@@ -85,6 +85,7 @@ public class TestEndToEndStoreAndForwardToFileNoDownstream extends AbstractEndTo
 
         mockFileDestination.assertMaxItemsPerAggregate(getConfig());
 
+        // No downstream, so FSC not called
         mockHttpDestination.assertFeedStatusCheckNotCalled();
 
         // No http forwarders set up so nothing goes to stroom
@@ -115,6 +116,7 @@ public class TestEndToEndStoreAndForwardToFileNoDownstream extends AbstractEndTo
         // Assert the contents of the files.
         mockFileDestination.assertFileContents(getConfig(), 12);
 
+        // No downstream, so FSC not called
         mockHttpDestination.assertFeedStatusCheckNotCalled();
 
         // No http forwarders set up so nothing goes to stroom

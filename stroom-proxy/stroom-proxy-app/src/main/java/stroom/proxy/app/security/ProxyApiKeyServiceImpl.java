@@ -143,7 +143,7 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
                     return Optional.empty();
                 }
             });
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.debug(() -> LogUtil.message("verifyApiKey() - Failed security check, request: {}, {}",
                     request, LogUtil.exceptionMessage(e)));
             throw new RuntimeException(e);
@@ -188,7 +188,7 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
                     verifiedApiKey = optUserDesc.map(userDesc ->
                                     createVerifiedApiKey(request, userDesc))
                             .orElse(null);
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     final Duration noFetchIntervalAfterFailure = downstreamHostConfigProvider.get()
                             .getNoFetchIntervalAfterFailure()
                             .getDuration();
@@ -220,11 +220,13 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
         final Set<VerifiedApiKey> newVerifiedApiKeySet = new HashSet<>();
         for (final VerifiedApiKey aVerifiedApiKey : verifiedApiKeySet) {
             // Just compare the prefix and perms as the hash algo may differ
-            if (ApiKeyGenerator.prefixesMatch(request.getApiKey(), aVerifiedApiKey.getPrefix())
-                && Objects.equals(request.getRequiredAppPermissions(), aVerifiedApiKey.getRequiredAppPermissions())) {
-                // This one matches our request so leave it out as we are either
-                // replacing it below, or removing it.
-            } else {
+            final boolean isMatch = ApiKeyGenerator.prefixesMatch(request.getApiKey(), aVerifiedApiKey.getPrefix())
+                                    && Objects.equals(
+                    request.getRequiredAppPermissions(),
+                    aVerifiedApiKey.getRequiredAppPermissions());
+
+            // Ignore matching ones as we are either replacing it below, or removing it.
+            if (!isMatch) {
                 LOGGER.debug("updateFile() - adding {}", aVerifiedApiKey);
                 newVerifiedApiKeySet.add(aVerifiedApiKey);
             }
@@ -296,7 +298,7 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
         final Path parent = jsonFile.getParent();
         try {
             Files.createDirectories(parent);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new UncheckedIOException(LogUtil.message("Error ensuring dir {} exists: {}",
                     parent, LogUtil.exceptionMessage(e)), e);
         }
@@ -306,7 +308,7 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
     private synchronized Optional<VerifiedApiKeys> readFromDisk() {
         final Path jsonFile = getJsonFilePath();
         if (Files.exists(jsonFile)) {
-            try (InputStream inputStream = Files.newInputStream(jsonFile, READ_OPEN_OPTIONS)) {
+            try (final InputStream inputStream = Files.newInputStream(jsonFile, READ_OPEN_OPTIONS)) {
                 LOGGER.debug("readFromDisk() - Reading receipt policy rules from file '{}'", jsonFile);
                 final VerifiedApiKeys verifiedApiKeys = JsonUtil.getMapper().readValue(
                         inputStream, VerifiedApiKeys.class);
@@ -323,7 +325,7 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
                     LOGGER.error("Null verifiedApiKeys from file '{}'", jsonFile);
                     return Optional.empty();
                 }
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 final String exMsg = LogUtil.exceptionMessage(e);
                 LOGGER.errorAndDebug(e, "Error reading persisted receipt policy rules from file '{}': {}",
                         jsonFile, exMsg);
@@ -339,7 +341,7 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
         if (verifiedApiKeys != null) {
             final Path jsonFile = getJsonFilePath();
             final ObjectMapper mapper = JsonUtil.getMapper();
-            try (OutputStream outputStream = Files.newOutputStream(jsonFile, WRITE_OPEN_OPTIONS)) {
+            try (final OutputStream outputStream = Files.newOutputStream(jsonFile, WRITE_OPEN_OPTIONS)) {
 
                 LOGGER.debug("writeToDisk() - Writing verifiedApiKeys to file {}\n{}",
                         jsonFile, verifiedApiKeys);

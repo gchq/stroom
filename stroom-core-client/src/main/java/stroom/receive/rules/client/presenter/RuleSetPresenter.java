@@ -36,6 +36,7 @@ import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
+import stroom.receive.rules.shared.ReceiptCheckMode;
 import stroom.receive.rules.shared.ReceiveDataRuleSetResource;
 import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.svg.client.SvgPresets;
@@ -43,6 +44,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
@@ -50,6 +52,7 @@ import stroom.widget.button.client.SvgButton;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 import stroom.widget.util.client.LazyValue;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -61,9 +64,6 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.Layer;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
         implements HasDirtyHandlers, CloseContentEvent.Handler, HasSave, DocumentTabData {
 
@@ -73,18 +73,15 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
     private static final TabData DOCUMENTATION_TAB = new TabDataImpl("Documentation");
     private static final String TAB_LABEL = "Data Receipt Rules";
     private final ButtonView saveButton;
-//    private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
+    private final ButtonView warningButton;
 
-    private final List<TabData> tabs = new ArrayList<>();
     private final RuleSetSettingsPresenter ruleSetSettingsPresenter;
     private final LazyValue<FieldListPresenter> lazyFieldListPresenter;
     private final LazyValue<MarkdownEditPresenter> lazyMarkdownEditPresenter;
     private final RestFactory restFactory;
-    private final HasSaveRegistry hasSaveRegistry;
-    protected final ButtonPanel toolbar;
+    private final ButtonPanel toolbar;
 
     private PresenterWidget<?> currentContent;
-    private TabData selectedTab;
     private boolean dirty;
     private String lastLabel;
     private ReceiveDataRules receiveDataRules = null;
@@ -96,10 +93,10 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
                             final Provider<FieldListPresenter> fieldListPresenterProvider,
                             final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
                             final RestFactory restFactory,
-                            final HasSaveRegistry hasSaveRegistry) {
+                            final HasSaveRegistry hasSaveRegistry,
+                            final UiConfigCache uiConfigCache) {
 
         super(eventBus, view);
-        this.hasSaveRegistry = hasSaveRegistry;
         this.ruleSetSettingsPresenter = ruleSetSettingsPresenter;
         registerHandler(this.ruleSetSettingsPresenter.addDirtyHandler(event -> {
             GWT.log("dirty event from ruleSetSettingsPresenter: " + event.isDirty());
@@ -129,10 +126,16 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
                 });
         this.restFactory = restFactory;
 
-        this.hasSaveRegistry.register(this);
-        this.saveButton = SvgButton.create(SvgPresets.SAVE);
+        hasSaveRegistry.register(this);
+        this.saveButton = SvgButton.create(SvgPresets.SAVE.title("Save all rules"));
         this.saveButton.setEnabled(false);
-        this.toolbar = createToolbar();
+
+        this.warningButton = SvgButton.create(SvgPresets.ALERT.title("Show Warnings"));
+
+        toolbar = new ButtonPanel();
+        uiConfigCache.get(extendedUiConfig -> {
+            initToolbar(toolbar, extendedUiConfig.getReceiptCheckMode());
+        }, this);
 
         addTab(RULES_TAB);
         addTab(FIELDS_TAB);
@@ -158,35 +161,30 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
                         null))
                 .taskMonitorFactory(this)
                 .exec();
-
-//        addTab(RULES, new DocumentEditTabProvider<>(settingsPresenterProvider::get));
-//        addTab(FIELDS, new DocumentEditTabProvider<>(fieldListPresenterProvider::get));
-//        addTab(DOCUMENTATION, new MarkdownTabProvider<ReceiveDataRules>(eventBus, markdownEditPresenterProvider) {
-//            @Override
-//            public void onRead(final MarkdownEditPresenter presenter,
-//                               final DocRef docRef,
-//                               final ReceiveDataRules document,
-//                               final boolean readOnly) {
-//                presenter.setText(document.getDescription());
-//                presenter.setReadOnly(readOnly);
-//            }
-//
-//            @Override
-//            public ReceiveDataRules onWrite(final MarkdownEditPresenter presenter,
-//                                            final ReceiveDataRules document) {
-//                document.setDescription(presenter.getText());
-//                return document;
-//            }
-//        });
-//        addTab(PERMISSIONS, documentUserPermissionsTabProvider);
-//        selectTab(RULES);
     }
 
-    protected ButtonPanel createToolbar() {
-        final ButtonPanel toolbar = new ButtonPanel();
+    private void initToolbar(final ButtonPanel toolbar, final ReceiptCheckMode receiptCheckMode) {
+//        GWT.log("receiptCheckMode: " + receiptCheckMode);
         toolbar.addButton(saveButton);
         registerHandler(saveButton.addClickHandler(event -> save()));
-        return toolbar;
+
+        if (receiptCheckMode != ReceiptCheckMode.RECEIPT_POLICY) {
+            toolbar.addButton(warningButton);
+            registerHandler(warningButton.addClickHandler(event -> {
+                if (MouseUtil.isPrimary(event)) {
+                    showWarnings(receiptCheckMode);
+                }
+            }));
+        }
+    }
+
+    private void showWarnings(final ReceiptCheckMode receiptCheckMode) {
+        final String msg =
+                "Stroom is currently configured with a receiptCheckMode of '" +
+                receiptCheckMode.name() + "' so these Data Receipt Rules will have no effect.\n\n" +
+                "To use Data Receipt Rules, change the receiptCheckMode property to '" +
+                ReceiptCheckMode.RECEIPT_POLICY + "'.";
+        AlertEvent.fireWarn(this, msg, null, null);
     }
 
     private void setDescriptionOnPresenter(final MarkdownEditPresenter markdownEditPresenter) {
@@ -200,10 +198,10 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
         fieldListPresenter.read(receiveDataRules.asDocRef(), receiveDataRules, false);
     }
 
-    private void setRulesOnPresenter(final RuleSetSettingsPresenter ruleSetSettingsPresenter) {
-        final ReceiveDataRules receiveDataRules = getReceiveDataRules();
-        ruleSetSettingsPresenter.onRead(receiveDataRules.asDocRef(), receiveDataRules, false);
-    }
+//    private void setRulesOnPresenter(final RuleSetSettingsPresenter ruleSetSettingsPresenter) {
+//        final ReceiveDataRules receiveDataRules = getReceiveDataRules();
+//        ruleSetSettingsPresenter.onRead(receiveDataRules.asDocRef(), receiveDataRules, false);
+//    }
 
     private ReceiveDataRules getReceiveDataRules() {
         return receiveDataRules;
@@ -231,7 +229,6 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
 
     public void addTab(final TabData tab) {
         getView().getTabBar().addTab(tab);
-        tabs.add(tab);
     }
 
     public void selectTab(final TabData tab) {
@@ -262,8 +259,6 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
 
                         // Update the selected tab.
                         getView().getTabBar().selectTab(tab);
-                        selectedTab = tab;
-
                         afterSelectTab(content);
                     }
                 });
@@ -341,17 +336,6 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
         }
     }
 
-//    @Override
-//    public void onRead(final DocRef docRef, final ReceiveDataRules doc, final boolean readOnly) {
-//        if (doc.getFields() == null) {
-//            doc.setFields(new ArrayList<>());
-//        }
-//        if (doc.getRules() == null) {
-//            doc.setRules(new ArrayList<>());
-//        }
-//        super.onRead(docRef, doc, readOnly);
-//    }
-
     @Override
     public String getType() {
         return ReceiveDataRules.TYPE;
@@ -395,14 +379,4 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
     public DocRef getDocRef() {
         return NullSafe.get(receiveDataRules, ReceiveDataRules::asDocRef);
     }
-
-//    @Override
-//    protected TabData getPermissionsTab() {
-//        return PERMISSIONS;
-//    }
-//
-//    @Override
-//    protected TabData getDocumentationTab() {
-//        return DOCUMENTATION_TAB;
-//    }
 }

@@ -96,13 +96,13 @@ public class RuleSetSettingsPresenter
         // Stop users from selecting expression items.
         expressionPresenter.setSelectionModel(null);
 
-        addButton = listPresenter.add(SvgPresets.ADD);
-        editButton = listPresenter.add(SvgPresets.EDIT);
-        copyButton = listPresenter.add(SvgPresets.COPY);
-        disableButton = listPresenter.add(SvgPresets.DISABLE);
-        deleteButton = listPresenter.add(SvgPresets.DELETE);
-        moveUpButton = listPresenter.add(SvgPresets.UP);
-        moveDownButton = listPresenter.add(SvgPresets.DOWN);
+        addButton = listPresenter.add(SvgPresets.ADD.title("Add new rule"));
+        editButton = listPresenter.add(SvgPresets.EDIT.title("Edit selected rule"));
+        copyButton = listPresenter.add(SvgPresets.COPY.title("Copy selected rule"));
+        disableButton = listPresenter.add(SvgPresets.DISABLE.title("Disable/enable selected rule"));
+        deleteButton = listPresenter.add(SvgPresets.DELETE.title("Delete selected rule"));
+        moveUpButton = listPresenter.add(SvgPresets.UP.title("Move selected rule up"));
+        moveDownButton = listPresenter.add(SvgPresets.DOWN.title("Move selected rule down"));
 
         listPresenter.getView().asWidget().getElement().getStyle().setBorderStyle(BorderStyle.NONE);
 

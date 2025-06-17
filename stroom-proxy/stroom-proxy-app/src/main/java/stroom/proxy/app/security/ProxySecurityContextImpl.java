@@ -10,6 +10,7 @@ import stroom.security.shared.VerifyApiKeyRequest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
@@ -62,17 +63,18 @@ public class ProxySecurityContextImpl implements CommonSecurityContext {
     @Override
     public boolean hasAppPermissions(final UserIdentity userIdentity,
                                      final AppPermissionSet requiredPermissions) {
-        // If the user is the internal processing user then they automatically have permission.
-        // This will also assert a user is 'logged in'.
-        if (isProcessingUser(userIdentity)) {
-            return true;
-        }
         // If no required perms then no need to check anything else
         if (AppPermissionSet.isEmpty(requiredPermissions)) {
             return true;
         }
 
-        if (userIdentity instanceof ApiKeyUserIdentity apiKeyUserIdentity) {
+        // If the user is the internal processing user then they automatically have permission.
+        // This will also assert a user is 'logged in'.
+        if (isProcessingUser(userIdentity)) {
+            return true;
+        }
+
+        if (userIdentity instanceof final ApiKeyUserIdentity apiKeyUserIdentity) {
             // Have to do this as proc user because verifyApiKey needs perms to be called,
             // i.e. when called directly from a resource
             return asProcessingUserResult(() ->
@@ -81,7 +83,12 @@ public class ProxySecurityContextImpl implements CommonSecurityContext {
                                     requiredPermissions))
                             .isPresent());
         } else {
-            // TODO do we need to support perm checking for other user types, e.g. OAuth?
+            // TODO Do we need to support perm checking for other user types, e.g. OAuth?
+            //  Maybe if proxy develops more of an API that users may want to call, but for now
+            //  the only thing calling the API will be another proxy which can have an API key.
+            LOGGER.error("Unable to check permissions for userIdentity {} of type {}",
+                    userIdentity,
+                    NullSafe.get(userIdentity, Object::getClass, Class::getSimpleName));
             return false;
         }
     }
@@ -102,17 +109,6 @@ public class ProxySecurityContextImpl implements CommonSecurityContext {
         return result;
     }
 
-//    @Override
-//    public <T> T asUserResult(final UserRef userRef, final Supplier<T> supplier) {
-////        ensureValidUser(userRef);
-//        return asUserResult(new BasicUserIdentity(userRef), supplier);
-//    }
-
-//    @Override
-//    public void asUser(final UserRef userRef, final Runnable runnable) {
-//
-//    }
-
     @Override
     public void asUser(final UserIdentity userIdentity, final Runnable runnable) {
         asUserResult(userIdentity, runnableAsSupplier(runnable));
@@ -128,14 +124,6 @@ public class ProxySecurityContextImpl implements CommonSecurityContext {
         asUser(userIdentityFactory.getServiceUserIdentity(), runnable);
     }
 
-//    @Override
-//    public void secure(final AppPermission requiredPermission, final Runnable runnable) {
-//        Objects.requireNonNull(requiredPermission);
-//        doSecureWork(runnableAsSupplier(runnable),
-//                () -> checkAppPermissionSet(requiredPermission.asAppPermissionSet()),
-//                false);
-//    }
-
     @Override
     public void secure(final AppPermissionSet requiredPermissions, final Runnable runnable) {
         Objects.requireNonNull(requiredPermissions);
@@ -143,14 +131,6 @@ public class ProxySecurityContextImpl implements CommonSecurityContext {
                 () -> checkAppPermissionSet(requiredPermissions),
                 false);
     }
-
-//    @Override
-//    public <T> T secureResult(final AppPermission requiredPermission, final Supplier<T> supplier) {
-//        Objects.requireNonNull(requiredPermission);
-//        return doSecureWork(supplier,
-//                () -> checkAppPermissionSet(requiredPermission.asAppPermissionSet()),
-//                false);
-//    }
 
     @Override
     public <T> T secureResult(final AppPermissionSet requiredPermissions, final Supplier<T> supplier) {
@@ -298,29 +278,6 @@ public class ProxySecurityContextImpl implements CommonSecurityContext {
                         LogUtil.message("User {} does not have the required permissions ({})",
                                 userIdentity, requiredPermissions));
             }
-
-//            if (AppPermissionSet.isEmpty(requiredPermissions)) {
-//                // No perms required, so all fine
-//            } else if (requiredPermissions.isAllOf()) {
-//                if (!hasAppPermissions(requiredPermissions)) {
-//                    final UserIdentity userIdentity = LogUtil.swallowExceptions(this::getUserIdentity)
-//                            .orElse(null);
-//                    throw new AuthenticationException(
-//                            LogUtil.message("User {} does not have the required permissions ({})",
-//                                    userIdentity, requiredPermissions));
-//                }
-//            } else {
-//                // One of permissionSet must be held
-//                boolean foundOne = requiredPermissions.stream()
-//                        .anyMatch(this::hasAppPermission);
-//                if (!foundOne) {
-//                    final UserIdentity userIdentity = LogUtil.swallowExceptions(this::getUserIdentity)
-//                            .orElse(null);
-//                    throw new AuthenticationException(
-//                            LogUtil.message("User {} does not have the required permissions ({})",
-//                                    userIdentity, requiredPermissions));
-//                }
-//            }
         } finally {
             CHECK_TYPE_THREAD_LOCAL.set(currentCheckType);
         }
