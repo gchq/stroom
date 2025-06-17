@@ -189,6 +189,15 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.contentstore.impl.ContentStoreConfig getContentStoreConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.contentstore.impl.ContentStoreConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.core.receive.AutoContentCreationConfig getAutoContentCreationConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
@@ -965,16 +974,6 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         throw new UnsupportedOperationException(
                 "stroom.config.common.UriConfig cannot be injected directly. "
-                        + "Inject a config class that uses it or one of its sub-class instead.");
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
-    stroom.contentstore.impl.ContentStoreConfig getContentStoreConfigButThrow(
-            final ConfigMapper configMapper) {
-        throw new UnsupportedOperationException(
-                "stroom.contentstore.impl.ContentStoreConfig cannot be injected directly. "
                         + "Inject a config class that uses it or one of its sub-class instead.");
     }
 
