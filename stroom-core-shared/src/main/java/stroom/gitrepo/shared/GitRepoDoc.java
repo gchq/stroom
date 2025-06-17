@@ -16,6 +16,7 @@
 
 package stroom.gitrepo.shared;
 
+import stroom.contentstore.shared.ContentStoreMetadata;
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
@@ -42,6 +43,8 @@ import java.util.Objects;
         "createUser",
         "updateUser",
         "description",
+        "contentStoreMeta",
+        "contentStoreContentPackId",
         "url",
         "username",
         "password",
@@ -56,6 +59,22 @@ public class GitRepoDoc extends Doc {
 
     public static final String TYPE = "GitRepo";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.GIT_REPO_DOCUMENT_TYPE;
+
+    /**
+     * If this is from a content store then this holds
+     * the metadata about that content store. Otherwise
+     * contentStoreMeta is null.
+     */
+    @JsonProperty
+    private ContentStoreMetadata contentStoreMeta;
+
+    /**
+     * If this is from a content store then this holds
+     * the ID of this content pack. Otherwise contentStoreContentPackId
+     * is null.
+     */
+    @JsonProperty
+    private String contentStoreContentPackId;
 
     @JsonProperty
     private String description = "";
@@ -106,6 +125,8 @@ public class GitRepoDoc extends Doc {
                       @JsonProperty("createUser") final String createUser,
                       @JsonProperty("updateUser") final String updateUser,
                       @JsonProperty("description") final String description,
+                      @JsonProperty("contentStoreMeta") final ContentStoreMetadata contentStoreMeta,
+                      @JsonProperty("contentStoreContentPackId") final String contentStoreContentPackId,
                       @JsonProperty("url") final String url,
                       @JsonProperty("username") final String username,
                       @JsonProperty("password") final String password,
@@ -116,6 +137,10 @@ public class GitRepoDoc extends Doc {
                       @JsonProperty("autoPush") final Boolean autoPush) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
+
+        // Content Pack stuff, if any
+        this.contentStoreMeta = contentStoreMeta;
+        this.contentStoreContentPackId = contentStoreContentPackId;
 
         // Git settings
         this.url = url;
@@ -177,6 +202,8 @@ public class GitRepoDoc extends Doc {
         }
         final GitRepoDoc that = (GitRepoDoc) o;
         return Objects.equals(description, that.description)
+               && Objects.equals(contentStoreMeta, that.contentStoreMeta)
+               && Objects.equals(contentStoreContentPackId, that.contentStoreContentPackId)
                && Objects.equals(url, that.url)
                && Objects.equals(username, that.username)
                && Objects.equals(password, that.password)
@@ -191,6 +218,8 @@ public class GitRepoDoc extends Doc {
     public int hashCode() {
         return Objects.hash(super.hashCode(),
                 description,
+                contentStoreMeta,
+                contentStoreContentPackId,
                 url,
                 username,
                 password,
@@ -207,6 +236,39 @@ public class GitRepoDoc extends Doc {
 
     public void setDescription(final String description) {
         this.description = description;
+    }
+
+    /**
+     * @return The metadata associated with the content store, if this is a content pack.
+     * If not a content pack then this returns null.
+     */
+    public ContentStoreMetadata getContentStoreMetadata() {
+        return this.contentStoreMeta;
+    }
+
+    /**
+     * Sets the metadata associated with the content store. Set to null if not
+     * a content store.
+     */
+    public void setContentStoreMetadata(final ContentStoreMetadata meta) {
+        this.contentStoreMeta = meta;
+    }
+
+    /**
+     * @return the ID associated with the content pack this was derived
+     * from, or null if not derived from a content pack.
+     */
+    public String getContentStoreContentPackId() {
+        return this.contentStoreContentPackId;
+    }
+
+    /**
+     * Sets the ID associated with the content pack. Set to null if not
+     * derived from a content store content pack.
+     * @param id The Content Pack ID.
+     */
+    public void setContentStoreContentPackId(final String id) {
+        this.contentStoreContentPackId = id;
     }
 
     public String getUrl() {
@@ -286,6 +348,8 @@ public class GitRepoDoc extends Doc {
         return "GitRepoDoc: {\n  "
                 + this.getName() + ",\n  "
                 + description + ",\n  "
+                + contentStoreMeta + ",\n"
+                + contentStoreContentPackId + ",\n"
                 + url + ",\n  "
                 + username + ",\n  "
                 + branch + "\n  "

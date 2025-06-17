@@ -19,7 +19,7 @@ package stroom.config.app;
 import stroom.activity.impl.db.ActivityConfig;
 import stroom.analytics.impl.AnalyticsConfig;
 import stroom.annotation.impl.AnnotationConfig;
-import stroom.contentstore.impl.ContentStoreConfigImpl;
+import stroom.contentstore.impl.ContentStoreConfig;
 import stroom.aws.s3.impl.S3Config;
 import stroom.bytebuffer.ByteBufferPoolConfig;
 import stroom.cluster.api.ClusterConfig;
@@ -137,7 +137,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final ActivityConfig activityConfig;
     private final AnalyticsConfig analyticsConfig;
     private final AnnotationConfig annotationConfig;
-    private final ContentStoreConfigImpl contentStoreConfigImpl;
+    private final ContentStoreConfig contentStoreConfig;
     private final AutoContentCreationConfig autoContentCreationConfig;
     private final ByteBufferPoolConfig byteBufferPoolConfig;
     private final ClusterConfig clusterConfig;
@@ -192,7 +192,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                 new ActivityConfig(),
                 new AnalyticsConfig(),
                 new AnnotationConfig(),
-                new ContentStoreConfigImpl(),
+                new ContentStoreConfig(),
                 new AutoContentCreationConfig(),
                 new ByteBufferPoolConfig(),
                 new ClusterConfig(),
@@ -246,7 +246,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_ACTIVITY) final ActivityConfig activityConfig,
                      @JsonProperty(PROP_NAME_ANALYTICS) final AnalyticsConfig analyticsConfig,
                      @JsonProperty(PROP_NAME_ANNOTATION) final AnnotationConfig annotationConfig,
-                     @JsonProperty(PROP_NAME_CONTENT_STORE) final ContentStoreConfigImpl contentStoreConfigImpl,
+                     @JsonProperty(PROP_NAME_CONTENT_STORE) final ContentStoreConfig contentStoreConfig,
                      @JsonProperty(PROP_NAME_AUTO_CONTENT_CREATION) final AutoContentCreationConfig autoContentCreationConfig,
                      @JsonProperty(PROP_NAME_BYTE_BUFFER_POOL) final ByteBufferPoolConfig byteBufferPoolConfig,
                      @JsonProperty(PROP_NAME_CLUSTER) final ClusterConfig clusterConfig,
@@ -296,7 +296,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.activityConfig = activityConfig;
         this.analyticsConfig = analyticsConfig;
         this.annotationConfig = annotationConfig;
-        this.contentStoreConfigImpl = contentStoreConfigImpl;
+        this.contentStoreConfig = contentStoreConfig;
         this.autoContentCreationConfig = autoContentCreationConfig;
         this.byteBufferPoolConfig = byteBufferPoolConfig;
         this.clusterConfig = clusterConfig;
@@ -376,8 +376,8 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @JsonProperty(PROP_NAME_CONTENT_STORE)
-    public ContentStoreConfigImpl getContentStoreConfigImpl() {
-        return contentStoreConfigImpl;
+    public ContentStoreConfig getContentStoreConfig() {
+        return contentStoreConfig;
     }
 
     @JsonProperty(PROP_NAME_AUTO_CONTENT_CREATION)

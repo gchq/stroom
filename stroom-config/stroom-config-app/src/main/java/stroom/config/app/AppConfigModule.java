@@ -4,8 +4,6 @@ import stroom.activity.impl.db.ActivityConfig;
 import stroom.activity.impl.db.ActivityConfig.ActivityDbConfig;
 import stroom.annotation.impl.AnnotationConfig;
 import stroom.annotation.impl.AnnotationConfig.AnnotationDBConfig;
-import stroom.contentstore.api.ContentStoreConfig;
-import stroom.contentstore.impl.ContentStoreConfigImpl;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig.ClusterLockDbConfig;
 import stroom.config.app.PropertyServiceConfig.PropertyServiceDbConfig;
@@ -114,11 +112,6 @@ public class AppConfigModule extends AbstractModule {
                                 AppConfig::getAnnotationConfig,
                                 AnnotationConfig::getDbConfig)
                         .orElseGet(AnnotationDBConfig::new));
-        bind(ContentStoreConfig.class)
-                .toInstance(NullSafe.getAsOptional(
-                                bootStrapConfig,
-                                AppConfig::getContentStoreConfigImpl)
-                        .orElseGet(ContentStoreConfigImpl::new));
 
         bind(AuthorisationDbConfig.class)
                 .toInstance(NullSafe.getAsOptional(

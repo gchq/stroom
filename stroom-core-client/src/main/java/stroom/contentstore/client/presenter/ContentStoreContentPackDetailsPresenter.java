@@ -287,13 +287,14 @@ public class ContentStoreContentPackDetailsPresenter
             // Ask for credentials if (contentPack.getGitNeedsAuth())
             if (contentPack.getGitNeedsAuth()) {
                 ShowPopupEvent.Builder builder = ShowPopupEvent.builder(credentialsDialog);
-                credentialsDialog.setupBuilder(
+                credentialsDialog.setupDialog(
                         contentPack,
                         builder);
                 builder.onHideRequest(e -> {
                             if (e.isOk()) {
                                 if (credentialsDialog.isValid()) {
                                     // Create the GitRepo with the given credentials
+                                    e.hide();
                                     requestGitRepoCreation(contentPack,
                                             credentialsDialog.getView().getUsername(),
                                             credentialsDialog.getView().getPassword());

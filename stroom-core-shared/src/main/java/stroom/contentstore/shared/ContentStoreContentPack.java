@@ -19,7 +19,7 @@ import java.util.Objects;
         "Contains the information for an Content Store Content Pack"
 )
 @JsonPropertyOrder({
-        "stroomName",
+        "id",
         "uiName",
         "iconUrl",
         "iconSvg",
@@ -40,9 +40,9 @@ public class ContentStoreContentPack {
     @JsonProperty
     private ContentStoreMetadata contentStoreMetadata = null;
 
-    /** The name as used by the App Store / Content Store */
+    /** The ID of this Content Pack within the Content Store */
     @JsonProperty
-    private final String stroomName;
+    private final String id;
 
     /** The name as displayed in the UI */
     @JsonProperty
@@ -109,7 +109,7 @@ public class ContentStoreContentPack {
 
     /**
      * Constructor. Initialises the values from the YAML.
-     * @param stroomName Name as used in the AppStore. Must not be null.
+     * @param id Name as used in the ContentStore. Must not be null.
      * @param uiName Name as shown in the UI. Must not be null.
      * @param iconUrl Icon URL. Can be null in which case null will
      *                be returned.
@@ -134,7 +134,7 @@ public class ContentStoreContentPack {
      *                     stuff from.
      */
     @JsonCreator
-    public ContentStoreContentPack(@JsonProperty("stroomName") final String stroomName,
+    public ContentStoreContentPack(@JsonProperty("id") final String id,
                                    @JsonProperty("uiName") final String uiName,
                                    @JsonProperty("iconUrl") final String iconUrl,
                                    @JsonProperty("iconSvg") final String iconSvg,
@@ -152,7 +152,7 @@ public class ContentStoreContentPack {
         // Implementation note:
         // Objects.requireNonNullElse() isn't available in GWT
 
-        this.stroomName = Objects.requireNonNull(stroomName);
+        this.id = Objects.requireNonNull(id);
         this.uiName = Objects.requireNonNull(uiName);
         this.iconUrl = iconUrl;
         this.iconSvg = iconSvg;
@@ -169,10 +169,10 @@ public class ContentStoreContentPack {
     }
 
     /**
-     * @return the Stroom ContentStore name for this content pack.
+     * @return The ID of this content pack.
      */
-    public String getStroomName() {
-        return stroomName;
+    public String getId() {
+        return id;
     }
 
     /**
@@ -289,16 +289,22 @@ public class ContentStoreContentPack {
 
     /**
      * Sets the metadata of the content store that this belongs to.
-     * Resolved later. This structure may change.
+     * Resolved later. This structure may change. Only called when creating the list of
+     * content packs. Shouldn't be called by anything else.
+     * @param meta The metadata. Must not be null.
      */
-    public void setContentStoreMetadata(ContentStoreMetadata meta) {
+    public void setContentStoreMetadata(final ContentStoreMetadata meta) {
+        Objects.requireNonNull(meta);
         this.contentStoreMetadata = meta;
     }
 
     /**
      * @return The metadata of the content store this belongs to.
+     * Never returns null once creation of this Content Pack is
+     * complete.
      */
     public ContentStoreMetadata getContentStoreMetadata() {
+        Objects.requireNonNull(this.contentStoreMetadata);
         return contentStoreMetadata;
     }
 
@@ -309,7 +315,7 @@ public class ContentStoreContentPack {
      * @param isInstalled true if this content pack is already installed.
      */
     @SuppressWarnings("unused")
-    public void setIsInstalled(Boolean isInstalled) {
+    public void setIsInstalled(final Boolean isInstalled) {
         if (isInstalled == null) {
             this.isInstalled = Boolean.FALSE;
         } else {
@@ -333,7 +339,7 @@ public class ContentStoreContentPack {
      * @param docs The collection of GitRepos that already exist. Must
      *             not be null but can be empty.
      */
-    public void checkIfInstalled(Collection<GitRepoDoc> docs) {
+    public void checkIfInstalled(final Collection<GitRepoDoc> docs) {
         Objects.requireNonNull(docs);
         for (var doc : docs) {
             if (this.matches(doc)) {
@@ -345,15 +351,30 @@ public class ContentStoreContentPack {
 
     /**
      * Returns whether this Content Pack matches the given GitRepoDoc.
-     * Note that this ignores the name of the pack. Instead it focuses
-     * on the Git content, as the content has UUIDs and shouldn't be
-     * downloaded to multiple places within Stroom as confusion would result.
+     * Matches on the Content Store ownerID and the Content Pack ID.
+     * Doesn't look at anything else, so may get clashes between
+     * Content Packs and manually created GitRepos.
      * @param gitRepoDoc The existing Stroom GitRepoDoc to check.
      * @return true if there is a match; false otherwise.
      */
     public boolean matches(final GitRepoDoc gitRepoDoc) {
-        return Objects.equals(gitUrl, gitRepoDoc.getUrl())
-                && Objects.equals(gitPath, gitRepoDoc.getPath());
+
+        // Check if Content Store ownerId matches
+        boolean ownerIdMatch = false;
+        if (this.contentStoreMetadata != null) {
+            String myOwnerId = this.contentStoreMetadata.getOwnerId();
+            if (gitRepoDoc.getContentStoreMetadata() != null) {
+                String gitRepoOwnerId = gitRepoDoc.getContentStoreMetadata().getOwnerId();
+
+                ownerIdMatch = myOwnerId.equals(gitRepoOwnerId);
+            }
+        }
+
+        // Check content pack ID
+        boolean contentPackIdMatch = Objects.equals(this.id, gitRepoDoc.getContentStoreContentPackId());
+
+        // Both must match
+        return ownerIdMatch && contentPackIdMatch;
     }
 
     /**
@@ -361,6 +382,8 @@ public class ContentStoreContentPack {
      * @param gitRepoDoc The doc to copy settings into.
      */
     public void updateSettingsIn(final GitRepoDoc gitRepoDoc) {
+        gitRepoDoc.setContentStoreMetadata(contentStoreMetadata);
+        gitRepoDoc.setContentStoreContentPackId(id);
         gitRepoDoc.setUrl(gitUrl);
         gitRepoDoc.setBranch(gitBranch);
         gitRepoDoc.setPath(gitPath);
@@ -375,7 +398,7 @@ public class ContentStoreContentPack {
         }
         final ContentStoreContentPack that = (ContentStoreContentPack) o;
         return Objects.equals(contentStoreMetadata, that.contentStoreMetadata)
-               && Objects.equals(stroomName, that.stroomName)
+               && Objects.equals(id, that.id)
                && Objects.equals(uiName, that.uiName)
                && Objects.equals(iconUrl, that.iconUrl)
                && Objects.equals(iconSvg, that.iconSvg)
@@ -395,7 +418,7 @@ public class ContentStoreContentPack {
     @Override
     public int hashCode() {
         return Objects.hash(contentStoreMetadata,
-                stroomName,
+                id,
                 uiName,
                 iconUrl,
                 iconSvg,
@@ -417,7 +440,7 @@ public class ContentStoreContentPack {
         String svgContent = (iconSvg == null ? "null" : "<svg content>");
         return "ContentStoreContentPack{"
                + "contentStore Metadata='" + contentStoreMetadata + '\''
-               + "stroomName='" + stroomName + '\''
+               + "ID='" + id + '\''
                + "  uiName='" + uiName + '\''
                + ", iconUrl='" + iconUrl + '\''
                + ", iconSvg='" + svgContent + '\''
