@@ -81,12 +81,12 @@ public class ReceiveDataRule {
     }
 
     private ReceiveDataRule(final Builder builder) {
-        ruleNumber = builder.ruleNumber;
-        creationTime = builder.creationTime;
-        name = builder.name;
-        enabled = builder.enabled;
-        expression = builder.expression;
-        action = builder.action;
+        this(builder.ruleNumber,
+                builder.creationTime,
+                builder.name,
+                builder.enabled,
+                builder.expression,
+                builder.action);
     }
 
     public int getRuleNumber() {
@@ -138,7 +138,7 @@ public class ReceiveDataRule {
     @Override
     public String toString() {
         // Create a rule name that includes the rule number.
-        String ruleName;
+        final String ruleName;
         if (name != null && !name.isEmpty()) {
             ruleName = ruleNumber + " " + name;
         } else {
@@ -151,8 +151,12 @@ public class ReceiveDataRule {
         return new Builder();
     }
 
+    public Builder copy() {
+        return copy(this);
+    }
+
     public static Builder copy(final ReceiveDataRule copy) {
-        Builder builder = new Builder();
+        final Builder builder = new Builder();
         builder.ruleNumber = copy.getRuleNumber();
         builder.creationTime = copy.getCreationTime();
         builder.name = copy.getName();

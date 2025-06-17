@@ -43,6 +43,7 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.MultiSelectEvent;
+import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.client.GWT;
@@ -57,6 +58,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class RuleSetSettingsPresenter
         extends DocumentEditPresenter<RuleSetSettingsView, ReceiveDataRules> {
@@ -190,19 +192,19 @@ public class RuleSetSettingsPresenter
 
     private void disableButtonClickHandler(final ClickEvent event) {
         if (!isReadOnly() && rules != null) {
-            final ReceiveDataRule selected = listPresenter.getSelectionModel().getSelected();
-            if (selected != null) {
-                final ReceiveDataRule newRule = new ReceiveDataRule(
-                        selected.getRuleNumber(),
-                        selected.getCreationTime(),
-                        selected.getName(),
-                        !selected.isEnabled(),
-                        selected.getExpression(),
-                        selected.getAction());
-                final int index = rules.indexOf(selected);
-                rules.remove(index);
-                rules.add(index, newRule);
-                listPresenter.getSelectionModel().setSelected(newRule);
+            final List<ReceiveDataRule> selectedItems = listPresenter.getSelectionModel().getSelectedItems();
+            if (NullSafe.hasItems(selectedItems)) {
+                final List<ReceiveDataRule> newSelection = new ArrayList<>(selectedItems.size());
+                for (final ReceiveDataRule rule : selectedItems) {
+                    final ReceiveDataRule newRule = rule.copy()
+                            .withEnabled(!rule.isEnabled())
+                            .build();
+                    newSelection.add(newRule);
+                    final int index = rules.indexOf(rule);
+                    rules.remove(index);
+                    rules.add(index, newRule);
+                }
+                listPresenter.getSelectionModel().setSelectedItems(newSelection);
                 update();
                 setDirty(true);
             }
@@ -211,10 +213,13 @@ public class RuleSetSettingsPresenter
 
     private void deleteButtonClickHandler(final ClickEvent event) {
         if (!isReadOnly() && rules != null) {
-            ConfirmEvent.fire(this, "Are you sure you want to delete this item?", ok -> {
+            final List<ReceiveDataRule> rules = listPresenter.getSelectionModel().getSelectedItems();
+            final String msg = rules.size() > 1
+                    ? "Are you sure you want to delete this rule?"
+                    : "Are you sure you want to delete the selected rules?";
+            ConfirmEvent.fire(this, msg, ok -> {
                 if (ok) {
-                    final ReceiveDataRule rule = listPresenter.getSelectionModel().getSelected();
-                    rules.remove(rule);
+                    this.rules.removeAll(rules);
                     listPresenter.getSelectionModel().clear();
                     update();
                     setDirty(true);
@@ -452,26 +457,59 @@ public class RuleSetSettingsPresenter
     private void updateButtons() {
         GWT.log("isReadOnly: " + isReadOnly());
         final boolean loadedPolicy = rules != null;
-        final ReceiveDataRule selection = listPresenter.getSelectionModel().getSelected();
-        final boolean selected = loadedPolicy && selection != null;
-        int index = -1;
-        if (selected) {
-            index = rules.indexOf(selection);
-        }
+        if (loadedPolicy) {
+            final MultiSelectionModel<ReceiveDataRule> selectionModel = listPresenter.getSelectionModel();
+            final Boolean areSelectedEnabled;
+            addButton.setEnabled(!isReadOnly());
 
-        if (selection != null && selection.isEnabled()) {
-            disableButton.setTitle("Disable");
+            if (selectionModel.getSelectedCount() == 0) {
+                areSelectedEnabled = null;
+            } else if (selectionModel.getSelectedCount() == 1) {
+                final ReceiveDataRule selection = listPresenter.getSelectionModel().getSelected();
+                final int index = rules.indexOf(selection);
+                areSelectedEnabled = selection.isEnabled();
+                editButton.setEnabled(!isReadOnly());
+                copyButton.setEnabled(!isReadOnly());
+                disableButton.setEnabled(!isReadOnly());
+                deleteButton.setEnabled(!isReadOnly());
+                moveUpButton.setEnabled(!isReadOnly() && index > 0);
+                moveDownButton.setEnabled(!isReadOnly() && index >= 0 && index < rules.size() - 1);
+            } else {
+                // Multi-select
+                final Set<Boolean> enabledStates = selectionModel.getSelectedItems()
+                        .stream()
+                        .map(ReceiveDataRule::isEnabled)
+                        .collect(Collectors.toSet());
+                areSelectedEnabled = enabledStates.size() == 1
+                        ? enabledStates.iterator().next()
+                        : null;
+
+                editButton.setEnabled(false);
+                copyButton.setEnabled(false);
+                disableButton.setEnabled(enabledStates.size() == 1);
+                deleteButton.setEnabled(true);
+                moveUpButton.setEnabled(false);
+                moveDownButton.setEnabled(false);
+            }
+
+            if (areSelectedEnabled != null) {
+                if (areSelectedEnabled) {
+                    disableButton.setTitle("Disable selected rules");
+                } else {
+                    disableButton.setTitle("Enable selected rules");
+                }
+            } else {
+                disableButton.setTitle("Select one or more rules with the same enabled state to enable/disable them.");
+            }
         } else {
-            disableButton.setTitle("Enable");
+            addButton.setEnabled(false);
+            editButton.setEnabled(false);
+            copyButton.setEnabled(false);
+            disableButton.setEnabled(false);
+            deleteButton.setEnabled(false);
+            moveUpButton.setEnabled(false);
+            moveDownButton.setEnabled(false);
         }
-
-        addButton.setEnabled(!isReadOnly() && loadedPolicy);
-        editButton.setEnabled(!isReadOnly() && selected);
-        copyButton.setEnabled(!isReadOnly() && selected);
-        disableButton.setEnabled(!isReadOnly() && selected);
-        deleteButton.setEnabled(!isReadOnly() && selected);
-        moveUpButton.setEnabled(!isReadOnly() && selected && index > 0);
-        moveDownButton.setEnabled(!isReadOnly() && selected && index >= 0 && index < rules.size() - 1);
     }
 
     @Override
