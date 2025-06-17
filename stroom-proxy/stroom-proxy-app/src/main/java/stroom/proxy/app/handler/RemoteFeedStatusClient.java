@@ -4,6 +4,8 @@ import stroom.proxy.app.AbstractDownstreamClient;
 import stroom.proxy.app.DownstreamHostConfig;
 import stroom.proxy.feed.remote.GetFeedStatusRequestV2;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
+import stroom.receive.common.ReceiveDataConfig;
+import stroom.receive.rules.shared.ReceiptCheckMode;
 import stroom.security.api.UserIdentityFactory;
 import stroom.util.HasHealthCheck;
 import stroom.util.HealthCheckUtils;
@@ -28,14 +30,17 @@ public class RemoteFeedStatusClient extends AbstractDownstreamClient implements 
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RemoteFeedStatusClient.class);
     private final Provider<FeedStatusConfig> feedStatusConfigProvider;
+    private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
 
     @Inject
     public RemoteFeedStatusClient(final JerseyClientFactory jerseyClientFactory,
                                   final UserIdentityFactory userIdentityFactory,
                                   final Provider<DownstreamHostConfig> downstreamHostConfigProvider,
-                                  final Provider<FeedStatusConfig> feedStatusConfigProvider) {
+                                  final Provider<FeedStatusConfig> feedStatusConfigProvider,
+                                  final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
         super(jerseyClientFactory, userIdentityFactory, downstreamHostConfigProvider);
         this.feedStatusConfigProvider = feedStatusConfigProvider;
+        this.receiveDataConfigProvider = receiveDataConfigProvider;
     }
 
     @Override
@@ -85,6 +90,9 @@ public class RemoteFeedStatusClient extends AbstractDownstreamClient implements 
         LOGGER.debug("getHealth() called");
         if (!isDownstreamEnabled()) {
             return HealthCheckUtils.healthy("Downstream host disabled");
+        } else if (receiveDataConfigProvider.get().getReceiptCheckMode() != ReceiptCheckMode.FEED_STATUS
+                   && receiveDataConfigProvider.get().getReceiptCheckMode() != ReceiptCheckMode.RECEIPT_POLICY) {
+            return HealthCheckUtils.healthy("Feed status checking disabled by receiptCheckMode");
         } else {
             final GetFeedStatusRequestV2 request = new GetFeedStatusRequestV2(
                     "DUMMY_FEED", null, null);

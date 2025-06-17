@@ -11,6 +11,7 @@ import stroom.util.HealthCheckUtils;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserDesc;
 
@@ -27,7 +28,7 @@ import java.util.Optional;
 
 public class ProxyApiKeyCheckClient extends AbstractDownstreamClient implements HasHealthCheck {
 
-    // This api key will never exist as it is malformed but we can make sure the resource
+    // This api key will never exist as it is malformed, but we can make sure the resource
     // is working with it.
     public static final VerifyApiKeyRequest HEALTH_CHECK_REQUEST = new VerifyApiKeyRequest(
             "DUMMY_API_KEY_FOR_HEALTH_CHECK",
@@ -102,6 +103,7 @@ public class ProxyApiKeyCheckClient extends AbstractDownstreamClient implements 
                             .build();
                 }
             } catch (final Throwable e) {
+                LOGGER.error("API Key check unhealthy: {}", LogUtil.exceptionMessage(e));
                 return Result.unhealthy(e);
             }
         }

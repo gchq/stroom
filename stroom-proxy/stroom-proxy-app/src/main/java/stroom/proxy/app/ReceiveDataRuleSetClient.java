@@ -1,6 +1,8 @@
 package stroom.proxy.app;
 
+import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.rules.shared.HashedReceiveDataRules;
+import stroom.receive.rules.shared.ReceiptCheckMode;
 import stroom.security.api.UserIdentityFactory;
 import stroom.util.HasHealthCheck;
 import stroom.util.HealthCheckUtils;
@@ -29,14 +31,17 @@ public class ReceiveDataRuleSetClient extends AbstractDownstreamClient implement
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReceiveDataRuleSetClient.class);
 
     private final Provider<ProxyReceiptPolicyConfig> proxyReceiptPolicyConfigProvider;
+    private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
 
     @Inject
     public ReceiveDataRuleSetClient(final JerseyClientFactory jerseyClientFactory,
                                     final UserIdentityFactory userIdentityFactory,
                                     final Provider<DownstreamHostConfig> downstreamHostConfigProvider,
-                                    final Provider<ProxyReceiptPolicyConfig> proxyReceiptPolicyConfigProvider) {
+                                    final Provider<ProxyReceiptPolicyConfig> proxyReceiptPolicyConfigProvider,
+                                    final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
         super(jerseyClientFactory, userIdentityFactory, downstreamHostConfigProvider);
         this.proxyReceiptPolicyConfigProvider = proxyReceiptPolicyConfigProvider;
+        this.receiveDataConfigProvider = receiveDataConfigProvider;
     }
 
     @Override
@@ -85,6 +90,8 @@ public class ReceiveDataRuleSetClient extends AbstractDownstreamClient implement
         LOGGER.debug("getHealth() called");
         if (!isDownstreamEnabled()) {
             return HealthCheckUtils.healthy("Downstream host disabled");
+        } else if (receiveDataConfigProvider.get().getReceiptCheckMode() != ReceiptCheckMode.RECEIPT_POLICY) {
+            return HealthCheckUtils.healthy("Receipt policy checking disabled by receiptCheckMode");
         } else {
             try {
                 try (final Response response = getResponse(SyncInvoker::get)) {

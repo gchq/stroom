@@ -15,7 +15,6 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppPermissionSet;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.NullSafe;
 
 import io.dropwizard.lifecycle.Managed;
 import jakarta.inject.Inject;
@@ -129,15 +128,15 @@ public class RemoteFeedStatusService implements FeedStatusService, Managed {
         });
     }
 
-    private boolean isFeedStatusCheckEnabled() {
-        final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
-        final boolean hasUrl = NullSafe.isNonBlankString(feedStatusConfig.getFeedStatusUrl());
-        if (!hasUrl) {
-            LOGGER.debug("Feed status check requested but property '{}' not configured.",
-                    feedStatusConfig.getFullPath(FeedStatusConfig.PROP_NAME_URL));
-        }
-        return hasUrl;
-    }
+//    private boolean isFeedStatusCheckEnabled() {
+//        final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
+//        final boolean hasUrl = NullSafe.isNonBlankString(feedStatusConfig.getFeedStatusUrl());
+//        if (!hasUrl) {
+//            LOGGER.debug("Feed status check requested but property '{}' not configured.",
+//                    feedStatusConfig.getFullPath(FeedStatusConfig.PROP_NAME_URL));
+//        }
+//        return hasUrl;
+//    }
 
     private FeedStatus getDefaultFeedStatus() {
         final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();

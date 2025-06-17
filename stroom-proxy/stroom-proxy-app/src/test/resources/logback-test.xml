@@ -14,6 +14,8 @@
 <!--    <logger name="stroom.proxy.app.handler" level="debug" />-->
 <!--    <logger name="stroom.proxy.app.handler.DirUtil" level="debug" />-->
     <logger name="stroom.proxy.app.TestRemoteReceiveDataRuleSetServiceImpl" level="debug" />
+    <logger name="stroom.proxy.app.AbstractDownstreamClient" level="debug" />
+
 
     <root level="error">
         <appender-ref ref="STDOUT" />

@@ -3,6 +3,7 @@ package stroom.proxy.app;
 import stroom.test.common.TestResourceLocks;
 import stroom.util.io.CommonDirSetup;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourcePaths;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
@@ -29,7 +30,7 @@ public abstract class AbstractEndToEndTest extends AbstractApplicationTest {
 
     final MockHttpDestination mockHttpDestination = new MockHttpDestination();
 
-    // Use RegisterExtension instead of @WireMockTest so we can set up the req listener
+    // Use RegisterExtension instead of @WireMockTest, so we can set up the req listener
     @SuppressWarnings("unused")
     @RegisterExtension
     public final WireMockExtension wireMockExtension = mockHttpDestination.createExtension();
@@ -55,13 +56,14 @@ public abstract class AbstractEndToEndTest extends AbstractApplicationTest {
 
     void waitForHealthyProxyApp(final Duration timeout) {
         final Instant startTime = Instant.now();
+        final Instant endTime = startTime.plus(timeout);
         final String healthCheckUrl = buildProxyAdminPath("/healthcheck");
 
         boolean didTimeout = true;
         Response response = null;
 
         LOGGER.info("Waiting for proxy to start using " + healthCheckUrl);
-        while (startTime.plus(timeout).isAfter(Instant.now())) {
+        while (endTime.isAfter(Instant.now())) {
             try {
                 response = getClient().target(healthCheckUrl)
                         .request()
@@ -71,23 +73,31 @@ public abstract class AbstractEndToEndTest extends AbstractApplicationTest {
                     LOGGER.info("Proxy is ready and healthy");
                     break;
                 } else {
+                    LOGGER.info("Still waiting for proxy to be healthy. Last error: {} - {}. Will give up in {}",
+                            response.getStatus(),
+                            response.getStatusInfo().getReasonPhrase(),
+                            Duration.between(Instant.now(), endTime));
                     throw new RuntimeException(LogUtil.message("Proxy is unhealthy, got {} code",
                             response.getStatus()));
                 }
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 // Expected, so sleep and go round again
             }
             try {
+                //noinspection BusyWait
                 Thread.sleep(100);
-            } catch (InterruptedException ex) {
+            } catch (final InterruptedException ex) {
                 Thread.currentThread().interrupt();
                 throw new RuntimeException("Interrupted while sleeping");
             }
         }
         if (didTimeout) {
             // Get the health check content so we can see what is wrong. Likely a feed status check issue
-            final Map<String, Object> map = response.readEntity(new GenericType<Map<String, Object>>() {
-            });
+            //noinspection Convert2Diamond
+            final Map<String, Object> map = NullSafe.get(response, resp ->
+                    resp.readEntity(new GenericType<Map<String, Object>>() {
+                    }));
+            LOGGER.error("Last response: {}", response);
             throw new RuntimeException(LogUtil.message(
                     "Timed out waiting for proxy to start. Last response: {}", map));
         }

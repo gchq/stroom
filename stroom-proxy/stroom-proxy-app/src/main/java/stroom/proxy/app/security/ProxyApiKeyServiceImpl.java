@@ -55,7 +55,6 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxyApiKeyServiceImpl.class);
 
-    private static final HashAlgorithm HASH_ALGORITHM = HashAlgorithm.SHA2_512;
     private static final OpenOption[] READ_OPEN_OPTIONS = new OpenOption[]{StandardOpenOption.READ};
     private static final OpenOption[] WRITE_OPEN_OPTIONS = new OpenOption[]{
             StandardOpenOption.WRITE,
@@ -95,12 +94,6 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
         this.hashFunctionFactory = hashFunctionFactory;
         this.pathCreator = pathCreator;
         this.downstreamHostConfigProvider = downstreamHostConfigProvider;
-        // Hopefully this should not contain many items as in most cases
-        // we won't have many upstream proxies hitting us
-//        this.verifiedKeysCache = cacheManager.createLoadingCache(
-//                CACHE_NAME,
-//                () -> downstreamHostConfigProvider.get().getVerifiedApiKeysCache(),
-//                this::doVerifyApiKey);
 
         verifiedKeysMap = new ConcurrentHashMap<>();
         verifiedApiKeysFromFile = readFromDisk()
@@ -292,33 +285,6 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
                 Instant.now().toEpochMilli(),
                 userDesc);
     }
-
-//    private Optional<UserDesc> fetchApiKeyValidity(final VerifyApiKeyRequest request) {
-//        final String url = getFullUrl();
-//        Optional<UserDesc> optUserDesc = Optional.empty();
-//        if (NullSafe.isNonBlankString(url)) {
-//            try (Response response = getResponse(builder -> builder.post(Entity.json(request)))) {
-//                final StatusType statusInfo = response.getStatusInfo();
-//                if (statusInfo.getStatusCode() == Status.OK.getStatusCode()) {
-//                    if (response.hasEntity()) {
-//                        optUserDesc = Optional.ofNullable(response.readEntity(UserDesc.class));
-//                        LOGGER.debug("fetchApiKeyValidity() - optUserDesc: {}, request: {}", optUserDesc, request);
-//                    } else {
-//                        LOGGER.debug("fetchApiKeyValidity() - No response entity from {}", url);
-//                    }
-//                } else {
-//                    LOGGER.error("Error fetching API Key validity using url '{}', " +
-//                                 "got response {} - {}, request: {}",
-//                            url, statusInfo.getStatusCode(), statusInfo.getReasonPhrase(), request);
-//                }
-//            } catch (NotFoundException e) {
-//                LOGGER.debug("fetchApiKeyValidity() - Not found exception");
-//            }
-//        } else {
-//            LOGGER.warn("No url configured for API key verification.");
-//        }
-//        return optUserDesc;
-//    }
 
     private Path getJsonFilePath() {
         final String contentDir = proxyConfigProvider.get().getContentDir();

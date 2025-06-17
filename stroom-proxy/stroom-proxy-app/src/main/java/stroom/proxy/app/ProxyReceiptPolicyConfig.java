@@ -23,12 +23,10 @@ public class ProxyReceiptPolicyConfig extends AbstractConfig implements IsProxyC
 
     private final String receiveDataRulesUrl;
     private final StroomDuration syncFrequency;
-//    private final String apiKey;
 
     public ProxyReceiptPolicyConfig() {
         receiveDataRulesUrl = null;
         syncFrequency = DEFAULT_SYNC_FREQUENCY;
-//        apiKey = null;
     }
 
     @JsonCreator

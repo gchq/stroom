@@ -11,6 +11,8 @@ import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.receive.common.FeedStatusResourceV2;
 import stroom.receive.common.ReceiveDataServlet;
+import stroom.security.shared.ApiKeyCheckResource;
+import stroom.security.shared.ApiKeyResource;
 import stroom.test.common.TestUtil;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.date.DateUtil;
@@ -38,6 +40,7 @@ import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.github.tomakehurst.wiremock.matching.UrlPattern;
 import com.github.tomakehurst.wiremock.stubbing.ServeEvent;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
+import jakarta.ws.rs.core.Response.Status;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.assertj.core.api.Assertions;
@@ -121,13 +124,13 @@ public class MockHttpDestination {
                 .build();
     }
 
-    public void setupLivenessEndpoint(Function<MappingBuilder, MappingBuilder> livenessBuilderFunc) {
+    public void setupLivenessEndpoint(final Function<MappingBuilder, MappingBuilder> livenessBuilderFunc) {
         final String path = getStatusPath();
         WireMock.stubFor(livenessBuilderFunc.apply(WireMock.get(path)));
         LOGGER.info("Setup WireMock POST stub for {}", path);
     }
 
-    public void setupStroomStubs(Function<MappingBuilder, MappingBuilder> datafeedBuilderFunc) {
+    public void setupStroomStubs(final Function<MappingBuilder, MappingBuilder> datafeedBuilderFunc) {
         final String feedStatusPath = getFeedStatusPath();
         final GetFeedStatusResponse feedStatusResponse = GetFeedStatusResponse.createOKReceiveResponse();
 
@@ -143,6 +146,14 @@ public class MockHttpDestination {
                         .withHeader("Content-Type", "application/json")
                         .withBody(responseJson)));
         LOGGER.info("Setup WireMock POST stub for {}", feedStatusPath);
+
+        final String apiKeyVerificationPath = getApiKeyVerificationPath();
+
+        WireMock.stubFor(WireMock.post(apiKeyVerificationPath)
+                .willReturn(WireMock.aResponse()
+                        .withStatus(Status.NO_CONTENT.getStatusCode())
+                        .withHeader("Content-Type", "application/json")));
+        LOGGER.info("Setup WireMock POST stub for {}", apiKeyVerificationPath);
 
         final String datafeedPath = getDataFeedPath();
         WireMock.stubFor(datafeedBuilderFunc.apply(WireMock.post(datafeedPath)));
@@ -338,15 +349,16 @@ public class MockHttpDestination {
                 .containsExactly(TestConstants.FEED_TEST_EVENTS_1, TestConstants.FEED_TEST_EVENTS_2);
     }
 
-    private static String getFeedStatusBasePath() {
+    private static String getFeedStatusPath() {
         return ResourcePaths.buildAuthenticatedApiPath(
-                FeedStatusResourceV2.BASE_RESOURCE_PATH);
+                FeedStatusResourceV2.BASE_RESOURCE_PATH,
+                FeedStatusResourceV2.GET_FEED_STATUS_PATH_PART);
     }
 
-    private static String getFeedStatusPath() {
-        return ResourcePaths.buildPath(
-                getFeedStatusBasePath(),
-                FeedStatusResourceV2.GET_FEED_STATUS_PATH_PART);
+    private static String getApiKeyVerificationPath() {
+        return ResourcePaths.buildAuthenticatedApiPath(
+                ApiKeyResource.BASE_PATH,
+                ApiKeyCheckResource.VERIFY_API_KEY_PATH_PART);
     }
 
     /**
@@ -471,14 +483,24 @@ public class MockHttpDestination {
     }
 
     static FeedStatusConfig createFeedStatusConfig() {
-        return new FeedStatusConfig(
-//                true,
-//                FeedStatus.Receive,
-                "http://localhost:"
-                + MockHttpDestination.DEFAULT_STROOM_PORT
-                + getFeedStatusBasePath(),
-//                null,
-                null);
+        return new FeedStatusConfig(null, null);
+//        return new FeedStatusConfig(
+////                true,
+////                FeedStatus.Receive,
+//                "http://localhost:"
+//                + MockHttpDestination.DEFAULT_STROOM_PORT
+//                + getFeedStatusPath(),
+////                null,
+//                null);
+    }
+
+    static DownstreamHostConfig createDownstreamHostConfig() {
+        return DownstreamHostConfig.builder()
+                .withEnabled(true)
+                .withScheme("http")
+                .withHostname("localhost")
+                .withPort(MockHttpDestination.DEFAULT_STROOM_PORT)
+                .build();
     }
 
     void assertSimpleDataFeedRequestContent(int expected) {

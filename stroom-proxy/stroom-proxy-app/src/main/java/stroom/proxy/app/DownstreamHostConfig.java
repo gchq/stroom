@@ -85,6 +85,26 @@ public class DownstreamHostConfig extends UriConfig implements IsProxyConfig {
                 noFetchIntervalAfterFailure, DEFAULT_NO_FETCH_INTERVAL);
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static Builder copy(final DownstreamHostConfig copy) {
+        final Builder builder = new Builder();
+        builder.scheme = copy.getScheme();
+        builder.hostname = copy.getHostname();
+        builder.port = copy.getPort();
+        builder.pathPrefix = copy.getPathPrefix();
+        builder.enabled = copy.isEnabled();
+        builder.apiKey = copy.getApiKey();
+        builder.apiKeyVerificationUrl = copy.getApiKeyVerificationUrl();
+        builder.persistedKeysHashAlgorithm = copy.getPersistedKeysHashAlgorithm();
+        builder.maxCachedKeyAge = copy.getMaxCachedKeyAge();
+        builder.maxPersistedKeyAge = copy.getMaxPersistedKeyAge();
+        builder.noFetchIntervalAfterFailure = copy.getNoFetchIntervalAfterFailure();
+        return builder;
+    }
+
     @JsonPropertyDescription("Whether this stroom-proxy has a downstream stroom/stroom-proxy instance " +
                              "to use for feed/API key/receipt poliocy checking. If this proxy is just used " +
                              "to forward to file only then set to false.")
@@ -199,5 +219,97 @@ public class DownstreamHostConfig extends UriConfig implements IsProxyConfig {
                ", maxPersistedKeyAge=" + maxPersistedKeyAge +
                ", noFetchIntervalAfterFailure=" + noFetchIntervalAfterFailure +
                '}';
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static final class Builder {
+
+        private String scheme;
+        private String hostname;
+        private Integer port;
+        private String pathPrefix;
+        private boolean enabled;
+        private String apiKey;
+        private String apiKeyVerificationUrl;
+        private HashAlgorithm persistedKeysHashAlgorithm;
+        private StroomDuration maxCachedKeyAge;
+        private StroomDuration maxPersistedKeyAge;
+        private StroomDuration noFetchIntervalAfterFailure;
+
+        private Builder() {
+        }
+
+        public Builder withScheme(final String scheme) {
+            this.scheme = scheme;
+            return this;
+        }
+
+        public Builder withHostname(final String hostname) {
+            this.hostname = hostname;
+            return this;
+        }
+
+        public Builder withPort(final int port) {
+            this.port = port;
+            return this;
+        }
+
+        public Builder withPrefix(final String pathPrefix) {
+            this.pathPrefix = pathPrefix;
+            return this;
+        }
+
+        public Builder withEnabled(final boolean enabled) {
+            this.enabled = enabled;
+            return this;
+        }
+
+        public Builder withApiKey(final String apiKey) {
+            this.apiKey = apiKey;
+            return this;
+        }
+
+        public Builder withApiKeyVerificationUrl(final String apiKeyVerificationUrl) {
+            this.apiKeyVerificationUrl = apiKeyVerificationUrl;
+            return this;
+        }
+
+        public Builder withPersistedKeysHashAlgorithm(final HashAlgorithm persistedKeysHashAlgorithm) {
+            this.persistedKeysHashAlgorithm = persistedKeysHashAlgorithm;
+            return this;
+        }
+
+        public Builder withMaxCachedKeyAge(final StroomDuration maxCachedKeyAge) {
+            this.maxCachedKeyAge = maxCachedKeyAge;
+            return this;
+        }
+
+        public Builder withMaxPersistedKeyAge(final StroomDuration maxPersistedKeyAge) {
+            this.maxPersistedKeyAge = maxPersistedKeyAge;
+            return this;
+        }
+
+        public Builder withNoFetchIntervalAfterFailure(final StroomDuration noFetchIntervalAfterFailure) {
+            this.noFetchIntervalAfterFailure = noFetchIntervalAfterFailure;
+            return this;
+        }
+
+        public DownstreamHostConfig build() {
+            return new DownstreamHostConfig(
+                    enabled,
+                    scheme,
+                    hostname,
+                    port,
+                    pathPrefix,
+                    apiKey,
+                    apiKeyVerificationUrl,
+                    persistedKeysHashAlgorithm,
+                    maxCachedKeyAge,
+                    maxPersistedKeyAge,
+                    noFetchIntervalAfterFailure);
+        }
     }
 }
