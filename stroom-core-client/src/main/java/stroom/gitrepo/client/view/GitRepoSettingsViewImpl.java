@@ -29,7 +29,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PasswordTextBox;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -71,9 +70,6 @@ public class GitRepoSettingsViewImpl
 
     @UiField
     CustomCheckBox autoPush;
-
-    @UiField
-    TextArea commitMessage;
 
     @UiField
     Button gitRepoPush;
@@ -177,17 +173,6 @@ public class GitRepoSettingsViewImpl
     }
 
     @Override
-    public String getCommitMessage() {
-        return this.commitMessage.getText();
-    }
-
-    @Override
-    public void setCommitMessage(final String commitMessage) {
-        this.commitMessage.setText(commitMessage);
-        this.onCommitMessageValueChange(null);
-    }
-
-    @Override
     public void onReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
         this.setState();
@@ -210,7 +195,6 @@ public class GitRepoSettingsViewImpl
             path.setEnabled(false);
             commit.setEnabled(false);
             autoPush.setEnabled(false);
-            commitMessage.setEnabled(false);
             gitRepoPush.setEnabled(false);
             gitRepoPull.setEnabled(false);
 
@@ -228,20 +212,10 @@ public class GitRepoSettingsViewImpl
             if (commit.getText().isEmpty()) {
                 // Can push manually or automatically
                 autoPush.setEnabled(true);
-                commitMessage.setEnabled(true);
-
-                if (commitMessage.getText().isEmpty()) {
-                    // Cannot push until message isn't empty
-                    gitRepoPush.setEnabled(false);
-
-                } else {
-                    // Can push as we have a commit message
-                    gitRepoPush.setEnabled(true);
-                }
+                gitRepoPush.setEnabled(true);
 
             } else {
                 // Commit hash is specified so cannot push manually or automatically
-                commitMessage.setEnabled(false);
                 autoPush.setEnabled(false);
                 gitRepoPush.setEnabled(false);
             }
@@ -271,16 +245,6 @@ public class GitRepoSettingsViewImpl
         if (getUiHandlers() != null) {
             getUiHandlers().onDirty();
         }
-        this.setState();
-    }
-
-    /**
-     * Enables/disables the Push button depending on whether there is anything
-     * in the Commit Message text box.
-     * @param e Event. Ignored. Can be null.
-     */
-    @UiHandler({"commitMessage"})
-    public void onCommitMessageValueChange(@SuppressWarnings("unused") final ValueChangeEvent<String> e) {
         this.setState();
     }
 
