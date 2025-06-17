@@ -1,0 +1,18 @@
+{
+  "elements" : {
+    "remove" : [ {
+      "id" : "xsltFilter2",
+      "type" : "XSLTFilter"
+    } ]
+  },
+  "links" : {
+    "add" : [ {
+      "from" : "xsltFilter1",
+      "to" : "schemaFilter"
+    } ],
+    "remove" : [ {
+      "from" : "xsltFilter1",
+      "to" : "xsltFilter2"
+    } ]
+  }
+}

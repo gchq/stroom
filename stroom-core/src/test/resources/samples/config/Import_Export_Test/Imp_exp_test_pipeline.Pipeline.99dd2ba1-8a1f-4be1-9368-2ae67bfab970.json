@@ -1,0 +1,70 @@
+{
+  "elements" : {
+    "add" : [ {
+      "id" : "Source",
+      "type" : "Source"
+    }, {
+      "id" : "combinedParser",
+      "type" : "CombinedParser"
+    }, {
+      "id" : "recordCountFilter",
+      "type" : "RecordCountFilter"
+    }, {
+      "id" : "xsltFilter",
+      "type" : "XSLTFilter"
+    }, {
+      "id" : "schemaFilter",
+      "type" : "SchemaFilter"
+    }, {
+      "id" : "xmlWriter",
+      "type" : "XMLWriter"
+    }, {
+      "id" : "fileAppender",
+      "type" : "FileAppender"
+    } ]
+  },
+  "properties" : {
+    "add" : [ {
+      "element" : "combinedParser",
+      "name" : "textConverter",
+      "value" : {
+        "entity" : {
+          "type" : "TextConverter",
+          "uuid" : "7b0f2921-e7b8-4b66-9f10-bfa3e68a8b4e",
+          "name" : "Imp_exp_test_text_converter"
+        }
+      }
+    }, {
+      "element" : "xsltFilter",
+      "name" : "xslt",
+      "value" : {
+        "entity" : {
+          "type" : "XSLT",
+          "uuid" : "c6fad44a-67de-4a36-9708-cac9f3def861",
+          "name" : "Imp_exp_test_XSLT"
+        }
+      }
+    } ]
+  },
+  "links" : {
+    "add" : [ {
+      "from" : "Source",
+      "to" : "combinedParser"
+    }, {
+      "from" : "combinedParser",
+      "to" : "recordCountFilter"
+    }, {
+      "from" : "recordCountFilter",
+      "to" : "xsltFilter"
+    }, {
+      "from" : "xsltFilter",
+      "to" : "schemaFilter"
+    }, {
+      "from" : "schemaFilter",
+      "to" : "xmlWriter"
+    }, {
+      "from" : "xmlWriter",
+      "to" : "fileAppender"
+    } ]
+  }
+}

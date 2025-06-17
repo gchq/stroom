@@ -1,0 +1,39 @@
+{
+  "elements" : {
+    "add" : [ {
+      "id" : "Source",
+      "type" : "Source"
+    }, {
+      "id" : "combinedParser",
+      "type" : "CombinedParser"
+    }, {
+      "id" : "schemaFilter",
+      "type" : "SchemaFilter"
+    } ],
+    "remove" : [ ]
+  },
+  "properties" : {
+    "add" : [ {
+      "element" : "schemaFilter",
+      "name" : "schemaGroup",
+      "value" : {
+        "string" : "EVENTS"
+      }
+    } ],
+    "remove" : [ ]
+  },
+  "pipelineReferences" : {
+    "add" : [ ],
+    "remove" : [ ]
+  },
+  "links" : {
+    "add" : [ {
+      "from" : "Source",
+      "to" : "combinedParser"
+    }, {
+      "from" : "combinedParser",
+      "to" : "schemaFilter"
+    } ],
+    "remove" : [ ]
+  }
+}

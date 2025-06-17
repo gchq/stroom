@@ -160,22 +160,22 @@ public class NewPropertyPresenter
         return getView().getSource();
     }
 
-    public void write(final PipelineProperty property) {
+    public PipelinePropertyValue writeValue() {
         if ("streamType".equals(propertyType.getName())) {
-            property.setValue(new PipelinePropertyValue(dataTypeWidget.getValue()));
+            return new PipelinePropertyValue(dataTypeWidget.getValue());
         } else if ("volumeGroup".equals(propertyType.getName())) {
-            property.setValue(new PipelinePropertyValue(dataTypeWidget.getValue()));
+            return new PipelinePropertyValue(dataTypeWidget.getValue());
         } else if ("boolean".equals(propertyType.getType())) {
             final String value = listBox.getValue();
-            property.setValue(new PipelinePropertyValue(Boolean.valueOf(value)));
+            return new PipelinePropertyValue(Boolean.valueOf(value));
         } else if ("int".equals(propertyType.getType())) {
             final Integer value = valueSpinner.getIntValue();
-            property.setValue(new PipelinePropertyValue(value));
+            return new PipelinePropertyValue(value);
         } else if ("long".equals(propertyType.getType())) {
             final Long value = (long) valueSpinner.getIntValue();
-            property.setValue(new PipelinePropertyValue(value));
+            return new PipelinePropertyValue(value);
         } else if ("String".equals(propertyType.getType())) {
-            property.setValue(new PipelinePropertyValue(textBox.getText()));
+            return new PipelinePropertyValue(textBox.getText());
 //        } else if (StreamType.DOCUMENT_TYPE.equals(propertyType.getType())) {
 //            property.setValue(new PipelinePropertyValue(streamTypesWidget.getSelectedItem()));
         } else {
@@ -184,7 +184,7 @@ public class NewPropertyPresenter
             if (namedEntity != null) {
                 value = new PipelinePropertyValue(namedEntity);
             }
-            property.setValue(value);
+            return value;
         }
     }
 

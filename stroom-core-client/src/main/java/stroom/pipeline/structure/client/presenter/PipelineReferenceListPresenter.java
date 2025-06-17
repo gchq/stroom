@@ -33,7 +33,9 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineElement;
+import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.planb.shared.PlanBDoc;
@@ -336,35 +338,38 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
         }
     }
 
-    private void showEditor(final PipelineReference pipelineReference, final boolean isNew) {
+    private void showEditor(final PipelineReference pipelineReference,
+                            final boolean isNew) {
         if (pipelineReference != null) {
             final PipelineData pipelineData = pipelineModel.getPipelineData();
-            final List<PipelineReference> added = pipelineData.getAddedPipelineReferences();
-            added.remove(pipelineReference);
+            final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
+            builder.getReferences().getAddList().remove(pipelineReference);
 
             final NewPipelineReferencePresenter editor = newPipelineReferencePresenter.get();
 
             final HidePopupRequestEvent.Handler handler = e -> {
                 if (e.isOk()) {
-                    editor.write(pipelineReference);
+                    final PipelineReference updated = editor.write();
 
-                    if (pipelineReference.getPipeline() == null) {
+                    if (updated.getPipeline() == null) {
                         AlertEvent.fireError(PipelineReferenceListPresenter.this,
                                 "You must specify a pipeline to use.", e::reset);
-                    } else if (!StateDoc.TYPE.equals(pipelineReference.getPipeline().getType()) &&
-                               !PlanBDoc.TYPE.equals(pipelineReference.getPipeline().getType()) &&
-                               pipelineReference.getFeed() == null) {
+                    } else if (!StateDoc.TYPE.equals(updated.getPipeline().getType()) &&
+                               !PlanBDoc.TYPE.equals(updated.getPipeline().getType()) &&
+                               updated.getFeed() == null) {
                         AlertEvent.fireError(PipelineReferenceListPresenter.this, "You must specify a feed to use.",
                                 e::reset);
-                    } else if (!StateDoc.TYPE.equals(pipelineReference.getPipeline().getType()) &&
-                               !PlanBDoc.TYPE.equals(pipelineReference.getPipeline().getType()) &&
-                               pipelineReference.getStreamType() == null) {
+                    } else if (!StateDoc.TYPE.equals(updated.getPipeline().getType()) &&
+                               !PlanBDoc.TYPE.equals(updated.getPipeline().getType()) &&
+                               updated.getStreamType() == null) {
                         AlertEvent.fireError(PipelineReferenceListPresenter.this,
                                 "You must specify a stream type to use.", e::reset);
                     } else {
-                        if (!added.contains(pipelineReference)) {
-                            added.add(pipelineReference);
+                        if (!builder.getReferences().getAddList().contains(updated)) {
+                            builder.getReferences().getAddList().add(updated);
                         }
+
+                        setPipelineData(builder.build());
 
                         setDirty(isNew || editor.isDirty());
                         refresh();
@@ -374,10 +379,11 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
                     // User has cancelled edit so add the reference back to
                     // the list if this was an existing reference
                     if (!isNew) {
-                        if (!added.contains(pipelineReference)) {
-                            added.add(pipelineReference);
+                        if (!builder.getReferences().getAddList().contains(pipelineReference)) {
+                            builder.getReferences().getAddList().add(pipelineReference);
                         }
                     }
+                    setPipelineData(builder.build());
 
                     e.hide();
                 }
@@ -403,21 +409,28 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
         final PipelineReference selected = selectionModel.getSelected();
         if (selected != null) {
             final PipelineData pipelineData = pipelineModel.getPipelineData();
-            if (pipelineData.getAddedPipelineReferences().contains(selected)) {
-                pipelineData.getAddedPipelineReferences().remove(selected);
-                pipelineData.getRemovedPipelineReferences().remove(selected);
+            final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
+            if (builder.getReferences().getAddList().contains(selected)) {
+                builder.getReferences().getAddList().remove(selected);
+                builder.getReferences().getRemoveList().remove(selected);
 
             } else {
-                if (pipelineData.getRemovedPipelineReferences().contains(selected)) {
-                    pipelineData.getRemovedPipelineReferences().remove(selected);
+                if (builder.getReferences().getRemoveList().contains(selected)) {
+                    builder.getReferences().getRemoveList().remove(selected);
                 } else {
-                    pipelineData.getRemovedPipelineReferences().add(selected);
+                    builder.getReferences().getRemoveList().add(selected);
                 }
             }
 
+            setPipelineData(builder.build());
             setDirty(true);
             refresh();
         }
+    }
+
+    private void setPipelineData(final PipelineData pipelineData) {
+        pipelineModel.setPipelineLayer(
+                new PipelineLayer(pipelineModel.getPipelineLayer().getSourcePipeline(), pipelineData));
     }
 
     private void addReference(final PipelineReference reference, final State state) {
@@ -477,11 +490,15 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
                                 .stream()
                                 .collect(Collectors.toMap(Function.identity(), Function.identity()));
 
+                        final List<PipelineReference> newList = new ArrayList<>(references.size());
                         for (final PipelineReference reference : references) {
-                            reference.setFeed(resolve(fetchedDocRefs, reference.getFeed()));
-                            reference.setPipeline(resolve(fetchedDocRefs, reference.getPipeline()));
+                            newList.add(new PipelineReference.Builder(reference)
+                                    .feed(resolve(fetchedDocRefs, reference.getFeed()))
+                                    .pipeline(resolve(fetchedDocRefs, reference.getPipeline()))
+                                    .build());
                         }
-
+                        references.clear();
+                        references.addAll(newList);
                         setData(references);
                     })
                     .taskMonitorFactory(getView())

@@ -30,7 +30,10 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.explorer.shared.ExplorerResource;
+import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineElement;
+import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
@@ -332,10 +335,7 @@ public class PropertyListPresenter
     }
 
     private PipelineProperty createDefaultProperty(final String elementName, final PipelinePropertyType propertyType) {
-        final PipelineProperty property = new PipelineProperty(elementName, propertyType.getName());
-        property.setValue(getDefaultValue(propertyType));
-
-        return property;
+        return new PipelineProperty(elementName, propertyType.getName(), getDefaultValue(propertyType));
     }
 
     private void onEdit(final PipelineProperty property, final boolean readOnly) {
@@ -363,10 +363,7 @@ public class PropertyListPresenter
                 localProperty = inheritedProperty;
             }
 
-            final PipelineProperty editing = new PipelineProperty();
-            editing.copyFrom(localProperty);
-            editing.setValue(localProperty.getValue());
-
+            final PipelineProperty editing = new PipelineProperty.Builder(localProperty).build();
             final Source source = getSource(editing);
 
             final NewPropertyPresenter editor = newPropertyPresenter.get();
@@ -380,24 +377,33 @@ public class PropertyListPresenter
                     if (editor.isDirty()) {
                         setDirty(true);
 
-                        editor.write(editing);
+                        final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineModel.getPipelineData());
 
                         // Remove the property locally.
-                        pipelineModel.getPipelineData().getAddedProperties().remove(editing);
-                        pipelineModel.getPipelineData().getRemovedProperties().remove(editing);
+                        builder.getProperties().getAddList().remove(editing);
+                        builder.getProperties().getRemoveList().remove(editing);
 
+                        // Write new property.
+                        final PipelinePropertyValue value = editor.writeValue();
+                        final PipelineProperty newProperty = new PipelineProperty.Builder(editing)
+                                .value(value)
+                                .build();
                         switch (editor.getSource()) {
                             case LOCAL:
-                                pipelineModel.getPipelineData().getAddedProperties().add(editing);
+                                builder.getProperties().getAddList().add(newProperty);
                                 break;
 
                             case DEFAULT:
-                                pipelineModel.getPipelineData().getRemovedProperties().add(editing);
+                                builder.getProperties().getRemoveList().add(newProperty);
                                 break;
 
                             case INHERIT:
                                 // Do nothing as we have already removed it.
                         }
+
+                        final PipelineData pipelineData = builder.build();
+                        pipelineModel.setPipelineLayer(
+                                new PipelineLayer(pipelineModel.getPipelineLayer().getSourcePipeline(), pipelineData));
 
                         refresh();
                     }
@@ -468,17 +474,19 @@ public class PropertyListPresenter
                                 .stream()
                                 .collect(Collectors.toMap(Function.identity(), Function.identity()));
 
+                        final List<PipelineProperty> newList = new ArrayList<>(propertyList.size());
                         for (final PipelineProperty property : propertyList) {
+                            final PipelineProperty.Builder builder = new PipelineProperty.Builder(property);
                             final DocRef docRef = property.getValue().getEntity();
                             if (docRef != null) {
                                 final DocRef fetchedDocRef = fetchedDocRefs.get(docRef);
                                 if (fetchedDocRef != null) {
-                                    property.getValue().setEntity(fetchedDocRef);
+                                    builder.value(new PipelinePropertyValue(fetchedDocRef));
                                 }
                             }
+                            newList.add(builder.build());
                         }
-
-                        setData(propertyList);
+                        setData(newList);
                     })
                     .taskMonitorFactory(getView())
                     .exec();
@@ -511,30 +519,29 @@ public class PropertyListPresenter
     }
 
     private PipelinePropertyValue getDefaultValue(final PipelinePropertyType propertyType) {
-        final PipelinePropertyValue value = new PipelinePropertyValue();
         if ("boolean".equals(propertyType.getType())) {
             boolean defaultValue = true;
             if (propertyType.getDefaultValue() != null && !propertyType.getDefaultValue().isEmpty()) {
                 defaultValue = Boolean.parseBoolean(propertyType.getDefaultValue());
             }
-            value.setBoolean(defaultValue);
+            return new PipelinePropertyValue(defaultValue);
         } else if ("int".equals(propertyType.getType())) {
             int defaultValue = 0;
             if (propertyType.getDefaultValue() != null && !propertyType.getDefaultValue().isEmpty()) {
                 defaultValue = Integer.parseInt(propertyType.getDefaultValue());
             }
-            value.setInteger(defaultValue);
+            return new PipelinePropertyValue(defaultValue);
         } else if ("long".equals(propertyType.getType())) {
             long defaultValue = 0L;
             if (propertyType.getDefaultValue() != null && !propertyType.getDefaultValue().isEmpty()) {
                 defaultValue = Long.parseLong(propertyType.getDefaultValue());
             }
-            value.setLong(defaultValue);
+            return new PipelinePropertyValue(defaultValue);
         } else if ("String".equals(propertyType.getType())) {
-            value.setString(propertyType.getDefaultValue());
+            return new PipelinePropertyValue(propertyType.getDefaultValue());
         }
 
-        return value;
+        return new PipelinePropertyValue();
     }
 
     public PipelineProperty getInheritedProperty(final PipelineProperty property) {

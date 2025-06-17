@@ -1,0 +1,53 @@
+{
+  "elements" : {
+    "add" : [ {
+      "id" : "Source",
+      "type" : "Source"
+    }, {
+      "id" : "combinedParser",
+      "type" : "CombinedParser"
+    }, {
+      "id" : "xsltFilter1",
+      "type" : "XSLTFilter"
+    }, {
+      "id" : "xsltFilter2",
+      "type" : "XSLTFilter"
+    }, {
+      "id" : "xsltFilter3",
+      "type" : "XSLTFilter"
+    }, {
+      "id" : "schemaFilter",
+      "type" : "SchemaFilter"
+    }, {
+      "id" : "xmlWriter",
+      "type" : "XMLWriter"
+    }, {
+      "id" : "streamAppender",
+      "type" : "StreamAppender"
+    } ]
+  },
+  "links" : {
+    "add" : [ {
+      "from" : "Source",
+      "to" : "combinedParser"
+    }, {
+      "from" : "combinedParser",
+      "to" : "xsltFilter1"
+    }, {
+      "from" : "xsltFilter1",
+      "to" : "xsltFilter2"
+    }, {
+      "from" : "xsltFilter2",
+      "to" : "xsltFilter3"
+    }, {
+      "from" : "xsltFilter3",
+      "to" : "schemaFilter"
+    }, {
+      "from" : "schemaFilter",
+      "to" : "xmlWriter"
+    }, {
+      "from" : "xmlWriter",
+      "to" : "streamAppender"
+    } ]
+  }
+}

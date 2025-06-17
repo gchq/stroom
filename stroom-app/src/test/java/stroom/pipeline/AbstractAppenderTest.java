@@ -37,6 +37,7 @@ import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.textconverter.TextConverterStore;
@@ -116,16 +117,18 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
         final String data = StroomPipelineTestFileUtil.getString(pipelineFile);
         final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, data);
         final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+        final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineDoc.getPipelineData());
 
         if (textConverterRef != null) {
-            pipelineDoc.getPipelineData().addProperty(
+            builder.addProperty(
                     PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", textConverterRef));
         }
         if (xsltRef != null) {
-            pipelineDoc.getPipelineData()
-                    .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xsltRef));
+            builder.addProperty(
+                    PipelineDataUtil.createProperty("translationFilter", "xslt", xsltRef));
         }
 
+        pipelineDoc.setPipelineData(builder.build());
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRef;
     }

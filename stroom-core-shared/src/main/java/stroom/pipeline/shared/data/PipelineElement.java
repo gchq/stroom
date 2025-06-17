@@ -22,49 +22,17 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlType;
 
 import java.util.Objects;
 
-/**
- * <p>
- * Java class for Element complex type.
- * <p>
- * <p>
- * The following schema fragment specifies the expected content contained within
- * this class.
- * <p>
- * <pre>
- * &lt;complexType name="Element">
- *   &lt;complexContent>
- *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
- *       &lt;sequence>
- *         &lt;element name="id" type="{http://www.w3.org/2001/XMLSchema}string"/>
- *         &lt;element name="type" type="{http://www.w3.org/2001/XMLSchema}string"/>
- *       &lt;/sequence>
- *     &lt;/restriction>
- *   &lt;/complexContent>
- * &lt;/complexType>
- * </pre>
- */
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "Element", propOrder = {"id", "type"})
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({"id", "type"})
 public class PipelineElement implements Comparable<PipelineElement> {
 
-    @XmlElement(required = true)
     @JsonProperty
-    private String id;
-    @XmlElement(required = true)
+    private final String id;
     @JsonProperty
-    private String type;
-
-    public PipelineElement() {
-    }
+    private final String type;
 
     @JsonCreator
     public PipelineElement(@JsonProperty("id") final String id,
@@ -77,16 +45,8 @@ public class PipelineElement implements Comparable<PipelineElement> {
         return id;
     }
 
-    public void setId(final String value) {
-        this.id = value;
-    }
-
     public String getType() {
         return type;
-    }
-
-    public void setType(final String value) {
-        this.type = value;
     }
 
     @Override
@@ -124,5 +84,35 @@ public class PipelineElement implements Comparable<PipelineElement> {
     @JsonIgnore
     public String getDisplayName() {
         return type + " '" + id + "'";
+    }
+
+    public static class Builder {
+
+        private String id;
+        private String type;
+
+        public Builder() {
+        }
+
+        public Builder(final PipelineElement element) {
+            if (element != null) {
+                this.id = element.id;
+                this.type = element.type;
+            }
+        }
+
+        public Builder id(final String id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder type(final String type) {
+            this.type = type;
+            return this;
+        }
+
+        public PipelineElement build() {
+            return new PipelineElement(id, type);
+        }
     }
 }

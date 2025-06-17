@@ -252,7 +252,7 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 "folder2",
                 "folder2/Pipeline\\.Pipeline\\.[-a-f0-9]*.meta",
                 "folder2/Pipeline\\.Pipeline\\.[-a-f0-9]*.node",
-                "folder2/Pipeline\\.Pipeline\\.[-a-f0-9]*.xml");
+                "folder2/Pipeline\\.Pipeline\\.[-a-f0-9]*.json");
 
         this.testGitFilesOnDisk("testExport1",
                 testDataDir,
@@ -347,7 +347,7 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 "folder2",
                 "folder2/Pipeline\\.Pipeline\\.[-a-f0-9]*.meta",
                 "folder2/Pipeline\\.Pipeline\\.[-a-f0-9]*.node",
-                "folder2/Pipeline\\.Pipeline\\.[-a-f0-9]*.xml");
+                "folder2/Pipeline\\.Pipeline\\.[-a-f0-9]*.json");
 
         this.testGitFilesOnDisk("testExport2",
                 testDataDir,

@@ -18,6 +18,7 @@ package stroom.pipeline.shared;
 
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineLayer;
@@ -26,8 +27,11 @@ import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.util.shared.NullSafe;
 
+import jakarta.validation.constraints.Null;
+
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,6 +41,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class PipelineDataMerger {
 
@@ -80,7 +85,7 @@ public class PipelineDataMerger {
                     final PipelineData pipelineData = pipelineLayer.getPipelineData();
 
                     // Add elements.
-                    for (final PipelineElement element : pipelineData.getElements().getAdd()) {
+                    for (final PipelineElement element : pipelineData.getAddedElements()) {
                         // If source is provided by a pipeline then remember this.
                         if (SOURCE.equals(element.getId())) {
                             sourceProvided = true;
@@ -99,7 +104,7 @@ public class PipelineDataMerger {
                     }
 
                     // Remove elements.
-                    for (final PipelineElement element : pipelineData.getElements().getRemove()) {
+                    for (final PipelineElement element : pipelineData.getRemovedElements()) {
                         elementMap.remove(element.getId());
                     }
                 }
@@ -136,7 +141,7 @@ public class PipelineDataMerger {
                 final PipelineData pipelineData = pipelineLayer.getPipelineData();
 
                 // Add properties.
-                for (final PipelineProperty property : pipelineData.getProperties().getAdd()) {
+                for (final PipelineProperty property : pipelineData.getAddedProperties()) {
                     final PipelineElement element = elementMap.get(property.getElement());
                     if (element != null) {
                         final String elementType = element.getType();
@@ -150,7 +155,7 @@ public class PipelineDataMerger {
                 }
 
                 // Remove properties.
-                for (final PipelineProperty property : pipelineData.getProperties().getRemove()) {
+                for (final PipelineProperty property : pipelineData.getRemovedProperties()) {
                     propertyMap.compute(property.getElement(), (elementId, map) -> {
                         if (map != null) {
                             map.remove(property.getName());
@@ -180,7 +185,7 @@ public class PipelineDataMerger {
                 final PipelineData pipelineData = pipelineLayer.getPipelineData();
 
                 // Add pipeline references.
-                for (final PipelineReference reference : pipelineData.getPipelineReferences().getAdd()) {
+                for (final PipelineReference reference : pipelineData.getAddedPipelineReferences()) {
                     final PipelineElement element = elementMap.get(reference.getElement());
                     if (element != null) {
                         final String elementType = element.getType();
@@ -200,7 +205,7 @@ public class PipelineDataMerger {
                 }
 
                 // Remove pipeline references.
-                for (final PipelineReference reference : pipelineData.getPipelineReferences().getRemove()) {
+                for (final PipelineReference reference : pipelineData.getRemovedPipelineReferences()) {
                     pipelineReferenceMap.compute(reference.getElement(), (elementId, map) -> {
                         if (map != null) {
                             map.compute(reference.getName(), (name, list) -> {
@@ -247,7 +252,7 @@ public class PipelineDataMerger {
                 final PipelineData pipelineData = pipelineLayer.getPipelineData();
 
                 // Add links.
-                for (final PipelineLink link : pipelineData.getLinks().getAdd()) {
+                for (final PipelineLink link : pipelineData.getAddedLinks()) {
                     final PipelineElement fromElement = elementMap.get(link.getFrom());
                     final PipelineElement toElement = elementMap.get(link.getTo());
 
@@ -268,7 +273,7 @@ public class PipelineDataMerger {
                 }
 
                 // Remove links.
-                for (final PipelineLink link : pipelineData.getLinks().getRemove()) {
+                for (final PipelineLink link : pipelineData.getRemovedLinks()) {
                     links.remove(link);
 //                        linkMap.compute(link.getFrom(), (elementId, list) -> {
 //                            if (list != null) {
@@ -365,30 +370,21 @@ public class PipelineDataMerger {
 
     public PipelineData createMergedData() {
         // Create merged data.
-        final PipelineData pipelineData = new PipelineData();
-
-        for (final PipelineElement element : elementMap.values()) {
-            pipelineData.addElement(element);
-        }
-        for (final Map<String, PipelineProperty> map : propertyMap.values()) {
-            for (final PipelineProperty property : map.values()) {
-                pipelineData.addProperty(property);
-            }
-        }
-        for (final Map<String, List<PipelineReference>> map : pipelineReferenceMap.values()) {
-            for (final List<PipelineReference> list : map.values()) {
-                for (final PipelineReference pipelineReference : list) {
-                    pipelineData.addPipelineReference(pipelineReference);
-                }
-            }
-        }
-        for (final List<PipelineLink> list : linkMap.values()) {
-            for (final PipelineLink link : list) {
-                pipelineData.addLink(link);
-            }
-        }
-
-        return pipelineData;
+        final PipelineDataBuilder builder = new PipelineDataBuilder();
+        builder.addElements(elementMap.values());
+        builder.addProperties(propertyMap.values()
+                .stream()
+                .flatMap(map -> map.values().stream())
+                .collect(Collectors.toList()));
+        builder.addPipelineReferences(pipelineReferenceMap.values()
+                .stream()
+                .flatMap(map -> map.values().stream().flatMap(Collection::stream))
+                .collect(Collectors.toList()));
+        builder.addLinks(linkMap.values()
+                .stream()
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList()));
+        return builder.build();
     }
 
     public DocRef getPropertySource(final PipelineProperty property) {

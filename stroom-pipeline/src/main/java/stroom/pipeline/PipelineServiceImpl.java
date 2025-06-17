@@ -83,14 +83,14 @@ public class PipelineServiceImpl implements PipelineService {
     }
 
     @Override
-    public Boolean savePipelineXml(final DocRef pipeline, final String xml) {
+    public Boolean savePipelineJson(final DocRef pipeline, final String json) {
         final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipeline);
 
         if (pipelineDoc == null) {
             return false;
         }
 
-        final PipelineData pipelineData = pipelineSerialiser.getPipelineDataFromXml(xml);
+        final PipelineData pipelineData = pipelineSerialiser.getPipelineDataFromJson(json);
         pipelineDoc.setPipelineData(pipelineData);
         pipelineStore.writeDocument(pipelineDoc);
 
@@ -98,10 +98,10 @@ public class PipelineServiceImpl implements PipelineService {
     }
 
     @Override
-    public String fetchPipelineXml(final DocRef pipeline) {
+    public String fetchPipelineJson(final DocRef pipeline) {
         final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipeline);
         if (pipelineDoc != null) {
-            return pipelineSerialiser.getXmlFromPipelineData(pipelineDoc.getPipelineData());
+            return pipelineSerialiser.getJsonFromPipelineData(pipelineDoc.getPipelineData());
         }
 
         return null;
@@ -138,13 +138,4 @@ public class PipelineServiceImpl implements PipelineService {
             }
         });
     }
-
-//    @Override
-//    public List<String> findUuidsByName(final String nameFilter) {
-//        return securityContext.secureResult(() ->
-//                pipelineStore.findByName(nameFilter, true)
-//                        .stream()
-//                        .map(DocRef::getUuid)
-//                        .collect(Collectors.toList()));
-//    }
 }

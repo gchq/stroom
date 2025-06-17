@@ -29,7 +29,7 @@ import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.PipelineResource;
-import stroom.pipeline.shared.SavePipelineXmlRequest;
+import stroom.pipeline.shared.SavePipelineJsonRequest;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -61,6 +61,7 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -81,7 +82,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
     private final NewElementPresenter newElementPresenter;
     private final PropertyListPresenter propertyListPresenter;
     private final PipelineReferenceListPresenter pipelineReferenceListPresenter;
-    private final Provider<EditorPresenter> xmlEditorProvider;
+    private final Provider<EditorPresenter> jsonEditorProvider;
     private final PipelineTreePresenter pipelineTreePresenter;
     private final PipelineElementTypesFactory pipelineElementTypesFactory;
     private PipelineElement selectedElement;
@@ -103,7 +104,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                                       final NewElementPresenter newElementPresenter,
                                       final PropertyListPresenter propertyListPresenter,
                                       final PipelineReferenceListPresenter pipelineReferenceListPresenter,
-                                      final Provider<EditorPresenter> xmlEditorProvider,
+                                      final Provider<EditorPresenter> jsonEditorProvider,
                                       final PipelineElementTypesFactory pipelineElementTypesFactory) {
         super(eventBus, view);
         this.pipelineTreePresenter = pipelineTreePresenter;
@@ -112,7 +113,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         this.newElementPresenter = newElementPresenter;
         this.propertyListPresenter = propertyListPresenter;
         this.pipelineReferenceListPresenter = pipelineReferenceListPresenter;
-        this.xmlEditorProvider = xmlEditorProvider;
+        this.jsonEditorProvider = jsonEditorProvider;
         this.pipelineElementTypesFactory = pipelineElementTypesFactory;
 
         getView().setUiHandlers(this);
@@ -446,7 +447,6 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
 
         if (selectedElement != null) {
             final List<PipelineElement> removedElements = pipelineModel.getRemovedElements();
-
             if (removedElements != null) {
                 existingElements.addAll(removedElements);
             }
@@ -471,37 +471,38 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         if (isDirty()) {
             AlertEvent.fireError(this, "You must save changes to this pipeline before you can view the source", null);
         } else {
-            final EditorPresenter xmlEditor = xmlEditorProvider.get();
-            xmlEditor.getIndicatorsOption().setAvailable(false);
-            xmlEditor.getIndicatorsOption().setOn(false);
-            xmlEditor.getStylesOption().setOn(true);
-            xmlEditor.getView().asWidget().getElement().addClassName("form-control-border default-min-sizes");
+            final EditorPresenter jsonEditor = jsonEditorProvider.get();
+            jsonEditor.setMode(AceEditorMode.JSON);
+//            jsonEditor.getIndicatorsOption().setAvailable(false);
+//            jsonEditor.getIndicatorsOption().setOn(false);
+//            jsonEditor.getStylesOption().setOn(true);
+            jsonEditor.getView().asWidget().getElement().addClassName("form-control-border default-min-sizes");
 
             final PopupSize popupSize = PopupSize.resizable(600, 400);
             restFactory
                     .create(PIPELINE_RESOURCE)
-                    .method(res -> res.fetchPipelineXml(docRef))
+                    .method(res -> res.fetchPipelineJson(docRef))
                     .onSuccess(result -> {
                         String text = "";
                         if (result != null) {
-                            text = result.getXml();
+                            text = result.getJson();
                         }
-                        xmlEditor.setText(text, true);
-                        ShowPopupEvent.builder(xmlEditor)
+                        jsonEditor.setText(text, true);
+                        ShowPopupEvent.builder(jsonEditor)
                                 .popupType(PopupType.OK_CANCEL_DIALOG)
                                 .popupSize(popupSize)
                                 .caption("Pipeline Source")
-                                .onShow(e -> xmlEditor.focus())
+                                .onShow(e -> jsonEditor.focus())
                                 .onHideRequest(e -> {
                                     if (e.isOk()) {
-                                        querySave(xmlEditor, e);
+                                        querySave(jsonEditor, e);
                                     } else {
                                         e.hide();
                                     }
                                 })
                                 .fire();
                     })
-                    .onFailure(throwable -> xmlEditor.setErrorText(
+                    .onFailure(throwable -> jsonEditor.setErrorText(
                             "Unable to display pipeline source",
                             throwable.getMessage()
                     ))
@@ -510,22 +511,22 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         }
     }
 
-    private void querySave(final EditorPresenter xmlEditor,
+    private void querySave(final EditorPresenter jsonEditor,
                            final HidePopupRequestEvent event) {
         ConfirmEvent.fire(PipelineStructurePresenter.this,
-                "Are you sure you want to save changes to the underlying XML?", ok -> {
+                "Are you sure you want to save changes to the underlying JSON?", ok -> {
                     if (ok) {
-                        doActualSave(xmlEditor, event);
+                        doActualSave(jsonEditor, event);
                     } else {
                         event.hide();
                     }
                 });
     }
 
-    private void doActualSave(final EditorPresenter xmlEditor, final HidePopupRequestEvent event) {
+    private void doActualSave(final EditorPresenter jsonEditor, final HidePopupRequestEvent event) {
         restFactory
                 .create(PIPELINE_RESOURCE)
-                .method(res -> res.savePipelineXml(new SavePipelineXmlRequest(docRef, xmlEditor.getText())))
+                .method(res -> res.savePipelineJson(new SavePipelineJsonRequest(docRef, jsonEditor.getText())))
                 .onSuccess(result -> {
                     // Hide the popup.
                     event.hide();

@@ -53,7 +53,7 @@ class TestPipelineFactory extends AbstractProcessIntegrationTest {
     @Test
     void testSingle() {
         final PipelineDoc pipelineDoc = PipelineTestUtil.createBasicPipeline(
-                StroomPipelineTestFileUtil.getString("TestPipelineFactory/EventDataPipeline.Pipeline.data.xml"));
+                StroomPipelineTestFileUtil.getString("TestPipelineFactory/EventDataPipeline.Pipeline.json"));
         final DocRef docRef = DocRefUtil.create(pipelineDoc);
         final PipelineData pipelineData = pipelineDoc.getPipelineData();
 
@@ -84,11 +84,11 @@ class TestPipelineFactory extends AbstractProcessIntegrationTest {
                 mockErrorReceiverProxy);
 
         final String data1 = StroomPipelineTestFileUtil
-                .getString("TestPipelineFactory/EventDataPipeline.Pipeline.data.xml");
+                .getString("TestPipelineFactory/EventDataPipeline.Pipeline.json");
         final String data2 = StroomPipelineTestFileUtil.getString(
-                "TestPipelineFactory/OverridePipeline.Pipeline.data.xml");
+                "TestPipelineFactory/OverridePipeline.Pipeline.json");
         final String data3 = StroomPipelineTestFileUtil.getString(
-                "TestPipelineFactory/CombinedPipeline.Pipeline.data.xml");
+                "TestPipelineFactory/CombinedPipeline.Pipeline.json");
 
         final PipelineDoc pipeline1 = PipelineTestUtil.createBasicPipeline(data1);
         final PipelineDoc pipeline2 = PipelineTestUtil.createBasicPipeline(data2);
@@ -98,22 +98,22 @@ class TestPipelineFactory extends AbstractProcessIntegrationTest {
         final DocRef docRef2 = DocRefUtil.create(pipeline2);
         final PipelineData pipelineData2 = pipeline2.getPipelineData();
 
-        assertThat(pipelineSerialiser.getXmlFromPipelineData(pipelineData1)).isEqualTo(data1);
-        assertThat(pipelineSerialiser.getXmlFromPipelineData(pipelineData2)).isEqualTo(data2);
+        assertThat(pipelineSerialiser.getJsonFromPipelineData(pipelineData1)).isEqualTo(data1);
+        assertThat(pipelineSerialiser.getJsonFromPipelineData(pipelineData2)).isEqualTo(data2);
 
         // Now merge the pipeline data into a single config.
         final PipelineDataMerger pipelineDataMerger = new PipelineDataMerger();
         pipelineDataMerger.merge(
                 new PipelineLayer(docRef1, pipelineData1),
                 new PipelineLayer(docRef2, pipelineData2));
-        final PipelineData pipelineData3 = pipelineDataMerger.createMergedData();
-        PipelineDataUtil.normalise(pipelineData3);
+        PipelineData pipelineData3 = pipelineDataMerger.createMergedData();
+        pipelineData3 = PipelineDataUtil.normalise(pipelineData3);
 
         // Take a look at the merged config.
         final PipelineDoc pipeline3 = new PipelineDoc();
         pipeline3.setPipelineData(pipelineData3);
 
-        assertThat(pipelineSerialiser.getXmlFromPipelineData(pipeline3.getPipelineData())).isEqualTo(data3);
+        assertThat(pipelineSerialiser.getJsonFromPipelineData(pipeline3.getPipelineData())).isEqualTo(data3);
 
         // Create a parser with the merged config.
         pipelineFactory.create(pipelineData3, new SimpleTaskContext());
@@ -128,11 +128,11 @@ class TestPipelineFactory extends AbstractProcessIntegrationTest {
                 mockErrorReceiverProxy);
 
         final String data1 = StroomPipelineTestFileUtil
-                .getString("TestPipelineFactory/TestBasePipeline.Pipeline.data.xml");
+                .getString("TestPipelineFactory/TestBasePipeline.Pipeline.json");
         final String data2 = StroomPipelineTestFileUtil.getString(
-                "TestPipelineFactory/TestChildPipeline.Pipeline.data.xml");
+                "TestPipelineFactory/TestChildPipeline.Pipeline.json");
         final String data3 = StroomPipelineTestFileUtil.getString(
-                "TestPipelineFactory/TestChildCombinedPipeline.Pipeline.data.xml");
+                "TestPipelineFactory/TestChildCombinedPipeline.Pipeline.json");
 
         final PipelineDoc pipeline1 = PipelineTestUtil.createBasicPipeline(data1);
         final PipelineDoc pipeline2 = PipelineTestUtil.createBasicPipeline(data2);
@@ -142,22 +142,22 @@ class TestPipelineFactory extends AbstractProcessIntegrationTest {
         final DocRef docRef2 = DocRefUtil.create(pipeline2);
         final PipelineData pipelineData2 = pipeline2.getPipelineData();
 
-        assertThat(pipelineSerialiser.getXmlFromPipelineData(pipelineData1)).isEqualTo(data1);
-        assertThat(pipelineSerialiser.getXmlFromPipelineData(pipelineData2)).isEqualTo(data2);
+        assertThat(pipelineSerialiser.getJsonFromPipelineData(pipelineData1)).isEqualTo(data1);
+        assertThat(pipelineSerialiser.getJsonFromPipelineData(pipelineData2)).isEqualTo(data2);
 
         // Now merge the pipeline data into a single config.
         final PipelineDataMerger pipelineDataMerger = new PipelineDataMerger();
         pipelineDataMerger.merge(
                 new PipelineLayer(docRef1, pipelineData1),
                 new PipelineLayer(docRef2, pipelineData2));
-        final PipelineData pipelineData3 = pipelineDataMerger.createMergedData();
-        PipelineDataUtil.normalise(pipelineData3);
+        PipelineData pipelineData3 = pipelineDataMerger.createMergedData();
+        pipelineData3 = PipelineDataUtil.normalise(pipelineData3);
 
         // Take a look at the merged config.
         final PipelineDoc pipeline3 = new PipelineDoc();
         pipeline3.setPipelineData(pipelineData3);
 
-        assertThat(pipelineSerialiser.getXmlFromPipelineData(pipeline3.getPipelineData())).isEqualTo(data3);
+        assertThat(pipelineSerialiser.getJsonFromPipelineData(pipeline3.getPipelineData())).isEqualTo(data3);
 
         // Create a parser with the merged config.
         pipelineFactory.create(pipelineData3, new SimpleTaskContext());

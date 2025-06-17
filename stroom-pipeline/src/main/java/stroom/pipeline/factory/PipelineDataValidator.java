@@ -44,24 +44,24 @@ public class PipelineDataValidator {
         final ElementRegistry registry = pipelineElementRegistryFactory.get();
 
         // Validate elements.
-        validateElementList(registry, pipelineData.getElements().getAdd(), elementMap);
-        validateElementList(registry, pipelineData.getElements().getRemove(), elementMap);
+        validateElementList(registry, pipelineData.getAddedElements(), elementMap);
+        validateElementList(registry, pipelineData.getRemovedElements(), elementMap);
 
         // Validate properties.
-        validatePropertiesList(registry, pipelineData.getProperties().getAdd(), elementMap);
-        validatePropertiesList(registry, pipelineData.getProperties().getRemove(), elementMap);
+        validatePropertiesList(registry, pipelineData.getAddedProperties(), elementMap);
+        validatePropertiesList(registry, pipelineData.getRemovedProperties(), elementMap);
 
         // Validate pipeline references.
         validatePipelineReferencesList(registry,
-                pipelineData.getPipelineReferences().getAdd(),
+                pipelineData.getAddedPipelineReferences(),
                 elementMap);
         validatePipelineReferencesList(registry,
-                pipelineData.getPipelineReferences().getRemove(),
+                pipelineData.getRemovedPipelineReferences(),
                 elementMap);
 
         // Validate links.
-        validateLinksList(pipelineData.getLinks().getAdd(), elementMap);
-        validateLinksList(pipelineData.getLinks().getRemove(), elementMap);
+        validateLinksList(pipelineData.getAddedLinks(), elementMap);
+        validateLinksList(pipelineData.getRemovedLinks(), elementMap);
     }
 
     private void validateElementList(final ElementRegistry registry,

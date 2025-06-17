@@ -59,18 +59,18 @@ public interface PipelineResource extends RestResource, DirectRestService, Fetch
                        @Parameter(description = "doc", required = true) PipelineDoc doc);
 
     @PUT
-    @Path("/savePipelineXml")
+    @Path("/savePipelineJson")
     @Operation(
-            summary = "Update a pipeline doc with XML directly",
-            operationId = "savePipelineXml")
-    Boolean savePipelineXml(@Parameter(description = "request", required = true) SavePipelineXmlRequest request);
+            summary = "Update a pipeline doc with JSON directly",
+            operationId = "savePipelineJson")
+    Boolean savePipelineJson(@Parameter(description = "request", required = true) SavePipelineJsonRequest request);
 
     @POST
-    @Path("/fetchPipelineXml")
+    @Path("/fetchPipelineJson")
     @Operation(
-            summary = "Fetch the XML for a pipeline",
-            operationId = "fetchPipelineXml")
-    FetchPipelineXmlResponse fetchPipelineXml(@Parameter(description = "pipeline", required = true) DocRef pipeline);
+            summary = "Fetch the JSON for a pipeline",
+            operationId = "fetchPipelineJson")
+    FetchPipelineJsonResponse fetchPipelineJson(@Parameter(description = "pipeline", required = true) DocRef pipeline);
 
     @POST
     @Path("/fetchPipelineLayers")

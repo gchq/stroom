@@ -17,66 +17,30 @@
 package stroom.pipeline.shared.data;
 
 import stroom.docref.DocRef;
-import stroom.util.shared.Copyable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlType;
 
 import java.util.Objects;
 
-/**
- * <p>
- * Java class for Value complex type.
- * <p>
- * <p>
- * The following schema fragment specifies the expected content contained within
- * this class.
- * <p>
- * <pre>
- * &lt;complexType name="Value">
- *   &lt;complexContent>
- *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
- *       &lt;choice>
- *         &lt;element name="string" type="{http://www.w3.org/2001/XMLSchema}string"/>
- *         &lt;element name="integer" type="{http://www.w3.org/2001/XMLSchema}int"/>
- *         &lt;element name="boolean" type="{http://www.w3.org/2001/XMLSchema}boolean"/>
- *         &lt;element name="entityReference" type="{http://www.example.org/pipeline-data}EntityReference"/>
- *       &lt;/choice>
- *     &lt;/restriction>
- *   &lt;/complexContent>
- * &lt;/complexType>
- * </pre>
- */
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "Value", propOrder = {"string", "integer", "_long", "_boolean", "entity"})
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({"string", "integer", "long", "boolean", "entity"})
 @SuppressWarnings({"checkstyle:membername", "checkstyle:parametername"})
-public class PipelinePropertyValue implements Copyable<PipelinePropertyValue> {
+public class PipelinePropertyValue {
 
     @JsonProperty("string")
-    protected String string;
+    private final String string;
     @JsonProperty("integer")
-    protected Integer integer;
+    private final Integer integer;
     @JsonProperty("long")
-    @XmlElement(name = "long")
-    protected Long _long;
+    private final Long _long;
     @JsonProperty("boolean")
-    @XmlElement(name = "boolean")
-    protected Boolean _boolean;
+    private final Boolean _boolean;
     @JsonProperty("entity")
-    @XmlElement(name = "entity")
-    protected DocRef entity;
-
-    public PipelinePropertyValue() {
-    }
+    private final DocRef entity;
 
     @JsonCreator
     public PipelinePropertyValue(@JsonProperty("string") final String string,
@@ -91,64 +55,72 @@ public class PipelinePropertyValue implements Copyable<PipelinePropertyValue> {
         this.entity = entity;
     }
 
+    public PipelinePropertyValue() {
+        this.string = null;
+        this.integer = null;
+        this._long = null;
+        this._boolean = null;
+        this.entity = null;
+    }
+
     public PipelinePropertyValue(final String string) {
         this.string = string;
+        this.integer = null;
+        this._long = null;
+        this._boolean = null;
+        this.entity = null;
     }
 
     public PipelinePropertyValue(final Integer integer) {
         this.integer = integer;
+        this.string = null;
+        this._long = null;
+        this._boolean = null;
+        this.entity = null;
     }
 
     public PipelinePropertyValue(final Long _long) {
         this._long = _long;
+        this.string = null;
+        this.integer = null;
+        this._boolean = null;
+        this.entity = null;
     }
 
     public PipelinePropertyValue(final Boolean _boolean) {
         this._boolean = _boolean;
+        this.string = null;
+        this.integer = null;
+        this._long = null;
+        this.entity = null;
     }
 
     public PipelinePropertyValue(final DocRef entity) {
         this.entity = entity;
+        this.string = null;
+        this.integer = null;
+        this._long = null;
+        this._boolean = null;
     }
 
     public String getString() {
         return string;
     }
 
-    public void setString(final String value) {
-        this.string = value;
-    }
-
     public Integer getInteger() {
         return integer;
-    }
-
-    public void setInteger(final Integer value) {
-        this.integer = value;
     }
 
     public Long getLong() {
         return _long;
     }
 
-    public void setLong(final Long value) {
-        this._long = value;
-    }
-
     public Boolean getBoolean() {
         return _boolean;
     }
 
-    public void setBoolean(final Boolean value) {
-        this._boolean = value;
-    }
-
     public DocRef getEntity() {
         return entity;
-    }
-
-    public void setEntity(final DocRef value) {
-        this.entity = value;
     }
 
     @Override
@@ -161,10 +133,10 @@ public class PipelinePropertyValue implements Copyable<PipelinePropertyValue> {
         }
         final PipelinePropertyValue that = (PipelinePropertyValue) o;
         return Objects.equals(string, that.string) &&
-                Objects.equals(integer, that.integer) &&
-                Objects.equals(_long, that._long) &&
-                Objects.equals(_boolean, that._boolean) &&
-                Objects.equals(entity, that.entity);
+               Objects.equals(integer, that.integer) &&
+               Objects.equals(_long, that._long) &&
+               Objects.equals(_boolean, that._boolean) &&
+               Objects.equals(entity, that.entity);
     }
 
     @Override
@@ -191,13 +163,13 @@ public class PipelinePropertyValue implements Copyable<PipelinePropertyValue> {
         }
         return "";
     }
-
-    @Override
-    public void copyFrom(final PipelinePropertyValue from) {
-        this.string = from.string;
-        this.integer = from.integer;
-        this._long = from._long;
-        this._boolean = from._boolean;
-        this.entity = from.entity;
-    }
+//
+//    @Override
+//    public void copyFrom(final PipelinePropertyValue from) {
+//        this.string = from.string;
+//        this.integer = from.integer;
+//        this._long = from._long;
+//        this._boolean = from._boolean;
+//        this.entity = from.entity;
+//    }
 }

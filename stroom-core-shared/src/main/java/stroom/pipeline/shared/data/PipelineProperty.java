@@ -17,64 +17,25 @@
 package stroom.pipeline.shared.data;
 
 import stroom.util.shared.CompareBuilder;
-import stroom.util.shared.Copyable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlType;
 
 import java.util.Objects;
 
-/**
- * <p>
- * Java class for Property complex type.
- * <p>
- * <p>
- * The following schema fragment specifies the expected content contained within
- * this class.
- * <p>
- * <pre>
- * &lt;complexType name="Property">
- *   &lt;complexContent>
- *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
- *       &lt;sequence>
- *         &lt;element name="element" type="{http://www.w3.org/2001/XMLSchema}string"/>
- *         &lt;element name="name" type="{http://www.w3.org/2001/XMLSchema}string"/>
- *         &lt;element name="value" type="{http://www.example.org/pipeline-data}Value" minOccurs="0"/>
- *       &lt;/sequence>
- *     &lt;/restriction>
- *   &lt;/complexContent>
- * &lt;/complexType>
- * </pre>
- */
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "Property", propOrder = {"element", "name", "value"})
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({"element", "name", "value"})
-public class PipelineProperty implements Comparable<PipelineProperty>, Copyable<PipelineProperty> {
+public class PipelineProperty implements Comparable<PipelineProperty> {
 
-    @XmlElement(required = true)
     @JsonProperty
-    private String element;
-    @XmlElement(required = true)
+    private final String element;
     @JsonProperty
-    private String name;
+    private final String name;
     @JsonProperty
-    private PipelinePropertyValue value;
-
-    public PipelineProperty() {
-    }
-
-    public PipelineProperty(final String element, final String name) {
-        this.element = element;
-        this.name = name;
-    }
+    private final PipelinePropertyValue value;
 
     @JsonCreator
     public PipelineProperty(@JsonProperty("element") final String element,
@@ -89,24 +50,12 @@ public class PipelineProperty implements Comparable<PipelineProperty>, Copyable<
         return element;
     }
 
-    public void setElement(final String value) {
-        this.element = value;
-    }
-
     public String getName() {
         return name;
     }
 
-    public void setName(final String value) {
-        this.name = value;
-    }
-
     public PipelinePropertyValue getValue() {
         return value;
-    }
-
-    public void setValue(final PipelinePropertyValue value) {
-        this.value = value;
     }
 
     @Override
@@ -140,15 +89,40 @@ public class PipelineProperty implements Comparable<PipelineProperty>, Copyable<
         return "element=" + element + ", name=" + name + ", value=" + value;
     }
 
-    @Override
-    public void copyFrom(final PipelineProperty other) {
-        this.element = other.element;
-        this.name = other.name;
-        if (other.value == null) {
-            this.value = null;
-        } else {
-            this.value = new PipelinePropertyValue();
-            this.value.copyFrom(other.value);
+    public static class Builder {
+
+        private String element;
+        private String name;
+        private PipelinePropertyValue value;
+
+        public Builder() {
+        }
+
+        public Builder(final PipelineProperty property) {
+            if (property != null) {
+                this.element = property.element;
+                this.name = property.name;
+                this.value = property.value;
+            }
+        }
+
+        public Builder element(final String element) {
+            this.element = element;
+            return this;
+        }
+
+        public Builder name(final String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder value(final PipelinePropertyValue value) {
+            this.value = value;
+            return this;
+        }
+
+        public PipelineProperty build() {
+            return new PipelineProperty(element, name, value);
         }
     }
 }

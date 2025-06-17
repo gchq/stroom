@@ -19,11 +19,11 @@ package stroom.pipeline;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.pipeline.factory.ElementRegistryFactory;
-import stroom.pipeline.shared.FetchPipelineXmlResponse;
+import stroom.pipeline.shared.FetchPipelineJsonResponse;
 import stroom.pipeline.shared.FetchPropertyTypesResult;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineResource;
-import stroom.pipeline.shared.SavePipelineXmlRequest;
+import stroom.pipeline.shared.SavePipelineJsonRequest;
 import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.util.shared.FetchWithUuid;
 
@@ -57,15 +57,15 @@ class PipelineResourceImpl implements PipelineResource, FetchWithUuid<PipelineDo
     }
 
     @Override
-    public Boolean savePipelineXml(final SavePipelineXmlRequest request) {
-        return pipelineServiceProvider.get().savePipelineXml(request.getPipeline(), request.getXml());
+    public Boolean savePipelineJson(final SavePipelineJsonRequest request) {
+        return pipelineServiceProvider.get().savePipelineJson(request.getPipeline(), request.getJson());
     }
 
     @Override
-    public FetchPipelineXmlResponse fetchPipelineXml(final DocRef pipeline) {
+    public FetchPipelineJsonResponse fetchPipelineJson(final DocRef pipeline) {
         if (pipeline != null) {
-            final String xml = pipelineServiceProvider.get().fetchPipelineXml(pipeline);
-            return new FetchPipelineXmlResponse(pipeline, xml);
+            final String json = pipelineServiceProvider.get().fetchPipelineJson(pipeline);
+            return new FetchPipelineJsonResponse(pipeline, json);
         }
 
         return null;

@@ -552,19 +552,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                     toDocRefDisplayString(docRef)));
         }
 
-        final Map<String, byte[]> data = persistence.getLockFactory().lockResult(uuid, () -> {
-            try {
-                return persistence.read(docRef);
-            } catch (final IOException e) {
-                LOGGER.error(e.getMessage(), e);
-                throw new UncheckedIOException(
-                        LogUtil.message("Error reading {} from store {}, {}",
-                                toDocRefDisplayString(docRef),
-                                persistence.getClass().getSimpleName(),
-                                e.getMessage()), e);
-            }
-        });
-
+        final Map<String, byte[]> data = readPersistence(docRef);
         if (data != null) {
             try {
                 return serialiser.read(data);
@@ -693,20 +681,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
             return Collections.emptyMap();
         }
 
-        final String uuid = docRef.getUuid();
-        final Map<String, byte[]> data = persistence.getLockFactory().lockResult(uuid, () -> {
-            try {
-                return persistence.read(new DocRef(type, uuid));
-            } catch (final IOException e) {
-                LOGGER.error(e.getMessage(), e);
-                throw new UncheckedIOException(
-                        LogUtil.message("Error reading {} from store {}, {}",
-                                toDocRefDisplayString(uuid),
-                                persistence.getClass().getSimpleName(),
-                                e.getMessage()), e);
-            }
-        });
-
+        final Map<String, byte[]> data = readPersistence(docRef);
         if (data == null) {
             return Collections.emptyMap();
         }
@@ -715,6 +690,23 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                 .entrySet()
                 .stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> new String(e.getValue(), StandardCharsets.UTF_8)));
+    }
+
+    @Deprecated // remove public access.
+    @Override
+    public Map<String, byte[]> readPersistence(final DocRef docRef) {
+        return persistence.getLockFactory().lockResult(docRef.getUuid(), () -> {
+            try {
+                return persistence.read(docRef);
+            } catch (final IOException e) {
+                LOGGER.error(e.getMessage(), e);
+                throw new UncheckedIOException(
+                        LogUtil.message("Error reading {} from store {}, {}",
+                                toDocRefDisplayString(docRef),
+                                persistence.getClass().getSimpleName(),
+                                e.getMessage()), e);
+            }
+        });
     }
 
     private String toDocRefDisplayString(final String uuid) {

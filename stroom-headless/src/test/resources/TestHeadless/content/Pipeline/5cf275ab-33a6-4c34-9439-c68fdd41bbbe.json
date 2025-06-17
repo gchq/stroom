@@ -1,0 +1,25 @@
+{
+  "properties" : {
+    "add" : [ {
+      "element" : "combinedParser",
+      "name" : "textConverter",
+      "value" : {
+        "entity" : {
+          "type" : "TextConverter",
+          "uuid" : "46ceda6c-ba3e-4196-9855-a5dc5fd0ab33",
+          "name" : "IP_RANGE_TO_LOCATION-REFERENCE"
+        }
+      }
+    }, {
+      "element" : "translationFilter",
+      "name" : "xslt",
+      "value" : {
+        "entity" : {
+          "type" : "XSLT",
+          "uuid" : "a531dfb5-b0e7-401a-afea-d2ee00ed3cbf",
+          "name" : "IP_RANGE_TO_LOCATION-REFERENCE"
+        }
+      }
+    } ]
+  }
+}

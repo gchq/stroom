@@ -53,6 +53,7 @@ public class NewPipelineReferencePresenter
     private final SelectionBox<String> dataTypeWidget;
     private boolean dirty;
     private boolean initialised;
+    private PipelineReference currentPipelineReference;
 
     @Inject
     public NewPipelineReferencePresenter(final EventBus eventBus,
@@ -91,6 +92,8 @@ public class NewPipelineReferencePresenter
     }
 
     public void read(final PipelineReference pipelineReference) {
+        this.currentPipelineReference = pipelineReference;
+
         // Filter the pipeline picker by tags, if configured
         uiConfigCache.get(extendedUiConfig -> {
             if (extendedUiConfig != null) {
@@ -111,7 +114,7 @@ public class NewPipelineReferencePresenter
             if (initialised) {
                 final DocRef selection = pipelinePresenter.getSelectedEntityReference();
                 if ((pipelineReference.getPipeline() == null && selection != null)
-                        || (pipelineReference.getPipeline() != null
+                    || (pipelineReference.getPipeline() != null
                         && !pipelineReference.getPipeline().equals(selection))) {
                     setDirty(true);
                 }
@@ -121,7 +124,7 @@ public class NewPipelineReferencePresenter
             if (initialised) {
                 final DocRef selection = feedPresenter.getSelectedEntityReference();
                 if ((pipelineReference.getFeed() == null && selection != null)
-                        || (pipelineReference.getFeed() != null && !pipelineReference.getFeed().equals(selection))) {
+                    || (pipelineReference.getFeed() != null && !pipelineReference.getFeed().equals(selection))) {
                     setDirty(true);
                 }
             }
@@ -130,7 +133,7 @@ public class NewPipelineReferencePresenter
             if (initialised) {
                 final String selection = dataTypeWidget.getValue();
                 if ((pipelineReference.getStreamType() == null && selection != null)
-                        || (pipelineReference.getStreamType() != null
+                    || (pipelineReference.getStreamType() != null
                         && !pipelineReference.getStreamType().equals(selection))) {
                     setDirty(true);
                 }
@@ -138,10 +141,12 @@ public class NewPipelineReferencePresenter
         });
     }
 
-    public void write(final PipelineReference pipelineReference) {
-        pipelineReference.setPipeline(pipelinePresenter.getSelectedEntityReference());
-        pipelineReference.setFeed(feedPresenter.getSelectedEntityReference());
-        pipelineReference.setStreamType(dataTypeWidget.getValue());
+    public PipelineReference write() {
+        return new PipelineReference.Builder(currentPipelineReference)
+                .pipeline(pipelinePresenter.getSelectedEntityReference())
+                .feed(feedPresenter.getSelectedEntityReference())
+                .streamType(dataTypeWidget.getValue())
+                .build();
     }
 
     private void updateDataTypes(final String selectedDataType) {

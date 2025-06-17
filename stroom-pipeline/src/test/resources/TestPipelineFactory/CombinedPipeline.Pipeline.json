@@ -1,0 +1,143 @@
+{
+  "elements" : {
+    "add" : [ {
+      "id" : "Source",
+      "type" : "Source"
+    }, {
+      "id" : "combinedParser",
+      "type" : "CombinedParser"
+    }, {
+      "id" : "decorationFilter",
+      "type" : "XSLTFilter"
+    }, {
+      "id" : "fileAppender",
+      "type" : "FileAppender"
+    }, {
+      "id" : "fileAppender2",
+      "type" : "FileAppender"
+    }, {
+      "id" : "flattenFilter",
+      "type" : "XSLTFilter"
+    }, {
+      "id" : "readRecordCountFilter",
+      "type" : "RecordCountFilter"
+    }, {
+      "id" : "recordOutputFilter",
+      "type" : "RecordOutputFilter"
+    }, {
+      "id" : "schemaFilter",
+      "type" : "SchemaFilter"
+    }, {
+      "id" : "splitFilter",
+      "type" : "SplitFilter"
+    }, {
+      "id" : "streamAppender",
+      "type" : "StreamAppender"
+    }, {
+      "id" : "textWriter",
+      "type" : "TextWriter"
+    }, {
+      "id" : "translationFilter",
+      "type" : "XSLTFilter"
+    }, {
+      "id" : "writeRecordCountFilter",
+      "type" : "RecordCountFilter"
+    }, {
+      "id" : "xmlWriter",
+      "type" : "XMLWriter"
+    } ]
+  },
+  "properties" : {
+    "add" : [ {
+      "element" : "fileAppender",
+      "name" : "outputPaths",
+      "value" : {
+        "string" : "${stroom.temp}/text/output1,${stroom.temp}/text/output2"
+      }
+    }, {
+      "element" : "fileAppender2",
+      "name" : "outputPaths",
+      "value" : {
+        "string" : "${stroom.temp}/xml/output1,${stroom.temp}/xml/output2"
+      }
+    }, {
+      "element" : "readRecordCountFilter",
+      "name" : "countRead",
+      "value" : {
+        "boolean" : true
+      }
+    }, {
+      "element" : "schemaFilter",
+      "name" : "schemaGroup",
+      "value" : {
+        "string" : "EVENTS"
+      }
+    }, {
+      "element" : "splitFilter",
+      "name" : "splitCount",
+      "value" : {
+        "integer" : 400
+      }
+    }, {
+      "element" : "splitFilter",
+      "name" : "splitDepth",
+      "value" : {
+        "integer" : 1
+      }
+    }, {
+      "element" : "streamAppender",
+      "name" : "segmentOutput",
+      "value" : {
+        "boolean" : true
+      }
+    }, {
+      "element" : "writeRecordCountFilter",
+      "name" : "countRead",
+      "value" : {
+        "boolean" : false
+      }
+    } ]
+  },
+  "links" : {
+    "add" : [ {
+      "from" : "Source",
+      "to" : "combinedParser"
+    }, {
+      "from" : "combinedParser",
+      "to" : "readRecordCountFilter"
+    }, {
+      "from" : "decorationFilter",
+      "to" : "schemaFilter"
+    }, {
+      "from" : "flattenFilter",
+      "to" : "textWriter"
+    }, {
+      "from" : "readRecordCountFilter",
+      "to" : "splitFilter"
+    }, {
+      "from" : "recordOutputFilter",
+      "to" : "writeRecordCountFilter"
+    }, {
+      "from" : "schemaFilter",
+      "to" : "recordOutputFilter"
+    }, {
+      "from" : "splitFilter",
+      "to" : "translationFilter"
+    }, {
+      "from" : "textWriter",
+      "to" : "fileAppender"
+    }, {
+      "from" : "translationFilter",
+      "to" : "decorationFilter"
+    }, {
+      "from" : "writeRecordCountFilter",
+      "to" : "flattenFilter"
+    }, {
+      "from" : "writeRecordCountFilter",
+      "to" : "xmlWriter"
+    }, {
+      "from" : "xmlWriter",
+      "to" : "streamAppender"
+    } ]
+  }
+}

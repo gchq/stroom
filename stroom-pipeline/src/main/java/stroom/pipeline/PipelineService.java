@@ -28,9 +28,9 @@ public interface PipelineService {
 
     PipelineDoc update(final String uuid, final PipelineDoc doc);
 
-    Boolean savePipelineXml(final DocRef pipeline, String xml);
+    Boolean savePipelineJson(final DocRef pipeline, String json);
 
-    String fetchPipelineXml(final DocRef pipeline);
+    String fetchPipelineJson(final DocRef pipeline);
 
     List<PipelineLayer> fetchPipelineLayers(final DocRef pipeline);
 }

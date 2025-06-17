@@ -50,6 +50,7 @@ import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.textconverter.TextConverterStore;
@@ -109,7 +110,7 @@ public final class StoreCreationTool {
 
     private static final Path EVENT_DATA_PIPELINE = StroomCoreServerTestFileUtil.getFile(
             "samples/config/Feeds_and_Translations/Test/" +
-                    "Event_Data_For_Junit.Pipeline.7740cfc4-3443-4001-bf0b-6adc77d5a3cf.xml");
+            "Event_Data_For_Junit.Pipeline.7740cfc4-3443-4001-bf0b-6adc77d5a3cf.json");
     private static long effectiveMsOffset = 0;
 
     private final Store store;
@@ -319,27 +320,31 @@ public final class StoreCreationTool {
                 new DocRef(PipelineDoc.TYPE, REFERENCE_DATA_PIPELINE_UUID),
                 feedName);
         final PipelineDoc pipelineDoc = pipelineRefAndDoc._2();
+        PipelineData pipelineData = pipelineDoc.getPipelineData();
+        final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
 
         // Setup the text converter.
         final DocRef textConverterRef = getTextConverter(feedName, textConverterType, textConverterLocation);
         if (textConverterRef != null) {
-            pipelineDoc.getPipelineData().addProperty(
-                    PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", textConverterRef));
+            builder.addProperty(PipelineDataUtil.createProperty(
+                    CombinedParser.DEFAULT_NAME, "textConverter", textConverterRef));
         }
         // Setup the xslt.
         final DocRef xslt = getXSLT(feedName, xsltLocation);
-        pipelineDoc.getPipelineData()
-                .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xslt));
-        pipelineDoc.getPipelineData()
-                .addProperty(PipelineDataUtil.createProperty(
-                        "storeAppender",
-                        "feed",
-                        new DocRef(null, null, feedName)));
-        pipelineDoc.getPipelineData()
-                .addProperty(PipelineDataUtil.createProperty(
-                        "storeAppender",
-                        "streamType",
-                        StreamTypeNames.REFERENCE));
+        builder.addProperty(PipelineDataUtil
+                .createProperty("translationFilter", "xslt", xslt));
+        builder.addProperty(PipelineDataUtil.createProperty(
+                "storeAppender",
+                "feed",
+                new DocRef(null, null, feedName)));
+        builder.addProperty(PipelineDataUtil.createProperty(
+                "storeAppender",
+                "streamType",
+                StreamTypeNames.REFERENCE));
+
+        pipelineData = builder.build();
+        pipelineDoc.setPipelineData(pipelineData);
+
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRefAndDoc._1();
     }
@@ -555,20 +560,21 @@ public final class StoreCreationTool {
                 new DocRef(PipelineDoc.TYPE, CONTEXT_DATA_PIPELINE_UUID),
                 feedName + "_CONTEXT");
         final PipelineDoc pipelineDoc = pipelineRefAndDoc._2();
-
+        final PipelineData pipelineData = pipelineDoc.getPipelineData();
+        final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
 
         if (contextTextConverterRef != null) {
-            pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME,
+            builder.addProperty(PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME,
                     "textConverter", contextTextConverterRef));
         }
         if (contextXSLT != null) {
-            pipelineDoc.getPipelineData()
-                    .addProperty(PipelineDataUtil.createProperty(
-                            "translationFilter",
-                            "xslt",
-                            contextXSLT));
+            builder.addProperty(PipelineDataUtil.createProperty(
+                    "translationFilter",
+                    "xslt",
+                    contextXSLT));
         }
 
+        pipelineDoc.setPipelineData(builder.build());
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRefAndDoc._1();
     }
@@ -588,6 +594,8 @@ public final class StoreCreationTool {
                                     final List<PipelineReference> pipelineReferences) {
         final DocRef pipelineRef = getPipeline(feedName, EVENT_DATA_PIPELINE);
         final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+        final PipelineData pipelineData = pipelineDoc.getPipelineData();
+        final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
 
 //        final Tuple2<DocRef, PipelineDoc> pipelineRefAndDoc = duplicatePipeline(
 //                new DocRef(PipelineDoc.DOCUMENT_TYPE, EVENT_DATA_TEXT_PIPELINE_UUID),
@@ -602,53 +610,50 @@ public final class StoreCreationTool {
         final DocRef translationXSLT = getXSLT(feedName, translationXsltLocation);
         final DocRef flatteningXSLT = getXSLT(feedName + "_FLATTENING", flatteningXsltLocation);
 
-        // Read the pipeline data.
-        final PipelineData pipelineData = pipelineDoc.getPipelineData();
-
         // Change some properties.
         if (translationTextConverterRef != null) {
             // final ElementType elementType = new ElementType("Parser");
             // final PropertyType propertyType = new PropertyType(elementType,
             // "textConverter", "TextConverter", false);
-            pipelineData.addProperty(PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter",
+            builder.addProperty(PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter",
                     translationTextConverterRef));
         }
         if (translationXSLT != null) {
             // final ElementType elementType = new ElementType("XSLTFilter");
             // final PropertyType propertyType = new PropertyType(elementType,
             // "xslt", "XSLT", false);
-            pipelineData.addProperty(PipelineDataUtil.createProperty(
+            builder.addProperty(PipelineDataUtil.createProperty(
                     "translationFilter",
                     "xslt",
                     translationXSLT));
         }
         if (pipelineReferences != null) {
             for (final PipelineReference pipelineReference : pipelineReferences) {
-                pipelineData.addPipelineReference(pipelineReference);
+                builder.addPipelineReference(pipelineReference);
             }
         }
         if (flatteningXSLT != null) {
             // final ElementType elementType = new ElementType("XSLTFilter");
             // final PropertyType propertyType = new PropertyType(elementType,
             // "xslt", "XSLT", false);
-            pipelineData.addProperty(PipelineDataUtil.createProperty(
+            builder.addProperty(PipelineDataUtil.createProperty(
                     "flattenFilter",
                     "xslt",
                     flatteningXSLT));
         } else {
-            pipelineData.removeLink(PipelineDataUtil.createLink("writeRecordCountFilter", "flattenFilter"));
+            builder.removeLink(PipelineDataUtil.createLink("writeRecordCountFilter", "flattenFilter"));
         }
         // final ElementType elementType = new ElementType(
         // "StoreAppender", false, true);
         // final PropertyType feedPropertyType = new PropertyType(elementType,
         // "feed", "Feed", false);
-        pipelineData.addProperty(PipelineDataUtil.createProperty("storeAppender",
+        builder.addProperty(PipelineDataUtil.createProperty("storeAppender",
                 "feed",
                 new DocRef(null, null, feedName)));
 
         // final PropertyType streamTypePropertyType = new PropertyType(
         // elementType, "streamType", "StreamType", false);
-        pipelineData.addProperty(PipelineDataUtil.createProperty("storeAppender",
+        builder.addProperty(PipelineDataUtil.createProperty("storeAppender",
                 "streamType",
                 StreamTypeNames.EVENTS));
 
@@ -660,6 +665,7 @@ public final class StoreCreationTool {
         //
         // pipeline.setMeta(data);
 
+        pipelineDoc.setPipelineData(builder.build());
         pipelineStore.writeDocument(pipelineDoc);
 
 //        return pipelineRefAndDoc._1();
@@ -675,26 +681,24 @@ public final class StoreCreationTool {
                 new DocRef(PipelineDoc.TYPE, INDEXING_PIPELINE_UUID),
                 indexRef.getName());
         final PipelineDoc pipelineDoc = pipelineRefAndDoc._2();
-
+        final PipelineData pipelineData = pipelineDoc.getPipelineData();
+        final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
 
         // Setup the xslt.
         final DocRef xslt = getXSLT(indexRef.getName(), xsltLocation);
-
-        // Read the pipeline data.
-        final PipelineData pipelineData = pipelineDoc.getPipelineData();
 
         // Change some properties.
         if (xslt != null) {
             // final ElementType elementType = new ElementType("XSLTFilter");
             // final PropertyType propertyType = new PropertyType(elementType,
             // "xslt", "XSLT", false);
-            pipelineData.addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xslt));
+            builder.addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xslt));
         }
 
         // final ElementType elementType = new ElementType("IndexingFilter");
         // final PropertyType propertyType = new PropertyType(elementType,
         // "index", "Index", false);
-        pipelineData.addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", indexRef));
+        builder.addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", indexRef));
 
         // // Write the pipeline data.
         // final ByteArrayOutputStream outputStream = new
@@ -704,6 +708,7 @@ public final class StoreCreationTool {
         //
         // pipeline.setMeta(data);
 
+        pipelineDoc.setPipelineData(builder.build());
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRefAndDoc._1();
     }
@@ -929,13 +934,14 @@ public final class StoreCreationTool {
         // Setup the xslt.
         final DocRef xslt = getXSLT(name, xsltLocation);
         final PipelineData pipelineData = pipelineDoc.getPipelineData();
+        final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
 
         // Change some properties.
         if (xslt != null) {
             // final ElementType elementType = new ElementType("XSLTFilter");
             // final PropertyType propertyType = new PropertyType(elementType,
             // "xslt", "XSLT", false);
-            pipelineData.addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xslt));
+            builder.addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xslt));
         }
 
         // Write the pipeline data.
@@ -946,6 +952,7 @@ public final class StoreCreationTool {
         //
         // pipeline.setMeta(data);
 
+        pipelineDoc.setPipelineData(builder.build());
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRefAndDoc._1();
     }
@@ -960,15 +967,17 @@ public final class StoreCreationTool {
         // Setup the xslt.
         final DocRef xslt = getXSLT(name, xsltLocation);
         final PipelineData pipelineData = pipelineDoc.getPipelineData();
+        final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
 
         // Change some properties.
         if (xslt != null) {
-            pipelineData.addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xslt));
+            builder.addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xslt));
         }
         if (indexDocRef != null) {
-            pipelineData.addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", indexDocRef));
+            builder.addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", indexDocRef));
         }
 
+        pipelineDoc.setPipelineData(builder.build());
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRef;
     }
@@ -980,12 +989,14 @@ public final class StoreCreationTool {
         // Setup the xslt.
         final DocRef xslt = getXSLT(name, xsltLocation);
         final PipelineData pipelineData = pipelineDoc.getPipelineData();
+        final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
 
         // Change some properties.
         if (xslt != null) {
-            pipelineData.addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xslt));
+            builder.addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xslt));
         }
 
+        pipelineDoc.setPipelineData(builder.build());
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRef;
     }

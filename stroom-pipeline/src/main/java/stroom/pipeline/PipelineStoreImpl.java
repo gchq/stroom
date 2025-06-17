@@ -25,9 +25,12 @@ import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
+import stroom.pipeline.legacy.PipelineDataMigration;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorFilterUtil;
@@ -52,15 +55,28 @@ public class PipelineStoreImpl implements PipelineStore {
     private final Store<PipelineDoc> store;
     private final Provider<ProcessorFilterService> processorFilterServiceProvider;
     private final Provider<ProcessorService> processorServiceProvider;
+    private final PipelineDataMigration pipelineDataMigration;
 
     @Inject
     public PipelineStoreImpl(final StoreFactory storeFactory,
                              final PipelineSerialiser serialiser,
                              final Provider<ProcessorFilterService> processorFilterServiceProvider,
-                             final Provider<ProcessorService> processorServiceProvider) {
+                             final Provider<ProcessorService> processorServiceProvider,
+                             final PipelineDataMigration pipelineDataMigration) {
         this.processorServiceProvider = processorServiceProvider;
         this.store = storeFactory.createStore(serialiser, PipelineDoc.TYPE, PipelineDoc.class);
         this.processorFilterServiceProvider = processorFilterServiceProvider;
+        this.pipelineDataMigration = pipelineDataMigration;
+
+        store.list().forEach(docRef -> {
+            final Map<String, byte[]> data = store.readPersistence(docRef);
+            if (pipelineDataMigration.migrate(data)) {
+                final ImportState importState = new ImportState(
+                        docRef,
+                        docRef.getName());
+                store.importDocument(docRef, data, importState, ImportSettings.auto());
+            }
+        });
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -137,33 +153,52 @@ public class PipelineStoreImpl implements PipelineStore {
 
             final PipelineData pipelineData = doc.getPipelineData();
             if (pipelineData != null) {
-                remapPipelineReferences(pipelineData.getAddedPipelineReferences(), dependencyRemapper);
-                remapPipelineReferences(pipelineData.getRemovedPipelineReferences(), dependencyRemapper);
-                remapPipelineProperties(pipelineData.getAddedProperties(), dependencyRemapper);
-                remapPipelineProperties(pipelineData.getRemovedProperties(), dependencyRemapper);
+                final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
+                remapPipelineProperties(
+                        pipelineData.getAddedProperties(),
+                        builder.getProperties().getAddList(), dependencyRemapper);
+                remapPipelineProperties(
+                        pipelineData.getRemovedProperties(),
+                        builder.getProperties().getRemoveList(), dependencyRemapper);
+
+                remapPipelineReferences(
+                        pipelineData.getAddedPipelineReferences(),
+                        builder.getReferences().getAddList(), dependencyRemapper);
+                remapPipelineReferences(
+                        pipelineData.getRemovedPipelineReferences(),
+                        builder.getReferences().getRemoveList(), dependencyRemapper);
+
+                doc.setPipelineData(builder.build());
             }
         };
     }
 
     public void remapPipelineProperties(final List<PipelineProperty> pipelineProperties,
+                                        final List<PipelineProperty> dest,
                                         final DependencyRemapper dependencyRemapper) {
         if (pipelineProperties != null) {
             pipelineProperties.forEach(pipelineProperty -> {
-                if (pipelineProperty.getValue() != null) {
-                    pipelineProperty.getValue()
-                            .setEntity(dependencyRemapper.remap(pipelineProperty.getValue().getEntity()));
+                if (pipelineProperty.getValue() == null || pipelineProperty.getValue().getEntity() == null) {
+                    dest.add(pipelineProperty);
+                } else {
+                    dest.add(new PipelineProperty.Builder(pipelineProperty)
+                            .value(new PipelinePropertyValue(dependencyRemapper
+                                    .remap(pipelineProperty.getValue().getEntity())))
+                            .build());
                 }
             });
         }
     }
 
     public void remapPipelineReferences(final List<PipelineReference> pipelineReferences,
+                                        final List<PipelineReference> dest,
                                         final DependencyRemapper dependencyRemapper) {
         if (pipelineReferences != null) {
-            pipelineReferences.forEach(pipelineReference -> {
-                pipelineReference.setFeed(dependencyRemapper.remap(pipelineReference.getFeed()));
-                pipelineReference.setPipeline(dependencyRemapper.remap(pipelineReference.getPipeline()));
-            });
+            pipelineReferences.forEach(pipelineReference ->
+                    dest.add(new PipelineReference.Builder(pipelineReference)
+                            .feed(dependencyRemapper.remap(pipelineReference.getFeed()))
+                            .pipeline(dependencyRemapper.remap(pipelineReference.getPipeline()))
+                            .build()));
         }
     }
 
@@ -203,6 +238,8 @@ public class PipelineStoreImpl implements PipelineStore {
                                  final Map<String, byte[]> dataMap,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
+        // Migrate the data we are importing.
+        pipelineDataMigration.migrate(dataMap);
         return store.importDocument(docRef, dataMap, importState, importSettings);
     }
 
