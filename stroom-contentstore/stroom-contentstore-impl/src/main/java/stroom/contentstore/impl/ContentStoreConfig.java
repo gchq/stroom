@@ -1,6 +1,5 @@
 package stroom.contentstore.impl;
 
-import stroom.contentstore.api.ContentStoreConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -21,7 +20,7 @@ import java.util.List;
  */
 @JsonPropertyOrder(alphabetic = true)
 @NotInjectableConfig
-public class ContentStoreConfigImpl extends AbstractConfig implements ContentStoreConfig, IsStroomConfig {
+public class ContentStoreConfig extends AbstractConfig implements IsStroomConfig {
     /**
      * Default location where the ContentStore config is stored.
      */
@@ -35,12 +34,12 @@ public class ContentStoreConfigImpl extends AbstractConfig implements ContentSto
     /**
      * Logger
      */
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContentStoreConfigImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContentStoreConfig.class);
 
     /**
      * Default constructor. Configuration created with default values.
      */
-    public ContentStoreConfigImpl() {
+    public ContentStoreConfig() {
         this.contentStores = new ArrayList<>();
         this.contentStores.add(DEFAULT_URL);
     }
@@ -51,10 +50,10 @@ public class ContentStoreConfigImpl extends AbstractConfig implements ContentSto
      */
     @SuppressWarnings("unused")
     @JsonCreator
-    public ContentStoreConfigImpl(@JsonProperty("urls") final ArrayList<String> contentStores) {
+    public ContentStoreConfig(@JsonProperty("urls") final ArrayList<String> contentStores) {
         this.contentStores = new ArrayList<>();
         if (contentStores == null || contentStores.isEmpty()) {
-            //LOGGER.debug("No contentstore URLs supplied in the configuration file; using default of '{}'", DEFAULT_URL);
+            LOGGER.debug("No Content Store URLs supplied in the configuration file; using default of '{}'", DEFAULT_URL);
             this.contentStores.add(DEFAULT_URL);
         } else {
             this.contentStores.addAll(contentStores);
@@ -62,9 +61,8 @@ public class ContentStoreConfigImpl extends AbstractConfig implements ContentSto
     }
 
     /**
-     * @return Where to download AppStores from
+     * @return Where to download Content Stores from
      */
-    @Override
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("The URLs of the Content Stores for Stroom Content")
     @JsonProperty("urls")
@@ -73,7 +71,7 @@ public class ContentStoreConfigImpl extends AbstractConfig implements ContentSto
     }
 
     /**
-     * Sets where to download AppStores from. If the parameter is
+     * Sets where to download  Content Stores from. If the parameter is
      * null or empty then the default URL is used.
      * @param urls The list of URLs for the Content Store. Can be null or empty,
      *             in which case the default URL is used.

@@ -1,10 +1,12 @@
 package stroom.contentstore.client.presenter;
 
 import stroom.contentstore.shared.ContentStoreContentPack;
+import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
@@ -20,19 +22,24 @@ import javax.inject.Inject;
 public class ContentStoreCredentialsDialogPresenter
         extends MyPresenterWidget<ContentStoreCredentialsDialogPresenter.ContentStoreCredentialsDialogView> {
 
+    /** Converts markdown to HTML */
+    private final MarkdownConverter markdownConverter;
+
     /** Width of dialog */
-    private final static int DIALOG_WIDTH = 600;
+    private final static int DIALOG_WIDTH = 400;
 
     /** Height of dialog */
-    private final static int DIALOG_HEIGHT = 300;
+    private final static int DIALOG_HEIGHT = 400;
 
     /**
      * Constructor. Injected.
      */
     @Inject
-    public ContentStoreCredentialsDialogPresenter(final EventBus eventBus,
+    public ContentStoreCredentialsDialogPresenter(final MarkdownConverter markdownConverter,
+                                                  final EventBus eventBus,
                                                   final ContentStoreCredentialsDialogView view) {
         super(eventBus, view);
+        this.markdownConverter = markdownConverter;
     }
 
     /**
@@ -41,15 +48,19 @@ public class ContentStoreCredentialsDialogPresenter
      *           to the user.
      * @param builder The builder to show this popup.
      */
-    public void setupBuilder(final ContentStoreContentPack cp,
-                             final ShowPopupEvent.Builder builder) {
+    public void setupDialog(final ContentStoreContentPack cp,
+                            final ShowPopupEvent.Builder builder) {
         // Get rid of any existing data
         this.getView().resetData();
+
+        // Set the authentication contact information so users know how to
+        // get some credentials
+        this.getView().setAuthContactHtml(markdownConverter.convertMarkdownToHtml(cp.getContentStoreMetadata().getAuthContact()));
 
         // Configure the popup builder for this dialog
         builder.popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(PopupSize.resizable(DIALOG_WIDTH, DIALOG_HEIGHT))
-                .caption("Credentials for " + cp.getContentStoreMetadata().getOwnerName())
+                .caption("Credentials")
                 .modal(true);
     }
 
@@ -81,6 +92,12 @@ public class ContentStoreCredentialsDialogPresenter
     public interface ContentStoreCredentialsDialogView extends View {
 
         /**
+         * Sets the HTML that tells users how to get authentication credentials.
+         * @param authContactHtml The HTML from Markdown giving the contact info.
+         */
+        void setAuthContactHtml(SafeHtml authContactHtml);
+
+        /**
          * @return The username entered by the user.
          */
         String getUsername();
@@ -94,5 +111,6 @@ public class ContentStoreCredentialsDialogPresenter
          * Resets all dialog information for the next use.
          */
         void resetData();
+
     }
 }

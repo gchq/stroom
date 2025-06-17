@@ -19,7 +19,7 @@ package stroom.config.global.impl;
 import stroom.activity.impl.db.ActivityConfig;
 import stroom.analytics.impl.AnalyticsConfig;
 import stroom.annotation.impl.AnnotationConfig;
-import stroom.contentstore.impl.ContentStoreConfigImpl;
+import stroom.contentstore.impl.ContentStoreConfig;
 import stroom.aws.s3.impl.S3Config;
 import stroom.bytebuffer.ByteBufferPoolConfig;
 import stroom.cluster.api.ClusterConfig;
@@ -922,7 +922,7 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_ACTIVITY) final ActivityConfig activityConfig,
                 @JsonProperty(PROP_NAME_ANALYTICS) final AnalyticsConfig analyticsConfig,
                 @JsonProperty(PROP_NAME_ANNOTATION) final AnnotationConfig annotationConfig,
-                @JsonProperty(PROP_NAME_CONTENT_STORE) final ContentStoreConfigImpl appStoreConfig,
+                @JsonProperty(PROP_NAME_CONTENT_STORE) final ContentStoreConfig appStoreConfig,
                 @JsonProperty(PROP_NAME_AUTO_CONTENT_CREATION) final AutoContentCreationConfig autoContentCreationConfig,
                 @JsonProperty(PROP_NAME_BYTE_BUFFER_POOL) final ByteBufferPoolConfig byteBufferPoolConfig,
                 @JsonProperty(PROP_NAME_CLUSTER) final ClusterConfig clusterConfig,

@@ -1,7 +1,5 @@
 package stroom.config.global.impl;
 
-import stroom.gitrepo.impl.GitRepoConfig;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
@@ -272,10 +270,10 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    GitRepoConfig getGitRepoConfigImpl(
+    stroom.gitrepo.impl.GitRepoConfig getGitRepoConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
-                GitRepoConfig.class);
+                stroom.gitrepo.impl.GitRepoConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -966,10 +964,10 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.contentstore.impl.ContentStoreConfigImpl getContentStoreConfigImplButThrow(
+    stroom.contentstore.impl.ContentStoreConfig getContentStoreConfigButThrow(
             final ConfigMapper configMapper) {
         throw new UnsupportedOperationException(
-                "stroom.contentstore.impl.ContentStoreConfigImpl cannot be injected directly. "
+                "stroom.contentstore.impl.ContentStoreConfig cannot be injected directly. "
                         + "Inject a config class that uses it or one of its sub-class instead.");
     }
 

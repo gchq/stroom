@@ -1,6 +1,5 @@
 package stroom.contentstore.impl;
 
-import stroom.contentstore.api.ContentStoreConfig;
 import stroom.contentstore.shared.ContentStoreCreateGitRepoRequest;
 import stroom.contentstore.shared.ContentStoreResponse;
 import stroom.contentstore.shared.ContentStoreContentPack;
@@ -23,6 +22,7 @@ import stroom.util.yaml.YamlUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,11 +40,12 @@ import java.util.List;
 /**
  * REST server-side implementation for the ContentStore stuff.
  */
+@SuppressWarnings("unused")
 @AutoLogged
 public class ContentStoreResourceImpl implements ContentStoreResource {
 
     /** Where we get configuration from */
-    private final ContentStoreConfig config;
+    private final Provider<ContentStoreConfig> config;
 
     /** The store used to create a GitRepo */
     private final GitRepoStore gitRepoStore;
@@ -70,10 +71,10 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
      */
     @SuppressWarnings("unused")
     @Inject
-    public ContentStoreResourceImpl(final ContentStoreConfig config,
-                                    GitRepoStore gitRepoStore,
-                                    ExplorerService explorerService,
-                                    GitRepoStorageService gitRepoStorageService) {
+    public ContentStoreResourceImpl(final Provider<ContentStoreConfig> config,
+                                    final GitRepoStore gitRepoStore,
+                                    final ExplorerService explorerService,
+                                    final GitRepoStorageService gitRepoStorageService) {
         this.config = config;
         this.gitRepoStore = gitRepoStore;
         this.explorerService = explorerService;
@@ -90,35 +91,35 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
      */
     @SuppressWarnings("unused")
     @Override
-    public ResultPage<ContentStoreContentPack> list(PageRequest pageRequest) {
+    public ResultPage<ContentStoreContentPack> list(final PageRequest pageRequest) {
 
         // Pull out the existing GitRepos so we know what exists
-        List<DocRef> existingDocRefs = gitRepoStore.list();
-        ArrayList<GitRepoDoc> installedGitRepoDocs = new ArrayList<>(existingDocRefs.size());
+        final List<DocRef> existingDocRefs = gitRepoStore.list();
+        final ArrayList<GitRepoDoc> installedGitRepoDocs = new ArrayList<>(existingDocRefs.size());
         for (DocRef docRef : existingDocRefs) {
             // Not sure if store can return null, but handle it just in case...
-            GitRepoDoc doc = gitRepoStore.readDocument(docRef);
+            final GitRepoDoc doc = gitRepoStore.readDocument(docRef);
             if (doc != null) {
                 installedGitRepoDocs.add(doc);
             }
         }
 
         // Grab YAML describing the content store
-        ObjectMapper mapper = YamlUtil.getMapper();
+        final ObjectMapper mapper = YamlUtil.getMapper();
 
-        List<String> contentStoreUrls = config.getContentStoreUrls();
-        List<ContentStoreContentPack> contentPacks = new ArrayList<>();
+        final List<String> contentStoreUrls = config.get().getContentStoreUrls();
+        final List<ContentStoreContentPack> contentPacks = new ArrayList<>();
 
         for (String appStoreUrl : contentStoreUrls) {
             LOGGER.info("Parsing appStore at '{}'", appStoreUrl);
 
             try {
-                URI uri = new URI(appStoreUrl);
-                InputStream istr = new BufferedInputStream(uri.toURL().openStream());
-                ContentStore cs = mapper.readValue(istr, ContentStore.class);
+                final URI uri = new URI(appStoreUrl);
+                final InputStream istr = new BufferedInputStream(uri.toURL().openStream());
+                final ContentStore cs = mapper.readValue(istr, ContentStore.class);
 
                 // Fill in any extra data needed by the content packs
-                List<ContentStoreContentPack> listOfContentPacks = cs.getContentPacks();
+                final List<ContentStoreContentPack> listOfContentPacks = cs.getContentPacks();
                 for (ContentStoreContentPack cp : listOfContentPacks) {
                     // Resolve icon link to SVG text
                     this.resolveSvgIcon(cp);
@@ -155,13 +156,13 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
      * @param contentPack The thing to update with an icon if necessary
      *                    and available.
      */
-    private void resolveSvgIcon(ContentStoreContentPack contentPack) {
+    private void resolveSvgIcon(final ContentStoreContentPack contentPack) {
         if (contentPack.getIconSvg() == null) {
             try {
-                byte[] buffer = new byte[IO_BUF_SIZE];
-                URI uri = new URI(contentPack.getIconUrl());
-                InputStream istr = new BufferedInputStream(uri.toURL().openStream());
-                ByteArrayOutputStream ostr = new ByteArrayOutputStream();
+                final byte[] buffer = new byte[IO_BUF_SIZE];
+                final URI uri = new URI(contentPack.getIconUrl());
+                final InputStream istr = new BufferedInputStream(uri.toURL().openStream());
+                final ByteArrayOutputStream ostr = new ByteArrayOutputStream();
 
                 for (int length; (length = istr.read(buffer)) != -1; ) {
                     ostr.write(buffer, 0, length);
@@ -192,10 +193,10 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
      * @return true if the GitRepo already exists; false if not.
      */
     @Override
-    public boolean exists(ContentStoreContentPack contentPack) {
-        List<DocRef> existingDocRefs = gitRepoStore.list();
+    public boolean exists(final ContentStoreContentPack contentPack) {
+        final List<DocRef> existingDocRefs = gitRepoStore.list();
         for (DocRef existingDocRef : existingDocRefs) {
-            GitRepoDoc existingGitRepoDoc = gitRepoStore.readDocument(existingDocRef);
+            final GitRepoDoc existingGitRepoDoc = gitRepoStore.readDocument(existingDocRef);
             if (contentPack.matches(existingGitRepoDoc)) {
                 return true;
             }
@@ -209,14 +210,15 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
      *                             that holds the data for the GitRepoDoc.
      */
     @Override
-    public ContentStoreResponse create(ContentStoreCreateGitRepoRequest createGitRepoRequest) {
+    public ContentStoreResponse create(final ContentStoreCreateGitRepoRequest createGitRepoRequest) {
+        LOGGER.info("REST request to create GitRepo from Content Store: {}", createGitRepoRequest);
 
         // Return value
         ContentStoreResponse response;
 
         final List<Message> messages = new ArrayList<>();
 
-        ContentStoreContentPack contentPack = createGitRepoRequest.getContentPack();
+        final ContentStoreContentPack contentPack = createGitRepoRequest.getContentPack();
         if (this.exists(contentPack)) {
             LOGGER.error("Content pack already exists within Stroom");
             response = new ContentStoreResponse(false, "Content pack already exists");
@@ -224,18 +226,18 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
             try {
                 // Put the document into the Explorer Tree
                 LOGGER.info("Creating DocPath from '{}'", contentPack.getStroomPath());
-                DocPath docPathToGitRepo = DocPath.fromPathString(contentPack.getStroomPath());
-                ExplorerNode parentNode = explorerService.ensureFolderPath(docPathToGitRepo,
+                final DocPath docPathToGitRepo = DocPath.fromPathString(contentPack.getStroomPath());
+                final ExplorerNode parentNode = explorerService.ensureFolderPath(docPathToGitRepo,
                         PermissionInheritance.DESTINATION);
-                ExplorerNode gitRepoNode = explorerService.create(
+                final ExplorerNode gitRepoNode = explorerService.create(
                         GitRepoDoc.TYPE,
                         contentPack.getGitRepoName(),
                         parentNode,
                         PermissionInheritance.DESTINATION);
 
                 // Update the GitRepoDoc
-                DocRef docRef = gitRepoNode.getDocRef();
-                GitRepoDoc gitRepoDoc = gitRepoStore.readDocument(docRef);
+                final DocRef docRef = gitRepoNode.getDocRef();
+                final GitRepoDoc gitRepoDoc = gitRepoStore.readDocument(docRef);
                 contentPack.updateSettingsIn(gitRepoDoc);
 
                 // Add credentials if necessary
@@ -249,7 +251,7 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
                 gitRepoStore.writeDocument(gitRepoDoc);
 
                 // Do the pull
-                List<Message> pullMessages = gitRepoStorageService.importDoc(gitRepoDoc);
+                final List<Message> pullMessages = gitRepoStorageService.importDoc(gitRepoDoc);
                 messages.addAll(pullMessages);
 
                 // Tell the user it worked
@@ -278,10 +280,10 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
      * @return The response to send back. Never null.
      */
     private ContentStoreResponse createOkResponse(
-            ContentStoreContentPack cp,
-            List<Message> messages) {
+            final ContentStoreContentPack cp,
+            final List<Message> messages) {
 
-        StringBuilder buf = new StringBuilder("Created '");
+        final StringBuilder buf = new StringBuilder("Created '");
         buf.append(cp.getUiName());
         buf.append("'\n");
         for (Message m : messages) {
@@ -301,11 +303,11 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
      * @return The response. Never null.
      */
     private ContentStoreResponse createErrResponse(
-            String errorMessage,
-            List<Message> messages,
-            Exception cause) {
+            final String errorMessage,
+            final List<Message> messages,
+            final Exception cause) {
 
-        StringBuilder buf = new StringBuilder(errorMessage);
+        final StringBuilder buf = new StringBuilder(errorMessage);
         if (cause != null) {
             buf.append("\n    ");
             buf.append(cause.getMessage());

@@ -17,12 +17,18 @@ import java.util.Objects;
         "Contains the metadata for a Content Store"
 )
 @JsonPropertyOrder({
+        "ownerId",
         "ownerName",
         "ownerUrl",
-        "ownerDescription"
+        "ownerDescription",
+        "authContact"
 })
 @JsonInclude(Include.NON_NULL)
 public class ContentStoreMetadata {
+    /** ID of this Content Store */
+    @JsonProperty("ownerId")
+    private final String ownerId;
+
     /** Name of this Content Store */
     @JsonProperty("ownerName")
     private final String ownerName;
@@ -35,9 +41,19 @@ public class ContentStoreMetadata {
     @JsonProperty("ownerDescription")
     private final String ownerDescription;
 
+    /** Markdown text describing how to get authentication credentials */
+    @JsonProperty("authContact")
+    private final String authContact;
+
+    /** Length to truncate fields to in toString() */
+    private static final int TRUNC = 10;
+
     /**
      * Called by YAML parser to construct the metadata associated with
      * a Content Store.
+     * @param ownerId The ID of the owner of the content store. Must be
+     *                globally unique so should probably be the domain
+     *                name of the owner.
      * @param ownerName The name of the owner of the content store.
      *                  Must not be null.
      * @param ownerUrl The URL associated with the owner. Can be null.
@@ -46,13 +62,26 @@ public class ContentStoreMetadata {
      */
     @SuppressWarnings("unused")
     @JsonCreator
-    public ContentStoreMetadata(@JsonProperty("ownerName") final String ownerName,
+    public ContentStoreMetadata(@JsonProperty("ownerId") final String ownerId,
+                                @JsonProperty("ownerName") final String ownerName,
                                 @JsonProperty("ownerUrl") final String ownerUrl,
-                                @JsonProperty("ownerDescription") final String ownerDescription) {
-        Objects.requireNonNull(ownerName);
+                                @JsonProperty("ownerDescription") final String ownerDescription,
+                                @JsonProperty("authContact") final String authContact) {
+        Objects.requireNonNull(ownerId, "Error in Content Store specification: contentStore.meta.ownerId must be specified");
+        Objects.requireNonNull(ownerName, "Error in Content Store specification: contentStore.meta.ownerName must be specified");
+        this.ownerId = ownerId;
         this.ownerName = ownerName;
         this.ownerUrl = ownerUrl == null ? "" : ownerUrl;
         this.ownerDescription = ownerUrl == null ? "" : ownerDescription;
+        this.authContact = authContact == null ? "" : authContact;
+    }
+
+    /**
+     * @return The ID of the owner of this content store.
+     * Never returns null.
+     */
+    public String getOwnerId() {
+        return ownerId;
     }
 
     /**
@@ -79,32 +108,46 @@ public class ContentStoreMetadata {
         return ownerDescription;
     }
 
+    /**
+     * @return The markdown content that describes how to get authentication
+     * credentials for Content Packs marked gitNeedsAuth: true.
+     */
+    public String getAuthContact() {
+        return authContact;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
         final ContentStoreMetadata that = (ContentStoreMetadata) o;
-        return Objects.equals(ownerName, that.ownerName)
+        return Objects.equals(ownerId, that.ownerId)
+               &&Objects.equals(ownerName, that.ownerName)
                && Objects.equals(ownerUrl, that.ownerUrl)
-               && Objects.equals(ownerDescription, that.ownerDescription);
+               && Objects.equals(ownerDescription, that.ownerDescription)
+               && Objects.equals(authContact, that.authContact);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(
+                ownerId,
                 ownerName,
                 ownerUrl,
-                ownerDescription);
+                ownerDescription,
+                authContact);
     }
 
     @Override
     public String toString() {
         return "ContentStoreMetadata{" +
-               "ownerName='" + ownerName + '\'' +
-               ", ownerUrl='" + ownerUrl + '\'' +
-               ", ownerDescription='" + ownerDescription + '\'' +
-               '}';
+               "\n  ownerId=" + ownerId +
+               "'\n  ownerName='" + ownerName +
+               "'\n  ownerUrl='" + ownerUrl +
+               "'\n  ownerDescription='" + ownerDescription.substring(0, Math.min(ownerDescription.length(), TRUNC)) +
+               "'\n  authContact='" + authContact.substring(0, Math.min(authContact.length(), TRUNC)) +
+               "'\n}";
     }
 
 }

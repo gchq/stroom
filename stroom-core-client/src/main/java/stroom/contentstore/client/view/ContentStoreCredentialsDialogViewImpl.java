@@ -3,8 +3,10 @@ package stroom.contentstore.client.view;
 import stroom.contentstore.client.presenter.ContentStoreCredentialsDialogPresenter;
 import stroom.contentstore.client.presenter.ContentStoreCredentialsDialogUiHandlers;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -24,6 +26,10 @@ public class ContentStoreCredentialsDialogViewImpl
     /** Underlying Widget created by UiBinder */
     private final Widget widget;
 
+    /** Introduces the credentials and tells users where to get the credentials from */
+    @UiField
+    HTML lblAuthContactHtml;
+
     /** Accepts username for the Content Pack auth */
     @UiField
     TextBox txtUsername;
@@ -39,6 +45,7 @@ public class ContentStoreCredentialsDialogViewImpl
     @SuppressWarnings("unused")
     public ContentStoreCredentialsDialogViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        lblAuthContactHtml.setWordWrap(true);
     }
 
     /**
@@ -47,6 +54,16 @@ public class ContentStoreCredentialsDialogViewImpl
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    /**
+     * Sets the markdown that tells users how to get credentials.
+     * @param authContactHtml The HTML from markdown that provides info
+     *                        for getting credentials for this content pack.
+     */
+    @Override
+    public void setAuthContactHtml(SafeHtml authContactHtml) {
+        lblAuthContactHtml.setHTML(authContactHtml);
     }
 
     /**
@@ -70,6 +87,7 @@ public class ContentStoreCredentialsDialogViewImpl
      */
     @Override
     public void resetData() {
+        lblAuthContactHtml.setHTML("");
         txtUsername.setText("");
         pwdPassword.setText("");
     }
