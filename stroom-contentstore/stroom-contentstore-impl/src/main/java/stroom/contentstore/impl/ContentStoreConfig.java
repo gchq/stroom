@@ -5,7 +5,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
-import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -19,7 +18,6 @@ import java.util.List;
  * Provides configuration for the ContentStore stuff on the server.
  */
 @JsonPropertyOrder(alphabetic = true)
-@NotInjectableConfig
 public class ContentStoreConfig extends AbstractConfig implements IsStroomConfig {
     /**
      * Default location where the ContentStore config is stored.

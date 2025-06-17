@@ -26,6 +26,7 @@ public class ContentStoreModule extends AbstractModule {
     @Override
     protected void configure() {
         // Bind the Resource implementation to the REST service
+        bind(ContentStoreResource.class).to(ContentStoreResourceImpl.class);
         RestResourcesBinder.create(binder()).bind(ContentStoreResource.class);
     }
 }
