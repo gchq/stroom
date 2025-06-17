@@ -341,6 +341,12 @@ public class MockHttpDestination {
                 .toList();
     }
 
+    void assertFeedStatusCheckNotCalled() {
+        // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
+        Assertions.assertThat(getPostsToFeedStatusCheck())
+                .isEmpty();
+    }
+
     void assertFeedStatusCheck() {
         // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
         Assertions.assertThat(getPostsToFeedStatusCheck())

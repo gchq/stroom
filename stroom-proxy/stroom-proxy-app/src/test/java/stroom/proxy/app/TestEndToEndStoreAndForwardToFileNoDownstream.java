@@ -19,11 +19,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
+public class TestEndToEndStoreAndForwardToFileNoDownstream extends AbstractEndToEndTest {
 
     private static final int MAX_ITEMS_PER_AGG = 3;
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestEndToEndStoreAndForwardToFile.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(
+            TestEndToEndStoreAndForwardToFileNoDownstream.class);
 
     @Inject
     private MockFileDestination mockFileDestination;
@@ -44,10 +45,13 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
                         .build())
                 .addForwardFileDestination(MockFileDestination.createForwardFileConfig())
                 .feedStatusConfig(MockHttpDestination.createFeedStatusConfig())
-                .downstreamHostConfig(MockHttpDestination.createDownstreamHostConfig())
+                // No downstream, just an isolated proxy
+                .downstreamHostConfig(DownstreamHostConfig.copy(MockHttpDestination.createDownstreamHostConfig())
+                        .withEnabled(false)
+                        .build())
                 .receiveDataConfig(ReceiveDataConfig.builder()
                         .withAuthenticationRequired(false)
-                        .withReceiptCheckMode(ReceiptCheckMode.FEED_STATUS)
+                        .withReceiptCheckMode(ReceiptCheckMode.RECEIVE_ALL)
                         .build())
                 .build();
     }
@@ -81,8 +85,7 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
 
         mockFileDestination.assertMaxItemsPerAggregate(getConfig());
 
-        // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
-        mockHttpDestination.assertFeedStatusCheck();
+        mockHttpDestination.assertFeedStatusCheckNotCalled();
 
         // No http forwarders set up so nothing goes to stroom
         final List<LoggedRequest> postsToStroomDataFeed = mockHttpDestination.getPostsToStroomDataFeed();
@@ -112,8 +115,7 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
         // Assert the contents of the files.
         mockFileDestination.assertFileContents(getConfig(), 12);
 
-        // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
-        mockHttpDestination.assertFeedStatusCheck();
+        mockHttpDestination.assertFeedStatusCheckNotCalled();
 
         // No http forwarders set up so nothing goes to stroom
         final List<LoggedRequest> postsToStroomDataFeed = mockHttpDestination.getPostsToStroomDataFeed();
