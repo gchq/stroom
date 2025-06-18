@@ -102,7 +102,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
                 name,
                 TextConverterType.DATA_SPLITTER);
         final DocRef filteredXSLT = createXSLT(stem + ".xsl", name);
-        final DocRef pipelineRef = createPipeline(stem + "_Pipeline.xml", textConverterRef, filteredXSLT);
+        final DocRef pipelineRef = createPipeline(stem + "_Pipeline.json", textConverterRef, filteredXSLT);
 
         pipelineScopeRunnable.scopeRunnable(() -> {
             process(pipelineRef, dir, name, null);

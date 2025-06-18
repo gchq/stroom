@@ -106,7 +106,7 @@ class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
         final DocRef textConverterRef = createTextConverter(dir + "TestRecordOutputFilter.ds3.xml",
                 "TestRecordOutputFilter", TextConverterType.DATA_SPLITTER);
         final DocRef filteredXSLT = createXSLT(dir + "TestRecordOutputFilter.xsl", "TestRecordOutputFilter");
-        final DocRef pipelineRef = createPipeline(dir + "TestRecordOutputFilter Pipeline.xml", textConverterRef,
+        final DocRef pipelineRef = createPipeline(dir + "TestRecordOutputFilter Pipeline.json", textConverterRef,
                 filteredXSLT);
         test(pipelineRef,
                 dir,

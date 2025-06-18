@@ -64,7 +64,6 @@ dependencies {
     implementation libs.swagger.annotations
     implementation libs.vavr
     implementation libs.ws.rs.api
-    //implementation libs.xml.apis
     implementation libs.zero.allocation.hashing
 
     testImplementation project(':stroom-cache:stroom-cache-api')

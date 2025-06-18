@@ -4865,6 +4865,26 @@ paths:
       summary: Get a detailed report of doc permissions for the specified user
       tags:
       - Doc Permissions
+  /pipeline/v1/fetchPipelineJson:
+    post:
+      operationId: fetchPipelineJson
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocRef"
+        description: pipeline
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FetchPipelineJsonResponse"
+          description: default response
+      summary: Fetch the JSON for a pipeline
+      tags:
+      - Pipelines
   /pipeline/v1/fetchPipelineLayers:
     post:
       operationId: fetchPipelineLayers
@@ -4887,26 +4907,6 @@ paths:
       summary: Fetch layers for a pipeline
       tags:
       - Pipelines
-  /pipeline/v1/fetchPipelineXml:
-    post:
-      operationId: fetchPipelineXml
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/DocRef"
-        description: pipeline
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/FetchPipelineXmlResponse"
-          description: default response
-      summary: Fetch the XML for a pipeline
-      tags:
-      - Pipelines
   /pipeline/v1/propertyTypes:
     get:
       operationId: getPipelinePropertyTypes
@@ -4922,14 +4922,14 @@ paths:
       summary: Get pipeline property types
       tags:
       - Pipelines
-  /pipeline/v1/savePipelineXml:
+  /pipeline/v1/savePipelineJson:
     put:
-      operationId: savePipelineXml
+      operationId: savePipelineJson
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SavePipelineXmlRequest"
+              $ref: "#/components/schemas/SavePipelineJsonRequest"
         description: request
         required: true
       responses:
@@ -4939,7 +4939,7 @@ paths:
               schema:
                 type: boolean
           description: default response
-      summary: Update a pipeline doc with XML directly
+      summary: Update a pipeline doc with JSON directly
       tags:
       - Pipelines
   /pipeline/v1/{uuid}:
@@ -10280,8 +10280,6 @@ components:
           example: 9f6184b4-bd78-48bc-b0cd-6e51a357f6a6
       required:
       - uuid
-      xml:
-        name: doc
     DocRefInfo:
       type: object
       properties:
@@ -11605,13 +11603,13 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/NodeStatusResult"
-    FetchPipelineXmlResponse:
+    FetchPipelineJsonResponse:
       type: object
       properties:
+        json:
+          type: string
         pipeline:
           $ref: "#/components/schemas/DocRef"
-        xml:
-          type: string
     FetchProcessorRequest:
       type: object
       properties:
@@ -13506,14 +13504,8 @@ components:
           $ref: "#/components/schemas/PipelineLinks"
         pipelineReferences:
           $ref: "#/components/schemas/PipelineReferences"
-        processors:
-          type: array
-          items:
-            $ref: "#/components/schemas/Processor"
         properties:
           $ref: "#/components/schemas/PipelineProperties"
-      xml:
-        name: pipeline
     PipelineDoc:
       type: object
       properties:
@@ -13548,9 +13540,6 @@ components:
           type: string
         type:
           type: string
-      required:
-      - id
-      - type
     PipelineElementType:
       type: object
       properties:
@@ -13778,14 +13767,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PipelineElement"
-          xml:
-            wrapped: true
         remove:
           type: array
           items:
             $ref: "#/components/schemas/PipelineElement"
-          xml:
-            wrapped: true
     PipelineLayer:
       type: object
       properties:
@@ -13800,9 +13785,6 @@ components:
           type: string
         to:
           type: string
-      required:
-      - from
-      - to
     PipelineLinks:
       type: object
       properties:
@@ -13810,14 +13792,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PipelineLink"
-          xml:
-            wrapped: true
         remove:
           type: array
           items:
             $ref: "#/components/schemas/PipelineLink"
-          xml:
-            wrapped: true
     PipelineProperties:
       type: object
       properties:
@@ -13825,14 +13803,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PipelineProperty"
-          xml:
-            wrapped: true
         remove:
           type: array
           items:
             $ref: "#/components/schemas/PipelineProperty"
-          xml:
-            wrapped: true
     PipelineProperty:
       type: object
       properties:
@@ -13842,9 +13816,6 @@ components:
           type: string
         value:
           $ref: "#/components/schemas/PipelinePropertyValue"
-      required:
-      - element
-      - name
     PipelinePropertyType:
       type: object
       properties:
@@ -13895,12 +13866,6 @@ components:
           $ref: "#/components/schemas/DocRef"
         streamType:
           type: string
-      required:
-      - element
-      - feed
-      - name
-      - pipeline
-      - streamType
     PipelineReferences:
       type: object
       properties:
@@ -13908,14 +13873,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PipelineReference"
-          xml:
-            wrapped: true
         remove:
           type: array
           items:
             $ref: "#/components/schemas/PipelineReference"
-          xml:
-            wrapped: true
     PipelineStepRequest:
       type: object
       properties:
@@ -15621,13 +15582,13 @@ components:
           type: string
         version:
           type: string
-    SavePipelineXmlRequest:
+    SavePipelineJsonRequest:
       type: object
       properties:
+        json:
+          type: string
         pipeline:
           $ref: "#/components/schemas/DocRef"
-        xml:
-          type: string
     Schedule:
       type: object
       properties:

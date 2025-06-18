@@ -35,10 +35,12 @@ public class PipelinePropertyValue {
     private final String string;
     @JsonProperty("integer")
     private final Integer integer;
+    // Not final as setter is required for restygwt to work properly with this field name.
     @JsonProperty("long")
-    private final Long _long;
+    private Long _long;
+    // Not final as setter is required for restygwt to work properly with this field name.
     @JsonProperty("boolean")
-    private final Boolean _boolean;
+    private Boolean _boolean;
     @JsonProperty("entity")
     private final DocRef entity;
 
@@ -115,8 +117,20 @@ public class PipelinePropertyValue {
         return _long;
     }
 
+    // DO NOT USE: Required for restygwt to work properly with this field name.
+    @Deprecated
+    public void setLong(final Long _long) {
+        this._long = _long;
+    }
+
     public Boolean getBoolean() {
         return _boolean;
+    }
+
+    // DO NOT USE: Required for restygwt to work properly with this field name.
+    @Deprecated
+    public void setBoolean(final Boolean _boolean) {
+        this._boolean = _boolean;
     }
 
     public DocRef getEntity() {
@@ -163,13 +177,4 @@ public class PipelinePropertyValue {
         }
         return "";
     }
-//
-//    @Override
-//    public void copyFrom(final PipelinePropertyValue from) {
-//        this.string = from.string;
-//        this.integer = from.integer;
-//        this._long = from._long;
-//        this._boolean = from._boolean;
-//        this.entity = from.entity;
-//    }
 }

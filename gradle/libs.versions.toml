@@ -183,7 +183,6 @@ wiremock = { module = "org.wiremock:wiremock", version = "3.3.1" }
 ws-rs-api = { module = "jakarta.ws.rs:jakarta.ws.rs-api" } # version controlled by dropwizard-dependencies
 ws-rs-api-gwt = { module = "javax.ws.rs:javax.ws.rs-api", version = "2.1.1" } # For GWT compilation
 xerces = { module = "xerces:xercesImpl", version = "2.12.2" }
-#xml-apis = { module = "xml-apis:xml-apis", version = "2.0.2" }
 zero-allocation-hashing = { module = "net.openhft:zero-allocation-hashing", version = "0.16" }
 
 [plugins]

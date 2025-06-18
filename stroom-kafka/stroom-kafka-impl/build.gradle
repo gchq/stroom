@@ -28,7 +28,6 @@ dependencies {
     implementation libs.saxon.he
     implementation libs.slf4j.api
     implementation libs.vavr
-    //implementation libs.xml.apis
 
     testImplementation libs.assertj.core
     testImplementation libs.junit.jupiter.api

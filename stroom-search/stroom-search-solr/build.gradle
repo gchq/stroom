@@ -40,5 +40,4 @@ dependencies {
     implementation libs.jakarta.inject
     implementation libs.jaxb.api
     implementation libs.ws.rs.api
-    //implementation libs.xml.apis
 }
