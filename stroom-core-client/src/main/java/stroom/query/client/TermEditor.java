@@ -29,6 +29,7 @@ import stroom.query.client.presenter.FieldInfoSelectionItem;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.security.shared.DocumentPermission;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.StringUtil;
 import stroom.util.shared.UserRef;
 import stroom.widget.customdatebox.client.MyDateBox;
@@ -281,9 +282,10 @@ public class TermEditor extends Composite {
         }
 
         conditionListBox.setValue(selected);
+        NullSafe.consume(selected, Condition::getDescription, conditionListBox::setTitle);
         changeCondition(field, selected);
 
-        if (field != null && field.getFldType() != null) {
+        if (NullSafe.nonNull(field, QueryField::getFldType)) {
             fieldTypeLabel.setText(field.getFldType().getShortTypeName());
             fieldTypeLabel.setTitle(field.getFldType().getDescription());
             fieldTypeLabel.setVisible(true);
@@ -293,92 +295,89 @@ public class TermEditor extends Composite {
     }
 
     private List<Condition> getConditions(final QueryField field) {
-        ConditionSet conditions;
-        if (field != null && field.getConditionSet() != null) {
-            conditions = field.getConditionSet();
-
-        } else {
-            FieldType fieldType = null;
-            if (field != null) {
-                fieldType = field.getFldType();
-            }
-            conditions = ConditionSet.getUiDefaultConditions(fieldType);
-        }
-
+        final ConditionSet conditions = NullSafe.getOrElseGet(
+                field,
+                QueryField::getConditionSet,
+                () -> {
+                    FieldType fieldType = null;
+                    if (field != null) {
+                        fieldType = field.getFldType();
+                    }
+                    return ConditionSet.getUiDefaultConditions(fieldType);
+                }
+        );
         return conditions.getConditionList();
     }
 
     private void changeCondition(final QueryField field,
                                  final Condition condition) {
         final QueryField selectedField = fieldListBox.getValue();
-        FieldType indexFieldType = null;
-        if (selectedField != null && selectedField.getFldType() != null) {
-            indexFieldType = selectedField.getFldType();
-        }
+        final FieldType indexFieldType = NullSafe.get(selectedField, QueryField::getFldType);
 
         if (indexFieldType == null) {
             setActiveWidgets();
-
         } else {
             switch (condition) {
+                // Could be text or date range
+                case BETWEEN:
+                    enterTextOrDateRangeMode(indexFieldType);
+                    break;
+                // Could be text or date value
                 case EQUALS:
                 case NOT_EQUALS:
                 case LESS_THAN:
                 case LESS_THAN_OR_EQUAL_TO:
                 case GREATER_THAN:
                 case GREATER_THAN_OR_EQUAL_TO:
-                    if (FieldType.DATE.equals(indexFieldType)) {
-                        enterDateMode();
-                    } else {
-                        enterTextMode();
-                    }
+                    enterTextOrDateMode(indexFieldType);
                     break;
-//                case CONTAINS:
-//                    enterTextMode();
-//                    break;
+                // Text only values
                 case IN:
+                case CONTAINS:
+                case CONTAINS_CASE_SENSITIVE:
+                case EQUALS_CASE_SENSITIVE:
+                case ENDS_WITH:
+                case ENDS_WITH_CASE_SENSITIVE:
+                case STARTS_WITH:
+                case STARTS_WITH_CASE_SENSITIVE:
+                case MATCHES_REGEX:
+                case MATCHES_REGEX_CASE_SENSITIVE:
                     enterTextMode();
                     break;
-                case BETWEEN:
-                    if (FieldType.DATE.equals(indexFieldType)) {
-                        enterDateRangeMode();
-                    } else {
-                        enterTextRangeMode();
-                    }
-                    break;
+                // DocRef values
                 case IN_DICTIONARY:
                 case IN_FOLDER:
                 case IS_DOC_REF:
-                    enterDocRefMode(field, condition);
-                    break;
                 case OF_DOC_REF:
                     enterDocRefMode(field, condition);
                     break;
+                // UserRef values
                 case IS_USER_REF:
-                    enterUserRefMode(field, condition);
-                    break;
                 case USER_HAS_PERM:
-                    enterUserRefMode(field, condition);
-                    break;
                 case USER_HAS_OWNER:
-                    enterUserRefMode(field, condition);
-                    break;
                 case USER_HAS_DELETE:
-                    enterUserRefMode(field, condition);
-                    break;
                 case USER_HAS_EDIT:
-                    enterUserRefMode(field, condition);
-                    break;
                 case USER_HAS_VIEW:
-                    enterUserRefMode(field, condition);
-                    break;
                 case USER_HAS_USE:
                     enterUserRefMode(field, condition);
                     break;
-                case MATCHES_REGEX:
-                    enterTextMode();
-                    break;
             }
+        }
+    }
+
+    private void enterTextOrDateMode(final FieldType indexFieldType) {
+        if (FieldType.DATE.equals(indexFieldType)) {
+            enterDateMode();
+        } else {
+            enterTextMode();
+        }
+    }
+
+    private void enterTextOrDateRangeMode(final FieldType indexFieldType) {
+        if (FieldType.DATE.equals(indexFieldType)) {
+            enterDateRangeMode();
+        } else {
+            enterTextRangeMode();
         }
     }
 

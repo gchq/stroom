@@ -322,7 +322,7 @@ public class RuleSetSettingsPresenter
 
     private void showRulePresenter(final RulePresenter rulePresenter,
                                    final Runnable okHandler) {
-        final PopupSize popupSize = PopupSize.resizable(800, 600);
+        final PopupSize popupSize = PopupSize.resizable(1_000, 600);
         uiConfigCache.get(extendedUiConfig -> {
             ShowPopupEvent.builder(rulePresenter)
                     .popupType(PopupType.OK_CANCEL_DIALOG)

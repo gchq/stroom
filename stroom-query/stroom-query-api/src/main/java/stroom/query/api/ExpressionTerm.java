@@ -19,6 +19,7 @@ package stroom.query.api;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.query.api.datasource.QueryField;
+import stroom.util.shared.HasDescription;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.StringUtil;
 
@@ -225,7 +226,7 @@ public final class ExpressionTerm extends ExpressionItem {
     // --------------------------------------------------------------------------------
 
 
-    public enum Condition implements HasDisplayValue {
+    public enum Condition implements HasDisplayValue, HasDescription {
         CONTAINS("+",
                 "contains",
                 "contains"),
@@ -269,7 +270,7 @@ public final class ExpressionTerm extends ExpressionItem {
                 "word boundary"),
 
         CONTAINS_CASE_SENSITIVE("=+",
-                "contains (case sensitive)",
+                "contains (CS)",
                 "contains (case sensitive)"),
         EQUALS_CASE_SENSITIVE("==",
                 "==",
@@ -278,13 +279,13 @@ public final class ExpressionTerm extends ExpressionItem {
                 "!==",
                 "equals (case sensitive)"),
         STARTS_WITH_CASE_SENSITIVE("=^",
-                "starts with (case sensitive)",
+                "starts with (CS)",
                 "starts with (case sensitive)"),
         ENDS_WITH_CASE_SENSITIVE("=$",
-                "ends with (case sensitive)",
+                "ends with (CS)",
                 "ends with (case sensitive)"),
         MATCHES_REGEX_CASE_SENSITIVE("=/",
-                "matches regex (case sensitive)",
+                "matches regex (CS)",
                 "matches regex (case sensitive)"),
 
         // Permission related conditions.
@@ -297,7 +298,6 @@ public final class ExpressionTerm extends ExpressionItem {
         USER_HAS_USE("has use permission");
 
         public static final String IN_CONDITION_DELIMITER = ",";
-
 
         private final String operator;
         private final String displayValue;
@@ -324,6 +324,7 @@ public final class ExpressionTerm extends ExpressionItem {
             return displayValue;
         }
 
+        @Override
         public String getDescription() {
             return description;
         }

@@ -80,6 +80,10 @@ public class RuleViewImpl extends ViewImpl implements RuleView {
         this.action.setValue(action);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Binder extends UiBinder<Widget, RuleViewImpl> {
 
     }

@@ -70,7 +70,6 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
     @Mock
     private ReceiveActionMetricsRecorder mockReceiveActionMetricsRecorder;
 
-
     @Test
     void test_noRules() {
         final DataReceiptPolicyAttributeMapFilterFactoryImpl factory =

@@ -251,7 +251,7 @@ public class MetaPresenter
                     MetaFields.getAllFields());
 
             presenter.getWidget().getElement().addClassName("default-min-sizes");
-            final PopupSize popupSize = PopupSize.resizable(800, 600);
+            final PopupSize popupSize = PopupSize.resizable(1_000, 600);
             ShowPopupEvent.builder(presenter)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
                     .popupSize(popupSize)
