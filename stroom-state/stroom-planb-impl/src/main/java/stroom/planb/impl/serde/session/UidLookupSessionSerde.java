@@ -3,6 +3,7 @@ package stroom.planb.impl.serde.session;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.data.Session;
 import stroom.planb.impl.db.Db;
+import stroom.planb.impl.db.KeyLength;
 import stroom.planb.impl.db.PlanBEnv;
 import stroom.planb.impl.db.UidLookupDb;
 import stroom.planb.impl.db.UidLookupRecorder;
@@ -70,9 +71,7 @@ public class UidLookupSessionSerde implements SessionSerde {
 
         ValSerdeUtil.write(session.getPrefix().getVal(), byteBuffers, valueByteBuffer -> {
             final ByteBuffer slice = valueByteBuffer.slice(0, valueByteBuffer.remaining() - timeLength);
-            if (slice.remaining() > Db.MAX_KEY_LENGTH) {
-                throw new RuntimeException("Key length exceeds " + Db.MAX_KEY_LENGTH + " bytes");
-            }
+            KeyLength.check(slice,  Db.MAX_KEY_LENGTH);
 
             uidLookupDb.put(txn, slice, idByteBuffer -> {
                 byteBuffers.use(idByteBuffer.remaining() + timeLength, prefixedBuffer -> {
@@ -101,9 +100,7 @@ public class UidLookupSessionSerde implements SessionSerde {
         return ValSerdeUtil.write(session.getPrefix().getVal(), byteBuffers, valueByteBuffer -> {
             // We are going to store as a lookup so take off the variable type prefix.
             final ByteBuffer slice = valueByteBuffer.slice(0, valueByteBuffer.remaining() - timeLength);
-            if (slice.remaining() > Db.MAX_KEY_LENGTH) {
-                throw new RuntimeException("Key length exceeds " + Db.MAX_KEY_LENGTH + " bytes");
-            }
+            KeyLength.check(slice,  Db.MAX_KEY_LENGTH);
 
             return uidLookupDb.get(txn, slice, optionalIdByteBuffer ->
                     optionalIdByteBuffer
