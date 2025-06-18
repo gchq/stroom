@@ -36,7 +36,7 @@ import java.time.temporal.ChronoUnit;
                         @FunctionArg(
                                 name = "time",
                                 description = "The time to round in milliseconds since the epoch or as a string " +
-                                        "formatted using the default date format.",
+                                              "formatted using the default date format.",
                                 argType = Val.class)}))
 class CeilingHour extends RoundDate {
 
@@ -64,7 +64,7 @@ class CeilingHour extends RoundDate {
 
         @Override
         protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            ZonedDateTime zoned = dateTime.atZone(ZoneOffset.UTC);
+            final ZonedDateTime zoned = dateTime.atZone(ZoneOffset.UTC);
             ZonedDateTime startOfHour = zoned.truncatedTo(ChronoUnit.HOURS);
             if (zoned.isAfter(startOfHour)) {
                 startOfHour = startOfHour.plusDays(1);

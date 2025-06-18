@@ -33,14 +33,14 @@ import java.time.temporal.ChronoUnit;
                 args = @FunctionArg(
                         name = "time",
                         description = "The time to round in milliseconds since the epoch or as a string " +
-                                "formatted using the default date format.",
+                                      "formatted using the default date format.",
                         argType = Val.class)))
 class FloorHour extends RoundDate {
 
     static final String NAME = "floorHour";
     private final ZoneId zoneId;
 
-    public FloorHour(final String name, final ExpressionContext expressionContext) {
+    public FloorHour(final ExpressionContext expressionContext, final String name) {
         super(name);
         this.zoneId = AbstractTimeFunction.getZoneId(expressionContext.getDateTimeSettings());
     }

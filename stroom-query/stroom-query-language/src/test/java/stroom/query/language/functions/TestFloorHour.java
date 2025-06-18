@@ -11,11 +11,13 @@ import java.util.stream.Stream;
 public class TestFloorHour extends AbstractFunctionTest<FloorHour> {
 
     @Override
-    Class<FloorHour> getFunctionType() { return FloorHour.class; }
+    Class<FloorHour> getFunctionType() {
+        return FloorHour.class;
+    }
 
     @Override
     protected Supplier<FloorHour> getFunctionSupplier() {
-        return () -> new FloorHour("floorHour", new ExpressionContext());
+        return () -> new FloorHour(new ExpressionContext(), "floorHour");
     }
 
 

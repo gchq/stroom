@@ -10,7 +10,9 @@ import java.util.stream.Stream;
 public class TestCeilingYear extends AbstractFunctionTest<CeilingYear> {
 
     @Override
-    Class<CeilingYear> getFunctionType() { return CeilingYear.class; }
+    Class<CeilingYear> getFunctionType() {
+        return CeilingYear.class;
+    }
 
     @Override
     protected Supplier<CeilingYear> getFunctionSupplier() {

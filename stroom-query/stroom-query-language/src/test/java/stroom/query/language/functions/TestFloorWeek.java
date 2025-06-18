@@ -3,13 +3,14 @@ package stroom.query.language.functions;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.time.temporal.ChronoUnit;
 import java.util.stream.Stream;
 
 public class TestFloorWeek extends AbstractFunctionTest<FloorWeek> {
 
     @Override
-    Class<FloorWeek> getFunctionType() { return FloorWeek.class; }
+    Class<FloorWeek> getFunctionType() {
+        return FloorWeek.class;
+    }
 
     @Override
     Stream<TestCase> getTestCases() {
@@ -19,7 +20,6 @@ public class TestFloorWeek extends AbstractFunctionTest<FloorWeek> {
         // April 7th 2025 is the Monday
         final Instant floored = LocalDateTime.of(2025, 4, 7, 0, 0)
                 .toInstant(ZoneOffset.UTC);
-
 
         return Stream.of(
                 TestCase.of(
@@ -32,5 +32,4 @@ public class TestFloorWeek extends AbstractFunctionTest<FloorWeek> {
                         ValString.create(DateUtil.createNormalDateTimeString(time.toEpochMilli())))
         );
     }
-
 }
