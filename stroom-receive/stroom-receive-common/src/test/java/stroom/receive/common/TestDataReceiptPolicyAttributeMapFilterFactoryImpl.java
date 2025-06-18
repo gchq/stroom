@@ -112,6 +112,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                         .withRuleNumber(1)
                         .withExpression(ExpressionOperator.builder()
                                 .build())
+                        .withAction(ReceiveAction.RECEIVE)
                         .build())
                 .build();
 
