@@ -17,13 +17,11 @@
 package stroom.pipeline;
 
 import stroom.docref.DocRef;
-import stroom.pipeline.legacy.PipelineDataMigration;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.util.json.JsonUtil;
 
 public final class PipelineTestUtil {
-
-    private static final PipelineDataMigration PIPELINE_DATA_MIGRATION = new PipelineDataMigration();
 
     private PipelineTestUtil() {
     }
@@ -33,7 +31,7 @@ public final class PipelineTestUtil {
         pipelineDoc.setName("test");
         pipelineDoc.setDescription("test");
         if (data != null) {
-            final PipelineData pipelineData = PIPELINE_DATA_MIGRATION.migrate(data);
+            final PipelineData pipelineData = JsonUtil.readValue(data, PipelineData.class);
             pipelineDoc.setPipelineData(pipelineData);
         }
         return pipelineDoc;
@@ -58,7 +56,7 @@ public final class PipelineTestUtil {
         pipelineDoc.setName(name);
         pipelineDoc.setDescription(description);
         if (data != null) {
-            final PipelineData pipelineData = PIPELINE_DATA_MIGRATION.migrate(data);
+            final PipelineData pipelineData = JsonUtil.readValue(data, PipelineData.class);
             pipelineDoc.setPipelineData(pipelineData);
         }
         pipelineStore.writeDocument(pipelineDoc);

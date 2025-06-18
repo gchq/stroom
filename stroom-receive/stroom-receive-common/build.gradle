@@ -29,7 +29,6 @@ dependencies {
     implementation libs.jackson.databind
     implementation libs.jakarta.servlet.api
     implementation libs.jakarta.inject
-    implementation libs.jaxb.api
     implementation libs.slf4j.api
     implementation libs.swagger.annotations
     implementation libs.ws.rs.api

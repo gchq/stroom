@@ -1,6 +1,5 @@
 package stroom.pipeline.legacy;
 
-import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.util.json.JsonUtil;
 import stroom.util.string.EncodingUtil;
 import stroom.util.xml.XMLMarshallerUtil;
@@ -10,8 +9,6 @@ import jakarta.xml.bind.JAXBException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Map;
 
 @Deprecated
@@ -56,24 +53,24 @@ public class PipelineDataMigration {
         return false;
     }
 
-    public stroom.pipeline.shared.data.PipelineData migrate(final String xml) {
-        if (xml != null) {
-            if (xml.startsWith("<")) {
-                final PipelineData pipelineData =
-                        XMLMarshallerUtil.unmarshal(jaxbContext, PipelineData.class, xml);
-                final String json = JsonUtil.writeValueAsString(pipelineData);
-                final stroom.pipeline.shared.data.PipelineData newData =
-                        JsonUtil.readValue(json, stroom.pipeline.shared.data.PipelineData.class);
-                final stroom.pipeline.shared.data.PipelineData cleaned =
-                        new stroom.pipeline.shared.data.PipelineDataBuilder(newData).build();
-                final String cleanedJson = JsonUtil.writeValueAsString(cleaned);
-                return cleaned;
-            } else {
-                return JsonUtil.readValue(xml, stroom.pipeline.shared.data.PipelineData.class);
-            }
-        }
-        return new PipelineDataBuilder().build();
-    }
+//    public stroom.pipeline.shared.data.PipelineData migrate(final String xml) {
+//        if (xml != null) {
+//            if (xml.startsWith("<")) {
+//                final PipelineData pipelineData =
+//                        XMLMarshallerUtil.unmarshal(jaxbContext, PipelineData.class, xml);
+//                final String json = JsonUtil.writeValueAsString(pipelineData);
+//                final stroom.pipeline.shared.data.PipelineData newData =
+//                        JsonUtil.readValue(json, stroom.pipeline.shared.data.PipelineData.class);
+//                final stroom.pipeline.shared.data.PipelineData cleaned =
+//                        new stroom.pipeline.shared.data.PipelineDataBuilder(newData).build();
+//                final String cleanedJson = JsonUtil.writeValueAsString(cleaned);
+//                return cleaned;
+//            } else {
+//                return JsonUtil.readValue(xml, stroom.pipeline.shared.data.PipelineData.class);
+//            }
+//        }
+//        return new PipelineDataBuilder().build();
+//    }
 
 //    public void migrate(final Path file) {
 //        try {

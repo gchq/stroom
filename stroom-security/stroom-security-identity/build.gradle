@@ -40,7 +40,6 @@ dependencies {
     implementation libs.jackson.databind
     implementation libs.jakarta.servlet.api
     implementation libs.jakarta.validation.api
-    implementation libs.jaxb.api
     implementation libs.jose4j
     implementation libs.restygwt
     implementation libs.simple.java.mail

@@ -209,7 +209,6 @@ dependencies {
     implementation libs.jakarta.servlet.api
     implementation libs.jakarta.validation.api
     implementation libs.jakarta.inject
-    implementation libs.jaxb.api
     implementation libs.jcommander
     implementation libs.jersey.common
     implementation libs.jetty.server

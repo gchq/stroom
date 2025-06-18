@@ -44,7 +44,6 @@ import stroom.util.json.JsonUtil;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import jakarta.xml.bind.JAXBException;
 import org.assertj.core.util.diff.DiffUtils;
 import org.assertj.core.util.diff.Patch;
 import org.junit.jupiter.api.Test;
@@ -123,7 +122,7 @@ class TestSerialisation {
     }
 
     @Test
-    void testPolymorphic() throws IOException, JAXBException {
+    void testPolymorphic() throws IOException {
         final List<Base> list = new ArrayList<>();
         list.add(new Sub1(2, 5));
         list.add(new Sub2(8, "test"));
@@ -133,7 +132,7 @@ class TestSerialisation {
     }
 
     @Test
-    void testPolymorphic2() throws IOException, JAXBException {
+    void testPolymorphic2() throws IOException {
         final List<Object> list = new ArrayList<>();
         list.add(1);
         list.add(2);
@@ -147,16 +146,16 @@ class TestSerialisation {
     }
 
     @Test
-    void testSearchRequestSerialisation() throws IOException, JAXBException {
+    void testSearchRequestSerialisation() throws IOException {
         test(getSearchRequest(), SearchRequest.class, "testSearchRequestSerialisation");
     }
 
     @Test
-    void testSearchResponseSerialisation() throws IOException, JAXBException {
+    void testSearchResponseSerialisation() throws IOException {
         test(getSearchResponse(), SearchResponse.class, "testSearchResponseSerialisation");
     }
 
-    private <T> void test(final T objIn, final Class<T> type, final String testName) throws IOException, JAXBException {
+    private <T> void test(final T objIn, final Class<T> type, final String testName) throws IOException {
         testJSON(objIn, type, testName);
 //        testXML(objIn, type, testName);
     }

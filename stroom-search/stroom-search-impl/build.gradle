@@ -33,7 +33,6 @@ dependencies {
     implementation libs.eventLogging
     implementation libs.guice
     implementation libs.jackson.annotations
-    implementation libs.jaxb.api
     implementation libs.jakarta.inject
     implementation libs.kryo
     implementation libs.slf4j.api
