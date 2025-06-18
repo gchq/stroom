@@ -1,38 +1,46 @@
 package stroom.query.language.functions;
 
+import stroom.expression.api.DateTimeSettings;
+
+import stroom.query.language.functions.ExpressionContext;
+
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.time.temporal.ChronoUnit;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
+import java.util.function.Supplier;
 
-class TestCeilingDay extends AbstractFunctionTest<CeilingDay> {
+public class TestFloorYear extends AbstractFunctionTest<FloorYear> {
 
     @Override
-    Class<CeilingDay> getFunctionType() {
-        return CeilingDay.class;
+    Class<FloorYear> getFunctionType() {
+        return FloorYear.class;
     }
 
     @Override
-    protected Supplier<CeilingDay> getFunctionSupplier() {
-        return () -> new CeilingDay("ceilingDay", new ExpressionContext());
+    protected Supplier<FloorYear> getFunctionSupplier() {
+        return () -> new FloorYear("floorYear", new ExpressionContext());
     }
 
     @Override
     Stream<TestCase> getTestCases() {
-        final Instant time = LocalDateTime.of(2021, 1, 20, 6, 30, 55)
+        final Instant timeUTC = LocalDateTime.of(2025, 4, 7, 10, 30, 30)
                 .toInstant(ZoneOffset.UTC);
-
-        final Instant truncated = time.truncatedTo(ChronoUnit.DAYS)
-                .plus(1, ChronoUnit.DAYS);
+        final Instant truncatedUTC = LocalDateTime.ofInstant(timeUTC, ZoneOffset.UTC)
+                .withMonth(1)
+                .withDayOfMonth(1)
+                .withHour(0)
+                .withMinute(0)
+                .withSecond(0)
+                .withNano(0)
+                .toInstant(ZoneOffset.UTC);
 
         final ZoneId newYorkZone = ZoneId.of("America/New_York");
         final Instant timeNY = LocalDateTime.of(2025, 4, 7, 1, 30, 30)
                 .atZone(newYorkZone)
                 .toInstant();
-        final Instant truncatedNY = LocalDateTime.of(2025, 4, 7, 20, 0, 0)
+        final Instant truncatedNY = LocalDateTime.of(2024, 12, 31, 19, 0, 0)
                 .atZone(newYorkZone)
                 .toInstant();
 
@@ -40,19 +48,21 @@ class TestCeilingDay extends AbstractFunctionTest<CeilingDay> {
         final Instant timeTokyo = LocalDateTime.of(2025, 4, 7, 10, 30, 30)
                 .atZone(tokyoZone)
                 .toInstant();
-        final Instant truncatedTokyo = LocalDateTime.of(2025, 4, 8, 9, 0, 0)
+        final Instant truncatedTokyo = LocalDateTime.of(2025, 1, 1, 9, 0, 0)
                 .atZone(tokyoZone)
                 .toInstant();
 
+
         return Stream.of(
                 TestCase.of(
-                        "long date",
-                        ValDate.create(truncated.toEpochMilli()),
-                        ValLong.create(time.toEpochMilli())),
+                        "long date UTC",
+                        ValDate.create(truncatedUTC.toEpochMilli()),
+                        ValLong.create(timeUTC.toEpochMilli())),
                 TestCase.of(
-                        "string date",
-                        ValDate.create(truncated.toEpochMilli()),
-                        ValString.create(DateUtil.createNormalDateTimeString(time.toEpochMilli()))),
+                        "string date UTC",
+                        ValDate.create(truncatedUTC.toEpochMilli()),
+                        ValString.create(DateUtil.createNormalDateTimeString(timeUTC.toEpochMilli()))),
+
                 TestCase.of(
                         "long date New York",
                         ValDate.create(truncatedNY.toEpochMilli()),
@@ -65,4 +75,3 @@ class TestCeilingDay extends AbstractFunctionTest<CeilingDay> {
         );
     }
 }
-
