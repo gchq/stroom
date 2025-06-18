@@ -5,41 +5,57 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
     <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="gitRepoSettingsUrl" label="Git repository URL">
+        <form:FormGroup identity="gitRepoSettingsUrl"
+                        label="Git repository URL"
+                        helpText="URL to access the Git repository">
             <g:TextBox name="Repository URL"
                        title="The URL of the GIT repository"
                        ui:field="url" />
         </form:FormGroup>
-        <form:FormGroup identity="gitRepoSettingsUsername" label="Git repository username">
+        <form:FormGroup identity="gitRepoSettingsUsername"
+                        label="Git repository username"
+                        helpText="Username to authenticate against the Git repository. Can be empty.">
             <g:TextBox name="Repository username"
                        title="The username to access the GIT repository"
                        ui:field="username" />
         </form:FormGroup>
-        <form:FormGroup identity="gitRepoSettingsPassword" label="Git repository password">
+        <form:FormGroup identity="gitRepoSettingsPassword"
+                        label="Git repository password"
+                        helpText="Password to authenticate against the Git repository. Can be empty.">
             <g:PasswordTextBox name="Repository password"
                                title="The password to access the GIT repository"
                                ui:field="password" />
         </form:FormGroup>
-        <form:FormGroup identity="gitRepoSettingsBranch" label="Git branch">
+        <form:FormGroup identity="gitRepoSettingsBranch"
+                        label="Git branch"
+                        helpText="Branch of the Git repository to pull from or push to">
             <g:TextBox name="Branch"
                        title="The branch of the GIT repository"
                        ui:field="branch" />
         </form:FormGroup>
-        <form:FormGroup identity="gitRepoSettingsPath" label="Git path">
+        <form:FormGroup identity="gitRepoSettingsPath"
+                        label="Git path"
+                        helpText="Path within the Git repository that is the root of the Stroom content">
             <g:TextBox name="Path"
                        title="The path within the GIT repository"
                        ui:field="path" />
         </form:FormGroup>
-        <form:FormGroup identity="gitRepoSettingsCommit" label="Git commit">
+        <form:FormGroup identity="gitRepoSettingsCommit"
+                        label="Git commit"
+                        helpText="Hash of a Git commit that you want to pull. Makes the repository read-only.">
             <g:TextBox name="Commit"
                        title="The commit you want to pull from Git"
                        ui:field="commit" />
         </form:FormGroup>
-        <form:FormGroup identity="gitRemoteCommitName" label="Currently checked out commit">
+        <form:FormGroup identity="gitRemoteCommitName"
+                        label="Currently checked out commit"
+                        helpText="The hash of the Git commit that has been downloaded into Stroom">
             <g:Label title="The commit that is currently checked out"
                      ui:field="gitRemoteCommitName" />
         </form:FormGroup>
-        <form:FormGroup identity="gitRepoSettingsAutoPush" label="Automatically push">
+        <form:FormGroup identity="gitRepoSettingsAutoPush"
+                        label="Automatically push"
+                        helpText="Whether to automatically push any changes into Git">
             <tickbox:CustomCheckBox name="AutoPush"
                         title="Automatically push changes to the Git repository"
                         ui:field="autoPush" />
