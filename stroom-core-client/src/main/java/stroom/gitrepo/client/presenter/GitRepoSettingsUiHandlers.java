@@ -23,4 +23,9 @@ public interface GitRepoSettingsUiHandlers extends DirtyUiHandlers {
      */
     void onCheckForUpdates(TaskMonitorFactory taskMonitorFactory);
 
+    /**
+     * 'Set Credentials' button event handler.
+     */
+    void onShowCredentialsDialog(TaskMonitorFactory taskMonitorFactory);
+
 }
