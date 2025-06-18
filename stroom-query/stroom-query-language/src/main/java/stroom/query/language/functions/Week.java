@@ -42,7 +42,7 @@ class Week extends AbstractTimeFunction {
         super(expressionContext, name);
         final ZonedDateTime referenceTime = getReferenceTime();
         TemporalField fieldISO = WeekFields.of(Locale.UK).dayOfWeek();
-        ZonedDateTime time = referenceTime.with(fieldISO, 1); // Monday
+        ZonedDateTime time = referenceTime.with(fieldISO, 1);
         time = time.truncatedTo(ChronoUnit.DAYS);
         generator = new StaticValueGen(ValDate.create(time.toInstant().toEpochMilli()));
     }

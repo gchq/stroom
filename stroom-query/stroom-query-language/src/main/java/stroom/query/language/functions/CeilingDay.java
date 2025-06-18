@@ -16,7 +16,14 @@
 
 package stroom.query.language.functions;
 
+import stroom.query.language.functions.ExpressionContext;
+
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -38,8 +45,11 @@ class CeilingDay extends RoundDate {
     static final String NAME = "ceilingDay";
     private static final Calc CALC = new Calc();
 
-    public CeilingDay(final String name) {
+    private final ExpressionContext expressionContext;
+
+    public CeilingDay(final String name, final ExpressionContext expressionContext) {
         super(name);
+        this.expressionContext = expressionContext;
     }
 
     @Override
@@ -47,15 +57,21 @@ class CeilingDay extends RoundDate {
         return CALC;
     }
 
+    protected ZonedDateTime toZonedDateTime(final long epochMillis) {
+        final ZoneId zoneId = AbstractTimeFunction.getZoneId(expressionContext.getDateTimeSettings());
+        return Instant.ofEpochMilli(epochMillis).atZone(zoneId);
+    }
+
     static class Calc extends RoundDateCalculator {
 
         @Override
         protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            LocalDateTime result = dateTime.toLocalDate().atStartOfDay();
-            if (dateTime.isAfter(result)) {
-                result = result.plusDays(1);
+            ZonedDateTime zoned = dateTime.atZone(ZoneOffset.UTC);
+            ZonedDateTime startOfDay = zoned.truncatedTo(ChronoUnit.DAYS);
+            if (zoned.isAfter(startOfDay)) {
+                startOfDay = startOfDay.plusDays(1);
             }
-            return result;
+            return startOfDay.toLocalDateTime();
         }
     }
 }
