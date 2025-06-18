@@ -19,32 +19,26 @@ package stroom.query.language.functions;
 import stroom.query.api.DateTimeSettings;
 
 import java.text.ParseException;
-import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.Objects;
 
-abstract class AbstractTimeFunction extends AbstractFunction {
+abstract class AbstractDateTimeFunction extends AbstractFunction {
 
     private final ExpressionContext expressionContext;
+    final ZoneId zoneId;
 
-    public AbstractTimeFunction(final ExpressionContext expressionContext, final String name) {
-        super(name, 0, 0);
+    public AbstractDateTimeFunction(final ExpressionContext expressionContext,
+                                    final String name,
+                                    final int minParams,
+                                    final int maxParams) {
+        super(name, minParams, maxParams);
         this.expressionContext = expressionContext;
+        zoneId = getZoneId();
     }
 
-    ZonedDateTime getReferenceTime() {
+    private ZoneId getZoneId() {
         final DateTimeSettings dateTimeSettings = expressionContext.getDateTimeSettings();
-        final ZoneId zoneId = getZoneId(dateTimeSettings);
-        Objects.requireNonNull(dateTimeSettings.getReferenceTime(),
-                "referenceTime not set in searchRequest.dateTimeSettings");
-
-        final Instant instant = Instant.ofEpochMilli(dateTimeSettings.getReferenceTime());
-        return ZonedDateTime.ofInstant(instant, zoneId);
-    }
-
-    public static ZoneId getZoneId(final DateTimeSettings dateTimeSettings) {
         Objects.requireNonNull(dateTimeSettings, "dateTimeSettings not set in searchRequest");
         switch (dateTimeSettings.getTimeZone().getUse()) {
             case LOCAL -> {
@@ -71,11 +65,6 @@ abstract class AbstractTimeFunction extends AbstractFunction {
 
     @Override
     public boolean hasAggregate() {
-        return false;
-    }
-
-    @Override
-    public boolean requiresChildData() {
         return false;
     }
 }

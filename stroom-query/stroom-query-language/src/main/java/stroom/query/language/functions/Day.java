@@ -29,7 +29,7 @@ import java.time.temporal.ChronoUnit;
         signatures = @FunctionSignature(
                 description = "Returns the current date and time truncated to the start of the day.",
                 args = {}))
-class Day extends AbstractTimeFunction {
+class Day extends AbstractCurrentDateTimeFunction {
 
     static final String NAME = "day";
 

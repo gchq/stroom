@@ -29,7 +29,7 @@ import java.time.temporal.ChronoUnit;
         signatures = @FunctionSignature(
                 description = "Returns the current date and time to the nearest minute.",
                 args = {}))
-class Minute extends AbstractTimeFunction {
+class Minute extends AbstractCurrentDateTimeFunction {
 
     static final String NAME = "minute";
 
