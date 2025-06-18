@@ -75,17 +75,17 @@ public class PipelineDataMigration {
         return new PipelineDataBuilder().build();
     }
 
-    public void migrate(final Path file) {
-        try {
-            final String data = Files.readString(file);
-            if (data.startsWith("<")) {
-                final String json = JsonUtil.writeValueAsString(new PipelineDataMigration().migrate(data));
-                final String name = file.getFileName().toString().replaceAll(".xml$", ".json");
-                final Path path = file.getParent().resolve(name);
-                Files.writeString(path, json);
-            }
-        } catch (final Exception e) {
-            System.err.println(e.getMessage());
-        }
-    }
+//    public void migrate(final Path file) {
+//        try {
+//            final String data = Files.readString(file);
+//            if (data.startsWith("<")) {
+//                final String json = JsonUtil.writeValueAsString(new PipelineDataMigration().migrate(data));
+//                final String name = file.getFileName().toString().replaceAll(".xml$", ".json");
+//                final Path path = file.getParent().resolve(name);
+//                Files.writeString(path, json);
+//            }
+//        } catch (final Exception e) {
+//            System.err.println(e.getMessage());
+//        }
+//    }
 }
