@@ -4,7 +4,6 @@ import stroom.contentstore.client.presenter.ContentStorePresenter.ContentStoreVi
 import stroom.contentstore.shared.ContentStoreContentPack;
 import stroom.contentstore.shared.ContentStoreResource;
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.data.table.client.Refreshable;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.MultiSelectEvent;
@@ -18,8 +17,7 @@ import com.gwtplatform.mvp.client.View;
 /**
  * Represents the Content Tab of the UI when displaying the App Store.
  */
-public class ContentStorePresenter extends ContentTabPresenter<ContentStoreView>
-implements Refreshable {
+public class ContentStorePresenter extends ContentTabPresenter<ContentStoreView> {
 
     /** Widget to show the list of available content packs */
     private final ContentStoreContentPackListPresenter contentPackListPresenter;
@@ -105,20 +103,12 @@ implements Refreshable {
     }
 
     /**
-     * Called by GWT when the UI is refreshed
-     */
-    @Override
-    public void refresh() {
-        contentPackListPresenter.refresh();
-    }
-
-    /**
      * Handler for when a row is selected in the list of content packs.
      * Displays blank details if nothing is selected.
      * @param event The event (ignored - can be null)
      */
     private void contentPackListSelectionHandler(final MultiSelectEvent event) {
-        ContentStoreContentPack cp =
+        final ContentStoreContentPack cp =
                 contentPackListPresenter.getSelectionModel().getSelected();
         contentPackDetailsPresenter.setContentPack(cp);
     }
@@ -133,4 +123,13 @@ implements Refreshable {
          */
         SimplePanel getContentPackDetailsPanel();
     }
+
+    /**
+     * Redraws the list of content packs. Call this when something changes
+     * in the state of a content pack.
+     */
+    public void redrawList() {
+        this.contentPackListPresenter.redraw();
+    }
+
 }

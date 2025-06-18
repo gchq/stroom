@@ -5,7 +5,6 @@ import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.util.client.DataGridUtil;
@@ -28,8 +27,8 @@ import java.util.function.Consumer;
  * Content Tab.
  */
 public class ContentStoreContentPackListPresenter
-        extends MyPresenterWidget<PagerView>
-        implements Refreshable {
+        extends MyPresenterWidget<PagerView> {
+
     /** Table of content packs */
     final MyDataGrid<ContentStoreContentPack> dataGrid = new MyDataGrid<>();
 
@@ -69,7 +68,7 @@ public class ContentStoreContentPackListPresenter
         this.initColumns(dataGrid);
 
         // Hook up the data
-        this.dataProvider = createDataProvider(eventBus, view, restFactory);
+        dataProvider = createDataProvider(eventBus, view, restFactory);
         dataProvider.addDataDisplay(dataGrid);
 
         // Get notified when the data has loaded & load up the first item on the page
@@ -179,10 +178,10 @@ public class ContentStoreContentPackListPresenter
     }
 
     /**
-     * Refreshes the display by telling the data provider to refresh its data.
+     * Redraws this list so any state changes show up.
      */
-    public void refresh() {
-        dataProvider.refresh();
+    public void redraw() {
+        dataGrid.redraw();
     }
 
 }

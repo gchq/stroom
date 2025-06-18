@@ -3,7 +3,6 @@ package stroom.contentstore.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.contentstore.shared.ContentStoreContentPack;
 import stroom.contentstore.shared.ContentStoreCreateGitRepoRequest;
-import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
@@ -26,7 +25,7 @@ import javax.inject.Inject;
 
 public class ContentStoreContentPackDetailsPresenter
     extends SimplePanel
-    implements Refreshable, HasHandlers {
+    implements HasHandlers {
 
     /** Points to top level of this page. Needed for Alert dialogs. */
     private ContentStorePresenter contentStorePresenter = null;
@@ -284,18 +283,21 @@ public class ContentStoreContentPackDetailsPresenter
     private void btnCreateGitRepoClick() {
         if (contentPack != null) {
 
+            // Defensive copy of reference as everything is async
+            final ContentStoreContentPack cp = contentPack;
+
             // Ask for credentials if (contentPack.getGitNeedsAuth())
-            if (contentPack.getGitNeedsAuth()) {
+            if (cp.getGitNeedsAuth()) {
                 ShowPopupEvent.Builder builder = ShowPopupEvent.builder(credentialsDialog);
                 credentialsDialog.setupDialog(
-                        contentPack,
+                        cp,
                         builder);
                 builder.onHideRequest(e -> {
                             if (e.isOk()) {
                                 if (credentialsDialog.isValid()) {
                                     // Create the GitRepo with the given credentials
                                     e.hide();
-                                    requestGitRepoCreation(contentPack,
+                                    requestGitRepoCreation(cp,
                                             credentialsDialog.getView().getUsername(),
                                             credentialsDialog.getView().getPassword());
                                 } else {
@@ -313,7 +315,7 @@ public class ContentStoreContentPackDetailsPresenter
 
             } else {
                 // No authentication needed
-                requestGitRepoCreation(contentPack, null, null);
+                requestGitRepoCreation(cp, null, null);
             }
         }
     }
@@ -342,6 +344,9 @@ public class ContentStoreContentPackDetailsPresenter
                                 "Creation success",
                                 result.getMessage(),
                                 () -> RefreshExplorerTreeEvent.fire(contentStorePresenter));
+                        // Mark the content pack as Installed
+                        cp.setIsInstalled(true);
+                        contentStorePresenter.redrawList();
                     } else {
                         AlertEvent.fireError(contentStorePresenter,
                                 "Create failed",
@@ -357,7 +362,6 @@ public class ContentStoreContentPackDetailsPresenter
                 })
                 .taskMonitorFactory(btnCreateGitRepo)
                 .exec();
-
 
     }
 
