@@ -19,7 +19,8 @@ import java.time.format.DateTimeParseException;
                                 argType = ValLong.class),
                         @FunctionArg(
                                 name = "duration",
-                                description = "The duration to round by in ISO-8601 format (e.g., 'PT5M' for 5 minutes).",
+                                description = "The duration to round by in ISO-8601 format " +
+                                              "(e.g., 'PT5M' for 5 minutes).",
                                 argType = ValString.class),
                         @FunctionArg(
                                 name = "offset",

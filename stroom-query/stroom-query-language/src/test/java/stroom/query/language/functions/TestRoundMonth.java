@@ -2,14 +2,16 @@ package stroom.query.language.functions;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.stream.Stream;
 
 public class TestRoundMonth extends AbstractFunctionTest<RoundMonth> {
 
     @Override
-    Class<RoundMonth> getFunctionType() { return RoundMonth.class; }
+    Class<RoundMonth> getFunctionType() {
+        return RoundMonth.class;
+    }
 
     @Override
     Stream<TestCase> getTestCases() {
@@ -77,5 +79,4 @@ public class TestRoundMonth extends AbstractFunctionTest<RoundMonth> {
                         ValLong.create(timeWithZone.toEpochMilli()))
         );
     }
-
 }

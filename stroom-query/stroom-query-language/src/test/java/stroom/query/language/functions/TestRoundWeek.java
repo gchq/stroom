@@ -8,7 +8,9 @@ import java.util.stream.Stream;
 public class TestRoundWeek extends AbstractFunctionTest<RoundWeek> {
 
     @Override
-    Class<RoundWeek> getFunctionType() { return RoundWeek.class; }
+    Class<RoundWeek> getFunctionType() {
+        return RoundWeek.class;
+    }
 
     @Override
     Stream<TestCase> getTestCases() {
@@ -71,5 +73,4 @@ public class TestRoundWeek extends AbstractFunctionTest<RoundWeek> {
                         ValLong.create(timeWithZone.toEpochMilli()))
         );
     }
-
 }

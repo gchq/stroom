@@ -20,12 +20,12 @@ import stroom.query.language.functions.ref.StoredValues;
 
 import java.text.ParseException;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.function.Supplier;
 
 @FunctionDef(
-        name = Week.NAME,
+        name = IsWeekend.NAME,
         commonCategory = FunctionCategory.DATE,
         commonSubCategories = "Variable",
         commonReturnType = ValDate.class,
@@ -36,11 +36,13 @@ import java.util.function.Supplier;
 class IsWeekend extends AbstractFunction {
 
     static final String NAME = "isWeekend";
+    private final ZoneId zoneId;
 
     private Function function;
 
-    public IsWeekend(final String name) {
-        super(NAME, 1, 1);
+    public IsWeekend(final ExpressionContext expressionContext, final String name) {
+        super(name, 1, 1);
+        this.zoneId = AbstractTimeFunction.getZoneId(expressionContext.getDateTimeSettings());
     }
 
     @Override
@@ -88,9 +90,9 @@ class IsWeekend extends AbstractFunction {
             return ValNull.INSTANCE;
         }
 
-        LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(val), ZoneOffset.UTC);
-        int dayOfWeek = dateTime.get(java.time.temporal.ChronoField.DAY_OF_WEEK);
-        boolean isWeekend = (dayOfWeek == 6 || dayOfWeek == 7); // Saturday or Sunday
+        final ZonedDateTime zonedDateTime = Instant.ofEpochMilli(val).atZone(zoneId);
+        final int dayOfWeek = zonedDateTime.get(java.time.temporal.ChronoField.DAY_OF_WEEK);
+        final boolean isWeekend = (dayOfWeek == 6 || dayOfWeek == 7); // Saturday or Sunday
         return ValBoolean.create(isWeekend);
     }
 }

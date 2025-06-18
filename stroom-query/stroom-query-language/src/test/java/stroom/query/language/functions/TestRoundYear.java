@@ -8,7 +8,9 @@ import java.util.stream.Stream;
 public class TestRoundYear extends AbstractFunctionTest<RoundYear> {
 
     @Override
-    Class<RoundYear> getFunctionType() { return RoundYear.class; }
+    Class<RoundYear> getFunctionType() {
+        return RoundYear.class;
+    }
 
     @Override
     Stream<TestCase> getTestCases() {
@@ -73,5 +75,4 @@ public class TestRoundYear extends AbstractFunctionTest<RoundYear> {
                         ValLong.create(timeWithZone.toEpochMilli()))
         );
     }
-
 }

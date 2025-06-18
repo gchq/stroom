@@ -11,11 +11,13 @@ import java.util.stream.Stream;
 public class TestFloorDay extends AbstractFunctionTest<FloorDay> {
 
     @Override
-    Class<FloorDay> getFunctionType() { return FloorDay.class; }
+    Class<FloorDay> getFunctionType() {
+        return FloorDay.class;
+    }
 
     @Override
     protected Supplier<FloorDay> getFunctionSupplier() {
-        return () -> new FloorDay("floorDay", new ExpressionContext());
+        return () -> new FloorDay(new ExpressionContext(), "floorDay");
     }
 
     @Override
@@ -62,4 +64,3 @@ public class TestFloorDay extends AbstractFunctionTest<FloorDay> {
         );
     }
 }
-

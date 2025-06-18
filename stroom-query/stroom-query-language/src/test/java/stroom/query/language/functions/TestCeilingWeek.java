@@ -3,13 +3,14 @@ package stroom.query.language.functions;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.time.temporal.ChronoUnit;
 import java.util.stream.Stream;
 
 public class TestCeilingWeek extends AbstractFunctionTest<CeilingWeek> {
 
     @Override
-    Class<CeilingWeek> getFunctionType() { return CeilingWeek.class; }
+    Class<CeilingWeek> getFunctionType() {
+        return CeilingWeek.class;
+    }
 
     @Override
     Stream<TestCase> getTestCases() {
@@ -32,5 +33,4 @@ public class TestCeilingWeek extends AbstractFunctionTest<CeilingWeek> {
                         ValString.create(DateUtil.createNormalDateTimeString(time.toEpochMilli())))
         );
     }
-
 }

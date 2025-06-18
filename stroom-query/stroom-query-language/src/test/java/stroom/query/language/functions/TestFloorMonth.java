@@ -16,7 +16,7 @@ public class TestFloorMonth extends AbstractFunctionTest<FloorMonth> {
 
     @Override
     protected Supplier<FloorMonth> getFunctionSupplier() {
-        return () -> new FloorMonth("floorMonth", new ExpressionContext());
+        return () -> new FloorMonth(new ExpressionContext(), "floorMonth");
     }
 
 

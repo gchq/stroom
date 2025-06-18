@@ -34,7 +34,7 @@ import java.time.temporal.ChronoUnit;
                 args = @FunctionArg(
                         name = "time",
                         description = "The time to round in milliseconds since the epoch or as a string " +
-                                "formatted using the default date format.",
+                                      "formatted using the default date format.",
                         argType = Val.class)))
 class FloorDay extends RoundDate {
 
@@ -43,7 +43,7 @@ class FloorDay extends RoundDate {
 
     private final ExpressionContext expressionContext;
 
-    public FloorDay(final String name, final ExpressionContext expressionContext) {
+    public FloorDay(final ExpressionContext expressionContext, final String name) {
         super(name);
         this.expressionContext = expressionContext;
     }
@@ -58,11 +58,16 @@ class FloorDay extends RoundDate {
         return Instant.ofEpochMilli(epochMillis).atZone(zoneId);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     static class Calc extends RoundDateCalculator {
+
         @Override
         protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            ZonedDateTime zoned = dateTime.atZone(ZoneId.of("UTC"));
-            ZonedDateTime floored = zoned.truncatedTo(ChronoUnit.DAYS);
+            final ZonedDateTime zoned = dateTime.atZone(ZoneId.of("UTC"));
+            final ZonedDateTime floored = zoned.truncatedTo(ChronoUnit.DAYS);
             return floored.toLocalDateTime();
         }
     }

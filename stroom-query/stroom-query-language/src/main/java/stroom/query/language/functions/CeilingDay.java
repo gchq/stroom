@@ -16,13 +16,11 @@
 
 package stroom.query.language.functions;
 
-import stroom.query.language.functions.ExpressionContext;
-
+import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
@@ -38,7 +36,7 @@ import java.time.temporal.ChronoUnit;
                         @FunctionArg(
                                 name = "time",
                                 description = "The time to round in milliseconds since the epoch or as a string " +
-                                        "formatted using the default date format.",
+                                              "formatted using the default date format.",
                                 argType = Val.class)}))
 class CeilingDay extends RoundDate {
 

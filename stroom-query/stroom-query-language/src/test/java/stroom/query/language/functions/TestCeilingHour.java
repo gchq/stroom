@@ -11,7 +11,9 @@ import java.util.stream.Stream;
 class TestCeilingHour extends AbstractFunctionTest<CeilingHour> {
 
     @Override
-    Class<CeilingHour> getFunctionType() { return CeilingHour.class; }
+    Class<CeilingHour> getFunctionType() {
+        return CeilingHour.class;
+    }
 
     @Override
     protected Supplier<CeilingHour> getFunctionSupplier() {

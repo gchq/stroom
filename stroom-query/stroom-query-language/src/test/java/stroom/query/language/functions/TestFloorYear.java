@@ -4,8 +4,8 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.util.stream.Stream;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 public class TestFloorYear extends AbstractFunctionTest<FloorYear> {
 
@@ -16,7 +16,7 @@ public class TestFloorYear extends AbstractFunctionTest<FloorYear> {
 
     @Override
     protected Supplier<FloorYear> getFunctionSupplier() {
-        return () -> new FloorYear("floorYear", new ExpressionContext());
+        return () -> new FloorYear(new ExpressionContext(), "floorYear");
     }
 
     @Override

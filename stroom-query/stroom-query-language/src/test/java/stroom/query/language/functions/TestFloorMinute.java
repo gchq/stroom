@@ -9,7 +9,9 @@ import java.util.stream.Stream;
 public class TestFloorMinute extends AbstractFunctionTest<FloorMinute> {
 
     @Override
-    Class<FloorMinute> getFunctionType() { return FloorMinute.class; }
+    Class<FloorMinute> getFunctionType() {
+        return FloorMinute.class;
+    }
 
     @Override
     Stream<TestCase> getTestCases() {
@@ -29,5 +31,4 @@ public class TestFloorMinute extends AbstractFunctionTest<FloorMinute> {
                         ValString.create(DateUtil.createNormalDateTimeString(time.toEpochMilli())))
         );
     }
-
 }

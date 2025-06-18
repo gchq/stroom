@@ -19,7 +19,6 @@ package stroom.query.language.functions;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -33,14 +32,14 @@ import java.time.temporal.ChronoUnit;
                 args = @FunctionArg(
                         name = "time",
                         description = "The time to round in milliseconds since the epoch or as a string " +
-                                "formatted using the default date format.",
+                                      "formatted using the default date format.",
                         argType = Val.class)))
 class FloorYear extends RoundDate {
 
     static final String NAME = "floorYear";
     private final ZoneId zoneId;
 
-    public FloorYear(final String name, final ExpressionContext expressionContext) {
+    public FloorYear(final ExpressionContext expressionContext, final String name) {
         super(name);
         this.zoneId = AbstractTimeFunction.getZoneId(expressionContext.getDateTimeSettings());
     }
@@ -49,6 +48,10 @@ class FloorYear extends RoundDate {
     protected RoundCalculator getCalculator() {
         return new FloorYear.Calc(zoneId);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     static class Calc extends RoundDateCalculator {
 
