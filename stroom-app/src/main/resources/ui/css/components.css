@@ -2550,6 +2550,13 @@ button.main-menu svg {
     height: 220px;
     resize: none;
 }
+/* Settings form */
+.gitrepo-settings-form button.Button {
+    width: 400px;
+}
+.gitrepo-settings-form input[type="text"] {
+    width: 400px;
+}
 .multiChooser td {
     vertical-align: middle;
 }

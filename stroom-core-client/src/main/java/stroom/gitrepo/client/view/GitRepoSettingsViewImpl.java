@@ -16,10 +16,10 @@
 
 package stroom.gitrepo.client.view;
 
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.gitrepo.client.presenter.GitRepoSettingsPresenter.GitRepoSettingsView;
 import stroom.gitrepo.client.presenter.GitRepoSettingsUiHandlers;
 import stroom.widget.button.client.Button;
+import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -28,7 +28,6 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -39,43 +38,52 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
  */
 public class GitRepoSettingsViewImpl
         extends ViewWithUiHandlers<GitRepoSettingsUiHandlers>
-        implements GitRepoSettingsView, ReadOnlyChangeHandler {
+        implements GitRepoSettingsView {
 
     /** The widget that this represents */
     private final Widget widget;
 
-    /** Whether this is readonly */
-    private boolean readOnly = false;
+    @UiField
+    FormGroup fgContentStore;
 
     @UiField
-    TextBox url;
+    Label lblContentStore;
 
     @UiField
-    TextBox username;
+    FormGroup fgContentPack;
 
     @UiField
-    PasswordTextBox password;
+    Label lblContentPack;
 
     @UiField
-    TextBox branch;
+    TextBox txtGitUrl;
 
     @UiField
-    TextBox path;
+    TextBox txtGitBranch;
 
     @UiField
-    TextBox commit;
+    TextBox txtGitPath;
 
     @UiField
-    Label gitRemoteCommitName;
+    Button btnSetCredentials;
 
     @UiField
-    CustomCheckBox autoPush;
+    TextBox txtGitCommitToPull;
 
     @UiField
-    Button gitRepoPush;
+    Label lblGitRemoteCommitName;
 
     @UiField
-    Button gitRepoPull;
+    FormGroup fgGitAutoPush;
+
+    @UiField
+    CustomCheckBox chkGitAutoPush;
+
+    @UiField
+    Button btnGitRepoPush;
+
+    @UiField
+    Button btnGitRepoPull;
 
     @UiField
     Button btnCheckForUpdates;
@@ -93,89 +101,73 @@ public class GitRepoSettingsViewImpl
     }
 
     @Override
+    public void setContentStoreName(String contentStoreName) {
+        this.lblContentStore.setText(contentStoreName);
+    }
+
+    @Override
+    public void setContentPackName(String contentPackName) {
+        this.lblContentPack.setText(contentPackName);
+    }
+
+    @Override
     public String getUrl() {
-        return url.getText();
+        return txtGitUrl.getText();
     }
 
     @Override
     public void setUrl(final String url) {
-        this.url.setText(url);
-    }
-
-    @Override
-    public String getUsername() {
-        return username.getText();
-    }
-
-    @Override
-    public void setUsername(final String username) {
-        this.username.setText(username);
-    }
-
-    @Override
-    public String getPassword() {
-        return password.getText();
-    }
-
-    @Override
-    public void setPassword(final String password) {
-        this.password.setText(password);
+        this.txtGitUrl.setText(url);
     }
 
     @Override
     public String getBranch() {
-        return branch.getText();
+        return txtGitBranch.getText();
     }
 
     @Override
     public void setBranch(final String branch) {
-        this.branch.setText(branch);
+        this.txtGitBranch.setText(branch);
     }
 
     @Override
     public String getPath() {
-        return path.getText();
+        return txtGitPath.getText();
     }
 
     @Override
     public void setPath(final String path) {
-        this.path.setText(path);
+        this.txtGitPath.setText(path);
     }
 
     @Override
-    public String getCommit() {
-        return commit.getText();
+    public String getCommitToPull() {
+        return txtGitCommitToPull.getText();
     }
 
     @Override
-    public void setCommit(String commit) {
-        this.commit.setText(commit);
+    public void setCommitToPull(String commit) {
+        this.txtGitCommitToPull.setText(commit);
     }
 
     @Override
     public void setGitRemoteCommitName(String commitName) {
-        this.gitRemoteCommitName.setText(commitName);
+        this.lblGitRemoteCommitName.setText(commitName);
     }
 
     @Override
     public Boolean isAutoPush() {
-        return this.autoPush.getValue();
+        return this.chkGitAutoPush.getValue();
     }
 
     @Override
     public void setAutoPush(final Boolean autoPush) {
         // Objects.requireNonNullElse() not defined for GWT
         if (autoPush == null) {
-            this.autoPush.setValue(Boolean.FALSE);
+            this.chkGitAutoPush.setValue(Boolean.FALSE);
         } else {
-            this.autoPush.setValue(autoPush);
+            this.chkGitAutoPush.setValue(autoPush);
         }
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        this.setState();
     }
 
     /**
@@ -186,40 +178,65 @@ public class GitRepoSettingsViewImpl
     @Override
     public void setState() {
 
-        if (this.readOnly) {
-            // Everything is disabled
-            url.setEnabled(false);
-            username.setEnabled(false);
-            password.setEnabled(false);
-            branch.setEnabled(false);
-            path.setEnabled(false);
-            commit.setEnabled(false);
-            autoPush.setEnabled(false);
-            gitRepoPush.setEnabled(false);
-            gitRepoPull.setEnabled(false);
+        if (!lblContentStore.getText().isEmpty()) {
+            // We've got a Content Pack so everything is readonly
+            fgContentStore.setVisible(true);
+            fgContentPack.setVisible(true);
+            txtGitUrl.setVisible(true);
+            txtGitUrl.setEnabled(false);
+            txtGitBranch.setVisible(true);
+            txtGitBranch.setEnabled(false);
+            txtGitPath.setVisible(true);
+            txtGitPath.setEnabled(false);
+            btnSetCredentials.setVisible(true);
+            txtGitCommitToPull.setVisible(true);
+            txtGitCommitToPull.setEnabled(false);
+            fgGitAutoPush.setVisible(false);
+            btnGitRepoPush.setVisible(false);
 
         } else {
-            // Not readonly so enable most stuff
-            url.setEnabled(true);
-            username.setEnabled(true);
-            password.setEnabled(true);
-            branch.setEnabled(true);
-            path.setEnabled(true);
-            commit.setEnabled(true);
-            gitRepoPull.setEnabled(true);
+            // Not a Content Pack so allow editing
+            fgContentStore.setVisible(false);
+            fgContentPack.setVisible(false);
+            txtGitUrl.setVisible(true);
+            txtGitUrl.setEnabled(true);
+            txtGitBranch.setVisible(true);
+            txtGitBranch.setEnabled(true);
+            txtGitPath.setVisible(true);
+            txtGitPath.setEnabled(true);
+            btnSetCredentials.setVisible(true);
+            txtGitCommitToPull.setVisible(true);
+            txtGitCommitToPull.setEnabled(true);
 
-            // Commit hash => Git cannot accept pushes
-            if (commit.getText().isEmpty()) {
-                // Can push manually or automatically
-                autoPush.setEnabled(true);
-                gitRepoPush.setEnabled(true);
+            // Is commit specified? If not can push to Git
+            // as long as the URL is specified
+            if (txtGitCommitToPull.getText().isEmpty()) {
+                fgGitAutoPush.setVisible(true);
+                btnGitRepoPush.setVisible(true);
+
+                if (!txtGitUrl.getText().isEmpty()) {
+                    chkGitAutoPush.setEnabled(true);
+                    btnGitRepoPush.setEnabled(true);
+                } else {
+                    chkGitAutoPush.setEnabled(false);
+                    btnGitRepoPush.setEnabled(false);
+                }
 
             } else {
-                // Commit hash is specified so cannot push manually or automatically
-                autoPush.setEnabled(false);
-                gitRepoPush.setEnabled(false);
+                fgGitAutoPush.setVisible(false);
+                btnGitRepoPush.setVisible(false);
             }
         }
+
+        // Can pull and check for updates if URL is set
+        if (!txtGitUrl.getText().isEmpty()) {
+            btnGitRepoPull.setEnabled(true);
+            btnCheckForUpdates.setEnabled(true);
+        } else {
+            btnGitRepoPull.setEnabled(false);
+            btnCheckForUpdates.setEnabled(false);
+        }
+
     }
 
     /**
@@ -227,7 +244,10 @@ public class GitRepoSettingsViewImpl
      * @param e Event from the UI widget. Ignored. Can be null.
      */
     @SuppressWarnings("unused")
-    @UiHandler({"url", "username", "password", "branch", "path", "commit"})
+    @UiHandler({"txtGitUrl",
+            "txtGitBranch",
+            "txtGitPath",
+            "txtGitCommitToPull"})
     public void onWidgetValueChange(@SuppressWarnings("unused") final ValueChangeEvent<String> e) {
         if (getUiHandlers() != null) {
             getUiHandlers().onDirty();
@@ -240,7 +260,7 @@ public class GitRepoSettingsViewImpl
      * @param event Event from the UI widget. Ignored. Can be null.
      */
     @SuppressWarnings("unused")
-    @UiHandler({"autoPush"})
+    @UiHandler({"chkGitAutoPush"})
     public void onAutoPushClick(@SuppressWarnings("unused") final ClickEvent event) {
         if (getUiHandlers() != null) {
             getUiHandlers().onDirty();
@@ -249,15 +269,28 @@ public class GitRepoSettingsViewImpl
     }
 
     /**
+     * Handles 'Set Credentials' button clicks.
+     * Passes the button to display the wait icon.
+     * @param event The button push event.
+     */
+    @SuppressWarnings("unused")
+    @UiHandler("btnSetCredentials")
+    public void onBtnSetCredentialsClick(@SuppressWarnings("unused") final ClickEvent event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onShowCredentialsDialog(btnSetCredentials);
+        }
+    }
+
+    /**
      * Handles 'Push to Git' button clicks.
      * Passes the button to display the wait icon.
      * @param event The button push event.
      */
     @SuppressWarnings("unused")
-    @UiHandler("gitRepoPush")
+    @UiHandler("btnGitRepoPush")
     public void onGitRepoPushClick(@SuppressWarnings("unused") final ClickEvent event) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onGitRepoPush(gitRepoPush);
+            getUiHandlers().onGitRepoPush(btnGitRepoPush);
         }
     }
 
@@ -267,10 +300,10 @@ public class GitRepoSettingsViewImpl
      * @param event The button push event. Ignored. Can be null.
      */
     @SuppressWarnings("unused")
-    @UiHandler("gitRepoPull")
+    @UiHandler("btnGitRepoPull")
     public void onGitRepoPullClick(@SuppressWarnings("unused") final ClickEvent event) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onGitRepoPull(gitRepoPull);
+            getUiHandlers().onGitRepoPull(btnGitRepoPull);
         }
     }
 

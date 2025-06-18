@@ -21,7 +21,6 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.gitrepo.shared.GitRepoPushDto;
@@ -53,6 +52,11 @@ public class GitRepoSettingsPresenter
     private final GitRepoCommitDialogPresenter commitDialog;
 
     /**
+     * Shows the credentials dialog box.
+     */
+    private final GitRepoCredentialsDialogPresenter credentialsDialog;
+
+    /**
      * Server REST API.
      */
     private static final GitRepoResource GIT_REPO_RESOURCE = GWT.create(GitRepoResource.class);
@@ -67,23 +71,31 @@ public class GitRepoSettingsPresenter
     public GitRepoSettingsPresenter(final EventBus eventBus,
                                     final GitRepoSettingsView view,
                                     final RestFactory restFactory,
-                                    final GitRepoCommitDialogPresenter commitDialog) {
+                                    final GitRepoCommitDialogPresenter commitDialog,
+                                    final GitRepoCredentialsDialogPresenter credentialsDialog) {
         super(eventBus, view);
         this.restFactory = restFactory;
         view.setUiHandlers(this);
         this.commitDialog = commitDialog;
+        this.credentialsDialog = credentialsDialog;
     }
 
     @Override
     protected void onRead(final DocRef docRef, final GitRepoDoc doc, final boolean readOnly) {
         gitRepoDoc = doc;
-        var view = this.getView();
+
+        GitRepoSettingsView view = this.getView();
+        if (doc.getContentStoreMetadata() != null) {
+            view.setContentStoreName(doc.getContentStoreMetadata().getOwnerName());
+            view.setContentPackName(doc.getName());
+        } else {
+            view.setContentStoreName("");
+            view.setContentPackName("");
+        }
         view.setUrl(doc.getUrl());
-        view.setUsername(doc.getUsername());
-        view.setPassword(doc.getPassword());
         view.setBranch(doc.getBranch());
         view.setPath(doc.getPath());
-        view.setCommit(doc.getCommit());
+        view.setCommitToPull(doc.getCommit());
         view.setAutoPush(doc.isAutoPush());
         view.setGitRemoteCommitName(doc.getGitRemoteCommitName());
 
@@ -93,13 +105,11 @@ public class GitRepoSettingsPresenter
 
     @Override
     protected GitRepoDoc onWrite(final GitRepoDoc doc) {
-        var view = this.getView();
+        GitRepoSettingsView view = this.getView();
         doc.setUrl(view.getUrl());
-        doc.setUsername(view.getUsername());
-        doc.setPassword(view.getPassword());
         doc.setBranch(view.getBranch());
         doc.setPath(view.getPath());
-        doc.setCommit(view.getCommit());
+        doc.setCommit(view.getCommitToPull());
 
         // Only save autoPush = true if we can push i.e. no commit hash ref
         if (doc.getCommit().isEmpty()) {
@@ -257,20 +267,46 @@ public class GitRepoSettingsPresenter
         }
     }
 
+    /**
+     * Called from View when the Set Credentials button is pressed.
+     */
+    @Override
+    public void onShowCredentialsDialog(TaskMonitorFactory taskMonitorFactory) {
+        ShowPopupEvent.Builder builder = ShowPopupEvent.builder(credentialsDialog);
+        credentialsDialog.setupDialog(gitRepoDoc, builder);
+        builder.onHideRequest(e -> {
+                    if (e.isOk()) {
+                        // OK pressed
+                        if (credentialsDialog.isValid()) {
+                            // All good
+                            e.hide();
+                            // Store the values in the GitRepoDoc
+                            gitRepoDoc.setUsername(credentialsDialog.getView().getUsername());
+                            gitRepoDoc.setPassword(credentialsDialog.getView().getPassword());
+                        } else {
+                            // Something wrong
+                            AlertEvent.fireWarn(credentialsDialog,
+                                    credentialsDialog.getValidationMessage(),
+                                    e::reset);
+                        }
+                    } else {
+                        // Cancel pressed
+                        e.hide();
+                    }
+                })
+                .fire();
+    }
+
     public interface GitRepoSettingsView
-            extends View, ReadOnlyChangeHandler, HasUiHandlers<GitRepoSettingsUiHandlers> {
+            extends View, HasUiHandlers<GitRepoSettingsUiHandlers> {
+
+        void setContentStoreName(String contentStoreName);
+
+        void setContentPackName(String contentPackName);
 
         void setUrl(String url);
 
         String getUrl();
-
-        String getUsername();
-
-        void setUsername(final String username);
-
-        String getPassword();
-
-        void setPassword(final String password);
 
         String getBranch();
 
@@ -280,9 +316,9 @@ public class GitRepoSettingsPresenter
 
         void setPath(final String directory);
 
-        String getCommit();
+        String getCommitToPull();
 
-        void setCommit(String commit);
+        void setCommitToPull(String commit);
 
         void setGitRemoteCommitName(String remoteCommitName);
 
