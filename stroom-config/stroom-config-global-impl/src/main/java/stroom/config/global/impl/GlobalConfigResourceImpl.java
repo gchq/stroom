@@ -25,6 +25,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.rest.RestUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.Unauthenticated;
@@ -286,8 +287,9 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     @Timed
     @Override
     public ExtendedUiConfig fetchExtendedUiConfig() {
-        final IdpType idpType = openIdConfigProvider.get().getIdentityProviderType();
-        final boolean isExternalIdp = idpType != null && idpType.isExternal();
+        final boolean isExternalIdp = NullSafe.test(
+                openIdConfigProvider.get().getIdentityProviderType(),
+                IdpType::isExternal);
 
         // Add additional back-end config that is also need in the UI without having to expose
         // the back-end config classes.

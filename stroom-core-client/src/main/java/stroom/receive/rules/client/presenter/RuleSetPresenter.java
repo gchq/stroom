@@ -99,7 +99,7 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
         super(eventBus, view);
         this.ruleSetSettingsPresenter = ruleSetSettingsPresenter;
         registerHandler(this.ruleSetSettingsPresenter.addDirtyHandler(event -> {
-            GWT.log("dirty event from ruleSetSettingsPresenter: " + event.isDirty());
+//            GWT.log("dirty event from ruleSetSettingsPresenter: " + event.isDirty());
             if (event.isDirty()) {
                 setDirty(true);
             }
@@ -129,7 +129,6 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
         hasSaveRegistry.register(this);
         this.saveButton = SvgButton.create(SvgPresets.SAVE.title("Save all rules"));
         this.saveButton.setEnabled(false);
-
         this.warningButton = SvgButton.create(SvgPresets.ALERT.title("Show Warnings"));
 
         toolbar = new ButtonPanel();

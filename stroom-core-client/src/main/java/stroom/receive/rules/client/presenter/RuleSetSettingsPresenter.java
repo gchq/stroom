@@ -46,7 +46,6 @@ import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.SafeHtmlUtil;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.inject.Inject;
@@ -455,7 +454,7 @@ public class RuleSetSettingsPresenter
     }
 
     private void updateButtons() {
-        GWT.log("isReadOnly: " + isReadOnly());
+//        GWT.log("isReadOnly: " + isReadOnly());
         final boolean loadedPolicy = rules != null;
         if (loadedPolicy) {
             final MultiSelectionModel<ReceiveDataRule> selectionModel = listPresenter.getSelectionModel();

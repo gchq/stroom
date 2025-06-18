@@ -20,7 +20,6 @@ package stroom.receive.rules.client;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
-import stroom.dispatch.client.RestFactory;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.receive.rules.client.presenter.RuleSetPresenter;
 import stroom.security.client.api.ClientSecurityContext;
@@ -39,74 +38,18 @@ import javax.inject.Singleton;
 @Singleton
 public class ReceiveDataRuleSetPlugin extends MonitoringPlugin<RuleSetPresenter> {
 
-//    private static final ReceiveDataRuleSetResource RULES_RESOURCE = GWT.create(ReceiveDataRuleSetResource.class);
-
-    private final Provider<RuleSetPresenter> editorProvider;
-    private final RestFactory restFactory;
-
     @Inject
     public ReceiveDataRuleSetPlugin(final EventBus eventBus,
                                     final Provider<RuleSetPresenter> editorProvider,
-                                    final RestFactory restFactory,
                                     final ContentManager contentManager,
                                     final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, editorProvider, securityContext);
-        this.editorProvider = editorProvider;
-        this.restFactory = restFactory;
     }
-
-//    @Override
-//    protected DocumentEditPresenter<?, ?> createEditor() {
-//        return editorProvider.get();
-//    }
-//
-//    @Override
-//    public void load(final DocRef docRef,
-//                     final Consumer<ReceiveDataRules> resultConsumer,
-//                     final RestErrorHandler errorHandler,
 
     @Override
     protected void onBind() {
         super.onBind();
-
-
     }
-
-
-//                     final TaskMonitorFactory taskMonitorFactory) {
-//        restFactory
-//                .create(RULES_RESOURCE)
-//                .method(res -> res.fetch(docRef.getUuid()))
-//                .onSuccess(resultConsumer)
-//                .onFailure(errorHandler)
-//                .taskMonitorFactory(taskMonitorFactory)
-//                .exec();
-//    }
-//
-//    @Override
-//    public void save(final DocRef docRef,
-//                     final ReceiveDataRules document,
-//                     final Consumer<ReceiveDataRules> resultConsumer,
-//                     final RestErrorHandler errorHandler,
-//                     final TaskMonitorFactory taskMonitorFactory) {
-//        restFactory
-//                .create(RULES_RESOURCE)
-//                .method(res -> res.update(document.getUuid(), document))
-//                .onSuccess(resultConsumer)
-//                .onFailure(errorHandler)
-//                .taskMonitorFactory(taskMonitorFactory)
-//                .exec();
-//    }
-//
-//    @Override
-//    public String getType() {
-//        return ReceiveDataRules.TYPE;
-//    }
-//
-//    @Override
-//    protected DocRef getDocRef(final ReceiveDataRules document) {
-//        return new DocRef(document.getType(), document.getUuid(), document.getName());
-//    }
 
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {

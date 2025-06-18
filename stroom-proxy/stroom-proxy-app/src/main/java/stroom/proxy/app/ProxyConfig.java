@@ -329,6 +329,26 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return true;
     }
 
+    @JsonIgnore
+    @SuppressWarnings("unused")
+    @ValidationMethod(message =
+            "downstreamHost.enabled must be set to true if receiptCheckMode is RECEIPT_POLICY " +
+            "or FEED_STATUS.")
+    public boolean isDownstreamValid() {
+        final ReceiptCheckMode receiptCheckMode = NullSafe.get(
+                getReceiveDataConfig(),
+                ReceiveDataConfig::getReceiptCheckMode);
+        if (receiptCheckMode == ReceiptCheckMode.RECEIPT_POLICY
+            || receiptCheckMode == ReceiptCheckMode.FEED_STATUS) {
+            return NullSafe.getOrElse(
+                    getDownstreamHostConfig(),
+                    DownstreamHostConfig::isEnabled,
+                    false);
+        } else {
+            return true;
+        }
+    }
+
 //    @JsonIgnore
 //    @SuppressWarnings("unused")
 //    @ValidationMethod(message = "Only one forwarder is permitted if any forwarder has instant=true.")
