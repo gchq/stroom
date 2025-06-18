@@ -16,16 +16,13 @@
 
 package stroom.query.language.functions;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = FloorHour.NAME,
         commonCategory = FunctionCategory.DATE,
-        commonSubCategories = RoundDate.FLOOR_SUB_CATEGORY,
+        commonSubCategories = AbstractRoundDateTime.FLOOR_SUB_CATEGORY,
         commonReturnType = ValLong.class,
         commonReturnDescription = "The time as milliseconds since the epoch (1st Jan 1970).",
         signatures = @FunctionSignature(
@@ -35,34 +32,23 @@ import java.time.temporal.ChronoUnit;
                         description = "The time to round in milliseconds since the epoch or as a string " +
                                       "formatted using the default date format.",
                         argType = Val.class)))
-class FloorHour extends RoundDate {
+class FloorHour extends AbstractRoundDateTime {
 
     static final String NAME = "floorHour";
-    private final ZoneId zoneId;
 
     public FloorHour(final ExpressionContext expressionContext, final String name) {
-        super(name);
-        this.zoneId = AbstractTimeFunction.getZoneId(expressionContext.getDateTimeSettings());
+        super(expressionContext, name);
     }
 
     @Override
-    protected RoundCalculator getCalculator() {
-        return new Calc(zoneId);
+    protected DateTimeAdjuster getAdjuster() {
+        return FloorHour::floor;
     }
 
-    static class Calc extends RoundDateCalculator {
-
-        private final ZoneId zoneId;
-
-        Calc(final ZoneId zoneId) {
-            this.zoneId = zoneId;
-        }
-
-        @Override
-        protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            ZonedDateTime zoned = dateTime.atZone(zoneId);
-            ZonedDateTime truncated = zoned.truncatedTo(ChronoUnit.HOURS);
-            return truncated.toLocalDateTime();
-        }
+    public static ZonedDateTime floor(final ZonedDateTime zonedDateTime) {
+        return zonedDateTime
+                .withMinute(0)
+                .withSecond(0)
+                .withNano(0);
     }
 }

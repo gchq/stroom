@@ -16,11 +16,6 @@ class TestCeilingHour extends AbstractFunctionTest<CeilingHour> {
     }
 
     @Override
-    protected Supplier<CeilingHour> getFunctionSupplier() {
-        return () -> new CeilingHour("ceilingHour", new ExpressionContext());
-    }
-
-    @Override
     Stream<TestCase> getTestCases() {
         final Instant time = LocalDateTime.of(2021, 1, 20, 6, 30, 55)
                 .toInstant(ZoneOffset.UTC);
@@ -32,7 +27,7 @@ class TestCeilingHour extends AbstractFunctionTest<CeilingHour> {
         final Instant timeNY = LocalDateTime.of(2025, 4, 7, 1, 30, 30)
                 .atZone(newYorkZone)
                 .toInstant();
-        final Instant truncatedNY = LocalDateTime.of(2025, 4, 7, 1, 0, 0)
+        final Instant truncatedNY = LocalDateTime.of(2025, 4, 7, 2, 0, 0)
                 .atZone(newYorkZone)
                 .toInstant();
 
@@ -40,7 +35,7 @@ class TestCeilingHour extends AbstractFunctionTest<CeilingHour> {
         final Instant timeTokyo = LocalDateTime.of(2025, 4, 7, 10, 30, 30)
                 .atZone(tokyoZone)
                 .toInstant();
-        final Instant truncatedTokyo = LocalDateTime.of(2025, 4, 7, 10, 0, 0)
+        final Instant truncatedTokyo = LocalDateTime.of(2025, 4, 7, 11, 0, 0)
                 .atZone(tokyoZone)
                 .toInstant();
 

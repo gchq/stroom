@@ -16,14 +16,13 @@
 
 package stroom.query.language.functions;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+import java.time.ZonedDateTime;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = FloorSecond.NAME,
         commonCategory = FunctionCategory.DATE,
-        commonSubCategories = RoundDate.FLOOR_SUB_CATEGORY,
+        commonSubCategories = AbstractRoundDateTime.FLOOR_SUB_CATEGORY,
         commonReturnType = ValLong.class,
         commonReturnDescription = "The time as milliseconds since the epoch (1st Jan 1970).",
         signatures = @FunctionSignature(
@@ -31,28 +30,23 @@ import java.time.temporal.ChronoUnit;
                 args = @FunctionArg(
                         name = "time",
                         description = "The time to round in milliseconds since the epoch or as a string " +
-                                "formatted using the default date format.",
+                                      "formatted using the default date format.",
                         argType = Val.class)))
-class FloorSecond extends RoundDate {
+class FloorSecond extends AbstractRoundDateTime {
 
     static final String NAME = "floorSecond";
-    private static final Calc CALC = new Calc();
 
-    public FloorSecond(final String name) {
-        super(name);
+    public FloorSecond(final ExpressionContext expressionContext, final String name) {
+        super(expressionContext, name);
     }
 
     @Override
-    protected RoundCalculator getCalculator() {
-        return CALC;
+    protected DateTimeAdjuster getAdjuster() {
+        return FloorSecond::floor;
     }
 
-    static class Calc extends RoundDateCalculator {
-
-
-        @Override
-        protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            return dateTime.truncatedTo(ChronoUnit.SECONDS);
-        }
+    public static ZonedDateTime floor(final ZonedDateTime zonedDateTime) {
+        return zonedDateTime
+                .withNano(0);
     }
 }

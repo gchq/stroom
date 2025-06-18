@@ -16,14 +16,13 @@
 
 package stroom.query.language.functions;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+import java.time.ZonedDateTime;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = RoundSecond.NAME,
         commonCategory = FunctionCategory.DATE,
-        commonSubCategories = RoundDate.ROUND_SUB_CATEGORY,
+        commonSubCategories = AbstractRoundDateTime.ROUND_SUB_CATEGORY,
         commonReturnType = ValLong.class,
         commonReturnDescription = "The time as milliseconds since the epoch (1st Jan 1970).",
         signatures = @FunctionSignature(
@@ -31,32 +30,24 @@ import java.time.temporal.ChronoUnit;
                 args = @FunctionArg(
                         name = "time",
                         description = "The time to round in milliseconds since the epoch or as a string " +
-                                "formatted using the default date format.",
+                                      "formatted using the default date format.",
                         argType = Val.class)))
-class RoundSecond extends RoundDate {
+class RoundSecond extends AbstractRoundDateTime {
 
     static final String NAME = "roundSecond";
-    private static final Calc CALC = new Calc();
 
-    public RoundSecond(final String name) {
-        super(name);
+    public RoundSecond(final ExpressionContext expressionContext, final String name) {
+        super(expressionContext, name);
     }
 
     @Override
-    protected RoundCalculator getCalculator() {
-        return CALC;
-    }
-
-    static class Calc extends RoundDateCalculator {
-
-
-        @Override
-        protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            LocalDateTime result = dateTime.truncatedTo(ChronoUnit.SECONDS);
-            if (dateTime.isAfter(result.plusNanos(500000000))) {
+    protected DateTimeAdjuster getAdjuster() {
+        return zonedDateTime -> {
+            ZonedDateTime result = FloorSecond.floor(zonedDateTime);
+            if (zonedDateTime.isAfter(result.plusNanos(500000000))) {
                 result = result.plusSeconds(1);
             }
             return result;
-        }
+        };
     }
 }

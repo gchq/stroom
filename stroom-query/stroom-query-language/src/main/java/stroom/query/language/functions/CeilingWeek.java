@@ -16,16 +16,13 @@
 
 package stroom.query.language.functions;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.WeekFields;
+import java.time.ZonedDateTime;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = CeilingWeek.NAME,
         commonCategory = FunctionCategory.DATE,
-        commonSubCategories = RoundDate.CEILING_SUB_CATEGORY,
+        commonSubCategories = AbstractRoundDateTime.CEILING_SUB_CATEGORY,
         commonReturnType = ValLong.class,
         commonReturnDescription = "The time as milliseconds since the epoch (1st Jan 1970).",
         signatures = @FunctionSignature(
@@ -33,40 +30,24 @@ import java.time.temporal.WeekFields;
                 args = @FunctionArg(
                         name = "time",
                         description = "The time to round in milliseconds since the epoch or as a string " +
-                                "formatted using the default date format.",
+                                      "formatted using the default date format.",
                         argType = Val.class)))
-class CeilingWeek extends RoundDate {
+class CeilingWeek extends AbstractRoundDateTime {
 
     static final String NAME = "ceilingWeek";
 
-    private final ZoneId zoneId;
-
     public CeilingWeek(final ExpressionContext expressionContext, final String name) {
-        super(name);
-        zoneId = AbstractTimeFunction.getZoneId(expressionContext.getDateTimeSettings());
+        super(expressionContext, name);
     }
 
     @Override
-    protected RoundCalculator getCalculator() {
-        return new Calc(zoneId);
-    }
-
-    static class Calc extends RoundDateCalculator {
-
-        private final ZoneId zoneId;
-
-        public Calc(final ZoneId zoneId) {
-            this.zoneId = zoneId;
-        }
-
-        @Override
-        protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            LocalDateTime result = dateTime.with(WeekFields.ISO.getFirstDayOfWeek())
-                    .truncatedTo(ChronoUnit.DAYS);
-            if (dateTime.isAfter(result)) {
+    protected DateTimeAdjuster getAdjuster() {
+        return zonedDateTime -> {
+            ZonedDateTime result = FloorWeek.floor(zonedDateTime);
+            if (zonedDateTime.isAfter(result)) {
                 result = result.plusWeeks(1);
             }
             return result;
-        }
+        };
     }
 }

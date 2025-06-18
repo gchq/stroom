@@ -26,7 +26,7 @@ package stroom.query.language.functions;
         signatures = @FunctionSignature(
                 description = "Returns the current date and time.",
                 args = {}))
-class Now extends AbstractTimeFunction {
+class Now extends AbstractCurrentDateTimeFunction {
 
     static final String NAME = "now";
 

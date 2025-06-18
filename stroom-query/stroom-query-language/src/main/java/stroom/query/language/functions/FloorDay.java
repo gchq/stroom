@@ -16,17 +16,13 @@
 
 package stroom.query.language.functions;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = FloorDay.NAME,
         commonCategory = FunctionCategory.DATE,
-        commonSubCategories = RoundDate.FLOOR_SUB_CATEGORY,
+        commonSubCategories = AbstractRoundDateTime.FLOOR_SUB_CATEGORY,
         commonReturnType = ValLong.class,
         commonReturnDescription = "The time as milliseconds since the epoch (1st Jan 1970).",
         signatures = @FunctionSignature(
@@ -36,39 +32,24 @@ import java.time.temporal.ChronoUnit;
                         description = "The time to round in milliseconds since the epoch or as a string " +
                                       "formatted using the default date format.",
                         argType = Val.class)))
-class FloorDay extends RoundDate {
+class FloorDay extends AbstractRoundDateTime {
 
     static final String NAME = "floorDay";
-    private static final Calc CALC = new Calc();
-
-    private final ExpressionContext expressionContext;
 
     public FloorDay(final ExpressionContext expressionContext, final String name) {
-        super(name);
-        this.expressionContext = expressionContext;
+        super(expressionContext, name);
     }
 
     @Override
-    protected RoundCalculator getCalculator() {
-        return CALC;
+    protected DateTimeAdjuster getAdjuster() {
+        return FloorDay::floor;
     }
 
-    protected ZonedDateTime toZonedDateTime(final long epochMillis) {
-        final ZoneId zoneId = AbstractTimeFunction.getZoneId(expressionContext.getDateTimeSettings());
-        return Instant.ofEpochMilli(epochMillis).atZone(zoneId);
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    static class Calc extends RoundDateCalculator {
-
-        @Override
-        protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            final ZonedDateTime zoned = dateTime.atZone(ZoneId.of("UTC"));
-            final ZonedDateTime floored = zoned.truncatedTo(ChronoUnit.DAYS);
-            return floored.toLocalDateTime();
-        }
+    public static ZonedDateTime floor(final ZonedDateTime zonedDateTime) {
+        return zonedDateTime
+                .withHour(0)
+                .withMinute(0)
+                .withSecond(0)
+                .withNano(0);
     }
 }
