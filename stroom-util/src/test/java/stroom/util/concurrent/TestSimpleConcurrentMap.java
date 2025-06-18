@@ -26,7 +26,7 @@ class TestSimpleConcurrentMap {
 
     @Test
     void testSimple() {
-        ExampleSimpleConcurrentMap test = new ExampleSimpleConcurrentMap();
+        final ExampleSimpleConcurrentMap test = new ExampleSimpleConcurrentMap();
 
         Assertions.assertThat(test.get("TEST").get()).isEqualTo(0);
         Assertions.assertThat(test.get("TEST").incrementAndGet()).isEqualTo(1);

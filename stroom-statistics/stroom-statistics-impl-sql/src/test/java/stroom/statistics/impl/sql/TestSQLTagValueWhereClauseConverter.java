@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestSQLTagValueWhereClauseConverter extends StroomUnitTest {
 
     @BeforeEach
-    void before(TestInfo testInfo) {
+    void before(final TestInfo testInfo) {
         System.out.println("\nTest: " + testInfo.getDisplayName());
         System.out.println("----------------------------------");
     }
@@ -102,7 +102,7 @@ class TestSQLTagValueWhereClauseConverter extends StroomUnitTest {
     }
 
     private SqlBuilder convertAndDump(final FilterTermsTree tree) {
-        SqlBuilder sqlBuilder = new SqlBuilder();
+        final SqlBuilder sqlBuilder = new SqlBuilder();
 
         SQLTagValueWhereClauseConverter.buildTagValueWhereClause(tree, sqlBuilder);
 

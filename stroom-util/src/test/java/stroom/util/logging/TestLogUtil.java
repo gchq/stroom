@@ -99,8 +99,8 @@ class TestLogUtil {
 
     @Test
     void withPercentage_durationAdder() {
-        DurationAdder durationAdderVal = new DurationAdder(Duration.ofSeconds(30));
-        DurationAdder durationAdderTotal = new DurationAdder(Duration.ofMinutes(1));
+        final DurationAdder durationAdderVal = new DurationAdder(Duration.ofSeconds(30));
+        final DurationAdder durationAdderTotal = new DurationAdder(Duration.ofMinutes(1));
 
         assertThat(LogUtil.withPercentage(durationAdderVal, durationAdderTotal))
                 .isEqualTo("PT30S (50%)");

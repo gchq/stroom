@@ -131,9 +131,9 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                                   final ByteBuffer valueStoreKeyBuffer,
                                   final StagingValue newRefDataValue) {
 
-        long currentValueHashCode = ValueStoreKeySerde.extractValueHashCode(valueStoreKeyBuffer);
-        long newValueHashCode = newRefDataValue.getValueHashCode();
-        boolean areValuesEqual;
+        final long currentValueHashCode = ValueStoreKeySerde.extractValueHashCode(valueStoreKeyBuffer);
+        final long newValueHashCode = newRefDataValue.getValueHashCode();
+        final boolean areValuesEqual;
         if (currentValueHashCode != newValueHashCode) {
             // valueHashCodes differ so values differ
             areValuesEqual = false;
@@ -208,7 +208,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
         final ByteBuffer startKey = buildStartKeyBuffer(refDataValue, valueStoreKeyPooledBuffer);
         ByteBuffer lastKeyBufferClone = null;
 
-        try (Cursor<ByteBuffer> cursor = getLmdbDbi().openCursor(writeTxn)) {
+        try (final Cursor<ByteBuffer> cursor = getLmdbDbi().openCursor(writeTxn)) {
             // get this key or one greater than it
             boolean isFound = cursor.get(startKey, GetOp.MDB_SET_RANGE);
 
@@ -222,7 +222,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
 
                 final ByteBuffer valueFromDbBuf = cursor.val();
                 final ByteBuffer keyFromDbBuf = cursor.key();
-                short thisKeyId = ValueStoreKeySerde.extractId(keyFromDbBuf);
+                final short thisKeyId = ValueStoreKeySerde.extractId(keyFromDbBuf);
 
                 // Because we have removal of entries we can end up with sparse id sequences
                 // therefore capture the first used and unused IDs so we can use it if we need to put a
@@ -284,7 +284,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                 isValueInDb.get(),
                 valuesCount.get()));
 
-        ByteBuffer valueStoreKeyBuffer;
+        final ByteBuffer valueStoreKeyBuffer;
 
         if (isValueInDb.get()) {
             // value is already in the map, so use its key

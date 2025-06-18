@@ -28,19 +28,19 @@ public class WrappedWriter extends Writer {
     }
 
     @Override
-    public Writer append(char c) throws IOException {
+    public Writer append(final char c) throws IOException {
         writer.append(c);
         return this;
     }
 
     @Override
-    public Writer append(CharSequence csq, int start, int end) throws IOException {
+    public Writer append(final CharSequence csq, final int start, final int end) throws IOException {
         writer.append(csq, start, end);
         return this;
     }
 
     @Override
-    public Writer append(CharSequence csq) throws IOException {
+    public Writer append(final CharSequence csq) throws IOException {
         writer.append(csq);
         return this;
     }
@@ -56,27 +56,27 @@ public class WrappedWriter extends Writer {
     }
 
     @Override
-    public void write(char[] cbuf, int off, int len) throws IOException {
+    public void write(final char[] cbuf, final int off, final int len) throws IOException {
         writer.write(cbuf, off, len);
     }
 
     @Override
-    public void write(char[] cbuf) throws IOException {
+    public void write(final char[] cbuf) throws IOException {
         writer.write(cbuf);
     }
 
     @Override
-    public void write(int c) throws IOException {
+    public void write(final int c) throws IOException {
         writer.write(c);
     }
 
     @Override
-    public void write(String str, int off, int len) throws IOException {
+    public void write(final String str, final int off, final int len) throws IOException {
         writer.write(str, off, len);
     }
 
     @Override
-    public void write(String str) throws IOException {
+    public void write(final String str) throws IOException {
         writer.write(str);
     }
 }

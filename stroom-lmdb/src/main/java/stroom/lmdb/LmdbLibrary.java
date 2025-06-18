@@ -87,7 +87,7 @@ public class LmdbLibrary {
     }
 
     private Path getLibraryExtractDir(final LmdbLibraryConfig lmdbLibraryConfig) {
-        String extractDirStr = lmdbLibraryConfig.getSystemLibraryExtractDir();
+        final String extractDirStr = lmdbLibraryConfig.getSystemLibraryExtractDir();
 
         final String extractDirPropName = lmdbLibraryConfig.getFullPathStr(LmdbLibraryConfig.EXTRACT_DIR_PROP_NAME);
 
@@ -111,7 +111,7 @@ public class LmdbLibrary {
                         extractDirPropName);
             }
             Files.createDirectories(extractDir);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(
                     LogUtil.message("Error ensuring directory {} exists (from configuration property {})",
                             extractDir.toAbsolutePath(),
@@ -144,12 +144,12 @@ public class LmdbLibrary {
                         + redundantLibraryFilePath.toAbsolutePath().normalize());
                 try {
                     Files.deleteIfExists(redundantLibraryFilePath);
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     LOGGER.error("Unable to delete file " + extractDir.toAbsolutePath().normalize(), e);
                     // swallow error as these old files don't matter really
                 }
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException("Error listing contents of " + extractDir.toAbsolutePath().normalize());
         }
     }

@@ -14,7 +14,7 @@ public class TestDataCreator {
     private static final int FIELD_COUNT = 500;
     private static final int ROW_COUNT = 500;
 
-    private static int getRandomLength(int max) {
+    private static int getRandomLength(final int max) {
         return Math.max(1, (int) (Math.random() * max));
     }
 
@@ -31,7 +31,7 @@ public class TestDataCreator {
         return sb.toString();
     }
 
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         final String home = System.getProperty("user.home");
         try (final Writer writer = Files.newBufferedWriter(Paths.get(home).resolve("sample-data.txt"))) {
             writer.write("Date,Time,FileNo,LineNo,User,Message");

@@ -35,23 +35,23 @@ public class TestGitRepoStorageService {
     public void testAddDirectoryToPath() throws IOException {
 
         // Create a test directory
-        Path fullPath = Paths.get("/tmp/TestGitRepoStorageService/one/two/three");
+        final Path fullPath = Paths.get("/tmp/TestGitRepoStorageService/one/two/three");
         Files.createDirectories(fullPath);
 
-        Path parent = Paths.get("/tmp/TestGitRepoStorageService/one");
-        Path subdir = Paths.get("two/three");
+        final Path parent = Paths.get("/tmp/TestGitRepoStorageService/one");
+        final Path subdir = Paths.get("two/three");
         Path resolved = GitRepoStorageService.addDirectoryToPath(parent, subdir);
 
         // Ensure that the test is running
         assertThat(resolved).isEqualTo(fullPath);
 
         try {
-            Path badDir = Paths.get("..");
+            final Path badDir = Paths.get("..");
             resolved = GitRepoStorageService.addDirectoryToPath(parent, badDir);
             assertThat(resolved)
                     .as("Shouldn't get here - exception should be thrown")
                     .isEqualTo(fullPath);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             // Ok - exception thrown
             System.err.println("Correct behaviour - exception thrown: " + e);
         }

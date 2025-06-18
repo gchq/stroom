@@ -136,20 +136,20 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
 
     @Test
     void testLoad() {
-        LuceneIndexDoc index = indexStore.readDocument(testIndex);
+        final LuceneIndexDoc index = indexStore.readDocument(testIndex);
         assertThat(index).isNotNull();
         assertThat(index.getName()).isEqualTo("Test index");
     }
 
     @Test
     void testClientSideStuff1() {
-        LuceneIndexDoc index = indexStore.readDocument(refIndex);
+        final LuceneIndexDoc index = indexStore.readDocument(refIndex);
         indexStore.writeDocument(index);
     }
 
     @Test
     void testClientSideStuff2() {
-        LuceneIndexDoc index = indexStore.readDocument(testIndex);
+        final LuceneIndexDoc index = indexStore.readDocument(testIndex);
         indexStore.writeDocument(index);
     }
 }

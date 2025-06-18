@@ -74,7 +74,7 @@ public class CharacterNavigatorPresenter extends MyPresenterWidget<CharacterNavi
         return characterRangeSelectionPresenter;
     }
 
-    private void handleLabelClick(ClickEvent clickEvent) {
+    private void handleLabelClick(final ClickEvent clickEvent) {
         final CharacterRangeSelectionPresenter characterRangeSelectionPresenter = getCharacterRangeSelectionPresenter();
         characterRangeSelectionPresenter.setDataRange(display.getDataRange());
 

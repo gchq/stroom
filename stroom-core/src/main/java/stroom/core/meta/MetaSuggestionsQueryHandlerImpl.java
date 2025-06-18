@@ -193,11 +193,11 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
                             Optional.of(Comparator.naturalOrder()))
                     .limit(LIMIT)
                     .toList();
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
             LOGGER.error("Thread interrupted", e);
             return Collections.emptyList();
-        } catch (ExecutionException e) {
+        } catch (final ExecutionException e) {
             throw new RuntimeException("Error getting feed name suggestions: " + e.getMessage(), e);
         }
     }

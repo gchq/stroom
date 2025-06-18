@@ -624,7 +624,7 @@ public class QueryResultTablePresenter
     }
 
     private void removeAllColumns() {
-        for (com.google.gwt.user.cellview.client.Column<TableRow, ?> column : existingColumns) {
+        for (final com.google.gwt.user.cellview.client.Column<TableRow, ?> column : existingColumns) {
             dataGrid.removeColumn(column);
         }
         existingColumns.clear();
@@ -705,7 +705,7 @@ public class QueryResultTablePresenter
                         ? row.getValues().get(i)
                         : "";
 
-                SafeStylesBuilder stylesBuilder = new SafeStylesBuilder();
+                final SafeStylesBuilder stylesBuilder = new SafeStylesBuilder();
 
                 // Wrap
                 if (column.getFormat() != null &&
@@ -748,7 +748,7 @@ public class QueryResultTablePresenter
         return processed;
     }
 
-    public HandlerRegistration addRefreshRequestHandler(RefreshRequestEvent.Handler handler) {
+    public HandlerRegistration addRefreshRequestHandler(final RefreshRequestEvent.Handler handler) {
         return addHandler(RefreshRequestEvent.getType(), handler);
     }
 

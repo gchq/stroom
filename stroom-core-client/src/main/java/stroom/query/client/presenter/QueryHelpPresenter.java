@@ -154,7 +154,7 @@ public class QueryHelpPresenter
         refresh();
     }
 
-    private HandlerRegistration addInsertHandler(InsertEditorTextEvent.Handler handler) {
+    private HandlerRegistration addInsertHandler(final InsertEditorTextEvent.Handler handler) {
         return addHandlerToSource(InsertEditorTextEvent.getType(), handler);
     }
 
@@ -189,12 +189,12 @@ public class QueryHelpPresenter
         keyedAceCompletionProvider.setDataSourceRef(dataSourceRef);
     }
 
-    public void setIncludedTypes(Set<QueryHelpType> includedTypes) {
+    public void setIncludedTypes(final Set<QueryHelpType> includedTypes) {
         model.setIncludedTypes(includedTypes);
         keyedAceCompletionProvider.setIncludedTypes(includedTypes);
     }
 
-    public void setTextType(TextType textType) {
+    public void setTextType(final TextType textType) {
         keyedAceCompletionProvider.setTextType(textType);
     }
 

@@ -197,7 +197,7 @@ public class ActivityServiceImpl implements ActivityService {
     private List<Activity> getAllUserActivities() {
         // Only find activities for this user
         final UserRef userRef = securityContext.getUserRef();
-        FindActivityCriteria criteria = new FindActivityCriteria();
+        final FindActivityCriteria criteria = new FindActivityCriteria();
         criteria.setUserRef(userRef);
         LOGGER.debug(() -> LogUtil.message("find({}, {})", criteria.getFilter(), criteria.getUserRef()));
         return dao.find(criteria);
@@ -206,7 +206,7 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     public ActivityValidationResult validate(final Activity activity) {
         boolean valid = true;
-        List<String> messages = new ArrayList<>();
+        final List<String> messages = new ArrayList<>();
 
         final Activity.ActivityDetails activityDetails = activity.getDetails();
         for (final Activity.Prop prop : activityDetails.getProperties()) {
@@ -215,7 +215,7 @@ public class ActivityServiceImpl implements ActivityService {
                 if (value == null) {
                     value = "";
                 }
-                Pattern pattern;
+                final Pattern pattern;
                 try {
                     pattern = Pattern.compile(prop.getValidation(), Pattern.DOTALL);
                     if (!pattern.matcher(value).matches()) {

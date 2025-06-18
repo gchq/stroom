@@ -72,14 +72,14 @@ public final class OffsetRange {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        OffsetRange that = (OffsetRange) o;
+        final OffsetRange that = (OffsetRange) o;
         return Objects.equals(offset, that.offset) &&
                 Objects.equals(length, that.length);
     }

@@ -73,7 +73,7 @@ public class BasicListInputSettingsPresenter
 
     @Override
     public ComponentConfig write(final ComponentConfig componentConfig) {
-        ComponentConfig result = super.write(componentConfig);
+        final ComponentConfig result = super.write(componentConfig);
         final ListInputComponentSettings oldSettings = (ListInputComponentSettings) result.getSettings();
         final ListInputComponentSettings newSettings = writeSettings(oldSettings);
         return result.copy().settings(newSettings).build();

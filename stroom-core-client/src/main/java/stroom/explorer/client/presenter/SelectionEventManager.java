@@ -119,22 +119,22 @@ public class SelectionEventManager<I>
 
     protected void nextPage() {
         if (this.cellTable != null) {
-            Range range = this.cellTable.getVisibleRange();
+            final Range range = this.cellTable.getVisibleRange();
             this.setPageStart(range.getStart() + range.getLength());
         }
     }
 
     protected void previousPage() {
         if (this.cellTable != null) {
-            Range range = this.cellTable.getVisibleRange();
+            final Range range = this.cellTable.getVisibleRange();
             this.setPageStart(range.getStart() - range.getLength());
         }
     }
 
     protected void setPageStart(int index) {
         if (this.cellTable != null) {
-            Range range = this.cellTable.getVisibleRange();
-            int pageSize = range.getLength();
+            final Range range = this.cellTable.getVisibleRange();
+            final int pageSize = range.getLength();
             if (this.cellTable.isRowCountExact()) {
                 index = Math.min(index, this.cellTable.getRowCount() - pageSize);
             }

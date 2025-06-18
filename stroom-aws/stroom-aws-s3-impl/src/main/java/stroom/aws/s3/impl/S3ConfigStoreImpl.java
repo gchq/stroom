@@ -189,7 +189,7 @@ class S3ConfigStoreImpl implements S3ConfigStore {
     }
 
     @Override
-    public Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef) {
+    public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
         return null;
     }
     ////////////////////////////////////////////////////////////////////////

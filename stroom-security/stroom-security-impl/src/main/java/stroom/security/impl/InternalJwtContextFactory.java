@@ -142,7 +142,7 @@ class InternalJwtContextFactory implements JwtContextFactory {
                     .build();
             try {
                 optJwtContext = Optional.of(simpleJwtConsumer.process(jwt));
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.debug(() -> "Unable to extract token: " + e.getMessage(), e);
             }
         }

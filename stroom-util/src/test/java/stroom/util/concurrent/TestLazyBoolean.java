@@ -53,7 +53,7 @@ class TestLazyBoolean {
                     assertThat(val)
                             .isEqualTo(VALUE);
                     finishedLatch.countDown();
-                } catch (InterruptedException e) {
+                } catch (final InterruptedException e) {
                     throw new RuntimeException(e);
                 }
             }, executorService);
@@ -100,7 +100,7 @@ class TestLazyBoolean {
                     assertThat(val)
                             .isEqualTo(VALUE);
                     finishedLatch.countDown();
-                } catch (InterruptedException e) {
+                } catch (final InterruptedException e) {
                     throw new RuntimeException(e);
                 }
             }, executorService);

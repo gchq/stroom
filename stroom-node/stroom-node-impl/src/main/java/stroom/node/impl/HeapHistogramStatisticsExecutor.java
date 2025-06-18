@@ -61,7 +61,7 @@ class HeapHistogramStatisticsExecutor {
 
             LOGGER.info("Java Heap Histogram Statistics job started");
             taskContext.info(() -> "Java Heap Histogram Statistics job started");
-            Instant startTme = Instant.now();
+            final Instant startTme = Instant.now();
             final List<HeapHistogramService.HeapHistogramEntry> heapHistogramEntries =
                     heapHistogramService.generateHeapHistogram();
             processHistogramEntries(heapHistogramEntries);
@@ -75,7 +75,7 @@ class HeapHistogramStatisticsExecutor {
         }
     }
 
-    private void processHistogramEntries(List<HeapHistogramService.HeapHistogramEntry> heapHistogramEntries) {
+    private void processHistogramEntries(final List<HeapHistogramService.HeapHistogramEntry> heapHistogramEntries) {
         Preconditions.checkNotNull(heapHistogramService);
 
         final long statTimeMs = Instant.now().toEpochMilli();

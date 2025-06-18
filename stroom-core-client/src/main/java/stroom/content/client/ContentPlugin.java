@@ -50,7 +50,7 @@ public abstract class ContentPlugin<P extends MyPresenterWidget<?>> extends Plug
         });
     }
 
-    public void open(Consumer<P> consumer) {
+    public void open(final Consumer<P> consumer) {
         if (presenter == null) {
             // If the presenter is null then we haven't got this tab open.
             // Create a new presenter.

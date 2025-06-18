@@ -1,7 +1,7 @@
 package stroom.widget.util.client;
 
 public class ClientStringUtil {
-    public static String zeroPad(final int amount, int value) {
+    public static String zeroPad(final int amount, final int value) {
         return zeroPad(amount, "" + value);
     }
 

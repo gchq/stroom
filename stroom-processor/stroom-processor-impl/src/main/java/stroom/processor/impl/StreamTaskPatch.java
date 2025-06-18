@@ -46,7 +46,7 @@ public class StreamTaskPatch {
         return op;
     }
 
-    public StreamTaskPatch setOp(String op) {
+    public StreamTaskPatch setOp(final String op) {
         this.op = op;
         return this;
     }
@@ -55,7 +55,7 @@ public class StreamTaskPatch {
         return path;
     }
 
-    public StreamTaskPatch setPath(String path) {
+    public StreamTaskPatch setPath(final String path) {
         this.path = path;
         return this;
     }
@@ -64,7 +64,7 @@ public class StreamTaskPatch {
         return value;
     }
 
-    public StreamTaskPatch setValue(String value) {
+    public StreamTaskPatch setValue(final String value) {
         this.value = value;
         return this;
     }

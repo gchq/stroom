@@ -18,7 +18,7 @@ class TestSystemInfoResult {
     @Test
     void test() {
 
-        SystemInfoResult systemInfoResult = SystemInfoResult.builder()
+        final SystemInfoResult systemInfoResult = SystemInfoResult.builder()
                 .name("name1")
                 .addDetail("key1", "value1")
                 .addDetail("key2", "value2")
@@ -29,7 +29,7 @@ class TestSystemInfoResult {
 
     @Test
     void testSerde() throws IOException {
-        SystemInfoResult systemInfoResult = SystemInfoResult.builder()
+        final SystemInfoResult systemInfoResult = SystemInfoResult.builder()
                 .name("name1")
                 .addDetail("key1", "value1")
                 .addDetail("key2", "value2")
@@ -45,7 +45,7 @@ class TestSystemInfoResult {
 //
 //        LOGGER.info("json:\n{}", json2);
 
-        SystemInfoResult systemInfoResult2 = JsonUtil.readValue(json, SystemInfoResult.class);
+        final SystemInfoResult systemInfoResult2 = JsonUtil.readValue(json, SystemInfoResult.class);
 
         Assertions.assertThat(systemInfoResult2)
                 .isEqualTo(systemInfoResult);
@@ -82,7 +82,7 @@ class TestSystemInfoResult {
 //
 //        LOGGER.info("json:\n{}", json2);
 
-        SystemInfoResultList systemInfoResultList2 = JsonUtil.readValue(json, SystemInfoResultList.class);
+        final SystemInfoResultList systemInfoResultList2 = JsonUtil.readValue(json, SystemInfoResultList.class);
 
         Assertions.assertThat(systemInfoResultList2)
                 .isEqualTo(systemInfoResultList);

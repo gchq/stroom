@@ -22,7 +22,7 @@ public class UnsignedLongSerde implements Serde<UnsignedLong> {
 
     @Override
     public UnsignedLong deserialize(final ByteBuffer byteBuffer) {
-        UnsignedLong unsignedLong = new UnsignedLong(unsignedBytes.get(byteBuffer), len);
+        final UnsignedLong unsignedLong = new UnsignedLong(unsignedBytes.get(byteBuffer), len);
         byteBuffer.flip();
         return unsignedLong;
     }

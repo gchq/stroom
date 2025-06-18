@@ -110,7 +110,7 @@ public class ExcelTarget implements SearchResultWriter.Target {
     public void endTable() {
         if (workbook != null && sheet != null) {
             // Auto-size tracked columns
-            for (var columnIndex : sheet.getTrackedColumnsForAutoSizing()) {
+            for (final var columnIndex : sheet.getTrackedColumnsForAutoSizing()) {
                 sheet.autoSizeColumn(columnIndex);
             }
         }
@@ -211,7 +211,7 @@ public class ExcelTarget implements SearchResultWriter.Target {
                 final LocalDateTime dateTime = dateTimeFormatter.parse(value);
                 cell.setCellValue(dateTime);
                 setCellFormat(cell, column);
-            } catch (DateTimeParseException e) {
+            } catch (final DateTimeParseException e) {
                 general(cell, value);
             }
         }
@@ -334,7 +334,7 @@ public class ExcelTarget implements SearchResultWriter.Target {
             }
 
             // Auto-size tracked columns
-            for (var columnIndex : sheet.getTrackedColumnsForAutoSizing()) {
+            for (final var columnIndex : sheet.getTrackedColumnsForAutoSizing()) {
                 sheet.autoSizeColumn(columnIndex);
             }
         }

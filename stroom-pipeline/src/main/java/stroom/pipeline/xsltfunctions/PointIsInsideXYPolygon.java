@@ -35,11 +35,11 @@ class PointIsInsideXYPolygon extends StroomExtensionFunctionCall {
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
         try {
 
-            Double xPos = getSafeDouble(functionName, context, arguments, 0);
-            Double yPos = getSafeDouble(functionName, context, arguments, 1);
-            Double[] xPolyData = getSafeDoubleArray(functionName, context, arguments, 2);
-            Double[] yPolyData = getSafeDoubleArray(functionName, context, arguments, 3);
-            Point [] polyData = createPolygon(functionName, xPolyData, yPolyData);
+            final Double xPos = getSafeDouble(functionName, context, arguments, 0);
+            final Double yPos = getSafeDouble(functionName, context, arguments, 1);
+            final Double[] xPolyData = getSafeDoubleArray(functionName, context, arguments, 2);
+            final Double[] yPolyData = getSafeDoubleArray(functionName, context, arguments, 3);
+            final Point [] polyData = createPolygon(functionName, xPolyData, yPolyData);
 
             boolean inside = false;
             if (xPos != null && yPos != null) {
@@ -56,7 +56,7 @@ class PointIsInsideXYPolygon extends StroomExtensionFunctionCall {
         return BooleanValue.FALSE;
     }
 
-    Point [] createPolygon(String functionName, Double[] xPolyData, Double[] yPolyData) {
+    Point [] createPolygon(final String functionName, final Double[] xPolyData, final Double[] yPolyData) {
         if (xPolyData == null || xPolyData.length == 0) {
             throw new IllegalArgumentException("No x values for polygon" +
                     " in XSLT function " + functionName);
@@ -74,7 +74,7 @@ class PointIsInsideXYPolygon extends StroomExtensionFunctionCall {
                     " XSLT function " + functionName);
         }
 
-        Point[] result = new Point[xPolyData.length];
+        final Point[] result = new Point[xPolyData.length];
 
         for (int i = 0; i < result.length; i++) {
             result[i] = new Point(xPolyData[i], yPolyData[i]);
@@ -131,12 +131,12 @@ class PointIsInsideXYPolygon extends StroomExtensionFunctionCall {
             outputWarning(context, sb, null);
         }
 
-        String[] tokens = string.split(delimiter);
-        Double[] result = new Double[tokens.length];
+        final String[] tokens = string.split(delimiter);
+        final Double[] result = new Double[tokens.length];
         for (int i = 0; i < tokens.length; i++) {
             try {
                 result[i] = Double.parseDouble(tokens[i]);
-            } catch (NumberFormatException ex) {
+            } catch (final NumberFormatException ex) {
                 final StringBuilder sb = new StringBuilder();
                 sb.append("Illegal non numeric token found in delimited string provided to function ");
                 sb.append(functionName);
@@ -154,10 +154,10 @@ class PointIsInsideXYPolygon extends StroomExtensionFunctionCall {
                                          final XPathContext context,
                                          final Sequence[] arguments,
                                          final int index) throws XPathException {
-        List<Double> result = new ArrayList<>();
+        final List<Double> result = new ArrayList<>();
         final Sequence sequence = arguments[index];
         if (sequence != null) {
-            SequenceIterator iterator = sequence.iterate();
+            final SequenceIterator iterator = sequence.iterate();
             Item item;
             while ((item = iterator.next()) != null) {
                 if (item != null && item instanceof NumericValue) {
@@ -177,13 +177,13 @@ class PointIsInsideXYPolygon extends StroomExtensionFunctionCall {
     }
 
     //Attribution: https://stackoverflow.com/questions/217578/how-can-i-determine-whether-a-2d-point-is-within-a-polygon
-    private boolean isPointInPolygon(Point p, Point[] polygon) {
+    private boolean isPointInPolygon(final Point p, final Point[] polygon) {
         double minX = polygon[ 0 ].x;
         double maxX = polygon[ 0 ].x;
         double minY = polygon[ 0 ].y;
         double maxY = polygon[ 0 ].y;
         for (int i = 1; i < polygon.length; i++) {
-            Point q = polygon[i];
+            final Point q = polygon[i];
             minX = Math.min(q.x, minX);
             maxX = Math.max(q.x, maxX);
             minY = Math.min(q.y, minY);
@@ -207,7 +207,7 @@ class PointIsInsideXYPolygon extends StroomExtensionFunctionCall {
     }
 
     static class Point {
-        public Point(double x, double y) {
+        public Point(final double x, final double y) {
             this.x = x;
             this.y = y;
         }

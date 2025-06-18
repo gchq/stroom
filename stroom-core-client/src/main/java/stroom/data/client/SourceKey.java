@@ -22,7 +22,7 @@ public class SourceKey {
         this.childStreamType = childStreamType;
     }
 
-    public SourceKey(SourceLocation sourceLocation) {
+    public SourceKey(final SourceLocation sourceLocation) {
         this.metaId = sourceLocation.getMetaId();
         this.partIndex = sourceLocation.getPartIndex();
         this.recordIndex = sourceLocation.getRecordIndex();

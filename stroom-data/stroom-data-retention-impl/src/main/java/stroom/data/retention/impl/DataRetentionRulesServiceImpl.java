@@ -59,7 +59,7 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
                                   final Serialiser2Factory serialiser2Factory,
                                   final SecurityContext securityContext) {
         this.securityContext = securityContext;
-        DocumentSerialiser2<DataRetentionRules> serialiser = serialiser2Factory.createSerialiser(
+        final DocumentSerialiser2<DataRetentionRules> serialiser = serialiser2Factory.createSerialiser(
                 DataRetentionRules.class);
         this.store = storeFactory.createStore(serialiser, DataRetentionRules.TYPE, DataRetentionRules.class);
     }
@@ -199,7 +199,7 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
     }
 
     @Override
-    public Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef) {
+    public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
         return null;
     }
 

@@ -143,7 +143,7 @@ public class TestProxyConfigProvidersModule {
                                         .isEqualTo(className);
                             }
 
-                        } catch (IllegalAccessException | InvocationTargetException e) {
+                        } catch (final IllegalAccessException | InvocationTargetException e) {
                             throw new RuntimeException(e);
                         }
                     });
@@ -166,7 +166,7 @@ public class TestProxyConfigProvidersModule {
                                 .assertThatThrownBy(() -> {
                                     try {
                                         method.invoke(configProvidersModule, proxyConfigProvider);
-                                    } catch (IllegalAccessException | InvocationTargetException e) {
+                                    } catch (final IllegalAccessException | InvocationTargetException e) {
                                         if (e.getCause().getClass().equals(UnsupportedOperationException.class)) {
                                             throw e.getCause();
                                         }

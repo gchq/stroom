@@ -26,7 +26,7 @@ public class StroomTestExecutionListener implements TestExecutionListener {
     private static volatile boolean DROPPED_TEST_DATABASES = false;
 
     @Override
-    public void testPlanExecutionStarted(TestPlan testPlan) {
+    public void testPlanExecutionStarted(final TestPlan testPlan) {
 //        initDropwizardMetricsRegistry();
 
         // If we don't have a DB conn don't bother doing anything, e.g. is a pure unit test
@@ -44,7 +44,7 @@ public class StroomTestExecutionListener implements TestExecutionListener {
                         if (!DROPPED_TEST_DATABASES) {
                             try {
                                 DbTestUtil.dropUnusedTestDatabases();
-                            } catch (Exception e) {
+                            } catch (final Exception e) {
                                 final Throwable rootCause = ExceptionUtils.getRootCause(e);
                                 if (rootCause instanceof SQLException
                                     && rootCause.getMessage().contains("No suitable driver found")) {
@@ -71,7 +71,7 @@ public class StroomTestExecutionListener implements TestExecutionListener {
     }
 
     @Override
-    public void testPlanExecutionFinished(TestPlan testPlan) {
+    public void testPlanExecutionFinished(final TestPlan testPlan) {
         // Called after all tests have run on this JVM.
         LOGGER.info("Finished test plan");
 
@@ -101,7 +101,7 @@ public class StroomTestExecutionListener implements TestExecutionListener {
         try {
             SharedMetricRegistries.getDefault();
             LOGGER.info("Using existing static metrics registry");
-        } catch (IllegalStateException e) {
+        } catch (final IllegalStateException e) {
             LOGGER.info("Creating new static metrics registry for testing");
             SharedMetricRegistries.setDefault("defaultRegistry", new MetricRegistry());
         }

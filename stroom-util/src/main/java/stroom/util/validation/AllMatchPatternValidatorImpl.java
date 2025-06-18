@@ -16,7 +16,7 @@ public class AllMatchPatternValidatorImpl implements AllMatchPatternValidator {
     private Pattern pattern;
 
     @Override
-    public void initialize(AllMatchPattern constraintAnnotation) {
+    public void initialize(final AllMatchPattern constraintAnnotation) {
         pattern = Pattern.compile(constraintAnnotation.pattern());
     }
 

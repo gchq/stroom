@@ -63,7 +63,7 @@ class CeilingMonth extends RoundDate {
 
         @Override
         protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            ZonedDateTime zoned = dateTime.atZone(ZoneOffset.UTC);
+            final ZonedDateTime zoned = dateTime.atZone(ZoneOffset.UTC);
             ZonedDateTime startOfMonth = zoned
                     .withDayOfMonth(1)
                     .withHour(0)

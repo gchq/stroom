@@ -70,7 +70,7 @@ public class RowUtil {
             for (int i = 0; i < newColumns.size(); i++) {
                 final Column column = newColumns.get(i);
                 if (column.getName() != null) {
-                    Integer index = originalColumnIndex.get(column.getName());
+                    final Integer index = originalColumnIndex.get(column.getName());
                     if (index == null) {
                         arr[i] = -1;
                     } else {

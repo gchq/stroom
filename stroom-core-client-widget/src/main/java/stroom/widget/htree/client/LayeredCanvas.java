@@ -46,7 +46,7 @@ public class LayeredCanvas extends FlowPanel {
     }
 
     private Canvas createLayer(final String name) {
-        Canvas canvas = Canvas.createIfSupported();
+        final Canvas canvas = Canvas.createIfSupported();
         if (canvas != null) {
             layerMap.put(name, canvas);
 

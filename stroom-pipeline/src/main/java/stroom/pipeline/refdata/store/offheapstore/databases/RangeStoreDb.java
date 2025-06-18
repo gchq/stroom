@@ -110,7 +110,7 @@ public class RangeStoreDb
 //                buf -> valueSerde.deserialize(buf).toString());
 
             final AtomicInteger cnt = new AtomicInteger();
-            try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(
+            try (final CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(
                     txn, keyRange)) {
                 // loop backwards over all rows with the same mapDefinitionUid, starting at key
                 for (final CursorIterable.KeyVal<ByteBuffer> keyVal : cursorIterable) {
@@ -172,9 +172,9 @@ public class RangeStoreDb
     public boolean containsMapDefinition(final Txn<ByteBuffer> txn, final UID mapDefinitionUid) {
         LOGGER.trace(() -> "containsMapDefinition called for " + mapDefinitionUid);
 
-        try (PooledByteBuffer pooledStartKeyBuffer = getPooledKeyBuffer();
-                PooledByteBuffer pooledEndKeyBuffer = getPooledKeyBuffer();
-                PooledByteBuffer nextUidBuffer = getByteBufferPool().getPooledByteBuffer(UID.length())) {
+        try (final PooledByteBuffer pooledStartKeyBuffer = getPooledKeyBuffer();
+                final PooledByteBuffer pooledEndKeyBuffer = getPooledKeyBuffer();
+                final PooledByteBuffer nextUidBuffer = getByteBufferPool().getPooledByteBuffer(UID.length())) {
 
             final Range<Long> startRange = new Range<>(0L, 0L);
             final RangeStoreKey startRangeStoreKey = new RangeStoreKey(mapDefinitionUid, startRange);
@@ -191,7 +191,7 @@ public class RangeStoreDb
             // start key inclusive, end key exclusive
             final KeyRange<ByteBuffer> keyRange = KeyRange.closedOpen(startKeyBuf, endKeyBuf);
 
-            try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(txn, keyRange)) {
+            try (final CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(txn, keyRange)) {
                 // If we find anything in our range then it means this map uid is in the range store.
                 return cursorIterable.iterator().hasNext();
             }
@@ -216,9 +216,9 @@ public class RangeStoreDb
         }
     }
 
-    public Optional<UID> getMaxUid(final Txn<ByteBuffer> txn, PooledByteBuffer pooledByteBuffer) {
+    public Optional<UID> getMaxUid(final Txn<ByteBuffer> txn, final PooledByteBuffer pooledByteBuffer) {
 
-        try (CursorIterable<ByteBuffer> iterable = getLmdbDbi().iterate(txn, KeyRange.allBackward())) {
+        try (final CursorIterable<ByteBuffer> iterable = getLmdbDbi().iterate(txn, KeyRange.allBackward())) {
             final Iterator<KeyVal<ByteBuffer>> iterator = iterable.iterator();
 
             if (iterator.hasNext()) {
@@ -268,8 +268,8 @@ public class RangeStoreDb
                                  final UID mapUid,
                                  final EntryConsumer entryConsumer) {
 
-        try (PooledByteBuffer startKeyIncPooledBuffer = getPooledKeyBuffer();
-                PooledByteBuffer endKeyExcPooledBuffer = getPooledKeyBuffer()) {
+        try (final PooledByteBuffer startKeyIncPooledBuffer = getPooledKeyBuffer();
+                final PooledByteBuffer endKeyExcPooledBuffer = getPooledKeyBuffer()) {
 
             final KeyRange<ByteBuffer> singleMapUidKeyRange = buildSingleMapUidKeyRange(
                     mapUid,
@@ -285,7 +285,7 @@ public class RangeStoreDb
                 boolean foundMatchingEntry;
                 // Scan over all entries from our start key and test each one to check we
                 // haven't gone past the ones we want.
-                try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(
+                try (final CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(
                         batchingWriteTxn.getTxn(), singleMapUidKeyRange)) {
 
                     boolean didBreakOutEarly = false;
@@ -354,7 +354,7 @@ public class RangeStoreDb
                     startKeyBuffer.getByteBuffer(),
                     endKeyBuffer.getByteBuffer());
 
-            try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(
+            try (final CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(
                     readTxn, keyRange)) {
 
                 for (final KeyVal<ByteBuffer> ignored : cursorIterable) {

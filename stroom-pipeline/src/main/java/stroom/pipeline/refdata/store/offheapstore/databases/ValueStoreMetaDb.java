@@ -83,7 +83,7 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
     }
 
     public Byte getTypeId(final Txn<ByteBuffer> txn, final ByteBuffer keyBuffer) {
-        Optional<ByteBuffer> optValueBuffer = getAsBytes(txn, keyBuffer);
+        final Optional<ByteBuffer> optValueBuffer = getAsBytes(txn, keyBuffer);
 
         return optValueBuffer
                 .map(valueSerde::extractTypeId)
@@ -91,7 +91,7 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
     }
 
     public OptionalInt getReferenceCount(final Txn<ByteBuffer> txn, final ByteBuffer keyBuffer) {
-        Optional<ByteBuffer> optValueBuffer = getAsBytes(txn, keyBuffer);
+        final Optional<ByteBuffer> optValueBuffer = getAsBytes(txn, keyBuffer);
 
         return optValueBuffer
                 .map(byteBuffer ->
@@ -104,11 +104,11 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
                                         final ByteBuffer keyBuffer,
                                         final StagingValue refDataValue) {
 
-        try (PooledByteBuffer pooledValueBuffer = getPooledValueBuffer()) {
+        try (final PooledByteBuffer pooledValueBuffer = getPooledValueBuffer()) {
             final ByteBuffer valueBuffer = pooledValueBuffer.getByteBuffer();
             serializeValue(pooledValueBuffer.getByteBuffer(), new ValueStoreMeta(refDataValue.getTypeId()));
 
-            PutOutcome putOutcome = put(txn, keyBuffer, valueBuffer, false);
+            final PutOutcome putOutcome = put(txn, keyBuffer, valueBuffer, false);
 
             if (!putOutcome.isSuccess()) {
                 throw new RuntimeException(LogUtil.message(
@@ -129,10 +129,10 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
                         "keyBuffer {} not found in DB",
                         ByteBufferUtils.byteBufferInfo(keyBuffer))));
 
-        try (PooledByteBuffer pooledValueBuffer = getPooledValueBuffer()) {
-            ByteBuffer newValueBuffer = pooledValueBuffer.getByteBuffer();
+        try (final PooledByteBuffer pooledValueBuffer = getPooledValueBuffer()) {
+            final ByteBuffer newValueBuffer = pooledValueBuffer.getByteBuffer();
             valueSerde.cloneAndIncrementRefCount(currValueBuffer, newValueBuffer);
-            PutOutcome putOutcome = put(writeTxn, keyBuffer, newValueBuffer, true);
+            final PutOutcome putOutcome = put(writeTxn, keyBuffer, newValueBuffer, true);
             if (!putOutcome.isSuccess()) {
                 throw new RuntimeException(LogUtil.message("Put failed for keyBuffer {}",
                         ByteBufferUtils.byteBufferInfo(keyBuffer)));
@@ -152,8 +152,8 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
         LAMBDA_LOGGER.trace(() -> LogUtil.message("deReferenceValue({}, {})",
                 writeTxn, ByteBufferUtils.byteBufferInfo(keyBuffer)));
 
-        try (Cursor<ByteBuffer> cursor = getLmdbDbi().openCursor(writeTxn)) {
-            boolean isFound = cursor.get(keyBuffer, GetOp.MDB_SET_KEY);
+        try (final Cursor<ByteBuffer> cursor = getLmdbDbi().openCursor(writeTxn)) {
+            final boolean isFound = cursor.get(keyBuffer, GetOp.MDB_SET_KEY);
             if (isFound) {
                 final ByteBuffer valueBuffer = cursor.val();
 
@@ -162,7 +162,7 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
                 // We could run LMDB in MDB_WRITEMAP mode which allows mutation of the buffers (and
                 // thus avoids the buffer copy cost) but adds more risk of DB corruption. As we are not
                 // doing a high volume of value mutations read-only mode is a safer bet.
-                boolean isLastReference = valueSerde.isLastReference(valueBuffer);
+                final boolean isLastReference = valueSerde.isLastReference(valueBuffer);
 
                 if (isLastReference) {
                     // we have the last ref to this value, so we can delete it
@@ -177,15 +177,15 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
 
                 } else {
                     // other people have a ref to it so just decrement the ref count
-                    try (PooledByteBuffer pooledNewValueBuffer = getPooledValueBuffer()) {
+                    try (final PooledByteBuffer pooledNewValueBuffer = getPooledValueBuffer()) {
                         final ByteBuffer newValueBuf = pooledNewValueBuffer.getByteBuffer();
                         valueSerde.cloneAndDecrementRefCount(
                                 valueBuffer,
                                 newValueBuf);
 
                         if (LAMBDA_LOGGER.isTraceEnabled()) {
-                            int oldRefCount = valueSerde.extractReferenceCount(keyBuffer);
-                            int newRefCount = valueSerde.extractReferenceCount(newValueBuf);
+                            final int oldRefCount = valueSerde.extractReferenceCount(keyBuffer);
+                            final int newRefCount = valueSerde.extractReferenceCount(newValueBuf);
                             LAMBDA_LOGGER.trace(() -> LogUtil.message(
                                     "Updating entry ref count from {} to {} for key {}",
                                     oldRefCount,

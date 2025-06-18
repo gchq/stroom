@@ -113,7 +113,7 @@ public class FastInfosetValue implements RefDataValue {
     }
 
     public RefDataValue copy(final Supplier<ByteBuffer> byteBufferSupplier) {
-        ByteBuffer newByteBuffer = byteBufferSupplier.get();
+        final ByteBuffer newByteBuffer = byteBufferSupplier.get();
         ByteBufferUtils.copy(this.fastInfosetByteBuffer, newByteBuffer);
         return new FastInfosetValue(newByteBuffer, fastInfosetValueHash, valueStoreHashAlgorithm);
     }

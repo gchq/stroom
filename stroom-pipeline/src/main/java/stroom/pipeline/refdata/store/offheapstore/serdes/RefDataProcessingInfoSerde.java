@@ -97,7 +97,7 @@ public class RefDataProcessingInfoSerde implements
     }
 
     public static ProcessingState extractProcessingState(final ByteBuffer byteBuffer) {
-        byte bState = byteBuffer.get(PROCESSING_STATE_OFFSET);
+        final byte bState = byteBuffer.get(PROCESSING_STATE_OFFSET);
         return ProcessingState.fromByte(bState);
     }
 
@@ -114,7 +114,7 @@ public class RefDataProcessingInfoSerde implements
                 processingStateIds[i++] = processingState.getId();
             }
             return byteBuffer -> {
-                byte bState = byteBuffer.get(PROCESSING_STATE_OFFSET);
+                final byte bState = byteBuffer.get(PROCESSING_STATE_OFFSET);
                 for (final byte processingStateId : processingStateIds) {
                     if (processingStateId == bState) {
                         return true;
@@ -137,7 +137,7 @@ public class RefDataProcessingInfoSerde implements
      * @param timeMsBuffer         a {@link ByteBuffer} containing a long representing an epoch millis time
      */
     public static boolean wasAccessedAfter(final ByteBuffer processingInfoBuffer, final ByteBuffer timeMsBuffer) {
-        int compareResult = ByteBufferUtils.compareAsLong(
+        final int compareResult = ByteBufferUtils.compareAsLong(
                 timeMsBuffer, timeMsBuffer.position(),
                 processingInfoBuffer, LAST_ACCESSED_TIME_OFFSET);
 

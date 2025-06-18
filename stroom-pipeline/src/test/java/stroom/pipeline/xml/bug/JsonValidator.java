@@ -66,7 +66,7 @@ public class JsonValidator implements ContentHandler {
     }
 
     @Override
-    public void setDocumentLocator(Locator locator) {
+    public void setDocumentLocator(final Locator locator) {
 
     }
 
@@ -81,27 +81,27 @@ public class JsonValidator implements ContentHandler {
     }
 
     @Override
-    public void startPrefixMapping(String prefix, String uri) throws SAXException {
+    public void startPrefixMapping(final String prefix, final String uri) throws SAXException {
 
     }
 
     @Override
-    public void endPrefixMapping(String prefix) throws SAXException {
+    public void endPrefixMapping(final String prefix) throws SAXException {
 
     }
 
     @Override
-    public void ignorableWhitespace(char[] ch, int start, int length) throws SAXException {
+    public void ignorableWhitespace(final char[] ch, final int start, final int length) throws SAXException {
 
     }
 
     @Override
-    public void processingInstruction(String target, String data) throws SAXException {
+    public void processingInstruction(final String target, final String data) throws SAXException {
 
     }
 
     @Override
-    public void skippedEntity(String name) throws SAXException {
+    public void skippedEntity(final String name) throws SAXException {
 
     }
 }

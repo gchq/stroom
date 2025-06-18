@@ -40,7 +40,7 @@ public class RefDataValueSerdeFactory {
             throw new RuntimeException("Unexpected typeId " + typeId);
         }
 
-        RefDataValueSerde serde = SERDES[typeId];
+        final RefDataValueSerde serde = SERDES[typeId];
         if (serde == null) {
             throw new RuntimeException("Unexpected typeId " + typeId);
         }

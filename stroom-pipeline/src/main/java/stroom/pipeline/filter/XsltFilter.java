@@ -338,7 +338,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                     TransformerImpl::getUnderlyingXsltTransformer,
                     xsltTransformer ->
                             xsltTransformer.setMessageListener(this::onXsltMessage));
-        } catch (Exception e) {
+        } catch (final Exception e) {
             // Just log and swallow as the message listener is not critical
             LOGGER.error("Error configuring XSLT message listener: " + e.getMessage(), e);
         }
@@ -356,7 +356,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
      * <pre>{@code <xsl:message><info>my message</info></xsl:message>}</pre>
      * Setting {@code terminate} trumps any severity set.
      */
-    private void onXsltMessage(XdmNode content, boolean terminate, SourceLocator locator) {
+    private void onXsltMessage(final XdmNode content, final boolean terminate, final SourceLocator locator) {
 
         boolean foundMsg = false;
         String msg = "";

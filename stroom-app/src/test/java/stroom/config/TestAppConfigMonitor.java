@@ -154,8 +154,8 @@ class TestAppConfigMonitor {
         grepFile(yamlFile);
 
         // Now keep checking if the appConfig has been updated, or we timeout
-        Instant startTime = Instant.now();
-        Instant timeOutTime = startTime.plusSeconds(10);
+        final Instant startTime = Instant.now();
+        final Instant timeOutTime = startTime.plusSeconds(10);
         LOGGER.info("Waiting for config object to be updated by AppConfigMonitor");
         // AppConfigMonitor waits 2s after detecting the change before it actually updates the object
         // so need to allow for that
@@ -176,13 +176,13 @@ class TestAppConfigMonitor {
 
     private void grepFile(final Path file) {
         try {
-            String str = YAML_KEY_PATTERN.matcher(Files.readString(file))
+            final String str = YAML_KEY_PATTERN.matcher(Files.readString(file))
                     .results()
                     .findFirst()
                     .orElseThrow()
                     .group(0);
             LOGGER.info("Found str [{}] in file {}", str, file);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(e);
         }
     }

@@ -98,10 +98,11 @@ public class AppUserPermissionsListPresenter
 
         dataGrid = new MyDataGrid<>();
         selectionModel = new MultiSelectionModelImpl<>();
-        DataGridSelectionEventManager<AppUserPermissions> selectionEventManager = new DataGridSelectionEventManager<>(
-                dataGrid,
-                selectionModel,
-                false);
+        final DataGridSelectionEventManager<AppUserPermissions> selectionEventManager =
+                new DataGridSelectionEventManager<>(
+                        dataGrid,
+                        selectionModel,
+                        false);
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);
         pagerView.setDataWidget(dataGrid);
 
@@ -285,7 +286,7 @@ public class AppUserPermissionsListPresenter
         final DescriptionBuilder sb = new DescriptionBuilder();
         boolean notEmpty = false;
         boolean lastIsInherited = false;
-        SafeHtml delimiter = new SafeHtmlBuilder()
+        final SafeHtml delimiter = new SafeHtmlBuilder()
                 .append(SafeHtmlUtil.ENSP)
                 .appendEscaped("|")
                 .append(SafeHtmlUtil.ENSP)
@@ -315,7 +316,7 @@ public class AppUserPermissionsListPresenter
     }
 
     private Function<AppUserPermissions, CommandLink> buildOpenAppPermissionsCommandLink() {
-        return (AppUserPermissions appUserPermissions) -> {
+        return (final AppUserPermissions appUserPermissions) -> {
             final UserRef userRef = NullSafe.get(appUserPermissions, AppUserPermissions::getUserRef);
             if (userRef != null) {
                 final String displayName = userRef.getDisplayName();

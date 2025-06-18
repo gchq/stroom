@@ -42,7 +42,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
     public void debug(final Supplier<String> message) {
         try {
             if (logger.isDebugEnabled()) {
-                String msg = message.get();
+                final String msg = message.get();
                 if (msg != null) {
                     logger.debug(msg);
                 }
@@ -140,7 +140,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
                 case ERROR -> logger.error(message);
                 default -> logger.error("Unexpected logLevel: {}", logLevel);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
         }
     }
@@ -156,7 +156,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
                 case ERROR -> logger.error(format, arg);
                 default -> logger.error("Unexpected logLevel: {}", logLevel);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
         }
     }
@@ -175,7 +175,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
                 case ERROR -> logger.error(format, arg1, arg2);
                 default -> logger.error("Unexpected logLevel: {}", logLevel);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
         }
     }
@@ -191,7 +191,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
                 case ERROR -> logger.error(format, args);
                 default -> logger.error("Unexpected logLevel: {}", logLevel);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
         }
     }
@@ -227,7 +227,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
                 }
                 default -> logger.error("Unexpected logLevel: {}", logLevel);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
         }
     }
@@ -265,7 +265,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
                 }
                 default -> logger.error("Unexpected logLevel: {}", logLevel);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
         }
     }
@@ -306,7 +306,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
                 case ERROR -> logger.isErrorEnabled();
                 default -> throw new RuntimeException("Unexpected logLevel: " + logLevel);
             };
-        } catch (Exception e) {
+        } catch (final Exception e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             return false;
         }

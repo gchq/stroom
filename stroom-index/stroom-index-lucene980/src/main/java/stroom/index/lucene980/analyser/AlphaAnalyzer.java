@@ -35,7 +35,7 @@ class AlphaAnalyzer extends Analyzer {
     }
 
     @Override
-    protected TokenStream normalize(String fieldName, TokenStream in) {
+    protected TokenStream normalize(final String fieldName, final TokenStream in) {
         if (caseSensitive) {
             return in;
         }

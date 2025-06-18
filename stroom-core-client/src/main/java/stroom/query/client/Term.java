@@ -58,7 +58,7 @@ public final class Term extends Item {
         return docRef;
     }
 
-    public void setDocRef(DocRef docRef) {
+    public void setDocRef(final DocRef docRef) {
         this.docRef = docRef;
     }
 

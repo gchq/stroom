@@ -61,7 +61,7 @@ public class NumberedDirProvider {
             return "0000000000";
         } else {
             final String str = String.valueOf(num);
-            int len = str.length();
+            final int len = str.length();
             return switch (len) {
                 case 0 -> "0000000000";
                 case 1 -> "000000000" + str;

@@ -33,7 +33,7 @@ public class UIDSerde implements Serde<UID>, Serializer<UID>, Deserializer<UID> 
 
     @Override
     public UID deserialize(final ByteBuffer byteBuffer) {
-        UID uid = getUid(byteBuffer);
+        final UID uid = getUid(byteBuffer);
         byteBuffer.rewind();
         return uid;
     }

@@ -47,7 +47,7 @@ public abstract class AbstractFunctionTest<T extends Function> {
     }
 
     private DynamicTest createDynamicTest(final Supplier<T> functionSupplier, final TestCase testCase) {
-        T function = functionSupplier.get();
+        final T function = functionSupplier.get();
         return DynamicTest.dynamicTest(
                 function.getClass().getSimpleName() + "(" + testCase.getTestVariantName() + ")",
                 () -> {
@@ -62,7 +62,7 @@ public abstract class AbstractFunctionTest<T extends Function> {
                                 argToString(testCase.getExpectedReturn()));
 
                         if (!testCase.getParams().isEmpty()) {
-                            Param[] params = testCase.getParams().toArray(new Param[0]);
+                            final Param[] params = testCase.getParams().toArray(new Param[0]);
                             function.setParams(params);
                         }
                         final ValueReferenceIndex valueReferenceIndex = new ValueReferenceIndex();
@@ -97,8 +97,8 @@ public abstract class AbstractFunctionTest<T extends Function> {
 
                         if (returnVal instanceof ValDouble
                                 && testCase.getExpectedReturn() instanceof ValDouble) {
-                            double expected = testCase.getExpectedReturn().toDouble();
-                            double actual = returnVal.toDouble();
+                            final double expected = testCase.getExpectedReturn().toDouble();
+                            final double actual = returnVal.toDouble();
                             Assertions.assertThat(actual)
                                     .isCloseTo(expected, Offset.offset(0.0001));
                         } else if (returnVal == ValErr.INSTANCE) {
@@ -113,26 +113,26 @@ public abstract class AbstractFunctionTest<T extends Function> {
                             Assertions.assertThat(returnVal)
                                     .isEqualTo(testCase.getExpectedReturn());
                         }
-                    } catch (ParseException e) {
+                    } catch (final ParseException e) {
                         throw new RuntimeException(e);
                     }
                 });
     }
 
     Supplier<T> getFunctionSupplier() {
-        Class<T> clazz = getFunctionType();
+        final Class<T> clazz = getFunctionType();
         return () -> {
             try {
                 return clazz.getConstructor(ExpressionContext.class, String.class)
                         .newInstance(new ExpressionContext(), clazz.getSimpleName());
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 // Ignore
             }
 
             try {
                 return clazz.getConstructor(String.class)
                         .newInstance(clazz.getSimpleName());
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw new RuntimeException(e);
             }
         };
@@ -246,8 +246,8 @@ public abstract class AbstractFunctionTest<T extends Function> {
                                            final Param... extraParams) {
 
 //            FieldIndex fieldIndex = FieldIndex.forFields("field1");
-            Ref ref = new Ref("field1", 0);
-            List<Param> params = Stream.concat(Stream.of(ref), Arrays.stream(extraParams))
+            final Ref ref = new Ref("field1", 0);
+            final List<Param> params = Stream.concat(Stream.of(ref), Arrays.stream(extraParams))
                     .collect(Collectors.toList());
 
             return new TestCase(

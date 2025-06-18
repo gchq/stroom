@@ -39,10 +39,10 @@ public class GenerateExpectedYaml {
      * NOTE: This main method is called from the stroom-app gradle build so if it
      * is moved you will need to refactor that too.
      */
-    public static void main(String[] args) throws IOException {
+    public static void main(final String[] args) throws IOException {
 
-        Path defaultsFile;
-        Path schemaFile;
+        final Path defaultsFile;
+        final Path schemaFile;
         if (args.length == 2) {
             defaultsFile = Paths.get(args[0]);
             schemaFile = Paths.get(args[1]);
@@ -51,7 +51,7 @@ public class GenerateExpectedYaml {
             schemaFile = null;
         }
 
-        Path parentDir = defaultsFile.getParent();
+        final Path parentDir = defaultsFile.getParent();
 
         if (!Files.isDirectory(parentDir)) {
             LOGGER.info("Creating directory {}", defaultsFile.toAbsolutePath());
@@ -61,7 +61,7 @@ public class GenerateExpectedYaml {
         final String generatedYaml = TestStroomYamlUtil.getYamlFromJavaModel();
 
 
-        List<String> outputLines;
+        final List<String> outputLines;
         if (args.length > 0) {
             // called for a specific output location so add a header
 
@@ -102,7 +102,7 @@ public class GenerateExpectedYaml {
         // JsonSchemaConfig config = JsonSchemaConfig.create(...);
         // JsonSchemaGenerator generator = new JsonSchemaGenerator(objectMapper, config);
 
-        JsonNode jsonSchema = jsonSchemaGenerator.generateJsonSchema(AppConfig.class);
+        final JsonNode jsonSchema = jsonSchemaGenerator.generateJsonSchema(AppConfig.class);
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
 
         LOGGER.info("Writing schema file to {}", schemaFile.toAbsolutePath());

@@ -73,7 +73,7 @@ class TestInjectionPerformance {
 
     @Test
     void testPerformance() {
-        Class<?>[] moduleClasses = {
+        final Class<?>[] moduleClasses = {
                 UriFactoryModule.class,
                 CoreModule.class,
                 BootstrapTestModule.class,
@@ -84,7 +84,7 @@ class TestInjectionPerformance {
                 MockMetaStatisticsModule.class,
                 stroom.test.DatabaseTestControlModule.class,
                 JerseyModule.class};
-        Module[] instances = new Module[moduleClasses.length];
+        final Module[] instances = new Module[moduleClasses.length];
         for (int i = 0; i < moduleClasses.length; i++) {
             final int pos = i;
             final Runnable r = () -> {
@@ -101,7 +101,7 @@ class TestInjectionPerformance {
         final Injector injector = LOGGER.logDurationIfInfoEnabled(() ->
                 Guice.createInjector(instances), "creating injector");
 
-        Class<?>[] toInject = {
+        final Class<?>[] toInject = {
                 ContentImportService.class,
                 IndexShardManager.class,
                 IndexShardWriterCache.class,
@@ -163,7 +163,7 @@ class TestInjectionPerformance {
                 } else {
                     for (final Class<?> paramType : paramTypes) {
                         try {
-                            Binding<?> binding = injector.getBinding(paramType);
+                            final Binding<?> binding = injector.getBinding(paramType);
                             if (binding instanceof final LinkedKeyBinding<?> linkedKeyBinding) {
                                 final Key<?> key = linkedKeyBinding.getLinkedKey();
                                 final Class<?> rawType = key.getTypeLiteral().getRawType();
@@ -183,13 +183,13 @@ class TestInjectionPerformance {
         }
     }
 
-    private Constructor<?> getInjectConstructor(Constructor<?>[] constructors) {
+    private Constructor<?> getInjectConstructor(final Constructor<?>[] constructors) {
         for (final Constructor<?> constructor : constructors) {
-            Inject inject = constructor.getAnnotation(Inject.class);
+            final Inject inject = constructor.getAnnotation(Inject.class);
             if (inject != null) {
                 return constructor;
             }
-            jakarta.inject.Inject inject2 = constructor.getAnnotation(jakarta.inject.Inject.class);
+            final jakarta.inject.Inject inject2 = constructor.getAnnotation(jakarta.inject.Inject.class);
             if (inject2 != null) {
                 return constructor;
             }
@@ -199,7 +199,7 @@ class TestInjectionPerformance {
 
     private void timeInjection(final Injector injector, final Class<?> clazz, final Map<Class<?>, Duration> durations) {
         if (!durations.containsKey(clazz)) {
-            long nanos = System.nanoTime();
+            final long nanos = System.nanoTime();
             injector.getInstance(clazz);
             durations.putIfAbsent(clazz, Duration.ofNanos(System.nanoTime() - nanos));
         }

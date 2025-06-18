@@ -211,7 +211,7 @@ public class ExplorerPopupPresenter
         setSelectedEntityReference(docRef, null);
     }
 
-    public void setSelectedEntityReference(final DocRef docRef, Runnable onSetSelected) {
+    public void setSelectedEntityReference(final DocRef docRef, final Runnable onSetSelected) {
         if (docRef != null) {
             restFactory
                     .create(EXPLORER_RESOURCE)

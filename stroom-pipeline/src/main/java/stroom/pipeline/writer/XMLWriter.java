@@ -164,13 +164,13 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
                     // Get compiled XSLT from the pool.
                     final ErrorReceiver errorReceiver = new ErrorReceiverIdDecorator(getElementId(),
                             getErrorReceiver());
-                    PoolItem<StoredXsltExecutable> poolItem = xsltPool.borrowConfiguredTemplate(xslt, errorReceiver,
-                            locationFactory, List.of(), true);
+                    final PoolItem<StoredXsltExecutable> poolItem = xsltPool.borrowConfiguredTemplate(
+                            xslt, errorReceiver, locationFactory, List.of(), true);
                     final StoredXsltExecutable storedXsltExecutable = poolItem.getValue();
                     // Get the errors.
                     final StoredErrorReceiver storedErrors = storedXsltExecutable.getErrorReceiver();
                     // Get the XSLT executable.
-                    XsltExecutable xsltExecutable = storedXsltExecutable.getXsltExecutable();
+                    final XsltExecutable xsltExecutable = storedXsltExecutable.getXsltExecutable();
                     if (storedErrors.getTotalErrors() > 0) {
                         // Replay any exceptions that were created when
                         // compiling the XSLT into the pipeline error handler.
@@ -224,8 +224,8 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
             final XsltDoc xsltDoc = xsltStore.readDocument(docRef);
             if (xsltDoc == null) {
                 final String message = "XSLT \"" +
-                        docRef.getName() +
-                        "\" appears to have been deleted";
+                                       docRef.getName() +
+                                       "\" appears to have been deleted";
                 throw ProcessException.create(message);
             }
 
@@ -555,7 +555,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
 
     @PipelineProperty(
             description = "A name pattern for dynamic loading of an XSLT, that will modfy the output via " +
-                    "xsl:output attributes.",
+                          "xsl:output attributes.",
             displayPriority = 2)
     public void setXsltNamePattern(final String xsltNamePattern) {
         this.xsltNamePattern = xsltNamePattern;
@@ -599,14 +599,14 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     }
 
     @SuppressWarnings("unused") //useful for debugging
-    private static String truncateAndStripWhitespace(String str) {
+    private static String truncateAndStripWhitespace(final String str) {
         //remove any line breaks and white space, accepting that white space in element text or attributes will be lost
         //but is this is intended for debugging that is ok.
         String truncatedStr = str
                 .replaceAll("\\s+", "")
                 .replace("\n", "");
         if (truncatedStr != null) {
-            int strLen = truncatedStr.length();
+            final int strLen = truncatedStr.length();
             if (strLen > 100) {
                 truncatedStr = String.format("%s..TRUNCATED..%s",
                         truncatedStr.substring(0, 45),
@@ -634,6 +634,4 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
                 ? charBuffer.toString()
                 : "";
     }
-
-
 }

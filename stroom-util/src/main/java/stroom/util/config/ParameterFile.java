@@ -27,7 +27,7 @@ public class ParameterFile {
         return parameter;
     }
 
-    public void setParameter(List<Parameter> parameter) {
+    public void setParameter(final List<Parameter> parameter) {
         this.parameter = parameter;
     }
 

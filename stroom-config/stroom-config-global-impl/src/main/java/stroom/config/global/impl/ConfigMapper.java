@@ -564,7 +564,7 @@ public class ConfigMapper {
         final PropertyPath fullPath = dbConfigProperty.getName();
 
         synchronized (this) {
-            ConfigProperty globalConfigProperty = getGlobalProperty(fullPath)
+            final ConfigProperty globalConfigProperty = getGlobalProperty(fullPath)
                     .orElseThrow(() ->
                             new UnknownPropertyException(LogUtil.message("No configProperty for {}", fullPath)));
 
@@ -643,7 +643,7 @@ public class ConfigMapper {
                                     valueType.getSimpleName(), config.getClass().getSimpleName()));
                             childConfigObject = (AbstractConfig) valueType.getConstructor().newInstance();
                             prop.setValueOnConfigObject(childConfigObject);
-                        } catch (Exception e) {
+                        } catch (final Exception e) {
                             throw new RuntimeException("Error constructing new instance of " + valueType, e);
                         }
                     } else {
@@ -771,31 +771,31 @@ public class ConfigMapper {
     }
 
     private static boolean isSupportedPropertyType(final Class<?> type) {
-        boolean isSupported = type.equals(String.class) ||
-                              type.equals(Byte.class) ||
-                              type.equals(byte.class) ||
-                              type.equals(Integer.class) ||
-                              type.equals(int.class) ||
-                              type.equals(Long.class) ||
-                              type.equals(long.class) ||
-                              type.equals(Short.class) ||
-                              type.equals(short.class) ||
-                              type.equals(Float.class) ||
-                              type.equals(float.class) ||
-                              type.equals(Double.class) ||
-                              type.equals(double.class) ||
-                              type.equals(Boolean.class) ||
-                              type.equals(boolean.class) ||
-                              type.equals(Character.class) ||
-                              type.equals(char.class) ||
-                              Set.class.isAssignableFrom(type) ||
-                              List.class.isAssignableFrom(type) ||
-                              Map.class.isAssignableFrom(type) ||
-                              DocRef.class.isAssignableFrom(type) ||
-                              Enum.class.isAssignableFrom(type) ||
-                              Path.class.isAssignableFrom(type) ||
-                              StroomDuration.class.isAssignableFrom(type) ||
-                              ByteSize.class.isAssignableFrom(type);
+        final boolean isSupported = type.equals(String.class) ||
+                                    type.equals(Byte.class) ||
+                                    type.equals(byte.class) ||
+                                    type.equals(Integer.class) ||
+                                    type.equals(int.class) ||
+                                    type.equals(Long.class) ||
+                                    type.equals(long.class) ||
+                                    type.equals(Short.class) ||
+                                    type.equals(short.class) ||
+                                    type.equals(Float.class) ||
+                                    type.equals(float.class) ||
+                                    type.equals(Double.class) ||
+                                    type.equals(double.class) ||
+                                    type.equals(Boolean.class) ||
+                                    type.equals(boolean.class) ||
+                                    type.equals(Character.class) ||
+                                    type.equals(char.class) ||
+                                    Set.class.isAssignableFrom(type) ||
+                                    List.class.isAssignableFrom(type) ||
+                                    Map.class.isAssignableFrom(type) ||
+                                    DocRef.class.isAssignableFrom(type) ||
+                                    Enum.class.isAssignableFrom(type) ||
+                                    Path.class.isAssignableFrom(type) ||
+                                    StroomDuration.class.isAssignableFrom(type) ||
+                                    ByteSize.class.isAssignableFrom(type);
 
         LOGGER.trace("isSupportedPropertyType({}), returning: {}", type, isSupported);
         return isSupported;
@@ -820,7 +820,7 @@ public class ConfigMapper {
 
         prop.getAnnotation(RequiresRestart.class)
                 .ifPresent(requiresRestart -> {
-                    RequiresRestart.RestartScope scope = requiresRestart.value();
+                    final RequiresRestart.RestartScope scope = requiresRestart.value();
                     switch (scope) {
                         case SYSTEM:
                             configProperty.setRequireRestart(true);
@@ -840,7 +840,7 @@ public class ConfigMapper {
         try {
             if (type instanceof Class) {
                 final Class<?> valueClass = (Class<?>) type;
-                String dataTypeName;
+                final String dataTypeName;
 
                 if (valueClass.equals(int.class)) {
                     dataTypeName = "Integer";
@@ -868,7 +868,7 @@ public class ConfigMapper {
             } else {
                 return "";
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message(
                     "Error getting type name for {}: {}", type, e.getMessage()));
         }
@@ -882,14 +882,14 @@ public class ConfigMapper {
 
     // pkg private for testing
     static String convertToString(final Object value) {
-        List<String> availableDelimiters = new ArrayList<>(VALID_DELIMITERS_LIST);
+        final List<String> availableDelimiters = new ArrayList<>(VALID_DELIMITERS_LIST);
         return convertToString(value, availableDelimiters);
     }
 
     static Function<Object, String> createDelimitedConversionFunc(
             final BiFunction<Object, List<String>, String> conversionFunc) {
 
-        List<String> availableDelimiters = new ArrayList<>(VALID_DELIMITERS_LIST);
+        final List<String> availableDelimiters = new ArrayList<>(VALID_DELIMITERS_LIST);
         return object ->
                 conversionFunc.apply(object, availableDelimiters);
     }
@@ -1031,7 +1031,7 @@ public class ConfigMapper {
             } else if (ByteSize.class.isAssignableFrom(type)) {
                 return ByteSize.parse(value);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             // Don't include the original exception else gwt uses the msg of the
             // original which is not very user friendly. Enable debug to see the stack
             final String propName = (prop.getParentObject() == null
@@ -1053,7 +1053,7 @@ public class ConfigMapper {
                 "Type [{}] is not supported for value [{}]", genericType, value));
     }
 
-    private static Object getDefaultValue(Class<?> clazz) {
+    private static Object getDefaultValue(final Class<?> clazz) {
         if (clazz.equals(boolean.class)) {
             return DEFAULT_BOOLEAN;
         } else if (clazz.equals(byte.class)) {
@@ -1075,7 +1075,7 @@ public class ConfigMapper {
     }
 
     private static Class<?> getGenericsParam(final Type typeWithGenerics, final int index) {
-        List<Type> genericsParamTypes = PropertyUtil.getGenericTypes(typeWithGenerics);
+        final List<Type> genericsParamTypes = PropertyUtil.getGenericTypes(typeWithGenerics);
         if (genericsParamTypes.isEmpty()) {
             throw new RuntimeException(LogUtil.message(
                     "Unable to get generics parameter {} for type {} as it has no parameterised types",
@@ -1109,13 +1109,13 @@ public class ConfigMapper {
         if (list.isEmpty()) {
             return "";
         }
-        List<String> strList = list.stream()
+        final List<String> strList = list.stream()
                 .map(ConfigMapper::convertToString)
                 .collect(Collectors.toList());
 
-        String allText = String.join("", strList);
+        final String allText = String.join("", strList);
 
-        String delimiter = getDelimiter(allText, availableDelimiters);
+        final String delimiter = getDelimiter(allText, availableDelimiters);
 
         // prefix the delimited form with the delimiter so when we deserialise
         // we know what the delimiter is
@@ -1128,14 +1128,14 @@ public class ConfigMapper {
         if (set.isEmpty()) {
             return "";
         }
-        List<String> strList = set.stream()
+        final List<String> strList = set.stream()
                 .sorted() // ensure consistent serialisation
                 .map(ConfigMapper::convertToString)
                 .collect(Collectors.toList());
 
-        String allText = String.join("", strList);
+        final String allText = String.join("", strList);
 
-        String delimiter = getDelimiter(allText, availableDelimiters);
+        final String delimiter = getDelimiter(allText, availableDelimiters);
 
         // prefix the delimited form with the delimiter so when we deserialise
         // we know what the delimiter is
@@ -1150,8 +1150,8 @@ public class ConfigMapper {
         // convert keys/values to strings
         final List<Map.Entry<String, String>> strEntries = map.entrySet().stream()
                 .map(entry -> {
-                    String key = ConfigMapper.convertToString(entry.getKey());
-                    String value = ConfigMapper.convertToString(entry.getValue());
+                    final String key = ConfigMapper.convertToString(entry.getKey());
+                    final String value = ConfigMapper.convertToString(entry.getValue());
                     return Map.entry(key, value);
                 })
                 .collect(Collectors.toList());
@@ -1174,9 +1174,9 @@ public class ConfigMapper {
 
     private static String docRefToString(final DocRef docRef,
                                          final List<String> availableDelimiters) {
-        String allText = String.join(
+        final String allText = String.join(
                 "", docRef.getType(), docRef.getUuid(), docRef.getName());
-        String delimiter = getDelimiter(allText, availableDelimiters);
+        final String delimiter = getDelimiter(allText, availableDelimiters);
 
         // prefix the delimited form with the delimiter so when we deserialise
         // we know what the delimiter is
@@ -1221,7 +1221,7 @@ public class ConfigMapper {
 
             try {
 
-                String delimitedValue = serialisedForm.substring(1);
+                final String delimitedValue = serialisedForm.substring(1);
 
                 return StreamSupport.stream(
                                 Splitter
@@ -1231,7 +1231,7 @@ public class ConfigMapper {
                         .map(str -> convertToObject(prop, str, type))
                         .map(type::cast)
                         .collect(Collectors.toList());
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw new RuntimeException(LogUtil.message(
                         "Error de-serialising a List<?> from [{}]", serialisedForm), e);
             }
@@ -1316,7 +1316,7 @@ public class ConfigMapper {
                     .uuid(parts.get(1))
                     .name(parts.get(2))
                     .build();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message(
                     "Error de-serialising a docRef from [{}] due to: {}", serialisedForm, e.getMessage()), e);
         }
@@ -1362,7 +1362,7 @@ public class ConfigMapper {
                 "No config instance found for class " + clazz.getName());
         try {
             return clazz.cast(config);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message(
                     "Error casting config object to {}, found {}",
                     clazz.getName(),

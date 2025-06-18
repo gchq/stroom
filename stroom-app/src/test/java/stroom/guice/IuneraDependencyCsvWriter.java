@@ -54,7 +54,7 @@ class IuneraDependencyCsvWriter implements Closeable {
         try {
             LOGGER.info(String.format("Written Dependencies for %s to %s", testClass, path));
             writer.close();
-        } catch (IOException e) {
+        } catch (final IOException e) {
             fail(e.getLocalizedMessage());
         }
     }

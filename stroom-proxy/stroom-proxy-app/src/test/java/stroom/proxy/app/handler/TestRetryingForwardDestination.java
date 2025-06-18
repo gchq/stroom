@@ -53,7 +53,7 @@ class TestRetryingForwardDestination {
     private DirQueueFactory dirQueueFactory;
 
     @BeforeEach
-    void setUp(@TempDir Path baseDir) {
+    void setUp(@TempDir final Path baseDir) {
         this.dataDir = baseDir.resolve("data");
         this.homeDir = baseDir.resolve("home");
         this.tempDir = baseDir.resolve("temp");
@@ -238,7 +238,7 @@ class TestRetryingForwardDestination {
                 final AttributeMap attributeMap = new AttributeMap(attrs);
                 AttributeMapUtil.write(attributeMap, meta);
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
         return sourceDir;

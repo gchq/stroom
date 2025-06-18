@@ -153,7 +153,7 @@ public class TabContentProvider<E>
         usedProviders.add(tabProvider);
     }
 
-    private E write(final TabProvider<E> tabProvider, E entity) {
+    private E write(final TabProvider<E> tabProvider, final E entity) {
         return tabProvider.write(entity);
     }
 

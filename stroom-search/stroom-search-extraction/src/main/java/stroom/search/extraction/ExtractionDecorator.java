@@ -180,7 +180,7 @@ public class ExtractionDecorator {
                             } else {
                                 // Poll for the next set of values.
                                 // When we get null we are done.
-                                Val[] values = storedDataQueue.take();
+                                final Val[] values = storedDataQueue.take();
                                 if (values == null) {
                                     done = true;
                                 } else {

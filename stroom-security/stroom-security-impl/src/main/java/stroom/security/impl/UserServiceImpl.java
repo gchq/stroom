@@ -163,7 +163,7 @@ class UserServiceImpl implements UserService, ContentPackUserService {
     }
 
     @Override
-    public User update(User user) {
+    public User update(final User user) {
         AuditUtil.stamp(securityContext, user);
         return securityContext.secureResult(AppPermission.MANAGE_USERS_PERMISSION, () -> {
             final User updatedUser = userDao.update(user);
@@ -328,7 +328,7 @@ class UserServiceImpl implements UserService, ContentPackUserService {
             int storedQueryCount = 0;
             try {
                 storedQueryCount = storedQueryService.deleteByOwner(userRef);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.error("Error deleting stored queries for user {}", userRef.toInfoString(), e);
                 // Swallow and carry on
             }
@@ -337,14 +337,14 @@ class UserServiceImpl implements UserService, ContentPackUserService {
                 userPrefCount = userPreferencesService.delete(userRef)
                         ? 1
                         : 0;
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.error("Error deleting user preferences for user {}", userRef.toInfoString(), e);
                 // Swallow and carry on
             }
             int activityCount = 0;
             try {
                 activityCount = activityService.deleteAllByOwner(userRef);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.error("Error deleting activities for user {}", userRef.toInfoString(), e);
                 // Swallow and carry on
             }

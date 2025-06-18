@@ -136,8 +136,8 @@ class TestFileTransferService extends AbstractResourceTest<FileTransferResource>
 
         // Test error if snapshot is up to date.
         assertThatThrownBy(() -> {
-            SnapshotRequest req = new SnapshotRequest(planBDocRef, requestTime, lastWriteTime.toEpochMilli());
-            WebTarget wt = getWebTarget(FileTransferResource.FETCH_SNAPSHOT_PATH_PART);
+            final SnapshotRequest req = new SnapshotRequest(planBDocRef, requestTime, lastWriteTime.toEpochMilli());
+            final WebTarget wt = getWebTarget(FileTransferResource.FETCH_SNAPSHOT_PATH_PART);
             fileTransferClient.fetchSnapshot(wt, req, targetDir);
         }).isInstanceOf(NotModifiedException.class);
     }

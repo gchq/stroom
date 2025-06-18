@@ -175,7 +175,7 @@ public class ActivityDaoImpl implements ActivityDao {
         final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
 
         return JooqUtil.contextResult(activityDbConnProvider, context -> {
-            try (Stream<Activity> activityStream = context
+            try (final Stream<Activity> activityStream = context
                     .select()
                     .from(ACTIVITY)
                     .where(conditions)

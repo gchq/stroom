@@ -27,7 +27,7 @@ class ParseUri extends StroomExtensionFunctionCall {
     private ReceivingContentHandler contentHandler;
 
     @Override
-    protected Sequence call(String functionName, XPathContext context, Sequence[] arguments) {
+    protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
         try {
             final String value = getSafeString(functionName, context, arguments, 0);
             if (value != null && !value.isEmpty()) {
@@ -55,7 +55,7 @@ class ParseUri extends StroomExtensionFunctionCall {
                 dataElement("userInfo", uri.getUserInfo());
                 endDocument();
 
-                Sequence sequence = builder.getCurrentRoot();
+                final Sequence sequence = builder.getCurrentRoot();
 
                 // Reset the builder, detaching it from the constructed
                 // document.

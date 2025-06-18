@@ -47,7 +47,7 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
     private final Map<String, DocumentEventLog> documentEventLogMap = new HashMap<>();
 
     private static JobNode buildJobNode(final int id, final int version, final String node) {
-        JobNode jobNode = new JobNode();
+        final JobNode jobNode = new JobNode();
         jobNode.setId(id);
         jobNode.setVersion(version);
         jobNode.setNodeName(node);

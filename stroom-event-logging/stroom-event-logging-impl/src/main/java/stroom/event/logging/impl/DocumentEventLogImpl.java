@@ -633,7 +633,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                     }
                 }
 
-                SearchEventAction action = searchBuilder.build();
+                final SearchEventAction action = searchBuilder.build();
 
                 eventLoggingService.log(
                         typeId != null
@@ -667,7 +667,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     }
 
     private ResultPage getResultPage(final PageResponse pageResponse) {
-        ResultPage resultPage = new ResultPage();
+        final ResultPage resultPage = new ResultPage();
         resultPage.setFrom(BigInteger.valueOf(pageResponse.getOffset()));
         resultPage.setTo(BigInteger.valueOf(pageResponse.getOffset() + pageResponse.getLength()));
         return resultPage;

@@ -482,7 +482,7 @@ class TestSQLStatisticAggregateMap extends StroomUnitTest {
     }
 
     private RolledUpStatisticEvent buildEvent(final String statName, final String valueSuffix, final Number value) {
-        StatisticEvent event;
+        final StatisticEvent event;
 
         if (value instanceof Long) {
             event = StatisticEvent.createCount(timeMs, statName, buildTagList(valueSuffix), (Long) value);

@@ -112,7 +112,7 @@ public class RollingFileDestination extends RollingDestination {
 
     private OutputStream createInnerOutputStream() {
         try {
-            OutputStream fileOutputStream = Files.newOutputStream(
+            final OutputStream fileOutputStream = Files.newOutputStream(
                     file,
                     StandardOpenOption.CREATE,
                     StandardOpenOption.WRITE,
@@ -125,7 +125,7 @@ public class RollingFileDestination extends RollingDestination {
     }
 
     @Override
-    protected void afterRoll(Consumer<Throwable> exceptionConsumer) {
+    protected void afterRoll(final Consumer<Throwable> exceptionConsumer) {
         boolean success = false;
 
         String destFileName = rolledFileName;
@@ -140,7 +140,7 @@ public class RollingFileDestination extends RollingDestination {
         }
 
         // Create source path.
-        Path source = file;
+        final Path source = file;
 
         // Create destination path.
         Path dest = destFile;

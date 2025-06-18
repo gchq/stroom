@@ -55,11 +55,11 @@ class TestStateLookupImpl {
      */
 //    @Disabled // Manual run only
     @Test
-    void perfTest(@TempDir Path tempDir) {
-        int entryCount = 5_000;
-        int refStreamDefCount = 5;
-        int keyValueMapCount = 20;
-        int batchSize = 1_000;
+    void perfTest(@TempDir final Path tempDir) {
+        final int entryCount = 5_000;
+        final int refStreamDefCount = 5;
+        final int keyValueMapCount = 20;
+        final int batchSize = 1_000;
         final Instant baseTime = Instant.now().truncatedTo(ChronoUnit.DAYS);
 
         // refStrmIdx => mapNames
@@ -122,7 +122,7 @@ class TestStateLookupImpl {
 
             LOGGER.info("Starting multi thread lookups");
             timer = DurationTimer.start();
-            int totalKeyValueEntryCount = refStreamDefCount * keyValueMapCount * entryCount;
+            final int totalKeyValueEntryCount = refStreamDefCount * keyValueMapCount * entryCount;
             IntStream.rangeClosed(0, totalKeyValueEntryCount)
                     .boxed()
                     .parallel()

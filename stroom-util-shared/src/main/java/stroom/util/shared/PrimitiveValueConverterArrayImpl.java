@@ -79,13 +79,13 @@ public class PrimitiveValueConverterArrayImpl<E extends HasPrimitiveValue>
                 try {
                     //noinspection unchecked // GWT, so limited options for checking type of items
                     return (E) value;
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     throw new RuntimeException(
                             "Unable to cast " + value.getClass().getName()
                             + " to " + itemType.getName(), e);
                 }
             }
-        } catch (IndexOutOfBoundsException e) {
+        } catch (final IndexOutOfBoundsException e) {
             // An unknown primitive value
             return null;
         }

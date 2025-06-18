@@ -50,7 +50,7 @@ class TestMultiForwardDestination {
 
 
     @BeforeEach
-    void setUp(@TempDir Path tempDir) {
+    void setUp(@TempDir final Path tempDir) {
         baseDir = tempDir;
         copiesDir = baseDir.resolve("copies");
         FileUtil.ensureDirExists(copiesDir);
@@ -192,7 +192,7 @@ class TestMultiForwardDestination {
                 final AttributeMap attributeMap = new AttributeMap(attrs);
                 AttributeMapUtil.write(attributeMap, meta);
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
         return sourceDir;

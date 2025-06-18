@@ -25,12 +25,12 @@ import java.util.List;
 public class ExecutionProfilerTopN {
     List<ExecutionProfiler> topN = new ArrayList<>();
 
-    public ExecutionProfilerTopN(Root root, int n) {
+    public ExecutionProfilerTopN(final Root root, final int n) {
         buildExecutionProfilerList(topN, root);
         init(n);
     }
 
-    public ExecutionProfilerTopN(List<ExecutionProfiler> list, int n) {
+    public ExecutionProfilerTopN(final List<ExecutionProfiler> list, final int n) {
         topN = list;
         init(n);
     }
@@ -39,7 +39,7 @@ public class ExecutionProfilerTopN {
         return topN;
     }
 
-    private void init(int n) {
+    private void init(final int n) {
         sort();
         if (topN.size() > n) {
             topN = topN.subList(0, n);
@@ -51,12 +51,12 @@ public class ExecutionProfilerTopN {
                 (lhs, rhs) -> CompareUtil.compareLong(rhs.getTotalExecutionTime(), lhs.getTotalExecutionTime()));
     }
 
-    private void buildExecutionProfilerList(List<ExecutionProfiler> list, Node node) {
+    private void buildExecutionProfilerList(final List<ExecutionProfiler> list, final Node node) {
         if (node instanceof ExecutionProfiler) {
             list.add((ExecutionProfiler) node);
         }
         if (node.getChildNodes() != null) {
-            for (Node child : node.getChildNodes()) {
+            for (final Node child : node.getChildNodes()) {
                 buildExecutionProfilerList(list, child);
             }
         }

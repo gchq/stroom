@@ -145,7 +145,7 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                     .onDuplicateKeyUpdate()
                     .set(PERMISSION_DOC.PERMISSION_ID, permissionId)
                     .execute());
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException("Error trying to upsert documentUuid: " + documentUuid
                                        + ", userUuid: " + userUuid + ", permission: " + permission, e);
         }
@@ -361,7 +361,7 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
     }
 
     @Override
-    public void addDocumentCreatePermissions(String sourceDocUuid, String destDocUuid) {
+    public void addDocumentCreatePermissions(final String sourceDocUuid, final String destDocUuid) {
         Objects.requireNonNull(sourceDocUuid, "Null source document UUID");
         Objects.requireNonNull(destDocUuid, "Null destination document UUID");
 

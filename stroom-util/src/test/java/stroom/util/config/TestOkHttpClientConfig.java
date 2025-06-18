@@ -15,7 +15,7 @@ class TestOkHttpClientConfig {
     void testDeser_empty() throws JsonProcessingException {
 
         final String json = "{}";
-        OkHttpClientConfig clientConfig = new ObjectMapper()
+        final OkHttpClientConfig clientConfig = new ObjectMapper()
                 .readerFor(OkHttpClientConfig.class)
                 .readValue(json);
 
@@ -53,7 +53,7 @@ class TestOkHttpClientConfig {
                     "followRedirects": true
                 }
                 """;
-        OkHttpClientConfig clientConfig = new ObjectMapper()
+        final OkHttpClientConfig clientConfig = new ObjectMapper()
                 .readerFor(OkHttpClientConfig.class)
                 .readValue(json);
 

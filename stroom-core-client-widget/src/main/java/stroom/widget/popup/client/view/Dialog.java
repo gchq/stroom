@@ -205,8 +205,8 @@ public class Dialog extends AbstractPopupPanel implements TaskMonitorFactory {
         if (dragging) {
             final int x = event.getClientX();
             final int y = event.getClientY();
-            double dx = x - dragStartX;
-            double dy = y - dragStartY;
+            final double dx = x - dragStartX;
+            final double dy = y - dragStartY;
 
             double left = dragStartWindow.getLeft() + dx;
             double top = dragStartWindow.getTop() + dy;

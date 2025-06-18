@@ -109,9 +109,9 @@ public class ElasticClientFactory {
         try {
             final InputStream certInputStream = new ByteArrayInputStream(cert.getBytes(StandardCharsets.UTF_8));
             return TransportUtils.sslContextFromHttpCaCrt(certInputStream);
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Failed to initialise SSL context", e);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Failed to load CA certificate", e);
         }
 
@@ -122,7 +122,7 @@ public class ElasticClientFactory {
      * Encode the API key ID and secret in base64 for use in a HTTP request.
      * @return Base-64 encoded string. If no API key or secret are defined, returns `null`.
      */
-    private String getEncodedApiKey(ElasticConnectionConfig config) {
+    private String getEncodedApiKey(final ElasticConnectionConfig config) {
         final String apiKeyId = config.getApiKeyId();
         final String apiKeySecret = config.getApiKeySecret();
 
@@ -138,7 +138,7 @@ public class ElasticClientFactory {
      * Parse an Elasticsearch connection URL into its components parts
      */
     public static HttpHost hostFromUrl(final String url) {
-        Matcher matches = URL_PATTERN.matcher(url);
+        final Matcher matches = URL_PATTERN.matcher(url);
 
         try {
             if (matches.find()) {
@@ -161,9 +161,9 @@ public class ElasticClientFactory {
 
                 return new HttpHost(host, port, scheme);
             }
-        } catch (NumberFormatException e) {
+        } catch (final NumberFormatException e) {
             LOGGER.error("Invalid port format in URL: '" + url + "'");
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Elasticsearch connection URL could not be parsed: '" + url + "'. " + e.getMessage());
         }
 

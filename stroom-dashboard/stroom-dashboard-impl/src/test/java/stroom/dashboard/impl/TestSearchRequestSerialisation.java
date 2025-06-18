@@ -32,12 +32,13 @@ class TestSearchRequestSerialisation {
     @Test
     void testJsonSearchRequestSerialisation() {
         // Given
-        SearchRequest searchRequest = SearchRequestTestData.apiSearchRequest();
+        final SearchRequest searchRequest = SearchRequestTestData.apiSearchRequest();
 
         // When
-        String serialisedSearchRequest = JsonUtil.writeValueAsString(searchRequest);
-        SearchRequest deserialisedSearchRequest = JsonUtil.readValue(serialisedSearchRequest, SearchRequest.class);
-        String reSerialisedSearchRequest = JsonUtil.writeValueAsString(deserialisedSearchRequest);
+        final String serialisedSearchRequest = JsonUtil.writeValueAsString(searchRequest);
+        final SearchRequest deserialisedSearchRequest = JsonUtil.readValue(
+                serialisedSearchRequest, SearchRequest.class);
+        final String reSerialisedSearchRequest = JsonUtil.writeValueAsString(deserialisedSearchRequest);
 
         // Then
         assertThat(searchRequest).isEqualTo(deserialisedSearchRequest);

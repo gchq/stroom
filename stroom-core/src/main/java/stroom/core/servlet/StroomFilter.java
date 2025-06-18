@@ -62,24 +62,24 @@ public class StroomFilter implements Filter {
             throws IOException, ServletException {
         if (LOGGER.isInfoEnabled()) {
             LOGGER.info("doFilter()");
-            HttpServletRequest httpRequest = (HttpServletRequest) request;
+            final HttpServletRequest httpRequest = (HttpServletRequest) request;
 
             LOGGER.info("Incoming request requestURI=" + httpRequest.getRequestURI());
 
-            Enumeration<String> headers = httpRequest.getHeaderNames();
+            final Enumeration<String> headers = httpRequest.getHeaderNames();
             while (headers.hasMoreElements()) {
-                String key = headers.nextElement();
+                final String key = headers.nextElement();
                 LOGGER.info("Incoming Header " + key + "=" + httpRequest.getHeader(key));
             }
-            Enumeration<String> parameters = httpRequest.getParameterNames();
+            final Enumeration<String> parameters = httpRequest.getParameterNames();
             while (parameters.hasMoreElements()) {
-                String key = parameters.nextElement();
+                final String key = parameters.nextElement();
                 LOGGER.info("Incoming Parameter " + key + "=" + httpRequest.getParameter(key));
             }
 
-            Cookie[] cookies = httpRequest.getCookies();
+            final Cookie[] cookies = httpRequest.getCookies();
             if (cookies != null) {
-                for (Cookie cookie : cookies) {
+                for (final Cookie cookie : cookies) {
                     LOGGER.info("Incoming Cookie domain=" + cookie.getDomain() + " maxAge=" + cookie.getMaxAge() + " "
                             + cookie.getName() + "=" + cookie.getValue());
                 }

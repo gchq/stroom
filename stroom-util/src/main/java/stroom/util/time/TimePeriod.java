@@ -99,11 +99,11 @@ public class TimePeriod {
      */
     public String getDurationStr() {
         long duration = getDuration().toMillis();
-        int totalHours = (int) (duration / MS_IN_HOUR);
+        final int totalHours = (int) (duration / MS_IN_HOUR);
         duration = duration - (totalHours * MS_IN_HOUR);
 
-        int hours;
-        int days;
+        final int hours;
+        final int days;
         if (totalHours > 24) {
             hours = totalHours % 24;
             days = totalHours / 24;
@@ -112,9 +112,9 @@ public class TimePeriod {
             days = 0;
         }
 
-        int minutes = (int) (duration / MS_IN_MINUTE);
+        final int minutes = (int) (duration / MS_IN_MINUTE);
         duration = duration - (minutes * MS_IN_MINUTE);
-        int seconds = (int) (duration / MS_IN_SECOND);
+        final int seconds = (int) (duration / MS_IN_SECOND);
         duration = duration - (seconds * MS_IN_SECOND);
 
         final StringBuilder sb = new StringBuilder();

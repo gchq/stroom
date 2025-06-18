@@ -25,8 +25,8 @@ public interface HasHealthCheck {
      * result in a {@link RuntimeException}. Useful for creating sorted maps to go into HealthCheck detail values
      */
     static <T, K, U> Collector<T, ?, TreeMap<K, U>> buildTreeMapCollector(
-            Function<? super T, ? extends K> keyMapper,
-            Function<? super T, ? extends U> valueMapper) {
+            final Function<? super T, ? extends K> keyMapper,
+            final Function<? super T, ? extends U> valueMapper) {
 
         return Collectors.toMap(
                 keyMapper,

@@ -34,7 +34,7 @@ public final class HBaseSignalInternal {
     private HBaseSignalInternal() {
     }
 
-    public static void handle(String signal, BiConsumer<Integer, String> handler) {
+    public static void handle(final String signal, final BiConsumer<Integer, String> handler) {
         Signal.handle(new Signal(signal), s -> handler.accept(s.getNumber(), s.getName()));
     }
 }

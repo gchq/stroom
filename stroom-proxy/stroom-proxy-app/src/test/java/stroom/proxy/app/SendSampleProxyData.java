@@ -29,7 +29,7 @@ public class SendSampleProxyData {
     }
 
     public static void main(final String[] args) {
-        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+        try (final CloseableHttpClient httpClient = HttpClients.createDefault()) {
             doWork("VERY_SIMPLE_DATA_SPLITTER-EVENTS", httpClient);
             doWork("VERY_SIMPLE_DATA_SPLITTER-EVENTS-V2", httpClient);
         } catch (final IOException e) {
@@ -43,8 +43,8 @@ public class SendSampleProxyData {
             for (int i = 0; i < 200; i++) {
                 final HttpPost httpPost = getHttpPost(url, feed);
                 httpClient.execute(httpPost, response -> {
-                    int code = response.getCode();
-                    String msg = response.getReasonPhrase();
+                    final int code = response.getCode();
+                    final String msg = response.getReasonPhrase();
                     System.out.println("Client Got Response " + response);
                     if (msg != null && !msg.isEmpty()) {
                         System.out.println(msg);
@@ -71,7 +71,7 @@ public class SendSampleProxyData {
     }
 
     private static InputStream getInputStream() throws IOException {
-        byte[] bytes;
+        final byte[] bytes;
         try (final ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             try (final PrintWriter printWriter =
                     new PrintWriter(

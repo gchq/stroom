@@ -45,42 +45,42 @@ public class TokenBuilder {
     private PublicJsonWebKey publicJsonWebKey;
     private String clientId;
 
-    public TokenBuilder subject(String subject) {
+    public TokenBuilder subject(final String subject) {
         this.subject = subject;
         return this;
     }
 
-    public TokenBuilder clientId(String clientId) {
+    public TokenBuilder clientId(final String clientId) {
         this.clientId = clientId;
         return this;
     }
 
-    public TokenBuilder issuer(String issuer) {
+    public TokenBuilder issuer(final String issuer) {
         this.issuer = issuer;
         return this;
     }
 
-    public TokenBuilder privateVerificationKey(PublicJsonWebKey publicJsonWebKey) {
+    public TokenBuilder privateVerificationKey(final PublicJsonWebKey publicJsonWebKey) {
         this.publicJsonWebKey = publicJsonWebKey;
         return this;
     }
 
-    public TokenBuilder nonce(String nonce) {
+    public TokenBuilder nonce(final String nonce) {
         this.nonce = nonce;
         return this;
     }
 
-    public TokenBuilder state(String state) {
+    public TokenBuilder state(final String state) {
         this.state = state;
         return this;
     }
 
-    public TokenBuilder algorithm(String algorithm) {
+    public TokenBuilder algorithm(final String algorithm) {
         this.algorithm = algorithm;
         return this;
     }
 
-    public TokenBuilder expirationTime(Instant expirationTime) {
+    public TokenBuilder expirationTime(final Instant expirationTime) {
         this.expirationTime = expirationTime;
         return this;
     }
@@ -104,7 +104,7 @@ public class TokenBuilder {
             claims.setClaim(OpenId.STATE, state);
         }
 
-        JsonWebSignature jws = new JsonWebSignature();
+        final JsonWebSignature jws = new JsonWebSignature();
         jws.setPayload(claims.toJson());
         jws.setAlgorithmHeaderValue(this.algorithm);
         jws.setKey(this.publicJsonWebKey.getPrivateKey());
@@ -118,7 +118,7 @@ public class TokenBuilder {
 
         try {
             return jws.getCompactSerialization();
-        } catch (JoseException e) {
+        } catch (final JoseException e) {
             throw new RuntimeException(e);
         }
     }

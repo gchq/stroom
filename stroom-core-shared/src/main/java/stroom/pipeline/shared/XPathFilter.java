@@ -62,7 +62,7 @@ public class XPathFilter {
         return path;
     }
 
-    public void setPath(String path) {
+    public void setPath(final String path) {
         this.path = path;
     }
 
@@ -70,7 +70,7 @@ public class XPathFilter {
         return matchType;
     }
 
-    public void setMatchType(MatchType matchType) {
+    public void setMatchType(final MatchType matchType) {
         this.matchType = matchType;
     }
 
@@ -78,7 +78,7 @@ public class XPathFilter {
         return value;
     }
 
-    public void setValue(String value) {
+    public void setValue(final String value) {
         this.value = value;
     }
 
@@ -86,7 +86,7 @@ public class XPathFilter {
         return ignoreCase;
     }
 
-    public void setIgnoreCase(Boolean ignoreCase) {
+    public void setIgnoreCase(final Boolean ignoreCase) {
         this.ignoreCase = ignoreCase;
     }
 

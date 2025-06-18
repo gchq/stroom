@@ -32,15 +32,15 @@ public class HealthCheckUtils {
             final URI uri;
             try {
                 uri = URI.create(urlStr);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 return LogUtil.message("Malformed URL: [{}]", e.getMessage());
             }
             final HttpUriRequestBase httpPost = new HttpUriRequestBase(httpMethod, uri);
 
             try {
-                int responseCode = httpClient.execute(httpPost, HttpResponse::getCode);
+                final int responseCode = httpClient.execute(httpPost, HttpResponse::getCode);
                 return String.valueOf(responseCode);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 return LogUtil.message("Unable to get response code: [{}]", e.getMessage());
             }
 
@@ -67,7 +67,7 @@ public class HealthCheckUtils {
             try {
                 map = JsonUtil.getMapper().readValue(json, new TypeReference<Map<String, Object>>() {
                 });
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 final String msg = LogUtil.message("Unable to convert object {} of type {}",
                         object, object.getClass().getName());
                 LOGGER.error(msg, e);
@@ -84,26 +84,27 @@ public class HealthCheckUtils {
      * Replaces any values with '***' if the key is a string and contains 'password' or 'apikey' or 'token'
      */
     public static void maskPasswords(final Map<String, Object> map) {
-        map.entrySet().forEach(entry -> {
-            String key = entry.getKey();
-            if (entry.getValue() instanceof String) {
+        map.forEach((key, value) -> {
+            if (value instanceof String) {
                 if (key.toLowerCase().contains("password")) {
                     LOGGER.debug("Masking entry with key {}", key);
                     map.put(key, "****");
                 } else if (key.toLowerCase().contains("apikey") || key.toLowerCase().contains("token")) {
                     LOGGER.debug("Masking entry with key {}", key);
-                    String oldValue = (String) entry.getValue();
+                    final String oldValue = (String) value;
                     if (oldValue.length() <= 8) {
                         map.put(key, "****");
                     } else {
-                        String newValue = oldValue.substring(0, 4) + "****" + oldValue.substring(oldValue.length() - 4);
+                        final String newValue = oldValue.substring(0, 4)
+                                                + "****"
+                                                + oldValue.substring(oldValue.length() - 4);
                         map.put(key, newValue);
                     }
                 }
-            } else if (entry.getValue() instanceof Map) {
-                maskPasswords((Map<String, Object>) entry.getValue());
-            } else if (entry.getValue() instanceof List) {
-                for (Object item : (List<Object>) entry.getValue()) {
+            } else if (value instanceof Map) {
+                maskPasswords((Map<String, Object>) value);
+            } else if (value instanceof List) {
+                for (final Object item : (List<Object>) value) {
                     if (item instanceof Map) {
                         maskPasswords((Map<String, Object>) item);
                     }

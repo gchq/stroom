@@ -65,9 +65,9 @@ class TestStroomIndexViewResource {
                         .build())
                 .build();
 
-        List<ResultRequest> resultRequestList = new ArrayList<>();
+        final List<ResultRequest> resultRequestList = new ArrayList<>();
         final DateTimeSettings dateTimeSettings = DateTimeSettings.builder().build();
-        SearchRequest searchRequest = new SearchRequest(
+        final SearchRequest searchRequest = new SearchRequest(
                 null,
                 queryKey,
                 query,
@@ -83,19 +83,19 @@ class TestStroomIndexViewResource {
     @Test
     void testSavedFromFile() throws IOException {
         // Given
-        String searchRequestJson = new String(Files.readAllBytes(Paths.get(
+        final String searchRequestJson = new String(Files.readAllBytes(Paths.get(
                 "src/test/resources/searchRequest.json")));
-        SearchRequest searchRequest = JsonUtil.readValue(searchRequestJson, SearchRequest.class);
-        Client client = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
+        final SearchRequest searchRequest = JsonUtil.readValue(searchRequestJson, SearchRequest.class);
+        final Client client = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
 
         // When
-        Response response = client
+        final Response response = client
                 .target(SEARCH_TARGET)
                 .request()
                 .header("Authorization", "Bearer " + jwtToken)
                 .accept(MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON)
                 .post(Entity.json(searchRequest));
-        SearchResponse searchResponse = response.readEntity(SearchResponse.class);
+        final SearchResponse searchResponse = response.readEntity(SearchResponse.class);
 
         // Then
         assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
@@ -110,11 +110,11 @@ class TestStroomIndexViewResource {
     @Test
     void test() throws JsonProcessingException {
         // Given
-        SearchRequest searchRequest = getSearchRequest();
+        final SearchRequest searchRequest = getSearchRequest();
 
         // When
-        Client client = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
-        Response response = client
+        final Client client = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
+        final Response response = client
                 .target(SEARCH_TARGET)
                 .request()
                 .header("Authorization", "Bearer " + jwtToken)

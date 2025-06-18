@@ -15,7 +15,7 @@ class TestWorkingDirectory {
      */
     @Test
     void test() {
-        Path workingDir = Paths.get(".");
+        final Path workingDir = Paths.get(".");
         assertThat(workingDir.toAbsolutePath().toString()).doesNotContain(".idea/modules");
     }
 }

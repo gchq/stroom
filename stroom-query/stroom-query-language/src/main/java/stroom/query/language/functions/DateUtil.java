@@ -96,13 +96,13 @@ public final class DateUtil {
             // Our format requires a zone offset, e.g. 'Z', '+02', '+00:00', '-02:00', etc.
             final ZonedDateTime zonedDateTime = ZonedDateTime.parse(date, DEFAULT_ISO_PARSER);
             return zonedDateTime.toInstant().toEpochMilli();
-        } catch (DateTimeParseException e) {
+        } catch (final DateTimeParseException e) {
             throw new IllegalArgumentException("Unable to parse date: \"" + date + "\": " + e.getMessage(), e);
         }
     }
 
     public static ZoneId getTimeZone(final String timeZone) throws ParseException {
-        ZoneId dateTimeZone;
+        final ZoneId dateTimeZone;
 
         if (!NullSafe.isBlankString(timeZone)) {
             try {
@@ -159,9 +159,9 @@ public final class DateUtil {
 
         final ZoneId zoneId2 = Objects.requireNonNullElse(zoneId, ZoneOffset.UTC);
         return switch (temporalAccessor) {
-            case ZonedDateTime zonedDateTime -> zonedDateTime.withZoneSameInstant(zoneId2);
-            case LocalDateTime localDateTime -> localDateTime.atZone(zoneId2);
-            case LocalDate localDate -> localDate.atStartOfDay(zoneId2);
+            case final ZonedDateTime zonedDateTime -> zonedDateTime.withZoneSameInstant(zoneId2);
+            case final LocalDateTime localDateTime -> localDateTime.atZone(zoneId2);
+            case final LocalDate localDate -> localDate.atStartOfDay(zoneId2);
             default -> throw new RuntimeException("Unexpected type " + temporalAccessor.getClass().getName());
         };
     }

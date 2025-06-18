@@ -110,7 +110,7 @@ public class DynamicQueryHelpSelectionListModel
 
                             final ResultPage<QueryHelpSelectionItem> resultPage;
                             if (NullSafe.hasItems(response.getValues())) {
-                                List<QueryHelpSelectionItem> items = response
+                                final List<QueryHelpSelectionItem> items = response
                                         .getValues()
                                         .stream()
                                         .map(this::wrap)

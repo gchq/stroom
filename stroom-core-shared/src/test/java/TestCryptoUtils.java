@@ -16,13 +16,13 @@ public class TestCryptoUtils {
         Assertions.assertTrue(encrypted.length() > 0, "Encrypted message length is > 0");
 
         // Try with the correct password
-        String decrypted = CryptoUtils.decrypt(encrypted, password);
+        final String decrypted = CryptoUtils.decrypt(encrypted, password);
         Assertions.assertEquals(decrypted, plainText, "Decrypted text is same as original");
 
         // Try with an incorrect password
         try {
             CryptoUtils.decrypt(encrypted, "wrong password");
-        } catch (AEADBadTagException e) {
+        } catch (final AEADBadTagException e) {
             // Successfully caught exception relating to inability to decrypt using the wrong password
         }
     }

@@ -67,7 +67,7 @@ class TestTemporalRangeStateDb {
             .build();
 
     @Test
-    void test(@TempDir Path tempDir) {
+    void test(@TempDir final Path tempDir) {
         testWrite(tempDir);
 
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");

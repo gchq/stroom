@@ -38,7 +38,7 @@ public class GetStatusResponse implements Serializable {
         private final String area;
         private final String message;
 
-        public StatusEntry(Status status, String area, String message) {
+        public StatusEntry(final Status status, final String area, final String message) {
             this.status = status;
             this.area = area;
             this.message = message;

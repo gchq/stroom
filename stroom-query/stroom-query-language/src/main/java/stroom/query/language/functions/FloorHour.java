@@ -60,8 +60,8 @@ class FloorHour extends RoundDate {
 
         @Override
         protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            ZonedDateTime zoned = dateTime.atZone(zoneId);
-            ZonedDateTime truncated = zoned.truncatedTo(ChronoUnit.HOURS);
+            final ZonedDateTime zoned = dateTime.atZone(zoneId);
+            final ZonedDateTime truncated = zoned.truncatedTo(ChronoUnit.HOURS);
             return truncated.toLocalDateTime();
         }
     }

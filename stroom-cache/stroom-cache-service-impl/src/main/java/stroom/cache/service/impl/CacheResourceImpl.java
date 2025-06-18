@@ -79,7 +79,7 @@ class CacheResourceImpl implements CacheResource {
     @Override
     @AutoLogged(OperationType.VIEW)
     public CacheNamesResponse list(final String nodeName) {
-        CacheNamesResponse result;
+        final CacheNamesResponse result;
 
         // If this is the node that was contacted then just return our local info.
         if (NodeCallUtil.shouldExecuteLocally(nodeInfo.get(), nodeName)) {
@@ -90,7 +90,7 @@ class CacheResourceImpl implements CacheResource {
             try {
                 WebTarget webTarget = webTargetFactory.get().create(url);
                 webTarget = UriBuilderUtil.addParam(webTarget, "nodeName", nodeName);
-                try (Response response = webTarget
+                try (final Response response = webTarget
                         .request(MediaType.APPLICATION_JSON)
                         .get()) {
                     if (response.getStatus() != 200) {
@@ -101,7 +101,7 @@ class CacheResourceImpl implements CacheResource {
                 if (result == null) {
                     throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
                 }
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
         }
@@ -125,8 +125,8 @@ class CacheResourceImpl implements CacheResource {
                 WebTarget webTarget = webTargetFactory.get().create(url);
                 webTarget = UriBuilderUtil.addParam(webTarget, "cacheName", cacheName);
                 webTarget = UriBuilderUtil.addParam(webTarget, "nodeName", nodeName);
-                CacheInfoResponse result;
-                try (Response response = webTarget
+                final CacheInfoResponse result;
+                try (final Response response = webTarget
                         .request(MediaType.APPLICATION_JSON)
                         .get()) {
                     if (response.getStatus() != 200) {
@@ -138,7 +138,7 @@ class CacheResourceImpl implements CacheResource {
                     throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
                 }
                 cacheInfoList = result.getValues();
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
         }
@@ -235,7 +235,7 @@ class CacheResourceImpl implements CacheResource {
                 WebTarget webTarget = webTargetFactory.get().create(url);
                 webTarget = UriBuilderUtil.addParam(webTarget, "cacheName", cacheName);
                 webTarget = UriBuilderUtil.addParam(webTarget, "nodeName", nodeName);
-                try (Response response = webTarget
+                try (final Response response = webTarget
                         .request(MediaType.APPLICATION_JSON)
                         .delete()) {
                     if (response.getStatus() != 200) {
@@ -243,7 +243,7 @@ class CacheResourceImpl implements CacheResource {
                     }
                     result = response.readEntity(Long.class);
                 }
-            } catch (Throwable e) {
+            } catch (final Throwable e) {
                 throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
         }

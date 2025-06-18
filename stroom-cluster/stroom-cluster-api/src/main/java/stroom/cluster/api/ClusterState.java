@@ -85,7 +85,7 @@ public class ClusterState {
         return updateTime;
     }
 
-    public void setUpdateTime(long updateTime) {
+    public void setUpdateTime(final long updateTime) {
         this.updateTime = updateTime;
     }
 

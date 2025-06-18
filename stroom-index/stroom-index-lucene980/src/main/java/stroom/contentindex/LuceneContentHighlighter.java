@@ -110,7 +110,7 @@ public class LuceneContentHighlighter implements ContentHighlighter {
                     docId,
                     field,
                     18);
-        } catch (ListFullException e) {
+        } catch (final ListFullException e) {
             // Ignore.
         } catch (final Exception e) {
             LOGGER.error(e::getMessage, e);

@@ -30,7 +30,7 @@ public class UnsupportedFilterExceptionMapper implements ExceptionMapper<Unsuppo
     private static final Logger LOGGER = LoggerFactory.getLogger(UnsupportedFilterExceptionMapper.class);
 
     @Override
-    public Response toResponse(UnsupportedFilterException exception) {
+    public Response toResponse(final UnsupportedFilterException exception) {
         LOGGER.debug(exception.getMessage());
         // 422 is UNPROCESSABLE_ENTITY - we understand the request and the request is fine but we don't support this yet
         return Response.status(422).entity(exception.getMessage()).build();

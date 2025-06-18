@@ -284,7 +284,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     }
 
     public int logicallyDeleteOldFilters(final Instant deleteThreshold, final DSLContext context) {
-        var query = context
+        final var query = context
                 .update(PROCESSOR_FILTER)
                 .set(PROCESSOR_FILTER.DELETED, true)
                 .set(PROCESSOR_FILTER.VERSION, PROCESSOR_FILTER.VERSION.plus(1))

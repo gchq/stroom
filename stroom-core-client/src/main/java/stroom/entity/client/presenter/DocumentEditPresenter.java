@@ -78,7 +78,7 @@ public abstract class DocumentEditPresenter<V extends View, D> extends MyPresent
     }
 
     @Override
-    public final D write(D document) {
+    public final D write(final D document) {
         return onWrite(document);
     }
 

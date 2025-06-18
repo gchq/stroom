@@ -41,10 +41,10 @@ public class StringSerde implements Serde<String> {
      */
     public static String extractValue(final ByteBuffer byteBuffer) {
         try {
-            String str = StandardCharsets.UTF_8.decode(byteBuffer).toString();
+            final String str = StandardCharsets.UTF_8.decode(byteBuffer).toString();
             byteBuffer.flip();
             return str;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message("Unable to decode string from byteBuffer {}",
                     ByteBufferUtils.byteBufferInfo(byteBuffer)), e);
         }

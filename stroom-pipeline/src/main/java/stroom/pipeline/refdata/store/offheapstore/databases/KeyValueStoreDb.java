@@ -77,8 +77,8 @@ public class KeyValueStoreDb
                                  final EntryConsumer entryConsumer) {
         LOGGER.debug("deleteMapEntries(..., {}, ...)", mapUid);
 
-        try (PooledByteBuffer startKeyIncPooledBuffer = getPooledKeyBuffer();
-                PooledByteBuffer endKeyExcPooledBuffer = getPooledKeyBuffer()) {
+        try (final PooledByteBuffer startKeyIncPooledBuffer = getPooledKeyBuffer();
+                final PooledByteBuffer endKeyExcPooledBuffer = getPooledKeyBuffer()) {
 
             final KeyRange<ByteBuffer> singleMapUidKeyRange = buildSingleMapUidKeyRange(
                     mapUid,
@@ -92,7 +92,7 @@ public class KeyValueStoreDb
             // and break out. After the inner loop we commit the txn, so the iterable has to be re-created.
             while (!isComplete) {
                 boolean foundMatchingEntry = false;
-                try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(
+                try (final CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(
                         batchingWriteTxn.getTxn(), singleMapUidKeyRange)) {
 
                     boolean didBreakOutEarly = false;
@@ -160,7 +160,7 @@ public class KeyValueStoreDb
                     startKeyBuffer.getByteBuffer(),
                     endKeyBuffer.getByteBuffer());
 
-            try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(
+            try (final CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(
                     readTxn, keyRange)) {
                 //noinspection unused
                 for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
@@ -193,9 +193,9 @@ public class KeyValueStoreDb
         }
     }
 
-    public Optional<UID> getMaxUid(final Txn<ByteBuffer> txn, PooledByteBuffer pooledByteBuffer) {
+    public Optional<UID> getMaxUid(final Txn<ByteBuffer> txn, final PooledByteBuffer pooledByteBuffer) {
 
-        try (CursorIterable<ByteBuffer> iterable = getLmdbDbi().iterate(txn, KeyRange.allBackward())) {
+        try (final CursorIterable<ByteBuffer> iterable = getLmdbDbi().iterate(txn, KeyRange.allBackward())) {
             final Iterator<KeyVal<ByteBuffer>> iterator = iterable.iterator();
 
             if (iterator.hasNext()) {

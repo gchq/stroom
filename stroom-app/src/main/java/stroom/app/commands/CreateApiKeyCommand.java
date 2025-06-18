@@ -205,7 +205,7 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
             // Output the API key to a file path specified by the CLI user
             try {
                 final String apiKey = createHashedApiKeyResponse.getApiKey();
-                BufferedWriter writer = new BufferedWriter(new FileWriter(path));
+                final BufferedWriter writer = new BufferedWriter(new FileWriter(path));
                 writer.write(apiKey);
                 writer.close();
 
@@ -213,7 +213,7 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
                 LOGGER.info("Wrote API key for user '{}' to file '{}'",
                         createHashedApiKeyResponse.getHashedApiKey().getOwner().toInfoString(),
                         fileInfo.getAbsolutePath());
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 LOGGER.error("API key for user '{}' could not be written to file. {}",
                         createHashedApiKeyResponse.getHashedApiKey().getOwner().toInfoString(),
                         LogUtil.exceptionMessage(e));

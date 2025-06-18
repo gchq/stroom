@@ -64,7 +64,7 @@ class CeilingDay extends RoundDate {
 
         @Override
         protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            ZonedDateTime zoned = dateTime.atZone(ZoneOffset.UTC);
+            final ZonedDateTime zoned = dateTime.atZone(ZoneOffset.UTC);
             ZonedDateTime startOfDay = zoned.truncatedTo(ChronoUnit.DAYS);
             if (zoned.isAfter(startOfDay)) {
                 startOfDay = startOfDay.plusDays(1);

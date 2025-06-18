@@ -58,7 +58,7 @@ class TestTermHandler {
 
     @Test
     void name() {
-        TermHandler<String> termHandler = getDocRefTermHandler(false);
+        final TermHandler<String> termHandler = getDocRefTermHandler(false);
 //        termHandler.apply(E)
     }
 

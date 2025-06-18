@@ -88,7 +88,7 @@ public class GenerateSampleStatisticsData {
     }
 
     private static List<Tuple3<String, String, String>> buildUserColourStateCombinations() {
-        List<Tuple3<String, String, String>> combinations = new ArrayList<>();
+        final List<Tuple3<String, String, String>> combinations = new ArrayList<>();
         for (final String user : USERS) {
             for (final String colour : COLOURS) {
                 for (final String state : STATES) {
@@ -114,7 +114,7 @@ public class GenerateSampleStatisticsData {
         final List<Tuple3<String, String, String>> combinations = buildUserColourStateCombinations();
 
         //parallel stream so data will be in a random order
-        String data = LongStream.range(0, iterations)
+        final String data = LongStream.range(0, iterations)
                 .parallel()
                 .boxed()
                 .map(i ->
@@ -126,7 +126,7 @@ public class GenerateSampleStatisticsData {
                                         timeStr, userColourState._1(), userColourState._2(), userColourState._3())))
                 .map(tuple4 -> {
                     //build the event xml
-                    StringBuilder stringBuilder = new StringBuilder()
+                    final StringBuilder stringBuilder = new StringBuilder()
                             .append("<event>")
                             .append("<time>")
                             .append(tuple4._1()) //time
@@ -156,7 +156,7 @@ public class GenerateSampleStatisticsData {
     }
 
     private static String getStatValue(final StatisticType statisticType, final String colour) {
-        String val;
+        final String val;
         switch (statisticType) {
             case COUNT:
                 val = "1";

@@ -28,7 +28,7 @@ public class PipelineScopeRunnable {
     }
 
     public <T> T scopeResult(final Supplier<T> supplier) {
-        T result;
+        final T result;
 
         scope.enter();
         try {

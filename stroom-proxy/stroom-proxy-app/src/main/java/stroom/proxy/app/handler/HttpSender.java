@@ -129,7 +129,7 @@ public class HttpSender implements StreamDestination {
     @Override
     public boolean performLivenessCheck() throws Exception {
         final String url = config.getLivenessCheckUrl();
-        boolean isLive;
+        final boolean isLive;
 
         if (NullSafe.isNonBlankString(url)) {
             final HttpGet httpGet = new HttpGet(url);
@@ -149,7 +149,7 @@ public class HttpSender implements StreamDestination {
                     throw new Exception(LogUtil.message("Got response code {} from livenessCheckUrl '{}'",
                             responseCode, url));
                 }
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 final String msg = LogUtil.message("Error calling livenessCheckUrl '{}': {}",
                         url, LogUtil.exceptionMessage(e));
                 LOGGER.debug(msg, e);
@@ -170,7 +170,7 @@ public class HttpSender implements StreamDestination {
         addAuthHeaders(httpPost);
 
         final AttributeMap sendHeader = AttributeMapUtil.cloneAllowable(attributeMap);
-        for (Entry<String, String> entry : sendHeader.entrySet()) {
+        for (final Entry<String, String> entry : sendHeader.entrySet()) {
             httpPost.addHeader(entry.getKey(), entry.getValue());
         }
 
@@ -352,7 +352,7 @@ public class HttpSender implements StreamDestination {
 //                errorMsg = e.getMessage();
 //                throw e;
 //            }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.debug(() ->
                     LogUtil.message("'{}' - Exception reading response {}",
                             forwarderName, LogUtil.exceptionMessage(e), e));
@@ -400,7 +400,7 @@ public class HttpSender implements StreamDestination {
             if (value != null) {
                 return Integer.parseInt(value);
             }
-        } catch (NumberFormatException e) {
+        } catch (final NumberFormatException e) {
             LOGGER.error(e::getMessage, e);
         }
         return def;
@@ -415,7 +415,7 @@ public class HttpSender implements StreamDestination {
                 final int code = Integer.parseInt(value);
                 return StroomStatusCode.fromCode(code);
             }
-        } catch (NumberFormatException e) {
+        } catch (final NumberFormatException e) {
             LOGGER.error("Error parsing stroom status code from header '{}' with value '{}': {}",
                     header, value, LogUtil.exceptionMessage(e), e);
         }
@@ -432,9 +432,9 @@ public class HttpSender implements StreamDestination {
     public ResponseStatus checkConnectionResponse(final ClassicHttpResponse response,
                                                   final AttributeMap attributeMap) {
         StroomStatusCode stroomStatusCode;
-        int httpResponseCode;
-        String receiptId;
-        String responseMessage;
+        final int httpResponseCode;
+        final String receiptId;
+        final String responseMessage;
         try {
             httpResponseCode = response.getCode();
             responseMessage = NullSafe.nonBlankStringElseGet(

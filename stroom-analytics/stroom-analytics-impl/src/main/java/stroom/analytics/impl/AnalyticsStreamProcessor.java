@@ -126,7 +126,7 @@ public class AnalyticsStreamProcessor {
     private void processData(final Source source,
                              final DocRef pipelineRef,
                              final Pipeline pipeline) {
-        long count = 0;
+        final long count = 0;
 
         try (final InputStreamProvider inputStreamProvider = source.get(0)) {
             // This is a valid stream so try and extract as many

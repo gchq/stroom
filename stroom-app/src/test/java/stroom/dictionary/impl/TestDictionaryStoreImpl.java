@@ -100,10 +100,10 @@ class TestDictionaryStoreImpl extends AbstractCoreIntegrationTest {
         assertThat(wordListProvider.getCombinedData(docRef1)).isEqualTo("dic1");
         assertThat(wordListProvider.getCombinedData(docRef2)).isEqualTo("dic1\ndic2");
 
-        List<DocRef> dictionary1Results = wordListProvider.findByName("dic1_name");
+        final List<DocRef> dictionary1Results = wordListProvider.findByName("dic1_name");
         assertThat(dictionary1Results.size()).isOne();
 
-        List<DocRef> badResults = wordListProvider.findByName("BAD NAME");
+        final List<DocRef> badResults = wordListProvider.findByName("BAD NAME");
         assertThat(badResults.size()).isZero();
     }
 }

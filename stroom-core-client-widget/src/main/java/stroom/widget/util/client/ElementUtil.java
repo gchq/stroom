@@ -88,7 +88,7 @@ public class ElementUtil {
         return el.getAttribute("class");
     }
 
-    public static Rect getClientRect(Element el) {
+    public static Rect getClientRect(final Element el) {
         final double windowScrollY = getWindowScrollY();
         final double windowScrollX = getWindowScrollX();
         final double top = windowScrollY + getBoundingClientRectTop(el);
@@ -119,19 +119,19 @@ public class ElementUtil {
                 right);
     }
 
-    public static double getClientLeft(Element el) {
+    public static double getClientLeft(final Element el) {
         return getWindowScrollX() + getBoundingClientRectLeft(el);
     }
 
-    public static double getClientRight(Element el) {
+    public static double getClientRight(final Element el) {
         return getWindowScrollX() + getBoundingClientRectRight(el);
     }
 
-    public static double getClientTop(Element el) {
+    public static double getClientTop(final Element el) {
         return getWindowScrollY() + getBoundingClientRectTop(el);
     }
 
-    public static double getClientBottom(Element el) {
+    public static double getClientBottom(final Element el) {
         return getWindowScrollY() + getBoundingClientRectBottom(el);
     }
 

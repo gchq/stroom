@@ -72,10 +72,10 @@ class OpenIdService {
                            @Nullable final String nonce,
                            @Nullable final String state,
                            @Nullable final String prompt) {
-        URI result;
+        final URI result;
         AuthStatus authStatus = null;
 
-        OpenIdClient oAuth2Client = openIdClientDetailsFactory.getClient(clientId);
+        final OpenIdClient oAuth2Client = openIdClientDetailsFactory.getClient(clientId);
         // After sign in attempts we want to come back here.
         final String postSignInRedirectUri = getPostSignInRedirectUri(request);
 
@@ -269,7 +269,7 @@ class OpenIdService {
         return tokenResponse;
     }
 
-    private URI buildRedirectionUrl(String redirectUri, String code, String state) {
+    private URI buildRedirectionUrl(final String redirectUri, final String code, final String state) {
         return UriBuilder
                 .fromUri(redirectUri)
                 .replaceQueryParam(OpenId.CODE, code)

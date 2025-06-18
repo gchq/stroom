@@ -40,8 +40,9 @@ public class RefTestUtil {
                              final MapDefinition mapDefinition,
                              final String key,
                              final RefDataValue refDataValue) {
-        try (StagingValueOutputStream stagingValueOutputStream = new StagingValueOutputStream(valueStoreHashAlgorithm,
-                pooledByteBufferOutputStreamFactory)) {
+        try (final StagingValueOutputStream stagingValueOutputStream = new StagingValueOutputStream(
+                valueStoreHashAlgorithm, pooledByteBufferOutputStreamFactory)) {
+
             writeValue(stagingValueOutputStream, refDataValue);
             refDataLoader.put(mapDefinition, key, stagingValueOutputStream);
         }
@@ -53,8 +54,9 @@ public class RefTestUtil {
                              final MapDefinition mapDefinition,
                              final Range<Long> range,
                              final RefDataValue refDataValue) {
-        try (StagingValueOutputStream stagingValueOutputStream = new StagingValueOutputStream(valueStoreHashAlgorithm,
-                pooledByteBufferOutputStreamFactory)) {
+        try (final StagingValueOutputStream stagingValueOutputStream = new StagingValueOutputStream(
+                valueStoreHashAlgorithm, pooledByteBufferOutputStreamFactory)) {
+
             writeValue(stagingValueOutputStream, refDataValue);
             refDataLoader.put(mapDefinition, range, stagingValueOutputStream);
         }
@@ -76,7 +78,7 @@ public class RefTestUtil {
             } else {
                 throw new RuntimeException("Unexpected type " + refDataValue.getClass().getSimpleName());
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message("Error writing value: {}", e.getMessage()), e);
         }
     }

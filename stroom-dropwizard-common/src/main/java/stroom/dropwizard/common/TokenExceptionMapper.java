@@ -10,7 +10,7 @@ import jakarta.ws.rs.ext.ExceptionMapper;
 
 public class TokenExceptionMapper implements ExceptionMapper<TokenException> {
     @Override
-    public Response toResponse(TokenException exception) {
+    public Response toResponse(final TokenException exception) {
         return Response
                 .status(Status.FORBIDDEN)
                 .type(MediaType.APPLICATION_JSON_TYPE)

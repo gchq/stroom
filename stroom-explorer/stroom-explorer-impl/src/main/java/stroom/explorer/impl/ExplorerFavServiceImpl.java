@@ -57,7 +57,7 @@ public class ExplorerFavServiceImpl implements ExplorerFavService {
                 .map(docRef -> {
                     try {
                         return docRefInfoService.get().decorate(docRef);
-                    } catch (RuntimeException e) {
+                    } catch (final RuntimeException e) {
                         // Doc info couldn't be found, probably due to a document that exists in the `explorer_node`
                         // table, but not `doc`.
                         LOGGER.error("Missing doc referenced by favourite: {}, user: {}", docRef, userRef);

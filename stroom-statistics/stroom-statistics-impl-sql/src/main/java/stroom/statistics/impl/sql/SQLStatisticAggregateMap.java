@@ -39,7 +39,7 @@ public class SQLStatisticAggregateMap {
     }
 
     public void addRolledUpEvent(final RolledUpStatisticEvent rolledUpStatisticEvent,
-                                 long precisionMs)
+                                 final long precisionMs)
             throws StatisticsEventValidationException {
         // Round the number of milliseconds to supplied precision.
         long roundedMs = rolledUpStatisticEvent.getTimeMs();
@@ -48,7 +48,7 @@ public class SQLStatisticAggregateMap {
             roundedMs = multiple * precisionMs;
         }
 
-        for (TimeAgnosticStatisticEvent timeAgnosticStatisticEvent : rolledUpStatisticEvent) {
+        for (final TimeAgnosticStatisticEvent timeAgnosticStatisticEvent : rolledUpStatisticEvent) {
             // Create a key using the rounded time
             final SQLStatKey key = new SQLStatKey(roundedMs, rolledUpStatisticEvent.getName(),
                     timeAgnosticStatisticEvent.getTagList());

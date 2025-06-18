@@ -112,7 +112,7 @@ public class GeneratePipelineElementsDoc implements DocumentationGenerator {
     );
 
     @GeneratesDocumentation
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         final GeneratePipelineElementsDoc generatePipelineElementsDoc = new GeneratePipelineElementsDoc();
 
         generatePipelineElementsDoc.generatePipelineElementReferenceContent();

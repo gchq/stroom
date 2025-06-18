@@ -73,7 +73,7 @@ public abstract class AbstractStroomBaseCommand extends ConfiguredCommand<Config
 
             try {
                 runCommand(bootstrap, namespace, config, childInjector);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 final String msg = "Error running command "
                         + commandName
                         + ": " + e.getMessage()
@@ -84,7 +84,7 @@ public abstract class AbstractStroomBaseCommand extends ConfiguredCommand<Config
 
             info(LOGGER, "Command " + commandName + " completed successfully");
             System.exit(0);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             final String msg = "Error initialising application";
             error(LOGGER, msg, e);
             System.exit(1);
@@ -95,7 +95,7 @@ public abstract class AbstractStroomBaseCommand extends ConfiguredCommand<Config
      * Convenience method to get an instance from the injector.
      * See {@link Injector#getInstance(Class)}.
      */
-    <T> T getInstance(Class<T> type) {
+    <T> T getInstance(final Class<T> type) {
         return childInjector.getInstance(type);
     }
 
@@ -103,7 +103,7 @@ public abstract class AbstractStroomBaseCommand extends ConfiguredCommand<Config
      * Convenience method to get an instance from the injector.
      * See {@link Injector#getInstance(Key)}.
      */
-    <T> T getInstance(Key<T> key) {
+    <T> T getInstance(final Key<T> key) {
         return childInjector.getInstance(key);
     }
 

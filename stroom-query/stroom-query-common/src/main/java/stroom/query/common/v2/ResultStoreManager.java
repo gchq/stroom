@@ -176,7 +176,7 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
 
     public RequestAndStore getResultStore(final SearchRequest searchRequest) {
         if (LOGGER.isDebugEnabled()) {
-            String json = JsonUtil.writeValueAsString(searchRequest);
+            final String json = JsonUtil.writeValueAsString(searchRequest);
             LOGGER.debug("/search called with searchRequest:\n{}", json);
         }
 
@@ -293,7 +293,7 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
             final QueryField partitionTimeField = optionalPartitionTimeField.get();
             final TimeRange timeRange = result.getQuery().getTimeRange();
             if (timeRange != null && (timeRange.getFrom() != null || timeRange.getTo() != null)) {
-                ExpressionOperator.Builder and = ExpressionOperator.builder().op(Op.AND);
+                final ExpressionOperator.Builder and = ExpressionOperator.builder().op(Op.AND);
                 if (timeRange.getFrom() != null) {
                     and.addDateTerm(
                             partitionTimeField,
@@ -346,7 +346,7 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
 
         } catch (final RuntimeException e) {
             // Create an error response.
-            List<Result> results;
+            final List<Result> results;
             if (request.getResultRequests() != null) {
                 results = request.getResultRequests().stream()
                         .map(resultRequest -> new TableResult(
@@ -371,7 +371,7 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
     }
 
     private String getResponseInfoForLogging(final SearchRequest request, final SearchResponse searchResponse) {
-        String resultInfo;
+        final String resultInfo;
 
         if (searchResponse.getResults() != null) {
             resultInfo = "\n" + searchResponse.getResults().stream()
@@ -409,7 +409,7 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
 
     public Boolean exists(final QueryKey queryKey) {
         if (LOGGER.isDebugEnabled()) {
-            String json = JsonUtil.writeValueAsString(queryKey);
+            final String json = JsonUtil.writeValueAsString(queryKey);
             LOGGER.debug("/exists called with queryKey:\n{}", json);
         }
 
@@ -434,7 +434,7 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
      */
     public Boolean terminate(final QueryKey queryKey) {
         if (LOGGER.isDebugEnabled()) {
-            String json = JsonUtil.writeValueAsString(queryKey);
+            final String json = JsonUtil.writeValueAsString(queryKey);
             LOGGER.debug("/terminate called with queryKey:\n{}", json);
         }
 
@@ -468,7 +468,7 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
     public Boolean destroy(final QueryKey queryKey,
                            final DestroyReason destroyReason) {
         if (LOGGER.isDebugEnabled()) {
-            String json = JsonUtil.writeValueAsString(queryKey);
+            final String json = JsonUtil.writeValueAsString(queryKey);
             LOGGER.debug("/destroy called with queryKey:\n{}", json);
         }
 

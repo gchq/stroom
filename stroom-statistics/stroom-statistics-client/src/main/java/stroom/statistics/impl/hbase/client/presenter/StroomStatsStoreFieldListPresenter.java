@@ -108,7 +108,7 @@ public class StroomStatsStoreFieldListPresenter extends DocumentEditPresenter<Pa
     private void enableButtons() {
         newButton.setEnabled(!isReadOnly());
         if (stroomStatsStoreEntityData != null && stroomStatsStoreEntityData.getFields() != null) {
-            StatisticField selected = selectionModel.getSelected();
+            final StatisticField selected = selectionModel.getSelected();
             final boolean enabled = !isReadOnly() && selected != null;
             editButton.setEnabled(enabled);
             removeButton.setEnabled(enabled);

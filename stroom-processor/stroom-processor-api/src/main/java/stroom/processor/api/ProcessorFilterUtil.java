@@ -20,7 +20,7 @@ public final class ProcessorFilterUtil {
             return false;
         }
 
-        ExpressionOperator expression = processorFilter.getQueryData().getExpression();
+        final ExpressionOperator expression = processorFilter.getQueryData().getExpression();
 
         return containsIdField(expression) == false;
     }
@@ -35,18 +35,18 @@ public final class ProcessorFilterUtil {
             return false;
         }
 
-        ExpressionOperator expression = processorFilter.getQueryData().getExpression();
+        final ExpressionOperator expression = processorFilter.getQueryData().getExpression();
 
         return containsIdField(expression) == false;
     }
 
-    private static boolean containsIdField(ExpressionOperator expression) {
+    private static boolean containsIdField(final ExpressionOperator expression) {
         if (expression == null) {
             return false;
         }
-        for (ExpressionItem item : expression.getChildren()) {
+        for (final ExpressionItem item : expression.getChildren()) {
             if (item instanceof ExpressionTerm) {
-                ExpressionTerm term = (ExpressionTerm) item;
+                final ExpressionTerm term = (ExpressionTerm) item;
                 if (MetaFields.ID.getFldName().equals(term.getField())) {
                     return true;
                 }

@@ -59,7 +59,7 @@ public class Configure extends AbstractCommandLineTool {
                         "processFile=<comma delimited files to process>");
     }
 
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         new Configure().doMain(args);
     }
 
@@ -71,25 +71,25 @@ public class Configure extends AbstractCommandLineTool {
         }
     }
 
-    public void setParameterFile(String parameterFile) {
+    public void setParameterFile(final String parameterFile) {
         this.parameterFilePath = parameterFile;
     }
 
-    public void setProcessFile(String processFile) {
+    public void setProcessFile(final String processFile) {
         this.processFilePath = processFile;
     }
 
-    public void setReadParameter(boolean readParameter) {
+    public void setReadParameter(final boolean readParameter) {
         this.readParameter = readParameter;
     }
 
-    public void setExitOnError(boolean exitOnError) {
+    public void setExitOnError(final boolean exitOnError) {
         this.exitOnError = exitOnError;
     }
 
-    public void marshal(ParameterFile data, OutputStream outputStream) {
+    public void marshal(final ParameterFile data, final OutputStream outputStream) {
         try {
-            Marshaller marshaller = jaxbContext.createMarshaller();
+            final Marshaller marshaller = jaxbContext.createMarshaller();
             marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
             marshaller.marshal(data, outputStream);
         } catch (final JAXBException e) {
@@ -97,14 +97,14 @@ public class Configure extends AbstractCommandLineTool {
         }
     }
 
-    public ParameterFile unmarshal(InputStream inputStream) {
+    public ParameterFile unmarshal(final InputStream inputStream) {
         try {
-            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-            ParameterFile parameterFile = (ParameterFile) unmarshaller.unmarshal(inputStream);
+            final Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+            final ParameterFile parameterFile = (ParameterFile) unmarshaller.unmarshal(inputStream);
 
             // When XML is formatted sometimes extra spaces are introduced that
             // we need to remove
-            for (Parameter parameter : parameterFile.getParameter()) {
+            for (final Parameter parameter : parameterFile.getParameter()) {
                 if (parameter.getValue() != null) {
                     parameter.setValue(parameter.getValue().trim());
                 }
@@ -128,7 +128,7 @@ public class Configure extends AbstractCommandLineTool {
                 exitWithError();
             }
 
-            Path parameter = Paths.get(parameterFilePath);
+            final Path parameter = Paths.get(parameterFilePath);
 
             if (!Files.isRegularFile(parameter)) {
                 printUsage();
@@ -140,7 +140,7 @@ public class Configure extends AbstractCommandLineTool {
                 parameterFile = unmarshal(inputStream);
             }
 
-            StringTokenizer processFiles = new StringTokenizer(processFilePath, ",");
+            final StringTokenizer processFiles = new StringTokenizer(processFilePath, ",");
             while (processFiles.hasMoreTokens()) {
                 final Path process = Paths.get(processFiles.nextToken());
                 if (!Files.isRegularFile(process)) {
@@ -155,11 +155,11 @@ public class Configure extends AbstractCommandLineTool {
 
             writeParameter();
 
-            for (Path file : processFile) {
+            for (final Path file : processFile) {
                 processFile(file);
             }
 
-        } catch (IllegalStateException isEx) {
+        } catch (final IllegalStateException isEx) {
             if (exitOnError) {
                 System.exit(1);
             }
@@ -175,19 +175,19 @@ public class Configure extends AbstractCommandLineTool {
         }
     }
 
-    public void processFile(Path file) throws IOException {
+    public void processFile(final Path file) throws IOException {
         writeHeading(FileUtil.getCanonicalPath(file));
 
-        Path newFile = file.getParent().resolve(file.getFileName().toString() + ".tmp");
+        final Path newFile = file.getParent().resolve(file.getFileName().toString() + ".tmp");
         Files.deleteIfExists(newFile);
         int replaceCount = 0;
-        try (BufferedReader buffReader = new BufferedReader(Files.newBufferedReader(file));
-                BufferedWriter buffWriter = new BufferedWriter(Files.newBufferedWriter(newFile))) {
+        try (final BufferedReader buffReader = new BufferedReader(Files.newBufferedReader(file));
+                final BufferedWriter buffWriter = new BufferedWriter(Files.newBufferedWriter(newFile))) {
             String line;
             int lineCount = 0;
             while ((line = buffReader.readLine()) != null) {
                 lineCount++;
-                for (Parameter parameter : parameterFile.getParameter()) {
+                for (final Parameter parameter : parameterFile.getParameter()) {
                     if (line.contains(parameter.getName())) {
                         line = line.replace(parameter.getName(), parameter.getValue());
                         replaceCount++;
@@ -214,26 +214,26 @@ public class Configure extends AbstractCommandLineTool {
     private void readParameter() throws IOException {
         writeHeading("Parameters - Hit enter to use the default in brackets");
 
-        InputStreamReader inputStreamReader = new InputStreamReader(System.in);
-        BufferedReader reader = new BufferedReader(inputStreamReader);
+        final InputStreamReader inputStreamReader = new InputStreamReader(System.in);
+        final BufferedReader reader = new BufferedReader(inputStreamReader);
 
         int maxName = 0;
         int maxValue = 0;
         int maxDescription = 0;
-        for (Parameter parameter : parameterFile.getParameter()) {
+        for (final Parameter parameter : parameterFile.getParameter()) {
             maxName = Math.max(maxName, parameter.getName().length());
             maxValue = Math.max(maxValue, parameter.getValue().length());
             maxDescription = Math.max(maxDescription, parameter.getDescription().length());
         }
 
-        for (Parameter parameter : parameterFile.getParameter()) {
+        for (final Parameter parameter : parameterFile.getParameter()) {
             int tryCount = 0;
             boolean ok;
             do {
                 System.out.print(parameter.getName() + " : " + parameter.getDescription() + " [" + parameter.getValue()
                         + "] > ");
                 if (readParameter) {
-                    String inputLine = reader.readLine();
+                    final String inputLine = reader.readLine();
                     if (inputLine != null && !inputLine.equals("")) {
                         parameter.setValue(inputLine.trim());
                     }
@@ -255,7 +255,7 @@ public class Configure extends AbstractCommandLineTool {
         System.out.println();
     }
 
-    private void writeHeading(String label) {
+    private void writeHeading(final String label) {
         System.out.println(label);
         for (int i = 0; i < label.length(); i++) {
             System.out.print("=");

@@ -74,7 +74,7 @@ public class TestFastInfosetVocab {
         factory.setNamespaceAware(true);
         final SAXParser saxParser = factory.newSAXParser();
 
-        ByteArrayOutputStream os;
+        final ByteArrayOutputStream os;
         try (final Reader reader = new StringReader(XML_1)) {
             try (final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
                 os = byteArrayOutputStream;
@@ -108,7 +108,7 @@ public class TestFastInfosetVocab {
         deser(fastInfosetBytes1a, (ParserVocabulary) null);
 
 //        final Vocabulary vocabulary1 = buildVocab(XML_1, null);
-        var vocabs1 = buildVocab(
+        final var vocabs1 = buildVocab(
                 XML_1,
                 null,
                 null);
@@ -124,7 +124,7 @@ public class TestFastInfosetVocab {
         LOGGER.info(LogUtil.inSeparatorLine("Deser 2a1"));
         deser(fastInfosetBytes2a, vocabs1._3);
 
-        var vocabs2 = buildVocab(XML_2, vocabs1._2, vocabs1._3);
+        final var vocabs2 = buildVocab(XML_2, vocabs1._2, vocabs1._3);
         dumpVocabs(vocabs2);
         final Vocabulary vocabulary2 = vocabs2._1;
 
@@ -227,7 +227,7 @@ public class TestFastInfosetVocab {
         factory.setNamespaceAware(true);
         final SAXParser saxParser = factory.newSAXParser();
 
-        ByteArrayOutputStream os;
+        final ByteArrayOutputStream os;
         try (final Reader reader = new StringReader(xml)) {
             try (final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
                 os = byteArrayOutputStream;
@@ -332,7 +332,7 @@ public class TestFastInfosetVocab {
         }
 
         public void setVocab(final Vocabulary vocab) {
-            SerializerVocabulary serializerVocabulary = createSerializerVocabulary(vocab);
+            final SerializerVocabulary serializerVocabulary = createSerializerVocabulary(vocab);
             saxDocumentSerializer.setVocabulary(serializerVocabulary);
         }
 

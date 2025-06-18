@@ -84,11 +84,11 @@ public final class ExplorerConstants {
         if (node == null) {
             return false;
         } else {
-            DocRef docRef = node.getDocRef();
+            final DocRef docRef = node.getDocRef();
             if (docRef == null) {
                 return false;
             } else {
-                String type = docRef.getType();
+                final String type = docRef.getType();
                 return type.equals(FOLDER_TYPE)
                        || type.equals(GitRepoDoc.TYPE);
             }

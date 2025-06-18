@@ -153,7 +153,7 @@ class BlockGZIPOutputFile extends OutputStream implements SeekableOutputStream {
 
         // Block Compressed size is size of stream less magic marker less block
         // size header (2 longs)
-        long rawBlockSize = mainBuffer.size() - BlockGZIPConstants.LONG_BYTES - BlockGZIPConstants.LONG_BYTES;
+        final long rawBlockSize = mainBuffer.size() - BlockGZIPConstants.LONG_BYTES - BlockGZIPConstants.LONG_BYTES;
         mainBuffer.overwriteLongAtOffset(BlockGZIPConstants.LONG_BYTES, rawBlockSize);
 
         flushMainBuffer();
@@ -211,7 +211,7 @@ class BlockGZIPOutputFile extends OutputStream implements SeekableOutputStream {
         }
 
         // Find out how many bytes are left to write in the current block
-        int bytesLeftInBlock = (int) (currentBlockEndPos - position);
+        final int bytesLeftInBlock = (int) (currentBlockEndPos - position);
 
         // These bytes will fit in this block
         if (length <= bytesLeftInBlock) {
@@ -302,7 +302,7 @@ class BlockGZIPOutputFile extends OutputStream implements SeekableOutputStream {
     }
 
     @Override
-    public void seek(long pos) {
+    public void seek(final long pos) {
         throw new UnsupportedOperationException();
     }
 

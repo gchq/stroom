@@ -194,10 +194,10 @@ class ExplorerResourceImpl implements ExplorerResource {
                             .decorate(req.getDocRef(),
                                     true,
                                     req.getRequiredPermissions()));
-        } catch (DocumentNotFoundException | PermissionException e) {
+        } catch (final DocumentNotFoundException | PermissionException e) {
             LOGGER.debug("docRef not found - {}", decorateRequest, e);
             return null;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             // Something unexpected
             LOGGER.error("Error decorating docRef - {}", decorateRequest, e);
             throw new RuntimeException(e);

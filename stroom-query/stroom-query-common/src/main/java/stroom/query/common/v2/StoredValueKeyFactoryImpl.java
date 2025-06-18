@@ -36,7 +36,7 @@ class StoredValueKeyFactoryImpl implements StoredValueKeyFactory {
                               final ValHasher valHasher) {
         this.compiledDepths = compiledDepths;
         this.valHasher = valHasher;
-        Generator[][] groupGenerators;
+        final Generator[][] groupGenerators;
         Generator timeGenerator = null;
 
         final boolean[][] groupIndicesByDepth = compiledDepths.getGroupIndicesByDepth();

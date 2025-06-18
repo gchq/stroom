@@ -191,7 +191,7 @@ class TestKeyValueStoreDb extends AbstractStoreDbTest {
         keyValueStoreDb.logRawDatabaseContents();
 
         lmdbEnv.doWithReadTxn(readTxn -> {
-            try (PooledByteBuffer pooledKeyBuffer = keyValueStoreDb.getPooledKeyBuffer()) {
+            try (final PooledByteBuffer pooledKeyBuffer = keyValueStoreDb.getPooledKeyBuffer()) {
                 final Optional<UID> optMaxUid = keyValueStoreDb.getMaxUid(readTxn, pooledKeyBuffer);
                 assertThat(optMaxUid)
                         .hasValue(uid3);
@@ -206,7 +206,7 @@ class TestKeyValueStoreDb extends AbstractStoreDbTest {
         keyValueStoreDb.logRawDatabaseContents();
 
         lmdbEnv.doWithReadTxn(readTxn -> {
-            try (PooledByteBuffer pooledKeyBuffer = keyValueStoreDb.getPooledKeyBuffer()) {
+            try (final PooledByteBuffer pooledKeyBuffer = keyValueStoreDb.getPooledKeyBuffer()) {
                 final Optional<UID> optMaxUid = keyValueStoreDb.getMaxUid(readTxn, pooledKeyBuffer);
                 assertThat(optMaxUid)
                         .isEmpty();
@@ -232,7 +232,7 @@ class TestKeyValueStoreDb extends AbstractStoreDbTest {
 
     private void doForEachTest(final UID uid, final int expectedEntryCount) throws Exception {
         try (final BatchingWriteTxn batchingWriteTxn = lmdbEnv.openBatchingWriteTxn(2)) {
-            AtomicInteger cnt = new AtomicInteger(0);
+            final AtomicInteger cnt = new AtomicInteger(0);
             keyValueStoreDb.deleteMapEntries(batchingWriteTxn, uid, (writeTxn, keyBuf, valBuf) -> {
                 cnt.incrementAndGet();
                 LOGGER.info("{} {}",

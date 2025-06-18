@@ -18,7 +18,7 @@ class TestConfigProperty {
     @Test
     void testPrecedenceNullDefaultOnly() {
 
-        ConfigProperty configProperty = new ConfigProperty();
+        final ConfigProperty configProperty = new ConfigProperty();
 
         assertThat(configProperty.getDefaultValue())
                 .isEmpty();
@@ -40,8 +40,8 @@ class TestConfigProperty {
     @Test
     void testPrecedenceDefaultOnly() {
 
-        ConfigProperty configProperty = new ConfigProperty();
-        String defaultValue = "default";
+        final ConfigProperty configProperty = new ConfigProperty();
+        final String defaultValue = "default";
         configProperty.setDefaultValue(defaultValue);
 
         assertThat(configProperty.getDefaultValue().orElseThrow())
@@ -61,9 +61,9 @@ class TestConfigProperty {
     @Test
     void testPrecedenceDefaultAndDb() {
 
-        ConfigProperty configProperty = new ConfigProperty();
-        String defaultValue = "default";
-        String dbValue = "database";
+        final ConfigProperty configProperty = new ConfigProperty();
+        final String defaultValue = "default";
+        final String dbValue = "database";
         configProperty.setDefaultValue(defaultValue);
         configProperty.setDatabaseOverrideValue(dbValue);
 
@@ -87,9 +87,9 @@ class TestConfigProperty {
     @Test
     void testPrecedenceDefaultAndNullDb() {
 
-        ConfigProperty configProperty = new ConfigProperty();
-        String defaultValue = "default";
-        String dbValue = null;
+        final ConfigProperty configProperty = new ConfigProperty();
+        final String defaultValue = "default";
+        final String dbValue = null;
         configProperty.setDefaultValue(defaultValue);
         configProperty.setDatabaseOverrideValue(dbValue);
 
@@ -110,9 +110,9 @@ class TestConfigProperty {
     @Test
     void testPrecedenceDefaultAndYaml() {
 
-        ConfigProperty configProperty = new ConfigProperty();
-        String defaultValue = "default";
-        String yamlValue = "yaml";
+        final ConfigProperty configProperty = new ConfigProperty();
+        final String defaultValue = "default";
+        final String yamlValue = "yaml";
         configProperty.setDefaultValue(defaultValue);
         configProperty.setYamlOverrideValue(yamlValue);
 
@@ -136,9 +136,9 @@ class TestConfigProperty {
     @Test
     void testPrecedenceDefaultAndNullYaml() {
 
-        ConfigProperty configProperty = new ConfigProperty();
-        String defaultValue = "default";
-        String yamlValue = null;
+        final ConfigProperty configProperty = new ConfigProperty();
+        final String defaultValue = "default";
+        final String yamlValue = null;
         configProperty.setDefaultValue(defaultValue);
         configProperty.setYamlOverrideValue(yamlValue);
 
@@ -162,10 +162,10 @@ class TestConfigProperty {
     @Test
     void testPrecedenceDefaultAndDbAndYaml() {
 
-        ConfigProperty configProperty = new ConfigProperty();
-        String defaultValue = "default";
-        String dbValue = "database";
-        String yamlValue = "yaml";
+        final ConfigProperty configProperty = new ConfigProperty();
+        final String defaultValue = "default";
+        final String dbValue = "database";
+        final String yamlValue = "yaml";
         configProperty.setDefaultValue(defaultValue);
         configProperty.setDatabaseOverrideValue(dbValue);
         configProperty.setYamlOverrideValue(yamlValue);
@@ -190,10 +190,10 @@ class TestConfigProperty {
     @Test
     void testPrecedenceDefaultAndDbAndNullYaml() {
 
-        ConfigProperty configProperty = new ConfigProperty();
-        String defaultValue = "default";
-        String dbValue = "database";
-        String yamlValue = null;
+        final ConfigProperty configProperty = new ConfigProperty();
+        final String defaultValue = "default";
+        final String dbValue = "database";
+        final String yamlValue = null;
         configProperty.setDefaultValue(defaultValue);
         configProperty.setDatabaseOverrideValue(dbValue);
         configProperty.setYamlOverrideValue(yamlValue);
@@ -256,8 +256,8 @@ class TestConfigProperty {
     @Test
     void testPassword() {
 
-        ConfigProperty configProperty = new ConfigProperty();
-        String defaultValue = "default";
+        final ConfigProperty configProperty = new ConfigProperty();
+        final String defaultValue = "default";
         configProperty.setDefaultValue(defaultValue);
         configProperty.setPassword(true);
 
@@ -293,7 +293,7 @@ class TestConfigProperty {
     @Test
     void testSerialisation2() throws IOException {
 
-        ConfigProperty configProperty = new ConfigProperty(PropertyPath.fromPathString("some.name"));
+        final ConfigProperty configProperty = new ConfigProperty(PropertyPath.fromPathString("some.name"));
         doSerdeTest(configProperty);
     }
 
@@ -302,7 +302,7 @@ class TestConfigProperty {
         assertThat(mapper.canSerialize(ConfigProperty.class)).isTrue();
         assertThat(mapper.canSerialize(OverrideValue.class)).isTrue();
 
-        String json = mapper.writeValueAsString(configProperty);
+        final String json = mapper.writeValueAsString(configProperty);
         System.out.println("\n" + json);
 
         final ConfigProperty configProperty2 = mapper.readValue(json, ConfigProperty.class);

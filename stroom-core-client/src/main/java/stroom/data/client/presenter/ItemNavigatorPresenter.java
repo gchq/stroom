@@ -51,7 +51,7 @@ public class ItemNavigatorPresenter extends MyPresenterWidget<ItemNavigatorView>
         return itemSelectionPresenter;
     }
 
-    private void handleLabelClick(ClickEvent clickEvent) {
+    private void handleLabelClick(final ClickEvent clickEvent) {
         final ItemSelectionPresenter itemSelectionPresenter = getItemSelectionPresenter();
         itemSelectionPresenter.setDisplay(display);
         itemSelectionPresenter.show();

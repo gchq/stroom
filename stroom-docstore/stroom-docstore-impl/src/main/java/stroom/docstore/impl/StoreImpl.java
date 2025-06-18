@@ -731,7 +731,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                         docRef, LogUtil.exceptionMessage(e), e);
                 try {
                     return DocRefUtil.createTypedDocRefString(docRef);
-                } catch (Exception ex) {
+                } catch (final Exception ex) {
                     LOGGER.debug("Error displaying docRef {}: {}",
                             docRef, LogUtil.exceptionMessage(e), e);
                     return docRef.toString();

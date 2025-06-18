@@ -200,7 +200,7 @@ public class StroomUserIdentityFactory
      * Each time we map their identity we check the cached info is up-to-date and if so update it.
      */
     private User updateUserInfo(final String subjectId, final User user, final JwtClaims jwtClaims) {
-        AtomicReference<User> userRef = new AtomicReference<>(user);
+        final AtomicReference<User> userRef = new AtomicReference<>(user);
 
         // We must default the displayName in the same way as happens when the DB record is created
         // (in stroom.security.impl.UserServiceImpl.getOrCreateUser)
@@ -257,7 +257,7 @@ public class StroomUserIdentityFactory
 
                                 userRef.set(updatedUser);
                                 success = true;
-                            } catch (DataChangedException e) {
+                            } catch (final DataChangedException e) {
                                 LOGGER.debug(LogUtil.message(
                                         "Another node has updated user {}, going round again. iterationCount: {}",
                                         user, iterationCount));
@@ -500,7 +500,7 @@ public class StroomUserIdentityFactory
             // User is not a Doc so DocRef is being abused to make use of EntityEvent
             // DocRef.name is User.subjectId
             // DocRef.uuid is User.userUuid
-            String subjectId = event.getUserRef().getSubjectId();
+            final String subjectId = event.getUserRef().getSubjectId();
             if (subjectId != null) {
                 // Don't know if it is a user or a group so invalidate both
                 cacheBySubjectId.invalidate(subjectId);

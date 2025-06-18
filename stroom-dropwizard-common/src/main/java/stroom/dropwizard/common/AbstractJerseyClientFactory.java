@@ -82,7 +82,7 @@ public abstract class AbstractJerseyClientFactory implements JerseyClientFactory
                             modifyConfig(jerseyClientName, jerseyClientConfig);
 
                             configMap.put(jerseyClientName, jerseyClientConfig);
-                        } catch (IllegalArgumentException e) {
+                        } catch (final IllegalArgumentException e) {
                             throw new RuntimeException(LogUtil.message(
                                     "Unknown jerseyClient name '{}' in configuration. Expecting one of {}",
                                     name.toUpperCase(), JerseyClientName.values()), e);
@@ -214,7 +214,7 @@ public abstract class AbstractJerseyClientFactory implements JerseyClientFactory
                     .using(jerseyClientConfiguration)
                     .build(dropWizardName)
                     .register(DefaultLoggingFilter.createWithDefaults());
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message("Error building jersey client for '{}': {}",
                     jerseyClientName, e.getMessage()), e);
         }
@@ -260,7 +260,7 @@ public abstract class AbstractJerseyClientFactory implements JerseyClientFactory
                 // Our hard coded sensible default (may be same as above)
                 final Object stroomDefaultValue = getPropValue(prop, stroomDefaultConfig);
                 // Value from yaml
-                Object actualValue = getPropValue(prop, actualConfig);
+                final Object actualValue = getPropValue(prop, actualConfig);
                 LOGGER.debug("Prop: {}.{}\nVanilla: {}\nStroom Default: {}\nActual: {}",
                         prefix, propName, vanillaValue, stroomDefaultValue, actualValue);
 

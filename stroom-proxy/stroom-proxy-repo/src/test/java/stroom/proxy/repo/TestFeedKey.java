@@ -20,11 +20,11 @@ class TestFeedKey {
     void testIntern_1() {
         final FeedKeyInterner interner = FeedKey.createInterner();
 
-        FeedKey feedKey1a = new FeedKey("feed1", "type1");
-        FeedKey feedKey1b = new FeedKey("feed1", "type1");
-        FeedKey feedKey2 = new FeedKey("feed2", "type1");
-        FeedKey feedKey3 = new FeedKey("feed1", "type2");
-        FeedKey feedKey4 = new FeedKey("feed2", "type2");
+        final FeedKey feedKey1a = new FeedKey("feed1", "type1");
+        final FeedKey feedKey1b = new FeedKey("feed1", "type1");
+        final FeedKey feedKey2 = new FeedKey("feed2", "type1");
+        final FeedKey feedKey3 = new FeedKey("feed1", "type2");
+        final FeedKey feedKey4 = new FeedKey("feed2", "type2");
 
         assertThat(feedKey1a)
                 .isEqualTo(feedKey1b)

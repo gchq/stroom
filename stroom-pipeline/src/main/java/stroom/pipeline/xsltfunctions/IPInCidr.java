@@ -35,7 +35,7 @@ class IPInCidr extends StroomExtensionFunctionCall {
                 final int subnetMask = 0xFFFFFFFF << (32 - prefixLength);
 
                 // Convert subnet mask to byte array
-                byte[] subnetMaskBytes = new byte[]{
+                final byte[] subnetMaskBytes = new byte[]{
                         (byte) ((subnetMask & 0xFF000000) >>> 24),
                         (byte) ((subnetMask & 0x00FF0000) >>> 16),
                         (byte) ((subnetMask & 0x0000FF00) >>> 8),
@@ -53,9 +53,9 @@ class IPInCidr extends StroomExtensionFunctionCall {
             } else {
                 throw new XPathException("Invalid CIDR format: " + cidr);
             }
-        } catch (UnknownHostException e) {
+        } catch (final UnknownHostException e) {
             log(context, Severity.ERROR, "Invalid IP address format", e);
-        } catch (XPathException e) {
+        } catch (final XPathException e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
 

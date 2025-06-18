@@ -42,7 +42,7 @@ class TestConfigPropertyDaoImpl {
 
     @BeforeEach
     void setUp() throws SQLException {
-        try (Connection connection = globalConfigDbConnProvider.getConnection()) {
+        try (final Connection connection = globalConfigDbConnProvider.getConnection()) {
             for (final Table<?> table : TABLES) {
                 final String tableName = table.getName();
                 LOGGER.debug("Clearing table {}", tableName);

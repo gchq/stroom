@@ -181,7 +181,7 @@ class TestUnsignedBytesInstancesFour {
             unsignedBytes.put(byteBuffer, unsignedBytes.getMaxVal() - 1);
             byteBuffer.flip();
 
-            long val = unsignedBytes.get(byteBuffer);
+            final long val = unsignedBytes.get(byteBuffer);
             byteBuffer.flip();
 
             LOGGER.info("Buffer {}", ByteBufferUtils.byteBufferInfo(byteBuffer));
@@ -191,7 +191,7 @@ class TestUnsignedBytesInstancesFour {
 
             unsignedBytes.increment(byteBuffer);
 
-            long val2 = unsignedBytes.get(byteBuffer);
+            final long val2 = unsignedBytes.get(byteBuffer);
 
             Assertions.assertThat(val2)
                     .isEqualTo(val + 1);
@@ -230,7 +230,7 @@ class TestUnsignedBytesInstancesFour {
 
 //        LOGGER.info("Buffer {}", ByteBufferUtils.byteBufferToHexAll(byteBuffer));
 
-        long val2 = FOUR_UNSIGNED_BYTES.get(byteBuffer, 0);
+        final long val2 = FOUR_UNSIGNED_BYTES.get(byteBuffer, 0);
 
         Assertions.assertThat(byteBuffer.capacity()).isEqualTo(cap);
         Assertions.assertThat(byteBuffer.position()).isEqualTo(pos);
@@ -241,7 +241,7 @@ class TestUnsignedBytesInstancesFour {
 
     @Test
     void testDecrement() {
-        int len = FOUR_UNSIGNED_BYTES.length();
+        final int len = FOUR_UNSIGNED_BYTES.length();
         final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(len);
 
         // the following will test all values but takes a good few minutes
@@ -270,7 +270,7 @@ class TestUnsignedBytesInstancesFour {
             unsignedBytes.put(byteBuffer, unsignedBytes.getMaxVal());
             byteBuffer.flip();
 
-            long val = unsignedBytes.get(byteBuffer);
+            final long val = unsignedBytes.get(byteBuffer);
             byteBuffer.flip();
 
             LOGGER.info("Buffer {}", ByteBufferUtils.byteBufferInfo(byteBuffer));
@@ -280,7 +280,7 @@ class TestUnsignedBytesInstancesFour {
 
             unsignedBytes.decrement(byteBuffer);
 
-            long val2 = unsignedBytes.get(byteBuffer);
+            final long val2 = unsignedBytes.get(byteBuffer);
 
             Assertions.assertThat(val2)
                     .isEqualTo(val - 1);
@@ -333,7 +333,7 @@ class TestUnsignedBytesInstancesFour {
 
 //        LOGGER.info("Buffer {}", ByteBufferUtils.byteBufferToHexAll(byteBuffer));
 
-        long val2 = FOUR_UNSIGNED_BYTES.get(byteBuffer, 0);
+        final long val2 = FOUR_UNSIGNED_BYTES.get(byteBuffer, 0);
 
         Assertions.assertThat(byteBuffer.capacity()).isEqualTo(cap);
         Assertions.assertThat(byteBuffer.position()).isEqualTo(pos);

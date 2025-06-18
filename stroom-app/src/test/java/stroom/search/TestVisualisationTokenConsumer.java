@@ -72,7 +72,7 @@ public class TestVisualisationTokenConsumer extends AbstractCoreIntegrationTest 
 
     @Test
     void testVis() {
-        String queryString = """
+        final String queryString = """
                 from "Test index"
                 eval EventTime = roundDay(EventTime)
                 eval count = count()

@@ -57,13 +57,13 @@ class RequestEntityCapturingInputStream extends BufferedInputStream {
             try {
                 mark(MAX_ENTITY_SIZE + 1);
                 requestEntity = objectMapper.readValue(new InputStreamReader(this, charset), requestParamClass);
-            } catch (Exception ex) {
+            } catch (final Exception ex) {
                 //Indicates that this request type cannot be constructed in this way.
                 requestEntity = null;
             } finally {
                 try {
                     reset();
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     LOGGER.error("Unable to reset stream", e);
                 }
             }

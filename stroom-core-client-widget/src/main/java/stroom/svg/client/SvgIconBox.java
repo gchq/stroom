@@ -33,7 +33,7 @@ public class SvgIconBox extends FlowPanel {
         this.add(outer);
     }
 
-    public HandlerRegistration addClickHandler(ClickHandler handler) {
+    public HandlerRegistration addClickHandler(final ClickHandler handler) {
         return outer.addDomHandler(event -> {
             if (!isReadonly()) {
                 handler.onClick(event);
@@ -41,7 +41,7 @@ public class SvgIconBox extends FlowPanel {
         }, ClickEvent.getType());
     }
 
-    public void setReadonly(boolean isReadonly) {
+    public void setReadonly(final boolean isReadonly) {
         this.isReadonly = isReadonly;
         if (isReadonly) {
             inner.getElement().addClassName(ICON_BOX_READONLY_CLASS_NAME);

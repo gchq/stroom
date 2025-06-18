@@ -32,7 +32,7 @@ class SingleSegmentInputStreamImpl extends SegmentInputStream {
     }
 
     @Override
-    public synchronized void mark(int readlimit) {
+    public synchronized void mark(final int readlimit) {
         inputStream.mark(readlimit);
     }
 
@@ -50,7 +50,7 @@ class SingleSegmentInputStreamImpl extends SegmentInputStream {
     }
 
     @Override
-    public int read(byte[] b, int off, int len) throws IOException {
+    public int read(final byte[] b, final int off, final int len) throws IOException {
         if (excludeAll) {
             return -1;
         }
@@ -58,7 +58,7 @@ class SingleSegmentInputStreamImpl extends SegmentInputStream {
     }
 
     @Override
-    public int read(byte[] b) throws IOException {
+    public int read(final byte[] b) throws IOException {
         if (excludeAll) {
             return -1;
         }
@@ -71,12 +71,12 @@ class SingleSegmentInputStreamImpl extends SegmentInputStream {
     }
 
     @Override
-    public long skip(long n) throws IOException {
+    public long skip(final long n) throws IOException {
         return inputStream.skip(n);
     }
 
     @Override
-    public final boolean equals(Object obj) {
+    public final boolean equals(final Object obj) {
         return inputStream.equals(obj);
     }
 

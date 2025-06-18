@@ -222,8 +222,8 @@ public class ContainerResourceInfo {
         }
     }
 
-    public boolean shouldLog(LoggingConfig config) {
-        OperationType op = getOperationType();
+    public boolean shouldLog(final LoggingConfig config) {
+        final OperationType op = getOperationType();
 //        if (OperationType.MANUALLY_LOGGED.equals(op)) {
 //            LOGGER.debug("{}, not logging request", OperationType.MANUALLY_LOGGED);
 //            return true;

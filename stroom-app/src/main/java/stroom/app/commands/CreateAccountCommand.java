@@ -157,7 +157,7 @@ public class CreateAccountCommand extends AbstractStroomAppCommand {
 
         LOGGER.info("Creating account for user '{}'", username);
 
-        CreateAccountRequest createAccountRequest = new CreateAccountRequest(
+        final CreateAccountRequest createAccountRequest = new CreateAccountRequest(
                 firstName,
                 lastName,
                 username,

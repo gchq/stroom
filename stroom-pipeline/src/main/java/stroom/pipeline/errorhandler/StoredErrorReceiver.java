@@ -46,7 +46,7 @@ public class StoredErrorReceiver implements ErrorReceiver {
         // Get cause SAXParseException if there is one.
         final Throwable cause = getCause(e);
 
-        String msg;
+        final String msg;
         if (cause != null && (message == null || (e.getMessage() != null && e.getMessage().equals(message)))) {
             msg = MessageUtil.getMessage(cause.getMessage(), cause);
         } else {

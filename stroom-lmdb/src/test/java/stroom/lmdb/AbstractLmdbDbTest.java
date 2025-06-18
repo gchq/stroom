@@ -78,10 +78,10 @@ public abstract class AbstractLmdbDbTest extends StroomUnitTest {
                     .filter(path -> path.endsWith("data.mdb"))
                     .forEach(path -> {
                         try {
-                            long fileSizeBytes = Files.size(path);
+                            final long fileSizeBytes = Files.size(path);
                             LOGGER.info("LMDB file size: {}",
                                     ModelStringUtil.formatIECByteSizeString(fileSizeBytes));
-                        } catch (IOException e) {
+                        } catch (final IOException e) {
                             throw new RuntimeException(e);
                         }
                     });

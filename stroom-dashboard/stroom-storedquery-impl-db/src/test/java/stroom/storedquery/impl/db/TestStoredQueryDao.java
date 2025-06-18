@@ -193,7 +193,7 @@ class TestStoredQueryDao {
         ResultPage<StoredQuery> list = storedQueryDao.find(criteria);
         assertThat(list.size()).isEqualTo(2);
 
-        StoredQuery query = list.getFirst();
+        final StoredQuery query = list.getFirst();
 
         // Now insert the same query over 100 times.
         for (int i = 0; i < 120; i++) {
@@ -208,7 +208,7 @@ class TestStoredQueryDao {
             storedQueryDao.create(newQuery);
         }
 
-        UserRef owner2 = UserRef.builder()
+        final UserRef owner2 = UserRef.builder()
                 .uuid(UUID.randomUUID().toString())
                 .subjectId("owner2")
                 .build();
@@ -249,7 +249,7 @@ class TestStoredQueryDao {
         ResultPage<StoredQuery> list = storedQueryDao.find(criteria);
         assertThat(list.size()).isEqualTo(2);
 
-        StoredQuery query = list.getFirst();
+        final StoredQuery query = list.getFirst();
 
         // Add 10 more for owner with OLD create time
         // These will be deleted
@@ -280,7 +280,7 @@ class TestStoredQueryDao {
             storedQueryDao.create(newQuery);
         }
 
-        UserRef owner2 = UserRef.builder()
+        final UserRef owner2 = UserRef.builder()
                 .uuid(UUID.randomUUID().toString())
                 .subjectId("owner2")
                 .build();
@@ -313,7 +313,7 @@ class TestStoredQueryDao {
 
     @Test
     void testLoad() {
-        StoredQuery query = storedQueryDao.fetch(testQuery.getId()).orElse(null);
+        final StoredQuery query = storedQueryDao.fetch(testQuery.getId()).orElse(null);
 
         assertThat(query).isNotNull();
         assertThat(query.getName()).isEqualTo("Test query");

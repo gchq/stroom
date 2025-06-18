@@ -91,7 +91,7 @@ public class DurationPicker extends Composite implements HasValue<SimpleDuration
         return addHandler(handler, ValueChangeEvent.getType());
     }
 
-    public void setEnabled(boolean enabled) {
+    public void setEnabled(final boolean enabled) {
         time.setEnabled(enabled);
         timeUnit.setEnabled(enabled);
     }

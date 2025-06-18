@@ -90,7 +90,7 @@ public class ContentTemplate {
     }
 
     public static Builder copy(final ContentTemplate copy) {
-        Builder builder = new Builder();
+        final Builder builder = new Builder();
         builder.enabled = copy.isEnabled();
         builder.templateNumber = copy.getTemplateNumber();
         builder.expression = copy.getExpression();

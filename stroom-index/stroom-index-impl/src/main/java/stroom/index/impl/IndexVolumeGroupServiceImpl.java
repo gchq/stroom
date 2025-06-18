@@ -119,7 +119,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
     public IndexVolumeGroup create() {
         ensureDefaultVolumes();
         final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
-        var newName = NextNameGenerator.getNextName(indexVolumeGroupDao.getNames(), "New group");
+        final var newName = NextNameGenerator.getNextName(indexVolumeGroupDao.getNames(), "New group");
         indexVolumeGroup.setName(newName);
         AuditUtil.stamp(securityContext, indexVolumeGroup);
         final IndexVolumeGroup result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
@@ -152,11 +152,11 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
     }
 
     @Override
-    public void delete(int id) {
+    public void delete(final int id) {
         securityContext.secure(AppPermission.MANAGE_VOLUMES_PERMISSION,
                 () -> {
                     //TODO Transaction?
-                    var indexVolumesInGroup = indexVolumeDao.getAll().stream()
+                    final var indexVolumesInGroup = indexVolumeDao.getAll().stream()
                             .filter(indexVolume ->
                                     indexVolume.getIndexVolumeGroupId().equals(id))
                             .toList();
@@ -209,7 +209,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
                                         .anyMatch(name -> name.equals(nodeName));
                                 if (!exists) {
                                     final List<String> paths = volumeConfig.getDefaultIndexVolumeGroupPaths();
-                                    for (String path : paths) {
+                                    for (final String path : paths) {
                                         final Path resolvedPath = pathCreator.toAppPath(path);
 
                                         LOGGER.info("Creating index volume with path {}",
@@ -254,7 +254,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
         try {
             final File parentDir = new File(path);
             parentDir.mkdirs();
-            long totalBytes = Files.getFileStore(Path.of(path)).getTotalSpace();
+            final long totalBytes = Files.getFileStore(Path.of(path)).getTotalSpace();
             // set an arbitrary limit of 90% of the filesystem total size to ensure we don't fill up the
             // filesystem.  Limit can be configured from within stroom.
             // Should be noted that although if you have multiple volumes on a filesystem the limit will apply
@@ -263,7 +263,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
             // this.updateVolumeState()
             return OptionalLong.of(
                     (long) (totalBytes * volumeConfigProvider.get().getDefaultIndexVolumeFilesystemUtilisation()));
-        } catch (IOException e) {
+        } catch (final IOException e) {
             LOGGER.warn(() -> LogUtil.message("Unable to determine the total space on the filesystem for path: {}." +
                             " Please manually set limit for index volume. {}",
                     FileUtil.getCanonicalPath(Path.of(path)), e.getMessage()));

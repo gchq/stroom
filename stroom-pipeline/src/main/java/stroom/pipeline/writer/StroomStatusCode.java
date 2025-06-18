@@ -86,8 +86,8 @@ public enum StroomStatusCode {
         this.reason = reason;
     }
 
-    public static StroomStatusCode getStroomStatusCode(int code) {
-        for (StroomStatusCode stroomStatusCode : StroomStatusCode.values()) {
+    public static StroomStatusCode getStroomStatusCode(final int code) {
+        for (final StroomStatusCode stroomStatusCode : StroomStatusCode.values()) {
             if (stroomStatusCode.getCode() == code) {
                 return stroomStatusCode;
             }
@@ -95,10 +95,10 @@ public enum StroomStatusCode {
         return UNKNOWN_ERROR;
     }
 
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         System.out.println("{| class=\"wikitable\"");
         System.out.println("!HTTP Status!!Stroom-Status!!Message!!Reason");
-        for (StroomStatusCode stroomStatusCode : StroomStatusCode.values()) {
+        for (final StroomStatusCode stroomStatusCode : StroomStatusCode.values()) {
             System.out.println("|-");
             System.out.println("|" + stroomStatusCode.getHttpCode() + "||" + stroomStatusCode.getCode() + "||"
                     + stroomStatusCode.getMessage() + "||" + stroomStatusCode.getReason());

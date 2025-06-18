@@ -44,9 +44,9 @@ class TestSessionListListener extends AbstractMultiNodeResourceTest<SessionResou
 
         initNodes();
 
-        SessionListService sessionListService1 = sessionListServiceMap.get("node1");
+        final SessionListService sessionListService1 = sessionListServiceMap.get("node1");
 
-        SessionListResponse sessionListResponse = sessionListService1.listSessions();
+        final SessionListResponse sessionListResponse = sessionListService1.listSessions();
 
         Thread.sleep(50);
 
@@ -65,9 +65,9 @@ class TestSessionListListener extends AbstractMultiNodeResourceTest<SessionResou
     void testListSessions_oneNode() throws InterruptedException {
         initNodes();
 
-        SessionListService sessionListService1 = sessionListServiceMap.get("node1");
+        final SessionListService sessionListService1 = sessionListServiceMap.get("node1");
 
-        SessionListResponse sessionListResponse = sessionListService1.listSessions("node2");
+        final SessionListResponse sessionListResponse = sessionListService1.listSessions("node2");
 
         Thread.sleep(50);
 

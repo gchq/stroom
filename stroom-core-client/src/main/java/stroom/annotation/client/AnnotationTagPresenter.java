@@ -104,9 +104,9 @@ public class AnnotationTagPresenter extends ContentTabPresenter<WrapperView> {
     private void delete() {
         final List<AnnotationTag> list = annotationTagListPresenter.getSelectionModel().getSelectedItems();
         if (list != null && !list.isEmpty()) {
-            String message = "Are you sure you want to delete the selected " +
-                             annotationTagType.getDisplayValue().toLowerCase() +
-                             "?";
+            final String message = "Are you sure you want to delete the selected " +
+                                   annotationTagType.getDisplayValue().toLowerCase() +
+                                   "?";
             ConfirmEvent.fire(AnnotationTagPresenter.this, message,
                     result -> {
                         if (result) {

@@ -62,7 +62,7 @@ public final class AppPermissionsEditViewImpl
     }
 
     @Override
-    public void setPermissionsView(View view) {
+    public void setPermissionsView(final View view) {
         permissions.setWidget(view.asWidget());
     }
 

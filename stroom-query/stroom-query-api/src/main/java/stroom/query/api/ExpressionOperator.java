@@ -307,7 +307,7 @@ public final class ExpressionOperator extends ExpressionItem {
          * @param item The expression item to add as children
          * @return The {@link Builder}, enabling method chaining
          */
-        public Builder addItem(ExpressionItem item) {
+        public Builder addItem(final ExpressionItem item) {
             this.children.add(item);
             return this;
         }

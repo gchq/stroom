@@ -164,7 +164,7 @@ public interface MetaService {
      * Return true if the passed meta type name is a 'raw' type, i.e. used for receipt of
      * raw data.
      */
-    default boolean isRaw(String typeName) {
+    default boolean isRaw(final String typeName) {
         return typeName != null
                 && getRawTypes().contains(typeName);
     }

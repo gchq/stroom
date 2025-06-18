@@ -59,8 +59,8 @@ class TestByteBufferUtils {
     @Test
     void testIntCompare() {
 
-        ByteBuffer buf1 = ByteBuffer.allocate(Integer.BYTES);
-        ByteBuffer buf2 = ByteBuffer.allocate(Integer.BYTES);
+        final ByteBuffer buf1 = ByteBuffer.allocate(Integer.BYTES);
+        final ByteBuffer buf2 = ByteBuffer.allocate(Integer.BYTES);
 
         doIntCompareTest(0, 0, buf1, buf2);
         doIntCompareTest(0, 1, buf1, buf2);
@@ -73,10 +73,10 @@ class TestByteBufferUtils {
         doIntCompareTest(Integer.MAX_VALUE, Integer.MIN_VALUE, buf1, buf2);
 
         // now just run the test with a load of random values
-        Random random = new Random();
+        final Random random = new Random();
         for (int i = 0; i < 10000; i++) {
-            int val1 = random.nextInt();
-            int val2 = random.nextInt();
+            final int val1 = random.nextInt();
+            final int val2 = random.nextInt();
             doIntCompareTest(val1, val2, buf1, buf2);
         }
     }
@@ -84,8 +84,8 @@ class TestByteBufferUtils {
     @Test
     void testLongCompare() {
 
-        ByteBuffer buf1 = ByteBuffer.allocate(Long.BYTES);
-        ByteBuffer buf2 = ByteBuffer.allocate(Long.BYTES);
+        final ByteBuffer buf1 = ByteBuffer.allocate(Long.BYTES);
+        final ByteBuffer buf2 = ByteBuffer.allocate(Long.BYTES);
         doLongCompareTest(0L, 0L, buf1, buf2);
         doLongCompareTest(0L, 1L, buf1, buf2);
         doLongCompareTest(-1L, 0L, buf1, buf2);
@@ -97,10 +97,10 @@ class TestByteBufferUtils {
         doLongCompareTest(Long.MAX_VALUE, Long.MIN_VALUE, buf1, buf2);
 
         // now just run the test with a load of random values
-        Random random = new Random();
+        final Random random = new Random();
         for (int i = 0; i < 10000; i++) {
-            long val1 = random.nextLong();
-            long val2 = random.nextLong();
+            final long val1 = random.nextLong();
+            final long val2 = random.nextLong();
             doLongCompareTest(val1, val2, buf1, buf2);
         }
     }
@@ -108,10 +108,10 @@ class TestByteBufferUtils {
     @Test
     void testContainsPrefix_match() {
 
-        ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4, 5});
-        ByteBuffer prefixByteBuffer = ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4});
+        final ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4, 5});
+        final ByteBuffer prefixByteBuffer = ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4});
 
-        boolean result = ByteBufferUtils.containsPrefix(byteBuffer, prefixByteBuffer);
+        final boolean result = ByteBufferUtils.containsPrefix(byteBuffer, prefixByteBuffer);
 
         assertThat(result).isTrue();
     }
@@ -119,10 +119,10 @@ class TestByteBufferUtils {
     @Test
     void testContainsPrefix_match2() {
 
-        ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4, 5});
-        ByteBuffer prefixByteBuffer = ByteBuffer.wrap(new byte[]{0});
+        final ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4, 5});
+        final ByteBuffer prefixByteBuffer = ByteBuffer.wrap(new byte[]{0});
 
-        boolean result = ByteBufferUtils.containsPrefix(byteBuffer, prefixByteBuffer);
+        final boolean result = ByteBufferUtils.containsPrefix(byteBuffer, prefixByteBuffer);
 
         assertThat(result).isTrue();
     }
@@ -130,10 +130,10 @@ class TestByteBufferUtils {
     @Test
     void testContainsPrefix_bufferTooShort() {
 
-        ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[]{0, 1, 2});
-        ByteBuffer prefixByteBuffer = ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4});
+        final ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[]{0, 1, 2});
+        final ByteBuffer prefixByteBuffer = ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4});
 
-        boolean result = ByteBufferUtils.containsPrefix(byteBuffer, prefixByteBuffer);
+        final boolean result = ByteBufferUtils.containsPrefix(byteBuffer, prefixByteBuffer);
 
         assertThat(result).isFalse();
     }
@@ -141,15 +141,15 @@ class TestByteBufferUtils {
     @Test
     void testContainsPrefix_noMatch() {
 
-        ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4, 5});
-        ByteBuffer prefixByteBuffer = ByteBuffer.wrap(new byte[]{1, 2, 3, 4});
+        final ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4, 5});
+        final ByteBuffer prefixByteBuffer = ByteBuffer.wrap(new byte[]{1, 2, 3, 4});
 
-        boolean result = ByteBufferUtils.containsPrefix(byteBuffer, prefixByteBuffer);
+        final boolean result = ByteBufferUtils.containsPrefix(byteBuffer, prefixByteBuffer);
 
         assertThat(result).isFalse();
     }
 
-    private void doLongCompareTest(long val1, long val2, ByteBuffer buf1, ByteBuffer buf2) {
+    private void doLongCompareTest(final long val1, final long val2, final ByteBuffer buf1, final ByteBuffer buf2) {
         buf1.clear();
         buf1.putLong(val1);
         buf1.flip();
@@ -157,9 +157,9 @@ class TestByteBufferUtils {
         buf2.putLong(val2);
         buf2.flip();
 
-        int cmpAsLongResult = Long.compare(val1, val2);
-        int cmpAsBufsResult = ByteBufferUtils.compareAsLong(buf1, buf2);
-        int cmpAsLongAndBufsResult = ByteBufferUtils.compareAsLong(val1, buf2);
+        final int cmpAsLongResult = Long.compare(val1, val2);
+        final int cmpAsBufsResult = ByteBufferUtils.compareAsLong(buf1, buf2);
+        final int cmpAsLongAndBufsResult = ByteBufferUtils.compareAsLong(val1, buf2);
         LOGGER.trace("Comparing {} [{}] to {} [{}], {} {} {}",
                 val1, ByteBufferUtils.byteBufferToHex(buf1),
                 val2, ByteBufferUtils.byteBufferToHex(buf2),
@@ -181,7 +181,7 @@ class TestByteBufferUtils {
         }
     }
 
-    private void doIntCompareTest(int val1, int val2, ByteBuffer buf1, ByteBuffer buf2) {
+    private void doIntCompareTest(final int val1, final int val2, final ByteBuffer buf1, final ByteBuffer buf2) {
         buf1.clear();
         buf1.putInt(val1);
         buf1.flip();
@@ -189,8 +189,8 @@ class TestByteBufferUtils {
         buf2.putInt(val2);
         buf2.flip();
 
-        int cmpLong = Integer.compare(val1, val2);
-        int cmpBuf = ByteBufferUtils.compareAsInt(buf1, buf2);
+        final int cmpLong = Integer.compare(val1, val2);
+        final int cmpBuf = ByteBufferUtils.compareAsInt(buf1, buf2);
         LOGGER.trace("Comparing {} [{}] to {} [{}], {} {}",
                 val1, ByteBufferUtils.byteBufferToHex(buf1),
                 val2, ByteBufferUtils.byteBufferToHex(buf2),
@@ -210,18 +210,18 @@ class TestByteBufferUtils {
     @Test
     void testBasicHashCode() {
 
-        ByteBuffer byteBuffer1 = ByteBuffer.wrap(new byte[]{0, 0, 1, 2, 3, 4, 5, 0, 0});
+        final ByteBuffer byteBuffer1 = ByteBuffer.wrap(new byte[]{0, 0, 1, 2, 3, 4, 5, 0, 0});
         byteBuffer1.position(2);
         byteBuffer1.limit(7);
         LOGGER.info(ByteBufferUtils.byteBufferInfo(byteBuffer1));
 
-        ByteBuffer byteBuffer2 = ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4, 5, 0, 0});
+        final ByteBuffer byteBuffer2 = ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4, 5, 0, 0});
         byteBuffer2.position(1);
         byteBuffer2.limit(6);
         LOGGER.info(ByteBufferUtils.byteBufferInfo(byteBuffer2));
 
-        int hash1 = ByteBufferUtils.basicHashCode(byteBuffer1);
-        int hash2 = ByteBufferUtils.basicHashCode(byteBuffer2);
+        final int hash1 = ByteBufferUtils.basicHashCode(byteBuffer1);
+        final int hash2 = ByteBufferUtils.basicHashCode(byteBuffer2);
 
         assertThat(hash1).isEqualTo(hash2);
     }
@@ -229,18 +229,18 @@ class TestByteBufferUtils {
     @Test
     void testXxHash() {
 
-        ByteBuffer byteBuffer1 = ByteBuffer.wrap(new byte[]{0, 0, 1, 2, 3, 4, 5, 0, 0});
+        final ByteBuffer byteBuffer1 = ByteBuffer.wrap(new byte[]{0, 0, 1, 2, 3, 4, 5, 0, 0});
         byteBuffer1.position(2);
         byteBuffer1.limit(7);
         LOGGER.info(ByteBufferUtils.byteBufferInfo(byteBuffer1));
 
-        ByteBuffer byteBuffer2 = ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4, 5, 0, 0});
+        final ByteBuffer byteBuffer2 = ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4, 5, 0, 0});
         byteBuffer2.position(1);
         byteBuffer2.limit(6);
         LOGGER.info(ByteBufferUtils.byteBufferInfo(byteBuffer2));
 
-        long hash1 = ByteBufferUtils.xxHash(byteBuffer1);
-        long hash2 = ByteBufferUtils.xxHash(byteBuffer2);
+        final long hash1 = ByteBufferUtils.xxHash(byteBuffer1);
+        final long hash2 = ByteBufferUtils.xxHash(byteBuffer2);
 
         assertThat(hash1).isEqualTo(hash2);
     }
@@ -400,7 +400,7 @@ class TestByteBufferUtils {
         for (int j = 0; j < rounds; j++) {
             final int round = j;
             funcMap.forEach((name, func) -> {
-                Instant startTime = Instant.now();
+                final Instant startTime = Instant.now();
 
                 for (int i = 0; i < iterations; i++) {
 
@@ -432,18 +432,18 @@ class TestByteBufferUtils {
 
     private void doHashTest(final String name,
                             final Function<ByteBuffer, Number> hashFunc) throws IOException {
-        int iterations = 1_000;
+        final int iterations = 1_000;
 
-        Path start = Paths.get(".")
+        final Path start = Paths.get(".")
                 .resolve("src")
                 .toAbsolutePath()
                 .normalize();
         System.out.println(start);
 
-        AtomicInteger fileCount = new AtomicInteger(0);
-        List<Path> paths = new ArrayList<>();
+        final AtomicInteger fileCount = new AtomicInteger(0);
+        final List<Path> paths = new ArrayList<>();
 
-        try (Stream<Path> stream = Files.walk(start, Integer.MAX_VALUE)) {
+        try (final Stream<Path> stream = Files.walk(start, Integer.MAX_VALUE)) {
             stream
                     .filter(path -> path.toString().endsWith(".java"))
                     .sorted(Comparator.comparing(Path::toString))
@@ -455,7 +455,7 @@ class TestByteBufferUtils {
         for (int i = 0; i < iterations; i++) {
             paths.forEach(path -> {
                 try {
-                    try (RandomAccessFile file = new RandomAccessFile(path.toFile(), "r")) {
+                    try (final RandomAccessFile file = new RandomAccessFile(path.toFile(), "r")) {
 
                         //Get file channel in read-only mode
                         final FileChannel fileChannel = file.getChannel();
@@ -470,7 +470,7 @@ class TestByteBufferUtils {
 //                                LOGGER.info("  {} {}", path.toString(), hash);
                         fileCount.incrementAndGet();
                     }
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     throw new RuntimeException(e);
                 }
             });
@@ -480,7 +480,7 @@ class TestByteBufferUtils {
                 name, fileCount.get(), Duration.between(startTime, Instant.now()));
 
 
-        ByteBuffer byteBuffer = ByteBuffer.allocate(300);
+        final ByteBuffer byteBuffer = ByteBuffer.allocate(300);
 
         startTime = Instant.now();
 

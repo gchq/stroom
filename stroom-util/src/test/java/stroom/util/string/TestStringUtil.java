@@ -284,7 +284,7 @@ class TestStringUtil {
                     char charAtRowCol = '?';
                     try {
                         charAtRowCol = str.charAt(idx);
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         // swallow
                     }
                     LOGGER.debug("Char: '{}', row: {}, col: {}, idx: {}",
@@ -295,7 +295,7 @@ class TestStringUtil {
                         final char chrAtIdx = str.charAt(expectedIdx);
                         LOGGER.debug("chrAtIdx: '{}' (code: {})",
                                 HexDumpUtil.asPrintableChar(chrAtIdx), (int) chrAtIdx);
-                    } catch (StringIndexOutOfBoundsException e) {
+                    } catch (final StringIndexOutOfBoundsException e) {
                         LOGGER.debug("At end of string");
                     }
 

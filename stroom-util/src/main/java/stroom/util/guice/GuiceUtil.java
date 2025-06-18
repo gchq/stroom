@@ -31,17 +31,17 @@ public class GuiceUtil {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> TypeLiteral<Set<T>> setOf(Class<T> type) {
+    public static <T> TypeLiteral<Set<T>> setOf(final Class<T> type) {
         return (TypeLiteral<Set<T>>) TypeLiteral.get(Types.setOf(type));
     }
 
     @SuppressWarnings("unchecked")
-    public static <K, V> TypeLiteral<Map<K, V>> mapOf(Class<K> keyType, Class<V> valueType) {
+    public static <K, V> TypeLiteral<Map<K, V>> mapOf(final Class<K> keyType, final Class<V> valueType) {
         return (TypeLiteral<Map<K, V>>) TypeLiteral.get(Types.mapOf(keyType, valueType));
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> TypeLiteral<List<T>> listOf(Class<T> type) {
+    public static <T> TypeLiteral<List<T>> listOf(final Class<T> type) {
         return (TypeLiteral<List<T>>) TypeLiteral.get(Types.listOf(type));
     }
 

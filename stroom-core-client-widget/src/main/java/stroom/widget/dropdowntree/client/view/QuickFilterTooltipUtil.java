@@ -143,7 +143,7 @@ public class QuickFilterTooltipUtil {
             tb.row(TableCell.header("Filterable fields"), TableCell.header("Field qualifier"));
 
             fieldDefinitions.forEach(fieldDefinition -> {
-                String suffix = fieldDefinition.isDefaultField()
+                final String suffix = fieldDefinition.isDefaultField()
                         ? " (Default)"
                         : "";
                 final SafeHtml value = new HtmlBuilder()

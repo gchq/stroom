@@ -143,7 +143,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
 
     @Override
     protected XMLReader createReader() throws SAXException {
-        XMLReader xmlReader = switch (getMode()) {
+        final XMLReader xmlReader = switch (getMode()) {
             case XML -> createXMLReader();
             case XML_FRAGMENT, DATA_SPLITTER -> createTextConverter();
             case JSON -> createJSONReader();
@@ -197,7 +197,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
 
 
     private XMLReader createXMLReader() throws SAXException {
-        SAXParser parser;
+        final SAXParser parser;
         try {
             parser = PARSER_FACTORY.newSAXParser();
         } catch (final ParserConfigurationException e) {

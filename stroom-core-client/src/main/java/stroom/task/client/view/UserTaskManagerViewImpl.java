@@ -49,12 +49,12 @@ public class UserTaskManagerViewImpl extends ViewImpl implements UserTaskManager
     }
 
     @Override
-    public void addTask(View task) {
+    public void addTask(final View task) {
         taskList.add(task.asWidget());
     }
 
     @Override
-    public void removeTask(View task) {
+    public void removeTask(final View task) {
         taskList.remove(task.asWidget());
     }
 

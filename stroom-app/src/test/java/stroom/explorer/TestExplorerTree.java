@@ -33,14 +33,14 @@ class TestExplorerTree extends AbstractCoreIntegrationTest {
 
     @Test
     void testCreateTree() {
-        ExplorerTreeNode root = explorerTreeDao.createRoot(newTreePojo("System"));
-        ExplorerTreeNode a = explorerTreeDao.addChild(root, newTreePojo("A"));
-        ExplorerTreeNode b = explorerTreeDao.addChild(root, newTreePojo("B"));
-        ExplorerTreeNode c = explorerTreeDao.addChild(root, newTreePojo("C"));
+        final ExplorerTreeNode root = explorerTreeDao.createRoot(newTreePojo("System"));
+        final ExplorerTreeNode a = explorerTreeDao.addChild(root, newTreePojo("A"));
+        final ExplorerTreeNode b = explorerTreeDao.addChild(root, newTreePojo("B"));
+        final ExplorerTreeNode c = explorerTreeDao.addChild(root, newTreePojo("C"));
         explorerTreeDao.addChild(b, newTreePojo("B1"));
         explorerTreeDao.addChild(b, newTreePojo("B2"));
         explorerTreeDao.addChild(a, newTreePojo("A1"));
-        ExplorerTreeNode c1 = explorerTreeDao.addChild(c, newTreePojo("C1"));
+        final ExplorerTreeNode c1 = explorerTreeDao.addChild(c, newTreePojo("C1"));
         explorerTreeDao.addChild(c1, newTreePojo("C11"));
 
         // Check create model.

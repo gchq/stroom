@@ -81,7 +81,7 @@ public class ShowMenuEvent
     }
 
     @Override
-    protected void dispatch(Handler handler) {
+    protected void dispatch(final Handler handler) {
         handler.onShow(this);
     }
 
@@ -164,7 +164,7 @@ public class ShowMenuEvent
             return this;
         }
 
-        public void fire(HasHandlers hasHandlers) {
+        public void fire(final HasHandlers hasHandlers) {
             Element[] elements = null;
             if (!autoHidePartners.isEmpty()) {
                 elements = autoHidePartners.toArray(new Element[0]);

@@ -99,7 +99,7 @@ public class StateValueProxy implements RefDataValueProxy {
                 successfulMapDefinition = mapDefinition;
             }
             return wasFound;
-        } catch (XPathException e) {
+        } catch (final XPathException e) {
             throw new RuntimeException(LogUtil.message(
                     "Error consuming reference data value for key [{}], {}: {}",
                     state.key(), mapDefinition, e.getMessage()), e);

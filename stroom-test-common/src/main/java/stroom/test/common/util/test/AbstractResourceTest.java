@@ -94,11 +94,11 @@ public abstract class AbstractResourceTest<R extends RestResource> {
 
         WebTarget webTarget = getWebTarget(subPath);
 
-        for (Function<WebTarget, WebTarget> method : builderMethods) {
+        for (final Function<WebTarget, WebTarget> method : builderMethods) {
             webTarget = method.apply(webTarget);
         }
 
-        Invocation.Builder builder = webTarget
+        final Invocation.Builder builder = webTarget
                 .request();
 
         final Entity<T_REQ> entity = Entity.json(request);
@@ -118,7 +118,7 @@ public abstract class AbstractResourceTest<R extends RestResource> {
                     response.getStatus(), validationErrorMessage.getErrors()));
         }
 
-        T_RESP responseEntity = response.readEntity(responseType);
+        final T_RESP responseEntity = response.readEntity(responseType);
 
         if (expectedResponse != null) {
             Assertions.assertThat(responseEntity)
@@ -152,14 +152,14 @@ public abstract class AbstractResourceTest<R extends RestResource> {
 
         WebTarget webTarget = getWebTarget(subPath);
 
-        for (Function<WebTarget, WebTarget> method : builderMethods) {
+        for (final Function<WebTarget, WebTarget> method : builderMethods) {
             webTarget = method.apply(webTarget);
         }
 
-        Invocation.Builder builder = webTarget
+        final Invocation.Builder builder = webTarget
                 .request();
 
-        Response response = builder.put(Entity.json(requestEntity));
+        final Response response = builder.put(Entity.json(requestEntity));
 
         if (!isSuccessful(response.getStatus())) {
             throw new RuntimeException(LogUtil.message("Error: {} {}",
@@ -191,11 +191,11 @@ public abstract class AbstractResourceTest<R extends RestResource> {
 
         WebTarget webTarget = getWebTarget(subPath);
 
-        for (Function<WebTarget, WebTarget> method : builderMethods) {
+        for (final Function<WebTarget, WebTarget> method : builderMethods) {
             webTarget = method.apply(webTarget);
         }
 
-        Invocation.Builder builder = webTarget
+        final Invocation.Builder builder = webTarget
                 .request();
 
         final Response response = operation.apply(builder);
@@ -209,7 +209,7 @@ public abstract class AbstractResourceTest<R extends RestResource> {
 //
 //        LOGGER.info("json:\n{}", json);
 
-        T_RESP entity = response.readEntity(responseType);
+        final T_RESP entity = response.readEntity(responseType);
 
         if (expectedResponse != null) {
             Assertions.assertThat(entity)

@@ -114,7 +114,7 @@ class TestRefDataOnHeapStore {
     private RefDataStore refDataStore;
 
     @BeforeEach
-    void setUp(@TempDir Path tempDir) {
+    void setUp(@TempDir final Path tempDir) {
         final Injector injector = Guice.createInjector(
                 new AbstractModule() {
                     @Override
@@ -131,8 +131,8 @@ class TestRefDataOnHeapStore {
 
     @Test
     void testTreeMapReverseOrdering() {
-        Comparator<Long> comparator = Comparator.reverseOrder();
-        NavigableMap<Long, String> treeMap = new TreeMap<>(comparator);
+        final Comparator<Long> comparator = Comparator.reverseOrder();
+        final NavigableMap<Long, String> treeMap = new TreeMap<>(comparator);
 
         treeMap.put(1L, "one");
         treeMap.put(3L, "three");
@@ -149,11 +149,11 @@ class TestRefDataOnHeapStore {
         assertThat(treeMap.ceilingEntry(9L).getValue())
                 .isEqualTo("seven");
 
-        Map.Entry<Long, String> entryThree = treeMap.ceilingEntry(4L);
+        final Map.Entry<Long, String> entryThree = treeMap.ceilingEntry(4L);
 
         LOGGER.info("------------------");
 
-        SortedMap<Long, String> partMap = treeMap.tailMap(4L);
+        final SortedMap<Long, String> partMap = treeMap.tailMap(4L);
         partMap.forEach((key, value) ->
                 LOGGER.info("{} => {}", key, value));
 
@@ -178,7 +178,7 @@ class TestRefDataOnHeapStore {
     void isDataLoaded_false() {
         final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
 
-        boolean isLoaded = refDataStore.isDataLoaded(refStreamDefinition);
+        final boolean isLoaded = refDataStore.isDataLoaded(refStreamDefinition);
 
         assertThat(isLoaded)
                 .isFalse();
@@ -186,44 +186,44 @@ class TestRefDataOnHeapStore {
 
     @Test
     void testOverwrite_doOverwrite_keyValueStore() {
-        StringValue value1 = StringValue.of("myValue1");
-        StringValue value2 = StringValue.of("myValue2");
+        final StringValue value1 = StringValue.of("myValue1");
+        final StringValue value2 = StringValue.of("myValue2");
 
         // overwriting so value changes to value2
-        StringValue expectedFinalValue = value2;
+        final StringValue expectedFinalValue = value2;
 
         doKeyValueOverwriteTest(true, value1, value2, expectedFinalValue);
     }
 
     @Test
     void testOverwrite_doOverwrite_rangeValueStore() {
-        StringValue value1 = StringValue.of("myValue1");
-        StringValue value2 = StringValue.of("myValue2");
+        final StringValue value1 = StringValue.of("myValue1");
+        final StringValue value2 = StringValue.of("myValue2");
 
         // overwriting so value changes to value2
-        StringValue expectedFinalValue = value2;
+        final StringValue expectedFinalValue = value2;
 
         doKeyRangeValueOverwriteTest(true, value1, value2, expectedFinalValue);
     }
 
     @Test
     void testOverwrite_doNotOverwrite_keyValueStore() {
-        StringValue value1 = StringValue.of("myValue1");
-        StringValue value2 = StringValue.of("myValue2");
+        final StringValue value1 = StringValue.of("myValue1");
+        final StringValue value2 = StringValue.of("myValue2");
 
         // no overwriting so value stays as value1
-        StringValue expectedFinalValue = value1;
+        final StringValue expectedFinalValue = value1;
 
         doKeyValueOverwriteTest(false, value1, value2, expectedFinalValue);
     }
 
     @Test
     void testOverwrite_doNotOverwrite_rangeValueStore() {
-        StringValue value1 = StringValue.of("myValue1");
-        StringValue value2 = StringValue.of("myValue2");
+        final StringValue value1 = StringValue.of("myValue1");
+        final StringValue value2 = StringValue.of("myValue2");
 
         // no overwriting so value stays as value1
-        StringValue expectedFinalValue = value1;
+        final StringValue expectedFinalValue = value1;
 
         doKeyRangeValueOverwriteTest(false, value1, value2, expectedFinalValue);
     }
@@ -231,8 +231,8 @@ class TestRefDataOnHeapStore {
     @Test
     void testGetWithNoLoad_stringKey() {
         final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
-        MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "map1");
-        String key = "myKey";
+        final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "map1");
+        final String key = "myKey";
 
         assertThat(refDataStore.getKeyValueEntryCount())
                 .isEqualTo(0);
@@ -244,8 +244,8 @@ class TestRefDataOnHeapStore {
     @Test
     void testGetWithNoLoad_longKey() {
         final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
-        MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "map1");
-        String key = "123";
+        final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "map1");
+        final String key = "123";
 
         assertThat(refDataStore.getKeyValueEntryCount())
                 .isEqualTo(0);
@@ -260,9 +260,9 @@ class TestRefDataOnHeapStore {
                                          final StringValue expectedFinalValue) {
 
         final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
-        long effectiveTimeMs = System.currentTimeMillis();
-        MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "map1");
-        String key = "myKey";
+        final long effectiveTimeMs = System.currentTimeMillis();
+        final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "map1");
+        final String key = "myKey";
 
         assertThat(refDataStore.getKeyValueEntryCount())
                 .isEqualTo(0);
@@ -295,9 +295,9 @@ class TestRefDataOnHeapStore {
                                               final StringValue expectedFinalValue) {
 
         final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
-        long effectiveTimeMs = System.currentTimeMillis();
-        MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "map1");
-        Range<Long> range = new Range<>(1L, 100L);
+        final long effectiveTimeMs = System.currentTimeMillis();
+        final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "map1");
+        final Range<Long> range = new Range<>(1L, 100L);
         final String key = "50";
 
         assertThat(refDataStore.getRangeValueEntryCount())
@@ -350,7 +350,7 @@ class TestRefDataOnHeapStore {
         final NullValue nullValue = NullValue.getInstance();
 
         final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
-        long effectiveTimeMs = System.currentTimeMillis();
+        final long effectiveTimeMs = System.currentTimeMillis();
         final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "map1");
         final String key = "myKey";
 
@@ -403,7 +403,7 @@ class TestRefDataOnHeapStore {
         final NullValue nullValue = NullValue.getInstance();
 
         final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
-        long effectiveTimeMs = System.currentTimeMillis();
+        final long effectiveTimeMs = System.currentTimeMillis();
         final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "map1");
         final Range<Long> range = new Range<>(1L, 100L);
 
@@ -435,28 +435,28 @@ class TestRefDataOnHeapStore {
 
     @Test
     void loader_noOverwriteBigCommitInterval() {
-        boolean overwriteExisting = false;
-        int commitInterval = Integer.MAX_VALUE;
+        final boolean overwriteExisting = false;
+        final int commitInterval = Integer.MAX_VALUE;
 
         bulkLoadAndAssert(overwriteExisting, commitInterval);
     }
 
     @Test
     void loader_noOverwriteSmallCommitInterval() {
-        boolean overwriteExisting = false;
-        int commitInterval = 2;
+        final boolean overwriteExisting = false;
+        final int commitInterval = 2;
 
         bulkLoadAndAssert(overwriteExisting, commitInterval);
     }
 
     @Test
     void loader_noOverwriteWithDuplicateData() {
-        int commitInterval = Integer.MAX_VALUE;
+        final int commitInterval = Integer.MAX_VALUE;
 
-        RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
+        final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
 
         // same refStreamDefinition twice to imitate a re-load
-        List<RefStreamDefinition> refStreamDefinitions = Arrays.asList(
+        final List<RefStreamDefinition> refStreamDefinitions = Arrays.asList(
                 refStreamDefinition, refStreamDefinition);
 
         bulkLoadAndAssert(refStreamDefinitions, false, commitInterval);
@@ -464,12 +464,12 @@ class TestRefDataOnHeapStore {
 
     @Test
     void loader_overwriteWithDuplicateData() {
-        int commitInterval = Integer.MAX_VALUE;
+        final int commitInterval = Integer.MAX_VALUE;
 
-        RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
+        final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
 
         // same refStreamDefinition twice to imitate a re-load
-        List<RefStreamDefinition> refStreamDefinitions = Arrays.asList(
+        final List<RefStreamDefinition> refStreamDefinitions = Arrays.asList(
                 refStreamDefinition, refStreamDefinition);
 
         bulkLoadAndAssert(refStreamDefinitions, true, commitInterval);
@@ -488,7 +488,7 @@ class TestRefDataOnHeapStore {
         final MapDefinition mapDefinitionRange = new MapDefinition(refStreamDefinition, "MyRangeMap");
         final int recCount = 1_000;
 
-        Runnable loadTask = () -> {
+        final Runnable loadTask = () -> {
             LOGGER.debug("Running loadTask on thread {}", Thread.currentThread().getName());
             try {
                 refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, loader -> {
@@ -501,7 +501,7 @@ class TestRefDataOnHeapStore {
                         doLoaderPut(loader, mapDefinitionKey, "key" + i, StringValue.of("Value" + i));
 
                         rangeEndExc = rangeStartInc + 10;
-                        Range<Long> range = new Range<>(rangeStartInc, rangeEndExc);
+                        final Range<Long> range = new Range<>(rangeStartInc, rangeEndExc);
                         rangeStartInc = rangeEndExc;
                         doLoaderPut(loader, mapDefinitionRange, range, StringValue.of("Value" + i));
                         //                        ThreadUtil.sleepAtLeastIgnoreInterrupts(50);
@@ -525,14 +525,14 @@ class TestRefDataOnHeapStore {
                             });
                 }, () -> LogUtil.message("Getting {} entries, twice", recCount));
 
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw new RuntimeException(e);
             }
             LOGGER.debug("Finished running loadTask on thread {}", Thread.currentThread().getName());
         };
 
-        ExecutorService executorService = Executors.newFixedThreadPool(6);
-        List<CompletableFuture<Void>> futures = IntStream.rangeClosed(1, 10)
+        final ExecutorService executorService = Executors.newFixedThreadPool(6);
+        final List<CompletableFuture<Void>> futures = IntStream.rangeClosed(1, 10)
                 .boxed()
                 .map(i -> {
                     LOGGER.debug("Running async task on thread {}", Thread.currentThread().getName());
@@ -545,7 +545,7 @@ class TestRefDataOnHeapStore {
         futures.forEach(voidCompletableFuture -> {
             try {
                 voidCompletableFuture.get();
-            } catch (InterruptedException | ExecutionException e) {
+            } catch (final InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
             }
         });
@@ -564,7 +564,7 @@ class TestRefDataOnHeapStore {
         final long effectiveTimeMs = System.currentTimeMillis();
         final int recCount = 1_000;
 
-        Consumer<RefStreamDefinition> loadTask = refStreamDefinition -> {
+        final Consumer<RefStreamDefinition> loadTask = refStreamDefinition -> {
             final MapDefinition mapDefinitionKey = new MapDefinition(refStreamDefinition, "MyKeyMap");
             final MapDefinition mapDefinitionRange = new MapDefinition(refStreamDefinition, "MyRangeMap");
             LOGGER.debug("Running loadTask on thread {}", Thread.currentThread().getName());
@@ -579,7 +579,7 @@ class TestRefDataOnHeapStore {
                         doLoaderPut(loader, mapDefinitionKey, "key" + i, StringValue.of("Value" + i));
 
                         rangeEndExc = rangeStartInc + 10;
-                        Range<Long> range = new Range<>(rangeStartInc, rangeEndExc);
+                        final Range<Long> range = new Range<>(rangeStartInc, rangeEndExc);
                         rangeStartInc = rangeEndExc;
                         doLoaderPut(loader, mapDefinitionRange, range, StringValue.of("Value" + i));
                         //                        ThreadUtil.sleepAtLeastIgnoreInterrupts(50);
@@ -603,18 +603,18 @@ class TestRefDataOnHeapStore {
                             });
                 }, () -> LogUtil.message("Getting {} entries, twice", recCount));
 
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw new RuntimeException(e);
             }
             LOGGER.debug("Finished running loadTask on thread {}", Thread.currentThread().getName());
         };
 
-        ExecutorService executorService = Executors.newFixedThreadPool(6);
-        List<CompletableFuture<Void>> futures = IntStream.rangeClosed(1, 10)
+        final ExecutorService executorService = Executors.newFixedThreadPool(6);
+        final List<CompletableFuture<Void>> futures = IntStream.rangeClosed(1, 10)
                 .boxed()
                 .map(i -> {
                     LOGGER.debug("Running async task on thread {}", Thread.currentThread().getName());
-                    RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
+                    final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
                     final CompletableFuture<Void> future = CompletableFuture.runAsync(
                             () ->
                                     loadTask.accept(refStreamDefinition),
@@ -627,7 +627,7 @@ class TestRefDataOnHeapStore {
         futures.forEach(voidCompletableFuture -> {
             try {
                 voidCompletableFuture.get();
-            } catch (InterruptedException | ExecutionException e) {
+            } catch (final InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
             }
         });
@@ -641,16 +641,16 @@ class TestRefDataOnHeapStore {
     @Test
     void testBigLoadForPerfTesting() {
 
-        MapNamFunc mapNamFunc = this::buildMapNameWithoutRefStreamDef;
+        final MapNamFunc mapNamFunc = this::buildMapNameWithoutRefStreamDef;
 
 //        setPurgeAgeProperty("1d");
-        int refStreamDefCount = 5;
-        int keyValueMapCount = 2;
-        int rangeValueMapCount = 2;
-        int entryCount = 50;
-        int totalKeyValueEntryCount = refStreamDefCount * keyValueMapCount * entryCount;
-        int totalRangeValueEntryCount = refStreamDefCount * rangeValueMapCount * entryCount;
-        int totalValueEntryCount = (totalKeyValueEntryCount + totalRangeValueEntryCount) / refStreamDefCount;
+        final int refStreamDefCount = 5;
+        final int keyValueMapCount = 2;
+        final int rangeValueMapCount = 2;
+        final int entryCount = 50;
+        final int totalKeyValueEntryCount = refStreamDefCount * keyValueMapCount * entryCount;
+        final int totalRangeValueEntryCount = refStreamDefCount * rangeValueMapCount * entryCount;
+        final int totalValueEntryCount = (totalKeyValueEntryCount + totalRangeValueEntryCount) / refStreamDefCount;
 
         LOGGER.info("-------------------------load starts here--------------------------------------");
         final List<RefStreamDefinition> refStreamDefs1 = loadBulkData(
@@ -669,7 +669,7 @@ class TestRefDataOnHeapStore {
 
         LOGGER.info("-----------------------second-load starts here----------------------------------");
 
-        List<RefStreamDefinition> refStreamDefs2 = loadBulkData(
+        final List<RefStreamDefinition> refStreamDefs2 = loadBulkData(
                 refStreamDefCount, keyValueMapCount, rangeValueMapCount, entryCount, refStreamDefCount, mapNamFunc);
 
         assertDbCounts(
@@ -679,31 +679,34 @@ class TestRefDataOnHeapStore {
 
         LOGGER.info("-------------------------gets start here---------------------------------------");
 
-        Random random = new Random();
+        final Random random = new Random();
         // for each ref stream def & map def, have N goes at picking a random key and getting the value for it
         Stream.concat(refStreamDefs1.stream(), refStreamDefs2.stream()).forEach(refStreamDef -> {
-            Instant startTime = Instant.now();
+            final Instant startTime = Instant.now();
             Stream.of(KV_TYPE, RANGE_TYPE).forEach(valueType -> {
                 for (int i = 0; i < entryCount; i++) {
 
-                    String mapName = mapNamFunc.buildMapName(refStreamDef, valueType, random.nextInt(keyValueMapCount));
-                    MapDefinition mapDefinition = new MapDefinition(refStreamDef, mapName);
-                    int entryIdx = random.nextInt(entryCount);
+                    final String mapName = mapNamFunc.buildMapName(
+                            refStreamDef,
+                            valueType,
+                            random.nextInt(keyValueMapCount));
+                    final MapDefinition mapDefinition = new MapDefinition(refStreamDef, mapName);
+                    final int entryIdx = random.nextInt(entryCount);
 
-                    String queryKey;
-                    String expectedValue;
+                    final String queryKey;
+                    final String expectedValue;
                     if (valueType.equals(KV_TYPE)) {
                         queryKey = buildKey(entryIdx);
                         expectedValue = buildKeyStoreValue(mapName, entryIdx, queryKey);
                     } else {
-                        Range<Long> range = buildRangeKey(entryIdx);
+                        final Range<Long> range = buildRangeKey(entryIdx);
                         // in the DB teh keys are ranges so we need to pick a value in that range
                         queryKey = Long.toString(random.nextInt(range.size().intValue()) + range.getFrom());
                         expectedValue = buildRangeStoreValue(mapName, entryIdx, range);
                     }
 
                     // get the proxy then get the value
-                    RefDataValueProxy valueProxy = refDataStore.getValueProxy(mapDefinition, queryKey);
+                    final RefDataValueProxy valueProxy = refDataStore.getValueProxy(mapDefinition, queryKey);
                     Optional<RefDataValue> optRefDataValue = valueProxy.supplyValue();
 
                     assertThat(optRefDataValue).isNotEmpty();
@@ -757,7 +760,7 @@ class TestRefDataOnHeapStore {
     private void bulkLoadAndAssert(final boolean overwriteExisting,
                                    final int commitInterval) {
         // two different ref stream definitions
-        List<RefStreamDefinition> refStreamDefinitions = Arrays.asList(
+        final List<RefStreamDefinition> refStreamDefinitions = Arrays.asList(
                 buildUniqueRefStreamDefinition(),
                 buildUniqueRefStreamDefinition());
 
@@ -803,11 +806,11 @@ class TestRefDataOnHeapStore {
         assertThat(entryCount)
                 .isGreaterThan(0);
 
-        List<RefStreamDefinition> refStreamDefinitions = new ArrayList<>();
+        final List<RefStreamDefinition> refStreamDefinitions = new ArrayList<>();
 
         for (int i = 0; i < refStreamDefinitionCount; i++) {
 
-            RefStreamDefinition refStreamDefinition = buildRefStreamDefintion(i + refStreamDefinitionOffset);
+            final RefStreamDefinition refStreamDefinition = buildRefStreamDefintion(i + refStreamDefinitionOffset);
 
             refStreamDefinitions.add(refStreamDefinition);
 
@@ -852,12 +855,12 @@ class TestRefDataOnHeapStore {
                                     final MapNamFunc mapNamFunc) {
         // load the range/value data
         for (int j = 0; j < keyValueMapCount; j++) {
-            String mapName = mapNamFunc.buildMapName(refStreamDefinition, RANGE_TYPE, j);
-            MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
+            final String mapName = mapNamFunc.buildMapName(refStreamDefinition, RANGE_TYPE, j);
+            final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
 
             for (int k = 0; k < entryCount; k++) {
-                Range<Long> range = buildRangeKey(k);
-                String value = buildRangeStoreValue(mapName, k, range);
+                final Range<Long> range = buildRangeKey(k);
+                final String value = buildRangeStoreValue(mapName, k, range);
                 doLoaderPut(loader, mapDefinition, range, StringValue.of(value));
             }
         }
@@ -882,12 +885,12 @@ class TestRefDataOnHeapStore {
                                   final MapNamFunc mapNamFunc) {
         // load the key/value data
         for (int j = 0; j < keyValueMapCount; j++) {
-            String mapName = mapNamFunc.buildMapName(refStreamDefinition, KV_TYPE, j);
-            MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
+            final String mapName = mapNamFunc.buildMapName(refStreamDefinition, KV_TYPE, j);
+            final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
 
             for (int k = 0; k < entryCount; k++) {
-                String key = buildKey(k);
-                String value = buildKeyStoreValue(mapName, k, key);
+                final String key = buildKey(k);
+                final String value = buildKeyStoreValue(mapName, k, key);
                 doLoaderPut(loader, mapDefinition, key, StringValue.of(value));
             }
         }
@@ -932,13 +935,13 @@ class TestRefDataOnHeapStore {
                                    final int commitInterval) {
 
 
-        long effectiveTimeMs = System.currentTimeMillis();
-        AtomicInteger counter = new AtomicInteger();
+        final long effectiveTimeMs = System.currentTimeMillis();
+        final AtomicInteger counter = new AtomicInteger();
 
-        List<String> mapNames = Arrays.asList("map1", "map2");
+        final List<String> mapNames = Arrays.asList("map1", "map2");
 
-        List<Tuple3<MapDefinition, String, StringValue>> keyValueLoadedData = new ArrayList<>();
-        List<Tuple3<MapDefinition, Range<Long>, StringValue>> keyRangeValueLoadedData = new ArrayList<>();
+        final List<Tuple3<MapDefinition, String, StringValue>> keyValueLoadedData = new ArrayList<>();
+        final List<Tuple3<MapDefinition, Range<Long>, StringValue>> keyRangeValueLoadedData = new ArrayList<>();
 
         final AtomicReference<RefStreamDefinition> lastRefStreamDefinition = new AtomicReference<>(null);
         final AtomicInteger lastCounterStartVal = new AtomicInteger();
@@ -957,7 +960,7 @@ class TestRefDataOnHeapStore {
                 }
                 lastCounterStartVal.set(counter.get());
 
-                int putAttempts = loadData(refStreamDefinition,
+                final int putAttempts = loadData(refStreamDefinition,
                         effectiveTimeMs,
                         commitInterval,
                         mapNames,
@@ -972,7 +975,7 @@ class TestRefDataOnHeapStore {
                         refDataStore.getKeyValueEntryCount(),
                         refDataStore.getRangeValueEntryCount());
 
-                int expectedNewEntries;
+                final int expectedNewEntries;
                 if (refStreamDefinition.equals(lastRefStreamDefinition.get())) {
                     expectedNewEntries = 0;
                 } else {
@@ -986,11 +989,11 @@ class TestRefDataOnHeapStore {
 
                 lastRefStreamDefinition.set(refStreamDefinition);
 
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw new RuntimeException(e);
             }
 
-            ProcessingState processingState = refDataStore.getLoadState(refStreamDefinition)
+            final ProcessingState processingState = refDataStore.getLoadState(refStreamDefinition)
                     .get();
 
             assertThat(processingState)
@@ -1005,10 +1008,10 @@ class TestRefDataOnHeapStore {
         // query all values from the key/value store
         keyValueLoadedData.forEach(tuple3 -> {
             // get the proxy object
-            RefDataValueProxy valueProxy = refDataStore.getValueProxy(tuple3._1, tuple3._2);
+            final RefDataValueProxy valueProxy = refDataStore.getValueProxy(tuple3._1, tuple3._2);
 
 
-            RefDataValue refDataValue = valueProxy.supplyValue().get();
+            final RefDataValue refDataValue = valueProxy.supplyValue().get();
 
             assertThat(refDataValue).isInstanceOf(StringValue.class);
             assertThat((StringValue) refDataValue)
@@ -1021,14 +1024,14 @@ class TestRefDataOnHeapStore {
         keyRangeValueLoadedData.forEach(tuple3 -> {
 
             // build a variety of keys from the supplied range
-            String keyAtStartOfRange = tuple3._2.getFrom().toString();
-            String keyAtEndOfRange = Long.toString(tuple3._2.getTo() - 1);
-            String keyInsideRange = Long.toString(tuple3._2.getFrom() + 5);
-            String keyBelowRange = Long.toString(tuple3._2.getFrom() - 1);
-            String keyAboveRange = Long.toString(tuple3._2.getTo() + 1);
+            final String keyAtStartOfRange = tuple3._2.getFrom().toString();
+            final String keyAtEndOfRange = Long.toString(tuple3._2.getTo() - 1);
+            final String keyInsideRange = Long.toString(tuple3._2.getFrom() + 5);
+            final String keyBelowRange = Long.toString(tuple3._2.getFrom() - 1);
+            final String keyAboveRange = Long.toString(tuple3._2.getTo() + 1);
 
             // define the expected result for each key
-            List<Tuple2<String, Boolean>> keysAndExpectedResults = Arrays.asList(
+            final List<Tuple2<String, Boolean>> keysAndExpectedResults = Arrays.asList(
                     Tuple.of(keyAtStartOfRange, true),
                     Tuple.of(keyAtEndOfRange, true),
                     Tuple.of(keyInsideRange, true),
@@ -1039,11 +1042,11 @@ class TestRefDataOnHeapStore {
                 LOGGER.debug("range {}, key {}, expected {}", tuple3._2, tuple2._1, tuple2._2);
 
                 // get the proxy object
-                RefDataValueProxy valueProxy = refDataStore.getValueProxy(tuple3._1, tuple2._1);
+                final RefDataValueProxy valueProxy = refDataStore.getValueProxy(tuple3._1, tuple2._1);
 
-                boolean isValueExpected = tuple2._2;
+                final boolean isValueExpected = tuple2._2;
 
-                Optional<RefDataValue> optRefDataValue = valueProxy.supplyValue();
+                final Optional<RefDataValue> optRefDataValue = valueProxy.supplyValue();
 
                 assertThat(optRefDataValue.isPresent())
                         .isEqualTo(isValueExpected);
@@ -1070,7 +1073,7 @@ class TestRefDataOnHeapStore {
 
 
         final int entriesPerMapDef = 1;
-        boolean didLoadHappen = refDataStore.doWithLoaderUnlessComplete(
+        final boolean didLoadHappen = refDataStore.doWithLoaderUnlessComplete(
                 refStreamDefinition,
                 effectiveTimeMs,
                 loader -> {
@@ -1082,9 +1085,9 @@ class TestRefDataOnHeapStore {
                         mapNames.stream()
                                 .map(name -> new MapDefinition(refStreamDefinition, name))
                                 .forEach(mapDefinition -> {
-                                    int cnt = counter.incrementAndGet();
-                                    String key = buildKey(cnt);
-                                    StringValue value = StringValue.of("value" + cnt);
+                                    final int cnt = counter.incrementAndGet();
+                                    final String key = buildKey(cnt);
+                                    final StringValue value = StringValue.of("value" + cnt);
                                     LOGGER.debug("Putting cnt {}, key {}, value {}", cnt, key, value);
                                     doLoaderPut(loader, mapDefinition, key, value);
 
@@ -1095,9 +1098,11 @@ class TestRefDataOnHeapStore {
                         mapNames.stream()
                                 .map(name -> new MapDefinition(refStreamDefinition, name))
                                 .forEach(mapDefinition -> {
-                                    int cnt = counter.incrementAndGet();
-                                    Range<Long> keyRange = new Range<>((long) (cnt * 10), (long) ((cnt * 10) + 10));
-                                    StringValue value = StringValue.of("value" + cnt);
+                                    final int cnt = counter.incrementAndGet();
+                                    final Range<Long> keyRange = new Range<>(
+                                            (long) (cnt * 10),
+                                            (long) ((cnt * 10) + 10));
+                                    final StringValue value = StringValue.of("value" + cnt);
                                     LOGGER.debug("Putting cnt {}, key-range {}, value {}", cnt, keyRange, value);
                                     doLoaderPut(loader, mapDefinition, keyRange, value);
                                     keyRangeValueLoadedData.add(Tuple.of(mapDefinition, keyRange, value));
@@ -1110,12 +1115,12 @@ class TestRefDataOnHeapStore {
         assertThat(didLoadHappen)
                 .isEqualTo(isLoadExpectedToHappen);
 
-        ProcessingState processingState = refDataStore.getLoadState(refStreamDefinition).get();
+        final ProcessingState processingState = refDataStore.getLoadState(refStreamDefinition).get();
 
         assertThat(processingState)
                 .isEqualTo(ProcessingState.COMPLETE);
 
-        boolean isDataLoaded = refDataStore.isDataLoaded(refStreamDefinition);
+        final boolean isDataLoaded = refDataStore.isDataLoaded(refStreamDefinition);
         assertThat(isDataLoaded)
                 .isTrue();
 
@@ -1163,7 +1168,7 @@ class TestRefDataOnHeapStore {
             } else {
                 throw new RuntimeException("Unexpected type " + refDataValue.getClass().getSimpleName());
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message("Error writing value: {}", e.getMessage()), e);
         }
     }

@@ -21,7 +21,7 @@ class TestPropertyPath {
 
     @Test
     void blank() {
-        PropertyPath propertyPath = PropertyPath.blank();
+        final PropertyPath propertyPath = PropertyPath.blank();
 
         assertThat(propertyPath.toString())
                 .isEqualTo("");
@@ -35,7 +35,7 @@ class TestPropertyPath {
 
     @Test
     void getPropertyPath() {
-        PropertyPath propertyPath = PropertyPath.fromParts("stroom", "node", "name");
+        final PropertyPath propertyPath = PropertyPath.fromParts("stroom", "node", "name");
 
         assertThat(propertyPath.toString())
                 .isEqualTo("stroom.node.name");
@@ -46,30 +46,30 @@ class TestPropertyPath {
 
     @Test
     void merge() {
-        PropertyPath propertyPath1 = PropertyPath.fromParts("stroom", "node");
-        PropertyPath propertyPath2 = PropertyPath.fromParts("name");
+        final PropertyPath propertyPath1 = PropertyPath.fromParts("stroom", "node");
+        final PropertyPath propertyPath2 = PropertyPath.fromParts("name");
         assertThat(propertyPath1.merge(propertyPath2).toString())
                 .isEqualTo("stroom.node.name");
     }
 
     @Test
     void merge2() {
-        PropertyPath propertyPath1 = PropertyPath.fromParts("stroom", "node");
-        String part2 = "name";
+        final PropertyPath propertyPath1 = PropertyPath.fromParts("stroom", "node");
+        final String part2 = "name";
         Assertions.assertThat(propertyPath1.merge(part2).toString())
                 .isEqualTo("stroom.node.name");
     }
 
     @Test
     void merge3() {
-        PropertyPath propertyPath1 = PropertyPath.fromParts("stroom", "node");
+        final PropertyPath propertyPath1 = PropertyPath.fromParts("stroom", "node");
         Assertions.assertThat(propertyPath1.merge("name", "other").toString())
                 .isEqualTo("stroom.node.name.other");
     }
 
     @Test
     void containsPart1() {
-        PropertyPath propertyPath = PropertyPath.fromParts("stroom", "node", "name");
+        final PropertyPath propertyPath = PropertyPath.fromParts("stroom", "node", "name");
         propertyPath.getParts()
                 .forEach(part -> {
                     assertThat(propertyPath.containsPart(part))
@@ -79,14 +79,14 @@ class TestPropertyPath {
 
     @Test
     void containsPart2() {
-        PropertyPath propertyPath = PropertyPath.fromParts("stroom", "node", "name");
+        final PropertyPath propertyPath = PropertyPath.fromParts("stroom", "node", "name");
         assertThat(propertyPath.containsPart("not_found"))
                 .isFalse();
     }
 
     @Test
     void builder() {
-        PropertyPath propertyPath = PropertyPath.builder()
+        final PropertyPath propertyPath = PropertyPath.builder()
                 .add("stroom")
                 .add("node")
                 .add("name")
@@ -144,10 +144,10 @@ class TestPropertyPath {
     private void doEqualsIgnoreCaseTest(final String pathString1,
                                         final String pathString2,
                                         final boolean expectedResult) {
-        PropertyPath path1 = PropertyPath.fromPathString(pathString1);
-        PropertyPath path2 = PropertyPath.fromPathString(pathString2);
+        final PropertyPath path1 = PropertyPath.fromPathString(pathString1);
+        final PropertyPath path2 = PropertyPath.fromPathString(pathString2);
 
-        boolean result = path1.equalsIgnoreCase(path2);
+        final boolean result = path1.equalsIgnoreCase(path2);
 
         assertThat(result)
                 .isEqualTo(expectedResult);
@@ -245,7 +245,7 @@ class TestPropertyPath {
         assertThat(mapper.canSerialize(entity.getClass()))
                 .isTrue();
 
-        String json = mapper.writeValueAsString(entity);
+        final String json = mapper.writeValueAsString(entity);
         System.out.println("\n" + json);
 
         final T entity2 = mapper.readValue(json, clazz);

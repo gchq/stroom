@@ -35,8 +35,8 @@ class CidrToNumericIPRange extends StroomExtensionFunctionCall {
                 final int prefixLength = Integer.parseInt(cidrMatcher.group(2));
                 final int subnetMask = 0xFFFFFFFF << (32 - prefixLength);
 
-                long networkAddress = IpAddressUtil.toNumericIpAddress(cidrAddress) & subnetMask;
-                long broadcastAddress = networkAddress | (~subnetMask);
+                final long networkAddress = IpAddressUtil.toNumericIpAddress(cidrAddress) & subnetMask;
+                final long broadcastAddress = networkAddress | (~subnetMask);
 
                 return new SimpleArrayItem(new ArrayList<>(Arrays.asList(
                         StringValue.makeStringValue(Long.toString(networkAddress)),
@@ -44,9 +44,9 @@ class CidrToNumericIPRange extends StroomExtensionFunctionCall {
             } else {
                 throw new XPathException("Invalid CIDR format: " + cidr);
             }
-        } catch (UnknownHostException e) {
+        } catch (final UnknownHostException e) {
             log(context, Severity.ERROR, "Invalid IP address", e);
-        } catch (XPathException e) {
+        } catch (final XPathException e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
 

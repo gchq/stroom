@@ -49,8 +49,8 @@ public class GitRepoPushExecutor {
      * Constructor, called from GitRepoJobsModule.
      */
     @Inject
-    GitRepoPushExecutor(GitRepoStore gitRepoStore,
-                        GitRepoStorageService gitRepoStorageService) {
+    GitRepoPushExecutor(final GitRepoStore gitRepoStore,
+                        final GitRepoStorageService gitRepoStorageService) {
         this.gitRepoStore = gitRepoStore;
         this.gitRepoStorageService = gitRepoStorageService;
     }
@@ -62,9 +62,9 @@ public class GitRepoPushExecutor {
         LOGGER.info(() -> TASK_NAME + " Running");
 
         // Get all the GitRepoDoc instances and push them
-        var docRefs = gitRepoStore.list();
-        for (var docRef : docRefs) {
-            GitRepoDoc gitRepoDoc = gitRepoStore.readDocument(docRef);
+        final var docRefs = gitRepoStore.list();
+        for (final var docRef : docRefs) {
+            final GitRepoDoc gitRepoDoc = gitRepoStore.readDocument(docRef);
 
             if (gitRepoDoc.isAutoPush()) {
                 try {
@@ -72,7 +72,7 @@ public class GitRepoPushExecutor {
                             gitRepoDoc,
                             JOB_COMMIT_MESSAGE,
                             false);
-                } catch (IOException | EntityServiceException e) {
+                } catch (final IOException | EntityServiceException e) {
                     LOGGER.error(TASK_NAME + " error: {}: {} ", e.getClass().getSimpleName(), e.getMessage());
                 }
             }

@@ -57,14 +57,14 @@ class TestValueStoreMetaSerde extends AbstractSerdeTest<ValueStoreMeta, ValueSto
     @Test
     void testExtractTypeId() {
 
-        ValueStoreMeta valueStoreMeta = new ValueStoreMeta(StringValue.TYPE_ID, 123);
+        final ValueStoreMeta valueStoreMeta = new ValueStoreMeta(StringValue.TYPE_ID, 123);
         doExtractionTest(valueStoreMeta, getSerde()::extractTypeId, ValueStoreMeta::getTypeId);
     }
 
     @Test
     void testExtractReferenceCount() {
 
-        ValueStoreMeta valueStoreMeta = new ValueStoreMeta(StringValue.TYPE_ID, 123);
+        final ValueStoreMeta valueStoreMeta = new ValueStoreMeta(StringValue.TYPE_ID, 123);
         doExtractionTest(valueStoreMeta, getSerde()::extractReferenceCount, ValueStoreMeta::getReferenceCount);
     }
 

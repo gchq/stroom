@@ -197,19 +197,19 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
                 .addTextTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, "TEST-FEED-EVENTS")
                 .addTerm(MetaFields.FIELD_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                 .build();
-        QueryData filterConstraints = new QueryData();
+        final QueryData filterConstraints = new QueryData();
         filterConstraints.setExpression(expression);
 
-        Processor processor = processorService.create(ProcessorType.PIPELINE, pipelineNode.getDocRef(), true);
+        final Processor processor = processorService.create(ProcessorType.PIPELINE, pipelineNode.getDocRef(), true);
 
-        ProcessorFilter filter = processorFilterService.create(processor,
+        final ProcessorFilter filter = processorFilterService.create(processor,
                 CreateProcessFilterRequest
                         .builder()
                         .pipeline(pipelineNode.getDocRef())
                         .queryData(filterConstraints)
                         .build());
 
-        HashSet<DocRef> forExport = new HashSet<>();
+        final HashSet<DocRef> forExport = new HashSet<>();
 
 //        forExport.add (new DocRef(Processor.ENTITY_TYPE,processor.getUuid()));
         forExport.add(new DocRef(ProcessorFilter.ENTITY_TYPE, filter.getUuid()));

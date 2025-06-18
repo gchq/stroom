@@ -43,7 +43,7 @@ public class DatabaseSchemaDumpTool extends AbstractCommandLineTool {
     public void run() {
         try {
             Class.forName(jdbcDriverClassName);
-            try (Connection connection = DriverManager.getConnection(jdbcDriverUrl, jdbcDriverUsername,
+            try (final Connection connection = DriverManager.getConnection(jdbcDriverUrl, jdbcDriverUsername,
                     jdbcDriverPassword)) {
                 final List<String> tableColumns = buildTableColumns(connection);
                 tableColumns.forEach(System.out::println);

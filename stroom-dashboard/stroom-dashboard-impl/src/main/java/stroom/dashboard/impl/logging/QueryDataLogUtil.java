@@ -144,7 +144,7 @@ public class QueryDataLogUtil {
                                        final WordListProvider wordListProvider,
                                        final CollectionService collectionService,
                                        final ExpressionOperator exp) {
-        AdvancedQueryOperator operator;
+        final AdvancedQueryOperator operator;
         if (exp.op() == Op.NOT) {
             operator = new Not();
         } else if (exp.op() == Op.OR) {

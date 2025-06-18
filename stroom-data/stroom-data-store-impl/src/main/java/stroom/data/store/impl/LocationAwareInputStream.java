@@ -42,7 +42,7 @@ public class LocationAwareInputStream extends FilterInputStream {
 
     @Override
     public int read() throws IOException {
-        int result = in.read();
+        final int result = in.read();
         if (result != -1) {
             lastReadSize = 1;
             firstOffsetInLastRead++;
@@ -52,8 +52,8 @@ public class LocationAwareInputStream extends FilterInputStream {
     }
 
     @Override
-    public int read(byte[] b, int off, int len) throws IOException {
-        int result = in.read(b, off, len);
+    public int read(final byte[] b, final int off, final int len) throws IOException {
+        final int result = in.read(b, off, len);
         if (result != -1) {
             lastReadSize = result;
             firstOffsetInLastRead++;
@@ -63,8 +63,8 @@ public class LocationAwareInputStream extends FilterInputStream {
     }
 
     @Override
-    public long skip(long n) throws IOException {
-        long result = in.skip(n);
+    public long skip(final long n) throws IOException {
+        final long result = in.skip(n);
         lastReadSize = -1;
         firstOffsetInLastRead += result;
         lastOffsetInLastRead = firstOffsetInLastRead;
@@ -72,7 +72,7 @@ public class LocationAwareInputStream extends FilterInputStream {
     }
 
     @Override
-    public void mark(int readlimit) {
+    public void mark(final int readlimit) {
         in.mark(readlimit);
         mark = firstOffsetInLastRead;
         // it's okay to mark even if mark isn't supported, as reset won't work

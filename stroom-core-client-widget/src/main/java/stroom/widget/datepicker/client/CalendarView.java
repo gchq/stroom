@@ -74,10 +74,10 @@ public abstract class CalendarView extends DatePickerComponent {
      * @param date the date of the cell where aria-selected should be set,
      *             or null to clear aria-selected.
      */
-    public void setAriaSelectedCell(UTCDate date) {
+    public void setAriaSelectedCell(final UTCDate date) {
     }
 
-    public void setKeyboardSelectedCell(UTCDate date) {
+    public void setKeyboardSelectedCell(final UTCDate date) {
     }
 
     /**

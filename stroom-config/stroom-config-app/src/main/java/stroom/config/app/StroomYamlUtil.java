@@ -88,7 +88,7 @@ public class StroomYamlUtil {
         Config config = null;
         try {
             config = configurationFactory.build(configurationSourceProvider, configFile.toAbsolutePath().toString());
-        } catch (ConfigurationException e) {
+        } catch (final ConfigurationException e) {
             throw new RuntimeException(LogUtil.message("Error parsing configuration from file {}",
                     configFile.toAbsolutePath()), e);
         }
@@ -125,7 +125,7 @@ public class StroomYamlUtil {
         try {
             final DummyConfig dummyConfig = mapper.convertValue(obj, DummyConfig.class);
             return dummyConfig.getAppConfig();
-        } catch (IllegalArgumentException e) {
+        } catch (final IllegalArgumentException e) {
             throw new RuntimeException("Error parsing yaml string", e);
         }
     }
@@ -138,7 +138,7 @@ public class StroomYamlUtil {
     }
 
     public static void writeConfig(final AppConfig appConfig, final OutputStream outputStream) throws IOException {
-        Config config = new Config();
+        final Config config = new Config();
         config.setYamlAppConfig(appConfig);
         writeConfig(config, outputStream);
     }
@@ -149,7 +149,7 @@ public class StroomYamlUtil {
     }
 
     public static void writeConfig(final AppConfig appConfig, final Path path) throws IOException {
-        Config config = new Config();
+        final Config config = new Config();
         config.setYamlAppConfig(appConfig);
         writeConfig(config, path);
     }

@@ -408,7 +408,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
                             if (keyboardSelectedTab == null) {
                                 tabData = visibleTabs.get(0);
                             } else {
-                                int index = visibleTabs.indexOf(keyboardSelectedTab);
+                                final int index = visibleTabs.indexOf(keyboardSelectedTab);
                                 if (index >= 0 && index < visibleTabs.size() - 1) {
                                     tabData = visibleTabs.get(index + 1);
                                 }
@@ -422,7 +422,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
                             if (keyboardSelectedTab == null) {
                                 tabData = visibleTabs.get(visibleTabs.size() - 1);
                             } else {
-                                int index = visibleTabs.indexOf(keyboardSelectedTab);
+                                final int index = visibleTabs.indexOf(keyboardSelectedTab);
                                 if (index > 0) {
                                     tabData = visibleTabs.get(index - 1);
                                 } else if (overflowTabCount == 0) {

@@ -353,9 +353,9 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
         // If we still have a narrow col see if there is any text content.
         if (minWidth < 10) {
-            String text = col.getInnerText();
+            final String text = col.getInnerText();
             tempDiv.setInnerHTML(text);
-            double scrollWidth = ElementUtil.getSubPixelOffsetWidth(tempDiv);
+            final double scrollWidth = ElementUtil.getSubPixelOffsetWidth(tempDiv);
             minWidth = Math.max(minWidth, scrollWidth);
         }
 
@@ -374,11 +374,11 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                 el = el.getFirstChildElement();
             }
 
-            String text = el.getInnerText();
+            final String text = el.getInnerText();
 
             if (text.length() > 0) {
                 tempDiv.setInnerHTML(text);
-                double offsetWidth = ElementUtil.getSubPixelOffsetWidth(tempDiv) + 1;
+                final double offsetWidth = ElementUtil.getSubPixelOffsetWidth(tempDiv) + 1;
                 minWidth = Math.max(minWidth, offsetWidth);
             }
         }
@@ -418,7 +418,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     private Heading getHeading(final Element target, final int initialX) {
         int childIndex;
         Element th = target;
-        Element headerRow;
+        final Element headerRow;
 
         // Get parent th.
         while (th != null && !"th".equalsIgnoreCase(th.getTagName())) {
@@ -622,7 +622,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                 final ColSettings settings = colSettings.get(i);
                 if (settings != null) {
                     final String stringWidth = getColumnWidth(col);
-                    int w = getPx(stringWidth);
+                    final int w = getPx(stringWidth);
                     totalColWidth += w;
                     if (settings.isFill()) {
                         totalWeight += settings.getFillWeight();

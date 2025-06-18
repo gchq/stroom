@@ -115,7 +115,7 @@ public class EventCoprocessor implements Coprocessor, HasCompletionState {
 
     @Override
     public void writePayload(final Output output) {
-        EventRefs refs;
+        final EventRefs refs;
         eventRefsLock.lock();
         try {
             refs = eventRefs;

@@ -79,7 +79,7 @@ class TestInteractiveSearch2 extends AbstractSearchTest2 {
      */
     @Test
     void positiveCaseInsensitiveTest() {
-        String queryString = """
+        final String queryString = """
                 from "Test index"
                 where UserId = user5 and Description = e0567
                 and EventTime >= 2000-01-01T00:00:00.000Z
@@ -98,7 +98,7 @@ class TestInteractiveSearch2 extends AbstractSearchTest2 {
      */
     @Test
     void testHavingEquals() {
-        String queryString = """
+        final String queryString = """
                 from "Test index"
                 where UserId = user5 and Description = e0567
                 and EventTime >= 2000-01-01T00:00:00.000Z
@@ -423,7 +423,7 @@ class TestInteractiveSearch2 extends AbstractSearchTest2 {
                                  final boolean extractValues) {
 
         // code to test the results when they come back
-        Consumer<Map<String, List<Row>>> resultMapConsumer = resultMap -> {
+        final Consumer<Map<String, List<Row>>> resultMapConsumer = resultMap -> {
             for (final List<Row> values : resultMap.values()) {
                 if (expectResultCount == 0) {
                     assertThat(values.size()).isEqualTo(0);

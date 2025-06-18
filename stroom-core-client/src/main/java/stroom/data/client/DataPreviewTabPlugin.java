@@ -47,7 +47,8 @@ public class DataPreviewTabPlugin extends AbstractTabPresenterPlugin<DataPreview
     /**
      * 4. This method will open the source and show it in the content pane.
      */
-    public Optional<DataPreviewTabPresenter> open(final SourceLocation sourceLocation, DataViewType initDataViewType,
+    public Optional<DataPreviewTabPresenter> open(final SourceLocation sourceLocation,
+                                                  final DataViewType initDataViewType,
                                                   final boolean forceOpen) {
 
         return super.openTabPresenter(

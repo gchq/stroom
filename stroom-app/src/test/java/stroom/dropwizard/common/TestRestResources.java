@@ -69,7 +69,7 @@ class TestRestResources {
     @TestFactory
     @SuppressWarnings("unchecked")
     Stream<DynamicTest> buildQualityAssuranceTests() {
-        try (ScanResult result = new ClassGraph()
+        try (final ScanResult result = new ClassGraph()
                 .acceptPackages("stroom")
                 .enableClassInfo()
                 .ignoreClassVisibility()
@@ -104,7 +104,7 @@ class TestRestResources {
     @SuppressWarnings("unchecked")
     void listMethods() {
 
-        try (ScanResult result = new ClassGraph()
+        try (final ScanResult result = new ClassGraph()
                 .acceptPackages("stroom")
                 .enableClassInfo()
                 .ignoreClassVisibility()
@@ -507,9 +507,9 @@ class TestRestResources {
 
     private void assertFetchDeclared(final Class<? extends RestResource> resourceClass,
                                      final SoftAssertions softAssertions) {
-        boolean fetchMethodPresent = Arrays.stream(resourceClass.getMethods())
+        final boolean fetchMethodPresent = Arrays.stream(resourceClass.getMethods())
                 .anyMatch(m -> m.getName().equals("fetch") && m.getParameterCount() == 1);
-        boolean updateOrDeleteMethodPresent = Arrays.stream(resourceClass.getMethods())
+        final boolean updateOrDeleteMethodPresent = Arrays.stream(resourceClass.getMethods())
                 .anyMatch(m -> m.getName().equals("update") || m.getName().equals("delete"));
         if (fetchMethodPresent && updateOrDeleteMethodPresent) {
             if (!FetchWithUuid.class.isAssignableFrom(resourceClass) &&
@@ -524,7 +524,7 @@ class TestRestResources {
 
     private void assertProviders(final Class<? extends RestResource> resourceClass,
                                  final SoftAssertions softAssertions) {
-        List<Class<?>> nonProvidedFields = Arrays.stream(resourceClass.getDeclaredFields())
+        final List<Class<?>> nonProvidedFields = Arrays.stream(resourceClass.getDeclaredFields())
                 .filter(field ->
                         Modifier.isPrivate(field.getModifiers())
                         && Modifier.isFinal(field.getModifiers())
@@ -545,7 +545,7 @@ class TestRestResources {
 
     private void assertNoSecurityContext(final Class<? extends RestResource> resourceClass,
                                          final SoftAssertions softAssertions) {
-        List<Field> securityContextFields = Arrays.stream(resourceClass.getDeclaredFields())
+        final List<Field> securityContextFields = Arrays.stream(resourceClass.getDeclaredFields())
                 .filter(field -> {
                     if (SecurityContext.class.isAssignableFrom(field.getType())) {
                         return true;
@@ -575,7 +575,7 @@ class TestRestResources {
     }
 
     private boolean hasJaxRsAnnotation(final Class<?> clazz, final Method method, final boolean checkInterfaces) {
-        boolean thisMethodHasJaxRs = Arrays.stream(method.getAnnotations())
+        final boolean thisMethodHasJaxRs = Arrays.stream(method.getAnnotations())
                 .anyMatch(annotation ->
                         annotation.annotationType().getPackageName().equals("jakarta.ws.rs"));
         if (!checkInterfaces) {

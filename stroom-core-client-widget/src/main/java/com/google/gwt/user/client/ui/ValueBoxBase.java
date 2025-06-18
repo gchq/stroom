@@ -94,7 +94,7 @@ public class ValueBoxBase<T> extends FocusWidget implements
      *
      * @param elem the browser element to wrap
      */
-    protected ValueBoxBase(Element elem, Renderer<T> renderer, Parser<T> parser) {
+    protected ValueBoxBase(final Element elem, final Renderer<T> renderer, final Parser<T> parser) {
         super(elem);
         autoDirHandler = AutoDirectionHandler.addTo(this,
                 BidiPolicy.isBidiEnabled());
@@ -102,7 +102,7 @@ public class ValueBoxBase<T> extends FocusWidget implements
         this.parser = parser;
     }
 
-    public HandlerRegistration addValueChangeHandler(ValueChangeHandler<T> handler) {
+    public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<T> handler) {
         // Initialization code
         if (!valueChangeHandlerInitialized) {
             valueChangeHandlerInitialized = true;
@@ -166,11 +166,11 @@ public class ValueBoxBase<T> extends FocusWidget implements
      * @return the selected text, or an empty string if none is selected
      */
     public String getSelectedText() {
-        int start = getCursorPos();
+        final int start = getCursorPos();
         if (start < 0) {
             return "";
         }
-        int length = getSelectionLength();
+        final int length = getSelectionLength();
         return getText().substring(start, start + length);
     }
 
@@ -193,7 +193,7 @@ public class ValueBoxBase<T> extends FocusWidget implements
     public T getValue() {
         try {
             return getValueOrThrow();
-        } catch (ParseException e) {
+        } catch (final ParseException e) {
             return null;
         }
     }
@@ -204,9 +204,9 @@ public class ValueBoxBase<T> extends FocusWidget implements
      * @throws ParseException if the value cannot be parsed
      */
     public T getValueOrThrow() throws ParseException {
-        String text = getText();
+        final String text = getText();
 
-        T parseResult = parser.parse(text);
+        final T parseResult = parser.parse(text);
 
         if ("".equals(text)) {
             return null;
@@ -226,8 +226,8 @@ public class ValueBoxBase<T> extends FocusWidget implements
     }
 
     @Override
-    public void onBrowserEvent(Event event) {
-        int type = DOM.eventGetType(event);
+    public void onBrowserEvent(final Event event) {
+        final int type = DOM.eventGetType(event);
         if ((type & Event.KEYEVENTS) != 0) {
             // Fire the keyboard event. Hang on to the current event object so that
             // cancelKey() and setKey() can be implemented.
@@ -249,13 +249,13 @@ public class ValueBoxBase<T> extends FocusWidget implements
      * hidden.
      */
     public void selectAll() {
-        int length = getText().length();
+        final int length = getText().length();
         if (length > 0) {
             setSelectionRange(0, length);
         }
     }
 
-    public void setAlignment(TextAlignment align) {
+    public void setAlignment(final TextAlignment align) {
         getElement().getStyle().setProperty("textAlign", align.getTextAlignString());
     }
 
@@ -267,29 +267,29 @@ public class ValueBoxBase<T> extends FocusWidget implements
      *
      * @param pos the new cursor position
      */
-    public void setCursorPos(int pos) {
+    public void setCursorPos(final int pos) {
         setSelectionRange(pos, 0);
     }
 
-    public void setDirection(Direction direction) {
+    public void setDirection(final Direction direction) {
         BidiUtils.setDirectionOnElement(getElement(), direction);
     }
 
     /**
      * Toggles on / off direction estimation.
      */
-    public void setDirectionEstimator(boolean enabled) {
+    public void setDirectionEstimator(final boolean enabled) {
         autoDirHandler.setDirectionEstimator(enabled);
     }
 
     /**
      * Sets the direction estimation model of the auto-dir handler.
      */
-    public void setDirectionEstimator(DirectionEstimator directionEstimator) {
+    public void setDirectionEstimator(final DirectionEstimator directionEstimator) {
         autoDirHandler.setDirectionEstimator(directionEstimator);
     }
 
-    public void setName(String name) {
+    public void setName(final String name) {
         getElement().setPropertyString("name", name);
     }
 
@@ -299,9 +299,9 @@ public class ValueBoxBase<T> extends FocusWidget implements
      * @param readOnly if <code>true</code>, the widget becomes read-only; if
      *                 <code>false</code> the widget becomes editable
      */
-    public void setReadOnly(boolean readOnly) {
+    public void setReadOnly(final boolean readOnly) {
         getElement().setPropertyBoolean("readOnly", readOnly);
-        String readOnlyStyle = "readonly";
+        final String readOnlyStyle = "readonly";
         if (readOnly) {
             addStyleDependentName(readOnlyStyle);
         } else {
@@ -318,7 +318,7 @@ public class ValueBoxBase<T> extends FocusWidget implements
      * @param pos    the position of the first character to be selected
      * @param length the number of characters to be selected
      */
-    public void setSelectionRange(int pos, int length) {
+    public void setSelectionRange(final int pos, final int length) {
         // Setting the selection range will not work for unattached elements.
         if (!isAttached()) {
             return;
@@ -344,7 +344,7 @@ public class ValueBoxBase<T> extends FocusWidget implements
      *
      * @param text the object's new text
      */
-    public void setText(String text) {
+    public void setText(final String text) {
         getElement().setPropertyString("value",
                 text != null
                         ? text
@@ -352,17 +352,17 @@ public class ValueBoxBase<T> extends FocusWidget implements
         autoDirHandler.refreshDirection();
     }
 
-    public void setValue(T value) {
+    public void setValue(final T value) {
         setValue(value, false);
     }
 
-    public void setValue(T value, boolean fireEvents) {
-        T oldValue = fireEvents
+    public void setValue(final T value, final boolean fireEvents) {
+        final T oldValue = fireEvents
                 ? getValue()
                 : null;
         setText(renderer.render(value));
         if (fireEvents) {
-            T newValue = getValue();
+            final T newValue = getValue();
             ValueChangeEvent.fireIfNotEqual(this, oldValue, newValue);
         }
     }

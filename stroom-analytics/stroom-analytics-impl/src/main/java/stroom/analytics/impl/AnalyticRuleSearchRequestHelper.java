@@ -33,11 +33,11 @@ public class AnalyticRuleSearchRequestHelper {
     public SearchRequest create(final AbstractAnalyticRuleDoc doc) {
         try {
             // Map the rule query
-            Query sampleQuery = Query.builder().build();
+            final Query sampleQuery = Query.builder().build();
             final QueryKey queryKey = new QueryKey(doc.getUuid() +
                                                    " - " +
                                                    doc.getName());
-            SearchRequest sampleRequest = new SearchRequest(
+            final SearchRequest sampleRequest = new SearchRequest(
                     SearchRequestSource.builder().sourceType(SourceType.TABLE_BUILDER_ANALYTIC).build(),
                     queryKey,
                     sampleQuery,

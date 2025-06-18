@@ -17,16 +17,16 @@ public class TokenGroupImpl extends TokenGroup {
     private int matchEndOffset;
     private OffsetAttribute offsetAtt;
 
-    public TokenGroupImpl(TokenStream tokenStream) {
+    public TokenGroupImpl(final TokenStream tokenStream) {
         super(tokenStream);
         this.offsetAtt = (OffsetAttribute) tokenStream.addAttribute(OffsetAttribute.class);
         tokenStream.addAttribute(CharTermAttribute.class);
     }
 
-    void addToken(float score) {
+    void addToken(final float score) {
         if (this.numTokens < 50) {
-            int termStartOffset = this.offsetAtt.startOffset();
-            int termEndOffset = this.offsetAtt.endOffset();
+            final int termStartOffset = this.offsetAtt.startOffset();
+            final int termEndOffset = this.offsetAtt.endOffset();
             if (this.numTokens == 0) {
                 this.startOffset = this.matchStartOffset = termStartOffset;
                 this.endOffset = this.matchEndOffset = termEndOffset;
@@ -62,7 +62,7 @@ public class TokenGroupImpl extends TokenGroup {
         this.tot = 0.0F;
     }
 
-    public float getScore(int index) {
+    public float getScore(final int index) {
         return this.scores[index];
     }
 

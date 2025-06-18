@@ -86,7 +86,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
      * @deprecated Use {@link FeedStatusService#getFeedStatus(GetFeedStatusRequestV2)}
      */
     @Deprecated
-    public GetFeedStatusResponse getFeedStatus(GetFeedStatusRequest legacyRequest) {
+    public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest legacyRequest) {
         final GetFeedStatusRequestV2 request = GetFeedStatusRequestAdapter.mapLegacyRequest(legacyRequest);
         return getFeedStatus(request);
     }
@@ -177,7 +177,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
         try (final Response response = getFeedStatusResponse(feedStatusConfig, webTarget, request)) {
             LOGGER.debug("Received response {}, duration: {}", response, timer);
             return responseConsumer.apply(response);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message(
                     "Error sending {} to {}{}, duration: {}, msg: {}",
                     request,
@@ -236,7 +236,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
                     "DUMMY_FEED", null, null);
             try {
                 sendRequest(request, feedStatusConfig, response -> {
-                    int responseCode = response.getStatusInfo().getStatusCode();
+                    final int responseCode = response.getStatusInfo().getStatusCode();
                     // Even though we have sent a dummy feed we should get back a 200 with something like
                     //{
                     //    "message": "Feed is not defined",
@@ -256,7 +256,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
                     }
                     return feedStatusResponse;
                 });
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 resultBuilder.unhealthy(e);
             }
         }

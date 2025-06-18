@@ -53,7 +53,7 @@ public class RefDataValueProxyConsumerFactory {
 
     public RefDataValueProxyConsumer getConsumer(final RefDataStore.StorageType storageType) {
 
-        RefDataValueProxyConsumer refDataValueProxyConsumer;
+        final RefDataValueProxyConsumer refDataValueProxyConsumer;
         if (storageType.equals(RefDataStore.StorageType.OFF_HEAP)) {
             if (offHeapRefDataValueProxyConsumer == null) {
                 offHeapRefDataValueProxyConsumer = offHeapRefDataValueProxyConsumerFactory.create(

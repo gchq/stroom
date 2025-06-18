@@ -126,7 +126,7 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
                         request.getRequestURI(), attributeMap);
                 return new StroomStreamException(StroomStatusCode.UNKNOWN_ERROR, attributeMap);
             });
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             // To help diagnose auth errors. Prob don't want to log to ERROR as there
             // may be lots of legitimate auth errors that we don't care about
             LOGGER.debug("Error authenticating request {}: {}",

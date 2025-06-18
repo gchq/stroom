@@ -164,7 +164,7 @@ public class StringUtil {
         Objects.requireNonNull(str);
         try {
             int idx = 0;
-            int rowNum = rowIdx + 1;
+            final int rowNum = rowIdx + 1;
             // All lines up to the one we want
             final List<String> lines = str.lines()
                     .limit(rowNum)
@@ -208,7 +208,7 @@ public class StringUtil {
                 }
                 return idx;
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw e;
         }
     }
@@ -265,7 +265,7 @@ public class StringUtil {
             boolean seenNonDelimiterChar = false;
             boolean hasChanged = false;
             int outputIdx = -1;
-            int startIdxInc = 0;
+            final int startIdxInc = 0;
             for (final char chr : charArray) {
                 if (chr == delimiter) {
                     if (!lastCharWasDelimiter && seenNonDelimiterChar) {

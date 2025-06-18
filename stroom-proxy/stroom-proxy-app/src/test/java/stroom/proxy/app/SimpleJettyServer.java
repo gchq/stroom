@@ -13,13 +13,13 @@ import java.io.IOException;
 
 public class SimpleJettyServer {
 
-    public static void main(String[] args) throws Exception {
+    public static void main(final String[] args) throws Exception {
         final Server server = new Server();
-        ServerConnector connector = new ServerConnector(server);
+        final ServerConnector connector = new ServerConnector(server);
         connector.setPort(8090);
         server.setConnectors(new Connector[]{connector});
 
-        ServletHandler servletHandler = new ServletHandler();
+        final ServletHandler servletHandler = new ServletHandler();
         servletHandler.addServletWithMapping(
                 BlockingServlet.class,
                 "/stroom/noauth/datafeed");

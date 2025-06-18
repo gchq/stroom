@@ -24,7 +24,7 @@ public class NoCertificateException extends RuntimeException {
         super("There is no certificate in this request.");
     }
 
-    public NoCertificateException(String message) {
+    public NoCertificateException(final String message) {
 
     }
 }

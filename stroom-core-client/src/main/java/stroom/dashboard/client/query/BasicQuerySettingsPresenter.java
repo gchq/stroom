@@ -88,7 +88,7 @@ public class BasicQuerySettingsPresenter
 
     @Override
     public ComponentConfig write(final ComponentConfig componentConfig) {
-        ComponentConfig result = super.write(componentConfig);
+        final ComponentConfig result = super.write(componentConfig);
         final QueryComponentSettings oldSettings = (QueryComponentSettings) result.getSettings();
         final QueryComponentSettings newSettings = writeSettings(oldSettings);
         return result.copy().settings(newSettings).build();
@@ -112,7 +112,7 @@ public class BasicQuerySettingsPresenter
 
         try {
             final String interval = getView().getRefreshInterval();
-            int millis = ModelStringUtil.parseDurationString(interval).intValue();
+            final int millis = ModelStringUtil.parseDurationString(interval).intValue();
 
             if (millis < QueryPresenter.TEN_SECONDS) {
                 throw new NumberFormatException("Query refresh interval must be greater than or equal to 10 seconds");

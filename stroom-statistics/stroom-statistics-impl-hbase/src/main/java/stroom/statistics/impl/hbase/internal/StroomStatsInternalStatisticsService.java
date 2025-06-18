@@ -61,7 +61,7 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
 
         try {
             this.datatypeFactory = DatatypeFactory.newInstance();
-        } catch (DatatypeConfigurationException e) {
+        } catch (final DatatypeConfigurationException e) {
             throw new RuntimeException("Unable to create new DatatypeFactory instance", e);
         }
     }
@@ -72,7 +72,7 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
                 KafkaConfigDoc.TYPE,
                 internalStatisticsConfig.getKafkaConfigUuid());
 
-        try (SharedKafkaProducer sharedKafkaProducer =
+        try (final SharedKafkaProducer sharedKafkaProducer =
                 stroomKafkaProducerFactory.getSharedProducer(kafkaConfigDocRef)) {
 
             sharedKafkaProducer.getKafkaProducer().ifPresentOrElse(
@@ -144,10 +144,10 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
 
     private Statistics.Statistic internalStatisticMapper(final InternalStatisticEvent internalStatisticEvent) {
         Preconditions.checkNotNull(internalStatisticEvent);
-        ObjectFactory objectFactory = new ObjectFactory();
-        Statistics.Statistic statistic = objectFactory.createStatisticsStatistic();
+        final ObjectFactory objectFactory = new ObjectFactory();
+        final Statistics.Statistic statistic = objectFactory.createStatisticsStatistic();
         statistic.setTime(toXMLGregorianCalendar(internalStatisticEvent.getTimeMs()));
-        InternalStatisticEvent.Type type = internalStatisticEvent.getType();
+        final InternalStatisticEvent.Type type = internalStatisticEvent.getType();
 
         switch (internalStatisticEvent.getType()) {
             case COUNT:
@@ -165,10 +165,10 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
         }
 
         if (!internalStatisticEvent.getTags().isEmpty()) {
-            Statistics.Statistic.Tags tags = new Statistics.Statistic.Tags();
+            final Statistics.Statistic.Tags tags = new Statistics.Statistic.Tags();
             internalStatisticEvent.getTags().entrySet().stream()
                     .map(entry -> {
-                        TagType tag = new TagType();
+                        final TagType tag = new TagType();
                         tag.setName(entry.getKey());
                         tag.setValue(entry.getValue());
                         return tag;
@@ -189,17 +189,17 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     }
 
     private XMLGregorianCalendar toXMLGregorianCalendar(final long timeMs) {
-        GregorianCalendar gregorianCalendar = new GregorianCalendar(TIME_ZONE_UTC);
+        final GregorianCalendar gregorianCalendar = new GregorianCalendar(TIME_ZONE_UTC);
         gregorianCalendar.setTimeInMillis(timeMs);
         return datatypeFactory.newXMLGregorianCalendar(gregorianCalendar);
     }
 
     private byte[] marshall(final Statistics statistics) {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        OutputStreamWriter writer = new OutputStreamWriter(byteArrayOutputStream, StandardCharsets.UTF_8);
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        final OutputStreamWriter writer = new OutputStreamWriter(byteArrayOutputStream, StandardCharsets.UTF_8);
         try {
             getMarshaller().marshal(statistics, writer);
-        } catch (JAXBException e) {
+        } catch (final JAXBException e) {
             throw new RuntimeException("Error marshalling Statistics object", e);
         }
         return byteArrayOutputStream.toByteArray();
@@ -210,17 +210,17 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
             if (jaxbContext == null) {
                 try {
                     jaxbContext = JAXBContext.newInstance(Statistics.class);
-                } catch (JAXBException e) {
+                } catch (final JAXBException e) {
                     throw new RuntimeException(String.format("Unable to create JAXBContext for class %s",
                             STATISTICS_CLASS.getCanonicalName()), e);
                 }
             }
 
-            Marshaller marshaller = jaxbContext.createMarshaller();
+            final Marshaller marshaller = jaxbContext.createMarshaller();
             marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.FALSE);
             marshaller.setProperty(Marshaller.JAXB_ENCODING, StandardCharsets.UTF_8.name());
             return marshaller;
-        } catch (JAXBException e) {
+        } catch (final JAXBException e) {
             throw new RuntimeException("Error creating marshaller for class " + STATISTICS_CLASS.getCanonicalName(), e);
         }
     }

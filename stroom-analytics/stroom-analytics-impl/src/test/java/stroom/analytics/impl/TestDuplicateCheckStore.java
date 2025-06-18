@@ -55,15 +55,15 @@ class TestDuplicateCheckStore {
     private DuplicateCheckDirs mockDuplicateCheckDirs;
 
     @Test
-    void test(@TempDir Path tempDir) {
-        LmdbEnvDir lmdbEnvDir = new LmdbEnvDir(tempDir, true);
+    void test(@TempDir final Path tempDir) {
+        final LmdbEnvDir lmdbEnvDir = new LmdbEnvDir(tempDir, true);
         Mockito.when(mockDuplicateCheckDirs.getDir(UUID))
                 .thenReturn(lmdbEnvDir);
 
         final DuplicateCheckStoreConfig duplicateCheckStoreConfig = new DuplicateCheckStoreConfig();
         final DuplicateCheckRowSerde serde = new DuplicateCheckRowSerde(byteBufferFactory);
 
-        try (ExecutorService executorService = Executors.newSingleThreadExecutor()) {
+        try (final ExecutorService executorService = Executors.newSingleThreadExecutor()) {
             final DuplicateCheckStore duplicateCheckStore = new DuplicateCheckStore(
                     mockDuplicateCheckDirs,
                     byteBufferFactory,
@@ -108,15 +108,15 @@ class TestDuplicateCheckStore {
     }
 
     @Test
-    void testLargeValue(@TempDir Path tempDir) {
-        LmdbEnvDir lmdbEnvDir = new LmdbEnvDir(tempDir, true);
+    void testLargeValue(@TempDir final Path tempDir) {
+        final LmdbEnvDir lmdbEnvDir = new LmdbEnvDir(tempDir, true);
         Mockito.when(mockDuplicateCheckDirs.getDir(UUID))
                 .thenReturn(lmdbEnvDir);
 
         final DuplicateCheckStoreConfig duplicateCheckStoreConfig = new DuplicateCheckStoreConfig();
         final DuplicateCheckRowSerde serde = new DuplicateCheckRowSerde(byteBufferFactory);
 
-        try (ExecutorService executorService = Executors.newSingleThreadExecutor()) {
+        try (final ExecutorService executorService = Executors.newSingleThreadExecutor()) {
             final DuplicateCheckStore duplicateCheckStore = new DuplicateCheckStore(
                     mockDuplicateCheckDirs,
                     byteBufferFactory,
@@ -155,15 +155,15 @@ class TestDuplicateCheckStore {
     }
 
     @Test
-    void testDeletes(@TempDir Path tempDir) {
-        LmdbEnvDir lmdbEnvDir = new LmdbEnvDir(tempDir, true);
+    void testDeletes(@TempDir final Path tempDir) {
+        final LmdbEnvDir lmdbEnvDir = new LmdbEnvDir(tempDir, true);
         Mockito.when(mockDuplicateCheckDirs.getDir(UUID))
                 .thenReturn(lmdbEnvDir);
 
         final DuplicateCheckStoreConfig duplicateCheckStoreConfig = new DuplicateCheckStoreConfig();
         final DuplicateCheckRowSerde serde = new DuplicateCheckRowSerde(byteBufferFactory);
 
-        try (ExecutorService executorService = Executors.newSingleThreadExecutor()) {
+        try (final ExecutorService executorService = Executors.newSingleThreadExecutor()) {
             final DuplicateCheckStore duplicateCheckStore = new DuplicateCheckStore(
                     mockDuplicateCheckDirs,
                     byteBufferFactory,
@@ -207,14 +207,14 @@ class TestDuplicateCheckStore {
             duplicateCheckStore.flush();
 
             duplicateCheckStore.close();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error", e);
         }
     }
 
     @Test
-    void testHashClash(@TempDir Path tempDir) {
-        LmdbEnvDir lmdbEnvDir = new LmdbEnvDir(tempDir, true);
+    void testHashClash(@TempDir final Path tempDir) {
+        final LmdbEnvDir lmdbEnvDir = new LmdbEnvDir(tempDir, true);
         Mockito.when(mockDuplicateCheckDirs.getDir(UUID))
                 .thenReturn(lmdbEnvDir);
 
@@ -222,7 +222,7 @@ class TestDuplicateCheckStore {
         // Every value gets the same hash, so 100% hash clashes
         final DuplicateCheckRowSerde serde = new HashClashDupCheckRowSerde(byteBufferFactory);
 
-        try (ExecutorService executorService = Executors.newSingleThreadExecutor()) {
+        try (final ExecutorService executorService = Executors.newSingleThreadExecutor()) {
             final DuplicateCheckStore duplicateCheckStore = new DuplicateCheckStore(
                     mockDuplicateCheckDirs,
                     byteBufferFactory,
@@ -267,8 +267,8 @@ class TestDuplicateCheckStore {
     }
 
     @Test
-    void testDeletesWithHashClash(@TempDir Path tempDir) {
-        LmdbEnvDir lmdbEnvDir = new LmdbEnvDir(tempDir, true);
+    void testDeletesWithHashClash(@TempDir final Path tempDir) {
+        final LmdbEnvDir lmdbEnvDir = new LmdbEnvDir(tempDir, true);
         Mockito.when(mockDuplicateCheckDirs.getDir(UUID))
                 .thenReturn(lmdbEnvDir);
 
@@ -276,7 +276,7 @@ class TestDuplicateCheckStore {
         // Every value gets the same hash, so 100% hash clashes
         final DuplicateCheckRowSerde serde = new HashClashDupCheckRowSerde(byteBufferFactory);
 
-        try (ExecutorService executorService = Executors.newSingleThreadExecutor()) {
+        try (final ExecutorService executorService = Executors.newSingleThreadExecutor()) {
             final DuplicateCheckStore duplicateCheckStore = new DuplicateCheckStore(
                     mockDuplicateCheckDirs,
                     byteBufferFactory,
@@ -329,7 +329,7 @@ class TestDuplicateCheckStore {
         return duplicateCheckStore.delete(request);
     }
 
-    private String makeValue(int len) {
+    private String makeValue(final int len) {
         return StringUtil.createRandomCode(secureRandom, len);
     }
 

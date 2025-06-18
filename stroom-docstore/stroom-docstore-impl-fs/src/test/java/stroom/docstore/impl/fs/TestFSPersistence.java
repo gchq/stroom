@@ -41,7 +41,7 @@ class TestFSPersistence {
         doc.setType(docRef.getType());
         doc.setUuid(docRef.getUuid());
         doc.setName(docRef.getName());
-        ObjectMapper mapper = JsonUtil.getNoIndentMapper();
+        final ObjectMapper mapper = JsonUtil.getNoIndentMapper();
         byte[] bytes = mapper.writeValueAsBytes(doc);
 
         // Create

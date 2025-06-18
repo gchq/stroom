@@ -44,7 +44,7 @@ public class RoundRobinIgnoreLeastFreePercentCapacitySelector extends AbstractSe
         for (int i = 0; i < list.size(); i++) {
             final OptionalDouble optFreePercent = list.get(i).getCapacityInfo().getFreeCapacityPercent();
             if (optFreePercent.isPresent()) {
-                double freePercent = optFreePercent.getAsDouble();
+                final double freePercent = optFreePercent.getAsDouble();
                 if (freePercent < lowestFreePercent) {
                     lowestFreePercent = freePercent;
                     lowestFreePercentIdxs = List.of(i);

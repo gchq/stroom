@@ -27,7 +27,7 @@ class TestReaderRecordDetector {
     @Test
     void read_recPerLine() throws IOException {
 
-        AtomicLong stepIdx = new AtomicLong();
+        final AtomicLong stepIdx = new AtomicLong();
         Mockito.doAnswer(
                         invocation -> {
                             final Long idx = invocation.getArgument(0, Long.class);
@@ -46,7 +46,8 @@ class TestReaderRecordDetector {
         final StringReader stringReader = new StringReader(jsonLines);
         final StringWriter stringWriter = new StringWriter();
 
-        ReaderRecordDetector readerRecordDetector = new ReaderRecordDetector(stringReader, mockSteppingController);
+        final ReaderRecordDetector readerRecordDetector = new ReaderRecordDetector(
+                stringReader, mockSteppingController);
 
         final char[] outputBuf = new char[10];
 
@@ -80,7 +81,7 @@ class TestReaderRecordDetector {
     @Test
     void read_prettyJson() throws IOException {
 
-        AtomicLong stepIdx = new AtomicLong();
+        final AtomicLong stepIdx = new AtomicLong();
         Mockito.doAnswer(
                         invocation -> {
                             final Long idx = invocation.getArgument(0, Long.class);
@@ -108,7 +109,8 @@ class TestReaderRecordDetector {
         final StringReader stringReader = new StringReader(prettyJson);
         final StringWriter stringWriter = new StringWriter();
 
-        ReaderRecordDetector readerRecordDetector = new ReaderRecordDetector(stringReader, mockSteppingController);
+        final ReaderRecordDetector readerRecordDetector = new ReaderRecordDetector(
+                stringReader, mockSteppingController);
 
         final char[] outputBuf = new char[10];
 

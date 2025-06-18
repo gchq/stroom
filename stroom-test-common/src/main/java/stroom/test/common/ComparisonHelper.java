@@ -170,7 +170,7 @@ public final class ComparisonHelper {
                         FileUtil.getCanonicalPath(expectedFile)));
             }
 
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(e);
         }
         return areFilesTheSame;

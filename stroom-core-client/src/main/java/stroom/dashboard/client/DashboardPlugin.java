@@ -134,15 +134,15 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
         }
     }
 
-    private Map<String, String> buildListParamMap(String queryString) {
+    private Map<String, String> buildListParamMap(final String queryString) {
         final Map<String, String> out = new HashMap<>();
         if (queryString != null && queryString.length() > 1) {
-            String qs = queryString.substring(1);
+            final String qs = queryString.substring(1);
 
-            for (String kvPair : qs.split("&")) {
-                String[] kv = kvPair.split("=", 2);
+            for (final String kvPair : qs.split("&")) {
+                final String[] kv = kvPair.split("=", 2);
 
-                String key = kv[0];
+                final String key = kv[0];
                 if (key.isEmpty()) {
                     continue;
                 }

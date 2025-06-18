@@ -358,7 +358,7 @@ public class DateExpressionParser {
             boolean found;
             do {
                 found = false;
-                char c = chars[index];
+                final char c = chars[index];
                 if (c == '+') {
                     sign = c;
                     index++;
@@ -396,16 +396,16 @@ public class DateExpressionParser {
         final String expression = WHITESPACE.matcher(string).replaceAll("");
 
         int start = 0;
-        char[] chars = expression.toCharArray();
+        final char[] chars = expression.toCharArray();
 
         TimeFunction lastFunction = null;
         while (start < chars.length) {
             // Get digits.
-            int numStart = start;
+            final int numStart = start;
             while (Character.isDigit(chars[start])) {
                 start++;
             }
-            long num = Long.parseLong(new String(chars, numStart, start - numStart));
+            final long num = Long.parseLong(new String(chars, numStart, start - numStart));
 
             // Get duration type.
             final char type = chars[start++];

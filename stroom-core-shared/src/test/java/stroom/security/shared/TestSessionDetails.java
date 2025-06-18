@@ -19,7 +19,7 @@ class TestSessionDetails {
 
     @Test
     void test() throws JsonProcessingException {
-        SessionDetails sessionDetails1 = new SessionDetails(
+        final SessionDetails sessionDetails1 = new SessionDetails(
                 UserRef
                         .builder()
                         .uuid(UUID.randomUUID().toString())
@@ -32,7 +32,7 @@ class TestSessionDetails {
                 "agent",
                 "node1");
 
-        ObjectMapper objectMapper = new ObjectMapper();
+        final ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
         final String json1 = objectMapper.writeValueAsString(sessionDetails1);
 

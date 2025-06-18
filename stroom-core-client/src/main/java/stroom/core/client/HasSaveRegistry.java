@@ -19,14 +19,14 @@ public class HasSaveRegistry implements HasSave {
 
     @Override
     public void save() {
-        for (HasSave hasSave : set) {
+        for (final HasSave hasSave : set) {
             hasSave.save();
         }
     }
 
     @Override
     public boolean isDirty() {
-        for (HasSave hasSave : set) {
+        for (final HasSave hasSave : set) {
             if (hasSave.isDirty()) {
                 return true;
             }

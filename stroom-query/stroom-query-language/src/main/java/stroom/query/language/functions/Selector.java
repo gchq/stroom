@@ -32,7 +32,7 @@ abstract class Selector extends AbstractSingleChildGenerator {
         return val;
     }
 
-    Val select(Generator childGenerator, ChildData childData) {
+    Val select(final Generator childGenerator, final ChildData childData) {
         return null;
     }
 }

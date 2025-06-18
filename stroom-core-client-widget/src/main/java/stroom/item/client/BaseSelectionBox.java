@@ -39,7 +39,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
             registerHandler(svgIconBox.addClickHandler(event -> showPopup()));
             registerHandler(textBox.addClickHandler(event -> onTextBoxClick()));
             registerHandler(textBox.addKeyDownHandler(event -> {
-                int keyCode = event.getNativeKeyCode();
+                final int keyCode = event.getNativeKeyCode();
                 if (KeyCodes.KEY_ENTER == keyCode) {
                     showPopup();
                 }

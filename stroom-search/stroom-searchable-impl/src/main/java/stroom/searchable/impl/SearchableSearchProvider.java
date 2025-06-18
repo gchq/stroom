@@ -274,7 +274,7 @@ class SearchableSearchProvider implements SearchProvider {
         return 5000;
     }
 
-    private Sizes extractValues(String value) {
+    private Sizes extractValues(final String value) {
         if (value != null) {
             try {
                 return Sizes.create(Arrays.stream(value.split(","))

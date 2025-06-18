@@ -191,7 +191,7 @@ public class MetaProperties {
 
         public MetaProperties build() {
             // When were we created
-            long timeMs = createMs != null
+            final long timeMs = createMs != null
                     ? createMs
                     : System.currentTimeMillis();
 

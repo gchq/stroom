@@ -332,12 +332,12 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
     @Test
     void dictionaryTest2() {
         final DocRef docRef1 = dictionaryStore.createDocument("users");
-        DictionaryDoc dic1 = dictionaryStore.readDocument(docRef1);
+        final DictionaryDoc dic1 = dictionaryStore.readDocument(docRef1);
         dic1.setData("user1\nuser2\nuser5");
         dictionaryStore.writeDocument(dic1);
 
         final DocRef docRef2 = dictionaryStore.createDocument("command");
-        DictionaryDoc dic2 = dictionaryStore.readDocument(docRef2);
+        final DictionaryDoc dic2 = dictionaryStore.readDocument(docRef2);
         dic2.setData("msg");
         dictionaryStore.writeDocument(dic2);
 
@@ -357,12 +357,12 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
     @Test
     void dictionaryTest3() {
         final DocRef docRef1 = dictionaryStore.createDocument("users");
-        DictionaryDoc dic1 = dictionaryStore.readDocument(docRef1);
+        final DictionaryDoc dic1 = dictionaryStore.readDocument(docRef1);
         dic1.setData("user1\nuser2\nuser5");
         dictionaryStore.writeDocument(dic1);
 
         final DocRef docRef2 = dictionaryStore.createDocument("command");
-        DictionaryDoc dic2 = dictionaryStore.readDocument(docRef2);
+        final DictionaryDoc dic2 = dictionaryStore.readDocument(docRef2);
         dic2.setData("msg foo bar");
         dictionaryStore.writeDocument(dic2);
 
@@ -405,7 +405,7 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
                                  final boolean extractValues) {
 
         // code to test the results when they come back
-        Consumer<Map<String, List<Row>>> resultMapConsumer = resultMap -> {
+        final Consumer<Map<String, List<Row>>> resultMapConsumer = resultMap -> {
             for (final List<Row> values : resultMap.values()) {
                 if (expectResultCount == 0) {
                     assertThat(values.size()).isEqualTo(0);

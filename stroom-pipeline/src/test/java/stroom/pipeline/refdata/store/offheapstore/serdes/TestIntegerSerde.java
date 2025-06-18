@@ -36,25 +36,25 @@ class TestIntegerSerde extends AbstractSerdeTest<Integer, IntegerSerde> {
 
     @Test
     void testIncrement() {
-        int input = 10;
+        final int input = 10;
 
-        ByteBuffer inputBuf = serialize(input);
+        final ByteBuffer inputBuf = serialize(input);
 
         getSerde().increment(inputBuf);
 
-        Integer output = deserialize(inputBuf);
+        final Integer output = deserialize(inputBuf);
 
         assertThat(output).isEqualTo(input + 1);
     }
 
     @Test
     void testDecrement() {
-        int input = 10;
-        ByteBuffer inputBuf = serialize(input);
+        final int input = 10;
+        final ByteBuffer inputBuf = serialize(input);
 
         getSerde().decrement(inputBuf);
 
-        Integer output = deserialize(inputBuf);
+        final Integer output = deserialize(inputBuf);
 
         assertThat(output).isEqualTo(input - 1);
     }

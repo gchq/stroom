@@ -67,7 +67,7 @@ class TestValueStoreMetaDb extends AbstractStoreDbTest {
                         keyBuffer,
                         stagingValue);
 
-                long refCount = valueStoreMetaDb.getReferenceCount(writeTxn, keyBuffer)
+                final long refCount = valueStoreMetaDb.getReferenceCount(writeTxn, keyBuffer)
                         .orElseThrow();
 
                 assertThat(refCount)
@@ -157,7 +157,7 @@ class TestValueStoreMetaDb extends AbstractStoreDbTest {
                 assertThat(refCount)
                         .isEqualTo(initialRefCount);
 
-                AtomicBoolean didDelete = new AtomicBoolean(false);
+                final AtomicBoolean didDelete = new AtomicBoolean(false);
 
                 // Increment to max value
                 refCount = decrementAndGetRefCount(writeTxn, keyBuffer, (txn, keyBuffer1) -> {
@@ -211,7 +211,7 @@ class TestValueStoreMetaDb extends AbstractStoreDbTest {
                 assertThat(refCount)
                         .isEqualTo(initialRefCount);
 
-                AtomicBoolean didDelete = new AtomicBoolean(false);
+                final AtomicBoolean didDelete = new AtomicBoolean(false);
 
                 // Increment to max value
                 refCount = decrementAndGetRefCount(writeTxn, keyBuffer, (txn, keyBuffer1) -> {

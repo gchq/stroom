@@ -117,7 +117,7 @@ public class StatisticsCustomMaskListPresenter extends DocumentEditPresenter<Pag
         autoGenerateButton.setEnabled(!isReadOnly());
 
         if (maskList != null && maskList.size() > 0) {
-            MaskHolder selectedElement = selectionModel.getSelected();
+            final MaskHolder selectedElement = selectionModel.getSelected();
             removeButton.setEnabled(!isReadOnly() && selectedElement != null);
 
         } else {

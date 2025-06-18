@@ -34,7 +34,7 @@ public class StroomZipFile implements AutoCloseable {
             // Skip directories.
             if (!entry.isDirectory()) {
                 LOGGER.debug("File entry: {}", entry);
-                String fileName = entry.getName();
+                final String fileName = entry.getName();
                 stroomZipEntries.addFile(fileName);
             }
         }

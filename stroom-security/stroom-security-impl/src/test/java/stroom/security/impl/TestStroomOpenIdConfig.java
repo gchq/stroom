@@ -82,7 +82,7 @@ class TestStroomOpenIdConfig extends AbstractValidatorTest {
 
             Assertions.assertThat(abstractOpenIdConfig3)
                     .isEqualTo(stroomOpenIdConfig);
-        } catch (JsonProcessingException e) {
+        } catch (final JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }

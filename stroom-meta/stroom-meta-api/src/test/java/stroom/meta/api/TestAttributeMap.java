@@ -29,7 +29,7 @@ class TestAttributeMap {
 
     @Test
     void testSimple() {
-        AttributeMap attributeMap = new AttributeMap();
+        final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put("person", "person1");
 
         assertThat(attributeMap.get("person")).isEqualTo("person1");
@@ -44,7 +44,7 @@ class TestAttributeMap {
 
         assertThat(attributeMap.keySet()).isEqualTo(new HashSet<>(Collections.singletonList("PERSON")));
 
-        AttributeMap attributeMap2 = new AttributeMap();
+        final AttributeMap attributeMap2 = new AttributeMap();
         attributeMap2.put("persOn", "person3");
         attributeMap2.put("persOn1", "person4");
 
@@ -55,7 +55,7 @@ class TestAttributeMap {
 
     @Test
     void testRemove() {
-        AttributeMap attributeMap = new AttributeMap();
+        final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put("a", "a1");
         attributeMap.put("B", "b1");
 
@@ -66,7 +66,7 @@ class TestAttributeMap {
 
     @Test
     void testReadWrite() throws IOException {
-        AttributeMap attributeMap = new AttributeMap();
+        final AttributeMap attributeMap = new AttributeMap();
         AttributeMapUtil.read("b:2\na:1\nz\n".getBytes(AttributeMapUtil.DEFAULT_CHARSET), attributeMap);
         assertThat(attributeMap.get("a")).isEqualTo("1");
         assertThat(attributeMap.get("b")).isEqualTo("2");
@@ -78,7 +78,7 @@ class TestAttributeMap {
 
     @Test
     void testtoString() throws IOException {
-        AttributeMap attributeMap = new AttributeMap();
+        final AttributeMap attributeMap = new AttributeMap();
         AttributeMapUtil.read("b:2\na:1\nz\n".getBytes(AttributeMapUtil.DEFAULT_CHARSET), attributeMap);
 
         // AttributeMap's are used in log output and so check that they do output
@@ -89,7 +89,7 @@ class TestAttributeMap {
 
     @Test
     void testTrim() {
-        AttributeMap attributeMap = AttributeMap.builder()
+        final AttributeMap attributeMap = AttributeMap.builder()
                 .put(" person ", "person1")
                 .put("PERSON", "person2")
                 .put("FOOBAR", "1")
@@ -103,7 +103,7 @@ class TestAttributeMap {
 
     @Test
     void testWriteMultiLineValues() throws IOException {
-        AttributeMap attributeMap = AttributeMap.builder()
+        final AttributeMap attributeMap = AttributeMap.builder()
                 .put("foo", "123")
                 .put("files", "/some/path/file1,/some/path/file2,/some/path/file3")
                 .put("bar", "456")
@@ -120,7 +120,7 @@ class TestAttributeMap {
 
     @Test
     void testPutCollection() throws IOException {
-        AttributeMap attributeMap = AttributeMap.builder()
+        final AttributeMap attributeMap = AttributeMap.builder()
                 .put("foo", "123")
                 .putCollection("files", List.of(
                         "/some/path/file1",
@@ -140,7 +140,7 @@ class TestAttributeMap {
 
     @Test
     void testGetAsCollection() throws IOException {
-        AttributeMap attributeMap = AttributeMap.builder()
+        final AttributeMap attributeMap = AttributeMap.builder()
                 .put("foo", "123")
                 .putCollection("files", List.of(
                         "/some/path/file1",
@@ -259,7 +259,7 @@ class TestAttributeMap {
                 .withInputTypes(AttributeMap.class, String.class)
                 .withOutputType(String.class)
                 .withTestFunction(testCase -> {
-                    var attrMap = testCase.getInput()._1;
+                    final var attrMap = testCase.getInput()._1;
                     return attrMap.get(testCase.getInput()._2);
                 })
                 .withSimpleEqualityAssertion()
@@ -287,7 +287,7 @@ class TestAttributeMap {
                 .withInputTypes(AttributeMap.class, String.class)
                 .withOutputType(boolean.class)
                 .withTestFunction(testCase -> {
-                    var attrMap = testCase.getInput()._1;
+                    final var attrMap = testCase.getInput()._1;
                     return attrMap.containsKey(testCase.getInput()._2);
                 })
                 .withSimpleEqualityAssertion()
@@ -317,7 +317,7 @@ class TestAttributeMap {
                 .withInputTypes(AttributeMap.class, String.class)
                 .withOutputType(boolean.class)
                 .withTestFunction(testCase -> {
-                    var attrMap = testCase.getInput()._1;
+                    final var attrMap = testCase.getInput()._1;
                     return attrMap.containsValue(testCase.getInput()._2);
                 })
                 .withSimpleEqualityAssertion()

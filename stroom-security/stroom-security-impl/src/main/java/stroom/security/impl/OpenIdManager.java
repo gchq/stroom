@@ -122,7 +122,7 @@ class OpenIdManager {
                 LOGGER.debug("No userIdentity so redirect to error page");
                 redirectUri = createErrorUri("Authentication failed");
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.debug("backChannelOIDC() - {}", e.getMessage(), e);
             redirectUri = createErrorUri(e.getMessage());
         }

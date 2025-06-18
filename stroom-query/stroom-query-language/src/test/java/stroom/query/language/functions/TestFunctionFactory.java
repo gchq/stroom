@@ -35,7 +35,7 @@ class TestFunctionFactory {
         LOGGER.info("Completed in {}", Duration.between(start, Instant.now()));
 
         // Scan the class path to find all the classes with @FunctionDef
-        try (ScanResult result = new ClassGraph()
+        try (final ScanResult result = new ClassGraph()
                 .acceptPackages(Function.class.getPackageName())
                 .enableClassInfo()
                 .ignoreClassVisibility()

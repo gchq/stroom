@@ -124,7 +124,7 @@ public class GenerateSnippetsDoc implements DocumentationGenerator {
     private final ObjectMapper objectMapper;
 
     @GeneratesDocumentation
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         new GenerateSnippetsDoc().generateDocs();
     }
 
@@ -229,7 +229,7 @@ public class GenerateSnippetsDoc implements DocumentationGenerator {
         final String jsStr;
         try {
             jsStr = Files.readString(snippetFile);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message("Error reading snippet file {}: {}",
                     snippetFile, LogUtil.exceptionMessage(e)), e);
         }
@@ -294,7 +294,7 @@ public class GenerateSnippetsDoc implements DocumentationGenerator {
 
             return snippets;
 
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message("Error parsing snippet file {} as javascript: {}",
                     snippetFile, LogUtil.exceptionMessage(e)), e);
         }

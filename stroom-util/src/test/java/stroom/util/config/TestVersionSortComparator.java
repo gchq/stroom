@@ -61,8 +61,8 @@ class TestVersionSortComparator {
                 Arrays.asList("app-3.0.0", "app-3.0.9", "app-3.0.77"));
     }
 
-    public void doTest(List<String> testCase, List<String> expectedList) {
-        List<String> sortList = new ArrayList<>();
+    public void doTest(final List<String> testCase, final List<String> expectedList) {
+        final List<String> sortList = new ArrayList<>();
         sortList.addAll(testCase);
         Collections.sort(sortList, new VersionSortComparator());
 

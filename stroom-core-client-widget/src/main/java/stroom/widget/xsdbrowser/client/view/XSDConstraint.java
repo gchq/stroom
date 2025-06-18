@@ -37,7 +37,7 @@ public class XSDConstraint {
         }
     }
 
-    private XSDNode getRestrictionNode(XSDNode node) {
+    private XSDNode getRestrictionNode(final XSDNode node) {
         if (node != null) {
             for (final XSDNode child : node.getChildNodes(new XSDTypeFilter(XSDType.RESTRICTION), true)) {
                 return child;

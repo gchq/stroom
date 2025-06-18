@@ -255,7 +255,7 @@ public class AccountsListPresenter
     }
 
     private Function<Account, CommandLink> buildOpenUserCommandLink() {
-        return (Account account) -> {
+        return (final Account account) -> {
             if (account != null) {
                 final String userId = account.getUserId();
 

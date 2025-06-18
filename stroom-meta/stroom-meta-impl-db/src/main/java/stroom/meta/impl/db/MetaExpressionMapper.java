@@ -36,11 +36,11 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
     }
 
     public void map(final QueryField dataSourceField) {
-        Optional<Integer> idOptional = metaKeyDao.getIdForName(dataSourceField.getFldName());
+        final Optional<Integer> idOptional = metaKeyDao.getIdForName(dataSourceField.getFldName());
 
         if (idOptional.isPresent()) {
-            int id = idOptional.get();
-            Field<Long> valueField = createValueField(id);
+            final int id = idOptional.get();
+            final Field<Long> valueField = createValueField(id);
 
             final TermHandler<Long> termHandler = termHandlerFactory.create(
                     dataSourceField,
@@ -81,7 +81,7 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
             final Field<Long> metaIdField,
             final Set<Integer> usedValKeys) {
 
-        for (Integer id : usedValKeys) {
+        for (final Integer id : usedValKeys) {
             final MetaVal metaVal = getAliasedMetaValTable(id);
 
             query = query.leftOuterJoin(metaVal)
@@ -103,7 +103,7 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
             final Field<Long> metaIdField,
             final Set<Integer> usedValKeys) {
 
-        for (Integer id : usedValKeys) {
+        for (final Integer id : usedValKeys) {
             final MetaVal metaVal = getAliasedMetaValTable(id);
 
             fromPart = fromPart.leftOuterJoin(metaVal)

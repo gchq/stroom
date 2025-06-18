@@ -15,7 +15,7 @@ public class IsSupersetOfValidatorImpl implements IsSupersetOfValidator {
     private Set<String> requiredValues;
 
     @Override
-    public void initialize(IsSupersetOf constraintAnnotation) {
+    public void initialize(final IsSupersetOf constraintAnnotation) {
         requiredValues = new HashSet<>(Arrays.asList(constraintAnnotation.requiredValues()));
     }
 

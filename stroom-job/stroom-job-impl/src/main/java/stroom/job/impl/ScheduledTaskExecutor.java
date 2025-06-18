@@ -240,7 +240,7 @@ class ScheduledTaskExecutor {
             try {
                 boolean isJobEnabledOnNode = true;
                 SimpleScheduleExec scheduler = null;
-                JobNodeTracker jobNodeTracker;
+                final JobNodeTracker jobNodeTracker;
 
                 final JobNodeTrackers trackers = jobNodeTrackerCache.getTrackers();
                 jobNodeTracker = trackers.getTrackerForJobName(scheduledJob.getName());

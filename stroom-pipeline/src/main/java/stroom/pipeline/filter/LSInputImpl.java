@@ -44,7 +44,7 @@ public class LSInputImpl implements LSInput {
     }
 
     @Override
-    public void setSystemId(String systemId) {
+    public void setSystemId(final String systemId) {
     }
 
     @Override
@@ -53,7 +53,7 @@ public class LSInputImpl implements LSInput {
     }
 
     @Override
-    public void setStringData(String stringData) {
+    public void setStringData(final String stringData) {
     }
 
     @Override
@@ -62,7 +62,7 @@ public class LSInputImpl implements LSInput {
     }
 
     @Override
-    public void setPublicId(String publicId) {
+    public void setPublicId(final String publicId) {
     }
 
     @Override
@@ -71,7 +71,7 @@ public class LSInputImpl implements LSInput {
     }
 
     @Override
-    public void setEncoding(String encoding) {
+    public void setEncoding(final String encoding) {
     }
 
     @Override
@@ -80,7 +80,7 @@ public class LSInputImpl implements LSInput {
     }
 
     @Override
-    public void setCharacterStream(Reader characterStream) {
+    public void setCharacterStream(final Reader characterStream) {
     }
 
     @Override
@@ -89,7 +89,7 @@ public class LSInputImpl implements LSInput {
     }
 
     @Override
-    public void setCertifiedText(boolean certifiedText) {
+    public void setCertifiedText(final boolean certifiedText) {
     }
 
     @Override
@@ -98,7 +98,7 @@ public class LSInputImpl implements LSInput {
     }
 
     @Override
-    public void setByteStream(InputStream byteStream) {
+    public void setByteStream(final InputStream byteStream) {
     }
 
     @Override
@@ -107,6 +107,6 @@ public class LSInputImpl implements LSInput {
     }
 
     @Override
-    public void setBaseURI(String baseURI) {
+    public void setBaseURI(final String baseURI) {
     }
 }

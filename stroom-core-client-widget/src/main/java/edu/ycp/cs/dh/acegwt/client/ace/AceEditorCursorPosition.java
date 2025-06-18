@@ -35,7 +35,7 @@ public class AceEditorCursorPosition {
      * @param row    row (0 for first row)
      * @param column column (0 for first column)
      */
-    public AceEditorCursorPosition(int row, int column) {
+    public AceEditorCursorPosition(final int row, final int column) {
         this.row = row;
         this.column = column;
     }
@@ -48,7 +48,7 @@ public class AceEditorCursorPosition {
      * @param column the column
      * @return the {@link AceEditorCursorPosition}
      */
-    public static AceEditorCursorPosition create(int row, int column) {
+    public static AceEditorCursorPosition create(final int row, final int column) {
         return new AceEditorCursorPosition(row, column);
     }
 

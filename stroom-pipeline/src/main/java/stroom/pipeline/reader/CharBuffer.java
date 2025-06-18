@@ -70,7 +70,7 @@ class CharBuffer implements CharSequence {
         return new CharBuffer(buffer, offset + off, len);
     }
 
-    public void move(int increment) {
+    public void move(final int increment) {
         offset += increment;
         length -= increment;
     }
@@ -79,8 +79,8 @@ class CharBuffer implements CharSequence {
     public boolean equals(final Object other) {
         if (other instanceof CharBuffer) {
             final CharBuffer buffer = (CharBuffer) other;
-            int len1 = length;
-            int len2 = buffer.length;
+            final int len1 = length;
+            final int len2 = buffer.length;
 
             if (len1 != len2) {
                 return false;

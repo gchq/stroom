@@ -25,7 +25,7 @@ class TestStroomFileNameUtil {
 
     @Test
     void testConstructFilename() {
-        AttributeMap attributeMap = new AttributeMap();
+        final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put("feed", "myFeed");
         attributeMap.put("var1", "myVar1");
 

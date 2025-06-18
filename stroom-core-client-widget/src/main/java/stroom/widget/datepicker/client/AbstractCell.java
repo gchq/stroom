@@ -17,7 +17,7 @@ public abstract class AbstractCell extends Widget {
         setElement(cellOuter);
     }
 
-    protected void setText(String value) {
+    protected void setText(final String value) {
         cellInner.setInnerText(value);
     }
 }

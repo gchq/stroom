@@ -61,13 +61,13 @@ public class LmdbPayloadCreator {
                     while (!in.end()) {
                         final int rowKeyLength = in.readInt();
                         final byte[] key = in.readBytes(rowKeyLength);
-                        ByteBuffer keyBuffer = bufferFactory.acquire(key.length);
+                        final ByteBuffer keyBuffer = bufferFactory.acquire(key.length);
                         keyBuffer.put(key, 0, key.length);
                         keyBuffer.flip();
 
                         final int valueLength = in.readInt();
                         final byte[] value = in.readBytes(valueLength);
-                        ByteBuffer valueBuffer = bufferFactory.acquire(value.length);
+                        final ByteBuffer valueBuffer = bufferFactory.acquire(value.length);
                         valueBuffer.put(value, 0, value.length);
                         valueBuffer.flip();
 

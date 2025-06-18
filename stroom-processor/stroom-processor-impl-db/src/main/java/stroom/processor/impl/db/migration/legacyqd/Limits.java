@@ -61,7 +61,7 @@ public class Limits {
         return streamCount;
     }
 
-    public void setStreamCount(Long streamCount) {
+    public void setStreamCount(final Long streamCount) {
         this.streamCount = streamCount;
     }
 
@@ -69,7 +69,7 @@ public class Limits {
         return eventCount;
     }
 
-    public void setEventCount(Long eventCount) {
+    public void setEventCount(final Long eventCount) {
         this.eventCount = eventCount;
     }
 
@@ -77,7 +77,7 @@ public class Limits {
         return durationMs;
     }
 
-    public void setDurationMs(Long durationMs) {
+    public void setDurationMs(final Long durationMs) {
         this.durationMs = durationMs;
     }
 }

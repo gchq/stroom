@@ -73,7 +73,7 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
 
     @Override
     public IndexVolumeGroup getOrCreate(final IndexVolumeGroup indexVolumeGroup) {
-        Optional<Integer> optional = JooqUtil.onDuplicateKeyIgnore(() ->
+        final Optional<Integer> optional = JooqUtil.onDuplicateKeyIgnore(() ->
                 JooqUtil.contextResult(indexDbConnProvider, context -> context
                         .insertInto(INDEX_VOLUME_GROUP,
                                 INDEX_VOLUME_GROUP.VERSION,
@@ -99,7 +99,7 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
     }
 
     @Override
-    public IndexVolumeGroup update(IndexVolumeGroup indexVolumeGroup) {
+    public IndexVolumeGroup update(final IndexVolumeGroup indexVolumeGroup) {
         // Get the current group name.
         String currentGroupName = null;
         if (indexVolumeGroup.getId() != null) {
@@ -110,7 +110,7 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
         final IndexVolumeGroup saved;
         try {
             saved = genericDao.update(indexVolumeGroup);
-        } catch (DataAccessException e) {
+        } catch (final DataAccessException e) {
             if (e.getCause() != null
                 && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
                 final var sqlEx = (SQLIntegrityConstraintViolationException) e.getCause();
@@ -197,7 +197,7 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
     }
 
     @Override
-    public void delete(int id) {
+    public void delete(final int id) {
         genericDao.delete(id);
     }
 }

@@ -103,7 +103,7 @@ public final class Column implements HasDisplayValue {
                   @JsonProperty("visible") final Boolean visible,
                   @JsonProperty("special") final Boolean special,
                   @JsonProperty("columnFilter") final ColumnFilter columnFilter,
-                  @JsonProperty("columnValueSelection") ColumnValueSelection columnValueSelection) {
+                  @JsonProperty("columnValueSelection") final ColumnValueSelection columnValueSelection) {
         this.id = id;
         this.name = name;
         this.expression = expression;

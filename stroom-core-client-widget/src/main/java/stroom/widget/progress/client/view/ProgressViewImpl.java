@@ -103,7 +103,7 @@ public class ProgressViewImpl extends ViewImpl implements ProgressView {
 
     @Override
     public void setClickHandler(final Consumer<Double> percentageConsumer) {
-        Style style = progressBarOuter.getElement().getStyle();
+        final Style style = progressBarOuter.getElement().getStyle();
         if (percentageConsumer == null) {
             style.setCursor(Cursor.DEFAULT);
         } else {

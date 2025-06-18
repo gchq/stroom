@@ -79,7 +79,7 @@ class RoundTime extends RoundDate {
 
                 return ValLong.create(roundedMillis + offsetMillis);
 
-            } catch (IllegalArgumentException e) {
+            } catch (final IllegalArgumentException e) {
                 return ValErr.create(e.getMessage());
             }
         }
@@ -95,7 +95,7 @@ class RoundTime extends RoundDate {
             }
             try {
                 return Duration.parse(param.toString());
-            } catch (DateTimeParseException e) {
+            } catch (final DateTimeParseException e) {
                 throw new IllegalArgumentException("Invalid " + paramName + " format: " + param.toString());
             }
         }

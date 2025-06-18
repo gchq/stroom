@@ -63,7 +63,7 @@ class CeilingYear extends RoundDate {
 
         @Override
         protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            ZonedDateTime zoned = dateTime.atZone(ZoneOffset.UTC);
+            final ZonedDateTime zoned = dateTime.atZone(ZoneOffset.UTC);
             ZonedDateTime startOfYear = zoned
                     .withMonth(1)
                     .withDayOfMonth(1)

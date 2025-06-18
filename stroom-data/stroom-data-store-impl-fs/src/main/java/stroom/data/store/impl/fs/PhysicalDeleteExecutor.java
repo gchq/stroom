@@ -500,7 +500,7 @@ public class PhysicalDeleteExecutor {
                         LOGGER.debug("{} - Using deleteThreshold: {} for deletePurgeAge: {}",
                                 TASK_NAME, deleteThreshold, purgeAge);
                         return deleteThreshold;
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         throw new RuntimeException(LogUtil.message("Invalid value {} for property '{}'",
                                 deletePurgeAge,
                                 config.getFullPathStr(DataStoreServiceConfig.PROP_NAME_DELETE_PURGE_AGE)), e);

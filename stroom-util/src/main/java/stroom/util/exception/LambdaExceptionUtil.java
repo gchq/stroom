@@ -48,12 +48,12 @@ public class LambdaExceptionUtil {
      * or
      * .forEach(rethrowConsumer(ClassNameUtil::println));
      */
-    public static <E extends Exception> Runnable rethrowRunnable(RunnableWithExceptions<E> runnable)
+    public static <E extends Exception> Runnable rethrowRunnable(final RunnableWithExceptions<E> runnable)
             throws E {
         return () -> {
             try {
                 runnable.run();
-            } catch (Exception exception) {
+            } catch (final Exception exception) {
                 throwAsUnchecked(exception);
             }
         };
@@ -65,24 +65,24 @@ public class LambdaExceptionUtil {
      * or
      * .forEach(rethrowConsumer(ClassNameUtil::println));
      */
-    public static <T, E extends Exception> Consumer<T> rethrowConsumer(ConsumerWithExceptions<T, E> consumer)
+    public static <T, E extends Exception> Consumer<T> rethrowConsumer(final ConsumerWithExceptions<T, E> consumer)
             throws E {
         return t -> {
             try {
                 consumer.accept(t);
-            } catch (Exception exception) {
+            } catch (final Exception exception) {
                 throwAsUnchecked(exception);
             }
         };
     }
 
     public static <T, U, E extends Exception> BiConsumer<T, U> rethrowBiConsumer(
-            BiConsumerWithExceptions<T, U, E> biConsumer)
+            final BiConsumerWithExceptions<T, U, E> biConsumer)
             throws E {
         return (t, u) -> {
             try {
                 biConsumer.accept(t, u);
-            } catch (Exception exception) {
+            } catch (final Exception exception) {
                 throwAsUnchecked(exception);
             }
         };
@@ -95,12 +95,12 @@ public class LambdaExceptionUtil {
      * .map(rethrowFunction(Class::forName))
      */
     public static <T, R, E extends Exception> Function<T, R> rethrowFunction(
-            FunctionWithExceptions<T, R, E> function)
+            final FunctionWithExceptions<T, R, E> function)
             throws E {
         return t -> {
             try {
                 return function.apply(t);
-            } catch (Exception exception) {
+            } catch (final Exception exception) {
                 throwAsUnchecked(exception);
                 return null;
             }
@@ -111,12 +111,12 @@ public class LambdaExceptionUtil {
      * rethrowSupplier(() -> new StringJoiner(new String(new byte[]{77, 97, 114, 107}, "UTF-8"))),
      */
     public static <T, E extends Exception> Supplier<T> rethrowSupplier(
-            SupplierWithExceptions<T, E> function)
+            final SupplierWithExceptions<T, E> function)
             throws E {
         return () -> {
             try {
                 return function.get();
-            } catch (Exception exception) {
+            } catch (final Exception exception) {
                 throwAsUnchecked(exception);
                 return null;
             }
@@ -126,10 +126,10 @@ public class LambdaExceptionUtil {
     /**
      * uncheck(() -> Class.forName("xxx"));
      */
-    public static void uncheck(RunnableWithExceptions t) {
+    public static void uncheck(final RunnableWithExceptions t) {
         try {
             t.run();
-        } catch (Exception exception) {
+        } catch (final Exception exception) {
             throwAsUnchecked(exception);
         }
     }
@@ -137,10 +137,10 @@ public class LambdaExceptionUtil {
     /**
      * uncheck(() -> Class.forName("xxx"));
      */
-    public static <R, E extends Exception> R uncheck(SupplierWithExceptions<R, E> supplier) {
+    public static <R, E extends Exception> R uncheck(final SupplierWithExceptions<R, E> supplier) {
         try {
             return supplier.get();
-        } catch (Exception exception) {
+        } catch (final Exception exception) {
             throwAsUnchecked(exception);
             return null;
         }
@@ -149,17 +149,17 @@ public class LambdaExceptionUtil {
     /**
      * uncheck(Class::forName, "xxx");
      */
-    public static <T, R, E extends Exception> R uncheck(FunctionWithExceptions<T, R, E> function, T t) {
+    public static <T, R, E extends Exception> R uncheck(final FunctionWithExceptions<T, R, E> function, final T t) {
         try {
             return function.apply(t);
-        } catch (Exception exception) {
+        } catch (final Exception exception) {
             throwAsUnchecked(exception);
             return null;
         }
     }
 
     @SuppressWarnings("unchecked")
-    private static <E extends Throwable> void throwAsUnchecked(Exception exception) throws E {
+    private static <E extends Throwable> void throwAsUnchecked(final Exception exception) throws E {
         throw (E) exception;
     }
 

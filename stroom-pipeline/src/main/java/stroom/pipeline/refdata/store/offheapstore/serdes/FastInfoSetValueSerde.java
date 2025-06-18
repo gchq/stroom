@@ -41,7 +41,7 @@ public class FastInfoSetValueSerde implements RefDataValueSerde {
             // copy our buffer into the other buffer, flipping the dest buffer in the process
             ByteBufferUtils.copy(((FastInfosetValue) refDataValue).getByteBuffer(), byteBuffer);
 
-        } catch (ClassCastException e) {
+        } catch (final ClassCastException e) {
             throw new RuntimeException(LogUtil.message("Unable to cast {} to {}",
                     refDataValue.getClass().getCanonicalName(),
                     FastInfosetValue.class.getCanonicalName()),
@@ -57,7 +57,7 @@ public class FastInfoSetValueSerde implements RefDataValueSerde {
             // the FastInfosetValue just wraps a ByteBuffer so just return that, no
             // serialisation to do.
             return ((FastInfosetValue) refDataValue).getByteBuffer();
-        } catch (ClassCastException e) {
+        } catch (final ClassCastException e) {
             throw new RuntimeException(LogUtil.message("Unable to cast {} to {}",
                     refDataValue.getClass().getCanonicalName(),
                     FastInfosetValue.class.getCanonicalName()),
@@ -72,7 +72,7 @@ public class FastInfoSetValueSerde implements RefDataValueSerde {
             // the FastInfosetValue just wraps a ByteBuffer so just return that, no
             // serialisation to do.
             return ((FastInfosetValue) refDataValue).getByteBuffer();
-        } catch (ClassCastException e) {
+        } catch (final ClassCastException e) {
             throw new RuntimeException(LogUtil.message("Unable to cast {} to {}",
                     refDataValue.getClass().getCanonicalName(),
                     FastInfosetValue.class.getCanonicalName()),

@@ -363,7 +363,7 @@ public class XMLStyler {
         // Find the start bracket.
         int start = -1;
         for (int i = pos; i < arr.length && start == -1; i++) {
-            char c = arr[i];
+            final char c = arr[i];
             if (c == '<') {
                 start = i;
             }
@@ -372,7 +372,7 @@ public class XMLStyler {
         // Find the element type.
         boolean inAttValue = false;
         for (int i = start; i < arr.length; i++) {
-            char c = arr[i];
+            final char c = arr[i];
 
             if (!isWhitespace(c)) {
                 sb.append(c);
@@ -425,7 +425,7 @@ public class XMLStyler {
     private char back(final int len) {
         int index = pos - len;
         while (index >= 0) {
-            char c = arr[index];
+            final char c = arr[index];
             if (isWhitespace(c)) {
                 index--;
             } else {
@@ -449,7 +449,7 @@ public class XMLStyler {
     private char forward(final int len) {
         int index = pos + len;
         while (index < arr.length) {
-            char c = arr[index];
+            final char c = arr[index];
             if (isWhitespace(c)) {
                 index++;
             } else {

@@ -10,10 +10,10 @@ class TestFieldMapper {
 
     @Test
     void testSimple() {
-        MyObject original = new MyObject();
+        final MyObject original = new MyObject();
         original.setString("Original");
 
-        MyObject copy = new MyObject();
+        final MyObject copy = new MyObject();
         copy.setString("Copy");
         FieldMapper.copy(original, copy);
 
@@ -61,10 +61,10 @@ class TestFieldMapper {
 
     @Test
     void testNullSource() {
-        MyObject original = new MyObject();
+        final MyObject original = new MyObject();
         original.setString(null);
 
-        MyObject copy = new MyObject();
+        final MyObject copy = new MyObject();
         copy.setString("copy");
         FieldMapper.copy(original, copy);
 
@@ -76,10 +76,10 @@ class TestFieldMapper {
 
     @Test
     void testNullSourceNoCopy() {
-        MyObject original = new MyObject();
+        final MyObject original = new MyObject();
         original.setString(null);
 
-        MyObject copy = new MyObject();
+        final MyObject copy = new MyObject();
         copy.setString("copy");
         FieldMapper.copyNonNulls(original, copy);
 
@@ -93,10 +93,10 @@ class TestFieldMapper {
 
     @Test
     void testNullDest() {
-        MyObject original = new MyObject();
+        final MyObject original = new MyObject();
         original.setString("NotNull");
 
-        MyObject copy = new MyObject();
+        final MyObject copy = new MyObject();
         copy.setString(null);
         FieldMapper.copy(original, copy);
 
@@ -118,7 +118,7 @@ class TestFieldMapper {
         final MyParent parent2 = new MyParent();
         parent2.setMyInt(99);
         parent2.setMyString("changed");
-        MyChild child3 = new MyChild();
+        final MyChild child3 = new MyChild();
         child3.setMyInt(999);
         child3.setMyString("changed child");
         parent2.setChild(child3);

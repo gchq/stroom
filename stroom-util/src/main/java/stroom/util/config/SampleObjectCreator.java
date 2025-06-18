@@ -161,7 +161,7 @@ public class SampleObjectCreator {
                 } else if (getter.getReturnType().isEnum()) {
                     final Object[] constants = getter.getReturnType().getEnumConstants();
                     if (constants != null && constants.length > 0) {
-                        int index = (int) Math.round(Math.random() * (constants.length - 1));
+                        final int index = (int) Math.round(Math.random() * (constants.length - 1));
                         return constants[index];
                     }
                 }
@@ -191,7 +191,7 @@ public class SampleObjectCreator {
         for (final Method method : methods) {
             if (method.getParameterCount() == 0) {
                 if (method.getName().startsWith("get") || method.getName().startsWith("is")) {
-                    JsonProperty jsonProperty = method.getAnnotation(JsonProperty.class);
+                    final JsonProperty jsonProperty = method.getAnnotation(JsonProperty.class);
                     if (jsonProperty != null) {
                         if (name.equals(jsonProperty.value())) {
 //                            if (!type.isAssignableFrom(method.getReturnType())) {
@@ -245,7 +245,7 @@ public class SampleObjectCreator {
     private static Field findAnnotatedField(final Class<?> clazz, final Class<?> type, final String name) {
         final Field[] fields = clazz.getDeclaredFields();
         for (final Field field : fields) {
-            JsonProperty jsonProperty = field.getAnnotation(JsonProperty.class);
+            final JsonProperty jsonProperty = field.getAnnotation(JsonProperty.class);
             if (jsonProperty != null) {
                 if (name.equals(jsonProperty.value())) {
 //                    if (!type.isAssignableFrom(field.getType())) {

@@ -27,13 +27,13 @@ class TestPropertyMap {
 
     @Test
     void testSimple() {
-        PropertyMap map = new PropertyMap();
+        final PropertyMap map = new PropertyMap();
         map.put("key", "value");
         map.put("k=y", "va ue");
 
-        String line = map.toArgLine();
+        final String line = map.toArgLine();
 
-        PropertyMap test = new PropertyMap();
+        final PropertyMap test = new PropertyMap();
         test.loadArgLine(line);
 
         assertThat(test).isEqualTo(map);
@@ -42,7 +42,7 @@ class TestPropertyMap {
 
     @Test
     void testLoadInvalid() {
-        PropertyMap map = new PropertyMap();
+        final PropertyMap map = new PropertyMap();
         map.loadArgLine("");
 
         assertThat(map.size()).isEqualTo(0);

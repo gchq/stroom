@@ -33,7 +33,7 @@ public final class StreamFactory {
         // Private constructor.
     }
 
-    public static Long getReferenceEffectiveTime(final Map<String, String> argsMap, boolean doDefault) {
+    public static Long getReferenceEffectiveTime(final Map<String, String> argsMap, final boolean doDefault) {
         Long effectiveMs = getSafeMs(argsMap, StandardHeaderArguments.EFFECTIVE_TIME);
         if (effectiveMs != null) {
             return effectiveMs;
@@ -64,7 +64,7 @@ public final class StreamFactory {
      * Helper to avoid null pointers
      */
     private static Long getSafeMs(final Map<String, String> argsMap, final String key) {
-        String value = argsMap.get(key);
+        final String value = argsMap.get(key);
         if (value != null) {
             try {
                 return DateUtil.parseNormalDateTimeString(value);

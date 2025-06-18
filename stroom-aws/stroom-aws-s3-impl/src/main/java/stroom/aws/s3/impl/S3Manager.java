@@ -302,7 +302,7 @@ public class S3Manager {
 
         if (awsCredentials != null) {
             switch (awsCredentials) {
-                case stroom.aws.s3.shared.AwsAnonymousCredentials awsAnonymousCredentials -> {
+                case final stroom.aws.s3.shared.AwsAnonymousCredentials awsAnonymousCredentials -> {
                     LOGGER.debug("Using AWS anonymous credentials");
                     return AnonymousCredentialsProvider.create();
                 }
@@ -313,11 +313,11 @@ public class S3Manager {
                     return StaticCredentialsProvider.create(credentials);
 
                 }
-                case stroom.aws.s3.shared.AwsDefaultCredentials awsDefaultCredentials -> {
+                case final stroom.aws.s3.shared.AwsDefaultCredentials awsDefaultCredentials -> {
                     LOGGER.debug("Using AWS default credentials");
                     return DefaultCredentialsProvider.create();
                 }
-                case stroom.aws.s3.shared.AwsEnvironmentVariableCredentials awsEnvironmentVariableCredentials -> {
+                case final stroom.aws.s3.shared.AwsEnvironmentVariableCredentials awsEnvironmentVariableCredentials -> {
                     LOGGER.debug("Using AWS environment variable credentials");
                     return EnvironmentVariableCredentialsProvider.create();
                 }
@@ -347,7 +347,7 @@ public class S3Manager {
                     return StaticCredentialsProvider.create(credentials);
 
                 }
-                case stroom.aws.s3.shared.AwsSystemPropertyCredentials awsSystemPropertyCredentials -> {
+                case final stroom.aws.s3.shared.AwsSystemPropertyCredentials awsSystemPropertyCredentials -> {
                     LOGGER.debug("Using AWS system property credentials");
                     return SystemPropertyCredentialsProvider.create();
                 }
@@ -661,7 +661,7 @@ public class S3Manager {
     }
 
     private String getIdPath(final String id) {
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         for (int i = 0; i < id.length() - PAD_SIZE; i += PAD_SIZE) {
             final String part = id.substring(i, i + PAD_SIZE);
             if (!sb.isEmpty()) {

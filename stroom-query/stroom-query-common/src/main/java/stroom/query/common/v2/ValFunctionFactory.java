@@ -34,7 +34,7 @@ public class ValFunctionFactory implements ValueFunctionFactory<Val> {
             if (Type.LONG.equals(values.type()) || Type.DATE.equals(values.type())) {
                 return values.toLong();
             } else {
-                String string = values.toString();
+                final String string = values.toString();
                 if (string != null) {
                     try {
                         return DateUtil.parseNormalDateTimeString(string);

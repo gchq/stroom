@@ -175,7 +175,7 @@ public class TabManager {
         menuItems.add(createHideMenu(tabLayoutConfig, tabConfig));
 
         // Create show menu.
-        Item showMenu = createShowMenu(tabLayoutConfig);
+        final Item showMenu = createShowMenu(tabLayoutConfig);
         if (showMenu != null) {
             menuItems.add(showMenu);
         }

@@ -36,7 +36,7 @@ public abstract class AbstractSelector implements HasCapacitySelector {
         return list;
     }
 
-    public <T extends HasCapacity> T select(List<T> list) {
+    public <T extends HasCapacity> T select(final List<T> list) {
         LOGGER.trace(() -> LogUtil.message("select() called on {} for items [{}]",
                 this.getClass().getSimpleName(),
                 dumpList(list)));

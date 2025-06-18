@@ -24,8 +24,8 @@ public class ExportContentResourceImpl implements ExportContentResource {
     private final Provider<ResourceStore> resourceStoreProvider;
 
     @Inject
-    public ExportContentResourceImpl(Provider<ContentService> contentServiceProvider,
-                                     Provider<ResourceStore> resourceStoreProvider) {
+    public ExportContentResourceImpl(final Provider<ContentService> contentServiceProvider,
+                                     final Provider<ResourceStore> resourceStoreProvider) {
         this.contentServiceProvider = contentServiceProvider;
         this.resourceStoreProvider = resourceStoreProvider;
     }

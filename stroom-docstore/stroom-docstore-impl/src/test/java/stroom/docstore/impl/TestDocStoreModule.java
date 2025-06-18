@@ -56,7 +56,7 @@ class TestDocStoreModule {
         injector.injectMembers(this);
         final DocumentSerialiser2<MyDoc> serialiser = serialiser2Factory.createSerialiser(MyDoc.class);
 
-        Store<MyDoc> store2 = storeFactory.createStore(serialiser, "MyDocType", MyDoc.class);
+        final Store<MyDoc> store2 = storeFactory.createStore(serialiser, "MyDocType", MyDoc.class);
     }
 
     private static class MyDoc extends Doc {

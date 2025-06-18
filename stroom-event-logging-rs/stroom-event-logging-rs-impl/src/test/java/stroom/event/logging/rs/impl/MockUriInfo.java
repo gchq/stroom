@@ -82,7 +82,7 @@ public class MockUriInfo implements UriInfo {
 
     private String uuid;
 
-    public void setId(Integer id) {
+    public void setId(final Integer id) {
         this.id = id;
     }
 
@@ -92,7 +92,7 @@ public class MockUriInfo implements UriInfo {
 
     @Override
     public MultivaluedMap<String, String> getPathParameters() {
-        MultivaluedMap<String, String> pathParameterMap = new MultivaluedHashMap<>();
+        final MultivaluedMap<String, String> pathParameterMap = new MultivaluedHashMap<>();
 
         if (id != null) {
             pathParameterMap.putSingle("id", id.toString());

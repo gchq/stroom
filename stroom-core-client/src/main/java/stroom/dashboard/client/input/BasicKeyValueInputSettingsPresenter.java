@@ -51,7 +51,7 @@ public class BasicKeyValueInputSettingsPresenter
 
     @Override
     public ComponentConfig write(final ComponentConfig componentConfig) {
-        ComponentConfig result = super.write(componentConfig);
+        final ComponentConfig result = super.write(componentConfig);
         final KeyValueInputComponentSettings oldSettings = (KeyValueInputComponentSettings) result.getSettings();
         final KeyValueInputComponentSettings newSettings = writeSettings(oldSettings);
         return result.copy().settings(newSettings).build();
