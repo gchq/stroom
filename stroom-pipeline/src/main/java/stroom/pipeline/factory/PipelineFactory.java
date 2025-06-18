@@ -105,7 +105,7 @@ public class PipelineFactory {
         final Map<Element, PipelineElementType> elementTypeMap = new HashMap<>();
         final Map<String, Set<String>> linkSets = new HashMap<>();
 
-        for (final PipelineElement element : pipelineData.getElements().getAdd()) {
+        for (final PipelineElement element : pipelineData.getAddedElements()) {
             LOGGER.debug("create() - loading element {}", element);
 
             final Class<Element> elementClass = pipelineElementRegistry.getElementClass(element.getType());
@@ -142,7 +142,7 @@ public class PipelineFactory {
             // Record links.
             final Set<String> linkSet = new HashSet<>();
             linkSets.put(element.getId(), linkSet);
-            for (final PipelineLink link : pipelineData.getLinks().getAdd()) {
+            for (final PipelineLink link : pipelineData.getAddedLinks()) {
                 if (link.getFrom().equals(element.getId())) {
                     linkSet.add(link.getTo());
                 }
@@ -203,7 +203,7 @@ public class PipelineFactory {
                                final PipelineData pipelineData,
                                final SteppingController controller) {
         // Set the properties on this instance.
-        for (final PipelineProperty property : pipelineData.getProperties().getAdd()) {
+        for (final PipelineProperty property : pipelineData.getAddedProperties()) {
             if (property.getElement().equals(id)) {
                 setProperty(pipelineElementRegistry, id, elementType, elementInstance, property.getName(),
                         property.getValue(), controller);
@@ -283,7 +283,7 @@ public class PipelineFactory {
                                        final Object elementInstance,
                                        final PipelineData pipelineData) {
         // Set the properties on this instance.
-        for (final PipelineReference pipelineReference : pipelineData.getPipelineReferences().getAdd()) {
+        for (final PipelineReference pipelineReference : pipelineData.getAddedPipelineReferences()) {
             if (pipelineReference.getElement().equals(id)) {
                 setPipelineReference(pipelineElementRegistry, elementType, elementInstance, pipelineReference.getName(),
                         pipelineReference);

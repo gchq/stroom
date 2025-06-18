@@ -57,6 +57,7 @@ public class NewPropertyPresenter
     private final DocSelectionBoxPresenter entityDropDownPresenter;
     private boolean dirty;
 
+    private PipelinePropertyType propertyType;
     private PipelineProperty defaultProperty;
     private PipelineProperty inheritedProperty;
     private PipelineProperty localProperty;
@@ -97,13 +98,15 @@ public class NewPropertyPresenter
         }
     }
 
-    public void edit(final PipelineProperty defaultProperty,
+    public void edit(final PipelinePropertyType propertyType,
+                     final PipelineProperty defaultProperty,
                      final PipelineProperty inheritedProperty,
                      final PipelineProperty localProperty,
                      final Source source,
                      final String defaultValue,
                      final String inheritedValue,
                      final String inheritedFrom) {
+        this.propertyType = propertyType;
         this.defaultProperty = defaultProperty;
         this.inheritedProperty = inheritedProperty;
         this.localProperty = localProperty;
@@ -111,7 +114,7 @@ public class NewPropertyPresenter
 
         getView().setElement(defaultProperty.getElement());
         getView().setName(defaultProperty.getName());
-        getView().setDescription(defaultProperty.getPropertyType().getDescription());
+        getView().setDescription(propertyType.getDescription());
         getView().setDefaultValue(defaultValue);
         getView().setInherited(inheritedFrom, inheritedValue);
         getView().setSource(source);
@@ -134,8 +137,6 @@ public class NewPropertyPresenter
     }
 
     private void startEdit(final PipelineProperty property) {
-        final PipelinePropertyType propertyType = property.getPropertyType();
-
         if ("streamType".equals(propertyType.getName())) {
             enterDataTypeMode(property);
         } else if ("volumeGroup".equals(propertyType.getName())) {
@@ -159,24 +160,22 @@ public class NewPropertyPresenter
         return getView().getSource();
     }
 
-    public void write(final PipelineProperty property) {
-        final PipelinePropertyType propertyType = property.getPropertyType();
-
+    public PipelinePropertyValue writeValue() {
         if ("streamType".equals(propertyType.getName())) {
-            property.setValue(new PipelinePropertyValue(dataTypeWidget.getValue()));
+            return new PipelinePropertyValue(dataTypeWidget.getValue());
         } else if ("volumeGroup".equals(propertyType.getName())) {
-            property.setValue(new PipelinePropertyValue(dataTypeWidget.getValue()));
+            return new PipelinePropertyValue(dataTypeWidget.getValue());
         } else if ("boolean".equals(propertyType.getType())) {
             final String value = listBox.getValue();
-            property.setValue(new PipelinePropertyValue(Boolean.valueOf(value)));
+            return new PipelinePropertyValue(Boolean.valueOf(value));
         } else if ("int".equals(propertyType.getType())) {
             final Integer value = valueSpinner.getIntValue();
-            property.setValue(new PipelinePropertyValue(value));
+            return new PipelinePropertyValue(value);
         } else if ("long".equals(propertyType.getType())) {
             final Long value = (long) valueSpinner.getIntValue();
-            property.setValue(new PipelinePropertyValue(value));
+            return new PipelinePropertyValue(value);
         } else if ("String".equals(propertyType.getType())) {
-            property.setValue(new PipelinePropertyValue(textBox.getText()));
+            return new PipelinePropertyValue(textBox.getText());
 //        } else if (StreamType.DOCUMENT_TYPE.equals(propertyType.getType())) {
 //            property.setValue(new PipelinePropertyValue(streamTypesWidget.getSelectedItem()));
         } else {
@@ -185,7 +184,7 @@ public class NewPropertyPresenter
             if (namedEntity != null) {
                 value = new PipelinePropertyValue(namedEntity);
             }
-            property.setValue(value);
+            return value;
         }
     }
 
@@ -391,7 +390,7 @@ public class NewPropertyPresenter
             value = property.getValue().getEntity();
         }
 
-        entityDropDownPresenter.setIncludedTypes(property.getPropertyType().getDocRefTypes());
+        entityDropDownPresenter.setIncludedTypes(propertyType.getDocRefTypes());
         entityDropDownPresenter.setRequiredPermissions(DocumentPermission.USE);
         try {
             entityDropDownPresenter.setSelectedEntityReference(value, true);

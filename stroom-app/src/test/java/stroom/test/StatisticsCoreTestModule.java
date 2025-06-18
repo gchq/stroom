@@ -10,7 +10,6 @@ import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.SimpleTaskContextFactory;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
-import stroom.util.db.ForceLegacyMigration;
 import stroom.util.io.DirProvidersModule;
 
 import com.google.inject.AbstractModule;
@@ -34,10 +33,7 @@ public class StatisticsCoreTestModule extends AbstractModule {
 
         bind(ClusterLockService.class).to(MockClusterLockService.class);
         bind(CommonTestControl.class).to(MockCommonTestControl.class);
-        bind(ForceLegacyMigration.class).toInstance(new ForceLegacyMigration() {
-        });
         bind(TaskContext.class).to(SimpleTaskContext.class);
         bind(TaskContextFactory.class).to(SimpleTaskContextFactory.class);
-
     }
 }

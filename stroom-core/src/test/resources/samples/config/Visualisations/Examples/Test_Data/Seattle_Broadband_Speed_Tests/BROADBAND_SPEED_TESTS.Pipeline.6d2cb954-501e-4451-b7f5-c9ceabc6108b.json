@@ -1,0 +1,136 @@
+{
+  "elements" : {
+    "add" : [ {
+      "id" : "dsParser",
+      "type" : "DSParser"
+    }, {
+      "id" : "readRecordCountFilter",
+      "type" : "RecordCountFilter"
+    }, {
+      "id" : "splitFilter",
+      "type" : "SplitFilter"
+    }, {
+      "id" : "translationFilter",
+      "type" : "XSLTFilter"
+    }, {
+      "id" : "schemaFilter",
+      "type" : "SchemaFilter"
+    }, {
+      "id" : "recordOutputFilter",
+      "type" : "RecordOutputFilter"
+    }, {
+      "id" : "writeRecordCountFilter",
+      "type" : "RecordCountFilter"
+    }, {
+      "id" : "xmlWriter",
+      "type" : "XMLWriter"
+    }, {
+      "id" : "streamAppender",
+      "type" : "StreamAppender"
+    }, {
+      "id" : "Source",
+      "type" : "Source"
+    } ]
+  },
+  "properties" : {
+    "add" : [ {
+      "element" : "dsParser",
+      "name" : "textConverter",
+      "value" : {
+        "entity" : {
+          "type" : "TextConverter",
+          "uuid" : "7e4452ed-bf26-4187-b849-e3e721780cba",
+          "name" : "CSV_WITH_HEADER"
+        }
+      }
+    }, {
+      "element" : "readRecordCountFilter",
+      "name" : "countRead",
+      "value" : {
+        "boolean" : true
+      }
+    }, {
+      "element" : "splitFilter",
+      "name" : "splitDepth",
+      "value" : {
+        "integer" : 1
+      }
+    }, {
+      "element" : "splitFilter",
+      "name" : "splitCount",
+      "value" : {
+        "integer" : 100
+      }
+    }, {
+      "element" : "translationFilter",
+      "name" : "xslt",
+      "value" : {
+        "entity" : {
+          "type" : "XSLT",
+          "uuid" : "c15d9f09-9634-4c4a-ad30-38fa2ef559e1",
+          "name" : "BROADBAND_SPEED_TESTS-RECORDS"
+        }
+      }
+    }, {
+      "element" : "schemaFilter",
+      "name" : "schemaGroup",
+      "value" : {
+        "string" : "RECORDS"
+      }
+    }, {
+      "element" : "writeRecordCountFilter",
+      "name" : "countRead",
+      "value" : {
+        "boolean" : false
+      }
+    }, {
+      "element" : "xmlWriter",
+      "name" : "indentOutput",
+      "value" : {
+        "boolean" : true
+      }
+    }, {
+      "element" : "streamAppender",
+      "name" : "segmentOutput",
+      "value" : {
+        "boolean" : true
+      }
+    }, {
+      "element" : "streamAppender",
+      "name" : "streamType",
+      "value" : {
+        "string" : "Records"
+      }
+    } ]
+  },
+  "links" : {
+    "add" : [ {
+      "from" : "dsParser",
+      "to" : "readRecordCountFilter"
+    }, {
+      "from" : "readRecordCountFilter",
+      "to" : "splitFilter"
+    }, {
+      "from" : "splitFilter",
+      "to" : "translationFilter"
+    }, {
+      "from" : "translationFilter",
+      "to" : "schemaFilter"
+    }, {
+      "from" : "schemaFilter",
+      "to" : "recordOutputFilter"
+    }, {
+      "from" : "recordOutputFilter",
+      "to" : "writeRecordCountFilter"
+    }, {
+      "from" : "writeRecordCountFilter",
+      "to" : "xmlWriter"
+    }, {
+      "from" : "xmlWriter",
+      "to" : "streamAppender"
+    }, {
+      "from" : "Source",
+      "to" : "dsParser"
+    } ]
+  }
+}

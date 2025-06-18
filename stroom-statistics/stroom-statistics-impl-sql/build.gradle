@@ -42,7 +42,6 @@ dependencies {
     implementation libs.swagger.annotations
     implementation libs.vavr
     implementation libs.ws.rs.api
-    //implementation libs.xml.apis
 
     testImplementation project(':stroom-docstore:stroom-docstore-impl')
     testImplementation project(':stroom-docstore:stroom-docstore-impl-memory')

@@ -18,6 +18,8 @@ package stroom.pipeline.structure.client.view;
 
 import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.data.PipelineElement;
+import stroom.pipeline.shared.stepping.SteppingFilterSettings;
+import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.OutputState;
@@ -54,11 +56,15 @@ public class PipelineElementBox extends Box<PipelineElement> {
         severityNameToClassMap.put(Severity.FATAL_ERROR.name(), SEVERITY_FATAL_ERROR_CLASS);
     }
 
+    private final PipelineModel pipelineModel;
     private final PipelineElement pipelineElement;
     private final Widget filterIcon;
 
-    public PipelineElementBox(final PipelineElement pipelineElement, final SvgImage icon) {
+    public PipelineElementBox(final PipelineModel pipelineModel,
+                              final PipelineElement pipelineElement,
+                              final SvgImage icon) {
 //        GWT.log("Creating pipe element " + pipelineElement.getId());
+        this.pipelineModel = pipelineModel;
         this.pipelineElement = pipelineElement;
 
         final FlowPanel background = new FlowPanel();
@@ -104,7 +110,7 @@ public class PipelineElementBox extends Box<PipelineElement> {
 
     private void updateFilterState() {
 
-        if (pipelineElement != null && pipelineElement.hasActiveFilters()) {
+        if (pipelineElement != null && pipelineModel != null && pipelineModel.hasActiveFilters(pipelineElement)) {
             filterIcon.addStyleName(BASE_CLASS + "-filterOn");
             filterIcon.removeStyleName(BASE_CLASS + "-filterOff");
             filterIcon.setTitle(buildFilterIconTitle());
@@ -116,52 +122,56 @@ public class PipelineElementBox extends Box<PipelineElement> {
     }
 
     private String buildFilterIconTitle() {
-        return NullSafe.get(
-                pipelineElement,
-                PipelineElement::getSteppingFilterSettings,
-                filterSettings -> {
-                    final Severity skipToSeverity = filterSettings.getSkipToSeverity();
-                    final OutputState skipToOutput = filterSettings.getSkipToOutput();
-                    final List<XPathFilter> xPathFilters = NullSafe.list(filterSettings.getFilters());
-                    if (skipToSeverity != null || skipToOutput != null || !xPathFilters.isEmpty()) {
-                        final StringBuilder sb = new StringBuilder();
-                        sb.append("Has active stepping filters:");
+        if (pipelineElement == null || pipelineModel == null || pipelineModel.getStepFilterMap() == null) {
+            return null;
+        }
 
-                        if (skipToSeverity != null) {
-                            sb.append("\n  ")
-                                    .append(BULLET)
-                                    .append(" Jump to ")
-                                    .append(skipToSeverity);
-                        }
+        final SteppingFilterSettings settings = pipelineModel.getStepFilterMap().get(pipelineElement.getId());
+        if (settings == null) {
+            return null;
+        }
 
-                        if (skipToOutput != null) {
-                            final String outputStateStr = OutputState.EMPTY.equals(skipToOutput)
-                                    ? "empty"
-                                    : "non-empty";
+        final Severity skipToSeverity = settings.getSkipToSeverity();
+        final OutputState skipToOutput = settings.getSkipToOutput();
+        final List<XPathFilter> xPathFilters = NullSafe.list(settings.getFilters());
+        if (skipToSeverity != null || skipToOutput != null || !xPathFilters.isEmpty()) {
+            final StringBuilder sb = new StringBuilder();
+            sb.append("Has active stepping filters:");
 
-                            sb.append("\n  ")
-                                    .append(BULLET)
-                                    .append(" Jump to ")
-                                    .append(outputStateStr)
-                                    .append(" output");
-                        }
-                        final int xPathFilterCount = xPathFilters.size();
-                        if (xPathFilterCount == 1) {
-                            sb.append("\n  ")
-                                    .append(BULLET)
-                                    .append(" XPath filter");
-                        } else if (xPathFilterCount > 1) {
-                            sb.append("\n  ")
-                                    .append(BULLET)
-                                    .append(" ")
-                                    .append(xPathFilterCount)
-                                    .append(" XPath filters");
-                        }
-                        return sb.toString();
-                    } else {
-                        return null;
-                    }
-                });
+            if (skipToSeverity != null) {
+                sb.append("\n  ")
+                        .append(BULLET)
+                        .append(" Jump to ")
+                        .append(skipToSeverity);
+            }
+
+            if (skipToOutput != null) {
+                final String outputStateStr = OutputState.EMPTY.equals(skipToOutput)
+                        ? "empty"
+                        : "non-empty";
+
+                sb.append("\n  ")
+                        .append(BULLET)
+                        .append(" Jump to ")
+                        .append(outputStateStr)
+                        .append(" output");
+            }
+            final int xPathFilterCount = xPathFilters.size();
+            if (xPathFilterCount == 1) {
+                sb.append("\n  ")
+                        .append(BULLET)
+                        .append(" XPath filter");
+            } else if (xPathFilterCount > 1) {
+                sb.append("\n  ")
+                        .append(BULLET)
+                        .append(" ")
+                        .append(xPathFilterCount)
+                        .append(" XPath filters");
+            }
+            return sb.toString();
+        }
+
+        return null;
     }
 
     public void refresh() {
@@ -205,7 +215,7 @@ public class PipelineElementBox extends Box<PipelineElement> {
 
     private void setSeverityHoverTip(final Severity severity) {
         final String namePart = pipelineElement.getType()
-                + " '" + pipelineElement.getId() + "'";
+                                + " '" + pipelineElement.getId() + "'";
         if (severity == null) {
             getElement().setTitle(namePart);
         } else {

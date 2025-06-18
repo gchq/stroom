@@ -23,7 +23,7 @@ class TestPipelineDataCache extends AbstractProcessIntegrationTest {
     @Test
     void test() {
         final DocRef docRef = PipelineTestUtil.createTestPipeline(pipelineStore,
-                StroomPipelineTestFileUtil.getString("TestPipelineFactory/EventDataPipeline.Pipeline.data.xml"));
+                StroomPipelineTestFileUtil.getString("TestPipelineFactory/EventDataPipeline.Pipeline.json"));
         final PipelineDoc pipelineDoc1 = pipelineStore.readDocument(docRef);
         final PipelineDoc pipelineDoc2 = pipelineStore.readDocument(docRef);
         final PipelineData pipelineData1 = pipelineDataCache.get(pipelineDoc1);

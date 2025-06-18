@@ -5,7 +5,6 @@ import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceFactory;
 import stroom.db.util.JooqUtil;
 import stroom.util.ConsoleColour;
-import stroom.util.db.ForceLegacyMigration;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -13,7 +12,6 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import com.google.common.base.Strings;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import jakarta.inject.Inject;
@@ -112,15 +110,7 @@ public abstract class AbstractSingleFlywayMigrationTest<
         try {
             injector = Guice.createInjector(
                     new UniqueDbTestModule(),
-                    getDatasourceModule(),
-                    new AbstractModule() {
-                        @Override
-                        protected void configure() {
-                            bind(ForceLegacyMigration.class)
-                                    .toInstance(new ForceLegacyMigration() {
-                                    });
-                        }
-                    }
+                    getDatasourceModule()
             );
             injector.injectMembers(this);
         } catch (Exception e) {

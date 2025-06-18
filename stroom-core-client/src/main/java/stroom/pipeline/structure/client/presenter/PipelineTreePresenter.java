@@ -25,7 +25,7 @@ import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
-import stroom.pipeline.shared.data.PipelineElements;
+import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
@@ -73,6 +73,7 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
 
     public void setModel(final PipelineModel model) {
         this.pipelineModel = model;
+        getView().setPipelineModel(pipelineModel);
         if (model != null) {
             model.addChangeDataHandler(this);
         }
@@ -163,9 +164,9 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
     public Set<String> getIds() {
         final List<PipelineElement> pipelineElements = NullSafe.get(
                 pipelineModel,
-                PipelineModel::getPipelineData,
-                PipelineData::getElements,
-                PipelineElements::getAdd);
+                PipelineModel::getPipelineLayer,
+                PipelineLayer::getPipelineData,
+                PipelineData::getAddedElements);
 
         return NullSafe.stream(pipelineElements)
                 .map(PipelineElement::getId)
@@ -177,6 +178,8 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
 
 
     public interface PipelineTreeView extends View, HasContextMenuHandlers, HasUiHandlers<PipelineTreeUiHandlers> {
+
+        void setPipelineModel(PipelineModel pipelineModel);
 
         void setTree(DefaultTreeForTreeLayout<PipelineElement> tree);
 

@@ -139,6 +139,7 @@ tasks.register('copySources') {
                 into inputProjectPath
             }
         }
+        delete "${inputProjectPath}/module-info.java"
         println("${Duration.between(start, Instant.now())}")
         start = Instant.now()
 

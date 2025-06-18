@@ -17,7 +17,6 @@ dependencies {
     // 3rd party libs
     implementation libs.guice
     implementation libs.jackson.annotations
-    implementation libs.jaxb.api
     implementation libs.jakarta.inject
 
     testImplementation libs.assertj.core

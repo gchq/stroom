@@ -25,54 +25,29 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.xml.bind.annotation.XmlTransient;
-import jakarta.xml.bind.annotation.XmlType;
 
 import java.util.Comparator;
 import java.util.Objects;
 
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "DataRetentionRule", propOrder = {
-        "ruleNumber",
-        "creationTime",
-        "name",
-        "enabled",
-        "expression",
-        "age",
-        "timeUnit",
-        "forever"})
-@XmlRootElement(name = "dataRetentionRule")
 @JsonInclude(Include.NON_NULL)
 public class DataRetentionRule {
 
     public static final String FOREVER = "Forever";
 
-    @XmlElement(name = "ruleNumber")
     @JsonProperty
     private int ruleNumber;
-    @XmlElement(name = "creationTime")
     @JsonProperty
     private long creationTime;
-    @XmlElement(name = "name")
     @JsonProperty
     private String name;
-    @XmlElement(name = "enabled")
     @JsonProperty
     private boolean enabled;
-    @XmlElement(name = "expression")
     @JsonProperty
     private ExpressionOperator expression;
-    @XmlElement(name = "age")
     @JsonProperty
     private int age;
-    @XmlElement(name = "timeUnit")
     @JsonProperty
     private TimeUnit timeUnit;
-    @XmlElement(name = "forever")
     @JsonProperty
     private boolean forever;
 
@@ -166,7 +141,6 @@ public class DataRetentionRule {
         return forever;
     }
 
-    @XmlTransient
     @JsonIgnore
     public String getAgeString() {
 

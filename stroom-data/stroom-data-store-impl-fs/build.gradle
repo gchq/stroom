@@ -32,7 +32,6 @@ dependencies {
     implementation libs.jakarta.servlet.api
     implementation libs.jakarta.validation.api
     implementation libs.jakarta.inject
-    implementation libs.jaxb.api
     implementation libs.restygwt
     implementation libs.slf4j.api
     implementation libs.vavr

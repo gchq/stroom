@@ -1,0 +1,140 @@
+{
+  "elements" : {
+    "add" : [ {
+      "id" : "combinedParser",
+      "type" : "CombinedParser"
+    }, {
+      "id" : "readRecordCountFilter",
+      "type" : "RecordCountFilter"
+    }, {
+      "id" : "splitFilter",
+      "type" : "SplitFilter"
+    }, {
+      "id" : "translationFilter",
+      "type" : "XSLTFilter"
+    }, {
+      "id" : "decorationFilter",
+      "type" : "XSLTFilter"
+    }, {
+      "id" : "flattenFilter",
+      "type" : "XSLTFilter"
+    }, {
+      "id" : "schemaFilter",
+      "type" : "SchemaFilter"
+    }, {
+      "id" : "recordOutputFilter",
+      "type" : "RecordOutputFilter"
+    }, {
+      "id" : "writeRecordCountFilter",
+      "type" : "RecordCountFilter"
+    }, {
+      "id" : "xmlWriter",
+      "type" : "XMLWriter"
+    }, {
+      "id" : "textWriter",
+      "type" : "TextWriter"
+    }, {
+      "id" : "streamAppender",
+      "type" : "StreamAppender"
+    }, {
+      "id" : "fileAppender",
+      "type" : "FileAppender"
+    }, {
+      "id" : "Source",
+      "type" : "Source"
+    } ]
+  },
+  "properties" : {
+    "add" : [ {
+      "element" : "readRecordCountFilter",
+      "name" : "countRead",
+      "value" : {
+        "boolean" : true
+      }
+    }, {
+      "element" : "splitFilter",
+      "name" : "splitDepth",
+      "value" : {
+        "integer" : 1
+      }
+    }, {
+      "element" : "splitFilter",
+      "name" : "splitCount",
+      "value" : {
+        "integer" : 100
+      }
+    }, {
+      "element" : "schemaFilter",
+      "name" : "schemaGroup",
+      "value" : {
+        "string" : "EVENTS"
+      }
+    }, {
+      "element" : "writeRecordCountFilter",
+      "name" : "countRead",
+      "value" : {
+        "boolean" : false
+      }
+    }, {
+      "element" : "streamAppender",
+      "name" : "segmentOutput",
+      "value" : {
+        "boolean" : true
+      }
+    }, {
+      "element" : "streamAppender",
+      "name" : "streamType",
+      "value" : {
+        "string" : "Events"
+      }
+    }, {
+      "element" : "fileAppender",
+      "name" : "outputPaths",
+      "value" : {
+        "string" : "${stroom.temp}/text/output1/${pipeline}/${metaId}_${feed}-${uuid}.out,${stroom.temp}/text/output2/${pipeline}/${metaId}_${feed}-${uuid}.out"
+      }
+    } ]
+  },
+  "links" : {
+    "add" : [ {
+      "from" : "combinedParser",
+      "to" : "readRecordCountFilter"
+    }, {
+      "from" : "readRecordCountFilter",
+      "to" : "splitFilter"
+    }, {
+      "from" : "splitFilter",
+      "to" : "translationFilter"
+    }, {
+      "from" : "translationFilter",
+      "to" : "decorationFilter"
+    }, {
+      "from" : "decorationFilter",
+      "to" : "schemaFilter"
+    }, {
+      "from" : "schemaFilter",
+      "to" : "recordOutputFilter"
+    }, {
+      "from" : "recordOutputFilter",
+      "to" : "writeRecordCountFilter"
+    }, {
+      "from" : "writeRecordCountFilter",
+      "to" : "flattenFilter"
+    }, {
+      "from" : "writeRecordCountFilter",
+      "to" : "xmlWriter"
+    }, {
+      "from" : "flattenFilter",
+      "to" : "textWriter"
+    }, {
+      "from" : "xmlWriter",
+      "to" : "streamAppender"
+    }, {
+      "from" : "textWriter",
+      "to" : "fileAppender"
+    }, {
+      "from" : "Source",
+      "to" : "combinedParser"
+    } ]
+  }
+}

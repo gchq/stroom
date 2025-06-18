@@ -12,7 +12,6 @@ import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.docstore.impl.StoreFactoryImpl;
 import stroom.docstore.impl.fs.FSPersistence;
 import stroom.dropwizard.common.DropwizardHttpClientFactory;
-import stroom.importexport.api.ImportConverter;
 import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.DataDirProviderImpl;
 import stroom.proxy.app.ProxyConfig;
@@ -85,10 +84,6 @@ public class ProxyCoreModule extends AbstractModule {
         bind(DocRefDecorator.class).to(NoDecorationDocRefDecorator.class);
         bind(DataDirProvider.class).to(DataDirProviderImpl.class);
         bind(ProgressLog.class).to(ProgressLogImpl.class);
-
-        // Proxy doesn't do import so bind a dummy ImportConverter for the StoreImpl(s) to use
-        bind(ImportConverter.class).to(NoOpImportConverter.class);
-
     }
 
     @SuppressWarnings("unused")

@@ -10,7 +10,6 @@ import stroom.security.user.api.UserRefLookup;
 import stroom.task.mock.MockTaskModule;
 import stroom.test.common.MockMetrics;
 import stroom.test.common.util.db.DbTestModule;
-import stroom.util.db.ForceLegacyMigration;
 import stroom.util.metrics.Metrics;
 import stroom.util.shared.UserRef;
 
@@ -33,9 +32,6 @@ public class TestModule extends AbstractModule {
         install(new MockTaskModule());
         install(new CacheModule());
 
-        // Not using all the DB modules so just bind to an empty anonymous class
-        bind(ForceLegacyMigration.class).toInstance(new ForceLegacyMigration() {
-        });
         bind(UserRefLookup.class).toInstance(new UserRefLookup() {
             @Override
             public Optional<UserRef> getByUuid(final String userUuid) {

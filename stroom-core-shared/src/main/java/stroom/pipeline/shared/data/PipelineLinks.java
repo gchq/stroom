@@ -16,73 +16,41 @@
 
 package stroom.pipeline.shared.data;
 
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlElementWrapper;
-import jakarta.xml.bind.annotation.XmlType;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "Links", propOrder = {"add", "remove"})
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({"add", "remove"})
-public class PipelineLinks {
-
-    @XmlElementWrapper(name = "add")
-    @XmlElement(name = "link")
-    @JsonProperty
-    private final List<PipelineLink> add;
-
-    @XmlElementWrapper(name = "remove")
-    @XmlElement(name = "link")
-    @JsonProperty
-    private final List<PipelineLink> remove;
-
-    public PipelineLinks() {
-        add = new ArrayList<>();
-        remove = new ArrayList<>();
-    }
+public class PipelineLinks extends AbstractAddRemove<PipelineLink> {
 
     @JsonCreator
     public PipelineLinks(@JsonProperty("add") final List<PipelineLink> add,
                          @JsonProperty("remove") final List<PipelineLink> remove) {
-        this.add = add;
-        this.remove = remove;
+        super(add, remove);
     }
 
-    public List<PipelineLink> getAdd() {
-        return add;
-    }
+    public static class Builder extends AbstractAddRemoveListBuilder<PipelineLink, PipelineLinks, Builder> {
 
-    public List<PipelineLink> getRemove() {
-        return remove;
-    }
+        public Builder() {
 
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
         }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        final PipelineLinks that = (PipelineLinks) o;
-        return Objects.equals(add, that.add) &&
-                Objects.equals(remove, that.remove);
-    }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(add, remove);
+        public Builder(final PipelineLinks links) {
+            super(links);
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public PipelineLinks build() {
+            return new PipelineLinks(copyAddList(), copyRemoveList());
+        }
     }
 }

@@ -37,7 +37,6 @@ dependencies {
     implementation libs.slf4j.api
     implementation libs.swagger.annotations
     implementation libs.ws.rs.api
-    //implementation libs.xml.apis
 
     testImplementation project(':stroom-test-common')
 

@@ -53,7 +53,6 @@ dependencies {
     implementation libs.jakarta.validation.api
     implementation libs.jakarta.annotation.api
     implementation libs.jakarta.inject
-    implementation libs.jaxb.api
     implementation libs.jersey.client
     implementation libs.jetty.http
     implementation libs.kryo
@@ -64,7 +63,6 @@ dependencies {
     implementation libs.swagger.annotations
     implementation libs.vavr
     implementation libs.ws.rs.api
-    //implementation libs.xml.apis
     implementation libs.zero.allocation.hashing
 
     testImplementation project(':stroom-cache:stroom-cache-api')

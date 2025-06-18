@@ -205,7 +205,7 @@ public class PipelinePropertyType implements Comparable<PipelinePropertyType>, H
             return this;
         }
 
-        public Builder displayPriority(int displayPriority) {
+        public Builder displayPriority(final int displayPriority) {
             this.displayPriority = displayPriority;
             return this;
         }

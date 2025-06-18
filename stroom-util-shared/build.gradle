@@ -5,7 +5,6 @@ dependencies {
 
     implementation libs.jackson.annotations
     implementation libs.jakarta.validation.api
-    //implementation libs.jaxb.api
     implementation libs.swagger.annotations
 
     testImplementation project(':stroom-test-common')

@@ -18,6 +18,7 @@ package stroom.pipeline.xml;
 
 
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.PipelineTestUtil;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -31,7 +32,9 @@ import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineDataUtil;
+import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.textconverter.TextConverterStore;
@@ -145,13 +148,14 @@ public class F2XTestUtil {
 
         // Create the pipeline.
         final PipelineDoc pipelineDoc = PipelineTestUtil.createBasicPipeline(
-                StroomPipelineTestFileUtil.getString("F2XTestUtil/f2xtest.Pipeline.data.xml"));
+                StroomPipelineTestFileUtil.getString("F2XTestUtil/f2xtest.Pipeline.json"));
         final PipelineData pipelineData = pipelineDoc.getPipelineData();
+        final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
 
         // final ElementType parserElementType = new ElementType("Parser");
         // final PropertyType textConverterPropertyType = new PropertyType(
         // parserElementType, "textConverter", "TextConverter", false);
-        pipelineData.addProperty(
+        builder.addProperty(
                 PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", textConverterRef));
 
         if (feed.isReference()) {
@@ -159,24 +163,24 @@ public class F2XTestUtil {
             // "SchemaFilter");
             // final PropertyType schemaGroupPropertyType = new PropertyType(
             // schemaFilterElementType, "schemaGroup", "String", false);
-            pipelineData.addProperty(PipelineDataUtil.createProperty("schemaFilter", "schemaGroup", "REFERENCE_DATA"));
+            builder.addProperty(PipelineDataUtil.createProperty("schemaFilter", "schemaGroup", "REFERENCE_DATA"));
         } else {
             // final ElementType schemaFilterElementType = new ElementType(
             // "SchemaFilter");
             // final PropertyType schemaGroupPropertyType = new PropertyType(
             // schemaFilterElementType, "schemaGroup", "String", false);
-            pipelineData.addProperty(PipelineDataUtil.createProperty("schemaFilter", "schemaGroup", "EVENTS"));
+            builder.addProperty(PipelineDataUtil.createProperty("schemaFilter", "schemaGroup", "EVENTS"));
         }
         // final ElementType xsltFilterElementType = new
         // ElementType("XSLTFilter");
         // final PropertyType xsltPropertyType = new PropertyType(
         // xsltFilterElementType, "xslt", "XSLT", false);
-        pipelineData.addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xsltRef));
+        builder.addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xsltRef));
 
-        final Pipeline pipeline = pipelineFactory.create(pipelineData, taskContext);
+        final Pipeline pipeline = pipelineFactory.create(builder.build(), taskContext);
 
         final List<TestAppender> filters = pipeline.findFilters(TestAppender.class);
-        final TestAppender testAppender = filters.get(0);
+        final TestAppender testAppender = filters.getFirst();
         testAppender.setOutputStream(out);
 
         pipeline.process(dataStream);
@@ -215,7 +219,7 @@ public class F2XTestUtil {
         return taskContextFactory.contextResult("F2XTestUtil", taskContext -> {
             // Persist the text converter.
             final DocRef docRef = textConverterStore.createDocument("TEST_TRANSLATION");
-            TextConverterDoc textConverter = textConverterStore.readDocument(docRef);
+            final TextConverterDoc textConverter = textConverterStore.readDocument(docRef);
             textConverter.setConverterType(textConverterType);
             textConverter.setData(StroomPipelineTestFileUtil.getString(textConverterLocation));
             textConverterStore.writeDocument(textConverter);
@@ -226,29 +230,33 @@ public class F2XTestUtil {
 
             // Create the pipeline.
             final PipelineDoc pipelineDoc = PipelineTestUtil.createBasicPipeline(
-                    StroomPipelineTestFileUtil.getString("F2XTestUtil/f2xtest.Pipeline.data.xml"));
+                    StroomPipelineTestFileUtil.getString("F2XTestUtil/f2xtest.Pipeline.json"));
+            final DocRef pipelineDocRef = DocRefUtil.create(pipelineDoc);
             final PipelineData pipelineData = pipelineDoc.getPipelineData();
+            final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
 
             // final ElementType parserElementType = new ElementType("Parser");
             // final PropertyType textConverterPropertyType = new PropertyType(
             // parserElementType, "textConverter", "TextConverter", false);
-            pipelineData.addProperty(
+            builder.addProperty(
                     PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", docRef));
 
             // final ElementType schemaFilterElementType = new ElementType(
             // "SchemaFilter");
             // final PropertyType schemaGroupPropertyType = new PropertyType(
             // schemaFilterElementType, "schemaGroup", "String", false);
-            pipelineData.addProperty(PipelineDataUtil.createProperty(
+            builder.addProperty(PipelineDataUtil.createProperty(
                     "schemaFilter", "schemaGroup", "RECORDS"));
 
             final ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-            final PipelineData mergedPipelineData = new PipelineDataMerger().merge(pipelineData).createMergedData();
+            final PipelineData mergedPipelineData = new PipelineDataMerger()
+                    .merge(new PipelineLayer(pipelineDocRef, builder.build()))
+                    .createMergedData();
             final Pipeline pipeline = pipelineFactory.create(mergedPipelineData, taskContext);
 
             final List<TestAppender> filters = pipeline.findFilters(TestAppender.class);
-            final TestAppender testAppender = filters.get(0);
+            final TestAppender testAppender = filters.getFirst();
             testAppender.setOutputStream(out);
 
             pipeline.process(inputStream);

@@ -22,6 +22,7 @@ import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter.SteppingFilterView;
+import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
@@ -77,7 +78,8 @@ public class SteppingFilterPresenter extends
     public SteppingFilterPresenter(final EventBus eventBus,
                                    final SteppingFilterView view,
                                    final XPathListPresenter xPathListPresenter,
-                                   final XPathFilterPresenter xPathFilterProvider) {
+                                   final XPathFilterPresenter xPathFilterProvider,
+                                   final PipelineElementTypesFactory pipelineElementTypesFactory) {
         super(eventBus, view);
         this.xPathListPresenter = xPathListPresenter;
         this.xPathFilterPresenter = xPathFilterProvider;
@@ -94,53 +96,54 @@ public class SteppingFilterPresenter extends
         elementChooser = new MyCellTable<>(Integer.MAX_VALUE);
         elementChooser.getElement().addClassName(BASE_CLASS);
 
-        // Pipe element icon column
-        final Column<PipelineElement, Preset> iconColumn = DataGridUtil.svgPresetColumnBuilder(false,
-                        (PipelineElement pipelineElement) -> {
-                            final PipelineElementType pipelineElementType = NullSafe.get(
-                                    pipelineElement,
-                                    PipelineElement::getElementType);
-                            if (pipelineElementType != null && pipelineElementType.getIcon() != null) {
-                                return new Preset(
-                                        pipelineElementType.getIcon(),
-                                        pipelineElementType.getType(),
-                                        true);
-                            } else {
-                                return null;
-                            }
-                        })
-                .withStyleName(BASE_CLASS + "-iconCell svgIcon")
-                .centerAligned()
-                .build();
-        elementChooser.addColumn(iconColumn);
-        elementChooser.setColumnWidth(iconColumn, ICON_COL_WIDTH, Unit.PX);
+        pipelineElementTypesFactory.get(this, elementTypes -> {
+            // Pipe element icon column
+            final Column<PipelineElement, Preset> iconColumn = DataGridUtil.svgPresetColumnBuilder(false,
+                            (PipelineElement pipelineElement) -> {
+                                final PipelineElementType pipelineElementType =
+                                        elementTypes.getElementType(pipelineElement);
+                                if (pipelineElementType != null && pipelineElementType.getIcon() != null) {
+                                    return new Preset(
+                                            pipelineElementType.getIcon(),
+                                            pipelineElementType.getType(),
+                                            true);
+                                } else {
+                                    return null;
+                                }
+                            })
+                    .withStyleName(BASE_CLASS + "-iconCell svgIcon")
+                    .centerAligned()
+                    .build();
+            elementChooser.addColumn(iconColumn);
+            elementChooser.setColumnWidth(iconColumn, ICON_COL_WIDTH, Unit.PX);
 
-        final Function<PipelineElement, String> filterActiveStyleFunc = pipelineElement ->
-                NullSafe.isTrue(elementIdToHasActiveFilterMap.get(pipelineElement.getId()))
-                        ? BASE_CLASS + "-filterOn"
-                        : BASE_CLASS + "-filterOff";
+            final Function<PipelineElement, String> filterActiveStyleFunc = pipelineElement ->
+                    NullSafe.isTrue(elementIdToHasActiveFilterMap.get(pipelineElement.getId()))
+                            ? BASE_CLASS + "-filterOn"
+                            : BASE_CLASS + "-filterOff";
 
-        // Pipe element ID column
-        final Column<PipelineElement, String> textColumn = DataGridUtil.textColumnBuilder(
-                        PipelineElement::getId)
-                .withStyleName(BASE_CLASS + "-textCell")
-                .build();
-        elementChooser.addColumn(textColumn);
+            // Pipe element ID column
+            final Column<PipelineElement, String> textColumn = DataGridUtil.textColumnBuilder(
+                            PipelineElement::getId)
+                    .withStyleName(BASE_CLASS + "-textCell")
+                    .build();
+            elementChooser.addColumn(textColumn);
 
-        // Pipe element has active filter icon column (only visible if active filter)
-        final Column<PipelineElement, Preset> filterIconColumn = DataGridUtil.svgPresetColumnBuilder(
-                        false,
-                        (PipelineElement pipelineElement) ->
-                                SvgPresets.FILTER.title("Has active filter(s)"))
-                .withStyleName(BASE_CLASS + "-filterIconCell svgIcon icon-colour__green")
-                .withConditionalStyleName(filterActiveStyleFunc)
-                .centerAligned()
-                .build();
-        elementChooser.addColumn(filterIconColumn);
-        elementChooser.setColumnWidth(filterIconColumn, ICON_COL_WIDTH, Unit.PX);
+            // Pipe element has active filter icon column (only visible if active filter)
+            final Column<PipelineElement, Preset> filterIconColumn = DataGridUtil.svgPresetColumnBuilder(
+                            false,
+                            (PipelineElement pipelineElement) ->
+                                    SvgPresets.FILTER.title("Has active filter(s)"))
+                    .withStyleName(BASE_CLASS + "-filterIconCell svgIcon icon-colour__green")
+                    .withConditionalStyleName(filterActiveStyleFunc)
+                    .centerAligned()
+                    .build();
+            elementChooser.addColumn(filterIconColumn);
+            elementChooser.setColumnWidth(filterIconColumn, ICON_COL_WIDTH, Unit.PX);
 
-        elementChooser.setSelectionModel(elementSelectionModel, new BasicSelectionEventManager<>(elementChooser));
-        elementChooser.setWidth("100%", true);
+            elementChooser.setSelectionModel(elementSelectionModel, new BasicSelectionEventManager<>(elementChooser));
+            elementChooser.setWidth("100%", true);
+        });
 
         getView().setElementChooser(elementChooser);
         getView().setXPathList(xPathListPresenter.getView());
@@ -273,10 +276,10 @@ public class SteppingFilterPresenter extends
     private void updateLocalActiveFilterState() {
         if (currentElementId != null) {
             final boolean hasActiveFilters = getView().getSkipToErrors() != null
-                    || getView().getSkipToOutput() != null
-                    || xPathListPresenter.getDataProvider().getList()
-                    .stream()
-                    .anyMatch(Objects::nonNull);
+                                             || getView().getSkipToOutput() != null
+                                             || xPathListPresenter.getDataProvider().getList()
+                                                     .stream()
+                                                     .anyMatch(Objects::nonNull);
             elementIdToHasActiveFilterMap.put(currentElementId, hasActiveFilters);
             elementChooser.redraw();
         }

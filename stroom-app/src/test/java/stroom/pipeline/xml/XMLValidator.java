@@ -25,6 +25,7 @@ import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.task.api.TaskContextFactory;
 import stroom.test.common.StroomPipelineTestFileUtil;
@@ -86,9 +87,10 @@ public class XMLValidator {
                             // Create the pipeline.
                             final DocRef pipelineRef =
                                     PipelineTestUtil.createTestPipeline(pipelineStore,
-                                    StroomPipelineTestFileUtil.getString("F2XTestUtil/validation.Pipeline.data.xml"));
+                                    StroomPipelineTestFileUtil.getString("F2XTestUtil/validation.Pipeline.json"));
                             final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
-                            final PipelineData pipelineData = pipelineDoc.getPipelineData();
+                            PipelineData pipelineData = pipelineDoc.getPipelineData();
+                            final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
 
                             // final ElementType schemaFilterElementType = new ElementType(
                             // "SchemaFilter");
@@ -96,16 +98,18 @@ public class XMLValidator {
                             // PropertyType(
                             // schemaFilterElementType, "schemaValidation", "Boolean",
                             // false);
-                            pipelineData.addProperty(PipelineDataUtil.createProperty("schemaFilter",
+                            builder.addProperty(PipelineDataUtil.createProperty("schemaFilter",
                                     "schemaValidation",
                                     false));
                             // final PropertyType schemaGroupPropertyType = new
                             // PropertyType(
                             // schemaFilterElementType, "schemaGroup", "String", false);
-                            pipelineData
+                            builder
                                     .addProperty(PipelineDataUtil.createProperty("schemaFilter",
                                             "schemaGroup",
                                             "DATA_SPLITTER"));
+                            pipelineData = builder.build();
+                            pipelineDoc.setPipelineData(pipelineData);
                             pipelineStore.writeDocument(pipelineDoc);
 
                             final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData, taskContext1);

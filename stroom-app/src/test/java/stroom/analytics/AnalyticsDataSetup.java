@@ -117,7 +117,7 @@ public class AnalyticsDataSetup {
         // Add extraction pipeline.
         final DocRef searchResultPipeline = storeCreationTool.getSearchResultPipeline(
                 "Search result",
-                resourcePath.resolve("dynamic-result-pipeline.xml"),
+                resourcePath.resolve("dynamic-result-pipeline.json"),
                 resourcePath.resolve("dynamic-index.xsl"));
 
         // Add view.
@@ -158,7 +158,7 @@ public class AnalyticsDataSetup {
         // Create index pipeline.
         final DocRef indexPipeline = storeCreationTool.getIndexPipeline(
                 "Dynamic Index",
-                resourcePath.resolve("indexing-pipeline.xml"),
+                resourcePath.resolve("indexing-pipeline.json"),
                 resourcePath.resolve("dynamic-index.xsl"),
                 indexDocRef);
 

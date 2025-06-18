@@ -56,7 +56,6 @@ public class SchemaFilterFactory {
             new StoreFactoryImpl(
                     persistence,
                     null,
-                    null,
                     securityContext,
                     MockDocRefInfoService::new),
             serialiser);
@@ -74,9 +73,9 @@ public class SchemaFilterFactory {
                 DS3ParserFactory.NAMESPACE_URI,
                 DS3ParserFactory.SYSTEM_ID,
                 ContentPacks.CORE_XML_SCHEMAS_PACK,
-                "XML Schemas/" +
-                "data-splitter/" +
-                "data_splitter_v3_0.XMLSchema.9e1e2567-ba83-4720-95c0-f882b951bd3e.data.xsd");
+                "XML_Schemas/" +
+                "data_splitter/" +
+                "data_splitter_v3_0.XMLSchema.9e1e2567-ba83-4720-95c0-f882b951bd3e.xsd");
     }
 
     public SchemaFilter getSchemaFilter(final String namespaceURI, final ErrorReceiverProxy errorReceiverProxy) {

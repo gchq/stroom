@@ -18,6 +18,7 @@ package stroom.pipeline.structure.client.view;
 
 import stroom.data.grid.client.MouseHelper;
 import stroom.pipeline.shared.data.PipelineElement;
+import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.util.shared.Severity;
 import stroom.widget.htree.client.ArrowConnectorRenderer;
 import stroom.widget.htree.client.ConnectorRenderer;
@@ -122,6 +123,12 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
     public void setSelectionModel(final SelectionModel<PipelineElement> selectionModel) {
         if (renderer != null) {
             cellRenderer.setSelectionModel(selectionModel);
+        }
+    }
+
+    public void setPipelineModel(final PipelineModel pipelineModel) {
+        if (renderer != null) {
+            cellRenderer.setPipelineModel(pipelineModel);
         }
     }
 

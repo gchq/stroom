@@ -25,7 +25,6 @@ dependencies {
     implementation libs.jakarta.validation.api
     implementation libs.javassist
     implementation libs.jakarta.inject
-    implementation libs.jaxb.api
     implementation libs.quartz
     implementation libs.saxon.he
     implementation libs.slf4j.api

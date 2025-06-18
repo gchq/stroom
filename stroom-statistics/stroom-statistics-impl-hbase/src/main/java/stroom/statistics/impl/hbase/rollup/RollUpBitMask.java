@@ -18,8 +18,6 @@ package stroom.statistics.impl.hbase.rollup;
 
 import stroom.bytebuffer.hbase.Bytes;
 
-import jakarta.xml.bind.DatatypeConverter;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -540,10 +538,6 @@ public class RollUpBitMask {
      */
     public byte[] asBytes() {
         return this.maskAsBytes;
-    }
-
-    public String asHexString() {
-        return DatatypeConverter.printHexBinary(this.maskAsBytes);
     }
 
     /**

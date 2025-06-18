@@ -25,13 +25,9 @@ dependencies {
     implementation libs.jackson.annotations
     implementation libs.jakarta.validation.api
     implementation libs.jakarta.inject
-    implementation libs.jaxb.api
     implementation libs.restygwt
-//    implementation libs.saxon.he
     implementation libs.slf4j.api
-//    implementation libs.vavr
-//    //implementation libs.xml.apis
-//
+
     testImplementation libs.assertj.core
     testImplementation libs.junit.jupiter.api
     testImplementation libs.mockito.core

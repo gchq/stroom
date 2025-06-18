@@ -25,7 +25,6 @@ import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
-import stroom.importexport.api.ImportConverter;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
@@ -72,21 +71,18 @@ public class FeedStoreImpl implements FeedStore {
     private final SecurityContext securityContext;
     private final FeedSerialiser serialiser;
     private final Provider<FsVolumeGroupService> fsVolumeGroupServiceProvider;
-    private final ImportConverter importConverter;
 
     @Inject
     public FeedStoreImpl(final StoreFactory storeFactory,
                          final FeedNameValidator feedNameValidator,
                          final FeedSerialiser serialiser,
                          final SecurityContext securityContext,
-                         final Provider<FsVolumeGroupService> fsVolumeGroupServiceProvider,
-                         final ImportConverter importConverter) {
+                         final Provider<FsVolumeGroupService> fsVolumeGroupServiceProvider) {
         this.fsVolumeGroupServiceProvider = fsVolumeGroupServiceProvider;
         this.store = storeFactory.createStore(serialiser, FeedDoc.TYPE, FeedDoc.class);
         this.feedNameValidator = feedNameValidator;
         this.securityContext = securityContext;
         this.serialiser = serialiser;
-        this.importConverter = importConverter;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -227,14 +223,9 @@ public class FeedStoreImpl implements FeedStore {
 
         // If the imported feed's vol grp doesn't exist in this env use our default
         // or null it out
-        Map<String, byte[]> effectiveDataMap = importConverter.convert(
-                docRef,
-                dataMap,
-                importState,
-                importSettings,
-                securityContext.getUserIdentityForAudit());
+        Map<String, byte[]> effectiveDataMap = dataMap;
         try {
-            final FeedDoc feedDoc = serialiser.read(effectiveDataMap);
+            final FeedDoc feedDoc = serialiser.read(dataMap);
 
             final String volumeGroup = feedDoc.getVolumeGroup();
             if (volumeGroup != null) {
@@ -316,7 +307,7 @@ public class FeedStoreImpl implements FeedStore {
         final List<DocRef> list = list();
         for (final DocRef docRef : list) {
             if (name.equals(docRef.getName()) &&
-                    (whitelistUuid == null || !whitelistUuid.equals(docRef))) {
+                (whitelistUuid == null || !whitelistUuid.equals(docRef))) {
                 return true;
             }
         }
