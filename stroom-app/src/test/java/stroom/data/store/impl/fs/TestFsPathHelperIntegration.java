@@ -66,8 +66,6 @@ public class TestFsPathHelperIntegration {
 
         Guice.createInjector(
                         localModule,
-                        new FsTestModule(),
-//                        new FsDataStoreDbModule(),
                         new FsDataStoreDbModule(),
                         new FsDataStoreDaoModule(),
                         new MockClusterLockModule(),

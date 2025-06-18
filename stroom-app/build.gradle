@@ -129,9 +129,6 @@ dependencies {
     implementation project(':stroom-job:stroom-job-impl-db-jooq')
     implementation project(':stroom-kafka:stroom-kafka-api')
     implementation project(':stroom-kafka:stroom-kafka-impl')
-    implementation project(':stroom-legacy:stroom-legacy-db-migration')
-    implementation project(':stroom-legacy:stroom-legacy-impex_6_1')
-    implementation project(':stroom-legacy:stroom-legacy-model_6_1')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-impl')
     implementation project(':stroom-lmdb')
@@ -212,7 +209,6 @@ dependencies {
     implementation libs.jakarta.servlet.api
     implementation libs.jakarta.validation.api
     implementation libs.jakarta.inject
-    implementation libs.jaxb.api
     implementation libs.jcommander
     implementation libs.jersey.common
     implementation libs.jetty.server
@@ -652,8 +648,10 @@ tasks.register('downloadSend', Download) {
 
     // Github rate limits unless you authenticate so use the special
     // auto generated workflow GITHUB_TOKEN
-    def token = "$System.env.GITHUB_TOKEN"
-    if (token != null && token != "") {
+    def token = System.getenv('GITHUB_TOKEN')
+    if (token != null && !token.isEmpty()) {
+        // Don't log the actual token obvs
+        println "Adding auth token for ${src}"
         header 'Authorization', "Bearer $token"
     }
 }
@@ -665,8 +663,10 @@ tasks.register('downloadSendArgs', Download) {
 
     // Github rate limits unless you authenticate so use the special
     // auto generated workflow GITHUB_TOKEN
-    def token = "$System.env.GITHUB_TOKEN"
-    if (token != null && token != "") {
+    def token = System.getenv('GITHUB_TOKEN')
+    if (token != null && !token.isEmpty()) {
+        // Don't log the actual token obvs
+        println "Adding auth token for ${src}"
         header 'Authorization', "Bearer $token"
     }
 }

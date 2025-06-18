@@ -12,7 +12,6 @@ dependencies {
     implementation libs.guice
     implementation libs.jackson.annotations
     implementation libs.jakarta.inject
-    implementation libs.jaxb.api
     implementation libs.slf4j.api
     implementation libs.vavr
 

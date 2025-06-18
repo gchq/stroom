@@ -21,7 +21,6 @@ dependencies {
 
     implementation libs.eventLogging
     implementation libs.guice
-    implementation libs.jaxb.api
     implementation libs.restygwt
     implementation libs.slf4j.api
     implementation libs.swagger.annotations

@@ -1,0 +1,28 @@
+{
+  "elements" : {
+    "add" : [ {
+      "id" : "xPathExtractionOutputFilter",
+      "type" : "XPathExtractionOutputFilter"
+    } ],
+    "remove" : [ {
+      "id" : "searchResultOutputFilter",
+      "type" : "SearchResultOutputFilter"
+    } ]
+  },
+  "properties" : {
+    "add" : [ {
+      "element" : "xsltFilter",
+      "name" : "xslt"
+    } ]
+  },
+  "links" : {
+    "add" : [ {
+      "from" : "xsltFilter",
+      "to" : "xPathExtractionOutputFilter"
+    } ],
+    "remove" : [ {
+      "from" : "xsltFilter",
+      "to" : "searchResultOutputFilter"
+    } ]
+  }
+}

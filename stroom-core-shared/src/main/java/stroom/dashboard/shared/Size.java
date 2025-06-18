@@ -21,23 +21,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.xml.bind.annotation.XmlType;
 
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlRootElement(name = "size")
-@XmlType(name = "Size", propOrder = {"width", "height"})
 @JsonPropertyOrder({"width", "height"})
 @JsonInclude(Include.NON_NULL)
 public class Size {
 
-    @XmlElement(name = "width")
     @JsonProperty("width")
     private int width;
-    @XmlElement(name = "height")
     @JsonProperty("height")
     private int height;
 

@@ -63,13 +63,11 @@ dependencies {
     implementation libs.jakarta.validation.api
     implementation libs.javassist
     implementation libs.jakarta.inject
-    implementation libs.jaxb.api
     implementation libs.restygwt
     implementation libs.saxon.he
     implementation libs.slf4j.api
     implementation libs.swagger.annotations
     implementation libs.ws.rs.api
-    //implementation libs.xml.apis
 
     runtimeOnly libs.jackson.annotations
     runtimeOnly libs.jackson.core

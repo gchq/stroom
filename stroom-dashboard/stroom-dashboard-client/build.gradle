@@ -15,6 +15,5 @@ dependencies {
     implementation libs.gwtp.mvp.client
     implementation libs.jackson.annotations
     implementation libs.javax.inject.gwt
-    implementation libs.jaxb.api
     implementation libs.restygwt
 }

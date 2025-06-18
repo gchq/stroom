@@ -6,5 +6,4 @@ dependencies {
 
     implementation libs.jackson.annotations
     implementation libs.guice
-    implementation libs.jaxb.api
 }

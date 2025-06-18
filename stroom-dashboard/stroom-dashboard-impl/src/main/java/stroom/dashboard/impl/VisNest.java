@@ -19,17 +19,12 @@ package stroom.dashboard.impl;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlType;
 
 import java.io.Serializable;
 
 @JsonPropertyOrder({"key", "limit", "nest", "values"})
 @JsonInclude(Include.NON_NULL)
-@XmlType(name = "VisNest", propOrder = {"key", "limit", "nest", "values"})
 public class VisNest implements Serializable {
-
-    private static final long serialVersionUID = 1272545271946712570L;
 
     private VisField key;
     private VisLimit limit;
@@ -50,7 +45,6 @@ public class VisNest implements Serializable {
         this.values = values;
     }
 
-    @XmlElement
     public VisField getKey() {
         return key;
     }
@@ -59,7 +53,6 @@ public class VisNest implements Serializable {
         this.key = key;
     }
 
-    @XmlElement
     public VisLimit getLimit() {
         return limit;
     }
@@ -68,7 +61,6 @@ public class VisNest implements Serializable {
         this.limit = limit;
     }
 
-    @XmlElement
     public VisNest getNest() {
         return nest;
     }
@@ -77,7 +69,6 @@ public class VisNest implements Serializable {
         this.nest = nest;
     }
 
-    @XmlElement
     public VisValues getValues() {
         return values;
     }

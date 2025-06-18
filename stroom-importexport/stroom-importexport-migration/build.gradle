@@ -13,7 +13,6 @@ dependencies {
 //    //implementation libs.guice
 //    //implementation libs.jakarta.inject
 //
-    implementation libs.jaxb.api
 //
     implementation libs.slf4j.api
 //    testImplementation libs.junit.jupiter.api

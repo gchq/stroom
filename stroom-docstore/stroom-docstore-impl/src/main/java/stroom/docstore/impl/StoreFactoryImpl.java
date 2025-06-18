@@ -5,7 +5,6 @@ import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.shared.Doc;
-import stroom.importexport.api.ImportConverter;
 import stroom.security.api.SecurityContext;
 import stroom.util.entityevent.EntityEventBus;
 
@@ -16,19 +15,16 @@ public class StoreFactoryImpl implements StoreFactory {
 
     private final Persistence persistence;
     private final EntityEventBus entityEventBus;
-    private final ImportConverter importConverter;
     private final SecurityContext securityContext;
     private final Provider<DocRefDecorator> docRefInfoServiceProvider;
 
     @Inject
     public StoreFactoryImpl(final Persistence persistence,
                             final EntityEventBus entityEventBus,
-                            final ImportConverter importConverter,
                             final SecurityContext securityContext,
                             final Provider<DocRefDecorator> docRefInfoServiceProvider) {
         this.persistence = persistence;
         this.entityEventBus = entityEventBus;
-        this.importConverter = importConverter;
         this.securityContext = securityContext;
         this.docRefInfoServiceProvider = docRefInfoServiceProvider;
     }
@@ -40,7 +36,6 @@ public class StoreFactoryImpl implements StoreFactory {
         return new StoreImpl<>(
                 persistence,
                 entityEventBus,
-                importConverter,
                 securityContext,
                 docRefInfoServiceProvider,
                 serialiser,

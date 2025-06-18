@@ -34,7 +34,6 @@ dependencies {
     implementation libs.dropwizard.metrics.core
     implementation libs.guice
     implementation libs.jackson.annotations
-    implementation libs.jaxb.api
     implementation libs.slf4j.api
 
     testImplementation project(':stroom-test-common')

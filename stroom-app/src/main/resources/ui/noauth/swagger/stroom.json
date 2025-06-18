@@ -7098,9 +7098,39 @@
         "tags" : [ "Doc Permissions" ]
       }
     },
-    "/pipeline/v1/fetchPipelineData" : {
+    "/pipeline/v1/fetchPipelineJson" : {
       "post" : {
-        "operationId" : "fetchPipelineData",
+        "operationId" : "fetchPipelineJson",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DocRef"
+              }
+            }
+          },
+          "description" : "pipeline",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FetchPipelineJsonResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch the JSON for a pipeline",
+        "tags" : [ "Pipelines" ]
+      }
+    },
+    "/pipeline/v1/fetchPipelineLayers" : {
+      "post" : {
+        "operationId" : "fetchPipelineLayers",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7119,7 +7149,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/PipelineData"
+                    "$ref" : "#/components/schemas/PipelineLayer"
                   }
                 }
               }
@@ -7127,37 +7157,7 @@
             "description" : "default response"
           }
         },
-        "summary" : "Fetch data for a pipeline",
-        "tags" : [ "Pipelines" ]
-      }
-    },
-    "/pipeline/v1/fetchPipelineXml" : {
-      "post" : {
-        "operationId" : "fetchPipelineXml",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/DocRef"
-              }
-            }
-          },
-          "description" : "pipeline",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/FetchPipelineXmlResponse"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Fetch the XML for a pipeline",
+        "summary" : "Fetch layers for a pipeline",
         "tags" : [ "Pipelines" ]
       }
     },
@@ -7183,14 +7183,14 @@
         "tags" : [ "Pipelines" ]
       }
     },
-    "/pipeline/v1/savePipelineXml" : {
+    "/pipeline/v1/savePipelineJson" : {
       "put" : {
-        "operationId" : "savePipelineXml",
+        "operationId" : "savePipelineJson",
         "requestBody" : {
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/SavePipelineXmlRequest"
+                "$ref" : "#/components/schemas/SavePipelineJsonRequest"
               }
             }
           },
@@ -7209,7 +7209,7 @@
             "description" : "default response"
           }
         },
-        "summary" : "Update a pipeline doc with XML directly",
+        "summary" : "Update a pipeline doc with JSON directly",
         "tags" : [ "Pipelines" ]
       }
     },
@@ -14077,9 +14077,6 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/ComponentConfig"
-            },
-            "xml" : {
-              "wrapped" : true
             }
           },
           "designMode" : {
@@ -14103,9 +14100,6 @@
           "timeRange" : {
             "$ref" : "#/components/schemas/TimeRange"
           }
-        },
-        "xml" : {
-          "name" : "dashboard"
         }
       },
       "DashboardDoc" : {
@@ -14341,9 +14335,6 @@
             "type" : "string",
             "enum" : [ "NANOSECONDS", "MILLISECONDS", "SECONDS", "MINUTES", "HOURS", "DAYS", "WEEKS", "MONTHS", "YEARS" ]
           }
-        },
-        "xml" : {
-          "name" : "dataRetentionRule"
         }
       },
       "DataRetentionRules" : {
@@ -14381,9 +14372,6 @@
           "version" : {
             "type" : "string"
           }
-        },
-        "xml" : {
-          "name" : "dataRetentionPolicy"
         }
       },
       "DateTimeFormatSettings" : {
@@ -14633,10 +14621,7 @@
             "example" : "9f6184b4-bd78-48bc-b0cd-6e51a357f6a6"
           }
         },
-        "required" : [ "uuid" ],
-        "xml" : {
-          "name" : "doc"
-        }
+        "required" : [ "uuid" ]
       },
       "DocRefInfo" : {
         "type" : "object",
@@ -15704,9 +15689,6 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/ExpressionItem"
-            },
-            "xml" : {
-              "wrapped" : true
             }
           },
           "enabled" : {
@@ -15719,8 +15701,7 @@
             "description" : "The logical addOperator type",
             "enum" : [ "AND", "OR", "NOT" ]
           }
-        },
-        "required" : [ "op" ]
+        }
       },
       "ExpressionTerm" : {
         "type" : "object",
@@ -16073,14 +16054,14 @@
           }
         }
       },
-      "FetchPipelineXmlResponse" : {
+      "FetchPipelineJsonResponse" : {
         "type" : "object",
         "properties" : {
+          "json" : {
+            "type" : "string"
+          },
           "pipeline" : {
             "$ref" : "#/components/schemas/DocRef"
-          },
-          "xml" : {
-            "type" : "string"
           }
         }
       },
@@ -17796,9 +17777,6 @@
             "type" : "integer",
             "format" : "int64"
           }
-        },
-        "xml" : {
-          "name" : "limits"
         }
       },
       "LinkEvents" : {
@@ -18534,8 +18512,7 @@
             "type" : "string",
             "description" : "The property value"
           }
-        },
-        "required" : [ "key", "value" ]
+        }
       },
       "ParamInfo" : {
         "type" : "object",
@@ -18575,18 +18552,9 @@
           "pipelineReferences" : {
             "$ref" : "#/components/schemas/PipelineReferences"
           },
-          "processors" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/Processor"
-            }
-          },
           "properties" : {
             "$ref" : "#/components/schemas/PipelineProperties"
           }
-        },
-        "xml" : {
-          "name" : "pipeline"
         }
       },
       "PipelineDoc" : {
@@ -18632,17 +18600,13 @@
       "PipelineElement" : {
         "type" : "object",
         "properties" : {
-          "elementType" : {
-            "$ref" : "#/components/schemas/PipelineElementType"
-          },
           "id" : {
             "type" : "string"
           },
           "type" : {
             "type" : "string"
           }
-        },
-        "required" : [ "id", "type" ]
+        }
       },
       "PipelineElementType" : {
         "type" : "object",
@@ -18673,19 +18637,24 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/PipelineElement"
-            },
-            "xml" : {
-              "wrapped" : true
             }
           },
           "remove" : {
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/PipelineElement"
-            },
-            "xml" : {
-              "wrapped" : true
             }
+          }
+        }
+      },
+      "PipelineLayer" : {
+        "type" : "object",
+        "properties" : {
+          "pipelineData" : {
+            "$ref" : "#/components/schemas/PipelineData"
+          },
+          "sourcePipeline" : {
+            "$ref" : "#/components/schemas/DocRef"
           }
         }
       },
@@ -18695,14 +18664,10 @@
           "from" : {
             "type" : "string"
           },
-          "sourcePipeline" : {
-            "$ref" : "#/components/schemas/DocRef"
-          },
           "to" : {
             "type" : "string"
           }
-        },
-        "required" : [ "from", "to" ]
+        }
       },
       "PipelineLinks" : {
         "type" : "object",
@@ -18711,18 +18676,12 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/PipelineLink"
-            },
-            "xml" : {
-              "wrapped" : true
             }
           },
           "remove" : {
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/PipelineLink"
-            },
-            "xml" : {
-              "wrapped" : true
             }
           }
         }
@@ -18734,18 +18693,12 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/PipelineProperty"
-            },
-            "xml" : {
-              "wrapped" : true
             }
           },
           "remove" : {
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/PipelineProperty"
-            },
-            "xml" : {
-              "wrapped" : true
             }
           }
         }
@@ -18759,17 +18712,10 @@
           "name" : {
             "type" : "string"
           },
-          "propertyType" : {
-            "$ref" : "#/components/schemas/PipelinePropertyType"
-          },
-          "sourcePipeline" : {
-            "$ref" : "#/components/schemas/DocRef"
-          },
           "value" : {
             "$ref" : "#/components/schemas/PipelinePropertyValue"
           }
-        },
-        "required" : [ "element", "name" ]
+        }
       },
       "PipelinePropertyType" : {
         "type" : "object",
@@ -18841,14 +18787,10 @@
           "pipeline" : {
             "$ref" : "#/components/schemas/DocRef"
           },
-          "sourcePipeline" : {
-            "$ref" : "#/components/schemas/DocRef"
-          },
           "streamType" : {
             "type" : "string"
           }
-        },
-        "required" : [ "element", "feed", "name", "pipeline", "streamType" ]
+        }
       },
       "PipelineReferences" : {
         "type" : "object",
@@ -18857,18 +18799,12 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/PipelineReference"
-            },
-            "xml" : {
-              "wrapped" : true
             }
           },
           "remove" : {
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/PipelineReference"
-            },
-            "xml" : {
-              "wrapped" : true
             }
           }
         }
@@ -19079,9 +19015,6 @@
             "type" : "integer",
             "format" : "int32"
           }
-        },
-        "xml" : {
-          "name" : "parameters"
         }
       },
       "ProcessorFilter" : {
@@ -19576,9 +19509,6 @@
           "timeRange" : {
             "$ref" : "#/components/schemas/TimeRange"
           }
-        },
-        "xml" : {
-          "name" : "query"
         }
       },
       "QueryDoc" : {
@@ -19827,8 +19757,7 @@
             "description" : "The UUID that makes up the query key",
             "example" : "7740bcd0-a49e-4c22-8540-044f85770716"
           }
-        },
-        "required" : [ "uuid" ]
+        }
       },
       "QuerySearchRequest" : {
         "type" : "object",
@@ -20007,9 +19936,6 @@
             "type" : "integer",
             "format" : "int32"
           }
-        },
-        "xml" : {
-          "name" : "dataReceiptRule"
         }
       },
       "ReceiveDataRules" : {
@@ -21155,14 +21081,14 @@
           }
         }
       },
-      "SavePipelineXmlRequest" : {
+      "SavePipelineJsonRequest" : {
         "type" : "object",
         "properties" : {
+          "json" : {
+            "type" : "string"
+          },
           "pipeline" : {
             "$ref" : "#/components/schemas/DocRef"
-          },
-          "xml" : {
-            "type" : "string"
           }
         }
       },
@@ -21429,9 +21355,6 @@
         "type" : "object",
         "description" : "A request for new search or a follow up request for more data for an existing iterative search",
         "properties" : {
-          "dateTimeLocale" : {
-            "type" : "string"
-          },
           "dateTimeSettings" : {
             "$ref" : "#/components/schemas/DateTimeSettings"
           },
@@ -21449,9 +21372,6 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/ResultRequest"
-            },
-            "xml" : {
-              "wrapped" : true
             }
           },
           "searchRequestSource" : {
@@ -21462,10 +21382,6 @@
             "format" : "int64",
             "description" : "Set the maximum time (in ms) for the server to wait for a complete result set. The timeout applies to both incremental and non incremental queries, though the behaviour is slightly different. The timeout will make the server wait for which ever comes first out of the query completing or the timeout period being reached. If no value is supplied then for an incremental query a default value of 0 will be used (i.e. returning immediately) and for a non-incremental query the server's default timeout period will be used. For an incremental query, if the query has not completed by the end of the timeout period, it will return the currently know results with complete=false, however for a non-incremental query it will return no results, complete=false and details of the timeout in the error field"
           }
-        },
-        "required" : [ "incremental", "query", "resultRequests" ],
-        "xml" : {
-          "name" : "searchRequest"
         }
       },
       "SearchRequestSource" : {
@@ -21935,9 +21851,6 @@
             "type" : "integer",
             "format" : "int32"
           }
-        },
-        "xml" : {
-          "name" : "size"
         }
       },
       "SnapshotRequest" : {
@@ -21995,9 +21908,6 @@
           "zkPath" : {
             "type" : "string"
           }
-        },
-        "xml" : {
-          "name" : "connection"
         }
       },
       "SolrConnectionTestResponse" : {
@@ -22264,9 +22174,6 @@
               "type" : "array",
               "items" : {
                 "$ref" : "#/components/schemas/LayoutConfig"
-              },
-              "xml" : {
-                "wrapped" : true
               }
             },
             "dimension" : {
@@ -22274,10 +22181,7 @@
               "format" : "int32"
             }
           }
-        } ],
-        "xml" : {
-          "name" : "splitLayout"
-        }
+        } ]
       },
       "State" : {
         "type" : "object",
@@ -22919,9 +22823,6 @@
           "visible" : {
             "type" : "boolean"
           }
-        },
-        "xml" : {
-          "name" : "tab"
         }
       },
       "TabLayoutConfig" : {
@@ -22939,16 +22840,10 @@
               "type" : "array",
               "items" : {
                 "$ref" : "#/components/schemas/TabConfig"
-              },
-              "xml" : {
-                "wrapped" : true
               }
             }
           }
-        } ],
-        "xml" : {
-          "name" : "tabLayout"
-        }
+        } ]
       },
       "TableBuilderAnalyticProcessConfig" : {
         "type" : "object",

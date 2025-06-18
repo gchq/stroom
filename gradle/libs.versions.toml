@@ -11,7 +11,7 @@ commons-io = "2.18.0"
 dropwizard = "4.0.12" # used to set the dropwizard-bom version, that controls lots of dependency versions
 elasticsearch = "8.12.2"
 httpcore = "4.4.16" # Transient dependency of Elasticsearch
-flyway = "10.0.0"
+flyway = "11.9.1"
 guice = "7.0.0"
 gwt = "2.12.2"
 jackson-swagger = "2.11.1" # Specific version of jackson for use with the swagger plugin
@@ -183,7 +183,6 @@ wiremock = { module = "org.wiremock:wiremock", version = "3.3.1" }
 ws-rs-api = { module = "jakarta.ws.rs:jakarta.ws.rs-api" } # version controlled by dropwizard-dependencies
 ws-rs-api-gwt = { module = "javax.ws.rs:javax.ws.rs-api", version = "2.1.1" } # For GWT compilation
 xerces = { module = "xerces:xercesImpl", version = "2.12.2" }
-#xml-apis = { module = "xml-apis:xml-apis", version = "2.0.2" }
 zero-allocation-hashing = { module = "net.openhft:zero-allocation-hashing", version = "0.16" }
 
 [plugins]
@@ -200,7 +199,7 @@ shadow = { id = "com.gradleup.shadow", version = "9.0.0-beta6" }
 
 jooq = { id = "nu.studer.jooq", version = "8.2.3" }
 
-flyway = { id = "org.flywaydb.flyway", version = "10.0.0" }
+flyway = { id = "org.flywaydb.flyway", version = "11.9.1" }
 
 jdeps = { id = "org.kordamp.gradle.jdeps", version = "0.16.0" }
 

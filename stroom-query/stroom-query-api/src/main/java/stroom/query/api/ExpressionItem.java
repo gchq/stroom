@@ -23,11 +23,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlSeeAlso;
-import jakarta.xml.bind.annotation.XmlType;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -42,23 +37,15 @@ import java.util.function.Predicate;
         @JsonSubTypes.Type(value = ExpressionTerm.class, name = "term")
 })
 @JsonInclude(Include.NON_NULL)
-@XmlType(name = "ExpressionItem", propOrder = {"enabled"})
-@XmlSeeAlso({ExpressionOperator.class, ExpressionTerm.class})
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(
         description = "Base type for an item in an expression tree",
         subTypes = {ExpressionOperator.class, ExpressionTerm.class})
 public abstract sealed class ExpressionItem implements Serializable permits ExpressionOperator, ExpressionTerm {
 
-    @XmlElement
     @Schema(description = "Whether this item in the expression tree is enabled or not",
             example = "true")
     @JsonProperty(value = "enabled")
-    private Boolean enabled; // TODO : XML serialisation still requires no-arg constructor and mutable fields
-
-    public ExpressionItem() {
-        // TODO : XML serialisation still requires no-arg constructor and mutable fields
-    }
+    private final Boolean enabled;
 
     @JsonCreator
     public ExpressionItem(@JsonProperty("enabled") final Boolean enabled) {
@@ -90,10 +77,9 @@ public abstract sealed class ExpressionItem implements Serializable permits Expr
         if (this == o) {
             return true;
         }
-        if (!(o instanceof ExpressionItem)) {
+        if (!(o instanceof final ExpressionItem that)) {
             return false;
         }
-        final ExpressionItem that = (ExpressionItem) o;
         return Objects.equals(enabled, that.enabled);
     }
 

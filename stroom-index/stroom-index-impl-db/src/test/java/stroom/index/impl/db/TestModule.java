@@ -27,7 +27,6 @@ import stroom.index.impl.IndexStore;
 import stroom.index.mock.MockIndexVolumeGroupService;
 import stroom.security.api.SecurityContext;
 import stroom.test.common.util.db.DbTestModule;
-import stroom.util.db.ForceLegacyMigration;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -53,8 +52,6 @@ class TestModule extends AbstractModule {
         when(securityContext.getUserIdentityForAudit())
                 .thenReturn(TEST_USER);
         bind(SecurityContext.class).toInstance(securityContext);
-        bind(ForceLegacyMigration.class).toInstance(new ForceLegacyMigration() {
-        });
         bind(IndexVolumeGroupService.class).toInstance(new MockIndexVolumeGroupService());
         bind(IndexStore.class).toInstance(mock(IndexStore.class));
     }

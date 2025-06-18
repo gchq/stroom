@@ -22,14 +22,19 @@ import stroom.pipeline.client.event.HasChangeDataHandlers;
 import stroom.pipeline.shared.PipelineDataMerger;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.pipeline.shared.data.PipelineElements;
+import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.pipeline.shared.data.PipelineLink;
+import stroom.pipeline.shared.data.PipelineLinks;
 import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
-import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 
 import com.google.gwt.event.shared.GwtEvent;
@@ -45,33 +50,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
 
     private static final String SOURCE = "Source";
     public static final PipelineElement SOURCE_ELEMENT = new PipelineElement(SOURCE, SOURCE);
-    private static final PipelineElementType SOURCE_ELEMENT_TYPE = new PipelineElementType(
-            SOURCE,
-            null,
-            new String[]{
-                    PipelineElementType.ROLE_SOURCE,
-                    PipelineElementType.ROLE_HAS_TARGETS,
-                    PipelineElementType.VISABILITY_SIMPLE},
-            SvgImage.PIPELINE_STREAM);
 
-    static {
-        SOURCE_ELEMENT.setElementType(SOURCE_ELEMENT_TYPE);
-    }
-
+    private final PipelineElementTypes elementTypes;
     private final EventBus eventBus = new SimpleEventBus();
     private Map<PipelineElement, List<PipelineElement>> childMap;
     private Map<PipelineElement, PipelineElement> parentMap;
-    private PipelineData pipelineData;
-    private List<PipelineData> baseStack;
+    private PipelineLayer pipelineLayer;
+    private List<PipelineLayer> baseStack;
     private PipelineDataMerger baseData;
     private PipelineDataMerger combinedData;
+    private Map<String, SteppingFilterSettings> stepFilterMap;
 
-    public PipelineModel() {
+    public PipelineModel(final PipelineElementTypes elementTypes) {
+        this.elementTypes = elementTypes;
         baseData = new PipelineDataMerger();
         combinedData = new PipelineDataMerger();
     }
@@ -86,61 +83,72 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     private void fixSourceNodes() {
         boolean first = true;
         if (baseStack != null) {
-            for (final PipelineData base : baseStack) {
-                fixSourceNode(base, first);
+            final List<PipelineLayer> newStack = new ArrayList<>(baseStack.size());
+            for (final PipelineLayer base : baseStack) {
+                newStack.add(fixSourceNode(base, first));
                 first = false;
             }
+            baseStack = newStack;
         }
-        fixSourceNode(pipelineData, first);
+        pipelineLayer = fixSourceNode(pipelineLayer, first);
     }
 
-    private void fixSourceNode(final PipelineData pipelineData, final boolean root) {
-        if (pipelineData != null) {
-            final boolean exists = pipelineData.getAddedElements().contains(SOURCE_ELEMENT);
-            if (!exists) {
-                pipelineData.addElement(SOURCE_ELEMENT);
-                if (root) {
-                    // See if there is a link from source.
-                    final List<PipelineLink> links = pipelineData.getAddedLinks();
-                    final Set<String> allFrom = new HashSet<>();
-                    final Set<String> allTo = new HashSet<>();
-                    final Map<String, String> mapToFrom = new HashMap<>();
-                    for (final PipelineLink link : links) {
-                        allFrom.add(link.getFrom());
-                        allTo.add(link.getTo());
-                        mapToFrom.put(link.getTo(), link.getFrom());
+    private PipelineLayer fixSourceNode(final PipelineLayer pipelineLayer, final boolean root) {
+        if (pipelineLayer == null) {
+            return null;
+        }
+
+        PipelineData pipelineData = pipelineLayer.getPipelineData();
+        final boolean exists = pipelineData.getAddedElements().contains(SOURCE_ELEMENT);
+        if (exists) {
+            return pipelineLayer;
+        }
+
+        final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
+        builder.addElement(SOURCE_ELEMENT);
+        pipelineData = builder.build();
+        if (root) {
+            // See if there is a link from source.
+            final List<PipelineLink> links = pipelineData.getAddedLinks();
+            final Set<String> allFrom = new HashSet<>();
+            final Set<String> allTo = new HashSet<>();
+            final Map<String, String> mapToFrom = new HashMap<>();
+            for (final PipelineLink link : links) {
+                allFrom.add(link.getFrom());
+                allTo.add(link.getTo());
+                mapToFrom.put(link.getTo(), link.getFrom());
+            }
+
+            if (!allFrom.contains(SOURCE)) {
+                // If there is no source provided then we need to attach a parser to source
+                // as this is an old pipeline config.
+                final Optional<String> optionalParserId = pipelineData.getAddedElements()
+                        .stream()
+                        .filter(e -> e.getType().toLowerCase().contains("parser"))
+                        .map(PipelineElement::getId)
+                        .findFirst();
+
+                optionalParserId.ifPresent(parserId -> {
+                    String parentId = parserId;
+
+                    // Track back up any links that might point to the parser.
+                    String parent = parserId;
+                    while (parent != null) {
+                        parentId = parent;
+                        parent = mapToFrom.get(parent);
                     }
 
-                    if (!allFrom.contains(SOURCE)) {
-                        // If there is no source provided then we need to attach a parser to source
-                        // as this is an old pipeline config.
-                        final Optional<String> optionalParserId = pipelineData.getAddedElements()
-                                .stream()
-                                .filter(e -> e.getType().toLowerCase().contains("parser"))
-                                .map(PipelineElement::getId)
-                                .findFirst();
-
-                        optionalParserId.ifPresent(parserId -> {
-                            String parentId = parserId;
-
-                            // Track back up any links that might point to the parser.
-                            String parent = parserId;
-                            while (parent != null) {
-                                parentId = parent;
-                                parent = mapToFrom.get(parent);
-                            }
-
-                            links.add(new PipelineLink(SOURCE, parentId));
-                        });
-                    }
-                }
+                    links.add(new PipelineLink(SOURCE, parentId));
+                });
             }
         }
+
+        return new PipelineLayer(pipelineLayer.getSourcePipeline(), pipelineData);
     }
 
     private void buildCombinedData() throws PipelineModelException {
         // Merge pipeline data together.
-        List<PipelineData> combined;
+        final List<PipelineLayer> combined;
         if (baseStack != null) {
             combined = new ArrayList<>(baseStack.size() + 1);
         } else {
@@ -150,8 +158,8 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
         if (baseStack != null) {
             combined.addAll(baseStack);
         }
-        if (pipelineData != null) {
-            combined.add(pipelineData);
+        if (pipelineLayer != null) {
+            combined.add(pipelineLayer);
         }
 
         final PipelineDataMerger pipelineDataMerger = new PipelineDataMerger();
@@ -169,9 +177,10 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     }
 
     public PipelineData diff() {
-        final PipelineData result = new PipelineData();
+        final PipelineDataBuilder builder = new PipelineDataBuilder();
+        if (pipelineLayer != null) {
+            final PipelineData pipelineData = pipelineLayer.getPipelineData();
 
-        if (pipelineData != null) {
             // Get a set of valid (used/linked) elements.
             final Set<String> validElements = new HashSet<>();
             for (final List<PipelineLink> list : combinedData.getLinks().values()) {
@@ -187,7 +196,7 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
                 if (baseElement == null) {
                     // Only add the element if there are links from/to it.
                     if (validElements.contains(combinedElement.getId())) {
-                        result.addElement(combinedElement);
+                        builder.addElement(combinedElement);
                     }
                 }
             }
@@ -196,7 +205,7 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
             for (final PipelineElement baseElement : baseData.getElements().values()) {
                 final PipelineElement combinedElement = combinedData.getElements().get(baseElement.getId());
                 if (combinedElement == null) {
-                    result.removeElement(baseElement);
+                    builder.removeElement(baseElement);
                 }
             }
 
@@ -204,14 +213,14 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
             // links that are related to valid elements.
             for (final String id : validElements) {
                 if (id != null) {
-                    copyProperties(id, pipelineData.getAddedProperties(), result.getAddedProperties(),
+                    copyProperties(id, pipelineData.getAddedProperties(), builder::addProperty,
                             pipelineData.getRemovedProperties());
-                    copyProperties(id, pipelineData.getRemovedProperties(), result.getRemovedProperties(), null);
+                    copyProperties(id, pipelineData.getRemovedProperties(), builder::removeProperty, null);
 
-                    copyReferences(id, pipelineData.getAddedPipelineReferences(), result.getAddedPipelineReferences(),
-                            pipelineData.getRemovedPipelineReferences());
+                    copyReferences(id, pipelineData.getAddedPipelineReferences(),
+                            builder::addPipelineReference, pipelineData.getRemovedPipelineReferences());
                     copyReferences(id, pipelineData.getRemovedPipelineReferences(),
-                            result.getRemovedPipelineReferences(), null);
+                            builder::removePipelineReference, null);
 
                     final List<PipelineLink> combinedLinks = combinedData.getLinks().get(id);
                     final List<PipelineLink> baseLinks = baseData.getLinks().get(id);
@@ -220,7 +229,7 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
                     if (combinedLinks != null) {
                         for (final PipelineLink combinedLink : combinedLinks) {
                             if (baseLinks == null || !baseLinks.contains(combinedLink)) {
-                                result.addLink(combinedLink);
+                                builder.addLink(combinedLink);
                             }
                         }
                     }
@@ -229,18 +238,18 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
                     if (baseLinks != null) {
                         for (final PipelineLink baseLink : baseLinks) {
                             if (combinedLinks == null || !combinedLinks.contains(baseLink)) {
-                                result.removeLink(baseLink);
+                                builder.removeLink(baseLink);
                             }
                         }
                     }
                 }
             }
         }
-
-        return result;
+        return builder.build();
     }
 
-    private void copyProperties(final String id, final List<PipelineProperty> source, final List<PipelineProperty> dest,
+    private void copyProperties(final String id, final List<PipelineProperty> source,
+                                final Consumer<PipelineProperty> dest,
                                 final List<PipelineProperty> ignore) {
         final Set<PipelineProperty> set = new HashSet<>();
 
@@ -251,13 +260,13 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
         for (final PipelineProperty property : source) {
             if (id.equals(property.getElement()) && !set.contains(property)) {
                 set.add(property);
-                dest.add(property);
+                dest.accept(property);
             }
         }
     }
 
     private void copyReferences(final String id, final List<PipelineReference> source,
-                                final List<PipelineReference> dest, final List<PipelineReference> ignore) {
+                                final Consumer<PipelineReference> dest, final List<PipelineReference> ignore) {
         final Set<PipelineReference> set = new HashSet<>();
 
         if (ignore != null) {
@@ -267,13 +276,13 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
         for (final PipelineReference pipelineReference : source) {
             if (id.equals(pipelineReference.getElement()) && !set.contains(pipelineReference)) {
                 set.add(pipelineReference);
-                dest.add(pipelineReference);
+                dest.accept(pipelineReference);
             }
         }
     }
 
     public List<PipelineElement> getRemovedElements() {
-        return pipelineData.getElements().getRemove();
+        return pipelineLayer.getPipelineData().getRemovedElements();
     }
 
     private void refresh() {
@@ -314,9 +323,9 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     public PipelineElement addElement(final PipelineElement parent,
                                       final PipelineElementType elementType,
                                       final String id) throws PipelineModelException {
-        PipelineElement element;
+        final PipelineElement element;
 
-        if (id == null || id.length() == 0) {
+        if (id == null || id.isEmpty()) {
             throw new PipelineModelException("No id has been set for this element");
         } else if (elementType == null) {
             throw new PipelineModelException("No element type has been chosen");
@@ -327,15 +336,19 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
                 throw new PipelineModelException("An element with this id already exists");
             }
 
+            PipelineData pipelineData = pipelineLayer.getPipelineData();
             element = PipelineDataUtil.createElement(id, elementType.getType());
-            element.setElementType(elementType);
             if (pipelineData.getRemovedElements().contains(element)) {
                 throw new PipelineModelException("Attempt to add an element with an id that matches a hidden " +
-                        "element. Restore the existing element if required or change the element id.");
+                                                 "element. Restore the existing element if required or change " +
+                                                 "the element id.");
             }
 
-            pipelineData.addElement(element);
-            pipelineData.addLink(PipelineDataUtil.createLink(parent.getId(), id));
+            final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
+            builder.addElement(element);
+            builder.addLink(parent.getId(), id);
+            pipelineData = builder.build();
+            pipelineLayer = new PipelineLayer(pipelineLayer.getSourcePipeline(), pipelineData);
 
             buildCombinedData();
             refresh();
@@ -372,6 +385,7 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
 //        debugLinks("LINKS 1", pipelineData.getLinks());
 //        debugLinks("LINKS 1", combinedData.getLinks());
 
+        PipelineData pipelineData = pipelineLayer.getPipelineData();
         final String id = existingElement.getId();
 
         if (combinedData.getElements().containsKey(id)) {
@@ -380,18 +394,25 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
             throw new PipelineModelException("No parent element has been selected");
         }
 
+        final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
+
         // Make sure this element isn't shadowed anymore.
-        pipelineData.getRemovedElements().remove(existingElement);
+        builder.getElements().getRemoveList().remove(existingElement);
 
 //        debugLinks("LINKS 2", pipelineData.getLinks());
 //        debugLinks("LINKS 2", combinedData.getLinks());
 
         // Make sure this link isn't marked as removed.
         final PipelineLink pipelineLink = PipelineDataUtil.createLink(parent.getId(), id);
-        pipelineData.getLinks().getRemove().remove(pipelineLink);
-        if (!pipelineData.getAddedLinks().contains(pipelineLink)) {
-            pipelineData.addLink(pipelineLink);
+        builder.getLinks().getRemoveList().remove(pipelineLink);
+        if (!builder.getLinks().getAddList().contains(pipelineLink)) {
+            builder.addLink(pipelineLink);
         }
+
+
+        pipelineData = builder.build();
+        pipelineLayer = new PipelineLayer(pipelineLayer.getSourcePipeline(), pipelineData);
+
 
 //        debugLinks("LINKS 3", pipelineData.getLinks());
 //        debugLinks("LINKS 3", combinedData.getLinks());
@@ -430,20 +451,26 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     public void removeElement(final PipelineElement element) throws PipelineModelException {
         final String id = element.getId();
 
+        PipelineData pipelineData = pipelineLayer.getPipelineData();
+        final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
+
         // Remove the element.
-        pipelineData.removeElement(element);
+        builder.removeElement(element);
         // Remove all links from/to this element.
-        removeLinks(pipelineData.getLinks().getAdd(), id);
-        removeLinks(pipelineData.getLinks().getRemove(), id);
+        removeLinks(builder.getLinks().getAddList(), id);
+        removeLinks(builder.getLinks().getRemoveList(), id);
 
         // Ensure links don't come back if we restore this element.
-        for (final List<PipelineLink> links : baseData.getLinks().values()) {
-            for (final PipelineLink link : links) {
+        for (final List<PipelineLink> linkList : baseData.getLinks().values()) {
+            for (final PipelineLink link : linkList) {
                 if (link.getTo().equals(id)) {
-                    pipelineData.removeLink(link);
+                    builder.removeLink(link);
                 }
             }
         }
+
+        pipelineData = builder.build();
+        pipelineLayer = new PipelineLayer(pipelineLayer.getSourcePipeline(), pipelineData);
 
         // Update the tree.
         buildCombinedData();
@@ -457,8 +484,7 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
             final Map<String, PipelineProperty> map = combinedData.getProperties().get(element.getId());
             if (map != null) {
                 for (final PipelineProperty property : map.values()) {
-                    final PipelineProperty newProperty = new PipelineProperty();
-                    newProperty.copyFrom(property);
+                    final PipelineProperty newProperty = new PipelineProperty.Builder(property).build();
                     properties.add(newProperty);
                 }
             }
@@ -471,26 +497,52 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
         return baseData;
     }
 
-    public void setBaseStack(final List<PipelineData> baseStack) {
+    public PipelineDataMerger getCombinedData() {
+        return combinedData;
+    }
+
+    public void setBaseStack(final List<PipelineLayer> baseStack) {
         this.baseStack = baseStack;
     }
 
+    public PipelineLayer getPipelineLayer() {
+        return pipelineLayer;
+    }
+
+    public void setPipelineLayer(final PipelineLayer pipelineLayer) {
+        this.pipelineLayer = pipelineLayer;
+    }
+
     public PipelineData getPipelineData() {
-        return pipelineData;
+        return pipelineLayer.getPipelineData();
     }
 
-    public void setPipelineData(final PipelineData pipelineData) {
-        this.pipelineData = pipelineData;
+//    /**
+//     * Set the provided filters on the pipeline elements in our model
+//     */
+//    public void setStepFilters(final Map<String, SteppingFilterSettings> elementIdToStepFilterMap) {
+//        this.elementIdToStepFilterMap = elementIdToStepFilterMap;
+//        NullSafe.map(combinedData.getElements()).values().forEach(element -> {
+//            element.setSteppingFilterSettings(NullSafe.map(elementIdToStepFilterMap).get(element.getId()));
+//        });
+//        refresh();
+//    }
+
+
+    public void setStepFilterMap(final Map<String, SteppingFilterSettings> stepFilterMap) {
+        this.stepFilterMap = stepFilterMap;
     }
 
-    /**
-     * Set the provided filters on the pipeline elements in our model
-     */
-    public void setStepFilters(final Map<String, SteppingFilterSettings> elementIdToStepFilterMap) {
-        NullSafe.map(combinedData.getElements()).values().forEach(element -> {
-            element.setSteppingFilterSettings(NullSafe.map(elementIdToStepFilterMap).get(element.getId()));
-        });
-        refresh();
+    public Map<String, SteppingFilterSettings> getStepFilterMap() {
+        return stepFilterMap;
+    }
+
+    public boolean hasActiveFilters(final PipelineElement element) {
+        if (element == null || stepFilterMap == null) {
+            return false;
+        }
+        final SteppingFilterSettings settings = stepFilterMap.get(element.getId());
+        return settings != null && settings.hasActiveFilters();
     }
 
     private void removeLinks(final List<PipelineLink> list, final String element) {
@@ -500,6 +552,27 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     @Override
     public HandlerRegistration addChangeDataHandler(final ChangeDataHandler<PipelineModel> handler) {
         return eventBus.addHandler(ChangeDataEvent.getType(), handler);
+    }
+
+
+    public Map<Category, List<PipelineElementType>> getElementTypesByCategory() {
+        return elementTypes.getElementTypesByCategory();
+    }
+
+    public PipelineElementType getElementType(final PipelineElement element) {
+        return elementTypes.getElementType(element);
+    }
+
+    public boolean hasRole(final PipelineElement element, final String role) {
+        return elementTypes.hasRole(element, role);
+    }
+
+    public Map<String, PipelinePropertyType> getPropertyTypes(final PipelineElement element) {
+        return elementTypes.getPropertyTypes(element);
+    }
+
+    public PipelinePropertyType getPropertyType(final PipelineElement element, final PipelineProperty property) {
+        return elementTypes.getPropertyType(element, property);
     }
 
     @Override

@@ -78,9 +78,10 @@ import java.util.function.Supplier;
                                 name = Data.ARG_VIEW_TYPE,
                                 description = "The view of the data to display. 'preview' shows a formatted portion " +
                                         "of the data starting, 'source' shows the un-formatted raw view of the data. " +
+                                        "'info' shows the stream metadata. " +
                                         "Defaults to 'preview'.",
                                 isOptional = true,
-                                allowedValues = {"preview", "source"},
+                                allowedValues = {"preview", "source", "info"},
                                 argType = ValString.class),
                         @FunctionArg(
                                 name = Data.ARG_DISPLAY_TYPE,

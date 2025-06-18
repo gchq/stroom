@@ -22,24 +22,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.xml.bind.annotation.XmlType;
 
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlRootElement(name = "tab")
-@XmlType(name = "tab", propOrder = {"id", "visible"})
 @JsonPropertyOrder({"id", "visible", "settings"})
 @JsonInclude(Include.NON_NULL)
 public class TabConfig {
 
-    @XmlElement(name = "id")
     @JsonProperty("id")
     private String id;
 
-    @XmlElement(name = "visible")
     @JsonProperty("visible")
     private Boolean visible;
 

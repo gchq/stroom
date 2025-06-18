@@ -33,7 +33,6 @@ dependencies {
     implementation libs.slf4j.api
     implementation libs.jakarta.servlet.api
     implementation libs.jakarta.inject
-    implementation libs.jaxb.api
     implementation libs.jersey.common
     implementation libs.ws.rs.api
 

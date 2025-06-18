@@ -19,7 +19,6 @@ package stroom.importexport.migration;
 import stroom.importexport.api.ExtensionProvider;
 import stroom.importexport.shared.ExternalFile;
 
-import jakarta.xml.bind.annotation.XmlTransient;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;

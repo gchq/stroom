@@ -9,7 +9,6 @@ dependencies {
 
     implementation libs.jackson.annotations
     implementation libs.jakarta.servlet.api
-    implementation libs.jaxb.api
     implementation libs.slf4j.api
 
     testImplementation project(':stroom-test-common')

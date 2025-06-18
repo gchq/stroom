@@ -16,16 +16,22 @@
 
 package stroom.pipeline.shared;
 
+import stroom.docref.DocRef;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.pipeline.shared.data.PipelineLink;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.util.shared.NullSafe;
 
+import jakarta.validation.constraints.Null;
+
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,6 +41,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class PipelineDataMerger {
 
@@ -46,13 +53,11 @@ public class PipelineDataMerger {
             null);
     private static final PipelineElement SOURCE_ELEMENT = new PipelineElement(SOURCE, SOURCE);
 
-    static {
-        SOURCE_ELEMENT.setElementType(SOURCE_ELEMENT_TYPE);
-    }
-
     private final Map<String, PipelineElement> elementMap = new HashMap<>();
     private final Map<String, Map<String, PipelineProperty>> propertyMap = new HashMap<>();
+    private final Map<String, Map<String, DocRef>> propertySourceMap = new HashMap<>();
     private final Map<String, Map<String, List<PipelineReference>>> pipelineReferenceMap = new HashMap<>();
+    private final Map<String, Map<String, Map<PipelineReference, DocRef>>> pipelineReferenceSourceMap = new HashMap<>();
     private final Map<String, List<PipelineLink>> linkMap = new HashMap<>();
 
     public PipelineDataMerger() {
@@ -61,25 +66,26 @@ public class PipelineDataMerger {
     public static Map<String, PipelineElementType> createElementMap() {
         final Map<String, PipelineElementType> map = new HashMap<>();
         // Ensure we always have a source element to link from.
-        map.put(SOURCE, SOURCE_ELEMENT.getElementType());
+        map.put(SOURCE, SOURCE_ELEMENT_TYPE);
         return map;
     }
 
-    public PipelineDataMerger merge(final PipelineData... configStack) throws PipelineModelException {
+    public PipelineDataMerger merge(final PipelineLayer... configStack) throws PipelineModelException {
         return merge(Arrays.asList(configStack));
     }
 
-    public PipelineDataMerger merge(final List<PipelineData> configStack) throws PipelineModelException {
-        if (NullSafe.hasItems(configStack)) {
+    public PipelineDataMerger merge(final List<PipelineLayer> pipelineLayers) throws PipelineModelException {
+        if (NullSafe.hasItems(pipelineLayers)) {
             final Map<String, PipelineElement> allElementMap = new HashMap<>();
             boolean sourceProvided = false;
 
             // Merge elements.
-            for (final PipelineData pipelineData : configStack) {
-                if (pipelineData != null) {
+            for (final PipelineLayer pipelineLayer : pipelineLayers) {
+                if (pipelineLayer != null) {
+                    final PipelineData pipelineData = pipelineLayer.getPipelineData();
 
                     // Add elements.
-                    for (final PipelineElement element : pipelineData.getElements().getAdd()) {
+                    for (final PipelineElement element : pipelineData.getAddedElements()) {
                         // If source is provided by a pipeline then remember this.
                         if (SOURCE.equals(element.getId())) {
                             sourceProvided = true;
@@ -90,13 +96,15 @@ public class PipelineDataMerger {
                             allElementMap.put(element.getId(), element);
                             elementMap.put(element.getId(), element);
                         } else if (!existing.getType().equals(element.getType())) {
-                            throw new PipelineModelException("Attempt to add element with id=" + existing.getId()
-                                    + " but element already exists with the same id but different type");
+                            throw new PipelineModelException("Attempt to add element with id=" +
+                                                             existing.getId() +
+                                                             " but element already exists with the same id but " +
+                                                             "different type");
                         }
                     }
 
                     // Remove elements.
-                    for (final PipelineElement element : pipelineData.getElements().getRemove()) {
+                    for (final PipelineElement element : pipelineData.getRemovedElements()) {
                         elementMap.remove(element.getId());
                     }
                 }
@@ -109,13 +117,13 @@ public class PipelineDataMerger {
             }
 
             // Merge properties.
-            mergeProperties(configStack);
+            mergeProperties(pipelineLayers);
 
             // Merge pipeline references.
-            mergePipelineReferences(configStack);
+            mergePipelineReferences(pipelineLayers);
 
             // Merge links.
-            mergeLinks(configStack);
+            mergeLinks(pipelineLayers);
 
             // If there is no source provided then we need to attach a parser to source as this is an old
             // pipeline config.
@@ -127,25 +135,37 @@ public class PipelineDataMerger {
         return this;
     }
 
-    private void mergeProperties(final List<PipelineData> configStack) {
-        for (final PipelineData pipelineData : configStack) {
-            if (pipelineData != null) {
+    private void mergeProperties(final List<PipelineLayer> pipelineLayers) {
+        for (final PipelineLayer pipelineLayer : pipelineLayers) {
+            if (pipelineLayer != null) {
+                final PipelineData pipelineData = pipelineLayer.getPipelineData();
 
                 // Add properties.
-                for (final PipelineProperty property : pipelineData.getProperties().getAdd()) {
+                for (final PipelineProperty property : pipelineData.getAddedProperties()) {
                     final PipelineElement element = elementMap.get(property.getElement());
                     if (element != null) {
                         final String elementType = element.getType();
                         if (elementType != null) {
                             propertyMap.computeIfAbsent(property.getElement(), k -> new HashMap<>())
                                     .put(property.getName(), property);
+                            propertySourceMap.computeIfAbsent(property.getElement(), k -> new HashMap<>())
+                                    .put(property.getName(), pipelineLayer.getSourcePipeline());
                         }
                     }
                 }
 
                 // Remove properties.
-                for (final PipelineProperty property : pipelineData.getProperties().getRemove()) {
+                for (final PipelineProperty property : pipelineData.getRemovedProperties()) {
                     propertyMap.compute(property.getElement(), (elementId, map) -> {
+                        if (map != null) {
+                            map.remove(property.getName());
+                            if (map.isEmpty()) {
+                                return null;
+                            }
+                        }
+                        return map;
+                    });
+                    propertySourceMap.compute(property.getElement(), (elementId, map) -> {
                         if (map != null) {
                             map.remove(property.getName());
                             if (map.isEmpty()) {
@@ -159,12 +179,13 @@ public class PipelineDataMerger {
         }
     }
 
-    private void mergePipelineReferences(final List<PipelineData> configStack) {
-        for (final PipelineData pipelineData : configStack) {
-            if (pipelineData != null) {
+    private void mergePipelineReferences(final List<PipelineLayer> pipelineLayers) {
+        for (final PipelineLayer pipelineLayer : pipelineLayers) {
+            if (pipelineLayer != null) {
+                final PipelineData pipelineData = pipelineLayer.getPipelineData();
 
                 // Add pipeline references.
-                for (final PipelineReference reference : pipelineData.getPipelineReferences().getAdd()) {
+                for (final PipelineReference reference : pipelineData.getAddedPipelineReferences()) {
                     final PipelineElement element = elementMap.get(reference.getElement());
                     if (element != null) {
                         final String elementType = element.getType();
@@ -174,14 +195,35 @@ public class PipelineDataMerger {
                                     .computeIfAbsent(reference.getName(), k -> new ArrayList<>());
                             if (!list.contains(reference)) {
                                 list.add(reference);
+                                pipelineReferenceSourceMap
+                                        .computeIfAbsent(reference.getElement(), k -> new HashMap<>())
+                                        .computeIfAbsent(reference.getName(), k -> new HashMap<>())
+                                        .put(reference, pipelineLayer.getSourcePipeline());
                             }
                         }
                     }
                 }
 
                 // Remove pipeline references.
-                for (final PipelineReference reference : pipelineData.getPipelineReferences().getRemove()) {
+                for (final PipelineReference reference : pipelineData.getRemovedPipelineReferences()) {
                     pipelineReferenceMap.compute(reference.getElement(), (elementId, map) -> {
+                        if (map != null) {
+                            map.compute(reference.getName(), (name, list) -> {
+                                if (list != null) {
+                                    list.remove(reference);
+                                    if (list.isEmpty()) {
+                                        return null;
+                                    }
+                                }
+                                return list;
+                            });
+                            if (map.isEmpty()) {
+                                return null;
+                            }
+                        }
+                        return map;
+                    });
+                    pipelineReferenceSourceMap.compute(reference.getElement(), (elementId, map) -> {
                         if (map != null) {
                             map.compute(reference.getName(), (name, list) -> {
                                 if (list != null) {
@@ -203,13 +245,14 @@ public class PipelineDataMerger {
         }
     }
 
-    private void mergeLinks(final List<PipelineData> configStack) {
+    private void mergeLinks(final List<PipelineLayer> pipelineLayers) {
         final List<PipelineLink> links = new ArrayList<>();
-        for (final PipelineData pipelineData : configStack) {
-            if (pipelineData != null) {
+        for (final PipelineLayer pipelineLayer : pipelineLayers) {
+            if (pipelineLayer != null) {
+                final PipelineData pipelineData = pipelineLayer.getPipelineData();
 
                 // Add links.
-                for (final PipelineLink link : pipelineData.getLinks().getAdd()) {
+                for (final PipelineLink link : pipelineData.getAddedLinks()) {
                     final PipelineElement fromElement = elementMap.get(link.getFrom());
                     final PipelineElement toElement = elementMap.get(link.getTo());
 
@@ -230,7 +273,7 @@ public class PipelineDataMerger {
                 }
 
                 // Remove links.
-                for (final PipelineLink link : pipelineData.getLinks().getRemove()) {
+                for (final PipelineLink link : pipelineData.getRemovedLinks()) {
                     links.remove(link);
 //                        linkMap.compute(link.getFrom(), (elementId, list) -> {
 //                            if (list != null) {
@@ -255,7 +298,7 @@ public class PipelineDataMerger {
             }
         }
 
-        // Now ad the remaining links to the link map.
+        // Now add the remaining links to the link map.
         for (final PipelineLink link : links) {
             linkMap.computeIfAbsent(link.getFrom(), k -> new ArrayList<>()).add(link);
         }
@@ -271,9 +314,7 @@ public class PipelineDataMerger {
         optionalParserId.ifPresent(parserId -> {
             // Track back up any links that might point to the parser.
             final Map<String, String> parentMap = new HashMap<>();
-            linkMap.forEach((k, v) -> v.forEach(link -> {
-                parentMap.put(link.getTo(), k);
-            }));
+            linkMap.forEach((k, v) -> v.forEach(link -> parentMap.put(link.getTo(), k)));
 
             String childId = null;
             String parentId = parserId;
@@ -329,29 +370,39 @@ public class PipelineDataMerger {
 
     public PipelineData createMergedData() {
         // Create merged data.
-        final PipelineData pipelineData = new PipelineData();
+        final PipelineDataBuilder builder = new PipelineDataBuilder();
+        builder.addElements(elementMap.values());
+        builder.addProperties(propertyMap.values()
+                .stream()
+                .flatMap(map -> map.values().stream())
+                .collect(Collectors.toList()));
+        builder.addPipelineReferences(pipelineReferenceMap.values()
+                .stream()
+                .flatMap(map -> map.values().stream().flatMap(Collection::stream))
+                .collect(Collectors.toList()));
+        builder.addLinks(linkMap.values()
+                .stream()
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList()));
+        return builder.build();
+    }
 
-        for (final PipelineElement element : elementMap.values()) {
-            pipelineData.addElement(element);
+    public DocRef getPropertySource(final PipelineProperty property) {
+        if (property == null) {
+            return null;
         }
-        for (final Map<String, PipelineProperty> map : propertyMap.values()) {
-            for (final PipelineProperty property : map.values()) {
-                pipelineData.addProperty(property);
-            }
-        }
-        for (final Map<String, List<PipelineReference>> map : pipelineReferenceMap.values()) {
-            for (final List<PipelineReference> list : map.values()) {
-                for (final PipelineReference pipelineReference : list) {
-                    pipelineData.addPipelineReference(pipelineReference);
-                }
-            }
-        }
-        for (final List<PipelineLink> list : linkMap.values()) {
-            for (final PipelineLink link : list) {
-                pipelineData.addLink(link);
-            }
-        }
+        return NullSafe.get(propertySourceMap,
+                map -> map.get(property.getElement()),
+                map -> map.get(property.getName()));
+    }
 
-        return pipelineData;
+    public DocRef getPipelineReferenceSource(final PipelineReference pipelineReference) {
+        if (pipelineReference == null) {
+            return null;
+        }
+        return NullSafe.get(pipelineReferenceSourceMap,
+                map -> map.get(pipelineReference.getElement()),
+                map -> map.get(pipelineReference.getName()),
+                map -> map.get(pipelineReference));
     }
 }

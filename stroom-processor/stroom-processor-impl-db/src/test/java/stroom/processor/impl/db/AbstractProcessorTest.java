@@ -30,7 +30,6 @@ import stroom.test.common.MockMetricsModule;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.test.common.util.guice.AbstractTestModule;
 import stroom.util.AuditUtil;
-import stroom.util.db.ForceLegacyMigration;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
@@ -108,9 +107,6 @@ class AbstractProcessorTest {
                         bindMock(ProcessorTaskQueueManager.class);
                         bindMock(DocumentEventLog.class);
                         bindMock(DocumentPermissionService.class);
-                        // Not using all the DB modules so just bind to an empty anonymous class
-                        bind(ForceLegacyMigration.class).toInstance(new ForceLegacyMigration() {
-                        });
                         bind(UserRefLookup.class).toInstance(new UserRefLookup() {
                             @Override
                             public Optional<UserRef> getByUuid(final String userUuid) {

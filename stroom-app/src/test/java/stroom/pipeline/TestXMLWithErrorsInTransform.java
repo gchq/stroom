@@ -29,6 +29,7 @@ import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.RecordCount;
@@ -59,7 +60,7 @@ import static org.assertj.core.api.Assertions.fail;
 class TestXMLWithErrorsInTransform extends AbstractProcessIntegrationTest {
 
     private static final int N4 = 4;
-    private static final String PIPELINE = "XMLWithErrorsInTransform/XMLWithErrorsInTransform.Pipeline.data.xml";
+    private static final String PIPELINE = "XMLWithErrorsInTransform/XMLWithErrorsInTransform.Pipeline.json";
     private static final String INPUT = "XMLWithErrorsInTransform/HttpProblem.in";
     private static final String FORMAT = "XMLWithErrorsInTransform/HttpSplitter.xml";
     private static final String XSLT_LOCATION = "XMLWithErrorsInTransform/HttpProblem.xsl";
@@ -125,10 +126,12 @@ class TestXMLWithErrorsInTransform extends AbstractProcessIntegrationTest {
             final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore,
                     StroomPipelineTestFileUtil.getString(PIPELINE));
             final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
-            pipelineDoc.getPipelineData().addProperty(
+            final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineDoc.getPipelineData());
+            builder.addProperty(
                     PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", textConverterRef));
-            pipelineDoc.getPipelineData()
-                    .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xsltRef));
+            builder.addProperty(
+                    PipelineDataUtil.createProperty("translationFilter", "xslt", xsltRef));
+            pipelineDoc.setPipelineData(builder.build());
             pipelineStore.writeDocument(pipelineDoc);
 
             final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);

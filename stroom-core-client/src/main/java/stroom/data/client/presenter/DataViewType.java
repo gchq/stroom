@@ -2,6 +2,7 @@ package stroom.data.client.presenter;
 
 public enum DataViewType {
     PREVIEW("preview"),
+    INFO("info"),
     SOURCE("source");
 
     private final String name;

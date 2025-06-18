@@ -25,7 +25,6 @@ dependencies {
     implementation libs.saxon.he
     implementation libs.slf4j.api
     implementation libs.stroomStatsSchema
-    //implementation libs.xml.apis
 
     testImplementation project(':stroom-docstore:stroom-docstore-impl')
     testImplementation project(':stroom-docstore:stroom-docstore-impl-memory')

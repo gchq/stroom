@@ -24,22 +24,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlElementWrapper;
-import jakarta.xml.bind.annotation.XmlElements;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.xml.bind.annotation.XmlType;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlRootElement(name = "tabLayout")
-@XmlType(name = "TabLayoutConfig", propOrder = {"preferredSize", "tabs", "selected"})
 @JsonPropertyOrder({"preferredSize", "tabs", "selected"})
 @JsonInclude(Include.NON_NULL)
 public final class TabLayoutConfig extends LayoutConfig {
@@ -50,14 +40,10 @@ public final class TabLayoutConfig extends LayoutConfig {
     /**
      * The preferred size of this layout in width, height.
      */
-    @XmlElement(name = "preferredSize")
     @JsonProperty("preferredSize")
     private Size preferredSize;
-    @XmlElementWrapper(name = "tabs")
-    @XmlElements({@XmlElement(name = "tab", type = TabConfig.class)})
     @JsonProperty("tabs")
     private List<TabConfig> tabs;
-    @XmlElement(name = "selected")
     @JsonProperty("selected")
     private Integer selected;
 

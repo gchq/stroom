@@ -23,10 +23,7 @@ import java.util.Collections;
 public class PipelineDataUtil {
 
     public static PipelineElement createElement(final String id, final String type) {
-        final PipelineElement element = new PipelineElement();
-        element.setId(id);
-        element.setType(type);
-        return element;
+        return new PipelineElement(id, type);
     }
 
 //    public static PipelineProperty createProperty(final String element, final String name, final BaseEntity entity) {
@@ -38,32 +35,21 @@ public class PipelineDataUtil {
 //        return property;
 //    }
 
-    public static PipelineProperty createProperty(final String element, final String name,
+    public static PipelineProperty createProperty(final String element,
+                                                  final String name,
                                                   final DocRef docRef) {
         final PipelinePropertyValue value = new PipelinePropertyValue(docRef);
-        final PipelineProperty property = new PipelineProperty();
-        property.setElement(element);
-        property.setName(name);
-        property.setValue(value);
-        return property;
+        return new PipelineProperty(element, name, value);
     }
 
     public static PipelineProperty createProperty(final String element, final String name, final String string) {
         final PipelinePropertyValue value = new PipelinePropertyValue(string);
-        final PipelineProperty property = new PipelineProperty();
-        property.setElement(element);
-        property.setName(name);
-        property.setValue(value);
-        return property;
+        return new PipelineProperty(element, name, value);
     }
 
     public static PipelineProperty createProperty(final String element, final String name, final boolean b) {
         final PipelinePropertyValue value = new PipelinePropertyValue(b);
-        final PipelineProperty property = new PipelineProperty();
-        property.setElement(element);
-        property.setName(name);
-        property.setValue(value);
-        return property;
+        return new PipelineProperty(element, name, value);
     }
 
     public static PipelineReference createReference(final String element,
@@ -71,17 +57,19 @@ public class PipelineDataUtil {
                                                     final DocRef pipeline,
                                                     final DocRef feed,
                                                     final String streamType) {
-        return new PipelineReference(element, name, pipeline, feed, streamType, null);
+        return new PipelineReference(element, name, pipeline, feed, streamType);
     }
 
     public static PipelineLink createLink(final String from, final String to) {
         return new PipelineLink(from, to);
     }
 
-    public static void normalise(final PipelineData pipelineData) {
-        Collections.sort(pipelineData.getElements().getAdd());
-        Collections.sort(pipelineData.getProperties().getAdd());
-        Collections.sort(pipelineData.getPipelineReferences().getAdd());
-        Collections.sort(pipelineData.getLinks().getAdd());
+    public static PipelineData normalise(final PipelineData pipelineData) {
+        final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
+        Collections.sort(builder.getElements().getAddList());
+        Collections.sort(builder.getProperties().getAddList());
+        Collections.sort(builder.getReferences().getAddList());
+        Collections.sort(builder.getLinks().getAddList());
+        return builder.build();
     }
 }

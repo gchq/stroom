@@ -1,0 +1,48 @@
+{
+  "elements" : {
+    "add" : [ {
+      "id" : "solrIndexingFilter",
+      "type" : "SolrIndexingFilter"
+    } ],
+    "remove" : [ {
+      "id" : "indexingFilter",
+      "type" : "IndexingFilter"
+    } ]
+  },
+  "properties" : {
+    "add" : [ {
+      "element" : "xsltFilter",
+      "name" : "xslt",
+      "value" : {
+        "entity" : {
+          "type" : "XSLT",
+          "uuid" : "dd8ecad9-60f5-4080-b5cf-548822a779f8",
+          "name" : "Example index"
+        }
+      }
+    }, {
+      "element" : "solrIndexingFilter",
+      "name" : "index",
+      "value" : {
+        "entity" : {
+          "type" : "SolrIndex",
+          "uuid" : "861c682d-a794-4e64-9963-4f4562fd1b54",
+          "name" : "mycore"
+        }
+      }
+    } ]
+  },
+  "links" : {
+    "add" : [ {
+      "from" : "xsltFilter",
+      "to" : "solrIndexingFilter"
+    }, {
+      "from" : "solrIndexingFilter",
+      "to" : "writeRecordCountFilter"
+    } ],
+    "remove" : [ {
+      "from" : "xsltFilter",
+      "to" : "indexingFilter"
+    } ]
+  }
+}

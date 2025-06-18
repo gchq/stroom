@@ -29,6 +29,7 @@ import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.textconverter.TextConverterStore;
@@ -73,8 +74,8 @@ class TestXMLTransformer extends AbstractProcessIntegrationTest {
     private static final String XSLT_PATH = DIR + "DATA_SPLITTER-EVENTS_no-ref.xsl";
     private static final String FRAGMENT_WRAPPER = DIR + "fragment_wrapper.xml";
 
-    private static final String TRANSFORMER_PIPELINE = DIR + "XMLTransformer.Pipeline.data.xml";
-    private static final String FRAGMENT_PIPELINE = DIR + "XMLFragment.Pipeline.data.xml";
+    private static final String TRANSFORMER_PIPELINE = DIR + "XMLTransformer.Pipeline.json";
+    private static final String FRAGMENT_PIPELINE = DIR + "XMLFragment.Pipeline.json";
 
     @Inject
     private Provider<PipelineFactory> pipelineFactoryProvider;
@@ -152,8 +153,10 @@ class TestXMLTransformer extends AbstractProcessIntegrationTest {
         final String data = StroomPipelineTestFileUtil.getString(FRAGMENT_PIPELINE);
         final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, data);
         final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
-        pipelineDoc.getPipelineData().addProperty(
+        final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineDoc.getPipelineData());
+        builder.addProperty(
                 PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", docRef));
+        pipelineDoc.setPipelineData(builder.build());
         pipelineDoc.setParentPipeline(createTransformerPipeline());
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRef;
@@ -171,8 +174,9 @@ class TestXMLTransformer extends AbstractProcessIntegrationTest {
         final String data = StroomPipelineTestFileUtil.getString(TRANSFORMER_PIPELINE);
         final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, data);
         final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
-        pipelineDoc.getPipelineData()
-                .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xsltRef));
+        final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineDoc.getPipelineData());
+        builder.addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xsltRef));
+        pipelineDoc.setPipelineData(builder.build());
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRef;
     }

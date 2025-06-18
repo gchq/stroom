@@ -76,8 +76,8 @@ public class GenerateXPaths {
 
             final String xPath = xPathBuilder.toString();
             if (xPath.endsWith(name)
-                    || xPath.endsWith(name + "[0]")
-                    || (xPath.endsWith("/Groups/Group[0]") && name.equals("Groups"))) {
+                || xPath.endsWith(name + "[0]")
+                || (xPath.endsWith("/Groups/Group[0]") && name.equals("Groups"))) {
                 // Hack to stop infinite recursion
             } else {
                 xPathBuilder.append("/")
@@ -114,7 +114,7 @@ public class GenerateXPaths {
             if (xmlElemAnno != null) {
                 final String propElmName = xmlElemAnno.name();
                 if (propClass.getName().startsWith("event.logging")
-                        && !Void.class.equals(propClass)) {
+                    && !Void.class.equals(propClass)) {
 
                     inspectClass(objectMapper,
                             xPaths,
@@ -127,7 +127,7 @@ public class GenerateXPaths {
                 } else if (List.class.isAssignableFrom(propClass)) {
                     final JavaType propSubType = propType.findTypeParameters(List.class)[0];
                     if (propSubType.getRawClass().getName().startsWith("event.logging")
-                            && !Void.class.equals(propSubType.getRawClass())) {
+                        && !Void.class.equals(propSubType.getRawClass())) {
                         inspectClass(objectMapper,
                                 xPaths,
                                 new StringBuilder(xPathBuilder),
@@ -141,8 +141,8 @@ public class GenerateXPaths {
                 }
             } else if (xmlAttrAnno != null) {
                 xPaths.add(xPathBuilder +
-                        "/@" +
-                        xmlAttrAnno.name());
+                           "/@" +
+                           xmlAttrAnno.name());
             }
         } catch (Exception e) {
             LOGGER.error(LogUtil.message("Unable to inspect prop {} at path {} - {}",

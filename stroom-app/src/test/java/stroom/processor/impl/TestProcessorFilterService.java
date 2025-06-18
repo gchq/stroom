@@ -25,7 +25,7 @@ import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
-import stroom.processor.impl.db.QueryDataXMLSerialiser;
+import stroom.processor.impl.db.QueryDataSerialiser;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
@@ -35,7 +35,6 @@ import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
@@ -49,31 +48,6 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
     private ProcessorService processorService;
     @Inject
     private ProcessorFilterService processorFilterService;
-
-//    @Override
-//    protected void onBefore() {
-//        super.onBefore();
-//        deleteAll();
-//    }
-//
-//    @Override
-//    protected void onAfter() {
-//        super.onAfter();
-//        deleteAll();
-//    }
-//
-//    private void deleteAll() {
-//        final List<ProcessorFilter> filters = processorFilterService
-//                .find(new ExpressionCriteria()).getValues();
-//        for (final ProcessorFilter filter : filters) {
-//            processorFilterService.delete(filter.getId());
-//        }
-//
-//        final List<Processor> streamProcessors = processorService.find(new ExpressionCriteria()).getValues();
-//        for (final Processor processor : streamProcessors) {
-//            processorService.delete(processor.getId());
-//        }
-//    }
 
     @Test
     void testBasic() {
@@ -133,8 +107,8 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
     void testFeedIncludeExclude() throws Exception {
         final DocRef pipelineRef = new DocRef(PipelineDoc.TYPE, "12345", "Test Pipeline");
 
-        final String feedName1 = FileSystemTestUtil.getUniqueTestString();
-        final String feedName2 = FileSystemTestUtil.getUniqueTestString();
+        final String feedName1 = "1749655604143_1";
+        final String feedName2 = "1749655604143_2";
 
         final QueryData findStreamQueryData = QueryData
                 .builder()
@@ -166,12 +140,13 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
                         .build());
         assertThat(processorService.find(new ExpressionCriteria()).size()).isEqualTo(1);
 
-        final QueryDataXMLSerialiser serialiser = new QueryDataXMLSerialiser();
+        final QueryDataSerialiser serialiser = new QueryDataSerialiser();
         final ResultPage<ProcessorFilter> filters = processorFilterService
                 .find(findProcessorFilterCriteria);
         ProcessorFilter filter = filters.getFirst();
-        String xml = buildXML(new String[]{feedName1, feedName2}, null);
-        assertThat(serialiser.serialise(filter.getQueryData())).isEqualTo(xml);
+        final String json = getJson();
+
+        assertThat(serialiser.serialise(filter.getQueryData())).isEqualTo(json);
 
         // TODO DocRefId - Need to rewrite the build XML to handle expression operators
 //        filter.getFindStreamCriteria().obtainFeeds().obtainInclude().remove(feed1);
@@ -190,68 +165,47 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
 //        assertThat(filter.getMeta()).isEqualTo(xml);
     }
 
-    private String buildXML(final String[] include, final String[] exclude) {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("""
-                <?xml version="1.1" encoding="UTF-8"?>
-                <query>
-                   <dataSource>
-                      <type>StreamStore</type>
-                      <uuid>StreamStore</uuid>
-                      <name>Stream Store</name>
-                   </dataSource>
-                   <expression>
-                      <children>
-                """);
-
-        if (include != null && include.length > 0) {
-            sb.append("""
-                             <operator>
-                                <op>OR</op>
-                                <children>
-                    """);
-            for (final String feed : include) {
-                sb.append("               <term>\n");
-                sb.append("                  <field>")
-                        .append(MetaFields.FEED)
-                        .append("</field>\n");
-                sb.append("                  <condition>EQUALS</condition>\n");
-                sb.append("                  <value>")
-                        .append(feed)
-                        .append("</value>\n");
-                sb.append("               </term>\n");
-            }
-
-            sb.append("""
-                                </children>
-                             </operator>
-                    """);
-        }
-
-        sb.append("         <operator>\n");
-        sb.append("            <op>OR</op>\n");
-        sb.append("            <children>\n");
-        sb.append("               <term>\n");
-        sb.append("                  <field>")
-                .append(MetaFields.TYPE)
-                .append("</field>\n");
-        sb.append("                  <condition>EQUALS</condition>\n");
-        sb.append("                  <value>Raw Events</value>\n");
-        sb.append("               </term>\n");
-        sb.append("               <term>\n");
-        sb.append("                  <field>")
-                .append(MetaFields.TYPE)
-                .append("</field>\n");
-        sb.append("                  <condition>EQUALS</condition>\n");
-        sb.append("                  <value>Raw Reference</value>\n");
-        sb.append("               </term>\n");
-        sb.append("            </children>\n");
-        sb.append("         </operator>\n");
-        sb.append("      </children>\n");
-        sb.append("   </expression>\n");
-        sb.append("</query>\n");
-
-        return sb.toString();
+    private String getJson() {
+        return """
+                {
+                  "dataSource" : {
+                    "type" : "StreamStore",
+                    "uuid" : "StreamStore",
+                    "name" : "Stream Store"
+                  },
+                  "expression" : {
+                    "type" : "operator",
+                    "children" : [ {
+                      "type" : "operator",
+                      "op" : "OR",
+                      "children" : [ {
+                        "type" : "term",
+                        "field" : "Feed",
+                        "condition" : "EQUALS",
+                        "value" : "1749655604143_1"
+                      }, {
+                        "type" : "term",
+                        "field" : "Feed",
+                        "condition" : "EQUALS",
+                        "value" : "1749655604143_2"
+                      } ]
+                    }, {
+                      "type" : "operator",
+                      "op" : "OR",
+                      "children" : [ {
+                        "type" : "term",
+                        "field" : "Type",
+                        "condition" : "EQUALS",
+                        "value" : "Raw Events"
+                      }, {
+                        "type" : "term",
+                        "field" : "Type",
+                        "condition" : "EQUALS",
+                        "value" : "Raw Reference"
+                      } ]
+                    } ]
+                  }
+                }""";
     }
 
     @Test
@@ -262,8 +216,6 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
                 .addBooleanTerm(ProcessorFilterFields.ENABLED, Condition.EQUALS, true)
                 .build();
         final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria(expression);
-//        findProcessorFilterCriteria.setLastPollPeriod(new Period(1L, 1L));
-//        findProcessorFilterCriteria.setProcessorFilterEnabled(true);
         assertThat(processorFilterService.find(findProcessorFilterCriteria).getPageSize()).isEqualTo(0);
     }
 }

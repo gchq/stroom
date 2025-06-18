@@ -100,6 +100,11 @@ public interface Store<D extends Doc>
 //    List<DocRef> findByNames(final List<String> name,
 //                             final boolean allowWildCards);
 
+
+    // This is only used to migrate pipelines. Do not use!!!
+    @Deprecated
+    Map<String, byte[]> readPersistence(DocRef docRef);
+
     interface DocumentCreator<D extends Doc> {
 
         D create(final String type,
