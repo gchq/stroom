@@ -3,6 +3,7 @@ package stroom.planb.impl.serde.temporalkey;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.db.Db;
+import stroom.planb.impl.db.KeyLength;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 import stroom.planb.impl.serde.time.TimeSerde;
 import stroom.query.language.functions.Val;
@@ -51,14 +52,7 @@ public class LimitedStringKeySerde implements TemporalKeySerde {
     @Override
     public void write(final Txn<ByteBuffer> txn, final TemporalKey key, final Consumer<ByteBuffer> consumer) {
         final byte[] bytes = key.getPrefix().getVal().toString().getBytes(StandardCharsets.UTF_8);
-        if (bytes.length > limit) {
-            throw new RuntimeException("Key length exceeds " + limit + " bytes");
-        }
-//        byteBuffers.use(bytes.length, byteBuffer -> {
-//            byteBuffer.put(bytes);
-//            byteBuffer.flip();
-//            consumer.accept(byteBuffer);
-//        });
+        KeyLength.check(bytes.length, limit);
 
         // We are in a single write transaction so should be able to reuse the same buffer again and again.
         reusableWriteBuffer.clear();
@@ -73,9 +67,7 @@ public class LimitedStringKeySerde implements TemporalKeySerde {
                                 final TemporalKey key,
                                 final Function<Optional<ByteBuffer>, R> function) {
         final byte[] bytes = key.getPrefix().getVal().toString().getBytes(StandardCharsets.UTF_8);
-        if (bytes.length > limit) {
-            throw new RuntimeException("Key length exceeds " + limit + " bytes");
-        }
+        KeyLength.check(bytes.length, limit);
         return byteBuffers.use(bytes.length + timeSerde.getSize(), byteBuffer -> {
             byteBuffer.put(bytes);
             timeSerde.write(byteBuffer, key.getTime());
