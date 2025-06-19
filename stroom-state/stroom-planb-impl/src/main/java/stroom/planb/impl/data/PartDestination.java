@@ -4,6 +4,8 @@ import stroom.planb.impl.db.StatePaths;
 import stroom.security.api.SecurityContext;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PermissionException;
 import stroom.util.string.StringIdUtil;
 
@@ -19,6 +21,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Singleton
 public class PartDestination {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PartDestination.class);
 
     private final SecurityContext securityContext;
     private final Provider<MergeProcessor> mergeProcessorProvider;
@@ -58,6 +62,9 @@ public class PartDestination {
                                   final String fileName,
                                   final boolean synchroniseMerge,
                                   final InputStream inputStream) throws IOException {
+        final FileInfo fileInfo = new FileInfo(createTime, metaId, fileHash, fileName);
+        LOGGER.debug(() -> "Receiving remote part: " + fileInfo);
+
         if (!securityContext.isProcessingUser()) {
             throw new PermissionException(securityContext.getUserRef(), "Only processing users can use this resource");
         }
@@ -75,6 +82,9 @@ public class PartDestination {
                                  final Path sourcePath,
                                  final boolean allowMove,
                                  final boolean synchroniseMerge) throws IOException {
+        final FileInfo fileInfo = fileDescriptor.getInfo(sourcePath);
+        LOGGER.debug(() -> "Receiving remote part: " + fileInfo);
+
         final MergeProcessor mergeProcessor = mergeProcessorProvider.get();
         if (allowMove) {
             // If we allow move then we can allow the file store to move the file directly into the store.

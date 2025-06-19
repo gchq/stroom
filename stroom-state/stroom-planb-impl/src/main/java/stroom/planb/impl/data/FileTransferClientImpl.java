@@ -9,6 +9,7 @@ import stroom.security.api.SecurityContext;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.zip.ZipUtil;
@@ -103,6 +104,11 @@ public class FileTransferClientImpl implements FileTransferClient {
 
                 // Send the data to all nodes.
                 for (final String nodeName : targetNodes) {
+                    LOGGER.debug(() -> LogUtil.message(
+                            "Plan B sending data {} to {}",
+                            fileDescriptor.getInfo(path),
+                            nodeName));
+
                     if (nodeInfo == null || NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
                         // Allow file move if the only target is the local node.
                         final boolean allowMove = targetNodes.size() == 1;
