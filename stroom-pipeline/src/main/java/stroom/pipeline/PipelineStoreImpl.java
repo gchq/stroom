@@ -46,6 +46,7 @@ import jakarta.inject.Singleton;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
@@ -68,13 +69,12 @@ public class PipelineStoreImpl implements PipelineStore {
         this.processorFilterServiceProvider = processorFilterServiceProvider;
         this.pipelineDataMigration = pipelineDataMigration;
 
-        store.list().forEach(docRef -> {
-            final Map<String, byte[]> data = store.readPersistence(docRef);
+        // TODO : Remove this code when we move past version 7.10
+        store.migratePipelines(data -> {
             if (pipelineDataMigration.migrate(data)) {
-                final ImportState importState = new ImportState(
-                        docRef,
-                        docRef.getName());
-                store.importDocument(docRef, data, importState, ImportSettings.auto());
+                return Optional.of(data);
+            } else {
+                return Optional.empty();
             }
         });
     }

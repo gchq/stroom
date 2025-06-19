@@ -57,6 +57,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
@@ -692,9 +693,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> new String(e.getValue(), StandardCharsets.UTF_8)));
     }
 
-    @Deprecated // remove public access.
-    @Override
-    public Map<String, byte[]> readPersistence(final DocRef docRef) {
+    private Map<String, byte[]> readPersistence(final DocRef docRef) {
         return persistence.getLockFactory().lockResult(docRef.getUuid(), () -> {
             try {
                 return persistence.read(docRef);
@@ -709,12 +708,22 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         });
     }
 
-    private String toDocRefDisplayString(final String uuid) {
-        if (uuid == null) {
-            return "";
-        } else {
-            return toDocRefDisplayString(new DocRef(type, uuid));
-        }
+    @Deprecated // remove once pipelines have been migrated.
+    public void migratePipelines(final Function<Map<String, byte[]>, Optional<Map<String, byte[]>>> function) {
+        persistence.list(type).forEach(docRef ->
+                persistence.getLockFactory().lock(docRef.getUuid(), () -> {
+                    final Map<String, byte[]> data = readPersistence(docRef);
+                    if (data != null) {
+                        final Optional<Map<String, byte[]>> migrated = function.apply(data);
+                        migrated.ifPresent(newData -> {
+                            try {
+                                persistence.write(docRef, true, newData);
+                            } catch (final Exception e) {
+                                LOGGER.error(e::getMessage, e);
+                            }
+                        });
+                    }
+                }));
     }
 
     private String toDocRefDisplayString(final DocRef docRef) {
@@ -731,7 +740,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                         docRef, LogUtil.exceptionMessage(e), e);
                 try {
                     return DocRefUtil.createTypedDocRefString(docRef);
-                } catch (Exception ex) {
+                } catch (final Exception ex) {
                     LOGGER.debug("Error displaying docRef {}: {}",
                             docRef, LogUtil.exceptionMessage(e), e);
                     return docRef.toString();
