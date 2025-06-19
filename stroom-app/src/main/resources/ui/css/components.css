@@ -2540,6 +2540,9 @@ button.main-menu svg {
     height: 220px;
     resize: none;
 }
+.gitrepo-credentials-dialog input {
+    width: 100%;
+}
 /* Settings form */
 .gitrepo-settings-form button.Button {
     width: 400px;
