@@ -70,7 +70,9 @@ class ParentForId extends StroomExtensionFunctionCall {
 
 
     private Optional<Long> getParentId(final long streamId) {
-        if (lastStreamId != null && lastStreamId.equals(streamId)) return Optional.ofNullable(lastParentId);
+        if (lastStreamId != null && lastStreamId.equals(streamId)) {
+            return Optional.ofNullable(lastParentId);
+        }
 
         try (final Source source = store.openSource(streamId)) {
             final Meta meta = source.getMeta();
