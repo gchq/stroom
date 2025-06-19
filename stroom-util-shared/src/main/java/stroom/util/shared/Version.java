@@ -121,7 +121,7 @@ public class Version implements Serializable, Comparable<Version> {
         return major;
     }
 
-    public void setMajor(Integer major) {
+    public void setMajor(final Integer major) {
         this.major = major;
     }
 
@@ -129,7 +129,7 @@ public class Version implements Serializable, Comparable<Version> {
         return minor;
     }
 
-    public void setMinor(Integer minor) {
+    public void setMinor(final Integer minor) {
         this.minor = minor;
     }
 
@@ -137,7 +137,7 @@ public class Version implements Serializable, Comparable<Version> {
         return patch;
     }
 
-    public void setPatch(Integer patch) {
+    public void setPatch(final Integer patch) {
         this.patch = patch;
     }
 
@@ -153,7 +153,7 @@ public class Version implements Serializable, Comparable<Version> {
     }
 
     @Override
-    public int compareTo(Version other) {
+    public int compareTo(final Version other) {
         int result = compare(this.major, other.major);
         if (result != 0) {
             return result;

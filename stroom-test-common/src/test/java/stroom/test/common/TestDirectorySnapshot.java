@@ -20,7 +20,7 @@ class TestDirectorySnapshot {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestDirectorySnapshot.class);
 
     @Test
-    void test(@TempDir Path path) throws IOException {
+    void test(@TempDir final Path path) throws IOException {
         createFile(path.resolve("file=_a0"));
         createFile(path.resolve("a1/file=_a1"));
         createFile(path.resolve("a1/a2/file_a2"));
@@ -42,7 +42,7 @@ class TestDirectorySnapshot {
                 .isEqualTo(snapshot1);
     }
 
-    private static void createFile(Path file) throws IOException {
+    private static void createFile(final Path file) throws IOException {
         Files.createDirectories(file.getParent());
         Files.writeString(file, "This is " + file, StandardOpenOption.CREATE);
     }

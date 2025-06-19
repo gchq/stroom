@@ -23,7 +23,7 @@ public class VariableLengthUUIDKryoSerializer implements KryoSerializer<String> 
         UUID uuid = null;
         try {
             uuid = UUID.fromString(uuidStr);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message("uuidStr [{}] is not a valid UUID", uuidStr), e);
         }
         output.writeLong(uuid.getMostSignificantBits(), false);

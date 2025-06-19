@@ -17,15 +17,15 @@ class TestXxHashValueStoreHashAlgorithm {
 
         final ValueStoreHashAlgorithm valueStoreHashAlgorithm = new XxHashValueStoreHashAlgorithm();
 
-        long hash1a = valueStoreHashAlgorithm.hash(input);
-        long hash1b = valueStoreHashAlgorithm.hash(input);
+        final long hash1a = valueStoreHashAlgorithm.hash(input);
+        final long hash1b = valueStoreHashAlgorithm.hash(input);
 
         assertThat(hash1b).isEqualTo(hash1a);
 
         final ByteBuffer byteBuffer = StandardCharsets.UTF_8.encode(input);
 
-        long hash2a = valueStoreHashAlgorithm.hash(byteBuffer);
-        long hash2b = valueStoreHashAlgorithm.hash(byteBuffer);
+        final long hash2a = valueStoreHashAlgorithm.hash(byteBuffer);
+        final long hash2b = valueStoreHashAlgorithm.hash(byteBuffer);
 
         assertThat(hash2b).isEqualTo(hash2a);
     }

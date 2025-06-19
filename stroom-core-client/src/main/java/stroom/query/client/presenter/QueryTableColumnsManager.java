@@ -91,7 +91,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                 final Element element = Element.as(event.getEventTarget());
                 final Element columnTop = ElementUtil.findParent(element, "column-top", 3);
                 if (columnTop != null) {
-                    int colIndex = heading.getColIndex();
+                    final int colIndex = heading.getColIndex();
                     if (currentMenuColIndex == colIndex) {
                         HideMenuEvent
                                 .builder()
@@ -413,7 +413,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
     private Column getColumn(final int colIndex) {
         final List<Column> columns = getColumns();
         int index = columnsStartIndex;
-        for (Column column : columns) {
+        for (final Column column : columns) {
             if (column.isVisible()) {
                 if (index == colIndex) {
                     return column;
@@ -457,7 +457,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
         menuItems.add(createHideMenu(column));
 
         // Create show menu.
-        Item showMenu = createShowMenu();
+        final Item showMenu = createShowMenu();
         if (showMenu != null) {
             menuItems.add(showMenu);
         }

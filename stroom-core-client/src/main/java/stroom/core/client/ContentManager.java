@@ -109,7 +109,7 @@ public class ContentManager implements HasHandlers {
                        final TabData tabData) {
         final CloseContentEvent.Handler closeHandler = handlerMap.get(tabData);
         if (closeHandler != null) {
-            Callback callback = ok -> {
+            final Callback callback = ok -> {
                 if (ok) {
                     forceClose(tabData);
 

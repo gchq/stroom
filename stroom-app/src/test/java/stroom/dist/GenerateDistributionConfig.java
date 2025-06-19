@@ -41,7 +41,7 @@ public class GenerateDistributionConfig {
             DOCKER_CONTEXT,
             ZIP_CONTEXT);
 
-    public static void main(String[] args) throws IOException {
+    public static void main(final String[] args) throws IOException {
         final Jinjava jinjava = new Jinjava();
 
         jinjava.registerFilter(new EnvVarSubstitutionFilter());
@@ -103,7 +103,7 @@ public class GenerateDistributionConfig {
                 LOGGER.info("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv");
                 verifyOutputFile(outputFileNameFile);
                 LOGGER.info("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new RuntimeException(e);
             }
         });
@@ -143,7 +143,7 @@ public class GenerateDistributionConfig {
             appConfig = StroomYamlUtil.readAppConfig(configFile);
             Assertions.assertThat(appConfig)
                     .isNotNull();
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message("Can't read file {} into Config object"), e);
         }
     }
@@ -170,7 +170,7 @@ public class GenerateDistributionConfig {
         public Object filter(final Object var, final JinjavaInterpreter interpreter, final String... args) {
             final boolean useEnvVarSubst = (boolean) interpreter.getContext().get(USE_VARIABLE_SUBSTITUTION_KEY);
             if (useEnvVarSubst) {
-                String envVarName = args[0];
+                final String envVarName = args[0];
                 return "${" + envVarName + ":-" + var + "}";
             } else {
                 return var;

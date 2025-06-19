@@ -26,7 +26,7 @@ public class DynamicAssetsBundle extends AssetsBundle {
         URL url = null;
         try {
             url = Resources.getResource("");
-        } catch (IllegalArgumentException e) {
+        } catch (final IllegalArgumentException e) {
             LOGGER.debug("Unable to get resource URL, we are likely in a jar: " + e.getMessage());
         }
 
@@ -65,10 +65,10 @@ public class DynamicAssetsBundle extends AssetsBundle {
 
     private static class DynamicAssetsServlet extends AssetServlet {
 
-        public DynamicAssetsServlet(String resourcePath,
-                                    String uriPath,
-                                    @Nullable String indexFile,
-                                    @Nullable Charset defaultCharset) {
+        public DynamicAssetsServlet(final String resourcePath,
+                                    final String uriPath,
+                                    @Nullable final String indexFile,
+                                    @Nullable final Charset defaultCharset) {
             super(resourcePath, uriPath, indexFile, defaultCharset);
         }
 

@@ -29,10 +29,10 @@ public class PropertyMap extends HashMap<String, String> {
     private static final long serialVersionUID = -3738479589881496128L;
 
     public String toArgLine() {
-        StringBuilder builder = new StringBuilder();
+        final StringBuilder builder = new StringBuilder();
         builder.append(MAGIC_MARKER);
         boolean doneOne = false;
-        for (Entry<String, String> entry : entrySet()) {
+        for (final Entry<String, String> entry : entrySet()) {
             if (doneOne) {
                 builder.append(" ");
             }
@@ -50,14 +50,14 @@ public class PropertyMap extends HashMap<String, String> {
         return Boolean.TRUE.toString().equals(get(SUCCESS));
     }
 
-    public void setSuccess(boolean value) {
+    public void setSuccess(final boolean value) {
         put(SUCCESS, Boolean.toString(value));
     }
 
-    public void encode(StringBuilder sb, String value) {
+    public void encode(final StringBuilder sb, final String value) {
         if (value != null) {
             for (int i = 0; i < value.length(); i++) {
-                char c = value.charAt(i);
+                final char c = value.charAt(i);
                 if (c == ' ') {
                     sb.append("\\s");
                 } else if (c == '=') {
@@ -71,8 +71,8 @@ public class PropertyMap extends HashMap<String, String> {
         }
     }
 
-    public String decode(String value) {
-        StringBuilder sb = new StringBuilder();
+    public String decode(final String value) {
+        final StringBuilder sb = new StringBuilder();
         if (value != null) {
             for (int i = 0; i < value.length(); i++) {
                 char c = value.charAt(i);

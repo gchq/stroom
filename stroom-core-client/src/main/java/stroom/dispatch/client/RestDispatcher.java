@@ -13,14 +13,14 @@ import java.util.logging.Logger;
 class RestDispatcher implements Dispatcher {
 
     @Override
-    public Request send(Method method, RequestBuilder builder) throws RequestException {
+    public Request send(final Method method, final RequestBuilder builder) throws RequestException {
         if (GWT.isClient() && LogConfiguration.loggingIsEnabled()) {
-            Logger logger = Logger.getLogger(
+            final Logger logger = Logger.getLogger(
                     org.fusesource.restygwt.client.dispatcher.DefaultDispatcher.class.getName());
             logger.fine("Sending http request: " + builder.getHTTPMethod() + " " + builder.getUrl() +
                     " ,timeout:" + builder.getTimeoutMillis());
 
-            String content = builder.getRequestData();
+            final String content = builder.getRequestData();
             if (content != null && !content.isEmpty()) {
                 logger.fine(content);
             }

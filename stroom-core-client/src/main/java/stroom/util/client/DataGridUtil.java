@@ -561,7 +561,7 @@ public class DataGridUtil {
         return new ColumnBuilder<T_ROW, CommandLink, Cell<CommandLink>>(valueExtractor, CommandLinkCell::new);
     }
 
-    public static void addCommandLinkFieldUpdater(Column<?, CommandLink> column) {
+    public static void addCommandLinkFieldUpdater(final Column<?, CommandLink> column) {
         column.setFieldUpdater((index, object, value) -> {
             if (NullSafe.allNonNull(value, value.getCommand())) {
                 value.getCommand().execute();

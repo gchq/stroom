@@ -49,7 +49,7 @@ class Argon2DataFeedKeyHasher implements DataFeedKeyHasher {
         Objects.requireNonNull(dataFeedKey);
         final Argon2BytesGenerator generator = new Argon2BytesGenerator();
         generator.init(params);
-        byte[] result = new byte[HASH_LENGTH];
+        final byte[] result = new byte[HASH_LENGTH];
         generator.generateBytes(
                 dataFeedKey.trim().getBytes(StandardCharsets.UTF_8),
                 result,

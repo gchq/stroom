@@ -37,7 +37,7 @@ public class Parameter {
         return name;
     }
 
-    public void setName(String name) {
+    public void setName(final String name) {
         this.name = name;
     }
 
@@ -45,7 +45,7 @@ public class Parameter {
         return value;
     }
 
-    public void setValue(String value) {
+    public void setValue(final String value) {
         this.value = value;
     }
 
@@ -53,7 +53,7 @@ public class Parameter {
         return regEx;
     }
 
-    public void setRegEx(String regEx) {
+    public void setRegEx(final String regEx) {
         this.regEx = regEx;
     }
 
@@ -61,7 +61,7 @@ public class Parameter {
         return description;
     }
 
-    public void setDescription(String description) {
+    public void setDescription(final String description) {
         this.description = description;
     }
 

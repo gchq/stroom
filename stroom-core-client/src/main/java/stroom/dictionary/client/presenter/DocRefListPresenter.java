@@ -71,7 +71,7 @@ public class DocRefListPresenter extends MyPresenterWidget<PagerView> {
     }
 
     private Function<DocRef, CommandLink> buildOpenDocCommandLink() {
-        return (DocRef docRef) -> {
+        return (final DocRef docRef) -> {
             if (docRef != null) {
                 final String name = docRef.getName();
                 return new CommandLink(

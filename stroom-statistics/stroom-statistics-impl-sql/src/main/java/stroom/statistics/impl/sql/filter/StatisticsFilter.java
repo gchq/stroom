@@ -308,7 +308,7 @@ public class StatisticsFilter extends AbstractXMLFilter {
                     }
                 }
             } else if (STATISTIC.equals(localName)) {
-                StatisticEvent statisticEvent;
+                final StatisticEvent statisticEvent;
 
                 final List<StatisticTag> tagList = new ArrayList<>(
                         statisticStoreEntity.getStatisticFieldCount());

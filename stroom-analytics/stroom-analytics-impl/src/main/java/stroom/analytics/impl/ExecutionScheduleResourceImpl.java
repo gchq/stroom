@@ -49,7 +49,7 @@ class ExecutionScheduleResourceImpl implements ExecutionScheduleResource {
     }
 
     @Override
-    public ExecutionSchedule createExecutionSchedule(ExecutionSchedule executionSchedule) {
+    public ExecutionSchedule createExecutionSchedule(final ExecutionSchedule executionSchedule) {
         return executionScheduleDaoProvider.get().createExecutionSchedule(checkRunAs(executionSchedule));
     }
 

@@ -144,7 +144,7 @@ public class CompletableQueue<T> {
                 }
                 try {
                     checkForCompletion();
-                } catch (CompleteException e) {
+                } catch (final CompleteException e) {
                     // Caller is asking to complete so ignore
                 }
 
@@ -202,7 +202,7 @@ public class CompletableQueue<T> {
         }
     }
 
-    private void circularClear(final Object[] items, int i, int end) {
+    private void circularClear(final Object[] items, int i, final int end) {
         for (int to = (i < end)
                 ? end
                 : items.length; ; i = 0, to = end) {
@@ -216,7 +216,7 @@ public class CompletableQueue<T> {
         }
     }
 
-    protected void destroy(Object item) {
+    protected void destroy(final Object item) {
 
     }
 

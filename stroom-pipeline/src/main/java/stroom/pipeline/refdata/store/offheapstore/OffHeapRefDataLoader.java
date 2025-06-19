@@ -176,7 +176,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 LOGGER.info("Waited for {} to acquire lock for {}",
                         timeToAcquireLock, refStreamDefinition);
             }
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
             throw ProcessException.wrap(UncheckedInterruptedException.create(LogUtil.message(
                     "Acquisition of lock for {} aborted due to thread interruption",
                     refStreamDefinition), e));
@@ -634,7 +634,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                     putOutcome = PutOutcome.replacedEntry();
                     removedEntriesCount++;
                 } else {
-                    boolean areValuesEqual = valueStore.areValuesEqual(
+                    final boolean areValuesEqual = valueStore.areValuesEqual(
                             writeTxn, currValueStoreKeyBuffer, stagingValue);
                     if (areValuesEqual) {
                         // value is the same as the existing value so nothing to do
@@ -769,7 +769,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
             if (offHeapStagingStore != null) {
                 offHeapStagingStore.close();
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error closing offHeapStagingStore: {}", e.getMessage(), e);
         }
 
@@ -777,7 +777,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         pooledByteBuffers.forEach(pooledByteBuffer -> {
             try {
                 pooledByteBuffer.close();
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.error("Error releasing pooled buffer: {}", e.getMessage(), e);
             }
         });
@@ -794,7 +794,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
 
     private void checkCurrentState(final LoaderState... validStates) {
         boolean isCurrentStateValid = false;
-        for (LoaderState loaderState : validStates) {
+        for (final LoaderState loaderState : validStates) {
             if (currentLoaderState.equals(loaderState)) {
                 isCurrentStateValid = true;
                 break;

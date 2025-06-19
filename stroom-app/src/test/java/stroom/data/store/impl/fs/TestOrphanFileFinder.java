@@ -125,7 +125,7 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
 
     private static void listContents(final Path path) {
         final StringBuilder sb = new StringBuilder();
-        try (Stream<Path> stream = Files.walk(path)) {
+        try (final Stream<Path> stream = Files.walk(path)) {
             stream.forEach(path2 -> sb.append("\n  ")
                     .append(path2.toString()));
         } catch (final IOException e) {
@@ -281,7 +281,7 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
             //
             // FILE2 UNLOCKED
             //
-            Meta meta;
+            final Meta meta;
             try (final Target nolockstreamTarget1 = streamStore.openTarget(nolockfile1)) {
                 meta = nolockstreamTarget1.getMeta();
                 TargetUtil.write(nolockstreamTarget1, "MyTest");

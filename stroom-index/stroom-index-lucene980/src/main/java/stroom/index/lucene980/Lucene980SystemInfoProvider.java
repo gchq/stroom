@@ -87,7 +87,7 @@ class Lucene980SystemInfoProvider implements IndexSystemInfoProvider {
                                          final IndexShard indexShard,
                                          final Integer limit,
                                          final Long streamId) {
-        SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
+        final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
         IndexSearcher indexSearcher = null;
         try {
             indexSearcher = searcherManager.acquire();
@@ -100,7 +100,7 @@ class Lucene980SystemInfoProvider implements IndexSystemInfoProvider {
                 consumeDocument(indexSearcher, streamIdDocCounts, scoreDoc);
             }
 
-            var detailMap = streamIdDocCounts
+            final var detailMap = streamIdDocCounts
                     .entrySet()
                     .stream()
                     .collect(Collectors.toMap(
@@ -133,14 +133,14 @@ class Lucene980SystemInfoProvider implements IndexSystemInfoProvider {
                     .addDetail("PartitionToTime",
                             DateUtil.createNormalDateTimeString(indexShard.getPartitionToTime()))
                     .build();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException("Error acquiring index searcher: " + e.getMessage(), e);
         } finally {
             try {
                 if (indexSearcher != null) {
                     searcherManager.release(indexSearcher);
                 }
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new RuntimeException("Error releasing index searcher: " + e.getMessage(), e);
             }
         }

@@ -166,7 +166,7 @@ public class User implements HasAuditInfo, HasIntegerId, HasUserRef {
     /**
      * See {@link User#getSubjectId()}
      */
-    public void setSubjectId(String subjectId) {
+    public void setSubjectId(final String subjectId) {
         this.subjectId = subjectId;
     }
 
@@ -221,7 +221,7 @@ public class User implements HasAuditInfo, HasIntegerId, HasUserRef {
     /**
      * See {@link User#getUuid()}
      */
-    public void setUuid(String uuid) {
+    public void setUuid(final String uuid) {
         this.uuid = uuid;
     }
 
@@ -232,7 +232,7 @@ public class User implements HasAuditInfo, HasIntegerId, HasUserRef {
         return group;
     }
 
-    public void setGroup(boolean group) {
+    public void setGroup(final boolean group) {
         this.group = group;
     }
 

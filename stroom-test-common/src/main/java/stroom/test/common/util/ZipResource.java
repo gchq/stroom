@@ -49,7 +49,7 @@ public class ZipResource {
     private final String folderToZip;
     private Path zip;
 
-    public ZipResource(String folderToZip) {
+    public ZipResource(final String folderToZip) {
         this.folderToZip = folderToZip;
     }
 
@@ -70,7 +70,7 @@ public class ZipResource {
     }
 
     public void before() throws IOException {
-        Path inputDir = Paths.get(RESOURCES + folderToZip);
+        final Path inputDir = Paths.get(RESOURCES + folderToZip);
         zip = Paths.get(RESOURCES + folderToZip + ZIP_EXTENSION);
         ZipUtil.zip(zip, inputDir);
     }
@@ -78,7 +78,7 @@ public class ZipResource {
     public void after() {
         try {
             Files.deleteIfExists(zip);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             e.printStackTrace();
         }
     }

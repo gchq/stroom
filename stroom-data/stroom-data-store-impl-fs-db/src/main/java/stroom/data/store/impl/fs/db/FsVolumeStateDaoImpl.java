@@ -42,12 +42,12 @@ public class FsVolumeStateDaoImpl implements FsVolumeStateDao {
     }
 
     @Override
-    public boolean delete(int id) {
+    public boolean delete(final int id) {
         return genericDao.delete(id);
     }
 
     @Override
-    public Optional<FsVolumeState> fetch(int id) {
+    public Optional<FsVolumeState> fetch(final int id) {
         return genericDao.fetch(id);
     }
 }

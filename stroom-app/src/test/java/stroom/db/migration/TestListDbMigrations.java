@@ -141,10 +141,10 @@ public class TestListDbMigrations {
 
     private void appendSqlMig(final Version version, final Script script, final StringBuilder sb) {
 
-        String fileContent;
+        final String fileContent;
         try {
             fileContent = Files.readString(script.absLocalPath);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message(
                     "Unable to read migration script {}: {}",
                     script.relPath.toAbsolutePath().normalize(),
@@ -261,7 +261,7 @@ public class TestListDbMigrations {
     private void appendScript(final ColouredStringBuilder stringBuilder,
                               final Script script,
                               final String padding) {
-        String filename = script.fileName();
+        final String filename = script.fileName();
         stringBuilder.append(padding);
 
         final ConsoleColour colour;
@@ -282,7 +282,7 @@ public class TestListDbMigrations {
     private static Comparator<String> buildModuleNameComparator() {
         // Core is always run first so list it first
         final Comparator<String> moduleComparator = (o1, o2) -> {
-            String stroomCoreModuleName = "stroom-core";
+            final String stroomCoreModuleName = "stroom-core";
 
             if (Objects.equals(o1, o2)) {
                 return 0;
@@ -299,9 +299,9 @@ public class TestListDbMigrations {
 
     private void populateMigrationsMap() throws IOException {
         if (moduleToScriptMap.isEmpty()) {
-            Path projectRoot = Paths.get("../").toAbsolutePath().normalize();
+            final Path projectRoot = Paths.get("../").toAbsolutePath().normalize();
 
-            try (Stream<Path> stream = Files.list(projectRoot)) {
+            try (final Stream<Path> stream = Files.list(projectRoot)) {
                 stream
                         .filter(Files::isDirectory)
                         .filter(path -> path.getFileName().toString().startsWith("stroom-"))
@@ -366,7 +366,7 @@ public class TestListDbMigrations {
                     return FileVisitResult.CONTINUE;
                 }
             });
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(e);
         }
 
@@ -427,7 +427,7 @@ public class TestListDbMigrations {
                 } else {
                     throw new RuntimeException("Prefix not found for '" + fileName + "'");
                 }
-            } catch (IllegalStateException e) {
+            } catch (final IllegalStateException e) {
                 throw new RuntimeException("Prefix not found for '" + fileName + "': " + e.getMessage());
             }
         }
@@ -443,7 +443,7 @@ public class TestListDbMigrations {
                 } else {
                     throw new RuntimeException("Prefix not found for '" + fileName + "'");
                 }
-            } catch (IllegalStateException e) {
+            } catch (final IllegalStateException e) {
                 throw new RuntimeException("Prefix not found for '" + fileName + "': " + e.getMessage());
             }
         }

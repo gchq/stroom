@@ -66,7 +66,7 @@ public class UniqueXMLEvents {
             final TransformerHandler th = XMLUtil.createTransformerHandler(true);
             th.setResult(new StreamResult(writer));
 
-            SAXParser parser;
+            final SAXParser parser;
             try {
                 parser = PARSER_FACTORY.newSAXParser();
             } catch (final ParserConfigurationException e) {

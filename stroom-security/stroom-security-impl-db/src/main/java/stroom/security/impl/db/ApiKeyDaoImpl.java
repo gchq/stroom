@@ -226,7 +226,7 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
                     .returning(API_KEY.ID)
                     .fetchOne()
             );
-        } catch (DataAccessException e) {
+        } catch (final DataAccessException e) {
             final Throwable rootCause = ExceptionUtils.getRootCause(e);
             if (rootCause instanceof final SQLIntegrityConstraintViolationException constraintException) {
                 LOGGER.debug(constraintException.getMessage());
@@ -260,7 +260,7 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
     public HashedApiKey update(final HashedApiKey apiKey) {
         try {
             return genericDao.update(apiKey);
-        } catch (DataAccessException e) {
+        } catch (final DataAccessException e) {
             final Throwable rootCause = ExceptionUtils.getRootCause(e);
             if (rootCause instanceof SQLIntegrityConstraintViolationException &&
                 rootCause.getMessage().contains(API_KEY.NAME.getName())) {

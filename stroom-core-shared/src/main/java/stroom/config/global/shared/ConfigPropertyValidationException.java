@@ -2,7 +2,7 @@ package stroom.config.global.shared;
 
 public class ConfigPropertyValidationException extends RuntimeException {
 
-    public ConfigPropertyValidationException(String message) {
+    public ConfigPropertyValidationException(final String message) {
         super(message);
     }
 

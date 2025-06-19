@@ -101,7 +101,7 @@ public class IndexSystemInfo implements HasSystemInfo {
                         .addDetail("Owned", false)
                         .build();
             }
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             return SystemInfoResult.builder(this)
                     .addError(e)
                     .build();

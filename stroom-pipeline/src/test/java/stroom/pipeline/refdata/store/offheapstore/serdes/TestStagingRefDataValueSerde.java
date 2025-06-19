@@ -24,8 +24,8 @@ class TestStagingRefDataValueSerde extends AbstractSerdeTest<StagingRefDataValue
     @Test
     void testSerialisationDeserialisation_fastInfoSet() {
 
-        FastInfosetValue fastInfosetValue = new FastInfosetValue(ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4}));
-        StagingRefDataValue stagingRefDataValue = StagingRefDataValue.wrap(fastInfosetValue);
+        final FastInfosetValue fastInfosetValue = new FastInfosetValue(ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4}));
+        final StagingRefDataValue stagingRefDataValue = StagingRefDataValue.wrap(fastInfosetValue);
         final StagingRefDataValue stagingRefDataValue2 = doSerialisationDeserialisationTest(stagingRefDataValue);
 
         assertThat(stagingRefDataValue2.getTypeId())
@@ -34,7 +34,7 @@ class TestStagingRefDataValueSerde extends AbstractSerdeTest<StagingRefDataValue
                 .extracting(StagingRefDataValue::getRefDataValue)
                 .isInstanceOf(FastInfosetValue.class);
 
-        FastInfosetValue fastInfosetValue2 = (FastInfosetValue) stagingRefDataValue2.getRefDataValue();
+        final FastInfosetValue fastInfosetValue2 = (FastInfosetValue) stagingRefDataValue2.getRefDataValue();
 
         assertThat(fastInfosetValue.getByteBuffer()).isEqualTo(fastInfosetValue2.getByteBuffer());
 
@@ -48,8 +48,8 @@ class TestStagingRefDataValueSerde extends AbstractSerdeTest<StagingRefDataValue
     @Test
     void testSerialisationDeserialisation_string() {
 
-        StringValue stringValue = new StringValue("foo");
-        StagingRefDataValue stagingRefDataValue = StagingRefDataValue.wrap(stringValue);
+        final StringValue stringValue = new StringValue("foo");
+        final StagingRefDataValue stagingRefDataValue = StagingRefDataValue.wrap(stringValue);
         final StagingRefDataValue stagingRefDataValue2 = doSerialisationDeserialisationTest(stagingRefDataValue);
 
         assertThat(stagingRefDataValue2.getTypeId())
@@ -72,8 +72,8 @@ class TestStagingRefDataValueSerde extends AbstractSerdeTest<StagingRefDataValue
     @Test
     void testSerialisationDeserialisation_null() {
 
-        NullValue nullValue = NullValue.getInstance();
-        StagingRefDataValue stagingRefDataValue = StagingRefDataValue.wrap(nullValue);
+        final NullValue nullValue = NullValue.getInstance();
+        final StagingRefDataValue stagingRefDataValue = StagingRefDataValue.wrap(nullValue);
         final StagingRefDataValue stagingRefDataValue2 = doSerialisationDeserialisationTest(stagingRefDataValue);
 
         assertThat(stagingRefDataValue2.getTypeId())
@@ -92,15 +92,15 @@ class TestStagingRefDataValueSerde extends AbstractSerdeTest<StagingRefDataValue
 
     @Test
     void testTypeIdExtraction() {
-        StringValue stringValue = new StringValue("foo");
-        StagingRefDataValue stagingRefDataValue = StagingRefDataValue.wrap(stringValue);
+        final StringValue stringValue = new StringValue("foo");
+        final StagingRefDataValue stagingRefDataValue = StagingRefDataValue.wrap(stringValue);
         doExtractionTest(stagingRefDataValue, getSerde()::extractTypeId, StagingRefDataValue::getTypeId);
     }
 
     @Test
     void testValueHashExtraction() {
-        StringValue stringValue = new StringValue("foo");
-        StagingRefDataValue stagingRefDataValue = StagingRefDataValue.wrap(stringValue);
+        final StringValue stringValue = new StringValue("foo");
+        final StagingRefDataValue stagingRefDataValue = StagingRefDataValue.wrap(stringValue);
         doExtractionTest(
                 stagingRefDataValue,
                 getSerde()::extractValueHash,

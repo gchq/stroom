@@ -65,7 +65,7 @@ class TestRangeStateDb {
             .build();
 
     @Test
-    void test(@TempDir Path tempDir) {
+    void test(@TempDir final Path tempDir) {
         testWrite(tempDir);
 
         try (final RangeStateDb db = RangeStateDb.create(

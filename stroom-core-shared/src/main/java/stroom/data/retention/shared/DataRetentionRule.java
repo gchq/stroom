@@ -189,7 +189,7 @@ public class DataRetentionRule {
     @Override
     public String toString() {
         // Create a rule name that includes the rule number.
-        String ruleName;
+        final String ruleName;
         if (name != null && !name.isEmpty()) {
             ruleName = ruleNumber + " " + name;
         } else {

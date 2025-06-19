@@ -17,7 +17,7 @@ class TestLambdaLogger {
     @Test
     void compareLambdaToIfBlock() {
 
-        String someStr = "sdskjdsdsdk";
+        final String someStr = "sdskjdsdsdk";
 
         Stream.of(100, 1_000, 1_000_000, 100_000_000)
                 .forEach(iterations -> {

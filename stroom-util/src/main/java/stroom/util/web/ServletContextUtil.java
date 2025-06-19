@@ -24,7 +24,7 @@ public class ServletContextUtil {
     private static final String DEFAULT_NAME = "stroom";
     private static final String WEBAPP = "ui";
 
-    public static final String getWARName(ServletConfig servletConfig) {
+    public static final String getWARName(final ServletConfig servletConfig) {
         if (servletConfig == null) {
             return DEFAULT_NAME;
         }
@@ -32,7 +32,7 @@ public class ServletContextUtil {
         return getWARName(servletConfig.getServletContext());
     }
 
-    public static final String getWARName(ServletContext servletContext) {
+    public static final String getWARName(final ServletContext servletContext) {
         final String fullPathUnavailableMessage = "[Full path is not available]";
         String fullPath = null;
         // Servlet context might not yet be loaded

@@ -42,7 +42,7 @@ class FileMetaGrep extends AbstractCommandLineTool {
     private String[] repoPathParts = null;
     private String feedId;
 
-    private FileMetaGrep(String[] args) {
+    private FileMetaGrep(final String[] args) {
         matchMap = ArgsUtil.parse(args);
         matchMap.remove("repoPath");
         matchMap.remove("feedId");
@@ -50,23 +50,23 @@ class FileMetaGrep extends AbstractCommandLineTool {
         doMain(args);
     }
 
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         new FileMetaGrep(args);
     }
 
-    public void setRepoPath(String repoPath) {
+    public void setRepoPath(final String repoPath) {
         this.repoPathParts = repoPath.split("/");
     }
 
-    public void setFeedId(String feedId) {
+    public void setFeedId(final String feedId) {
         this.feedId = feedId;
     }
 
     @Override
     public void run() {
-        StringBuilder path = new StringBuilder();
+        final StringBuilder path = new StringBuilder();
 
-        for (String part : repoPathParts) {
+        for (final String part : repoPathParts) {
             if (part.contains("*")) {
                 break;
             }
@@ -77,7 +77,7 @@ class FileMetaGrep extends AbstractCommandLineTool {
         scanDir(Paths.get(path.toString()));
     }
 
-    private void scanDir(Path path) {
+    private void scanDir(final Path path) {
         try {
             Files.walkFileTree(path,
                     EnumSet.of(FileVisitOption.FOLLOW_LINKS),
@@ -100,9 +100,9 @@ class FileMetaGrep extends AbstractCommandLineTool {
         }
     }
 
-    private void scanFile(Path file) {
+    private void scanFile(final Path file) {
         try {
-            String path = file.toAbsolutePath().normalize().toString();
+            final String path = file.toAbsolutePath().normalize().toString();
             if (feedId != null) {
                 if (!file.getFileName().toString().startsWith(feedId)) {
                     return;
@@ -110,7 +110,7 @@ class FileMetaGrep extends AbstractCommandLineTool {
             }
 
             if (path.endsWith("meta.bgz")) {
-                String bdyPath = path.substring(0, path.length() - 4) + ".bdy.dat";
+                final String bdyPath = path.substring(0, path.length() - 4) + ".bdy.dat";
                 int segment = 0;
                 boolean done = false;
                 while (!done) {
@@ -123,12 +123,12 @@ class FileMetaGrep extends AbstractCommandLineTool {
                         } else {
                             segmentInputStream.include(segment);
 
-                            AttributeMap attributeMap = new AttributeMap();
+                            final AttributeMap attributeMap = new AttributeMap();
                             AttributeMapUtil.read(segmentInputStream, attributeMap);
 
                             boolean match = true;
 
-                            for (String matchKey : matchMap.keySet()) {
+                            for (final String matchKey : matchMap.keySet()) {
                                 if (!attributeMap.containsKey(matchKey)) {
                                     // No Good
                                     match = false;
@@ -152,13 +152,13 @@ class FileMetaGrep extends AbstractCommandLineTool {
                     }
                 }
             }
-        } catch (IOException ioEx) {
+        } catch (final IOException ioEx) {
             ioEx.printStackTrace();
         }
     }
 
-    private boolean matches(String path) {
-        String[] pathParts = path.split("/");
+    private boolean matches(final String path) {
+        final String[] pathParts = path.split("/");
 
         for (int i = 0; (i < pathParts.length) && (i < repoPathParts.length); i++) {
             for (int c = 0; c < pathParts[i].length(); c++) {

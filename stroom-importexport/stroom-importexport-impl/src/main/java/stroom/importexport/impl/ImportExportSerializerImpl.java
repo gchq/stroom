@@ -136,7 +136,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
     private Set<DocRef> processDir(final Path dir,
                                    final Map<DocRef, ImportState> confirmMap,
                                    final ImportSettings importSettings) {
-        HashSet<DocRef> result = new HashSet<>();
+        final HashSet<DocRef> result = new HashSet<>();
 
         try {
             Files.walkFileTree(dir,
@@ -259,7 +259,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         final NonExplorerDocRefProvider nonExplorerDocRefProvider =
                 (NonExplorerDocRefProvider) importExportActionHandler;
 
-        DocRef importRootDocRef = importSettings.getRootDocRef();
+        final DocRef importRootDocRef = importSettings.getRootDocRef();
         final String importPath = resolvePath(path, importRootDocRef);
 
         final DocRef ownerDocument = nonExplorerDocRefProvider.getOwnerDocument(docRef, dataMap);
@@ -518,7 +518,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
     public ExportSummary write(final Path dir,
                                final Set<DocRef> docRefs,
                                final boolean omitAuditFields) {
-        Set<String> docTypesToIgnore = Collections.emptySet();
+        final Set<String> docTypesToIgnore = Collections.emptySet();
         return this.write(null, dir, docRefs, docTypesToIgnore, omitAuditFields);
     }
 
@@ -686,10 +686,10 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         List<ExplorerNode> resultPath = nodePath;
 
         if (rootPath != null) {
-            List<String> rootUuids = rootPath.stream()
+            final List<String> rootUuids = rootPath.stream()
                     .map(ExplorerNode::getUuid)
                     .toList();
-            List<String> nodeUuids = nodePath.stream()
+            final List<String> nodeUuids = nodePath.stream()
                     .map(ExplorerNode::getUuid)
                     .limit(rootPath.size())
                     .toList();
@@ -721,7 +721,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
             final DocRef explorerDocRef;
             final ExplorerNode explorerNode;
             final DocRef docRef;
-            if (importExportActionHandler instanceof NonExplorerDocRefProvider docRefProvider) {
+            if (importExportActionHandler instanceof final NonExplorerDocRefProvider docRefProvider) {
                 // Find the closest DocRef to this one to give a location to export it.
                 explorerDocRef = docRefProvider.findNearestExplorerDocRef(initialDocRef);
 
@@ -757,7 +757,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                 }
 
                 // Turn the path into a list of strings but ignore any nodes that aren't folders, e.g. the root.
-                List<String> pathElements = path.stream()
+                final List<String> pathElements = path.stream()
                         .filter(ExplorerConstants::isFolder)
                         .map(ExplorerNode::getName).toList();
 
@@ -811,7 +811,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                         importExportDocumentEventLog.exportDocument(docRef, new RuntimeException(errorText));
                     }
                 }
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 importExportDocumentEventLog.exportDocument(docRef, e);
                 localMessageList.add(new Message(
                         Severity.ERROR,
@@ -828,7 +828,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         if (bytes.length < LINE_END_CHAR_BYTES.length) {
             return false;
         } else {
-            byte[] lastChar = Arrays.copyOfRange(bytes, bytes.length - LINE_END_CHAR_BYTES.length, bytes.length);
+            final byte[] lastChar = Arrays.copyOfRange(bytes, bytes.length - LINE_END_CHAR_BYTES.length, bytes.length);
             return !Arrays.equals(LINE_END_CHAR_BYTES, lastChar);
         }
     }

@@ -121,7 +121,7 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
         ThreadLocalLogState.setLogged(false);
 
         if (exception instanceof WebApplicationException) {
-            WebApplicationException wae = (WebApplicationException) exception;
+            final WebApplicationException wae = (WebApplicationException) exception;
             return wae.getResponse();
         } else {
             return delegatingExceptionMapperProvider.get().toResponse(exception);
@@ -133,7 +133,7 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
             throws WebApplicationException {
         try {
             writerInterceptorContext.proceed();
-        } catch (Exception ex) {
+        } catch (final Exception ex) {
             LOGGER.error("Error in Java RS filter chain processing.", ex);
         }
 
@@ -159,7 +159,7 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
 
     @Override
     public void filter(final ContainerRequestContext context) throws IOException {
-        ContainerResourceInfo containerResourceInfo =
+        final ContainerResourceInfo containerResourceInfo =
                 new ContainerResourceInfo(
                         resourceContext,
                         securityContextProvider.get(),

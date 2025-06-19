@@ -30,7 +30,7 @@ public class DoubleListReference implements ValueReference<List<Double>> {
     @Override
     public void read(final StoredValues storedValues, final DataReader reader) {
         final int length = reader.readInt();
-        List<Double> list = new ArrayList<>(length);
+        final List<Double> list = new ArrayList<>(length);
         for (int i = 0; i < length; i++) {
             list.add(reader.readDouble());
         }
@@ -39,7 +39,7 @@ public class DoubleListReference implements ValueReference<List<Double>> {
 
     @Override
     public void write(final StoredValues storedValues, final DataWriter writer) {
-        List<Double> list = get(storedValues);
+        final List<Double> list = get(storedValues);
         writer.writeInt(list.size());
         for (final Double d : list) {
             writer.writeDouble(d);

@@ -292,7 +292,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                     signature: {}""", header, payload, signature);
 
             return new JwsParts(jws, header, payload, signature);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.debug("Unable to parse '{}' as a JWT", jws, e);
             throw new AuthenticationException(LogUtil.message(
                     "Error parsing token as a JSON Web Token: {}", e.getMessage()));
@@ -317,7 +317,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
             final JwtConsumer jwtConsumer = builder.build();
             return Optional.ofNullable(jwtConsumer.process(jwsParts.jws));
 
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.debug(e::getMessage, e);
             throw new RuntimeException(LogUtil.message("Error getting jwt context for AWS JWT: {}",
                     LogUtil.exceptionMessage(e)), e);
@@ -409,7 +409,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                     .build();
             try {
                 optJwtContext = Optional.of(simpleJwtConsumer.process(jwt));
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.debug(() -> "Unable to extract token: " + e.getMessage(), e);
             }
         }
@@ -589,11 +589,11 @@ public class StandardJwtContextFactory implements JwtContextFactory {
             publicKeyPEM = publicKeyPEM.replace("-----BEGIN PUBLIC KEY-----\n", "");
             publicKeyPEM = publicKeyPEM.replace("-----END PUBLIC KEY-----", "");
 
-            byte[] publicKeyBytes = SimplePEMEncoder.decode(publicKeyPEM);
+            final byte[] publicKeyBytes = SimplePEMEncoder.decode(publicKeyPEM);
 
             // create a key object from the bytes
             final X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
-            KeyFactory keyFactory = KeyFactory.getInstance(alg);
+            final KeyFactory keyFactory = KeyFactory.getInstance(alg);
             publicKey = keyFactory.generatePublic(keySpec);
 
         } catch (final RuntimeException | NoSuchAlgorithmException | InvalidKeySpecException e) {
@@ -632,7 +632,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
             final String decoded;
             try {
                 decoded = new String(Base64.getDecoder().decode(input), StandardCharsets.UTF_8);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw new RuntimeException(LogUtil.message("input is not in BASE64 format, input: '{}': {}",
                         input, LogUtil.exceptionMessage(e)), e);
             }

@@ -101,7 +101,7 @@ class Lucene553ShardSearcher implements LuceneShardSearcher {
                 dictionaryStore,
                 maxBooleanClauseCount,
                 dateTimeSettings);
-        SearchExpressionQuery searchExpressionQuery = searchExpressionQueryBuilder.buildQuery(expression);
+        final SearchExpressionQuery searchExpressionQuery = searchExpressionQueryBuilder.buildQuery(expression);
         query = searchExpressionQuery.getQuery();
 
         // Make sure the query was created successfully.

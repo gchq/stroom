@@ -124,37 +124,37 @@ public class HtmlBuilder {
         return this;
     }
 
-    public HtmlBuilder append(boolean b) {
+    public HtmlBuilder append(final boolean b) {
         sb.append(b);
         return this;
     }
 
-    public HtmlBuilder append(byte num) {
+    public HtmlBuilder append(final byte num) {
         sb.append(num);
         return this;
     }
 
-    public HtmlBuilder append(char c) {
+    public HtmlBuilder append(final char c) {
         sb.append(SafeHtmlUtils.htmlEscape(c));
         return this;
     }
 
-    public HtmlBuilder append(double num) {
+    public HtmlBuilder append(final double num) {
         sb.append(num);
         return this;
     }
 
-    public HtmlBuilder append(float num) {
+    public HtmlBuilder append(final float num) {
         sb.append(num);
         return this;
     }
 
-    public HtmlBuilder append(int num) {
+    public HtmlBuilder append(final int num) {
         sb.append(num);
         return this;
     }
 
-    public HtmlBuilder append(long num) {
+    public HtmlBuilder append(final long num) {
         sb.append(num);
         return this;
     }
@@ -186,7 +186,7 @@ public class HtmlBuilder {
         return this;
     }
 
-    public HtmlBuilder appendEscapedLines(String text) {
+    public HtmlBuilder appendEscapedLines(final String text) {
         sb.append(SafeHtmlUtils.htmlEscape(text).replaceAll("\n", "<br/>"));
         return this;
     }

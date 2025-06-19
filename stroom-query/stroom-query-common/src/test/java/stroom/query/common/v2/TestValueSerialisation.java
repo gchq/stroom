@@ -51,7 +51,7 @@ public class TestValueSerialisation {
         final CompiledColumn[] compiledColumnArray = compiledColumns.getCompiledColumns();
         final ValueReferenceIndex valueReferenceIndex = compiledColumns.getValueReferenceIndex();
         final CompiledDepths compiledDepths = new CompiledDepths(compiledColumnArray, false);
-        KeyFactoryConfigImpl keyFactoryConfig =
+        final KeyFactoryConfigImpl keyFactoryConfig =
                 new KeyFactoryConfigImpl(SourceType.DASHBOARD_UI, compiledColumnArray, compiledDepths);
         final ByteBufferFactory byteBufferFactory = new SimpleByteBufferFactory();
         final DataWriterFactory writerFactory =

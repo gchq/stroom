@@ -63,10 +63,10 @@ abstract class AbstractSerdeTest<T, S extends Serde<T>> {
         return () -> {
             try {
                 return (S) getSerdeType().getRawType().getConstructor().newInstance();
-            } catch (NoSuchMethodException
-                     | InvocationTargetException
-                     | InstantiationException
-                     | IllegalAccessException e) {
+            } catch (final NoSuchMethodException
+                           | InvocationTargetException
+                           | InstantiationException
+                           | IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
         };
@@ -116,7 +116,7 @@ abstract class AbstractSerdeTest<T, S extends Serde<T>> {
         // modify the bytebuffer
         byteBufferModifier.accept(serde1, byteBuffer);
 
-        T outputObject = serde2.deserialize(byteBuffer);
+        final T outputObject = serde2.deserialize(byteBuffer);
 
         LOGGER.debug("inputObject [{}]", inputObject);
         LOGGER.debug("expectedOutputObject [{}]", expectedOutputObject);
@@ -124,17 +124,17 @@ abstract class AbstractSerdeTest<T, S extends Serde<T>> {
 
         assertThat(outputObject).isEqualTo(expectedOutputObject);
 
-        T outputObject2 = serde2.deserialize(byteBuffer);
+        final T outputObject2 = serde2.deserialize(byteBuffer);
 
         // re-run the deser to ennsure the buffer is in the right position to be read from again
         assertThat(outputObject2).isEqualTo(expectedOutputObject);
     }
 
-    T doSerialisationDeserialisationTest(T object) {
+    T doSerialisationDeserialisationTest(final T object) {
         return doSerialisationDeserialisationTest(object, this::getSerde);
     }
 
-    T doSerialisationDeserialisationTest(T object, Supplier<Serde<T>> serdeSupplier) {
+    T doSerialisationDeserialisationTest(final T object, final Supplier<Serde<T>> serdeSupplier) {
         // use two serde instances to be sure ser and de-ser are independent
         final Serde<T> serde1 = serdeSupplier.get();
         final Serde<T> serde2 = serdeSupplier.get();
@@ -146,14 +146,14 @@ abstract class AbstractSerdeTest<T, S extends Serde<T>> {
 
         LOGGER.debug(ByteBufferUtils.byteBufferInfo(byteBuffer));
 
-        T object2 = serde2.deserialize(byteBuffer);
+        final T object2 = serde2.deserialize(byteBuffer);
 
         LOGGER.debug("Object   [{}]", object);
         LOGGER.debug("Object 2 [{}]", object2);
 
         assertThat(object2).isEqualTo(object);
 
-        T object3 = serde2.deserialize(byteBuffer);
+        final T object3 = serde2.deserialize(byteBuffer);
 
         // re-run the deser to ensure the buffer is in the right position to be read from again
         assertThat(object3).isEqualTo(object);
@@ -176,10 +176,10 @@ abstract class AbstractSerdeTest<T, S extends Serde<T>> {
     <V> void doExtractionTest(final T object,
                               final Function<ByteBuffer, V> extractionFunc,
                               final Function<T, V> expectedValueFunc) {
-        ByteBuffer byteBuffer = serialize(object);
-        ByteBuffer byteBufferClone = byteBuffer.asReadOnlyBuffer();
+        final ByteBuffer byteBuffer = serialize(object);
+        final ByteBuffer byteBufferClone = byteBuffer.asReadOnlyBuffer();
 
-        V actualExtractedValue = extractionFunc.apply(byteBuffer);
+        final V actualExtractedValue = extractionFunc.apply(byteBuffer);
 
         assertThat(actualExtractedValue).isEqualTo(expectedValueFunc.apply(object));
 

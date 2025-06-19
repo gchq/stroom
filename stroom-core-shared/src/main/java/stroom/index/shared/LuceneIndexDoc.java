@@ -244,7 +244,7 @@ public class LuceneIndexDoc extends Doc {
         return volumeGroupName;
     }
 
-    public void setVolumeGroupName(String volumeGroupName) {
+    public void setVolumeGroupName(final String volumeGroupName) {
         this.volumeGroupName = volumeGroupName;
     }
 

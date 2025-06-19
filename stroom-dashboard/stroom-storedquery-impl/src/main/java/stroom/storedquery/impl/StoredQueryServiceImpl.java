@@ -77,7 +77,7 @@ public class StoredQueryServiceImpl implements StoredQueryService {
     }
 
     @Override
-    public boolean delete(int id) {
+    public boolean delete(final int id) {
         return securityContext.secureResult(() -> {
             final StoredQuery storedQuery = dao.fetch(id)
                     .orElseThrow(() -> new RuntimeException(LogUtil.message(
@@ -113,7 +113,7 @@ public class StoredQueryServiceImpl implements StoredQueryService {
     }
 
     @Override
-    public StoredQuery fetch(int id) {
+    public StoredQuery fetch(final int id) {
         return securityContext.secureResult(() -> {
             final StoredQuery storedQuery = dao.fetch(id)
                     .orElse(null);
@@ -129,7 +129,7 @@ public class StoredQueryServiceImpl implements StoredQueryService {
     }
 
     @Override
-    public ResultPage<StoredQuery> find(FindStoredQueryCriteria criteria) {
+    public ResultPage<StoredQuery> find(final FindStoredQueryCriteria criteria) {
         criteria.setOwner(securityContext.getUserRef());
         return securityContext.secureResult(() -> dao.find(criteria));
     }

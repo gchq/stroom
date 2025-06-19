@@ -34,7 +34,7 @@ public class NoSuchUserExceptionMapper implements ExceptionMapper<NoSuchUserExce
     private static final Logger LOGGER = LoggerFactory.getLogger(NoSuchUserExceptionMapper.class);
 
     @Override
-    public Response toResponse(NoSuchUserException exception) {
+    public Response toResponse(final NoSuchUserException exception) {
         LOGGER.debug(exception.getMessage());
         return Response.status(Response.Status.BAD_REQUEST).entity(exception.getMessage()).build();
     }

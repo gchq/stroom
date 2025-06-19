@@ -47,7 +47,7 @@ class MetaSecurityFilterImpl implements MetaSecurityFilter, Clearable {
 
     private String getFilteredFeeds(final DocumentPermission permission) {
         // Get all feeds as seen by the processing user.
-        List<DocRef> feeds = getCachedFeeds();
+        final List<DocRef> feeds = getCachedFeeds();
         // Filter feeds that the current user has the requested permission on.
         return feeds
                 .stream()

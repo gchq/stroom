@@ -44,7 +44,7 @@ public class SpinnerSmall extends Widget implements TaskMonitorFactory {
         setElement(spinnerSmall);
     }
 
-    public void setRefreshing(boolean refreshing) {
+    public void setRefreshing(final boolean refreshing) {
         if (refreshing) {
             addStyleName("refreshing");
         } else {

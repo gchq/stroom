@@ -76,7 +76,7 @@ class TestHexDumpUtil {
         // Dump the full thing
         ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
         HexDump hexDump = HexDumpUtil.hexDump(inputStream, charset);
-        String hexDumpStr = hexDump.getHexDumpAsStr();
+        final String hexDumpStr = hexDump.getHexDumpAsStr();
         LOGGER.info("hexDump: \n{}", hexDump.getHexDumpAsStr());
 
         final String fourthLine1 = hexDump.getLine(4).get().getLine();

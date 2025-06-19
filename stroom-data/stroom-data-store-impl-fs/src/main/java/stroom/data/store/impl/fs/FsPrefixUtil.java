@@ -75,7 +75,7 @@ final class FsPrefixUtil {
             } else {
                 try {
                     return Long.parseLong(dePaddedId);
-                } catch (NumberFormatException e) {
+                } catch (final NumberFormatException e) {
                     LOGGER.debug("Unable to convert '{}' to a long", dePaddedId, e);
                     return -1;
                 }

@@ -126,19 +126,19 @@ public class GitRepoStorageService {
      * place.
      * @throws IOException if something goes wrong
      */
-    public synchronized List<Message> exportDoc(GitRepoDoc gitRepoDoc,
+    public synchronized List<Message> exportDoc(final GitRepoDoc gitRepoDoc,
                                                 final String commitMessage,
-                                                boolean calledFromUi)
+                                                final boolean calledFromUi)
             throws IOException {
         LOGGER.debug("Exporting document '{}' to GIT; UUID is '{}'", gitRepoDoc.getUrl(), gitRepoDoc.getUuid());
-        List<Message> messages = new ArrayList<>();
+        final List<Message> messages = new ArrayList<>();
 
-        DocRef gitRepoDocRef = GitRepoDoc.getDocRef(gitRepoDoc.getUuid());
-        Optional<ExplorerNode> optGitRepoExplorerNode = explorerService.getFromDocRef(gitRepoDocRef);
-        ExplorerNode gitRepoExplorerNode = optGitRepoExplorerNode.orElseThrow(IOException::new);
+        final DocRef gitRepoDocRef = GitRepoDoc.getDocRef(gitRepoDoc.getUuid());
+        final Optional<ExplorerNode> optGitRepoExplorerNode = explorerService.getFromDocRef(gitRepoDocRef);
+        final ExplorerNode gitRepoExplorerNode = optGitRepoExplorerNode.orElseThrow(IOException::new);
 
         // Work out where the GitRepo node is in the explorer tree
-        List<ExplorerNode> gitRepoNodePath = this.explorerNodeService.getPath(gitRepoDocRef);
+        final List<ExplorerNode> gitRepoNodePath = this.explorerNodeService.getPath(gitRepoDocRef);
         gitRepoNodePath.add(gitRepoExplorerNode);
 
         // Only try to do anything if the settings exist
@@ -148,7 +148,7 @@ public class GitRepoStorageService {
             final Path gitWorkDir = localDir.resolve(gitRepoDoc.getUuid());
 
             // Create Git object for the gitWork directory
-            try (Git git = this.gitConstructForPush(gitRepoDoc, gitWorkDir)) {
+            try (final Git git = this.gitConstructForPush(gitRepoDoc, gitWorkDir)) {
 
                 // The export directory is somewhere within the gitWorkDir,
                 // defined by the path the user specified
@@ -161,7 +161,7 @@ public class GitRepoStorageService {
                 this.deleteFileTree(exportDir, true);
 
                 // Export everything from Stroom to local git repo dir
-                ExportSummary exportSummary = this.export(
+                final ExportSummary exportSummary = this.export(
                         gitRepoNodePath,
                         gitRepoExplorerNode,
                         exportDir);
@@ -169,7 +169,7 @@ public class GitRepoStorageService {
                 messages.add(new Message(Severity.INFO, "Export to disk successful"));
 
                 // Has anything changed against the remote?
-                Status gitStatus = git.status().call();
+                final Status gitStatus = git.status().call();
                 if (!gitStatus.isClean()) {
 
                     this.gitStatusToMessages(gitStatus, messages);
@@ -197,9 +197,9 @@ public class GitRepoStorageService {
                         LOGGER.info("{}: No local changes; not pushing to Git", gitRepoDoc.getName());
                     }
                 }
-            } catch (GitAPIException e) {
+            } catch (final GitAPIException e) {
                 this.throwException("Couldn't commit and push GIT", e, messages);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 this.throwException("Error pushing to GIT", e, messages);
             }
         } else {
@@ -221,19 +221,19 @@ public class GitRepoStorageService {
      */
     private void gitStatusToMessages(final Status gitStatus,
                                      final List<Message> messages) {
-        for (var filename : gitStatus.getUncommittedChanges()) {
+        for (final var filename : gitStatus.getUncommittedChanges()) {
             messages.add(new Message(Severity.INFO, "Changed: " + filename));
         }
-        for (var dirname : gitStatus.getUntrackedFolders()) {
+        for (final var dirname : gitStatus.getUntrackedFolders()) {
             messages.add(new Message(Severity.INFO, "New folder: " + dirname));
         }
-        for (var filename : gitStatus.getUntracked()) {
+        for (final var filename : gitStatus.getUntracked()) {
             messages.add(new Message(Severity.INFO, "New file: " + filename));
         }
-        for (var filename : gitStatus.getMissing()) {
+        for (final var filename : gitStatus.getMissing()) {
             messages.add(new Message(Severity.INFO, "Deleted: " + filename));
         }
-        for (var filename : gitStatus.getModified()) {
+        for (final var filename : gitStatus.getModified()) {
             messages.add(new Message(Severity.INFO, "Modified: " + filename));
         }
     }
@@ -247,15 +247,15 @@ public class GitRepoStorageService {
      * @return A list of messages about the import
      * @throws IOException if something goes wrong
      */
-    public synchronized List<Message> importDoc(GitRepoDoc gitRepoDoc) throws IOException {
-        List<Message> messages = new ArrayList<>();
+    public synchronized List<Message> importDoc(final GitRepoDoc gitRepoDoc) throws IOException {
+        final List<Message> messages = new ArrayList<>();
 
-        DocRef gitRepoDocRef = GitRepoDoc.getDocRef(gitRepoDoc.getUuid());
-        Optional<ExplorerNode> optGitRepoExplorerNode = explorerService.getFromDocRef(gitRepoDocRef);
-        ExplorerNode gitRepoExplorerNode = optGitRepoExplorerNode.orElseThrow(IOException::new);
+        final DocRef gitRepoDocRef = GitRepoDoc.getDocRef(gitRepoDoc.getUuid());
+        final Optional<ExplorerNode> optGitRepoExplorerNode = explorerService.getFromDocRef(gitRepoDocRef);
+        final ExplorerNode gitRepoExplorerNode = optGitRepoExplorerNode.orElseThrow(IOException::new);
 
         // Work out where the GitRepo node is in the explorer tree
-        List<ExplorerNode> gitRepoNodePath = this.explorerNodeService.getPath(gitRepoDocRef);
+        final List<ExplorerNode> gitRepoNodePath = this.explorerNodeService.getPath(gitRepoDocRef);
         gitRepoNodePath.add(gitRepoExplorerNode);
 
         // Only try to do anything if the settings exist
@@ -275,8 +275,8 @@ public class GitRepoStorageService {
             // gitRepoDocRef rather than where it might have been in the
             // original export.
 
-            List<ImportState> importStates = new ArrayList<>();
-            ImportSettings importSettings = ImportSettings.builder()
+            final List<ImportState> importStates = new ArrayList<>();
+            final ImportSettings importSettings = ImportSettings.builder()
                     .importMode(ImportMode.IGNORE_CONFIRMATION)
                     .enableFilters(false)
                     .useImportFolders(true)
@@ -292,8 +292,8 @@ public class GitRepoStorageService {
                 pathToImport = gitWork;
             }
 
-            Set<DocRef> docRefs = importExportSerializer.read(pathToImport, importStates, importSettings);
-            for (var docRef : docRefs) {
+            final Set<DocRef> docRefs = importExportSerializer.read(pathToImport, importStates, importSettings);
+            for (final var docRef : docRefs) {
                 // ImportExportSerializerImpl adds the System docref to the returned set,
                 // but we don't use that here, so ignore it
                 if (!docRef.equals(ExplorerConstants.SYSTEM_DOC_REF)) {
@@ -320,20 +320,20 @@ public class GitRepoStorageService {
      * @param messages     Any messages from the export. Never null. Can be empty.
      * @throws IOException to indicate to the caller that an error has occurred.
      */
-    private void throwException(String errorMessage,
-                                Exception cause,
-                                List<Message> messages)
+    private void throwException(final String errorMessage,
+                                final Exception cause,
+                                final List<Message> messages)
             throws IOException {
 
         LOGGER.error("{}, {}, {}", errorMessage, cause, messages);
-        var buf = new StringBuilder(errorMessage);
+        final var buf = new StringBuilder(errorMessage);
         if (cause != null) {
             buf.append("\n    ");
             buf.append(cause.getMessage());
         }
         if (!messages.isEmpty()) {
             buf.append("\n\nAdditional information:");
-            for (var m : messages) {
+            for (final var m : messages) {
                 buf.append("\n    ");
                 buf.append(m);
             }
@@ -374,7 +374,7 @@ public class GitRepoStorageService {
 
         Files.walkFileTree(root, new SimpleFileVisitor<>() {
             @Override
-            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+            public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) {
 
                 // Ignore any .git subtree
                 if (keepGitStuff && dir.endsWith(GIT_REPO_DIRNAME)) {
@@ -385,7 +385,7 @@ public class GitRepoStorageService {
             }
 
             @Override
-            public FileVisitResult visitFile(Path p, BasicFileAttributes attrs)
+            public FileVisitResult visitFile(final Path p, final BasicFileAttributes attrs)
                     throws IOException {
 
                 // Don't delete README files
@@ -396,7 +396,7 @@ public class GitRepoStorageService {
             }
 
             @Override
-            public FileVisitResult postVisitDirectory(Path dir, IOException ex)
+            public FileVisitResult postVisitDirectory(final Path dir, final IOException ex)
                     throws IOException {
 
                 // Don't delete the root dir or the .git dir
@@ -415,12 +415,12 @@ public class GitRepoStorageService {
      * @param node    The root node of the search.
      * @param docRefs The set of DocRefs that were found.
      */
-    private void recurseExplorerNodes(final ExplorerNode node, Set<DocRef> docRefs) {
+    private void recurseExplorerNodes(final ExplorerNode node, final Set<DocRef> docRefs) {
         if (!node.getType().equals(GitRepoDoc.TYPE)) {
             docRefs.add(node.getDocRef());
         }
-        List<ExplorerNode> children = this.explorerNodeService.getChildren(node.getDocRef());
-        for (ExplorerNode child : children) {
+        final List<ExplorerNode> children = this.explorerNodeService.getChildren(node.getDocRef());
+        for (final ExplorerNode child : children) {
             // Don't recurse any child GitRepoDoc nodes
             if (!child.getType().equals(GitRepoDoc.TYPE)) {
                 this.recurseExplorerNodes(child, docRefs);
@@ -436,12 +436,12 @@ public class GitRepoStorageService {
      * @param exportDir The directory to export to.
      * @return The export summary.
      */
-    private ExportSummary export(List<ExplorerNode> gitRepoNodePath,
-                                 ExplorerNode node,
-                                 Path exportDir) {
+    private ExportSummary export(final List<ExplorerNode> gitRepoNodePath,
+                                 final ExplorerNode node,
+                                 final Path exportDir) {
         final Set<DocRef> docRefs = new HashSet<>();
         this.recurseExplorerNodes(node, docRefs);
-        Set<String> docTypesToIgnore = Set.of(GitRepoDoc.TYPE);
+        final Set<String> docTypesToIgnore = Set.of(GitRepoDoc.TYPE);
 
         return importExportSerializer.write(
                 gitRepoNodePath,
@@ -457,9 +457,9 @@ public class GitRepoStorageService {
      * @param gitRepoDoc Where we get the credential data from. Must not be null.
      * @return Credentials to log into a remote GIT repo. Never returns null.
      */
-    private CredentialsProvider getGitCreds(GitRepoDoc gitRepoDoc) {
-        String username = gitRepoDoc.getUsername();
-        String password = gitRepoDoc.getPassword();
+    private CredentialsProvider getGitCreds(final GitRepoDoc gitRepoDoc) {
+        final String username = gitRepoDoc.getUsername();
+        final String password = gitRepoDoc.getPassword();
         return new UsernamePasswordCredentialsProvider(username, password);
     }
 
@@ -508,7 +508,7 @@ public class GitRepoStorageService {
         this.ensureDirectoryExists(gitWorkDir);
         this.deleteFileTree(gitWorkDir, false);
 
-        try (Git git = Git.cloneRepository()
+        try (final Git git = Git.cloneRepository()
                 .setURI(gitRepoDoc.getUrl())
                 .setDirectory(gitWorkDir.toFile())
                 .setCredentialsProvider(this.getGitCreds(gitRepoDoc))
@@ -518,7 +518,7 @@ public class GitRepoStorageService {
                 .call()) {
 
             // No code - close automatically
-        } catch (GitAPIException e) {
+        } catch (final GitAPIException e) {
             throw new IOException("Git error cloning repository "
                                   + gitRepoDoc.getUrl(), e);
         }
@@ -548,7 +548,7 @@ public class GitRepoStorageService {
         final Path realPath;
         try {
             realPath = parent.toRealPath();
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new IOException("Parent directory '" + parent + "' does not exist");
         }
 

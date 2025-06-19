@@ -24,7 +24,7 @@ public class ByteCountInputStream extends WrappedInputStream {
 
     private final AtomicLong count = new AtomicLong();
 
-    public ByteCountInputStream(InputStream inputStream) {
+    public ByteCountInputStream(final InputStream inputStream) {
         super(inputStream);
     }
 
@@ -34,7 +34,7 @@ public class ByteCountInputStream extends WrappedInputStream {
 
     @Override
     public int read() throws IOException {
-        int r = super.read();
+        final int r = super.read();
         if (r >= 0) {
             count.incrementAndGet();
         }
@@ -42,8 +42,8 @@ public class ByteCountInputStream extends WrappedInputStream {
     }
 
     @Override
-    public int read(byte[] b) throws IOException {
-        int r = super.read(b);
+    public int read(final byte[] b) throws IOException {
+        final int r = super.read(b);
         if (r >= 0) {
             count.addAndGet(r);
         }
@@ -51,8 +51,8 @@ public class ByteCountInputStream extends WrappedInputStream {
     }
 
     @Override
-    public int read(byte[] b, int off, int len) throws IOException {
-        int r = super.read(b, off, len);
+    public int read(final byte[] b, final int off, final int len) throws IOException {
+        final int r = super.read(b, off, len);
         if (r >= 0) {
             count.addAndGet(r);
         }

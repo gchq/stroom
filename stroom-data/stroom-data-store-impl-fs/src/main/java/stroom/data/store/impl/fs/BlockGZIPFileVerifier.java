@@ -56,7 +56,7 @@ class BlockGZIPFileVerifier {
         stream = new RAInputStreamAdaptor();
     }
 
-    static void main(String[] args) throws IOException {
+    static void main(final String[] args) throws IOException {
         new BlockGZIPFileVerifier(Paths.get(args[0])).verify();
     }
 
@@ -78,7 +78,7 @@ class BlockGZIPFileVerifier {
         final long idxStart = readLong();
         final long eof = readLong();
 
-        long numberOfBlocks = dataLength / blockSize;
+        final long numberOfBlocks = dataLength / blockSize;
 
         System.out.println("Header Info");
         System.out.println("===========");
@@ -91,11 +91,11 @@ class BlockGZIPFileVerifier {
         System.out.println("Block Markers");
         System.out.println("=============");
 
-        ArrayList<Long> blockStarts = new ArrayList<>();
+        final ArrayList<Long> blockStarts = new ArrayList<>();
         for (int i = 0; i <= numberOfBlocks; i++) {
-            long pos = raFile.getChannel().position();
+            final long pos = raFile.getChannel().position();
             readMagicMarker(pos);
-            long gzipSize = readLong();
+            final long gzipSize = readLong();
             System.out.println("Block " + i + " Starts at " + pos + " and raw data is " + gzipSize);
             raFile.skipBytes((int) gzipSize);
             blockStarts.add(pos);
@@ -104,15 +104,15 @@ class BlockGZIPFileVerifier {
         System.out.println("Index Markers");
         System.out.println("=============");
 
-        long pos = raFile.getChannel().position();
+        final long pos = raFile.getChannel().position();
         if (pos != idxStart) {
             throw new IOException("Corrupt Index");
         }
 
         readMagicMarker(pos);
         for (int i = 0; i <= numberOfBlocks; i++) {
-            long indexPos = readLong();
-            long realPos = blockStarts.get(i);
+            final long indexPos = readLong();
+            final long realPos = blockStarts.get(i);
 
             if (indexPos != realPos) {
                 throw new IOException("Corrupt Index");
@@ -123,11 +123,11 @@ class BlockGZIPFileVerifier {
         System.out.println("GZIP Content");
         System.out.println("=============");
 
-        BlockByteArrayOutputStream buffer = new BlockByteArrayOutputStream();
+        final BlockByteArrayOutputStream buffer = new BlockByteArrayOutputStream();
 
         for (int i = 0; i <= numberOfBlocks; i++) {
             readMagicMarker(blockStarts.get(i));
-            int gzipSize = (int) readLong();
+            final int gzipSize = (int) readLong();
 
             buffer.reset();
 
@@ -135,7 +135,7 @@ class BlockGZIPFileVerifier {
 
             System.out.println("Checking Block " + i + " GZIP Format");
 
-            ByteArrayInputStream is = new ByteArrayInputStream(buffer.getRawBuffer(), 0, buffer.size());
+            final ByteArrayInputStream is = new ByteArrayInputStream(buffer.getRawBuffer(), 0, buffer.size());
             try (final GzipCompressorInputStream gzip = new GzipCompressorInputStream(is)) {
                 int byteRead;
                 while ((byteRead = gzip.read()) != -1) {
@@ -161,7 +161,7 @@ class BlockGZIPFileVerifier {
 
     private void fillBuffer(final InputStream stream, final byte[] buffer, final int offset, final int len)
             throws IOException {
-        int realLen = stream.read(buffer, offset, len);
+        final int realLen = stream.read(buffer, offset, len);
 
         if (realLen == -1) {
             throw new IOException("Unable to fill buffer");
@@ -190,7 +190,7 @@ class BlockGZIPFileVerifier {
         return true;
     }
 
-    private void readMagicMarker(long pos) throws IOException {
+    private void readMagicMarker(final long pos) throws IOException {
         raFile.seek(pos);
 
         fillBuffer(stream, magicMarkerRawBufffer, 0, magicMarkerRawBufffer.length);
@@ -200,7 +200,7 @@ class BlockGZIPFileVerifier {
             getRaFile().seek(Math.max(0, pos - 10));
             final int bufSize = getRaFile().read(rawBuffer, 0, rawBuffer.length);
 
-            StringBuilder stringBuilder = new StringBuilder();
+            final StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.append("Failed to find block sync point at ");
             stringBuilder.append(pos);
             stringBuilder.append(" eof is ");

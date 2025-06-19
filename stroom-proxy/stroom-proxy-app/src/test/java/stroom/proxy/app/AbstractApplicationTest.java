@@ -91,7 +91,7 @@ public abstract class AbstractApplicationTest {
         final Path temp;
         try {
             temp = Files.createTempDirectory("stroom-proxy");
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message("Error creating temp dir"), e);
         }
 
@@ -214,10 +214,10 @@ public abstract class AbstractApplicationTest {
                         Jackson.newObjectMapper(),
                         "dw");
 
-        Config config;
+        final Config config;
         try {
             config = configurationFactory.build(configurationSourceProvider, configFile.toAbsolutePath().toString());
-        } catch (ConfigurationException | IOException e) {
+        } catch (final ConfigurationException | IOException e) {
             throw new RuntimeException(LogUtil.message("Error parsing configuration from file {}",
                     configFile.toAbsolutePath()), e);
         }
@@ -226,7 +226,7 @@ public abstract class AbstractApplicationTest {
     }
 
     private static Config loadYamlFile(final String filename) {
-        Path path = getStroomProxyAppFile(filename);
+        final Path path = getStroomProxyAppFile(filename);
 
         return readConfig(path);
     }

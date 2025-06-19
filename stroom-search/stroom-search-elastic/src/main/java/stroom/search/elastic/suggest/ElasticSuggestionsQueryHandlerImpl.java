@@ -60,7 +60,7 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
         final ElasticClusterDoc elasticCluster = elasticClusterStoreProvider.get()
                 .readDocument(elasticIndex.getClusterRef());
 
-        CompletableFuture<Suggestions> future = CompletableFuture.supplyAsync(taskContextFactoryProvider.get()
+        final CompletableFuture<Suggestions> future = CompletableFuture.supplyAsync(taskContextFactoryProvider.get()
                 .contextResult("Query suggestions for Elasticsearch index '" + elasticIndex.getName() + "'",
                         taskContext -> elasticClientCacheProvider.get().contextResult(elasticCluster.getConnection(),
                                 elasticClient -> querySuggestions(request, elasticIndex, elasticClient)
@@ -70,11 +70,11 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
 
         try {
             return future.get();
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
             LOGGER.error(() -> "Thread interrupted");
             return Suggestions.EMPTY;
-        } catch (ExecutionException e) {
+        } catch (final ExecutionException e) {
             throw new RuntimeException("Error getting Elasticsearch term suggestions: " + e.getMessage(), e);
         }
     }
@@ -114,7 +114,7 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
             return new Suggestions(termSuggestion.getFirst().term().options().stream()
                     .map(TermSuggestOption::text)
                     .toList());
-        } catch (IOException | RuntimeException e) {
+        } catch (final IOException | RuntimeException e) {
             LOGGER.error(() -> "Failed to retrieve search suggestions for field: " + field.getFldName() +
                     ". " + e.getMessage(), e);
             return Suggestions.EMPTY;

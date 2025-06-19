@@ -53,14 +53,14 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
 
         final FetchNodeStatusResponse expectedResponse = getTestNodes().stream()
                 .map(testNode -> {
-                    Node node2 = new Node();
+                    final Node node2 = new Node();
                     node2.setEnabled(testNode.isEnabled());
                     node2.setName(testNode.getNodeName());
                     return new NodeStatusResult(node2, testNode.getNodeName().equals("node1"));
                 })
                 .collect(FetchNodeStatusResponse.collector(FetchNodeStatusResponse::new));
 
-        FindNodeStatusCriteria findNodeStatusCriteria = new FindNodeStatusCriteria();
+        final FindNodeStatusCriteria findNodeStatusCriteria = new FindNodeStatusCriteria();
 
         doPostTest(
                 subPath,
@@ -244,7 +244,7 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
                 subPath,
                 10L);
 
-        Node newNode = new Node();
+        final Node newNode = new Node();
         newNode.setName("node2");
         newNode.setPriority(10);
 
@@ -263,7 +263,7 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
                 subPath,
                 Boolean.FALSE);
 
-        Node newNode = new Node();
+        final Node newNode = new Node();
         newNode.setName("node2");
         newNode.setEnabled(false);
 
@@ -296,7 +296,7 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
         when(nodeService.find(Mockito.any(FindNodeCriteria.class)))
                 .thenReturn(allNodes.stream()
                         .map(testNode -> {
-                            Node node2 = new Node();
+                            final Node node2 = new Node();
                             node2.setEnabled(testNode.isEnabled());
                             node2.setName(testNode.getNodeName());
                             return node2;
@@ -305,8 +305,8 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
 
         when(nodeService.getNode(Mockito.anyString()))
                 .thenAnswer(invocation -> {
-                    String nodeName = invocation.getArgument(0);
-                    Node node2 = new Node();
+                    final String nodeName = invocation.getArgument(0);
+                    final Node node2 = new Node();
                     node2.setName(nodeName);
                     return node2;
                 });
@@ -325,7 +325,7 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
         final ClusterNodeManager clusterNodeManager = createNamedMock(ClusterNodeManager.class, node);
 
         final long now = System.currentTimeMillis();
-        ClusterNodeInfo clusterNodeInfo = new ClusterNodeInfo(
+        final ClusterNodeInfo clusterNodeInfo = new ClusterNodeInfo(
                 now,
                 new BuildInfo(
                         now,

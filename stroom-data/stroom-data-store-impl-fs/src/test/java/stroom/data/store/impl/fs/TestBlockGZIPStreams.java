@@ -34,7 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestBlockGZIPStreams {
     @Test
-    void testSimple(@TempDir Path tempDir) throws IOException {
+    void testSimple(@TempDir final Path tempDir) throws IOException {
         final Path testFile = Files.createTempFile(tempDir, "test", ".bgz");
         FileUtil.deleteFile(testFile);
         final OutputStream os = new BufferedOutputStream(new BlockGZIPOutputFile(testFile, 100));
@@ -45,7 +45,7 @@ class TestBlockGZIPStreams {
 
         os.close();
 
-        try (BlockGZIPInputStream bgzi = new BlockGZIPInputStream(Files.newInputStream(testFile));
+        try (final BlockGZIPInputStream bgzi = new BlockGZIPInputStream(Files.newInputStream(testFile));
              final LineNumberReader in = new LineNumberReader(
                      new InputStreamReader(bgzi, StreamUtil.DEFAULT_CHARSET))) {
             String line;

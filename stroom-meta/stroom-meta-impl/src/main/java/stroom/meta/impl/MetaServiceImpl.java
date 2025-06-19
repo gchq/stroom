@@ -538,11 +538,11 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
     public List<MetaRow> findRelatedData(final long id, final boolean anyStatus) {
         // Get the starting row.
         final FindMetaCriteria findDataCriteria = new FindMetaCriteria(getIdExpression(id, anyStatus));
-        ResultPage<Meta> rows = find(findDataCriteria);
+        final ResultPage<Meta> rows = find(findDataCriteria);
         final List<Meta> result = new ArrayList<>(rows.getValues());
 
         if (!rows.isEmpty()) {
-            Meta row = rows.getFirst();
+            final Meta row = rows.getFirst();
             LOGGER.logDurationIfTraceEnabled(
                     () -> addChildren(row, anyStatus, result),
                     "Adding children");
@@ -755,13 +755,13 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
                 try {
                     // Wait for completion
                     summaries = future.get();
-                } catch (InterruptedException e) {
+                } catch (final InterruptedException e) {
                     LOGGER.debug("Thread interrupted");
                     summaries = Collections.emptyList();
-                } catch (CancellationException e) {
+                } catch (final CancellationException e) {
                     LOGGER.debug("Query cancelled");
                     summaries = Collections.emptyList();
-                } catch (ExecutionException e) {
+                } catch (final ExecutionException e) {
                     if (e.getCause() != null) {
                         if (e.getCause() instanceof RuntimeException) {
                             throw (RuntimeException) e.getCause();

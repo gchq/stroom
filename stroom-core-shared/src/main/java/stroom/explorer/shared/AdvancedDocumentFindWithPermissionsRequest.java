@@ -31,7 +31,7 @@ public class AdvancedDocumentFindWithPermissionsRequest extends AdvancedDocument
                                                       @JsonProperty("requiredPermissions") final Set<DocumentPermission>
                                                               requiredPermissions,
                                                       @JsonProperty("userRef") final UserRef userRef,
-                                                      @JsonProperty("showLevel") PermissionShowLevel showLevel) {
+                                                      @JsonProperty("showLevel") final PermissionShowLevel showLevel) {
         super(pageRequest, sortList, expression, requiredPermissions);
         this.userRef = userRef;
         this.showLevel = showLevel;

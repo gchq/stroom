@@ -400,7 +400,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
             final long count = source.count();
             for (long index = 0; index < count && !taskContext.isTerminated(); index++) {
                 try (final InputStreamProvider inputStreamProvider = source.get(index)) {
-                    InputStream inputStream;
+                    final InputStream inputStream;
 
                     // If the task requires specific events to be processed then
                     // add them.
@@ -463,8 +463,8 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                             }
 
                             // Reset the error statistics for the next stream.
-                            if (errorReceiverProxy.getErrorReceiver() instanceof ErrorStatistics errorStatistics) {
-                                errorStatistics.reset();
+                            if (errorReceiverProxy.getErrorReceiver() instanceof final ErrorStatistics errorStats) {
+                                errorStats.reset();
                             }
                         }
                     }
@@ -492,13 +492,13 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                    || e instanceof RuntimeException) {
             // An exception that's gets here is definitely a failure.
             outputFatalError(e);
-        } else if (e instanceof Error err) {
+        } else if (e instanceof final Error err) {
             // If we get here we are into OOM, stackOverflow type critical JVM errors so try to log
             // the failure (if the JVM allows) but re-throw as we should not really be swallowing JVM Errors.
             try {
                 LOGGER.error("Error while processing data task: id = {}", NullSafe.get(meta, Meta::getId), e);
                 outputFatalError(e);
-            } catch (Exception e2) {
+            } catch (final Exception e2) {
                 // Error while logging
                 LOGGER.error("Error while trying to log error '{}'", e.getMessage(), e2);
             }
@@ -527,7 +527,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                         severity, e.getMessage(), e2);
             }
 
-            if (errorReceiverProxy.getErrorReceiver() instanceof ErrorStatistics errorStatistics) {
+            if (errorReceiverProxy.getErrorReceiver() instanceof final ErrorStatistics errorStatistics) {
                 errorStatistics.checkRecord(-1);
             }
 

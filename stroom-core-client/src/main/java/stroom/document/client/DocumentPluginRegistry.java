@@ -9,7 +9,7 @@ public class DocumentPluginRegistry {
 
     private final Map<String, DocumentPlugin<?>> pluginMap = new HashMap<>();
 
-    public void register(String type, DocumentPlugin<?> plugin) {
+    public void register(final String type, final DocumentPlugin<?> plugin) {
         pluginMap.put(type, plugin);
     }
 

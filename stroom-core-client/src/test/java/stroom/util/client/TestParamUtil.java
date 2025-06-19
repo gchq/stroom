@@ -119,7 +119,7 @@ class TestParamUtil {
         return ParamUtil.createParamMap(list);
     }
 
-    private void testKV(String text, String... expectedParams) {
+    private void testKV(final String text, final String... expectedParams) {
         final Map<String, String> map = getMap(text);
 
         assertThat(expectedParams.length > 0).isTrue();
@@ -127,8 +127,8 @@ class TestParamUtil {
         assertThat(map.size()).isEqualTo(expectedParams.length / 2);
 
         for (int i = 0; i < expectedParams.length; i += 2) {
-            String key = expectedParams[i];
-            String value = expectedParams[i + 1];
+            final String key = expectedParams[i];
+            final String value = expectedParams[i + 1];
             assertThat(map.get(key)).isEqualTo(value);
         }
     }

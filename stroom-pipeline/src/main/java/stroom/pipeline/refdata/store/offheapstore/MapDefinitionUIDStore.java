@@ -163,8 +163,8 @@ public class MapDefinitionUIDStore {
     }
 
     public long getEntryCount() {
-        long entryCountForward = mapUidForwardDb.getEntryCount();
-        long entryCountReverse = mapUidReverseDb.getEntryCount();
+        final long entryCountForward = mapUidForwardDb.getEntryCount();
+        final long entryCountReverse = mapUidReverseDb.getEntryCount();
 
         if (entryCountForward != entryCountReverse) {
             throw new RuntimeException(LogUtil.message("Entry counts don't match, forward {}, reverse {}",
@@ -231,7 +231,7 @@ public class MapDefinitionUIDStore {
         LOGGER.trace(() -> "nextUidKeyBuffer " + ByteBufferUtils.byteBufferToHexAll(nextUidKeyBuffer));
 
         // ensure it is ready for reading again as we are returning it
-        UID mapUid = UID.wrap(nextUidKeyBuffer);
+        final UID mapUid = UID.wrap(nextUidKeyBuffer);
 
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace("nextUidKeyBuffer {}", ByteBufferUtils.byteBufferInfo(nextUidKeyBuffer));

@@ -113,7 +113,7 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
                 FileSystemTestUtil.getUniqueTestString(),
                 folder2,
                 null);
-        FeedDoc eventFeed = feedStore.readDocument(eventFeedNode.getDocRef());
+        final FeedDoc eventFeed = feedStore.readDocument(eventFeedNode.getDocRef());
         eventFeed.setDescription("Description");
         feedStore.writeDocument(eventFeed);
 

@@ -488,7 +488,7 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
                             RegExp.ASCII_CASE_INSENSITIVE,
                             10_000);
                 }
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.debug(() -> LogUtil.message("Error constructing regex query with pattern '{}': {}",
                         pattern, LogUtil.exceptionMessage(e)));
                 throw e;
@@ -742,7 +742,7 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
                 // Make the user wait a wee bit if it is not initialised as this gives it a chance
                 // to return a non-zero % so the user gets the impression that it is underway.
                 isInitialised = indexInitialisedLatch.await(LATCH_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {
+            } catch (final InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
         }
@@ -771,7 +771,7 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
         @Override
         protected TokenStreamComponents createComponents(final String fieldName) {
             final Tokenizer tokenizer = new NGramTokenizer(MIN_GRAM, MAX_GRAM);
-            TokenStream tokenStream = new LowerCaseFilter(tokenizer);
+            final TokenStream tokenStream = new LowerCaseFilter(tokenizer);
             return new Analyzer.TokenStreamComponents(tokenizer, tokenStream);
         }
     }

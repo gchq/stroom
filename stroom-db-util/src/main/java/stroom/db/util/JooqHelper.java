@@ -202,7 +202,7 @@ public class JooqHelper {
                         record.into(type));
     }
 
-    private Field<Integer> getIdField(Table<?> table) {
+    private Field<Integer> getIdField(final Table<?> table) {
         final Field<Integer> idField = table.field(DEFAULT_ID_FIELD_NAME, Integer.class);
         if (idField == null) {
             throw new RuntimeException(LogUtil.message("Field [id] not found on table [{}]", table.getName()));
@@ -431,7 +431,7 @@ public class JooqHelper {
     /**
      * Converts a time in millis since epoch to a {@link Date}
      */
-    public Field<Date> epochMsToDate(Field<? extends Number> field) {
+    public Field<Date> epochMsToDate(final Field<? extends Number> field) {
         return DSL.field("from_unixtime({0} / 1000)", SQLDataType.DATE, field);
     }
 
@@ -456,7 +456,7 @@ public class JooqHelper {
         }
 
         // Check thread usage
-        CurrentDataSource currentThreadDataSource = DATA_SOURCE_THREAD_LOCAL.get();
+        final CurrentDataSource currentThreadDataSource = DATA_SOURCE_THREAD_LOCAL.get();
         if (currentThreadDataSource != null && currentThreadDataSource.dataSource.equals(dataSource)) {
             LOGGER.error(() -> "Data source already in use by this thread:\n\n" +
                     currentThreadDataSource +

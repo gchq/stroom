@@ -58,7 +58,7 @@ public class SearchDebugUtil {
     }
 
     private static String getSuffix(final boolean actual) {
-        String suffix;
+        final String suffix;
         if (actual) {
             suffix = "_actual.txt";
         } else {

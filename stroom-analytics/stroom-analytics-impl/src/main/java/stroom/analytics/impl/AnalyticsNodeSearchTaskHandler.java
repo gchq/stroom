@@ -141,7 +141,7 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
             final ExpressionOperator expression = expressionFilter.copy(query.getExpression());
 
             // Decorate result with annotations.
-            ValuesConsumer valuesConsumer =
+            final ValuesConsumer valuesConsumer =
                     annotationsDecoratorFactory.create(coprocessors, coprocessors.getFieldIndex(), query);
 
             final List<CompletableFuture<Void>> futures = new ArrayList<>();

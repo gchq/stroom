@@ -31,7 +31,7 @@ class TestTaskContextPerformance extends AbstractCoreIntegrationTest {
         final AtomicInteger count = new AtomicInteger();
 
         final long start = System.nanoTime();
-        CompletableFuture[] futures = new CompletableFuture[10];
+        final CompletableFuture[] futures = new CompletableFuture[10];
         for (int i = 0; i < 10; i++) {
             final CompletableFuture future = CompletableFuture.runAsync(() -> {
                 while (count.incrementAndGet() < 1000000000) {
@@ -51,7 +51,7 @@ class TestTaskContextPerformance extends AbstractCoreIntegrationTest {
         final AtomicInteger count = new AtomicInteger();
 
         final long start = System.nanoTime();
-        CompletableFuture[] futures = new CompletableFuture[10];
+        final CompletableFuture[] futures = new CompletableFuture[10];
         for (int i = 0; i < 10; i++) {
             final CompletableFuture future = CompletableFuture.runAsync(() -> {
                 while (count.incrementAndGet() < 1000000000) {
@@ -73,7 +73,7 @@ class TestTaskContextPerformance extends AbstractCoreIntegrationTest {
         final AtomicInteger count = new AtomicInteger();
 
         final long start = System.nanoTime();
-        CompletableFuture[] futures = new CompletableFuture[10];
+        final CompletableFuture[] futures = new CompletableFuture[10];
         for (int i = 0; i < 10; i++) {
             final CompletableFuture future = CompletableFuture.runAsync(() -> {
                 taskContextFactory.context("Test", tc -> {

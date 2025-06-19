@@ -148,7 +148,7 @@ class StandardKafkaProducer extends AbstractXMLFilter {
                 log(Severity.FATAL_ERROR, "No Kafka produce exists for config " + configRef, null);
                 return LoggedException.create("Unable to create Kafka Producer using config " + configRef);
             });
-        } catch (KafkaException ex) {
+        } catch (final KafkaException ex) {
             log(Severity.FATAL_ERROR, "Unable to create Kafka Producer using config " + configRef.getUuid(), ex);
         } finally {
             super.startProcessing();
@@ -181,7 +181,7 @@ class StandardKafkaProducer extends AbstractXMLFilter {
                                 Thread.currentThread().interrupt();
 
                                 throw ProcessException.create("Thread interrupted");
-                            } catch (ExecutionException e) {
+                            } catch (final ExecutionException e) {
                                 log(Severity.ERROR, "Error sending message to Kafka", e);
                             }
                         }
@@ -194,11 +194,11 @@ class StandardKafkaProducer extends AbstractXMLFilter {
         super.endProcessing();
     }
 
-    private static Long createTimestamp(String isoFormat) {
+    private static Long createTimestamp(final String isoFormat) {
         try {
-            Instant instant = Instant.parse(isoFormat);
+            final Instant instant = Instant.parse(isoFormat);
             return instant.toEpochMilli();
-        } catch (DateTimeParseException ex) {
+        } catch (final DateTimeParseException ex) {
             return null;
         }
     }
@@ -213,19 +213,19 @@ class StandardKafkaProducer extends AbstractXMLFilter {
             if (xmlValueDepth == -1) {
                 final ErrorListener errorListener = new ErrorListener() {
                     @Override
-                    public void warning(TransformerException exception) {
+                    public void warning(final TransformerException exception) {
                         errorReceiverProxy.log(Severity.WARNING, locationFactory.create(locator), getElementId(),
                                 "Kafka XML value parse error", exception);
                     }
 
                     @Override
-                    public void error(TransformerException exception) {
+                    public void error(final TransformerException exception) {
                         errorReceiverProxy.log(Severity.ERROR, locationFactory.create(locator), getElementId(),
                                 "Kafka XML value parse error", exception);
                     }
 
                     @Override
-                    public void fatalError(TransformerException exception) {
+                    public void fatalError(final TransformerException exception) {
                         errorReceiverProxy.log(Severity.FATAL_ERROR, locationFactory.create(locator), getElementId(),
                                 "Kafka XML value parse error", exception);
                     }
@@ -251,12 +251,12 @@ class StandardKafkaProducer extends AbstractXMLFilter {
                 state = new KafkaMessageState();
 
                 for (int i = 0; i < atts.getLength(); i++) {
-                    String attName = atts.getLocalName(i);
+                    final String attName = atts.getLocalName(i);
 
                     if (TOPIC_ATTRIBUTE_LOCAL_NAME.equals(attName)) {
                         state.topic = atts.getValue(i);
                     } else if (TIMESTAMP_ATTRIBUTE_LOCAL_NAME.equals(attName)) {
-                        Long timestamp = createTimestamp(atts.getValue(i));
+                        final Long timestamp = createTimestamp(atts.getValue(i));
                         if (timestamp == null) {
                             log(Severity.ERROR,
                                     "Kafka timestamp must be in ISO 8601 format.  Got " + atts.getValue(i),
@@ -267,7 +267,7 @@ class StandardKafkaProducer extends AbstractXMLFilter {
                     } else if (PARTITION_ATTRIBUTE_LOCAL_NAME.equals(attName)) {
                         try {
                             state.partition = Integer.parseInt(atts.getValue(i));
-                        } catch (NumberFormatException ex) {
+                        } catch (final NumberFormatException ex) {
                             log(Severity.ERROR, "Kafka partition must be an integer.  Got " + atts.getValue(i), null);
                         }
                     }
@@ -333,7 +333,7 @@ class StandardKafkaProducer extends AbstractXMLFilter {
     }
 
     @Override
-    public void characters(char[] ch, int start, int length) throws SAXException {
+    public void characters(final char[] ch, final int start, final int length) throws SAXException {
         if (state != null && VALUE_ELEMENT_LOCAL_NAME.equals(state.lastElement)) {
             if (!state.inHeader && xmlValueDepth >= 0) {
                 xmlValueHandler.characters(ch, start, length);
@@ -344,7 +344,7 @@ class StandardKafkaProducer extends AbstractXMLFilter {
         super.characters(ch, start, length);
     }
 
-    private void createKafkaMessage(KafkaMessageState state) {
+    private void createKafkaMessage(final KafkaMessageState state) {
 
         if (state.isInvalid()) {
             log(Severity.ERROR, "Badly formed Kafka message " + state.whyInvalid(), null);
@@ -358,7 +358,7 @@ class StandardKafkaProducer extends AbstractXMLFilter {
                     state.key,
                     state.messageValue);
 
-            Headers headers = record.headers();
+            final Headers headers = record.headers();
             for (int i = 0; i < state.headerNames.size(); i++) {
                 headers.add(
                         state.headerNames.get(i),

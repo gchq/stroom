@@ -192,7 +192,7 @@ class TestExpressionMatcher {
                         .build())
                 .build();
 
-        boolean match = expressionMatcher.match(
+        final boolean match = expressionMatcher.match(
                 Map.of(FRUIT.getFldName(), "orange"),
                 expression);
         assertThat(match)

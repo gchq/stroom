@@ -46,7 +46,7 @@ class TestHeadless {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestHeadless.class);
 
     @Test
-    void test(@TempDir Path newTempDir) throws IOException {
+    void test(@TempDir final Path newTempDir) throws IOException {
 //        StroomProperties.setOverrideProperty(
 //        "stroom.temp", FileUtil.getCanonicalPath(newTempDir), StroomProperties.Source.TEST);
 

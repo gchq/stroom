@@ -170,7 +170,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
 
     @Override
     public void selectFirstItem() {
-        int row = getFirstSelectableRow();
+        final int row = getFirstSelectableRow();
         if (row >= 0) {
             final List<Item> items = cellTable.getVisibleItems();
             final Item item = items.get(row);
@@ -189,7 +189,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
 
         // Make sure the item is selected as the parent of the current child menu.
         if (parentItem != null) {
-            int row = cellTable.getVisibleItems().indexOf(parentItem);
+            final int row = cellTable.getVisibleItems().indexOf(parentItem);
             if (row >= 0) {
                 selectRow(row, false);
             }
@@ -198,7 +198,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
 
     @Override
     public void focus() {
-        int row = getFirstSelectableRow();
+        final int row = getFirstSelectableRow();
         if (row >= 0) {
             selectRow(row, true);
         }

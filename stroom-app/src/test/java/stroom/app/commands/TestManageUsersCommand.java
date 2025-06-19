@@ -30,7 +30,7 @@ class TestManageUsersCommand {
 
     @Test
     void test() throws ArgumentParserException {
-        ArgumentParser parser = ArgumentParsers.newFor("test").build()
+        final ArgumentParser parser = ArgumentParsers.newFor("test").build()
                 .description("My test");
 
         final Subparsers subparsers = parser.addSubparsers();
@@ -89,7 +89,7 @@ class TestManageUsersCommand {
 
         LOGGER.info("help\n{}", subparser.formatHelp());
 
-        String[] args = new String[]{
+        final String[] args = new String[]{
                 "manageUsers",
                 asArg(CREATE_USER_ARG_NAME),
                 "jbloggs",

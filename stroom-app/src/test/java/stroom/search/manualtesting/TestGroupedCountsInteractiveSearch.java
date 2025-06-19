@@ -96,11 +96,11 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
     //    @Override
     protected boolean onAfterSetup() {
 
-        List<Path> dataFiles = new ArrayList<>();
+        final List<Path> dataFiles = new ArrayList<>();
 //        if (!Files.exists(dataFile)) {
         LOGGER.info("Generating test data");
         IntStream.rangeClosed(1, STREAM_COUNT).forEach(i -> {
-            Path dataFile = testDir.resolve(String.format(DATA_FILE_NAME_FORMAT, i));
+            final Path dataFile = testDir.resolve(String.format(DATA_FILE_NAME_FORMAT, i));
             LOGGER.info("Generating test data in {}", dataFile.toAbsolutePath().toString());
             NetworkMonitoringDataGenerator.generate(STREAM_ROW_COUNT, dataFile);
             dataFiles.add(dataFile);
@@ -141,15 +141,15 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
         final List<String> componentIds = Collections.singletonList("table-1");
 
         // we have 20 different user IDs so should get 20 rows
-        int expectedResultCount = 20;
-        boolean extractValues = true;
+        final int expectedResultCount = 20;
+        final boolean extractValues = true;
 
-        Consumer<Map<String, List<Row>>> resultMapConsumer = resultMap -> {
+        final Consumer<Map<String, List<Row>>> resultMapConsumer = resultMap -> {
             assertThat(resultMap.size()).isEqualTo(1);
-            List<Row> rows = resultMap.values().iterator().next();
+            final List<Row> rows = resultMap.values().iterator().next();
             assertThat(rows.size()).isEqualTo(expectedResultCount);
 
-            long totalCount = rows.stream()
+            final long totalCount = rows.stream()
                     .map(row -> row.getValues().get(1)) // get the 'count' field
                     .mapToLong(Long::parseLong)
                     .sum();
@@ -170,7 +170,7 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
         LOGGER.info("Completed search");
     }
 
-    private TableSettings createTableSettings(Boolean extractValues) {
+    private TableSettings createTableSettings(final Boolean extractValues) {
 
         final Column groupedUserId = Column.builder()
                 .id("User")
@@ -186,7 +186,7 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
                 .format(Format.NUMBER)
                 .build();
 
-        List<Column> columns = Arrays.asList(groupedUserId, countColumn);
+        final List<Column> columns = Arrays.asList(groupedUserId, countColumn);
         final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();
 
         return TableSettings.builder()

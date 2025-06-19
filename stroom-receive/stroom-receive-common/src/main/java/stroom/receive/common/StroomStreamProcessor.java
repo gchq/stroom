@@ -103,12 +103,12 @@ public class StroomStreamProcessor {
         }
     }
 
-    public void processInputStream(InputStream inputStream,
+    public void processInputStream(final InputStream inputStream,
                                    final String prefix) {
         processInputStream(inputStream, prefix, Instant.now());
     }
 
-    public void processInputStream(InputStream inputStream,
+    public void processInputStream(final InputStream inputStream,
                                    final String prefix,
                                    final Instant receivedTime) {
 
@@ -158,7 +158,7 @@ public class StroomStreamProcessor {
         }
     }
 
-    private void processStream(InputStream inputStream, final String prefix) throws IOException {
+    private void processStream(final InputStream inputStream, final String prefix) throws IOException {
         try (final BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream)) {
             // Read an initial buffer full so we can see if there is any data
             bufferedInputStream.mark(1);

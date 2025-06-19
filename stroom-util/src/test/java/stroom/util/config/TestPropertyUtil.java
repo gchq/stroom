@@ -73,7 +73,7 @@ class TestPropertyUtil {
     @Test
     void getProperties_fieldProps() {
 
-        AnnosOnFields annosOnFields = new AnnosOnFields();
+        final AnnosOnFields annosOnFields = new AnnosOnFields();
         annosOnFields.setIncludedField("yes");
         annosOnFields.setReadOnlyField("cheese");
         annosOnFields.setIgnoredField("No");
@@ -103,7 +103,7 @@ class TestPropertyUtil {
                 annosOnFields::getReadOnlyField,
                 String.class);
 
-        PropertyUtil.Prop includedFieldProp = propMap.get("includedField");
+        final PropertyUtil.Prop includedFieldProp = propMap.get("includedField");
         Assertions.assertThat(includedFieldProp.hasFieldAnnotation(JsonProperty.class))
                 .isTrue();
         Assertions.assertThat(includedFieldProp.hasFieldAnnotation(JsonPropertyDescription.class))
@@ -119,7 +119,7 @@ class TestPropertyUtil {
         Assertions.assertThat(includedFieldProp.hasAnnotation(JsonPropertyDescription.class))
                 .isTrue();
 
-        PropertyUtil.Prop readOnlyFieldProp = propMap.get("readOnlyField");
+        final PropertyUtil.Prop readOnlyFieldProp = propMap.get("readOnlyField");
         Assertions.assertThat(includedFieldProp.hasFieldAnnotation(JsonProperty.class))
                 .isTrue();
         Assertions.assertThat(includedFieldProp.hasFieldAnnotation(JsonPropertyDescription.class))
@@ -206,7 +206,7 @@ class TestPropertyUtil {
                           final Object newValue,
                           final Supplier<Object> newValueSupplier,
                           final Class<?> clazz) {
-        PropertyUtil.Prop booleanProp = propMap.get(name);
+        final PropertyUtil.Prop booleanProp = propMap.get(name);
         assertThat(booleanProp.getValueFromConfigObject())
                 .isEqualTo(expectedValue);
         booleanProp.setValueOnConfigObject(newValue);

@@ -98,7 +98,7 @@ public class RefreshButton
         button.setEnabled(enabled);
     }
 
-    public HandlerRegistration addClickHandler(ClickHandler handler) {
+    public HandlerRegistration addClickHandler(final ClickHandler handler) {
         return button.addClickHandler(handler);
     }
 

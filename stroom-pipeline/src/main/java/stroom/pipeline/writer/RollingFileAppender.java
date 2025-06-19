@@ -166,7 +166,7 @@ public class RollingFileAppender extends AbstractRollingAppender {
         }
 
         // Get a path to use.
-        String path;
+        final String path;
         if (outputPaths.length == 1) {
             path = outputPaths[0];
         } else {
@@ -187,7 +187,7 @@ public class RollingFileAppender extends AbstractRollingAppender {
 
         try {
             return PosixFilePermissions.fromString(filePermissions);
-        } catch (IllegalArgumentException e) {
+        } catch (final IllegalArgumentException e) {
             LOGGER.debug("Invalid file permissions format: '" + filePermissions + "'");
             return null;
         }
@@ -272,7 +272,7 @@ public class RollingFileAppender extends AbstractRollingAppender {
             if (CompressionUtil.isSupportedCompressor(compressionMethod)) {
                 this.compressionMethod = compressionMethod;
             } else {
-                String errorMsg = "Unsupported compression method: " + compressionMethod;
+                final String errorMsg = "Unsupported compression method: " + compressionMethod;
                 throw ProcessException.create(errorMsg);
             }
         }

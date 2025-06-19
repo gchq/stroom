@@ -77,7 +77,7 @@ public final class MultiSelectionModelImpl<T>
     public void setSelectedItems(final List<T> selectedItems) {
         clear(false);
         if (selectedItems != null) {
-            for (T t : selectedItems) {
+            for (final T t : selectedItems) {
                 setSelected(t, true, new SelectionType(), false);
             }
         }
@@ -123,7 +123,7 @@ public final class MultiSelectionModelImpl<T>
         } else {
             final boolean currentlySelected = isSelected(item);
             if (!currentlySelected || selection.size() != 1) {
-                List<T> items = selection.getSelectedItems();
+                final List<T> items = selection.getSelectedItems();
 
                 // Mark changes.
                 if (currentlySelected) {

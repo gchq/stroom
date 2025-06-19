@@ -24,9 +24,9 @@ public class JwkFactoryImpl implements JsonWebKeyFactory {
     @Override
     public PublicJsonWebKey createPublicKey() {
         // We need to set up the jwkId so we know which JWTs were signed by which JWKs.
-        String jwkId = UUID.randomUUID().toString();
+        final String jwkId = UUID.randomUUID().toString();
         try {
-            RsaJsonWebKey jwk = RsaJwkGenerator.generateJwk(BITS);
+            final RsaJsonWebKey jwk = RsaJwkGenerator.generateJwk(BITS);
             LOGGER.info("Generating RSA key pair for JSON Web Tokens with ID: {}", jwkId);
 
             jwk.setKeyId(jwkId);
@@ -34,7 +34,7 @@ public class JwkFactoryImpl implements JsonWebKeyFactory {
             jwk.setAlgorithm(AlgorithmIdentifiers.RSA_USING_SHA256);
             LOGGER.info("keyId: {}", jwk.getKeyId());
             return jwk;
-        } catch (JoseException e) {
+        } catch (final JoseException e) {
             throw new RuntimeException(LogUtil.message("Error generating JWK of {} bits", BITS), e);
         }
     }
@@ -48,7 +48,7 @@ public class JwkFactoryImpl implements JsonWebKeyFactory {
     public PublicJsonWebKey fromJson(final String json) {
         try {
             return RsaJsonWebKey.Factory.newPublicJwk(json);
-        } catch (JoseException e) {
+        } catch (final JoseException e) {
             LOGGER.error("Unable to create RsaJsonWebKey from json:\n{}", json, e);
             throw new RuntimeException(e);
         }

@@ -36,7 +36,7 @@ public class BrowserRouterAssetServlet extends HttpServlet {
         private final String eTag;
         private final long lastModifiedTime;
 
-        private CachedAsset(byte[] resource, long lastModifiedTime) {
+        private CachedAsset(final byte[] resource, final long lastModifiedTime) {
             this.resource = resource;
             this.eTag = '"' + Hashing.murmur3_128().hashBytes(resource).toString() + '"';
             this.lastModifiedTime = lastModifiedTime;
@@ -86,8 +86,8 @@ public class BrowserRouterAssetServlet extends HttpServlet {
     }
 
     @Override
-    protected void doGet(HttpServletRequest req,
-                         HttpServletResponse resp) throws ServletException, IOException {
+    protected void doGet(final HttpServletRequest req,
+                         final HttpServletResponse resp) throws ServletException, IOException {
         try {
             final StringBuilder builder = new StringBuilder(req.getServletPath());
             if (req.getPathInfo() != null) {
@@ -125,7 +125,7 @@ public class BrowserRouterAssetServlet extends HttpServlet {
 
                     try {
                         ranges = parseRangeHeader(rangeHeader, resourceLength);
-                    } catch (NumberFormatException e) {
+                    } catch (final NumberFormatException e) {
                         resp.sendError(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
                         return;
                     }
@@ -156,7 +156,7 @@ public class BrowserRouterAssetServlet extends HttpServlet {
                     if (defaultCharset != null && mediaType.is(MediaType.ANY_TEXT_TYPE)) {
                         mediaType = mediaType.withCharset(defaultCharset);
                     }
-                } catch (IllegalArgumentException ignore) {
+                } catch (final IllegalArgumentException ignore) {
                     // ignore
                 }
             }
@@ -172,9 +172,9 @@ public class BrowserRouterAssetServlet extends HttpServlet {
                 resp.setCharacterEncoding(mediaType.charset().get().toString());
             }
 
-            try (ServletOutputStream output = resp.getOutputStream()) {
+            try (final ServletOutputStream output = resp.getOutputStream()) {
                 if (usingRanges) {
-                    for (ByteRange range : ranges) {
+                    for (final ByteRange range : ranges) {
                         output.write(cachedAsset.getResource(), range.getStart(),
                                 range.getEnd() - range.getStart() + 1);
                     }
@@ -182,13 +182,13 @@ public class BrowserRouterAssetServlet extends HttpServlet {
                     output.write(cachedAsset.getResource());
                 }
             }
-        } catch (RuntimeException | URISyntaxException ignored) {
+        } catch (final RuntimeException | URISyntaxException ignored) {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND);
         }
     }
 
     @Nullable
-    private CachedAsset loadAsset(String key) throws URISyntaxException, IOException {
+    private CachedAsset loadAsset(final String key) throws URISyntaxException, IOException {
         checkArgument(key.startsWith(uriPath));
         final String requestedResourcePath = SLASHES.trimFrom(key.substring(uriPath.length()));
         final String absoluteRequestedResourcePath = SLASHES.trimFrom(this.resourcePath + requestedResourcePath);
@@ -214,15 +214,15 @@ public class BrowserRouterAssetServlet extends HttpServlet {
         return new CachedAsset(readResource(requestedResourceURL), lastModified);
     }
 
-    protected URL getResourceUrl(String absoluteRequestedResourcePath) {
+    protected URL getResourceUrl(final String absoluteRequestedResourcePath) {
         return Resources.getResource(absoluteRequestedResourcePath);
     }
 
-    protected byte[] readResource(URL requestedResourceURL) throws IOException {
+    protected byte[] readResource(final URL requestedResourceURL) throws IOException {
         return Resources.toByteArray(requestedResourceURL);
     }
 
-    private boolean isCachedClientSide(HttpServletRequest req, CachedAsset cachedAsset) {
+    private boolean isCachedClientSide(final HttpServletRequest req, final CachedAsset cachedAsset) {
         return cachedAsset.getETag().equals(req.getHeader(HttpHeaders.IF_NONE_MATCH)) ||
                 (req.getDateHeader(HttpHeaders.IF_MODIFIED_SINCE) >= cachedAsset.getLastModifiedTime());
     }

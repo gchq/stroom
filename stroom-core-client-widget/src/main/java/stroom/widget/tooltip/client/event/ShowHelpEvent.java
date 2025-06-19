@@ -25,7 +25,7 @@ public class ShowHelpEvent extends GwtEvent<Handler> {
                           final PopupPosition popupPosition,
                           final SafeHtml content) {
         this.popupPosition = NullSafe.requireNonNullElseGet(popupPosition, () -> {
-            Rect relativeRect = new Rect(element);
+            final Rect relativeRect = new Rect(element);
             return new PopupPosition(relativeRect, PopupLocation.RIGHT);
         });
         this.element = element;
@@ -44,7 +44,7 @@ public class ShowHelpEvent extends GwtEvent<Handler> {
     }
 
     public static Builder builder(final Element element) {
-        Builder builder = new Builder();
+        final Builder builder = new Builder();
         builder.element = element;
         return builder;
     }

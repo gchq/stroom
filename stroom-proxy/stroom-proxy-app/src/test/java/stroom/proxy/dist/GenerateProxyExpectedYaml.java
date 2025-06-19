@@ -40,10 +40,10 @@ public class GenerateProxyExpectedYaml {
      * NOTE: This main method is called from the stroom-app gradle build so if it
      * is moved you will need to refactor that too.
      */
-    public static void main(String[] args) throws IOException {
+    public static void main(final String[] args) throws IOException {
 
-        Path defaultsFile;
-        Path schemaFile;
+        final Path defaultsFile;
+        final Path schemaFile;
         if (args.length == 2) {
             defaultsFile = Paths.get(args[0]);
             schemaFile = Paths.get(args[1]);
@@ -52,7 +52,7 @@ public class GenerateProxyExpectedYaml {
             schemaFile = null;
         }
 
-        Path parentDir = defaultsFile.getParent();
+        final Path parentDir = defaultsFile.getParent();
 
         if (!Files.isDirectory(parentDir)) {
             LOGGER.info("Creating directory {}", defaultsFile.toAbsolutePath());
@@ -61,7 +61,7 @@ public class GenerateProxyExpectedYaml {
 
         final String generatedYaml = TestProxyYamlUtil.getYamlFromJavaModel();
 
-        List<String> outputLines;
+        final List<String> outputLines;
         if (args.length > 0) {
             // called for a specific output location so add a header
 

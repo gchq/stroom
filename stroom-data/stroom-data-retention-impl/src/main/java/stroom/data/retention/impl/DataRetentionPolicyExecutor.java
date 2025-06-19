@@ -517,7 +517,7 @@ public class DataRetentionPolicyExecutor {
     /**
      * Gets the earliest meta create time that would be retained by this rule.
      */
-    private static Instant getEarliestRetainedCreateTime(final DataRetentionRule rule, Instant now) {
+    private static Instant getEarliestRetainedCreateTime(final DataRetentionRule rule, final Instant now) {
         return DataRetentionCreationTimeUtil.minus(now, rule);
     }
 

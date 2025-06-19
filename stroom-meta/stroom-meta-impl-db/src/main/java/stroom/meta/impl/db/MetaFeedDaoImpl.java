@@ -159,7 +159,7 @@ class MetaFeedDaoImpl implements MetaFeedDao, Clearable {
 
     Optional<Integer> tryCreate(final String name) {
 
-        MetaFeedRecord rec = new MetaFeedRecord(null, name);
+        final MetaFeedRecord rec = new MetaFeedRecord(null, name);
         final MetaFeedRecord dbRec = JooqUtil.tryCreate(metaDbConnProvider, rec, META_FEED.NAME, createdRec -> {
             LOGGER.debug(() -> LogUtil.message("Created new {} record with ID: {}, name: {}",
                     META_FEED.getName(),

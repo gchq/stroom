@@ -119,7 +119,7 @@ public class OpenIdTokenRequestHelper {
         addBasicAuth(invocationBuilder);
 
         TokenResponse tokenResponse = null;
-        try (Response response = doPost(invocationBuilder)) {
+        try (final Response response = doPost(invocationBuilder)) {
             if (HttpServletResponse.SC_OK == response.getStatus()) {
                 final String json = response.readEntity(String.class);
                 LOGGER.debug("response json:\n{}", json);
@@ -138,7 +138,7 @@ public class OpenIdTokenRequestHelper {
                                                   "' from " +
                                                   endpointUri + " :\n" + msg);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new AuthenticationException(
                     "Error requesting token from " + endpointUri + ": " + e.getMessage(), e);
         }

@@ -562,7 +562,7 @@ class TestMetaDaoImpl {
                 });
     }
 
-    private ExpressionTerm createFeedTerm(final DocRef feed, boolean enabled) {
+    private ExpressionTerm createFeedTerm(final DocRef feed, final boolean enabled) {
         return ExpressionTerm
                 .builder()
                 .field(MetaFields.FEED.getFldName())
@@ -572,7 +572,7 @@ class TestMetaDaoImpl {
                 .build();
     }
 
-    private ExpressionTerm createPipelineTerm(final String pipelineUuid, boolean enabled) {
+    private ExpressionTerm createPipelineTerm(final String pipelineUuid, final boolean enabled) {
         return ExpressionTerm
                 .builder()
                 .field(MetaFields.PIPELINE.getFldName())
@@ -1178,7 +1178,7 @@ class TestMetaDaoImpl {
                 .orElse(null);
     }
 
-    static void dumpMetaTable(MetaDbConnProvider metaDbConnProvider) {
+    static void dumpMetaTable(final MetaDbConnProvider metaDbConnProvider) {
         JooqUtil.context(metaDbConnProvider, context ->
                 LOGGER.debug("processor:\n{}", JooqUtil.toAsciiTable(context.select(
                                 meta.ID,

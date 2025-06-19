@@ -53,7 +53,7 @@ public class SimpleStringExpressionParser {
             return Optional.empty();
         }
 
-        char[] chars = string.toCharArray();
+        final char[] chars = string.toCharArray();
         final Token unknown = new Token(TokenType.UNKNOWN, chars, 0, chars.length - 1);
 
         // Tag quoted strings and comments.
@@ -290,7 +290,7 @@ public class SimpleStringExpressionParser {
                 }
 
                 // Resolve condition.
-                for (Condition c : SUPPORTED_CONDITIONS) {
+                for (final Condition c : SUPPORTED_CONDITIONS) {
                     final String operator = c.getOperator();
                     if (fieldValue.startsWith(operator)) {
                         condition = c;
@@ -323,7 +323,7 @@ public class SimpleStringExpressionParser {
             // If this is a chars anywhere condition then we need to alter the value so that we can use a regex for
             // chars anywhere matching.
             if (charsAnywhere) {
-                char[] chars = fieldValue.toCharArray();
+                final char[] chars = fieldValue.toCharArray();
                 final StringBuilder sb = new StringBuilder();
                 for (final char c : chars) {
                     if (sb.length() > 0) {
@@ -347,7 +347,7 @@ public class SimpleStringExpressionParser {
                 if (not) {
                     final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.NOT);
                     addTerms(fields, condition, fieldValue, builder);
-                    ExpressionOperator notOperator = builder.build();
+                    final ExpressionOperator notOperator = builder.build();
                     if (notOperator.hasChildren()) {
                         parent.addOperator(notOperator);
                     }
@@ -384,7 +384,7 @@ public class SimpleStringExpressionParser {
     }
 
     private static String getFieldPrefix(final String string) {
-        char[] chars = string.toCharArray();
+        final char[] chars = string.toCharArray();
         final StringBuilder sb = new StringBuilder();
         boolean escape = false;
         for (final char c : chars) {

@@ -100,7 +100,7 @@ class ClusterValuesRow implements TreeRow {
                         groupRowSource = null;
                     } else if (nodeCount == 1) {
                         isLeaf = true;
-                        NodeSource nodeSource = nodes.iterator().next();
+                        final NodeSource nodeSource = nodes.iterator().next();
                         groupRowNodeName = nodeSource.getNodeName();
                         groupRowSource = nodeSource.getSource();
                     } else {
@@ -114,8 +114,8 @@ class ClusterValuesRow implements TreeRow {
                             groupRowSource,
                             groupRowNodeName);
 
-                    boolean isExpanded = treeAction.isRowExpanded(row)
-                            || (!treeAction.isRowExpanded(row) && !treeAction.isRowCollapsed(row));
+                    final boolean isExpanded = treeAction.isRowExpanded(row)
+                                               || (!treeAction.isRowExpanded(row) && !treeAction.isRowCollapsed(row));
 
                     if (row.getExpander() == null) {
                         row.setExpander(new Expander(depth, isExpanded, isLeaf));

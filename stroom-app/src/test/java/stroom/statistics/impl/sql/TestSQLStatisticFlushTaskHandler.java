@@ -201,7 +201,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractStatisticsCoreIntegration
             try {
                 sqlStatisticValueBatchSaveService
                         .saveBatchStatisticValueSource_BatchPreparedStatement(batch);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw new RuntimeException(e);
             }
         };
@@ -319,7 +319,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractStatisticsCoreIntegration
                             aggregateMapRef.get().addRolledUpEvent(
                                     new RolledUpStatisticEvent(event),
                                     1_000);
-                        } catch (StatisticsEventValidationException e) {
+                        } catch (final StatisticsEventValidationException e) {
                             throw new RuntimeException(e);
                         }
                         eventCount++;
@@ -415,8 +415,8 @@ class TestSQLStatisticFlushTaskHandler extends AbstractStatisticsCoreIntegration
         for (int l = 0; l < iterations; l++) {
             final List<SQLStatValSourceDO> batch = new ArrayList<>();
             for (int i = 0; i < batchSize; i++) {
-                long value = System.currentTimeMillis();
-                long count = 100;
+                final long value = System.currentTimeMillis();
+                final long count = 100;
 
                 final SQLStatValSourceDO statisticValueSource = SQLStatValSourceDO.createValueStat(
                         System.currentTimeMillis(),
@@ -463,7 +463,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractStatisticsCoreIntegration
     }
 
     private int getStatValSrcRowCount() throws SQLException {
-        int count;
+        final int count;
         try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement(
                     "select count(*) from " + SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME)) {

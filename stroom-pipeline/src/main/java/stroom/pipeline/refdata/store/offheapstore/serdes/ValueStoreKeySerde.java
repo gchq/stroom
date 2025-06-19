@@ -39,8 +39,8 @@ public class ValueStoreKeySerde implements Serde<ValueStoreKey> {
 
     @Override
     public ValueStoreKey deserialize(final ByteBuffer byteBuffer) {
-        long hashCode = byteBuffer.getLong();
-        short uniqueId = byteBuffer.getShort();
+        final long hashCode = byteBuffer.getLong();
+        final short uniqueId = byteBuffer.getShort();
         byteBuffer.flip();
         return new ValueStoreKey(hashCode, uniqueId);
     }
@@ -95,7 +95,7 @@ public class ValueStoreKeySerde implements Serde<ValueStoreKey> {
             return ByteBufferUtils.compareTo(
                     thisBuffer, VALUE_HASH_CODE_OFFSET, VALUE_HASH_CODE_BYTES,
                     thatBuffer, VALUE_HASH_CODE_OFFSET, VALUE_HASH_CODE_BYTES);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message("Error comparing [{}] & [{}]",
                     ByteBufferUtils.byteBufferInfo(thisBuffer),
                     ByteBufferUtils.byteBufferInfo(thatBuffer)), e);

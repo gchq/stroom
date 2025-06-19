@@ -82,7 +82,7 @@ class TestMapDefinitionUIDStore extends AbstractStoreDbTest {
     @Test
     void testSmallDbKey() {
         final Dbi<ByteBuffer> dbi = lmdbEnv.openDbi("testDb", DbiFlags.MDB_CREATE);
-        String keyStr = "greeting";
+        final String keyStr = "greeting";
         final ByteBuffer key = ByteBuffer.allocateDirect(keyStr.length());
         final ByteBuffer value = ByteBuffer.allocateDirect(20);
         key.put(keyStr.getBytes(StandardCharsets.UTF_8)).flip();
@@ -128,14 +128,14 @@ class TestMapDefinitionUIDStore extends AbstractStoreDbTest {
                 "MyMapName");
 
         final UID uid1 = lmdbEnv.getWithWriteTxn(writeTxn -> {
-            UID uid = mapDefinitionUIDStore.getOrCreateUid(
+            final UID uid = mapDefinitionUIDStore.getOrCreateUid(
                     writeTxn,
                     mapDefinition,
                     mapDefinitionUIDStore.getUidPooledByteBuffer());
 
             assertThat(uid).isNotNull();
 
-            long id = UID.UNSIGNED_BYTES.get(uid.getBackingBuffer());
+            final long id = UID.UNSIGNED_BYTES.get(uid.getBackingBuffer());
 
             // empty store so should get back the first id value of 0
             assertThat(id).isEqualTo(0);
@@ -149,14 +149,14 @@ class TestMapDefinitionUIDStore extends AbstractStoreDbTest {
 
         // now try again with the same mapDefinition, which should give the same UID
         final UID uid2 = lmdbEnv.getWithWriteTxn(writeTxn -> {
-            UID uid = mapDefinitionUIDStore.getOrCreateUid(
+            final UID uid = mapDefinitionUIDStore.getOrCreateUid(
                     writeTxn,
                     mapDefinition,
                     mapDefinitionUIDStore.getUidPooledByteBuffer());
 
             assertThat(uid).isNotNull();
 
-            long id = UID.UNSIGNED_BYTES.get(uid.getBackingBuffer());
+            final long id = UID.UNSIGNED_BYTES.get(uid.getBackingBuffer());
 
             // empty store so should get back the first id value of 0
             assertThat(id).isEqualTo(0);
@@ -170,12 +170,12 @@ class TestMapDefinitionUIDStore extends AbstractStoreDbTest {
     @Test
     void getOrCreateId_multiple() {
 
-        int putCount = 5;
-        String uuidStr = UUID.randomUUID().toString();
+        final int putCount = 5;
+        final String uuidStr = UUID.randomUUID().toString();
         final List<MapDefinition> mapDefinitions = IntStream.rangeClosed(1, putCount)
                 .boxed()
                 .map(i -> {
-                    String versionUuid = UUID.randomUUID().toString();
+                    final String versionUuid = UUID.randomUUID().toString();
                     // each one is different by the streamId
                     final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                             uuidStr,
@@ -205,11 +205,12 @@ class TestMapDefinitionUIDStore extends AbstractStoreDbTest {
 
         // now try and call get() for each mapDefinition and check it gives us the right UID
 
-        try (PooledByteBuffer uidPooledBuffer = mapDefinitionUIDStore.getUidPooledByteBuffer()) {
+        try (final PooledByteBuffer uidPooledBuffer = mapDefinitionUIDStore.getUidPooledByteBuffer()) {
             loadedEntries.entrySet().forEach(entry -> {
-                UID uidLoaded = entry.getKey();
-                MapDefinition mapDefinitionLoaded = entry.getValue();
-                UID uidFromGet = mapDefinitionUIDStore.getUid(mapDefinitionLoaded, uidPooledBuffer.getByteBuffer())
+                final UID uidLoaded = entry.getKey();
+                final MapDefinition mapDefinitionLoaded = entry.getValue();
+                final UID uidFromGet = mapDefinitionUIDStore.getUid(
+                                mapDefinitionLoaded, uidPooledBuffer.getByteBuffer())
                         .orElseGet(() -> {
                             fail("Expecting to get a value back but didn't");
                             return null;
@@ -222,8 +223,8 @@ class TestMapDefinitionUIDStore extends AbstractStoreDbTest {
     @Test
     void testGet_notFound() {
 
-        String uuidStr = UUID.randomUUID().toString();
-        String versionUuidStr = UUID.randomUUID().toString();
+        final String uuidStr = UUID.randomUUID().toString();
+        final String versionUuidStr = UUID.randomUUID().toString();
         // each one is different by the partIndex
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 uuidStr,
@@ -232,8 +233,8 @@ class TestMapDefinitionUIDStore extends AbstractStoreDbTest {
 
         loadEntries(Collections.singletonList(new MapDefinition(refStreamDefinition, "MyMapName")));
 
-        try (PooledByteBuffer uidPooledBuffer = mapDefinitionUIDStore.getUidPooledByteBuffer()) {
-            Optional<UID> optUid = mapDefinitionUIDStore.getUid(
+        try (final PooledByteBuffer uidPooledBuffer = mapDefinitionUIDStore.getUidPooledByteBuffer()) {
+            final Optional<UID> optUid = mapDefinitionUIDStore.getUid(
                     new MapDefinition(refStreamDefinition, "DifferentMapName"),
                     uidPooledBuffer.getByteBuffer());
 
@@ -244,19 +245,19 @@ class TestMapDefinitionUIDStore extends AbstractStoreDbTest {
     @Test
     void testGet_found() {
 
-        String uuidStr = UUID.randomUUID().toString();
-        String versionUuidStr = UUID.randomUUID().toString();
+        final String uuidStr = UUID.randomUUID().toString();
+        final String versionUuidStr = UUID.randomUUID().toString();
         // each one is different by the partIndex
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 uuidStr,
                 versionUuidStr,
                 123456L);
-        MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "MyMapName");
+        final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "MyMapName");
 
         loadEntries(Collections.singletonList(mapDefinition));
 
-        try (PooledByteBuffer uidPooledBuffer = mapDefinitionUIDStore.getUidPooledByteBuffer()) {
-            Optional<UID> optUid = mapDefinitionUIDStore.getUid(
+        try (final PooledByteBuffer uidPooledBuffer = mapDefinitionUIDStore.getUidPooledByteBuffer()) {
+            final Optional<UID> optUid = mapDefinitionUIDStore.getUid(
                     mapDefinition,
                     uidPooledBuffer.getByteBuffer());
 
@@ -267,13 +268,13 @@ class TestMapDefinitionUIDStore extends AbstractStoreDbTest {
 
     @Test
     void testDeletePair() {
-        String pipelineUuid = UUID.randomUUID().toString();
-        String pipelineVersion = UUID.randomUUID().toString();
-        RefStreamDefinition refStreamDefinition = new RefStreamDefinition(pipelineUuid, pipelineVersion, 1);
+        final String pipelineUuid = UUID.randomUUID().toString();
+        final String pipelineVersion = UUID.randomUUID().toString();
+        final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(pipelineUuid, pipelineVersion, 1);
 
-        MapDefinition mapDefinition1 = new MapDefinition(refStreamDefinition, "map1");
-        MapDefinition mapDefinition2 = new MapDefinition(refStreamDefinition, "map2");
-        MapDefinition mapDefinition3 = new MapDefinition(refStreamDefinition, "map3");
+        final MapDefinition mapDefinition1 = new MapDefinition(refStreamDefinition, "map1");
+        final MapDefinition mapDefinition2 = new MapDefinition(refStreamDefinition, "map2");
+        final MapDefinition mapDefinition3 = new MapDefinition(refStreamDefinition, "map3");
 
         final Map<UID, MapDefinition> loadedEntries = loadEntries(mapDefinition1, mapDefinition2, mapDefinition3);
 
@@ -293,16 +294,19 @@ class TestMapDefinitionUIDStore extends AbstractStoreDbTest {
     @Test
     void testGetNextMapDefinition() {
 
-        String pipelineUuid = UUID.randomUUID().toString();
-        String pipelineVersion = UUID.randomUUID().toString();
-        RefStreamDefinition refStreamDefinition1 = new RefStreamDefinition(pipelineUuid, pipelineVersion, 1);
-        RefStreamDefinition refStreamDefinition2 = new RefStreamDefinition(pipelineUuid, pipelineVersion, 2);
-        RefStreamDefinition refStreamDefinition3 = new RefStreamDefinition(pipelineUuid, pipelineVersion, 3);
+        final String pipelineUuid = UUID.randomUUID().toString();
+        final String pipelineVersion = UUID.randomUUID().toString();
+        final RefStreamDefinition refStreamDefinition1 = new RefStreamDefinition(
+                pipelineUuid, pipelineVersion, 1);
+        final RefStreamDefinition refStreamDefinition2 = new RefStreamDefinition(
+                pipelineUuid, pipelineVersion, 2);
+        final RefStreamDefinition refStreamDefinition3 = new RefStreamDefinition(
+                pipelineUuid, pipelineVersion, 3);
 
-        MapDefinition mapDefinition11 = new MapDefinition(refStreamDefinition1, "map1");
-        MapDefinition mapDefinition21 = new MapDefinition(refStreamDefinition2, "map1");
-        MapDefinition mapDefinition22 = new MapDefinition(refStreamDefinition2, "map2");
-        MapDefinition mapDefinition31 = new MapDefinition(refStreamDefinition3, "map1");
+        final MapDefinition mapDefinition11 = new MapDefinition(refStreamDefinition1, "map1");
+        final MapDefinition mapDefinition21 = new MapDefinition(refStreamDefinition2, "map1");
+        final MapDefinition mapDefinition22 = new MapDefinition(refStreamDefinition2, "map2");
+        final MapDefinition mapDefinition31 = new MapDefinition(refStreamDefinition3, "map1");
 
         loadEntries(Arrays.asList(
                 mapDefinition11,
@@ -363,14 +367,14 @@ class TestMapDefinitionUIDStore extends AbstractStoreDbTest {
                                             final Optional<MapDefinition> optExpectedMapDefinition,
                                             final boolean deletePairAfterwards) {
 
-        Optional<UID> optMapUid = mapDefinitionUIDStore.getNextMapDefinition(
+        final Optional<UID> optMapUid = mapDefinitionUIDStore.getNextMapDefinition(
                 writeTxn, inputRefStreamDefinition, () -> ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH));
 
         assertThat(optMapUid.isPresent()).isEqualTo(optExpectedMapDefinition.isPresent());
 
         if (optMapUid.isPresent()) {
 
-            MapDefinition actualMapDefinition = mapUidReverseDb.get(writeTxn, optMapUid.get()).get();
+            final MapDefinition actualMapDefinition = mapUidReverseDb.get(writeTxn, optMapUid.get()).get();
 
             assertThat(actualMapDefinition).isEqualTo(optExpectedMapDefinition.get());
 
@@ -380,14 +384,14 @@ class TestMapDefinitionUIDStore extends AbstractStoreDbTest {
         }
     }
 
-    private Map<UID, MapDefinition> loadEntries(MapDefinition... mapDefinitions) {
+    private Map<UID, MapDefinition> loadEntries(final MapDefinition... mapDefinitions) {
         return loadEntries(Arrays.asList(mapDefinitions));
     }
 
-    private Map<UID, MapDefinition> loadEntries(List<MapDefinition> mapDefinitions) {
-        List<UID> uids = new ArrayList<>();
+    private Map<UID, MapDefinition> loadEntries(final List<MapDefinition> mapDefinitions) {
+        final List<UID> uids = new ArrayList<>();
 
-        Map<UID, MapDefinition> loadedEntries = new HashMap<>();
+        final Map<UID, MapDefinition> loadedEntries = new HashMap<>();
         lmdbEnv.doWithWriteTxn(writeTxn -> {
             mapDefinitions.stream()
                     .forEach(mapDefinition -> {
@@ -415,11 +419,11 @@ class TestMapDefinitionUIDStore extends AbstractStoreDbTest {
         // now verify all the uid<->mapDef mappings we are about to return
         lmdbEnv.doWithReadTxn(readTxn -> {
             loadedEntries.forEach(((uid, mapDefinition) -> {
-                UID uid2 = mapUidForwardDb.get(readTxn, mapDefinition).get();
+                final UID uid2 = mapUidForwardDb.get(readTxn, mapDefinition).get();
 
                 assertThat(uid.getBackingBuffer()).isEqualTo(uid2.getBackingBuffer());
 
-                MapDefinition mapDefinition2 = mapUidReverseDb.get(readTxn, uid).get();
+                final MapDefinition mapDefinition2 = mapUidReverseDb.get(readTxn, uid).get();
 
                 assertThat(mapDefinition2).isEqualTo(mapDefinition);
             }));

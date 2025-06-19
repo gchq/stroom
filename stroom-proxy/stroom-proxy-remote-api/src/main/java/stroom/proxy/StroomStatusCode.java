@@ -136,7 +136,7 @@ public enum StroomStatusCode {
                     StroomStatusCode::getCode,
                     Function.identity()));
 
-    public static StroomStatusCode fromCode(int code) {
+    public static StroomStatusCode fromCode(final int code) {
         return CODE_TO_ENUM_MAP.getOrDefault(code, StroomStatusCode.UNKNOWN_ERROR);
     }
 
@@ -146,7 +146,7 @@ public enum StroomStatusCode {
      * @return Either {@link StroomStatusCode#OK} if httpCode is 200 else
      * {@link StroomStatusCode#UNKNOWN_ERROR}
      */
-    public static StroomStatusCode fromHttpCode(int httpCode) {
+    public static StroomStatusCode fromHttpCode(final int httpCode) {
         return httpCode == OK.httpCode
                 ? OK
                 : UNKNOWN_ERROR;
@@ -191,10 +191,10 @@ public enum StroomStatusCode {
         return httpCode + " - " + code + " - " + message;
     }
 
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         System.out.println("{| class=\"wikitable\"");
         System.out.println("!HTTP Status!!Stroom-Status!!Message!!Reason");
-        for (StroomStatusCode stroomStatusCode : StroomStatusCode.values()) {
+        for (final StroomStatusCode stroomStatusCode : StroomStatusCode.values()) {
             System.out.println("|-");
             System.out.println("|" + stroomStatusCode.getHttpCode() + "||" + stroomStatusCode.getCode() + "||"
                                + stroomStatusCode.getMessage() + "||" + stroomStatusCode.getReason());

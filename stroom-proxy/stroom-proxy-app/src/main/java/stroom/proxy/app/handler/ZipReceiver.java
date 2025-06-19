@@ -224,7 +224,7 @@ public class ZipReceiver implements Receiver {
                     .forEach(zipEntryGroup -> {
                         try {
                             zipEntryGroup.write(writer);
-                        } catch (IOException e) {
+                        } catch (final IOException e) {
                             throw new UncheckedIOException(LogUtil.message(
                                     "Error writing entries to {}: {}", entriesFile, LogUtil.exceptionMessage(e)), e);
                         }
@@ -412,7 +412,7 @@ public class ZipReceiver implements Receiver {
         } finally {
             try {
                 Files.delete(stagingZipFilePath);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 LOGGER.error("Error deleting stagingZipFilePath {}, msg: {}",
                         stagingZipFilePath, LogUtil.exceptionMessage(e), e);
             }
@@ -481,7 +481,7 @@ public class ZipReceiver implements Receiver {
                 }
             }
             return size;
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
     }
@@ -544,7 +544,7 @@ public class ZipReceiver implements Receiver {
             try (final ByteCountInputStream byteCountInputStream = ByteCountInputStream.wrap(inputStream)) {
                 Files.copy(byteCountInputStream, zipFilePath);
                 return byteCountInputStream.getCount();
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new UncheckedIOException(LogUtil.message(
                         "Error writing inputStream to file {}: {}",
                         zipFilePath, LogUtil.exceptionMessage(e)), e);
@@ -563,13 +563,13 @@ public class ZipReceiver implements Receiver {
         final long size;
         if (ZipUtil.hasKnownUncompressedSize(sourceEntry)) {
             // We know the size so can just write the raw entry without having to de-compress/compress it
-            try (InputStream rawInputStream = sourceZipFile.getRawInputStream(sourceEntry)) {
+            try (final InputStream rawInputStream = sourceZipFile.getRawInputStream(sourceEntry)) {
                 zipWriter.writeRawStream(sourceEntry, rawInputStream);
                 size = sourceEntry.getSize();
             }
         } else {
             // We don't know the uncompressed size, so have to effectively de-compress/compress it to find out
-            try (InputStream inputStream = sourceZipFile.getInputStream(sourceEntry)) {
+            try (final InputStream inputStream = sourceZipFile.getInputStream(sourceEntry)) {
                 size = zipWriter.writeStream(sourceEntry.getName(), inputStream);
             }
         }

@@ -44,7 +44,7 @@ public interface Serializer<T> {
         final ByteBuffer byteBuffer = Objects.requireNonNull(byteBufferSupplier.get());
         try {
             serialize(byteBuffer, object);
-        } catch (BufferOverflowException boe) {
+        } catch (final BufferOverflowException boe) {
             throw new RuntimeException(LogUtil.message("Buffer {} too small for value {}",
                     ByteBufferUtils.byteBufferInfo(byteBuffer),
                     object));

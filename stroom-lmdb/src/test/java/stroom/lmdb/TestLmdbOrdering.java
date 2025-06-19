@@ -37,7 +37,7 @@ public class TestLmdbOrdering extends AbstractLmdbDbTest {
 
     @Test
     void testOrder_customKey() {
-        BasicLmdbDb<TestKey, String> db = new BasicLmdbDb<>(
+        final BasicLmdbDb<TestKey, String> db = new BasicLmdbDb<>(
                 lmdbEnv,
                 byteBufferPool,
                 new TestKeySerde(),
@@ -91,7 +91,7 @@ public class TestLmdbOrdering extends AbstractLmdbDbTest {
 
     @Test
     void testOrder_signedLongs() {
-        BasicLmdbDb<Long, String> db = new BasicLmdbDb<>(
+        final BasicLmdbDb<Long, String> db = new BasicLmdbDb<>(
                 lmdbEnv,
                 byteBufferPool,
                 new SignedLongSerde(),

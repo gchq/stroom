@@ -142,7 +142,7 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
         getView().getTabBar().setTabHidden(tab, hidden);
     }
 
-    private void getContent(TabData tab, ContentCallback callback) {
+    private void getContent(final TabData tab, final ContentCallback callback) {
         callback.onReady(tabContentProvider.getPresenter(tab, this));
     }
 

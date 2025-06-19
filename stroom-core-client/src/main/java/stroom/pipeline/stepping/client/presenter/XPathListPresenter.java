@@ -59,7 +59,7 @@ public class XPathListPresenter extends MyPresenterWidget<PagerView>
         dataProvider.addDataDisplay(dataGrid);
     }
 
-    ButtonView addButton(Preset preset) {
+    ButtonView addButton(final Preset preset) {
         return getView().addButton(preset);
     }
 

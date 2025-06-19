@@ -33,11 +33,13 @@ class TestOutputFactory {
         final Path filePath = tempDir.resolve("file.gz");
         LOGGER.info("Using filePath: {}", filePath.toAbsolutePath().normalize());
 
-        OutputFactory outputFactory = new OutputFactory(new MetaDataHolder());
+        final OutputFactory outputFactory = new OutputFactory(new MetaDataHolder());
         outputFactory.setUseCompression(true);
         outputFactory.setCompressionMethod(CompressorStreamFactory.GZIP);
 
-        try (OutputStream outputStream = outputFactory.create(Files.newOutputStream(filePath)).getOutputStream()) {
+        try (final OutputStream outputStream = outputFactory.create(
+                Files.newOutputStream(filePath)).getOutputStream()) {
+
             final PrintWriter printWriter = new PrintWriter(outputStream);
             printWriter.println(content);
             printWriter.flush();
@@ -45,8 +47,9 @@ class TestOutputFactory {
         }
 
         final String text;
-        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new GzipCompressorInputStream(
-                Files.newInputStream(filePath))))) {
+        try (final BufferedReader bufferedReader = new BufferedReader(
+                new InputStreamReader(new GzipCompressorInputStream(Files.newInputStream(filePath))))) {
+
             text = bufferedReader.readLine();
             assertThat(text)
                     .isEqualTo(content);
@@ -111,10 +114,12 @@ class TestOutputFactory {
         final Path filePath = tempDir.resolve("file.txt");
         LOGGER.info("Using filePath: {}", filePath.toAbsolutePath().normalize());
 
-        OutputFactory outputFactory = new OutputFactory(new MetaDataHolder());
+        final OutputFactory outputFactory = new OutputFactory(new MetaDataHolder());
         outputFactory.setUseCompression(false);
 
-        try (OutputStream outputStream = outputFactory.create(Files.newOutputStream(filePath)).getOutputStream()) {
+        try (final OutputStream outputStream = outputFactory.create(
+                Files.newOutputStream(filePath)).getOutputStream()) {
+
             final PrintWriter printWriter = new PrintWriter(outputStream);
             printWriter.println(content);
             printWriter.flush();
@@ -122,7 +127,7 @@ class TestOutputFactory {
         }
 
         final String text;
-        try (BufferedReader bufferedReader = new BufferedReader(
+        try (final BufferedReader bufferedReader = new BufferedReader(
                 new InputStreamReader(Files.newInputStream(filePath)))) {
             text = bufferedReader.readLine();
             assertThat(text)

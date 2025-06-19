@@ -57,7 +57,7 @@ public class ProxyConfigProvider {
         Objects.requireNonNull(config, "No config instance found for class " + clazz.getName());
         try {
             return clazz.cast(config);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message(
                     "Error casting config object to {}, found {}",
                     clazz.getName(),
@@ -166,7 +166,7 @@ public class ProxyConfigProvider {
                     }
                 }
             });
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException("Error adding config instances for " + config.getClass().getName(), e);
         }
     }

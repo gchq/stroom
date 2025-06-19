@@ -23,7 +23,7 @@ public class IntegerSerde implements Serde<Integer> {
 
     @Override
     public Integer deserialize(final ByteBuffer byteBuffer) {
-        Integer val = byteBuffer.getInt();
+        final Integer val = byteBuffer.getInt();
         byteBuffer.flip();
         return val;
     }
@@ -35,14 +35,14 @@ public class IntegerSerde implements Serde<Integer> {
     }
 
     public void increment(final ByteBuffer byteBuffer) {
-        int val = byteBuffer.getInt();
+        final int val = byteBuffer.getInt();
         byteBuffer.flip();
         byteBuffer.putInt(val + 1);
         byteBuffer.flip();
     }
 
     public void decrement(final ByteBuffer byteBuffer) {
-        int val = byteBuffer.getInt();
+        final int val = byteBuffer.getInt();
         byteBuffer.flip();
         byteBuffer.putInt(val - 1);
         byteBuffer.flip();

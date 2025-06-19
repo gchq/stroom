@@ -135,7 +135,7 @@ public class Dictionaries {
                         .map(matchResult -> createCompletionValue(matchResult.item(), matchResult.score()))
                         .forEach(resultList::add);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error adding visualisation completions: {}", e.getMessage(), e);
         }
     }

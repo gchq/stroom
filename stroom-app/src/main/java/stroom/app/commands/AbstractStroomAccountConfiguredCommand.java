@@ -78,7 +78,7 @@ public abstract class AbstractStroomAccountConfiguredCommand extends ConfiguredC
 
                 try {
                     runCommand(bootstrap, namespace, config, appInjector);
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     final String msg = "Error running command "
                             + commandName
                             + ": " + e.getMessage()
@@ -91,7 +91,7 @@ public abstract class AbstractStroomAccountConfiguredCommand extends ConfiguredC
                 info(LOGGER, "Command " + commandName + " completed successfully");
                 System.exit(0);
             });
-        } catch (Exception e) {
+        } catch (final Exception e) {
             final String msg = "Error initialising application";
             LOGGER.error(msg, e);
             System.err.println(msg);

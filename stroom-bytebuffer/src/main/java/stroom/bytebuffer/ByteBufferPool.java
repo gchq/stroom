@@ -35,7 +35,7 @@ public interface ByteBufferPool extends Clearable, HasSystemInfo {
      * Performs work using a pooled buffer with capacity >= minCapacity. The pooled buffer is returned
      * to the pool on completion of work. The buffer should not be used/mutated after completion of work.
      */
-    default <T> T getWithBuffer(int minCapacity, Function<ByteBuffer, T> work) {
+    default <T> T getWithBuffer(final int minCapacity, final Function<ByteBuffer, T> work) {
         try (final PooledByteBuffer pooledKeyByteBuffer = getPooledByteBuffer(minCapacity)) {
             return work.apply(pooledKeyByteBuffer.getByteBuffer());
         }
@@ -45,7 +45,7 @@ public interface ByteBufferPool extends Clearable, HasSystemInfo {
      * Performs work using a pooled buffer with capacity >= minCapacity. The pooled buffer is returned
      * to the pool on completion of work. The buffer should not be used/mutated after completion of work.
      */
-    default void doWithBuffer(int minCapacity, Consumer<ByteBuffer> work) {
+    default void doWithBuffer(final int minCapacity, final Consumer<ByteBuffer> work) {
         try (final PooledByteBuffer pooledKeyByteBuffer = getPooledByteBuffer(minCapacity)) {
             work.accept(pooledKeyByteBuffer.getByteBuffer());
         }

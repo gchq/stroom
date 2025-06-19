@@ -25,7 +25,7 @@ class TestStringUtil {
 
     @Test
     void testToString() {
-        DocRef docRef = DocRef.builder()
+        final DocRef docRef = DocRef.builder()
                 .uuid(UUID.randomUUID().toString())
                 .type("Index")
                 .name("my name")
@@ -38,7 +38,7 @@ class TestStringUtil {
 
     @Test
     void testToString_null() {
-        DocRef docRef = null;
+        final DocRef docRef = null;
 
         final String str = StringUtil.toString(docRef);
         assertThat(str)
@@ -149,7 +149,7 @@ class TestStringUtil {
         return TestUtil.buildDynamicTestStream()
                 .withInputAndOutputType(String.class)
                 .withTestFunction(testCase -> {
-                    var quotedInput = StringUtil.addWhitespaceQuoting(testCase.getInput());
+                    final var quotedInput = StringUtil.addWhitespaceQuoting(testCase.getInput());
                     LOGGER.debug("quotedInput: '{}'", quotedInput);
                     return StringUtil.removeWhitespaceQuoting(quotedInput);
                 })

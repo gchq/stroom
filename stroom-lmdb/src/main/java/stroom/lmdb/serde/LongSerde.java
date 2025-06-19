@@ -23,7 +23,7 @@ public class LongSerde implements Serde<Long> {
 
     @Override
     public Long deserialize(final ByteBuffer byteBuffer) {
-        Long val = byteBuffer.getLong();
+        final Long val = byteBuffer.getLong();
         byteBuffer.flip();
         return val;
     }
@@ -35,14 +35,14 @@ public class LongSerde implements Serde<Long> {
     }
 
     public void increment(final ByteBuffer byteBuffer) {
-        int val = byteBuffer.getInt();
+        final int val = byteBuffer.getInt();
         byteBuffer.flip();
         byteBuffer.putLong(val + 1);
         byteBuffer.flip();
     }
 
     public void decrement(final ByteBuffer byteBuffer) {
-        int val = byteBuffer.getInt();
+        final int val = byteBuffer.getInt();
         byteBuffer.flip();
         byteBuffer.putLong(val - 1);
         byteBuffer.flip();

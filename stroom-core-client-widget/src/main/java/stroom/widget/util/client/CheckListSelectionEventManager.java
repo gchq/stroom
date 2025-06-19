@@ -15,7 +15,7 @@ public abstract class CheckListSelectionEventManager<T>
         this.cellTable = cellTable;
     }
 
-    protected void onToggle(T item) {
+    protected void onToggle(final T item) {
     }
 
     @Override
@@ -57,7 +57,7 @@ public abstract class CheckListSelectionEventManager<T>
     }
 
     public void selectFirstItem() {
-        int row = getFirstSelectableRow();
+        final int row = getFirstSelectableRow();
         if (row >= 0) {
             selectRow(row);
         }

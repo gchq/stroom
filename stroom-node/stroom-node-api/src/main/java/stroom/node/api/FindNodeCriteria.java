@@ -42,7 +42,7 @@ public class FindNodeCriteria extends FindNamedEntityCriteria {
     }
 
     public static FindNodeCriteria allEnabled() {
-        FindNodeCriteria criteria = new FindNodeCriteria();
+        final FindNodeCriteria criteria = new FindNodeCriteria();
         criteria.setEnabled(true);
         return criteria;
     }

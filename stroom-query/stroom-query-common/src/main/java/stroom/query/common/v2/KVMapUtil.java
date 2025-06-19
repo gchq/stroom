@@ -74,7 +74,7 @@ public final class KVMapUtil {
                     } else {
                         final String text = sb.toString();
 
-                        int index = text.lastIndexOf(' ');
+                        final int index = text.lastIndexOf(' ');
                         if (index != -1) {
                             if (key != null && key.length() > 0) {
                                 final String value = text.substring(0, index).trim();
@@ -106,7 +106,7 @@ public final class KVMapUtil {
         final StringBuilder sb = new StringBuilder();
 
         int paramStart = -1;
-        char[] chars = value.toCharArray();
+        final char[] chars = value.toCharArray();
         for (int i = 0; i < chars.length; i++) {
             switch (chars[i]) {
                 case '$':

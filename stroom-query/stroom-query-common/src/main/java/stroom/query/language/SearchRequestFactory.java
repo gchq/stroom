@@ -243,7 +243,7 @@ public class SearchRequestFactory {
         private List<AbstractToken> addDataSource(final List<AbstractToken> tokens,
                                                   final Consumer<DocRef> consumer,
                                                   final boolean isLenient) {
-            AbstractToken token = tokens.getFirst();
+            final AbstractToken token = tokens.getFirst();
 
             // The first token must be `FROM`.
             if (!TokenType.FROM.equals(token.getTokenType())) {
@@ -326,7 +326,7 @@ public class SearchRequestFactory {
 
         private ExpressionTerm createTerm(
                 final List<AbstractToken> tokens) {
-            ExpressionTerm expressionTerm;
+            final ExpressionTerm expressionTerm;
 
             if (NullSafe.isEmptyCollection(tokens)) {
                 throw new RuntimeException("createTerm called with empty list");
@@ -371,7 +371,7 @@ public class SearchRequestFactory {
                 }
 
                 // If we have a where clause then we expect the next token to contain an expression.
-                Condition cond;
+                final Condition cond;
                 switch (conditionToken.getTokenType()) {
                     case EQUALS -> cond = Condition.EQUALS;
                     case NOT_EQUALS -> cond = Condition.NOT_EQUALS;
@@ -410,7 +410,7 @@ public class SearchRequestFactory {
 
         private ExpressionTerm createInTerm(
                 final List<AbstractToken> tokens) {
-            ExpressionTerm expressionTerm;
+            final ExpressionTerm expressionTerm;
 
             final AbstractToken fieldToken = tokens.get(0);
             final AbstractToken conditionToken = tokens.get(1);
@@ -1271,7 +1271,7 @@ public class SearchRequestFactory {
             addedFields.add(fieldName);
             Expression expression = expressionMap.get(fieldName);
             if (expression == null) {
-                ExpressionParser expressionParser = new ExpressionParser(new ParamFactory(expressionMap));
+                final ExpressionParser expressionParser = new ExpressionParser(new ParamFactory(expressionMap));
                 try {
                     expression = expressionParser.parse(
                             expressionContext,

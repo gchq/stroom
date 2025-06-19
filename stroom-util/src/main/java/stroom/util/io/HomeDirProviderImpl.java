@@ -98,7 +98,7 @@ public class HomeDirProviderImpl implements HomeDirProvider {
 
     private Optional<Path> getApplicationJarDir() {
         try {
-            String codeSourceLocation = this.getClass()
+            final String codeSourceLocation = this.getClass()
                     .getProtectionDomain()
                     .getCodeSource()
                     .getLocation()

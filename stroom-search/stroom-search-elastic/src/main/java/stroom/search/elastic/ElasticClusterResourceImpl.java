@@ -79,7 +79,7 @@ class ElasticClusterResourceImpl implements ElasticClusterResource, FetchWithUui
             final ElasticsearchClient elasticClient = new ElasticClientFactory()
                     .create(connectionConfig, elasticClientConfig);
 
-            InfoResponse response = elasticClient.info();
+            final InfoResponse response = elasticClient.info();
 
             final StringBuilder sb = new StringBuilder()
                     .append("Cluster URLs: ")

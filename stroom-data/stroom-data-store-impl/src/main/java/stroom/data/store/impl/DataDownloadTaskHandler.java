@@ -275,7 +275,7 @@ public class DataDownloadTaskHandler {
 
         taskContext.info(() -> FileUtil.getCanonicalPath(file));
 
-        StroomZipOutputStreamImpl outputStream;
+        final StroomZipOutputStreamImpl outputStream;
 
         // Create directories and files in a synchronized way so that the clean() method will not remove empty
         // directories that we are just about to write to.

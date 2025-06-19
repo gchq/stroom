@@ -94,7 +94,7 @@ class Lookup extends AbstractLookup {
                               final boolean trace,
                               final ReferenceDataResult result,
                               final SequenceMaker sequenceMaker) throws XPathException {
-        boolean wasFound;
+        final boolean wasFound;
         sequenceMaker.open();
 
         //noinspection OptionalGetWithoutIsPresent // checked outside method

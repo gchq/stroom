@@ -25,7 +25,7 @@ public class QuotedStringToken extends Token {
         public Builder() {
         }
 
-        public Builder(QuotedStringToken token) {
+        public Builder(final QuotedStringToken token) {
             this.tokenType = token.tokenType;
             this.chars = token.chars;
             this.start = token.start;

@@ -124,7 +124,7 @@ class JobResourceImpl implements JobResource {
                 params.getExcludeJobs());
 
         if (recordsUpdated > 0) {
-            String enabledState = params.isEnabled()
+            final String enabledState = params.isEnabled()
                     ? "Enabled"
                     : "Disabled";
             LOGGER.info(enabledState + " " + recordsUpdated + " tasks for node " + nodeName);

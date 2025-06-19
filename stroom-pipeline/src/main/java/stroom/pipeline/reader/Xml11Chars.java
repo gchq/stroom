@@ -124,7 +124,7 @@ public class Xml11Chars implements XmlChars {
      * @param c The character to check.
      */
     @Override
-    public boolean isValidLiteral(int c) {
+    public boolean isValidLiteral(final int c) {
         return ((c < 0x10000 && ((XML11CHARS[c] & MASK_XML11_VALID) != 0
                 && (XML11CHARS[c] & MASK_XML11_CONTROL) == 0))
                 || (0x10000 <= c && c <= 0x10FFFF));

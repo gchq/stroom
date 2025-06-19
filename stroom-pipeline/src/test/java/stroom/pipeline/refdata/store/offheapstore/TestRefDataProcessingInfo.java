@@ -31,9 +31,9 @@ class TestRefDataProcessingInfo {
     @Test
     void testProcessingStateFromBytes() {
 
-        for (ProcessingState state : ProcessingState.values()) {
-            byte id = state.getId();
-            ProcessingState outputState = ProcessingState.fromByte(id);
+        for (final ProcessingState state : ProcessingState.values()) {
+            final byte id = state.getId();
+            final ProcessingState outputState = ProcessingState.fromByte(id);
             assertThat(outputState).isEqualTo(state);
         }
     }

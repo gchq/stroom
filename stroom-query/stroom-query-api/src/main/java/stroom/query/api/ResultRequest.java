@@ -123,14 +123,14 @@ public final class ResultRequest {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        ResultRequest that = (ResultRequest) o;
+        final ResultRequest that = (ResultRequest) o;
         return Objects.equals(componentId, that.componentId) &&
                Objects.equals(mappings, that.mappings) &&
                Objects.equals(requestedRange, that.requestedRange) &&

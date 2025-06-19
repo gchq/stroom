@@ -19,7 +19,7 @@ public class DataReceiptMetrics {
     private final Histogram contentLengthHistogram;
 
     @Inject
-    public DataReceiptMetrics(Metrics metrics) {
+    public DataReceiptMetrics(final Metrics metrics) {
         this.requestTimer = metrics.registrationBuilder(getClass())
                 .addNamePart("request")
                 .addNamePart("time")
@@ -45,7 +45,7 @@ public class DataReceiptMetrics {
             try {
                 final long len = Long.parseLong(contentLength);
                 contentLengthHistogram.update(len);
-            } catch (NumberFormatException e) {
+            } catch (final NumberFormatException e) {
                 LOGGER.debug("Unable to parse '{}' to a long", contentLength);
             }
         }

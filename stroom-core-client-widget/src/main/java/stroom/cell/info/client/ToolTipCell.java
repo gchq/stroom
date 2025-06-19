@@ -17,7 +17,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 public class ToolTipCell extends AbstractCell<ToolTipCellValue> {
 
     @Override
-    public void render(Context context, ToolTipCellValue value, SafeHtmlBuilder sb) {
+    public void render(final Context context, final ToolTipCellValue value, final SafeHtmlBuilder sb) {
         if (value != null) {
             sb
                     .appendHtmlConstant("<div title=\"")

@@ -115,8 +115,8 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
             final String key = getSafeString(functionName, context, arguments, 1);
 
             // Find out if we are going to ignore warnings.
-            boolean ignoreWarnings = arguments.length > 3
-                                     && NullSafe.isTrue(getSafeBoolean(functionName, context, arguments, 3));
+            final boolean ignoreWarnings = arguments.length > 3
+                                           && NullSafe.isTrue(getSafeBoolean(functionName, context, arguments, 3));
             // Find out if we are going to trace the lookup.
             final boolean traceLookup = arguments.length > 4
                                         && NullSafe.isTrue(getSafeBoolean(functionName, context, arguments, 4));
@@ -179,7 +179,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                             null,
                             context);
                 }
-            } catch (RuntimeException e) {
+            } catch (final RuntimeException e) {
                 final StringBuilder sb = new StringBuilder();
                 sb.append("Identifier must have a map and a key (map: ");
                 sb.append(map);

@@ -29,13 +29,13 @@ import java.util.regex.Pattern;
         commonCategory = FunctionCategory.STRING,
         commonReturnType = ValString.class,
         commonReturnDescription = "One of the result arguments, if matched, or the value of the otherwise " +
-                "argument if no match is found.",
+                                  "argument if no match is found.",
         signatures = @FunctionSignature(
                 description = "Similar to a switch/case statement. The arguments are split into 3 parts: " +
-                        "the input value to test, pairs of regex patterns with their respective output values " +
-                        "and a default result if no matches are found. It must always have an even number " +
-                        "of arguments and can have any number of pattern/result pairs. Result values in the " +
-                        "format '$n' can be used to return the appropriate capture group values from the regex.",
+                              "the input value to test, pairs of regex patterns with their respective output values " +
+                              "and a default result if no matches are found. It must always have an even number " +
+                              "of arguments and can have any number of pattern/result pairs. Result values in the " +
+                              "format '$n' can be used to return the appropriate capture group values from the regex.",
                 args = {
                         @FunctionArg(
                                 name = "input",
@@ -81,7 +81,7 @@ class Decode extends AbstractManyChildFunction {
 
         // See if this is a static computation.
         simple = true;
-        for (Param param : params) {
+        for (final Param param : params) {
             if (!(param instanceof Val)) {
                 simple = false;
                 break;
@@ -101,14 +101,14 @@ class Decode extends AbstractManyChildFunction {
                 }
 
                 final Pattern pattern = PatternCache.get(regex);
-                Matcher matcher = pattern.matcher(value);
+                final Matcher matcher = pattern.matcher(value);
                 if (matcher.matches()) {
-                    String returnValue = params[i + 1].toString();
+                    final String returnValue = params[i + 1].toString();
                     if (returnValue.startsWith("$")) {
                         try {
-                            int index = Integer.parseInt(returnValue.substring(1));
+                            final int index = Integer.parseInt(returnValue.substring(1));
                             newValue = matcher.group(index);
-                        } catch (NumberFormatException | IllegalStateException | IndexOutOfBoundsException ex) {
+                        } catch (final NumberFormatException | IllegalStateException | IndexOutOfBoundsException ex) {
                             throw new ParseException("Unable to get capture group " + returnValue + " from regex", 0);
                         }
                     } else {
@@ -193,18 +193,20 @@ class Decode extends AbstractManyChildFunction {
                     }
 
                     final Pattern pattern = PatternCache.get(regex);
-                    Matcher matcher = pattern.matcher(value);
+                    final Matcher matcher = pattern.matcher(value);
                     if (matcher.matches()) {
                         newVal = childGenerators[i + 1].eval(storedValues, childDataSupplier);
                         if (!newVal.type().isValue()) {
                             return ValErr.wrap(newVal);
                         }
-                        String returnValue = newVal.toString();
+                        final String returnValue = newVal.toString();
                         if (returnValue.startsWith("$")) {
                             try {
-                                int index = Integer.parseInt(returnValue.substring(1));
+                                final int index = Integer.parseInt(returnValue.substring(1));
                                 newValue = matcher.group(index);
-                            } catch (NumberFormatException | IllegalStateException | IndexOutOfBoundsException ex) {
+                            } catch (final NumberFormatException
+                                           | IllegalStateException
+                                           | IndexOutOfBoundsException ex) {
                                 return ValErr.create("Unable to get capture group " + returnValue + " from regex");
                             }
                         } else {

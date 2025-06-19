@@ -44,12 +44,12 @@ public class StreamTaskDerivedStats {
         if (durationMs == null) {
             return "";
         }
-        long timeMs = durationMs;
+        final long timeMs = durationMs;
         if (timeMs < MS_IN_SEC) {
             return timeMs + "ms";
         }
-        long timeS = timeMs / MS_IN_SEC;
-        long remMs = timeMs % MS_IN_SEC;
+        final long timeS = timeMs / MS_IN_SEC;
+        final long remMs = timeMs % MS_IN_SEC;
         return timeS + "." + ModelStringUtil.zeroPad(3, Long.toString(remMs)) + "s";
     }
 

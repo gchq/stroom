@@ -122,7 +122,7 @@ public class ContentTemplates extends Doc {
     }
 
     public static Builder copy(final ContentTemplates copy) {
-        Builder builder = new Builder();
+        final Builder builder = new Builder();
         builder.type = copy.getType();
         builder.uuid = copy.getUuid();
         builder.name = copy.getName();

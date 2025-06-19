@@ -137,7 +137,7 @@ public class EmailSender {
                 emailBuilder.withPlainText(body);
             }
             emailBuilder.withAttachments(attachmentResources);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             final String message = LogUtil.message("Error sending alert email using user ({}) at {}:{} - {}",
                     smtpConfig.getUsername(),
                     smtpConfig.getHost(),

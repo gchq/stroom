@@ -79,14 +79,14 @@ public enum DataFeedKeyHashAlgorithm implements HasDisplayValue {
             throw new IllegalArgumentException("Blank uniqueId");
         } else {
             final int intVal = Integer.parseInt(uniqueId);
-            DataFeedKeyHashAlgorithm dataFeedKeyHashAlgorithm;
+            final DataFeedKeyHashAlgorithm dataFeedKeyHashAlgorithm;
             try {
                 dataFeedKeyHashAlgorithm = SPARSE_ALGORITHM_ARRAY[intVal];
                 if (dataFeedKeyHashAlgorithm == null) {
                     throw new IllegalArgumentException("Unknown uniqueId " + uniqueId);
                 }
                 return dataFeedKeyHashAlgorithm;
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw new RuntimeException(e);
             }
         }

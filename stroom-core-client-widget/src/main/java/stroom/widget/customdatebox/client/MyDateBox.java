@@ -62,7 +62,7 @@ public class MyDateBox extends Composite implements DateBoxView {
 
         initWidget(textBox);
 
-        DateBoxHandler handler = new DateBoxHandler();
+        final DateBoxHandler handler = new DateBoxHandler();
         datePicker.addValueChangeHandler(handler);
         textBox.addFocusHandler(handler);
         textBox.addBlurHandler(handler);
@@ -147,7 +147,7 @@ public class MyDateBox extends Composite implements DateBoxView {
     private Date parseDate() {
         try {
             String text = textBox.getText().trim();
-            int index = text.indexOf('T');
+            final int index = text.indexOf('T');
             if (index != -1) {
                 text = text.substring(0, index) + "T12:00:00.000Z";
             }
@@ -177,17 +177,17 @@ public class MyDateBox extends Composite implements DateBoxView {
             FocusHandler, BlurHandler, ClickHandler, KeyDownHandler,
             CloseHandler<PopupPanel> {
 
-        public void onValueChange(ValueChangeEvent<Date> event) {
+        public void onValueChange(final ValueChangeEvent<Date> event) {
             // Trim down the date to be just the date part.
-            String date = ClientDateUtil.toDateString(event.getValue().getTime());
+            final String date = ClientDateUtil.toDateString(event.getValue().getTime());
 
             String time = utc
                     ? DEFAULT_UTC_TIME
                     : DEFAULT_LOCAL_TIME;
             String expression = "";
 
-            String text = textBox.getText().trim();
-            int tIndex = text.indexOf('T');
+            final String text = textBox.getText().trim();
+            final int tIndex = text.indexOf('T');
             if (tIndex != -1) {
                 int end = text.indexOf('Z', tIndex);
                 if (end == -1) {
@@ -219,17 +219,17 @@ public class MyDateBox extends Composite implements DateBoxView {
             hideDatePicker();
         }
 
-        public void onBlur(BlurEvent event) {
+        public void onBlur(final BlurEvent event) {
 //            if (isDatePickerShowing() == false) {
 //                updateDateFromTextBox();
 //            }
         }
 
-        public void onClick(ClickEvent event) {
+        public void onClick(final ClickEvent event) {
             showDatePicker();
         }
 
-        public void onClose(CloseEvent<PopupPanel> event) {
+        public void onClose(final CloseEvent<PopupPanel> event) {
 //            // If we are not closing because we have picked a new value, make sure the
 //            // current value is updated.
 //            if (allowDPShow) {
@@ -237,13 +237,13 @@ public class MyDateBox extends Composite implements DateBoxView {
 //            }
         }
 
-        public void onFocus(FocusEvent event) {
+        public void onFocus(final FocusEvent event) {
 //            if (allowDPShow && isDatePickerShowing() == false) {
             showDatePicker();
 //            }
         }
 
-        public void onKeyDown(KeyDownEvent event) {
+        public void onKeyDown(final KeyDownEvent event) {
             switch (event.getNativeKeyCode()) {
                 case KeyCodes.KEY_ENTER:
                 case KeyCodes.KEY_TAB:

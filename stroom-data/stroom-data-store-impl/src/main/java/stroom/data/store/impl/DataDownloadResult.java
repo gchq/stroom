@@ -38,7 +38,7 @@ public class DataDownloadResult {
         return recordsWritten;
     }
 
-    public void setRecordsWritten(long recordsWritten) {
+    public void setRecordsWritten(final long recordsWritten) {
         this.recordsWritten = recordsWritten;
     }
 
@@ -50,7 +50,7 @@ public class DataDownloadResult {
         return hitMaxFileSize;
     }
 
-    public void setHitMaxFileSize(boolean hitMaxFileSize) {
+    public void setHitMaxFileSize(final boolean hitMaxFileSize) {
         this.hitMaxFileSize = hitMaxFileSize;
     }
 
@@ -58,7 +58,7 @@ public class DataDownloadResult {
         return hitMaxFileParts;
     }
 
-    public void setHitMaxFileParts(boolean hitMaxFileParts) {
+    public void setHitMaxFileParts(final boolean hitMaxFileParts) {
         this.hitMaxFileParts = hitMaxFileParts;
     }
 
@@ -66,7 +66,7 @@ public class DataDownloadResult {
         return messageList;
     }
 
-    public void addMessage(Message message) {
+    public void addMessage(final Message message) {
         if (messageList == null) {
             messageList = new ArrayList<>();
         }

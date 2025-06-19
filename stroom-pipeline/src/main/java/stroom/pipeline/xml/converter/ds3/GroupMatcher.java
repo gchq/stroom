@@ -42,7 +42,7 @@ public class GroupMatcher implements MatchResult {
     }
 
     @Override
-    public int end(int group) {
+    public int end(final int group) {
         return cs.length();
     }
 
@@ -52,7 +52,7 @@ public class GroupMatcher implements MatchResult {
     }
 
     @Override
-    public String group(int group) {
+    public String group(final int group) {
         return cs.toString();
     }
 
@@ -67,7 +67,7 @@ public class GroupMatcher implements MatchResult {
     }
 
     @Override
-    public int start(int group) {
+    public int start(final int group) {
         return 0;
     }
 }

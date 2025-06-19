@@ -206,7 +206,7 @@ class TaskContextFactoryImpl implements TaskContextFactory {
                 securityAttributes.useAsRead());
 
         return () -> {
-            R result;
+            final R result;
 
             // Make sure this thread is not interrupted.
             if (Thread.interrupted()) {

@@ -27,7 +27,7 @@ public abstract class RestSaveQueue<K, V> implements HasHandlers {
     }
 
     private void tryAndSetValue(final K key) {
-        V value = nextValue.remove(key);
+        final V value = nextValue.remove(key);
         if (value != null) {
             doAction(key, value, this::tryAndSetValue);
 

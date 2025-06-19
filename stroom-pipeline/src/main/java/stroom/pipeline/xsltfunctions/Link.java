@@ -8,10 +8,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Link extends StroomExtensionFunctionCall {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(Link.class);
 
     @Override
-    protected Sequence call(String functionName, XPathContext context, Sequence[] arguments) throws XPathException {
+    protected Sequence call(final String functionName,
+                            final XPathContext context,
+                            final Sequence[] arguments) throws XPathException {
+
         String link = "";
 
         if (arguments.length == 1) {

@@ -61,7 +61,7 @@ public final class UnsafeAccess {
      * @param offset offset into array
      * @return the short value
      */
-    public static short toShort(byte[] bytes, int offset) {
+    public static short toShort(final byte[] bytes, final int offset) {
         if (LITTLE_ENDIAN) {
             return Short
                     .reverseBytes(HBasePlatformDependent.getShort(bytes, offset + BYTE_ARRAY_BASE_OFFSET));
@@ -77,7 +77,7 @@ public final class UnsafeAccess {
      * @param offset offset into array
      * @return the int value
      */
-    public static int toInt(byte[] bytes, int offset) {
+    public static int toInt(final byte[] bytes, final int offset) {
         if (LITTLE_ENDIAN) {
             return Integer
                     .reverseBytes(HBasePlatformDependent.getInt(bytes, offset + BYTE_ARRAY_BASE_OFFSET));
@@ -93,7 +93,7 @@ public final class UnsafeAccess {
      * @param offset offset into array
      * @return the long value
      */
-    public static long toLong(byte[] bytes, int offset) {
+    public static long toLong(final byte[] bytes, final int offset) {
         if (LITTLE_ENDIAN) {
             return Long
                     .reverseBytes(HBasePlatformDependent.getLong(bytes, offset + BYTE_ARRAY_BASE_OFFSET));
@@ -112,7 +112,7 @@ public final class UnsafeAccess {
      * @param val    short to write out
      * @return incremented offset
      */
-    public static int putShort(byte[] bytes, int offset, short val) {
+    public static int putShort(final byte[] bytes, final int offset, short val) {
         if (LITTLE_ENDIAN) {
             val = Short.reverseBytes(val);
         }
@@ -128,7 +128,7 @@ public final class UnsafeAccess {
      * @param val    int to write out
      * @return incremented offset
      */
-    public static int putInt(byte[] bytes, int offset, int val) {
+    public static int putInt(final byte[] bytes, final int offset, int val) {
         if (LITTLE_ENDIAN) {
             val = Integer.reverseBytes(val);
         }
@@ -144,7 +144,7 @@ public final class UnsafeAccess {
      * @param val    long to write out
      * @return incremented offset
      */
-    public static int putLong(byte[] bytes, int offset, long val) {
+    public static int putLong(final byte[] bytes, final int offset, long val) {
         if (LITTLE_ENDIAN) {
             val = Long.reverseBytes(val);
         }
@@ -160,7 +160,7 @@ public final class UnsafeAccess {
      *
      * @return short value at offset
      */
-    public static short toShort(ByteBuffer buf, int offset) {
+    public static short toShort(final ByteBuffer buf, final int offset) {
         if (LITTLE_ENDIAN) {
             return Short.reverseBytes(getAsShort(buf, offset));
         }
@@ -173,7 +173,7 @@ public final class UnsafeAccess {
      *
      * @return short value at offset
      */
-    public static short toShort(Object ref, long offset) {
+    public static short toShort(final Object ref, final long offset) {
         if (LITTLE_ENDIAN) {
             return Short.reverseBytes(HBasePlatformDependent.getShort(ref, offset));
         }
@@ -185,7 +185,7 @@ public final class UnsafeAccess {
      *
      * @return short value at offset
      */
-    private static short getAsShort(ByteBuffer buf, int offset) {
+    private static short getAsShort(final ByteBuffer buf, final int offset) {
         if (buf.isDirect()) {
             return HBasePlatformDependent.getShort(directBufferAddress(buf) + offset);
         }
@@ -199,7 +199,7 @@ public final class UnsafeAccess {
      *
      * @return int value at offset
      */
-    public static int toInt(ByteBuffer buf, int offset) {
+    public static int toInt(final ByteBuffer buf, final int offset) {
         if (LITTLE_ENDIAN) {
             return Integer.reverseBytes(getAsInt(buf, offset));
         }
@@ -211,7 +211,7 @@ public final class UnsafeAccess {
      *
      * @return int value at offset
      */
-    public static int toInt(Object ref, long offset) {
+    public static int toInt(final Object ref, final long offset) {
         if (LITTLE_ENDIAN) {
             return Integer.reverseBytes(HBasePlatformDependent.getInt(ref, offset));
         }
@@ -223,7 +223,7 @@ public final class UnsafeAccess {
      *
      * @return int value at offset
      */
-    private static int getAsInt(ByteBuffer buf, int offset) {
+    private static int getAsInt(final ByteBuffer buf, final int offset) {
         if (buf.isDirect()) {
             return HBasePlatformDependent.getInt(directBufferAddress(buf) + offset);
         }
@@ -237,7 +237,7 @@ public final class UnsafeAccess {
      *
      * @return long value at offset
      */
-    public static long toLong(ByteBuffer buf, int offset) {
+    public static long toLong(final ByteBuffer buf, final int offset) {
         if (LITTLE_ENDIAN) {
             return Long.reverseBytes(getAsLong(buf, offset));
         }
@@ -250,7 +250,7 @@ public final class UnsafeAccess {
      *
      * @return long value at offset
      */
-    public static long toLong(Object ref, long offset) {
+    public static long toLong(final Object ref, final long offset) {
         if (LITTLE_ENDIAN) {
             return Long.reverseBytes(HBasePlatformDependent.getLong(ref, offset));
         }
@@ -262,7 +262,7 @@ public final class UnsafeAccess {
      *
      * @return long value at offset
      */
-    private static long getAsLong(ByteBuffer buf, int offset) {
+    private static long getAsLong(final ByteBuffer buf, final int offset) {
         if (buf.isDirect()) {
             return HBasePlatformDependent.getLong(directBufferAddress(buf) + offset);
         }
@@ -277,7 +277,7 @@ public final class UnsafeAccess {
      * @param offset the offset at which the byte has to be read
      * @return the byte at the given offset
      */
-    public static byte toByte(ByteBuffer buf, int offset) {
+    public static byte toByte(final ByteBuffer buf, final int offset) {
         if (buf.isDirect()) {
             return HBasePlatformDependent.getByte(directBufferAddress(buf) + offset);
         } else {
@@ -291,7 +291,7 @@ public final class UnsafeAccess {
      *
      * @return the byte at the given offset
      */
-    public static byte toByte(Object ref, long offset) {
+    public static byte toByte(final Object ref, final long offset) {
         return HBasePlatformDependent.getByte(ref, offset);
     }
 
@@ -303,7 +303,7 @@ public final class UnsafeAccess {
      * @param val    int to write out
      * @return incremented offset
      */
-    public static int putInt(ByteBuffer buf, int offset, int val) {
+    public static int putInt(final ByteBuffer buf, final int offset, int val) {
         if (LITTLE_ENDIAN) {
             val = Integer.reverseBytes(val);
         }
@@ -327,7 +327,7 @@ public final class UnsafeAccess {
      * @param destOffset offset into destination buffer
      * @param length     length of data to copy
      */
-    public static void copy(byte[] src, int srcOffset, ByteBuffer dest, int destOffset, int length) {
+    public static void copy(final byte[] src, final int srcOffset, final ByteBuffer dest, final int destOffset, final int length) {
         long destAddress = destOffset;
         Object destBase = null;
         if (dest.isDirect()) {
@@ -336,13 +336,13 @@ public final class UnsafeAccess {
             destAddress = destAddress + BYTE_ARRAY_BASE_OFFSET + dest.arrayOffset();
             destBase = dest.array();
         }
-        long srcAddress = srcOffset + BYTE_ARRAY_BASE_OFFSET;
+        final long srcAddress = srcOffset + BYTE_ARRAY_BASE_OFFSET;
         unsafeCopy(src, srcAddress, destBase, destAddress, length);
     }
 
-    private static void unsafeCopy(Object src, long srcAddr, Object dst, long destAddr, long len) {
+    private static void unsafeCopy(final Object src, long srcAddr, final Object dst, long destAddr, long len) {
         while (len > 0) {
-            long size = (len > UNSAFE_COPY_THRESHOLD)
+            final long size = (len > UNSAFE_COPY_THRESHOLD)
                     ? UNSAFE_COPY_THRESHOLD
                     : len;
             HBasePlatformDependent.copyMemory(src, srcAddr, dst, destAddr, size);
@@ -362,7 +362,7 @@ public final class UnsafeAccess {
      * @param destOffset offset into destination buffer
      * @param length     length of data to copy
      */
-    public static void copy(ByteBuffer src, int srcOffset, byte[] dest, int destOffset, int length) {
+    public static void copy(final ByteBuffer src, final int srcOffset, final byte[] dest, final int destOffset, final int length) {
         long srcAddress = srcOffset;
         Object srcBase = null;
         if (src.isDirect()) {
@@ -371,7 +371,7 @@ public final class UnsafeAccess {
             srcAddress = srcAddress + BYTE_ARRAY_BASE_OFFSET + src.arrayOffset();
             srcBase = src.array();
         }
-        long destAddress = destOffset + BYTE_ARRAY_BASE_OFFSET;
+        final long destAddress = destOffset + BYTE_ARRAY_BASE_OFFSET;
         unsafeCopy(srcBase, srcAddress, dest, destAddress, length);
     }
 
@@ -385,9 +385,10 @@ public final class UnsafeAccess {
      * @param destOffset offset into destination buffer
      * @param length     length of data to copy
      */
-    public static void copy(ByteBuffer src, int srcOffset, ByteBuffer dest, int destOffset,
-                            int length) {
-        long srcAddress, destAddress;
+    public static void copy(final ByteBuffer src, final int srcOffset, final ByteBuffer dest, final int destOffset,
+                            final int length) {
+        final long srcAddress;
+        final long destAddress;
         Object srcBase = null, destBase = null;
         if (src.isDirect()) {
             srcAddress = srcOffset + directBufferAddress(src);
@@ -414,7 +415,7 @@ public final class UnsafeAccess {
      * @param val    short to write out
      * @return incremented offset
      */
-    public static int putShort(ByteBuffer buf, int offset, short val) {
+    public static int putShort(final ByteBuffer buf, final int offset, short val) {
         if (LITTLE_ENDIAN) {
             val = Short.reverseBytes(val);
         }
@@ -435,7 +436,7 @@ public final class UnsafeAccess {
      * @param val    long to write out
      * @return incremented offset
      */
-    public static int putLong(ByteBuffer buf, int offset, long val) {
+    public static int putLong(final ByteBuffer buf, final int offset, long val) {
         if (LITTLE_ENDIAN) {
             val = Long.reverseBytes(val);
         }
@@ -456,7 +457,7 @@ public final class UnsafeAccess {
      * @param b      byte to write out
      * @return incremented offset
      */
-    public static int putByte(ByteBuffer buf, int offset, byte b) {
+    public static int putByte(final ByteBuffer buf, final int offset, final byte b) {
         if (buf.isDirect()) {
             HBasePlatformDependent.putByte(directBufferAddress(buf) + offset, b);
         } else {
@@ -466,11 +467,11 @@ public final class UnsafeAccess {
         return offset + 1;
     }
 
-    public static long directBufferAddress(ByteBuffer buf) {
+    public static long directBufferAddress(final ByteBuffer buf) {
         return PlatformDependent.directBufferAddress(buf);
     }
 
-    public static void freeDirectBuffer(ByteBuffer buffer) {
+    public static void freeDirectBuffer(final ByteBuffer buffer) {
         // here we just use the method in netty
         PlatformDependent.freeDirectBuffer(buffer);
     }

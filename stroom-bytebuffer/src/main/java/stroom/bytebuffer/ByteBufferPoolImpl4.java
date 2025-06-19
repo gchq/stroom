@@ -141,7 +141,7 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
         final List<String> msgs = new ArrayList<>(sizesCount);
         for (int i = 0; i < sizesCount; i++) {
 
-            int bufferCapacity = (int) Math.pow(10, i);
+            final int bufferCapacity = (int) Math.pow(10, i);
             final Integer configuredCount = pooledByteBufferCounts.getOrDefault(
                     bufferCapacity,
                     DEFAULT_MAX_BUFFERS_PER_QUEUE);
@@ -181,7 +181,7 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
      * @param n The number to test
      * @return True if n is a power of ten, e.g. if n==10
      */
-    static boolean isPowerOf10(int n) {
+    static boolean isPowerOf10(final int n) {
         return switch (n) {
             case 1:
             case 10:
@@ -243,7 +243,7 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
                         final BlockingQueue<ByteBuffer> byteBufferQueue = pooledBufferQueues[originalOffset];
                         LOGGER.debug("Taking from queue, may block");
                         buffer = byteBufferQueue.take();
-                    } catch (InterruptedException e) {
+                    } catch (final InterruptedException e) {
                         LOGGER.debug("Thread interrupted waiting for a buffer from the pool", e);
                         Thread.currentThread().interrupt();
                         throw new RuntimeException("Thread interrupted while waiting for a buffer from the pool");
@@ -329,7 +329,7 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
             try {
                 LOGGER.debug("Unmapping buffer {}", buffer);
                 ByteBufferSupport.unmap(buffer);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.error("Error releasing direct byte buffer", e);
             }
         }
@@ -412,7 +412,7 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
                 // be created again if needs be. It doesn't matter that this happens sometime later than
                 // the draining of the queue.
                 pooledBufferCounters[offset].addAndGet(-1 * drainedBuffers.size());
-                int size = bufferSizes[offset];
+                final int size = bufferSizes[offset];
                 msgs.add(size + ":" + drainedBuffers.size());
 
                 // Destroy all the cleared buffers
@@ -434,7 +434,7 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
     @Override
     public SystemInfoResult getSystemInfo() {
         try {
-            SystemInfoResult.Builder builder = SystemInfoResult.builder(this)
+            final SystemInfoResult.Builder builder = SystemInfoResult.builder(this)
                     .addDetail("Total buffers in pool", getCurrentPoolSize());
 
             final SortedMap<Integer, Map<String, Integer>> offsetMapOfInfoMaps = new TreeMap<>();
@@ -474,13 +474,13 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
                 builder
                         .addDetail("Pooled buffers (grouped by buffer capacity)", offsetMapOfInfoMaps)
                         .addDetail("Overall total size (bytes)", overallTotalSizeBytes);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.error("Error getting capacity counts", e);
                 builder.addDetail("Buffer capacity counts", "Error getting counts");
             }
 
             return builder.build();
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             return SystemInfoResult.builder(this)
                     .addError(e)
                     .build();
@@ -496,7 +496,7 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
         ByteBuffer byteBuffer = null;
 
         while (true) {
-            int currBufferCount = bufferCounter.get();
+            final int currBufferCount = bufferCounter.get();
 
 
             if (currBufferCount < maxBufferCount) {

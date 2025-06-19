@@ -72,7 +72,7 @@ class TestEffectiveStreamInternPool {
 
         LOGGER.info("set1:\n{}", set1);
 
-        EffectiveMetaSet set2 = EffectiveMetaSet.builder("SET2 FEED-COMBINED-V2.0", "Reference")
+        final EffectiveMetaSet set2 = EffectiveMetaSet.builder("SET2 FEED-COMBINED-V2.0", "Reference")
                 .add(56826239, DateUtil.parseNormalDateTimeString("2024-08-06T13:52:10.000Z"))
                 .add(56890073, DateUtil.parseNormalDateTimeString("2024-08-07T13:52:16.000Z"))
                 .build();
@@ -80,7 +80,7 @@ class TestEffectiveStreamInternPool {
         LOGGER.info("set2:\n{}", set2);
         LOGGER.info("--------------------------------------------------------------------------------");
 
-        EffectiveStreamInternPool internPool = new EffectiveStreamInternPool();
+        final EffectiveStreamInternPool internPool = new EffectiveStreamInternPool();
 
         final EffectiveMetaSet interned1 = internPool.intern(set1);
 

@@ -81,7 +81,7 @@ public class ProxyYamlUtil {
         Config config = null;
         try {
             config = configurationFactory.build(configurationSourceProvider, configFile.toAbsolutePath().toString());
-        } catch (ConfigurationException e) {
+        } catch (final ConfigurationException e) {
             throw new RuntimeException(LogUtil.message("Error parsing configuration file {}\n{}",
                     configFile.toAbsolutePath(), e.getMessage()), e);
         }
@@ -107,7 +107,7 @@ public class ProxyYamlUtil {
     }
 
     public static void writeConfig(final ProxyConfig proxyConfig, final OutputStream outputStream) throws IOException {
-        Config config = new Config();
+        final Config config = new Config();
         config.setProxyConfig(proxyConfig);
         writeConfig(config, outputStream);
     }
@@ -119,7 +119,7 @@ public class ProxyYamlUtil {
     }
 
     public static void writeConfig(final ProxyConfig proxyConfig, final Path path) throws IOException {
-        Config config = new Config();
+        final Config config = new Config();
         config.setProxyConfig(proxyConfig);
         writeConfig(config, path);
     }

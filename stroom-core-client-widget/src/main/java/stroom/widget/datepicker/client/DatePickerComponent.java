@@ -30,7 +30,7 @@ abstract class DatePickerComponent extends Composite {
         return datePicker.getModel();
     }
 
-    protected void addMonths(int numMonths) {
+    protected void addMonths(final int numMonths) {
         getModel().shiftCurrentMonth(numMonths);
         getDatePicker().refreshAll();
     }
@@ -63,7 +63,7 @@ abstract class DatePickerComponent extends Composite {
         return datePicker.css();
     }
 
-    void setDatePicker(CustomDatePicker me) {
+    void setDatePicker(final CustomDatePicker me) {
         this.datePicker = me;
     }
 }

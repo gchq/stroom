@@ -248,7 +248,7 @@ public final class ForwardFileConfig
     }
 
     public static Builder builder(final ForwardFileConfig copy) {
-        Builder builder = new Builder();
+        final Builder builder = new Builder();
         builder.enabled = copy.isEnabled();
         builder.instant = copy.isInstant();
         builder.name = copy.getName();

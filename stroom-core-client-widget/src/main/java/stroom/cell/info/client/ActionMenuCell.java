@@ -84,7 +84,7 @@ public class ActionMenuCell<R> extends AbstractCell<R> {
                                final ValueUpdater<R> valueUpdater) {
         super.onBrowserEvent(context, parent, row, event, valueUpdater);
         if (BrowserEvents.MOUSEDOWN.equals(event.getType())) {
-            EventTarget eventTarget = event.getEventTarget();
+            final EventTarget eventTarget = event.getEventTarget();
             if (!Element.is(eventTarget)) {
                 return;
             }

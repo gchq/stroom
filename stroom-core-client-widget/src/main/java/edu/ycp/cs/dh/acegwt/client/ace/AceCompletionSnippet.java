@@ -78,21 +78,21 @@ public class AceCompletionSnippet extends AceCompletion {
      * @param htmlTooltip     the HTML tooltip
      * @param score           The score is the value assigned to the autocompletion option. Scores with a higher value will appear closer to the top. Items with an identical score are sorted alphbetically by caption in the drop down.
      */
-    public AceCompletionSnippet(String caption,
-                                AceCompletionSnippetSegment[] snippetSegments,
-                                String meta,
-                                String htmlTooltip,
-                                int score) {
+    public AceCompletionSnippet(final String caption,
+                                final AceCompletionSnippetSegment[] snippetSegments,
+                                final String meta,
+                                final String htmlTooltip,
+                                final int score) {
         this.caption = caption;
         this.score = score;
         this.meta = meta;
         this.tooltip = htmlTooltip;
 
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
 
         int tabStopNumber = 1;
 
-        for (AceCompletionSnippetSegment segment : snippetSegments) {
+        for (final AceCompletionSnippetSegment segment : snippetSegments) {
             sb.append(segment.getPreparedText(tabStopNumber));
             if (segment instanceof AceCompletionSnippetSegmentTabstopItem) {
                 tabStopNumber++;
@@ -117,7 +117,7 @@ public class AceCompletionSnippet extends AceCompletion {
      * @param score       The score is the value assigned to the autocompletion option. Scores with a higher value will appear closer to the top. Items with an identical score are sorted alphbetically by caption in the drop down.
      * @param htmlTooltip the HTML tooltip
      */
-    public AceCompletionSnippet(String caption, String snippet, int score, String meta, String htmlTooltip) {
+    public AceCompletionSnippet(final String caption, final String snippet, final int score, final String meta, final String htmlTooltip) {
         this.caption = caption;
         this.score = score;
         this.meta = meta;

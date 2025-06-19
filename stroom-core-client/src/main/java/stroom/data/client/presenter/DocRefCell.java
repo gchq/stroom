@@ -256,7 +256,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
 
     private MenuItem createCopyAsMenuItem(final DocRef docRef,
                                           final int priority) {
-        List<Item> children = createCopyAsChildMenuItems(docRef);
+        final List<Item> children = createCopyAsChildMenuItems(docRef);
         return new IconParentMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.COPY)

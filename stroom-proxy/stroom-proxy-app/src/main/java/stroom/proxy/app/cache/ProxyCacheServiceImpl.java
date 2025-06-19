@@ -59,12 +59,12 @@ public class ProxyCacheServiceImpl implements ProxyCacheService, HasAdminTasks {
                 try {
                     LOGGER.debug("Evicting expired elements in cache '{}'", name);
                     cache.evictExpiredElements();
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     LOGGER.error("Error calling evictExpiredElements on cache '{}': {}",
                             cache.name(), LogUtil.exceptionMessage(e), e);
                 }
             });
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error running cache eviction: {}", LogUtil.exceptionMessage(e), e);
         }
     }

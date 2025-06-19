@@ -190,7 +190,7 @@ public final class StoreCreationTool {
 
         final String data = StreamUtil.fileToString(dataLocation);
 
-        Meta meta;
+        final Meta meta;
 
         try (final Target target = store.openTarget(metaProperties)) {
             meta = target.getMeta();
@@ -210,7 +210,7 @@ public final class StoreCreationTool {
 
     private DocRef getRefFeed(final String feedName, final TextConverterType textConverterType,
                               final Path textConverterLocation, final Path xsltLocation) {
-        DocRef docRef;
+        final DocRef docRef;
         final List<DocRef> docRefs = feedStore.findByName(feedName);
         if (docRefs.size() > 0) {
             docRef = docRefs.get(0);
@@ -252,7 +252,7 @@ public final class StoreCreationTool {
     }
 
     private DocRef createFeed(final String feedName) {
-        ExplorerNode feedNode;
+        final ExplorerNode feedNode;
         feedNode = explorerService.create(FeedDoc.TYPE,
                 feedName,
                 ExplorerConstants.SYSTEM_NODE,
@@ -266,7 +266,7 @@ public final class StoreCreationTool {
     }
 
     private DocRef createTextConverter(final String name) {
-        ExplorerNode textConverterNode;
+        final ExplorerNode textConverterNode;
         textConverterNode = explorerService.create(TextConverterDoc.TYPE,
                 name,
                 ExplorerConstants.SYSTEM_NODE,
@@ -280,7 +280,7 @@ public final class StoreCreationTool {
     }
 
     private DocRef createXslt(final String name) {
-        ExplorerNode xsltNode;
+        final ExplorerNode xsltNode;
         xsltNode = explorerService.create(XsltDoc.TYPE,
                 name,
                 ExplorerConstants.SYSTEM_NODE,
@@ -294,7 +294,7 @@ public final class StoreCreationTool {
     }
 
     private DocRef createPipeline(final String name) {
-        ExplorerNode pipelineNode;
+        final ExplorerNode pipelineNode;
         pipelineNode = explorerService.create(PipelineDoc.TYPE,
                 name,
                 ExplorerConstants.SYSTEM_NODE,
@@ -421,7 +421,7 @@ public final class StoreCreationTool {
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
 
-        Meta meta;
+        final Meta meta;
         try (final Target target = store.openTarget(metaProperties)) {
             meta = target.getMeta();
 
@@ -452,7 +452,7 @@ public final class StoreCreationTool {
     public DocRef getOrCreateFeedDoc(final String feedName) {
         commonTestControl.createRequiredXMLSchemas();
 
-        DocRef docRef;
+        final DocRef docRef;
         final List<DocRef> docRefs = feedStore.findByName(feedName);
         if (docRefs.size() > 0) {
             docRef = docRefs.get(0);
@@ -460,7 +460,7 @@ public final class StoreCreationTool {
             // Setup the feeds in mock feed configuration manager.
 //            docRef = feedStore.createDocument(feedName);
             docRef = createFeed(feedName);
-            FeedDoc feedDoc = feedStore.readDocument(docRef);
+            final FeedDoc feedDoc = feedStore.readDocument(docRef);
             feedDoc.setDescription("Description " + feedName);
             feedDoc.setStatus(FeedStatus.RECEIVE);
             feedStore.writeDocument(feedDoc);
@@ -818,11 +818,11 @@ public final class StoreCreationTool {
 
     private Tuple2<DocRef, PipelineDoc> duplicatePipeline(final DocRef sourcePipelineDocRef,
                                                           final String newName) {
-        DocRef newDocRef = duplicatePipeline(
+        final DocRef newDocRef = duplicatePipeline(
                 sourcePipelineDocRef,
                 newName,
                 "Description " + newName);
-        PipelineDoc newPipelineDoc = pipelineStore.readDocument(newDocRef);
+        final PipelineDoc newPipelineDoc = pipelineStore.readDocument(newDocRef);
         return Tuple.of(newDocRef, newPipelineDoc);
     }
 
@@ -1048,14 +1048,14 @@ public final class StoreCreationTool {
                              final String encoding,
                              final boolean isReference) {
         LOGGER.info("Creating feed {} in {} with type {} encoding {}");
-        ExplorerNode feedNode;
+        final ExplorerNode feedNode;
         feedNode = explorerService.create(FeedDoc.TYPE, feedName,
                 ExplorerConstants.SYSTEM_NODE,
                 PermissionInheritance.DESTINATION);
         final DocRef feedDocRef = feedNode != null
                 ? feedNode.getDocRef()
                 : feedStore.createDocument(feedName);
-        FeedDoc feedDoc = feedStore.readDocument(feedDocRef);
+        final FeedDoc feedDoc = feedStore.readDocument(feedDocRef);
         feedDoc.setReference(isReference);
         feedDoc.setEncoding(encoding);
         feedDoc.setStreamType(streamType);

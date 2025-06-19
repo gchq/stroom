@@ -27,7 +27,7 @@ public class CryptoUtils {
      * @param length Length in bytes of the IV
      */
     public static byte[] getRandomNonce(final int length) {
-        byte[] nonce = new byte[length];
+        final byte[] nonce = new byte[length];
         new SecureRandom().nextBytes(nonce);
 
         return nonce;
@@ -38,8 +38,8 @@ public class CryptoUtils {
      */
     public static SecretKey getAESKeyFromPassword(final String password, final byte[] salt)
             throws NoSuchAlgorithmException, InvalidKeySpecException {
-        SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-        KeySpec keySpec = new PBEKeySpec(password.toCharArray(), salt, KEY_ITERATION_COUNT, KEY_LENGTH);
+        final SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+        final KeySpec keySpec = new PBEKeySpec(password.toCharArray(), salt, KEY_ITERATION_COUNT, KEY_LENGTH);
 
         return new SecretKeySpec(keyFactory.generateSecret(keySpec).getEncoded(), "AES");
     }

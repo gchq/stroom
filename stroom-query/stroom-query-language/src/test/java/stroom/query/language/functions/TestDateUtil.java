@@ -123,7 +123,7 @@ public class TestDateUtil {
 
     @TestFactory
     Stream<DynamicTest> testParseLocal() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
+        final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
         return TestUtil.buildDynamicTestStream()
                 .withInputTypes(String.class, DateTimeFormatter.class, ZoneId.class)

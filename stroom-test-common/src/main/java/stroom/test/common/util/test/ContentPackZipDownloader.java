@@ -61,7 +61,7 @@ public class ContentPackZipDownloader {
             LOGGER.info("Copying from " + downloadFile + " to " + importFile);
             try {
                 StreamUtil.copyFile(downloadFile, importFile);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new RuntimeException(LogUtil.message("Error copying {} to {}: {}",
                         downloadFile, importFile, e.getMessage()), e);
             }
@@ -73,7 +73,7 @@ public class ContentPackZipDownloader {
     private static void ensureDirectoryExists(final Path contentPackDownloadDir) {
         try {
             Files.createDirectories(contentPackDownloadDir);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message("Error ensuring {} exists: {}",
                     contentPackDownloadDir, e.getMessage()), e);
         }
@@ -89,13 +89,13 @@ public class ContentPackZipDownloader {
                 contentPackImportDir.toAbsolutePath());
         try {
             Files.createDirectories(contentPackDownloadDir);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             LOGGER.error("Error ensuring {} exists: {}", contentPackDownloadDir.toAbsolutePath(), e.getMessage(), e);
         }
 
         try {
             Files.createDirectories(contentPackImportDir);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             LOGGER.error("Error ensuring {} exists: {}", contentPackImportDir.toAbsolutePath(), e.getMessage(), e);
         }
 
@@ -139,7 +139,7 @@ public class ContentPackZipDownloader {
         final Path parent = lockFilePath.getParent();
         try {
             Files.createDirectories(lockFilePath.getParent());
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException("Error creating lockFilePath parent dir " + parent);
         }
 
@@ -176,7 +176,7 @@ public class ContentPackZipDownloader {
                     try {
                         // Create the .complete file so other jvms know the git clone is good to use
                         FileUtil.touch(completedFilePath);
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         throw new RuntimeException(LogUtil.message(
                                 "Error creating file {} - {}", completedFilePath, LogUtil.exceptionMessage(e), e));
                     }
@@ -250,7 +250,7 @@ public class ContentPackZipDownloader {
     private static URL getUrl(final ContentPackZip contentPackZip) {
         try {
             return new URL(contentPackZip.getUrl());
-        } catch (MalformedURLException e) {
+        } catch (final MalformedURLException e) {
             throw new RuntimeException("Url " +
                                        contentPackZip.getUrl() +
                                        " for content pack " +
@@ -271,8 +271,8 @@ public class ContentPackZipDownloader {
         return destDir.resolve(filename + ".lock");
     }
 
-    private static boolean isRedirected(Map<String, List<String>> header) {
-        for (String hv : header.get(null)) {
+    private static boolean isRedirected(final Map<String, List<String>> header) {
+        for (final String hv : header.get(null)) {
             if (hv.contains(" 301 ")
                 || hv.contains(" 302 ")) {
                 return true;
@@ -298,7 +298,7 @@ public class ContentPackZipDownloader {
                     // concurrent tests don't overwrite the file.
                     try {
                         Files.move(tempFile, destFilename);
-                    } catch (FileAlreadyExistsException e) {
+                    } catch (final FileAlreadyExistsException e) {
                         // Don't see why we should get here as the methods are synchronized
                         LOGGER.warn("Unable to move {} to {} as file already exists, ignoring the error.",
                                 tempFile.toAbsolutePath().normalize(),

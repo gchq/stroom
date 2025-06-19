@@ -89,7 +89,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
             expectedContent.put(null, "File1\nFile1\n");
 
             final List<Map<String, String>> expectedBoundaries = new ArrayList<>();
-            Map<String, String> map = new HashMap<>();
+            final Map<String, String> map = new HashMap<>();
             map.put(null, "File1\nFile1\n");
             expectedBoundaries.add(map);
 
@@ -169,7 +169,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
             final UniqueId receiptId = uniqueIdGenerator.generateId();
 
             final List<Map<String, String>> expectedBoundaries = new ArrayList<>();
-            Map<String, String> map = new HashMap<>();
+            final Map<String, String> map = new HashMap<>();
             map.put(null, "File1\nFile1\n");
             map.put(StreamTypeNames.CONTEXT, "Context1\nContext1\n");
             map.put(StreamTypeNames.META, LogUtil.message("""

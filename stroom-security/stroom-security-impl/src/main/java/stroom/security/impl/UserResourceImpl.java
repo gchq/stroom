@@ -56,7 +56,7 @@ public class UserResourceImpl implements UserResource {
     }
 
     @Override
-    public User fetch(String userUuid) {
+    public User fetch(final String userUuid) {
         return userServiceProvider.get().loadByUuid(userUuid)
                 .orElseThrow(() -> new NotFoundException("User " + userUuid + " does not exist"));
     }
@@ -209,7 +209,7 @@ public class UserResourceImpl implements UserResource {
                     result,
                     null);
             return result;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             authorisationEventLogProvider.get().removePermission(
                     userIdForLogging.asRef(),
                     groupIdForLogging.asRef().toDisplayString(),

@@ -47,7 +47,7 @@ public class TestSearchExpressionQueryBuilder {
         test(AnalyzerType.KEYWORD);
     }
 
-    private void test(AnalyzerType analyzerType) {
+    private void test(final AnalyzerType analyzerType) {
 //        final DocRef dictionaryRef = dictionaryStore.createDocument("test");
 //        DictionaryDoc dictionaryDoc = dictionaryStore.readDocument(dictionaryRef);
 //        dictionaryDoc.setData("1\n2\n3\n4");

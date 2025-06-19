@@ -17,8 +17,8 @@ public class GenerateS3ClientConfigSchema {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GenerateS3ClientConfigSchema.class);
 
-    public static void main(String[] args) throws IOException {
-        Path schemaFile = getBasePath().resolve("s3config-schema.json");
+    public static void main(final String[] args) throws IOException {
+        final Path schemaFile = getBasePath().resolve("s3config-schema.json");
         generateJsonSchema(schemaFile);
     }
 
@@ -30,7 +30,7 @@ public class GenerateS3ClientConfigSchema {
         // JsonSchemaConfig config = JsonSchemaConfig.create(...);
         // JsonSchemaGenerator generator = new JsonSchemaGenerator(objectMapper, config);
 
-        JsonNode jsonSchema = jsonSchemaGenerator.generateJsonSchema(S3ClientConfig.class);
+        final JsonNode jsonSchema = jsonSchemaGenerator.generateJsonSchema(S3ClientConfig.class);
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
 
         LOGGER.info("Writing schema file to {}", schemaFile.toAbsolutePath());

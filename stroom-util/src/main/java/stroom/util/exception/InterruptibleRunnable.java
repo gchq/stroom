@@ -19,7 +19,7 @@ public interface InterruptibleRunnable {
      * will reset the interrupt flag and wrap the exception with a {@link UncheckedInterruptedException},
      * thus making it unchecked and usable in a lambda.
      */
-    static Runnable unchecked(InterruptibleRunnable runnable) {
+    static Runnable unchecked(final InterruptibleRunnable runnable) {
         return unchecked(runnable, null);
 
     }
@@ -29,12 +29,12 @@ public interface InterruptibleRunnable {
      * will reset the interrupt flag and wrap the exception with a {@link UncheckedInterruptedException},
      * thus making it unchecked and usable in a lambda.
      */
-    static Runnable unchecked(InterruptibleRunnable runnable,
+    static Runnable unchecked(final InterruptibleRunnable runnable,
                               final Supplier<String> debugMsgSupplier) {
         return () -> {
             try {
                 runnable.run();
-            } catch (InterruptedException e) {
+            } catch (final InterruptedException e) {
                 LOGGER.debug(() ->
                                 NullSafe.getOrElse(
                                         debugMsgSupplier,

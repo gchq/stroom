@@ -186,7 +186,7 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
         record.set(FS_VOLUME.DATA, data);
     }
 
-    private FsVolume recordToVolume(Record record) {
+    private FsVolume recordToVolume(final Record record) {
         final FsVolumeState fileSystemVolumeState = new FsVolumeState(
                 record.get(FS_VOLUME_STATE.ID),
                 record.get(FS_VOLUME_STATE.VERSION),
@@ -197,7 +197,7 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
         return recordToVolume(record, fileSystemVolumeState);
     }
 
-    private FsVolume recordToVolume(Record record, final FsVolumeState fileSystemVolumeState) {
+    private FsVolume recordToVolume(final Record record, final FsVolumeState fileSystemVolumeState) {
         final FsVolume fileVolume = new FsVolume();
         fileVolume.setId(record.get(FS_VOLUME.ID));
         fileVolume.setVersion(record.get(FS_VOLUME.VERSION));

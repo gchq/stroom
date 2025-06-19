@@ -62,8 +62,8 @@ public class NumberFormatter implements Formatter {
     private static String asStringWithNoFormatting(final Val val) {
         Objects.requireNonNull(val);
         return switch (val) {
-            case ValDuration valDuration -> String.valueOf(valDuration.toLong());
-            case ValDate valDate -> String.valueOf(valDate.toLong());
+            case final ValDuration valDuration -> String.valueOf(valDuration.toLong());
+            case final ValDate valDate -> String.valueOf(valDate.toLong());
             default -> val.toString();
         };
     }
@@ -78,12 +78,12 @@ public class NumberFormatter implements Formatter {
         final int groupSize = useSeparators
                 ? 3
                 : 0;
-        if (numberFormat instanceof DecimalFormat decimalFormat) {
+        if (numberFormat instanceof final DecimalFormat decimalFormat) {
             decimalFormat.setGroupingSize(groupSize);
         }
 
         final int decimalPlaces = Objects.requireNonNullElse(formatSettings.getDecimalPlaces(), 0);
-        if (numberFormat instanceof DecimalFormat decimalFormat) {
+        if (numberFormat instanceof final DecimalFormat decimalFormat) {
             decimalFormat.setMinimumFractionDigits(decimalPlaces);
             decimalFormat.setMaximumFractionDigits(decimalPlaces);
         }

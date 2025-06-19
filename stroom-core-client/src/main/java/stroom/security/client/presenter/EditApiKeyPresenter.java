@@ -253,7 +253,7 @@ public class EditApiKeyPresenter
         } else if (owner == null) {
             AlertEvent.fireError(this, "An owner must be provided for the API key.", event::reset);
         } else {
-            CreateHashedApiKeyRequest request = new CreateHashedApiKeyRequest(
+            final CreateHashedApiKeyRequest request = new CreateHashedApiKeyRequest(
                     owner,
                     expireTimeEpochMs,
                     getView().getName(),

@@ -107,7 +107,7 @@ class PooledByteBufferImpl implements PooledByteBuffer {
             if (byteBuffer != null && byteBuffer.isDirect()) {
                 try {
                     ByteBufferSupport.unmap(byteBuffer);
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     LOGGER.error("Error releasing direct byte buffer", e);
                 }
             }

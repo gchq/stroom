@@ -143,7 +143,7 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
         final QueryDataSerialiser serialiser = new QueryDataSerialiser();
         final ResultPage<ProcessorFilter> filters = processorFilterService
                 .find(findProcessorFilterCriteria);
-        ProcessorFilter filter = filters.getFirst();
+        final ProcessorFilter filter = filters.getFirst();
         final String json = getJson();
 
         assertThat(serialiser.serialise(filter.getQueryData())).isEqualTo(json);

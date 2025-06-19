@@ -30,7 +30,7 @@ public class RefDataValueConverter {
         try {
             xmlEmitterReceiver.setWriter(stringWriter);
             xmlEmitterReceiver.setPipelineConfiguration(pipelineConfiguration);
-        } catch (XPathException e) {
+        } catch (final XPathException e) {
             throw new RuntimeException(e);
         }
 

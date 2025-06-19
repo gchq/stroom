@@ -99,7 +99,7 @@ public class ParamParseUtil {
         return false;
     }
 
-    private static String getPos(int pos) {
+    private static String getPos(final int pos) {
         if (pos < POSITIONS.length) {
             return POSITIONS[pos];
         }
@@ -110,7 +110,7 @@ public class ParamParseUtil {
         // See if this is a static computation.
         boolean simple = true;
         if (params != null) {
-            for (Param param : params) {
+            for (final Param param : params) {
                 if (!(param instanceof Val)) {
                     simple = false;
                     break;

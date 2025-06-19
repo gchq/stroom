@@ -35,7 +35,7 @@ public class InputEvent extends DomEvent<Handler> {
     }
 
     @Override
-    protected void dispatch(Handler handler) {
+    protected void dispatch(final Handler handler) {
         handler.onInput(this);
     }
 

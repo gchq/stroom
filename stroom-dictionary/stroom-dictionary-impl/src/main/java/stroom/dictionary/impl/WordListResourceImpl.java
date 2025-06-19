@@ -54,7 +54,7 @@ class WordListResourceImpl implements WordListResource {
             @SuppressWarnings("UnnecessaryLocalVariable") final WordList wordList = wordListProviderProvider.get()
                     .getCombinedWordList(dictDocRef, docRefDecoratorProvider.get());
             return wordList;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
             return WordList.EMPTY;
         }

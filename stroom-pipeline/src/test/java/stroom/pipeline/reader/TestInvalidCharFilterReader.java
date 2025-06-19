@@ -14,8 +14,8 @@ public class TestInvalidCharFilterReader {
 
     @Test
     void test() throws IOException {
-        char[] good = {'v', 'a', 'l', 'u', 'e'};
-        char[] bad = {5, 'v', 'a', 'l', 'u', 'e'};
+        final char[] good = {'v', 'a', 'l', 'u', 'e'};
+        final char[] bad = {5, 'v', 'a', 'l', 'u', 'e'};
 
         final Params goodParms = new Params(new String(good), new String(good));
         final Params badParms = new Params(new String(bad), new String(bad));
@@ -33,8 +33,8 @@ public class TestInvalidCharFilterReader {
 
     @Test
     void test2() throws IOException {
-        char[] good = {'v', 'a', 'l', 'u', 'e'};
-        char[] bad = {5, 'v', 'a', 'l', 'u', 'e'};
+        final char[] good = {'v', 'a', 'l', 'u', 'e'};
+        final char[] bad = {5, 'v', 'a', 'l', 'u', 'e'};
 
         final Params goodParms = new Params(new String(good), new String(good));
         final Params badParms = new Params(new String(bad), new String(bad));

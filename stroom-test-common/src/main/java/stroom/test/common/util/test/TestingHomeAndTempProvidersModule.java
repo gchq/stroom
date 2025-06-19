@@ -18,7 +18,7 @@ public class TestingHomeAndTempProvidersModule extends AbstractModule {
         try {
             this.tempDir = Files.createTempDirectory("stroom-temp");
             this.homeDir = tempDir.resolve("home");
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException("Error creating temp dir", e);
         }
     }

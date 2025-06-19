@@ -54,7 +54,7 @@ public class XMLFragmentParser extends AbstractParser {
 
     @Override
     public void parse(final InputSource input) throws IOException, SAXException {
-        SAXParser parser;
+        final SAXParser parser;
         try {
             parser = PARSER_FACTORY.newSAXParser();
         } catch (final ParserConfigurationException e) {
@@ -74,7 +74,7 @@ public class XMLFragmentParser extends AbstractParser {
             // entity resolution to achieve its goal, as the scanning for entities must add a fair
             // amount of overhead. A simpler and more crude approach may be better.
             xmlReader.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, false);
-        } catch (SAXNotRecognizedException | SAXNotSupportedException e) {
+        } catch (final SAXNotRecognizedException | SAXNotSupportedException e) {
             LOGGER.error("Unable to disable FEATURE_SECURE_PROCESSING on the SAX PARSER", e);
         }
 

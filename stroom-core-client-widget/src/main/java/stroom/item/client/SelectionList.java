@@ -93,7 +93,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         };
 
         selectionModel = new MultiSelectionModelImpl<>();
-        SelectionEventManager<T, I> selectionEventManager = new SelectionEventManager<>(cellTable,
+        final SelectionEventManager<T, I> selectionEventManager = new SelectionEventManager<>(cellTable,
                 selectionModel,
                 this);
         cellTable.setSelectionModel(selectionModel, selectionEventManager);

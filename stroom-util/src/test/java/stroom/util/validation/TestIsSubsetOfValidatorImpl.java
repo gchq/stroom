@@ -63,7 +63,7 @@ class TestIsSubsetOfValidatorImpl extends AbstractValidatorTest {
 
         private final List<String> values;
 
-        public PoJo(String... values) {
+        public PoJo(final String... values) {
             this.values = Arrays.asList(values);
         }
 

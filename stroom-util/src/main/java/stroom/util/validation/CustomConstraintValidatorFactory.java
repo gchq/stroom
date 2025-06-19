@@ -69,14 +69,14 @@ public class CustomConstraintValidatorFactory implements ConstraintValidatorFact
      */
     @Override
     public <T extends ConstraintValidator<?, ?>> T getInstance(final Class<T> key) {
-        T validator;
+        final T validator;
 
         // See if guice has the validator class we are after, i.e. one of our custom validators
         if (key.getCanonicalName().startsWith("stroom.")) {
             try {
                 validator = getStroomValidatorInstance(key);
                 LOGGER.debug(() -> LogUtil.message("Obtained class {} from Guice injector", key.getName()));
-            } catch (ConfigurationException e) {
+            } catch (final ConfigurationException e) {
                 throw new RuntimeException(LogUtil.message(
                         "Error getting instance of {} from Guice", key.getCanonicalName(), e));
             }

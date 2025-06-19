@@ -101,7 +101,7 @@ class FsOrphanFileFinder {
                         Integer.MAX_VALUE,
                         new AbstractFileVisitor() {
                             @Override
-                            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                            public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) {
                                 cleanProgress.addDir();
                                 // Remember the dir age.
                                 final Instant instant = Instant.ofEpochMilli(attrs.lastModifiedTime().toMillis());

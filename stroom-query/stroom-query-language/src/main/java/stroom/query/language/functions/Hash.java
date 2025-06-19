@@ -83,7 +83,7 @@ class Hash extends AbstractManyChildFunction {
     static {
         try {
             DEFAULT_ALGORITHM_DIGEST = MessageDigest.getInstance(DEFAULT_ALGORITHM);
-        } catch (NoSuchAlgorithmException e) {
+        } catch (final NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
     }
@@ -130,7 +130,7 @@ class Hash extends AbstractManyChildFunction {
                         : MessageDigest.getInstance(algorithm);
                 generator = StaticValueFunction.of(hash(valueToHash, messageDigest, salt))
                         .createGenerator();
-            } catch (NoSuchAlgorithmException e) {
+            } catch (final NoSuchAlgorithmException e) {
                 throw new ParseException("Second argument of '" + name + "' function '" + algorithm
                                          + "' is not a valid hash algorithm name.", 0);
             }
@@ -139,7 +139,7 @@ class Hash extends AbstractManyChildFunction {
             // generator, so we don't need to get it for each row.
             if (paramCount >= 2) {
                 final Param algoParam = params[1];
-                if (algoParam instanceof Val val) {
+                if (algoParam instanceof final Val val) {
                     final String algo = val.toString();
                     messageDigest = verifyAndGetAlgorithm(algo);
                 }
@@ -150,7 +150,7 @@ class Hash extends AbstractManyChildFunction {
     private static String hash(final String value,
                                final String algorithm,
                                final String salt) throws ParseException {
-        MessageDigest digest = algorithm != null
+        final MessageDigest digest = algorithm != null
                 ? verifyAndGetAlgorithm(algorithm)
                 : DEFAULT_ALGORITHM_DIGEST;
         return hash(value, digest, salt);
@@ -171,7 +171,7 @@ class Hash extends AbstractManyChildFunction {
     private static MessageDigest verifyAndGetAlgorithm(final String algorithm) throws ParseException {
         try {
             return MessageDigest.getInstance(algorithm);
-        } catch (NoSuchAlgorithmException e) {
+        } catch (final NoSuchAlgorithmException e) {
             throw new ParseException(e.getMessage(), 0);
         }
     }

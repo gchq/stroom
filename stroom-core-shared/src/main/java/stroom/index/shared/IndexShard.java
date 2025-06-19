@@ -159,11 +159,11 @@ public class IndexShard {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(final Long id) {
         this.id = id;
     }
 
-    public void setVolume(IndexVolume volume) {
+    public void setVolume(final IndexVolume volume) {
         this.volume = volume;
     }
 

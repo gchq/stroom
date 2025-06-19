@@ -181,13 +181,13 @@ class TestSplitFilter extends StroomUnitTest {
 
         assertThat(actualXmlList).hasSize(expectedXmlList.size()); // first just check the size
         final Iterator<String> actualXmlIter = actualXmlList.iterator();
-        for (String expectedXml : expectedXmlList) {
+        for (final String expectedXml : expectedXmlList) {
             final String actualXml = actualXmlIter.next();
             ComparisonHelper.compareStrings(expectedXml, actualXml, "Expected and actual XML do not match at index: ");
         }
     }
 
-    private List<String> getStrings(final String resourceName, int count) {
+    private List<String> getStrings(final String resourceName, final int count) {
         return IntStream.range(0, count)
                 .mapToObj(x -> String.format(resourceName, x))
                 .map(this::getString)

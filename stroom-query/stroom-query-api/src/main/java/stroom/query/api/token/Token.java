@@ -37,7 +37,7 @@ public class Token extends AbstractToken {
         public Builder() {
         }
 
-        public Builder(Token token) {
+        public Builder(final Token token) {
             this.tokenType = token.tokenType;
             this.chars = token.chars;
             this.start = token.start;

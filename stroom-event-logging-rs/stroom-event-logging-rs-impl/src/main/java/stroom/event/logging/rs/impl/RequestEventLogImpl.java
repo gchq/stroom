@@ -128,41 +128,41 @@ class RequestEventLogImpl implements RequestEventLog {
     }
 
     @Override
-    public void log(RequestInfo info, Object responseEntity) {
+    public void log(final RequestInfo info, final Object responseEntity) {
         log(info, responseEntity, null);
     }
 
     private <T extends EventAction> EventActionDecorator<T> createDecorator(
-            Class<? extends EventActionDecorator> decoratorClass) {
+            final Class<? extends EventActionDecorator> decoratorClass) {
         if (decoratorClass == null) {
             return null;
         }
-        EventActionDecorator decorator = injector.getInstance(decoratorClass);
+        final EventActionDecorator decorator = injector.getInstance(decoratorClass);
         return decorator;
     }
 
-    private void logProcess(Class<? extends EventActionDecorator> decoratorClass,
-                            String typeId,
-                            Object requestEntity,
-                            String descriptionVerb,
-                            Throwable error) {
-        EventActionDecorator<ProcessEventAction> decorator = createDecorator(decoratorClass);
+    private void logProcess(final Class<? extends EventActionDecorator> decoratorClass,
+                            final String typeId,
+                            final Object requestEntity,
+                            final String descriptionVerb,
+                            final Throwable error) {
+        final EventActionDecorator<ProcessEventAction> decorator = createDecorator(decoratorClass);
         documentEventLog.process(requestEntity, typeId, descriptionVerb, error, decorator);
     }
 
-    private void logSearch(Class<? extends EventActionDecorator> decoratorClass,
-                           String typeId,
-                           Object requestEntity,
-                           Object responseEntity,
-                           String descriptionVerb,
-                           Throwable error) {
-        Query query = new Query();
+    private void logSearch(final Class<? extends EventActionDecorator> decoratorClass,
+                           final String typeId,
+                           final Object requestEntity,
+                           final Object responseEntity,
+                           final String descriptionVerb,
+                           final Throwable error) {
+        final Query query = new Query();
 
         if (requestEntity != null) {
             String queryJson;
             try {
                 queryJson = JsonUtil.writeValueAsString(requestEntity, false);
-            } catch (RuntimeException ex) {
+            } catch (final RuntimeException ex) {
                 queryJson = "Invalid";
             }
 
@@ -174,9 +174,9 @@ class RequestEventLogImpl implements RequestEventLog {
         if (responseEntity instanceof PageResponse) {
             pageResponse = (PageResponse) responseEntity;
         } else if (responseEntity instanceof ResultPage) {
-            ResultPage<?> resultPage = (ResultPage) responseEntity;
+            final ResultPage<?> resultPage = (ResultPage) responseEntity;
             pageResponse = resultPage.getPageResponse();
-            Optional<?> firstVal = resultPage.getValues().stream().findFirst();
+            final Optional<?> firstVal = resultPage.getValues().stream().findFirst();
             if (firstVal.isPresent()) {
                 if (firstVal.get().getClass().getSimpleName().endsWith("s")) {
                     listContents = firstVal.get().getClass().getSimpleName() + "es";
@@ -190,7 +190,7 @@ class RequestEventLogImpl implements RequestEventLog {
             }
         }
 
-        EventActionDecorator<SearchEventAction> decorator = createDecorator(decoratorClass);
+        final EventActionDecorator<SearchEventAction> decorator = createDecorator(decoratorClass);
         documentEventLog.search(typeId, query, listContents, pageResponse, descriptionVerb, error, decorator);
     }
 }

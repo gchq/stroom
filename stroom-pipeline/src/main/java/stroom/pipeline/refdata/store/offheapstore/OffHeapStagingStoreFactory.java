@@ -110,7 +110,7 @@ public class OffHeapStagingStoreFactory {
                     .withSubDirectory(subDirName)
                     .addEnvFlag(EnvFlags.MDB_NOTLS)
                     .build();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message("Error building staging LMDB in {}: {}",
                     subDirPath, e.getMessage()), e);
         }

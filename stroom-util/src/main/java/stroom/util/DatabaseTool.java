@@ -53,7 +53,7 @@ public class DatabaseTool extends AbstractCommandLineTool {
     }
 
     protected Connection getConnection() {
-        Connection connection;
+        final Connection connection;
         try {
             Class.forName(jdbcDriverClassName);
         } catch (final ClassNotFoundException ex) {

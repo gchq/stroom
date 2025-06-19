@@ -69,7 +69,7 @@ public class DocContentMatch {
         // Go back to get a sample from the same line.
         boolean sampleAtStartOfLine = sampleStart == 0;
         for (; sampleStart >= min; sampleStart--) {
-            char c = chars[sampleStart];
+            final char c = chars[sampleStart];
             if (c == '\n') {
                 sampleAtStartOfLine = true;
                 break;
@@ -79,7 +79,7 @@ public class DocContentMatch {
 
         // Trim leading whitespace.
         for (; sampleStart < offset; sampleStart++) {
-            char c = chars[sampleStart];
+            final char c = chars[sampleStart];
             if (!Character.isWhitespace(c)) {
                 break;
             }

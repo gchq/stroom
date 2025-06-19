@@ -97,7 +97,7 @@ public class SQLTagValueWhereClauseConverter {
         }
 
         if (oldNode.getFilterOperationMode().equals(FilterOperationMode.NOT)) {
-            String sqlOp = OPERATOR_TO_SQL_TERM_MAP.get(oldNode.getFilterOperationMode());
+            final String sqlOp = OPERATOR_TO_SQL_TERM_MAP.get(oldNode.getFilterOperationMode());
             if (oldNode.getChildren().size() > 1) {
                 // Stroom supports NOT() with multiple children. This is treated as NOT( child1 OR child2 )
                 sql.append(" " + sqlOp + " (");

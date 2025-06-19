@@ -49,7 +49,7 @@ class TestXml11Chars {
     void testRestrictedChars() {
         // Each pair is an inclusive range
         // From https://www.w3.org/TR/xml11/#NT-RestrictedChar
-        int[] restrictedCharRanges = new int[]{
+        final int[] restrictedCharRanges = new int[]{
                 0x1, 0x8,
                 0xb, 0xc,
                 0xe, 0x1f,
@@ -57,8 +57,8 @@ class TestXml11Chars {
                 0x86, 0x9f};
 
         for (int i = 0; i < restrictedCharRanges.length; i += 2) {
-            int fromInc = restrictedCharRanges[i];
-            int toInc = restrictedCharRanges[i + 1];
+            final int fromInc = restrictedCharRanges[i];
+            final int toInc = restrictedCharRanges[i + 1];
 
             for (int j = fromInc; j <= toInc; j++) {
                 final char chr = (char) j;

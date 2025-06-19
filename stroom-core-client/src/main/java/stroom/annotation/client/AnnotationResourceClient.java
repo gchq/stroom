@@ -115,7 +115,7 @@ public class AnnotationResourceClient extends AbstractRestClient {
                 .exec();
     }
 
-    public void getLinkedEvents(DocRef annotationRef,
+    public void getLinkedEvents(final DocRef annotationRef,
                                 final Consumer<List<EventId>> consumer,
                                 final TaskMonitorFactory taskMonitorFactory) {
         restFactory

@@ -18,7 +18,7 @@ class TestRoundRobinCapacitySelector extends AbstractHasCapacitySelectorTest {
         // Do it all twice, so we can check it cycles back round
         for (int i = 0; i < 2; i++) {
             // Should get each path in turn
-            for (NoddyVolume volume : VOLUME_LIST) {
+            for (final NoddyVolume volume : VOLUME_LIST) {
                 noddyVolume = testOnce(roundRobinCapacitySelector, ALL_PATHS);
                 Assertions.assertThat(noddyVolume.getPath())
                         .isEqualTo(volume.getPath());

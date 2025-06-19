@@ -142,7 +142,7 @@ public final class ExpressionOperator extends ExpressionItem {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
@@ -152,7 +152,7 @@ public final class ExpressionOperator extends ExpressionItem {
         if (!super.equals(o)) {
             return false;
         }
-        ExpressionOperator that = (ExpressionOperator) o;
+        final ExpressionOperator that = (ExpressionOperator) o;
         return op == that.op &&
                Objects.equals(children, that.children);
     }

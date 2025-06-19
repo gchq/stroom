@@ -15,7 +15,7 @@ class TestPropertyPathDecorator {
      */
     @Test
     void test() {
-        RootConfig rootConfig = new RootConfig();
+        final RootConfig rootConfig = new RootConfig();
         PropertyPathDecorator.decoratePaths(rootConfig, PropertyPath.fromParts("root"));
 
         Assertions.assertThat(rootConfig.getBasePathStr())

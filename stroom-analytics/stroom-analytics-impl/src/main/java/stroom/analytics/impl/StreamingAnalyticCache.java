@@ -74,7 +74,7 @@ public class StreamingAnalyticCache implements Clearable, EntityEvent.Handler {
                 LOGGER.info(() -> "Loading rule");
                 final AbstractAnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(analyticRuleRef);
 
-                ViewDoc viewDoc;
+                final ViewDoc viewDoc;
 
                 // Try and get view.
                 final String ruleIdentity = RuleUtil.getRuleIdentity(analyticRuleDoc);

@@ -17,7 +17,7 @@ class TestNodeFlagPair {
 
     @TestFactory
     Stream<DynamicTest> testAddFlag() {
-        NodeFlagPair nodeFlagPair = NodeFlagGroups.FILTER_MATCH_PAIR;
+        final NodeFlagPair nodeFlagPair = NodeFlagGroups.FILTER_MATCH_PAIR;
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputType(new TypeLiteral<Tuple2<Boolean, Set<NodeFlag>>>() {
                 })

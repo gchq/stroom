@@ -166,7 +166,7 @@ public class TestConfigProvidersModule {
                             softAssertions.assertThat(System.identityHashCode(guiceObject))
                                     .isEqualTo(System.identityHashCode(config));
 
-                        } catch (IllegalAccessException | InvocationTargetException e) {
+                        } catch (final IllegalAccessException | InvocationTargetException e) {
                             throw new RuntimeException(e);
                         }
                     });
@@ -206,7 +206,7 @@ public class TestConfigProvidersModule {
                                 .assertThatThrownBy(() -> {
                                     try {
                                         method.invoke(configProvidersModule, configMapper);
-                                    } catch (IllegalAccessException | InvocationTargetException e) {
+                                    } catch (final IllegalAccessException | InvocationTargetException e) {
                                         if (e.getCause().getClass().equals(UnsupportedOperationException.class)) {
                                             throw e.getCause();
                                         }

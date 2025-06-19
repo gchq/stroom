@@ -45,7 +45,7 @@ class TestFileAppender extends StroomUnitTest {
     private static final byte[] data = "__data__".getBytes(StandardCharsets.UTF_8);
 
     @Test
-    void testZip(@TempDir Path tempDir) throws IOException {
+    void testZip(@TempDir final Path tempDir) throws IOException {
         final FileAppender provider = createZipAppender(tempDir);
 
         provider.startProcessing();
@@ -82,7 +82,7 @@ class TestFileAppender extends StroomUnitTest {
     }
 
     @Test
-    void testGZip(@TempDir Path tempDir) throws IOException, CompressorException {
+    void testGZip(@TempDir final Path tempDir) throws IOException, CompressorException {
         final FileAppender provider = createGZipAppender(tempDir);
 
         provider.startProcessing();

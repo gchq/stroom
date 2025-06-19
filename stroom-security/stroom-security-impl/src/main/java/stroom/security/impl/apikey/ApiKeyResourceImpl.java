@@ -55,7 +55,7 @@ public class ApiKeyResourceImpl implements ApiKeyResource {
                 throw new RuntimeException("No API Key found with ID " + id);
             }
             return didDelete;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.debug(() -> LogUtil.message("Error deleting API key with ID {}: {}",
                     id, LogUtil.exceptionMessage(e)));
             throw e;

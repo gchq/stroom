@@ -49,7 +49,7 @@ public class ProxyAggregationLoader {
 
         for (int i = 1; i <= 1000000000; i++) {
             final Path testFile1 = proxyDir.resolve(String.format("%08d", i) + ".zip");
-            int feedNo = (i % 4) + 1;
+            final int feedNo = (i % 4) + 1;
             writeTestFile(testFile1, "TEST_FEED_" + feedNo, i + "-data1\n" + i + "-data1\n");
             Thread.sleep(200);
         }

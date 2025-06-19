@@ -237,14 +237,14 @@ class DashboardServiceImpl implements DashboardService {
                         builder.dateTimeSettings(dateTimeSettings.withoutReferenceTime()));
 
                 // Convert our internal model to the model used by the api
-                SearchRequest apiSearchRequest = searchRequestMapper.mapRequest(builder.build());
+                final SearchRequest apiSearchRequest = searchRequestMapper.mapRequest(builder.build());
 
                 if (apiSearchRequest == null) {
                     throw new EntityServiceException("Query could not be mapped to a SearchRequest");
                 }
 
                 // Generate the export file
-                String fileName = getQueryFileName(request);
+                final String fileName = getQueryFileName(request);
 
                 final ResourceKey resourceKey = resourceStore.createTempFile(fileName);
                 final Path tempFile = resourceStore.getTempFile(resourceKey);
@@ -261,7 +261,7 @@ class DashboardServiceImpl implements DashboardService {
         return securityContext.secureResult(AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
             final DashboardSearchRequest searchRequest = request.getSearchRequest();
             final QueryKey queryKey = searchRequest.getQueryKey();
-            ResourceKey resourceKey;
+            final ResourceKey resourceKey;
             long totalRowCount = 0;
 
             try {
@@ -280,7 +280,7 @@ class DashboardServiceImpl implements DashboardService {
                                 ComponentResultRequest::getComponentId,
                                 req -> (TableResultRequest) req));
 
-                SearchRequest mappedRequest = searchRequestMapper.mapRequest(searchRequest);
+                final SearchRequest mappedRequest = searchRequestMapper.mapRequest(searchRequest);
                 final List<ResultRequest> resultRequests = mappedRequest
                         .getResultRequests()
                         .stream()
@@ -416,7 +416,7 @@ class DashboardServiceImpl implements DashboardService {
                             "Dashboard Search",
                             TerminateHandlerFactory.NOOP_FACTORY,
                             taskContext -> {
-                                DashboardSearchResponse searchResponse;
+                                final DashboardSearchResponse searchResponse;
                                 try {
                                     taskContext.info(() -> "Polling for new search results");
                                     httpServletRequestHolder.set(httpServletRequest);
@@ -445,8 +445,8 @@ class DashboardServiceImpl implements DashboardService {
         LOGGER.trace(() -> "processRequest() " + searchRequest);
         DashboardSearchResponse result = null;
 
-        QueryKey queryKey = searchRequest.getQueryKey();
-        Search search = searchRequest.getSearch();
+        final QueryKey queryKey = searchRequest.getQueryKey();
+        final Search search = searchRequest.getSearch();
 
         if (search != null) {
             Exception exception = null;
@@ -547,7 +547,7 @@ class DashboardServiceImpl implements DashboardService {
 //                            ComponentResultRequest::getComponentId,
 //                            req -> (TableResultRequest) req));
 
-            SearchRequest mappedRequest = searchRequestMapper.mapRequest(searchRequest);
+            final SearchRequest mappedRequest = searchRequestMapper.mapRequest(searchRequest);
             final List<ResultRequest> resultRequests = mappedRequest
                     .getResultRequests()
                     .stream()

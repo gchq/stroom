@@ -176,7 +176,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         }
 
         // now create the filter and tracker
-        ProcessorFilter processorFilter = new ProcessorFilter();
+        final ProcessorFilter processorFilter = new ProcessorFilter();
         AuditUtil.stamp(securityContext, processorFilter);
         processorFilter.setReprocess(request.isReprocess());
         processorFilter.setEnabled(request.isEnabled());
@@ -452,19 +452,20 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         // First try to find the associated processors
         final ExpressionOperator processorExpression = ExpressionOperator.builder()
                 .addDocRefTerm(ProcessorFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef).build();
-        ResultPage<Processor> processorResultPage = processorService.find(new ExpressionCriteria(processorExpression));
+        final ResultPage<Processor> processorResultPage = processorService.find(
+                new ExpressionCriteria(processorExpression));
         if (processorResultPage.isEmpty()) {
             return new ResultPage<>(new ArrayList<>());
         }
 
         final ArrayList<ProcessorFilter> filters = new ArrayList<>();
         // Now find all the processor filters
-        for (Processor processor : processorResultPage.getValues()) {
+        for (final Processor processor : processorResultPage.getValues()) {
             final ExpressionOperator filterExpression = ExpressionOperator.builder()
                     .addIdTerm(ProcessorFields.ID,
                             ExpressionTerm.Condition.EQUALS,
                             processor.getId()).build();
-            ResultPage<ProcessorFilter> filterResultPage = find(new ExpressionCriteria(filterExpression));
+            final ResultPage<ProcessorFilter> filterResultPage = find(new ExpressionCriteria(filterExpression));
             filters.addAll(filterResultPage.getValues());
         }
 
@@ -478,11 +479,11 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
 
         if (operator.getChildren() != null) {
             for (final ExpressionItem child : operator.getChildren()) {
-                if (child instanceof ExpressionOperator expressionOperator) {
+                if (child instanceof final ExpressionOperator expressionOperator) {
                     builder.addOperator(decorate(expressionOperator));
 
                 } else if (child instanceof ExpressionTerm expressionTerm) {
-                    DocRef docRef = expressionTerm.getDocRef();
+                    final DocRef docRef = expressionTerm.getDocRef();
 
                     try {
                         if (docRef != null) {

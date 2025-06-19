@@ -179,7 +179,7 @@ public class ReferenceData {
 
                     // Recurse with the nested lookup
                     ensureReferenceDataAvailability(pipelineReferences, nestedIdentifier, result);
-                } catch (ClassCastException e) {
+                } catch (final ClassCastException e) {
                     result.logLazyTemplate(Severity.ERROR,
                             "Value is the wrong type, expected: {}, found: {}",
                             () -> Arrays.asList(StringValue.class.getName(),

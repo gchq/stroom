@@ -183,7 +183,7 @@ public final class FlywayUtil {
                             flywayLocations);
                 }
 
-            } catch (FlywayException e) {
+            } catch (final FlywayException e) {
                 LOGGER.error("{} - Error migrating database: {}", moduleName, e.getMessage(), e);
                 throw e;
             }

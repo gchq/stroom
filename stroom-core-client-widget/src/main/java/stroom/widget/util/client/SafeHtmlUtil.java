@@ -187,84 +187,84 @@ public class SafeHtmlUtil {
         }
     }
 
-    public static SafeHtml from(boolean b) {
+    public static SafeHtml from(final boolean b) {
         return SafeHtmlUtils.fromTrustedString(String.valueOf(b));
     }
 
-    public static SafeHtml from(byte num) {
+    public static SafeHtml from(final byte num) {
         return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
     }
 
-    public static SafeHtml from(char c) {
+    public static SafeHtml from(final char c) {
         return SafeHtmlUtils.fromTrustedString(SafeHtmlUtils.htmlEscape(c));
     }
 
-    public static SafeHtml from(double num) {
+    public static SafeHtml from(final double num) {
         return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
     }
 
-    public static SafeHtml from(float num) {
+    public static SafeHtml from(final float num) {
         return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
     }
 
-    public static SafeHtml from(int num) {
+    public static SafeHtml from(final int num) {
         return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
     }
 
-    public static SafeHtml from(long num) {
+    public static SafeHtml from(final long num) {
         return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
     }
 
-    public static SafeHtml from(Boolean b) {
+    public static SafeHtml from(final Boolean b) {
         if (b == null) {
             return SafeHtmlUtils.EMPTY_SAFE_HTML;
         }
         return SafeHtmlUtils.fromTrustedString(String.valueOf(b));
     }
 
-    public static SafeHtml from(Byte num) {
+    public static SafeHtml from(final Byte num) {
         if (num == null) {
             return SafeHtmlUtils.EMPTY_SAFE_HTML;
         }
         return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
     }
 
-    public static SafeHtml from(Character c) {
+    public static SafeHtml from(final Character c) {
         if (c == null) {
             return SafeHtmlUtils.EMPTY_SAFE_HTML;
         }
         return SafeHtmlUtils.fromTrustedString(SafeHtmlUtils.htmlEscape(c));
     }
 
-    public static SafeHtml from(Double num) {
+    public static SafeHtml from(final Double num) {
         if (num == null) {
             return SafeHtmlUtils.EMPTY_SAFE_HTML;
         }
         return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
     }
 
-    public static SafeHtml from(Float num) {
+    public static SafeHtml from(final Float num) {
         if (num == null) {
             return SafeHtmlUtils.EMPTY_SAFE_HTML;
         }
         return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
     }
 
-    public static SafeHtml from(Integer num) {
+    public static SafeHtml from(final Integer num) {
         if (num == null) {
             return SafeHtmlUtils.EMPTY_SAFE_HTML;
         }
         return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
     }
 
-    public static SafeHtml from(Long num) {
+    public static SafeHtml from(final Long num) {
         if (num == null) {
             return SafeHtmlUtils.EMPTY_SAFE_HTML;
         }
         return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
     }
 
-    public static SafeHtml from(String string) {
+    public static SafeHtml from(final String string) {
         if (string == null) {
             return SafeHtmlUtils.EMPTY_SAFE_HTML;
         }

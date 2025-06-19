@@ -117,7 +117,7 @@ public class RefDataStoreModule extends AbstractModule {
                 try {
                     LOGGER.info("Running job '{}'", JOB_NAME);
                     refDataStoreFactory.purgeOldData();
-                } catch (TaskTerminatedException e) {
+                } catch (final TaskTerminatedException e) {
                     LOGGER.debug("Reference Data Purge terminated", e);
                     LOGGER.warn("Reference Data Purge terminated");
                 }

@@ -49,7 +49,7 @@ public class StringValue implements RefDataValue {
         this.valueHash = stagingValue.getValueHashCode();
     }
 
-    public static StringValue of(String value) {
+    public static StringValue of(final String value) {
         return new StringValue(value);
     }
 

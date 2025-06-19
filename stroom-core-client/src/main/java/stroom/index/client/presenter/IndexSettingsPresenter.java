@@ -139,7 +139,7 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
                             .map(IndexVolumeGroup::getName)
                             .collect(Collectors.toList());
 
-                    SelectionBox<String> listBox = getView().getVolumeGroups();
+                    final SelectionBox<String> listBox = getView().getVolumeGroups();
                     listBox.clear();
                     listBox.addItem("");
                     listBox.addItems(volumeGroupNames);

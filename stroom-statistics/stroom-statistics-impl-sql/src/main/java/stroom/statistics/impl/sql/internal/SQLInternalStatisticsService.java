@@ -42,7 +42,7 @@ class SQLInternalStatisticsService implements InternalStatisticsService {
         // This may be called by pipe processing which runs as a lowly user so record
         // the stat as the proc user.
         securityContext.asProcessingUser(() -> {
-            List<StatisticEvent> statisticEvents = Preconditions.checkNotNull(eventsMap).entrySet().stream()
+            final List<StatisticEvent> statisticEvents = Preconditions.checkNotNull(eventsMap).entrySet().stream()
                     .flatMap(entry ->
                             entry.getValue().stream()
                                     .map(event -> new Tuple2<>(entry.getKey(), event)))

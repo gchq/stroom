@@ -12,7 +12,7 @@ public final class FeedKey {
     private int hash = 0;
     private boolean hashIsZero = false;
 
-    public FeedKey(String feed, String type) {
+    public FeedKey(final String feed, final String type) {
         this.feed = feed;
         this.type = type;
     }
@@ -35,14 +35,14 @@ public final class FeedKey {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(final Object obj) {
         if (obj == this) {
             return true;
         }
         if (obj == null || obj.getClass() != this.getClass()) {
             return false;
         }
-        var that = (FeedKey) obj;
+        final var that = (FeedKey) obj;
         return Objects.equals(this.feed, that.feed) &&
                Objects.equals(this.type, that.type);
     }

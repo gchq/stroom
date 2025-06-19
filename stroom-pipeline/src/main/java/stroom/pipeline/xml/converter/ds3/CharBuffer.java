@@ -59,11 +59,11 @@ public class CharBuffer implements Buffer {
 
     @Override
     public Buffer trimStart() {
-        int initialStart = offset;
-        int initialEnd = offset + length - 1;
+        final int initialStart = offset;
+        final int initialEnd = offset + length - 1;
 
         int start = initialStart;
-        int end = initialEnd;
+        final int end = initialEnd;
 
         while (start <= end && buffer[start] <= SPACE) {
             start++;
@@ -78,10 +78,10 @@ public class CharBuffer implements Buffer {
 
     @Override
     public Buffer trimEnd() {
-        int initialStart = offset;
-        int initialEnd = offset + length - 1;
+        final int initialStart = offset;
+        final int initialEnd = offset + length - 1;
 
-        int start = initialStart;
+        final int start = initialStart;
         int end = initialEnd;
 
         while (end >= start && buffer[end] <= SPACE) {
@@ -97,8 +97,8 @@ public class CharBuffer implements Buffer {
 
     @Override
     public Buffer trim() {
-        int initialStart = offset;
-        int initialEnd = offset + length - 1;
+        final int initialStart = offset;
+        final int initialEnd = offset + length - 1;
 
         int start = initialStart;
         int end = initialEnd;
@@ -129,7 +129,7 @@ public class CharBuffer implements Buffer {
         }
 
         int start = offset;
-        int end = offset + length - 1;
+        final int end = offset + length - 1;
 
         while (start <= end && buffer[start] <= SPACE) {
             start++;
@@ -182,13 +182,13 @@ public class CharBuffer implements Buffer {
     }
 
     @Override
-    public void move(int increment) {
+    public void move(final int increment) {
         offset += increment;
         length -= increment;
     }
 
     @Override
-    public void remove(int start, int end) {
+    public void remove(final int start, final int end) {
         final int removeLength = end - start;
         assert removeLength > 0;
         final char[] chars = new char[length - removeLength];
@@ -203,8 +203,8 @@ public class CharBuffer implements Buffer {
     public boolean equals(final Object other) {
         if (other instanceof CharBuffer) {
             final CharBuffer buffer = (CharBuffer) other;
-            int len1 = length;
-            int len2 = buffer.length;
+            final int len1 = length;
+            final int len2 = buffer.length;
 
             if (len1 != len2) {
                 return false;

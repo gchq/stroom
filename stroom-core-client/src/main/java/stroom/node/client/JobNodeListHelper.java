@@ -139,7 +139,7 @@ public class JobNodeListHelper {
             final TaskMonitorFactory taskMonitorFactory,
             final Runnable onSuccessHandler) {
 
-        return (int rowIndex, JobNodeAndInfo jobNodeAndInfo, TickBoxState value) -> {
+        return (final int rowIndex, final JobNodeAndInfo jobNodeAndInfo, final TickBoxState value) -> {
             if (jobNodeAndInfo != null) {
                 final boolean isEnabled = NullSafe.isTrue(value.toBoolean());
                 jobNodeAndInfo.getJobNode().setEnabled(isEnabled);
@@ -240,7 +240,7 @@ public class JobNodeListHelper {
         }
     }
 
-    public String getCurrentTaskCountAsStr(JobNodeAndInfo jobNodeAndInfo) {
+    public String getCurrentTaskCountAsStr(final JobNodeAndInfo jobNodeAndInfo) {
         return NullSafe.getOrElse(
                 jobNodeAndInfo,
                 JobNodeAndInfo::getJobNodeInfo,
@@ -248,7 +248,7 @@ public class JobNodeListHelper {
                 "?");
     }
 
-    public String getLastExecutedTimeAsStr(JobNodeAndInfo jobNodeAndInfo) {
+    public String getLastExecutedTimeAsStr(final JobNodeAndInfo jobNodeAndInfo) {
         if (NullSafe.test(jobNodeAndInfo, jobNode2 ->
                 jobNode2.getJobType() == JobType.CRON
                 || jobNode2.getJobType() == JobType.FREQUENCY)) {
@@ -262,7 +262,7 @@ public class JobNodeListHelper {
         }
     }
 
-    public String getNextScheduledTimeAsStr(JobNodeAndInfo jobNodeAndInfo) {
+    public String getNextScheduledTimeAsStr(final JobNodeAndInfo jobNodeAndInfo) {
         final JobType jobType = NullSafe.get(jobNodeAndInfo, JobNodeAndInfo::getJobType);
         final boolean isJobNodeEnabled = isJobNodeEnabled(jobNodeAndInfo);
 
@@ -308,7 +308,7 @@ public class JobNodeListHelper {
         return null;
     }
 
-    public static String buildJobTypeStr(JobNodeAndInfo jobNodeAndInfo) {
+    public static String buildJobTypeStr(final JobNodeAndInfo jobNodeAndInfo) {
         //noinspection EnhancedSwitchMigration // not in GWT
         switch (jobNodeAndInfo.getJobType()) {
             case CRON:
@@ -437,7 +437,7 @@ public class JobNodeListHelper {
     public void addNodeStateColumn(final MyDataGrid<JobNodeAndInfo> dataGrid) {
         dataGrid.addColumn(
                 DataGridUtil.textColumnBuilder(
-                                (JobNodeAndInfo jobNodeAndInfo) -> {
+                                (final JobNodeAndInfo jobNodeAndInfo) -> {
                                     final String nodeName = NullSafe.get(
                                             jobNodeAndInfo, JobNodeAndInfo::getNodeName);
                                     return isNodeEnabled(nodeName)

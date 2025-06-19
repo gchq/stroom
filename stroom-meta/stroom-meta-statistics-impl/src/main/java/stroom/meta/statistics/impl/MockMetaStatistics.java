@@ -23,6 +23,6 @@ import java.util.Map;
 class MockMetaStatistics implements MetaStatistics {
 
     @Override
-    public void recordStatistics(Map<String, String> metaData) {
+    public void recordStatistics(final Map<String, String> metaData) {
     }
 }

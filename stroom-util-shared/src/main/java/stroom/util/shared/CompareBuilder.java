@@ -24,7 +24,7 @@ public class CompareBuilder {
         comparison = 0;
     }
 
-    public CompareBuilder appendSuper(int superCompareTo) {
+    public CompareBuilder appendSuper(final int superCompareTo) {
         if (comparison != 0) {
             return this;
         }
@@ -32,7 +32,7 @@ public class CompareBuilder {
         return this;
     }
 
-    public CompareBuilder append(long lhs, long rhs) {
+    public CompareBuilder append(final long lhs, final long rhs) {
         if (comparison != 0) {
             return this;
         }
@@ -40,7 +40,7 @@ public class CompareBuilder {
         return this;
     }
 
-    public CompareBuilder append(int lhs, int rhs) {
+    public CompareBuilder append(final int lhs, final int rhs) {
         if (comparison != 0) {
             return this;
         }
@@ -48,7 +48,7 @@ public class CompareBuilder {
         return this;
     }
 
-    public CompareBuilder append(short lhs, short rhs) {
+    public CompareBuilder append(final short lhs, final short rhs) {
         if (comparison != 0) {
             return this;
         }
@@ -56,7 +56,7 @@ public class CompareBuilder {
         return this;
     }
 
-    public CompareBuilder append(char lhs, char rhs) {
+    public CompareBuilder append(final char lhs, final char rhs) {
         if (comparison != 0) {
             return this;
         }
@@ -64,7 +64,7 @@ public class CompareBuilder {
         return this;
     }
 
-    public CompareBuilder append(byte lhs, byte rhs) {
+    public CompareBuilder append(final byte lhs, final byte rhs) {
         if (comparison != 0) {
             return this;
         }
@@ -72,7 +72,7 @@ public class CompareBuilder {
         return this;
     }
 
-    public CompareBuilder append(double lhs, double rhs) {
+    public CompareBuilder append(final double lhs, final double rhs) {
         if (comparison != 0) {
             return this;
         }
@@ -80,7 +80,7 @@ public class CompareBuilder {
         return this;
     }
 
-    public CompareBuilder append(float lhs, float rhs) {
+    public CompareBuilder append(final float lhs, final float rhs) {
         if (comparison != 0) {
             return this;
         }
@@ -89,7 +89,7 @@ public class CompareBuilder {
     }
 
     @SuppressWarnings("unchecked")
-    public <T> CompareBuilder append(T lhs, T rhs) {
+    public <T> CompareBuilder append(final T lhs, final T rhs) {
         if (comparison != 0) {
             return this;
         }

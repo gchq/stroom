@@ -93,7 +93,7 @@ public class CreateApiKeyRequest {
         return tokenType;
     }
 
-    public void setTokenType(String tokenType) {
+    public void setTokenType(final String tokenType) {
         this.tokenType = tokenType;
     }
 
@@ -101,7 +101,7 @@ public class CreateApiKeyRequest {
         return enabled;
     }
 
-    public void setEnabled(boolean enabled) {
+    public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
     }
 
@@ -110,7 +110,7 @@ public class CreateApiKeyRequest {
         return comments;
     }
 
-    public void setComments(@Nullable String comments) {
+    public void setComments(@Nullable final String comments) {
         this.comments = comments;
     }
 

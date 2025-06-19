@@ -38,7 +38,7 @@ abstract class Calculator {
             }
             return ValDouble.create(op(cur, val));
 
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             return ValErr.create(e.getMessage());
         }
     }

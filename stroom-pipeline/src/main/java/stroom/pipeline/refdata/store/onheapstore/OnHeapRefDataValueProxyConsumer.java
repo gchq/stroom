@@ -86,7 +86,7 @@ public class OnHeapRefDataValueProxyConsumer
                         // Do nothing
                     } else if (refDataValue.getTypeId() == FastInfosetValue.TYPE_ID) {
 
-                        ByteBuffer valueByteBuffer = ((FastInfosetValue) refDataValue).getByteBuffer();
+                        final ByteBuffer valueByteBuffer = ((FastInfosetValue) refDataValue).getByteBuffer();
                         LOGGER.trace(() -> LogUtil.message(
                                 "Consuming {}", ByteBufferUtils.byteBufferInfo(valueByteBuffer)));
 

@@ -5,7 +5,7 @@ import java.util.Objects;
 public class PasswordValidator {
 
     public static void validateLength(final String newPassword,
-                                      int minimumLength) {
+                                      final int minimumLength) {
         if (newPassword == null) {
             throw new RuntimeException("Password is null");
         }

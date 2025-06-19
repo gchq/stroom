@@ -74,7 +74,7 @@ public class PrioritisedFilters implements Clearable {
             filters.sort(ProcessorFilter.HIGHEST_PRIORITY_FIRST_COMPARATOR);
 
             // Try and ensure we have pipeline names for each filter
-            for (ProcessorFilter filter : NullSafe.list(filters)) {
+            for (final ProcessorFilter filter : NullSafe.list(filters)) {
                 try {
                     if (filter != null
                         && filter.getPipelineUuid() != null

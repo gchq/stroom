@@ -20,7 +20,7 @@ class TestLmdbUtils {
 
     @Test
     void copyDirectBuffer() {
-        ByteBuffer sourceBuffer = ByteBuffer.allocateDirect(50);
+        final ByteBuffer sourceBuffer = ByteBuffer.allocateDirect(50);
 
 
         final RefDataProcessingInfo refDataProcessingInfo = new RefDataProcessingInfo(
@@ -35,7 +35,7 @@ class TestLmdbUtils {
 
         LOGGER.debug(ByteBufferUtils.byteBufferInfo(sourceBuffer));
 
-        ByteBuffer outputBuffer = ByteBufferUtils.copyToDirectBuffer(sourceBuffer);
+        final ByteBuffer outputBuffer = ByteBufferUtils.copyToDirectBuffer(sourceBuffer);
 
         LOGGER.debug(ByteBufferUtils.byteBufferInfo(outputBuffer));
 

@@ -24,7 +24,7 @@ public class TestProxyGuiceBindings extends AbstractApplicationTest {
 
     @Test
     public void testAllGuiceBinds() {
-        Injector injector = ((MyApp) getDropwizard().getApplication()).getInjector();
+        final Injector injector = ((MyApp) getDropwizard().getApplication()).getInjector();
 
         // Test all the constructors to make sure guice can bind them
         // As proxy shares classes with stroom we have no way of knowing which shared classes are used
@@ -39,7 +39,7 @@ public class TestProxyGuiceBindings extends AbstractApplicationTest {
         LOGGER.info("Finding all classes in {} with {} constructors",
                 packagePrefix, annotationClass.getCanonicalName());
 
-        ScanResult scanResult = new ClassGraph()
+        final ScanResult scanResult = new ClassGraph()
                 .acceptPackages(packagePrefix)
                 .enableClassInfo()
                 .enableMethodInfo()
@@ -48,11 +48,11 @@ public class TestProxyGuiceBindings extends AbstractApplicationTest {
 
         scanResult.getClassesWithMethodAnnotation(annotationClass.getName())
                 .forEach(classInfo -> {
-                    Class<?> clazz = classInfo.loadClass();
+                    final Class<?> clazz = classInfo.loadClass();
                     LOGGER.info("  Testing injection for " + clazz.getCanonicalName());
                     try {
                         actionPerClass.accept(clazz);
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         // TODO At the moment we can only log an error and not fail the test as not all
                         //   visible classes are meant to be injectable. Leaving this test here in  case
                         //   this changes.

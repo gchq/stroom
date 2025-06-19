@@ -83,7 +83,7 @@ public final class ValString implements Val {
 
     @Override
     public Integer toInteger() {
-        Long l = toLong();
+        final Long l = toLong();
         if (l != null) {
             return l.intValue();
         }
@@ -105,7 +105,7 @@ public final class ValString implements Val {
             try {
                 // See if it is a date string
                 longValue = DateUtil.parseNormalDateTimeString(trimmedVal);
-            } catch (RuntimeException e2) {
+            } catch (final RuntimeException e2) {
                 try {
                     // See if it is a duration string
                     longValue = ValDurationUtil.parseToMilliseconds(trimmedVal);
@@ -119,7 +119,7 @@ public final class ValString implements Val {
 
     @Override
     public Float toFloat() {
-        Double d = toDouble();
+        final Double d = toDouble();
         if (d != null) {
             return d.floatValue();
         }
@@ -140,7 +140,7 @@ public final class ValString implements Val {
             try {
                 // If parsable as a date then get the millis value
                 doubleValue = (double) DateUtil.parseNormalDateTimeString(trimmedVal);
-            } catch (RuntimeException e2) {
+            } catch (final RuntimeException e2) {
                 try {
                     // If parsable as a duration then get the millis value
                     doubleValue = (double) ValDurationUtil.parseToMilliseconds(trimmedVal);

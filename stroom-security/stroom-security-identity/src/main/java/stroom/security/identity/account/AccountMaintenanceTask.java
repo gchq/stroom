@@ -38,7 +38,8 @@ class AccountMaintenanceTask {
 
         final StroomDuration neverUsedAgeThreshold = passwordPolicyConfigProvider.get()
                 .getNeverUsedAccountDeactivationThreshold();
-        int numberOfInactiveNewAccounts = accountDao.deactivateNewInactiveUsers(neverUsedAgeThreshold.getDuration());
+        final int numberOfInactiveNewAccounts = accountDao.deactivateNewInactiveUsers(
+                neverUsedAgeThreshold.getDuration());
         LOGGER.info("Deactivated {} new user account(s) that have been inactive for {} or more.",
                 numberOfInactiveNewAccounts, neverUsedAgeThreshold);
         taskContext.info(() -> LogUtil.message(
@@ -48,7 +49,7 @@ class AccountMaintenanceTask {
 
         final StroomDuration unusedAgeThreshold = passwordPolicyConfigProvider.get()
                 .getUnusedAccountDeactivationThreshold();
-        int numberOfInactiveAccounts = accountDao.deactivateInactiveUsers(unusedAgeThreshold.getDuration());
+        final int numberOfInactiveAccounts = accountDao.deactivateInactiveUsers(unusedAgeThreshold.getDuration());
         LOGGER.info("Deactivated {} user account(s) that have been inactive for {} or more.",
                 numberOfInactiveAccounts, unusedAgeThreshold);
         taskContext.info(() -> LogUtil.message(

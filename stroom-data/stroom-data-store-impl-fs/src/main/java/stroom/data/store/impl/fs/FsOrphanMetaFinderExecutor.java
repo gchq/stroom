@@ -93,7 +93,7 @@ class FsOrphanMetaFinderExecutor {
                         progress.getMetaCount(),
                         progress.getCacheMissCount()));
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             ORPHAN_META_LOGGER.info("--- {} task failed at {} due to: {} ---",
                     TASK_NAME,
                     DateUtil.createNormalDateTimeString(),

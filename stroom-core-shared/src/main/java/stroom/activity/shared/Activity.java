@@ -76,7 +76,7 @@ public class Activity implements HasAuditInfo, HasIntegerId {
                     @JsonProperty("updateTimeMs") final Long updateTimeMs,
                     @JsonProperty("updateUser") final String updateUser,
                     @JsonProperty("userRef") final UserRef userRef,
-                    @JsonProperty("details") ActivityDetails details) {
+                    @JsonProperty("details") final ActivityDetails details) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;

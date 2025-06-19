@@ -421,7 +421,7 @@ public class LmdbRowKeyFactoryFactory {
         public ByteBuffer create(final int depth, final ByteBuffer parentRowKey, final StoredValues storedValues) {
             final long groupHash = storedValueKeyFactory.getGroupHash(depth, storedValues);
 
-            ByteBuffer byteBuffer;
+            final ByteBuffer byteBuffer;
 
             // If this is a grouping key then we need to add the depth first.
             if (depth == 0) {
@@ -591,7 +591,7 @@ public class LmdbRowKeyFactoryFactory {
             final long timeMs = storedValueKeyFactory.getTimeMs(storedValues);
             final long groupHash = storedValueKeyFactory.getGroupHash(depth, storedValues);
 
-            ByteBuffer byteBuffer;
+            final ByteBuffer byteBuffer;
 
             // If this is a grouping key then we need to add the depth first.
             if (depth == 0) {
@@ -703,7 +703,7 @@ public class LmdbRowKeyFactoryFactory {
                 createChildKeyRange(parentKey, consumer);
 
             } else {
-                KeyRange<ByteBuffer> keyRange;
+                final KeyRange<ByteBuffer> keyRange;
 
                 // If this is a grouping key then we need to add the depth first.
                 final int depth = parentKey.getDepth();

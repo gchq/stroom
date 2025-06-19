@@ -103,7 +103,7 @@ public class ContentResourceImpl implements ContentResource {
             } else {
                 return responseSupplier.get();
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error(LogUtil.message("Error importing content with key: {}, name: {}, error: {}",
                     NullSafe.get(request.getResourceKey(), ResourceKey::getKey),
                     NullSafe.get(request.getResourceKey(), ResourceKey::getName),

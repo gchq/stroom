@@ -55,7 +55,7 @@ public class QuickFilterDialogViewImpl extends ViewWithUiHandlers<QuickFilterUiH
     }
 
     @Override
-    public void setDataView(View view) {
+    public void setDataView(final View view) {
         data.setWidget(view.asWidget());
     }
 

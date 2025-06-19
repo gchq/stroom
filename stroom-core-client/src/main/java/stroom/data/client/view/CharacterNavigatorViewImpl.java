@@ -206,7 +206,7 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
     private String getLongValueForLabel(final Count<Long> value, final int increment) {
         // Increment allows for switching from zero to one based
         if (value != null && value.getCount() != null) {
-            String str = numberFormatter.format(value.getCount() + increment);
+            final String str = numberFormatter.format(value.getCount() + increment);
             if (value.isExact()) {
                 return str;
             } else {

@@ -42,8 +42,8 @@ public class FlywayHelper {
     @Parameter(names = {"--password", "-p"}, password = true)
     String password;
 
-    public static void main(String... argv) {
-        FlywayHelper flywayHelper = new FlywayHelper();
+    public static void main(final String... argv) {
+        final FlywayHelper flywayHelper = new FlywayHelper();
         JCommander.newBuilder()
                 .addObject(flywayHelper)
                 .build()
@@ -78,8 +78,8 @@ public class FlywayHelper {
         }
     }
 
-    private void printInfo(MigrationInfo[] migrationInfo) {
-        List<Line> lines = new ArrayList<>();
+    private void printInfo(final MigrationInfo[] migrationInfo) {
+        final List<Line> lines = new ArrayList<>();
         Arrays.asList(migrationInfo).forEach(info -> {
             lines.add(new Line(
                     info.getVersion().getVersion(),
@@ -97,7 +97,7 @@ public class FlywayHelper {
         System.out.printf(lineFormat, "Version", "Description", "Type", "Installed On", "State");
         System.out.println();
         System.out.println(br);
-        for (Line line : lines) {
+        for (final Line line : lines) {
             System.out.format(
                     lineFormat,
                     line.version, line.description, line.type, line.installedOn, line.state);
@@ -105,6 +105,10 @@ public class FlywayHelper {
         }
         System.out.println(br);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private class Line {
 
@@ -114,7 +118,12 @@ public class FlywayHelper {
         private final String installedOn;
         String state;
 
-        Line(String version, String description, String type, String installedOn, String state) {
+        Line(final String version,
+             final String description,
+             final String type,
+             final String installedOn,
+             final String state) {
+
             this.version = version;
             this.description = description;
             this.type = type;

@@ -66,7 +66,7 @@ public class Xml10Chars implements XmlChars {
         //              [#xE000-#xFFFD] | [#x10000-#x10FFFF]
         //
 
-        int[] charRange = {
+        final int[] charRange = {
                 0x0009, 0x000A, 0x000D, 0x000D, 0x0020, 0xD7FF, 0xE000, 0xFFFD,
         };
 
@@ -74,7 +74,7 @@ public class Xml10Chars implements XmlChars {
         // [3] S ::= (#x20 | #x9 | #xD | #xA)+
         //
 
-        int[] spaceChar = {
+        final int[] spaceChar = {
                 0x0020, 0x0009, 0x000D, 0x000A,
         };
 
@@ -83,7 +83,7 @@ public class Xml10Chars implements XmlChars {
         //                  CombiningChar | Extender
         //
 
-        int[] nameChar = {
+        final int[] nameChar = {
                 0x002D, 0x002E, // '-' and '.'
         };
 
@@ -91,7 +91,7 @@ public class Xml10Chars implements XmlChars {
         // [5] Name ::= (Letter | '_' | ':') (NameChar)*
         //
 
-        int[] nameStartChar = {
+        final int[] nameStartChar = {
                 0x003A, 0x005F, // ':' and '_'
         };
 
@@ -99,12 +99,12 @@ public class Xml10Chars implements XmlChars {
         // [13] PubidChar ::= #x20 | 0xD | 0xA | [a-zA-Z0-9] | [-'()+,./:=?;!*#@$_%]
         //
 
-        int[] pubidChar = {
+        final int[] pubidChar = {
                 0x000A, 0x000D, 0x0020, 0x0021, 0x0023, 0x0024, 0x0025, 0x003D,
                 0x005F
         };
 
-        int[] pubidRange = {
+        final int[] pubidRange = {
                 0x0027, 0x003B, 0x003F, 0x005A, 0x0061, 0x007A
         };
 
@@ -112,7 +112,7 @@ public class Xml10Chars implements XmlChars {
         // [84] Letter ::= BaseChar | Ideographic
         //
 
-        int[] letterRange = {
+        final int[] letterRange = {
                 // BaseChar
                 0x0041, 0x005A, 0x0061, 0x007A, 0x00C0, 0x00D6, 0x00D8, 0x00F6,
                 0x00F8, 0x0131, 0x0134, 0x013E, 0x0141, 0x0148, 0x014A, 0x017E,
@@ -155,7 +155,7 @@ public class Xml10Chars implements XmlChars {
                 // Ideographic
                 0x3021, 0x3029, 0x4E00, 0x9FA5,
         };
-        int[] letterChar = {
+        final int[] letterChar = {
                 // BaseChar
                 0x0386, 0x038C, 0x03DA, 0x03DC, 0x03DE, 0x03E0, 0x0559, 0x06D5,
                 0x093D, 0x09B2, 0x0A5E, 0x0A8D, 0x0ABD, 0x0AE0, 0x0B3D, 0x0B9C,
@@ -172,7 +172,7 @@ public class Xml10Chars implements XmlChars {
         // [87] CombiningChar ::= ...
         //
 
-        int[] combiningCharRange = {
+        final int[] combiningCharRange = {
                 0x0300, 0x0345, 0x0360, 0x0361, 0x0483, 0x0486, 0x0591, 0x05A1,
                 0x05A3, 0x05B9, 0x05BB, 0x05BD, 0x05C1, 0x05C2, 0x064B, 0x0652,
                 0x06D6, 0x06DC, 0x06DD, 0x06DF, 0x06E0, 0x06E4, 0x06E7, 0x06E8,
@@ -192,7 +192,7 @@ public class Xml10Chars implements XmlChars {
                 0x20D0, 0x20DC, 0x302A, 0x302F,
         };
 
-        int[] combiningCharChar = {
+        final int[] combiningCharChar = {
                 0x05BF, 0x05C4, 0x0670, 0x093C, 0x094D, 0x09BC, 0x09BE, 0x09BF,
                 0x09D7, 0x0A02, 0x0A3C, 0x0A3E, 0x0A3F, 0x0ABC, 0x0B3C, 0x0BD7,
                 0x0D57, 0x0E31, 0x0EB1, 0x0F35, 0x0F37, 0x0F39, 0x0F3E, 0x0F3F,
@@ -203,7 +203,7 @@ public class Xml10Chars implements XmlChars {
         // [88] Digit ::= ...
         //
 
-        int[] digitRange = {
+        final int[] digitRange = {
                 0x0030, 0x0039, 0x0660, 0x0669, 0x06F0, 0x06F9, 0x0966, 0x096F,
                 0x09E6, 0x09EF, 0x0A66, 0x0A6F, 0x0AE6, 0x0AEF, 0x0B66, 0x0B6F,
                 0x0BE7, 0x0BEF, 0x0C66, 0x0C6F, 0x0CE6, 0x0CEF, 0x0D66, 0x0D6F,
@@ -214,11 +214,11 @@ public class Xml10Chars implements XmlChars {
         // [89] Extender ::= ...
         //
 
-        int[] extenderRange = {
+        final int[] extenderRange = {
                 0x3031, 0x3035, 0x309D, 0x309E, 0x30FC, 0x30FE,
         };
 
-        int[] extenderChar = {
+        final int[] extenderChar = {
                 0x00B7, 0x02D0, 0x02D1, 0x0387, 0x0640, 0x0E46, 0x0EC6, 0x3005,
         };
 
@@ -226,7 +226,7 @@ public class Xml10Chars implements XmlChars {
         // SpecialChar ::= '<', '&', '\n', '\r', ']'
         //
 
-        int[] specialChar = {
+        final int[] specialChar = {
                 '<', '&', '\n', '\r', ']',
         };
 

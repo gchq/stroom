@@ -190,11 +190,11 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
         return selectionModel;
     }
 
-    private static boolean isNodeEnabled(NodeStatusResult nodeStatusResult) {
+    private static boolean isNodeEnabled(final NodeStatusResult nodeStatusResult) {
         return NullSafe.isTrue(nodeStatusResult.getNode(), Node::isEnabled);
     }
 
-    private static Number extractNodePriority(NodeStatusResult result) {
+    private static Number extractNodePriority(final NodeStatusResult result) {
         return NullSafe.get(
                 result,
                 NodeStatusResult::getNode,
@@ -202,7 +202,7 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
                 EditableInteger::new);
     }
 
-    private String extractLastBootTimeAsStr(NodeStatusResult result) {
+    private String extractLastBootTimeAsStr(final NodeStatusResult result) {
         return NullSafe.get(
                 result,
                 NodeStatusResult::getNode,
@@ -439,7 +439,7 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
         final Attribute titleAttr = Attribute.title(title);
         final Attribute outerClass = Attribute.className("nodePingBar-outer");
 
-        HtmlBuilder htmlBuilder = new HtmlBuilder();
+        final HtmlBuilder htmlBuilder = new HtmlBuilder();
         if (isErrorMsg) {
             // A text div covering the whole of the cell
             // e.g. ' Unable to connect           '

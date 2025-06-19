@@ -35,12 +35,12 @@ public class AceCompletionSnippetSegmentTabstopItem implements AceCompletionSnip
      *
      * @param tabstopText The literal text that makes up part of the tab stop. This does not need to be escaped, escaping will be handled automatically.
      */
-    public AceCompletionSnippetSegmentTabstopItem(String tabstopText) {
+    public AceCompletionSnippetSegmentTabstopItem(final String tabstopText) {
         this.tabstopText = tabstopText;
     }
 
     @Override
-    public String getPreparedText(int tabstopNumber) {
+    public String getPreparedText(final int tabstopNumber) {
 
         // Special characters need escaping so that we can support tokens, see demo to see how this works in practice
 

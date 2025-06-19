@@ -121,7 +121,7 @@ public final class ClientDateUtil {
         Long millis = null;
         if (string != null && string.trim().length() > 0) {
             try {
-                double res = MomentJs.nativeFromISOString(string.trim());
+                final double res = MomentJs.nativeFromISOString(string.trim());
                 if (res > 0) {
                     millis = (long) res;
                 }
@@ -145,7 +145,7 @@ public final class ClientDateUtil {
                 final StringBuilder scratchBuilder = new StringBuilder();
                 char lastChar = Character.MIN_VALUE;
                 for (int i = 0; i < javaFormatStr.length(); i++) {
-                    char currChar = javaFormatStr.charAt(i);
+                    final char currChar = javaFormatStr.charAt(i);
                     parseChar(outputBuilder, scratchBuilder, lastChar, currChar);
                     lastChar = currChar;
                 }
@@ -154,7 +154,7 @@ public final class ClientDateUtil {
                 final String jsDateFormatStr = outputBuilder.toString();
 
                 return Optional.of(jsDateFormatStr);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 GWT.log("Unable to convert '" + javaFormatStr + "' due to: " + e.getMessage());
                 return Optional.empty();
             }
@@ -167,7 +167,7 @@ public final class ClientDateUtil {
                                   final StringBuilder scratchBuilder,
                                   final char lastChar,
                                   final char currChar) {
-        boolean isDifferentChar = lastChar != Character.MIN_VALUE && lastChar != currChar;
+        final boolean isDifferentChar = lastChar != Character.MIN_VALUE && lastChar != currChar;
 
         if (isDifferentChar) {
             final String scratch = scratchBuilder.toString();
@@ -206,7 +206,7 @@ public final class ClientDateUtil {
                 && format != null
                 && format.trim().length() > 0) {
             try {
-                double res = MomentJs.nativeFromCustomFormatString(string.trim(), format.trim());
+                final double res = MomentJs.nativeFromCustomFormatString(string.trim(), format.trim());
                 if (res > 0) {
                     millis = (long) res;
                 }

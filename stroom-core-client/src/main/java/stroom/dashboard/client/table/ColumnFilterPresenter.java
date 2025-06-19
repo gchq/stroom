@@ -82,7 +82,7 @@ public class ColumnFilterPresenter extends MyPresenterWidget<ColumnFilterView> {
     public ColumnFilter getColumnFilter() {
         ColumnFilter filter = null;
 
-        String expression = editorPresenter.getText().trim();
+        final String expression = editorPresenter.getText().trim();
         if (expression.length() > 0) {
             filter = new ColumnFilter(expression);
         }

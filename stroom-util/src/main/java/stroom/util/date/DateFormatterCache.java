@@ -36,7 +36,7 @@ public final class DateFormatterCache {
                     .75F,
                     true) {
                 // This method is called just after a new entry has been added
-                public boolean removeEldestEntry(Map.Entry eldest) {
+                public boolean removeEldestEntry(final Map.Entry eldest) {
                     if (size() > MAX_ENTRIES) {
                         if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug("Evicting old formatter: " + eldest.getKey());
@@ -53,7 +53,7 @@ public final class DateFormatterCache {
                     .75F,
                     true) {
                 // This method is called just after a new entry has been added
-                public boolean removeEldestEntry(Map.Entry eldest) {
+                public boolean removeEldestEntry(final Map.Entry eldest) {
                     if (size() > MAX_ENTRIES) {
                         if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug("Evicting old zone id: " + eldest.getKey());
@@ -148,7 +148,7 @@ public final class DateFormatterCache {
     }
 
     private static ZoneId getTimeZone(final String timeZone) throws ParseException {
-        ZoneId dateTimeZone;
+        final ZoneId dateTimeZone;
         try {
             if (timeZone != null) {
                 if (GMT_BST_GUESS.equals(timeZone)) {

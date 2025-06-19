@@ -98,14 +98,14 @@ public class DataGenerator {
                 try (final BufferedWriter writer = new BufferedWriter(
                         new FileWriter(filePath.toFile(), true))) {
 
-                    AtomicBoolean isFirstRecord = new AtomicBoolean(true);
+                    final AtomicBoolean isFirstRecord = new AtomicBoolean(true);
                     recordStream.forEach(recordStr -> {
                         try {
                             if (!isFirstRecord.get() && !recordSeparator.isEmpty()) {
                                 writer.append(recordSeparator);
                             }
                             writer.append(recordStr);
-                        } catch (IOException e) {
+                        } catch (final IOException e) {
                             throw new RuntimeException("Error writing line to file "
                                                        + filePath.toAbsolutePath().normalize().toString() + ": "
                                                        + e.getMessage());
@@ -113,7 +113,7 @@ public class DataGenerator {
                         isFirstRecord.set(false);
                     });
                 }
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new RuntimeException("Error writing to file "
                                            + filePath.toAbsolutePath().normalize().toString() + ": "
                                            + e.getMessage());
@@ -143,7 +143,7 @@ public class DataGenerator {
                 return fakerFunction.apply(faker);
 //                }
             });
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(
                     Utils.message("Error building fakerField, {}, {}", name, e.getMessage()), e);
         }
@@ -166,7 +166,7 @@ public class DataGenerator {
             final Supplier<String> supplier = () ->
                     values.get(indexSequence.getNext());
             return new Field(name, supplier);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(Utils.message(
                     "Error building sequentialValueField, {},{}",
                     name, e.getMessage()), e);
@@ -186,7 +186,7 @@ public class DataGenerator {
             Utils.checkArgument(!values.isEmpty(), "values is empty");
             return new Field(name, (random, ignoredFaker) ->
                     values.get(random.nextInt(values.size())));
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(
                     Utils.message("Error building randomValueField, {}, {}", name, e.getMessage()), e);
         }
@@ -238,7 +238,7 @@ public class DataGenerator {
                 return new StringBuilder().appendCodePoint(codePoint).toString();
             };
             return new Field(name, valueFunction);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(
                     Utils.message("Error building randomEmojiField, {}, {}", name, e.getMessage()), e);
         }
@@ -254,7 +254,7 @@ public class DataGenerator {
                 return new StringBuilder().appendCodePoint(codePoint).toString();
             };
             return new Field(name, valueFunction);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(
                     Utils.message("Error building randomEmojiField, {}, {}", name, e.getMessage()), e);
         }
@@ -278,7 +278,7 @@ public class DataGenerator {
             final ValueFunction valueFunction = (random, ignoredFaker) ->
                     String.format(format, random.nextInt(maxNumberExc));
             return new Field(name, valueFunction);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(Utils.message(
                     "Error building randomNumberedValueField, {}, {}", name, e.getMessage()), e);
         }
@@ -311,7 +311,7 @@ public class DataGenerator {
                     String.format(format, numberSequence.getNext());
 
             return new Field(name, supplier);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(Utils.message(
                     "Error building sequentiallyNumberedValueField, {}, {}", name, e.getMessage()), e);
         }
@@ -340,7 +340,7 @@ public class DataGenerator {
                     Long.toString(numberSequence.getNext());
 
             return new Field(name, supplier);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(Utils.message(
                     "Error building sequentialValueField, {}, {}", name, e.getMessage()), e);
         }
@@ -367,7 +367,7 @@ public class DataGenerator {
                     (random, ignoredFaker) ->
                             Integer.toString(
                                     buildRandomNumberSupplier(startInc, endExc).applyAsInt(random)));
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(Utils.message(
                     "Error building sequentialValueField, {}, {}", name, e.getMessage()), e);
         }
@@ -391,7 +391,7 @@ public class DataGenerator {
                             intSupplier.applyAsInt(random),
                             intSupplier.applyAsInt(random));
             return new Field(name, valueFunction);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(Utils.message(
                     "Error building randomIpV4Field, {}, {}", name, e.getMessage()), e);
         }
@@ -415,9 +415,9 @@ public class DataGenerator {
             Objects.requireNonNull(startDateInc);
             Objects.requireNonNull(endDateExc);
             Objects.requireNonNull(formatStr);
-            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(formatStr);
+            final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(formatStr);
             return randomDateTimeField(name, startDateInc, endDateExc, dateTimeFormatter);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(Utils.message("Error building randomDateTimeField, {}, {}",
                     name,
                     e.getMessage()), e);
@@ -456,13 +456,13 @@ public class DataGenerator {
                     final long randomDelta = (long) (random.nextDouble() * millisBetween);
                     final LocalDateTime dateTime = startDateInc.plus(randomDelta, ChronoUnit.MILLIS);
                     return dateTime.format(formatter);
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     throw new RuntimeException(Utils.message("Time range is too large, maximum allowed: {}",
                             Duration.ofMillis(Integer.MAX_VALUE).toString()), e);
                 }
             };
             return new Field(name, valueFunction);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(Utils.message("Error building randomDateTimeField, {}, {}",
                     name,
                     e.getMessage()), e);
@@ -484,9 +484,9 @@ public class DataGenerator {
                                                 final Duration delta,
                                                 final String formatStr) {
         try {
-            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(formatStr);
+            final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(formatStr);
             return sequentialDateTimeField(name, startDateInc, delta, dateTimeFormatter);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             e.printStackTrace();
             throw new RuntimeException(Utils.message("Error building sequentialDateTimeField, {}, {}",
                     name,
@@ -515,13 +515,13 @@ public class DataGenerator {
                 try {
                     return lastValueRef.getAndUpdate(lastVal -> lastVal.plus(delta))
                             .format(formatter);
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     throw new RuntimeException(Utils.message("Time range is too large, maximum allowed: {}",
                             Duration.ofMillis(Integer.MAX_VALUE).toString()));
                 }
             };
             return new Field(name, supplier);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(Utils.message("Error building sequentialDateTimeField, {}, {}",
                     name,
                     e.getMessage()), e);
@@ -538,7 +538,7 @@ public class DataGenerator {
     public static Field uuidField(final String name) {
         try {
             return new Field(name, () -> UUID.randomUUID().toString());
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(Utils.message("Error building uuidField, {}, {}", name, e.getMessage()), e);
         }
     }
@@ -567,7 +567,7 @@ public class DataGenerator {
                             wordList.size()));
 
             final ValueFunction supplier = (random, ignoredFaker) -> {
-                int wordCount = random.nextInt(maxCount - minCount + 1) + minCount;
+                final int wordCount = random.nextInt(maxCount - minCount + 1) + minCount;
                 return IntStream.rangeClosed(0, wordCount)
                         .boxed()
                         .map(i -> wordList.get(random.nextInt(wordList.size())))
@@ -577,7 +577,7 @@ public class DataGenerator {
             };
 
             return new Field(name, supplier);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(Utils.message("Error building randomWordsField, {}, {}", name, e.getMessage()),
                     e);
         }
@@ -620,7 +620,7 @@ public class DataGenerator {
 
             return (random) ->
                     random.nextInt(delta) + startInc;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(Utils.message("Error building randomNumberSupplier, {}", e.getMessage()), e);
         }
     }
@@ -629,7 +629,7 @@ public class DataGenerator {
         if (file.getParent() != null) {
             try {
                 Files.createDirectories(file.getParent());
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new RuntimeException("Error creating parent directories for {}"
                                            + file.toAbsolutePath().normalize().toString());
             }
@@ -664,7 +664,7 @@ public class DataGenerator {
             try {
                 final ClassLoader loader = Thread.currentThread().getContextClassLoader();
 
-                List<String> classNames = ClassPath.from(loader).getAllClasses().stream()
+                final List<String> classNames = ClassPath.from(loader).getAllClasses().stream()
                         .filter(classInfo -> classInfo.getPackageName().startsWith("java."))
                         .map(ClassPath.ClassInfo::getSimpleName)
                         .toList();
@@ -697,7 +697,7 @@ public class DataGenerator {
         private Faker faker;
 
         public DefinitionBuilder addFieldDefinition(final Field fieldDefinition) {
-            boolean isNamedAlreadyUsed = fieldDefinitions.stream()
+            final boolean isNamedAlreadyUsed = fieldDefinitions.stream()
                     .map(Field::getName)
                     .anyMatch(Predicate.isEqual(fieldDefinition.getName()));
             Utils.checkArgument(!isNamedAlreadyUsed,
@@ -730,7 +730,7 @@ public class DataGenerator {
             return this;
         }
 
-        public DefinitionBuilder withRandomSeed(long seed) {
+        public DefinitionBuilder withRandomSeed(final long seed) {
             this.random = new Random(seed);
             // Can't run in parallel if using a fixed seed
             this.isParallel = false;
@@ -775,12 +775,12 @@ public class DataGenerator {
 
         private Stream<DataRecord> generateDataRows() {
 
-            Function<Integer, DataRecord> toRecordMapper = integer -> {
-                List<String> values = fieldDefinitions.stream()
+            final Function<Integer, DataRecord> toRecordMapper = integer -> {
+                final List<String> values = fieldDefinitions.stream()
                         .map(field -> {
                             try {
                                 return field.getNext(random, faker);
-                            } catch (Exception e) {
+                            } catch (final Exception e) {
                                 throw new RuntimeException(Utils.message("Error getting next value for field {}, {}",
                                         field.getName(), e.getMessage()), e);
                             }

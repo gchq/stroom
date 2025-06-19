@@ -88,7 +88,7 @@ class OpenIdResourceImpl implements OpenIdResource {
                 prompt);
 
         if (result.getStatus().isPresent() && result.getStatus().get().isNew()) {
-            AuthStatus status = result.getStatus().get();
+            final AuthStatus status = result.getStatus().get();
 
             final AuthenticateEventAction.Builder<Void> eventBuilder = event.logging.AuthenticateEventAction.builder()
                     .withAction(AuthenticateAction.LOGON)

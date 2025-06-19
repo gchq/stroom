@@ -15,10 +15,10 @@ class TestBatchingIterator {
     @Test
     void batchedStreamOf() {
 
-        Stream<Integer> sourceStream = IntStream.rangeClosed(1, 10)
+        final Stream<Integer> sourceStream = IntStream.rangeClosed(1, 10)
                 .boxed();
 
-        List<List<Integer>> batches = BatchingIterator.batchedStreamOf(sourceStream, 3)
+        final List<List<Integer>> batches = BatchingIterator.batchedStreamOf(sourceStream, 3)
                 .collect(Collectors.toList());
 
         assertThat(batches).hasSize(4);
@@ -31,10 +31,10 @@ class TestBatchingIterator {
     @Test
     void batchedStreamOf_exact() {
 
-        Stream<Integer> sourceStream = IntStream.rangeClosed(1, 10)
+        final Stream<Integer> sourceStream = IntStream.rangeClosed(1, 10)
                 .boxed();
 
-        List<List<Integer>> batches = BatchingIterator.batchedStreamOf(sourceStream, 5)
+        final List<List<Integer>> batches = BatchingIterator.batchedStreamOf(sourceStream, 5)
                 .collect(Collectors.toList());
 
         assertThat(batches).hasSize(2);
@@ -45,9 +45,9 @@ class TestBatchingIterator {
     @Test
     void batchedStreamOf_empty() {
 
-        Stream<Integer> sourceStream = Stream.empty();
+        final Stream<Integer> sourceStream = Stream.empty();
 
-        List<List<Integer>> batches = BatchingIterator.batchedStreamOf(sourceStream, 3)
+        final List<List<Integer>> batches = BatchingIterator.batchedStreamOf(sourceStream, 3)
                 .collect(Collectors.toList());
 
         assertThat(batches).isNotNull();

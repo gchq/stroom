@@ -164,7 +164,7 @@ public class DS3Reader extends CharBuffer implements DSLocator {
         // 12| MonTueWed     - 1:1=>1:3, 1:4=>1:6, 1:7=>1:9 regex records: ([A-Z][a-z]{2})
 
         for (int i = 0; i < increment; i++) {
-            int pos = offset + i;
+            final int pos = offset + i;
             final char c = buffer[pos];
             if (isFirstChar) {
                 isFirstChar = false;

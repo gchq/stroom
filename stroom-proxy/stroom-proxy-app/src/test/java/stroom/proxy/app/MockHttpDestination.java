@@ -122,20 +122,20 @@ public class MockHttpDestination {
                 .build();
     }
 
-    public void setupLivenessEndpoint(Function<MappingBuilder, MappingBuilder> livenessBuilderFunc) {
+    public void setupLivenessEndpoint(final Function<MappingBuilder, MappingBuilder> livenessBuilderFunc) {
         final String path = getStatusPath();
         WireMock.stubFor(livenessBuilderFunc.apply(WireMock.get(path)));
         LOGGER.info("Setup WireMock POST stub for {}", path);
     }
 
-    public void setupStroomStubs(Function<MappingBuilder, MappingBuilder> datafeedBuilderFunc) {
+    public void setupStroomStubs(final Function<MappingBuilder, MappingBuilder> datafeedBuilderFunc) {
         final String feedStatusPath = getFeedStatusPath();
         final GetFeedStatusResponse feedStatusResponse = GetFeedStatusResponse.createOKReceiveResponse();
 
         final String responseJson;
         try {
             responseJson = JsonUtil.writeValueAsString(feedStatusResponse);
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             throw new RuntimeException("Error creating json for " + feedStatusResponse);
         }
 
@@ -294,7 +294,7 @@ public class MockHttpDestination {
                         break;
                     }
                     entries.add(entry.getName() + " (" + entry.getSize() + ")");
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     throw new RuntimeException(LogUtil.message("Error reading zip stream: {}", e.getMessage()), e);
                 }
             }
@@ -367,7 +367,7 @@ public class MockHttpDestination {
 
         try {
             contentStr = new String(loggedRequest.getBody(), charset);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message(
                     "Error reading content bytes as {}, error: {}",
                     clazz.getSimpleName(), e.getMessage()), e);
@@ -375,7 +375,7 @@ public class MockHttpDestination {
 
         try {
             return JsonUtil.readValue(contentStr, clazz);
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             throw new RuntimeException(LogUtil.message(
                     "Error de-serialising content to {}, error: {}, content:\n{}",
                     clazz.getSimpleName(), e.getMessage(), contentStr), e);
@@ -477,7 +477,7 @@ public class MockHttpDestination {
                 null);
     }
 
-    void assertSimpleDataFeedRequestContent(int expected) {
+    void assertSimpleDataFeedRequestContent(final int expected) {
         Assertions.assertThat(dataFeedRequests).hasSize(expected);
 
         final List<String> expectedFiles = List.of(
@@ -486,7 +486,7 @@ public class MockHttpDestination {
         assertDataFeedRequestContent(dataFeedRequests, expectedFiles);
     }
 
-    void assertRequestCount(int expectedRequestCount) {
+    void assertRequestCount(final int expectedRequestCount) {
         TestUtil.waitForIt(
                 this::getDataFeedPostsToStroomCount,
                 expectedRequestCount,

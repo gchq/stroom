@@ -42,9 +42,9 @@ public class AuthProxyResourceImpl implements AuthProxyResource {
             final String token = idpProxyServiceProvider.get().fetchToken(clientCredentials);
 
             return token;
-        } catch (IllegalArgumentException e) {
+        } catch (final IllegalArgumentException e) {
             throw new BadRequestException(e.getMessage(), e);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             // Let the ex mapper handle it
             throw e;
         }

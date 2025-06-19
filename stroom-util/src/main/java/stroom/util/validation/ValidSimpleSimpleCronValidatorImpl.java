@@ -44,7 +44,7 @@ public class ValidSimpleSimpleCronValidatorImpl implements ValidSimpleCronValida
                         .withSchedule(CronScheduleBuilder.cronSchedule(converted).inTimeZone(UTC))
                         .startAt(Date.from(Instant.ofEpochMilli(0)))
                         .build();
-            } catch (RuntimeException e) {
+            } catch (final RuntimeException e) {
                 final String msgTemplate =
                         context.getDefaultConstraintMessageTemplate() +
                                 ". caused by: " +

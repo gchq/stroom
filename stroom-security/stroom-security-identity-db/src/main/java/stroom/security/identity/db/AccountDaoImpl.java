@@ -329,11 +329,11 @@ class AccountDaoImpl implements AccountDao {
         }
 
         final AccountRecord record = optionalRecord.get();
-        boolean isPasswordCorrect = PasswordHashUtil.checkPassword(password, record.getPasswordHash());
-        boolean isDisabled = !record.getEnabled();
-        boolean isInactive = record.getInactive();
-        boolean isLocked = record.getLocked();
-        boolean isProcessingAccount = record.getProcessingAccount();
+        final boolean isPasswordCorrect = PasswordHashUtil.checkPassword(password, record.getPasswordHash());
+        final boolean isDisabled = !record.getEnabled();
+        final boolean isInactive = record.getInactive();
+        final boolean isLocked = record.getLocked();
+        final boolean isProcessingAccount = record.getProcessingAccount();
 
         return new CredentialValidationResult(
                 isPasswordCorrect, false, isLocked, isDisabled, isInactive, isProcessingAccount);
@@ -457,7 +457,7 @@ class AccountDaoImpl implements AccountDao {
     }
 
     @Override
-    public Optional<Account> get(int id) {
+    public Optional<Account> get(final int id) {
         return genericDao.fetch(id);
 
 //        Optional<AccountRecord> userQuery = JooqUtil.contextResult(authDbConnProvider, context -> context
@@ -602,7 +602,7 @@ class AccountDaoImpl implements AccountDao {
     }
 
     private Condition createCondition(final FindAccountRequest request) {
-        Condition condition = ACCOUNT.PROCESSING_ACCOUNT.isFalse();
+        final Condition condition = ACCOUNT.PROCESSING_ACCOUNT.isFalse();
 //        if (request.getQuickFilter() != null) {
 //            condition = condition.and(ACCOUNT.USER_ID.contains(request.getQuickFilter()));
 //        }

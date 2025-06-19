@@ -183,7 +183,7 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
     }
 
     @Override
-    public Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef) {
+    public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
         return null;
     }
 

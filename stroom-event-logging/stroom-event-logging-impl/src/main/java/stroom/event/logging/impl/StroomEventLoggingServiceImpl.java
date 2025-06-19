@@ -140,7 +140,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         try {
             ThreadLocalLogState.setLogged(true);
             super.log(event);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             // Swallow the exception so failure to log does not prevent the action being logged
             // from succeeding
             LOGGER.error("Error logging event {}: {}", event, LogUtil.exceptionMessage(e), e);
@@ -214,7 +214,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     }
 
     private <T> void mergeValue(final Supplier<T> getter, final Consumer<T> setter) {
-        T value = getter.get();
+        final T value = getter.get();
         if (value != null) {
             setter.accept(value);
         }
@@ -396,7 +396,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         final ObjectInfoProvider objectInfoProvider = getInfoAppender(object.getClass());
         if (objectInfoProvider == null) {
             if (object instanceof Collection) {
-                Collection<?> collection = (Collection<?>) object;
+                final Collection<?> collection = (Collection<?>) object;
                 if (collection.isEmpty()) {
                     return "Empty collection";
                 } else {
@@ -528,7 +528,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
      * @return List of {@link Data} items representing properties of the supplied POJO
      */
     @Override
-    public List<Data> getDataItems(Object obj) {
+    public List<Data> getDataItems(final Object obj) {
         if (obj == null || loggingConfigProvider.get().getMaxDataElementStringLength() == 0) {
             return null;
         }
@@ -540,12 +540,12 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         return getDataItemsFromJavaBean(obj);
     }
 
-    private List<Data> getDataItemsFromProperties(Properties properties) {
+    private List<Data> getDataItemsFromProperties(final Properties properties) {
         return properties.entrySet().stream().map(entry ->
                 convertValToData(entry.getKey().toString(), entry.getValue())).collect(Collectors.toList());
     }
 
-    private List<Data> getDataItemsFromJavaBean(Object bean) {
+    private List<Data> getDataItemsFromJavaBean(final Object bean) {
 
         // Construct a Jackson JavaType for the class
         final JavaType javaType = objectMapper.getTypeFactory().constructType(bean.getClass());
@@ -578,13 +578,13 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                 }).collect(Collectors.toList());
     }
 
-    private Data convertValToData(String name, Object valObj) {
+    private Data convertValToData(final String name, final Object valObj) {
         final Data.Builder<?> builder = Data.builder().withName(name);
 
         if (valObj != null) {
             final LoggingConfig loggingConfig = loggingConfigProvider.get();
             if (valObj instanceof Collection<?>) {
-                Collection<?> collection = (Collection<?>) valObj;
+                final Collection<?> collection = (Collection<?>) valObj;
 
                 if (loggingConfig.getMaxListElements() >= 0
                     && collection.size() > loggingConfig.getMaxListElements()) {
@@ -662,32 +662,32 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
     private static boolean isLeafPropertyType(final Class<?> type) {
 
-        boolean isLeaf = type.equals(String.class) ||
-                         type.equals(Byte.class) ||
-                         type.equals(byte.class) ||
-                         type.equals(Integer.class) ||
-                         type.equals(int.class) ||
-                         type.equals(Long.class) ||
-                         type.equals(long.class) ||
-                         type.equals(Short.class) ||
-                         type.equals(short.class) ||
-                         type.equals(Float.class) ||
-                         type.equals(float.class) ||
-                         type.equals(Double.class) ||
-                         type.equals(double.class) ||
-                         type.equals(Boolean.class) ||
-                         type.equals(boolean.class) ||
-                         type.equals(Character.class) ||
-                         type.equals(char.class) ||
+        final boolean isLeaf = type.equals(String.class) ||
+                               type.equals(Byte.class) ||
+                               type.equals(byte.class) ||
+                               type.equals(Integer.class) ||
+                               type.equals(int.class) ||
+                               type.equals(Long.class) ||
+                               type.equals(long.class) ||
+                               type.equals(Short.class) ||
+                               type.equals(short.class) ||
+                               type.equals(Float.class) ||
+                               type.equals(float.class) ||
+                               type.equals(Double.class) ||
+                               type.equals(double.class) ||
+                               type.equals(Boolean.class) ||
+                               type.equals(boolean.class) ||
+                               type.equals(Character.class) ||
+                               type.equals(char.class) ||
 
-                         DocRef.class.isAssignableFrom(type) ||
-                         Enum.class.isAssignableFrom(type) ||
-                         Path.class.isAssignableFrom(type) ||
-                         StroomDuration.class.isAssignableFrom(type) ||
-                         ByteSize.class.isAssignableFrom(type) ||
-                         Date.class.isAssignableFrom(type) ||
-                         Instant.class.isAssignableFrom(type) ||
-                         (type.isArray() &&
+                               DocRef.class.isAssignableFrom(type) ||
+                               Enum.class.isAssignableFrom(type) ||
+                               Path.class.isAssignableFrom(type) ||
+                               StroomDuration.class.isAssignableFrom(type) ||
+                               ByteSize.class.isAssignableFrom(type) ||
+                               Date.class.isAssignableFrom(type) ||
+                               Instant.class.isAssignableFrom(type) ||
+                               (type.isArray() &&
                           (type.getComponentType().equals(Byte.class) ||
                            type.getComponentType().equals(byte.class) ||
                            type.getComponentType().equals(Character.class) ||
@@ -703,7 +703,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         if (method != null) {
             try {
                 return method.callOn(obj);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.debug("Error calling getter of " + beanPropDef.getName() + " on class " +
                              obj.getClass().getSimpleName(), e);
             }
@@ -718,7 +718,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     //It is possible for a resource to be annotated to prevent it being logged at all, even when the resource
     //itself is logged, e.g. due to configuration settings
     //Assess whether this field should be redacted
-    public boolean shouldRedact(String propNameLowercase, Class<?> type) {
+    public boolean shouldRedact(final String propNameLowercase, final Class<?> type) {
         if (Boolean.class.isAssignableFrom(type) || boolean.class.isAssignableFrom(type)) {
             return false; //Don't redact boolean types
         }

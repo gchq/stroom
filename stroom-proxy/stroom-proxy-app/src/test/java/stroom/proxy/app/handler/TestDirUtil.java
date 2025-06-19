@@ -29,7 +29,7 @@ class TestDirUtil {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestDirUtil.class);
 
     @Test
-    void testBadFilesAndDirs(@TempDir Path rootDir) throws IOException {
+    void testBadFilesAndDirs(@TempDir final Path rootDir) throws IOException {
         final List<Long> nums = List.of(
                 1L,
                 10L,
@@ -56,7 +56,7 @@ class TestDirUtil {
     }
 
     @Test
-    void testEmptyDirs(@TempDir Path rootDir) throws IOException {
+    void testEmptyDirs(@TempDir final Path rootDir) throws IOException {
         final List<Long> nums = List.of(
                 99L,
                 1001L,
@@ -106,7 +106,7 @@ class TestDirUtil {
 
     @Test
     void testMaxId_missing() {
-        Path path = Path.of("/doesntExist");
+        final Path path = Path.of("/doesntExist");
         Assertions.assertThat(path)
                 .doesNotExist();
 
@@ -117,7 +117,7 @@ class TestDirUtil {
 
     @Test
     void testMinId_missing() {
-        Path path = Path.of("/doesntExist");
+        final Path path = Path.of("/doesntExist");
         Assertions.assertThat(path)
                 .doesNotExist();
 
@@ -147,7 +147,7 @@ class TestDirUtil {
     }
 
     @TestFactory
-    Stream<DynamicTest> testMinMax(@TempDir Path dir) {
+    Stream<DynamicTest> testMinMax(@TempDir final Path dir) {
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputType(new TypeLiteral<List<Long>>() {
                 })
@@ -190,7 +190,7 @@ class TestDirUtil {
     }
 
     @TestFactory
-    Stream<DynamicTest> testCreatePath(@TempDir Path dir) {
+    Stream<DynamicTest> testCreatePath(@TempDir final Path dir) {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(long.class)
                 .withOutputType(Path.class)

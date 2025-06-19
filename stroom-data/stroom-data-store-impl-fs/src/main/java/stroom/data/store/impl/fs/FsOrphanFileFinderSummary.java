@@ -33,7 +33,7 @@ public class FsOrphanFileFinderSummary {
         DecodedPath decodedPath;
         try {
             decodedPath = FsPathHelper.decodedPath(path);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.debug("Unable to decode path {}", path, e);
             handleBadPath(path);
             decodedPath = null;
@@ -59,7 +59,7 @@ public class FsOrphanFileFinderSummary {
                     } else {
                         message = "Non-empty directory";
                     }
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     LOGGER.debug("Error checking contents of {}", path, e);
                     message = "Directory with unknown contents" + ExceptionStringUtil.getMessage(e);
                 }
@@ -127,7 +127,7 @@ public class FsOrphanFileFinderSummary {
         private final LocalDate date;
         private final boolean isDirectory;
 
-        public SummaryLine(DecodedPath decodedPath) {
+        public SummaryLine(final DecodedPath decodedPath) {
             this.type = decodedPath.getTypeName();
             this.feed = Objects.requireNonNullElse(decodedPath.getFeedName(), "");
             this.date = decodedPath.getDate();

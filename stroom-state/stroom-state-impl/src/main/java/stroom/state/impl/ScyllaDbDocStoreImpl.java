@@ -56,8 +56,8 @@ public class ScyllaDbDocStoreImpl implements ScyllaDbDocStore {
 
     @Override
     public DocRef createDocument(final String name) {
-        DocRef docRef = store.createDocument(name);
-        ScyllaDbDoc doc = store.readDocument(docRef);
+        final DocRef docRef = store.createDocument(name);
+        final ScyllaDbDoc doc = store.readDocument(docRef);
         doc.setConnection(ScyllaDbUtil.getDefaultConnection());
         doc.setKeyspace(ScyllaDbUtil.getDefaultKeyspace());
         doc.setKeyspaceCql(ScyllaDbUtil.getDefaultKeyspaceCql());
@@ -90,7 +90,7 @@ public class ScyllaDbDocStoreImpl implements ScyllaDbDocStore {
     }
 
     @Override
-    public DocRefInfo info(DocRef docRef) {
+    public DocRefInfo info(final DocRef docRef) {
         return store.info(docRef);
     }
 
@@ -210,7 +210,7 @@ public class ScyllaDbDocStoreImpl implements ScyllaDbDocStore {
     }
 
     @Override
-    public Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef) {
+    public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
         return null;
     }
 

@@ -33,7 +33,7 @@ public class ValueReferenceIndex {
                 new FieldValReference(list.size(), fieldIndex, name);
 
         // Only store one reference to each field.
-        int index = list.indexOf(valueReference);
+        final int index = list.indexOf(valueReference);
         if (index != -1) {
             return (FieldValReference) list.get(index);
         }
@@ -50,7 +50,7 @@ public class ValueReferenceIndex {
         return add(new ValReference(list.size(), name));
     }
 
-    private <T extends ValueReference<?>> T add(T valueReference) {
+    private <T extends ValueReference<?>> T add(final T valueReference) {
         list.add(valueReference);
         return valueReference;
     }
@@ -62,7 +62,7 @@ public class ValueReferenceIndex {
     public StoredValues read(final DataReader reader) {
         try {
             final StoredValues storedValues = createStoredValues();
-            for (ValueReference<?> valueReference : list) {
+            for (final ValueReference<?> valueReference : list) {
                 valueReference.read(storedValues, reader);
             }
             return storedValues;
@@ -85,7 +85,7 @@ public class ValueReferenceIndex {
 
     public void write(final StoredValues storedValues, final DataWriter writer) {
         try {
-            for (ValueReference<?> valueReference : list) {
+            for (final ValueReference<?> valueReference : list) {
                 valueReference.write(storedValues, writer);
             }
         } catch (final RuntimeException e) {

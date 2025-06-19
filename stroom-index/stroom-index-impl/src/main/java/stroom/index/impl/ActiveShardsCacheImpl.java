@@ -145,7 +145,7 @@ public class ActiveShardsCacheImpl implements ActiveShardsCache {
 
         public void addDocument(final IndexDocument document) {
             // Try and add the document silently without locking.
-            boolean success = addDocument(document, false);
+            final boolean success = addDocument(document, false);
 
             // Attempt under lock if we failed to add.
             if (!success) {

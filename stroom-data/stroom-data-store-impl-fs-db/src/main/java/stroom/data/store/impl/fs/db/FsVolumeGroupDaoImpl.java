@@ -62,7 +62,7 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
 
     @Override
     public FsVolumeGroup getOrCreate(final FsVolumeGroup fsVolumeGroup) {
-        Optional<Integer> optional = JooqUtil.onDuplicateKeyIgnore(() ->
+        final Optional<Integer> optional = JooqUtil.onDuplicateKeyIgnore(() ->
                 JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
                         .insertInto(FS_VOLUME_GROUP,
                                 FS_VOLUME_GROUP.VERSION,
@@ -88,11 +88,11 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
     }
 
     @Override
-    public FsVolumeGroup update(FsVolumeGroup fsVolumeGroup) {
+    public FsVolumeGroup update(final FsVolumeGroup fsVolumeGroup) {
         final FsVolumeGroup saved;
         try {
             saved = genericDao.update(fsVolumeGroup);
-        } catch (DataAccessException e) {
+        } catch (final DataAccessException e) {
             if (e.getCause() != null
                 && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
                 final var sqlEx = (SQLIntegrityConstraintViolationException) e.getCause();
@@ -179,7 +179,7 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
     }
 
     @Override
-    public void delete(int id) {
+    public void delete(final int id) {
         genericDao.delete(id);
     }
 }

@@ -42,7 +42,7 @@ public class KafkaEventConsumer implements EventConsumer {
         try {
             LOGGER.debug(() -> "Creating KafkaProducer");
             kafkaProducer = new KafkaProducer<>(properties, new ByteArraySerializer(), new ByteArraySerializer());
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error(e::getMessage, e);
             throw new RuntimeException("Error creating KafkaProducer " + e.getMessage(), e);
         }

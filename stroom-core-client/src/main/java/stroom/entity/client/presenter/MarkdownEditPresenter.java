@@ -108,7 +108,7 @@ public class MarkdownEditPresenter
     }
 
     private ButtonPanel createToolbar() {
-        ButtonPanel toolbar = new ButtonPanel();
+        final ButtonPanel toolbar = new ButtonPanel();
         if (insertedButtons != null) {
             toolbar.addButtons(insertedButtons);
         }

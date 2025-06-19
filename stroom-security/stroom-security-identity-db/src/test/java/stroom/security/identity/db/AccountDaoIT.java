@@ -29,9 +29,9 @@ public class AccountDaoIT extends DatabaseIT {
 
     @Test
     void testNewButInactiveUserIsDisabled() {
-        try (Connection conn = getConnection()) {
+        try (final Connection conn = getConnection()) {
             // GIVEN...
-            AccountDao accountDao = getUserDao(conn);
+            final AccountDao accountDao = getUserDao(conn);
 
             final String user01 = UUID.randomUUID().toString();
             final String user02 = UUID.randomUUID().toString();
@@ -50,7 +50,7 @@ public class AccountDaoIT extends DatabaseIT {
 
             // WHEN...
 //            setClockToDaysFromNow(accountDao, 31);
-            int numberOfDisabledUsers = accountDao.deactivateNewInactiveUsers(Duration.parse("P30D"));
+            final int numberOfDisabledUsers = accountDao.deactivateNewInactiveUsers(Duration.parse("P30D"));
 
             // THEN...
             assertThat(numberOfDisabledUsers).isEqualTo(1);
@@ -58,7 +58,7 @@ public class AccountDaoIT extends DatabaseIT {
             assertThat(accountDao.get(user02).get().isEnabled()).isTrue();
             assertThat(accountDao.get(user03).get().isEnabled()).isTrue();
 
-        } catch (SQLException e) {
+        } catch (final SQLException e) {
             e.printStackTrace();
             fail(e.getMessage());
         }
@@ -66,9 +66,9 @@ public class AccountDaoIT extends DatabaseIT {
 
     @Test
     void testReactivatedDateIsUsedInsteadOfLastLoginForNewUsers() {
-        try (Connection conn = getConnection()) {
+        try (final Connection conn = getConnection()) {
             // GIVEN...
-            AccountDao accountDao = getUserDao(conn);
+            final AccountDao accountDao = getUserDao(conn);
 
             final String user01 = UUID.randomUUID().toString();
             final String user02 = UUID.randomUUID().toString();
@@ -92,7 +92,7 @@ public class AccountDaoIT extends DatabaseIT {
 
             // WHEN...
 //            setClockToDaysFromNow(accountDao, 31);
-            int numberOfDisabledUsers = accountDao.deactivateNewInactiveUsers(Duration.parse("P30D"));
+            final int numberOfDisabledUsers = accountDao.deactivateNewInactiveUsers(Duration.parse("P30D"));
 
             // THEN...
             assertThat(numberOfDisabledUsers).isEqualTo(1);
@@ -101,7 +101,7 @@ public class AccountDaoIT extends DatabaseIT {
             assertThat(accountDao.get(user03).get().isEnabled()).isTrue();
             assertThat(accountDao.get(user04).get().isEnabled()).isTrue();
 
-        } catch (SQLException e) {
+        } catch (final SQLException e) {
             e.printStackTrace();
             fail(e.getMessage());
         }
@@ -109,9 +109,9 @@ public class AccountDaoIT extends DatabaseIT {
 
     @Test
     void testReactivatedDateIsUsedInsteadOfLastLogin() {
-        try (Connection conn = getConnection()) {
+        try (final Connection conn = getConnection()) {
             // GIVEN...
-            AccountDao accountDao = getUserDao(conn);
+            final AccountDao accountDao = getUserDao(conn);
 
             final String user01 = "user01_" + UUID.randomUUID().toString();
             final String user02 = "user02_" + UUID.randomUUID().toString();
@@ -132,7 +132,7 @@ public class AccountDaoIT extends DatabaseIT {
 
             // WHEN...
 //            setClockToDaysFromNow(accountDao, 91);
-            int numberOfDisabledUsers = accountDao.deactivateInactiveUsers(Duration.parse("P90D"));
+            final int numberOfDisabledUsers = accountDao.deactivateInactiveUsers(Duration.parse("P90D"));
 
             // THEN...
             assertThat(numberOfDisabledUsers).isEqualTo(1);
@@ -140,7 +140,7 @@ public class AccountDaoIT extends DatabaseIT {
             assertThat(accountDao.get(user02).get().isEnabled()).isTrue();
             assertThat(accountDao.get(user03).get().isEnabled()).isTrue();
 
-        } catch (SQLException e) {
+        } catch (final SQLException e) {
             e.printStackTrace();
             fail(e.getMessage());
         }
@@ -148,9 +148,9 @@ public class AccountDaoIT extends DatabaseIT {
 
     @Test
     void testInactiveUserIsDeactivated() {
-        try (Connection conn = getConnection()) {
+        try (final Connection conn = getConnection()) {
             // GIVEN...
-            AccountDao accountDao = getUserDao(conn);
+            final AccountDao accountDao = getUserDao(conn);
 
             final String user01 = UUID.randomUUID().toString();
             final String user02 = UUID.randomUUID().toString();
@@ -181,7 +181,7 @@ public class AccountDaoIT extends DatabaseIT {
             assertThat(numberOfDisabledUsers).isEqualTo(1);
             assertThat(accountDao.get(user02).get().isInactive()).isTrue();
 
-        } catch (SQLException e) {
+        } catch (final SQLException e) {
             e.printStackTrace();
             fail(e.getMessage());
         }
@@ -189,9 +189,9 @@ public class AccountDaoIT extends DatabaseIT {
 
     @Test
     void testLockedUserIsNeverMadeInactive() {
-        try (Connection conn = getConnection()) {
+        try (final Connection conn = getConnection()) {
             // GIVEN...
-            AccountDao accountDao = getUserDao(conn);
+            final AccountDao accountDao = getUserDao(conn);
 
             final String user01 = UUID.randomUUID().toString();
             final String user02 = UUID.randomUUID().toString();
@@ -204,14 +204,14 @@ public class AccountDaoIT extends DatabaseIT {
 
             // WHEN...
 //            setClockToDaysFromNow(accountDao, 91);
-            int numberOfDisabledUsers = accountDao.deactivateInactiveUsers(Duration.parse("P90D"));
+            final int numberOfDisabledUsers = accountDao.deactivateInactiveUsers(Duration.parse("P90D"));
 
             // THEN...
             assertThat(numberOfDisabledUsers).isEqualTo(1);
             assertThat(accountDao.get(user01).get().isInactive()).isTrue();
             assertThat(accountDao.get(user02).get().isLocked()).isTrue();
 
-        } catch (SQLException e) {
+        } catch (final SQLException e) {
             e.printStackTrace();
             fail(e.getMessage());
         }
@@ -219,9 +219,9 @@ public class AccountDaoIT extends DatabaseIT {
 
     @Test
     void testDisabledUserIsNeverMadeInactive() {
-        try (Connection conn = getConnection()) {
+        try (final Connection conn = getConnection()) {
             // GIVEN...
-            AccountDao accountDao = getUserDao(conn);
+            final AccountDao accountDao = getUserDao(conn);
 
             final String user01 = UUID.randomUUID().toString();
             final String user02 = UUID.randomUUID().toString();
@@ -234,7 +234,7 @@ public class AccountDaoIT extends DatabaseIT {
 
             // WHEN...
 //            setClockToDaysFromNow(accountDao, 91);
-            int numberOfDisabledUsers = accountDao.deactivateInactiveUsers(Duration.parse("P90D"));
+            final int numberOfDisabledUsers = accountDao.deactivateInactiveUsers(Duration.parse("P90D"));
 
             // THEN...
             assertThat(numberOfDisabledUsers).isEqualTo(1);
@@ -242,7 +242,7 @@ public class AccountDaoIT extends DatabaseIT {
             assertThat(accountDao.get(user02).get().isEnabled()).isFalse();
 
 
-        } catch (SQLException e) {
+        } catch (final SQLException e) {
             e.printStackTrace();
             fail(e.getMessage());
         }
@@ -250,9 +250,9 @@ public class AccountDaoIT extends DatabaseIT {
 
     @Test
     void testNeverExpiresUser() {
-        try (Connection conn = getConnection()) {
+        try (final Connection conn = getConnection()) {
             // GIVEN...
-            AccountDao accountDao = getUserDao(conn);
+            final AccountDao accountDao = getUserDao(conn);
 
             final String user01 = UUID.randomUUID().toString();
             final String user02 = UUID.randomUUID().toString();
@@ -267,13 +267,13 @@ public class AccountDaoIT extends DatabaseIT {
 
             // WHEN...
 //            setClockToDaysFromNow(accountDao, 91);
-            int numberOfDisabledUsers = accountDao.deactivateInactiveUsers(Duration.parse("P90D"));
+            final int numberOfDisabledUsers = accountDao.deactivateInactiveUsers(Duration.parse("P90D"));
 
             // THEN...
             assertThat(numberOfDisabledUsers).isEqualTo(1);
             assertThat(accountDao.get(user01).get().isInactive()).isTrue();
             assertThat(accountDao.get(user02).get().isEnabled()).isTrue();
-        } catch (SQLException e) {
+        } catch (final SQLException e) {
             e.printStackTrace();
             fail(e.getMessage());
         }
@@ -281,9 +281,9 @@ public class AccountDaoIT extends DatabaseIT {
 
     @Test
     void testNeedsPasswordChange() {
-        try (Connection conn = getConnection()) {
+        try (final Connection conn = getConnection()) {
             // GIVEN...
-            AccountDao accountDao = getUserDao(conn);
+            final AccountDao accountDao = getUserDao(conn);
 
             final String user01 = UUID.randomUUID().toString();
 
@@ -296,7 +296,7 @@ public class AccountDaoIT extends DatabaseIT {
 
             // THEN...
             // Simple
-            Boolean shouldNotNeedChange = accountDao.needsPasswordChange(user01, Duration.parse("PT1M"), true);
+            final Boolean shouldNotNeedChange = accountDao.needsPasswordChange(user01, Duration.parse("PT1M"), true);
             assertThat(shouldNotNeedChange).isTrue();
 
             Boolean shouldNeedChange = accountDao.needsPasswordChange(user01, Duration.parse("PT200M"), true);
@@ -304,7 +304,7 @@ public class AccountDaoIT extends DatabaseIT {
             assertThat(shouldNeedChange).isTrue();
 
             // Boundary cases
-            Boolean shouldNotNeedChangeBoundaryCase = accountDao.needsPasswordChange(user01,
+            final Boolean shouldNotNeedChangeBoundaryCase = accountDao.needsPasswordChange(user01,
                     Duration.parse("P90D"),
                     true);
             assertThat(shouldNotNeedChangeBoundaryCase).isTrue();
@@ -313,40 +313,42 @@ public class AccountDaoIT extends DatabaseIT {
             shouldNeedChange = accountDao.needsPasswordChange(user01, Duration.parse("PT200M"), true);
             assertThat(shouldNeedChange).isFalse();
 
-            Boolean shouldNeedChangeBoundaryCase = accountDao.needsPasswordChange(user01,
+            final Boolean shouldNeedChangeBoundaryCase = accountDao.needsPasswordChange(user01,
                     Duration.parse("PT91M"),
                     true);
             assertThat(shouldNeedChangeBoundaryCase).isFalse();
-        } catch (SQLException e) {
+        } catch (final SQLException e) {
             e.printStackTrace();
             fail(e.getMessage());
         }
     }
 
-    private static void createUserAccount(AccountDao accountDao, String userId) {
+    private static void createUserAccount(final AccountDao accountDao, final String userId) {
         createUserAccount(accountDao, userId, false, true, false, false);
     }
 
-    private static void createUserAccount(AccountDao accountDao, String userId, boolean neverExpires) {
+    private static void createUserAccount(final AccountDao accountDao,
+                                          final String userId,
+                                          final boolean neverExpires) {
         createUserAccount(accountDao, userId, neverExpires, true, false, false);
     }
 
-    private static void createUserAccount(AccountDao accountDao,
-                                          String userId,
-                                          boolean neverExpires,
-                                          boolean enabled,
-                                          boolean inactive,
-                                          boolean locked) {
+    private static void createUserAccount(final AccountDao accountDao,
+                                          final String userId,
+                                          final boolean neverExpires,
+                                          final boolean enabled,
+                                          final boolean inactive,
+                                          final boolean locked) {
         createUserAccount(accountDao, userId, neverExpires, enabled, inactive, locked, null);
     }
 
-    private static void createUserAccount(AccountDao accountDao,
-                                          String userId,
-                                          boolean neverExpires,
-                                          boolean enabled,
-                                          boolean inactive,
-                                          boolean locked,
-                                          Long reactivatedDate) {
+    private static void createUserAccount(final AccountDao accountDao,
+                                          final String userId,
+                                          final boolean neverExpires,
+                                          final boolean enabled,
+                                          final boolean inactive,
+                                          final boolean locked,
+                                          final Long reactivatedDate) {
         final Account account = new Account();
         account.setCreateTimeMs(System.currentTimeMillis());
         account.setCreateUser("UserDao_IT");
@@ -364,9 +366,9 @@ public class AccountDaoIT extends DatabaseIT {
         assertThat(newAccount.isLocked()).isEqualTo(locked);
     }
 
-    private AccountDao getUserDao(Connection conn) {
+    private AccountDao getUserDao(final Connection conn) {
         // We don't care about most config for this test, so we'll pass in null
-        AccountDao accountDao = new AccountDaoImpl(
+        final AccountDao accountDao = new AccountDaoImpl(
                 null,
                 new IdentityDbModule.DataSourceImpl(
                         DbTestUtil.createTestDataSource(new CommonDbConfig(), "account-test", false)),

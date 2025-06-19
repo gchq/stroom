@@ -39,7 +39,7 @@ class TestJobDaoImpl {
     @Test
     void basicCreation() {
         // Given/when
-        Job job = createStandardJob();
+        final Job job = createStandardJob();
 
         // Then
         assertThat(job.getId()).isNotNull();
@@ -47,7 +47,7 @@ class TestJobDaoImpl {
         assertThat(job.getName()).isEqualTo("Some name");
         assertThat(job.isEnabled()).isTrue();
 
-        Job loadedJob = dao.fetch(job.getId()).get();
+        final Job loadedJob = dao.fetch(job.getId()).get();
         assertThat(loadedJob.getId()).isEqualTo(job.getId());
         assertThat(loadedJob.getVersion()).isNotNull();
         assertThat(loadedJob.getName()).isEqualTo("Some name");
@@ -57,7 +57,7 @@ class TestJobDaoImpl {
     @Test
     void descriptionTooLong() {
         // Given
-        Job job = new Job();
+        final Job job = new Job();
         job.setEnabled(true);
         job.setName(RandomStringUtils.randomAlphabetic(256));
 
@@ -68,7 +68,7 @@ class TestJobDaoImpl {
     @Test
     void badFetch() {
         // Given/when
-        Optional<Job> job = dao.fetch(11111);
+        final Optional<Job> job = dao.fetch(11111);
         // Then
         assertThat(job.isPresent()).isFalse();
     }
@@ -76,13 +76,13 @@ class TestJobDaoImpl {
     @Test
     void update() {
         // Given
-        Job job = createStandardJob();
+        final Job job = createStandardJob();
         final int version = job.getVersion();
         job.setName("Different name");
         job.setEnabled(false);
 
         // When
-        Job updatedJob = dao.update(job);
+        final Job updatedJob = dao.update(job);
 
         // Then
         assertThat(updatedJob.getId()).isEqualTo(job.getId());
@@ -91,7 +91,7 @@ class TestJobDaoImpl {
         assertThat(updatedJob.isEnabled()).isFalse();
 
         // Then
-        Job fetchedUpdatedJob = dao.fetch(updatedJob.getId()).get();
+        final Job fetchedUpdatedJob = dao.fetch(updatedJob.getId()).get();
         assertThat(fetchedUpdatedJob.getId()).isEqualTo(job.getId());
         assertThat(fetchedUpdatedJob.getVersion()).isEqualTo(version + 1);
         assertThat(fetchedUpdatedJob.getName()).isEqualTo("Different name");
@@ -101,21 +101,21 @@ class TestJobDaoImpl {
     @Test
     void delete() {
         // Given
-        Job job = createStandardJob();
+        final Job job = createStandardJob();
 
         // When
-        boolean didDeleteSucceed = dao.delete(job.getId());
+        final boolean didDeleteSucceed = dao.delete(job.getId());
 
         // Then
         assertThat(didDeleteSucceed).isTrue();
-        Optional<Job> optionalJob = dao.fetch(job.getId());
+        final Optional<Job> optionalJob = dao.fetch(job.getId());
         assertThat(optionalJob.isPresent()).isFalse();
     }
 
     @Test
     void badDelete() {
         // Given/when
-        boolean didDeleteSucceed = dao.delete(111111);
+        final boolean didDeleteSucceed = dao.delete(111111);
         // Then
         assertThat(didDeleteSucceed).isFalse();
     }
@@ -123,9 +123,9 @@ class TestJobDaoImpl {
     @Test
     void checkOcc() {
         // Given
-        Job job = createStandardJob();
-        Job copy1 = dao.fetch(job.getId()).get();
-        Job copy2 = dao.fetch(job.getId()).get();
+        final Job job = createStandardJob();
+        final Job copy1 = dao.fetch(job.getId()).get();
+        final Job copy2 = dao.fetch(job.getId()).get();
 
         copy1.setName("change 1");
         dao.update(copy1);
@@ -137,11 +137,11 @@ class TestJobDaoImpl {
     }
 
     private Job createStandardJob() {
-        Job job = new Job();
+        final Job job = new Job();
         AuditUtil.stamp(() -> "test", job);
         job.setEnabled(true);
         job.setName("Some name");
-        Job createdJob = dao.create(job);
+        final Job createdJob = dao.create(job);
         return createdJob;
     }
 

@@ -18,8 +18,8 @@ public interface ThrowingFunction<T, R, E extends Throwable> {
         return t -> {
             try {
                 return f.apply(t);
-            } catch (Throwable e) {
-                if (e instanceof IOException ioe) {
+            } catch (final Throwable e) {
+                if (e instanceof final IOException ioe) {
                     throw new UncheckedIOException(ioe);
                 } else {
                     throw new RuntimeException(e);

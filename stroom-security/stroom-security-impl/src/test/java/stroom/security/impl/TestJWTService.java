@@ -86,7 +86,7 @@ class TestJWTService {
                     .isEqualTo(defaultOpenIdCredentials.getApiKeyUserEmail());
             assertThat(jwtClaims.getAudience())
                     .contains(defaultOpenIdCredentials.getOauth2ClientId());
-            LocalDateTime expiryTime = LocalDateTime.ofInstant(
+            final LocalDateTime expiryTime = LocalDateTime.ofInstant(
                     Instant.ofEpochMilli(jwtClaims.getExpirationTime().getValueInMillis()),
                     ZoneOffset.UTC);
 
@@ -95,7 +95,7 @@ class TestJWTService {
                     LocalDateTime.now(ZoneOffset.UTC).toLocalDate(),
                     expiryTime.toLocalDate()).getYears())
                     .isGreaterThan(1);
-        } catch (MalformedClaimException e) {
+        } catch (final MalformedClaimException e) {
             e.printStackTrace();
         }
     }
@@ -130,13 +130,13 @@ class TestJWTService {
         //
 
         // Generate an RSA key pair, which will be used for signing and verification of the JWT, wrapped in a JWK
-        RsaJsonWebKey rsaJsonWebKey = RsaJwkGenerator.generateJwk(2048);
+        final RsaJsonWebKey rsaJsonWebKey = RsaJwkGenerator.generateJwk(2048);
 
         // Give the JWK a Key ID (kid), which is just the polite thing to do
         rsaJsonWebKey.setKeyId("k1");
 
         // Create the Claims, which will be the content of the JWT
-        JwtClaims claims = new JwtClaims();
+        final JwtClaims claims = new JwtClaims();
         claims.setIssuer("Issuer");  // who creates the token and signs it
         claims.setAudience("Audience"); // to whom the token is intended to be sent
         claims.setExpirationTimeMinutesInTheFuture(10); // time when the token will expire (10 minutes from now)
@@ -146,13 +146,13 @@ class TestJWTService {
         claims.setSubject("subject"); // the subject/principal is whom the token is about
         // additional claims/attributes about the subject can be added
         claims.setClaim("email", "mail@example.com");
-        List<String> groups = Arrays.asList("group-one", "other-group", "group-three");
+        final List<String> groups = Arrays.asList("group-one", "other-group", "group-three");
         // multi-valued claims work too and will end up as a JSON array
         claims.setStringListClaim("groups", groups);
 
         // A JWT is a JWS and/or a JWE with JSON claims as the payload.
         // In this example it is a JWS so we create a JsonWebSignature object.
-        JsonWebSignature jws = new JsonWebSignature();
+        final JsonWebSignature jws = new JsonWebSignature();
 
         // The payload of the JWS is JSON content of the JWT Claims
         jws.setPayload(claims.toJson());
@@ -173,7 +173,7 @@ class TestJWTService {
         // base64url-encoded parts in the form Header.Payload.Signature
         // If you wanted to encrypt it, you can simply set this jwt as the payload
         // of a JsonWebEncryption object and set the cty (Content Type) header to "jwt".
-        String jwt = jws.getCompactSerialization();
+        final String jwt = jws.getCompactSerialization();
 
 
         // Now you can do something with the JWT. Like send it to some other party
@@ -187,7 +187,7 @@ class TestJWTService {
         // and audience that identifies your system as the intended recipient.
         // If the JWT is encrypted too, you need only provide a decryption key or
         // decryption key resolver to the builder.
-        JwtConsumer jwtConsumer = new JwtConsumerBuilder()
+        final JwtConsumer jwtConsumer = new JwtConsumerBuilder()
                 .setRequireExpirationTime() // the JWT must have an expiration time
                 .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to
                 //                                   account for clock skew
@@ -211,7 +211,7 @@ class TestJWTService {
 
 
         //  Validate the JWT and process it to the Claims
-        JwtClaims jwtClaims = jwtConsumer.processToClaims(jwt);
+        final JwtClaims jwtClaims = jwtConsumer.processToClaims(jwt);
         System.out.println("JWT validation succeeded! " + jwtClaims);
 
     }

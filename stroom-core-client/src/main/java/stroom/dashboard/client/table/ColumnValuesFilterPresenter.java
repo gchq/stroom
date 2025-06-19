@@ -102,7 +102,7 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         cellTable.addColumn(getTickBoxColumn());
         cellTable.setSkipRowHoverCheck(true);
 
-        MySingleSelectionModel<String> selectionModel = new MySingleSelectionModel<>();
+        final MySingleSelectionModel<String> selectionModel = new MySingleSelectionModel<>();
         typeFilterSelectionEventManager = new ColumnValueSelectionEventManager(cellTable);
         cellTable.setSelectionModel(selectionModel, typeFilterSelectionEventManager);
 

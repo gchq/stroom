@@ -34,7 +34,7 @@ class TestFsFileDeleter {
     final AtomicLong dirDeleteCounter = new AtomicLong(0);
 
     @Test
-    void deleteFilesByBaseName(@TempDir Path tempDir) throws IOException {
+    void deleteFilesByBaseName(@TempDir final Path tempDir) throws IOException {
 
         final String baseName1 = "001";
         Files.createFile(tempDir.resolve(baseName1 + ".dat"));
@@ -69,7 +69,7 @@ class TestFsFileDeleter {
     }
 
     @Test
-    void deleteFilesByBaseName_rerun(@TempDir Path tempDir) throws IOException {
+    void deleteFilesByBaseName_rerun(@TempDir final Path tempDir) throws IOException {
 
         final String baseName1 = "001";
         Files.createFile(tempDir.resolve(baseName1 + ".dat"));
@@ -118,7 +118,7 @@ class TestFsFileDeleter {
 
     @Disabled // Too time sensitive and unpredictable, fine in dev, fails in CI
     @Test
-    void deleteFilesByBaseName_interrupted(@TempDir Path tempDir)
+    void deleteFilesByBaseName_interrupted(@TempDir final Path tempDir)
             throws IOException, InterruptedException, ExecutionException {
 
         final String baseName1 = "001";
@@ -172,7 +172,7 @@ class TestFsFileDeleter {
     }
 
     @Test
-    void deleteFilesByBaseName_noFiles(@TempDir Path tempDir) throws IOException {
+    void deleteFilesByBaseName_noFiles(@TempDir final Path tempDir) throws IOException {
 
         assertThat(FileUtil.count(tempDir))
                 .isEqualTo(0);
@@ -192,7 +192,7 @@ class TestFsFileDeleter {
     }
 
     @Test
-    void deleteFilesByBaseName_badDir(@TempDir Path tempDir) throws IOException {
+    void deleteFilesByBaseName_badDir(@TempDir final Path tempDir) throws IOException {
 
 
         final Path notExistsDir = tempDir.resolve("i_dont_exist");
@@ -212,7 +212,7 @@ class TestFsFileDeleter {
     }
 
     @Test
-    void tryDeleteDir_badDir(@TempDir Path tempDir) {
+    void tryDeleteDir_badDir(@TempDir final Path tempDir) {
 
         final Path notExistsDir = tempDir.resolve(UUID.randomUUID().toString());
 
@@ -235,7 +235,7 @@ class TestFsFileDeleter {
     }
 
     @Test
-    void tryDeleteDir_sameDir(@TempDir Path tempDir) {
+    void tryDeleteDir_sameDir(@TempDir final Path tempDir) {
 
         assertThat(tempDir)
                 .exists()
@@ -262,7 +262,7 @@ class TestFsFileDeleter {
     }
 
     @Test
-    void tryDeleteDir_oneLevelDeep(@TempDir Path tempDir) throws IOException {
+    void tryDeleteDir_oneLevelDeep(@TempDir final Path tempDir) throws IOException {
 
         final Path level1 = tempDir.resolve("level1");
         Files.createDirectories(level1);
@@ -294,7 +294,7 @@ class TestFsFileDeleter {
     }
 
     @Test
-    void tryDeleteDir_twoLevelsDeep(@TempDir Path tempDir) throws IOException {
+    void tryDeleteDir_twoLevelsDeep(@TempDir final Path tempDir) throws IOException {
 
         final Path level1 = tempDir.resolve("level1");
         final Path level2 = level1.resolve("level2");
@@ -330,7 +330,7 @@ class TestFsFileDeleter {
     }
 
     @Test
-    void tryDeleteDir_twoLevelsDeep_reRun(@TempDir Path tempDir) throws IOException {
+    void tryDeleteDir_twoLevelsDeep_reRun(@TempDir final Path tempDir) throws IOException {
 
         final Path level1 = tempDir.resolve("level1");
         final Path level2 = level1.resolve("level2");
@@ -389,7 +389,7 @@ class TestFsFileDeleter {
     }
 
     @Test
-    void tryDeleteDir_twoLevelsDeep_nonEmptyLevel1(@TempDir Path tempDir) throws IOException {
+    void tryDeleteDir_twoLevelsDeep_nonEmptyLevel1(@TempDir final Path tempDir) throws IOException {
 
         final Path level1Dir = tempDir.resolve("level1");
         final Path level2Dir = level1Dir.resolve("level2");
@@ -435,7 +435,7 @@ class TestFsFileDeleter {
     }
 
     @Test
-    void tryDeleteDir_twoLevelsDeep_notADir(@TempDir Path tempDir) throws IOException {
+    void tryDeleteDir_twoLevelsDeep_notADir(@TempDir final Path tempDir) throws IOException {
 
         final Path level1Dir = tempDir.resolve("level1");
         final Path level2Dir = level1Dir.resolve("level2");
@@ -483,7 +483,7 @@ class TestFsFileDeleter {
     }
 
     @Test
-    void tryDeleteDir_twoLevelsDeep_tooNew(@TempDir Path tempDir) throws IOException {
+    void tryDeleteDir_twoLevelsDeep_tooNew(@TempDir final Path tempDir) throws IOException {
 
         final Path level1Dir = tempDir.resolve("level1");
         final Path level2Dir = level1Dir.resolve("level2");
@@ -522,7 +522,7 @@ class TestFsFileDeleter {
     }
 
     @Test
-    void tryDeleteDir_twoLevelsDeep_missingLevel2(@TempDir Path tempDir) throws IOException {
+    void tryDeleteDir_twoLevelsDeep_missingLevel2(@TempDir final Path tempDir) throws IOException {
 
         final Path level1Dir = tempDir.resolve("level1");
         final Path level2Dir = level1Dir.resolve("level2");
@@ -562,7 +562,7 @@ class TestFsFileDeleter {
     }
 
     @Test
-    void tryDeleteDir_dirNotInRoot(@TempDir Path tempDir1, @TempDir Path tempDir2) throws IOException {
+    void tryDeleteDir_dirNotInRoot(@TempDir final Path tempDir1, @TempDir final Path tempDir2) throws IOException {
 
         assertThat(tempDir1)
                 .exists()

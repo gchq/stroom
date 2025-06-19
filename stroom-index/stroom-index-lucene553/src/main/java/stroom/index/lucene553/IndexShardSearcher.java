@@ -92,7 +92,7 @@ class IndexShardSearcher {
                 searcherManager = new SearcherManager(directory, new SearcherFactory());
 
                 // Check the document count in the index matches the DB.
-                IndexSearcher indexSearcher = searcherManager.acquire();
+                final IndexSearcher indexSearcher = searcherManager.acquire();
                 try {
                     final int actualDocumentCount = indexSearcher.getIndexReader().numDocs();
                     if (indexShard.getDocumentCount() != actualDocumentCount) {
@@ -137,7 +137,7 @@ class IndexShardSearcher {
         // Check the document count in the index matches the DB. We are using
         // the writer so chances are there is a mismatch.
         if (LOGGER.isDebugEnabled()) {
-            IndexSearcher indexSearcher = searcherManager.acquire();
+            final IndexSearcher indexSearcher = searcherManager.acquire();
             try {
                 final int actualDocumentCount = indexSearcher.getIndexReader().numDocs();
                 if (indexShard.getDocumentCount() != actualDocumentCount) {

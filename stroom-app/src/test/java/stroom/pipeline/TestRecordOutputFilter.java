@@ -192,7 +192,7 @@ class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
                 final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(dir);
                 assertThat(Files.isDirectory(inputDir)).as("Can't find input dir").isTrue();
 
-                List<Path> inputFiles = new ArrayList<>();
+                final List<Path> inputFiles = new ArrayList<>();
                 try (final DirectoryStream<Path> stream = Files.newDirectoryStream(inputDir, inputStem + "*.in")) {
                     stream.forEach(inputFiles::add);
                 }

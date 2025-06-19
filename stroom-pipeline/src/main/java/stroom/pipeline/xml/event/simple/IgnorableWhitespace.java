@@ -66,7 +66,7 @@ public final class IgnorableWhitespace extends BaseEvent {
      */
     @Override
     public void fire(final ContentHandler handler) throws SAXException {
-        char[] ch = chars.toCharArray();
+        final char[] ch = chars.toCharArray();
         handler.ignorableWhitespace(ch, 0, ch.length);
     }
 

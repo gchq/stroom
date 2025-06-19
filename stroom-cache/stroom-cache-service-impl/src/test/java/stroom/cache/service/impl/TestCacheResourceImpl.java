@@ -86,7 +86,7 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
 
         when(cacheManagerService.find(Mockito.any(FindCacheInfoCriteria.class)))
                 .thenAnswer(invocation -> {
-                    FindCacheInfoCriteria criteria = (invocation.getArgument(0));
+                    final FindCacheInfoCriteria criteria = (invocation.getArgument(0));
                     if (criteria.getName().isConstrained()) {
                         return List.of(buildCacheInfo(
                                 criteria.getName().getString(),
@@ -164,7 +164,7 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
     void info_sameNode() {
         final String subPath = ResourcePaths.buildPath(CacheResource.INFO);
 
-        List<CacheInfo> cacheInfoList = List.of(
+        final List<CacheInfo> cacheInfoList = List.of(
                 buildCacheInfo("cache1", "node1"));
 
         final CacheInfoResponse expectedResponse = new CacheInfoResponse(cacheInfoList);
@@ -186,7 +186,7 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
     void info_otherNode() {
         final String subPath = ResourcePaths.buildPath(CacheResource.INFO);
 
-        List<CacheInfo> cacheInfoList = List.of(
+        final List<CacheInfo> cacheInfoList = List.of(
                 buildCacheInfo("cache1", "node2"));
 
         final CacheInfoResponse expectedResponse = new CacheInfoResponse(cacheInfoList);

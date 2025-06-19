@@ -45,7 +45,7 @@ public class QuickFilterExpressionParser {
         // If the default field mapper is two fields, field1 & field2 then "bad stuff" is really
         // (field1:bad OR field2:bad) AND (field1:stuff OR field2:stuff)
 
-        ExpressionOperator.Builder builder = ExpressionOperator.builder();
+        final ExpressionOperator.Builder builder = ExpressionOperator.builder();
         if (NullSafe.isNonBlankString(userInput)) {
             extractMatchTokens(userInput, defaultFields, fieldMap, builder);
         }
@@ -152,7 +152,7 @@ public class QuickFilterExpressionParser {
                     insideQuotes = !insideQuotes; // toggle state
                 }
 
-                boolean atLastChar = (current == cleanedInput.length() - 1);
+                final boolean atLastChar = (current == cleanedInput.length() - 1);
 
                 if (atLastChar) {
                     if (wasInsideQuotes) {
@@ -182,7 +182,7 @@ public class QuickFilterExpressionParser {
 //                        unEscapedQuoteCount, userInput);
                 tokens.clear();
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
 //            LOGGER.trace("Unable to parse [{}] due to: {}", userInput, e.getMessage(), e);
             // Don't want to throw as it may be unfinished user input.
         }

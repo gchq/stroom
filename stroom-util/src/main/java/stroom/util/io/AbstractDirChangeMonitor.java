@@ -104,7 +104,7 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
             try {
                 startWatcher();
                 onInitialisation();
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 // Swallow and log as we don't want to stop the app from starting just for this
                 errors.add(e.getMessage());
                 LOGGER.error(
@@ -128,7 +128,7 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
     private void startWatcher() throws IOException {
         try {
             watchService = FileSystems.getDefault().newWatchService();
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message("Error creating watch new service, {}", e.getMessage()), e);
         }
 
@@ -150,7 +150,7 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
                     isRunning.compareAndSet(false, true);
                     // block until the watch service spots a change
                     watchKey = watchService.take();
-                } catch (InterruptedException ie) {
+                } catch (final InterruptedException ie) {
                     Thread.currentThread().interrupt();
                     // continue to re-use the if block above
                     continue;
@@ -159,7 +159,7 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
                 final List<WatchEvent<?>> watchEvents = watchKey.pollEvents();
                 LOGGER.debug(() -> LogUtil.message("Received {} events", watchEvents.size()));
 
-                for (WatchEvent<?> event : watchEvents) {
+                for (final WatchEvent<?> event : watchEvents) {
                     if (LOGGER.isDebugEnabled()) {
                         if (event == null) {
                             LOGGER.debug("Event is null");
@@ -189,7 +189,7 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
                         }
                     }
                 }
-                boolean isValid = watchKey.reset();
+                final boolean isValid = watchKey.reset();
                 if (!isValid) {
                     LOGGER.warn("Watch key is no longer valid, the watch service may have been stopped");
                     break;
@@ -217,7 +217,7 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
             } else {
                 LOGGER.debug("Ignoring eventType: {} on affectedFile: {}", eventType, affectedFile);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error handling watch event, kind: {}, affectedFile: {}", kind.name(), affectedFile, e);
             // Swallow error so future changes can be monitored.
         }
@@ -247,7 +247,7 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
                                                 SimpleWatchEvent::path,
                                                 Collectors.toList()));
 
-                                for (Entry<Path, List<SimpleWatchEvent>> entry : groupedByPath.entrySet()) {
+                                for (final Entry<Path, List<SimpleWatchEvent>> entry : groupedByPath.entrySet()) {
                                     final Path path = entry.getKey();
                                     List<SimpleWatchEvent> eventsForPath = entry.getValue();
                                     LOGGER.debug("path: {}, simpleWatchEvents: {}", path, eventsForPath);
@@ -335,7 +335,7 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
 
     @Override
     public HealthCheck.Result getHealth() {
-        HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
+        final HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
 
         // isRunning will only be true if the file is also present and valid
         if (dirToWatch == null) {

@@ -66,7 +66,7 @@ public abstract class AbstractXMLSerialiser<T> {
 
         try {
             return JAXBContext.newInstance(getSerialisableClass());
-        } catch (JAXBException e) {
+        } catch (final JAXBException e) {
             throw new RuntimeException(e);
         }
     }

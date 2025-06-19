@@ -117,7 +117,7 @@ public class DiffUtil {
     private static String getFileAsString(final Path file) {
         try {
             return Files.readString(file);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message("Error opening file {}: {}",
                     file.toAbsolutePath().normalize(), e.getMessage()), e);
         }

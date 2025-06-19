@@ -14,7 +14,7 @@ public abstract class TempDirSuperClass {
     Path instanceTempDir2;
 
     @BeforeEach
-    public void setup(@TempDir Path tempDir) {
+    public void setup(@TempDir final Path tempDir) {
         Assertions.assertThat(tempDir).isNotNull();
         Assertions.assertThat(instanceTempDir2).isNotNull();
 

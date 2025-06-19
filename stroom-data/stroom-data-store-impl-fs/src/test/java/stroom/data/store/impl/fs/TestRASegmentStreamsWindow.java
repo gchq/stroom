@@ -30,9 +30,11 @@ import java.nio.file.Path;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestRASegmentStreamsWindow {
+
     @Test
-    void testFullWindowNoDataSegments(@TempDir Path tempDir) throws IOException {
-        final SegmentOutputStream os = new RASegmentOutputStream(new BlockGZIPOutputFile(tempDir.resolve("test.dat")),
+    void testFullWindowNoDataSegments(@TempDir final Path tempDir) throws IOException {
+        final SegmentOutputStream os = new RASegmentOutputStream(
+                new BlockGZIPOutputFile(tempDir.resolve("test.dat")),
                 () -> Files.newOutputStream(tempDir.resolve("test.idx")));
 
         os.addSegment();
@@ -65,8 +67,9 @@ class TestRASegmentStreamsWindow {
     }
 
     @Test
-    void testFullWindowNoDataSegments1(@TempDir Path tempDir) throws IOException {
-        final SegmentOutputStream os = new RASegmentOutputStream(new BlockGZIPOutputFile(tempDir.resolve("test.dat")),
+    void testFullWindowNoDataSegments1(@TempDir final Path tempDir) throws IOException {
+        final SegmentOutputStream os = new RASegmentOutputStream(
+                new BlockGZIPOutputFile(tempDir.resolve("test.dat")),
                 () -> Files.newOutputStream(tempDir.resolve("test.idx")));
 
         os.write("TEST".getBytes(StreamUtil.DEFAULT_CHARSET));
@@ -113,8 +116,9 @@ class TestRASegmentStreamsWindow {
     }
 
     @Test
-    void testPartialWindowSegments1(@TempDir Path tempDir) throws IOException {
-        final SegmentOutputStream os = new RASegmentOutputStream(new BlockGZIPOutputFile(tempDir.resolve("test.dat")),
+    void testPartialWindowSegments1(@TempDir final Path tempDir) throws IOException {
+        final SegmentOutputStream os = new RASegmentOutputStream(
+                new BlockGZIPOutputFile(tempDir.resolve("test.dat")),
                 () -> Files.newOutputStream(tempDir.resolve("test.idx")));
 
         // 0
@@ -165,10 +169,11 @@ class TestRASegmentStreamsWindow {
     }
 
     @Test
-    void testPartialWindowSegments2(@TempDir Path tempDir) throws IOException {
+    void testPartialWindowSegments2(@TempDir final Path tempDir) throws IOException {
         FileUtil.deleteContents(tempDir);
 
-        try (SegmentOutputStream os = new RASegmentOutputStream(new BlockGZIPOutputFile(tempDir.resolve("test.dat")),
+        try (final SegmentOutputStream os = new RASegmentOutputStream(
+                new BlockGZIPOutputFile(tempDir.resolve("test.dat")),
                 () -> Files.newOutputStream(tempDir.resolve("test.idx")))) {
             os.write("TEST".getBytes(StreamUtil.DEFAULT_CHARSET));
             os.addSegment();
@@ -180,7 +185,8 @@ class TestRASegmentStreamsWindow {
 
             os.close();
 
-            RASegmentInputStream is = new RASegmentInputStream(new BlockGZIPInputFile(tempDir.resolve("test.dat")),
+            RASegmentInputStream is = new RASegmentInputStream(
+                    new BlockGZIPInputFile(tempDir.resolve("test.dat")),
                     new UncompressedInputStream(tempDir.resolve("test.idx"), true), 2, 6);
 
             assertThat(is.count()).isEqualTo(6);
@@ -203,15 +209,17 @@ class TestRASegmentStreamsWindow {
     }
 
     @Test
-    void testFullWindowNoSegments(@TempDir Path tempDir) throws IOException {
-        try (SegmentOutputStream os = new RASegmentOutputStream(new BlockGZIPOutputFile(tempDir.resolve("test.dat")),
+    void testFullWindowNoSegments(@TempDir final Path tempDir) throws IOException {
+        try (final SegmentOutputStream os = new RASegmentOutputStream(
+                new BlockGZIPOutputFile(tempDir.resolve("test.dat")),
                 () -> Files.newOutputStream(tempDir.resolve("test.idx")))) {
             // 0
             os.write("TEST".getBytes(StreamUtil.DEFAULT_CHARSET));
 
             os.close();
 
-            RASegmentInputStream is = new RASegmentInputStream(new BlockGZIPInputFile(tempDir.resolve("test.dat")),
+            RASegmentInputStream is = new RASegmentInputStream(
+                    new BlockGZIPInputFile(tempDir.resolve("test.dat")),
                     new UncompressedInputStream(tempDir.resolve("test.idx"), true), 0, 4);
 
             assertThat(is.count()).isEqualTo(1);
@@ -230,15 +238,17 @@ class TestRASegmentStreamsWindow {
     }
 
     @Test
-    void testPartialWindowNoSegments(@TempDir Path tempDir) throws IOException {
-        try (SegmentOutputStream os = new RASegmentOutputStream(new BlockGZIPOutputFile(tempDir.resolve("test.dat")),
+    void testPartialWindowNoSegments(@TempDir final Path tempDir) throws IOException {
+        try (final SegmentOutputStream os = new RASegmentOutputStream(
+                new BlockGZIPOutputFile(tempDir.resolve("test.dat")),
                 () -> Files.newOutputStream(tempDir.resolve("test.idx")))) {
             // 0
             os.write("TEST".getBytes(StreamUtil.DEFAULT_CHARSET));
 
             os.close();
 
-            RASegmentInputStream is = new RASegmentInputStream(new BlockGZIPInputFile(tempDir.resolve("test.dat")),
+            RASegmentInputStream is = new RASegmentInputStream(
+                    new BlockGZIPInputFile(tempDir.resolve("test.dat")),
                     new UncompressedInputStream(tempDir.resolve("test.idx"), true), 0, 2);
             assertThat(is.count()).isEqualTo(1);
             is.include(0);

@@ -247,7 +247,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
             }
             case UNIQUE -> {
                 for (final Object object : objects) {
-                    String value = getStringValue(object, xPathFilter.isIgnoreCase());
+                    final String value = getStringValue(object, xPathFilter.isIgnoreCase());
                     // See if we previously found a matching record
                     // for this filter.
                     Rec record = xPathFilter.getUniqueRecord(value);
@@ -274,13 +274,13 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
     /**
      * @return value as a string, trimmed and, if ignoreCase is true, converted to lower case
      */
-    private static String getStringValue(final Object object, Boolean ignoreCase) {
+    private static String getStringValue(final Object object, final Boolean ignoreCase) {
         if (object == null) {
             return null;
         } else {
             return switch (object) {
-                case NodeInfo nodeInfo -> clean(nodeInfo.getStringValue(), ignoreCase);
-                case String str -> clean(str, ignoreCase);
+                case final NodeInfo nodeInfo -> clean(nodeInfo.getStringValue(), ignoreCase);
+                case final String str -> clean(str, ignoreCase);
                 default -> object.toString();
             };
         }
@@ -296,7 +296,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
     private static boolean contains(final Object value, final String text, final Boolean ignoreCase) {
         // Contains doesn't really make any sense for any type other than string, so just convert whatever it
         // is to a string and do contains on that.
-        String valueStr = getStringValue(value, ignoreCase);
+        final String valueStr = getStringValue(value, ignoreCase);
 
         if (valueStr == null || text == null) {
             return false;
@@ -316,11 +316,11 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
             return false;
         } else {
             return switch (value) {
-                case NodeInfo nodeInfo -> equalsAsString(nodeInfo.getStringValue(), text, ignoreCase);
-                case String str -> equalsAsString(str, text, ignoreCase);
-                case Double aDouble -> equalsAsDouble(aDouble, text);
-                case Long aLong -> equalsAsLong(aLong, text);
-                case Boolean aBool -> equalsAsBoolean(aBool, text);
+                case final NodeInfo nodeInfo -> equalsAsString(nodeInfo.getStringValue(), text, ignoreCase);
+                case final String str -> equalsAsString(str, text, ignoreCase);
+                case final Double aDouble -> equalsAsDouble(aDouble, text);
+                case final Long aLong -> equalsAsLong(aLong, text);
+                case final Boolean aBool -> equalsAsBoolean(aBool, text);
                 default -> equalsAsString(value.toString(), text, ignoreCase);
             };
         }
@@ -330,8 +330,8 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
         if (value == null || text == null) {
             return false;
         } else {
-            String val = value.trim();
-            String txt = text.trim();
+            final String val = value.trim();
+            final String txt = text.trim();
 
             if (NullSafe.isTrue(ignoreCase)) {
                 return val.equalsIgnoreCase(txt);
@@ -345,7 +345,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
         try {
             final Double val2 = Double.parseDouble(text);
             return value.equals(val2);
-        } catch (NumberFormatException e) {
+        } catch (final NumberFormatException e) {
             // We know the xpath returned a number so if we can't parse the user value to a number
             // it is not a match
             return false;
@@ -356,7 +356,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
         try {
             final Long val2 = Long.parseLong(text);
             return value.equals(val2);
-        } catch (NumberFormatException e) {
+        } catch (final NumberFormatException e) {
             // We know the xpath returned a number so if we can't parse the user value to a number
             // it is not a match
             return false;
@@ -367,7 +367,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
         try {
             final Boolean val2 = Boolean.parseBoolean(text);
             return value.equals(val2);
-        } catch (NumberFormatException e) {
+        } catch (final NumberFormatException e) {
             // We know the xpath returned a number so if we can't parse the user value to a number
             // it is not a match
             return false;

@@ -11,8 +11,8 @@ class TestResultPage {
     @Test
     void testCollector1() {
 
-        PageRequest pageRequest = new PageRequest(10, 10);
-        ResultPage<WrappedInt> resultPage = IntStream.rangeClosed(0, 99)
+        final PageRequest pageRequest = new PageRequest(10, 10);
+        final ResultPage<WrappedInt> resultPage = IntStream.rangeClosed(0, 99)
                 .boxed()
                 .map(WrappedInt::new)
                 .collect(ResultPage.collector(pageRequest));
@@ -25,7 +25,7 @@ class TestResultPage {
     @Test
     void testCollector2() {
 
-        ResultPage<WrappedInt> resultPage = IntStream.rangeClosed(0, 99)
+        final ResultPage<WrappedInt> resultPage = IntStream.rangeClosed(0, 99)
                 .boxed()
                 .map(WrappedInt::new)
                 .collect(ResultPage.collector(ResultPage::new));
@@ -38,7 +38,7 @@ class TestResultPage {
     @Test
     void testCollector3() {
 
-        ResultPage<WrappedInt> resultPage = IntStream.rangeClosed(0, 99)
+        final ResultPage<WrappedInt> resultPage = IntStream.rangeClosed(0, 99)
                 .boxed()
                 .map(WrappedInt::new)
                 .collect(ResultPage.collector((PageRequest) null));

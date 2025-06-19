@@ -19,7 +19,7 @@ public class ByteSize {
 
     private ByteSize(final String valueAsStr) {
         Objects.requireNonNull(valueAsStr);
-        Long bytes = ModelStringUtil.parseIECByteSizeString(valueAsStr);
+        final Long bytes = ModelStringUtil.parseIECByteSizeString(valueAsStr);
 
         if (bytes == null) {
             throw new IllegalArgumentException("Unable to parse [" + valueAsStr + "] to a ByteSize.");

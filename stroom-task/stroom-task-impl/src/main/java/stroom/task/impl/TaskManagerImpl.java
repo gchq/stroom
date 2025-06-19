@@ -376,10 +376,10 @@ class TaskManagerImpl implements TaskManager {
         final List<TaskProgress> colourTasks = taskNames.stream()
                 .flatMap(taskname -> {
                     // Need to make sure task IDs are unique over the cluster
-                    TaskId grandparentTaskId = new TaskId(thisNodeName + "-" + id.incrementAndGet(), null);
-                    TaskId parentTaskId = new TaskId(thisNodeName + "-" + id.incrementAndGet(),
+                    final TaskId grandparentTaskId = new TaskId(thisNodeName + "-" + id.incrementAndGet(), null);
+                    final TaskId parentTaskId = new TaskId(thisNodeName + "-" + id.incrementAndGet(),
                             grandparentTaskId);
-                    TaskId childTaskId = new TaskId(thisNodeName + "-" + id.incrementAndGet(),
+                    final TaskId childTaskId = new TaskId(thisNodeName + "-" + id.incrementAndGet(),
                             parentTaskId);
                     return Stream.of(
                             Tuple.of(taskname + "-grandparent", grandparentTaskId),
@@ -387,8 +387,8 @@ class TaskManagerImpl implements TaskManager {
                             Tuple.of(taskname + "-child", childTaskId));
                 })
                 .map(tuple2 -> {
-                    String taskName = tuple2._1();
-                    TaskId taskId = tuple2._2();
+                    final String taskName = tuple2._1();
+                    final TaskId taskId = tuple2._2();
                     String taskInfo = "taskInfo-" + taskName;
                     // Make a long taskInfo so we can test cell wrapping
                     for (int i = 0; i < 3; i++) {

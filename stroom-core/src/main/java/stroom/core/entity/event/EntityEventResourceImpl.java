@@ -69,7 +69,7 @@ class EntityEventResourceImpl implements EntityEventResource {
 
             try {
                 final Boolean success;
-                try (Response response = webTargetFactoryProvider
+                try (final Response response = webTargetFactoryProvider
                         .get()
                         .create(url)
                         .request(MediaType.APPLICATION_JSON)
@@ -81,7 +81,7 @@ class EntityEventResourceImpl implements EntityEventResource {
                 }
                 Objects.requireNonNull(success, "Null success");
                 return success;
-            } catch (Throwable e) {
+            } catch (final Throwable e) {
                 throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
         }

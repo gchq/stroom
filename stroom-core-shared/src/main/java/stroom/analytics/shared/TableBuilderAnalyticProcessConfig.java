@@ -41,7 +41,7 @@ public final class TableBuilderAnalyticProcessConfig extends AnalyticProcessConf
                                              @JsonProperty("maxMetaCreateTimeMs") final Long maxMetaCreateTimeMs,
                                              @JsonProperty("timeToWaitForData") final SimpleDuration timeToWaitForData,
                                              @JsonProperty("dataRetention") final SimpleDuration dataRetention,
-                                             @JsonProperty("runAsUser") UserRef runAsUser) {
+                                             @JsonProperty("runAsUser") final UserRef runAsUser) {
         this.enabled = enabled;
         this.node = node;
         this.errorFeed = errorFeed;

@@ -337,7 +337,7 @@ class IndexShardDaoImpl implements IndexShardDao {
                     final Optional<IndexShardStatus> optStatus = fetch(id)
                             .map(IndexShard::getStatus);
                     LOGGER.debug("Unable to update status to {} for shard id {}, optStatus: {}", status, id, optStatus);
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     LOGGER.debug("Error trying to fetch shard for debug", e);
                 }
             }

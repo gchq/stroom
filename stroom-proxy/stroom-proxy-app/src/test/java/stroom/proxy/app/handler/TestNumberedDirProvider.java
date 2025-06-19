@@ -56,7 +56,7 @@ public class TestNumberedDirProvider extends StroomUnitTest {
     }
 
     @Test
-    void testBadPaths(@TempDir Path dir) throws Exception {
+    void testBadPaths(@TempDir final Path dir) throws Exception {
 
         NumberedDirProvider numberedDirProvider = new NumberedDirProvider(dir);
         assertThat(numberedDirProvider.get().getFileName().toString())
@@ -74,7 +74,7 @@ public class TestNumberedDirProvider extends StroomUnitTest {
     }
 
     @Test
-    void testMissingItems(@TempDir Path dir) throws Exception {
+    void testMissingItems(@TempDir final Path dir) throws Exception {
 
         NumberedDirProvider numberedDirProvider = new NumberedDirProvider(dir);
         assertThat(numberedDirProvider.get().getFileName().toString())
@@ -180,7 +180,7 @@ public class TestNumberedDirProvider extends StroomUnitTest {
         if (num == 0) {
             return "0000000000";
         } else {
-            int length = (int) (Math.log10(num) + 1);
+            final int length = (int) (Math.log10(num) + 1);
             return switch (length) {
                 case 0 -> "0000000000";
                 case 1 -> "000000000" + num;
@@ -203,7 +203,7 @@ public class TestNumberedDirProvider extends StroomUnitTest {
             return "0000000000";
         } else {
             final String str = String.valueOf(num);
-            int len = str.length();
+            final int len = str.length();
             return switch (len) {
                 case 0 -> "0000000000";
                 case 1 -> "000000000" + str;
@@ -222,7 +222,7 @@ public class TestNumberedDirProvider extends StroomUnitTest {
 
     private static String create4(final long num) {
         final String str = String.valueOf(num);
-        int len = str.length();
+        final int len = str.length();
         return switch (len) {
             case 0 -> "0000000000";
             case 1 -> "000000000" + str;

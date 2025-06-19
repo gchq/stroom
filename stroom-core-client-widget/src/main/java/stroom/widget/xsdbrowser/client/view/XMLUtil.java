@@ -29,7 +29,7 @@ public final class XMLUtil {
 
     public static String removePrefix(final String qName) {
         String localName = qName;
-        int index = localName.lastIndexOf(":");
+        final int index = localName.lastIndexOf(":");
         if (index != -1) {
             localName = localName.substring(index + 1);
         }

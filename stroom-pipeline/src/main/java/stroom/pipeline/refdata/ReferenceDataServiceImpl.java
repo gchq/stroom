@@ -203,7 +203,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                 }
 
                 entries = refDataStore.list(limit, predicate);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.error("Error listing reference data", e);
                 throw e;
             }
@@ -238,7 +238,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                 }
 
                 entries = refDataStore.listProcessingInfo(limit, predicate);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.error("Error listing ref stream processing info data", e);
                 throw e;
             }
@@ -618,7 +618,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             }
 
             return stringWriter.toString();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             // Errors for unknown keys are to be expected
             if (!(e instanceof NotFoundException)) {
                 LOGGER.error("Error looking up {}", refDataLookupRequest, e);
@@ -819,7 +819,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             } else {
                 return refStoreEntry -> true;
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error building predicate for {}", expressionCriteria, e);
             throw e;
         }
@@ -883,7 +883,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
                 // expecting all list items to be non null
                 for (final Predicate<T> childPredicate : childPredicates) {
-                    boolean testResult = childPredicate.test(val);
+                    final boolean testResult = childPredicate.test(val);
 
                     compoundResult = compoundResult && testResult;
 
@@ -908,7 +908,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
                 // expecting all list items to be non null
                 for (final Predicate<T> childPredicate : childPredicates) {
-                    boolean testResult = childPredicate.test(val);
+                    final boolean testResult = childPredicate.test(val);
 
                     compoundResult = compoundResult || testResult;
 
@@ -934,7 +934,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                 // expecting all list items to be non null
                 for (final Predicate<T> childPredicate : childPredicates) {
                     // treat NOT(x, y) as AND(NOT(x), NOT(y))
-                    boolean testResult = !childPredicate.test(val);
+                    final boolean testResult = !childPredicate.test(val);
 
                     if (compoundResult == null) {
                         compoundResult = testResult;
@@ -964,7 +964,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
         // name => field
         // field => fieldType
-        QueryField abstractField = FIELD_NAME_TO_FIELD_MAP.get(expressionTerm.getField());
+        final QueryField abstractField = FIELD_NAME_TO_FIELD_MAP.get(expressionTerm.getField());
 
         return switch (abstractField.getFldType()) {
             case TEXT -> buildTextFieldPredicate(expressionTerm, refStoreEntry ->

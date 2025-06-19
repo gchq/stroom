@@ -30,10 +30,10 @@ class TestWord {
 
     @Test
     void testEquality() {
-        Word word1a = new Word("cat", "100", null);
-        Word word1b = new Word("cat", "100", null);
-        Word word2a = new Word("cat", "200", null);
-        Word word2b = new Word("dog", "200", null);
+        final Word word1a = new Word("cat", "100", null);
+        final Word word1b = new Word("cat", "100", null);
+        final Word word2a = new Word("cat", "200", null);
+        final Word word2b = new Word("dog", "200", null);
 
         assertThat(word1a)
                 .isEqualTo(word1b);

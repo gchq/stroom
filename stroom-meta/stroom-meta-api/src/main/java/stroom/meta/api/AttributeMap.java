@@ -252,7 +252,7 @@ public class AttributeMap extends CIStringHashMap {
     /**
      * Put an entry where the value is itself a collection of values, e.g. a list of files
      */
-    public String putCollection(final String key, Collection<String> values) {
+    public String putCollection(final String key, final Collection<String> values) {
         final String value;
         if (values == null) {
             value = null;
@@ -340,7 +340,7 @@ public class AttributeMap extends CIStringHashMap {
             return this;
         }
 
-        public Builder putCollection(final String key, Collection<String> values) {
+        public Builder putCollection(final String key, final Collection<String> values) {
             Objects.requireNonNull(key);
             attributes.putCollection(key, values);
             return this;

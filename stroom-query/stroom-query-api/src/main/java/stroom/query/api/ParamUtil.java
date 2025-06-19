@@ -53,7 +53,7 @@ public final class ParamUtil {
             return Collections.emptyList();
         }
 
-        List<Param> list = new ArrayList<>();
+        final List<Param> list = new ArrayList<>();
         final char[] chars = trimmed.toCharArray();
 
         boolean quot = false;
@@ -89,7 +89,7 @@ public final class ParamUtil {
                     } else {
                         final String text = sb.toString();
 
-                        int index = text.lastIndexOf(' ');
+                        final int index = text.lastIndexOf(' ');
                         if (index != -1) {
                             if (key != null && !key.isEmpty()) {
                                 final String value = text.substring(0, index).trim();

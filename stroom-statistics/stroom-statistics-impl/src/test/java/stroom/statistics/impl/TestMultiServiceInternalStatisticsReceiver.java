@@ -75,11 +75,11 @@ class TestMultiServiceInternalStatisticsReceiver {
                 .containsExactly(DOC_REF_B1);
 
         //service1 supports docRefType1, etc.
-        Map<String, InternalStatisticsService> docRefTypeToServiceMap = ImmutableMap.of(
+        final Map<String, InternalStatisticsService> docRefTypeToServiceMap = ImmutableMap.of(
                 DOC_REF_TYPE_1, internalStatisticsService1, //i.e. docRefA1 and B1
                 DOC_REF_TYPE_2, internalStatisticsService2); //i.e. docRefA2
 
-        MultiServiceInternalStatisticsReceiver facade = new MultiServiceInternalStatisticsReceiver(
+        final MultiServiceInternalStatisticsReceiver facade = new MultiServiceInternalStatisticsReceiver(
                 docRefTypeToServiceMap,
                 () -> internalStatisticsConfig);
 

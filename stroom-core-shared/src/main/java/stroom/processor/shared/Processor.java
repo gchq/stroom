@@ -164,7 +164,7 @@ public class Processor implements HasAuditInfo, HasUuid {
         return processorType;
     }
 
-    public void setProcessorType(ProcessorType processorType) {
+    public void setProcessorType(final ProcessorType processorType) {
         this.processorType = processorType;
     }
 
@@ -213,7 +213,7 @@ public class Processor implements HasAuditInfo, HasUuid {
         return enabled;
     }
 
-    public void setEnabled(boolean enabled) {
+    public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
     }
 

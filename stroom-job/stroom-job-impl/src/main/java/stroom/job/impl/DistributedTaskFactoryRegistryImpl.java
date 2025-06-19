@@ -37,7 +37,7 @@ class DistributedTaskFactoryRegistryImpl implements DistributedTaskFactoryRegist
     @Inject
     DistributedTaskFactoryRegistryImpl(final Set<DistributedTaskFactory> distributedTaskFactories) {
         for (final DistributedTaskFactory distributedTaskFactory : distributedTaskFactories) {
-            DistributedTaskFactoryDescription annotation = distributedTaskFactory.getClass().getAnnotation(
+            final DistributedTaskFactoryDescription annotation = distributedTaskFactory.getClass().getAnnotation(
                     DistributedTaskFactoryDescription.class);
             final String jobName = annotation.jobName();
 

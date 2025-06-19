@@ -71,11 +71,11 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
             final Hyperlink hyperlink = event.getHyperlink();
             nativeConsoleLog("HyperlinkEvent: " + hyperlink.getHref());
 
-            String href = hyperlink.getHref();
+            final String href = hyperlink.getHref();
             String type = hyperlink.getType();
             String customTitle = null;
             if (type != null) {
-                int index = type.indexOf("|");
+                final int index = type.indexOf("|");
                 if (index != -1) {
                     customTitle = type.substring(index + 1);
                     type = type.substring(0, index);
@@ -300,7 +300,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
     }
 
     private long getParam(final String href, final String paramName, final long def) {
-        String value = getParam(href, paramName);
+        final String value = getParam(href, paramName);
         if (value == null || value.length() == 0) {
             return def;
         }
@@ -308,7 +308,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
     }
 
     private Long getLongParam(final String href, final String paramName) {
-        String value = getParam(href, paramName);
+        final String value = getParam(href, paramName);
         if (value == null || value.length() == 0) {
             return null;
         }
@@ -320,7 +320,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
         int start = href.indexOf(paramName + "=");
         if (start != -1) {
             start = start + (paramName + "=").length();
-            int end = href.indexOf("&", start);
+            final int end = href.indexOf("&", start);
             if (end == -1) {
                 value = href.substring(start);
             } else {

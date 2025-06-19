@@ -93,7 +93,7 @@ public class StateLookupImpl implements StateLookup {
                                              final String tableName,
                                              final String keyName,
                                              final Instant eventTime) {
-        Optional<TemporalState> optional;
+        final Optional<TemporalState> optional;
         final Provider<CqlSession> sessionProvider = cqlSessionFactory.getSessionProvider(doc.getScyllaDbRef());
 
         switch (doc.getStateType()) {

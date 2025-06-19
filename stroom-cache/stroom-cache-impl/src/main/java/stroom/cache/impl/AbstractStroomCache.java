@@ -375,7 +375,7 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
                 final String[] kv = pair.split("=");
                 if (kv.length == 2) {
                     String key = kv[0].replaceAll("\\W", "");
-                    String value = kv[1].replaceAll("\\D", "");
+                    final String value = kv[1].replaceAll("\\D", "");
                     if (!key.isEmpty()) {
                         final char[] chars = key.toCharArray();
                         chars[0] = Character.toUpperCase(chars[0]);

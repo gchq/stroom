@@ -95,11 +95,11 @@ public class AnalyticNotificationEditPresenter
                         config,
                         NotificationConfig::getDestination);
 
-                NotificationEmailDestination emailDestination = getOrDefaultEmailDestination(
+                final NotificationEmailDestination emailDestination = getOrDefaultEmailDestination(
                         destination, defaultConfig);
                 NullSafe.consume(emailDestination, analyticEmailDestinationPresenter::read);
 
-                NotificationStreamDestination streamDestination = getOrDefaultStreamDestination(
+                final NotificationStreamDestination streamDestination = getOrDefaultStreamDestination(
                         destination, defaultConfig);
                 NullSafe.consume(streamDestination, analyticStreamDestinationPresenter::read);
             }

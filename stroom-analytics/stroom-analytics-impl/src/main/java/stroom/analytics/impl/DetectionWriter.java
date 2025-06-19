@@ -144,7 +144,7 @@ public class DetectionWriter implements DetectionConsumer {
         }
     }
 
-    private void writeValues(List<DetectionValue> values) throws SAXException {
+    private void writeValues(final List<DetectionValue> values) throws SAXException {
         if (NullSafe.hasItems(values)) {
             for (final DetectionValue value : values) {
                 writeValue(value);
