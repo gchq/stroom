@@ -2,6 +2,7 @@ package stroom.planb.impl.serde.valtime;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.db.Db;
+import stroom.planb.impl.db.KeyLength;
 import stroom.planb.impl.db.PlanBEnv;
 import stroom.planb.impl.db.UidLookupDb;
 import stroom.planb.impl.db.UidLookupRecorder;
@@ -49,9 +50,7 @@ public class UidLookupValTimeSerde implements ValTimeSerde {
     @Override
     public void write(final Txn<ByteBuffer> txn, final ValTime value, final Consumer<ByteBuffer> consumer) {
         ValSerdeUtil.write(value.val(), byteBuffers, valueByteBuffer -> {
-            if (valueByteBuffer.remaining() > Db.MAX_KEY_LENGTH) {
-                throw new RuntimeException("Key length exceeds " + Db.MAX_KEY_LENGTH + " bytes");
-            }
+            KeyLength.check(valueByteBuffer, Db.MAX_KEY_LENGTH);
 
             uidLookupDb.put(txn, valueByteBuffer, idByteBuffer -> {
                 byteBuffers.use(idByteBuffer.remaining() + timeSerde.getSize(), keyBuffer -> {

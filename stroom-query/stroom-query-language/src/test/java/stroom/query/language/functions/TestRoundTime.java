@@ -56,50 +56,50 @@ public class TestRoundTime extends AbstractFunctionTest<RoundTime> {
         return Stream.of(
                 TestCase.of(
                         "Round time with valid inputs",
-                        ValLong.create(expectedMillis),
-                        ValLong.create(inputMillis),
+                        ValDate.create(expectedMillis),
+                        ValDate.create(inputMillis),
                         ValString.create("PT15M"),       //duration
                         ValString.create("PT5M")        //offset
                 ),
                 TestCase.of(
                         "Round time with invalid duration",
                         ValErr.create("Invalid duration format: INVALID"),
-                        ValLong.create(inputMillis),
+                        ValDate.create(inputMillis),
                         ValString.create("INVALID"),
                         ValString.create("PT1M")
                 ),
                 TestCase.of(
                         "Round time with invalid offset",
                         ValErr.create("Invalid offset format: INVALID"),
-                        ValLong.create(inputMillis),
+                        ValDate.create(inputMillis),
                         ValString.create("PT5M"),
                         ValString.create("INVALID")
                 ),
                 TestCase.of(
                         "Round time with timezone offset",
-                        ValLong.create(expectedMillisWithZone),
-                        ValLong.create(inputMillisWithZone),
+                        ValDate.create(expectedMillisWithZone),
+                        ValDate.create(inputMillisWithZone),
                         ValString.create("PT15M"),
                         ValString.create("PT5M")
                 ),
                 TestCase.of(
                         "Round to hourly with zero offset",
-                        ValLong.create(hourlyExpectedMillis),
-                        ValLong.create(hourlyInputMillis),
+                        ValDate.create(hourlyExpectedMillis),
+                        ValDate.create(hourlyInputMillis),
                         ValString.create("PT1H"),
                         ValString.create("PT0M")
                 ),
                 TestCase.of(
                         "Round to daily with offset",
-                        ValLong.create(dailyExpectedMillis),
-                        ValLong.create(dailyInputMillis),
+                        ValDate.create(dailyExpectedMillis),
+                        ValDate.create(dailyInputMillis),
                         ValString.create("P1D"),
                         ValString.create("PT0M")
                 ),
                 TestCase.of(
                         "Round to nearest 30 seconds",
-                        ValLong.create(secondsExpectedMillis),
-                        ValLong.create(secondsInputMillis),
+                        ValDate.create(secondsExpectedMillis),
+                        ValDate.create(secondsInputMillis),
                         ValString.create("PT15S"),
                         ValString.create("PT0S")
                 ),
@@ -112,22 +112,22 @@ public class TestRoundTime extends AbstractFunctionTest<RoundTime> {
                 ),
                 TestCase.of(
                         "Exactly on boundary",
-                        ValLong.create(exactExpectedMillis),
-                        ValLong.create(exactInputMillis),
+                        ValDate.create(exactExpectedMillis),
+                        ValDate.create(exactInputMillis),
                         ValString.create("PT30M"),
                         ValString.create("PT0M")
                 ),
                 TestCase.of(
                         "Just before boundary",
-                        ValLong.create(beforeExpectedMillis),
-                        ValLong.create(beforeInputMillis),
+                        ValDate.create(beforeExpectedMillis),
+                        ValDate.create(beforeInputMillis),
                         ValString.create("PT30M"),
                         ValString.create("PT0M")
                 ),
                 TestCase.of(
                         "Cross day boundary",
-                        ValLong.create(crossDayExpectedMillis),
-                        ValLong.create(crossDayInputMillis),
+                        ValDate.create(crossDayExpectedMillis),
+                        ValDate.create(crossDayInputMillis),
                         ValString.create("PT15M"),
                         ValString.create("PT10M")
                 )

@@ -75,6 +75,20 @@ public class UidLookupDb {
         return uidToKeyDbi.get(readTxn, keyByteBuffer);
     }
 
+    public ByteBuffer getValue(final Txn<ByteBuffer> readTxn,
+                               final long uid) {
+        return uidToByteBuffer(uid, byteBuffer -> uidToKeyDbi.get(readTxn, byteBuffer));
+    }
+
+    public <R> R uidToByteBuffer(final long uid, final Function<ByteBuffer, R> function) {
+        final UnsignedBytes unsignedBytes = UnsignedBytesInstances.forValue(uid);
+        return byteBuffers.use(unsignedBytes.length(), byteBuffer -> {
+            unsignedBytes.put(byteBuffer, uid);
+            byteBuffer.flip();
+            return function.apply(byteBuffer);
+        });
+    }
+
     public <R> R get(final Txn<ByteBuffer> readTxn,
                      final ByteBuffer byteBuffer,
                      final Function<Optional<ByteBuffer>, R> idConsumer) {
@@ -85,6 +99,8 @@ public class UidLookupDb {
     public <R> R put(final Txn<ByteBuffer> writeTxn,
                      final ByteBuffer keyByteBuffer,
                      final Function<ByteBuffer, R> idConsumer) {
+        KeyLength.check(keyByteBuffer, Db.MAX_KEY_LENGTH);
+
         // See if we already have this key.
         final ByteBuffer existingUidByteBuffer = keyToUidDbi.get(writeTxn, keyByteBuffer);
         if (existingUidByteBuffer != null) {

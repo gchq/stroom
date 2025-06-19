@@ -20,6 +20,13 @@ public class UidLookupRecorder implements UsedLookupsRecorder {
         usedLookupsDb.record(writer, byteBuffer);
     }
 
+    public void recordUsed(final LmdbWriter writer, final long uid) {
+        uidLookupDb.uidToByteBuffer(uid, byteBuffer -> {
+            usedLookupsDb.record(writer, byteBuffer);
+            return null;
+        });
+    }
+
     @Override
     public void deleteUnused(final Txn<ByteBuffer> readTxn, final LmdbWriter writer) {
         uidLookupDb.forEachUid(readTxn, uid -> {

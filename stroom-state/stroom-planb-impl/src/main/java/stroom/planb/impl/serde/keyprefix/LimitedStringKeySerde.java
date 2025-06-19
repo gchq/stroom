@@ -3,6 +3,7 @@ package stroom.planb.impl.serde.keyprefix;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.db.Db;
+import stroom.planb.impl.db.KeyLength;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;
 
@@ -36,9 +37,7 @@ public class LimitedStringKeySerde implements KeyPrefixSerde {
     @Override
     public void write(final Txn<ByteBuffer> txn, final KeyPrefix key, final Consumer<ByteBuffer> consumer) {
         final byte[] bytes = key.getVal().toString().getBytes(StandardCharsets.UTF_8);
-        if (bytes.length > limit) {
-            throw new RuntimeException("Key length exceeds " + limit + " bytes");
-        }
+        KeyLength.check(bytes.length,  limit);
 
         // We are in a single write transaction so should be able to reuse the same buffer again and again.
         reusableWriteBuffer.clear();
@@ -52,9 +51,8 @@ public class LimitedStringKeySerde implements KeyPrefixSerde {
                                 final KeyPrefix key,
                                 final Function<Optional<ByteBuffer>, R> function) {
         final byte[] bytes = key.getVal().toString().getBytes(StandardCharsets.UTF_8);
-        if (bytes.length > limit) {
-            throw new RuntimeException("Key length exceeds " + limit + " bytes");
-        }
+        KeyLength.check(bytes.length,  limit);
+
         return byteBuffers.use(bytes.length, byteBuffer -> {
             byteBuffer.put(bytes);
             byteBuffer.flip();

@@ -20,7 +20,6 @@ import stroom.query.language.functions.ref.StoredValues;
 
 import java.text.ParseException;
 import java.time.Instant;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.function.Supplier;
 
@@ -33,16 +32,13 @@ import java.util.function.Supplier;
         signatures = @FunctionSignature(
                 description = "Returns whether a date is part of the weekend or not.",
                 args = {}))
-class IsWeekend extends AbstractFunction {
+class IsWeekend extends AbstractDateTimeFunction {
 
     static final String NAME = "isWeekend";
-    private final ZoneId zoneId;
-
     private Function function;
 
     public IsWeekend(final ExpressionContext expressionContext, final String name) {
-        super(name, 1, 1);
-        this.zoneId = AbstractTimeFunction.getZoneId(expressionContext.getDateTimeSettings());
+        super(expressionContext, name, 1, 1);
     }
 
     @Override
