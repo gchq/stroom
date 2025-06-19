@@ -67,6 +67,24 @@ public class GitRepoSettingsPresenter
      */
     private GitRepoDoc gitRepoDoc = null;
 
+    /**
+     * Local copy of the username.
+     */
+    private String gitRepoUsername = "";
+
+    /**
+     * Local copy of the password.
+     */
+    private String gitRepoPassword = "";
+
+    /**
+     * Injected constructor.
+     * @param eventBus For parent class
+     * @param view The View for showing stuff to users
+     * @param restFactory For talking to the server
+     * @param commitDialog Injected dialog for commit message
+     * @param credentialsDialog Injected dialog for credentials
+     */
     @Inject
     public GitRepoSettingsPresenter(final EventBus eventBus,
                                     final GitRepoSettingsView view,
@@ -80,8 +98,13 @@ public class GitRepoSettingsPresenter
         this.credentialsDialog = credentialsDialog;
     }
 
+    /**
+     * Called when the UI is created and values need to be set from
+     * the GitRepoDoc.
+     */
     @Override
     protected void onRead(final DocRef docRef, final GitRepoDoc doc, final boolean readOnly) {
+        // Local copy of the initial value of the doc
         gitRepoDoc = doc;
 
         GitRepoSettingsView view = this.getView();
@@ -99,10 +122,18 @@ public class GitRepoSettingsPresenter
         view.setAutoPush(doc.isAutoPush());
         view.setGitRemoteCommitName(doc.getGitRemoteCommitName());
 
+        // Credentials - store locally
+        gitRepoUsername = doc.getUsername();
+        gitRepoPassword = doc.getPassword();
+
         // Set the initial state of the UI
         view.setState();
     }
 
+    /**
+     * Called when values are being saved, so the UI values need to be stored
+     * into the GitRepoDoc.
+     */
     @Override
     protected GitRepoDoc onWrite(final GitRepoDoc doc) {
         GitRepoSettingsView view = this.getView();
@@ -119,9 +150,16 @@ public class GitRepoSettingsPresenter
             view.setAutoPush(false);
         }
 
+        // Credentials - store from local values
+        doc.setUsername(gitRepoUsername);
+        doc.setPassword(gitRepoPassword);
+
         return doc;
     }
 
+    /**
+     * Called when anything changes, so the UI is dirty.
+     */
     @Override
     public void onDirty() {
         this.setDirty(true);
@@ -272,17 +310,24 @@ public class GitRepoSettingsPresenter
      */
     @Override
     public void onShowCredentialsDialog(TaskMonitorFactory taskMonitorFactory) {
+
         ShowPopupEvent.Builder builder = ShowPopupEvent.builder(credentialsDialog);
-        credentialsDialog.setupDialog(gitRepoDoc, builder);
+        credentialsDialog.setupDialog(
+                gitRepoUsername,
+                gitRepoPassword,
+                builder);
+
         builder.onHideRequest(e -> {
                     if (e.isOk()) {
                         // OK pressed
                         if (credentialsDialog.isValid()) {
                             // All good
                             e.hide();
-                            // Store the values in the GitRepoDoc
-                            gitRepoDoc.setUsername(credentialsDialog.getView().getUsername());
-                            gitRepoDoc.setPassword(credentialsDialog.getView().getPassword());
+                            // Store the values in this presenter
+                            gitRepoUsername = credentialsDialog.getView().getUsername();
+                            gitRepoPassword = credentialsDialog.getView().getPassword();
+                            // Mark the doc as dirty
+                            this.setDirty(true);
                         } else {
                             // Something wrong
                             AlertEvent.fireWarn(credentialsDialog,

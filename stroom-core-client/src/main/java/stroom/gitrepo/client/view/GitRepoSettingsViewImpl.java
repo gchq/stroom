@@ -152,7 +152,11 @@ public class GitRepoSettingsViewImpl
 
     @Override
     public void setGitRemoteCommitName(String commitName) {
-        this.lblGitRemoteCommitName.setText(commitName);
+        if (commitName == null || commitName.trim().isEmpty()) {
+            this.lblGitRemoteCommitName.setText("-");
+        } else {
+            this.lblGitRemoteCommitName.setText(commitName);
+        }
     }
 
     @Override

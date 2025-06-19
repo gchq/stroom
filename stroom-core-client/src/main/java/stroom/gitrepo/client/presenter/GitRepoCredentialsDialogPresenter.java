@@ -1,6 +1,5 @@
 package stroom.gitrepo.client.presenter;
 
-import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -11,18 +10,23 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.UiHandlers;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.Objects;
+
+/**
+ * Asks for credentials - called from the GitRepo Settings UI.
+ */
 public class GitRepoCredentialsDialogPresenter
         extends MyPresenterWidget<GitRepoCredentialsDialogPresenter.GitRepoCredentialsDialogView> {
 
     /**
      * Width of dialog
      */
-    private final static int DIALOG_WIDTH = 400;
+    private final static int DIALOG_WIDTH = 300;
 
     /**
      * Height of dialog
      */
-    private final static int DIALOG_HEIGHT = 400;
+    private final static int DIALOG_HEIGHT = 300;
 
     /**
      * Constructor. Injected.
@@ -35,16 +39,22 @@ public class GitRepoCredentialsDialogPresenter
 
     /**
      * Call with the builder to set up this dialog before calling .fire().
-     * @param gitRepoDoc The doc - source of the credentials
-     * @param builder The builder to show this popup.
+     * @param username The initial value of the username. Can be null
+     *                 in which case the empty string will be used.
+     * @param password The initial value of the password. Can be
+     *                 null in which case the empty string will be used.
+     * @param builder The builder to show this popup. Must not be null.
      */
-    public void setupDialog(final GitRepoDoc gitRepoDoc,
+    public void setupDialog(final String username,
+                            final String password,
                             final ShowPopupEvent.Builder builder) {
+        Objects.requireNonNull(builder);
+
         // Get rid of any existing data
         this.getView().resetData();
 
-        this.getView().setUsername(gitRepoDoc.getUsername());
-        this.getView().setPassword(gitRepoDoc.getPassword());
+        this.getView().setUsername(username == null ? "" : username);
+        this.getView().setPassword(password == null ? "" : password);
 
         // Configure the popup builder for this dialog
         builder.popupType(PopupType.OK_CANCEL_DIALOG)
@@ -55,10 +65,10 @@ public class GitRepoCredentialsDialogPresenter
 
     /**
      * Determines if the data entered is valid.
+     * We allow empty username and password.
      */
     public boolean isValid() {
-        return !this.getView().getUsername().trim().isEmpty()
-               && !this.getView().getPassword().isEmpty();
+        return true;
     }
 
     /**
@@ -66,13 +76,7 @@ public class GitRepoCredentialsDialogPresenter
      * isn't valid.
      */
     public String getValidationMessage() {
-        if (this.getView().getUsername().trim().isEmpty()) {
-            return "Username must not be empty";
-        } else if (this.getView().getPassword().isEmpty()) {
-            return "Password must not be empty";
-        } else {
-            return "";
-        }
+        return "";
     }
 
     /**
