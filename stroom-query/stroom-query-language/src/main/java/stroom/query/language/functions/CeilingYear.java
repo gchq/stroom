@@ -16,18 +16,13 @@
 
 package stroom.query.language.functions;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = CeilingYear.NAME,
         commonCategory = FunctionCategory.DATE,
-        commonSubCategories = RoundDate.CEILING_SUB_CATEGORY,
+        commonSubCategories = AbstractRoundDateTime.CEILING_SUB_CATEGORY,
         commonReturnType = ValLong.class,
         commonReturnDescription = "The time as milliseconds since the epoch (1st Jan 1970).",
         signatures = @FunctionSignature(
@@ -35,46 +30,24 @@ import java.time.temporal.ChronoUnit;
                 args = @FunctionArg(
                         name = "time",
                         description = "The time to round in milliseconds since the epoch or as a string " +
-                                "formatted using the default date format.",
+                                      "formatted using the default date format.",
                         argType = Val.class)))
-class CeilingYear extends RoundDate {
+class CeilingYear extends AbstractRoundDateTime {
 
     static final String NAME = "ceilingYear";
-    private static final Calc CALC = new Calc();
 
-    private final ExpressionContext expressionContext;
-
-    public CeilingYear(final String name, final ExpressionContext expressionContext) {
-        super(name);
-        this.expressionContext = expressionContext;
+    public CeilingYear(final ExpressionContext expressionContext, final String name) {
+        super(expressionContext, name);
     }
 
     @Override
-    protected RoundCalculator getCalculator() {
-        return CALC;
-    }
-
-    protected ZonedDateTime toZonedDateTime(final long epochMillis) {
-        final ZoneId zoneId = AbstractTimeFunction.getZoneId(expressionContext.getDateTimeSettings());
-        return Instant.ofEpochMilli(epochMillis).atZone(zoneId);
-    }
-
-    static class Calc extends RoundDateCalculator {
-
-        @Override
-        protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            final ZonedDateTime zoned = dateTime.atZone(ZoneOffset.UTC);
-            ZonedDateTime startOfYear = zoned
-                    .withMonth(1)
-                    .withDayOfMonth(1)
-                    .withHour(0)
-                    .withMinute(0)
-                    .withSecond(0)
-                    .withNano(0);
-            if (zoned.isAfter(startOfYear)) {
-                startOfYear = startOfYear.plusYears(1);
+    protected DateTimeAdjuster getAdjuster() {
+        return zonedDateTime -> {
+            ZonedDateTime result = FloorYear.floor(zonedDateTime);
+            if (zonedDateTime.isAfter(result)) {
+                result = result.plusYears(1);
             }
-            return startOfYear.toLocalDateTime();
-        }
+            return result;
+        };
     }
 }

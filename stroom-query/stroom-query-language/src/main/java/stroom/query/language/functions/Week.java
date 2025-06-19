@@ -32,7 +32,7 @@ import java.util.Locale;
         signatures = @FunctionSignature(
                 description = "Returns the current date and time truncated to the start of the week.",
                 args = {}))
-class Week extends AbstractTimeFunction {
+class Week extends AbstractCurrentDateTimeFunction {
 
     static final String NAME = "week";
 

@@ -28,7 +28,7 @@ import java.time.ZonedDateTime;
         signatures = @FunctionSignature(
                 description = "Returns the current date and time truncated to the start of the month.",
                 args = {}))
-class Month extends AbstractTimeFunction {
+class Month extends AbstractCurrentDateTimeFunction {
 
     static final String NAME = "month";
 

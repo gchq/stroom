@@ -15,11 +15,6 @@ public class TestCeilingYear extends AbstractFunctionTest<CeilingYear> {
     }
 
     @Override
-    protected Supplier<CeilingYear> getFunctionSupplier() {
-        return () -> new CeilingYear("ceilingYear", new ExpressionContext());
-    }
-
-    @Override
     Stream<TestCase> getTestCases() {
         final Instant time = LocalDateTime.of(2025, 4, 7, 10, 30, 30)
                 .toInstant(ZoneOffset.UTC);
