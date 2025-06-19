@@ -47,7 +47,7 @@ class TestScriptStoreImpl extends AbstractCoreIntegrationTest {
         final ScriptDoc loaded = scriptStore.readDocument(docRef);
 
         assertThat(loaded.getData()).isEqualTo(data);
-        List<ScriptDoc> linkedScripts = scriptStore.fetchLinkedScripts(docRef, null);
+        final List<ScriptDoc> linkedScripts = scriptStore.fetchLinkedScripts(docRef, null);
         assertThat(linkedScripts).hasSize(1);
     }
 }

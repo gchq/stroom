@@ -23,7 +23,7 @@ public class AceCommandDescription {
      * @param name command line name
      * @param exec execution action
      */
-    public AceCommandDescription(String name, ExecAction exec) {
+    public AceCommandDescription(final String name, final ExecAction exec) {
         this.name = name;
         this.exec = exec;
     }
@@ -65,7 +65,7 @@ public class AceCommandDescription {
     private static AceCommandDescription.ExecAction createJavaScriptWrapper(final Object jsFunction) {
         return new AceCommandDescription.ExecAction() {
             @Override
-            public Object exec(AceEditor editor) {
+            public Object exec(final AceEditor editor) {
                 return invokeJavaScriptCommand(jsFunction, editor);
             }
 
@@ -164,7 +164,7 @@ public class AceCommandDescription {
      * @param bindKey key binding (e.g. "shift-esc|ctrl-`" or "Command+Alt+C")
      * @return reference to this command description
      */
-    public AceCommandDescription withBindKey(KeyBinding bindKey) {
+    public AceCommandDescription withBindKey(final KeyBinding bindKey) {
         this.bindKey = bindKey;
         return this;
     }
@@ -175,7 +175,7 @@ public class AceCommandDescription {
      * @param bindKeyForAllPlatforms key binding (e.g. "shift-esc|ctrl-`" or "Command+Alt+C")
      * @return reference to this command description
      */
-    public AceCommandDescription withBindKey(String bindKeyForAllPlatforms) {
+    public AceCommandDescription withBindKey(final String bindKeyForAllPlatforms) {
         this.bindKey = new KeyBinding(bindKeyForAllPlatforms);
         return this;
     }
@@ -187,8 +187,8 @@ public class AceCommandDescription {
      * @param bindKeyForMac                   key binding for Mac (e.g. "shift-esc|ctrl-`" or "Command+Alt+C")
      * @return reference to this command description
      */
-    public AceCommandDescription withBindKey(String bindKeyForAllPlatformsExceptMac,
-                                             String bindKeyForMac) {
+    public AceCommandDescription withBindKey(final String bindKeyForAllPlatformsExceptMac,
+                                             final String bindKeyForMac) {
         this.bindKey = new KeyBinding(bindKeyForAllPlatformsExceptMac, bindKeyForMac);
         return this;
     }
@@ -199,7 +199,7 @@ public class AceCommandDescription {
      * @param readOnly describes does this command change editor document or not
      * @return reference to this command description
      */
-    public AceCommandDescription withReadOnly(boolean readOnly) {
+    public AceCommandDescription withReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
         return this;
     }
@@ -211,7 +211,7 @@ public class AceCommandDescription {
      *                  and will be passed to original listener after command execution
      * @return reference to this command description
      */
-    public AceCommandDescription withPassEvent(boolean passEvent) {
+    public AceCommandDescription withPassEvent(final boolean passEvent) {
         this.passEvent = passEvent;
         return this;
     }
@@ -224,7 +224,7 @@ public class AceCommandDescription {
      *                       see {@link ScrollIntoView} for details)
      * @return reference to this command description
      */
-    public AceCommandDescription withScrollIntoView(ScrollIntoView scrollIntoView) {
+    public AceCommandDescription withScrollIntoView(final ScrollIntoView scrollIntoView) {
         this.scrollIntoView = scrollIntoView;
         return this;
     }
@@ -238,7 +238,7 @@ public class AceCommandDescription {
      *                          details)
      * @return reference to this command description
      */
-    public AceCommandDescription withMultiSelectAction(MultiSelectAction multiSelectAction) {
+    public AceCommandDescription withMultiSelectAction(final MultiSelectAction multiSelectAction) {
         this.multiSelectAction = multiSelectAction;
         return this;
     }
@@ -249,7 +249,7 @@ public class AceCommandDescription {
      * @param aceCommandGroup Ace command group name of this command
      * @return reference to this command description
      */
-    public AceCommandDescription withAceCommandGroup(String aceCommandGroup) {
+    public AceCommandDescription withAceCommandGroup(final String aceCommandGroup) {
         this.aceCommandGroup = aceCommandGroup;
         return this;
     }
@@ -283,7 +283,7 @@ public class AceCommandDescription {
 		if (readOnly)
 			ret['readOnly'] = readOnly;
 		var passEvent = this.@edu.ycp.cs.dh.acegwt.client.ace.AceCommandDescription::passEvent;
-		if (passEvent) 
+		if (passEvent)
 			ret['passEvent'] = passEvent;
 		var scrollIntoView = this.@edu.ycp.cs.dh.acegwt.client.ace.AceCommandDescription::scrollIntoView;
 		if (scrollIntoView)
@@ -318,8 +318,8 @@ public class AceCommandDescription {
          */
         selectionPart;
 
-        public static ScrollIntoView fromString(String value) {
-            for (ScrollIntoView ret : ScrollIntoView.values()) {
+        public static ScrollIntoView fromString(final String value) {
+            for (final ScrollIntoView ret : ScrollIntoView.values()) {
                 if (ret.name().equals(value)) {
                     return ret;
                 }
@@ -345,8 +345,8 @@ public class AceCommandDescription {
          */
         single;
 
-        public static MultiSelectAction fromString(String value) {
-            for (MultiSelectAction ret : MultiSelectAction.values()) {
+        public static MultiSelectAction fromString(final String value) {
+            for (final MultiSelectAction ret : MultiSelectAction.values()) {
                 if (ret.name().equals(value)) {
                     return ret;
                 }
@@ -377,7 +377,7 @@ public class AceCommandDescription {
          *
          * @param allPlatforms key bindings (e.g. "shift-esc|ctrl-`" or "Command+Alt+C")
          */
-        public KeyBinding(String allPlatforms) {
+        public KeyBinding(final String allPlatforms) {
             this.allPlatforms = allPlatforms;
             this.mac = null;
             this.exceptMac = null;
@@ -389,7 +389,7 @@ public class AceCommandDescription {
          * @param exceptMac key bindings for all other than Mac (e.g. "shift-esc|ctrl-`")
          * @param mac       key bindings for Mac (e.g. "Command+Alt+C")
          */
-        public KeyBinding(String exceptMac, String mac) {
+        public KeyBinding(final String exceptMac, final String mac) {
             this.allPlatforms = null;
             this.mac = mac;
             this.exceptMac = exceptMac;

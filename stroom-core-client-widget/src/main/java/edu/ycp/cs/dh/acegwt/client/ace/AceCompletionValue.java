@@ -66,7 +66,7 @@ public class AceCompletionValue extends AceCompletion {
      * @param meta  "meta" means the category of the substitution (this appears right aligned on the dropdown list). This is freeform description and can contain anything but typically a very short category description (9 chars or less) such as "function" or "param" or "template".
      * @param score The score is the value assigned to the autocompletion option. Scores with a higher value will appear closer to the top. Items with an identical score are sorted alphbetically by caption in the drop down.
      */
-    public AceCompletionValue(String caption, String value, String meta, int score) {
+    public AceCompletionValue(final String caption, final String value, final String meta, final int score) {
         this.caption = caption;
         this.value = value;
         this.meta = meta;
@@ -83,7 +83,7 @@ public class AceCompletionValue extends AceCompletion {
      * @param tooltip "tooltip" is an escaped html tooltip to be displayed when the completion option is displayed, this can be null.
      * @param score   The score is the value assigned to the autocompletion option. Scores with a higher value will appear closer to the top. Items with an identical score are sorted alphbetically by caption in the drop down.
      */
-    public AceCompletionValue(String caption, String value, String meta, String tooltip, int score) {
+    public AceCompletionValue(final String caption, final String value, final String meta, final String tooltip, final int score) {
         this.caption = caption;
         this.value = value;
         this.score = score;
@@ -99,7 +99,7 @@ public class AceCompletionValue extends AceCompletion {
      */
     native JavaScriptObject toJsObject() /*-{
 
-		
+
 			return {
 				caption: this.@edu.ycp.cs.dh.acegwt.client.ace.AceCompletionValue::caption,
 				value: this.@edu.ycp.cs.dh.acegwt.client.ace.AceCompletionValue::value,

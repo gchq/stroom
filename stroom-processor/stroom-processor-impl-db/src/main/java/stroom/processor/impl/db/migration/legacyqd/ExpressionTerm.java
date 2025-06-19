@@ -132,7 +132,7 @@ public final class ExpressionTerm extends ExpressionItem {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
@@ -142,7 +142,7 @@ public final class ExpressionTerm extends ExpressionItem {
         if (!super.equals(o)) {
             return false;
         }
-        ExpressionTerm that = (ExpressionTerm) o;
+        final ExpressionTerm that = (ExpressionTerm) o;
         return Objects.equals(field, that.field) &&
                condition == that.condition &&
                Objects.equals(value, that.value) &&

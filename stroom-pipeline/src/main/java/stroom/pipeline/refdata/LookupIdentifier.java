@@ -76,7 +76,7 @@ public class LookupIdentifier {
     }
 
     public static LookupIdentifier of(final String map, final String key, final String eventTimeStr) {
-        long eventTimeMs = DateUtil.parseNormalDateTimeString(eventTimeStr);
+        final long eventTimeMs = DateUtil.parseNormalDateTimeString(eventTimeStr);
         return new LookupIdentifier(map, key, eventTimeMs);
     }
 
@@ -131,7 +131,7 @@ public class LookupIdentifier {
         return new LookupIdentifier(secondaryMapName, newKey, eventTime);
     }
 
-    public LookupIdentifier cloneWithNewKey(String newKey) {
+    public LookupIdentifier cloneWithNewKey(final String newKey) {
         return new LookupIdentifier(map, newKey, eventTime);
     }
 

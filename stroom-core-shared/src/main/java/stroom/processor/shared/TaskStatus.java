@@ -60,7 +60,7 @@ public enum TaskStatus implements HasDisplayValue, HasPrimitiveValue {
     private final String displayValue;
     private final byte primitiveValue;
 
-    TaskStatus(final String displayValue, int primitiveValue) {
+    TaskStatus(final String displayValue, final int primitiveValue) {
         this.displayValue = displayValue;
         this.primitiveValue = (byte) primitiveValue;
     }

@@ -147,7 +147,7 @@ public interface ResourcePaths {
         }
 
         public Builder addPathParts(final String... parts) {
-            for (String part : parts) {
+            for (final String part : parts) {
                 if (part != null && !part.isEmpty()) {
                     if (!part.startsWith("/")) {
                         pathParts.add("/");

@@ -148,7 +148,7 @@ public class AnalyticEmailDestinationPresenter
     }
 
     private boolean validate(final NotificationEmailDestination emailDestination,
-                             ValidationMode... validationModes) {
+                             final ValidationMode... validationModes) {
         final List<String> msgs = new ArrayList<>();
         final String subject = emailDestination.getSubjectTemplate();
         final String body = emailDestination.getBodyTemplate();

@@ -193,7 +193,7 @@ public class BootstrapUtil {
                 NodeConfig::getNodeName,
                 "UNKNOWN NODE");
 
-        try (Connection conn = DbUtil.getSingleConnection(connectionConfig)) {
+        try (final Connection conn = DbUtil.getSingleConnection(connectionConfig)) {
             // Need read committed so that once we have acquired the lock we can see changes
             // committed by other nodes.
             conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
@@ -251,7 +251,7 @@ public class BootstrapUtil {
                         // including doing all the flyway migrations
                         try {
                             output = work.get();
-                        } catch (Exception e) {
+                        } catch (final Exception e) {
                             final String msg = LogUtil.message(
                                     "Error upgrading stroom to {}: {}", buildVersion, e.getMessage(), e);
                             LOGGER.error(msg);
@@ -282,7 +282,7 @@ public class BootstrapUtil {
                 return output;
             });
             LOGGER.debug("Closed connection");
-        } catch (SQLException e) {
+        } catch (final SQLException e) {
             throw new RuntimeException("Error obtaining bootstrap lock: " + e.getMessage(), e);
         }
 
@@ -417,7 +417,7 @@ public class BootstrapUtil {
                 LOGGER.info("Waited {} to acquire bootstrap lock",
                         Duration.between(startTime, Instant.now()));
                 acquiredLock = true;
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 // If the node that gets the lock has to run lengthy db= migrations it is almost certain
                 // that we will get a lock timeout error so need to handle that and keep trying to get the lock
                 if (e.getCause() != null
@@ -514,7 +514,7 @@ public class BootstrapUtil {
                     connection.commit();
                 }
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException("Error ensuring table "
                                        + BUILD_VERSION_TABLE_NAME + ": "
                                        + e.getMessage(), e);

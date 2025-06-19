@@ -42,7 +42,7 @@ public class FetchAppUserPermissionsRequest extends ExpressionCriteria {
                                           @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                           @JsonProperty("expression") final ExpressionOperator expression,
                                           @JsonProperty("userRef") final UserRef userRef,
-                                          @JsonProperty("showLevel") PermissionShowLevel showLevel) {
+                                          @JsonProperty("showLevel") final PermissionShowLevel showLevel) {
         super(pageRequest, sortList, expression);
         this.userRef = userRef;
         this.showLevel = showLevel;

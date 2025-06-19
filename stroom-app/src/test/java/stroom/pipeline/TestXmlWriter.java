@@ -22,7 +22,7 @@ class TestXmlWriter {
     void testUnicodeHandling() throws Exception {
         final StringBuilder sb = new StringBuilder();
         for (int i = '\u0001'; i <= '\uffff'; i++) {
-            char c = (char) i;
+            final char c = (char) i;
             if (!UTF16CharacterSet.isSurrogate(c)) {
                 sb.append(c);
             }

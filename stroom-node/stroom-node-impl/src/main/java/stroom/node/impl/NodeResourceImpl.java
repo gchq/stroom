@@ -87,7 +87,7 @@ class NodeResourceImpl implements NodeResource {
     @Override
     @AutoLogged(OperationType.UNLOGGED) // Too noisy and of little value
     public List<String> listAllNodes() {
-        FetchNodeStatusResponse response = find();
+        final FetchNodeStatusResponse response = find();
         if (response != null && response.getValues() != null) {
             return response.getValues()
                     .stream()
@@ -206,7 +206,7 @@ class NodeResourceImpl implements NodeResource {
             }
 
             clusterNodeInfo.setPing(System.currentTimeMillis() - now);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             clusterNodeInfo = new ClusterNodeInfo();
             clusterNodeInfo.setNodeName(nodeName);
             clusterNodeInfo.setEndpointUrl(null);
@@ -237,7 +237,7 @@ class NodeResourceImpl implements NodeResource {
                             // we have incurred within this method.
                             System.currentTimeMillis() - now,
                     SyncInvoker::get);
-        } catch (WebApplicationException e) {
+        } catch (final WebApplicationException e) {
             throw new RuntimeException("Unable to connect to node '" + nodeName + "': "
                                        + e.getMessage());
         }

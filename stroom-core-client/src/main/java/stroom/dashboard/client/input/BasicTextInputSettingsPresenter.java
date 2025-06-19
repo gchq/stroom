@@ -55,7 +55,7 @@ public class BasicTextInputSettingsPresenter
 
     @Override
     public ComponentConfig write(final ComponentConfig componentConfig) {
-        ComponentConfig result = super.write(componentConfig);
+        final ComponentConfig result = super.write(componentConfig);
         final TextInputComponentSettings oldSettings = (TextInputComponentSettings) result.getSettings();
         final TextInputComponentSettings newSettings = writeSettings(oldSettings);
         return result.copy().settings(newSettings).build();

@@ -260,7 +260,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
                                                                     final DataRange highlight,
                                                                     final SourceConfig sourceConfig) {
         // Don't have to worry about highlights during stepping as hex is not available
-        long newByteOffsetFrom = highlight.getOptByteOffsetFrom().map(
+        final long newByteOffsetFrom = highlight.getOptByteOffsetFrom().map(
                         byteOffsetFrom -> Math.max(
                                 0,
                                 byteOffsetFrom -
@@ -683,7 +683,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
                 : null;
     }
 
-    private void beginStepping(ClickEvent clickEvent) {
+    private void beginStepping(final ClickEvent clickEvent) {
         beginStepping();
     }
 

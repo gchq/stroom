@@ -29,7 +29,7 @@ public class V07_06_00_300__processor_filter_pre_migration_checks extends BaseJa
 
     @Override
     public void migrate(final Context context) throws Exception {
-        boolean error = false;
+        final boolean error = false;
 
 
         // NOT SURE IF WE NEED PRE MIG CHECKS BUT WE COULD DETECT PFs WITHOUT OWNER OR WITH MULTIPLE OWNERS????

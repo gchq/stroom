@@ -103,7 +103,7 @@ class SecurityFilter implements Filter {
 
         try {
             filter(httpServletRequest, httpServletResponse, chain);
-        } catch (AuthenticationException e) {
+        } catch (final AuthenticationException e) {
             // Return a sensible HTTP code for auth failures
             httpServletResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
         }
@@ -278,7 +278,7 @@ class SecurityFilter implements Filter {
         return false;
     }
 
-    private boolean isApiRequest(String servletPath) {
+    private boolean isApiRequest(final String servletPath) {
         return servletPath.startsWith(ResourcePaths.API_ROOT_PATH);
     }
 

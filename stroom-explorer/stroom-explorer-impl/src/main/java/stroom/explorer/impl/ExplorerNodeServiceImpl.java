@@ -77,7 +77,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                     LOGGER.info("Creating explorer root node in the database {}", rootNode);
                     try {
                         explorerTreeDao.addChild(null, rootNode);
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         throw new RuntimeException("Error creating explorer root node " + rootNode, e);
                     }
                 }
@@ -301,7 +301,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     }
 
     @Override
-    public Optional<ExplorerNode> getParent(DocRef docRef) {
+    public Optional<ExplorerNode> getParent(final DocRef docRef) {
         return getNodeForDocRef(docRef)
                 .map(explorerTreeDao::getParent)
                 .map(this::createExplorerNode);

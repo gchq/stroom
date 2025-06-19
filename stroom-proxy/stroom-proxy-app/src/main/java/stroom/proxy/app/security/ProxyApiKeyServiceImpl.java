@@ -349,7 +349,7 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
                 LOGGER.info("Written verifiedApiKeys with snapshot time {} to file '{}'",
                         Instant.ofEpochMilli(verifiedApiKeys.getSnapshotTimeEpochMs()), jsonFile);
                 verifiedApiKeysFromFile = verifiedApiKeys;
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 LOGGER.error("Error writing to file " + jsonFile
                              + ": " + LogUtil.exceptionMessage(e), e);
                 // Swallow and carry on

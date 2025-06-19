@@ -36,7 +36,7 @@ class TestTokenType {
     @Disabled
         // Here just to see debug in the static initialiser
     void test() {
-        TokenType tokenType = TokenType.FROM;
+        final TokenType tokenType = TokenType.FROM;
     }
 
     @TestFactory

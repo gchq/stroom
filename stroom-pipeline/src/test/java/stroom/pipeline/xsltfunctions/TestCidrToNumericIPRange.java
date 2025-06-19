@@ -68,7 +68,7 @@ class TestCidrToNumericIPRange extends AbstractXsltFunctionTest<CidrToNumericIPR
                 .isInstanceOf(ArrayItem.class)
                 .describedAs("Returned type should be an array");
 
-        ArrayItem range = ((ArrayItem) sequence);
+        final ArrayItem range = ((ArrayItem) sequence);
         assertThat(range.arrayLength())
                 .isEqualTo(2)
                 .describedAs("Returned array should contain only two items");

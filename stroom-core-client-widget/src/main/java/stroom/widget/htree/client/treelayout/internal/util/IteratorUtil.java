@@ -49,7 +49,7 @@ public class IteratorUtil {
      * @param list
      * @return a reverse {@link Iterator} of the list
      */
-    public static <T> Iterator<T> createReverseIterator(List<T> list) {
+    public static <T> Iterator<T> createReverseIterator(final List<T> list) {
         return new ReverseIterator<>(list);
     }
 
@@ -57,7 +57,7 @@ public class IteratorUtil {
 
         private final ListIterator<T> listIterator;
 
-        public ReverseIterator(List<T> list) {
+        public ReverseIterator(final List<T> list) {
             this.listIterator = list.listIterator(list.size());
         }
 

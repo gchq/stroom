@@ -538,14 +538,14 @@ public enum AceEditorMode {
                 .collect(Collectors.toMap(Enum::name, Function.identity()));
     }
 
-    AceEditorMode(String name) {
+    AceEditorMode(final String name) {
         this.name = name;
     }
 
     // Added by at055612
     public static AceEditorMode fromName(final String name) {
         Objects.requireNonNull(name);
-        AceEditorMode mode = NAME_TO_MODES_MAP.get(name);
+        final AceEditorMode mode = NAME_TO_MODES_MAP.get(name);
         Objects.requireNonNull(mode);
         return mode;
     }

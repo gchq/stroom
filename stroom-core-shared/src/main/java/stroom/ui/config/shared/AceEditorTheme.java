@@ -127,7 +127,7 @@ public enum AceEditorTheme {
     private final String name;
     private final ThemeType themeType;
 
-    AceEditorTheme(String name, final ThemeType themeType) {
+    AceEditorTheme(final String name, final ThemeType themeType) {
         this.name = Objects.requireNonNull(name);
         this.themeType = Objects.requireNonNull(themeType);
     }
@@ -159,7 +159,7 @@ public enum AceEditorTheme {
         }
     }
 
-    public static boolean matchesThemeType(final String themeName, ThemeType themeType) {
+    public static boolean matchesThemeType(final String themeName, final ThemeType themeType) {
         Objects.requireNonNull(themeName);
         Objects.requireNonNull(themeType);
         return TYPE_TO_THEME_MAP.get(themeType)

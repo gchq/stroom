@@ -51,7 +51,7 @@ public interface HasCaseInsensitiveForm<T extends Enum<T>> {
             final Map<CIKey, T> map = NullSafe.stream(clazz.getEnumConstants())
                     .filter(Objects::nonNull)
                     .collect(Collectors.toMap(
-                            (T item) -> {
+                            (final T item) -> {
                                 // Add the enum's uppercase name to our common CIKeys
                                 // to speed up checking if the uppercase form is used, which
                                 // will be the case for API use as that will always serialise to

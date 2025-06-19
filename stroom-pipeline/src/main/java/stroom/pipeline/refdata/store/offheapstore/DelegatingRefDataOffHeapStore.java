@@ -166,7 +166,7 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
         LOGGER.debug("Ensuring directory {}", path);
         try {
             Files.createDirectories(path);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message("Error ensuring directory {} for property '{}': {}",
                     path,
                     propertyPath,
@@ -177,7 +177,7 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
         Path tempFile = null;
         try {
             tempFile = Files.createTempFile(path, "", null);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message("Error writing test file in directory {} for property '{}': {}",
                     path,
                     propertyPath,
@@ -186,7 +186,7 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
             if (tempFile != null) {
                 try {
                     Files.deleteIfExists(tempFile);
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     // Swallow and log
                     LOGGER.error("Error writing test file in directory {} for property {}: {}",
                             path,
@@ -499,7 +499,7 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
             }
 
             return builder.build();
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             return SystemInfoResult.builder(this)
                     .addError(e)
                     .build();
@@ -571,7 +571,7 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
             } else {
                 try {
                     migrateRefStream(refStreamId, feedSpecificStore);
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     // We can't risk the migration holding up processing, so if it fails just ignore it.
                     // The caller will then get a feed specific store that doesn't contain the stream so will try to
                     // load it as normal.
@@ -621,7 +621,7 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
                 LOGGER.info("Discovered {} feed specific ref data stores in {}",
                         storeCount, localDir.toAbsolutePath());
 
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new RuntimeException(e);
             }
         } else {
@@ -649,12 +649,12 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
                         feedStore.info(DocRef.builder().type(FeedDoc.TYPE).uuid(feedDocUuid).build()),
                         DocRefInfo::getDocRef,
                         DocRef::getName);
-            } catch (DocumentNotFoundException e) {
+            } catch (final DocumentNotFoundException e) {
                 LOGGER.error("Feed with UUID '{}' not found for ref store directory {} (parts: {}). " +
                              "Ignoring this directory. Consider deleting it if refers to a non-existent fee.",
                         feedDocUuid, storeDir, parts);
                 return 0;
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.error("Error initialising ref store directory {} (parts: {}). Ignoring this store. Error: {}",
                         storeDir, parts, e.getMessage(), e);
                 return 0;
@@ -707,7 +707,7 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
                     migrationCheckRequired = false;
                 }
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message(
                     "Error listing files in {}: {}", localDir, e.getMessage()), e);
         }
@@ -730,10 +730,10 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
             lmdbEnvironment.close();
             try {
                 lmdbEnvironment.delete();
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.error("Error deleting ref data lmdb env {}: {}", lmdbEnvironment, e.getMessage(), e);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error closing ref data lmdb env {}: {}", lmdbEnvironment, e.getMessage(), e);
         }
     }

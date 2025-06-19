@@ -125,13 +125,13 @@ public class StoreMigrator {
             LOGGER.info("Completed migration of ref stream {} into store {} in {}",
                     refStreamId, destinationStore.getName(), timer);
 
-        } catch (TaskTerminatedException e) {
+        } catch (final TaskTerminatedException e) {
             // Expected behaviour so just rethrow, stopping it being picked up by the other
             // catch block
             LOGGER.debug("Migration terminated, refStreamId: " + refStreamId, e);
             LOGGER.warn("Migration terminated, refStreamId: " + refStreamId);
             throw e;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error(() -> "Migration of refStreamId " + refStreamId + " failed due to " + e.getMessage());
             throw e;
         }
@@ -229,7 +229,7 @@ public class StoreMigrator {
             }
 
             destStoreLoader.completeProcessing(ProcessingState.COMPLETE);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             destStoreLoader.completeProcessing(ProcessingState.FAILED);
             throw new RuntimeException(e);
         }

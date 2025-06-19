@@ -118,7 +118,7 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
         return getLmdbEnvironment().getWithReadTxn(readTxn ->
                 getByteBufferPool().getWithBuffer(keySerde.getBufferCapacity(), keyBuffer -> {
                     keySerde.serialize(keyBuffer, refStreamDefinition);
-                    ByteBuffer valueBuffer = getLmdbDbi().get(readTxn, keyBuffer);
+                    final ByteBuffer valueBuffer = getLmdbDbi().get(readTxn, keyBuffer);
                     return RefDataProcessingInfoSerde.extractProcessingState(valueBuffer);
                 }));
     }
@@ -142,7 +142,7 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
         }
         int i = 0;
 
-        try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(txn, keyRange)) {
+        try (final CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(txn, keyRange)) {
             for (final CursorIterable.KeyVal<ByteBuffer> keyVal : cursorIterable) {
                 i++;
 
@@ -164,8 +164,8 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
 
     public Tuple2<Optional<Instant>, Optional<Instant>> getLastAccessedTimeRange() {
 
-        long earliestInitialValue = Long.MAX_VALUE;
-        long latestInitialValue = 0;
+        final long earliestInitialValue = Long.MAX_VALUE;
+        final long latestInitialValue = 0;
         final LongAccumulator earliestLastAccessedTime = new LongAccumulator(Long::min, earliestInitialValue);
         final LongAccumulator latestLastAccessedTime = new LongAccumulator(Long::max, latestInitialValue);
 
@@ -174,7 +174,7 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
                     // It would be quicker to keep a copy of the earliest/latest times in there byte
                     // form and do the comparison on that but as this is only intended for use
                     // in a sys info check it is probably ok as is.
-                    long lastAccessedTime = valueSerde.extractLastAccessedTimeMs(keyVal.val());
+                    final long lastAccessedTime = valueSerde.extractLastAccessedTimeMs(keyVal.val());
                     earliestLastAccessedTime.accumulate(lastAccessedTime);
                     latestLastAccessedTime.accumulate(lastAccessedTime);
                 }));

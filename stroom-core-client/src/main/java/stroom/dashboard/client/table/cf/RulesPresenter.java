@@ -161,7 +161,7 @@ public class RulesPresenter
         registerHandler(moveUpButton.addClickHandler(event -> {
             final ConditionalFormattingRule rule = listPresenter.getSelectionModel().getSelected();
             if (rule != null) {
-                int index = rules.indexOf(rule);
+                final int index = rules.indexOf(rule);
                 if (index > 0) {
                     rules.remove(rule);
                     rules.add(index - 1, rule);
@@ -173,7 +173,7 @@ public class RulesPresenter
         registerHandler(moveDownButton.addClickHandler(event -> {
             final ConditionalFormattingRule rule = listPresenter.getSelectionModel().getSelected();
             if (rule != null) {
-                int index = rules.indexOf(rule);
+                final int index = rules.indexOf(rule);
                 if (index < rules.size() - 1) {
                     rules.remove(rule);
                     rules.add(index + 1, rule);

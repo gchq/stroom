@@ -99,13 +99,13 @@ class TestValueStore extends AbstractStoreDbTest {
         valueStore = new ValueStore(refDataLmdbEnv, valueStoreDb, valueStoreMetaDb);
     }
 
-    private ValueStoreKey getOrCreate(Txn<ByteBuffer> writeTxn, RefDataValue refDataValue) {
-        try (PooledByteBuffer valueStoreKeyPooledBuffer = valueStore.getPooledKeyBuffer()) {
+    private ValueStoreKey getOrCreate(final Txn<ByteBuffer> writeTxn, final RefDataValue refDataValue) {
+        try (final PooledByteBuffer valueStoreKeyPooledBuffer = valueStore.getPooledKeyBuffer()) {
             final StagingValue stagingValue = StagingValueSerde.convert(
                     ByteBuffer::allocateDirect,
                     basicHashAlgorithm,
                     refDataValue);
-            ByteBuffer valueStoreKeyBuffer = valueStore.getOrCreateKey(
+            final ByteBuffer valueStoreKeyBuffer = valueStore.getOrCreateKey(
                     writeTxn,
                     valueStoreKeyPooledBuffer,
                     stagingValue);
@@ -120,7 +120,7 @@ class TestValueStore extends AbstractStoreDbTest {
         // We have to set up the DB with the basic hash func so we can be assured of hash clashes
         setupValueStoreDb(basicHashAlgorithm);
 
-        ValueStoreHashAlgorithm hashAlgorithm = valueStoreDb.getValueStoreHashAlgorithm();
+        final ValueStoreHashAlgorithm hashAlgorithm = valueStoreDb.getValueStoreHashAlgorithm();
 
         // 1 & 2 have the same hashcode, 3 has a different hashcode
         final String stringValueStr1 = "Aa";
@@ -134,7 +134,7 @@ class TestValueStore extends AbstractStoreDbTest {
         assertThat(valueStoreMetaDb.getEntryCount()).isEqualTo(0);
 
         lmdbEnv.doWithWriteTxn(writeTxn -> {
-            ValueStoreKey valueStoreKey = getOrCreate(writeTxn, StringValue.of(stringValueStr1));
+            final ValueStoreKey valueStoreKey = getOrCreate(writeTxn, StringValue.of(stringValueStr1));
 
             assertThat(valueStoreKey).isNotNull();
             assertThat(valueStoreKey.getUniqueId()).isEqualTo((short) 0);
@@ -151,7 +151,7 @@ class TestValueStore extends AbstractStoreDbTest {
         // now put the same value again. Entry count should not change as we already have the value
         // returned valueStoreKey should also be the same.
         lmdbEnv.doWithWriteTxn(writeTxn -> {
-            ValueStoreKey valueStoreKey = getOrCreate(writeTxn, StringValue.of(stringValueStr1));
+            final ValueStoreKey valueStoreKey = getOrCreate(writeTxn, StringValue.of(stringValueStr1));
 
             assertThat(valueStoreKey).isNotNull();
             assertThat(valueStoreKey.getUniqueId()).isEqualTo((short) 0);
@@ -168,7 +168,7 @@ class TestValueStore extends AbstractStoreDbTest {
         // now put a different value with same hashcode. Entry count should increase and the
         // returned valueStoreKey should have an id of 1 as it has same hashcode as last one
         lmdbEnv.doWithWriteTxn(writeTxn -> {
-            ValueStoreKey valueStoreKey = getOrCreate(writeTxn, StringValue.of(stringValueStr2));
+            final ValueStoreKey valueStoreKey = getOrCreate(writeTxn, StringValue.of(stringValueStr2));
 
             assertThat(valueStoreKey).isNotNull();
             assertThat(valueStoreKey.getUniqueId()).isEqualTo((short) 1);
@@ -182,7 +182,7 @@ class TestValueStore extends AbstractStoreDbTest {
 
         // get the same value again, no change to DB or returned values
         lmdbEnv.doWithWriteTxn(writeTxn -> {
-            ValueStoreKey valueStoreKey = getOrCreate(writeTxn, StringValue.of(stringValueStr2));
+            final ValueStoreKey valueStoreKey = getOrCreate(writeTxn, StringValue.of(stringValueStr2));
 
             assertThat(valueStoreKey).isNotNull();
             assertThat(valueStoreKey.getUniqueId()).isEqualTo((short) 1);
@@ -198,7 +198,7 @@ class TestValueStore extends AbstractStoreDbTest {
         // now put a different value with a different hashcode. Entry count should increase and the
         // returned valueStoreKey should have an id of 0 as it has a different hashcode.
         lmdbEnv.doWithWriteTxn(writeTxn -> {
-            ValueStoreKey valueStoreKey = getOrCreate(writeTxn, StringValue.of(stringValueStr3));
+            final ValueStoreKey valueStoreKey = getOrCreate(writeTxn, StringValue.of(stringValueStr3));
 
             assertThat(valueStoreKey).isNotNull();
             assertThat(valueStoreKey.getUniqueId()).isEqualTo((short) 0);
@@ -212,7 +212,7 @@ class TestValueStore extends AbstractStoreDbTest {
 
         // get the same value again, no change to DB or returned values
         lmdbEnv.doWithWriteTxn(writeTxn -> {
-            ValueStoreKey valueStoreKey = getOrCreate(writeTxn, StringValue.of(stringValueStr3));
+            final ValueStoreKey valueStoreKey = getOrCreate(writeTxn, StringValue.of(stringValueStr3));
 
             assertThat(valueStoreKey).isNotNull();
             assertThat(valueStoreKey.getUniqueId()).isEqualTo((short) 0);
@@ -234,8 +234,8 @@ class TestValueStore extends AbstractStoreDbTest {
     @Test
     void testDereference() {
 
-        StringValue value1 = StringValue.of("1111");
-        StringValue value2 = StringValue.of("2222");
+        final StringValue value1 = StringValue.of("1111");
+        final StringValue value2 = StringValue.of("2222");
 
         // ensure hashcodes don't clash
         assertThat(value1.getValue().hashCode())
@@ -364,8 +364,8 @@ class TestValueStore extends AbstractStoreDbTest {
     }
 
     private void deReferenceOrDeleteValue(final Txn<ByteBuffer> writeTxn, final ValueStoreKey valueStoreKey) {
-        try (PooledByteBuffer pooledByteBuffer = valueStoreDb.getPooledKeyBuffer()) {
-            ByteBuffer valueStoreKeyBuffer = pooledByteBuffer.getByteBuffer();
+        try (final PooledByteBuffer pooledByteBuffer = valueStoreDb.getPooledKeyBuffer()) {
+            final ByteBuffer valueStoreKeyBuffer = pooledByteBuffer.getByteBuffer();
 
             valueStoreDb.serializeKey(valueStoreKeyBuffer, valueStoreKey);
             valueStore.deReferenceOrDeleteValue(writeTxn, valueStoreKeyBuffer);
@@ -373,16 +373,18 @@ class TestValueStore extends AbstractStoreDbTest {
     }
 
 
-    private int getRefCount(Txn<ByteBuffer> txn, ValueStoreKey valueStoreKey) {
-        ValueStoreMeta valueStoreMeta = valueStoreMetaDb.get(txn, valueStoreKey).get();
+    private int getRefCount(final Txn<ByteBuffer> txn, final ValueStoreKey valueStoreKey) {
+        final ValueStoreMeta valueStoreMeta = valueStoreMetaDb.get(txn, valueStoreKey).get();
         final int referenceCount = valueStoreMeta.getReferenceCount();
         LOGGER.info("Ref count: {}", referenceCount);
         return referenceCount;
     }
 
-    private void assertRefCount(Txn<ByteBuffer> txn, final ValueStoreKey valueStoreKey, final int expectedRefCount) {
-        ValueStoreMeta valueStoreMeta = valueStoreMetaDb.get(txn, valueStoreKey).get();
-        int foundRefCount = valueStoreMeta.getReferenceCount();
+    private void assertRefCount(final Txn<ByteBuffer> txn,
+                                final ValueStoreKey valueStoreKey,
+                                final int expectedRefCount) {
+        final ValueStoreMeta valueStoreMeta = valueStoreMetaDb.get(txn, valueStoreKey).get();
+        final int foundRefCount = valueStoreMeta.getReferenceCount();
         assertThat(foundRefCount).isEqualTo(expectedRefCount);
     }
 

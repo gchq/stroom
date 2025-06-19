@@ -203,7 +203,7 @@ class TestValDurationUtil {
     }
 
     private static void getTestAssertions(final TestOutcome<?, ?> testOutcome) {
-        if (testOutcome.getExpectedOutput() instanceof ValErr valErrExpected) {
+        if (testOutcome.getExpectedOutput() instanceof final ValErr valErrExpected) {
             assertThat(testOutcome.getActualOutput())
                     .isInstanceOf(ValErr.class);
             assertThat(((ValErr) testOutcome.getActualOutput()).getMessage())

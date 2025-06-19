@@ -412,7 +412,7 @@ class TestDS3 extends StroomUnitTest {
 
         LOGGER.info("root:\n{}", root.toString());
 
-        DS3Parser ds3Parser = new DS3Parser(root, 1_000, 10_000);
+        final DS3Parser ds3Parser = new DS3Parser(root, 1_000, 10_000);
 
         LOGGER.info("Input:\n-----\n{}\n-----", inputStr);
 
@@ -612,7 +612,7 @@ class TestDS3 extends StroomUnitTest {
             if (expectedErrors) {
                 compareFiles(errtmp, err);
             }
-        } catch (ReaderConfigurationException e) {
+        } catch (final ReaderConfigurationException e) {
             if (expectedErrors) {
                 // Do nothing, expected
             } else {
@@ -658,7 +658,7 @@ class TestDS3 extends StroomUnitTest {
 
     private void compareFiles(final Path actualFile, final Path expectedFile) {
 
-        boolean areFilesTheSame = ComparisonHelper.unifiedDiff(expectedFile, actualFile);
+        final boolean areFilesTheSame = ComparisonHelper.unifiedDiff(expectedFile, actualFile);
 
         if (areFilesTheSame) {
             // If the files matched then delete the temporary file.
@@ -704,10 +704,10 @@ class TestDS3 extends StroomUnitTest {
                 }
                 lastChar = chr;
 
-                boolean isOnOrPastFromLocation = line > from.getLineNo()
-                        || (line == from.getLineNo() && col >= from.getColNo());
-                boolean isBeforeOrOnToLocation = line < to.getLineNo()
-                        || (line == to.getLineNo() && col <= to.getColNo());
+                final boolean isOnOrPastFromLocation = line > from.getLineNo()
+                                                       || (line == from.getLineNo() && col >= from.getColNo());
+                final boolean isBeforeOrOnToLocation = line < to.getLineNo()
+                                                       || (line == to.getLineNo() && col <= to.getColNo());
 
                 if (isOnOrPastFromLocation && isBeforeOrOnToLocation) {
                     output.append(charToVisible((char) chr));
@@ -716,7 +716,7 @@ class TestDS3 extends StroomUnitTest {
                     break;
                 }
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(e);
         }
         return output.toString();
@@ -809,7 +809,7 @@ class TestDS3 extends StroomUnitTest {
             if (localName.equals("record")) {
 
                 if (locator instanceof DSLocator) {
-                    DSLocator dsLocator = (DSLocator) locator;
+                    final DSLocator dsLocator = (DSLocator) locator;
                     LOGGER.info("  [{}:{}] => [{}:{}]",
                             dsLocator.getLineNumber(),
                             dsLocator.getColumnNumber(),

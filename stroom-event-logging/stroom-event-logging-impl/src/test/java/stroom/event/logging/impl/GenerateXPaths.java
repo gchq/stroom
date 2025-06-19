@@ -61,7 +61,7 @@ public class GenerateXPaths {
                                   final String name,
                                   final Class<T> clazz,
                                   final int depth,
-                                  boolean hasMultiple) throws Exception {
+                                  final boolean hasMultiple) throws Exception {
 
         if (depth <= 20) {
             final String padding = Strings.repeat(" ", (depth - 1) * 2);
@@ -144,7 +144,7 @@ public class GenerateXPaths {
                            "/@" +
                            xmlAttrAnno.name());
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error(LogUtil.message("Unable to inspect prop {} at path {} - {}",
                     propName, xPathBuilder.toString(), e.getMessage()));
         }

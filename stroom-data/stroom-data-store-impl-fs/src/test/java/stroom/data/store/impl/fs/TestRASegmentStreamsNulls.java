@@ -31,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestRASegmentStreamsNulls {
 
     @Test
-    void testNoSegments(@TempDir Path tempDir) throws IOException {
+    void testNoSegments(@TempDir final Path tempDir) throws IOException {
         final Path datFile = tempDir.resolve("test.bzg");
         final Path segFile = tempDir.resolve("test.seg.dat");
 

@@ -31,7 +31,7 @@ class ModelChangeDetector {
 
     @Test
     void detect_changes_in_SearchRequest() throws IOException {
-        String newPortrait = ClassPhotographer.takePortraitOf(SearchRequest.class, "stroom.query.api");
+        final String newPortrait = ClassPhotographer.takePortraitOf(SearchRequest.class, "stroom.query.api");
 
         // Uncomment this line to update the model portrait
 //        Files.write(SEARCH_REQUEST_PORTRAIT_FILE_CURRENT, newPortrait.getBytes());
@@ -40,7 +40,7 @@ class ModelChangeDetector {
         //assertion fails
         Files.write(SEARCH_REQUEST_PORTRAIT_FILE_NEW, newPortrait.getBytes());
 
-        String currentPortrait = new String(Files.readAllBytes(SEARCH_REQUEST_PORTRAIT_FILE_CURRENT));
+        final String currentPortrait = new String(Files.readAllBytes(SEARCH_REQUEST_PORTRAIT_FILE_CURRENT));
 
         System.out.println("Ir the test fails compare the contents of the following two files to " +
                 "establish how the api has changed");

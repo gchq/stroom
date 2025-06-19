@@ -110,8 +110,8 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         // done once in the ExplorerNodeServiceImpl ctor
         explorerNodeService.ensureRootNodeExists();
 
-        Path fsVolDir;
-        Path indexVolDir;
+        final Path fsVolDir;
+        final Path indexVolDir;
         if (tempDir == null) {
             final List<String> fsVolPathStr = fsVolumeConfig.getDefaultStreamVolumePaths();
             fsVolDir = pathCreator.toAppPath(fsVolPathStr.get(0));
@@ -205,7 +205,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
      * left by test runs. Tests should clean up after themselves, but exceptions may stop
      * this happening.
      */
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         DbTestUtil.dropAllTestDatabases();
     }
 }

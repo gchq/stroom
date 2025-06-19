@@ -25,7 +25,7 @@ final class FormatterCache {
                     .75F,
                     true) {
                 // This method is called just after a new entry has been added
-                public boolean removeEldestEntry(Map.Entry eldest) {
+                public boolean removeEldestEntry(final Map.Entry eldest) {
                     if (size() > MAX_ENTRIES) {
                         if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug("Evicting old formatter: " + eldest.getKey());
@@ -42,7 +42,7 @@ final class FormatterCache {
                     .75F,
                     true) {
                 // This method is called just after a new entry has been added
-                public boolean removeEldestEntry(Map.Entry eldest) {
+                public boolean removeEldestEntry(final Map.Entry eldest) {
                     if (size() > MAX_ENTRIES) {
                         if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug("Evicting old zone id: " + eldest.getKey());

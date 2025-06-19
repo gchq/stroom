@@ -564,7 +564,7 @@ public final class ModelStringUtil {
     }
 
     private static String addThousandsSeparators(final String number) {
-        String integerPart;
+        final String integerPart;
         final String decimalPart;
 
         if (number.contains(".")) {

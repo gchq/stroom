@@ -118,7 +118,7 @@ public class CopyTextUtil {
         }
     }
 
-    public static SafeHtml div(String className, SafeHtml content) {
+    public static SafeHtml div(final String className, final SafeHtml content) {
         return TEMPLATE.div(className, content);
     }
 

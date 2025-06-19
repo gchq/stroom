@@ -80,7 +80,7 @@ class FormatDateTime extends StroomExtensionFunctionCall {
         }
 
         // Create the supplied date.
-        Instant instant = value.toJavaInstant();
+        final Instant instant = value.toJavaInstant();
 
         // Resolve the output time zone.
         final ZoneId zoneId = getTimeZone(context, timeZoneOut);

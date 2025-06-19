@@ -120,7 +120,7 @@ class TestHttpSender {
                 .when(mockHttpClient)
                 .execute(Mockito.any(HttpPost.class), Mockito.any(HttpClientResponseHandler.class));
 
-        HttpSender httpSender = new HttpSender(
+        final HttpSender httpSender = new HttpSender(
                 mockLogStream,
                 config,
                 "my-user-agent",
@@ -194,7 +194,7 @@ class TestHttpSender {
                 .when(mockHttpClient)
                 .execute(Mockito.any(HttpPost.class), Mockito.any(HttpClientResponseHandler.class));
 
-        HttpSender httpSender = new HttpSender(
+        final HttpSender httpSender = new HttpSender(
                 mockLogStream,
                 config,
                 "my-user-agent",
@@ -264,7 +264,7 @@ class TestHttpSender {
                 .when(mockHttpClient)
                 .execute(Mockito.any(HttpPost.class), Mockito.any(HttpClientResponseHandler.class));
 
-        HttpSender httpSender = new HttpSender(
+        final HttpSender httpSender = new HttpSender(
                 mockLogStream,
                 config,
                 "my-user-agent",
@@ -336,7 +336,7 @@ class TestHttpSender {
                 .when(mockHttpClient)
                 .execute(Mockito.any(HttpPost.class), Mockito.any(HttpClientResponseHandler.class));
 
-        HttpSender httpSender = new HttpSender(
+        final HttpSender httpSender = new HttpSender(
                 mockLogStream,
                 config,
                 "my-user-agent",
@@ -383,7 +383,7 @@ class TestHttpSender {
                         Mockito.any(HttpPost.class),
                         Mockito.any(HttpClientResponseHandler.class));
 
-        HttpSender httpSender = new HttpSender(
+        final HttpSender httpSender = new HttpSender(
                 mockLogStream,
                 config,
                 "my-user-agent",
@@ -428,7 +428,7 @@ class TestHttpSender {
 
         final HttpClient httpClient = buildRealHttpClient();
 
-        HttpSender httpSender = new HttpSender(
+        final HttpSender httpSender = new HttpSender(
                 mockLogStream,
                 config,
                 "my-user-agent",
@@ -452,7 +452,7 @@ class TestHttpSender {
 
         final HttpClient httpClient = buildRealHttpClient();
 
-        HttpSender httpSender = new HttpSender(
+        final HttpSender httpSender = new HttpSender(
                 mockLogStream,
                 config,
                 "my-user-agent",
@@ -476,7 +476,7 @@ class TestHttpSender {
 
         final HttpClient httpClient = buildRealHttpClient();
 
-        HttpSender httpSender = new HttpSender(
+        final HttpSender httpSender = new HttpSender(
                 mockLogStream,
                 config,
                 "my-user-agent",
@@ -497,7 +497,7 @@ class TestHttpSender {
         try {
             Assertions.assertThat(httpSender.performLivenessCheck())
                     .isEqualTo(isLive);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             if (isLive) {
                 Assertions.fail(LogUtil.message("Expecting {} to be live", httpSender));
             }

@@ -194,7 +194,7 @@ public enum UnsignedBytesInstances implements UnsignedBytes {
         if (cap >= len) {
             // Work from right to left
             for (int i = index + len - 1; i >= index; i--) {
-                byte b = byteBuffer.get(i);
+                final byte b = byteBuffer.get(i);
                 if (b == (byte) 0xFF) {
                     if (i == index) {
                         // Every byte is FF so we can't increment anymore
@@ -232,7 +232,7 @@ public enum UnsignedBytesInstances implements UnsignedBytes {
         if (cap >= len) {
             // Work from right to left
             for (int i = index + len - 1; i >= index; i--) {
-                byte b = byteBuffer.get(i);
+                final byte b = byteBuffer.get(i);
                 if (b == (byte) 0x00) {
                     if (i == index) {
                         // Every byte is 00 so we can't decrement anymore

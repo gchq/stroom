@@ -60,7 +60,7 @@ public class VerifyApiKeyRequest {
         } else {
             try {
                 return apiKey.substring(0, 15);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 return "ERROR";
             }
         }

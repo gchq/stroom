@@ -19,7 +19,7 @@ public class ElasticRetentionConfig extends AbstractConfig implements IsStroomCo
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public ElasticRetentionConfig(@JsonProperty("scrollSize") long scrollSize) {
+    public ElasticRetentionConfig(@JsonProperty("scrollSize") final long scrollSize) {
         this.scrollSize = scrollSize;
     }
 

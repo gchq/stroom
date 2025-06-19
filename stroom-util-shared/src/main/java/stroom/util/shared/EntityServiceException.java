@@ -68,7 +68,7 @@ public class EntityServiceException extends RuntimeException implements Serializ
         return detail;
     }
 
-    public void setDetail(String detail) {
+    public void setDetail(final String detail) {
         this.detail = detail;
     }
 
@@ -76,7 +76,7 @@ public class EntityServiceException extends RuntimeException implements Serializ
         return callStack;
     }
 
-    public void setCallStack(String callStack) {
+    public void setCallStack(final String callStack) {
         this.callStack = callStack;
     }
 

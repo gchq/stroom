@@ -121,7 +121,7 @@ class FsOrphanFileFinderExecutor {
                         counter.get());
                 LOGGER.info(LogUtil.message("{} - Finished, in {}.", TASK_NAME, durationTimer));
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             ORPHAN_FILE_LOGGER.info("--- {} task failed at {} due to: {} ---",
                     TASK_NAME,
                     DateUtil.createNormalDateTimeString(),

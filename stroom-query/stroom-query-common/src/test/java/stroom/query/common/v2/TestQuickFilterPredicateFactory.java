@@ -328,7 +328,7 @@ class TestQuickFilterPredicateFactory {
 
     @Test
     void testFilterStream_string_contains() {
-        List<String> data = List.of(
+        final List<String> data = List.of(
                 "Brown Fox",
                 "Red Panda",
                 "Blue Whale",
@@ -350,7 +350,7 @@ class TestQuickFilterPredicateFactory {
 
     @Test
     void testFilterStream_string_charsAnywhere() {
-        List<String> data = List.of(
+        final List<String> data = List.of(
                 "Brown Fox",
                 "Red Panda",
                 "Blue Whale",
@@ -376,7 +376,7 @@ class TestQuickFilterPredicateFactory {
 
     @Test
     void testFilterStream_string_regex() {
-        List<String> data = List.of(
+        final List<String> data = List.of(
                 "Brown Fox",
                 "Red Panda",
                 "Blue Whale",

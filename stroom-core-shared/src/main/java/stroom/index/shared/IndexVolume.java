@@ -192,7 +192,7 @@ public class IndexVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
         return nodeName;
     }
 
-    public void setNodeName(String nodeName) {
+    public void setNodeName(final String nodeName) {
         this.nodeName = nodeName;
     }
 

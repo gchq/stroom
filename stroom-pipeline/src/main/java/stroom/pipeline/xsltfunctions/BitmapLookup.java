@@ -119,7 +119,7 @@ class BitmapLookup extends AbstractLookup {
             }
 
             return generateSequence(sequenceMakerRef, xPathContext);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             log(xPathContext,
                     Severity.ERROR,
                     "Error during lookup: " + e.getMessage(),
@@ -167,7 +167,7 @@ class BitmapLookup extends AbstractLookup {
                 // No value proxy so log the reason
                 logFailureReason(result, xPathContext, ignoreWarnings, trace);
             }
-        } catch (XPathException e) {
+        } catch (final XPathException e) {
             outputInfo(
                     Severity.ERROR,
                     () -> "Error during lookup: " + e.getMessage(),
@@ -182,7 +182,7 @@ class BitmapLookup extends AbstractLookup {
     @NotNull
     private int[] convertToBits(final LookupIdentifier lookupIdentifier) {
         final String key = lookupIdentifier.getKey();
-        int val;
+        final int val;
         try {
             if (key.startsWith("0x")) {
                 // Hex input

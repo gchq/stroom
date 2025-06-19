@@ -285,7 +285,7 @@ public final class SetupSampleDataBean {
         }
     }
 
-    private static void logDocRefs(List<DocRef> entities, String entityTypes) {
+    private static void logDocRefs(final List<DocRef> entities, final String entityTypes) {
         LOGGER.info("Listing loaded {}:", entityTypes);
         entities.stream()
                 .map(DocRef::getName)
@@ -382,7 +382,7 @@ public final class SetupSampleDataBean {
                         LOGGER.info("Loading data from {}", dir.toAbsolutePath().normalize());
                         // Load data.
                         final DataLoader dataLoader = new DataLoader(feedProperties, streamTargetStreamHandlers);
-                        long startTime = System.currentTimeMillis();
+                        final long startTime = System.currentTimeMillis();
 
                         // Then load event data.
                         dataLoader.read(dir, false, startTime);

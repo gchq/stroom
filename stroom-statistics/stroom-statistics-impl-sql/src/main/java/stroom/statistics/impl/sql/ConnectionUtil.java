@@ -82,12 +82,12 @@ public class ConnectionUtil {
             sqlStatements.forEach(sql -> {
                 try {
                     statement.addBatch(sql);
-                } catch (SQLException e) {
+                } catch (final SQLException e) {
                     throw new RuntimeException(String.format("Error adding sql [%s] to batch", sql), e);
                 }
             });
-            int[] results = statement.executeBatch();
-            boolean isFailure = Arrays.stream(results)
+            final int[] results = statement.executeBatch();
+            final boolean isFailure = Arrays.stream(results)
                     .anyMatch(val -> val == Statement.EXECUTE_FAILED);
 
             if (isFailure) {
@@ -190,7 +190,7 @@ public class ConnectionUtil {
             if (c == '?') {
                 try {
                     sqlString.append(args.get(arg++));
-                } catch (IndexOutOfBoundsException e) {
+                } catch (final IndexOutOfBoundsException e) {
                     LOGGER.warn("Mismatch between '?' and args. sql: {}, args: {}", sql, args);
                     sqlString.append(c);
                 }

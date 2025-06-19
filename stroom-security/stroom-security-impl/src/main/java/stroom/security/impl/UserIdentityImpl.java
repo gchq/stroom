@@ -113,7 +113,7 @@ public class UserIdentityImpl
 
             try {
                 optUserIdentity = UserIdentitySessionUtil.get(httpSession);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.debug(() -> LogUtil.message(
                         "Error getting identity from session, likely due to it being removed at logout: {}",
                         e.getMessage()));

@@ -34,7 +34,7 @@ public class WrappedReader extends Reader {
     }
 
     @Override
-    public void mark(int readAheadLimit) throws IOException {
+    public void mark(final int readAheadLimit) throws IOException {
         reader.mark(readAheadLimit);
     }
 
@@ -49,17 +49,17 @@ public class WrappedReader extends Reader {
     }
 
     @Override
-    public int read(char[] cbuf, int off, int len) throws IOException {
+    public int read(final char[] cbuf, final int off, final int len) throws IOException {
         return reader.read(cbuf, off, len);
     }
 
     @Override
-    public int read(char[] cbuf) throws IOException {
+    public int read(final char[] cbuf) throws IOException {
         return reader.read(cbuf);
     }
 
     @Override
-    public int read(CharBuffer target) throws IOException {
+    public int read(final CharBuffer target) throws IOException {
         return reader.read(target);
     }
 
@@ -74,12 +74,12 @@ public class WrappedReader extends Reader {
     }
 
     @Override
-    public long skip(long n) throws IOException {
+    public long skip(final long n) throws IOException {
         return reader.skip(n);
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(final Object obj) {
         return reader.equals(obj);
     }
 

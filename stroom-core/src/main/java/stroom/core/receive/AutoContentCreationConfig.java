@@ -89,7 +89,7 @@ public class AutoContentCreationConfig
         this.templateMatchFields = normaliseFields(templateMatchFields);
     }
 
-    private AutoContentCreationConfig(Builder builder) {
+    private AutoContentCreationConfig(final Builder builder) {
         this.enabled = builder.enabled;
         this.destinationExplorerPathTemplate = builder.destinationExplorerPathTemplate;
         this.groupTemplate = builder.groupTemplate;
@@ -202,42 +202,42 @@ public class AutoContentCreationConfig
         private UserType createAsType;
         private Set<String> templateMatchFields;
 
-        public Builder enabled(boolean enabled) {
+        public Builder enabled(final boolean enabled) {
             this.enabled = enabled;
             return this;
         }
 
-        public Builder destinationPathTemplate(String destinationPathTemplate) {
+        public Builder destinationPathTemplate(final String destinationPathTemplate) {
             this.destinationExplorerPathTemplate = destinationPathTemplate;
             return this;
         }
 
-        public Builder groupTemplate(String groupTemplate) {
+        public Builder groupTemplate(final String groupTemplate) {
             this.groupTemplate = groupTemplate;
             return this;
         }
 
-        public Builder additionalGroupTemplate(String additionalGroupSuffix) {
+        public Builder additionalGroupTemplate(final String additionalGroupSuffix) {
             this.additionalGroupTemplate = additionalGroupSuffix;
             return this;
         }
 
-        public Builder createAsSubjectId(String createAsSubjectId) {
+        public Builder createAsSubjectId(final String createAsSubjectId) {
             this.createAsSubjectId = createAsSubjectId;
             return this;
         }
 
-        public Builder createAsType(UserType createAsType) {
+        public Builder createAsType(final UserType createAsType) {
             this.createAsType = createAsType;
             return this;
         }
 
-        public Builder templateMatchFields(Set<String> templateMatchFields) {
+        public Builder templateMatchFields(final Set<String> templateMatchFields) {
             this.templateMatchFields = NullSafe.mutableSet(templateMatchFields);
             return this;
         }
 
-        public Builder addTemplateMatchFields(String templateMatchField) {
+        public Builder addTemplateMatchFields(final String templateMatchField) {
             if (templateMatchFields == null) {
                 templateMatchFields = new HashSet<>();
             }

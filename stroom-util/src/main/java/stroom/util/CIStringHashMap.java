@@ -38,8 +38,8 @@ public class CIStringHashMap implements Serializable, Map<String, String> {
     }
 
     @Override
-    public String getOrDefault(Object key, String defaultVal) {
-        String val = realMap.get(new CIString((String) key));
+    public String getOrDefault(final Object key, final String defaultVal) {
+        final String val = realMap.get(new CIString((String) key));
         return val == null
                 ? defaultVal
                 : val;

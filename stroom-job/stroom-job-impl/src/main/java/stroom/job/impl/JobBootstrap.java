@@ -94,7 +94,7 @@ public class JobBootstrap {
             final Set<String> validJobNames = new HashSet<>();
 
             // TODO: The form below isn't very clear. Split into job mapping and creation.
-            for (ScheduledJob scheduledJob : scheduledJobsMap.keySet()) {
+            for (final ScheduledJob scheduledJob : scheduledJobsMap.keySet()) {
                 // We only add managed jobs to the DB as only managed ones can accept user changes.
                 if (scheduledJob.isManaged()) {
                     if (validJobNames.contains(scheduledJob.getName())) {

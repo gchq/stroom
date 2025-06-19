@@ -87,7 +87,7 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
         BundledRules bundledRules = null;
         try {
             bundledRules = ruleSetService.getBundledRules();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error fetching receipt policy rules: {}", LogUtil.exceptionMessage(e), e);
         }
         if (bundledRules == null) {

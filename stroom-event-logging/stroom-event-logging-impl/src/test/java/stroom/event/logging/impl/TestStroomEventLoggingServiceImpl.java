@@ -70,7 +70,7 @@ class TestStroomEventLoggingServiceImpl {
                 currentActivity,
                 () -> buildInfo,
                 (ipAddress -> {
-                    Device device = new Device();
+                    final Device device = new Device();
                     device.setIPAddress(ipAddress);
                     return device;
                 }));
@@ -149,7 +149,7 @@ class TestStroomEventLoggingServiceImpl {
     @Test
     void testLoggedAction_success() {
 
-        AtomicBoolean wasWorkDone = new AtomicBoolean(false);
+        final AtomicBoolean wasWorkDone = new AtomicBoolean(false);
 
         stroomEventLoggingService.loggedWorkBuilder()
                 .withTypeId("typeId")
@@ -236,7 +236,7 @@ class TestStroomEventLoggingServiceImpl {
 
     @Test
     void testDataItemCreationAndRedaction() throws Exception {
-        List<Data> allData = stroomEventLoggingService.getDataItems(
+        final List<Data> allData = stroomEventLoggingService.getDataItems(
                 new TestSecretObj("test", "xyzzy", "open-sesame"));
 
         assertThat(allData.size()).isEqualTo(3); //name property should be excluded, as this is logged elsewhere
@@ -255,19 +255,19 @@ class TestStroomEventLoggingServiceImpl {
 
     @Test
     void testConvertPojoWithInfoProvider() throws Exception {
-        BaseObject baseObject = stroomEventLoggingService.convert(new TestObj());
+        final BaseObject baseObject = stroomEventLoggingService.convert(new TestObj());
         assertThat(baseObject).isSameAs(testObj);
     }
 
     @Test
     void testConvertPojoWithoutInfoProvider() throws Exception {
-        String name = "TestSecretObject1";
-        String typeName = TestSecretObj.class.getSimpleName();
-        BaseObject baseObject = stroomEventLoggingService.convert(new TestSecretObj(name, "b", "x"));
+        final String name = "TestSecretObject1";
+        final String typeName = TestSecretObj.class.getSimpleName();
+        final BaseObject baseObject = stroomEventLoggingService.convert(new TestSecretObj(name, "b", "x"));
 
         assertThat(baseObject.getType()).isEqualTo(typeName);
 
-        String description = baseObject.getDescription();
+        final String description = baseObject.getDescription();
         assertThat(baseObject.getName()).isEqualTo(name);
 
         assertThat(description).contains(name);
@@ -324,7 +324,7 @@ class TestStroomEventLoggingServiceImpl {
         private String myNewSecret;
         private boolean secret;
 
-        public TestSecretObj(String name, String password, String myNewSecret) {
+        public TestSecretObj(final String name, final String password, final String myNewSecret) {
             this.name = name;
             this.password = password;
             this.myNewSecret = myNewSecret;

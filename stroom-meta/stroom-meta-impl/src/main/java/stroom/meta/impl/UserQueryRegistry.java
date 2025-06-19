@@ -58,7 +58,7 @@ class UserQueryRegistry {
         Objects.requireNonNull(queryId);
         Objects.requireNonNull(taskId);
 
-        TaskId previousTaskId = userQueryToTaskMap.putIfAbsent(new Key(userRef, queryId), taskId);
+        final TaskId previousTaskId = userQueryToTaskMap.putIfAbsent(new Key(userRef, queryId), taskId);
 
         if (previousTaskId != null) {
             LOGGER.debug("Query {} already registered for user {}", queryId, userRef);

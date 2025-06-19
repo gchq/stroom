@@ -126,7 +126,7 @@ public class PlanBEnv implements AutoCloseable {
         }
     }
 
-    public void copy(File dest, CopyFlags... flags) {
+    public void copy(final File dest, final CopyFlags... flags) {
         env.copy(dest, flags);
     }
 

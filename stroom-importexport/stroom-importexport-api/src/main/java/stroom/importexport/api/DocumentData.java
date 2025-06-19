@@ -54,7 +54,9 @@ public class DocumentData implements Serializable {
         return new Base64EncodedDocumentData(documentData.getDocRef(), encodedData);
     }
 
-    public static DocumentData fromBase64EncodedDocumentData(Base64EncodedDocumentData base64EncodedDocumentData) {
+    public static DocumentData fromBase64EncodedDocumentData(
+            final Base64EncodedDocumentData base64EncodedDocumentData) {
+
         final Map<String, byte[]> decodedData = base64EncodedDocumentData.getDataMap().entrySet()
                 .stream()
                 .collect(Collectors.toMap(Entry::getKey, e -> Base64.getDecoder().decode(e.getValue())));

@@ -146,7 +146,7 @@ public class TestRestResourceAutoLogger {
 
     @Test
     public void testLogBasic() throws Exception {
-        Method method = TestResource.class.getMethod("fetch", Integer.class);
+        final Method method = TestResource.class.getMethod("fetch", Integer.class);
 
         //Set up resource and method
         Mockito.doReturn(TestResource.class).when(resourceInfo).getResourceClass();
@@ -159,10 +159,10 @@ public class TestRestResourceAutoLogger {
         Mockito.verify(documentEventLog).view(objectCaptor.capture(), eventTypeIdCaptor.capture(), verbCaptor.capture(),
                 throwableCaptor.capture());
 
-        Object loggedObject = objectCaptor.getValue();
-        String eventTypeId = eventTypeIdCaptor.getValue();
-        String descriptionVerb = verbCaptor.getValue();
-        Throwable exception = throwableCaptor.getValue();
+        final Object loggedObject = objectCaptor.getValue();
+        final String eventTypeId = eventTypeIdCaptor.getValue();
+        final String descriptionVerb = verbCaptor.getValue();
+        final Throwable exception = throwableCaptor.getValue();
 
         assertThat(loggedObject).isNull();
         assertThat(eventTypeId)
@@ -173,7 +173,7 @@ public class TestRestResourceAutoLogger {
 
     @Test
     public void testLogAlternativeLogMethod() throws Exception {
-        Method method = TestResource.class.getMethod("findAndDestroy");
+        final Method method = TestResource.class.getMethod("findAndDestroy");
 
         //Set up resource and method
         Mockito.doReturn(TestResource.class).when(resourceInfo).getResourceClass();
@@ -188,10 +188,10 @@ public class TestRestResourceAutoLogger {
                 verbCaptor.capture(),
                 throwableCaptor.capture());
 
-        Object loggedObject = objectCaptor.getValue();
-        String eventTypeId = eventTypeIdCaptor.getValue();
-        String descriptionVerb = verbCaptor.getValue();
-        Throwable exception = throwableCaptor.getValue();
+        final Object loggedObject = objectCaptor.getValue();
+        final String eventTypeId = eventTypeIdCaptor.getValue();
+        final String descriptionVerb = verbCaptor.getValue();
+        final Throwable exception = throwableCaptor.getValue();
 
         assertThat(loggedObject).isNull();
         assertThat(eventTypeId)
@@ -202,7 +202,7 @@ public class TestRestResourceAutoLogger {
 
     @Test
     public void testLogWithEntity() throws Exception {
-        Method method = TestResource.class.getMethod("create", TestObj.class);
+        final Method method = TestResource.class.getMethod("create", TestObj.class);
 
         //Set up resource and method
         Mockito.doReturn(TestResource.class)
@@ -214,17 +214,17 @@ public class TestRestResourceAutoLogger {
         final Integer requestId = run;
         final Integer responseId = -run;
 
-        TestObj requestTestObj = new TestObj(requestId);
+        final TestObj requestTestObj = new TestObj(requestId);
         //Set up Stream containing serialized object
 
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         objectMapper.writeValue(bos, requestTestObj);
         bos.flush();
 
-        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bos.toByteArray());
+        final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bos.toByteArray());
         requestContext.setEntityStream(byteArrayInputStream);
 
-        TestObj responseTestObj = new TestObj(responseId);
+        final TestObj responseTestObj = new TestObj(responseId);
         Mockito.when(writerInterceptorContext.getEntity())
                 .thenReturn(responseTestObj);
 
@@ -236,13 +236,13 @@ public class TestRestResourceAutoLogger {
                 verbCaptor.capture(),
                 throwableCaptor.capture());
 
-        Object loggedObject = objectCaptor.getValue();
-        String eventTypeId = eventTypeIdCaptor.getValue();
-        String descriptionVerb = verbCaptor.getValue();
-        Throwable exception = throwableCaptor.getValue();
+        final Object loggedObject = objectCaptor.getValue();
+        final String eventTypeId = eventTypeIdCaptor.getValue();
+        final String descriptionVerb = verbCaptor.getValue();
+        final Throwable exception = throwableCaptor.getValue();
 
         assertThat(loggedObject).isInstanceOf(TestObj.class);
-        TestObj entity = (TestObj) loggedObject;
+        final TestObj entity = (TestObj) loggedObject;
         assertThat(entity.getId())
                 .isEqualTo(responseId);
 
@@ -254,7 +254,7 @@ public class TestRestResourceAutoLogger {
 
     @Test
     public void testLogWithEntityAndAlternativeDescription() throws Exception {
-        Method method = TestResource.class.getMethod("update", TestObj.class);
+        final Method method = TestResource.class.getMethod("update", TestObj.class);
 
         //Set up resource and method
         Mockito.doReturn(TestResource.class)
@@ -268,15 +268,15 @@ public class TestRestResourceAutoLogger {
         //Set up Stream containing serialized object
 
         //Set up Stream containing serialized object
-        String idAsStr = Integer.toString(requestId);
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final String idAsStr = Integer.toString(requestId);
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         bos.write(idAsStr.getBytes());
         bos.flush();
 
-        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bos.toByteArray());
+        final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bos.toByteArray());
         requestContext.setEntityStream(byteArrayInputStream);
 
-        TestObj responseTestObj = new TestObj(responseId);
+        final TestObj responseTestObj = new TestObj(responseId);
         Mockito.when(writerInterceptorContext.getEntity())
                 .thenReturn(responseTestObj);
 
@@ -287,21 +287,21 @@ public class TestRestResourceAutoLogger {
                 eventTypeIdCaptor.capture(), verbCaptor.capture(),
                 throwableCaptor.capture());
 
-        Object beforeLoggedObject = objectCaptor.getValue();
+        final Object beforeLoggedObject = objectCaptor.getValue();
         assertThat(beforeLoggedObject).isInstanceOf(TestObj.class);
 
-        TestObj testObj = (TestObj) beforeLoggedObject;
+        final TestObj testObj = (TestObj) beforeLoggedObject;
         assertThat(testObj.getId())
                 .isEqualTo(BEFORE_ID);
 
 
-        Object afterLoggedObject = outcomeObjectCaptor.getValue();
-        String eventTypeId = eventTypeIdCaptor.getValue();
-        String descriptionVerb = verbCaptor.getValue();
-        Throwable exception = throwableCaptor.getValue();
+        final Object afterLoggedObject = outcomeObjectCaptor.getValue();
+        final String eventTypeId = eventTypeIdCaptor.getValue();
+        final String descriptionVerb = verbCaptor.getValue();
+        final Throwable exception = throwableCaptor.getValue();
 
         assertThat(afterLoggedObject).isInstanceOf(TestObj.class);
-        TestObj entity = (TestObj) afterLoggedObject;
+        final TestObj entity = (TestObj) afterLoggedObject;
         assertThat(entity.getId())
                 .isEqualTo(responseId);
 
@@ -315,7 +315,7 @@ public class TestRestResourceAutoLogger {
 
     @Test
     public void testLogWithUuidAndActionDecorator() throws Exception {
-        Method method = TestResource.class.getMethod("shutdown", String.class);
+        final Method method = TestResource.class.getMethod("shutdown", String.class);
 
         //Set up resource and method
         Mockito.doReturn(TestResource.class).when(resourceInfo).getResourceClass();
@@ -327,11 +327,11 @@ public class TestRestResourceAutoLogger {
         //Set up Stream containing serialized object
 
         //Set up Stream containing serialized object
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         bos.write(uuid.getBytes());
         bos.flush();
 
-        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bos.toByteArray());
+        final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bos.toByteArray());
         requestContext.setEntityStream(byteArrayInputStream);
 
 
@@ -348,12 +348,12 @@ public class TestRestResourceAutoLogger {
                 throwableCaptor.capture(),
                 (EventActionDecorator<ProcessEventAction>) eventActionDecoratorArgumentCaptor.capture());
 
-        Object loggedObject = objectCaptor.getValue();
+        final Object loggedObject = objectCaptor.getValue();
 
-        String eventTypeId = eventTypeIdCaptor.getValue();
-        String descriptionVerb = verbCaptor.getValue();
-        Throwable exception = throwableCaptor.getValue();
-        EventActionDecorator<?> eventActionDecorator = eventActionDecoratorArgumentCaptor.getValue();
+        final String eventTypeId = eventTypeIdCaptor.getValue();
+        final String descriptionVerb = verbCaptor.getValue();
+        final Throwable exception = throwableCaptor.getValue();
+        final EventActionDecorator<?> eventActionDecorator = eventActionDecoratorArgumentCaptor.getValue();
 
         assertThat(eventActionDecorator).isInstanceOf(TestResource.TestShutdownEventActionDecorator.class);
         assertThat(loggedObject).isInstanceOf(HasUuid.class);
@@ -372,27 +372,27 @@ public class TestRestResourceAutoLogger {
 
     @Test
     public void testLogWithException() throws Exception {
-        Method method = TestResource.class.getMethod("random", Integer.class);
+        final Method method = TestResource.class.getMethod("random", Integer.class);
 
         //Set up resource and method
         Mockito.doReturn(TestResource.class).when(resourceInfo).getResourceClass();
         Mockito.when(resourceInfo.getResourceMethod()).thenReturn(method);
 
-        int pathId = random.nextInt();
+        final int pathId = random.nextInt();
 
         //Set up Stream containing serialized object
-        String idAsStr = Integer.toString(pathId);
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final String idAsStr = Integer.toString(pathId);
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         bos.write(idAsStr.getBytes());
         bos.flush();
 
-        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bos.toByteArray());
+        final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bos.toByteArray());
         requestContext.setEntityStream(byteArrayInputStream);
 
         ((MockUriInfo) requestContext.getUriInfo()).setId(pathId);
 
-        String message = "Testing exception handling";
-        Exception testException = new Exception(message);
+        final String message = "Testing exception handling";
+        final Exception testException = new Exception(message);
 
         filter.filter(requestContext);
         filter.toResponse(testException);
@@ -406,14 +406,14 @@ public class TestRestResourceAutoLogger {
 
         assertThat(delgatedThrowableCaptor.getValue()).hasMessage(message);
 
-        Object loggedObject = objectCaptor.getValue();
-        String eventTypeId = eventTypeIdCaptor.getValue();
-        String descriptionVerb = verbCaptor.getValue();
-        Throwable exception = throwableCaptor.getValue();
+        final Object loggedObject = objectCaptor.getValue();
+        final String eventTypeId = eventTypeIdCaptor.getValue();
+        final String descriptionVerb = verbCaptor.getValue();
+        final Throwable exception = throwableCaptor.getValue();
 
         assertThat(loggedObject).isInstanceOf(HasId.class);
 
-        HasId hasId = (HasId) loggedObject;
+        final HasId hasId = (HasId) loggedObject;
         assertThat(hasId.getId())
                 .isEqualTo(pathId);
 
@@ -427,15 +427,15 @@ public class TestRestResourceAutoLogger {
 
     @Test
     public void testLogSearch() throws Exception {
-        Method method = TestResource.class.getMethod("find", Integer.class, TestObj.class);
+        final Method method = TestResource.class.getMethod("find", Integer.class, TestObj.class);
 
         //Set up resource and method
         Mockito.doReturn(TestResource.class).when(resourceInfo).getResourceClass();
         Mockito.when(resourceInfo.getResourceMethod()).thenReturn(method);
 
-        int run = random.nextInt(1000);
-        Integer requestId = run;
-        Integer responseId = -run;
+        final int run = random.nextInt(1000);
+        final Integer requestId = run;
+        final Integer responseId = -run;
 
         final TestObj requestTestObj = new TestObj(requestId);
         final TestObj responseTestObj = new TestObj(responseId);
@@ -444,11 +444,11 @@ public class TestRestResourceAutoLogger {
 
         //Set up Stream containing serialized object
 
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         objectMapper.writeValue(bos, requestTestObj);
         bos.flush();
 
-        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bos.toByteArray());
+        final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bos.toByteArray());
         requestContext.setEntityStream(byteArrayInputStream);
         Mockito.when(writerInterceptorContext.getEntity()).thenReturn(resultPage);
 
@@ -467,12 +467,12 @@ public class TestRestResourceAutoLogger {
 //                (objectCaptor.capture(), eventTypeIdCaptor.capture(), verbCaptor.capture(),
 //                throwableCaptor.capture());
 
-        String eventTypeId = eventTypeIdCaptor.getValue();
-        Query query = queryCaptor.getValue();
-        String listContents = listContentCaptor.getValue();
-        PageResponse pageResponse = pageResponseCaptor.getValue();
-        String descriptionVerb = verbCaptor.getValue();
-        Throwable exception = throwableCaptor.getValue();
+        final String eventTypeId = eventTypeIdCaptor.getValue();
+        final Query query = queryCaptor.getValue();
+        final String listContents = listContentCaptor.getValue();
+        final PageResponse pageResponse = pageResponseCaptor.getValue();
+        final String descriptionVerb = verbCaptor.getValue();
+        final Throwable exception = throwableCaptor.getValue();
 
         assertThat(eventActionDecoratorArgumentCaptor.getValue()).isNull();
         assertThat(pageResponse).isNotNull();
@@ -491,7 +491,7 @@ public class TestRestResourceAutoLogger {
 
         try {
             deserialised = objectMapper.readValue(query.getRaw().getBytes(), TestObj.class);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             // Ignore any error
         }
 
@@ -558,15 +558,15 @@ public class TestRestResourceAutoLogger {
     @AutoLogged
     public static class TestResource implements FetchWithIntegerId<TestObj> {
 
-        public String find(@PathParam("id") Integer id, TestObj query) {
+        public String find(@PathParam("id") final Integer id, final TestObj query) {
             return null;
         }
 
-        public String random(@PathParam("id") Integer id) {
+        public String random(@PathParam("id") final Integer id) {
             return null;
         }
 
-        public String create(TestObj testObj) {
+        public String create(final TestObj testObj) {
             return null;
         }
 
@@ -585,7 +585,7 @@ public class TestRestResourceAutoLogger {
         }
 
         @AutoLogged(typeId = "TestingUpdate", verb = "Testing")
-        public String update(TestObj orig) {
+        public String update(final TestObj orig) {
             return null;
         }
 

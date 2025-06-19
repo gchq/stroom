@@ -64,7 +64,7 @@ public class LmdbEnvDir {
             try {
                 LOGGER.info("Deleting file {}", FileUtil.getCanonicalPath(file));
                 Files.delete(file);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new RuntimeException("Unable to delete file: " + FileUtil.getCanonicalPath(file));
             }
         } else {
@@ -74,7 +74,7 @@ public class LmdbEnvDir {
 
     private void dumpMdbFileSize() {
         if (Files.isDirectory(envDir)) {
-            try (Stream<Path> stream = Files.list(envDir)) {
+            try (final Stream<Path> stream = Files.list(envDir)) {
                 stream
                         .filter(path ->
                                 !Files.isDirectory(path))
@@ -86,7 +86,7 @@ public class LmdbEnvDir {
                                 return envDir.getFileName().resolve(file.getFileName())
                                         + " - file size: "
                                         + ModelStringUtil.formatIECByteSizeString(fileSizeBytes);
-                            } catch (IOException e) {
+                            } catch (final IOException e) {
                                 throw new RuntimeException(e);
                             }
                         })

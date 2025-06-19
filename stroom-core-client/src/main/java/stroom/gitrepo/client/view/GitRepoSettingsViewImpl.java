@@ -131,7 +131,7 @@ public class GitRepoSettingsViewImpl
     }
 
     @Override
-    public void setPath(String path) {
+    public void setPath(final String path) {
         this.path.setText(path);
     }
 
@@ -141,7 +141,7 @@ public class GitRepoSettingsViewImpl
     }
 
     @Override
-    public void setAutoPush(Boolean autoPush) {
+    public void setAutoPush(final Boolean autoPush) {
         // Objects.requireNonNullElse() not defined for GWT
         if (autoPush == null) {
             this.autoPush.setValue(Boolean.FALSE);
@@ -156,7 +156,7 @@ public class GitRepoSettingsViewImpl
     }
 
     @Override
-    public void setCommitMessage(String commitMessage) {
+    public void setCommitMessage(final String commitMessage) {
         this.commitMessage.setText(commitMessage);
         this.onCommitMessageValueChange(null);
     }

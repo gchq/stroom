@@ -40,8 +40,8 @@ public interface SearchEventLog {
                 List<Result> results,
                 Exception ex);
 
-    default void downloadResults(DownloadSearchResultsRequest downloadSearchResultsRequest,
-                                 Long resultCount) {
+    default void downloadResults(final DownloadSearchResultsRequest downloadSearchResultsRequest,
+                                 final Long resultCount) {
         downloadResults(downloadSearchResultsRequest,
                 resultCount,
                 null);
@@ -51,9 +51,9 @@ public interface SearchEventLog {
                          Long resultCount,
                          Exception ex);
 
-    default void downloadResults(DownloadQueryResultsRequest downloadSearchResultsRequest,
-                                 SearchRequest request,
-                                 Long resultCount) {
+    default void downloadResults(final DownloadQueryResultsRequest downloadSearchResultsRequest,
+                                 final SearchRequest request,
+                                 final Long resultCount) {
         downloadResults(downloadSearchResultsRequest,
                 request,
                 resultCount,

@@ -44,7 +44,7 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         int start = hostPageBaseUrl.indexOf("//");
         if (start != -1) {
             start++;
-            int index = hostPageBaseUrl.lastIndexOf("/");
+            final int index = hostPageBaseUrl.lastIndexOf("/");
             if (index != -1 && start != index) {
                 return hostPageBaseUrl.substring(0, index);
             }

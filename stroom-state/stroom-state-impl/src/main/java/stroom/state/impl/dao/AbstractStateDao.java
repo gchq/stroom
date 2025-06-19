@@ -76,7 +76,7 @@ public abstract class AbstractStateDao<T> {
         return sessionProvider.get().execute(statement).one().getLong(0);
     }
 
-    public void condense(Instant oldest) {
+    public void condense(final Instant oldest) {
         // Not all implementations condense data.
     }
 

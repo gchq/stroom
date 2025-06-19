@@ -162,7 +162,7 @@ public class TestLmdbPerformance extends AbstractDualEnvLmdbTest {
             DurationTimer timer = DurationTimer.start();
             putValues(db, false, isOrdered, inputData);
             timer.stop();
-            double bytesPerEntry = lmdbEnv.getSizeOnDisk() / (double) db.getEntryCount();
+            final double bytesPerEntry = lmdbEnv.getSizeOnDisk() / (double) db.getEntryCount();
             LOGGER.info("{} puts,    size on disk: {}, bytes/entry: {}, time: {}, entry count: {}",
                     ModelStringUtil.formatCsv(iterations),
                     ByteSize.ofBytes(lmdbEnv.getSizeOnDisk()),

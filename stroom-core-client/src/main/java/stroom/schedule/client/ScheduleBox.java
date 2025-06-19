@@ -43,7 +43,7 @@ public class ScheduleBox
         protected void onBind() {
             registerHandler(svgIconBox.addClickHandler(event -> showPopup()));
             registerHandler(textBox.addKeyDownHandler(event -> {
-                int keyCode = event.getNativeKeyCode();
+                final int keyCode = event.getNativeKeyCode();
                 if (KeyCodes.KEY_ENTER == keyCode) {
                     showPopup();
                 }

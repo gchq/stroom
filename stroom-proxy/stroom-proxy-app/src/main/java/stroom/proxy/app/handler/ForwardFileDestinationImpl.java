@@ -114,7 +114,7 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
             // No need to age them off.
             writeIdsCache = Caffeine.newBuilder()
                     .maximumSize(1_000)
-                    .removalListener((Path key, AtomicLong value, RemovalCause cause) -> {
+                    .removalListener((final Path key, final AtomicLong value, final RemovalCause cause) -> {
                         if (value != null) {
                             // In case any other thread is holding onto the AtomicLong
                             value.set(-1);
@@ -174,7 +174,7 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
                     case null -> throw new IllegalArgumentException(
                             "Unexpected value of livenessCheckMode " + livenessCheckMode);
                 };
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.debug("'{}' - Error during liveness check", name, e);
                 throw e;
             }
@@ -194,7 +194,7 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
             } else {
                 throw new Exception(LogUtil.message("Path '{}' is not a regular file", path));
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.debug("Error trying to write to file {}", path, e);
             throw new Exception(LogUtil.message("Error trying to write to file '{}': {}", path, e.getMessage()));
         }
@@ -207,7 +207,7 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
 
     @Override
     public String getDestinationDescription() {
-        String storeDirStr = storeDir.toString();
+        final String storeDirStr = storeDir.toString();
         return subPathTemplate.hasPathTemplate()
                 ? storeDirStr + "/" + subPathTemplate.getPathTemplate()
                 : storeDirStr;
@@ -224,7 +224,7 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
         try {
             AttributeMapUtil.read(fileGroup.getMeta(), attributeMap);
             return attributeMap;
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
     }
@@ -367,7 +367,7 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
             // If the target is on a remote FS then chances are ATOMIC_MOVE will not be supported
             // so, we need a fallback, accepting that we lose the guarantee of exactly once.
             Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
-        } catch (AtomicMoveNotSupportedException e) {
+        } catch (final AtomicMoveNotSupportedException e) {
             LOGGER.warn(() -> LogUtil.message(
                     "'{}' - Atomic move not supported, falling back to non-atomic move. "
                     + "To stop seeing this warning set the config property {} to false."

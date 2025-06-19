@@ -51,7 +51,7 @@ public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest 
         final Path libPath;
         try {
             libPath = Files.createTempDirectory("stroom_lmdb_lib__");
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message(
                     "Error creating temp directory for LMDB library. {}", e.getMessage()), e);
         }

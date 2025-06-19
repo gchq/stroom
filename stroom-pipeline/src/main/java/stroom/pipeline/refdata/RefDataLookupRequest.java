@@ -58,10 +58,10 @@ public class RefDataLookupRequest {
 
             try {
                 epochMs = Long.parseLong(effectiveTime);
-            } catch (NumberFormatException e) {
+            } catch (final NumberFormatException e) {
                 try {
                     epochMs = DateUtil.parseNormalDateTimeString(effectiveTime);
-                } catch (Exception exception) {
+                } catch (final Exception exception) {
                     throw new IllegalArgumentException("Invalid date " + effectiveTime);
                 }
             }

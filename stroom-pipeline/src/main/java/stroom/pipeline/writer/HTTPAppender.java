@@ -224,7 +224,7 @@ public class HTTPAppender extends AbstractAppender {
 
             setCompressionProperties(outputStreamSupport, request);
 
-            for (Entry<String, String> entry : effectiveAttributeMap.entrySet()) {
+            for (final Entry<String, String> entry : effectiveAttributeMap.entrySet()) {
                 addRequestProperty(request, entry.getKey(), entry.getValue());
             }
 
@@ -249,7 +249,7 @@ public class HTTPAppender extends AbstractAppender {
                     LOGGER.debug(e::getMessage, e);
                     throw e;
                 } finally {
-                    long bytes = getCurrentOutputSize();
+                    final long bytes = getCurrentOutputSize();
                     final long duration = System.currentTimeMillis() - startTimeMs;
                     final AttributeMap attributeMap = metaDataHolder.getMetaData();
                     log(SEND_LOG, attributeMap, "SEND", forwardUrl, responseCode, bytes, duration);
@@ -263,7 +263,7 @@ public class HTTPAppender extends AbstractAppender {
     }
 
     public static int checkResponse(final HttpResponse response) {
-        int responseCode;
+        final int responseCode;
         try {
             LOGGER.debug(() -> "Connection response " + response.getCode() + ": " + response.getReasonPhrase());
 
@@ -549,7 +549,7 @@ public class HTTPAppender extends AbstractAppender {
                                                + headerText + "' supplied.");
         }
 
-        int delimiterPos = headerText.indexOf(':');
+        final int delimiterPos = headerText.indexOf(':');
         attributeMap.put(headerText.substring(0, delimiterPos), headerText.substring(delimiterPos + 1));
         LOGGER.debug("Added '{}' to {}", headerText, attributeMap);
     }
@@ -608,7 +608,7 @@ public class HTTPAppender extends AbstractAppender {
     private static Set<String> getActiveSSLProtocols() {
         try {
             return NullSafe.asSet(SSLContext.getDefault().createSSLEngine().getEnabledProtocols());
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.debug("Unable to determine SSL protocols", e);
             return Collections.emptySet();
         }
@@ -832,14 +832,14 @@ public class HTTPAppender extends AbstractAppender {
                                     "GET, POST, HEAD, OPTIONS, PUT, DELETE and TRACE.",
             defaultValue = DEFAULT_REQUEST_METHOD_PROP_VALUE,
             displayPriority = 24)
-    public void setRequestMethod(String requestMethod) {
+    public void setRequestMethod(final String requestMethod) {
         this.requestMethod = NullSafe.get(requestMethod, String::trim, String::toUpperCase);
     }
 
     @PipelineProperty(description = "The content type",
             defaultValue = "application/json",
             displayPriority = 25)
-    public void setContentType(String contentType) {
+    public void setContentType(final String contentType) {
         this.contentType = contentType;
     }
 

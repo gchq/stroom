@@ -36,7 +36,7 @@ class DateChangeEvent extends ValueChangeEvent<UTCDate> {
      * @param newValue the newValue, may be null
      */
     public static <S extends HasValueChangeHandlers<UTCDate> & HasHandlers> void fireIfNotEqualDates(
-            S source, UTCDate oldValue, UTCDate newValue) {
+            final S source, final UTCDate oldValue, final UTCDate newValue) {
         if (ValueChangeEvent.shouldFire(source, oldValue, newValue)) {
             source.fireEvent(new DateChangeEvent(newValue));
         }
@@ -47,7 +47,7 @@ class DateChangeEvent extends ValueChangeEvent<UTCDate> {
      *
      * @param value the value
      */
-    protected DateChangeEvent(UTCDate value) {
+    protected DateChangeEvent(final UTCDate value) {
         // The date must be copied in case one handler causes it to change.
         super(CalendarUtil.copyDate(value));
     }

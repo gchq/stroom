@@ -17,7 +17,7 @@ class TestTempDirExtension extends TempDirSuperClass {
     }
 
     @Test
-    void testMethodDir(@TempDir Path tempDir) {
+    void testMethodDir(@TempDir final Path tempDir) {
         assertThat(tempDir).isNotNull();
         assertThat(tempDir).exists();
         assertThat(tempDir).isDirectory();

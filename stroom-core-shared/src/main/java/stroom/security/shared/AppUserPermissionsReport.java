@@ -20,7 +20,7 @@ public class AppUserPermissionsReport {
     @JsonCreator
     public AppUserPermissionsReport(
             @JsonProperty("explicitPermissions") final Set<AppPermission> explicitPermissions,
-            @JsonProperty("inheritedPermissions") Map<AppPermission, List<String>> inheritedPermissions) {
+            @JsonProperty("inheritedPermissions") final Map<AppPermission, List<String>> inheritedPermissions) {
 
         this.explicitPermissions = explicitPermissions;
         this.inheritedPermissions = inheritedPermissions;

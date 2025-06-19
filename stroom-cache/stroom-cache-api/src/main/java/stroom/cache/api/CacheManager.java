@@ -102,7 +102,7 @@ public interface CacheManager extends AutoCloseable {
      */
     default <K, V> LoadingStroomCache<K, V> createLoadingCache(
             final String name,
-            final Supplier<CacheConfig> cacheConfigSupplier, Function<K, V> loadFunction) {
+            final Supplier<CacheConfig> cacheConfigSupplier, final Function<K, V> loadFunction) {
 
         return createLoadingCache(
                 name,

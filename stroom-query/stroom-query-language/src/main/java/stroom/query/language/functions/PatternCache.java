@@ -23,7 +23,7 @@ final class PatternCache {
                     true) {
 
                 // This method is called just after a new entry has been added
-                public boolean removeEldestEntry(Map.Entry eldest) {
+                public boolean removeEldestEntry(final Map.Entry eldest) {
                     if (size() > MAX_ENTRIES) {
                         if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug("Evicting old pattern: " + eldest.getKey());

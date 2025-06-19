@@ -13,12 +13,12 @@ public interface ThrowingRunnable<E extends Throwable> {
      * any thrown exception with a {@link RuntimeException}, thus making it unchecked and
      * usable in a lambda.
      */
-    static <E extends Throwable> Runnable unchecked(ThrowingRunnable<E> runnable) {
+    static <E extends Throwable> Runnable unchecked(final ThrowingRunnable<E> runnable) {
         return () -> {
             try {
                 runnable.run();
-            } catch (Throwable e) {
-                if (e instanceof IOException ioe) {
+            } catch (final Throwable e) {
+                if (e instanceof final IOException ioe) {
                     throw new UncheckedIOException(ioe);
                 } else {
                     throw new RuntimeException(e);

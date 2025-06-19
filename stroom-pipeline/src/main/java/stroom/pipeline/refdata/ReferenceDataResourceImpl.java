@@ -75,10 +75,10 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
     public boolean purgeByAge(final String purgeAge, final String nodeName) {
-        StroomDuration purgeAgeDuration;
+        final StroomDuration purgeAgeDuration;
         try {
             purgeAgeDuration = StroomDuration.parse(purgeAge);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new IllegalArgumentException(LogUtil.message(
                     "Can't parse purgeAge [{}]", purgeAge), e);
         }
@@ -105,7 +105,7 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
                         referenceDataServiceProvider.get()
                                 .purge(purgeAgeDuration, nodeName);
                         return true;
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         LOGGER.error("Failed to purgeAge " + purgeAge, e);
                         throw e;
                     }
@@ -122,10 +122,10 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
                                     final String nodeName) {
         Objects.requireNonNull(feedName);
 
-        StroomDuration purgeAgeDuration;
+        final StroomDuration purgeAgeDuration;
         try {
             purgeAgeDuration = StroomDuration.parse(purgeAge);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new IllegalArgumentException(LogUtil.message(
                     "Can't parse purgeAge [{}]", purgeAge), e);
         }
@@ -152,7 +152,7 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
                         referenceDataServiceProvider.get()
                                 .purge(feedName, purgeAgeDuration, nodeName);
                         return true;
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         LOGGER.error("Failed to purgeAge " + purgeAge, e);
                         throw e;
                     }
@@ -235,7 +235,7 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
                         referenceDataServiceProvider.get()
                                 .purge(refStreamId, nodeName);
                         return true;
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         LOGGER.error("Failed to purge stream " + refStreamId, e);
                         throw e;
                     }
@@ -251,7 +251,7 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
         try {
             referenceDataServiceProvider.get()
                     .clearBufferPool(nodeName);
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Failed to clear buffer pool", e);
             throw e;
         }

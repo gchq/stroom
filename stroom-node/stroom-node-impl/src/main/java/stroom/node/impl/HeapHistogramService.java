@@ -81,7 +81,7 @@ class HeapHistogramService {
 
     private Object getRawHistogramOutput() {
         final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-        Object output;
+        final Object output;
         try {
             final ObjectName objectName = new ObjectName(DIAGNOSTIC_COMMAND_MBEAN_OBJECT_NAME);
             output = server.invoke(
@@ -89,10 +89,10 @@ class HeapHistogramService {
                     ACTION_NAME,
                     new Object[]{null},
                     new String[]{String[].class.getName()});
-        } catch (MalformedObjectNameException
-                | InstanceNotFoundException
-                | ReflectionException
-                | MBeanException e) {
+        } catch (final MalformedObjectNameException
+                       | InstanceNotFoundException
+                       | ReflectionException
+                       | MBeanException e) {
             throw new RuntimeException(LogUtil.message("Error invoking action {}", ACTION_NAME), e);
         }
         return output;
@@ -107,7 +107,7 @@ class HeapHistogramService {
     }
 
     private Predicate<String> getClassNameMatchPredicate() {
-        String classNameRegexStr = heapHistogramConfigProvider.get().getClassNameMatchRegex();
+        final String classNameRegexStr = heapHistogramConfigProvider.get().getClassNameMatchRegex();
 
         if (classNameRegexStr == null || classNameRegexStr.isEmpty()) {
             //no prop value so return an always true predicate
@@ -144,7 +144,7 @@ class HeapHistogramService {
 
         Preconditions.checkNotNull(classNameReplacer);
         return line -> {
-            Matcher matcher = lineMatchPattern.matcher(line);
+            final Matcher matcher = lineMatchPattern.matcher(line);
             if (matcher.matches()) {
                 //if this is a data row then extract the values of interest
                 final long instances = Long.parseLong(matcher.group("instances"));
@@ -170,7 +170,7 @@ class HeapHistogramService {
             final Function<String, Optional<HeapHistogramEntry>> lineToEntryMapper =
                     buildLineToEntryMapper(classNameReplacer);
 
-            String[] lines = output.split("\\r?\\n");
+            final String[] lines = output.split("\\r?\\n");
 
             LOGGER.debug("processing {} lines of stdout", lines.length);
 

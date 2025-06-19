@@ -138,7 +138,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
         // Create a record for the TextConverter.
         final InputStream textConverterInputStream = StroomPipelineTestFileUtil.getInputStream(textConverterFile);
         final DocRef textConverterRef = textConverterStore.createDocument(name);
-        TextConverterDoc textConverter = textConverterStore.readDocument(textConverterRef);
+        final TextConverterDoc textConverter = textConverterStore.readDocument(textConverterRef);
         textConverter.setConverterType(textConverterType);
         textConverter.setData(StreamUtil.streamToString(textConverterInputStream));
         textConverterStore.writeDocument(textConverter);

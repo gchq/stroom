@@ -72,7 +72,7 @@ public class Servlets {
 
         final Set<String> allPaths = new HashSet<>();
 
-        int maxNameLength = servlets.stream()
+        final int maxNameLength = servlets.stream()
                 .mapToInt(servlet -> servlet.getClass().getName().length())
                 .max()
                 .orElse(0);
@@ -137,7 +137,7 @@ public class Servlets {
             final ServletHolder servletHolder;
             try {
                 servletHolder = new ServletHolder(servletName, (Servlet) servlet);
-            } catch (ClassCastException e) {
+            } catch (final ClassCastException e) {
                 throw new RuntimeException(LogUtil.message("Injected class {} is not a Servlet",
                         servlet.getClass().getName()));
             }
@@ -166,7 +166,7 @@ public class Servlets {
                     // as the servlet doesn't know its own full path
                     HealthCheck.Result result = ((HasHealthCheck) servlet).getHealth();
 
-                    HealthCheck.ResultBuilder builder = Result.builder();
+                    final HealthCheck.ResultBuilder builder = Result.builder();
                     if (result.isHealthy()) {
                         builder
                                 .healthy()

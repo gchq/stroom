@@ -273,7 +273,7 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
             }
         }
 
-        private char charAt(int index) {
+        private char charAt(final int index) {
             return stringBuilder.charAt(index);
         }
 
@@ -401,7 +401,7 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
 
             boolean found = false;
             boolean inRecord = false;
-            boolean isEndInclusive = rangeMode.isEndInclusive();
+            final boolean isEndInclusive = rangeMode.isEndInclusive();
 
             int advance = 0;
             final MutableInt offset = new MutableInt(0);
@@ -529,7 +529,7 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
             clear();
         }
 
-        private byte byteAt(int index) {
+        private byte byteAt(final int index) {
             return byteBuffer.getByte(index);
         }
 

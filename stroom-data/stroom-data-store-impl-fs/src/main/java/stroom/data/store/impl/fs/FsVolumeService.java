@@ -147,8 +147,8 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
     public FsVolume create(final FsVolume fileVolume) {
         return securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION, () -> {
-            FsVolume result;
-            Path volPath = getAbsVolumePath(fileVolume);
+            final FsVolume result;
+            final Path volPath = getAbsVolumePath(fileVolume);
             try {
                 if (volPath != null && FsVolumeType.STANDARD.equals(fileVolume.getVolumeType())) {
                     if (Files.exists(volPath) && !Files.isDirectory(volPath)) {
@@ -189,7 +189,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                 AuditUtil.stamp(securityContext, fileVolume);
                 result = fsVolumeDao.create(fileVolume);
                 result.setVolumeState(fileVolume.getVolumeState());
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 LOGGER.error("Unable to create volume due to an error creating directory {}", volPath, e);
                 final String msg;
                 if (volPath.toString().equals(e.getMessage())) {
@@ -434,7 +434,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         LOGGER.info(() -> "Deleting default volumes");
         if (volumeConfigProvider.get().getDefaultStreamVolumePaths() != null) {
             final List<String> paths = volumeConfigProvider.get().getDefaultStreamVolumePaths();
-            for (String path : paths) {
+            for (final String path : paths) {
                 final Path resolvedPath = pathCreator.toAppPath(path);
                 LOGGER.info("Deleting directory {}", resolvedPath.toAbsolutePath().normalize().toString());
                 FileUtil.deleteDir(resolvedPath);
@@ -558,14 +558,14 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                                    final String type,
                                    final Long bytes) {
         if (bytes != null) {
-            SortedMap<String, String> tags = ImmutableSortedMap.<String, String>naturalOrder()
+            final SortedMap<String, String> tags = ImmutableSortedMap.<String, String>naturalOrder()
                     .put("Id", String.valueOf(volume.getId()))
                     .put("Path", getAbsVolumePath(volume).toString())
                     .put("Type", type)
                     .put("Node", nodeInfo.getThisNodeName())
                     .build();
 
-            InternalStatisticEvent event = InternalStatisticEvent.createValueStat(
+            final InternalStatisticEvent event = InternalStatisticEvent.createValueStat(
                     InternalStatisticKey.VOLUMES, timeMs, tags, bytes.doubleValue());
             events.add(event);
         }
@@ -652,7 +652,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                         if (existingVolumes.isEmpty()) {
                             if (volumeConfig.getDefaultStreamVolumePaths() != null) {
                                 final List<String> paths = volumeConfig.getDefaultStreamVolumePaths();
-                                for (String path : paths) {
+                                for (final String path : paths) {
                                     final Path resolvedPath = pathCreator.toAppPath(path);
                                     LOGGER.info("Creating default data volume with path {}",
                                             resolvedPath.toAbsolutePath().normalize());
@@ -690,7 +690,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
     private OptionalLong getDefaultVolumeLimit(final Path path) {
         try {
-            long totalBytes = Files.getFileStore(path).getTotalSpace();
+            final long totalBytes = Files.getFileStore(path).getTotalSpace();
             // set an arbitrary limit of 90% of the filesystem total size to ensure we don't fill up the
             // filesystem.  Limit can be configured from within stroom.
             // Should be noted that although if you have multiple volumes on a filesystem the limit will apply
@@ -699,7 +699,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
             // this.updateVolumeState()
             return OptionalLong.of((long) (totalBytes * volumeConfigProvider.get()
                     .getDefaultStreamVolumeFilesystemUtilisation()));
-        } catch (IOException e) {
+        } catch (final IOException e) {
             LOGGER.warn(() -> LogUtil.message("Unable to determine the total space on the filesystem for path: {}." +
                                               " Please manually set limit for index volume. {}",
                     FileUtil.getCanonicalPath(path), e.getMessage()));
@@ -793,7 +793,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         if (!Files.exists(absPath)) {
             try {
                 Files.createDirectories(absPath);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 final String msg;
                 if (absPath.toString().equals(e.getMessage())) {
                     // Some java IO exceptions just have the path as the message, helpful.
@@ -819,7 +819,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
             tempFile = Files.createTempFile(absPath, TEMP_FILE_PREFIX, null);
 
 
-        } catch (IOException e) {
+        } catch (final IOException e) {
             return ValidationResult.error(LogUtil.message(
                     "Error creating test file in directory {}. " +
                     "Does Stroom have the right permissions on this directory? " +
@@ -837,7 +837,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                     LOGGER.debug("About to delete file {}", finalTempFile);
                     try {
                         Files.deleteIfExists(finalTempFile);
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         LOGGER.error("Unable to delete temporary file {}", finalTempFile, e);
                     }
                 }, 5, TimeUnit.SECONDS);

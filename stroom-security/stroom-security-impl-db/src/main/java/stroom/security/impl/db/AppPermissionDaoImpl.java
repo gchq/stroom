@@ -98,7 +98,7 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
     }
 
     @Override
-    public void removePermission(final String userUuid, AppPermission permission) {
+    public void removePermission(final String userUuid, final AppPermission permission) {
         final UByte permissionId = UByte.valueOf(appPermissionIdDao.getOrCreateId(permission.getDisplayValue()));
         JooqUtil.context(securityDbConnProvider, context -> context
                 .deleteFrom(PERMISSION_APP)
@@ -229,7 +229,7 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
 
             // Join recursive select to user.
             try {
-                var sql = context
+                final var sql = context
                         .select(STROOM_USER.UUID,
                                 STROOM_USER.NAME,
                                 STROOM_USER.DISPLAY_NAME,
@@ -256,11 +256,11 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
 
                 LOGGER.debug("fetchAppUserPermissions sql:\n{}", sql);
                 return sql.fetch();
-            } catch (DataAccessException e) {
+            } catch (final DataAccessException e) {
                 throw new RuntimeException(e);
             }
 
-        }).map((Record8<?, ?, ?, ?, ?, ?, ?, ?> r) -> {
+        }).map((final Record8<?, ?, ?, ?, ?, ?, ?, ?> r) -> {
             try {
                 final UserRef userRef = recordToUserRef(r);
                 final String perms = r.get(ctePerms.getName(), String.class);
@@ -268,7 +268,7 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
                 final Set<AppPermission> permissions = getAppPermissionSet(perms);
                 final Set<AppPermission> inherited = getAppPermissionSet(inheritedPerms);
                 return new AppUserPermissions(userRef, permissions, inherited);
-            } catch (IllegalArgumentException | DataTypeException e) {
+            } catch (final IllegalArgumentException | DataTypeException e) {
                 throw new RuntimeException(e);
             }
         });

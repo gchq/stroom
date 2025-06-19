@@ -50,7 +50,7 @@ public class AccountsPlugin extends MonitoringPlugin<AccountsPresenter> {
     }
 
     @Override
-    protected void addChildItems(BeforeRevealMenubarEvent event) {
+    protected void addChildItems(final BeforeRevealMenubarEvent event) {
         uiConfigCacheProvider.get().get(extendedUiConfig -> {
             // We don't show accounts if using an external IDP as all accounts
             // are managed on the IDP

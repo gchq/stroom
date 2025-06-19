@@ -687,7 +687,7 @@ class TestSQLStatisticAggregationManager extends AbstractStatisticsCoreIntegrati
             for (int j = 0; j < timesCount; j++) {
                 // make each time 1ms earlier
                 final long timeMs = startDate.toEpochMilli() - j;
-                StatisticEvent statisticEvent;
+                final StatisticEvent statisticEvent;
 
                 if (statisticType.equals(StatisticType.COUNT)) {
                     statisticEvent = StatisticEvent.createCount(timeMs, statName, Collections.emptyList(),
@@ -725,7 +725,7 @@ class TestSQLStatisticAggregationManager extends AbstractStatisticsCoreIntegrati
     }
 
     private int getRowCount(final String tableName) throws SQLException {
-        int count;
+        final int count;
 
         try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement(
@@ -740,7 +740,7 @@ class TestSQLStatisticAggregationManager extends AbstractStatisticsCoreIntegrati
     }
 
     private int getAggregateByPrecision(final String colName, final byte precision) throws SQLException {
-        int count;
+        final int count;
         try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement(
                     "select sum(coalesce(" + colName + ",0)) " +
@@ -756,7 +756,7 @@ class TestSQLStatisticAggregationManager extends AbstractStatisticsCoreIntegrati
     }
 
     private int getAggregateTotal(final String colName) throws SQLException {
-        int count;
+        final int count;
         try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement(
                     "select sum(coalesce(" + colName + ",0)) " +

@@ -33,7 +33,7 @@ public interface AppPermissionSet extends Iterable<AppPermission> {
     /**
      * Create a {@link AppPermissionSet} where ALL the app permissions must be held.
      */
-    static AppPermissionSet allOf(Collection<AppPermission> appPermissions) {
+    static AppPermissionSet allOf(final Collection<AppPermission> appPermissions) {
         if (NullSafe.isEmptyCollection(appPermissions)) {
             return EmptyAppPermissionSet.INSTANCE;
         } else if (appPermissions.size() == 1) {
@@ -50,7 +50,7 @@ public interface AppPermissionSet extends Iterable<AppPermission> {
     /**
      * Create a {@link AppPermissionSet} where ALL the app permissions must be held.
      */
-    static AppPermissionSet allOf(AppPermission... appPermissions) {
+    static AppPermissionSet allOf(final AppPermission... appPermissions) {
         return allOf(NullSafe.asList(appPermissions));
     }
 
@@ -58,7 +58,7 @@ public interface AppPermissionSet extends Iterable<AppPermission> {
      * Create a {@link AppPermissionSet} where at least ONE of the app permissions
      * must be held.
      */
-    static AppPermissionSet oneOf(Collection<AppPermission> appPermissions) {
+    static AppPermissionSet oneOf(final Collection<AppPermission> appPermissions) {
         if (NullSafe.isEmptyCollection(appPermissions)) {
             return EmptyAppPermissionSet.INSTANCE;
         } else if (appPermissions.size() == 1) {
@@ -76,14 +76,14 @@ public interface AppPermissionSet extends Iterable<AppPermission> {
      * Create a {@link AppPermissionSet} where at least ONE of the app permissions
      * must be held.
      */
-    static AppPermissionSet oneOf(AppPermission... appPermissions) {
+    static AppPermissionSet oneOf(final AppPermission... appPermissions) {
         return oneOf(NullSafe.asList(appPermissions));
     }
 
     /**
      * Create a {@link AppPermissionSet} for a single app permission.
      */
-    static AppPermissionSet of(AppPermission appPermission) {
+    static AppPermissionSet of(final AppPermission appPermission) {
         // Operator is irrelevant, so just use AND as that is easier to test
         if (appPermission != null) {
             return new SingletonAppPermissionSet(appPermission);

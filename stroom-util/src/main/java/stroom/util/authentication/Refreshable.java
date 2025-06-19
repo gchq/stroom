@@ -121,7 +121,7 @@ public interface Refreshable {
         final long refreshBufferMs = Math.max(0, getRefreshBufferMs());
         return switch (Objects.requireNonNull(refreshMode)) {
             case EAGER -> {
-                long effectiveBufferMs;
+                final long effectiveBufferMs;
                 if (refreshBufferMs > 0) {
                     effectiveBufferMs = (long) (EAGER_REFRESH_BUFFER_FACTOR * refreshBufferMs);
                 } else {

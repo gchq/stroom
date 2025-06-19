@@ -197,7 +197,7 @@ public class FieldListPresenter extends DocumentEditPresenter<PagerView, Receive
                 150);
 
         dataGrid.addResizableColumn(DataGridUtil.textColumnBuilder(
-                                (QueryField queryField) -> {
+                                (final QueryField queryField) -> {
                                     final CIKey ciFieldName = CIKey.of(queryField.getFldName());
                                     return DataGridUtil.formatAsYesNo(obfuscatedFields.contains(ciFieldName));
                                 })

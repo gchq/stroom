@@ -239,7 +239,7 @@ public class ContentTemplateTabPresenter
             if (contentTemplates != null) {
                 if (currTemplate != null) {
                     final ContentTemplate newTemplate = currTemplate.withEnabledState(isEnabled);
-                    int index = contentTemplates.indexOf(currTemplate);
+                    final int index = contentTemplates.indexOf(currTemplate);
                     contentTemplates.set(index, newTemplate);
 //                    contentTemplates.remove(index);
 //                    contentTemplates.add(index, newTemplate);
@@ -393,8 +393,8 @@ public class ContentTemplateTabPresenter
         if (sourceTemplate != null) {
 
             // Make sure the copy has a unique name
-            int sourceIdx = contentTemplates.indexOf(sourceTemplate);
-            int newIdx = sourceIdx + 1;
+            final int sourceIdx = contentTemplates.indexOf(sourceTemplate);
+            final int newIdx = sourceIdx + 1;
             int copyNo = 0;
             String newName;
             do {

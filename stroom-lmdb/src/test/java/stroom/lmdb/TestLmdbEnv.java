@@ -246,7 +246,7 @@ public class TestLmdbEnv {
                     try {
                         LOGGER.debug("countDownLatch1: {}", startLatch.getCount());
                         startLatch.await();
-                    } catch (InterruptedException e) {
+                    } catch (final InterruptedException e) {
                         throw new RuntimeException(e);
                     }
 
@@ -259,7 +259,7 @@ public class TestLmdbEnv {
                         // Wait for all others to reach this point before closing the txn so we have
                         // cnt txns open
                         closeTxnLatch.await();
-                    } catch (InterruptedException e) {
+                    } catch (final InterruptedException e) {
                         throw new RuntimeException(e);
                     }
 
@@ -285,7 +285,7 @@ public class TestLmdbEnv {
         final Path dbDir = Files.createTempDirectory("stroom");
         final PathCreator pathCreator = new SimplePathCreator(() -> dbDir, () -> dbDir);
         final TempDirProvider tempDirProvider = () -> dbDir;
-        try (LmdbEnv lmdbEnv = new LmdbEnvFactory(pathCreator,
+        try (final LmdbEnv lmdbEnv = new LmdbEnvFactory(pathCreator,
                 new LmdbLibrary(pathCreator, tempDirProvider, LmdbLibraryConfig::new))
                 .builder(dbDir)
                 .withMapSize(ByteSize.ofKibibytes(30))
@@ -294,7 +294,7 @@ public class TestLmdbEnv {
                 .addEnvFlag(EnvFlags.MDB_NOTLS)
                 .build()) {
 
-            BasicLmdbDb<String, String> db = new BasicLmdbDb<>(
+            final BasicLmdbDb<String, String> db = new BasicLmdbDb<>(
                     lmdbEnv,
                     BYTE_BUFFER_POOL,
                     new StringSerde(),
@@ -471,7 +471,7 @@ public class TestLmdbEnv {
                 Assertions.assertThat(writersHighWaterMarkTracker.getHighWaterMark())
                         .isEqualTo(1);
             }
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
@@ -495,7 +495,7 @@ public class TestLmdbEnv {
             try {
                 // Get all threads to wait for this latch to count down to zero
                 releaseThreadsLatch.await();
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw new RuntimeException(e);
             }
 
@@ -510,7 +510,7 @@ public class TestLmdbEnv {
                                 .isNotEmpty();
                         LOGGER.trace("highWaterMarkTracker: {}", highWaterMarkTracker);
                     });
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     exceptions.add(e);
                 } finally {
                     LOGGER.trace("Finished reader thread {}", i);
@@ -541,7 +541,7 @@ public class TestLmdbEnv {
             try {
                 // Get all threads to wait for this latch to count down to zero
                 releaseThreadsLatch.await();
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw new RuntimeException(e);
             }
 
@@ -559,7 +559,7 @@ public class TestLmdbEnv {
                         LOGGER.trace("highWaterMarkTracker: {}", highWaterMarkTracker);
                     });
 
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     exceptions.add(e);
                 } finally {
                     LOGGER.trace("Finished writer thread {}", i);
@@ -570,11 +570,11 @@ public class TestLmdbEnv {
         }, executor);
     }
 
-    private String buildKey(int i) {
+    private String buildKey(final int i) {
         return String.format("%02d", i);
     }
 
-    private String buildValue(int i) {
+    private String buildValue(final int i) {
         return "value" + i;
     }
 

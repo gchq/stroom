@@ -39,12 +39,12 @@ import java.util.HashMap;
  */
 public class ExportKey {
 
-    public static void main(String[] args)
+    public static void main(final String[] args)
             throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException,
             NoSuchProviderException, UnrecoverableKeyException {
-        HashMap<String, String> argsMap = new HashMap<>();
+        final HashMap<String, String> argsMap = new HashMap<>();
         for (int i = 0; i < args.length; i++) {
-            String[] split = args[i].split("=");
+            final String[] split = args[i].split("=");
             if (split.length > 1) {
                 argsMap.put(split[0], split[1]);
             } else {
@@ -52,16 +52,16 @@ public class ExportKey {
             }
         }
 
-        String keyPass = argsMap.get("keypass");
-        String alias = argsMap.get("alias");
-        String keystore = argsMap.get("keystore");
+        final String keyPass = argsMap.get("keypass");
+        final String alias = argsMap.get("alias");
+        final String keystore = argsMap.get("keystore");
 
-        KeyStore ks = KeyStore.getInstance("JKS", "SUN");
+        final KeyStore ks = KeyStore.getInstance("JKS", "SUN");
         try (final InputStream inputStream = Files.newInputStream(Paths.get(keystore))) {
             ks.load(inputStream, keyPass.toCharArray());
         }
 
-        Key key = ks.getKey(alias, keyPass.toCharArray());
+        final Key key = ks.getKey(alias, keyPass.toCharArray());
 
         if (key == null) {
             System.out.println("No key with alias " + alias);

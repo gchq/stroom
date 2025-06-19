@@ -41,7 +41,7 @@ public class OutputStreamProviderImpl implements OutputStreamProvider {
         root = factory.getSegmentOutputStreamProvider(null);
     }
 
-    private void logDebug(String msg) {
+    private void logDebug(final String msg) {
         LOGGER.debug(msg + meta.getId());
     }
 

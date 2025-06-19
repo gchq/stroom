@@ -32,7 +32,7 @@ public class Filters {
     public void register() {
         final ServletContextHandler servletContextHandler = environment.getApplicationContext();
 
-        int maxNameLength = filters.values().stream()
+        final int maxNameLength = filters.values().stream()
                 .mapToInt(filter -> filter.getClass().getName().length())
                 .max()
                 .orElse(0);

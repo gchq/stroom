@@ -393,7 +393,7 @@ public class RuleSetSettingsPresenter
                 final List<ExpressionTerm> unhashableTerms = new ArrayList<>();
                 // We have obfuscated fields so see if the conditions are ok
                 ExpressionUtil.walkExpressionTree(expression, expressionItem -> {
-                    if (expressionItem instanceof ExpressionTerm term
+                    if (expressionItem instanceof final ExpressionTerm term
                         && obfuscatedFields.contains(term.getField())
                         && term.getCondition() != null
                         && !ConditionSet.OBFUSCATABLE_CONDITIONS.supportsCondition(term.getCondition())) {

@@ -34,10 +34,10 @@ public class SendExtraSampleData {
     }
 
     public static void main(final String[] args) {
-        String url = "http://localhost:8056/datafeed";
+        final String url = "http://localhost:8056/datafeed";
         try (final CloseableHttpClient httpClient = HttpClients.createDefault()) {
 
-            String xml = StreamUtil
+            final String xml = StreamUtil
                     .streamToString(ClassLoader.getSystemResourceAsStream("samples/input/XML-EVENTS~1.in"));
 
             for (int i = 0; i < 100; i++) {
@@ -49,7 +49,7 @@ public class SendExtraSampleData {
                         ContentType.create("application/audit"),
                         true));
                 httpClient.execute(httpPost, response -> {
-                    String msg = response.getReasonPhrase();
+                    final String msg = response.getReasonPhrase();
                     System.out.println("Client Got Response " + response.getCode());
                     if (msg != null && !msg.isEmpty()) {
                         System.out.println(msg);
@@ -62,7 +62,7 @@ public class SendExtraSampleData {
         } catch (final InterruptedException e) {
             // Continue to interrupt this thread.
             Thread.currentThread().interrupt();
-        } catch (IOException ex) {
+        } catch (final IOException ex) {
             ex.printStackTrace();
         }
     }

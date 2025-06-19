@@ -159,7 +159,7 @@ public class ParallelExecutor implements Managed {
                     }
                     // Got our permit, so run the task
                     runTask();
-                } catch (InterruptedException e) {
+                } catch (final InterruptedException e) {
                     // Don't reset the interrupted flag as the thread is going straight back to the pool
                     throw new UncheckedInterruptedException(e);
                 } finally {
@@ -199,11 +199,11 @@ public class ParallelExecutor implements Managed {
             LOGGER.debug("Running task");
             try {
                 task.run();
-            } catch (UncheckedInterruptedException e) {
+            } catch (final UncheckedInterruptedException e) {
                 // Swallow the exception to keep this thread running
                 LOGGER.debug("Parallel executor interrupted: '{}' task: {}",
                         threadNamePrefix, LogUtil.exceptionMessage(e), e);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 // Swallow the exception to keep this thread running
                 LOGGER.error("Error running parallel executor '{}' task: {}",
                         threadNamePrefix, LogUtil.exceptionMessage(e), e);

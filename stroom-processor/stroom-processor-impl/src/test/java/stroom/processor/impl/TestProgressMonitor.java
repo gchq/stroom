@@ -104,7 +104,7 @@ class TestProgressMonitor {
         final FilterProgressMonitor progressMonitor2 = progressMonitor.logFilter(PROCESSOR_FILTER_2, 0);
 
         for (final FilterProgressMonitor fpm : List.of(progressMonitor1, progressMonitor2)) {
-            DurationTimer durationTimer = DurationTimer.start();
+            final DurationTimer durationTimer = DurationTimer.start();
             fpm.logPhase(Phase.FIND_META_FOR_FILTER, durationTimer, 200);
             fpm.add(200);
             fpm.logPhase(Phase.CREATE_STREAM_MAP,

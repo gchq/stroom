@@ -7,7 +7,7 @@ class TestAtomicLoopedLongSequence {
 
     @Test
     void getNext1() {
-        AtomicLoopedLongSequence sequence = new AtomicLoopedLongSequence(5);
+        final AtomicLoopedLongSequence sequence = new AtomicLoopedLongSequence(5);
         for (int j = 0; j < 2; j++) {
             for (int i = 0; i < 5; i++) {
                 Assertions.assertThat(sequence.getNext())
@@ -18,7 +18,7 @@ class TestAtomicLoopedLongSequence {
 
     @Test
     void getNext2() {
-        AtomicLoopedLongSequence sequence = new AtomicLoopedLongSequence(1, 6);
+        final AtomicLoopedLongSequence sequence = new AtomicLoopedLongSequence(1, 6);
         for (int j = 0; j < 2; j++) {
             for (int i = 1; i < 6; i++) {
                 Assertions.assertThat(sequence.getNext())

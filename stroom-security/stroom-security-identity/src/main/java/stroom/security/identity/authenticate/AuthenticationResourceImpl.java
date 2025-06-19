@@ -101,7 +101,7 @@ class AuthenticationResourceImpl implements AuthenticationResource {
                         "Stroom user login",
                         eventBuilder.build());
                 return response;
-            } catch (Throwable e) {
+            } catch (final Throwable e) {
                 eventBuilder.withOutcome(AuthenticateOutcome.builder()
                         .withSuccess(false)
                         .withReason(AuthenticateOutcomeReason.OTHER)
@@ -142,7 +142,7 @@ class AuthenticationResourceImpl implements AuthenticationResource {
                             .withId(userId)
                             .build());
 
-        } catch (Throwable e) {
+        } catch (final Throwable e) {
             eventBuilder.withOutcome(AuthenticateOutcome.builder()
                     .withSuccess(false)
                     .withReason(AuthenticateOutcomeReason.OTHER)
@@ -155,7 +155,7 @@ class AuthenticationResourceImpl implements AuthenticationResource {
         }
 
         try {
-            UriBuilder uriBuilder = UriBuilder.fromUri(postLogoutRedirectUri);
+            final UriBuilder uriBuilder = UriBuilder.fromUri(postLogoutRedirectUri);
             throw new RedirectionException(Status.TEMPORARY_REDIRECT, uriBuilder.build());
         } finally {
             stroomEventLoggingServiceProvider.get().log(
@@ -199,7 +199,7 @@ class AuthenticationResourceImpl implements AuthenticationResource {
             }
             return response;
 
-        } catch (Throwable e) {
+        } catch (final Throwable e) {
             eventBuilder.withOutcome(AuthenticateOutcome.builder()
                     .withSuccess(false)
                     .withReason(AuthenticateOutcomeReason.OTHER)
@@ -254,7 +254,7 @@ class AuthenticationResourceImpl implements AuthenticationResource {
                 return true;
             }
             throw new NotFoundException("User does not exist");
-        } catch (Throwable e) {
+        } catch (final Throwable e) {
             eventBuilder.withOutcome(AuthenticateOutcome.builder()
                     .withSuccess(false)
                     .withPermitted(false)

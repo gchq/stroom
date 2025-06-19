@@ -89,7 +89,7 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
         text.setInnerHTML("Close");
     }
 
-    private int getRelativeX(final Event e, Element target) {
+    private int getRelativeX(final Event e, final Element target) {
         return e.getClientX() - target.getAbsoluteLeft() + target.getScrollLeft() +
                 target.getOwnerDocument().getScrollLeft();
     }
@@ -100,7 +100,7 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
      * @param target the element whose coordinate system is to be used
      * @return the relative y-position
      */
-    private int getRelativeY(final Event e, Element target) {
+    private int getRelativeY(final Event e, final Element target) {
         return e.getClientY() - target.getAbsoluteTop() + target.getScrollTop() +
                 target.getOwnerDocument().getScrollTop();
     }

@@ -95,7 +95,7 @@ public abstract class AbstractSelectionEventManager<T>
         }
     }
 
-    void handledEvent(CellPreviewEvent<
+    void handledEvent(final CellPreviewEvent<
             ?> event) {
 //        event.setCanceled(true);
 //        GWT.log("Stopping propagation");

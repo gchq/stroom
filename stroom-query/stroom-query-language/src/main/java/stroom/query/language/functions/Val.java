@@ -182,23 +182,23 @@ public sealed interface Val
     static Val create(final Object object) {
         return switch (object) {
             case null -> ValNull.INSTANCE;
-            case Boolean val -> ValBoolean.create(val);
-            case Double val -> ValDouble.create(val);
-            case Duration val -> ValDuration.create(val.toMillis());
-            case Float val -> ValFloat.create(val);
-            case Instant val -> ValDate.create(val.toEpochMilli());
-            case Integer val -> ValInteger.create(val);
-            case Long val -> ValLong.create(val);
-            case String val -> ValString.create(val);
-            case StroomDuration val -> ValDuration.create(val.toMillis());
-            case Throwable val -> ValErr.create(val.getMessage());
-            case Val val -> val;
+            case final Boolean val -> ValBoolean.create(val);
+            case final Double val -> ValDouble.create(val);
+            case final Duration val -> ValDuration.create(val.toMillis());
+            case final Float val -> ValFloat.create(val);
+            case final Instant val -> ValDate.create(val.toEpochMilli());
+            case final Integer val -> ValInteger.create(val);
+            case final Long val -> ValLong.create(val);
+            case final String val -> ValString.create(val);
+            case final StroomDuration val -> ValDuration.create(val.toMillis());
+            case final Throwable val -> ValErr.create(val.getMessage());
+            case final Val val -> val;
             default -> throw new UnsupportedOperationException("Unsupported type " + object.getClass());
         };
     }
 
     @Override
-    default int compareTo(Val other) {
+    default int compareTo(final Val other) {
         return ValComparators.GENERIC_CASE_INSENSITIVE_COMPARATOR.compare(this, other);
     }
 }

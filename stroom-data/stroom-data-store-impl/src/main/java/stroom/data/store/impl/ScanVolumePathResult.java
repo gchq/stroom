@@ -36,7 +36,7 @@ public class ScanVolumePathResult implements Serializable {
         return fileCount;
     }
 
-    public void setFileCount(long fileCount) {
+    public void setFileCount(final long fileCount) {
         this.fileCount = fileCount;
     }
 
@@ -51,11 +51,11 @@ public class ScanVolumePathResult implements Serializable {
         return childDirectoryList;
     }
 
-    public void addChildDirectory(String path) {
+    public void addChildDirectory(final String path) {
         childDirectoryList.add(path);
     }
 
-    public void addDelete(String file) {
+    public void addDelete(final String file) {
         deleteList.add(file);
     }
 

@@ -212,7 +212,7 @@ public class AppPermissionSetImpl implements AppPermissionSet {
 
         @Override
         public boolean containsAll(final Collection<?> c) {
-            for (Object e : c) {
+            for (final Object e : c) {
                 if (!contains(e)) {
                     return false;
                 }

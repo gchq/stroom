@@ -283,7 +283,7 @@ class TestFileSystemUtil {
                 new MockFsTypePaths(),
                 new StreamTypeExtensions(FsVolumeConfig::new));
 
-        Path path = Paths.get("");
+        final Path path = Paths.get("");
         assertThat(fileSystemStreamPathHelper.getRootPath(path, meta, StreamTypeNames.EVENTS))
                 .isEqualTo(path.resolve("store/EVENTS/2008/11/18/100/2=100100.evt.bgz"));
         assertThat(fileSystemStreamPathHelper.getBaseName(meta)).isEqualTo("2=100100");
@@ -305,7 +305,7 @@ class TestFileSystemUtil {
                 new MockFsTypePaths(),
                 new StreamTypeExtensions(FsVolumeConfig::new));
 
-        Path path = Paths.get("");
+        final Path path = Paths.get("");
         assertThat(fileSystemStreamPathHelper.getRootPath(path, meta, StreamTypeNames.EVENTS))
                 .isEqualTo(path.resolve("store/EVENTS/2008/11/18/001/100/2=001100100.evt.bgz"));
         assertThat(fileSystemStreamPathHelper.getBaseName(meta)).isEqualTo("2=001100100");

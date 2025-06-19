@@ -129,7 +129,7 @@ public class Detection {
     }
 
     public static Builder builder(final Detection copy) {
-        Builder builder = new Builder();
+        final Builder builder = new Builder();
         builder.detectTime = copy.getDetectTime();
         builder.detectorName = copy.getDetectorName();
         builder.detectorUuid = copy.getDetectorUuid();

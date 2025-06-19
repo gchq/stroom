@@ -102,7 +102,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
     }
 
     public static Builder builder(final HashedApiKey copy) {
-        Builder builder = new Builder();
+        final Builder builder = new Builder();
         builder.id = copy.getId();
         builder.version = copy.getVersion();
         builder.createTimeMs = copy.getCreateTimeMs();

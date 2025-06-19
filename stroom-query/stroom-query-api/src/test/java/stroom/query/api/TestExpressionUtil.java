@@ -205,7 +205,7 @@ class TestExpressionUtil {
                 .build();
 
         final ExpressionOperator operator2 = ExpressionUtil.copyOperator(operator, item ->
-                !(item instanceof ExpressionTerm term && term.getField().equals("foo")));
+                !(item instanceof final ExpressionTerm term && term.getField().equals("foo")));
 
         assertThat(operator2)
                 .isNotEqualTo(operator);

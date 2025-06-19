@@ -44,7 +44,7 @@ class TestForwardFileDestinationImpl {
     private PathCreator pathCreator;
 
     @BeforeEach
-    void setUp(@TempDir Path homeDir) {
+    void setUp(@TempDir final Path homeDir) {
         dirs = new Dirs(homeDir);
         pathCreator = new SimplePathCreator(dirs::getHomeDir, dirs::getTempDir);
     }
@@ -646,7 +646,7 @@ class TestForwardFileDestinationImpl {
     private List<Path> listContent(final Path path) {
         try (final Stream<Path> stream = Files.list(path)) {
             return stream.toList();
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(e);
         }
     }
@@ -691,7 +691,7 @@ class TestForwardFileDestinationImpl {
                 final AttributeMap attributeMap = new AttributeMap(attrs);
                 AttributeMapUtil.write(attributeMap, meta);
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
         return sourceDir;
@@ -701,7 +701,7 @@ class TestForwardFileDestinationImpl {
         try {
             Assertions.assertThat(forwardDestination.performLivenessCheck())
                     .isEqualTo(isLive);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             if (isLive) {
                 Assertions.fail(LogUtil.message("Expecting {} to be live", forwardDestination));
             }

@@ -84,7 +84,7 @@ class TestScheduledQueryAnalytics extends AbstractAnalyticsTest {
     private void basicTest(final String query,
                            final int expectedStreams,
                            final int expectedRecords) {
-        AnalyticRuleDoc analyticRuleDoc = AnalyticRuleDoc.builder()
+        final AnalyticRuleDoc analyticRuleDoc = AnalyticRuleDoc.builder()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
                 .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)

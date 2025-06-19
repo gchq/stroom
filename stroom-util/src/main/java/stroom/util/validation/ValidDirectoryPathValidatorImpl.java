@@ -66,7 +66,7 @@ public class ValidDirectoryPathValidatorImpl implements ValidDirectoryPathValida
                 try {
                     LOGGER.info("Creating dir {} (modified to {})", dir, modifiedDir);
                     Files.createDirectories(modifiedDir);
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     final String msg = "error creating directory: " + e.getMessage();
                     addValidationMessage(context, dir, modifiedDir, msg);
                 }

@@ -85,7 +85,7 @@ class TestHistogramDb {
     }
 
     @Test
-    void test(@TempDir Path tempDir) {
+    void test(@TempDir final Path tempDir) {
         testWrite(tempDir);
 
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
@@ -128,7 +128,7 @@ class TestHistogramDb {
     }
 
     @Test
-    void testGetHistogram(@TempDir Path tempDir) {
+    void testGetHistogram(@TempDir final Path tempDir) {
         final KeyPrefix tags = getTags();
         final Instant time = Instant.parse("2000-01-01T00:00:00.000Z");
         try (final HistogramDb db = HistogramDb.create(tempDir, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
@@ -176,7 +176,7 @@ class TestHistogramDb {
 //            for (final ValueFunction valueFunction : HistogramValueTestUtil.getValueFunctions()) {
 //            for (final HistogramPeriod period : HistogramPeriod.values()) {
 
-            TemporalResolution temporalResolution = TemporalResolution.HOUR;
+            final TemporalResolution temporalResolution = TemporalResolution.HOUR;
             tests.add(DynamicTest.dynamicTest("key type = " + keyFunction +
 //                                                      ", Value type = " + valueFunction +
                                               ", Temporal resolution = " + temporalResolution,

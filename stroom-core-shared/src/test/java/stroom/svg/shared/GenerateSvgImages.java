@@ -144,7 +144,7 @@ public class GenerateSvgImages {
             stream.forEach(sourceFile -> {
                 final Path relSourcePath = sourceBasePath.relativize(sourceFile);
                 try {
-                    String fileName = sourceFile.getFileName().toString();
+                    final String fileName = sourceFile.getFileName().toString();
                     if (fileName.toLowerCase(Locale.ROOT).endsWith(".svg")) {
 
                         final Path output = destBasePath.resolve(relSourcePath);
@@ -229,7 +229,7 @@ public class GenerateSvgImages {
                             sb.append("            \"\\n\" +\n");
                         } else {
                             while (part.length() > 0) {
-                                int size = Math.min(80, part.length());
+                                final int size = Math.min(80, part.length());
                                 String line = part.substring(0, size);
                                 part = part.substring(size);
                                 line = line.replaceAll("\"", "\\\\\"");
@@ -322,7 +322,7 @@ public class GenerateSvgImages {
         return coreSharedPath;
     }
 
-    static void deleteDirectory(Path directoryToBeDeleted) {
+    static void deleteDirectory(final Path directoryToBeDeleted) {
         try {
             if (Files.isDirectory(directoryToBeDeleted)) {
                 Files.walk(directoryToBeDeleted)
@@ -330,7 +330,7 @@ public class GenerateSvgImages {
                         .map(Path::toFile)
                         .forEach(File::delete);
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
     }

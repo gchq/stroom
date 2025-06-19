@@ -272,7 +272,7 @@ class TestPhysicalDeleteExecutor extends AbstractCoreIntegrationTest {
         final List<Meta> oldMetas = deletedMetas.stream()
                 .limit(oldMetaCount)
                 .collect(Collectors.toList());
-        Instant oldStatusTime = Instant.now().minus(30, ChronoUnit.DAYS);
+        final Instant oldStatusTime = Instant.now().minus(30, ChronoUnit.DAYS);
 
         JooqUtil.context(metaDbConnProvider, context -> context
                 .update(META)

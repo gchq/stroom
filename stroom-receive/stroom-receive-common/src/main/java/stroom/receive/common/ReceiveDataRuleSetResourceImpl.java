@@ -44,7 +44,7 @@ public class ReceiveDataRuleSetResourceImpl implements ReceiveDataRuleSetResourc
     public ReceiveDataRules fetch() {
         try {
             return ruleSetServiceProvider.get().getReceiveDataRules();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error fetching receive data rules", e);
             throw e;
         }

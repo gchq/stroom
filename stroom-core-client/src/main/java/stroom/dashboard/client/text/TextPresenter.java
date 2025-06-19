@@ -74,7 +74,8 @@ public class TextPresenter
     public static final String TAB_TYPE = "text-component";
     private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
 
-    public static final ComponentType TYPE = new ComponentType(2, "text", "Text", ComponentUse.PANEL);
+    public static final ComponentType TYPE = new ComponentType(
+            2, "text", "Text", ComponentUse.PANEL);
 
     private static final Version CURRENT_MODEL_VERSION = new Version(7, 8, 0);
     private static final ColumnRef DEFAULT_STREAM_ID_COLUMN = new ColumnRef(
@@ -484,7 +485,7 @@ public class TextPresenter
     }
 
     private long getStartLine(final TextRange highlight) {
-        int lineNoFrom = highlight.getFrom().getLineNo();
+        final int lineNoFrom = highlight.getFrom().getLineNo();
         if (lineNoFrom == 1) {
             // Content starts on first line so convert to an offset as the server code
             // works in zero based line numbers
@@ -496,7 +497,7 @@ public class TextPresenter
     }
 
     private long getLineCount(final TextRange highlight) {
-        int lineNoFrom = highlight.getFrom().getLineNo();
+        final int lineNoFrom = highlight.getFrom().getLineNo();
         if (lineNoFrom == 1) {
             return highlight.getTo().getLineNo() - highlight.getFrom().getLineNo() + 1;
         } else {
@@ -595,7 +596,8 @@ public class TextPresenter
                                 // If we are queueing more actions then don't update
                                 // the text.
                                 if (fetchDataQueue.isEmpty()) {
-                                    String data = "The data has been deleted or reprocessed since this index was built";
+                                    final String data = "The data has been deleted or reprocessed since this " +
+                                                        "index was built";
                                     boolean isHtml = false;
                                     if (result != null) {
                                         if (result instanceof final FetchDataResult fetchDataResult) {

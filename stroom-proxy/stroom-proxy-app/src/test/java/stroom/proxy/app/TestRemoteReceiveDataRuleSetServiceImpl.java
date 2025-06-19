@@ -29,11 +29,8 @@ import stroom.util.collections.CollectionUtil.DuplicateMode;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.string.Base58;
-import stroom.util.string.StringUtil;
 import stroom.util.time.StroomDuration;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -43,7 +40,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Map;
@@ -107,7 +103,7 @@ class TestRemoteReceiveDataRuleSetServiceImpl {
         Mockito.when(mockProxyReceiptPolicyConfig.getSyncFrequency())
                 .thenReturn(StroomDuration.ofMinutes(1));
 
-        try (TemporaryPathCreator temporaryPathCreator = new TemporaryPathCreator()) {
+        try (final TemporaryPathCreator temporaryPathCreator = new TemporaryPathCreator()) {
 
             Mockito.when(mockProxyConfig.getContentDir())
                     .thenReturn(ProxyConfig.DEFAULT_CONTENT_DIR);
@@ -250,7 +246,7 @@ class TestRemoteReceiveDataRuleSetServiceImpl {
         Mockito.when(mockProxyReceiptPolicyConfig.getSyncFrequency())
                 .thenReturn(StroomDuration.ofSeconds(1));
 
-        try (TemporaryPathCreator temporaryPathCreator = new TemporaryPathCreator()) {
+        try (final TemporaryPathCreator temporaryPathCreator = new TemporaryPathCreator()) {
             Mockito.when(mockProxyConfig.getContentDir())
                     .thenReturn(ProxyConfig.DEFAULT_CONTENT_DIR);
             Mockito.when(mockReceiveDataConfig.getReceiptCheckMode())
@@ -337,7 +333,7 @@ class TestRemoteReceiveDataRuleSetServiceImpl {
 
     private DictionaryDoc createDict(final String name,
                                      final String... lines) {
-        DictionaryDoc dict = new DictionaryDoc();
+        final DictionaryDoc dict = new DictionaryDoc();
         dict.setUuid(UUID.randomUUID().toString());
         dict.setName(name);
         dict.setType(DictionaryDoc.TYPE);
@@ -367,39 +363,5 @@ class TestRemoteReceiveDataRuleSetServiceImpl {
             builder.putDateTime(StandardHeaderArguments.RECEIVED_TIME, receiveTime);
         }
         return builder.build();
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    /**
-     * Use md5 for shorter/faster hashes in testing
-     */
-    private static class Md5Hasher implements HashFunction {
-
-        private final SecureRandom secureRandom = new SecureRandom();
-
-        @Override
-        public String generateSalt() {
-            return StringUtil.createRandomCode(secureRandom, 5);
-        }
-
-        protected String getSaltedValue(final String value, final String salt) {
-            return salt != null
-                    ? salt + value
-                    : value;
-        }
-
-        @Override
-        public String hash(final String value, final String salt) {
-            final String saltedVal = getSaltedValue(value, salt);
-            return Base58.encode(DigestUtils.md5(saltedVal));
-        }
-
-        @Override
-        public HashAlgorithm getType() {
-            return HASH_ALGORITHM;
-        }
     }
 }

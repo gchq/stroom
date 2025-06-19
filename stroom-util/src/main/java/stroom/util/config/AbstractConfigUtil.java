@@ -136,7 +136,7 @@ public class AbstractConfigUtil {
             final Map<String, Object> valueMap = new HashMap<>();
 
             // No replacement for the whole branch so check all its props
-            AtomicBoolean haveAnyPropsChanged = new AtomicBoolean(false);
+            final AtomicBoolean haveAnyPropsChanged = new AtomicBoolean(false);
             objectInfo.getPropertyMap().forEach((propName, prop) -> {
                 final PropertyPath propPath = config.getBasePath().merge(propName);
                 final Class<?> valueClass = prop.getValueClass();
@@ -155,7 +155,7 @@ public class AbstractConfigUtil {
                     if (existingPropValue != null
                         && AbstractConfig.class.isAssignableFrom(valueClass)) {
                         // Branch so recurse
-                        Object newPropValue = mutateBranch((AbstractConfig) existingPropValue,
+                        final Object newPropValue = mutateBranch((AbstractConfig) existingPropValue,
                                 objectInfoMap,
                                 replacementValueMap);
                         if (!Objects.equals(existingPropValue, newPropValue) && !haveAnyPropsChanged.get()) {

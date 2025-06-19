@@ -49,22 +49,22 @@ import java.util.Map;
 public class SearchRequestTestData {
 
     static SearchRequest apiSearchRequest() {
-        DashboardSearchRequest dashboardSearchRequest = dashboardSearchRequest();
+        final DashboardSearchRequest dashboardSearchRequest = dashboardSearchRequest();
 
-        SearchRequestMapper searchRequestMapper = new SearchRequestMapper(null);
+        final SearchRequestMapper searchRequestMapper = new SearchRequestMapper(null);
         return searchRequestMapper.mapRequest(dashboardSearchRequest);
     }
 
     static DashboardSearchRequest dashboardSearchRequest() {
         final DocRef docRef = new DocRef("docRefType", "docRefUuid", "docRefName");
 
-        ExpressionOperator.Builder expressionOperator = ExpressionOperator.builder();
+        final ExpressionOperator.Builder expressionOperator = ExpressionOperator.builder();
         expressionOperator.addTerm("field1", ExpressionTerm.Condition.EQUALS, "value1");
         expressionOperator.addOperator(ExpressionOperator.builder().build());
         expressionOperator.addTerm("field2", ExpressionTerm.Condition.BETWEEN, "value2");
 
         final String componentId = "componentSettingsMapKey";
-        TableComponentSettings tableSettings = TableComponentSettings.builder()
+        final TableComponentSettings tableSettings = TableComponentSettings.builder()
                 .queryId("someQueryId")
                 .addColumn(Column.builder()
                         .id("1")
@@ -105,7 +105,7 @@ public class SearchRequestTestData {
                 .showDetail(false)
                 .build();
 
-        Map<String, ComponentSettings> componentSettingsMap = new HashMap<>();
+        final Map<String, ComponentSettings> componentSettingsMap = new HashMap<>();
         componentSettingsMap.put(componentId, tableSettings);
 
         final List<Param> params = List.of(new Param("param1", "val1"), new Param("param2", "val2"));
@@ -122,7 +122,7 @@ public class SearchRequestTestData {
         for (final Map.Entry<String, ComponentSettings> entry : componentSettingsMap.entrySet()) {
             final TableComponentSettings tableComponentSettings = (TableComponentSettings) entry.getValue();
             final TableSettings ts = tableComponentSettings.copy().buildTableSettings();
-            TableResultRequest tableResultRequest = TableResultRequest.builder()
+            final TableResultRequest tableResultRequest = TableResultRequest.builder()
                     .componentId(entry.getKey())
                     .tableSettings(ts)
                     .fetch(Fetch.CHANGES)

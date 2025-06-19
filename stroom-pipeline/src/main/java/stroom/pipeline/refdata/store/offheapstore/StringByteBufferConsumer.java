@@ -59,7 +59,7 @@ public class StringByteBufferConsumer implements RefDataValueByteBufferConsumer 
             // Not sure why we use WHOLE_TEXT_NODE as we are potentially calling characters() multiple times for a
             // bitmap lookup. Maybe that is what is adding the space between bitmaplookup values.
             receiver.characters(str, RefDataValueProxyConsumer.NULL_LOCATION, ReceiverOptions.WHOLE_TEXT_NODE);
-        } catch (XPathException e) {
+        } catch (final XPathException e) {
             throw new RuntimeException(LogUtil.message("Error passing string {} to receiver", str), e);
         }
     }

@@ -67,7 +67,7 @@ class TestSessionDb {
     private static final ByteBuffers BYTE_BUFFERS = new ByteBuffers(new ByteBufferFactoryImpl());
 
     @Test
-    void test(@TempDir Path tempDir) {
+    void test(@TempDir final Path tempDir) {
         final Ranges ranges = testWrite(tempDir);
 
         final KeyPrefix key = KeyPrefix.create("TEST");

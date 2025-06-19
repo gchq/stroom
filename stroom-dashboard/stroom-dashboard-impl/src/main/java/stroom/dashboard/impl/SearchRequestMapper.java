@@ -119,7 +119,7 @@ public class SearchRequestMapper {
                         params,
                         searchRequest.getSearch().getTimeRange());
 
-            } catch (RuntimeException ex) {
+            } catch (final RuntimeException ex) {
                 throw new RuntimeException("Invalid JSON for expression.  Got: " + expressionJson, ex);
             }
 
@@ -422,7 +422,7 @@ public class SearchRequestMapper {
             final VisResultRequest visResultRequest,
             final TableSettings parentTableSettings) {
 
-        DocRef docRef = visResultRequest.getVisualisation();
+        final DocRef docRef = visResultRequest.getVisualisation();
         TableSettings tableSettings = null;
 
         if (docRef == null) {
@@ -453,8 +453,8 @@ public class SearchRequestMapper {
                     }
                 }
 
-                List<Column> columns = new ArrayList<>();
-                List<Long> limits = new ArrayList<>();
+                final List<Column> columns = new ArrayList<>();
+                final List<Long> limits = new ArrayList<>();
 
                 VisNest nest = mapNest(structure.getNest(), settingResolver);
                 VisValues values = mapVisValues(structure.getValues(), settingResolver);
@@ -570,9 +570,9 @@ public class SearchRequestMapper {
             return null;
         }
 
-        Boolean enabled = settingResolver.resolveBoolean(sort.getEnabled());
+        final Boolean enabled = settingResolver.resolveBoolean(sort.getEnabled());
         if (enabled != null && enabled) {
-            String dir = settingResolver.resolveString(sort.getDirection());
+            final String dir = settingResolver.resolveString(sort.getDirection());
 
             if (dir != null) {
                 final SortDirection direction;
@@ -611,7 +611,7 @@ public class SearchRequestMapper {
 
     private VisLimit mapVisLimit(final VisSettings.Limit limit, final SettingResolver settingResolver) {
         if (limit != null) {
-            Boolean enabled = settingResolver.resolveBoolean(limit.getEnabled());
+            final Boolean enabled = settingResolver.resolveBoolean(limit.getEnabled());
             if (enabled == null || enabled) {
                 final VisLimit copy = new VisLimit();
                 copy.setSize(settingResolver.resolveLong(limit.getSize()));
@@ -674,7 +674,7 @@ public class SearchRequestMapper {
         }
 
         public Boolean resolveBoolean(final String value) {
-            String str = resolveString(value);
+            final String str = resolveString(value);
             if (str == null) {
                 return null;
             }
@@ -682,7 +682,7 @@ public class SearchRequestMapper {
         }
 
         public Integer resolveInteger(final String value) {
-            String str = resolveString(value);
+            final String str = resolveString(value);
             if (str == null) {
                 return null;
             }
@@ -690,7 +690,7 @@ public class SearchRequestMapper {
         }
 
         public Long resolveLong(final String value) {
-            String str = resolveString(value);
+            final String str = resolveString(value);
             if (str == null) {
                 return null;
             }
@@ -713,17 +713,17 @@ public class SearchRequestMapper {
         }
 
         private Map<String, String> getDashboardSettingsMap(final String json) {
-            Map<String, String> map = new HashMap<>();
+            final Map<String, String> map = new HashMap<>();
 
             try {
                 if (json != null && !json.isEmpty()) {
-                    ObjectMapper objectMapper = JsonUtil.getNoIndentMapper();
+                    final ObjectMapper objectMapper = JsonUtil.getNoIndentMapper();
                     final JsonNode node = objectMapper.readTree(json);
 
-                    Iterator<Entry<String, JsonNode>> iterator = node.fields();
+                    final Iterator<Entry<String, JsonNode>> iterator = node.fields();
                     while (iterator.hasNext()) {
-                        Entry<String, JsonNode> entry = iterator.next();
-                        JsonNode val = entry.getValue();
+                        final Entry<String, JsonNode> entry = iterator.next();
+                        final JsonNode val = entry.getValue();
                         if (val != null) {
                             final String str = val.textValue();
                             if (str != null) {

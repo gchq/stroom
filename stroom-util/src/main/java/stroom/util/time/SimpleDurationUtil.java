@@ -97,7 +97,7 @@ public class SimpleDurationUtil {
         };
     }
 
-    public static LocalDateTime roundDown(LocalDateTime dateTime, SimpleDuration simpleDuration) {
+    public static LocalDateTime roundDown(final LocalDateTime dateTime, final SimpleDuration simpleDuration) {
         return switch (simpleDuration.getTimeUnit()) {
             case NANOSECONDS -> LocalDateTime.of(
                     dateTime.getYear(),

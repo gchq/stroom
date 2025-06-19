@@ -23,10 +23,10 @@ public class LogLevelInspector implements HasSystemInfo, HasHealthCheck {
 
     @Override
     public SystemInfoResult getSystemInfo() {
-        LoggerContext loggerContext = getLoggerContext();
+        final LoggerContext loggerContext = getLoggerContext();
 
         if (loggerContext != null) {
-            Map<String, String> levels = getLogLevels(loggerContext);
+            final Map<String, String> levels = getLogLevels(loggerContext);
 
             return SystemInfoResult.builder(this)
                     .addDetail("levels", levels)
@@ -40,10 +40,10 @@ public class LogLevelInspector implements HasSystemInfo, HasHealthCheck {
 
     @Override
     public HealthCheck.Result getHealth() {
-        LoggerContext loggerContext = getLoggerContext();
+        final LoggerContext loggerContext = getLoggerContext();
 
         if (loggerContext != null) {
-            Map<String, String> levels = getLogLevels(loggerContext);
+            final Map<String, String> levels = getLogLevels(loggerContext);
 
             return HealthCheck.Result.builder()
                     .healthy()

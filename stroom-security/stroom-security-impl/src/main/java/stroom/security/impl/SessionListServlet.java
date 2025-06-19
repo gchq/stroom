@@ -73,7 +73,7 @@ class SessionListServlet extends HttpServlet implements IsServlet {
     public void service(final ServletRequest req, final ServletResponse res) {
         try {
             super.service(req, res);
-        } catch (ServletException e) {
+        } catch (final ServletException e) {
             throw new RuntimeException(e.getMessage(), e);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
@@ -142,7 +142,7 @@ class SessionListServlet extends HttpServlet implements IsServlet {
                             throw new UncheckedIOException(e);
                         }
                     });
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error displaying session list servlet: "
                          + LogUtil.exceptionMessage(e), e);
             throw new RuntimeException(e);

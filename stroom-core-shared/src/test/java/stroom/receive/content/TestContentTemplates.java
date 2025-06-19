@@ -23,7 +23,7 @@ class TestContentTemplates {
     void testSerde() throws IOException {
 
         int templateNumber = 0;
-        ContentTemplates contentTemplates = new ContentTemplates(List.of(
+        final ContentTemplates contentTemplates = new ContentTemplates(List.of(
                 new ContentTemplate(
                         true,
                         ++templateNumber,
@@ -76,7 +76,7 @@ class TestContentTemplates {
         final List<ContentTemplate> contentTemplates = new ArrayList<>();
         int iter = 1;
         for (int i = 5; i > 0; i--) {
-            ContentTemplate contentTemplate = ContentTemplate.builder()
+            final ContentTemplate contentTemplate = ContentTemplate.builder()
                     .withName(String.valueOf(iter))
                     .withTemplateNumber(i)
                     .build();

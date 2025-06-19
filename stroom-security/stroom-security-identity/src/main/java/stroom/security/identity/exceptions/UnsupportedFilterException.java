@@ -20,7 +20,7 @@ package stroom.security.identity.exceptions;
 
 public class UnsupportedFilterException extends RuntimeException {
 
-    public UnsupportedFilterException(String message) {
+    public UnsupportedFilterException(final String message) {
         super(message);
     }
 }

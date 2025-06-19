@@ -22,7 +22,7 @@ import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
 
 public abstract class PluginModule extends AbstractPresenterModule {
 
-    protected <P extends Plugin> void bindPlugin(Class<P> plugin) {
+    protected <P extends Plugin> void bindPlugin(final Class<P> plugin) {
         bind(plugin).asEagerSingleton();
     }
 }

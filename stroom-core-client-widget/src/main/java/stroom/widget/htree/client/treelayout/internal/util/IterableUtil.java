@@ -48,7 +48,7 @@ public class IterableUtil {
      * @param list
      * @return a reverse {@link Iterable} of the list
      */
-    public static <T> Iterable<T> createReverseIterable(List<T> list) {
+    public static <T> Iterable<T> createReverseIterable(final List<T> list) {
         // When the list is empty we can use the "forward" iterable (i.e. the
         // list itself) also as the reverseIterable as it will do nothing.
         if (list.size() == 0) {
@@ -62,7 +62,7 @@ public class IterableUtil {
 
         private final List<T> list;
 
-        public ReverseIterable(List<T> list) {
+        public ReverseIterable(final List<T> list) {
             this.list = list;
         }
 

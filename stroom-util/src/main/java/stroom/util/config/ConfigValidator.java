@@ -164,7 +164,7 @@ public class ConfigValidator<T> {
         }
 
         String propName = null;
-        for (jakarta.validation.Path.Node node : constraintViolation.getPropertyPath()) {
+        for (final jakarta.validation.Path.Node node : constraintViolation.getPropertyPath()) {
             propName = node.getName();
         }
         final T config = (T) constraintViolation.getLeafBean();

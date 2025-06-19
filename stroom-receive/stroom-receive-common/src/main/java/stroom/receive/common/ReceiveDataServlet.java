@@ -134,7 +134,7 @@ public class ReceiveDataServlet extends HttpServlet implements IsServlet {
 
         final Enumeration<String> headers = request.getHeaderNames();
         while (headers.hasMoreElements()) {
-            String header = headers.nextElement();
+            final String header = headers.nextElement();
             trace.append("request.getHeader('");
             trace.append(header);
             trace.append("')='");
@@ -144,7 +144,7 @@ public class ReceiveDataServlet extends HttpServlet implements IsServlet {
 
         final Enumeration<String> attributes = request.getAttributeNames();
         while (attributes.hasMoreElements()) {
-            String attr = attributes.nextElement();
+            final String attr = attributes.nextElement();
             trace.append("request.getAttribute('");
             trace.append(attr);
             trace.append("')='");

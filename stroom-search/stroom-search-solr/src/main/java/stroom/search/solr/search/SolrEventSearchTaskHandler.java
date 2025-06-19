@@ -70,7 +70,7 @@ public class SolrEventSearchTaskHandler {
 
     public EventRefs exec(final SolrEventSearchTask task) {
         return securityContext.secureResult(() -> {
-            EventRefs eventRefs;
+            final EventRefs eventRefs;
 
             // Get the current time in millis since epoch.
             final DateTimeSettings dateTimeSettings = DateTimeSettings.builder().build();

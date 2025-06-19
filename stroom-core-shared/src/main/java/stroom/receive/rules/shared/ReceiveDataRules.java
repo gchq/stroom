@@ -195,7 +195,7 @@ public class ReceiveDataRules extends Doc {
     }
 
     public static Builder copy(final ReceiveDataRules source) {
-        Builder builder = new Builder();
+        final Builder builder = new Builder();
         builder.type = source.getType();
         builder.uuid = source.getUuid();
         builder.name = source.getName();

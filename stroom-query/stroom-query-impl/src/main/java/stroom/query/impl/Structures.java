@@ -368,7 +368,7 @@ class Structures {
                         .map(row -> createCompletionValue(row, INITIAL_SCORE))
                         .forEach(resultList::add);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error adding structure completions: {}", e.getMessage(), e);
         }
     }

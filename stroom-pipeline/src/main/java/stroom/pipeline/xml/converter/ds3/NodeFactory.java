@@ -133,7 +133,7 @@ public abstract class NodeFactory {
         return debugId;
     }
 
-    void toString(StringBuilder sb, String pad) {
+    void toString(final StringBuilder sb, final String pad) {
         sb.append(pad);
         sb.append(xml);
         if (getChildNodes().size() > 0) {

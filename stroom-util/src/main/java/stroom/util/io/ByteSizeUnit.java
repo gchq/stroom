@@ -45,7 +45,7 @@ public enum ByteSizeUnit {
     private static final Map<Long, ByteSizeUnit> intToEnumMap = new HashMap<>();
 
     static {
-        for (ByteSizeUnit byteSizeUnit : ByteSizeUnit.values()) {
+        for (final ByteSizeUnit byteSizeUnit : ByteSizeUnit.values()) {
             shortNameToEnumMap.put(CaseInsensitiveString.fromString(byteSizeUnit.shortName), byteSizeUnit);
             intToEnumMap.put(byteSizeUnit.longBytes(), byteSizeUnit);
         }
@@ -61,10 +61,10 @@ public enum ByteSizeUnit {
         this.longName = longName;
     }
 
-    public static ByteSizeUnit fromShortName(String shortName) {
-        ByteSizeUnit val = shortNameToEnumMap.get(CaseInsensitiveString.fromString(shortName));
+    public static ByteSizeUnit fromShortName(final String shortName) {
+        final ByteSizeUnit val = shortNameToEnumMap.get(CaseInsensitiveString.fromString(shortName));
         if (val == null) {
-            String allShortNames = Arrays.stream(ByteSizeUnit.values())
+            final String allShortNames = Arrays.stream(ByteSizeUnit.values())
                     .map(byteSizeUnit -> {
                         return byteSizeUnit.shortName;
                     })
@@ -78,7 +78,7 @@ public enum ByteSizeUnit {
     }
 
     public static ByteSizeUnit fromBytes(final long bytes) {
-        ByteSizeUnit val = intToEnumMap.get(bytes);
+        final ByteSizeUnit val = intToEnumMap.get(bytes);
         if (val == null) {
             throw new IllegalArgumentException(String.format(
                     "The byte value %s is not a valid value for conversion into a ByteSizeUnit unit", bytes));
@@ -96,14 +96,14 @@ public enum ByteSizeUnit {
     /**
      * Converts the value from the units of this into bytes
      */
-    public long longBytes(long fromValue) {
+    public long longBytes(final long fromValue) {
         return this.bytes * fromValue;
     }
 
     /**
      * Converts the value from the units of this into bytes
      */
-    public int intBytes(int fromValue) {
+    public int intBytes(final int fromValue) {
         return (int) (this.bytes * fromValue);
     }
 
@@ -138,7 +138,7 @@ public enum ByteSizeUnit {
     /**
      * Converts a value from one byte size unit into another, e.g. MiB into KiB
      */
-    public double convert(double fromValue, final ByteSizeUnit toUnits) {
+    public double convert(final double fromValue, final ByteSizeUnit toUnits) {
         return (fromValue * this.bytes) / toUnits.bytes;
     }
 
@@ -150,12 +150,12 @@ public enum ByteSizeUnit {
             this.value = value.toLowerCase();
         }
 
-        public static CaseInsensitiveString fromString(String value) {
+        public static CaseInsensitiveString fromString(final String value) {
             return new CaseInsensitiveString(value);
         }
 
         @Override
-        public boolean equals(Object o) {
+        public boolean equals(final Object o) {
             if (this == o) {
                 return true;
             }
@@ -163,7 +163,7 @@ public enum ByteSizeUnit {
                 return false;
             }
 
-            CaseInsensitiveString that = (CaseInsensitiveString) o;
+            final CaseInsensitiveString that = (CaseInsensitiveString) o;
 
             return value.equals(that.value);
         }

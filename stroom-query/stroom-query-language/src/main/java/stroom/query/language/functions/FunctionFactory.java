@@ -49,7 +49,7 @@ public class FunctionFactory {
 //        final StringBuilder functions = new StringBuilder();
 
         // Scan the class path to find all the classes with @FunctionDef
-        try (ScanResult result = new ClassGraph()
+        try (final ScanResult result = new ClassGraph()
                 .acceptPackages(Function.class.getPackageName())
                 .enableAnnotationInfo()
                 .enableClassInfo()

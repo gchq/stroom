@@ -123,7 +123,7 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
                             configState.feedNameTemplate,
                             FeedNameGenerator::normaliseParam,
                             FeedNameGenerator::normaliseStaticText);
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     throw new IllegalArgumentException(LogUtil.message(
                             "Error parsing feed name template '{}': {}",
                             configState.feedNameTemplate, LogUtil.exceptionMessage(e)));

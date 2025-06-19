@@ -76,7 +76,7 @@ public class FindInContentResultCell extends AbstractCell<FindInContentResult> {
                     .replaceAll("\n", " ");
             final String sampleAfter = sample.substring(Math.min(end, sample.length()))
                     .replaceAll("\n", " ");
-            SafeHtmlBuilder sampleHtml = new SafeHtmlBuilder();
+            final SafeHtmlBuilder sampleHtml = new SafeHtmlBuilder();
             sampleHtml.append(template.div(getCellClassName() + "-sample-before",
                     SafeHtmlUtil.from(sampleBefore)));
             sampleHtml.append(template.div(getCellClassName() + "-highlight",

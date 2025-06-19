@@ -95,7 +95,7 @@ public class Aggregator {
                             }
                         }
 
-                        try (ZipFile zipFile = ZipUtil.createZipFile(fileGroup.getZip())) {
+                        try (final ZipFile zipFile = ZipUtil.createZipFile(fileGroup.getZip())) {
                             final Iterator<ZipArchiveEntry> entries = zipFile.getEntries().asIterator();
 
                             String lastBaseName = null;
@@ -117,7 +117,7 @@ public class Aggregator {
                                         outputBaseName + "." + fileName.getExtension(),
                                         zipFile.getRawInputStream(zipEntry));
                             }
-                        } catch (IOException e) {
+                        } catch (final IOException e) {
                             LOGGER.error(e::getMessage, e);
                             throw new UncheckedIOException(e);
                         }

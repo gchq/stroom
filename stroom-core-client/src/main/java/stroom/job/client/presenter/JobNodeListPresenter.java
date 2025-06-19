@@ -373,7 +373,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
     }
 
     private Function<JobNodeAndInfo, CommandLink> buildOpenJobNodeCommandLink() {
-        return (JobNodeAndInfo jobNodeAndInfo) -> {
+        return (final JobNodeAndInfo jobNodeAndInfo) -> {
             if (jobNodeAndInfo != null) {
                 final String nodeName = jobNodeAndInfo.getNodeName();
                 final String jobName = jobNodeAndInfo.getJobName();

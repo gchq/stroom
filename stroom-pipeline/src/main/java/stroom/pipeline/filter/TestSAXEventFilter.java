@@ -256,16 +256,16 @@ public class TestSAXEventFilter extends AbstractXMLFilter {
         try {
             // Output content first if we have any.
             if (!content.isEmpty()) {
-                String out = NEW_LINE_PATTERN.matcher(content).replaceAll(SPACE);
+                final String out = NEW_LINE_PATTERN.matcher(content).replaceAll(SPACE);
                 output.write(out.getBytes());
                 output.write(NEW_LINE.getBytes());
                 content.clear();
             }
 
-            String out = NEW_LINE_PATTERN.matcher(cb).replaceAll(SPACE);
+            final String out = NEW_LINE_PATTERN.matcher(cb).replaceAll(SPACE);
             output.write(out.getBytes());
             output.write(NEW_LINE.getBytes());
-        } catch (IOException e) {
+        } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);
         }
 
@@ -276,7 +276,7 @@ public class TestSAXEventFilter extends AbstractXMLFilter {
         try {
             // Output content first if we have any.
             if (!content.isEmpty()) {
-                String out = NEW_LINE_PATTERN.matcher(content).replaceAll(SPACE);
+                final String out = NEW_LINE_PATTERN.matcher(content).replaceAll(SPACE);
                 output.write(out.getBytes());
                 output.write(NEW_LINE.getBytes());
                 content.clear();
@@ -284,7 +284,7 @@ public class TestSAXEventFilter extends AbstractXMLFilter {
 
             output.write(type.getBytes());
             output.write(NEW_LINE.getBytes());
-        } catch (IOException e) {
+        } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);
         }
     }

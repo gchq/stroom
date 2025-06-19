@@ -19,7 +19,7 @@ public class GenerateAllDocumentation {
      * {@link stroom.test.common.docs.StroomDocsUtil#STROOM_DOCS_REPO_DIR_PROP_KEY}
      */
     @GeneratesDocumentation
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         LOGGER.info("Generating documentation for pipeline elements");
         final List<DocumentationGenerator> documentationGenerators = List.of(
                 new GenerateDocumentReferenceDoc(),

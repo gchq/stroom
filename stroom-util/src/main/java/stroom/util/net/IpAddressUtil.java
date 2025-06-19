@@ -20,7 +20,7 @@ public class IpAddressUtil {
     public static long toNumericIpAddress(final String address) throws UnknownHostException {
         final byte[] addressBytes = ipAddressFromString(address).getAddress();
         long value = 0;
-        for (byte b : addressBytes) {
+        for (final byte b : addressBytes) {
             value = (value << 8) | (b & 0xFF);
         }
         return value;

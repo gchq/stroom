@@ -129,16 +129,16 @@ public class MyXmlEmitter extends XMLEmitter {
             } else if (disabled) {
                 if (c > 127) {
                     if (UTF16CharacterSet.isHighSurrogate(c)) {
-                        int cc = UTF16CharacterSet.combinePair(c, chars.charAt(i + 1));
+                        final int cc = UTF16CharacterSet.combinePair(c, chars.charAt(i + 1));
                         if (!characterSet.inCharset(cc)) {
-                            XPathException de = new XPathException("Character x" + Integer.toHexString(cc) +
-                                    " is not available in the chosen encoding");
+                            final XPathException de = new XPathException("Character x" + Integer.toHexString(cc) +
+                                                                         " is not available in the chosen encoding");
                             de.setErrorCode("SERE0008");
                             throw de;
                         }
                     } else if (!characterSet.inCharset(c)) {
-                        XPathException de = new XPathException("Character " + c + " (x" + Integer.toHexString(c) +
-                                ") is not available in the chosen encoding");
+                        final XPathException de = new XPathException("Character " + c + " (x" + Integer.toHexString(c) +
+                                                                     ") is not available in the chosen encoding");
                         de.setErrorCode("SERE0008");
                         throw de;
                     }
@@ -168,8 +168,8 @@ public class MyXmlEmitter extends XMLEmitter {
                 // XML 1.1 requires these characters to be written as character references
                 characterReferenceGenerator.outputCharacterReference(c, writer);
             } else if (UTF16CharacterSet.isHighSurrogate(c)) {
-                char d = chars.charAt(++i);
-                int charval = UTF16CharacterSet.combinePair(c, d);
+                final char d = chars.charAt(++i);
+                final int charval = UTF16CharacterSet.combinePair(c, d);
                 if (characterSet.inCharset(charval)) {
                     writer.write(c);
                     writer.write(d);

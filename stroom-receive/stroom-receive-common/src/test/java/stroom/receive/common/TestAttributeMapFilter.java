@@ -35,7 +35,7 @@ class TestAttributeMapFilter {
     @Test
     void wrap_oneFilter() {
         final AtomicBoolean filter1Called = new AtomicBoolean(false);
-        AttributeMapFilter filter1 = attributeMap -> {
+        final AttributeMapFilter filter1 = attributeMap -> {
             filter1Called.set(true);
             return true;
         };
@@ -49,12 +49,12 @@ class TestAttributeMapFilter {
     @Test
     void wrap_twoFilters_1() {
         final AtomicBoolean filter1Called = new AtomicBoolean(false);
-        AttributeMapFilter filter1 = attributeMap -> {
+        final AttributeMapFilter filter1 = attributeMap -> {
             filter1Called.set(true);
             return true;
         };
         final AtomicBoolean filter2Called = new AtomicBoolean(false);
-        AttributeMapFilter filter2 = attributeMap -> {
+        final AttributeMapFilter filter2 = attributeMap -> {
             filter2Called.set(true);
             return false;
         };
@@ -73,12 +73,12 @@ class TestAttributeMapFilter {
     @Test
     void wrap_twoFilters_2() {
         final AtomicBoolean filter1Called = new AtomicBoolean(false);
-        AttributeMapFilter filter1 = attributeMap -> {
+        final AttributeMapFilter filter1 = attributeMap -> {
             filter1Called.set(true);
             return false;
         };
         final AtomicBoolean filter2Called = new AtomicBoolean(false);
-        AttributeMapFilter filter2 = attributeMap -> {
+        final AttributeMapFilter filter2 = attributeMap -> {
             filter2Called.set(true);
             return true;
         };
@@ -97,12 +97,12 @@ class TestAttributeMapFilter {
     @Test
     void wrap_threeFilters_rejectAll() {
         final AtomicBoolean filter1Called = new AtomicBoolean(false);
-        AttributeMapFilter filter1 = attributeMap -> {
+        final AttributeMapFilter filter1 = attributeMap -> {
             filter1Called.set(true);
             return true;
         };
         final AtomicBoolean filter2Called = new AtomicBoolean(false);
-        AttributeMapFilter filter2 = attributeMap -> {
+        final AttributeMapFilter filter2 = attributeMap -> {
             filter2Called.set(true);
             return false;
         };

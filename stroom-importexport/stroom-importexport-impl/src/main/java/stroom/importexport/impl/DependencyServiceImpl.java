@@ -111,7 +111,7 @@ public class DependencyServiceImpl implements DependencyService {
                         taskContext -> {
                             try {
                                 return getDependencies(criteria, taskContext);
-                            } catch (Exception e) {
+                            } catch (final Exception e) {
                                 LOGGER.error("Error getting dependencies for criteria " + criteria, e);
                                 throw e;
                             }
@@ -126,7 +126,7 @@ public class DependencyServiceImpl implements DependencyService {
                         taskContext -> {
                             try {
                                 return buildMissingDependencies(taskContext);
-                            } catch (Exception e) {
+                            } catch (final Exception e) {
                                 LOGGER.error("Error getting broken dependencies", e);
                                 throw e;
                             }

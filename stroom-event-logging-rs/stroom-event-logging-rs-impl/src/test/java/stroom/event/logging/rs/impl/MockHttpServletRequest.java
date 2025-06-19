@@ -247,7 +247,7 @@ public class MockHttpServletRequest implements HttpServletRequest {
     @SuppressWarnings("rawtypes")
     @Override
     public Enumeration getAttributeNames() {
-        Vector<String> vector = new Vector<>();
+        final Vector<String> vector = new Vector<>();
         vector.addAll(attributes.keySet());
         return vector.elements();
     }

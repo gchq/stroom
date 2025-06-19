@@ -83,15 +83,15 @@ public class HasCapacitySelectorFactory {
             return () -> {
                 try {
                     return constructor.newInstance();
-                } catch (InstantiationException
-                         | IllegalAccessException
-                         | InvocationTargetException e) {
+                } catch (final InstantiationException
+                               | IllegalAccessException
+                               | InvocationTargetException e) {
                     throw new RuntimeException("Unable to instantiate "
                             + selector.getClass().getName()
                             + ". Is there a public no-args constructor?");
                 }
             };
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException("Unable to instantiate "
                     + selector.getClass().getName()
                     + ". Is there a public no-args constructor?");

@@ -8,7 +8,7 @@ public class DataPreviewKey {
 
     private final long metaId;
 
-    public DataPreviewKey(SourceLocation sourceLocation) {
+    public DataPreviewKey(final SourceLocation sourceLocation) {
         this.metaId = sourceLocation.getMetaId();
     }
 

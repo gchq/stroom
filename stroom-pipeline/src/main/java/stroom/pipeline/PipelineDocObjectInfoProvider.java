@@ -52,7 +52,7 @@ class PipelineDocObjectInfoProvider implements ObjectInfoProvider {
             LOGGER.error("Unable to get pipeline description!", e);
         }
 
-        OtherObject.Builder builder = OtherObject.builder()
+        final OtherObject.Builder builder = OtherObject.builder()
                 .withType(pipelineDoc.getType())
                 .withName(pipelineDoc.getName())
                 .withId(pipelineDoc.getUuid())
@@ -78,7 +78,7 @@ class PipelineDocObjectInfoProvider implements ObjectInfoProvider {
             if (xml != null) {
                 builder.addData(Data.builder().withName("Structure").withValue(xml).build());
             }
-        } catch (Exception ex) {
+        } catch (final Exception ex) {
             //Ignore this error
         }
 

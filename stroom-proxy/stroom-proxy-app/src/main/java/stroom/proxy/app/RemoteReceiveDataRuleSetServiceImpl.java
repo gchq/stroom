@@ -267,7 +267,7 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
         final Path parent = jsonFile.getParent();
         try {
             Files.createDirectories(parent);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new UncheckedIOException(LogUtil.message("Error ensuring dir {} exists: {}",
                     parent, LogUtil.exceptionMessage(e)), e);
         }
@@ -277,7 +277,7 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
     private Optional<HashedReceiveDataRules> readFromDisk() {
         final Path jsonFile = getJsonFilePath();
         if (Files.exists(jsonFile)) {
-            try (InputStream inputStream = Files.newInputStream(jsonFile, READ_OPEN_OPTIONS)) {
+            try (final InputStream inputStream = Files.newInputStream(jsonFile, READ_OPEN_OPTIONS)) {
                 LOGGER.debug("readFromDisk() - Reading receipt policy rules from file '{}'", jsonFile);
                 final HashedReceiveDataRules hashedReceiveDataRules = JsonUtil.getMapper().readValue(
                         inputStream, HashedReceiveDataRules.class);
@@ -291,7 +291,7 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
                     LOGGER.error("Null hashedReceiveDataRules from file '{}'", jsonFile);
                     return Optional.empty();
                 }
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 final String exMsg = LogUtil.exceptionMessage(e);
                 LOGGER.errorAndDebug(e, "Error reading persisted receipt policy rules from file '{}': {}",
                         jsonFile, exMsg);
@@ -318,14 +318,14 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
             if (isWriteRequired) {
                 final Path jsonFile = getJsonFilePath();
                 final ObjectMapper mapper = JsonUtil.getMapper();
-                try (OutputStream outputStream = Files.newOutputStream(jsonFile, WRITE_OPEN_OPTIONS)) {
+                try (final OutputStream outputStream = Files.newOutputStream(jsonFile, WRITE_OPEN_OPTIONS)) {
 
                     LOGGER.debug("writeToDisk() - Writing hashedReceiveDataRules to file {}\n{}",
                             jsonFile, hashedReceiveDataRules);
                     mapper.writeValue(outputStream, hashedReceiveDataRules);
                     LOGGER.info("Written receipt policy rules with snapshot time {} to file '{}'",
                             Instant.ofEpochMilli(hashedReceiveDataRules.getSnapshotTimeEpochMs()), jsonFile);
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     LOGGER.error("Error writing to file " + jsonFile
                                  + ": " + LogUtil.exceptionMessage(e), e);
                     // Swallow and carry on
@@ -410,14 +410,14 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
         }
 
         @Override
-        public boolean equals(Object obj) {
+        public boolean equals(final Object obj) {
             if (obj == this) {
                 return true;
             }
             if (obj == null || obj.getClass() != this.getClass()) {
                 return false;
             }
-            var that = (AttributeMapHasher) obj;
+            final var that = (AttributeMapHasher) obj;
             return Objects.equals(this.hashFunction, that.hashFunction) &&
                    Objects.equals(this.fieldNameToSaltMap, that.fieldNameToSaltMap);
         }

@@ -23,12 +23,12 @@ public class CheckedLimit {
     final int limit;
     private final AtomicInteger atomicInteger = new AtomicInteger(0);
 
-    public CheckedLimit(int limit) {
+    public CheckedLimit(final int limit) {
         this.limit = limit;
     }
 
     public int increment() {
-        int newValue = atomicInteger.getAndIncrement();
+        final int newValue = atomicInteger.getAndIncrement();
         if (newValue >= limit) {
             throw new RuntimeException("limited exceeded");
         }
@@ -36,9 +36,9 @@ public class CheckedLimit {
     }
 
     public int decrement() {
-        int newValue = atomicInteger.getAndDecrement();
+        final int newValue = atomicInteger.getAndDecrement();
         if (newValue <= 0) {
-            RuntimeException exception = new RuntimeException("limited went below 0 !!");
+            final RuntimeException exception = new RuntimeException("limited went below 0 !!");
             exception.printStackTrace();
             throw exception;
         }

@@ -106,7 +106,7 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
 
     private void addSeverityColumn() {
         dataGrid.addColumn(DataGridUtil
-                .svgPresetColumnBuilder(false, (Marker marker) -> {
+                .svgPresetColumnBuilder(false, (final Marker marker) -> {
                     switch (marker.getSeverity()) {
                         case FATAL_ERROR:
                             return SvgPresets.FATAL.title("Fatal Error");
@@ -125,7 +125,7 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
 
     private void addElementId() {
         dataGrid.addResizableColumn(DataGridUtil
-                        .htmlColumnBuilder((Marker marker) -> {
+                        .htmlColumnBuilder((final Marker marker) -> {
                             if (marker instanceof StoredError) {
                                 final StoredError storedError = (StoredError) marker;
                                 if (storedError.getElementId() != null) {
@@ -179,7 +179,7 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
 
     private void addStream() {
         dataGrid.addResizableColumn(DataGridUtil
-                        .htmlColumnBuilder((Marker marker) -> {
+                        .htmlColumnBuilder((final Marker marker) -> {
                             final StoredError storedError = convertToStoredError(marker);
                             if (storedError != null && storedError.getLocation() != null &&
                                 storedError.getLocation() instanceof StreamLocation) {
@@ -202,7 +202,7 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
 
     private void addLine() {
         dataGrid.addResizableColumn(DataGridUtil
-                        .htmlColumnBuilder((Marker marker) -> {
+                        .htmlColumnBuilder((final Marker marker) -> {
                             final StoredError storedError = convertToStoredError(marker);
                             if (storedError != null && storedError.getLocation().getLineNo() >= 0) {
                                 return SafeHtmlUtils
@@ -218,7 +218,7 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
 
     private void addCol() {
         dataGrid.addResizableColumn(DataGridUtil
-                        .htmlColumnBuilder((Marker marker) -> {
+                        .htmlColumnBuilder((final Marker marker) -> {
                             final StoredError storedError = convertToStoredError(marker);
                             if (storedError != null && storedError.getLocation().getColNo() >= 0) {
                                 return SafeHtmlUtils
@@ -240,7 +240,7 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
 
     private void addMessage() {
         dataGrid.addResizableColumn(DataGridUtil
-                        .htmlColumnBuilder((Marker marker) -> {
+                        .htmlColumnBuilder((final Marker marker) -> {
                             final StoredError storedError = convertToStoredError(marker);
                             if (storedError == null) {
                                 return SafeHtmlUtils.EMPTY_SAFE_HTML;

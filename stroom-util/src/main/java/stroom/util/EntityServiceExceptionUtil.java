@@ -122,7 +122,7 @@ public class EntityServiceExceptionUtil {
 
     }
 
-    private static String appendDetail(String detail) {
+    private static String appendDetail(final String detail) {
         if (detail == null) {
             return "";
         }

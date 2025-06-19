@@ -37,7 +37,7 @@ public class ScheduledTimes {
     private final String error;
 
     @JsonCreator
-    public ScheduledTimes(@JsonProperty("schedule") Schedule schedule,
+    public ScheduledTimes(@JsonProperty("schedule") final Schedule schedule,
                           @JsonProperty("nextScheduledTimeMs") final Long nextScheduledTimeMs,
                           @JsonProperty("error") final String error) {
         this.schedule = schedule;

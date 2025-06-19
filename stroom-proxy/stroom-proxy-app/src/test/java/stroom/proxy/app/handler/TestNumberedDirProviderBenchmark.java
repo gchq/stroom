@@ -23,7 +23,7 @@ public class TestNumberedDirProviderBenchmark {
     @Benchmark
     @BenchmarkMode(Mode.Throughput)
     @Measurement(iterations = 1)
-    public void benchProviderMethod1(ExecutionPlan plan, Blackhole blackhole) {
+    public void benchProviderMethod1(final ExecutionPlan plan, final Blackhole blackhole) {
         final LongFunction<String> function = plan.func;
         blackhole.consume(function.apply(plan.input));
     }
@@ -60,7 +60,7 @@ public class TestNumberedDirProviderBenchmark {
             if (num == 0) {
                 return "0000000000";
             } else {
-                int length = (int) (Math.log10(num) + 1);
+                final int length = (int) (Math.log10(num) + 1);
                 return switch (length) {
                     case 0 -> "0000000000";
                     case 1 -> "000000000" + num;
@@ -83,7 +83,7 @@ public class TestNumberedDirProviderBenchmark {
                 return "0000000000";
             } else {
                 final String str = String.valueOf(num);
-                int len = str.length();
+                final int len = str.length();
                 return switch (len) {
                     case 0 -> "0000000000";
                     case 1 -> "000000000" + str;

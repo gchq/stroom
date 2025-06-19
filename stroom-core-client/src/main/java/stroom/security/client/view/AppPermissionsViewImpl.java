@@ -67,7 +67,7 @@ public final class AppPermissionsViewImpl
     }
 
     @Override
-    public void setAppUserPermissionListView(View view) {
+    public void setAppUserPermissionListView(final View view) {
         appUserPermissionsList.setWidget(view.asWidget());
     }
 

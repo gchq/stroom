@@ -20,7 +20,7 @@ class TestDocPath {
 
     @Test
     void blank() {
-        DocPath docPath = DocPath.blank();
+        final DocPath docPath = DocPath.blank();
 
         assertThat(docPath.toString())
                 .isEqualTo("/");
@@ -48,7 +48,7 @@ class TestDocPath {
 
     @Test
     void testAbsolute() {
-        DocPath docPath = DocPath.fromPathString("/stroom/node/name");
+        final DocPath docPath = DocPath.fromPathString("/stroom/node/name");
         Assertions.assertThat(docPath.isAbsolute())
                 .isTrue();
         Assertions.assertThat(docPath.isRelative())
@@ -59,7 +59,7 @@ class TestDocPath {
 
     @Test
     void testAbsolute2() {
-        DocPath docPath = DocPath.fromPathString("/stroom/node/name/");
+        final DocPath docPath = DocPath.fromPathString("/stroom/node/name/");
         Assertions.assertThat(docPath.isAbsolute())
                 .isTrue();
         Assertions.assertThat(docPath.isRelative())
@@ -70,7 +70,7 @@ class TestDocPath {
 
     @Test
     void testRelative() {
-        DocPath docPath = DocPath.fromPathString("stroom/node/name");
+        final DocPath docPath = DocPath.fromPathString("stroom/node/name");
         Assertions.assertThat(docPath.isAbsolute())
                 .isFalse();
         Assertions.assertThat(docPath.isRelative())
@@ -81,7 +81,7 @@ class TestDocPath {
 
     @Test
     void testRelative2() {
-        DocPath docPath = DocPath.fromPathString("stroom/node/name/");
+        final DocPath docPath = DocPath.fromPathString("stroom/node/name/");
         Assertions.assertThat(docPath.isAbsolute())
                 .isFalse();
         Assertions.assertThat(docPath.isRelative())
@@ -92,7 +92,7 @@ class TestDocPath {
 
     @Test
     void testWhitespace() {
-        DocPath docPath = DocPath.fromPathString(" / stroom / node / name / ");
+        final DocPath docPath = DocPath.fromPathString(" / stroom / node / name / ");
         Assertions.assertThat(docPath.isAbsolute())
                 .isTrue();
         Assertions.assertThat(docPath.toString())
@@ -101,7 +101,7 @@ class TestDocPath {
 
     @Test
     void testWhitespace2() {
-        DocPath docPath = DocPath.fromPathString("  stroom / node / name /");
+        final DocPath docPath = DocPath.fromPathString("  stroom / node / name /");
         Assertions.assertThat(docPath.isAbsolute())
                 .isEqualTo(!docPath.isRelative())
                 .isFalse();
@@ -111,7 +111,7 @@ class TestDocPath {
 
     @Test
     void testWhitespace3() {
-        DocPath docPath = DocPath.fromPathString("  stroom / has a few spaces / name /");
+        final DocPath docPath = DocPath.fromPathString("  stroom / has a few spaces / name /");
         Assertions.assertThat(docPath.isAbsolute())
                 .isEqualTo(!docPath.isRelative())
                 .isFalse();
@@ -121,7 +121,7 @@ class TestDocPath {
 
     @Test
     void getDocPath() {
-        DocPath docPath = DocPath.fromParts("stroom", "node", "name");
+        final DocPath docPath = DocPath.fromParts("stroom", "node", "name");
 
         assertThat(docPath.toString())
                 .isEqualTo("/stroom/node/name");
@@ -132,31 +132,31 @@ class TestDocPath {
 
     @Test
     void merge() {
-        DocPath docPath1 = DocPath.fromParts("stroom", "node");
-        DocPath docPath2 = DocPath.fromParts("name").toRelativePath();
+        final DocPath docPath1 = DocPath.fromParts("stroom", "node");
+        final DocPath docPath2 = DocPath.fromParts("name").toRelativePath();
         assertThat(docPath1.append(docPath2).toString())
                 .isEqualTo("/stroom/node/name");
     }
 
     @Test
     void merge2() {
-        DocPath docPath1 = DocPath.fromParts("stroom", "node");
-        String part2 = "name";
+        final DocPath docPath1 = DocPath.fromParts("stroom", "node");
+        final String part2 = "name";
         Assertions.assertThat(docPath1.append(part2).toString())
                 .isEqualTo("/stroom/node/name");
     }
 
     @Test
     void merge3() {
-        DocPath docPath1 = DocPath.fromParts("stroom", "node");
+        final DocPath docPath1 = DocPath.fromParts("stroom", "node");
         Assertions.assertThat(docPath1.append("name", "other").toString())
                 .isEqualTo("/stroom/node/name/other");
     }
 
     @Test
     void merge4() {
-        DocPath docPath1 = DocPath.fromParts("stroom", "node");
-        DocPath docPath2 = DocPath.fromParts("name");
+        final DocPath docPath1 = DocPath.fromParts("stroom", "node");
+        final DocPath docPath2 = DocPath.fromParts("name");
 
         Assertions.assertThatThrownBy(
                         () -> {
@@ -168,7 +168,7 @@ class TestDocPath {
 
     @Test
     void containsPart1() {
-        DocPath docPath = DocPath.fromParts("stroom", "node", "name");
+        final DocPath docPath = DocPath.fromParts("stroom", "node", "name");
         docPath.getParts()
                 .forEach(part -> {
                     assertThat(docPath.containsPart(part))
@@ -178,14 +178,14 @@ class TestDocPath {
 
     @Test
     void containsPart2() {
-        DocPath docPath = DocPath.fromParts("stroom", "node", "name");
+        final DocPath docPath = DocPath.fromParts("stroom", "node", "name");
         assertThat(docPath.containsPart("not_found"))
                 .isFalse();
     }
 
     @Test
     void builder() {
-        DocPath docPath = DocPath.builder()
+        final DocPath docPath = DocPath.builder()
                 .add("stroom")
                 .add("node")
                 .add("name")
@@ -223,10 +223,10 @@ class TestDocPath {
     private void doEqualsIgnoreCaseTest(final String pathString1,
                                         final String pathString2,
                                         final boolean expectedResult) {
-        DocPath path1 = DocPath.fromPathString(pathString1);
-        DocPath path2 = DocPath.fromPathString(pathString2);
+        final DocPath path1 = DocPath.fromPathString(pathString1);
+        final DocPath path2 = DocPath.fromPathString(pathString2);
 
-        boolean result = path1.equalsIgnoreCase(path2);
+        final boolean result = path1.equalsIgnoreCase(path2);
 
         assertThat(result)
                 .isEqualTo(expectedResult);
@@ -289,7 +289,7 @@ class TestDocPath {
         assertThat(mapper.canSerialize(entity.getClass()))
                 .isTrue();
 
-        String json = mapper.writeValueAsString(entity);
+        final String json = mapper.writeValueAsString(entity);
         System.out.println("\n" + json);
 
         final T entity2 = mapper.readValue(json, clazz);

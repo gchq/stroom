@@ -39,8 +39,8 @@ class TestCompletableQueue {
                 .toList();
         final List<Integer> outputItems = new CopyOnWriteArrayList<>();
 
-        CountDownLatch donePutsLatch = new CountDownLatch(count);
-        CountDownLatch doneTakesLatch = new CountDownLatch(count);
+        final CountDownLatch donePutsLatch = new CountDownLatch(count);
+        final CountDownLatch doneTakesLatch = new CountDownLatch(count);
 
         // 10 threads putting, 10 taking
         final ExecutorService putsExecutor = Executors.newFixedThreadPool(10);
@@ -53,7 +53,7 @@ class TestCompletableQueue {
                     outputItems.add(item);
                     LOGGER.debug("Got item: {}", item);
                     doneTakesLatch.countDown();
-                } catch (InterruptedException | CompleteException e) {
+                } catch (final InterruptedException | CompleteException e) {
                     throw new RuntimeException(e);
                 }
             }, takeExecutor);
@@ -64,7 +64,7 @@ class TestCompletableQueue {
                 try {
                     completableQueue.put(item);
                     donePutsLatch.countDown();
-                } catch (InterruptedException e) {
+                } catch (final InterruptedException e) {
                     throw new RuntimeException(e);
                 }
             }, putsExecutor);
@@ -85,8 +85,8 @@ class TestCompletableQueue {
                 .toList();
         final List<Integer> outputItems = new CopyOnWriteArrayList<>();
 
-        CountDownLatch donePutsLatch = new CountDownLatch(count);
-        CountDownLatch donePollingLatch = new CountDownLatch(count);
+        final CountDownLatch donePutsLatch = new CountDownLatch(count);
+        final CountDownLatch donePollingLatch = new CountDownLatch(count);
 
         // 10 threads putting, 10 taking
         final ExecutorService putsExecutor = Executors.newFixedThreadPool(10);
@@ -102,7 +102,7 @@ class TestCompletableQueue {
 
                     outputItems.add(item);
                     LOGGER.debug("Got item: {}", item);
-                } catch (InterruptedException | CompleteException e) {
+                } catch (final InterruptedException | CompleteException e) {
                     throw new RuntimeException(e);
                 }
                 donePollingLatch.countDown();
@@ -114,7 +114,7 @@ class TestCompletableQueue {
                 try {
                     completableQueue.put(item);
                     donePutsLatch.countDown();
-                } catch (InterruptedException e) {
+                } catch (final InterruptedException e) {
                     throw new RuntimeException(e);
                 }
             }, putsExecutor);
@@ -135,8 +135,8 @@ class TestCompletableQueue {
                 .toList();
         final List<Integer> outputItems = new CopyOnWriteArrayList<>();
 
-        CountDownLatch donePutsLatch = new CountDownLatch(count);
-        CountDownLatch donePollingLatch = new CountDownLatch(count);
+        final CountDownLatch donePutsLatch = new CountDownLatch(count);
+        final CountDownLatch donePollingLatch = new CountDownLatch(count);
 
         // 10 threads putting, 10 taking
         final ExecutorService putsExecutor = Executors.newFixedThreadPool(10);
@@ -153,7 +153,7 @@ class TestCompletableQueue {
                     outputItems.add(item);
                     LOGGER.debug("Got item: {}", item);
                     donePollingLatch.countDown();
-                } catch (InterruptedException | CompleteException e) {
+                } catch (final InterruptedException | CompleteException e) {
                     throw new RuntimeException(e);
                 }
             }, pollExecutor);
@@ -164,7 +164,7 @@ class TestCompletableQueue {
                 try {
                     completableQueue.put(item);
                     donePutsLatch.countDown();
-                } catch (InterruptedException e) {
+                } catch (final InterruptedException e) {
                     throw new RuntimeException(e);
                 }
             }, putsExecutor);
@@ -204,8 +204,8 @@ class TestCompletableQueue {
                 .toList();
         final List<Integer> outputItems = new CopyOnWriteArrayList<>();
 
-        CountDownLatch donePutsLatch = new CountDownLatch(count);
-        CountDownLatch doneTakesLatch = new CountDownLatch(count);
+        final CountDownLatch donePutsLatch = new CountDownLatch(count);
+        final CountDownLatch doneTakesLatch = new CountDownLatch(count);
 
         // 10 threads putting, 10 taking
         final ExecutorService putsExecutor = Executors.newFixedThreadPool(10);
@@ -219,9 +219,9 @@ class TestCompletableQueue {
                     final Integer item = completableQueue.take();
                     outputItems.add(item);
                     LOGGER.debug("Got item: {}", item);
-                } catch (InterruptedException e) {
+                } catch (final InterruptedException e) {
                     throw new RuntimeException(e);
-                } catch (CompleteException e) {
+                } catch (final CompleteException e) {
                     LOGGER.debug("Completed");
                     completed.set(true);
                 }
@@ -239,7 +239,7 @@ class TestCompletableQueue {
                         completableQueue.put(item);
                     }
                     donePutsLatch.countDown();
-                } catch (InterruptedException e) {
+                } catch (final InterruptedException e) {
                     throw new RuntimeException(e);
                 }
             }, putsExecutor);
@@ -296,9 +296,9 @@ class TestCompletableQueue {
                     final Integer item = completableQueue.take();
                     outputItems.add(item);
                     LOGGER.debug("Got item: {}", item);
-                } catch (InterruptedException e) {
+                } catch (final InterruptedException e) {
                     throw new RuntimeException(e);
-                } catch (CompleteException e) {
+                } catch (final CompleteException e) {
                     LOGGER.debug("Completed");
                     completed.set(true);
                 }
@@ -334,9 +334,9 @@ class TestCompletableQueue {
                     final Integer item = completableQueue.take();
                     outputItems.add(item);
                     LOGGER.debug("Got item: {}", item);
-                } catch (InterruptedException e) {
+                } catch (final InterruptedException e) {
                     throw new RuntimeException(e);
-                } catch (CompleteException e) {
+                } catch (final CompleteException e) {
                     LOGGER.debug("Completed");
                     completed.set(true);
                 }
@@ -372,9 +372,9 @@ class TestCompletableQueue {
                     final Integer item = completableQueue.take();
                     outputItems.add(item);
                     LOGGER.debug("Got item: {}", item);
-                } catch (InterruptedException e) {
+                } catch (final InterruptedException e) {
                     throw new RuntimeException(e);
-                } catch (CompleteException e) {
+                } catch (final CompleteException e) {
                     LOGGER.debug("Completed");
                     completed.set(true);
                 }

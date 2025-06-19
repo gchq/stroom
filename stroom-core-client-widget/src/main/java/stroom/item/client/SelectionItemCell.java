@@ -70,7 +70,7 @@ public class SelectionItemCell<I extends SelectionItem> extends AbstractCell<I> 
             // Add parent indicator arrow.
             if (row.isHasChildren()) {
                 final SvgImage expanderIcon = SvgImage.ARROW_RIGHT;
-                SafeHtml expanderIconSafeHtml;
+                final SafeHtml expanderIconSafeHtml;
                 String className = getCellClassName() + "-expander";
                 className += " " + expanderIcon.getClassName();
                 expanderIconSafeHtml = SafeHtmlUtils.fromTrustedString(expanderIcon.getSvg());

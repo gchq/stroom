@@ -31,8 +31,8 @@ public class TimePartitionFactory {
                 : Math.max(1, index.getPartitionSize());
 
         LocalDate dateFrom = Instant.ofEpochMilli(timeMs).atZone(UTC).toLocalDate();
-        LocalDate dateTo;
-        String label;
+        final LocalDate dateTo;
+        final String label;
 
         if (PartitionBy.YEAR.equals(partitionBy)) {
             // Truncate to first day of the year.
@@ -85,10 +85,10 @@ public class TimePartitionFactory {
     }
 
     private LocalDate roundDown(final LocalDate dateTime, final TemporalUnit temporalUnit, final int size) {
-        LocalDate epoch = LocalDate.ofEpochDay(0);
-        long count = temporalUnit.between(epoch, dateTime);
-        long round = count / size * size;
-        long diff = round - count;
+        final LocalDate epoch = LocalDate.ofEpochDay(0);
+        final long count = temporalUnit.between(epoch, dateTime);
+        final long round = count / size * size;
+        final long diff = round - count;
         return dateTime.plus(diff, temporalUnit);
     }
 }

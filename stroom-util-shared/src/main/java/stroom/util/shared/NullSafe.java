@@ -810,7 +810,7 @@ public class NullSafe {
             final S collection) {
         if (collection == null || collection.isEmpty()) {
             return Collections.emptySet();
-        } else if (collection instanceof EnumSet<?> enumSet) {
+        } else if (collection instanceof final EnumSet<?> enumSet) {
             // Saves the copyOf
             //noinspection unchecked
             return Collections.unmodifiableSet((EnumSet<T>) enumSet);
@@ -1658,7 +1658,7 @@ public class NullSafe {
         if (value == null) {
             throw new NullPointerException(buildNullValueMsg("value", messageSupplier));
         } else {
-            R result = Objects.requireNonNull(getter, "Null getter")
+            final R result = Objects.requireNonNull(getter, "Null getter")
                     .apply(value);
             if (result == null) {
                 throw new NullPointerException(buildNullGetterResultMsg(0, messageSupplier));
@@ -1701,7 +1701,7 @@ public class NullSafe {
     /**
      * GWT currently doesn't emulate requireNonNullElse
      */
-    public static <T> T requireNonNullElse(T obj, T other) {
+    public static <T> T requireNonNullElse(final T obj, final T other) {
         return (obj != null)
                 ? obj
                 : Objects.requireNonNull(other, "other");
@@ -1710,7 +1710,7 @@ public class NullSafe {
     /**
      * GWT currently doesn't emulate requireNonNullElse
      */
-    public static <T> T requireNonNullElseGet(T obj, Supplier<? extends T> supplier) {
+    public static <T> T requireNonNullElseGet(final T obj, final Supplier<? extends T> supplier) {
         return (obj != null)
                 ? obj
                 : Objects.requireNonNull(

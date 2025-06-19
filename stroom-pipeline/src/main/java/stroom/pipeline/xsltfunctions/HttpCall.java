@@ -76,7 +76,7 @@ class HttpCall extends StroomExtensionFunctionCall {
                 log(context, Severity.ERROR, msg, e);
                 try {
                     sequence = createError(context, msg);
-                } catch (SAXException ex) {
+                } catch (final SAXException ex) {
                     LOGGER.trace(msg, e);
                     log(context, Severity.ERROR, msg, e);
                 }
@@ -101,7 +101,7 @@ class HttpCall extends StroomExtensionFunctionCall {
                   final String mediaType,
                   final String data,
                   final HttpClient httpClient,
-                  HttpClientResponseHandler<T> responseHandler) {
+                  final HttpClientResponseHandler<T> responseHandler) {
         LOGGER.debug(() -> "Creating request builder");
         final HttpPost httpPost = new HttpPost(url);
 
@@ -113,7 +113,7 @@ class HttpCall extends StroomExtensionFunctionCall {
         if (headers != null && !headers.isEmpty()) {
             final String[] parts = headers.split(HEADER_DELIMITER);
             for (final String part : parts) {
-                int index = part.indexOf(HEADER_KV_DELIMITER);
+                final int index = part.indexOf(HEADER_KV_DELIMITER);
                 if (index > 0) {
                     final String key = part.substring(0, index).trim();
                     final String value = part.substring(index + HEADER_KV_DELIMITER.length()).trim();
@@ -173,7 +173,7 @@ class HttpCall extends StroomExtensionFunctionCall {
             endElement(contentHandler, "response");
             contentHandler.endDocument();
 
-            Sequence sequence = builder.getCurrentRoot();
+            final Sequence sequence = builder.getCurrentRoot();
 
             // Reset the builder, detaching it from the constructed
             // document.
@@ -198,7 +198,7 @@ class HttpCall extends StroomExtensionFunctionCall {
         data(contentHandler, "error", message);
         contentHandler.endDocument();
 
-        Sequence sequence = builder.getCurrentRoot();
+        final Sequence sequence = builder.getCurrentRoot();
 
         // Reset the builder, detaching it from the constructed
         // document.

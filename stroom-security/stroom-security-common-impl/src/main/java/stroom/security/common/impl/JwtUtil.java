@@ -117,7 +117,7 @@ public final class JwtUtil {
 
     public static String removePrefix(final String userId) {
         if (userId != null) {
-            int index = userId.indexOf(CORP_PREFIX);
+            final int index = userId.indexOf(CORP_PREFIX);
             if (index != -1) {
                 return userId.substring(CORP_PREFIX.length());
             }
@@ -178,7 +178,7 @@ public final class JwtUtil {
                     JwtContext::getJwtClaims,
                     ThrowingFunction.unchecked(jwtClaims ->
                             jwtClaims.getClaimValue(claim, String.class)));
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.debug(() -> LogUtil.message("Error getting claim {}: {}", claim, e.getMessage()), e);
             return Optional.empty();
         }
@@ -190,7 +190,7 @@ public final class JwtUtil {
                     jwtClaims,
                     ThrowingFunction.unchecked(jwtClaims2 ->
                             jwtClaims2.getClaimValue(claim, String.class)));
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.debug(() -> LogUtil.message("Error getting claim {}: {}", claim, e.getMessage()), e);
             return Optional.empty();
         }

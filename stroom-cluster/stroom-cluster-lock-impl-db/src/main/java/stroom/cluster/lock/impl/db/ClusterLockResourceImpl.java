@@ -86,7 +86,7 @@ class ClusterLockResourceImpl implements ClusterLockResource {
                 nodeName);
 
         try {
-            try (Response response = webTargetFactory.get()
+            try (final Response response = webTargetFactory.get()
                     .create(url)
                     .request(MediaType.APPLICATION_JSON)
                     .put(Entity.json(key))) {
@@ -95,7 +95,7 @@ class ClusterLockResourceImpl implements ClusterLockResource {
                 }
                 return response.readEntity(Boolean.class);
             }
-        } catch (Throwable e) {
+        } catch (final Throwable e) {
             throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
         }
     }

@@ -20,14 +20,14 @@ public class SolrClientFactory {
             } else if (config.getSolrUrls().size() != 1) {
                 throw new SolrIndexException("Expected a single Solr URL but found " + config.getSolrUrls().size());
             }
-            Http2SolrClient.Builder builder = new Http2SolrClient.Builder(config.getSolrUrls().getFirst());
+            final Http2SolrClient.Builder builder = new Http2SolrClient.Builder(config.getSolrUrls().getFirst());
             return builder.build();
 
         } else if (config.isUseZk()) {
             if (config.getZkHosts() == null || config.getZkHosts().isEmpty()) {
                 throw new SolrIndexException("No ZK hosts have been provided");
             }
-            CloudHttp2SolrClient.Builder builder = new CloudSolrClient.Builder(config.getZkHosts(),
+            final CloudHttp2SolrClient.Builder builder = new CloudSolrClient.Builder(config.getZkHosts(),
                     Optional.ofNullable(config.getZkPath()))
                     .withHttpClient(
                             new Http2SolrClient.Builder()
@@ -42,7 +42,7 @@ public class SolrClientFactory {
             if (config.getSolrUrls() == null || config.getSolrUrls().isEmpty()) {
                 throw new SolrIndexException("No Solr URLs have been provided");
             }
-            CloudHttp2SolrClient.Builder builder = new CloudSolrClient.Builder(config.getZkHosts(),
+            final CloudHttp2SolrClient.Builder builder = new CloudSolrClient.Builder(config.getZkHosts(),
                     Optional.ofNullable(config.getZkPath()))
                     .withHttpClient(
                             new Http2SolrClient.Builder()

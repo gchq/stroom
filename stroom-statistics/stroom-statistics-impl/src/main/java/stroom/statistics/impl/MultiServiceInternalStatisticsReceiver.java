@@ -44,7 +44,7 @@ class MultiServiceInternalStatisticsReceiver implements InternalStatisticsReceiv
         try {
             final InternalStatisticsConfig internalStatisticsConfig = internalStatisticsConfigProvider.get();
             // Group the events by service and docref
-            Map<InternalStatisticsService, Map<DocRef, List<InternalStatisticEvent>>> serviceToEventsMapMap =
+            final Map<InternalStatisticsService, Map<DocRef, List<InternalStatisticEvent>>> serviceToEventsMapMap =
                     statisticEvents.stream()
                             .flatMap(event ->
                                     internalStatisticsConfig.getEnabledDocRefs(event.getKey())
@@ -77,7 +77,7 @@ class MultiServiceInternalStatisticsReceiver implements InternalStatisticsReceiv
     }
 
     private InternalStatisticsService getServiceForType(final String type) {
-        InternalStatisticsService service = docRefTypeToServiceMap.get(type);
+        final InternalStatisticsService service = docRefTypeToServiceMap.get(type);
         if (service == null) {
             LOGGER.warn("No InternalStatisticsService for type {}", type);
         }

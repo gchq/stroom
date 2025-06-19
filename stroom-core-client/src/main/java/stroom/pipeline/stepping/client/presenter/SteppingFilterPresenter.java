@@ -99,7 +99,7 @@ public class SteppingFilterPresenter extends
         pipelineElementTypesFactory.get(this, elementTypes -> {
             // Pipe element icon column
             final Column<PipelineElement, Preset> iconColumn = DataGridUtil.svgPresetColumnBuilder(false,
-                            (PipelineElement pipelineElement) -> {
+                            (final PipelineElement pipelineElement) -> {
                                 final PipelineElementType pipelineElementType =
                                         elementTypes.getElementType(pipelineElement);
                                 if (pipelineElementType != null && pipelineElementType.getIcon() != null) {

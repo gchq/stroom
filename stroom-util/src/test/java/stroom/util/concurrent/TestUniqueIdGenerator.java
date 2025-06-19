@@ -38,7 +38,7 @@ class TestUniqueIdGenerator {
 
     @Test
     void simple() {
-        UniqueIdGenerator generator = new UniqueIdGenerator(NodeType.PROXY, "node1");
+        final UniqueIdGenerator generator = new UniqueIdGenerator(NodeType.PROXY, "node1");
         ThreadUtil.sleep(20);
         final UniqueId uniqueId = generator.generateId();
 
@@ -54,7 +54,7 @@ class TestUniqueIdGenerator {
 
     @Test
     void parse() {
-        UniqueIdGenerator generator = new UniqueIdGenerator(NodeType.PROXY, "node1");
+        final UniqueIdGenerator generator = new UniqueIdGenerator(NodeType.PROXY, "node1");
         final UniqueId uniqueId1 = generator.generateId();
 
         final String str = uniqueId1.toString();
@@ -74,9 +74,9 @@ class TestUniqueIdGenerator {
         final CountDownLatch completionLatch = new CountDownLatch(cores);
         final UniqueIdGenerator generator = new UniqueIdGenerator(NodeType.PROXY, "node1");
 
-        int iterations = 100_000;
+        final int iterations = 100_000;
         final List<UniqueId>[] lists = new List[cores];
-        DurationTimer timer = DurationTimer.start();
+        final DurationTimer timer = DurationTimer.start();
 
         for (int i = 0; i < cores; i++) {
             final int coreIdx = i;
@@ -96,7 +96,7 @@ class TestUniqueIdGenerator {
                     lists[coreIdx] = uniqueIdList;
                     assertThat(uniqueIdList)
                             .hasSize(iterations);
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     LOGGER.error("Error", e);
                 } finally {
 //                    LOGGER.info("Thread {} completing", coreIdx);
@@ -109,7 +109,7 @@ class TestUniqueIdGenerator {
 
         ThreadUtil.await(completionLatch);
 
-        int totalCount = iterations * cores;
+        final int totalCount = iterations * cores;
         final Duration duration = timer.get();
         LOGGER.info("Generated {} uniqueIds in {}, " +
                     "uniqueIds/sec: {}, " +

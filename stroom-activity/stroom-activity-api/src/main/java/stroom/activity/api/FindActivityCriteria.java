@@ -50,7 +50,7 @@ public class FindActivityCriteria extends BaseCriteria {
     }
 
     public static FindActivityCriteria create(final String filter) {
-        FindActivityCriteria criteria = new FindActivityCriteria();
+        final FindActivityCriteria criteria = new FindActivityCriteria();
         criteria.setFilter(filter);
         return criteria;
     }

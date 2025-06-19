@@ -13,7 +13,7 @@ public interface UserDao {
 
     User create(User user);
 
-    default User tryCreate(User user) {
+    default User tryCreate(final User user) {
         return tryCreate(user, u -> {
         });
     }

@@ -113,7 +113,7 @@ class TestIndexVolumeGroupDaoImpl {
         // Put some delay in it, so that the audit time fields will definitely be different
         try {
             Thread.sleep(100);
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
             e.printStackTrace();
         }
 

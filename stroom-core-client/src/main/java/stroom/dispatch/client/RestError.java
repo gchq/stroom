@@ -68,12 +68,12 @@ public class RestError {
             } else {
                 try {
                     unwrapped = getThrowableFromJsonResponse(method, throwable, responseText);
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     GWT.log("Error parsing response as json: " + e.getMessage());
                     try {
                         // Try parsing it as text
                         unwrapped = getThrowableFromStringResponse(method, throwable, responseText);
-                    } catch (Exception e2) {
+                    } catch (final Exception e2) {
                         GWT.log("Error parsing response as text: " + e.getMessage());
                     }
                 }

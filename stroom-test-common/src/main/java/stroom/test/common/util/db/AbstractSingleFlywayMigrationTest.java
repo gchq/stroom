@@ -100,7 +100,7 @@ public abstract class AbstractSingleFlywayMigrationTest<
     protected abstract Class<T_CONN_PROV> getConnectionProviderType();
 
     @BeforeEach
-    void beforeEach(@TempDir Path tempDir) {
+    void beforeEach(@TempDir final Path tempDir) {
         LOGGER.info("Running all migrations up to and including {}, using test data {}",
                 getTargetVersion(), getTestDataVersion());
         this.testDataDir = tempDir;
@@ -113,7 +113,7 @@ public abstract class AbstractSingleFlywayMigrationTest<
                     getDatasourceModule()
             );
             injector.injectMembers(this);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             if (ExceptionUtils.getRootCause(e) instanceof SQLException) {
                 throw new RuntimeException("There is an error in the migrations or in the test data script", e);
             } else {
@@ -173,7 +173,7 @@ public abstract class AbstractSingleFlywayMigrationTest<
                     testDataFile.normalize().toAbsolutePath());
             try {
                 Files.writeString(testDataFile, testDataScriptContent);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new RuntimeException(e);
             }
         }

@@ -64,8 +64,8 @@ public class DashboardConfig {
                            @JsonProperty("timeRange") final TimeRange timeRange,
                            @JsonProperty("components") final List<ComponentConfig> components,
                            @JsonProperty("layout") final LayoutConfig layout,
-                           @JsonProperty("layoutConstraints") LayoutConstraints layoutConstraints,
-                           @JsonProperty("preferredSize") Size preferredSize,
+                           @JsonProperty("layoutConstraints") final LayoutConstraints layoutConstraints,
+                           @JsonProperty("preferredSize") final Size preferredSize,
                            @JsonProperty("designMode") final Boolean designMode,
                            @JsonProperty("modelVersion") final String modelVersion) {
         this.parameters = parameters;
@@ -84,7 +84,7 @@ public class DashboardConfig {
     }
 
     @Deprecated
-    public void setParameters(String parameters) {
+    public void setParameters(final String parameters) {
         this.parameters = parameters;
     }
 

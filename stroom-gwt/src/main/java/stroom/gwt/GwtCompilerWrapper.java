@@ -33,13 +33,13 @@ public class GwtCompilerWrapper {
      * every 20s. This is intended for use to prevent travis-ci from timing out during the compilation step
      * of the build
      */
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         System.out.println("Starting GWT Compiler in the background...");
         if (args != null) {
             System.out.println("GWT Compiler args: " + Arrays.stream(args).collect(Collectors.joining(" ")));
         }
 
-        CompletableFuture<Void> future = CompletableFuture.runAsync(() -> Compiler.main(args));
+        final CompletableFuture<Void> future = CompletableFuture.runAsync(() -> Compiler.main(args));
 
         future.exceptionally(throwable -> {
             System.out.println("Error during GWT Compile: " + throwable.getMessage());
@@ -47,10 +47,10 @@ public class GwtCompilerWrapper {
             return null;
         });
 
-        Instant startTime = Instant.now();
+        final Instant startTime = Instant.now();
         while (!future.isDone()) {
             doSleep(TIME_BETWEEN_CONSOLE_OUTPUT_MS);
-            Duration duration = Duration.between(startTime, Instant.now());
+            final Duration duration = Duration.between(startTime, Instant.now());
             System.out.println(String.format("GWT Compile still running... (Duration: %s)", duration));
         }
 

@@ -93,7 +93,7 @@ class TestMetricDb {
     }
 
     @Test
-    void test(@TempDir Path tempDir) {
+    void test(@TempDir final Path tempDir) {
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
         try (final MetricDb db = MetricDb.create(tempDir, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
             for (int i = 0; i < 100; i++) {
@@ -150,7 +150,7 @@ class TestMetricDb {
     }
 
     @Test
-    void testGetMetric(@TempDir Path tempDir) {
+    void testGetMetric(@TempDir final Path tempDir) {
         final KeyPrefix tags = getTags();
         final Instant time = Instant.parse("2000-01-01T00:00:00.000Z");
         try (final MetricDb db = MetricDb.create(tempDir, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
@@ -198,7 +198,7 @@ class TestMetricDb {
 //            for (final ValueFunction valueFunction : MetricValueTestUtil.getValueFunctions()) {
 //            for (final MetricPeriod period : MetricPeriod.values()) {
 
-            TemporalResolution temporalResolution = TemporalResolution.HOUR;
+            final TemporalResolution temporalResolution = TemporalResolution.HOUR;
             tests.add(DynamicTest.dynamicTest("key type = " + keyFunction +
 //                                                      ", Value type = " + valueFunction +
                                               ", Temporal resolution = " + temporalResolution,

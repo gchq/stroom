@@ -88,7 +88,7 @@ public final class JsonUtil {
         }
     }
 
-    public static <T> T readValue(String content, Class<T> valueType) {
+    public static <T> T readValue(final String content, final Class<T> valueType) {
         Preconditions.checkNotNull(content);
         Preconditions.checkNotNull(valueType);
         try {
@@ -199,7 +199,7 @@ public final class JsonUtil {
                     if (jsonToken == JsonToken.FIELD_NAME) {
                         final String fieldName = jParser.getCurrentName();
                         if (remainingFields.contains(fieldName)) {
-                            String value = jParser.nextTextValue();
+                            final String value = jParser.nextTextValue();
                             if (value != null) {
                                 results.put(fieldName, value);
                                 remainingFields.remove(fieldName);
@@ -222,7 +222,7 @@ public final class JsonUtil {
                         endRootToken = JsonToken.END_OBJECT;
                     }
                 }
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new RuntimeException(LogUtil.message(
                         "Error extracting fields '{}' from json:\n{}", keys, json));
             } finally {

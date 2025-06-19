@@ -102,7 +102,7 @@ class DbClusterLock implements Clearable {
                                 lockName, Duration.between(startTime, Instant.now()));
                     }
                     acquiredLock = true;
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     // If the supplier takes a long time to run, especially if it has to run on multiple nodes
                     // than we will get a lock timeout error from the DB so need to handle that and keep
                     // trying to get the lock. This means this thread/node will join the back of the queue
@@ -131,7 +131,7 @@ class DbClusterLock implements Clearable {
     }
 
     private Optional<Record> getRecordLock(final String lockName, final DSLContext context) {
-        Optional<Record> optional;
+        final Optional<Record> optional;
         // Get the lock, waiting if not available, but this may time out
         optional = context
                 .select()

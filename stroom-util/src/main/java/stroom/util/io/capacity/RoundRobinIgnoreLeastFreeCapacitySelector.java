@@ -45,7 +45,7 @@ public class RoundRobinIgnoreLeastFreeCapacitySelector extends AbstractSelector 
         for (int i = 0; i < list.size(); i++) {
             final OptionalLong optFreeCapacity = list.get(i).getCapacityInfo().getFreeCapacityBytes();
             if (optFreeCapacity.isPresent()) {
-                long freeCapacity = optFreeCapacity.getAsLong();
+                final long freeCapacity = optFreeCapacity.getAsLong();
                 if (freeCapacity < lowestFreeCapacity) {
                     lowestFreeCapacity = freeCapacity;
                     lowestFreeCapacityIdxs = List.of(i);

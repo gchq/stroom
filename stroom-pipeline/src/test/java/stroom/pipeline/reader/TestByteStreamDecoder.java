@@ -292,7 +292,7 @@ class TestByteStreamDecoder {
             }
         });
 
-        List<DecodedChar> decodedChars = new ArrayList<>();
+        final List<DecodedChar> decodedChars = new ArrayList<>();
         DecodedChar decodedChar;
         int iterations = 0;
         do {
@@ -433,7 +433,7 @@ class TestByteStreamDecoder {
         final ByteStreamDecoder byteStreamDecoder = new ByteStreamDecoder(charset, () ->
                 myByteBuffer.getByte(byteOffset.getAndIncrement()));
 
-        List<DecodedChar> decodedChars = new ArrayList<>();
+        final List<DecodedChar> decodedChars = new ArrayList<>();
         while (byteOffset.get() < myByteBuffer.size()) {
 
             final DecodedChar decodedChar = byteStreamDecoder.decodeNextChar();

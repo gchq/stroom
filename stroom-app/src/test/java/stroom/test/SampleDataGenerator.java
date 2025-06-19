@@ -58,7 +58,7 @@ public class SampleDataGenerator {
     /**
      * To aid testing the generation without running {@link SetupSampleData}
      */
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         final Path dir = StroomCoreServerTestFileUtil.getTestResourcesDir()
                 .resolve(SetupSampleDataBean.ROOT_DIR_NAME)
                 .resolve("generated")
@@ -363,7 +363,7 @@ public class SampleDataGenerator {
                                 sourceContent,
                                 counter.getAndIncrement());
                     });
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message("Error reading file {}",
                     multipleLanguagesFile.toAbsolutePath()), e);
         }
@@ -382,7 +382,7 @@ public class SampleDataGenerator {
             final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
             // Get the bytes of the desired charset
-            byte[] sourceBytes = sourceContent.getBytes(charset);
+            final byte[] sourceBytes = sourceContent.getBytes(charset);
 
             final Path file = makeInputFilePath(
                     dir,
@@ -394,7 +394,7 @@ public class SampleDataGenerator {
             LOGGER.info("Generating file {}, with charset {}, BOM {}",
                     file, charset, byteOrderMark);
 
-            try (OutputStream outputStream = new FileOutputStream(file.toFile())) {
+            try (final OutputStream outputStream = new FileOutputStream(file.toFile())) {
 
                 // Write the BOM to the stream if we have one. We control the
                 // presence of the BOM, not the java.
@@ -410,7 +410,7 @@ public class SampleDataGenerator {
                 bomFreeInputStream.transferTo(byteArrayOutputStream);
 
                 byteArrayOutputStream.writeTo(outputStream);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw new RuntimeException(e);
             }
         });
@@ -435,7 +435,7 @@ public class SampleDataGenerator {
             Files.createDirectories(dir);
             LOGGER.info("Clearing contents of {}", dir.toAbsolutePath().normalize());
             FileUtil.deleteContents(dir);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message("Error ensuring directory {} exists",
                     dir.toAbsolutePath().normalize()), e);
         }

@@ -57,7 +57,7 @@ public class DbUtil {
 
         try {
             Class.forName(connectionConfig.getClassName());
-        } catch (ClassNotFoundException e) {
+        } catch (final ClassNotFoundException e) {
             throw new RuntimeException(LogUtil.message(
                     "Invalid JDBC driver class name {}", connectionConfig.getClassName()), e);
         }
@@ -82,7 +82,7 @@ public class DbUtil {
                         consumer.accept(prepStmt);
                     }
                 }
-            } catch (SQLException e) {
+            } catch (final SQLException e) {
                 throw new RuntimeException(LogUtil.message("Error running SQL: '{}', {}", sql, e.getMessage()), e);
             }
         }
@@ -109,7 +109,7 @@ public class DbUtil {
                         return function.apply(prepStmt);
                     }
                 }
-            } catch (SQLException e) {
+            } catch (final SQLException e) {
                 throw new RuntimeException(LogUtil.message("Error running SQL: '{}', {}", sql, e.getMessage()), e);
             }
         } else {
@@ -134,7 +134,7 @@ public class DbUtil {
                     stmt.execute(sql);
                 }
             }
-        } catch (SQLException e) {
+        } catch (final SQLException e) {
             throw new RuntimeException(LogUtil.message("Error running SQL: '{}', {}", sql, e.getMessage()), e);
         }
     }
@@ -164,10 +164,10 @@ public class DbUtil {
         Throwable lastThrowable = null;
 
         while (true) {
-            try (Connection connection = getSingleConnection(connectionConfig)) {
+            try (final Connection connection = getSingleConnection(connectionConfig)) {
                 LOGGER.info("Successfully established connection to {} with username {}", jdbcUrl, username);
                 break;
-            } catch (SQLException e) {
+            } catch (final SQLException e) {
                 if (e.getErrorCode() == ACCESS_DENIED_BAD_UNAME_OR_PWORD ||
                         e.getErrorCode() == ACCESS_DENIED_BAD_DATABASE ||
                         (e.getMessage() != null && e.getMessage().startsWith("Unsupported"))) {
@@ -195,7 +195,7 @@ public class DbUtil {
             }
             try {
                 Thread.sleep(sleepMs);
-            } catch (InterruptedException e) {
+            } catch (final InterruptedException e) {
                 // Nothing to do here as the
                 Thread.currentThread().interrupt();
                 break;
@@ -209,10 +209,10 @@ public class DbUtil {
         }
     }
 
-    public static boolean validateConnection(DataSource dataSource) {
+    public static boolean validateConnection(final DataSource dataSource) {
         try (final Connection connection = dataSource.getConnection()) {
             return true;
-        } catch (SQLException e) {
+        } catch (final SQLException e) {
             final Throwable cause = e.getCause();
             final String errorMsg = cause != null
                     ? cause.getMessage()
@@ -227,7 +227,7 @@ public class DbUtil {
     public static int countEntity(final DataSource dataSource, final String tableName) {
         try (final Connection connection = dataSource.getConnection()) {
             return countEntity(connection, tableName);
-        } catch (SQLException e) {
+        } catch (final SQLException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
@@ -252,7 +252,7 @@ public class DbUtil {
             final String schema = connection.getSchema();
             LOGGER.debug("doesTableExist - catalog: {}, schema: {}, tableName: {}", catalog, schema, tableName);
             final DatabaseMetaData meta = connection.getMetaData();
-            try (ResultSet tables = meta.getTables(
+            try (final ResultSet tables = meta.getTables(
                     catalog, schema, tableName, null)) {
 //                boolean found = false;
 //                while (tables.next()) {
@@ -265,7 +265,7 @@ public class DbUtil {
 //                return found;
                 return tables.next();
             }
-        } catch (SQLException e) {
+        } catch (final SQLException e) {
             throw new RuntimeException(
                     LogUtil.message("Error establishing if table {} exists in the database.", tableName), e);
         }
@@ -283,12 +283,12 @@ public class DbUtil {
                                    final boolean isIdempotent) {
 
         if (doesTableExist(connection, oldTableName)) {
-            String sql = "RENAME TABLE " + oldTableName + " TO " + newTableName;
+            final String sql = "RENAME TABLE " + oldTableName + " TO " + newTableName;
             try {
                 try (final PreparedStatement stmt = connection.prepareStatement(sql)) {
                     stmt.execute();
                 }
-            } catch (SQLException e) {
+            } catch (final SQLException e) {
                 throw new RuntimeException(
                         LogUtil.message("Error renaming table {} to {}.", oldTableName, newTableName), e);
             }

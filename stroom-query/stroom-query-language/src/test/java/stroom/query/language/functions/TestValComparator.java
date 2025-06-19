@@ -52,7 +52,7 @@ class TestValComparator {
         doTestContract(vals);
 
         // Make sure we can sort the full list without exception
-        List<Val> sortedList = vals.stream()
+        final List<Val> sortedList = vals.stream()
                 .sorted(comparator)
                 .collect(Collectors.toList());
     }

@@ -69,21 +69,21 @@ public class PipelineScope implements Scope {
 //        }
     }
 
-    public <T> void seed(Key<T> key, T value) {
-        Map<Key<?>, Object> scopedObjects = getScopedObjectMap(key);
+    public <T> void seed(final Key<T> key, final T value) {
+        final Map<Key<?>, Object> scopedObjects = getScopedObjectMap(key);
         checkState(!scopedObjects.containsKey(key), "A value for the key %s was " +
                         "already seeded in this scope. Old value: %s New value: %s", key,
                 scopedObjects.get(key), value);
         scopedObjects.put(key, value);
     }
 
-    public <T> void seed(Class<T> clazz, T value) {
+    public <T> void seed(final Class<T> clazz, final T value) {
         seed(Key.get(clazz), value);
     }
 
     public <T> Provider<T> scope(final Key<T> key, final Provider<T> unscoped) {
         return () -> {
-            Map<Key<?>, Object> scopedObjects = getScopedObjectMap(key);
+            final Map<Key<?>, Object> scopedObjects = getScopedObjectMap(key);
 
             @SuppressWarnings("unchecked")
             T current = (T) scopedObjects.get(key);
@@ -101,7 +101,7 @@ public class PipelineScope implements Scope {
         };
     }
 
-    private <T> Map<Key<?>, Object> getScopedObjectMap(Key<T> key) {
+    private <T> Map<Key<?>, Object> getScopedObjectMap(final Key<T> key) {
         final Deque<Map<Key<?>, Object>> deque = threadLocal.get();
         if (deque == null) {
             throw new OutOfScopeException("Cannot access " + key

@@ -54,7 +54,7 @@ public class TemporaryPathCreator implements PathCreator, AutoCloseable {
                     tempDir.toAbsolutePath().normalize()));
             Files.createDirectories(homeDir);
             Files.createDirectories(tempDir);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException("Error creating temp dir with prefix 'stroom'", e);
         }
         homeDirProvider = () -> homeDir;
@@ -169,7 +169,7 @@ public class TemporaryPathCreator implements PathCreator, AutoCloseable {
                     "0");
             final String prefix = "stroom_" + gradleWorker + "_";
             return Files.createTempDirectory(prefix);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(e);
         }
     }

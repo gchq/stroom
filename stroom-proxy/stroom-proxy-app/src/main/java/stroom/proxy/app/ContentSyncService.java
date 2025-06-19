@@ -259,7 +259,7 @@ public class ContentSyncService implements Managed, HasHealthCheck {
                         response.getStatusInfo().getStatusCode(),
                         response.getStatusInfo().getReasonPhrase());
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             return LogUtil.message("Error: [{}]", e.getMessage());
         }
     }

@@ -80,7 +80,7 @@ public class DataGridSelectionEventManager<T>
             boolean consumed = false;
 
             String parentTag = null;
-            Element target = event.getNativeEvent().getEventTarget().cast();
+            final Element target = event.getNativeEvent().getEventTarget().cast();
             if (target.getParentElement() != null) {
                 parentTag = target.getParentElement().getTagName();
             }
@@ -157,7 +157,7 @@ public class DataGridSelectionEventManager<T>
                 selection.clear();
             }
 
-            List<T> rows = dataGrid.getVisibleItems();
+            final List<T> rows = dataGrid.getVisibleItems();
             final int index1 = rows.indexOf(multiSelectStart);
             final int index2 = rows.indexOf(row);
             if (index1 != -1 && index2 != -1) {

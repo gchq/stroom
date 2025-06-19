@@ -269,7 +269,7 @@ public class AppPermissionsEditPresenter
     }
 
     private SafeHtml getDetails() {
-        AppUserPermissionsReport currentPermissions = getCurrentPermissions();
+        final AppUserPermissionsReport currentPermissions = getCurrentPermissions();
         final DescriptionBuilder sb = new DescriptionBuilder();
         final AppPermission permission = getSelectionModel().getSelected();
         if (permission != null) {

@@ -33,31 +33,31 @@ public class MockitoExtension
         implements TestInstancePostProcessor, ParameterResolver {
 
     @Override
-    public void postProcessTestInstance(Object testInstance,
-                                        ExtensionContext context) {
+    public void postProcessTestInstance(final Object testInstance,
+                                        final ExtensionContext context) {
         MockitoAnnotations.initMocks(testInstance);
     }
 
     @Override
-    public boolean supportsParameter(ParameterContext parameterContext,
-                                     ExtensionContext extensionContext) {
+    public boolean supportsParameter(final ParameterContext parameterContext,
+                                     final ExtensionContext extensionContext) {
         return
                 parameterContext.getParameter().isAnnotationPresent(Mock.class);
     }
 
     @Override
-    public Object resolveParameter(ParameterContext parameterContext,
-                                   ExtensionContext extensionContext) {
+    public Object resolveParameter(final ParameterContext parameterContext,
+                                   final ExtensionContext extensionContext) {
         return getMock(parameterContext.getParameter(), extensionContext);
     }
 
     private Object getMock(
-            Parameter parameter, ExtensionContext extensionContext) {
+            final Parameter parameter, final ExtensionContext extensionContext) {
 
-        Class<?> mockType = parameter.getType();
-        Store mocks = extensionContext.getStore(Namespace.create(
+        final Class<?> mockType = parameter.getType();
+        final Store mocks = extensionContext.getStore(Namespace.create(
                 MockitoExtension.class, mockType));
-        String mockName = getMockName(parameter);
+        final String mockName = getMockName(parameter);
 
         if (mockName != null) {
             return mocks.getOrComputeIfAbsent(
@@ -68,8 +68,8 @@ public class MockitoExtension
         }
     }
 
-    private String getMockName(Parameter parameter) {
-        String explicitMockName = parameter.getAnnotation(Mock.class)
+    private String getMockName(final Parameter parameter) {
+        final String explicitMockName = parameter.getAnnotation(Mock.class)
                 .name().trim();
         if (!explicitMockName.isEmpty()) {
             return explicitMockName;

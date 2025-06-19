@@ -71,7 +71,7 @@ class CountGroups extends AbstractFunction implements AggregateFunction {
             if (childDataSupplier != null) {
                 final ChildData childData = childDataSupplier.get();
                 if (childData != null) {
-                    long count = childData.count();
+                    final long count = childData.count();
                     if (count > 0) {
                         val = ValLong.create(count);
                     }

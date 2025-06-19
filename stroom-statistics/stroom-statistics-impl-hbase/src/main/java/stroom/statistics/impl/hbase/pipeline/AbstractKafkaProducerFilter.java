@@ -77,12 +77,12 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
         }
 
         if (Strings.isNullOrEmpty(getTopic())) {
-            String msg = "A Kafka topic has not been set";
+            final String msg = "A Kafka topic has not been set";
             log(Severity.FATAL_ERROR, msg, null);
             throw LoggedException.create(msg);
         }
         if (Strings.isNullOrEmpty(getRecordKey())) {
-            String msg = "A Kafka record key has not been set";
+            final String msg = "A Kafka record key has not been set";
             log(Severity.FATAL_ERROR, msg, null);
             throw LoggedException.create(msg);
         }
@@ -90,13 +90,13 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
         try {
             sharedKafkaProducer = kafkaProducerFactory.getSharedProducer(kafkaConfigRef);
         } catch (final RuntimeException e) {
-            String msg = "Error initialising kafka producer - " + e.getMessage();
+            final String msg = "Error initialising kafka producer - " + e.getMessage();
             log(Severity.FATAL_ERROR, msg, e);
             throw LoggedException.create(msg);
         }
 
         kafkaProducer = sharedKafkaProducer.getKafkaProducer().orElseThrow(() -> {
-            String msg = "No Kafka producer connector is available, check Stroom's configuration";
+            final String msg = "No Kafka producer connector is available, check Stroom's configuration";
             log(Severity.FATAL_ERROR, msg, null);
             throw LoggedException.create(msg);
         });
@@ -127,7 +127,7 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
                                 Thread.currentThread().interrupt();
 
                                 throw ProcessException.create("Thread interrupted");
-                            } catch (ExecutionException e) {
+                            } catch (final ExecutionException e) {
                                 log(Severity.ERROR, "Error sending message to Kafka", e);
                             }
                         }
@@ -172,7 +172,7 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
                 //keep hold of the future so we can wait for it at the end of processing
                 kafkaMetaFutures.add(sendFuture);
             }
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             error(e);
         }
     }

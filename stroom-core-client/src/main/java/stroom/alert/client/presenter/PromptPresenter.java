@@ -30,7 +30,7 @@ public class PromptPresenter extends MyPresenter<PromptPresenter.PromptView, Pro
         implements PromptEvent.Handler {
 
     @Inject
-    public PromptPresenter(EventBus eventBus, final PromptView view, final PromptProxy proxy) {
+    public PromptPresenter(final EventBus eventBus, final PromptView view, final PromptProxy proxy) {
         super(eventBus, view, proxy);
     }
 

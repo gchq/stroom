@@ -171,7 +171,7 @@ public class AceStringMatcher {
                     }
                 }
                 final boolean exactMatch = penalty <= 0;
-                int score = initialScore - penalty;
+                final int score = initialScore - penalty;
                 results.add(new AceMatchResult<>(item, name, score, exactMatch));
             }
             return results;

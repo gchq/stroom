@@ -61,7 +61,7 @@ public class HttpClientCache {
 
     private CloseableHttpClient create(final HttpClientConfiguration httpClientConfiguration) {
         LOGGER.debug(() -> "Creating client builder");
-        RuntimeException exception = null;
+        final RuntimeException exception = null;
 
 //            @JsonProperty
 //            private final List<String> httpProtocols;

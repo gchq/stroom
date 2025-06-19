@@ -31,7 +31,7 @@ class FetchJson extends StroomExtensionFunctionCall {
     }
 
     @Override
-    protected Sequence call(final String functionName, XPathContext context,
+    protected Sequence call(final String functionName, final XPathContext context,
                             final Sequence[] arguments) throws XPathException {
         Sequence sequence = EmptyAtomicSequence.getInstance();
 

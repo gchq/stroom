@@ -62,8 +62,8 @@ public class DefaultConfiguration<T_TREE_NODE> implements Configuration<T_TREE_N
      *                         {@link stroom.widget.htree.client.treelayout.Configuration.AlignmentInLevel#Center
      *                         Center}]
      */
-    public DefaultConfiguration(double gapBetweenLevels, double gapBetweenNodes, Location location,
-                                AlignmentInLevel alignmentInLevel) {
+    public DefaultConfiguration(final double gapBetweenLevels, final double gapBetweenNodes, final Location location,
+                                final AlignmentInLevel alignmentInLevel) {
         checkArg(gapBetweenLevels >= 0, "gapBetweenLevels must be >= 0");
         checkArg(gapBetweenNodes >= 0, "gapBetweenNodes must be >= 0");
 
@@ -86,7 +86,7 @@ public class DefaultConfiguration<T_TREE_NODE> implements Configuration<T_TREE_N
      * stroom.widget.htree.client.treelayout.Configuration.Location,
      * stroom.widget.htree.client.treelayout.Configuration.AlignmentInLevel)}
      */
-    public DefaultConfiguration(double gapBetweenLevels, double gapBetweenNodes, Location location) {
+    public DefaultConfiguration(final double gapBetweenLevels, final double gapBetweenNodes, final Location location) {
         this(gapBetweenLevels, gapBetweenNodes, location, AlignmentInLevel.Center);
     }
 
@@ -101,7 +101,7 @@ public class DefaultConfiguration<T_TREE_NODE> implements Configuration<T_TREE_N
      * stroom.widget.htree.client.treelayout.Configuration.Location,
      * stroom.widget.htree.client.treelayout.Configuration.AlignmentInLevel)}
      */
-    public DefaultConfiguration(double gapBetweenLevels, double gapBetweenNodes) {
+    public DefaultConfiguration(final double gapBetweenLevels, final double gapBetweenNodes) {
         this(gapBetweenLevels, gapBetweenNodes, Location.Top, AlignmentInLevel.Center);
     }
 
@@ -109,12 +109,12 @@ public class DefaultConfiguration<T_TREE_NODE> implements Configuration<T_TREE_N
     // location
 
     @Override
-    public double getGapBetweenLevels(int nextLevel) {
+    public double getGapBetweenLevels(final int nextLevel) {
         return gapBetweenLevels;
     }
 
     @Override
-    public double getGapBetweenNodes(T_TREE_NODE node1, T_TREE_NODE node2) {
+    public double getGapBetweenNodes(final T_TREE_NODE node1, final T_TREE_NODE node2) {
         return gapBetweenNodes;
     }
 

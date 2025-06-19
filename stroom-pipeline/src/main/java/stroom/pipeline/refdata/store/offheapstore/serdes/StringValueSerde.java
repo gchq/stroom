@@ -47,7 +47,7 @@ public class StringValueSerde implements RefDataValueSerde {
         try {
             final StringValue stringValue = (StringValue) refDataValue;
             stringSerde.serialize(byteBuffer, stringValue.getValue());
-        } catch (ClassCastException e) {
+        } catch (final ClassCastException e) {
             throw new RuntimeException(LogUtil.message("Unable to cast {} to {}",
                     refDataValue.getClass().getCanonicalName(), StringValue.class.getCanonicalName()), e);
         }
@@ -60,10 +60,10 @@ public class StringValueSerde implements RefDataValueSerde {
             final StringValue stringValue = (StringValue) refDataValue;
             pooledByteBufferOutputStream.write(toBytes(stringValue));
             return pooledByteBufferOutputStream.getByteBuffer();
-        } catch (ClassCastException e) {
+        } catch (final ClassCastException e) {
             throw new RuntimeException(LogUtil.message("Unable to cast {} to {}",
                     refDataValue.getClass().getCanonicalName(), StringValue.class.getCanonicalName()), e);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message("Unable to write value {} to output stream: {}",
                     refDataValue, e.getMessage()), e);
         }

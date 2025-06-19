@@ -53,7 +53,7 @@ public final class XMLMarshallerUtil {
         try {
             if (obj != null) {
                 Class<?> clazz = obj.getClass();
-                Object clone;
+                final Object clone;
 
                 try {
                     clone = clazz.getConstructor().newInstance();

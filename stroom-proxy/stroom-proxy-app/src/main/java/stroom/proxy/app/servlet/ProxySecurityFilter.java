@@ -259,11 +259,11 @@ public class ProxySecurityFilter implements Filter {
     public void destroy() {
     }
 
-    private boolean isApiRequest(String servletPath) {
+    private boolean isApiRequest(final String servletPath) {
         return servletPath.startsWith(ResourcePaths.API_ROOT_PATH);
     }
 
-    private boolean isEventResourceRequest(String fullPath) {
+    private boolean isEventResourceRequest(final String fullPath) {
         return fullPath.startsWith(EVENT_RESOURCE_PATH);
     }
 

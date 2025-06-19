@@ -39,7 +39,7 @@ class TestOverrideValue {
         assertThat(mapper.canSerialize(entity.getClass()))
                 .isTrue();
 
-        String json = mapper.writeValueAsString(entity);
+        final String json = mapper.writeValueAsString(entity);
         System.out.println("\n" + json);
 
         final T entity2 = (T) mapper.readValue(json, clazz);

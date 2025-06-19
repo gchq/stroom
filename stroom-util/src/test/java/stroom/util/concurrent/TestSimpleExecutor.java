@@ -25,7 +25,7 @@ class TestSimpleExecutor {
 
     @Test
     void testSimpleShutDownNow() throws InterruptedException {
-        SimpleExecutor simpleExecutor = new SimpleExecutor(5);
+        final SimpleExecutor simpleExecutor = new SimpleExecutor(5);
         for (int i = 0; i < 100; i++) {
             // 10 sec task
             simpleExecutor.execute(new TestRunnable(10000));
@@ -40,7 +40,7 @@ class TestSimpleExecutor {
 
     @Test
     void testSimpleShutDown() throws InterruptedException {
-        SimpleExecutor simpleExecutor = new SimpleExecutor(5);
+        final SimpleExecutor simpleExecutor = new SimpleExecutor(5);
         for (int i = 0; i < 10; i++) {
             // Submit 10 very quick tasks
             simpleExecutor.execute(new TestRunnable(10));
@@ -110,7 +110,7 @@ class TestSimpleExecutor {
 
         int time;
 
-        TestRunnable(int time) {
+        TestRunnable(final int time) {
             this.time = time;
         }
 

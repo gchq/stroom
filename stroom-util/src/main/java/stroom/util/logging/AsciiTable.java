@@ -135,7 +135,7 @@ public class AsciiTable {
      *                    be in no particular order.
      * @return A {@link String} containing the markdown style table.
      */
-    public static <T> String fromCollection(final Collection<T> data, boolean sortColumns) {
+    public static <T> String fromCollection(final Collection<T> data, final boolean sortColumns) {
         if (data == null || data.isEmpty()) {
             return "NO DATA";
         }
@@ -181,7 +181,7 @@ public class AsciiTable {
         final ColumnBuilder<T, ?> columnBuilder = Column.builder(columnName, row -> {
             try {
                 return method.invoke(row);
-            } catch (IllegalAccessException | InvocationTargetException e) {
+            } catch (final IllegalAccessException | InvocationTargetException e) {
                 throw new RuntimeException(e);
             }
         });
@@ -291,7 +291,7 @@ public class AsciiTable {
                             column -> column.extractValue(row)));
         }
 
-        private static String createHorizontalLine(int length, char lineChar) {
+        private static String createHorizontalLine(final int length, final char lineChar) {
             return Strings.repeat(String.valueOf(lineChar), length);
         }
 
@@ -309,10 +309,10 @@ public class AsciiTable {
                         maxWidth + COLUMN_PADDING,
                         PAD_CHAR);
             } else if (column.getAlignment().equals(Alignment.CENTER)) {
-                int valWidth = value.length();
-                int totalSpace = maxWidth + (COLUMN_PADDING * 2) - valWidth;
-                int space = totalSpace / 2;
-                int remainder = totalSpace % 2;
+                final int valWidth = value.length();
+                final int totalSpace = maxWidth + (COLUMN_PADDING * 2) - valWidth;
+                final int space = totalSpace / 2;
+                final int remainder = totalSpace % 2;
 
                 return Strings.repeat(PAD_STRING, space) +
                         value +
@@ -446,7 +446,7 @@ public class AsciiTable {
                 final Function<T_ROW, T_COL> columnExtractor,
                 final int decimalPlaces) {
 
-            NumberFormat numberFormat = NumberFormat.getNumberInstance();
+            final NumberFormat numberFormat = NumberFormat.getNumberInstance();
             numberFormat.setGroupingUsed(true);
             numberFormat.setMinimumFractionDigits(decimalPlaces);
             numberFormat.setMaximumFractionDigits(decimalPlaces);
@@ -472,7 +472,7 @@ public class AsciiTable {
             numberFormat.setMinimumFractionDigits(0);
             numberFormat.setMaximumFractionDigits(0);
             Objects.requireNonNull(columnExtractor);
-            Function<T_ROW, Long> newExtractor = row -> columnExtractor.apply(row)
+            final Function<T_ROW, Long> newExtractor = row -> columnExtractor.apply(row)
                     .toMillis();
 
             return new ColumnBuilder<>(
@@ -496,7 +496,7 @@ public class AsciiTable {
             numberFormat.setMinimumFractionDigits(0);
             numberFormat.setMaximumFractionDigits(0);
             Objects.requireNonNull(columnExtractor);
-            Function<T_ROW, Long> newExtractor = row -> columnExtractor.apply(row)
+            final Function<T_ROW, Long> newExtractor = row -> columnExtractor.apply(row)
                     .toNanos();
 
             return new ColumnBuilder<>(
@@ -548,7 +548,7 @@ public class AsciiTable {
         }
 
         private String extractValue(final T_ROW row) {
-            T_COL obj = columnExtractor.apply(row);
+            final T_COL obj = columnExtractor.apply(row);
             if (obj == null) {
                 return nullValueSupplier.get();
             } else {

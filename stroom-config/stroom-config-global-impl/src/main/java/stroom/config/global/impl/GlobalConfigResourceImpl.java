@@ -232,7 +232,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
 
         try {
             return globalConfigServiceProvider.get().update(configProperty);
-        } catch (ConfigPropertyValidationException e) {
+        } catch (final ConfigPropertyValidationException e) {
             throw RestUtil.badRequest(e);
         }
     }
@@ -276,7 +276,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                                         () -> persistedProperty));
                     })
                     .getResultAndLog();
-        } catch (ConfigPropertyValidationException e) {
+        } catch (final ConfigPropertyValidationException e) {
             throw RestUtil.badRequest(e);
         }
     }

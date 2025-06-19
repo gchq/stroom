@@ -25,8 +25,8 @@ class BulkActionResultObjectInfoProvider  implements ObjectInfoProvider {
         if (bulkActionResult.getExplorerNodes() != null) {
             builder.withName("" + bulkActionResult.getExplorerNodes().size() + " docrefs; see data elements");
 
-            Iterator<ExplorerNode> itr = bulkActionResult.getExplorerNodes().iterator();
-            int index = 1;
+            final Iterator<ExplorerNode> itr = bulkActionResult.getExplorerNodes().iterator();
+            final int index = 1;
             while (itr.hasNext()) {
                 final ExplorerNode docRef = itr.next();
                 builder.addData(Data.builder().withName("itemName" + index).withValue(docRef.getName()).build());

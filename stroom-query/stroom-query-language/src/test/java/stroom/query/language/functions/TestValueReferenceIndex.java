@@ -114,9 +114,11 @@ public class TestValueReferenceIndex {
 
     private void testWriteRead(final ValueReferenceIndex valueReferenceIndex, final StoredValues storedValues) {
         final ByteBuffer byteBuffer1 = write(valueReferenceIndex, storedValues);
-        StoredValues storedValues2 = valueReferenceIndex.read(new KryoDataReader(new ByteBufferInput(byteBuffer1)));
+        final StoredValues storedValues2 = valueReferenceIndex.read(
+                new KryoDataReader(new ByteBufferInput(byteBuffer1)));
         final ByteBuffer byteBuffer2 = write(valueReferenceIndex, storedValues2);
-        StoredValues storedValues3 = valueReferenceIndex.read(new KryoDataReader(new ByteBufferInput(byteBuffer2)));
+        final StoredValues storedValues3 = valueReferenceIndex.read(
+                new KryoDataReader(new ByteBufferInput(byteBuffer2)));
     }
 
     private ByteBuffer write(final ValueReferenceIndex valueReferenceIndex, final StoredValues storedValues) {

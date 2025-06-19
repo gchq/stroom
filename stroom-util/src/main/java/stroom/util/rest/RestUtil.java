@@ -30,7 +30,7 @@ public class RestUtil {
     /**
      * Used to validate a request argument and throw a {@link BadRequestException} if it is null
      */
-    public static void requireNonNull(final Object object, String message) throws BadRequestException {
+    public static void requireNonNull(final Object object, final String message) throws BadRequestException {
         if (object == null) {
             throw badRequest(message);
         }
@@ -39,7 +39,7 @@ public class RestUtil {
     /**
      * Used to validate a request argument and throw a {@link BadRequestException} if it is null
      */
-    public static void requireNonNull(final Object object, Supplier<String> messageSupplier)
+    public static void requireNonNull(final Object object, final Supplier<String> messageSupplier)
             throws BadRequestException {
         if (object == null) {
             throw badRequest(messageSupplier != null

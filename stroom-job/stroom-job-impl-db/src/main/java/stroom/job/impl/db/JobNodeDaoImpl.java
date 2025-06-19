@@ -139,12 +139,12 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
     }
 
     @Override
-    public boolean delete(int id) {
+    public boolean delete(final int id) {
         return genericDao.delete(id);
     }
 
     @Override
-    public Optional<JobNode> fetch(int id) {
+    public Optional<JobNode> fetch(final int id) {
         return JooqUtil.contextResult(jobDbConnProvider, context -> context
                         .select()
                         .from(JOB_NODE)
@@ -159,7 +159,7 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
                 });
     }
 
-    public JobNodeListResponse find(FindJobNodeCriteria criteria) {
+    public JobNodeListResponse find(final FindJobNodeCriteria criteria) {
         final Collection<Condition> conditions = JooqUtil.conditions(
                 JooqUtil.getStringCondition(JOB.NAME, criteria.getJobName()),
                 JooqUtil.getStringCondition(JOB_NODE.NODE_NAME, criteria.getNodeName()),

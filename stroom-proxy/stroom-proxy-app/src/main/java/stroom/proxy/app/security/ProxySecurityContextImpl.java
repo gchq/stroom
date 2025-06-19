@@ -95,7 +95,7 @@ public class ProxySecurityContextImpl implements CommonSecurityContext {
 
     @Override
     public <T> T asUserResult(final UserIdentity userIdentity, final Supplier<T> supplier) {
-        T result;
+        final T result;
         boolean success = false;
         try {
             pushUser(userIdentity);

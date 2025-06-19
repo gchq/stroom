@@ -23,7 +23,7 @@ public abstract class AbstractJsonSerialiser<T> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractJsonSerialiser.class);
 
-    public String serialise(T object) {
+    public String serialise(final T object) {
         try {
             return JsonUtil.writeValueAsString(object);
 

@@ -32,7 +32,7 @@ class TestUID {
 
         // Compare two buffers of different capacities
         final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(uid1.getBackingBuffer().capacity() * 2);
-        UID uid2 = UID.of(5, byteBuffer);
+        final UID uid2 = UID.of(5, byteBuffer);
 
         LOGGER.info("uid1: {}", uid1);
         LOGGER.info("uid2: {}", uid2);
@@ -57,7 +57,7 @@ class TestUID {
         byteBuffer.put(new byte[]{0, 0, 0, 5});
         byteBuffer.flip();
         byteBuffer.position(2);
-        UID uid2 = UID.wrap(byteBuffer);
+        final UID uid2 = UID.wrap(byteBuffer);
 
         LOGGER.info("uid1: {}", uid1);
         LOGGER.info("uid2: {}", uid2);

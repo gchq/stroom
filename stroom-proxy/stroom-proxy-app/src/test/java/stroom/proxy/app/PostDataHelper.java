@@ -85,7 +85,7 @@ public class PostDataHelper {
                         final String environment,
                         final Map<String, String> extraHeaders,
                         final String data) {
-        int status;
+        final int status;
         try {
             final Builder builder = client.target(url)
                     .request()
@@ -99,7 +99,7 @@ public class PostDataHelper {
             final String dataId = getDataId();
             final String payload = dataId + "-" + data;
             LOGGER.info("Sending POST request to {}, with payload '{}'", url, payload);
-            try (Response response = builder.post(Entity.text(payload))) {
+            try (final Response response = builder.post(Entity.text(payload))) {
                 postToProxyCount.increment();
                 status = consumeResponse(response);
             }
@@ -125,7 +125,7 @@ public class PostDataHelper {
                            final Map<String, String> extraHeaders,
                            final String data,
                            final int entryCount) {
-        int status;
+        final int status;
         try {
             final Builder builder = client.target(url)
                     .request()
@@ -149,7 +149,7 @@ public class PostDataHelper {
                 }
             }
 
-            try (Response response = builder.post(
+            try (final Response response = builder.post(
                     Entity.entity(outputStream.toByteArray(), MediaType.APPLICATION_JSON_TYPE))) {
                 postToProxyCount.increment();
                 status = consumeResponse(response);
@@ -167,7 +167,7 @@ public class PostDataHelper {
         UniqueId receiptId = null;
         try {
             receiptId = UniqueId.parse(responseText);
-        } catch (Exception ignored) {
+        } catch (final Exception ignored) {
             // Ignore
         }
         LOGGER.info("datafeed response ({}):\n{}", status, responseText);

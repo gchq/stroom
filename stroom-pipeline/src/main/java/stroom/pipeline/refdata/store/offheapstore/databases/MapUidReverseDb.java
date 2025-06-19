@@ -66,7 +66,7 @@ public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
                                  final PooledByteBuffer newUidPooledBuffer) {
         final ByteBuffer nextUidBuffer = newUidPooledBuffer.getByteBuffer();
         // scan backwards over all entries to find the first (i.e. highest) key
-        try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(txn, KeyRange.allBackward())) {
+        try (final CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(txn, KeyRange.allBackward())) {
             final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
             if (iterator.hasNext()) {
                 final CursorIterable.KeyVal<ByteBuffer> highestKeyVal = iterator.next();

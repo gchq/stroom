@@ -139,7 +139,7 @@ public class RestResources {
         return unauthenticatedPaths.stream();
     }
 
-    static <T> T getFromClassOrSuper(final Class<?> clazz, Function<Class<?>, T> getter) {
+    static <T> T getFromClassOrSuper(final Class<?> clazz, final Function<Class<?>, T> getter) {
         Objects.requireNonNull(getter);
 
         T val = getter.apply(clazz);
@@ -259,7 +259,7 @@ public class RestResources {
             }
 
             @Override
-            public void dispose(T versionResource) {
+            public void dispose(final T versionResource) {
             }
         }
     }

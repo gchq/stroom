@@ -54,7 +54,7 @@ public class ExecutionSchedule {
                              @JsonProperty("contiguous") final boolean contiguous,
                              @JsonProperty("scheduleBounds") final ScheduleBounds scheduleBounds,
                              @JsonProperty("owningDoc") final DocRef owningDoc,
-                             @JsonProperty("runAsUser") UserRef runAsUser) {
+                             @JsonProperty("runAsUser") final UserRef runAsUser) {
         this.id = id;
         this.name = name;
         this.enabled = enabled;

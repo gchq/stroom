@@ -36,9 +36,9 @@ class TestIndexShardUtil {
     void getIndexPath() throws IOException {
         final Path path = tempDir.resolve("idxVol");
         Files.createDirectories(path);
-        IndexVolume indexVolume = new IndexVolume();
+        final IndexVolume indexVolume = new IndexVolume();
         indexVolume.setPath(path.toString());
-        IndexShard indexShard = new IndexShard();
+        final IndexShard indexShard = new IndexShard();
         indexShard.setId(123L);
         indexShard.setIndexUuid(String.valueOf(UUID.randomUUID()));
         indexShard.setPartition("partition1");
@@ -57,9 +57,9 @@ class TestIndexShardUtil {
         final Path path = pathCreator.toAppPath(relPathStr);
         Files.createDirectories(path);
 
-        IndexVolume indexVolume = new IndexVolume();
+        final IndexVolume indexVolume = new IndexVolume();
         indexVolume.setPath(relPathStr);
-        IndexShard indexShard = new IndexShard();
+        final IndexShard indexShard = new IndexShard();
         indexShard.setId(123L);
         indexShard.setIndexUuid(String.valueOf(UUID.randomUUID()));
         indexShard.setPartition("partition1");

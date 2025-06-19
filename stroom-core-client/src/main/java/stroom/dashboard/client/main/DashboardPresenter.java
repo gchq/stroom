@@ -684,7 +684,7 @@ public class DashboardPresenter
         for (final ComponentConfig componentConfig : newComponents) {
             ComponentSettings settings = componentConfig.getSettings();
             if (settings instanceof TableComponentSettings) {
-                TableComponentSettings tableComponentSettings = (TableComponentSettings) settings;
+                final TableComponentSettings tableComponentSettings = (TableComponentSettings) settings;
                 if (tableComponentSettings.getQueryId() != null
                     && idMapping.containsKey(tableComponentSettings.getQueryId())) {
                     settings = tableComponentSettings.copy()
@@ -692,7 +692,7 @@ public class DashboardPresenter
                             .build();
                 }
             } else if (settings instanceof VisComponentSettings) {
-                VisComponentSettings visComponentSettings = (VisComponentSettings) settings;
+                final VisComponentSettings visComponentSettings = (VisComponentSettings) settings;
                 if (visComponentSettings.getTableId() != null
                     && idMapping.containsKey(visComponentSettings.getTableId())) {
                     settings = visComponentSettings.copy()
@@ -700,7 +700,7 @@ public class DashboardPresenter
                             .build();
                 }
             } else if (settings instanceof TextComponentSettings) {
-                TextComponentSettings textComponentSettings = (TextComponentSettings) settings;
+                final TextComponentSettings textComponentSettings = (TextComponentSettings) settings;
                 if (textComponentSettings.getTableId() != null
                     && idMapping.containsKey(textComponentSettings.getTableId())) {
                     settings = textComponentSettings.copy()

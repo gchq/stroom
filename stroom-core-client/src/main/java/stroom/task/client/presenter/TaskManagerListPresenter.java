@@ -427,7 +427,7 @@ public class TaskManagerListPresenter
             final Function<TaskProgress, String> extractor) {
         final Function<TaskProgress, SafeHtml> colouredCellFunc = getColouredCellFunc(extractor);
 
-        return (TaskProgress row) -> {
+        return (final TaskProgress row) -> {
             final SafeHtml colouredText = colouredCellFunc.apply(row);
             if (wrapToggleButton.isOn()) {
                 return HtmlBuilder.builder()

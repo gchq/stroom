@@ -39,7 +39,7 @@ public class BenchmarkProxyConfigProvidersModule {
     @Benchmark
     @BenchmarkMode(Mode.Throughput)
     @Measurement(iterations = 1)
-    public void benchProviderMethod1(ExecutionPlan plan) {
+    public void benchProviderMethod1(final ExecutionPlan plan) {
         final MyPojo myPojo = plan.provider.get();
         if (!"foo".equals(myPojo.value)) {
             throw new RuntimeException(LogUtil.message("Invalid value"));
@@ -56,7 +56,7 @@ public class BenchmarkProxyConfigProvidersModule {
 
         @Setup(Level.Invocation)
         public void setUp() {
-            AbstractModule module;
+            final AbstractModule module;
             if (methodNo == 1) {
                 // Config instances are looked up in a hashmap
                 module = new MyModule1();
@@ -78,7 +78,7 @@ public class BenchmarkProxyConfigProvidersModule {
                 final Injector injector = Guice.createInjector(module);
 
                 if (methodNo == 2) {
-                    ConfigSetter configSetter = injector.getInstance(ConfigSetter.class);
+                    final ConfigSetter configSetter = injector.getInstance(ConfigSetter.class);
                     configSetter.setMyConfig(new MyPojo("foo"));
                 }
                 provider = injector.getProvider(MyPojo.class);
@@ -137,7 +137,7 @@ public class BenchmarkProxyConfigProvidersModule {
             Objects.requireNonNull(config, "No config instance found for class " + clazz.getName());
             try {
                 return clazz.cast(config);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw new RuntimeException(LogUtil.message(
                         "Error casting config object to {}, found {}",
                         clazz.getName(),

@@ -120,7 +120,7 @@ class FsStore implements Store, AttributeMapFactory {
         try {
             if (target instanceof final FsTarget fsTarget) {
                 fsTarget.delete();
-            } else if (target instanceof S3Target s3Target) {
+            } else if (target instanceof final S3Target s3Target) {
                 s3Target.delete();
             }
         } catch (final RuntimeException e) {

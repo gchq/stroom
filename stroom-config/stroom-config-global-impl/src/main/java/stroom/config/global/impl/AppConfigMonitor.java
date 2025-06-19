@@ -64,14 +64,14 @@ public class AppConfigMonitor extends AbstractFileChangeMonitor implements Manag
                     configMapper.updateConfigFromYaml(newAppConfig);
 
                     LOGGER.info("Completed updating application config from file.");
-                } catch (Throwable e) {
+                } catch (final Throwable e) {
                     // Swallow error as we don't want to break the app because the new config is bad
                     // The admins can fix the problem and let it have another go.
                     LOGGER.error("Error updating runtime configuration from file {}",
                             configFile.toAbsolutePath().normalize(), e);
                 }
             }
-        } catch (Throwable e) {
+        } catch (final Throwable e) {
             // Swallow error as we don't want to break the app because the file is bad.
             LOGGER.error("Error parsing configuration from file {}",
                     configFile.toAbsolutePath().normalize(), e);

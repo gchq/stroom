@@ -11,7 +11,7 @@ public final class ClipboardUtil {
      * Copies the provided text to the clipboard via an invisible textarea
      * @return Whether the copy was successful
      */
-    public static boolean copy(String text) {
+    public static boolean copy(final String text) {
         final BodyElement body = Document.get().getBody();
         final TextArea textArea = new TextArea();
         final Element textAreaElement = textArea.getElement();

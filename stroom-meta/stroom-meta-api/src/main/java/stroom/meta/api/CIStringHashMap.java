@@ -26,7 +26,7 @@ class CIStringHashMap implements Map<String, String> {
         map = new HashMap<>(initialCapacity);
     }
 
-    public CIStringHashMap(CIStringHashMap ciStringHashMap) {
+    public CIStringHashMap(final CIStringHashMap ciStringHashMap) {
         if (ciStringHashMap == null || ciStringHashMap.isEmpty()) {
             map = new HashMap<>();
         } else {

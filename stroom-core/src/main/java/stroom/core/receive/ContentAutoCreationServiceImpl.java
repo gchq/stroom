@@ -236,7 +236,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
             if (feeds.isEmpty()) {
                 try {
                     docRef = createFeedAndContent(feedName, userDesc, attributeMap);
-                } catch (EntityServiceException e) {
+                } catch (final EntityServiceException e) {
                     // It's possible that another thread/node has created the feed
                     if (NullSafe.containsIgnoringCase(e.getMessage(), "exists")) {
                         // Feeds have unique names, so get first
@@ -435,7 +435,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         final List<ContentTemplate> activeTemplates = contentTemplates.getActiveTemplates();
         ContentTemplate matchingTemplate = null;
         if (NullSafe.hasItems(activeTemplates)) {
-            for (ContentTemplate contentTemplate : activeTemplates) {
+            for (final ContentTemplate contentTemplate : activeTemplates) {
                 final ExpressionOperator expression = contentTemplate.getExpression();
                 if (expression == null) {
                     matchingTemplate = contentTemplate;
@@ -476,10 +476,10 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         getMatchingTemplate(attributeMap)
                 .ifPresent(contentTemplate -> {
                     final DocRef pipelineDocRef = Objects.requireNonNull(contentTemplate.getPipeline());
-                    PipelineDoc pipelineDoc;
+                    final PipelineDoc pipelineDoc;
                     try {
                         pipelineDoc = pipelineService.fetch(pipelineDocRef.getUuid());
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         throw new RuntimeException(LogUtil.message(
                                 "Unable to fetch the pipeline {} configured in content template {} '{}'.",
                                 pipelineDocRef,

@@ -87,7 +87,7 @@ public abstract class AbstractXsltFunctionTest<T extends StroomExtensionFunction
         final Sequence sequence;
         try {
             sequence = xsltFunction.call(functionName, mockXPathContext, args);
-        } catch (XPathException e) {
+        } catch (final XPathException e) {
             throw new RuntimeException(
                     "Error calling function " + functionName + ": " + e.getMessage(), e);
         }
@@ -213,7 +213,7 @@ public abstract class AbstractXsltFunctionTest<T extends StroomExtensionFunction
                     if (sequence2 instanceof EmptyAtomicSequence) {
                         return null;
                     } else if (sequence2 instanceof DateTimeValue) {
-                        String str = ((DateTimeValue) sequence2).getStringValue();
+                        final String str = ((DateTimeValue) sequence2).getStringValue();
                         LOGGER.debug("Got dateTime value:\n{}", str);
                         return str;
                     } else {
@@ -282,7 +282,7 @@ public abstract class AbstractXsltFunctionTest<T extends StroomExtensionFunction
                             final String xml = QueryResult.serialize((NodeInfo) sequence2);
                             LOGGER.debug("Got XML value:\n{}", xml);
                             return xml;
-                        } catch (XPathException e) {
+                        } catch (final XPathException e) {
                             throw new RuntimeException("Error serialising nodeInfo - "
                                                        + e.getMessage(), e);
                         }
@@ -345,7 +345,7 @@ public abstract class AbstractXsltFunctionTest<T extends StroomExtensionFunction
      */
     static Sequence[] buildFunctionArguments(final List<Object> args) {
         if (NullSafe.hasItems(args)) {
-            Sequence[] seqArr = new Sequence[args.size()];
+            final Sequence[] seqArr = new Sequence[args.size()];
             for (int i = 0; i < args.size(); i++) {
                 final Object val = args.get(i);
                 final Item item;

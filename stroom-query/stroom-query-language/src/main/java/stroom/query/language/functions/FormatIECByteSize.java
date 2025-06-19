@@ -88,8 +88,8 @@ class FormatIECByteSize extends AbstractFunction {
     public void setParams(final Param[] params) throws ParseException {
         super.setParams(params);
 
-        DateTimeFormatter formatter = DateUtil.DEFAULT_FORMATTER;
-        ZoneId zoneId = ZoneOffset.UTC;
+        final DateTimeFormatter formatter = DateUtil.DEFAULT_FORMATTER;
+        final ZoneId zoneId = ZoneOffset.UTC;
 
         if (params.length >= 2) {
             omitTrailingZeros = ParamParseUtil.parseBooleanParam(params, 1, name);

@@ -58,7 +58,7 @@ public final class SizeUtil {
         return result;
     }
 
-    public static boolean isPc(String size) {
+    public static boolean isPc(final String size) {
         final int index = size.indexOf("%");
         return index != -1;
 

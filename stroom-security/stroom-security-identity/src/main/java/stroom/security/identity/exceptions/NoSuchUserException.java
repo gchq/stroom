@@ -22,7 +22,7 @@ import jakarta.ws.rs.WebApplicationException;
 
 public class NoSuchUserException extends WebApplicationException {
 
-    public NoSuchUserException(String message) {
+    public NoSuchUserException(final String message) {
         super(message);
     }
 }

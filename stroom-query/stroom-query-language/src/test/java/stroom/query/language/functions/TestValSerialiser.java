@@ -47,7 +47,7 @@ class TestValSerialiser {
                     byteBuffer.flip();
                     LOGGER.debug("byteBuffer: {}", ByteBufferUtils.byteBufferToHex(byteBuffer));
 
-                    try (KryoDataReader input = new KryoDataReader(new ByteBufferInput(byteBuffer))) {
+                    try (final KryoDataReader input = new KryoDataReader(new ByteBufferInput(byteBuffer))) {
                         return ValSerialiser.read(input);
                     }
 

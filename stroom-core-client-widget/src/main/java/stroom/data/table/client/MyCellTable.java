@@ -11,7 +11,7 @@ public class MyCellTable<T> extends CellTable<T> {
 
     private static final Resources RESOURCES = GWT.create(DefaultResources.class);
 
-    public MyCellTable(int pageSize) {
+    public MyCellTable(final int pageSize) {
         super(pageSize, RESOURCES);
         addStyleName("w-100");
         setLoadingIndicator(null);

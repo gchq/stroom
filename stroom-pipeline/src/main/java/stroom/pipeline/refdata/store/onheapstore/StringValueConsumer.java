@@ -41,12 +41,12 @@ public class StringValueConsumer implements RefDataValueConsumer {
 
     @Override
     public void consume(final RefDataValue refDataValue) {
-        String value = ((StringValue) refDataValue).getValue();
+        final String value = ((StringValue) refDataValue).getValue();
         LOGGER.trace("consuming {}", value);
 
         try {
             receiver.characters(value, RefDataValueProxyConsumer.NULL_LOCATION, ReceiverOptions.WHOLE_TEXT_NODE);
-        } catch (XPathException e) {
+        } catch (final XPathException e) {
             throw new RuntimeException(LogUtil.message("Error passing string {} to receiver", value), e);
         }
     }

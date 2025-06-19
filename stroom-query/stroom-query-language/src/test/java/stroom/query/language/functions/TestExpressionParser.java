@@ -1303,7 +1303,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             final Supplier<ChildData> childDataSupplier =
                     createChildDataSupplier(List.of(storedValues, storedValues));
 
-            Val out = gen.eval(storedValues, childDataSupplier);
+            final Val out = gen.eval(storedValues, childDataSupplier);
             ValAssertions.valLong(2).actual(out);
         });
     }

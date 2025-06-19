@@ -30,7 +30,7 @@ public class MockIntCrud<T> implements HasIntCrud<T>, Clearable {
 
     @Override
     public T update(final T t) {
-        Integer id = getId(t);
+        final Integer id = getId(t);
         if (id == null) {
             throw new NullPointerException("Not present");
         }
@@ -48,7 +48,7 @@ public class MockIntCrud<T> implements HasIntCrud<T>, Clearable {
         try {
             final Method method = t.getClass().getMethod("getId");
             return (Integer) method.invoke(t);
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+        } catch (final NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
     }
@@ -57,11 +57,11 @@ public class MockIntCrud<T> implements HasIntCrud<T>, Clearable {
         try {
             final Method method = t.getClass().getMethod("setId", Integer.class);
             method.invoke(t, id);
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+        } catch (final NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             try {
                 final Method method = t.getClass().getMethod("setId", Integer.TYPE);
                 method.invoke(t, id);
-            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e2) {
+            } catch (final NoSuchMethodException | IllegalAccessException | InvocationTargetException e2) {
                 throw new RuntimeException(e2);
             }
         }

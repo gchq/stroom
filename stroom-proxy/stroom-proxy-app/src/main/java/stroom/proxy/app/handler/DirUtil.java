@@ -402,7 +402,7 @@ public class DirUtil {
     private static Optional<DirId> findDir(final Path path,
                                            final Mode mode,
                                            final Predicate<String> filenamePredicate,
-                                           boolean warnIfInvalid) {
+                                           final boolean warnIfInvalid) {
 
         LOGGER.trace("find - path: {}, mode: {}", path, mode);
         try (final Stream<Path> dirStream = findDirectories(path)) {

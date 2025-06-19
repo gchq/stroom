@@ -90,7 +90,7 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
 
         try {
             Class.forName(CONTAINER_FACTORY);
-        } catch (ClassNotFoundException e) {
+        } catch (final ClassNotFoundException e) {
             throw new RuntimeException("You are missing a test runtime dependency for " +
                     "jersey-test-framework-provider-grizzly2");
         }
@@ -131,7 +131,7 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
         nodeToJerseyTestMap.values().forEach(jerseyTest -> {
             try {
                 jerseyTest.tearDown();
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw new RuntimeException(e);
             }
         });
@@ -169,7 +169,7 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
 
                     final String baseEndPointUrl = getBaseEndPointUrl(node);
 
-                    RequestListener requestListener = new RequestListener(node);
+                    final RequestListener requestListener = new RequestListener(node);
                     nodeToListenerMap.put(node.getNodeName(), requestListener);
 
                     final JerseyTest jerseyTest = new JerseyTestBuilder<>(
@@ -186,7 +186,7 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
                                     node.getNodeName(), node.isEnabled, baseEndPointUrl);
                             jerseyTest.setUp();
                         }
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         throw new RuntimeException("Error starting jersey test on " + baseEndPointUrl, e);
                     }
                 });
@@ -261,14 +261,14 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
                 .target(getResourceBasePath())
                 .path(subPath);
 
-        for (Function<WebTarget, WebTarget> method : builderMethods) {
+        for (final Function<WebTarget, WebTarget> method : builderMethods) {
             webTarget = method.apply(webTarget);
         }
 
-        Invocation.Builder builder = webTarget
+        final Invocation.Builder builder = webTarget
                 .request();
 
-        Response response = builder.post(Entity.json(requestEntity));
+        final Response response = builder.post(Entity.json(requestEntity));
 
         if (!isSuccessful(response.getStatus())) {
             throw new RuntimeException(LogUtil.message("Error: {} {}", response.getStatus(), response));
@@ -301,14 +301,14 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
                 .target(getResourceBasePath())
                 .path(subPath);
 
-        for (Function<WebTarget, WebTarget> method : builderMethods) {
+        for (final Function<WebTarget, WebTarget> method : builderMethods) {
             webTarget = method.apply(webTarget);
         }
 
-        Invocation.Builder builder = webTarget
+        final Invocation.Builder builder = webTarget
                 .request();
 
-        Response response = builder.put(Entity.json(requestEntity));
+        final Response response = builder.put(Entity.json(requestEntity));
 
         if (!isSuccessful(response.getStatus())) {
             throw new RuntimeException(LogUtil.message("Error: {} {}", response.getStatus(), response));
@@ -338,7 +338,7 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
                 .target(getResourceBasePath())
                 .path(subPath);
 
-        for (Function<WebTarget, WebTarget> method : builderMethods) {
+        for (final Function<WebTarget, WebTarget> method : builderMethods) {
             webTarget = method.apply(webTarget);
         }
 
@@ -375,11 +375,11 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
                 .target(getResourceBasePath())
                 .path(subPath);
 
-        for (Function<WebTarget, WebTarget> method : builderMethods) {
+        for (final Function<WebTarget, WebTarget> method : builderMethods) {
             webTarget = method.apply(webTarget);
         }
 
-        Invocation.Builder builder = webTarget
+        final Invocation.Builder builder = webTarget
                 .request();
 
         final Response response = operation.apply(builder);
@@ -576,7 +576,7 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
         @Override
         public Response toResponse(final Throwable exception) {
             if (exception instanceof WebApplicationException) {
-                WebApplicationException wae = (WebApplicationException) exception;
+                final WebApplicationException wae = (WebApplicationException) exception;
                 return wae.getResponse();
             } else {
                 return createExceptionResponse(Status.INTERNAL_SERVER_ERROR, exception);

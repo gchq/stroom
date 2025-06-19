@@ -41,7 +41,7 @@ public abstract class AbstractQueryTest {
         }
 
         final String in = Files.readString(inFile);
-        Pattern pattern = Pattern.compile("(?:^|\n)-----[^\n]*\n?");
+        final Pattern pattern = Pattern.compile("(?:^|\n)-----[^\n]*\n?");
         final Matcher matcher = pattern.matcher(in);
 
         final List<String> inputs = new ArrayList<>();

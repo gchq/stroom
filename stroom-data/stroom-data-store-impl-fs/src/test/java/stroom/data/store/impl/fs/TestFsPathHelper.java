@@ -83,7 +83,7 @@ class TestFsPathHelper {
     @SuppressWarnings("checkstyle:LineLength")
     @Test
     void decodedPath1() {
-        Path path = Path.of(
+        final Path path = Path.of(
                 "/some/path/default_stream_volume/store/RAW_EVENTS/2022/12/14/TEST_REFERENCE_DATA-EVENTS=414.revt.meta.bgz");
         final DecodedPath decodedPath = FsPathHelper.decodedPath(path);
 
@@ -102,7 +102,7 @@ class TestFsPathHelper {
     @SuppressWarnings("checkstyle:LineLength")
     @Test
     void decodedPath2() {
-        Path path = Path.of(
+        final Path path = Path.of(
                 "/some/path/default_stream_volume/store/RAW_EVENTS/2023/03/15/005/TEST_FEED=999999.revt.meta.bgz.yml");
         final DecodedPath decodedPath = FsPathHelper.decodedPath(path);
 
@@ -121,7 +121,7 @@ class TestFsPathHelper {
     @SuppressWarnings("checkstyle:LineLength")
     @Test
     void decodedPath3() {
-        Path path = Path.of("/some/path/default_stream_volume/store/EVENTS/2023/01/16/002");
+        final Path path = Path.of("/some/path/default_stream_volume/store/EVENTS/2023/01/16/002");
         final DecodedPath decodedPath = FsPathHelper.decodedPath(path);
 
         assertThat(decodedPath.getTypeName())

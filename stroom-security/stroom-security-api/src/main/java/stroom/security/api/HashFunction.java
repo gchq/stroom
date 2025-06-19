@@ -20,7 +20,7 @@ public interface HashFunction {
      *
      * @return The hash
      */
-    default String hash(String value) {
+    default String hash(final String value) {
         return hash(value, null);
     }
 
@@ -39,7 +39,7 @@ public interface HashFunction {
      *
      * @return True if value hashes to the same hash as hash.
      */
-    default boolean verify(String value, String hash) {
+    default boolean verify(final String value, final String hash) {
         final String computedHash = hash(Objects.requireNonNull(value), null);
         return Objects.equals(Objects.requireNonNull(hash), computedHash);
     }
@@ -50,7 +50,7 @@ public interface HashFunction {
      *
      * @return True if value hashes to the same hash as hash.
      */
-    default boolean verify(String value, String hash, String salt) {
+    default boolean verify(final String value, final String hash, final String salt) {
         final String computedHash = hash(
                 Objects.requireNonNull(value),
                 Objects.requireNonNull(salt));

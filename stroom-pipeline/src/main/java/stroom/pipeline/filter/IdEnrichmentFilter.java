@@ -150,7 +150,7 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
                 // This is a first level element.
                 count++;
 
-                String eventId;
+                final String eventId;
                 // If we are using this is search result output then we need to
                 // get event ids from a list.
                 if (eventIds != null) {

@@ -50,7 +50,7 @@ public class ByteArrayUtils {
     public static String byteArrayToString(final byte[] arr, final int offset, final int length) {
         final StringBuilder sb = new StringBuilder();
         if (arr != null) {
-            int endOffsetEx = offset + length;
+            final int endOffsetEx = offset + length;
             for (int i = offset; i < endOffsetEx; i++) {
                 sb.append(arr[i]);
                 sb.append(" ");
@@ -86,7 +86,7 @@ public class ByteArrayUtils {
     public static String byteArrayToHex(final byte[] arr, final int offset, final int length) {
         final StringBuilder sb = new StringBuilder();
         if (arr != null) {
-            int endOffsetEx = offset + length;
+            final int endOffsetEx = offset + length;
             for (int i = offset; i < endOffsetEx; i++) {
                 final byte[] oneByteArr = new byte[1];
                 oneByteArr[0] = arr[i];
@@ -155,8 +155,8 @@ public class ByteArrayUtils {
      * @param len length to write
      * @return string output
      */
-    public static String toStringBinary(final byte[] b, int off, int len) {
-        StringBuilder result = new StringBuilder();
+    public static String toStringBinary(final byte[] b, final int off, int len) {
+        final StringBuilder result = new StringBuilder();
         // Just in case we are passed a 'len' that is > buffer length...
         if (off >= b.length) {
             return result.toString();
@@ -165,7 +165,7 @@ public class ByteArrayUtils {
             len = b.length - off;
         }
         for (int i = off; i < off + len; ++i) {
-            int ch = b[i] & 0xFF;
+            final int ch = b[i] & 0xFF;
             if (ch >= ' ' && ch <= '~' && ch != '\\') {
                 result.append((char) ch);
             } else {

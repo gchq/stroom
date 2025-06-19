@@ -11,7 +11,7 @@ import jakarta.ws.rs.ext.ExceptionMapper;
 public class PermissionExceptionMapper implements ExceptionMapper<PermissionException> {
 
     @Override
-    public Response toResponse(PermissionException exception) {
+    public Response toResponse(final PermissionException exception) {
         final int forbiddenCode = Status.FORBIDDEN.getStatusCode();
         return Response
                 .status(forbiddenCode)

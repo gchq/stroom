@@ -77,7 +77,7 @@ public final class ValDouble implements ValNumber {
 
     @Override
     public Number toNumber() {
-        Number num = hasFractionalPart()
+        final Number num = hasFractionalPart()
                 ? value
                 : toLong();
         return num;

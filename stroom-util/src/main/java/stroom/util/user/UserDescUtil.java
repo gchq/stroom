@@ -76,7 +76,7 @@ public class UserDescUtil {
                                     fullName);
                         })
                         .collect(Collectors.toList());
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 LOGGER.error("Unable to parse users CSV data\n{}", usersCsvData);
                 throw new RuntimeException(LogUtil.message("Error parsing user CSV data: {}",
                         e.getMessage()), e);

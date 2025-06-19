@@ -257,7 +257,7 @@ public class TestUtil {
         final String json;
         try {
             json = objectMapper.writeValueAsString(object);
-        } catch (JsonProcessingException e) {
+        } catch (final JsonProcessingException e) {
             throw new RuntimeException(LogUtil.message(
                     "Error serialising {}: {}", object, e.getMessage()), e);
         }
@@ -271,7 +271,7 @@ public class TestUtil {
         final T object2;
         try {
             object2 = objectMapper.readValue(json, clazz);
-        } catch (JsonProcessingException e) {
+        } catch (final JsonProcessingException e) {
             throw new RuntimeException(LogUtil.message(
                     "Error deserialising {}: {}", json, e.getMessage()), e);
         }
@@ -287,14 +287,14 @@ public class TestUtil {
 
         final CountDownLatch startLatch = new CountDownLatch(threads);
         final CountDownLatch endLatch = new CountDownLatch(threads);
-        try (ExecutorService executorService = Executors.newFixedThreadPool(threads)) {
+        try (final ExecutorService executorService = Executors.newFixedThreadPool(threads)) {
             for (int i = 0; i < threads; i++) {
                 executorService.submit(() -> {
 //                    LOGGER.trace("Starting thread");
                     startLatch.countDown();
                     try {
                         startLatch.await();
-                    } catch (InterruptedException e) {
+                    } catch (final InterruptedException e) {
                         throw UncheckedInterruptedException.create(e);
                     }
 
@@ -306,7 +306,7 @@ public class TestUtil {
         }
         try {
             endLatch.await();
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
             throw UncheckedInterruptedException.create(e);
         }
     }

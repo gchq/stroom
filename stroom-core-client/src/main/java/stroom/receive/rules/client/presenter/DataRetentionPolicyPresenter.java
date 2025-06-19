@@ -142,7 +142,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
     }
 
     private void setVisibleRules(final List<DataRetentionRule> rules) {
-        List<DataRetentionRule> allRules = new ArrayList<>();
+        final List<DataRetentionRule> allRules = new ArrayList<>();
         if (rules != null) {
             allRules.addAll(rules);
         }

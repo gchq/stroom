@@ -31,10 +31,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestRASegmentStreamsByteSeeking {
 
     @Test
-    void testByteSeeking(@TempDir Path tempDir) throws IOException {
+    void testByteSeeking(@TempDir final Path tempDir) throws IOException {
         assertThat(tempDir).isNotNull();
-        try (SegmentOutputStream os = new RASegmentOutputStream(new BlockGZIPOutputFile(tempDir.resolve("test.dat")),
+        try (final SegmentOutputStream os = new RASegmentOutputStream(
+                new BlockGZIPOutputFile(tempDir.resolve("test.dat")),
                 () -> Files.newOutputStream(tempDir.resolve("test.idx")))) {
+
             os.write("LINE ONE\n".getBytes(StreamUtil.DEFAULT_CHARSET));
             os.addSegment();
             os.write("LINE TWO\n".getBytes(StreamUtil.DEFAULT_CHARSET));
@@ -46,9 +48,11 @@ class TestRASegmentStreamsByteSeeking {
             os.flush();
         }
 
-        final UncompressedInputStream debug = new UncompressedInputStream(tempDir.resolve("test.idx"), true);
+        final UncompressedInputStream debug = new UncompressedInputStream(
+                tempDir.resolve("test.idx"), true);
 
-        RASegmentInputStream is = new RASegmentInputStream(new BlockGZIPInputFile(tempDir.resolve("test.dat")),
+        RASegmentInputStream is = new RASegmentInputStream(
+                new BlockGZIPInputFile(tempDir.resolve("test.dat")),
                 new UncompressedInputStream(tempDir.resolve("test.idx"), true));
 
         assertThat(is.count()).isEqualTo(4);

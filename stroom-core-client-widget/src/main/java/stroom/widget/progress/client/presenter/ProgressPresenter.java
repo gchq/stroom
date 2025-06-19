@@ -59,7 +59,7 @@ public class ProgressPresenter extends MyPresenterWidget<ProgressView> {
      *                      valueConsumer will not be called if the current value of {@link Progress}
      *                      has no upper bound.
      */
-    public void setClickHandler(Consumer<Double> valueConsumer) {
+    public void setClickHandler(final Consumer<Double> valueConsumer) {
 
         if (valueConsumer == null) {
             getView().setClickHandler(null);

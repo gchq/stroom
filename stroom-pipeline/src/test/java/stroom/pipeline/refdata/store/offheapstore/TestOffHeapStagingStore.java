@@ -176,7 +176,7 @@ class TestOffHeapStagingStore extends StroomUnitTest {
                     stagingValueOutputStream.setTypeId(typeId);
                     final String key = "key-" + numberPart;
                     offHeapStagingStore.put(mapDefinition, key, stagingValueOutputStream);
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     throw new RuntimeException(LogUtil.message("Error: {}", e.getMessage()), e);
                 }
             }
@@ -184,7 +184,7 @@ class TestOffHeapStagingStore extends StroomUnitTest {
     }
 
     private void doWithMapDef(final BiConsumer<StagingValueOutputStream, MapDefinition> work) {
-        try (StagingValueOutputStream stagingValueOutputStream = new StagingValueOutputStream(
+        try (final StagingValueOutputStream stagingValueOutputStream = new StagingValueOutputStream(
                 valueStoreHashAlgorithm,
                 pooledByteBufferOutputStreamFactory)) {
 

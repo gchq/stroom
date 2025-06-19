@@ -37,13 +37,13 @@ package stroom.widget.htree.client.treelayout.internal.util;
  */
 public class Contract {
 
-    public static void checkArg(boolean isOK, String s) {
+    public static void checkArg(final boolean isOK, final String s) {
         if (!isOK) {
             throw new IllegalArgumentException(s);
         }
     }
 
-    public static void checkState(boolean isOK, String s) {
+    public static void checkState(final boolean isOK, final String s) {
         if (!isOK) {
             throw new IllegalStateException(s);
         }

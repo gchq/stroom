@@ -80,7 +80,7 @@ class FsVolumeResourceImpl implements FsVolumeResource {
 
     @Override
     public FsVolume create(final FsVolume volume) {
-        FsVolume result;
+        final FsVolume result;
 
         try {
             result = volumeServiceProvider.get().create(volume);
@@ -95,7 +95,7 @@ class FsVolumeResourceImpl implements FsVolumeResource {
 
     @Override
     public FsVolume fetch(final Integer id) {
-        FsVolume result;
+        final FsVolume result;
 
         try {
             result = volumeServiceProvider.get().fetch(id);

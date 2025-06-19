@@ -55,7 +55,7 @@ class Match extends AbstractManyChildFunction {
 
         // See if this is a static computation.
         simple = true;
-        for (Param param : params) {
+        for (final Param param : params) {
             if (!(param instanceof Val)) {
                 simple = false;
                 break;

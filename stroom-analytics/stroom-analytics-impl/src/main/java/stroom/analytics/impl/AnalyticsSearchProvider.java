@@ -135,7 +135,7 @@ public class AnalyticsSearchProvider implements SearchProvider, IsSpecialExplore
      */
     private Set<String> getHighlights(final ExpressionOperator expression,
                                       final DateTimeSettings dateTimeSettings) {
-        Set<String> highlights = Collections.emptySet();
+        final Set<String> highlights = Collections.emptySet();
 
 //        try {
 //            // Create a map of index fields keyed by name.

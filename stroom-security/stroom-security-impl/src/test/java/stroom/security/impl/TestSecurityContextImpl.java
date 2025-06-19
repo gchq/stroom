@@ -91,7 +91,7 @@ public class TestSecurityContextImpl {
                               final AppPermissionSet requiredPermissions,
                               final Class<? extends Exception> expectedException,
                               final boolean shouldWorkRun) {
-        Runnable asUserWork = () -> {
+        final Runnable asUserWork = () -> {
             final AtomicBoolean didWorkRun = new AtomicBoolean(false);
             final Supplier<Boolean> work = () -> {
                 didWorkRun.set(true);
@@ -147,7 +147,7 @@ public class TestSecurityContextImpl {
     private void doSecureTest(final UserIdentity userIdentity,
                               final Class<? extends Exception> expectedException,
                               final boolean shouldWorkRun) {
-        Runnable asUserWork = () -> {
+        final Runnable asUserWork = () -> {
             final AtomicBoolean didWorkRun = new AtomicBoolean(false);
             final Supplier<Boolean> work = () -> {
                 didWorkRun.set(true);
@@ -602,7 +602,7 @@ public class TestSecurityContextImpl {
                 .type("MyType")
                 .name("MyDoc")
                 .build();
-        UserIdentity userIdentity = USER_1;
+        final UserIdentity userIdentity = USER_1;
         setUserDocPerm(userIdentity, docRef, DocumentPermission.USE);
 
         securityContextImpl.asUser(userIdentity, () -> {
@@ -638,7 +638,7 @@ public class TestSecurityContextImpl {
                 .type("MyType")
                 .name("MyDoc")
                 .build();
-        UserIdentity userIdentity = USER_1;
+        final UserIdentity userIdentity = USER_1;
 
         securityContextImpl.asUser(userIdentity, () -> {
 
@@ -680,7 +680,7 @@ public class TestSecurityContextImpl {
         Mockito.when(mockUserIdentityFactory.isServiceUser(Mockito.eq(USER_1)))
                 .thenReturn(false);
 
-        UserIdentity userIdentity = USER_1;
+        final UserIdentity userIdentity = USER_1;
         securityContextImpl.asUser(userIdentity, () -> {
             assertThat(securityContextImpl.isProcessingUser())
                     .isFalse();
@@ -708,7 +708,7 @@ public class TestSecurityContextImpl {
 
     @Test
     void testInGroup_false() {
-        UserIdentity userIdentity = USER_1;
+        final UserIdentity userIdentity = USER_1;
         setGroups(userIdentity, Set.of());
 
         securityContextImpl.asUser(userIdentity, () -> {
@@ -719,7 +719,7 @@ public class TestSecurityContextImpl {
 
     @Test
     void testInGroup_true() {
-        UserIdentity userIdentity = USER_1;
+        final UserIdentity userIdentity = USER_1;
         setGroups(userIdentity, Set.of(GROUP_1, GROUP_2));
 
         securityContextImpl.asUser(userIdentity, () -> {
@@ -730,7 +730,7 @@ public class TestSecurityContextImpl {
 
     @Test
     void testInGroup_indirect_true() {
-        UserIdentity userIdentity = USER_1;
+        final UserIdentity userIdentity = USER_1;
         setGroups(userIdentity, Set.of(GROUP_1));
         setGroups(GROUP_1, Set.of(GROUP_2));
 
@@ -803,13 +803,13 @@ public class TestSecurityContextImpl {
     }
 
     private UserIdentity setupAdminUser() {
-        UserIdentity userIdentity = ADMIN;
+        final UserIdentity userIdentity = ADMIN;
         setUserAppPerms(userIdentity, EnumSet.of(AppPermission.ADMINISTRATOR));
         return userIdentity;
     }
 
     private UserIdentity setupProcUser() {
-        UserIdentity userIdentity = PROC_USER;
+        final UserIdentity userIdentity = PROC_USER;
         setProcUserState(userIdentity, true);
         return userIdentity;
     }

@@ -38,7 +38,7 @@ public class SimpleEventListBuilder implements EventListBuilder {
     }
 
     @Override
-    public void setDocumentLocator(Locator locator) {
+    public void setDocumentLocator(final Locator locator) {
         eventList.add(new SetDocumentLocator(locator));
     }
 
@@ -53,42 +53,45 @@ public class SimpleEventListBuilder implements EventListBuilder {
     }
 
     @Override
-    public void startPrefixMapping(String prefix, String uri) throws SAXException {
+    public void startPrefixMapping(final String prefix, final String uri) throws SAXException {
         eventList.add(new StartPrefixMapping(prefix, uri));
     }
 
     @Override
-    public void endPrefixMapping(String prefix) throws SAXException {
+    public void endPrefixMapping(final String prefix) throws SAXException {
         eventList.add(new EndPrefixMapping(prefix));
     }
 
     @Override
-    public void startElement(String uri, String localName, String qName, Attributes atts) throws SAXException {
+    public void startElement(final String uri,
+                             final String localName,
+                             final String qName,
+                             final Attributes atts) throws SAXException {
         eventList.add(new StartElement(uri, localName, qName, atts));
     }
 
     @Override
-    public void endElement(String uri, String localName, String qName) throws SAXException {
+    public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         eventList.add(new EndElement(uri, localName, qName));
     }
 
     @Override
-    public void characters(char[] ch, int start, int length) throws SAXException {
+    public void characters(final char[] ch, final int start, final int length) throws SAXException {
         eventList.add(new Characters(ch, start, length));
     }
 
     @Override
-    public void ignorableWhitespace(char[] ch, int start, int length) throws SAXException {
+    public void ignorableWhitespace(final char[] ch, final int start, final int length) throws SAXException {
         eventList.add(new IgnorableWhitespace(ch, start, length));
     }
 
     @Override
-    public void processingInstruction(String target, String data) throws SAXException {
+    public void processingInstruction(final String target, final String data) throws SAXException {
         eventList.add(new ProcessingInstruction(target, data));
     }
 
     @Override
-    public void skippedEntity(String name) throws SAXException {
+    public void skippedEntity(final String name) throws SAXException {
         eventList.add(new SkippedEntity(name));
     }
 }

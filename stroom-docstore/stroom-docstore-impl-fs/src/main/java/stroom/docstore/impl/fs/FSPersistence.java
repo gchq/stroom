@@ -182,21 +182,21 @@ public class FSPersistence implements Persistence, Clearable {
 
     private void recursiveDelete(final Path path) {
         try {
-            FileVisitor<Path> visitor = new SimpleFileVisitor<>() {
+            final FileVisitor<Path> visitor = new SimpleFileVisitor<>() {
                 @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
                     Files.delete(file);
                     return FileVisitResult.CONTINUE;
                 }
 
                 @Override
-                public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                public FileVisitResult visitFileFailed(final Path file, final IOException exc) throws IOException {
                     Files.delete(file);
                     return FileVisitResult.CONTINUE;
                 }
 
                 @Override
-                public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) throws IOException {
                     if (!dir.equals(path)) {
                         Files.delete(dir);
                     }

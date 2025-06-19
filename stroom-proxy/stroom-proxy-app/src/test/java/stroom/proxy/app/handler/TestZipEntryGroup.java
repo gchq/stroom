@@ -49,8 +49,8 @@ public class TestZipEntryGroup extends StroomUnitTest {
         }
 
         // Read data
-        try (Stream<String> linesStream = data.lines()) {
-            AtomicInteger counter = new AtomicInteger();
+        try (final Stream<String> linesStream = data.lines()) {
+            final AtomicInteger counter = new AtomicInteger();
             linesStream.forEach(line -> {
                 // Use the interner, so we get the shared FeedKey obj on deser
                 final ZipEntryGroup zipEntryGroup = ZipEntryGroup.read(line, interner);
@@ -91,7 +91,7 @@ public class TestZipEntryGroup extends StroomUnitTest {
     }
 
     @Test
-    void test2(@TempDir Path tempDir) throws IOException {
+    void test2(@TempDir final Path tempDir) throws IOException {
         final String data;
         final FeedKeyInterner interner = FeedKey.createInterner();
         final FeedKey feedKey = interner.intern("test_feed", "test_type");

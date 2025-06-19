@@ -338,7 +338,7 @@ public enum ConditionSet {
         return UI_TEXT;
     }
 
-    ConditionSet(Condition... arr) {
+    ConditionSet(final Condition... arr) {
         conditionList = Arrays.asList(arr);
         conditionSet = EnumSet.copyOf(conditionList);
     }

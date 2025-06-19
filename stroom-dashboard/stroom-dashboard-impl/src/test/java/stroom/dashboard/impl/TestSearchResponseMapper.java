@@ -71,13 +71,13 @@ class TestSearchResponseMapper {
     }
 
     private FlatResult getVisResult1() {
-        List<Column> structure = new ArrayList<>();
+        final List<Column> structure = new ArrayList<>();
         structure.add(Column.builder().id("val1").name("val1").format(Format.GENERAL).build());
         structure.add(Column.builder().id("val1").name("val2").format(Format.NUMBER).build());
         structure.add(Column.builder().id("val1").name("val3").format(Format.NUMBER).build());
         structure.add(Column.builder().id("val1").name("val4").format(Format.GENERAL).build());
 
-        List<List<Object>> data = new ArrayList<>();
+        final List<List<Object>> data = new ArrayList<>();
         data.add(Arrays.asList("test0", 0.4, 234, "this0"));
         data.add(Arrays.asList("test1", 0.5, 25634, "this1"));
         data.add(Arrays.asList("test2", 0.6, 27, "this2"));

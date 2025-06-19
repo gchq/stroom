@@ -104,18 +104,18 @@ public class PooledByteBufferOutputStream extends OutputStream implements AutoCl
     }
 
     @Override
-    public void write(int b) throws IOException {
+    public void write(final int b) throws IOException {
         checkWriteableState();
         checkSizeAndGrow(1);
         getCurrentPooledBuffer().getByteBuffer().put((byte) b);
     }
 
     @Override
-    public void write(byte[] b) throws IOException {
+    public void write(final byte[] b) throws IOException {
         write(b, 0, b.length);
     }
 
-    public void write(byte[] b, int off, int len) throws IOException {
+    public void write(final byte[] b, final int off, final int len) throws IOException {
         if (len > 0) {
             checkWriteableState();
             Objects.checkFromIndexSize(off, len, b.length);
@@ -129,7 +129,7 @@ public class PooledByteBufferOutputStream extends OutputStream implements AutoCl
      * Writes byteBuffer into the outputStream. Respects the position/limit of byteBuffer.
      * After reading, byteBuffer is rewound to return it to its passed state.
      */
-    public void write(ByteBuffer byteBuffer) throws IOException {
+    public void write(final ByteBuffer byteBuffer) throws IOException {
         Objects.requireNonNull(byteBuffer);
         final int remaining = byteBuffer.remaining();
         if (remaining > 0) {
@@ -148,11 +148,11 @@ public class PooledByteBufferOutputStream extends OutputStream implements AutoCl
         }
     }
 
-    private void checkSizeAndGrow(int extra) {
+    private void checkSizeAndGrow(final int extra) {
         final PooledByteBuffer currPooledByteBuffer = getCurrentPooledBuffer();
         final ByteBuffer curBuf = currPooledByteBuffer.getByteBuffer();
 
-        long capacityNeeded = curBuf.position() + (long) extra;
+        final long capacityNeeded = curBuf.position() + (long) extra;
         if (capacityNeeded > curBuf.limit()) {
             // guarantee it's possible to fit
             if (capacityNeeded > MAX_ARRAY_SIZE) {

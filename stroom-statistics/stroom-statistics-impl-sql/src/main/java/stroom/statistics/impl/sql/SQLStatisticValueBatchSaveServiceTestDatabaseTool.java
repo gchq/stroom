@@ -54,8 +54,8 @@ public class SQLStatisticValueBatchSaveServiceTestDatabaseTool extends DatabaseT
             for (int l = 0; l < 100; l++) {
                 final List<SQLStatValSourceDO> batch = new ArrayList<>();
                 for (int i = 0; i < 1000; i++) {
-                    long value = System.currentTimeMillis();
-                    long count = 100;
+                    final long value = System.currentTimeMillis();
+                    final long count = 100;
 
                     final SQLStatValSourceDO statisticValueSource = SQLStatValSourceDO.createValueStat(
                             System.currentTimeMillis(),

@@ -264,7 +264,7 @@ public final class FileUtil {
      *
      * @throws IOException
      */
-    public static void touch(Path file) throws IOException {
+    public static void touch(final Path file) throws IOException {
         Objects.requireNonNull(file, "file is null");
         if (Files.exists(file)) {
             if (!Files.isRegularFile(file)) {
@@ -351,7 +351,7 @@ public final class FileUtil {
             LOGGER.info("Creating directory {}", path.normalize().toAbsolutePath());
             try {
                 return Files.createDirectories(path);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new RuntimeException("Error creating directory " + path.normalize().toAbsolutePath(), e);
             }
         } else {
@@ -406,7 +406,7 @@ public final class FileUtil {
 
             LOGGER.debug("Work complete, releasing lock");
             return result;
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException("Error opening lock file " + lockFilePath.toAbsolutePath(), e);
         }
     }
@@ -431,13 +431,13 @@ public final class FileUtil {
         return total.get();
     }
 
-    public static void deepCopy(Path src, Path dest) throws IOException {
-        try (Stream<Path> stream = Files.walk(src)) {
+    public static void deepCopy(final Path src, final Path dest) throws IOException {
+        try (final Stream<Path> stream = Files.walk(src)) {
             stream.forEach(source -> copy(source, dest.resolve(src.relativize(source))));
         }
     }
 
-    private static void copy(Path source, Path dest) {
+    private static void copy(final Path source, final Path dest) {
         try {
             Files.copy(source, dest);
         } catch (final IOException e) {
@@ -491,11 +491,11 @@ public final class FileUtil {
         };
 
         try (final Stream<Path> stream = Files.find(path, Integer.MAX_VALUE, predicate, fileVisitOptions)) {
-            Stream<Path> stream2 = parallel
+            final Stream<Path> stream2 = parallel
                     ? stream.parallel()
                     : stream;
 
-            Stream<PathWithAttributes> fileWithAttributesStream = stream2
+            final Stream<PathWithAttributes> fileWithAttributesStream = stream2
                     .map(aPath -> {
                         // Remove it from the map now we have mapped it
                         final BasicFileAttributes attributes = Objects.requireNonNull(pathToTypeMap.remove(aPath));
@@ -507,7 +507,7 @@ public final class FileUtil {
             } else {
                 return fileWithAttributesStream.toList();
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(e);
         }
     }
@@ -542,7 +542,7 @@ public final class FileUtil {
             return Collections.emptyList();
         } else {
             try {
-                try (Stream<Path> pathStream = Files.list(parent)) {
+                try (final Stream<Path> pathStream = Files.list(parent)) {
                     if (pathPredicate != null) {
                         return pathStream.filter(pathPredicate)
                                 .toList();
@@ -550,7 +550,7 @@ public final class FileUtil {
                         return pathStream.toList();
                     }
                 }
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
         }
@@ -590,7 +590,7 @@ public final class FileUtil {
         if (parent != null) {
             Objects.requireNonNull(childConsumer);
             try {
-                try (Stream<Path> pathStream = Files.list(parent)) {
+                try (final Stream<Path> pathStream = Files.list(parent)) {
                     if (pathPredicate != null) {
                         pathStream.filter(pathPredicate)
                                 .forEach(childConsumer);
@@ -598,7 +598,7 @@ public final class FileUtil {
                         pathStream.forEach(childConsumer);
                     }
                 }
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
         }

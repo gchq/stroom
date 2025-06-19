@@ -63,7 +63,7 @@ public class PipelineStepRequest {
                                @JsonProperty("stepFilterMap") final Map<String, SteppingFilterSettings> stepFilterMap,
                                @JsonProperty("pipeline") final DocRef pipeline,
                                @JsonProperty("code") final Map<String, String> code,
-                               @JsonProperty("stepSize") int stepSize,
+                               @JsonProperty("stepSize") final int stepSize,
                                @JsonProperty("timeout") final Long timeout) {
         this.sessionUuid = sessionUuid;
         this.criteria = criteria;
@@ -148,7 +148,7 @@ public class PipelineStepRequest {
         private Builder() {
         }
 
-        private Builder(PipelineStepRequest request) {
+        private Builder(final PipelineStepRequest request) {
             this.sessionUuid = request.sessionUuid;
             this.criteria = request.criteria;
             this.childStreamType = request.childStreamType;

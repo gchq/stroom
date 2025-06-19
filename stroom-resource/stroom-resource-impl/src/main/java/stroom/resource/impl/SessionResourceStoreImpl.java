@@ -86,7 +86,7 @@ public class SessionResourceStoreImpl extends HttpServlet implements ResourceSto
     }
 
     private ResourceMap getMap() {
-        ResourceMap resourceMap;
+        final ResourceMap resourceMap;
 
         final HttpServletRequest request = httpServletRequestHolder.get();
         if (request == null) {

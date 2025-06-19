@@ -142,7 +142,7 @@ public class SearchResponseCreator {
                             new RuntimeException(SearchResponse.TIMEOUT_MESSAGE + effectiveTimeout));
                 }
 
-            } catch (InterruptedException e) {
+            } catch (final InterruptedException e) {
                 LOGGER.trace(e::getMessage, e);
                 // Keep interrupting this thread.
                 Thread.currentThread().interrupt();
@@ -226,7 +226,7 @@ public class SearchResponseCreator {
     }
 
     private Duration getEffectiveTimeout(final SearchRequest searchRequest) {
-        Duration requestedTimeout = searchRequest.getTimeout() == null
+        final Duration requestedTimeout = searchRequest.getTimeout() == null
                 ? null
                 : Duration.ofMillis(searchRequest.getTimeout());
         if (requestedTimeout != null) {
@@ -244,7 +244,7 @@ public class SearchResponseCreator {
                                     final Map<String, ResultCreator> resultCreatorMap) {
 
         // Provide results if this search is incremental or the search is complete.
-        List<Result> results = new ArrayList<>(searchRequest.getResultRequests().size());
+        final List<Result> results = new ArrayList<>(searchRequest.getResultRequests().size());
         // Copy the requested portion of the result cache into the result.
         for (final ResultRequest resultRequest : searchRequest.getResultRequests()) {
             final ResultCreator resultCreator = resultCreatorMap.get(resultRequest.getComponentId());
@@ -296,7 +296,7 @@ public class SearchResponseCreator {
                                                   final ResultRequest resultRequest,
                                                   final boolean cacheLastResult) {
         return cachedResultCreators.computeIfAbsent(componentId, k -> {
-            ResultCreator resultCreator;
+            final ResultCreator resultCreator;
             try {
                 if (ResultStyle.TABLE.equals(resultRequest.getResultStyle())) {
                     final FormatterFactory formatterFactory = new FormatterFactory(searchRequest.getDateTimeSettings());

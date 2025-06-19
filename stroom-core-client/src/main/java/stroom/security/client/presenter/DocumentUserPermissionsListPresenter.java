@@ -253,7 +253,7 @@ public class DocumentUserPermissionsListPresenter
         // Effective Permission
         dataGrid.addColumn(
                 DataGridUtil.textColumnBuilder(
-                                (DocumentUserPermissions row) -> {
+                                (final DocumentUserPermissions row) -> {
                                     final DocumentPermission explicit = row.getPermission();
                                     final DocumentPermission inherited = row.getInheritedPermission();
                                     return NullSafe.get(DocumentPermission.highest(explicit, inherited),

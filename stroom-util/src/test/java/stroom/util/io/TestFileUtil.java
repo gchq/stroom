@@ -107,7 +107,7 @@ class TestFileUtil {
     @Test
     void testIsEmptyDirectory_containsFile(@TempDir final Path tempDir) throws IOException {
 
-        Path file = tempDir.resolve("my_file");
+        final Path file = tempDir.resolve("my_file");
         Files.createFile(file);
 
         assertThat(file)
@@ -121,7 +121,7 @@ class TestFileUtil {
     @Test
     void testIsEmptyDirectory_containsDir(@TempDir final Path tempDir) throws IOException {
 
-        Path dir = tempDir.resolve("my_sub_dir");
+        final Path dir = tempDir.resolve("my_sub_dir");
         Files.createDirectories(dir);
 
         assertThat(dir)

@@ -138,13 +138,13 @@ public class ZipEntryGroup {
 
     public static List<ZipEntryGroup> read(final Path entriesFile,
                                            final FeedKeyInterner feedKeyInterner) {
-        try (Stream<String> linesStream = Files.lines(entriesFile)) {
+        try (final Stream<String> linesStream = Files.lines(entriesFile)) {
             return linesStream
                     .filter(Predicate.not(String::isBlank))
                     .map(line ->
                             read(line, feedKeyInterner))
                     .toList();
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
     }

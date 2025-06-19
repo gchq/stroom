@@ -83,7 +83,7 @@ public class AuthProxyServiceImpl implements AuthProxyService {
 
             return Objects.requireNonNull(tokenResponse.getAccessToken(),
                     "No getAccessToken in response");
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message("Error fetching client credentials flow access token for " +
                                                        "clientId '{}' at endpoint '{}': {}",
                     openIdConfiguration.getClientId(),

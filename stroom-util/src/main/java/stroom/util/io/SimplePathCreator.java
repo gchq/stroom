@@ -73,7 +73,7 @@ public class SimplePathCreator implements PathCreator {
     }
 
     @Override
-    public String replaceTimeVars(String path) {
+    public String replaceTimeVars(final String path) {
         // Replace some of the path elements with time variables.
         final ZonedDateTime dateTime = ZonedDateTime.now(ZoneOffset.UTC);
         return replaceTimeVars(path, dateTime);
@@ -201,7 +201,7 @@ public class SimplePathCreator implements PathCreator {
 
         //convert the long supplier into a string supplier to prevent the
         //evaluation of the long supplier
-        Supplier<String> stringReplacementSupplier = () -> {
+        final Supplier<String> stringReplacementSupplier = () -> {
             String value = String.valueOf(replacementSupplier.getAsLong());
             if (pad > 0) {
                 value = Strings.padStart(value, pad, '0');
@@ -237,7 +237,7 @@ public class SimplePathCreator implements PathCreator {
     }
 
     @Override
-    public String replaceContextVars(String path) {
+    public String replaceContextVars(final String path) {
         return path;
     }
 

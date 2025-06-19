@@ -85,7 +85,7 @@ abstract class AbstractEqualityFunctionTest<T extends AbstractEqualityFunction>
 
     protected record Values(Object param1, Object param2, boolean expectedOutput) {
 
-        static Values of(Object param1, Object param2, boolean expectedOutput) {
+        static Values of(final Object param1, final Object param2, final boolean expectedOutput) {
             return new Values(param1, param2, expectedOutput);
         }
 

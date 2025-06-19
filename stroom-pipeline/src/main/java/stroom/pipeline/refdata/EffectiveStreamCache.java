@@ -240,7 +240,7 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
                              "outside the key window. key: {}, invalid effective streams:\n{}",
                         metasOutsideKeyWindow.size(), key, effectiveStreamsToString(metasOutsideKeyWindow));
             }
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Error in validateStreamSet", e);
         }
     }

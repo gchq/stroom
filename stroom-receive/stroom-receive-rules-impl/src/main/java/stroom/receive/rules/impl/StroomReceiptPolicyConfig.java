@@ -116,7 +116,7 @@ public class StroomReceiptPolicyConfig extends AbstractConfig implements IsStroo
     }
 
     public static Builder copy(final StroomReceiptPolicyConfig copy) {
-        Builder builder = new Builder();
+        final Builder builder = new Builder();
         builder.obfuscatedFields = copy.getObfuscatedFields();
         builder.obfuscationHashAlgorithm = copy.getObfuscationHashAlgorithm();
         builder.receiptRulesInitialFields = copy.getReceiptRulesInitialFields();

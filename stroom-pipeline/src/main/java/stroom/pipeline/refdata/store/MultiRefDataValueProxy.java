@@ -146,7 +146,7 @@ public class MultiRefDataValueProxy implements RefDataValueProxy {
     public Optional<RefDataValue> supplyValue() {
         // try each of our proxies in turn and as soon as one finds a result break out
         Optional<RefDataValue> optResult = Optional.empty();
-        for (RefDataValueProxy refDataValueProxy : refDataValueProxies) {
+        for (final RefDataValueProxy refDataValueProxy : refDataValueProxies) {
 
             LOGGER.trace("Attempting to supplyValue with sub-proxy {}", refDataValueProxy);
             optResult = refDataValueProxy.supplyValue();
@@ -168,7 +168,7 @@ public class MultiRefDataValueProxy implements RefDataValueProxy {
         // the rest.  For pipelines with a lot of ref loaders this should speed things up.
         // The downside of this is that it would change the behavior in the event that two
         // ref streams can supply a value for the same map/key
-        for (SingleRefDataValueProxy refDataValueProxy : refDataValueProxies) {
+        for (final SingleRefDataValueProxy refDataValueProxy : refDataValueProxies) {
             LOGGER.trace("Attempting to consumeBytes with sub-proxy {}", refDataValueProxy);
             foundValue = refDataValueProxy.consumeBytes(typedByteBufferConsumer);
             if (foundValue) {
@@ -194,7 +194,7 @@ public class MultiRefDataValueProxy implements RefDataValueProxy {
         // the rest.  For pipelines with a lot of ref loaders this should speed things up.
         // The downside of this is that it would change the behavior in the event that two
         // ref streams can supply a value for the same map/key
-        for (RefDataValueProxy refDataValueProxy : refDataValueProxies) {
+        for (final RefDataValueProxy refDataValueProxy : refDataValueProxies) {
             LOGGER.trace("Attempting to consumeBytes with sub-proxy {}", refDataValueProxy);
             foundValue = refDataValueProxy.consumeValue(refDataValueProxyConsumerFactory);
             if (foundValue) {

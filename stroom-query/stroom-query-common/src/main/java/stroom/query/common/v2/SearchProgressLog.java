@@ -60,7 +60,7 @@ public class SearchProgressLog {
         final StringBuilder sb = new StringBuilder();
         sb.append("Query Key,");
         sb.append("Elapsed Time (ms)");
-        for (SearchPhase searchPhase : SearchPhase.values()) {
+        for (final SearchPhase searchPhase : SearchPhase.values()) {
             sb.append(",");
             sb.append(searchPhase.getDisplayName());
         }
@@ -145,7 +145,7 @@ public class SearchProgressLog {
             sb.append(",");
             sb.append(elapsedTime);
 
-            for (SearchPhase searchPhase : SearchPhase.values()) {
+            for (final SearchPhase searchPhase : SearchPhase.values()) {
                 sb.append(",");
                 final AtomicLong count = map.get(searchPhase);
                 if (count == null) {

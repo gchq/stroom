@@ -65,7 +65,7 @@ class BlockBufferedInputStream extends BufferedInputStream {
 
     @Override
     public int read() throws IOException {
-        int rtn = super.read();
+        final int rtn = super.read();
         if (rtn != -1) {
             // did we read a byte?
             streamPosition++;
@@ -76,7 +76,7 @@ class BlockBufferedInputStream extends BufferedInputStream {
     @SuppressWarnings("NullableProblems")
     @Override
     public int read(final byte[] b) throws IOException {
-        int rtn = super.read(b);
+        final int rtn = super.read(b);
         if (rtn != -1) {
             // Accumulate the bytes read
             streamPosition += rtn;
@@ -87,7 +87,7 @@ class BlockBufferedInputStream extends BufferedInputStream {
     @SuppressWarnings("NullableProblems")
     @Override
     public int read(final byte[] b, final int off, final int len) throws IOException {
-        int rtn = super.read(b, off, len);
+        final int rtn = super.read(b, off, len);
         if (rtn != -1) {
             // Accumulate the bytes read
             streamPosition += rtn;
