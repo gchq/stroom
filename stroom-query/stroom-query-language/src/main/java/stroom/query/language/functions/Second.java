@@ -29,7 +29,7 @@ import java.time.temporal.ChronoUnit;
         signatures = @FunctionSignature(
                 description = "Returns the current date and time to the nearest second.",
                 args = {}))
-class Second extends AbstractTimeFunction {
+class Second extends AbstractCurrentDateTimeFunction {
 
     static final String NAME = "second";
 

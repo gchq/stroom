@@ -18,18 +18,18 @@ package stroom.query.language.functions;
 
 import java.text.ParseException;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
-abstract class RoundDate extends AbstractFunction {
+abstract class AbstractRoundDateTime extends AbstractDateTimeFunction {
 
     static final String CEILING_SUB_CATEGORY = "Ceiling";
     static final String FLOOR_SUB_CATEGORY = "Floor";
     static final String ROUND_SUB_CATEGORY = "Round";
     private Function function;
 
-    public RoundDate(final String name) {
-        super(name, 1, 3);
+    public AbstractRoundDateTime(final ExpressionContext expressionContext, final String name) {
+        super(expressionContext, name, 1, 3);
     }
 
     @Override
@@ -47,7 +47,7 @@ abstract class RoundDate extends AbstractFunction {
     @Override
     public Generator createGenerator() {
         final Generator childGenerator = function.createGenerator();
-        return new RoundGenerator(childGenerator, getCalculator());
+        return new RoundGenerator(childGenerator, new RoundDateCalculator(zoneId, getAdjuster()));
     }
 
     @Override
@@ -63,27 +63,42 @@ abstract class RoundDate extends AbstractFunction {
         return super.requiresChildData();
     }
 
-    protected abstract RoundCalculator getCalculator();
+    protected abstract DateTimeAdjuster getAdjuster();
 
-    public abstract static class RoundDateCalculator implements RoundCalculator {
+    public static final class RoundDateCalculator implements RoundCalculator {
 
+        private final ZoneId zoneId;
+        private final DateTimeAdjuster adjuster;
+
+        RoundDateCalculator(final ZoneId zoneId,
+                            final DateTimeAdjuster adjuster) {
+            this.zoneId = zoneId;
+            this.adjuster = adjuster;
+        }
 
         @Override
         public Val calc(final Val value) {
-            final Long val = value.toLong();
-            if (val == null) {
-                return ValNull.INSTANCE;
+            try {
+                final Long val = value.toLong();
+                if (val == null) {
+                    return ValNull.INSTANCE;
+                }
+
+                ZonedDateTime dateTime = ZonedDateTime.ofInstant(Instant.ofEpochMilli(val), zoneId);
+                dateTime = adjuster.adjust(dateTime);
+                return ValDate.create(dateTime.toInstant().toEpochMilli());
+            } catch (final RuntimeException e) {
+                return ValErr.create(e.getMessage());
             }
-
-            LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(val), ZoneOffset.UTC);
-            dateTime = adjust(dateTime);
-            return ValDate.create(dateTime.toInstant(ZoneOffset.UTC).toEpochMilli());
         }
-
-        protected abstract LocalDateTime adjust(LocalDateTime dateTime);
     }
 
     protected Param[] getParams() {
         return params;
+    }
+
+    public interface DateTimeAdjuster {
+
+        ZonedDateTime adjust(ZonedDateTime zonedDateTime);
     }
 }

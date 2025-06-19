@@ -15,11 +15,6 @@ public class TestFloorYear extends AbstractFunctionTest<FloorYear> {
     }
 
     @Override
-    protected Supplier<FloorYear> getFunctionSupplier() {
-        return () -> new FloorYear(new ExpressionContext(), "floorYear");
-    }
-
-    @Override
     Stream<TestCase> getTestCases() {
         final Instant timeUTC = LocalDateTime.of(2025, 4, 7, 10, 30, 30)
                 .toInstant(ZoneOffset.UTC);

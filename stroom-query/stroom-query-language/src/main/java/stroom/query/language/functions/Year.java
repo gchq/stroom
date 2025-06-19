@@ -28,7 +28,7 @@ import java.time.ZonedDateTime;
         signatures = @FunctionSignature(
                 description = "Returns the current date and time truncated to the start of the year.",
                 args = {}))
-class Year extends AbstractTimeFunction {
+class Year extends AbstractCurrentDateTimeFunction {
 
     static final String NAME = "year";
 
