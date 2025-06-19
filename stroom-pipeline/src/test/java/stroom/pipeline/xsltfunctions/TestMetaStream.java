@@ -43,7 +43,7 @@ class TestMetaStream extends AbstractXsltFunctionTest<MetaStream> {
 
         Mockito.when(attributeMapFactory.getAttributeMapForPart(1L, 0L)).thenReturn(attributeMap);
 
-        Sequence sequence = callFunctionWithSimpleArgs();
+        final Sequence sequence = callFunctionWithSimpleArgs();
         assertThat(sequence).isNotNull();
 
         final String xml = getAsSerialisedXmlString(sequence).orElseThrow();

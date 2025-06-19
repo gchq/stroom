@@ -41,7 +41,7 @@ class TestManifest extends AbstractXsltFunctionTest<Manifest> {
         Mockito.when(mockDataService.metaAttributes(1234L)).thenReturn(
                 Map.of("key1", "value1", "key2", "value2"));
 
-        Sequence sequence = callFunctionWithSimpleArgs();
+        final Sequence sequence = callFunctionWithSimpleArgs();
         assertThat(sequence).isNotNull();
 
         final String xml = getAsSerialisedXmlString(sequence).orElseThrow();
@@ -63,7 +63,7 @@ class TestManifest extends AbstractXsltFunctionTest<Manifest> {
 
         Mockito.when(mockDataService.metaAttributes(1234L)).thenThrow(new DataException("error"));
 
-        Sequence sequence = callFunctionWithSimpleArgs();
+        final Sequence sequence = callFunctionWithSimpleArgs();
         assertThat(sequence).isNotNull();
 
         final String xml = getAsSerialisedXmlString(sequence).orElseThrow();
