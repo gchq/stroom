@@ -38,8 +38,8 @@ public class CommandLinkCell extends AbstractCell<CommandLink> implements EventC
     }
 
     @Override
-    public void onBrowserEvent(Context context, Element parent, CommandLink value,
-                               NativeEvent event, ValueUpdater<CommandLink> valueUpdater) {
+    public void onBrowserEvent(final Context context, final Element parent, final CommandLink value,
+                               final NativeEvent event, final ValueUpdater<CommandLink> valueUpdater) {
 //        super.onBrowserEvent(context, parent, value, event, valueUpdater);
 //
 //        if (CLICK.equals(event.getType()) && valueUpdater != null && value.getCommand() != null) {

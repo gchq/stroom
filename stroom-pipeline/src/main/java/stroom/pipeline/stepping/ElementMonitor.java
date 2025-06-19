@@ -83,7 +83,7 @@ public class ElementMonitor {
                 final Object data = inputRecorder.getData(textRange);
                 elementData.setInput(data);
                 elementData.setFormatInput(!(data == null || data instanceof String));
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 elementData.setInput(null);
                 elementData.setFormatInput(false);
                 logError(loggingErrorReceiver, textRange, "input", e);
@@ -95,7 +95,7 @@ public class ElementMonitor {
                 final Object data = outputRecorder.getData(textRange);
                 elementData.setOutput(data);
                 elementData.setFormatOutput(!(data == null || data instanceof String) || element instanceof XMLWriter);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 elementData.setOutput(null);
                 elementData.setFormatOutput(false);
                 logError(loggingErrorReceiver, textRange, "output", e);

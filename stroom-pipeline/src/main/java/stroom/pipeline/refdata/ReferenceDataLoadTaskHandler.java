@@ -280,7 +280,7 @@ class ReferenceDataLoadTaskHandler {
                             feedName);
                     logAndCompleteProcessing(refDataLoader, Severity.INFO, ProcessingState.COMPLETE, msg);
                 }
-            } catch (UncheckedIOException | IOException e) {
+            } catch (final UncheckedIOException | IOException e) {
                 // Missing ref strm file or unable to read it
                 final String msg = "Error reading reference stream "
                                    + refStreamDefinition.getStreamId()
@@ -289,7 +289,7 @@ class ReferenceDataLoadTaskHandler {
                                    + " - "
                                    + e.getMessage();
                 logAndCompleteProcessing(refDataLoader, Severity.FATAL_ERROR, ProcessingState.FAILED, msg, e);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 handleException(refDataLoader, e);
             }
         });
@@ -300,7 +300,7 @@ class ReferenceDataLoadTaskHandler {
 
     private void handleException(final RefDataLoader refDataLoader, final Throwable e) {
 
-        if (e instanceof ProcessException pe) {
+        if (e instanceof final ProcessException pe) {
             // ProcessException are a bit special, so we need to get the exception that we wrapped
             final Throwable wrappedThrowable = NullSafe.get(
                     pe.getXPathException(),

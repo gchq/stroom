@@ -105,7 +105,7 @@ public class StatisticsFieldListPresenter extends DocumentEditPresenter<PagerVie
     private void enableButtons() {
         newButton.setEnabled(!isReadOnly());
         if (statisticsDataSourceData != null && statisticsDataSourceData.getFields() != null) {
-            StatisticField selected = selectionModel.getSelected();
+            final StatisticField selected = selectionModel.getSelected();
             final boolean enabled = !isReadOnly() && selected != null;
             editButton.setEnabled(enabled);
             removeButton.setEnabled(enabled);

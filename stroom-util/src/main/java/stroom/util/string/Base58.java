@@ -73,7 +73,7 @@ public class Base58 {
         }
         // Convert base-256 digits to base-58 digits (plus conversion to ASCII characters)
         input = Arrays.copyOf(input, input.length); // since we modify it in-place
-        char[] encoded = new char[input.length * 2]; // upper bound
+        final char[] encoded = new char[input.length * 2]; // upper bound
         int outputStart = encoded.length;
         for (int inputStart = zeros; inputStart < input.length; ) {
             encoded[--outputStart] = ALPHABET[divmod(input, inputStart, 256, 58)];
@@ -98,15 +98,15 @@ public class Base58 {
      * @param input the base58-encoded string to decode
      * @return the decoded data bytes
      */
-    public static byte[] decode(String input) {
+    public static byte[] decode(final String input) {
         if (input.length() == 0) {
             return new byte[0];
         }
         // Convert the base58-encoded ASCII chars to a base58 byte sequence (base58 digits).
-        byte[] input58 = new byte[input.length()];
+        final byte[] input58 = new byte[input.length()];
         for (int i = 0; i < input.length(); ++i) {
-            char c = input.charAt(i);
-            int digit = c < 128
+            final char c = input.charAt(i);
+            final int digit = c < 128
                     ? INDEXES[c]
                     : -1;
             if (digit < 0) {
@@ -120,7 +120,7 @@ public class Base58 {
             ++zeros;
         }
         // Convert base-58 digits to base-256 digits.
-        byte[] decoded = new byte[input.length()];
+        final byte[] decoded = new byte[input.length()];
         int outputStart = decoded.length;
         for (int inputStart = zeros; inputStart < input58.length; ) {
             decoded[--outputStart] = divmod(input58, inputStart, 58, 256);
@@ -136,7 +136,7 @@ public class Base58 {
         return Arrays.copyOfRange(decoded, outputStart - zeros, decoded.length);
     }
 
-    public static BigInteger decodeToBigInteger(String input) {
+    public static BigInteger decodeToBigInteger(final String input) {
         return new BigInteger(1, decode(input));
     }
 
@@ -152,12 +152,12 @@ public class Base58 {
      * @param divisor    the number to divide by (up to 256)
      * @return the remainder of the division operation
      */
-    private static byte divmod(byte[] number, int firstDigit, int base, int divisor) {
+    private static byte divmod(final byte[] number, final int firstDigit, final int base, final int divisor) {
         // this is just long division which accounts for the base of the input digits
         int remainder = 0;
         for (int i = firstDigit; i < number.length; i++) {
-            int digit = (int) number[i] & 0xFF;
-            int temp = remainder * base + digit;
+            final int digit = (int) number[i] & 0xFF;
+            final int temp = remainder * base + digit;
             number[i] = (byte) (temp / divisor);
             remainder = temp % divisor;
         }

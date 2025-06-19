@@ -30,13 +30,13 @@ import java.util.function.Consumer;
 
 public interface UserService {
 
-    default User getOrCreateUser(String subjectId) {
+    default User getOrCreateUser(final String subjectId) {
         return getOrCreateUser(UserDesc.builder(subjectId)
                 .displayName(subjectId)
                 .build(), null);
     }
 
-    default User getOrCreateUser(UserDesc userDesc) {
+    default User getOrCreateUser(final UserDesc userDesc) {
         return getOrCreateUser(userDesc, null);
     }
 
@@ -44,7 +44,7 @@ public interface UserService {
 
     Optional<User> getUserBySubjectId(String subjectId);
 
-    default User getOrCreateUserGroup(String groupName) {
+    default User getOrCreateUserGroup(final String groupName) {
         return getOrCreateUserGroup(groupName, null);
     }
 

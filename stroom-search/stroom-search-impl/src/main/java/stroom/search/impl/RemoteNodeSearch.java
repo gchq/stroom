@@ -107,7 +107,7 @@ public class RemoteNodeSearch implements NodeSearch {
                 RemoteSearchResource.START_PATH_PART);
 
         try {
-            try (Response response = webTargetFactory
+            try (final Response response = webTargetFactory
                     .create(url)
                     .request(MediaType.APPLICATION_JSON)
                     .post(Entity.json(nodeSearchTask))) {
@@ -119,7 +119,7 @@ public class RemoteNodeSearch implements NodeSearch {
 
                 return response.readEntity(Boolean.class);
             }
-        } catch (Throwable e) {
+        } catch (final Throwable e) {
             LOGGER.debug(e::getMessage, e);
             throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
         }
@@ -128,7 +128,7 @@ public class RemoteNodeSearch implements NodeSearch {
     private Boolean pollRemoteSearch(final String nodeName,
                                      final String queryKey,
                                      final ResultStore resultCollector) throws IOException {
-        boolean complete;
+        final boolean complete;
         final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
                 + ResourcePaths.buildAuthenticatedApiPath(
                 RemoteSearchResource.BASE_PATH,
@@ -158,7 +158,7 @@ public class RemoteNodeSearch implements NodeSearch {
             WebTarget webTarget = webTargetFactory.create(url);
             webTarget = UriBuilderUtil.addParam(webTarget, "queryKey", queryKey);
 
-            try (Response response = webTarget
+            try (final Response response = webTarget
                     .request(MediaType.APPLICATION_JSON)
                     .get()) {
                 if (response.getStatus() == Status.NOT_FOUND.getStatusCode()) {
@@ -169,7 +169,7 @@ public class RemoteNodeSearch implements NodeSearch {
 
                 return response.readEntity(Boolean.class);
             }
-        } catch (Throwable e) {
+        } catch (final Throwable e) {
             LOGGER.debug(e::getMessage, e);
             throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
         }

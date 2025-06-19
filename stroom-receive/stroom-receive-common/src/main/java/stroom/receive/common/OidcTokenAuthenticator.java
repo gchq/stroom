@@ -31,9 +31,9 @@ public class OidcTokenAuthenticator implements AuthenticatorFilter {
         if (foundToken) {
             try {
                 optUserIdentity = userIdentityFactory.getApiUserIdentity(request);
-            } catch (StroomStreamException e) {
+            } catch (final StroomStreamException e) {
                 throw e;
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw new StroomStreamException(
                         StroomStatusCode.CLIENT_TOKEN_NOT_AUTHENTICATED, attributeMap, e.getMessage());
             }

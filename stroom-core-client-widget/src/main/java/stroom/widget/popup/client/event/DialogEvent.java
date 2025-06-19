@@ -57,7 +57,7 @@ public class DialogEvent extends GwtEvent<Handler> {
     }
 
     @Override
-    protected void dispatch(Handler handler) {
+    protected void dispatch(final Handler handler) {
         handler.onDialogAction(this);
     }
 

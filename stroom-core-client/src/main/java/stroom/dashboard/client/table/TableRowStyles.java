@@ -29,7 +29,7 @@ public class TableRowStyles implements RowStyles<TableRow> {
     public String getStyleNames(final TableRow row, final int rowIndex) {
         final ClassNameBuilder classNameBuilder = new ClassNameBuilder();
         if (row != null && row.getMatchingRule() != null && !userPreferencesManager.isHideConditionalStyles()) {
-            ConditionalFormattingRule rule = conditionalFormattingRules.get(row.getMatchingRule());
+            final ConditionalFormattingRule rule = conditionalFormattingRules.get(row.getMatchingRule());
             if (rule != null) {
                 // Fixed styles.
                 if (rule.getFormattingType() == null ||

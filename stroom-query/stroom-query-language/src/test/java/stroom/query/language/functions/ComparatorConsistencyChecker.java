@@ -88,7 +88,7 @@ class ComparatorConsistencyChecker<T> {
         }
     }
 
-    private void checkEquals(final Obj<T> o1, Obj<T> o2, final Comparator<T> comparator) {
+    private void checkEquals(final Obj<T> o1, final Obj<T> o2, final Comparator<T> comparator) {
         final int diff = comparator.compare(o2.value, o1.value);
         if (diff != 0) {
             throw new RuntimeException("Objects " + o1 + " and " + o2 + " are not equal.");
@@ -120,7 +120,7 @@ class ComparatorConsistencyChecker<T> {
                              final Set<Obj<T>> all) {
         if (depth < 2) {
             for (final Obj<T> o : obj.less) {
-                boolean changed = all.addAll(o.less);
+                final boolean changed = all.addAll(o.less);
                 if (changed) {
                     throw new RuntimeException("Unexpected child objects");
                 }
@@ -137,7 +137,7 @@ class ComparatorConsistencyChecker<T> {
                                 final Set<Obj<T>> all) {
         if (depth < 2) {
             for (final Obj<T> o : obj.greater) {
-                boolean changed = all.addAll(o.greater);
+                final boolean changed = all.addAll(o.greater);
                 if (changed) {
                     throw new RuntimeException("Unexpected child objects");
                 }
@@ -160,7 +160,7 @@ class ComparatorConsistencyChecker<T> {
         }
     }
 
-    private void checkLessThan(final Obj<T> o1, Obj<T> o2, final Comparator<T> comparator) {
+    private void checkLessThan(final Obj<T> o1, final Obj<T> o2, final Comparator<T> comparator) {
         final int diff = comparator.compare(o1.value, o2.value);
         if (diff < 0) {
             throw new RuntimeException("Object " + o2 + " is not less than " + o1 + ".");
@@ -196,7 +196,7 @@ class ComparatorConsistencyChecker<T> {
         }
     }
 
-    private void checkGreaterThan(final Obj<T> o1, Obj<T> o2, final Comparator<T> comparator) {
+    private void checkGreaterThan(final Obj<T> o1, final Obj<T> o2, final Comparator<T> comparator) {
         final int diff = comparator.compare(o1.value, o2.value);
         if (diff > 0) {
             throw new RuntimeException("Object " + o2 + " is not greater than " + o1 + ".");

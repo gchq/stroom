@@ -85,12 +85,12 @@ class GitRepoResourceImpl implements GitRepoResource {
         GitRepoResponse response;
         try {
             LOGGER.info("Pushing to Git repo: '{}'", gitRepoPushDto.getGitRepoDoc().getUrl());
-            List<Message> messages = gitRepoStorageServiceProvider.get()
+            final List<Message> messages = gitRepoStorageServiceProvider.get()
                             .exportDoc(gitRepoPushDto.getGitRepoDoc(),
                                        gitRepoPushDto.getCommitMessage(),
                                        true);
             response = this.createResponse(messages);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             response = new GitRepoResponse(false, e.getMessage());
         }
         return response;
@@ -109,10 +109,10 @@ class GitRepoResourceImpl implements GitRepoResource {
         GitRepoResponse response;
         try {
             LOGGER.info("Pulling from Git repo: {}", gitRepoDoc.getUrl());
-            List<Message> messages = gitRepoStorageServiceProvider.get()
+            final List<Message> messages = gitRepoStorageServiceProvider.get()
                     .importDoc(gitRepoDoc);
             response = this.createResponse(messages);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             response = new GitRepoResponse(false, e.getMessage());
         }
         return response;
@@ -131,10 +131,10 @@ class GitRepoResourceImpl implements GitRepoResource {
      * @param messages The collection of messages for the export process.
      * @return the response for the UI. Never returns null.
      */
-    private GitRepoResponse createResponse(List<Message> messages) {
+    private GitRepoResponse createResponse(final List<Message> messages) {
         Objects.requireNonNull(messages);
-        var buf = new StringBuilder("Success:\n");
-        for (var m : messages) {
+        final var buf = new StringBuilder("Success:\n");
+        for (final var m : messages) {
             buf.append(m);
             buf.append("\n");
         }

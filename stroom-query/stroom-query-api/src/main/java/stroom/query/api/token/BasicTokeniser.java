@@ -38,7 +38,7 @@ public class BasicTokeniser {
             throw new TokenException(null, "Empty query");
         }
 
-        char[] chars = string.toCharArray();
+        final char[] chars = string.toCharArray();
         final Token unknown = new Token(TokenType.UNKNOWN, chars, 0, chars.length - 1);
         tokens = Collections.singletonList(unknown);
 
@@ -513,7 +513,7 @@ public class BasicTokeniser {
         return out;
     }
 
-    private static boolean testChars(Token token, char[] test, int pos) {
+    private static boolean testChars(final Token token, final char[] test, final int pos) {
         if (pos + test.length - 1 > token.getEnd()) {
             return false;
         }

@@ -69,8 +69,8 @@ public class CompiledWindow {
                 offsets = new ArrayList<>();
                 SimpleDuration offset = SimpleDuration.ZERO;
 
-                LocalDateTime reference = LocalDateTime.of(1970, 1, 1, 0, 0, 0);
-                LocalDateTime maximum = SimpleDurationUtil.plus(reference, windowSize);
+                final LocalDateTime reference = LocalDateTime.of(1970, 1, 1, 0, 0, 0);
+                final LocalDateTime maximum = SimpleDurationUtil.plus(reference, windowSize);
                 LocalDateTime added = reference;
 
                 while (added.isBefore(maximum) || added.equals(maximum)) {
@@ -123,7 +123,7 @@ public class CompiledWindow {
 
         // Fix or insert time column.
         if (timeField != null) {
-            Column timeColumn = columnMap.get(timeField);
+            final Column timeColumn = columnMap.get(timeField);
             if (timeColumn != null) {
                 final int index = columns.indexOf(timeColumn);
                 columns.set(index, timeColumn
@@ -146,7 +146,7 @@ public class CompiledWindow {
         // Add period columns.
         for (int i = 0; i < offsets.size(); i++) {
             final String fieldId = FIELD_PREFIX + i;
-            Expression expression = expressionMap.get(fieldId);
+            final Expression expression = expressionMap.get(fieldId);
             final String expressionString = expression.toString();
             final Column column = columnMap.get(fieldId);
             if (column != null) {
@@ -210,7 +210,7 @@ public class CompiledWindow {
         public void process(final Val[] values,
                             final BiConsumer<Val[], Integer> consumer) {
             int iteration = 0;
-            for (SimpleDuration offset : offsets) {
+            for (final SimpleDuration offset : offsets) {
                 final Val[] modifiedValues = addWindow(values, offset);
                 consumer.accept(modifiedValues, iteration);
                 iteration++;

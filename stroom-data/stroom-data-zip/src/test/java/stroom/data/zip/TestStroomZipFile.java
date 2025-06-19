@@ -20,7 +20,7 @@ class TestStroomZipFile {
 
     @Test
     void testRealZip1() throws IOException {
-        Path uniqueTestDir = Files.createTempDirectory("stroom");
+        final Path uniqueTestDir = Files.createTempDirectory("stroom");
         assertThat(Files.isDirectory(uniqueTestDir))
                 .isTrue();
         final Path file = Files.createTempFile(uniqueTestDir, "TestStroomZipFile", ".zip");

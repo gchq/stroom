@@ -78,7 +78,7 @@ public class LmdbEnvDirFactory {
                         localDir.toAbsolutePath(),
                         lmdbConfig.getFullPathStr(LmdbConfig.LOCAL_DIR_PROP_NAME)));
                 Files.createDirectories(localDir);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new RuntimeException(
                         LogUtil.message("Error ensuring directory {} exists (from configuration property {})",
                                 localDir.toAbsolutePath(),
@@ -113,7 +113,7 @@ public class LmdbEnvDirFactory {
                 LOGGER.debug(() -> "Ensuring existence of directory " + envDir.toAbsolutePath().normalize());
                 try {
                     Files.createDirectories(envDir);
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     throw new RuntimeException(LogUtil.message(
                             "Error creating directory {}: {}", envDir.toAbsolutePath().normalize(), e));
                 }

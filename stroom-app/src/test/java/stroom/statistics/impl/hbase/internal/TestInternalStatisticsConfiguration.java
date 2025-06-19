@@ -39,11 +39,11 @@ class TestInternalStatisticsConfiguration extends AbstractCoreIntegrationTest {
         internalStatisticsConfig.setEnabledStoreTypes(List.of(
                 StatisticStoreDoc.TYPE));
 
-        List<String> enabledStoreTypes = internalStatisticsConfig.getEnabledStoreTypes();
+        final List<String> enabledStoreTypes = internalStatisticsConfig.getEnabledStoreTypes();
 
         Arrays.stream(InternalStatisticKey.values()).forEach(key -> {
             LOGGER.info("Checking docRefs for key {}", key);
-            List<DocRef> docRefs = internalStatisticsConfig.getEnabledDocRefs(key);
+            final List<DocRef> docRefs = internalStatisticsConfig.getEnabledDocRefs(key);
 
             assertThat(docRefs)
                     .isNotNull();
@@ -67,11 +67,11 @@ class TestInternalStatisticsConfiguration extends AbstractCoreIntegrationTest {
                 StatisticStoreDoc.TYPE,
                 StroomStatsStoreDoc.TYPE));
 
-        List<String> enabledStoreTypes = internalStatisticsConfig.getEnabledStoreTypes();
+        final List<String> enabledStoreTypes = internalStatisticsConfig.getEnabledStoreTypes();
 
         Arrays.stream(InternalStatisticKey.values()).forEach(key -> {
             LOGGER.info("Checking docRefs for key {}", key);
-            List<DocRef> docRefs = internalStatisticsConfig.getEnabledDocRefs(key);
+            final List<DocRef> docRefs = internalStatisticsConfig.getEnabledDocRefs(key);
 
             assertThat(docRefs)
                     .isNotNull();

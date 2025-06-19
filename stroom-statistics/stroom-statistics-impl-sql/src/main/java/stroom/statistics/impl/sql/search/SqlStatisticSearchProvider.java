@@ -287,14 +287,14 @@ public class SqlStatisticSearchProvider implements SearchProvider {
         return resultStore;
     }
 
-    private Sizes extractValues(String value) {
+    private Sizes extractValues(final String value) {
         if (value != null) {
             try {
                 return Sizes.create(Arrays.stream(value.split(","))
                         .map(String::trim)
                         .map(Long::valueOf)
                         .collect(Collectors.toList()));
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.warn(e.getMessage());
             }
         }

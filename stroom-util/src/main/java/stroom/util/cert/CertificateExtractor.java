@@ -32,7 +32,7 @@ public interface CertificateExtractor {
      *
      * @return null or the CN name
      */
-    static String extractCNFromDN(String dn) {
+    static String extractCNFromDN(final String dn) {
         LOGGER.debug(() -> "extractCNFromDN DN = " + dn);
 
         if (dn == null) {

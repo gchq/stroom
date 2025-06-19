@@ -55,7 +55,7 @@ public class DateGrid extends Grid {
         cellList.add(cell);
     }
 
-    public DateCell getCell(int i) {
+    public DateCell getCell(final int i) {
         return cellList.get(i);
     }
 
@@ -64,7 +64,7 @@ public class DateGrid extends Grid {
     }
 
     @Override
-    public void onBrowserEvent(Event event) {
+    public void onBrowserEvent(final Event event) {
         if (event.getTypeInt() == Event.ONKEYDOWN) {
             navigate(event.getKeyCode());
 
@@ -105,10 +105,10 @@ public class DateGrid extends Grid {
         setKeyboardSelectedCell(cellList.indexOf(cell));
     }
 
-    public final void setSelected(DateCell cell) {
+    public final void setSelected(final DateCell cell) {
         setKeyboardSelectedCell(cell);
 
-        DateCell last = selectedCell;
+        final DateCell last = selectedCell;
         selectedCell = cell;
 
         if (last != null) {
@@ -119,11 +119,11 @@ public class DateGrid extends Grid {
         }
     }
 
-    boolean isActive(DateCell cell) {
+    boolean isActive(final DateCell cell) {
         return cell != null && cell.isEnabled();
     }
 
-    public void navigate(int keyCode) {
+    public void navigate(final int keyCode) {
         switch (keyCode) {
             case KeyCodes.KEY_UP: {
                 if (keyboardSelectionIndex >= 7) {

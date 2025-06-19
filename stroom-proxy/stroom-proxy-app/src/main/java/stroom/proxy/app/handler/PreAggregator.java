@@ -360,7 +360,7 @@ public class PreAggregator {
             Files.delete(dir);
             LOGGER.debug("Deleted empty dir {}", dir);
             NullSafe.run(onSuccessfulDelete);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             LOGGER.error("Unable to delete empty dir {}", dir, e);
         }
     }
@@ -539,7 +539,7 @@ public class PreAggregator {
             aggregateItemCountHistogram.update(aggregateState.itemCount);
             aggregateByteSizeHistogram.update(aggregateState.totalBytes);
             aggregateAgeHistogram.update(aggregateState.getAge().toMillis());
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error capturing aggregate stats: {}", LogUtil.exceptionMessage(e), e);
         }
     }
@@ -554,7 +554,7 @@ public class PreAggregator {
         final Path parentDir = tempSplittingDirProvider.get();
         final List<PartDir> partDirs = new ArrayList<>();
 
-        try (ZipFile zipFile = ZipUtil.createZipFile(fileGroup.getZip())) {
+        try (final ZipFile zipFile = ZipUtil.createZipFile(fileGroup.getZip())) {
             final Iterator<ZipArchiveEntry> entries = zipFile.getEntries().asIterator();
             if (!entries.hasNext()) {
                 throw new RuntimeException("Unexpected empty zip file");

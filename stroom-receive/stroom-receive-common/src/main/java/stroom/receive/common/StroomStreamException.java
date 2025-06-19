@@ -60,7 +60,7 @@ public class StroomStreamException extends RuntimeException {
 
     public static StroomStreamException create(final Throwable ex, final AttributeMap attributeMap) {
         final RuntimeException unwrappedException = unwrap(ex, attributeMap);
-        if (unwrappedException instanceof StroomStreamException stroomStreamException) {
+        if (unwrappedException instanceof final StroomStreamException stroomStreamException) {
             return stroomStreamException;
         } else {
             return new StroomStreamException(
@@ -78,11 +78,11 @@ public class StroomStreamException extends RuntimeException {
         } else if (ex instanceof AuthenticationException) {
             return new StroomStreamException(
                     StroomStatusCode.CLIENT_TOKEN_OR_CERT_NOT_AUTHENTICATED, attributeMap, ex.getMessage());
-        } else if (ex instanceof StroomStreamException stroomStreamException) {
+        } else if (ex instanceof final StroomStreamException stroomStreamException) {
             return stroomStreamException;
         } else if (ex.getCause() != null) {
             return unwrap(ex.getCause(), attributeMap);
-        } else if (ex instanceof RuntimeException runtimeException) {
+        } else if (ex instanceof final RuntimeException runtimeException) {
             return runtimeException;
         } else {
             return new RuntimeException(ex);

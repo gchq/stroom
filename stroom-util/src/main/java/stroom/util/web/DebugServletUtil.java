@@ -30,19 +30,19 @@ import java.util.Enumeration;
  */
 public final class DebugServletUtil {
 
-    public static void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    public static void doPost(final HttpServletRequest req,
+                              final HttpServletResponse resp) throws ServletException, IOException {
         final StringBuilder debugResponse = new StringBuilder();
 
         debugResponse.append("\n");
         debugResponse.append("HTTP Header\n");
         debugResponse.append("===========\n");
 
-        @SuppressWarnings("unchecked")
-        Enumeration<String> headers = req.getHeaderNames();
+        @SuppressWarnings("unchecked") final Enumeration<String> headers = req.getHeaderNames();
 
         while (headers.hasMoreElements()) {
-            String headerKey = headers.nextElement();
-            String headerValue = req.getHeader(headerKey);
+            final String headerKey = headers.nextElement();
+            final String headerValue = req.getHeader(headerKey);
             debugResponse.append("[" + headerKey + "]=[" + headerValue + "]\n");
         }
 
@@ -55,7 +55,7 @@ public final class DebugServletUtil {
 
         debugResponse.append("HTTP Payload\n");
         debugResponse.append("============\n");
-        String payload = StreamUtil.streamToString(req.getInputStream());
+        final String payload = StreamUtil.streamToString(req.getInputStream());
         debugResponse.append(payload + "\n");
 
         debugResponse.append("\n");

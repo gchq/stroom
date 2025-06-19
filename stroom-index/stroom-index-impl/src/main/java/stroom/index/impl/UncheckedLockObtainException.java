@@ -4,7 +4,7 @@ import java.io.IOException;
 
 public class UncheckedLockObtainException extends RuntimeException {
 
-    public UncheckedLockObtainException(IOException e) {
+    public UncheckedLockObtainException(final IOException e) {
         super(e);
     }
 }

@@ -39,7 +39,7 @@ public class ApiKeysPlugin extends MonitoringPlugin<ApiKeysPresenter> {
     }
 
     @Override
-    protected void addChildItems(BeforeRevealMenubarEvent event) {
+    protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(getRequiredAppPermission())) {
             MenuKeys.addSecurityMenu(event.getMenuItems());
             addMenuItem(event);

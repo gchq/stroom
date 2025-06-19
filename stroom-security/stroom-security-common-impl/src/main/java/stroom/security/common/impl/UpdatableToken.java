@@ -106,7 +106,7 @@ public class UpdatableToken implements Refreshable, HasJwtClaims, HasJwt {
 
     @Override
     public boolean isRefreshRequired(final RefreshMode refreshMode) {
-        boolean hasPassedThreshold = System.currentTimeMillis() >= getExpireTimeWithBufferEpochMs(refreshMode);
+        final boolean hasPassedThreshold = System.currentTimeMillis() >= getExpireTimeWithBufferEpochMs(refreshMode);
         boolean isRefreshRequired = hasPassedThreshold;
         LOGGER.trace("hasPassedThreshold: {}", hasPassedThreshold);
         if (additionalRefreshCondition != null) {
@@ -131,7 +131,7 @@ public class UpdatableToken implements Refreshable, HasJwtClaims, HasJwt {
                                 Objects.requireNonNull(fetchTokenResult.jwtClaims()));
                         NullSafe.consume(this, onRefreshAction);
                         didWork = true;
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         LOGGER.error("Error updating token for userIdentity: {}",
                                 LogUtil.typedValue(userIdentity), e);
                         throw e;
@@ -175,7 +175,7 @@ public class UpdatableToken implements Refreshable, HasJwtClaims, HasJwt {
                     tokenResponse,
                     jwtClaims);
 
-        } catch (MalformedClaimException e) {
+        } catch (final MalformedClaimException e) {
             throw new RuntimeException("Unable to extract expiry time from jwtClaims " + jwtClaims, e);
         }
     }
@@ -196,7 +196,7 @@ public class UpdatableToken implements Refreshable, HasJwtClaims, HasJwt {
         try {
             session.getCreationTime();
             return true;
-        } catch (IllegalStateException e) {
+        } catch (final IllegalStateException e) {
             // session has been invalidated
             LOGGER.warn("Invalid session - {}", e.getMessage());
             return false;

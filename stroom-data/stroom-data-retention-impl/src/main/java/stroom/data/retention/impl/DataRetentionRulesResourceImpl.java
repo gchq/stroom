@@ -64,7 +64,7 @@ class DataRetentionRulesResourceImpl implements DataRetentionRulesResource {
 
     @Override
     public DataRetentionDeleteSummaryResponse getRetentionDeletionSummary(
-            @Parameter(description = "request", required = true) DataRetentionDeleteSummaryRequest request) {
+            @Parameter(description = "request", required = true) final DataRetentionDeleteSummaryRequest request) {
         return new DataRetentionDeleteSummaryResponse(
                 metaServiceProvider.get()
                         .getRetentionDeleteSummary(

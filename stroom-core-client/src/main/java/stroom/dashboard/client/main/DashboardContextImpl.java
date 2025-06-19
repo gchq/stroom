@@ -110,7 +110,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
 
     public SafeHtml toSafeHtml() {
         final TableBuilder tb = new TableBuilder();
-        List<ComponentState> componentStates = getComponentStates();
+        final List<ComponentState> componentStates = getComponentStates();
         printContext(tb, componentStates);
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
         htmlBuilder.div(tb::write, Attribute.className("infoTable"));
@@ -161,8 +161,8 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                     .collect(Collectors.toList());
             for (final Component component : componentList) {
                 List<Param> paramList = new ArrayList<>();
-                List<List<Param>> selectionList = new ArrayList<>();
-                List<ColumnSelectionFilter> filterList = new ArrayList<>();
+                final List<List<Param>> selectionList = new ArrayList<>();
+                final List<ColumnSelectionFilter> filterList = new ArrayList<>();
                 if (component instanceof final HasParams hasParams) {
                     final String start = keyPrefix + "component." + component.getId() + ".param.";
                     final List<Param> componentParams = hasParams.getParams();
@@ -277,7 +277,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
         }
 
         final List<ComponentState> componentStates = getComponentStates();
-        List<ExpressionOperator> list = new ArrayList<>();
+        final List<ExpressionOperator> list = new ArrayList<>();
         for (final ComponentSelectionHandler selectionHandler : selectionHandlers) {
             if (selectionHandler.isEnabled()) {
                 replaceComponentSelection(componentStates,

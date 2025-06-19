@@ -89,7 +89,7 @@ class Source extends StroomExtensionFunctionCall {
         endElement(contentHandler, "source");
         contentHandler.endDocument();
 
-        Sequence sequence = builder.getCurrentRoot();
+        final Sequence sequence = builder.getCurrentRoot();
 
         // Reset the builder, detaching it from the constructed
         // document.

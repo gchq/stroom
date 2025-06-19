@@ -135,7 +135,7 @@ class TestDocRefInfoCache {
         Mockito.when(mockExplorerActionHandlers.stream())
                 .thenReturn(Stream.of(new MyFolderExplorerActionHandler()));
 
-        Optional<DocRefInfo> docRefInfo = docRefInfoCache.get(stripType(docRef));
+        final Optional<DocRefInfo> docRefInfo = docRefInfoCache.get(stripType(docRef));
 
         assertThat(docRefInfo).isNotEmpty();
         assertThat(docRefInfo.get().getDocRef()).isEqualTo(docRef);
@@ -144,7 +144,7 @@ class TestDocRefInfoCache {
 
     @Test
     void testGet_noName() {
-        DocRef docRef = DOC_REF_1;
+        final DocRef docRef = DOC_REF_1;
         final Optional<DocRefInfo> docRefInfo = docRefInfoCache.get(docRef.withoutName());
 
         assertThat(docRefInfo)

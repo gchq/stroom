@@ -95,7 +95,7 @@ public class Pager extends AbstractPager {
         refresh.setEnabled(false);
     }
 
-    private void setupButton(SvgButton button) {
+    private void setupButton(final SvgButton button) {
         button.setEnabled(false);
     }
 

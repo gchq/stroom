@@ -195,7 +195,7 @@ class TestDataFeedKeyServiceImpl {
                 DATA_FEED_KEY_HASHERS,
                 new CacheManagerImpl());
         final List<KeyWithHash> keys = new ArrayList<>(15);
-        Instant time = Instant.now();
+        final Instant time = Instant.now();
         for (int accId = 1; accId <= 3; accId++) {
             for (int i = 0; i < 5; i++) {
                 final KeyWithHash keyWithHash = DataFeedKeyGenerator.generateRandomKey(
@@ -240,8 +240,8 @@ class TestDataFeedKeyServiceImpl {
                 new CacheManagerImpl());
         final List<KeyWithHash> keys = new ArrayList<>(5);
         final List<KeyWithHash> keysToUse = new ArrayList<>(5);
-        Instant time = Instant.now();
-        int accId = 1;
+        final Instant time = Instant.now();
+        final int accId = 1;
         // Five unique keys, each duplicated 3 times
         for (int i = 0; i < 5; i++) {
             final KeyWithHash keyWithHash = DataFeedKeyGenerator.generateRandomKey(

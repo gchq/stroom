@@ -309,7 +309,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                         final LongAdder totalTasksCreated) {
         // Don't try and create tasks for this filter if we didn't manage to create any last time and not much time has
         // passed since the last attempt.
-        ProcessorFilterTracker tracker = filter.getProcessorFilterTracker();
+        final ProcessorFilterTracker tracker = filter.getProcessorFilterTracker();
         if (tracker.getLastPollTaskCount() == null ||
             tracker.getLastPollTaskCount() > 0 ||
             Instant
@@ -668,7 +668,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
      */
     static ExpressionOperator sanitiseAndValidateExpression(final ExpressionOperator expressionOperator) {
         if (expressionOperator != null) {
-            ExpressionOperator copy;
+            final ExpressionOperator copy;
             if (expressionOperator.containsField(MetaFields.STATUS.getFldName())) {
                 // Remove any status terms in case the UI has left any in. This is mostly to deal
                 // with a legacy situation where the UI was including status terms in re-process filters.
@@ -690,7 +690,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                     MetaFields.getProcessorFilterFields());
             try {
                 expressionValidator.validate(copy);
-            } catch (ExpressionValidationException e) {
+            } catch (final ExpressionValidationException e) {
                 LOGGER.debug(() -> LogUtil.message(
                         "sanitiseAndValidateExpression() - Error validating expression: {} - {}",
                         copy, LogUtil.exceptionMessage(e)));
@@ -703,8 +703,8 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
     }
 
     private static boolean isNotStatusTerm(final ExpressionItem expressionItem) {
-        boolean isStatusTerm = expressionItem instanceof ExpressionTerm term
-                               && MetaFields.STATUS.getFldName().equals(term.getField());
+        final boolean isStatusTerm = expressionItem instanceof final ExpressionTerm term
+                                     && MetaFields.STATUS.getFldName().equals(term.getField());
         return !isStatusTerm;
     }
 
@@ -775,7 +775,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         }
     }
 
-    private List<Meta> findMeta(Function<FindMetaCriteria, ResultPage<Meta>> findFunc,
+    private List<Meta> findMeta(final Function<FindMetaCriteria, ResultPage<Meta>> findFunc,
                                 final ExpressionOperator.Builder builder,
                                 final QueryField idField,
                                 final int length,

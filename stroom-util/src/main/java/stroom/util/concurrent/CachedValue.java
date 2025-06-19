@@ -158,7 +158,7 @@ public class CachedValue<V, S> {
                     try {
                         checkAndUpdateUnderLock();
                         LOGGER.debug("getValueAsync() - Completed async task");
-                    } catch (Throwable e) {
+                    } catch (final Throwable e) {
                         LOGGER.error("getValueAsync() - Error running async checkAndUpdateUnderLock(): {}",
                                 LogUtil.exceptionMessage(e), e);
                     } finally {

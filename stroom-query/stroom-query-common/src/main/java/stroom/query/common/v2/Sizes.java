@@ -91,14 +91,14 @@ public class Sizes {
         return new Sizes(sizes, defaultSize);
     }
 
-    public static Sizes parse(String value) throws ParseException {
+    public static Sizes parse(final String value) throws ParseException {
         if (value != null) {
             try {
                 return Sizes.create(Arrays.stream(value.split(","))
                         .map(String::trim)
                         .map(Long::valueOf)
                         .collect(Collectors.toList()));
-            } catch (RuntimeException e) {
+            } catch (final RuntimeException e) {
                 throw new ParseException(e.getMessage(), 0);
             }
         }

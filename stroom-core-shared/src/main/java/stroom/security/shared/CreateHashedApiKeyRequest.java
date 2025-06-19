@@ -56,7 +56,7 @@ public class CreateHashedApiKeyRequest {
     }
 
     public static Builder builder(final CreateHashedApiKeyRequest copy) {
-        Builder builder = new Builder();
+        final Builder builder = new Builder();
         builder.owner = copy.getOwner();
         builder.expireTimeMs = copy.getExpireTimeMs();
         builder.name = copy.getName();

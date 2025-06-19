@@ -93,7 +93,7 @@ public class FileStores {
                 .register();
     }
 
-    private long getStat(final Key key, Function<StoreStats, Long> statFunc) {
+    private long getStat(final Key key, final Function<StoreStats, Long> statFunc) {
         return NullSafe.getOrElse(
                 statsMapUpdater.getValue(),
                 map -> map.get(key),

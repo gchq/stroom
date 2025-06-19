@@ -44,7 +44,7 @@ public class TestClassLogger {
                 if (!Files.isDirectory(TEST_LOG_DIR)) {
                     doTestClassLogging = false;
                 }
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 doTestClassLogging = false;
             }
             final long threadId = Thread.currentThread().getId();
@@ -79,7 +79,7 @@ public class TestClassLogger {
                             new StandardOpenOption[]{
                                     StandardOpenOption.CREATE,
                                     StandardOpenOption.APPEND});
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     throw new RuntimeException(LogUtil.message("Error writing file {}: {}",
                             logFilePath.toAbsolutePath(), e.getMessage()), e);
                 }

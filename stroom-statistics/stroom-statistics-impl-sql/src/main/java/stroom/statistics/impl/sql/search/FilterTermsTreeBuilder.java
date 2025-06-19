@@ -81,7 +81,7 @@ public class FilterTermsTreeBuilder {
     }
 
     private static PrintableNode convertTermNode(final ExpressionTerm oldNode, final Set<String> fieldBlackList) {
-        PrintableNode newNode;
+        final PrintableNode newNode;
 
         if (fieldBlackList != null && fieldBlackList.contains(oldNode.getField())) {
             // this term is black listed so ignore it

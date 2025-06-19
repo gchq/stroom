@@ -27,8 +27,8 @@ public enum ValidationSeverity {
         return payloadClass;
     }
 
-    public static ValidationSeverity fromPayloads(Set<Class<? extends Payload>> payloads) {
-        ValidationSeverity result;
+    public static ValidationSeverity fromPayloads(final Set<Class<? extends Payload>> payloads) {
+        final ValidationSeverity result;
         if (payloads == null || payloads.isEmpty()) {
             // ERROR is assumed if we have no other info
             result = ERROR;

@@ -172,7 +172,7 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
                     DateTimeSettings.builder().referenceTime(effectiveExecutionTime.toEpochMilli()).build(),
                     false);
             final ExpressionContext expressionContext = expressionContextFactory.createContext(sampleRequest);
-            SearchRequest mappedRequest = searchRequestFactory.create(query, sampleRequest, expressionContext);
+            final SearchRequest mappedRequest = searchRequestFactory.create(query, sampleRequest, expressionContext);
 
             // Fix table result requests.
             final List<ResultRequest> resultRequests = mappedRequest.getResultRequests();
@@ -399,7 +399,7 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
         //  we can pass some kind of json path query to the persistence layer that the DBPersistence
         //  can translate to a MySQL json path query.
         final List<AnalyticRuleDoc> currentRules = new ArrayList<>();
-        List<DocRef> docRefs = analyticRuleStore.list();
+        final List<DocRef> docRefs = analyticRuleStore.list();
         for (final DocRef docRef : docRefs) {
             try {
                 final AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(docRef);

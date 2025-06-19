@@ -282,7 +282,7 @@ public enum TokenType {
         return Collections.emptySet();
     }
 
-    public static boolean isString(AbstractToken token) {
+    public static boolean isString(final AbstractToken token) {
         return token != null && ALL_STRINGS.contains(token.getTokenType());
     }
 

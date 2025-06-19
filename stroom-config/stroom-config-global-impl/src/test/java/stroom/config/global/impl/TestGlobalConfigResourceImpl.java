@@ -246,9 +246,11 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
 
         final String subPath = "";
 
-        ConfigProperty newConfigProperty = new ConfigProperty(PropertyPath.fromPathString("a.new.config.prop"));
+        final ConfigProperty newConfigProperty = new ConfigProperty(
+                PropertyPath.fromPathString("a.new.config.prop"));
 
-        ConfigProperty expectedConfigProperty = new ConfigProperty(PropertyPath.fromPathString("a.new.config.prop"));
+        final ConfigProperty expectedConfigProperty = new ConfigProperty(
+                PropertyPath.fromPathString("a.new.config.prop"));
         expectedConfigProperty.setId(1);
         expectedConfigProperty.setVersion(1);
 
@@ -265,11 +267,13 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
 
         initNodes();
 
-        ConfigProperty existingConfigProperty = new ConfigProperty(PropertyPath.fromPathString("a.new.config.prop"));
+        final ConfigProperty existingConfigProperty = new ConfigProperty(
+                PropertyPath.fromPathString("a.new.config.prop"));
         existingConfigProperty.setId(1);
         existingConfigProperty.setVersion(1);
 
-        ConfigProperty expectedConfigProperty = new ConfigProperty(PropertyPath.fromPathString("a.new.config.prop"));
+        final ConfigProperty expectedConfigProperty = new ConfigProperty(
+                PropertyPath.fromPathString("a.new.config.prop"));
         expectedConfigProperty.setId(1);
         expectedConfigProperty.setVersion(2);
 
@@ -289,8 +293,8 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
     void fetchExtendedUiConfig() {
         initNodes();
 
-        String subPath = GlobalConfigResource.FETCH_EXTENDED_UI_CONFIG_SUB_PATH;
-        ExtendedUiConfig expectedResponse = new ExtendedUiConfig();
+        final String subPath = GlobalConfigResource.FETCH_EXTENDED_UI_CONFIG_SUB_PATH;
+        final ExtendedUiConfig expectedResponse = new ExtendedUiConfig();
 
         final ExtendedUiConfig response = doGetTest(
                 subPath,
@@ -318,7 +322,7 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 .thenAnswer(invocation -> {
                     System.out.println("list called");
                     try {
-                        GlobalConfigCriteria criteria = invocation.getArgument(0);
+                        final GlobalConfigCriteria criteria = invocation.getArgument(0);
                         final ExpressionPredicateFactory expressionPredicateFactory = new ExpressionPredicateFactory();
 
                         Stream<ConfigProperty> stream = FULL_PROP_LIST.stream();
@@ -333,7 +337,7 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                                 .toList();
 
                         return new ListConfigResponse(list, "node1a");
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         e.printStackTrace(System.err);
                         throw e;
                     }
@@ -341,7 +345,7 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
 
         when(globalConfigService.fetch(Mockito.any()))
                 .thenAnswer(invocation -> {
-                    PropertyPath propertyPath = invocation.getArgument(0);
+                    final PropertyPath propertyPath = invocation.getArgument(0);
                     return FULL_PROP_LIST.stream()
                             .peek(configProperty -> {
                                 configProperty.setYamlOverrideValue(node.getNodeName());
@@ -352,7 +356,7 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
 
         when(globalConfigService.update(Mockito.any()))
                 .thenAnswer(invocation -> {
-                    ConfigProperty configProperty = invocation.getArgument(0);
+                    final ConfigProperty configProperty = invocation.getArgument(0);
                     configProperty.setId(1);
                     configProperty.setVersion(configProperty.getVersion() == null
                             ? 1

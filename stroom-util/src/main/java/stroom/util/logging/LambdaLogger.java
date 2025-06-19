@@ -61,7 +61,7 @@ public interface LambdaLogger extends Logger {
      * @param throwable The exception to log at DEBUG level only.
      * @param args      The message arguments, not including the throwable.
      */
-    default void errorAndDebug(final Throwable throwable, final String message, Object... args) {
+    default void errorAndDebug(final Throwable throwable, final String message, final Object... args) {
         try {
             error(() -> LogUtil.message(message + " (Enable debug for stack trace)", args));
             if (isDebugEnabled()) {
@@ -70,12 +70,12 @@ public interface LambdaLogger extends Logger {
                 } else {
                     // Add the throwable as another arg on the end
                     final int newLength = args.length + 1;
-                    Object[] newArgs = Arrays.copyOf(args, newLength);
+                    final Object[] newArgs = Arrays.copyOf(args, newLength);
                     newArgs[newLength - 1] = throwable;
                     debug(message, newArgs);
                 }
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             error("Error calling errorAndDebug: {}", LogUtil.exceptionMessage(e), e);
         }
     }
@@ -96,7 +96,7 @@ public interface LambdaLogger extends Logger {
             if (isDebugEnabled()) {
                 debug(messageSupplier.get(), throwable);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             error("Error calling errorAndDebug: {}", LogUtil.exceptionMessage(e), e);
         }
     }

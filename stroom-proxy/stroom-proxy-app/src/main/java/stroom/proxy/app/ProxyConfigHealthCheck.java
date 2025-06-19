@@ -22,7 +22,7 @@ public class ProxyConfigHealthCheck implements HasHealthCheck {
 
     @Override
     public Result getHealth() {
-        Map<String, Object> detailMap = HealthCheckUtils.beanToMap(proxyConfigProvider.get());
+        final Map<String, Object> detailMap = HealthCheckUtils.beanToMap(proxyConfigProvider.get());
 
         // We don't really want passwords appearing on the admin page so mask them out.
         HealthCheckUtils.maskPasswords(detailMap);

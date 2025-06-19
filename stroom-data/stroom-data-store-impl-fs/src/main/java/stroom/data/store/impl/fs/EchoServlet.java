@@ -40,7 +40,7 @@ public class EchoServlet extends HttpServlet implements IsServlet {
             ResourcePaths.addLegacyUnauthenticatedServletPrefix(PATH_PART));
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    protected void doPost(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
         try (final InputStream is = new BlockGZIPInputStream(req.getInputStream())) {
             resp.setStatus(200);
             StreamUtil.streamToStream(is, resp.getOutputStream());

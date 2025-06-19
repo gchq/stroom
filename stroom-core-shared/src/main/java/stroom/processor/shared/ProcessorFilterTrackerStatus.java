@@ -43,7 +43,7 @@ public enum ProcessorFilterTrackerStatus implements HasDisplayValue, HasPrimitiv
     private final String displayValue;
     private final byte primitiveValue;
 
-    ProcessorFilterTrackerStatus(final String displayValue, int primitiveValue) {
+    ProcessorFilterTrackerStatus(final String displayValue, final int primitiveValue) {
         this.displayValue = displayValue;
         this.primitiveValue = (byte) primitiveValue;
     }

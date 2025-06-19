@@ -59,7 +59,7 @@ class TestYamlUtil {
                 mapper -> {
                     try {
                         return mapper.readTree(sparseYaml);
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         throw new RuntimeException(e);
                     }
                 },
@@ -159,7 +159,7 @@ class TestYamlUtil {
                 mapper -> {
                     try {
                         return mapper.readTree(sparseYaml);
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         throw new RuntimeException(e);
                     }
                 },

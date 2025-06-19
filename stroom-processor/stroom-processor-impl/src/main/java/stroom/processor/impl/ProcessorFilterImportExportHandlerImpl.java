@@ -143,7 +143,7 @@ public class ProcessorFilterImportExportHandlerImpl
             final ProcessorFilter processorFilter;
             try {
                 processorFilter = delegate.read(dataMap.get(META));
-            } catch (IOException ex) {
+            } catch (final IOException ex) {
                 throw new RuntimeException("Unable to read meta file associated with processor filter " + docRef, ex);
             }
 
@@ -186,11 +186,11 @@ public class ProcessorFilterImportExportHandlerImpl
                             request);
                 } else {
                     LOGGER.error("Processor not found on pipeline " +
-                            processorFilter.getPipelineName() +
-                            "(" +
-                            processorFilter.getPipelineUuid() +
-                            ")" +
-                            " and failed to create");
+                                 processorFilter.getPipelineName() +
+                                 "(" +
+                                 processorFilter.getPipelineUuid() +
+                                 ")" +
+                                 " and failed to create");
                 }
             }
         }
@@ -211,8 +211,8 @@ public class ProcessorFilterImportExportHandlerImpl
                         filter.setPipelineName(optional.orElse(null));
                         if (filter.getPipelineName() == null) {
                             LOGGER.warn("Unable to find Pipeline " + filter.getPipelineUuid()
-                                    + " associated with ProcessorFilter " + filter.getUuid()
-                                    + " (id: " + filter.getId() + ")");
+                                        + " associated with ProcessorFilter " + filter.getUuid()
+                                        + " (id: " + filter.getId() + ")");
                         }
                     }
                     return filter;
@@ -221,7 +221,9 @@ public class ProcessorFilterImportExportHandlerImpl
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef, boolean omitAuditFields, List<Message> messageList) {
+    public Map<String, byte[]> exportDocument(final DocRef docRef,
+                                              final boolean omitAuditFields,
+                                              final List<Message> messageList) {
         if (docRef == null) {
             return null;
         }
@@ -239,10 +241,10 @@ public class ProcessorFilterImportExportHandlerImpl
             processorFilter = new AuditFieldFilter<ProcessorFilter>().apply(processorFilter);
         }
 
-        Map<String, byte[]> data;
+        final Map<String, byte[]> data;
         try {
             data = delegate.write(processorFilter);
-        } catch (IOException ioex) {
+        } catch (final IOException ioex) {
             LOGGER.error("Unable to create meta file for processor filter", ioex);
             importExportDocumentEventLog.exportDocument(docRef, ioex);
             throw new RuntimeException("Unable to create meta file for processor filter", ioex);
@@ -286,10 +288,10 @@ public class ProcessorFilterImportExportHandlerImpl
     @Override
     public DocRef findNearestExplorerDocRef(final DocRef docref) {
         if (docref != null && ProcessorFilter.ENTITY_TYPE.equals(docref.getType())) {
-            ProcessorFilter processorFilter = findProcessorFilter(docref);
+            final ProcessorFilter processorFilter = findProcessorFilter(docref);
 
             if (processorFilter != null) {
-                Processor processor = findProcessorForFilter(processorFilter);
+                final Processor processor = findProcessorForFilter(processorFilter);
                 return new DocRef(PipelineDoc.TYPE, processor.getPipelineUuid());
             }
         }
@@ -300,7 +302,7 @@ public class ProcessorFilterImportExportHandlerImpl
     @Override
     public String findNameOfDocRef(final DocRef docRef) {
         if (docRef != null && ProcessorFilter.ENTITY_TYPE.equals(docRef.getType())) {
-            ProcessorFilter processorFilter = findProcessorFilter(docRef);
+            final ProcessorFilter processorFilter = findProcessorFilter(docRef);
 
             final String name = docRef.getUuid().substring(0, 7);
             final String pipelineName = processorFilter.getPipelineName();
@@ -366,11 +368,11 @@ public class ProcessorFilterImportExportHandlerImpl
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTextTerm(ProcessorFields.UUID, ExpressionTerm.Condition.EQUALS, processorUuid).build();
 
-        ExpressionCriteria criteria = new ExpressionCriteria(expression);
-        ResultPage<Processor> page = processorService.find(criteria);
+        final ExpressionCriteria criteria = new ExpressionCriteria(expression);
+        final ResultPage<Processor> page = processorService.find(criteria);
 
-        Processor result;
-        RuntimeException ex;
+        final Processor result;
+        final RuntimeException ex;
         if (page.size() == 0) {
             if (pipelineUuid != null) {
                 // Create the missing processor

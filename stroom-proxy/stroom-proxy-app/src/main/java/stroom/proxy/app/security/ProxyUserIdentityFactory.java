@@ -93,7 +93,7 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
     public Optional<UserIdentity> getApiUserIdentity(final HttpServletRequest request) {
         // First see if we have a Stroom API key to authenticate with, else
         // let the super try and get the identity
-        Optional<UserIdentity> optIdentity;
+        final Optional<UserIdentity> optIdentity;
         if (IdpType.NO_IDP.equals(openIdConfigurationProvider.get().getIdentityProviderType())) {
             optIdentity = fetchApiKeyUserIdentity(request);
         } else {

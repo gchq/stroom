@@ -50,7 +50,7 @@ public class ProxyConfigMonitor extends AbstractFileChangeMonitor implements Man
 
         try {
             newProxyConfig = ProxyYamlUtil.readProxyConfig(configFile);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             // Swallow error as we don't want to break the app because the file is bad.
             // Admin can fix file and try again.
             if (LOGGER.isDebugEnabled()) {
@@ -74,7 +74,7 @@ public class ProxyConfigMonitor extends AbstractFileChangeMonitor implements Man
                 try {
                     LOGGER.info("Updating application config from file.");
                     proxyConfigProvider.rebuildConfigInstances(newProxyConfig);
-                } catch (Throwable e) {
+                } catch (final Throwable e) {
                     // Swallow error as we don't want to break the app because the new config is bad
                     // The admins can fix the problem and let it have another go.
                     LOGGER.error("Error updating runtime configuration from file {}",

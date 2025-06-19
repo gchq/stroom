@@ -106,7 +106,7 @@ class TestTemporalStateDb {
                             ValString.create(StateValueTestUtil.makeString(1000))), refTime)));
 
     @Test
-    void test(@TempDir Path tempDir) {
+    void test(@TempDir final Path tempDir) {
         testWrite(tempDir);
 
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
@@ -163,7 +163,7 @@ class TestTemporalStateDb {
     }
 
     @Test
-    void testGetState(@TempDir Path tempDir) {
+    void testGetState(@TempDir final Path tempDir) {
         final KeyPrefix name = KeyPrefix.create("test");
         final Instant effectiveTime = Instant.parse("2000-01-01T00:00:00.000Z");
         try (final TemporalStateDb db = TemporalStateDb.create(tempDir, BYTE_BUFFERS, BASIC_SETTINGS, false)) {

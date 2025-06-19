@@ -248,7 +248,7 @@ public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
     }
 
     private void calcSizeOfLevels(final TreeNode node, final int level) {
-        double oldSize;
+        final double oldSize;
         if (sizeOfLevel.size() <= level) {
             sizeOfLevel.add(Double.valueOf(0));
             oldSize = 0;

@@ -15,7 +15,7 @@ class TestRuleEmailTemplatingService {
     void renderDetectionEmail() {
         final RuleEmailTemplatingService templatingService = new RuleEmailTemplatingService();
         final Detection detection = getExampleDetection(true, true);
-        NotificationEmailDestination emailDestination = NotificationEmailDestination.builder()
+        final NotificationEmailDestination emailDestination = NotificationEmailDestination.builder()
                 .subjectTemplate("{{ headline }}")
                 .bodyTemplate("{{ detectorVersion }} - {{ detectionRevision }}")
                 .build();

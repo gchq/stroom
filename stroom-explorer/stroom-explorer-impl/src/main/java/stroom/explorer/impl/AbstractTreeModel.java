@@ -403,7 +403,7 @@ public abstract class AbstractTreeModel<K> {
             this.parentKeyToChildNodesMap.forEach((key, childNodes) ->
                     treeModel.parentKeyToChildNodesMap.put(key, new LinkedHashSet<>(childNodes)));
             return treeModel;
-        } catch (CloneNotSupportedException e) {
+        } catch (final CloneNotSupportedException e) {
             throw new RuntimeException(e);
         }
     }

@@ -252,8 +252,8 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
 
     private FsSource child(final String streamTypeName) {
         final Path childFile = fileSystemStreamPathHelper.getChildPath(getFile(), streamTypeName);
-        boolean lazy = fileSystemStreamPathHelper.isStreamTypeLazy(streamTypeName);
-        boolean isFile = Files.isRegularFile(childFile);
+        final boolean lazy = fileSystemStreamPathHelper.isStreamTypeLazy(streamTypeName);
+        final boolean isFile = Files.isRegularFile(childFile);
         if (lazy || isFile) {
             return new FsSource(fileSystemStreamPathHelper, this, streamTypeName, childFile);
         } else {

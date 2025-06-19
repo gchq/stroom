@@ -129,7 +129,7 @@ public class XSDModel implements HasDataSelectionHandlers<XSDNode> {
     }
 
     @Override
-    public HandlerRegistration addDataSelectionHandler(DataSelectionHandler<XSDNode> handler) {
+    public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<XSDNode> handler) {
         return handlerManager.addHandler(DataSelectionEvent.getType(), handler);
     }
 

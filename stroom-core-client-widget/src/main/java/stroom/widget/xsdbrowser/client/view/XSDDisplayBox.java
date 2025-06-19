@@ -73,7 +73,7 @@ public class XSDDisplayBox extends Composite implements SelectableItem {
     }
 
     @Override
-    public void setSelected(boolean selected) {
+    public void setSelected(final boolean selected) {
         this.selected = selected;
 
         if (selected) {

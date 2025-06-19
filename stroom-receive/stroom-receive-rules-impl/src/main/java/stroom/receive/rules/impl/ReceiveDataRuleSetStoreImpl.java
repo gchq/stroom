@@ -94,7 +94,7 @@ public class ReceiveDataRuleSetStoreImpl implements ReceiveDataRuleSetStore {
         if (NullSafe.isEmptyCollection(docRefs)) {
             // Not there so create it
             docRef = createDocument(DOC_NAME);
-            ReceiveDataRules receiveDataRules = store.readDocument(docRef);
+            final ReceiveDataRules receiveDataRules = store.readDocument(docRef);
             final StroomReceiptPolicyConfig receiptPolicyConfig = stroomReceiptPolicyConfigProvider.get();
             final List<QueryField> fields = NullSafe.map(receiptPolicyConfig.getReceiptRulesInitialFields())
                     .entrySet()
@@ -108,7 +108,7 @@ public class ReceiveDataRuleSetStoreImpl implements ReceiveDataRuleSetStore {
                             LOGGER.error("Unknown field type in config '{}', ignoring.", typeName);
                             return null;
                         } else {
-                            Builder builder = QueryField.builder()
+                            final Builder builder = QueryField.builder()
                                     .fldName(fieldName)
                                     .fldType(fieldType)
                                     .conditionSet(ConditionSet.RECEIPT_POLICY_CONDITIONS);
@@ -274,7 +274,7 @@ public class ReceiveDataRuleSetStoreImpl implements ReceiveDataRuleSetStore {
     }
 
     @Override
-    public Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef) {
+    public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
         return null;
     }
 

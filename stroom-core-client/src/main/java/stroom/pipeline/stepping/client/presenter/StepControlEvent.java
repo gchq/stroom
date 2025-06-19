@@ -35,12 +35,12 @@ public class StepControlEvent extends GwtEvent<StepControlEvent.StepControlHandl
     }
 
     public static <I> void fire(final HasHandlers source, final StepType stepType, final StepLocation stepLocation) {
-        StepControlEvent event = new StepControlEvent(stepType, stepLocation);
+        final StepControlEvent event = new StepControlEvent(stepType, stepLocation);
         source.fireEvent(event);
     }
 
     public static <I> void fire(final HasHandlers source, final StepType stepType) {
-        StepControlEvent event = new StepControlEvent(stepType, null);
+        final StepControlEvent event = new StepControlEvent(stepType, null);
         source.fireEvent(event);
     }
 

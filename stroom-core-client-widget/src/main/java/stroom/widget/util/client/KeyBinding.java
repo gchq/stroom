@@ -335,7 +335,7 @@ public class KeyBinding {
     static void add(final Action action,
                     final boolean ctrl,
                     final int... keyCode) {
-        for (int code : keyCode) {
+        for (final int code : keyCode) {
             add(action, Shortcut.builder()
                     .ctrl(ctrl)
                     .keyCode(code)
@@ -344,7 +344,7 @@ public class KeyBinding {
     }
 
     static void add(final Action action, final int... keyCode) {
-        for (int code : keyCode) {
+        for (final int code : keyCode) {
             add(action, Shortcut.builder()
                     .keyCode(code)
                     .build());

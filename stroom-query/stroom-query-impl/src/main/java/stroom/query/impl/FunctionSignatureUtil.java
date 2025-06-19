@@ -157,7 +157,7 @@ public class FunctionSignatureUtil {
                 sigStr = args
                         .stream()
                         .flatMap(arg -> {
-                            List<String> argStrs = new ArrayList<>();
+                            final List<String> argStrs = new ArrayList<>();
 
                             if (arg.isVarargs()) {
                                 for (int i = 1; i <= arg.getMinVarargsCount() + 1; i++) {

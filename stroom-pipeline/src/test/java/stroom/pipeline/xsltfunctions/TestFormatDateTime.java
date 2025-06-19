@@ -224,7 +224,7 @@ class TestFormatDateTime extends AbstractXsltFunctionTest<FormatDateTime> {
                     """, name, funcCallStr, actualOutput);
             try {
                 Files.writeString(tempFile, line, StandardOpenOption.APPEND);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new RuntimeException(e);
             }
         });

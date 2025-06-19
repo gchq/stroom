@@ -15,12 +15,12 @@ public class ValueStoreMeta {
     private final byte typeId;
     private final int referenceCount;
 
-    public ValueStoreMeta(byte typeId) {
+    public ValueStoreMeta(final byte typeId) {
         this.typeId = typeId;
         this.referenceCount = 1;
     }
 
-    public ValueStoreMeta(byte typeId, int referenceCount) {
+    public ValueStoreMeta(final byte typeId, final int referenceCount) {
         this.typeId = typeId;
         this.referenceCount = referenceCount;
     }
@@ -34,14 +34,14 @@ public class ValueStoreMeta {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        ValueStoreMeta that = (ValueStoreMeta) o;
+        final ValueStoreMeta that = (ValueStoreMeta) o;
         return typeId == that.typeId &&
                 referenceCount == that.referenceCount;
     }

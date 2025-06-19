@@ -64,7 +64,7 @@ public class OutputFactory {
             if (CompressionUtil.isSupportedCompressor(compressionMethod)) {
                 this.compressionMethod = compressionMethod;
             } else {
-                String errorMsg = "Unsupported compression method: " + compressionMethod;
+                final String errorMsg = "Unsupported compression method: " + compressionMethod;
                 throw ProcessException.create(errorMsg);
             }
         }

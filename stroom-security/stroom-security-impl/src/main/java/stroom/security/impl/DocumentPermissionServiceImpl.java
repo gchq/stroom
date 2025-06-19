@@ -212,7 +212,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                 }
                 PermissionChangeEvent.fire(permissionChangeEventBus, null, docRef);
             }
-            case RemoveAllPermissions ignored -> {
+            case final RemoveAllPermissions ignored -> {
                 documentPermissionDao.removeAllDocumentPermissions(docRef.getUuid());
                 PermissionChangeEvent.fire(permissionChangeEventBus, null, docRef);
             }

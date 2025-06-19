@@ -43,10 +43,10 @@ public abstract class AbstractTabProvider<E, P extends MyPresenterWidget<?>>
         return onWrite(getPresenter(), document);
     }
 
-    public void onRead(P presenter, DocRef docRef, E document, boolean readOnly) {
+    public void onRead(final P presenter, final DocRef docRef, final E document, final boolean readOnly) {
     }
 
-    public E onWrite(P presenter, E document) {
+    public E onWrite(final P presenter, final E document) {
         return document;
     }
 

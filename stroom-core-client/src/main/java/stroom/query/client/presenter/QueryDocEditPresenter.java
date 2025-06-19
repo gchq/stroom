@@ -222,7 +222,7 @@ public class QueryDocEditPresenter
                                             final AnalyticUiDefaultConfig analyticUiDefaultConfig,
                                             final String query,
                                             final TimeRange timeRange) {
-        AnalyticRuleDoc updated = doc
+        final AnalyticRuleDoc updated = doc
                 .copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
@@ -248,7 +248,7 @@ public class QueryDocEditPresenter
 //                        .scheduleBounds(new ScheduleBounds(System.currentTimeMillis(), null))
 //                        .errorFeed(analyticUiDefaultConfig.getDefaultErrorFeed())
 //                        .build();
-        AnalyticRuleDoc updated = doc
+        final AnalyticRuleDoc updated = doc
                 .copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
@@ -274,7 +274,7 @@ public class QueryDocEditPresenter
                         .maxMetaCreateTimeMs(null)
                         .timeToWaitForData(oneHour)
                         .build();
-        AnalyticRuleDoc updated = doc
+        final AnalyticRuleDoc updated = doc
                 .copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
@@ -455,7 +455,7 @@ public class QueryDocEditPresenter
                                             final AnalyticUiDefaultConfig analyticUiDefaultConfig,
                                             final String query,
                                             final TimeRange timeRange) {
-        ReportDoc updated = doc
+        final ReportDoc updated = doc
                 .copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
@@ -482,7 +482,7 @@ public class QueryDocEditPresenter
 //                        .scheduleBounds(new ScheduleBounds(System.currentTimeMillis(), null))
 //                        .errorFeed(analyticUiDefaultConfig.getDefaultErrorFeed())
 //                        .build();
-        ReportDoc updated = doc
+        final ReportDoc updated = doc
                 .copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
@@ -509,7 +509,7 @@ public class QueryDocEditPresenter
                         .maxMetaCreateTimeMs(null)
                         .timeToWaitForData(oneHour)
                         .build();
-        ReportDoc updated = doc
+        final ReportDoc updated = doc
                 .copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)

@@ -246,7 +246,7 @@ public class ExpressionParser {
         final List<Param> paramList = new ArrayList<>(children.size());
 
         // Turn comma separated tokens into parameters.
-        List<Object> childSet = new ArrayList<>();
+        final List<Object> childSet = new ArrayList<>();
         for (final AbstractToken token : children) {
             if (TokenType.COMMA.equals(token.getTokenType())) {
                 // If we haven't found a parameter from the previous token or object then this comma

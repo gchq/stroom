@@ -133,7 +133,7 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
                     diffLines ->
                             log("Comparing original and modified yaml:\n{}",
                                     String.join("\n", diffLines)));
-        } catch (IOException e) {
+        } catch (final IOException e) {
             log("Unable to read file " + path, e);
         }
     }
@@ -230,7 +230,7 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
         }
     }
 
-    private void log(final String msg, Object... args) {
+    private void log(final String msg, final Object... args) {
         // Use system.out as we have no logger at this point
         if (logChanges) {
             // Use system.out as we have no logger at this point

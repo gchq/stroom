@@ -89,7 +89,7 @@ public class PopupUtil {
         });
     }
 
-    private static int getSize(final int current, Size size) {
+    private static int getSize(final int current, final Size size) {
         int newSize = current;
         if (size != null) {
             if (size.getInitial() == null) {

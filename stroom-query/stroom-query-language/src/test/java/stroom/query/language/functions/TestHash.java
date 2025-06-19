@@ -106,14 +106,14 @@ class TestHash extends AbstractFunctionTest<Hash> {
      */
     @Test
     void testHash() throws NoSuchAlgorithmException {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        final MessageDigest digest = MessageDigest.getInstance("SHA-256");
         digest.update("salt".getBytes(StandardCharsets.UTF_8));
-        String hex1 = HexFormat.of().formatHex(digest.digest("foo".getBytes(StandardCharsets.UTF_8)));
+        final String hex1 = HexFormat.of().formatHex(digest.digest("foo".getBytes(StandardCharsets.UTF_8)));
 
         digest.reset();
 
         digest.update("salt".getBytes(StandardCharsets.UTF_8));
-        String hex2 = HexFormat.of().formatHex(digest.digest("foo".getBytes(StandardCharsets.UTF_8)));
+        final String hex2 = HexFormat.of().formatHex(digest.digest("foo".getBytes(StandardCharsets.UTF_8)));
 
         assertThat(hex2)
                 .isEqualTo(hex1);

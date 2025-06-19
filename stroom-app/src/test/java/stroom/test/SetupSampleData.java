@@ -56,7 +56,7 @@ public final class SetupSampleData {
             throw new RuntimeException("Expected 1 argument that is the location of the config.");
         }
         final Path configFile = YamlUtil.getYamlFileFromArgs(args);
-        Config config;
+        final Config config;
         try {
             config = StroomYamlUtil.readConfig(configFile);
         } catch (final IOException e) {

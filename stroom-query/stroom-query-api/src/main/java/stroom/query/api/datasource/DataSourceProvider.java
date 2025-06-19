@@ -56,7 +56,7 @@ public interface DataSourceProvider {
      * @param docRef The document to get documentation for.
      * @return An optional documentation string.
      */
-    default Optional<String> fetchDocumentation(DocRef docRef) {
+    default Optional<String> fetchDocumentation(final DocRef docRef) {
         return Optional.empty();
     }
 
@@ -66,7 +66,7 @@ public interface DataSourceProvider {
      * @param docRef The document to get the default extraction pipeline for.
      * @return The default extraction pipeline.
      */
-    default Optional<DocRef> fetchDefaultExtractionPipeline(DocRef docRef) {
+    default Optional<DocRef> fetchDefaultExtractionPipeline(final DocRef docRef) {
         return Optional.empty();
     }
 
@@ -76,7 +76,7 @@ public interface DataSourceProvider {
      * @param docRef The document to get the time field for.
      * @return The time field.
      */
-    default Optional<QueryField> getTimeField(DocRef docRef) {
+    default Optional<QueryField> getTimeField(final DocRef docRef) {
         return Optional.empty();
     }
 }

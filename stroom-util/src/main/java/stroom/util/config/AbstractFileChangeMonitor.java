@@ -77,7 +77,7 @@ public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
         if (isValidFile) {
             try {
                 startWatcher();
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 // Swallow and log as we don't want to stop the app from starting just for this
                 errors.add(e.getMessage());
                 LOGGER.error(
@@ -95,7 +95,7 @@ public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
     private void startWatcher() throws IOException {
         try {
             watchService = FileSystems.getDefault().newWatchService();
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message("Error creating watch new service, {}", e.getMessage()), e);
         }
 
@@ -119,13 +119,13 @@ public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
                     isRunning.compareAndSet(false, true);
                     // block until the watch service spots a change
                     watchKey = watchService.take();
-                } catch (InterruptedException ie) {
+                } catch (final InterruptedException ie) {
                     Thread.currentThread().interrupt();
                     // continue to re-use the if block above
                     continue;
                 }
 
-                for (WatchEvent<?> event : watchKey.pollEvents()) {
+                for (final WatchEvent<?> event : watchKey.pollEvents()) {
                     if (LOGGER.isDebugEnabled()) {
                         if (event == null) {
                             LOGGER.debug("Event is null");
@@ -150,7 +150,7 @@ public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
                         LOGGER.debug("Not an event we care about");
                     }
                 }
-                boolean isValid = watchKey.reset();
+                final boolean isValid = watchKey.reset();
                 if (!isValid) {
                     LOGGER.warn("Watch key is no longer valid, the watch service may have been stopped");
                     break;
@@ -178,7 +178,7 @@ public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
                     } else {
                         LOGGER.debug("Ignoring change to file {}", modifiedFile);
                     }
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     // Swallow error so future changes can be monitored.
                     // We may get a NoSuchFileException from isSameFile() due to anisble creating temp files in the
                     // monitored dir which it then immediately deletes. We don't care about this.
@@ -270,7 +270,7 @@ public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
 
     @Override
     public HealthCheck.Result getHealth() {
-        HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
+        final HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
 
         // isRunning will only be true if the file is also present and valid
         if (monitoredFile == null) {

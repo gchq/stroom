@@ -115,13 +115,13 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
                 .createMs(newDate.toInstant().toEpochMilli())
                 .build();
 
-        Meta oldFileMeta;
+        final Meta oldFileMeta;
         try (final Target oldFileTarget = streamStore.openTarget(oldFile)) {
             oldFileMeta = oldFileTarget.getMeta();
             TargetUtil.write(oldFileTarget, "MyTest");
         }
 
-        Meta newFileMeta;
+        final Meta newFileMeta;
         try (final Target newFileTarget = streamStore.openTarget(newFile)) {
             newFileMeta = newFileTarget.getMeta();
             TargetUtil.write(newFileTarget, "MyTest");
@@ -154,7 +154,7 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
 
     private void setupDataRetentionRules(final String feedName) {
         final DocRef docRef = dataRetentionRulesService.createDocument("test");
-        DataRetentionRules dataRetentionRules = dataRetentionRulesService.readDocument(docRef);
+        final DataRetentionRules dataRetentionRules = dataRetentionRulesService.readDocument(docRef);
 
         final ExpressionOperator.Builder builder = ExpressionOperator.builder();
         builder.addTextTerm(MetaFields.FEED, Condition.EQUALS, feedName);

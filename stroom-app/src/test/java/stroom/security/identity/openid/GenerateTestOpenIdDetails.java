@@ -73,7 +73,7 @@ public class GenerateTestOpenIdDetails {
         jsonWebKeyFactory = new JwkFactoryImpl();
     }
 
-    public static void main(String[] args) throws JoseException {
+    public static void main(final String[] args) throws JoseException {
         new GenerateTestOpenIdDetails().run();
     }
 
@@ -155,11 +155,11 @@ public class GenerateTestOpenIdDetails {
     }
 
     private void updateFile(final String generatedCode) {
-        Path pwd = Paths.get(".").toAbsolutePath().normalize();
+        final Path pwd = Paths.get(".").toAbsolutePath().normalize();
 
         LOGGER.debug("PWD: {}", pwd.toString());
 
-        Path defaultCredsFile = pwd.resolve("stroom-util/src/main/java")
+        final Path defaultCredsFile = pwd.resolve("stroom-util/src/main/java")
                 .resolve(DefaultOpenIdCredentials.class.getName().replace(".", File.separator) + ".java")
                 .normalize();
 
@@ -174,7 +174,7 @@ public class GenerateTestOpenIdDetails {
         }
 
         try {
-            String fileContent = Files.readString(defaultCredsFile);
+            final String fileContent = Files.readString(defaultCredsFile);
 
             // match some thing like:
 
@@ -190,9 +190,9 @@ public class GenerateTestOpenIdDetails {
 //                    Pattern.DOTALL);
 
             LOGGER.debug("\n{}", fileContent);
-            Matcher matcher = generatedBlockPattern.matcher(fileContent);
+            final Matcher matcher = generatedBlockPattern.matcher(fileContent);
 
-            boolean foundMatch = matcher.find();
+            final boolean foundMatch = matcher.find();
             if (foundMatch) {
                 final String newFileContent = matcher.replaceAll(matchResult -> {
                     LOGGER.debug("match \n{}", matchResult.group());
@@ -208,7 +208,7 @@ public class GenerateTestOpenIdDetails {
                         "Expecting to find one block matching [{}]", generatedBlockPattern));
             }
 
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException("Error reading content of " + defaultCredsFile);
         }
 

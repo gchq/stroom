@@ -12,11 +12,11 @@ public class PayloadOutput extends Output {
     }
 
     public void writeByteBuffer(final ByteBuffer byteBuffer) throws KryoException {
-        int count = byteBuffer.remaining();
+        final int count = byteBuffer.remaining();
         require(count);
-        int p = position;
+        final int p = position;
         position += count;
-        byte[] buffer = this.buffer;
+        final byte[] buffer = this.buffer;
         byteBuffer.get(buffer, p, count);
     }
 }

@@ -28,7 +28,7 @@ class TestHashedDataFeedKeys {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestHashedDataFeedKeys.class);
 
-    public static void main(String[] args) throws IOException {
+    public static void main(final String[] args) throws IOException {
         final ObjectMapper mapper = JsonUtil.getMapper();
         final Path dir = Paths.get("/tmp/TestDataFeedKeys");
         Files.createDirectories(dir);

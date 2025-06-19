@@ -68,7 +68,7 @@ public class RefDataLoaderHolder {
             //only fetch the version once per pipeline process
             return pipelineDocRefToVersionCache.computeIfAbsent(pipelineReference.getPipeline(), docRef ->
                     pipelineStore.readDocument(pipelineReference.getPipeline()).getVersion());
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message(
                     "pipelineReference not found in store {}", pipelineReference), e);
         }

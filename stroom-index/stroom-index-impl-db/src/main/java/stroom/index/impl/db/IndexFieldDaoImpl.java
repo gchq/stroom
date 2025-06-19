@@ -97,7 +97,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
 
     private void ensureFieldSource(final DocRef docRef) {
         JooqUtil.context(queryDatasourceDbConnProvider, context -> {
-            Optional<Integer> optional = getFieldSource(context, docRef, false);
+            final Optional<Integer> optional = getFieldSource(context, docRef, false);
             if (optional.isEmpty()) {
                 createFieldSource(context, docRef);
             }
@@ -114,7 +114,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
     private Optional<Integer> getFieldSource(final DSLContext context,
                                              final DocRef docRef,
                                              final boolean lockFieldSource) {
-        var c = context
+        final var c = context
                 .select(INDEX_FIELD_SOURCE.ID)
                 .from(INDEX_FIELD_SOURCE)
                 .where(INDEX_FIELD_SOURCE.TYPE.eq(docRef.getType()))
@@ -146,7 +146,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
             ensureFieldSource(docRef);
 
             boolean success = false;
-            AtomicInteger attempt = new AtomicInteger(0);
+            final AtomicInteger attempt = new AtomicInteger(0);
 
             while (!success) {
                 if (attempt.incrementAndGet() > MAX_DEADLOCK_RETRY_ATTEMPTS) {
@@ -204,11 +204,11 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                         }
                     });
                     success = true;
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     // Deadlocks are likely as the upsert will create gap locks in the ID idx which has
                     // fields from different indexes all mixed in together.
                     if (e instanceof DataAccessException
-                        && e.getCause() instanceof SQLTransactionRollbackException sqlTxnRollbackEx
+                        && e.getCause() instanceof final SQLTransactionRollbackException sqlTxnRollbackEx
                         && NullSafe.containsIgnoringCase(sqlTxnRollbackEx.getMessage(), "deadlock")) {
                         LOGGER.warn(() -> LogUtil.message(
                                 "Deadlock trying to upsert {} {} into {}. Attempt: {}. Will retry. " +

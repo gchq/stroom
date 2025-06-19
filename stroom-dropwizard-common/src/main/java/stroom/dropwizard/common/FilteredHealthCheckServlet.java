@@ -79,7 +79,7 @@ public class FilteredHealthCheckServlet extends HttpServlet implements IsAdminSe
             }
         }
 
-        try (OutputStream output = resp.getOutputStream()) {
+        try (final OutputStream output = resp.getOutputStream()) {
             if (isMinimalOutput(req)) {
                 final Map<String, Boolean> minimalResults = Map.of("healthy", areAllHealthy);
                 // Output a minimal form
@@ -97,7 +97,7 @@ public class FilteredHealthCheckServlet extends HttpServlet implements IsAdminSe
         return Boolean.parseBoolean(request.getParameter(PARAM_NAME_MINIMAL));
     }
 
-    private ObjectWriter getWriter(HttpServletRequest request) {
+    private ObjectWriter getWriter(final HttpServletRequest request) {
         final boolean prettyPrint = Boolean.parseBoolean(request.getParameter(PARAM_NAME_PRETTY));
         if (prettyPrint) {
             return objectMapper.writerWithDefaultPrettyPrinter();
@@ -106,7 +106,7 @@ public class FilteredHealthCheckServlet extends HttpServlet implements IsAdminSe
     }
 
     private SortedMap<String, HealthCheck.Result> runHealthChecks(final HttpServletRequest request) {
-        HealthCheckFilter healthCheckFilter = buildHealthCheckFilter(request);
+        final HealthCheckFilter healthCheckFilter = buildHealthCheckFilter(request);
 
         // We could consider running the healthchecks in parallel by providing an executorService
         // to the overloaded form of this method.
@@ -115,7 +115,7 @@ public class FilteredHealthCheckServlet extends HttpServlet implements IsAdminSe
         return healthCheckRegistry.runHealthChecks(healthCheckFilter);
     }
 
-    private static boolean areAllHealthy(Map<String, Result> results) {
+    private static boolean areAllHealthy(final Map<String, Result> results) {
         return results.values()
                 .stream()
                 .allMatch(Result::isHealthy);

@@ -434,9 +434,9 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
 
     private static Predicate<CachedHashedDataFeedKey> createKeyOwnerFilter(final CIKey keyOwnerMetaKey,
                                                                            final String ownerFromAttrMap) {
-        Predicate<CachedHashedDataFeedKey> filter;
+        final Predicate<CachedHashedDataFeedKey> filter;
         if (CIKey.isNonBlank(keyOwnerMetaKey)) {
-            filter = (CachedHashedDataFeedKey key) -> {
+            filter = (final CachedHashedDataFeedKey key) -> {
                 final String ownerFromKey = key.getStreamMetaValue(keyOwnerMetaKey);
                 final boolean result = Objects.equals(ownerFromKey, ownerFromAttrMap);
                 LOGGER.debug("keyOwnerMetaKey: {}, ownerFromAttrMap: {}, ownerFromKey: {}, result: {}",
@@ -484,11 +484,11 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
     private boolean verifyKey(final String unHashedKey, final CachedHashedDataFeedKey cachedHashedDataFeedKey) {
         final String hash = cachedHashedDataFeedKey.getHash();
         final String salt = cachedHashedDataFeedKey.getSalt();
-        DataFeedKeyHasher hasher;
+        final DataFeedKeyHasher hasher;
         try {
             final DataFeedKeyHashAlgorithm hashAlgorithmId = cachedHashedDataFeedKey.getHashAlgorithm();
             hasher = hashFunctionMap.get(hashAlgorithmId);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException("Unknown hash algorithm " + cachedHashedDataFeedKey.getHashAlgorithm());
         }
 
@@ -547,9 +547,9 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
                     });
             LOGGER.debug("Returning {}, attributeMap: {}", optUserIdentity, attributeMap);
             return optUserIdentity;
-        } catch (StroomStreamException e) {
+        } catch (final StroomStreamException e) {
             throw e;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new StroomStreamException(
                     StroomStatusCode.DATA_FEED_KEY_NOT_AUTHENTICATED, attributeMap, e.getMessage());
         }
@@ -562,7 +562,7 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
             public void run() {
                 try {
                     evictExpired();
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     LOGGER.error("Error running entry eviction timerTask: {}", e.getMessage(), e);
                 }
             }
@@ -576,7 +576,7 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
         LOGGER.info("Shutting down entry eviction timer");
         try {
             timer.cancel();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error shutting down the timer: {}", LogUtil.exceptionMessage(e), e);
         }
     }

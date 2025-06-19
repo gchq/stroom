@@ -41,7 +41,7 @@ public class AttributeMapFunctionFactory implements ValueFunctionFactory<Attribu
         return attributeMap -> {
             try {
                 return attributeMap.getAsEpochMillis(fieldName);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 // attributeMap could contain any old rubbish so swallow and return null
                 LOGGER.debug(LogUtil.message("Error extracting field {} of type {} as millis: {}",
                         fieldName, fieldType, LogUtil.exceptionMessage(e), e));

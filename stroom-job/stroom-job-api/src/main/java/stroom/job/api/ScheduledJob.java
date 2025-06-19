@@ -83,37 +83,37 @@ public class ScheduledJob {
             name = scheduledJob.name;
         }
 
-        public Builder description(String description) {
+        public Builder description(final String description) {
             this.description = description;
             return this;
         }
 
-        public Builder enabled(boolean enabled) {
+        public Builder enabled(final boolean enabled) {
             this.enabled = enabled;
             return this;
         }
 
-        public Builder advanced(boolean advanced) {
+        public Builder advanced(final boolean advanced) {
             this.advanced = advanced;
             return this;
         }
 
-        public Builder managed(boolean managed) {
+        public Builder managed(final boolean managed) {
             this.managed = managed;
             return this;
         }
 
-        public Builder cronSchedule(String schedule) {
+        public Builder cronSchedule(final String schedule) {
             this.schedule = new Schedule(ScheduleType.CRON, schedule);
             return this;
         }
 
-        public Builder frequencySchedule(String schedule) {
+        public Builder frequencySchedule(final String schedule) {
             this.schedule = new Schedule(ScheduleType.FREQUENCY, schedule);
             return this;
         }
 
-        public Builder name(String name) {
+        public Builder name(final String name) {
             this.name = name;
             return this;
         }

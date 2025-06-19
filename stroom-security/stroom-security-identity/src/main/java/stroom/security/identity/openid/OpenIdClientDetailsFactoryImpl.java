@@ -101,7 +101,7 @@ public class OpenIdClientDetailsFactoryImpl implements OpenIdClientFactory {
 
                     try {
                         openIdClientDao.createIfNotExists(newOAuth2Client);
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         LOGGER.error("Error writing new oauth2 client to database: {}",
                                 LogUtil.exceptionMessage(e), e);
                     }

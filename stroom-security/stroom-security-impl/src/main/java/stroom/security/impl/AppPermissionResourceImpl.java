@@ -172,7 +172,7 @@ class AppPermissionResourceImpl implements AppPermissionResource {
         return true;
     }
 
-    private void addPermission(UserRef user, AppPermission permission) {
+    private void addPermission(final UserRef user, final AppPermission permission) {
         try {
             appPermissionServiceProvider.get().addPermission(user, permission);
             authorisationEventLogProvider.get()
@@ -183,7 +183,7 @@ class AppPermissionResourceImpl implements AppPermissionResource {
         }
     }
 
-    private void removePermission(UserRef user, AppPermission permission) {
+    private void removePermission(final UserRef user, final AppPermission permission) {
         try {
             appPermissionServiceProvider.get().removePermission(user, permission);
             authorisationEventLogProvider.get()

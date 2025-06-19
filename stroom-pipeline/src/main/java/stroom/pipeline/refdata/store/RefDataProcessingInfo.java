@@ -57,9 +57,9 @@ public class RefDataProcessingInfo {
     }
 
     public RefDataProcessingInfo cloneWithNewState(final ProcessingState newProcessingState,
-                                                   boolean touchLastAccessedTime) {
+                                                   final boolean touchLastAccessedTime) {
 
-        long newLastAccessedTime;
+        final long newLastAccessedTime;
         if (touchLastAccessedTime) {
             newLastAccessedTime = truncateLastAccessTime(System.currentTimeMillis());
         } else {

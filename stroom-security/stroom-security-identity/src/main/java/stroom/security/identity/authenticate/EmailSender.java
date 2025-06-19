@@ -52,7 +52,7 @@ class EmailSender {
 
     public void send(final String emailAddress,
                      final String firstName,
-                     final String lastName, String resetToken) {
+                     final String lastName, final String resetToken) {
 
         final EmailConfig emailConfig = authenticationConfig.getEmailConfig();
         final SmtpConfig smtpConfig = Preconditions.checkNotNull(
@@ -96,9 +96,9 @@ class EmailSender {
                 smtpConfig.getHost(),
                 smtpConfig.getPort());
 
-        try (Mailer mailer = mailerBuilder.buildMailer()) {
+        try (final Mailer mailer = mailerBuilder.buildMailer()) {
             mailer.sendMail(email);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error sending reset email to user {} ({}) at {}:{} - {}",
                     smtpConfig.getUsername(),
                     emailAddress,

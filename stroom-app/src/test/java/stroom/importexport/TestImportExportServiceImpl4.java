@@ -83,7 +83,7 @@ class TestImportExportServiceImpl4 extends AbstractCoreIntegrationTest {
         assertThat(Files.isDirectory(importDir)).isTrue();
 
         // Make sure doc doesn't exist in the explorer.
-        Optional<ExplorerNode> node = explorerNodeService.getNode(PIPELINE_DOC_REF);
+        final Optional<ExplorerNode> node = explorerNodeService.getNode(PIPELINE_DOC_REF);
         assertThat(node.isPresent()).isFalse();
 
         List<ImportState> confirmList = new ArrayList<>();

@@ -673,7 +673,7 @@ public class MetaPresenter
                               final String childStreamType) {
         // Try and get a pipeline id to use as a starting point for
         // stepping.
-        DocRef pipelineRef = null;
+        final DocRef pipelineRef = null;
 
         // We will assume that the stream list has a child stream selected.
         // This would be the case where a user chooses an event with errors

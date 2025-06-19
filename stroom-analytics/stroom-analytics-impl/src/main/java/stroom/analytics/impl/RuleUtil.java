@@ -13,7 +13,7 @@ public class RuleUtil {
         return NullSafe.get(doc, d -> d.getName() + " (" + d.getUuid() + ")");
     }
 
-    public static long getMin(Long currentValue, Long newValue) {
+    public static long getMin(final Long currentValue, final Long newValue) {
         if (newValue == null) {
             return 0L;
         } else if (currentValue == null) {
@@ -22,7 +22,7 @@ public class RuleUtil {
         return Math.min(currentValue, newValue);
     }
 
-    public static long getMax(Long currentValue, Long newValue) {
+    public static long getMax(final Long currentValue, final Long newValue) {
         if (newValue == null) {
             return Long.MAX_VALUE;
         } else if (currentValue == null) {

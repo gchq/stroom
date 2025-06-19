@@ -114,7 +114,7 @@ public class ProcessorServiceImpl implements ProcessorService {
 
 
     @Override
-    public Processor create(Processor processor) {
+    public Processor create(final Processor processor) {
         if (processor.getUuid() == null) {
             processor.setUuid(UUID.randomUUID().toString());
         }
@@ -171,7 +171,7 @@ public class ProcessorServiceImpl implements ProcessorService {
                                 // This will also logically 'delete' processor filters and any associated tasks that
                                 // have not yet finished processing.
                                 return delete(processor.getId());
-                            } catch (Exception e) {
+                            } catch (final Exception e) {
                                 throw new RuntimeException("Error deleting filters and processor for pipelineUuid "
                                         + pipelineUuid, e);
                             }

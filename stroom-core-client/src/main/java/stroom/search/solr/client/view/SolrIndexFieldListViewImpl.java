@@ -48,7 +48,7 @@ public class SolrIndexFieldListViewImpl extends ViewImpl implements SolrIndexFie
     }
 
     @Override
-    public void setDataGridView(View view) {
+    public void setDataGridView(final View view) {
         dataGrid.setWidget(view.asWidget());
     }
 

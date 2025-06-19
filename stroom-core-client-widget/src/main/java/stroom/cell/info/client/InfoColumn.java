@@ -34,7 +34,7 @@ public abstract class InfoColumn<T> extends Column<T, Preset> {
     }
 
     @Override
-    public Preset getValue(T object) {
+    public Preset getValue(final T object) {
         return SvgPresets.INFO;
     }
 
@@ -52,7 +52,7 @@ public abstract class InfoColumn<T> extends Column<T, Preset> {
             target = target.getParentElement();
         }
 
-        Rect relativeRect = new Rect(target);
+        final Rect relativeRect = new Rect(target);
         final PopupPosition position = new PopupPosition(relativeRect, PopupLocation.RIGHT);
         showInfo(row, position);
     }

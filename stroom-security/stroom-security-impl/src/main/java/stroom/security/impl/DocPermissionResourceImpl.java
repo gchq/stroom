@@ -72,7 +72,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
         } catch (final Exception e) {
             try {
                 logPermCheck(request, false, e);
-            } catch (Exception ex) {
+            } catch (final Exception ex) {
                 LOGGER.error("Error logging event: {}", e.getMessage(), e);
             }
             throw new RuntimeException(e);

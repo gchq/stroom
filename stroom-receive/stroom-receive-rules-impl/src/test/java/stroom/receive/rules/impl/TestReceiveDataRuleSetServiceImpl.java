@@ -358,7 +358,7 @@ class TestReceiveDataRuleSetServiceImpl {
     private DictionaryDoc createDict(final String name,
                                      final DictionaryDoc importedDoc,
                                      final String... lines) {
-        DictionaryDoc dict = new DictionaryDoc();
+        final DictionaryDoc dict = new DictionaryDoc();
         dict.setUuid(UUID.randomUUID().toString());
         dict.setName(name);
         dict.setType(DictionaryDoc.TYPE);

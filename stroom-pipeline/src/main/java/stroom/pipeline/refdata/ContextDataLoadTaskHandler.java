@@ -170,11 +170,11 @@ class ContextDataLoadTaskHandler {
                                         pipeline.process(inputStream, encoding);
 
                                         refDataLoader.completeProcessing(ProcessingState.COMPLETE);
-                                    } catch (TaskTerminatedException e) {
+                                    } catch (final TaskTerminatedException e) {
                                         // Task terminated
                                         log(Severity.FATAL_ERROR, e.getMessage(), e);
                                         refDataLoader.completeProcessing(ProcessingState.TERMINATED);
-                                    } catch (Exception e) {
+                                    } catch (final Exception e) {
                                         log(Severity.FATAL_ERROR, e.getMessage(), e);
                                         refDataLoader.completeProcessing(ProcessingState.FAILED);
                                     } finally {

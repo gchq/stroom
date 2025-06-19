@@ -43,7 +43,7 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
         popupPanel.setStyleName("SelectionPopup");
     }
 
-    public void addAutoHidePartner(Element partner) {
+    public void addAutoHidePartner(final Element partner) {
         popupPanel.addAutoHidePartner(partner);
     }
 

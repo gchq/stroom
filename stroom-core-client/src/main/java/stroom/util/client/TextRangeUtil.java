@@ -22,7 +22,7 @@ public class TextRangeUtil {
             int start = match.getOffset();
             int end = Math.max(start, start + match.getLength() - 1);
             Location from = null;
-            List<TextRange> ranges = new ArrayList<>(matchList.size());
+            final List<TextRange> ranges = new ArrayList<>(matchList.size());
 
             for (int i = 0; i < chars.length && match != null; i++) {
                 final char c = chars[i];
@@ -37,7 +37,7 @@ public class TextRangeUtil {
                     from = new DefaultLocation(lineNo, colNo);
                 }
                 if (i == end) {
-                    Location to = new DefaultLocation(lineNo, colNo);
+                    final Location to = new DefaultLocation(lineNo, colNo);
                     ranges.add(new TextRange(from, to));
 
                     from = null;

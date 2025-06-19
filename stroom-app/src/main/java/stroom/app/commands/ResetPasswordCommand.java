@@ -91,7 +91,7 @@ public class ResetPasswordCommand extends AbstractStroomAppCommand {
 
         accountDao.resetPassword(username, newPassword);
 
-        String msg = LogUtil.message("Password reset complete for user {}", username);
+        final String msg = LogUtil.message("Password reset complete for user {}", username);
         LOGGER.info(msg);
         logEvent(username, true, msg);
     }

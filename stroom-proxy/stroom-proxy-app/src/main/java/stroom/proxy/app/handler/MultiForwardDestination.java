@@ -28,9 +28,9 @@ final class MultiForwardDestination implements ForwardDestination {
     private final CleanupDirQueue cleanupDirQueue;
 
     MultiForwardDestination(
-            List<ForwardDestination> destinations,
-            NumberedDirProvider copiesDirProvider,
-            CleanupDirQueue cleanupDirQueue) {
+            final List<ForwardDestination> destinations,
+            final NumberedDirProvider copiesDirProvider,
+            final CleanupDirQueue cleanupDirQueue) {
 
         if (NullSafe.size(destinations) < 2) {
             throw new IllegalArgumentException(LogUtil.message(
@@ -63,7 +63,7 @@ final class MultiForwardDestination implements ForwardDestination {
                     destination.add(copyDir);
                     // Null the destinationCopy as it has been moved and doesn't need to be cleaned up
                     destinationCopies.set(i, null);
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     LOGGER.debug("Error adding '{}' to destination {}: {}",
                             copyDir, destination.asString(), LogUtil.exceptionMessage(e), e);
                     exceptions.add(new RuntimeException(LogUtil.message(

@@ -144,7 +144,7 @@ public class SubStreamNavigator extends Composite {
                     && display.getPartNo().isPresent()
                     && hasMultipleParts) {
 
-                long partNo = display.getPartNo().get();
+                final long partNo = display.getPartNo().get();
 //                GWT.log("parts: " + display.getTotalParts().map(Objects::toString).orElse("?"));
                 final String lbl = PARTS_TITLE
                         + " "
@@ -154,7 +154,7 @@ public class SubStreamNavigator extends Composite {
 
                 lblParts.setText(lbl);
 
-                boolean hasNext = partNo < display.getTotalParts()
+                final boolean hasNext = partNo < display.getTotalParts()
                         .map(count -> count - 1) // part is zero based
                         .orElse(Long.MAX_VALUE);
 
@@ -178,12 +178,12 @@ public class SubStreamNavigator extends Composite {
                     && display.getSegmentNoFrom().isPresent()
                     && display.getSegmentNoTo().isPresent()) {
 
-                long segmentNoFrom = display.getSegmentNoFrom().get();
-                long segmentNoTo = display.getSegmentNoTo().get();
+                final long segmentNoFrom = display.getSegmentNoFrom().get();
+                final long segmentNoTo = display.getSegmentNoTo().get();
 
 //                GWT.log("segments: " + display.getTotalParts().map(Objects::toString).orElse("?"));
 
-                boolean isOneSegmentPerPage = segmentNoFrom == segmentNoTo;
+                final boolean isOneSegmentPerPage = segmentNoFrom == segmentNoTo;
 
                 final String segmentNoFromStr = getValueForLabel(
                         display.getSegmentNoFrom(), ZERO_TO_ONE_BASE_INCREMENT);
@@ -208,7 +208,7 @@ public class SubStreamNavigator extends Composite {
                 lblSegments.setText(lbl);
 
                 // segmentNO zero based
-                boolean hasNext = segmentNoTo < display.getTotalSegments()
+                final boolean hasNext = segmentNoTo < display.getTotalSegments()
                         .map(count -> count - 1) // part is zero based
                         .orElse(Long.MAX_VALUE);
 

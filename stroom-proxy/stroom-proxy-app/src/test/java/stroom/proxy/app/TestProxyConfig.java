@@ -39,7 +39,7 @@ class TestProxyConfig {
     );
 
     @Test
-    void testValidation(@TempDir Path tempDir) throws IOException {
+    void testValidation(@TempDir final Path tempDir) throws IOException {
 
         final TestingHomeAndTempProvidersModule testingHomeAndTempProvidersModule =
                 new TestingHomeAndTempProvidersModule(tempDir);
@@ -86,7 +86,7 @@ class TestProxyConfig {
     }
 
     private void checkProperties(final Class<?> clazz, final String indent) {
-        for (Field field : clazz.getDeclaredFields()) {
+        for (final Field field : clazz.getDeclaredFields()) {
             final Class<?> fieldClass = field.getType();
 
             // We are trying to inspect props that are themselves config objects

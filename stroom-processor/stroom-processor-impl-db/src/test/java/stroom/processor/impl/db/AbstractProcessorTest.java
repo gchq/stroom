@@ -135,7 +135,7 @@ class AbstractProcessorTest {
 
     protected int countOwned(final String nodeName) {
         int count = 0;
-        List<ProcessorTask> list = processorTaskDao.find(new ExpressionCriteria()).getValues();
+        final List<ProcessorTask> list = processorTaskDao.find(new ExpressionCriteria()).getValues();
         for (final ProcessorTask task : list) {
             if (task.getNodeName() == null) {
                 if (nodeName == null) {

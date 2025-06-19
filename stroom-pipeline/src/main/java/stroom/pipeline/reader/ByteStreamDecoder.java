@@ -148,7 +148,7 @@ public class ByteStreamDecoder {
                         byteCnt++;
                     }
                     b = suppliedByte;
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     throw new RuntimeException("Error getting next byte: " + e.getMessage(), e);
                 }
 
@@ -184,7 +184,7 @@ public class ByteStreamDecoder {
                     final String decodedStr;
                     if (outputBuffer.remaining() == 2) {
 //                    if (outputBuffer.array()[0] != 0 && outputBuffer.array()[1] != 0) {
-                        int codePoint = Character.toCodePoint(outputBuffer.get(), outputBuffer.get());
+                        final int codePoint = Character.toCodePoint(outputBuffer.get(), outputBuffer.get());
                         decodedStr = new String(new int[]{codePoint}, 0, 1);
 
                         LOGGER.trace("Multi-char character found with codePoint: [{}], decodedStr: [{}]",
@@ -219,9 +219,9 @@ public class ByteStreamDecoder {
             if (decodedChar == null && byteCnt > 0) {
                 throw createDecoderException(byteCnt);
             }
-        } catch (DecoderException e) {
+        } catch (final DecoderException e) {
             throw e;
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             throw new RuntimeException(LogUtil.message("Error decoding bytes after {} iterations: {}",
                     byteCnt, e.getMessage()), e);
         }
@@ -254,7 +254,7 @@ public class ByteStreamDecoder {
         }
 
         largeInputBuffer.flip();
-        int byteCount = largeInputBuffer.remaining();
+        final int byteCount = largeInputBuffer.remaining();
 
         // Assume that at least the first byte is bad, so keep slicing the bytebuffer
         // to cut off the first n bytes, then decode the remainder (replacing malformed bytes
@@ -275,7 +275,7 @@ public class ByteStreamDecoder {
 
         if (goodCharByteOffset == -1) {
             if (isEndOfStream) {
-                byte[] malformedBytes = new byte[byteCount];
+                final byte[] malformedBytes = new byte[byteCount];
                 inputBuffer.get(0, malformedBytes, 0, byteCount);
                 return DecodedChar.unknownChar(malformedBytes);
             } else {
@@ -297,7 +297,7 @@ public class ByteStreamDecoder {
             //noinspection UnnecessaryLocalVariable // Added for clarity
             final int malformedBytesCount = goodCharByteOffset;
 
-            byte[] malformedBytes = new byte[malformedBytesCount];
+            final byte[] malformedBytes = new byte[malformedBytesCount];
             inputBuffer.get(0, malformedBytes, 0, malformedBytesCount);
 
             // Keep a record of some of the nasty bits we have found

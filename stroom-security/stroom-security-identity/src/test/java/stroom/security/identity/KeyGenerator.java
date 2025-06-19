@@ -49,9 +49,9 @@ public class KeyGenerator {
 
     @Test
     void tokenBuilder() throws JoseException {
-        TokenBuilder builder = new TokenBuilder();
-        PublicJsonWebKey jwk = RsaJsonWebKey.Factory.newPublicJwk(JWK);
-        String key = builder
+        final TokenBuilder builder = new TokenBuilder();
+        final PublicJsonWebKey jwk = RsaJsonWebKey.Factory.newPublicJwk(JWK);
+        final String key = builder
                 .subject("admin")
                 .issuer("stroom")
                 .clientId("PZnJr8kHRKqnlJRQThSI")
@@ -63,7 +63,7 @@ public class KeyGenerator {
 
     @Test
     void generateRsaKeys() throws JoseException {
-        String jwt = sign();
+        final String jwt = sign();
 
         verify(jwt);
 
@@ -71,9 +71,9 @@ public class KeyGenerator {
         LOGGER.info(getPublic());
     }
 
-    private void verify(String jwt) throws JoseException {
-        PublicJsonWebKey publicJwk = PublicJsonWebKey.Factory.newPublicJwk(getPublic());
-        JwtConsumer jwtConsumer = new JwtConsumerBuilder()
+    private void verify(final String jwt) throws JoseException {
+        final PublicJsonWebKey publicJwk = PublicJsonWebKey.Factory.newPublicJwk(getPublic());
+        final JwtConsumer jwtConsumer = new JwtConsumerBuilder()
                 .setRequireExpirationTime() // the JWT must have an expiration time
                 .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims
                 // to account for clock skew
@@ -88,22 +88,22 @@ public class KeyGenerator {
                 .build(); // create the JwtConsumer instance
         try {
             //  Validate the JWT and process it to the Claims
-            JwtClaims jwtClaims = jwtConsumer.processToClaims(jwt);
+            final JwtClaims jwtClaims = jwtConsumer.processToClaims(jwt);
             System.out.println("JWT validation succeeded! " + jwtClaims);
-        } catch (InvalidJwtException e) {
+        } catch (final InvalidJwtException e) {
             System.out.println("Invalid JWT! " + e);
             fail("Invalid JWT! " + e);
         }
     }
 
     private String sign() throws JoseException {
-        JsonWebSignature jws = new JsonWebSignature();
+        final JsonWebSignature jws = new JsonWebSignature();
         jws.setPayload(getSomeClaimsForTesting().toJson());
-        PublicJsonWebKey privateJwk = PublicJsonWebKey.Factory.newPublicJwk(getPrivate());
+        final PublicJsonWebKey privateJwk = PublicJsonWebKey.Factory.newPublicJwk(getPrivate());
         jws.setKey(privateJwk.getPrivateKey());
         jws.setKeyIdHeaderValue(privateJwk.getKeyId());
         jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.RSA_USING_SHA256);
-        String jwt = jws.getCompactSerialization();
+        final String jwt = jws.getCompactSerialization();
 
         return jwt;
     }
@@ -118,7 +118,7 @@ public class KeyGenerator {
 
     private JwtClaims getSomeClaimsForTesting() {
         // Create the Claims, which will be the content of the JWT
-        JwtClaims claims = new JwtClaims();
+        final JwtClaims claims = new JwtClaims();
         claims.setIssuer("stroom");  // who creates the token and signs it
         claims.setAudience("PZnJr8kHRKqnlJRQThSI"); // to whom the token is intended to be sent
         claims.setExpirationTimeMinutesInTheFuture(10); // time when the token will expire (10 minutes from now)
@@ -127,7 +127,7 @@ public class KeyGenerator {
         claims.setNotBeforeMinutesInThePast(2); // time before which the token is not yet valid (2 minutes ago)
         claims.setSubject("subject"); // the subject/principal is whom the token is about
         claims.setClaim("email", "mail@example.com"); // additional claims/attributes about the subject can be added
-        List<String> groups = Arrays.asList("group-one", "other-group", "group-three");
+        final List<String> groups = Arrays.asList("group-one", "other-group", "group-three");
         claims.setStringListClaim("groups", groups); // multi-valued claims work too and will end up as a JSON array
         return claims;
     }

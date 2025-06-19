@@ -36,7 +36,7 @@ public class ByteArrayBuilder {
         if (!NullSafe.isEmptyString(str)) {
             try {
                 byteArrayOutputStream.write(str.getBytes(charset));
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
         }
@@ -46,7 +46,7 @@ public class ByteArrayBuilder {
     public ByteArrayBuilder append(final char chr) {
         try {
             byteArrayOutputStream.write(String.valueOf(chr).getBytes(charset));
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
         return this;
@@ -57,7 +57,7 @@ public class ByteArrayBuilder {
             final String str = new String(unicodePoints, 0, unicodePoints.length);
             try {
                 byteArrayOutputStream.write(str.getBytes(charset));
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
         }
@@ -80,7 +80,7 @@ public class ByteArrayBuilder {
     public ByteArrayBuilder append(final byte[] bytes) {
         try {
             byteArrayOutputStream.write(bytes);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
         return this;

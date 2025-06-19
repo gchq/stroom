@@ -74,7 +74,7 @@ public class DocumentListPresenter extends MyPresenterWidget<PagerView> {
         cellTable.addStyleName("FindCellTable");
 
         selectionModel = new MultiSelectionModelImpl<>();
-        SelectionEventManager<FindResult> selectionEventManager = new SelectionEventManager<>(
+        final SelectionEventManager<FindResult> selectionEventManager = new SelectionEventManager<>(
                 cellTable,
                 selectionModel,
                 doc -> findResultListHandler.openDocument(doc),
@@ -164,7 +164,7 @@ public class DocumentListPresenter extends MyPresenterWidget<PagerView> {
         return selectionModel.getSelected();
     }
 
-    public void setKeyboardSelectedRow(final int row, boolean stealFocus) {
+    public void setKeyboardSelectedRow(final int row, final boolean stealFocus) {
         cellTable.setKeyboardSelectedRow(row, stealFocus);
     }
 

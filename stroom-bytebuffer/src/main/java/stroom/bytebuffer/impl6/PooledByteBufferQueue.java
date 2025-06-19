@@ -71,7 +71,7 @@ class PooledByteBufferQueue {
             try {
                 LOGGER.trace("Unmapping buffer {}", buffer);
                 ByteBufferSupport.unmap(buffer);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.error("Error releasing direct byte buffer", e);
             }
         }

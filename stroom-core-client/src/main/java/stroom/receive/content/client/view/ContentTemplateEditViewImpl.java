@@ -146,7 +146,7 @@ public class ContentTemplateEditViewImpl extends ViewImpl implements ContentTemp
     }
 
     @Override
-    public void setProcessorPriority(int value) {
+    public void setProcessorPriority(final int value) {
         processorPriority.setValue(value);
     }
 
@@ -156,7 +156,7 @@ public class ContentTemplateEditViewImpl extends ViewImpl implements ContentTemp
     }
 
     @Override
-    public void setProcessorMaxConcurrent(int value) {
+    public void setProcessorMaxConcurrent(final int value) {
         processorMaxConcurrent.setValue(value);
     }
 

@@ -353,7 +353,7 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
                 while (objectPool.getNumWaiters() > 0) {
                     try {
                         Thread.sleep(200);
-                    } catch (InterruptedException e) {
+                    } catch (final InterruptedException e) {
                         Thread.currentThread().interrupt();
                         LOGGER.error("Thread interrupted while waiting for object pool waiters", e);
                     }
@@ -371,7 +371,7 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
                 while (objectPool.getNumActive() > 0) {
                     try {
                         Thread.sleep(200);
-                    } catch (InterruptedException e) {
+                    } catch (final InterruptedException e) {
                         Thread.currentThread().interrupt();
                         LOGGER.error("Thread interrupted while waiting for pool objects to be returned", e);
                     }

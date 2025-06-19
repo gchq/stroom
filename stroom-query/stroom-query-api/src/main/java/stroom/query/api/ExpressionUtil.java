@@ -296,7 +296,7 @@ public class ExpressionUtil {
                 .enabled(operator.getEnabled())
                 .op(operator.getOp());
         if (operator.getChildren() != null) {
-            for (ExpressionItem child : operator.getChildren()) {
+            for (final ExpressionItem child : operator.getChildren()) {
                 if (child instanceof ExpressionOperator) {
                     final ExpressionOperator childOperator = (ExpressionOperator) child;
                     builder.addOperator(replaceExpressionParameters(childOperator, paramValues, keepUnmatched));

@@ -58,7 +58,7 @@ public interface CommonSecurityContext {
      * @return True if the user associated with the security context has the
      * requested permission.
      */
-    default boolean hasAppPermission(AppPermission requiredPermission) {
+    default boolean hasAppPermission(final AppPermission requiredPermission) {
         return hasAppPermissions(requiredPermission.asAppPermissionSet());
     }
 
@@ -104,7 +104,7 @@ public interface CommonSecurityContext {
     /**
      * Secure the supplied code with the supplied application permission.
      */
-    default void secure(AppPermission permission, Runnable runnable) {
+    default void secure(final AppPermission permission, final Runnable runnable) {
         secure(permission.asAppPermissionSet(), runnable);
     }
 
@@ -113,7 +113,7 @@ public interface CommonSecurityContext {
     /**
      * Secure the supplied code with the supplied application permission.
      */
-    default <T> T secureResult(AppPermission permission, Supplier<T> supplier) {
+    default <T> T secureResult(final AppPermission permission, final Supplier<T> supplier) {
         return secureResult(permission.asAppPermissionSet(), supplier);
     }
 

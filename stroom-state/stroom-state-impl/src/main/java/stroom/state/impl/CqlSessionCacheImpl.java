@@ -72,7 +72,7 @@ public class CqlSessionCacheImpl implements CqlSessionCache, Clearable {
         return session;
     }
 
-    private void destroy(ScyllaDbDoc doc, final CqlSession session) {
+    private void destroy(final ScyllaDbDoc doc, final CqlSession session) {
         session.close();
     }
 

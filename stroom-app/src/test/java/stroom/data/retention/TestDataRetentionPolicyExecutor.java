@@ -105,7 +105,7 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
 
         Long lastStatusMsInside = metaInsideRetention.getStatusMs();
         Long lastStatusMsOutside = metaOutsideRetention.getStatusMs();
-        Long lastStatusMsForever = foreverMeta.getStatusMs();
+        final Long lastStatusMsForever = foreverMeta.getStatusMs();
 
         // run the stream retention task which should 'delete' one stream
         dataRetentionPolicyExecutor.exec();

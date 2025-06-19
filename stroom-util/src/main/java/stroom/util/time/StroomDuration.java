@@ -56,13 +56,13 @@ public class StroomDuration implements Comparable<StroomDuration>, TemporalAmoun
         } else {
             this.duration = Duration.from(temporalAmount);
         }
-        String durationStr = duration.toString();
+        final String durationStr = duration.toString();
         // Duration won't output in days, instead using multiple hours, e.g. P30D => PT720H
         // which is a bit grim, so do a simple hack to deal with whole numbers of days.
         if (durationStr.matches("^PT[0-9]+[hH]$")) {
             // get the number of hours
-            long hours = Long.parseLong(durationStr.substring(2, durationStr.length() - 1));
-            long remainderHours = hours % 24;
+            final long hours = Long.parseLong(durationStr.substring(2, durationStr.length() - 1));
+            final long remainderHours = hours % 24;
 //            if (hours >= 24 && hours % 24 == 0) {
             if (hours >= 24) {
                 String valueAsStr = "P" + hours / 24 + "D";

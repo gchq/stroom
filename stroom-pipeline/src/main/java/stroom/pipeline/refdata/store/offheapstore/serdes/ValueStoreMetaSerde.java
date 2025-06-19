@@ -41,9 +41,9 @@ public class ValueStoreMetaSerde implements Serde<ValueStoreMeta> {
     }
 
     @Override
-    public ValueStoreMeta deserialize(ByteBuffer byteBuffer) {
+    public ValueStoreMeta deserialize(final ByteBuffer byteBuffer) {
 
-        ValueStoreMeta valueStoreMeta = new ValueStoreMeta(
+        final ValueStoreMeta valueStoreMeta = new ValueStoreMeta(
                 byteBuffer.get(),
                 (int) REF_COUNT_UNSIGNED_BYTES.get(byteBuffer));
         byteBuffer.flip();
@@ -52,7 +52,7 @@ public class ValueStoreMetaSerde implements Serde<ValueStoreMeta> {
     }
 
     @Override
-    public void serialize(ByteBuffer byteBuffer, ValueStoreMeta valueStoreMeta) {
+    public void serialize(final ByteBuffer byteBuffer, final ValueStoreMeta valueStoreMeta) {
 
         byteBuffer.put((byte) valueStoreMeta.getTypeId());
         REF_COUNT_UNSIGNED_BYTES.put(byteBuffer, valueStoreMeta.getReferenceCount());
@@ -92,7 +92,7 @@ public class ValueStoreMetaSerde implements Serde<ValueStoreMeta> {
         ByteBufferUtils.copy(sourceBuffer, destBuffer);
         try {
             REF_COUNT_UNSIGNED_BYTES.decrement(destBuffer, REFERENCE_COUNT_OFFSET);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message("Error decrementing reference count. Current value {}. {}",
                     REF_COUNT_UNSIGNED_BYTES.get(sourceBuffer, sourceBuffer.position()),
                     e.getMessage()), e);
@@ -103,7 +103,7 @@ public class ValueStoreMetaSerde implements Serde<ValueStoreMeta> {
         ByteBufferUtils.copy(sourceBuffer, destBuffer);
         try {
             REF_COUNT_UNSIGNED_BYTES.increment(destBuffer, REFERENCE_COUNT_OFFSET);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message(
                     "Error incrementing reference count. Current value {}. {}",
                     ModelStringUtil.formatCsv(REF_COUNT_UNSIGNED_BYTES.get(sourceBuffer, REFERENCE_COUNT_OFFSET)),

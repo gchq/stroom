@@ -12,7 +12,7 @@ class TestToLong extends AbstractFunctionTest<ToLong> {
 
     @Override
     Stream<TestCase> getTestCases() {
-        Instant now = Instant.now();
+        final Instant now = Instant.now();
 
         return Stream.of(
                 TestCase.of(

@@ -53,7 +53,7 @@ public final class VisResultRequest extends ComponentResultRequest {
                             @JsonProperty("fetch") final Fetch fetch,
                             @JsonProperty("visualisation") final DocRef visualisation,
                             @JsonProperty("json") final String json,
-                            @JsonProperty("tableSettings") TableSettings tableSettings,
+                            @JsonProperty("tableSettings") final TableSettings tableSettings,
                             @JsonProperty("requestedRange") final OffsetRange requestedRange) {
         super(componentId, fetch);
         this.visualisation = visualisation;

@@ -59,7 +59,7 @@ class TestAbstractDocPool {
                 this::createPoolValueWithCounter);
 
         final MyDoc myDoc = new MyDoc("foo");
-        PoolItem<String> poolItem1 = myDocPool.borrowObject(myDoc, true);
+        final PoolItem<String> poolItem1 = myDocPool.borrowObject(myDoc, true);
 
         Assertions.assertThat(valueCreationCounter)
                 .hasValue(1);
@@ -107,7 +107,7 @@ class TestAbstractDocPool {
 
 
         final MyDoc myDoc = new MyDoc("foo");
-        PoolItem<String> poolItem1 = myDocPool.borrowObject(myDoc, false);
+        final PoolItem<String> poolItem1 = myDocPool.borrowObject(myDoc, false);
 
         Assertions.assertThat(valueCreationCounter)
                 .hasValue(1);
@@ -118,7 +118,7 @@ class TestAbstractDocPool {
 
         myDocPool.returnObject(poolItem1, false);
 
-        PoolItem<String> poolItem2 = myDocPool.borrowObject(myDoc, false);
+        final PoolItem<String> poolItem2 = myDocPool.borrowObject(myDoc, false);
 
         // Item 1 didn't go in the pool so value created fresh
         Assertions.assertThat(valueCreationCounter)
@@ -136,7 +136,7 @@ class TestAbstractDocPool {
                 this::createPoolValueWithCounter);
 
         final MyDoc myDoc = new MyDoc("foo");
-        PoolItem<String> poolItem1 = myDocPool.borrowObject(myDoc, true);
+        final PoolItem<String> poolItem1 = myDocPool.borrowObject(myDoc, true);
 
         Assertions.assertThat(poolItem1.getValue())
                 .isEqualTo(createPoolValue(myDoc));
@@ -151,7 +151,7 @@ class TestAbstractDocPool {
         // by the pool
         myDocPool.returnObject(poolItem1, true);
 
-        PoolItem<String> poolItem2 = myDocPool.borrowObject(myDoc, true);
+        final PoolItem<String> poolItem2 = myDocPool.borrowObject(myDoc, true);
 
         // Latest borrow causes value to be created as there is nothing in the pool
         Assertions.assertThat(valueCreationCounter)

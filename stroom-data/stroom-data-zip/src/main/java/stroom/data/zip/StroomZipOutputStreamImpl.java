@@ -33,8 +33,8 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
     }
 
     public StroomZipOutputStreamImpl(final Path file, final TaskContext taskContext) throws IOException {
-        Path dir = file.getParent();
-        Path lockFile = dir.resolve(file.getFileName().toString() + LOCK_EXTENSION);
+        final Path dir = file.getParent();
+        final Path lockFile = dir.resolve(file.getFileName().toString() + LOCK_EXTENSION);
 
         if (Files.deleteIfExists(file)) {
             LOGGER.warn("deleted file " + file);

@@ -362,7 +362,7 @@ class SecurityContextImpl implements SecurityContext {
      */
     @Override
     public <T> T asUserResult(final UserIdentity userIdentity, final Supplier<T> supplier) {
-        T result;
+        final T result;
         boolean success = false;
         try {
             pushUser(userIdentity);
@@ -435,7 +435,7 @@ class SecurityContextImpl implements SecurityContext {
      */
     @Override
     public <T> T useAsReadResult(final Supplier<T> supplier) {
-        T result;
+        final T result;
         boolean success = false;
         try {
             elevatePermissions();
@@ -615,7 +615,7 @@ class SecurityContextImpl implements SecurityContext {
                 }
             } else {
                 // One of permissionSet must be held
-                boolean foundOne = requiredPermissions.stream()
+                final boolean foundOne = requiredPermissions.stream()
                         .anyMatch(this::hasAppPermission);
                 if (!foundOne) {
                     throw new PermissionException(

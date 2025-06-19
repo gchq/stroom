@@ -167,7 +167,7 @@ class FsFileDeleter {
                                     deleteCountConsumer.accept(1L);
                                 }
                                 LOGGER.debug("tryDelete() - Successfully deleted empty directory {}", canonicalDir);
-                            } catch (NoSuchFileException e) {
+                            } catch (final NoSuchFileException e) {
                                 LOGGER.debug("tryDelete() - Directory not found {}", canonicalDir);
                                 // It is not there (which is what we want), so just carry on recursing
                                 // with its parent

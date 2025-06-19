@@ -60,7 +60,7 @@ public abstract class AbstractRefDataStore implements RefDataStore {
                                               final Consumer<RefDataLoader> work) {
 
         final boolean result;
-        try (RefDataLoader refDataLoader = createLoader(refStreamDefinition, effectiveTimeMs)) {
+        try (final RefDataLoader refDataLoader = createLoader(refStreamDefinition, effectiveTimeMs)) {
             // we now hold the lock for this RefStreamDefinition so re-test the completion state
 
             final Optional<ProcessingState> optLoadState = getLoadState(refStreamDefinition);
@@ -106,13 +106,13 @@ public abstract class AbstractRefDataStore implements RefDataStore {
 
                 result = true;
             }
-        } catch (TaskTerminatedException e) {
+        } catch (final TaskTerminatedException e) {
             LAMBDA_LOGGER.debug(() -> "Task terminated: " + e.getMessage());
             throw e;
-        } catch (UncheckedInterruptedException e) {
+        } catch (final UncheckedInterruptedException e) {
             LAMBDA_LOGGER.debug(() -> "Interrupted: " + e.getMessage());
             throw new TaskTerminatedException();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             String msg = e.getMessage();
             // May get suppressed exceptions from the try-with-resources
             if (e.getSuppressed() != null && e.getSuppressed().length > 0) {
@@ -138,7 +138,7 @@ public abstract class AbstractRefDataStore implements RefDataStore {
                     try {
                         LOGGER.debug("Acquiring lock for {}", refStreamDefinition);
                         lock.lockInterruptibly();
-                    } catch (InterruptedException e) {
+                    } catch (final InterruptedException e) {
                         Thread.currentThread().interrupt();
                         throw new RuntimeException(LogUtil.message(
                                 "Thread interrupted while trying to acquire lock for refStreamDefinition {}",

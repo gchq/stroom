@@ -221,14 +221,14 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
             final List<ExpressionItem> childrenCopy = new ArrayList<>();
             for (final ExpressionItem child : expressionOperator.getChildren()) {
                 final ExpressionItem childCopy;
-                if (child instanceof ExpressionTerm childTerm) {
+                if (child instanceof final ExpressionTerm childTerm) {
                     childCopy = copyAndObfuscateTerm(
                             childTerm,
                             fieldNameToSaltMap,
                             hashFunction,
                             obfuscatedFields,
                             uuidToFlattenedDictMap);
-                } else if (child instanceof ExpressionOperator childOperator) {
+                } else if (child instanceof final ExpressionOperator childOperator) {
                     childCopy = copyAndObfuscateOperator(
                             childOperator,
                             fieldNameToSaltMap,
@@ -333,7 +333,7 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
                                                  final CIKey fieldName,
                                                  final HashFunction hashFunction,
                                                  final Map<String, String> fieldNameToSaltMap,
-                                                 boolean obfuscateContent) {
+                                                 final boolean obfuscateContent) {
         // combinedData includes all the words from the imports
         String combinedData = wordListProvider.getCombinedData(docRef);
 

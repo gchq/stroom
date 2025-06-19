@@ -245,7 +245,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
     private Long getLong(final Val[] values, final int index) {
         Long result = null;
         if (values.length > index) {
-            Val val = values[index];
+            final Val val = values[index];
             if (val != null) {
                 result = val.toLong();
             }
@@ -294,7 +294,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
         Objects.requireNonNull(fieldName);
         Objects.requireNonNull(getter);
         return Map.entry(fieldName, annotation -> {
-            T value = getter.apply(annotation);
+            final T value = getter.apply(annotation);
 
             if (value == null) {
                 return ValNull.INSTANCE;

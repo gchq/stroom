@@ -41,9 +41,9 @@ public class CertificateAuthenticator implements AuthenticatorFilter {
 
             LOGGER.debug("Returning optUserIdentity: {}", optUserIdentity);
             return optUserIdentity;
-        } catch (StroomStreamException e) {
+        } catch (final StroomStreamException e) {
             throw e;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new StroomStreamException(
                     StroomStatusCode.CLIENT_CERTIFICATE_NOT_AUTHENTICATED, attributeMap, e.getMessage());
         }

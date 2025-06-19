@@ -78,12 +78,12 @@ public class MockFileDestination {
             return forwardConfigs.stream()
                     .mapToLong(forwardConfig -> {
                         if (!forwardConfig.getPath().isBlank()) {
-                            try (Stream<Path> pathStream = Files.walk(
+                            try (final Stream<Path> pathStream = Files.walk(
                                     pathCreator.toAppPath(forwardConfig.getPath()))) {
                                 return pathStream
                                         .filter(path -> path.toString().endsWith(".meta"))
                                         .count();
-                            } catch (IOException e) {
+                            } catch (final IOException e) {
                                 throw new RuntimeException(e);
                             }
                         } else {
@@ -150,7 +150,7 @@ public class MockFileDestination {
                                         }
                                     }
 
-                                } catch (Exception e) {
+                                } catch (final Exception e) {
                                     throw new RuntimeException(e);
                                 }
                                 forwardFileItems.add(new ForwardFileItem(

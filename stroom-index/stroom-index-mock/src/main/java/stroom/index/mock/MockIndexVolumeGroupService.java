@@ -65,7 +65,7 @@ public class MockIndexVolumeGroupService implements IndexVolumeGroupService {
     }
 
     @Override
-    public IndexVolumeGroup get(String name) {
+    public IndexVolumeGroup get(final String name) {
         return null;
     }
 

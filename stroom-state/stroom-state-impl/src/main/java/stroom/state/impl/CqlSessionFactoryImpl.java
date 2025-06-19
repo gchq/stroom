@@ -16,12 +16,12 @@ public class CqlSessionFactoryImpl implements CqlSessionFactory {
     }
 
     @Override
-    public CqlSession getSession(DocRef scyllaDbDocRef) {
+    public CqlSession getSession(final DocRef scyllaDbDocRef) {
         return cqlSessionCache.get(scyllaDbDocRef);
     }
 
     @Override
-    public Provider<CqlSession> getSessionProvider(DocRef scyllaDbDocRef) {
+    public Provider<CqlSession> getSessionProvider(final DocRef scyllaDbDocRef) {
         return () -> getSession(scyllaDbDocRef);
     }
 }

@@ -144,7 +144,7 @@ public class BenchmarkDataFeed {
     public void sendFile(final HttpClient httpClient) {
         final long startTime = System.currentTimeMillis();
         boolean connected = false;
-        boolean sent = false;
+        final boolean sent = false;
         try {
             logDebug("Sending to " + serverUrl);
 
@@ -166,17 +166,17 @@ public class BenchmarkDataFeed {
 
                         // Compress data and replace sample.
                         if ("gzip".equalsIgnoreCase(compression)) {
-                            try (GzipCompressorOutputStream gzipCompressorOutputStream =
+                            try (final GzipCompressorOutputStream gzipCompressorOutputStream =
                                     new GzipCompressorOutputStream(
                                             outputStream)) {
-                                byte[] sampleData = buildSampleData();
+                                final byte[] sampleData = buildSampleData();
                                 StreamUtil.streamToStream(new ByteArrayInputStream(sampleData),
                                         gzipCompressorOutputStream);
                             }
                         } else {
                             try (final BufferedOutputStream bufferedOutputStream =
                                     new BufferedOutputStream(outputStream)) {
-                                byte[] sampleData = buildSampleData();
+                                final byte[] sampleData = buildSampleData();
                                 StreamUtil.streamToStream(new ByteArrayInputStream(sampleData),
                                         bufferedOutputStream);
                             }
@@ -356,7 +356,7 @@ public class BenchmarkDataFeed {
     }
 
     public void run() throws IOException {
-        try (InputStreamReader reader = new InputStreamReader(System.in, StreamUtil.DEFAULT_CHARSET)) {
+        try (final InputStreamReader reader = new InputStreamReader(System.in, StreamUtil.DEFAULT_CHARSET)) {
             final BufferedReader readerB = new BufferedReader(reader);
 
             String line = "";

@@ -59,13 +59,13 @@ class RANestedInputStream extends NestedInputStream {
         return getNextEntry(0);
     }
 
-    boolean getNextEntry(long skipCount) throws IOException {
+    boolean getNextEntry(final long skipCount) throws IOException {
         currentEntry = currentEntry + skipCount + 1;
         return getEntry(currentEntry);
     }
 
     @Override
-    public boolean getEntry(long entryNo) throws IOException {
+    public boolean getEntry(final long entryNo) throws IOException {
         // Check that this stream is open.
         checkNotClosed();
 
@@ -141,7 +141,7 @@ class RANestedInputStream extends NestedInputStream {
 
     @SuppressWarnings("NullableProblems")
     @Override
-    public int read(byte[] b) throws IOException {
+    public int read(final byte[] b) throws IOException {
         checkOpenEntry();
         return segmentInputStream.read(b);
     }
@@ -162,13 +162,13 @@ class RANestedInputStream extends NestedInputStream {
 
     @SuppressWarnings("NullableProblems")
     @Override
-    public int read(byte[] b, int off, int len) throws IOException {
+    public int read(final byte[] b, final int off, final int len) throws IOException {
         checkOpenEntry();
         return segmentInputStream.read(b, off, len);
     }
 
     @Override
-    public void mark(int readlimit) {
+    public void mark(final int readlimit) {
         if (segmentInputStream != null) {
             segmentInputStream.mark(readlimit);
         }
@@ -195,7 +195,7 @@ class RANestedInputStream extends NestedInputStream {
     }
 
     @Override
-    public long skip(long n) throws IOException {
+    public long skip(final long n) throws IOException {
         checkOpenEntry();
         return segmentInputStream.skip(n);
     }

@@ -32,7 +32,7 @@ class TestFsFeedPathDaoImpl extends StroomUnitTest {
         final FsDataStoreDbConnProvider fsDataStoreDbConnProvider = DbTestUtil.getTestDbDatasource(
                 new FsDataStoreDbModule(), new DataStoreServiceDbConfig());
 
-        FsFeedPathDaoImpl fsFeedPathDao = new FsFeedPathDaoImpl(
+        final FsFeedPathDaoImpl fsFeedPathDao = new FsFeedPathDaoImpl(
                 fsDataStoreDbConnProvider,
                 new CacheManagerImpl(),
                 FsVolumeConfig::new);

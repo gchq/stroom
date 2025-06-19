@@ -59,17 +59,17 @@ class TestMergeFilter extends StroomUnitTest {
         return StroomPipelineTestFileUtil.getString(resourceName);
     }
 
-    public static String prettyPrintXML(String xmlString) throws Exception {
-        Document document = javax.xml.parsers.DocumentBuilderFactory.newInstance()
+    public static String prettyPrintXML(final String xmlString) throws Exception {
+        final Document document = javax.xml.parsers.DocumentBuilderFactory.newInstance()
                 .newDocumentBuilder()
                 .parse(new InputSource(new java.io.StringReader(xmlString)));
 
-        TransformerFactory transformerFactory = TransformerFactory.newInstance();
+        final TransformerFactory transformerFactory = TransformerFactory.newInstance();
 
-        Transformer transformer = transformerFactory.newTransformer();
+        final Transformer transformer = transformerFactory.newTransformer();
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 
-        StringWriter writer = new StringWriter();
+        final StringWriter writer = new StringWriter();
         transformer.transform(new DOMSource(document), new StreamResult(writer));
 
         return writer.toString();

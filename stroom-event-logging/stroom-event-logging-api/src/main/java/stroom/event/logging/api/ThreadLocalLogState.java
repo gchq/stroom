@@ -8,7 +8,7 @@ public class ThreadLocalLogState {
         return THREAD_LOCAL.get() == Boolean.TRUE;
     }
 
-    public static void setLogged(boolean logged) {
+    public static void setLogged(final boolean logged) {
         if (!logged) {
             THREAD_LOCAL.remove();
         } else {

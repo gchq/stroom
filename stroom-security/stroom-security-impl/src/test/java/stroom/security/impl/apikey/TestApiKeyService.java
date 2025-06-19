@@ -90,7 +90,7 @@ class TestApiKeyService {
                 .displayName("myDisplayName")
                 .build();
 
-        CreateHashedApiKeyRequest request = new CreateHashedApiKeyRequest(
+        final CreateHashedApiKeyRequest request = new CreateHashedApiKeyRequest(
                 owner,
                 Instant.now().plus(10, ChronoUnit.DAYS).toEpochMilli(),
                 "key1",
@@ -133,7 +133,7 @@ class TestApiKeyService {
                 .displayName("myDisplayName")
                 .build();
 
-        CreateHashedApiKeyRequest request = new CreateHashedApiKeyRequest(
+        final CreateHashedApiKeyRequest request = new CreateHashedApiKeyRequest(
                 owner,
                 null,
                 "key1",
@@ -187,7 +187,7 @@ class TestApiKeyService {
         // Over the limit
         final Instant expireTime = maxExpireTime.plus(Duration.ofDays(10));
 
-        CreateHashedApiKeyRequest request = new CreateHashedApiKeyRequest(
+        final CreateHashedApiKeyRequest request = new CreateHashedApiKeyRequest(
                 owner,
                 expireTime.toEpochMilli(),
                 "key1",
@@ -209,7 +209,7 @@ class TestApiKeyService {
                 .displayName("myDisplayName")
                 .build();
 
-        CreateHashedApiKeyRequest request = new CreateHashedApiKeyRequest(
+        final CreateHashedApiKeyRequest request = new CreateHashedApiKeyRequest(
                 owner,
                 Instant.now().plus(10, ChronoUnit.DAYS).toEpochMilli(),
                 "key1",
@@ -258,7 +258,7 @@ class TestApiKeyService {
                 .build();
 
         final String name = "key-" + UUID.randomUUID().toString();
-        CreateHashedApiKeyRequest request = new CreateHashedApiKeyRequest(
+        final CreateHashedApiKeyRequest request = new CreateHashedApiKeyRequest(
                 owner,
                 Instant.now().plus(10, ChronoUnit.DAYS).toEpochMilli(),
                 name,
@@ -311,7 +311,7 @@ class TestApiKeyService {
                 .build();
         final UserRef ownerRef = owner.asRef();
 
-        List<HashedApiKey> apiKeys = List.of(
+        final List<HashedApiKey> apiKeys = List.of(
                 HashedApiKey.builder()
                         .withOwner(ownerRef)
                         .withApiKeyHash(hash)
@@ -366,7 +366,7 @@ class TestApiKeyService {
         final User owner = createUser("mySubjectId");
         final UserRef ownerRef = owner.asRef();
 
-        List<HashedApiKey> apiKeys = List.of(
+        final List<HashedApiKey> apiKeys = List.of(
                 HashedApiKey.builder()
                         .withOwner(ownerRef)
                         .withApiKeyHash(hash)
@@ -397,7 +397,7 @@ class TestApiKeyService {
         final User owner2 = createUser("mySubjectId2");
         final User owner3 = createUser("mySubjectId3");
 
-        List<HashedApiKey> apiKeys = List.of(
+        final List<HashedApiKey> apiKeys = List.of(
                 HashedApiKey.builder()
                         .withOwner(owner1.asRef())
                         .withApiKeyHash("another hash")
@@ -465,7 +465,7 @@ class TestApiKeyService {
                 .displayName("myDisplayName3")
                 .build();
 
-        List<HashedApiKey> apiKeys = List.of(
+        final List<HashedApiKey> apiKeys = List.of(
                 HashedApiKey.builder()
                         .withOwner(owner1)
                         .withApiKeyHash("another hash")
@@ -500,7 +500,7 @@ class TestApiKeyService {
                     final ApiKeyHashAlgorithm hashAlgorithm = testCase.getInput();
                     long millis = 0;
                     long nanos = 0;
-                    int cnt = 10;
+                    final int cnt = 10;
                     for (int i = 0; i < cnt; i++) {
                         final String apiKeyStr = apiKeyGenerator.generateRandomApiKey();
 

@@ -55,9 +55,9 @@ public class BackupConfig {
             }
         }
 
-        try (LineNumberReader inputStreamReader = new LineNumberReader(
+        try (final LineNumberReader inputStreamReader = new LineNumberReader(
                 new InputStreamReader(System.in, StreamUtil.DEFAULT_CHARSET));
-                PrintWriter printWriter = new PrintWriter(
+                final PrintWriter printWriter = new PrintWriter(
                         new OutputStreamWriter(System.out, StreamUtil.DEFAULT_CHARSET))) {
             String line = null;
             while ((line = inputStreamReader.readLine()) != null) {

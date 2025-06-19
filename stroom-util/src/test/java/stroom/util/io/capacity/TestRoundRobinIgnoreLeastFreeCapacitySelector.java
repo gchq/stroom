@@ -30,7 +30,7 @@ class TestRoundRobinIgnoreLeastFreeCapacitySelector extends AbstractHasCapacityS
         // Do it all twice, so we can check it cycles back round
         for (int i = 0; i < 2; i++) {
             // Should get each path in turn
-            for (NoddyVolume volume : validVolumes) {
+            for (final NoddyVolume volume : validVolumes) {
                 noddyVolume = testOnce(selector, PATH_1, PATH_2, PATH_3, PATH_5);
                 Assertions.assertThat(noddyVolume.getPath())
                         .isEqualTo(volume.getPath());

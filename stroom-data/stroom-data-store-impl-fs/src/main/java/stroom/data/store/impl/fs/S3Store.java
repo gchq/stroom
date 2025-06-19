@@ -137,7 +137,7 @@ class S3Store {
 
     private void evict() {
         if (cache.size() > MAX_CACHED_ITEMS) {
-            List<TrackedSource> list;
+            final List<TrackedSource> list;
             synchronized (S3Store.this) {
                 list = new ArrayList<>(evictable);
             }

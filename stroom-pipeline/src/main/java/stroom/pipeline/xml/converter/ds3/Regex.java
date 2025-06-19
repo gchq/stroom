@@ -45,7 +45,7 @@ public class Regex extends Expression implements ExecutionProfiler, Match {
     @Override
     public void setInput(final CharSequence cs) {
         if (LOGGER.isDebugEnabled()) {
-            long startTime = System.currentTimeMillis();
+            final long startTime = System.currentTimeMillis();
             matcher = pattern.matcher(cs);
             totalExecutionTime += System.currentTimeMillis() - startTime;
         } else {
@@ -146,7 +146,7 @@ public class Regex extends Expression implements ExecutionProfiler, Match {
     private boolean findNextMatch() {
         try {
             return matcher.find(0);
-        } catch (StackOverflowError soe) {
+        } catch (final StackOverflowError soe) {
             throw new ComplexRegexException(matcher);
         }
     }

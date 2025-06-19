@@ -246,7 +246,7 @@ public class App extends Application<Config> {
 
     private void registerLogConfiguration(final Environment environment) {
         // Task to allow configuration of log levels at runtime
-        String path = environment.getAdminContext().getContextPath();
+        final String path = environment.getAdminContext().getContextPath();
 
         // To change the log level do one of:
         // curl -X POST -d "logger=stroom&level=DEBUG" [admin context path]/tasks/log-level
@@ -271,8 +271,8 @@ public class App extends Application<Config> {
                             ? " (INSTANT)"
                             : "";
                     final String type = switch (forwarderConfig) {
-                        case ForwardHttpPostConfig ignored -> "HTTP";
-                        case ForwardFileConfig ignored -> "FILE";
+                        case final ForwardHttpPostConfig ignored -> "HTTP";
+                        case final ForwardFileConfig ignored -> "FILE";
                     };
                     return "    " + type + ": '" + name + "' -> " + destination + instant + state;
                 })
@@ -327,7 +327,7 @@ public class App extends Application<Config> {
                         }
                     });
 
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException("Error parsing config file " + configFile.toAbsolutePath().normalize());
         }
     }

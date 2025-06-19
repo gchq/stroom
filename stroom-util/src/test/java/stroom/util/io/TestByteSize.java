@@ -51,7 +51,7 @@ class TestByteSize {
                           final Function<Long, ByteSize> func,
                           final String expected,
                           final long expectedMultiplier) {
-        ByteSize byteSize = func.apply(input);
+        final ByteSize byteSize = func.apply(input);
 
         assertThat(byteSize.getValueAsStr()).isEqualTo(expected);
         assertThat(byteSize.getBytes()).isEqualTo(input * expectedMultiplier);
@@ -60,14 +60,14 @@ class TestByteSize {
     @Test
     void ofBytes_bad() {
         Assertions.assertThatThrownBy(() -> {
-            long input = -1;
+            final long input = -1;
             ByteSize.ofBytes(input);
         }).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void zero() {
-        ByteSize byteSize = ByteSize.ZERO;
+        final ByteSize byteSize = ByteSize.ZERO;
         assertThat(byteSize.getBytes()).isEqualTo(0);
         assertThat(byteSize.isZero()).isTrue();
         assertThat(byteSize.isNonZero()).isFalse();
@@ -91,7 +91,7 @@ class TestByteSize {
         for (final String value : values) {
             LOGGER.info("Testing value {}, expected {}", value, expectedBytes);
 
-            ByteSize byteSize = ByteSize.parse(value);
+            final ByteSize byteSize = ByteSize.parse(value);
             assertThat(byteSize.getBytes()).isEqualTo(expectedBytes);
             assertThat(byteSize.getValueAsStr()).isEqualTo(value);
             assertThat(byteSize.isZero()).isFalse();

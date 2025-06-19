@@ -47,7 +47,7 @@ class TestAppConfigModule {
 
     @Test
     void testCommonDbConfig() throws IOException {
-        Path devYamlPath = getDevYamlPath();
+        final Path devYamlPath = getDevYamlPath();
 
         LOGGER.debug("dev yaml path: {}", devYamlPath.toAbsolutePath());
 
@@ -77,7 +77,7 @@ class TestAppConfigModule {
                 .getConnectionConfig()
                 .setUser(newUser);
 
-        Injector injector = Guice.createInjector(new AbstractModule() {
+        final Injector injector = Guice.createInjector(new AbstractModule() {
             @Override
             protected void configure() {
                 install(new AppConfigModule(new ConfigHolder() {
@@ -110,7 +110,7 @@ class TestAppConfigModule {
                 .map(method -> {
                     try {
                         return (HasDbConfig) method.invoke(appConfig);
-                    } catch (IllegalAccessException | InvocationTargetException e) {
+                    } catch (final IllegalAccessException | InvocationTargetException e) {
                         throw new RuntimeException(e);
                     }
                 });
@@ -194,7 +194,7 @@ class TestAppConfigModule {
                 .map(ClassPath.ClassInfo::load)
                 .filter(classFilter)
                 .filter(clazz -> {
-                    boolean isAbstract = Modifier.isAbstract(clazz.getModifiers());
+                    final boolean isAbstract = Modifier.isAbstract(clazz.getModifiers());
                     if (isAbstract) {
                         LOGGER.info("Ignoring abstract class {}", clazz.getName());
                     }
@@ -229,10 +229,10 @@ class TestAppConfigModule {
                                     prop.getParentObject().getClass().getSimpleName(), prop.getGetter().getName()))
                             .isNotNull();
 
-                    Class<?> valueClass = prop.getValueClass();
+                    final Class<?> valueClass = prop.getValueClass();
                     if (classFilter.test(valueClass)) {
                         appConfigTreeClasses.add(prop.getValueClass());
-                        AbstractConfig propValue = (AbstractConfig) prop.getValueFromConfigObject();
+                        final AbstractConfig propValue = (AbstractConfig) prop.getValueFromConfigObject();
                         // Keep a record of the instance ID of the instance in the tree
                         appConfigTreeClassToIdMap.put(valueClass, System.identityHashCode(propValue));
                     }

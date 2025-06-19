@@ -14,7 +14,7 @@ public class UniqueUtil {
         int count = 1;
 
         // See if we can get a numeric part off the end of the field name.
-        int index = fieldName.lastIndexOf(" ");
+        final int index = fieldName.lastIndexOf(" ");
         if (index != -1) {
             final String part1 = fieldName.substring(0, index);
             final String part2 = fieldName.substring(index + 1);

@@ -92,7 +92,7 @@ public class FindApiKeyCriteria extends ExpressionCriteria {
 //    }
 //
     public static FindApiKeyCriteria create(final UserRef owner) {
-        FindApiKeyCriteria findApiKeyCriteria = new FindApiKeyCriteria();
+        final FindApiKeyCriteria findApiKeyCriteria = new FindApiKeyCriteria();
         findApiKeyCriteria.setOwner(owner);
         return findApiKeyCriteria;
     }

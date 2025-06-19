@@ -31,13 +31,10 @@ import org.xml.sax.helpers.AttributesImpl;
 @ConfigurableElement(
         type = "SafeXMLFilter",
         category = Category.FILTER,
-        description = """
-                Restricts the characters to a very simple set consisting of `[a-zA-Z0-9]` and `["""
-                + SafeBuffer.OTHER_CHARS
-                + """
-                ]`.
-                All other characters are replaced by `~NNN`, where `NNN` is a three digit codepoint for the \
-                replaced character.""",
+        description = "Restricts the characters to a very simple set consisting of `[a-zA-Z0-9]` and `["
+                      + SafeBuffer.OTHER_CHARS
+                      + "]`. All other characters are replaced by `~NNN`, where `NNN` is a three " +
+                      "digit codepoint for the replaced character.",
         roles = {
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_HAS_TARGETS,
@@ -50,20 +47,23 @@ public class SafeXMLFilter extends AbstractXMLFilter {
     private final SafeAttributes safeAttributes = new SafeAttributes(safeBuffer);
 
     @Override
-    public void startElement(String uri, String localName, String name, Attributes atts) throws SAXException {
+    public void startElement(final String uri,
+                             final String localName,
+                             final String name,
+                             final Attributes atts) throws SAXException {
         outputChars();
         safeAttributes.setAtts(atts);
         super.startElement(uri, localName, name, safeAttributes);
     }
 
     @Override
-    public void endElement(String uri, String localName, String name) throws SAXException {
+    public void endElement(final String uri, final String localName, final String name) throws SAXException {
         outputChars();
         super.endElement(uri, localName, name);
     }
 
     @Override
-    public void characters(char[] ch, int start, int length) throws SAXException {
+    public void characters(final char[] ch, final int start, final int length) throws SAXException {
         safeBuffer.append(ch, start, length);
     }
 
@@ -161,7 +161,7 @@ public class SafeXMLFilter extends AbstractXMLFilter {
                 codePoint = c;
 
                 if (inRange(codePoint, DIGIT_CODEPOINTS) || inRange(codePoint, LOWERCASE_CODEPOINTS)
-                        || inRange(codePoint, UPPERCASE_CODEPOINTS) || inValues(codePoint, OTHER_CODEPOINTS)) {
+                    || inRange(codePoint, UPPERCASE_CODEPOINTS) || inValues(codePoint, OTHER_CODEPOINTS)) {
                     outputBuffer.append(c);
                     j++;
                 } else {

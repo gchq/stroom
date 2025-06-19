@@ -26,7 +26,7 @@ public class ParamToken extends Token {
         public Builder() {
         }
 
-        public Builder(ParamToken token) {
+        public Builder(final ParamToken token) {
             this.tokenType = token.tokenType;
             this.chars = token.chars;
             this.start = token.start;

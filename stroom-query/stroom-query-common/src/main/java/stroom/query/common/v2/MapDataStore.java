@@ -88,7 +88,7 @@ public class MapDataStore implements DataStore {
                         final ErrorConsumer errorConsumer,
                         final ResultStoreMapConfig resultStoreMapConfig) {
         this.componentId = componentId;
-        List<Column> columns = tableSettings.getColumns();
+        final List<Column> columns = tableSettings.getColumns();
         this.dateTimeSettings = expressionContext == null
                 ? null
                 : expressionContext.getDateTimeSettings();
@@ -637,7 +637,7 @@ public class MapDataStore implements DataStore {
                                        final Key key,
                                        final StoredValues storedValues,
                                        final int index) {
-            Val val;
+            final Val val;
             final Generator generator = dataStore.compiledColumnsArray[index].getGenerator();
             if (key.isGrouped()) {
                 final Supplier<ChildData> childDataSupplier = () -> new ChildData() {

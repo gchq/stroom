@@ -97,13 +97,13 @@ class TestMetaTypeDaoImpl {
 
     @Test
     void testGet() {
-        String typeName = "Foo";
+        final String typeName = "Foo";
         Optional<Integer> optId = metaTypeDao.get(typeName);
 
         assertThat(optId)
                 .isEmpty();
 
-        Integer id = metaTypeDao.getOrCreate(typeName);
+        final Integer id = metaTypeDao.getOrCreate(typeName);
 
         assertThat(id)
                 .isNotNull();

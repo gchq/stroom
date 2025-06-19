@@ -38,7 +38,7 @@ public class FastInfosetByteBufferConsumer implements RefDataValueByteBufferCons
         try {
             // do the parsing which will output to the tinyBuilder
             saxDocumentParser.parse(inputStream);
-        } catch (IOException | FastInfosetException | SAXException e) {
+        } catch (final IOException | FastInfosetException | SAXException e) {
             throw new RuntimeException("Error parsing fastinfoset bytes, "
                     + ByteBufferUtils.byteBufferInfo(inputStream.getByteBuffer()) + " "
                     + e.getMessage(), e);

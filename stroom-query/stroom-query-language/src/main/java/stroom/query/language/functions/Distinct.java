@@ -228,7 +228,7 @@ class Distinct extends AbstractFunction {
             final List<String> list = stringListReference.get(storedValues);
             if (ascending) {
                 final StringBuilder sb = new StringBuilder();
-                for (String s : list) {
+                for (final String s : list) {
                     sb.append(s);
                     sb.append(delimiter);
                 }
@@ -288,7 +288,7 @@ class Distinct extends AbstractFunction {
 
             int totalLength = 0;
             if (ascending) {
-                for (String s : list) {
+                for (final String s : list) {
                     totalLength += s.length();
                     trimSize++;
                     if (totalLength >= maxStringLength) {

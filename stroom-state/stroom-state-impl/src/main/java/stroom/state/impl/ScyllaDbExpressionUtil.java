@@ -58,8 +58,8 @@ public class ScyllaDbExpressionUtil {
     private static Relation convertTerm(final Map<String, ScyllaDbColumn> columnMap,
                                         final ExpressionTerm term,
                                         final DateTimeSettings dateTimeSettings) {
-        String field = term.getField();
-        Condition condition = term.getCondition();
+        final String field = term.getField();
+        final Condition condition = term.getCondition();
         String value = term.getValue();
 
         final ScyllaDbColumn column = columnMap.get(field);

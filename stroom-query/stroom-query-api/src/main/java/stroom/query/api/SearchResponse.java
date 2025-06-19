@@ -124,14 +124,14 @@ public final class SearchResponse {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        SearchResponse that = (SearchResponse) o;
+        final SearchResponse that = (SearchResponse) o;
         return Objects.equals(highlights, that.highlights) &&
                 Objects.equals(results, that.results) &&
                 Objects.equals(errors, that.errors) &&

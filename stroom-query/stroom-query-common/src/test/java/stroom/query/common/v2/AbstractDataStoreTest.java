@@ -199,9 +199,9 @@ abstract class AbstractDataStoreTest {
         testRows(searchResult, 3);
     }
 
-    private void testRows(final TableResult searchResult, int maxDepth) {
+    private void testRows(final TableResult searchResult, final int maxDepth) {
         // Create expected test rows.
-        List<List<String>> expectedRows = new ArrayList<>();
+        final List<List<String>> expectedRows = new ArrayList<>();
         createRows(expectedRows, Collections.emptyList(), 1, maxDepth, 10, 3);
 
         // Test row count.
@@ -215,12 +215,12 @@ abstract class AbstractDataStoreTest {
         }
     }
 
-    private void createRows(List<List<String>> rows,
-                            List<String> parentRow,
-                            int currentDepth,
-                            int maxDepth,
-                            int count,
-                            int columns) {
+    private void createRows(final List<List<String>> rows,
+                            final List<String> parentRow,
+                            final int currentDepth,
+                            final int maxDepth,
+                            final int count,
+                            final int columns) {
         for (long i = 1; i <= count; i++) {
             final List<String> newParentRow = new ArrayList<>(parentRow);
             newParentRow.add(Long.toString(i));
@@ -333,7 +333,7 @@ abstract class AbstractDataStoreTest {
         SimpleMetrics.report();
 
         //Getting the runtime reference from system
-        Runtime runtime = Runtime.getRuntime();
+        final Runtime runtime = Runtime.getRuntime();
 
         runtime.gc();
 

@@ -89,12 +89,12 @@ class TestValueStoreDb extends AbstractStoreDbTest {
 
     private ValueStoreKey getOrCreate(final Txn<ByteBuffer> writeTxn,
                                       final RefDataValue refDataValue) {
-        try (PooledByteBuffer valueStoreKeyPooledBuffer = valueStoreDb.getPooledKeyBuffer()) {
+        try (final PooledByteBuffer valueStoreKeyPooledBuffer = valueStoreDb.getPooledKeyBuffer()) {
             final StagingValue stagingValue = StagingValueSerde.convert(
                     ByteBuffer::allocateDirect,
                     getCurrValueStoreHashAlgorithm(),
                     refDataValue);
-            ByteBuffer valueStoreKeyBuffer = valueStoreDb.getOrCreateKey(
+            final ByteBuffer valueStoreKeyBuffer = valueStoreDb.getOrCreateKey(
                     writeTxn,
                     stagingValue,
                     valueStoreKeyPooledBuffer,
@@ -240,11 +240,11 @@ class TestValueStoreDb extends AbstractStoreDbTest {
 
         complete:
         for (int i = 0; i < 5; i++) {
-            int size = strings.size();
+            final int size = strings.size();
             temp = new ArrayList<>(size * size);
             int count = 0;
-            for (String s : strings) {
-                for (String t : strings) {
+            for (final String s : strings) {
+                for (final String t : strings) {
                     if (count == desiredRecords) {
                         break complete;
                     }
@@ -288,15 +288,15 @@ class TestValueStoreDb extends AbstractStoreDbTest {
 
         assertThat(valueStoreDb.getEntryCount()).isEqualTo(3);
 
-        ValueStoreKeySerde keySerde = new ValueStoreKeySerde();
+        final ValueStoreKeySerde keySerde = new ValueStoreKeySerde();
 
         lmdbEnv.doWithReadTxn(txn -> {
             // lookup our three entries
             valueToKeyMap.forEach((valueStr, valueStoreKey) -> {
                 valueStoreDb.getPooledKeyBuffer().doWithByteBuffer(keyBuffer -> {
                     keySerde.serialize(keyBuffer, valueStoreKey);
-                    ByteBuffer valueBuffer = valueStoreDb.getAsBytes(txn, keyBuffer).get();
-                    RefDataValue val = refDataValueSerdeFactory.deserialize(valueBuffer, StringValue.TYPE_ID);
+                    final ByteBuffer valueBuffer = valueStoreDb.getAsBytes(txn, keyBuffer).get();
+                    final RefDataValue val = refDataValueSerdeFactory.deserialize(valueBuffer, StringValue.TYPE_ID);
                     assertThat(val).isInstanceOf(StringValue.class);
                     assertThat(((StringValue) val).getValue()).isEqualTo(valueStr);
                 });
@@ -305,7 +305,7 @@ class TestValueStoreDb extends AbstractStoreDbTest {
             // now try and get a value that doesn't exist
             valueStoreDb.getPooledKeyBuffer().doWithByteBuffer(keyBuffer -> {
                 keySerde.serialize(keyBuffer, new ValueStoreKey(123456, (short) 99));
-                Optional<RefDataValue> optRefDataValue = valueStoreDb.get(
+                final Optional<RefDataValue> optRefDataValue = valueStoreDb.get(
                         txn,
                         keyBuffer,
                         StringValue.TYPE_ID);
@@ -322,10 +322,10 @@ class TestValueStoreDb extends AbstractStoreDbTest {
 
         assertThat(valueStoreDb.getEntryCount()).isEqualTo(0);
 
-        String val1str = "AaAa";
-        String val2str = "BBBB";
-        String val3str = "AaBB";
-        String val4str = "BBAa";
+        final String val1str = "AaAa";
+        final String val2str = "BBBB";
+        final String val3str = "AaBB";
+        final String val4str = "BBAa";
 
         assertThat(val1str.hashCode()).isEqualTo(val2str.hashCode());
         assertThat(val1str.hashCode()).isEqualTo(val3str.hashCode());
@@ -350,16 +350,16 @@ class TestValueStoreDb extends AbstractStoreDbTest {
 
         assertThat(valueStoreDb.getEntryCount()).isEqualTo(valueToKeyMap.size());
 
-        ValueStoreKeySerde keySerde = new ValueStoreKeySerde();
+        final ValueStoreKeySerde keySerde = new ValueStoreKeySerde();
 
         lmdbEnv.doWithReadTxn(txn -> {
             // lookup our entries
-            List<Integer> ids = new ArrayList<>();
+            final List<Integer> ids = new ArrayList<>();
             valueStoreDb.getPooledKeyBuffer().doWithByteBuffer(keyBuffer -> {
                 valueToKeyMap.forEach((valueStr, valueStoreKey) -> {
                     keySerde.serialize(keyBuffer, valueStoreKey);
-                    ByteBuffer valueBuffer = valueStoreDb.getAsBytes(txn, keyBuffer).get();
-                    RefDataValue val = refDataValueSerdeFactory.deserialize(valueBuffer, StringValue.TYPE_ID);
+                    final ByteBuffer valueBuffer = valueStoreDb.getAsBytes(txn, keyBuffer).get();
+                    final RefDataValue val = refDataValueSerdeFactory.deserialize(valueBuffer, StringValue.TYPE_ID);
                     assertThat(val).isInstanceOf(StringValue.class);
                     assertThat(((StringValue) val).getValue()).isEqualTo(valueStr);
                 });
@@ -456,14 +456,15 @@ class TestValueStoreDb extends AbstractStoreDbTest {
 
     @Test
     void testAreValueEqual_notFound() {
-        StringValue value2 = StringValue.of("value2");
-        ValueStoreKey unknownValueStoreKey = new ValueStoreKey(123, (short) 0);
-        ByteBuffer unknownValueStoreKeyBuffer = valueStoreDb.getPooledKeyBuffer().getByteBuffer();
+        final StringValue value2 = StringValue.of("value2");
+        final ValueStoreKey unknownValueStoreKey = new ValueStoreKey(123, (short) 0);
+        final ByteBuffer unknownValueStoreKeyBuffer = valueStoreDb.getPooledKeyBuffer().getByteBuffer();
         valueStoreDb.serializeKey(unknownValueStoreKeyBuffer, unknownValueStoreKey);
 
         final StagingValue stagingValue = convert(value2);
         lmdbEnv.doWithWriteTxn(writeTxn -> {
-            boolean areValuesEqual = valueStoreDb.areValuesEqual(writeTxn, unknownValueStoreKeyBuffer, stagingValue);
+            final boolean areValuesEqual = valueStoreDb.areValuesEqual(
+                    writeTxn, unknownValueStoreKeyBuffer, stagingValue);
             assertThat(areValuesEqual).isFalse();
         });
     }
@@ -472,7 +473,7 @@ class TestValueStoreDb extends AbstractStoreDbTest {
     void testKeyOrder() {
 
         // Ensure entries come back in the right order
-        long hash = 123456789;
+        final long hash = 123456789;
         final List<Entry<ValueStoreKey, RefDataValue>> data = IntStream.rangeClosed(0, 1001)
                 .boxed()
                 .map(i -> {
@@ -507,14 +508,14 @@ class TestValueStoreDb extends AbstractStoreDbTest {
                                         final RefDataValue value2,
                                         final boolean expectedResult) {
         lmdbEnv.doWithWriteTxn(writeTxn -> {
-            ValueStoreKey valueStoreKey1 = getOrCreate(writeTxn, value1);
+            final ValueStoreKey valueStoreKey1 = getOrCreate(writeTxn, value1);
 
-            ByteBuffer valueStoreKeyBuffer = valueStoreDb.getPooledKeyBuffer().getByteBuffer();
+            final ByteBuffer valueStoreKeyBuffer = valueStoreDb.getPooledKeyBuffer().getByteBuffer();
             valueStoreDb.serializeKey(valueStoreKeyBuffer, valueStoreKey1);
 
             final StagingValue stagingValue = convert(value2);
 
-            boolean areValuesEqual = valueStoreDb.areValuesEqual(writeTxn, valueStoreKeyBuffer, stagingValue);
+            final boolean areValuesEqual = valueStoreDb.areValuesEqual(writeTxn, valueStoreKeyBuffer, stagingValue);
             assertThat(areValuesEqual).isEqualTo(expectedResult);
         });
     }

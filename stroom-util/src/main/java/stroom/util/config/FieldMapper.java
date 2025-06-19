@@ -99,7 +99,7 @@ public class FieldMapper {
         LOGGER.trace("copy called for {}", source.getClass().getSimpleName());
         try {
             final Map<String, Prop> properties = PropertyUtil.getProperties(source);
-            for (Prop prop : properties.values()) {
+            for (final Prop prop : properties.values()) {
                 LOGGER.trace("Examining prop {} of type {}",
                         prop.getName(), prop.getValueClass().getSimpleName());
 
@@ -154,10 +154,10 @@ public class FieldMapper {
                     }
                 }
             }
-        } catch (InvocationTargetException
-                | IllegalAccessException
-                | NoSuchMethodException
-                | InstantiationException e) {
+        } catch (final InvocationTargetException
+                       | IllegalAccessException
+                       | NoSuchMethodException
+                       | InstantiationException e) {
             throw new RuntimeException(LogUtil.message("Error copying fields from [{}] to [{}]", source, dest), e);
         }
     }
@@ -201,7 +201,7 @@ public class FieldMapper {
         }
     }
 
-    private static boolean isOptionPresent(final CopyOption copyOption, CopyOption... copyOptions) {
+    private static boolean isOptionPresent(final CopyOption copyOption, final CopyOption... copyOptions) {
         return Arrays.asList(copyOptions).contains(copyOption);
     }
 }

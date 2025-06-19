@@ -133,7 +133,7 @@ public class StroomDocsUtil {
                 LOGGER.debug("File content not changed for file {}", file);
                 return false;
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message("Error reading file '{}': {}",
                     file.toAbsolutePath().normalize(),
                     LogUtil.exceptionMessage(e)));
@@ -190,7 +190,7 @@ public class StroomDocsUtil {
     }
 
     public static void doWithClassScanResult(final Consumer<ScanResult> scanResultConsumer) {
-        try (ScanResult scanResult =
+        try (final ScanResult scanResult =
                 new ClassGraph()
                         .enableAllInfo()             // Scan classes, methods, fields, annotations
                         .acceptPackages(STROOM_PACKAGE_NAME)  // Scan com.xyz and subpkgs (omit to scan all packages)

@@ -320,8 +320,7 @@
     </module>
 
     <!-- Ensure un-changed local variables are marked final -->
-    <!-- Commented out for now as there are too many failures -->
-<!--    <module name="FinalLocalVariable"/>-->
+    <module name="FinalLocalVariable"/>
 
     <module name="ClassTypeParameterName">
       <!-- This is google's pattern K, T1, ConProvT, RowT -->

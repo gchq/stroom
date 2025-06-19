@@ -70,7 +70,7 @@ class TestByteBufferPool {
         final ByteBufferPool byteBufferPool = getByteBufferPool();
 
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(0);
-        int minCapacity = 100;
+        final int minCapacity = 100;
         byteBufferPool.doWithBuffer(minCapacity, buffer -> {
 
             assertThat(buffer).isNotNull();
@@ -103,7 +103,7 @@ class TestByteBufferPool {
     @Test
     void doWithBuffer_differentSize() {
 
-        ByteBufferPool byteBufferPool = getByteBufferPool();
+        final ByteBufferPool byteBufferPool = getByteBufferPool();
 
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(0);
 
@@ -119,8 +119,8 @@ class TestByteBufferPool {
 
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(2);
 
-        int minCapacity = 123;
-        int expectedCapacity = 1000;
+        final int minCapacity = 123;
+        final int expectedCapacity = 1000;
         byteBufferPool.doWithBuffer(minCapacity, buffer -> {
 
             assertThat(buffer).isNotNull();
@@ -136,9 +136,9 @@ class TestByteBufferPool {
 
     @Test
     void testBufferReleasing() {
-        ByteBufferPool byteBufferPool = getByteBufferPool();
+        final ByteBufferPool byteBufferPool = getByteBufferPool();
 
-        PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(10);
+        final PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(10);
 
         pooledByteBuffer.getByteBuffer().putLong(Long.MAX_VALUE);
 
@@ -146,11 +146,11 @@ class TestByteBufferPool {
         assertThat(pooledByteBuffer.getByteBuffer().capacity()).isEqualTo(10);
 
         // hold a ref to the buffer so we can test it later, shouldn't normally do this
-        ByteBuffer firstByteBuffer = pooledByteBuffer.getByteBuffer();
+        final ByteBuffer firstByteBuffer = pooledByteBuffer.getByteBuffer();
 
         pooledByteBuffer.close();
 
-        PooledByteBuffer pooledByteBuffer2 = byteBufferPool.getPooledByteBuffer(10);
+        final PooledByteBuffer pooledByteBuffer2 = byteBufferPool.getPooledByteBuffer(10);
 
         // got same instance from pool
         assertThat(pooledByteBuffer2.getByteBuffer()).isSameAs(firstByteBuffer);
@@ -162,8 +162,8 @@ class TestByteBufferPool {
 
     @Test
     void testConcurrency() throws InterruptedException {
-        int threadCount = 50;
-        int minCapacity = 10;
+        final int threadCount = 50;
+        final int minCapacity = 10;
         final ByteBufferPool byteBufferPool = getByteBufferPool();
 
         assertPoolSizeAfterMultipleConcurrentGetRequests(threadCount, minCapacity, byteBufferPool);
@@ -178,8 +178,8 @@ class TestByteBufferPool {
 
     @Test
     void testClear() {
-        int threadCount = 50;
-        int minCapacity = 10;
+        final int threadCount = 50;
+        final int minCapacity = 10;
         final ByteBufferPool byteBufferPool = getByteBufferPool();
 
         assertPoolSizeAfterMultipleConcurrentGetRequests(threadCount, minCapacity, byteBufferPool);
@@ -225,7 +225,7 @@ class TestByteBufferPool {
 
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(6);
 
-        SystemInfoResult systemInfoResult = byteBufferPool.getSystemInfo();
+        final SystemInfoResult systemInfoResult = byteBufferPool.getSystemInfo();
         LOGGER.info("health: {}", systemInfoResult);
 
         assertQueueSize(systemInfoResult, 1, 2);
@@ -251,7 +251,7 @@ class TestByteBufferPool {
         assertThatThrownBy(() -> {
             final ByteBufferPool byteBufferPool = getByteBufferPool();
             assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(0);
-            PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(10);
+            final PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(10);
             pooledByteBuffer.getByteBuffer();
             pooledByteBuffer.close();
 
@@ -264,12 +264,12 @@ class TestByteBufferPool {
 
     @Test
     void testGetByteBuffer() {
-        int capacity = 10;
+        final int capacity = 10;
         final ByteBufferPool byteBufferPool = getByteBufferPool();
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(0);
-        PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(capacity);
+        final PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(capacity);
 
-        ByteBuffer theBuffer = pooledByteBuffer.getByteBuffer();
+        final ByteBuffer theBuffer = pooledByteBuffer.getByteBuffer();
 
         assertThat(theBuffer.capacity()).isEqualTo(capacity);
     }
@@ -293,7 +293,7 @@ class TestByteBufferPool {
                 try {
                     // wait for all threads to have got a new buffer from the pool
                     countDownLatch.await();
-                } catch (InterruptedException e) {
+                } catch (final InterruptedException e) {
                     Thread.currentThread().interrupt();
                     throw new RuntimeException("Thread interrupted", e);
                 }
@@ -304,7 +304,7 @@ class TestByteBufferPool {
         completableFutures.forEach(completableFuture -> {
             try {
                 completableFuture.get();
-            } catch (InterruptedException | ExecutionException e) {
+            } catch (final InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
             }
         });
@@ -431,7 +431,7 @@ class TestByteBufferPool {
 //                doPerfTest(results, testRound, iterations, hbaseByteBufferPool, executorService);
 
                 LOGGER.info("---------------------------------------------------------");
-            } catch (ExecutionException | InterruptedException e) {
+            } catch (final ExecutionException | InterruptedException e) {
                 throw new RuntimeException(e);
             }
         });
@@ -466,10 +466,10 @@ class TestByteBufferPool {
 
         LOGGER.info("Using pool {}", byteBufferPool.getClass().getName());
 
-        CountDownLatch countDownLatch = new CountDownLatch(1);
+        final CountDownLatch countDownLatch = new CountDownLatch(1);
 
         //use consistent seed for a common set of random numbers for each run
-        Random random = new Random(RANDOM_SEED);
+        final Random random = new Random(RANDOM_SEED);
 
         LOGGER.info("Scheduling tasks");
         // submit all the runnables but they will wait till the countDownLatch is counted down
@@ -480,15 +480,15 @@ class TestByteBufferPool {
                         try {
                             // wait till all tasks are scheduled.
                             countDownLatch.await(10, TimeUnit.SECONDS);
-                        } catch (InterruptedException e) {
+                        } catch (final InterruptedException e) {
                             Thread.currentThread().interrupt();
                             throw new RuntimeException(e);
                         }
-                        int capacity = 500 + random.nextInt(1000) + 1;
+                        final int capacity = 500 + random.nextInt(1000) + 1;
 
                         // Using the pool
-                        try (PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(capacity)) {
-                            ByteBuffer buffer = pooledByteBuffer.getByteBuffer();
+                        try (final PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(capacity)) {
+                            final ByteBuffer buffer = pooledByteBuffer.getByteBuffer();
                             simulateUsingBuffer(buffer, capacity);
                         }
 
@@ -502,7 +502,7 @@ class TestByteBufferPool {
         // release the tasks
         countDownLatch.countDown();
 
-        for (Future<?> future : futures) {
+        for (final Future<?> future : futures) {
             future.get();
         }
 
@@ -516,9 +516,9 @@ class TestByteBufferPool {
         LOGGER.info("System info:{}", byteBufferPool.getSystemInfo());
     }
 
-    private void getAndReleaseBuffer(ByteBufferPool byteBufferPool, int minCapacity) {
+    private void getAndReleaseBuffer(final ByteBufferPool byteBufferPool, final int minCapacity) {
         //will create a new buffer
-        PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(minCapacity);
+        final PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(minCapacity);
         pooledByteBuffer.getByteBuffer();
         pooledByteBuffer.close();
     }
@@ -527,7 +527,7 @@ class TestByteBufferPool {
         // Wait for visualvm to spin up
         try {
             Thread.sleep(millis);
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
             throw new RuntimeException(e);
         }
     }

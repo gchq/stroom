@@ -44,7 +44,7 @@ public class FastInfosetValueConsumer implements RefDataValueConsumer {
 
     @Override
     public void consume(final RefDataValue refDataValue) {
-        ByteBuffer valueByteBuffer = ((FastInfosetValue) refDataValue).getByteBuffer();
+        final ByteBuffer valueByteBuffer = ((FastInfosetValue) refDataValue).getByteBuffer();
         LOGGER.trace(() -> LogUtil.message(
                 "Consuming {}", ByteBufferUtils.byteBufferInfo(valueByteBuffer)));
 

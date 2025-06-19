@@ -64,7 +64,7 @@ public class ReflectionMapper {
             try {
                 // May fail due to overflow
                 return io.dropwizard.util.Duration.nanoseconds(in.toNanos());
-            } catch (ArithmeticException e) {
+            } catch (final ArithmeticException e) {
                 // Fall back to conversion using millis with possible loss of precision
                 return io.dropwizard.util.Duration.milliseconds(in.toMillis());
             }
@@ -84,7 +84,9 @@ public class ReflectionMapper {
         put(String.class, File.class, in -> pathCreator.toAppPath(in).toFile());
     }
 
-    private <T_IN, T_OUT> void put(Class<T_IN> inClass, Class<T_OUT> outClass, Function<T_IN, T_OUT> function) {
+    private <T_IN, T_OUT> void put(final Class<T_IN> inClass,
+                                   final Class<T_OUT> outClass,
+                                   final Function<T_IN, T_OUT> function) {
         mappingFunctionMap.put(new TypeMapping(inClass, outClass), function);
     }
 

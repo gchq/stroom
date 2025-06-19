@@ -39,15 +39,15 @@ class TestProxyConfigModule {
     @Test
     void testIsProxyConfigPresence() throws IOException {
 
-        ProxyConfig proxyConfig = new ProxyConfig();
-        ProxyConfigModule proxyConfigModule = new ProxyConfigModule(new ProxyConfigHolder(
+        final ProxyConfig proxyConfig = new ProxyConfig();
+        final ProxyConfigModule proxyConfigModule = new ProxyConfigModule(new ProxyConfigHolder(
                 proxyConfig,
                 Path.of("/dummy/path/to/config.yml")));
 
         final Injector injector = Guice.createInjector(
                 proxyConfigModule);
 
-        Predicate<String> packageNameFilter = name ->
+        final Predicate<String> packageNameFilter = name ->
                 name.startsWith(STROOM_PACKAGE_PREFIX) && !name.contains("shaded");
 
         final Predicate<Class<?>> classFilter = clazz ->
@@ -65,17 +65,17 @@ class TestProxyConfigModule {
                 .getAllClasses()
                 .stream()
                 .filter(classInfo -> packageNameFilter.test(classInfo.getPackageName()))
-                .map((ClassInfo classInfo2) -> {
+                .map((final ClassInfo classInfo2) -> {
                     try {
                         return classInfo2.load();
-                    } catch (Throwable e) {
+                    } catch (final Throwable e) {
                         throw new RuntimeException(LogUtil.message(
                                 "Unable to load class {}", classInfo2), e);
                     }
                 })
                 .filter(classFilter)
                 .filter(clazz -> {
-                    boolean isAbstract = Modifier.isAbstract(clazz.getModifiers());
+                    final boolean isAbstract = Modifier.isAbstract(clazz.getModifiers());
                     if (isAbstract) {
                         LOGGER.info("Ignoring abstract class {}", clazz.getName());
                     }
@@ -88,7 +88,7 @@ class TestProxyConfigModule {
 
         LOGGER.info("Finding all classes in object tree");
 
-        Map<Class<?>, Integer> appConfigTreeClassToIdMap = new HashMap<>();
+        final Map<Class<?>, Integer> appConfigTreeClassToIdMap = new HashMap<>();
 
         // Find all stroom. classes in the config tree, i.e. config POJOs
         final Set<Class<?>> appConfigTreeClasses = new HashSet<>();
@@ -107,21 +107,21 @@ class TestProxyConfigModule {
 //                                    prop.getParentObject().getClass().getSimpleName(), prop.getSetter().getName()))
 //                            .isNotNull();
 
-                    Class<?> valueClass = prop.getValueClass();
+                    final Class<?> valueClass = prop.getValueClass();
                     if (classFilter.test(valueClass)) {
-                        IsProxyConfig propValue = (IsProxyConfig) prop.getValueFromConfigObject();
+                        final IsProxyConfig propValue = (IsProxyConfig) prop.getValueFromConfigObject();
                         appConfigTreeClasses.add(prop.getValueClass());
                         // Keep a record of the instance ID of the instance in the tree
                         appConfigTreeClassToIdMap.put(valueClass, System.identityHashCode(propValue));
                     }
                 });
 
-        Map<Class<?>, Integer> injectedInstanceIdMap = isProxyConfigConcreteClasses.stream()
+        final Map<Class<?>, Integer> injectedInstanceIdMap = isProxyConfigConcreteClasses.stream()
                 .filter(clazz -> !clazz.isAnnotationPresent(NotInjectableConfig.class))
                 .collect(Collectors.toMap(
                         clazz -> clazz,
                         clazz -> {
-                            Object object = injector.getInstance(clazz);
+                            final Object object = injector.getInstance(clazz);
                             return System.identityHashCode(object);
                         }));
 
@@ -140,15 +140,15 @@ class TestProxyConfigModule {
         // Now we know the appConfig tree contains all the concrete IsProxyConfig classes
         // check that guice will give us the right instance. This ensures
 
-        List<Class<?>> classesWithMultipleInstances = appConfigTreeClassToIdMap.entrySet()
+        final List<Class<?>> classesWithMultipleInstances = appConfigTreeClassToIdMap.entrySet()
                 .stream()
                 .filter(entry -> {
-                    Integer appConfigTreeInstanceId = entry.getValue();
-                    Integer injectedInstanceId = injectedInstanceIdMap.get(entry.getKey());
+                    final Integer appConfigTreeInstanceId = entry.getValue();
+                    final Integer injectedInstanceId = injectedInstanceIdMap.get(entry.getKey());
 
                     // Some IsProxyConfig classes are shared so can't be injected themselves
                     // so filter them out
-                    boolean isInjectableClass = entry.getKey().getAnnotation(NotInjectableConfig.class) == null;
+                    final boolean isInjectableClass = entry.getKey().getAnnotation(NotInjectableConfig.class) == null;
 
                     return isInjectableClass && !injectedInstanceId.equals(appConfigTreeInstanceId);
                 })
@@ -162,7 +162,7 @@ class TestProxyConfigModule {
             classesWithMultipleInstances.stream()
                     .sorted(Comparator.comparing(Class::getName))
                     .forEach(clazz -> {
-                        AbstractConfig config = (AbstractConfig) injector.getInstance(clazz);
+                        final AbstractConfig config = (AbstractConfig) injector.getInstance(clazz);
                         LOGGER.info("  {}", config.getBasePathStr());
                     });
         }

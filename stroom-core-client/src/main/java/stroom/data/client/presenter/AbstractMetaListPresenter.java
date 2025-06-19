@@ -229,7 +229,7 @@ public abstract class AbstractMetaListPresenter
         // There might have been a selection change so fire a data selection event.
         DataSelectionEvent.fire(AbstractMetaListPresenter.this, selection, false);
 
-        MetaRow selected = selectionModel.getSelected();
+        final MetaRow selected = selectionModel.getSelected();
         if (selected != null) {
             if (!resultPage.getValues().contains(selected)) {
                 selectionModel.setSelected(selected, false);
@@ -909,8 +909,8 @@ public abstract class AbstractMetaListPresenter
     }
 
     private static boolean isNotStatusTerm(final ExpressionItem expressionItem) {
-        boolean isStatusTerm = expressionItem instanceof ExpressionTerm term
-                               && MetaFields.STATUS.getFldName().equals(term.getField());
+        final boolean isStatusTerm = expressionItem instanceof final ExpressionTerm term
+                                     && MetaFields.STATUS.getFldName().equals(term.getField());
         return !isStatusTerm;
     }
 

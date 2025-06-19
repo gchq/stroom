@@ -61,7 +61,7 @@ public class DocRefInfo {
         return docRef;
     }
 
-    public void setDocRef(DocRef docRef) {
+    public void setDocRef(final DocRef docRef) {
         this.docRef = docRef;
     }
 
@@ -69,7 +69,7 @@ public class DocRefInfo {
         return createTime;
     }
 
-    public void setCreateTime(Long createTime) {
+    public void setCreateTime(final Long createTime) {
         this.createTime = createTime;
     }
 
@@ -77,7 +77,7 @@ public class DocRefInfo {
         return updateTime;
     }
 
-    public void setUpdateTime(Long updateTime) {
+    public void setUpdateTime(final Long updateTime) {
         this.updateTime = updateTime;
     }
 
@@ -85,7 +85,7 @@ public class DocRefInfo {
         return createUser;
     }
 
-    public void setCreateUser(String createUser) {
+    public void setCreateUser(final String createUser) {
         this.createUser = createUser;
     }
 
@@ -93,7 +93,7 @@ public class DocRefInfo {
         return updateUser;
     }
 
-    public void setUpdateUser(String updateUser) {
+    public void setUpdateUser(final String updateUser) {
         this.updateUser = updateUser;
     }
 
@@ -101,19 +101,19 @@ public class DocRefInfo {
         return otherInfo;
     }
 
-    public void setOtherInfo(String otherInfo) {
+    public void setOtherInfo(final String otherInfo) {
         this.otherInfo = otherInfo;
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        DocRefInfo that = (DocRefInfo) o;
+        final DocRefInfo that = (DocRefInfo) o;
         return Objects.equals(docRef, that.docRef) &&
                 Objects.equals(createTime, that.createTime) &&
                 Objects.equals(updateTime, that.updateTime) &&

@@ -44,7 +44,7 @@ class SearchResponseBuilderTest {
         assertThat(searchResponse.getErrors().contains(error1)).isTrue();
         assertThat(searchResponse.getHighlights()).hasSize(1);
         assertThat(searchResponse.getHighlights().get(0)).isEqualTo(highlight0);
-        long resultCount = searchResponse.getResults().stream()
+        final long resultCount = searchResponse.getResults().stream()
                 .filter(result -> result instanceof FlatResult)
                 .map(result -> (FlatResult) result)
                 .map(Result::getComponentId)
@@ -87,7 +87,7 @@ class SearchResponseBuilderTest {
         assertThat(searchResponse.getErrors().contains(error1)).isTrue();
         assertThat(searchResponse.getHighlights()).hasSize(1);
         assertThat(searchResponse.getHighlights().get(0)).isEqualTo(highlight0);
-        long resultCount = searchResponse.getResults().stream()
+        final long resultCount = searchResponse.getResults().stream()
                 .filter(result -> result instanceof TableResult)
                 .map(result -> (TableResult) result)
                 .map(Result::getComponentId)

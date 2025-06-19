@@ -51,7 +51,7 @@ public class ForwardHttpPostDestination implements ForwardDestination {
 
             // We have completed sending so can delete the data.
             cleanupDirQueue.add(sourceDir);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
     }

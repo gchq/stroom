@@ -63,7 +63,7 @@ public class AdminServlets {
 
         final Set<String> allPaths = new HashSet<>();
 
-        int maxNameLength = adminServlets.stream()
+        final int maxNameLength = adminServlets.stream()
                 .mapToInt(servlet -> servlet.getClass().getName().length())
                 .max()
                 .orElse(0);
@@ -117,7 +117,7 @@ public class AdminServlets {
         final ServletHolder servletHolder;
         try {
             servletHolder = new ServletHolder(name, (Servlet) isAdminServlet);
-        } catch (ClassCastException e) {
+        } catch (final ClassCastException e) {
             throw new RuntimeException(LogUtil.message("Injected class {} is not a Servlet",
                     isAdminServlet.getClass().getName()));
         }

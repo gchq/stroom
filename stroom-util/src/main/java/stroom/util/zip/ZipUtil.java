@@ -220,7 +220,7 @@ public final class ZipUtil {
             return ZipFile.builder()
                     .setSeekableByteChannel(Files.newByteChannel(zipFilePath))
                     .get();
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new UncheckedIOException(LogUtil.message(
                     "Error creating ZipFile object for zipFilePath {}: {}",
                     zipFilePath, LogUtil.exceptionMessage(e)), e);
@@ -231,7 +231,7 @@ public final class ZipUtil {
                                          final ZipArchiveEntry entry) {
         try (final InputStream inputStream = zipFile.getInputStream(entry)) {
             return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
     }
@@ -242,12 +242,12 @@ public final class ZipUtil {
     public static void forEachEntry(final Path zipFilePath,
                                     final BiConsumer<ZipFile, ZipArchiveEntry> entryConsumer) {
         Objects.requireNonNull(entryConsumer);
-        try (ZipFile zipFile = createZipFile(zipFilePath)) {
+        try (final ZipFile zipFile = createZipFile(zipFilePath)) {
             zipFile.getEntries()
                     .asIterator()
                     .forEachRemaining(entry ->
                             entryConsumer.accept(zipFile, entry));
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new UncheckedIOException(LogUtil.message(
                     "Error iterating over entries in zipFilePath {}: {}",
                     zipFilePath, LogUtil.exceptionMessage(e)), e);

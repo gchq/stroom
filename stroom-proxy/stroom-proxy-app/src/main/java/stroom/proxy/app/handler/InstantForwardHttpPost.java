@@ -85,7 +85,7 @@ public class InstantForwardHttpPost {
                 httpSender.send(attributeMap, inputStreamSupplier.get());
             } catch (final ForwardException e) {
                 throw new RuntimeException(e);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
         }

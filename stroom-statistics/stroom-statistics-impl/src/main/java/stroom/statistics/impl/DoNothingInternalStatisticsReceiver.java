@@ -24,7 +24,7 @@ class DoNothingInternalStatisticsReceiver implements InternalStatisticsReceiver 
     }
 
     @Override
-    public void putEvents(List<InternalStatisticEvent> events) {
+    public void putEvents(final List<InternalStatisticEvent> events) {
         logWarn("putEvents");
     }
 

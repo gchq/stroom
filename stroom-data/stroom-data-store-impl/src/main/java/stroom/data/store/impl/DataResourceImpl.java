@@ -164,7 +164,7 @@ class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSec
                                         .withObjects(stroomEventLoggingService.convert(fetchDataResult))
                                         .build());
 
-                    } catch (ViewDataException vde) {
+                    } catch (final ViewDataException vde) {
                         // Convert an ex into a fetch result
                         final AbstractFetchDataResult fetchDataResult = createErrorResult(vde);
                         outcome = ComplexLoggedOutcome.failure(

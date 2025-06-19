@@ -70,7 +70,7 @@ public class DefaultLoggingFilter
     }
 
     @Override
-    public boolean configure(FeatureContext context) {
+    public boolean configure(final FeatureContext context) {
         context.register(this);
         return true;
     }
@@ -212,7 +212,7 @@ public class DefaultLoggingFilter
             this.maxEntitySize = maxEntitySize;
         }
 
-        public StringBuilder getStringBuilder(Charset charset) {
+        public StringBuilder getStringBuilder(final Charset charset) {
             final byte[] entity = byteArrayOutputStream.toByteArray();
 
             stringBuilder.append(new String(entity, 0, Math.min(entity.length, maxEntitySize), charset));

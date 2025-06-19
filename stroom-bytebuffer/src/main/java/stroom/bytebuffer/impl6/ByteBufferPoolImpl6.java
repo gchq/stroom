@@ -125,7 +125,7 @@ public class ByteBufferPoolImpl6 implements ByteBufferFactory, ByteBufferPool {
         final List<String> msgs = new ArrayList<>(sizesCount);
         for (int i = 0; i < sizesCount; i++) {
 
-            int bufferCapacity = (int) Math.pow(10, i);
+            final int bufferCapacity = (int) Math.pow(10, i);
             final Integer configuredCount = pooledByteBufferCounts.getOrDefault(
                     bufferCapacity,
                     DEFAULT_MAX_BUFFERS_PER_QUEUE);
@@ -156,7 +156,7 @@ public class ByteBufferPoolImpl6 implements ByteBufferFactory, ByteBufferPool {
      * @param n The number to test
      * @return True if n is a power of ten, e.g. if n==10
      */
-    static boolean isPowerOf10(int n) {
+    static boolean isPowerOf10(final int n) {
         return switch (n) {
             case 1:
             case 10:
@@ -182,7 +182,7 @@ public class ByteBufferPoolImpl6 implements ByteBufferFactory, ByteBufferPool {
 
     private PooledByteBuffer getPooledBufferByMinCapacity(final int minCapacity) {
         final int offset = getOffset(minCapacity);
-        PooledByteBuffer buffer;
+        final PooledByteBuffer buffer;
         if (isUnPooled(offset)) {
             buffer = getUnPooledBuffer(minCapacity);
         } else {
@@ -195,7 +195,7 @@ public class ByteBufferPoolImpl6 implements ByteBufferFactory, ByteBufferPool {
     @Override
     public ByteBuffer acquire(final int minCapacity) {
         final int offset = getOffset(minCapacity);
-        ByteBuffer buffer;
+        final ByteBuffer buffer;
         if (isUnPooled(offset)) {
             // Too big a buffer to pool so just create one that will have to be destroyed and not put in the pool
             buffer = ByteBuffer.allocateDirect(minCapacity);
@@ -289,7 +289,7 @@ public class ByteBufferPoolImpl6 implements ByteBufferFactory, ByteBufferPool {
     @Override
     public SystemInfoResult getSystemInfo() {
         try {
-            SystemInfoResult.Builder builder = SystemInfoResult.builder(this)
+            final SystemInfoResult.Builder builder = SystemInfoResult.builder(this)
                     .addDetail("Total buffers in pool", getCurrentPoolSize());
 
             final SortedMap<Integer, Map<String, Integer>> offsetMapOfInfoMaps = new TreeMap<>();
@@ -331,13 +331,13 @@ public class ByteBufferPoolImpl6 implements ByteBufferFactory, ByteBufferPool {
                 builder
                         .addDetail("Pooled buffers (grouped by buffer capacity)", offsetMapOfInfoMaps)
                         .addDetail("Overall total size (bytes)", overallTotalSizeBytes);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.error("Error getting capacity counts", e);
                 builder.addDetail("Buffer capacity counts", "Error getting counts");
             }
 
             return builder.build();
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             return SystemInfoResult.builder(this)
                     .addError(e)
                     .build();

@@ -40,12 +40,12 @@ class InterceptingSelectionChangeHandler implements HasSelectionChangedHandlers,
     }
 
     @Override
-    public HandlerRegistration addSelectionChangeHandler(SelectionChangeEvent.Handler handler) {
+    public HandlerRegistration addSelectionChangeHandler(final SelectionChangeEvent.Handler handler) {
         return handlerManager.addHandler(SelectionChangeEvent.getType(), handler);
     }
 
     @Override
-    public void fireEvent(GwtEvent<?> event) {
+    public void fireEvent(final GwtEvent<?> event) {
         handlerManager.fireEvent(event);
     }
 }

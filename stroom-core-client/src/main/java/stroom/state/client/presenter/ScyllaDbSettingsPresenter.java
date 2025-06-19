@@ -63,7 +63,7 @@ public class ScyllaDbSettingsPresenter
     }
 
     @Override
-    public void onTestConnection(TaskMonitorFactory taskMonitorFactory) {
+    public void onTestConnection(final TaskMonitorFactory taskMonitorFactory) {
         final ScyllaDbDoc cluster = onWrite(new ScyllaDbDoc());
         restFactory
                 .create(SCYLLA_DB_RESOURCE)

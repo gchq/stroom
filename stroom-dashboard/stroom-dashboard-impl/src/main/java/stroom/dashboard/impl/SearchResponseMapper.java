@@ -39,7 +39,7 @@ public class SearchResponseMapper {
             highlights = new HashSet<>(searchResponse.getHighlights());
         }
 
-        List<Result> results = searchResponse.getResults();
+        final List<Result> results = searchResponse.getResults();
 
 //        List<Result> results = null;
 //        if (searchResponse.getResults() != null) {

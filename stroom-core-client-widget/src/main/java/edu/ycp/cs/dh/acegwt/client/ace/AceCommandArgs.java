@@ -14,10 +14,10 @@ public class AceCommandArgs {
     /**
      * Create map argument. In case <code>data</code> is null map will be empty.
      */
-    public AceCommandArgs(Map<String, String> data) {
+    public AceCommandArgs(final Map<String, String> data) {
         value = JavaScriptObject.createObject();
         if (data != null) {
-            for (Map.Entry<String, String> entry : data.entrySet()) {
+            for (final Map.Entry<String, String> entry : data.entrySet()) {
                 with(entry.getKey(), entry.getValue());
             }
         }
@@ -26,7 +26,7 @@ public class AceCommandArgs {
     /**
      * Create text argument.
      */
-    public AceCommandArgs(String value) {
+    public AceCommandArgs(final String value) {
         this.value = value;
     }
 

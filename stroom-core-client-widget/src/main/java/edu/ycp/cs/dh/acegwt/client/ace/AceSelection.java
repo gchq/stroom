@@ -19,10 +19,10 @@ public class AceSelection {
      *
      * @param selection Ace Selection java-script object (returned from editor.getSession().getSelection())
      */
-    public AceSelection(JavaScriptObject selection) {
+    public AceSelection(final JavaScriptObject selection) {
         this.selection = selection;
         this.rootListener = ignore -> {
-            for (AceSelectionListener lst : subListeners) {
+            for (final AceSelectionListener lst : subListeners) {
                 lst.onChangeSelection(AceSelection.this);
             }
         };
@@ -40,7 +40,7 @@ public class AceSelection {
      *
      * @param listener implementation of a listener for selection change events
      */
-    public void addSelectionListener(AceSelectionListener listener) {
+    public void addSelectionListener(final AceSelectionListener listener) {
         subListeners.add(listener);
     }
 
@@ -49,7 +49,7 @@ public class AceSelection {
      *
      * @param listener implementation of a listener for selection change events
      */
-    public void removeSelectionListener(AceSelectionListener listener) {
+    public void removeSelectionListener(final AceSelectionListener listener) {
         subListeners.remove(listener);
     }
 

@@ -81,7 +81,7 @@ class TestDataRetentionPolicyExecutor {
         final List<List<DataRetentionRuleAction>> allRuleActions = ruleExpressionsCaptor.getAllValues();
         final List<TimePeriod> allPeriods = periodCaptor.getAllValues();
 
-        int expectedPeriodCount = 2;
+        final int expectedPeriodCount = 2;
         assertThat(allPeriods).hasSize(expectedPeriodCount);
         assertThat(allRuleActions).hasSize(expectedPeriodCount);
 
@@ -120,7 +120,7 @@ class TestDataRetentionPolicyExecutor {
         final List<List<DataRetentionRuleAction>> allRuleActions = ruleExpressionsCaptor.getAllValues();
         final List<TimePeriod> allPeriods = periodCaptor.getAllValues();
 
-        int expectedPeriodCount = 3;
+        final int expectedPeriodCount = 3;
         assertThat(allPeriods).hasSize(expectedPeriodCount);
         assertThat(allRuleActions).hasSize(expectedPeriodCount);
 
@@ -173,7 +173,7 @@ class TestDataRetentionPolicyExecutor {
         final List<List<DataRetentionRuleAction>> allRuleActions = ruleExpressionsCaptor.getAllValues();
         final List<TimePeriod> allPeriods = periodCaptor.getAllValues();
 
-        int expectedPeriodCount = 3;
+        final int expectedPeriodCount = 3;
         assertThat(allPeriods).hasSize(expectedPeriodCount);
         assertThat(allRuleActions).hasSize(expectedPeriodCount);
 
@@ -231,7 +231,7 @@ class TestDataRetentionPolicyExecutor {
         final List<List<DataRetentionRuleAction>> allRuleActions = ruleExpressionsCaptor.getAllValues();
         final List<TimePeriod> allPeriods = periodCaptor.getAllValues();
 
-        int expectedPeriodCount = 3;
+        final int expectedPeriodCount = 3;
         assertThat(allPeriods).hasSize(expectedPeriodCount);
         assertThat(allRuleActions).hasSize(expectedPeriodCount);
 
@@ -292,7 +292,7 @@ class TestDataRetentionPolicyExecutor {
 
         final Instant now = Instant.now();
 
-        int trackerAgeDays = 90;
+        final int trackerAgeDays = 90;
         // Tracker is 90days old so should be ignored for periods:
         // 1month ago => 10days ago
         // 2months ago => 1months ago
@@ -304,7 +304,7 @@ class TestDataRetentionPolicyExecutor {
         final List<List<DataRetentionRuleAction>> allRuleActions = ruleExpressionsCaptor.getAllValues();
         final List<TimePeriod> allPeriods = periodCaptor.getAllValues();
 
-        int expectedPeriodCount = 4;
+        final int expectedPeriodCount = 4;
         assertThat(allPeriods).hasSize(expectedPeriodCount);
         assertThat(allRuleActions).hasSize(expectedPeriodCount);
 
@@ -367,7 +367,7 @@ class TestDataRetentionPolicyExecutor {
                 .atStartOfDay()
                 .toInstant(ZoneOffset.UTC);
 
-        int trackerAgeDays = 1;
+        final int trackerAgeDays = 1;
         // Tracker is 90days old so should be ignored for periods:
         // 1month ago => 10days ago
         // 2months ago => 1months ago
@@ -392,7 +392,7 @@ class TestDataRetentionPolicyExecutor {
         final List<List<DataRetentionRuleAction>> allRuleActions = ruleExpressionsCaptor.getAllValues();
         final List<TimePeriod> allPeriods = periodCaptor.getAllValues();
 
-        int expectedPeriodCount = 4;
+        final int expectedPeriodCount = 4;
         assertThat(allPeriods).hasSize(expectedPeriodCount);
         assertThat(allRuleActions).hasSize(expectedPeriodCount);
 
@@ -469,12 +469,12 @@ class TestDataRetentionPolicyExecutor {
         final List<List<DataRetentionRuleAction>> allRuleActions = ruleExpressionsCaptor.getAllValues();
         final List<TimePeriod> allPeriods = periodCaptor.getAllValues();
 
-        int expectedPeriodCount = 1;
+        final int expectedPeriodCount = 1;
         assertThat(allPeriods).hasSize(expectedPeriodCount);
         assertThat(allRuleActions).hasSize(expectedPeriodCount);
 
         // The method call number
-        int callNo = 0;
+        final int callNo = 0;
 
         // -------------------------------------------------
 
@@ -500,7 +500,7 @@ class TestDataRetentionPolicyExecutor {
         final List<List<DataRetentionRuleAction>> allRuleActions = ruleExpressionsCaptor.getAllValues();
         final List<TimePeriod> allPeriods = periodCaptor.getAllValues();
 
-        int expectedPeriodCount = 2;
+        final int expectedPeriodCount = 2;
         assertThat(allPeriods).hasSize(expectedPeriodCount);
         assertThat(allRuleActions).hasSize(expectedPeriodCount);
 
@@ -537,12 +537,12 @@ class TestDataRetentionPolicyExecutor {
         final List<List<DataRetentionRuleAction>> allRuleActions = ruleExpressionsCaptor.getAllValues();
         final List<TimePeriod> allPeriods = periodCaptor.getAllValues();
 
-        int expectedPeriodCount = 1;
+        final int expectedPeriodCount = 1;
         assertThat(allPeriods).hasSize(expectedPeriodCount);
         assertThat(allRuleActions).hasSize(expectedPeriodCount);
 
         // The method call number
-        int callNo = 0;
+        final int callNo = 0;
 
         // -------------------------------------------------
 
@@ -632,7 +632,7 @@ class TestDataRetentionPolicyExecutor {
                 .containsExactlyElementsOf(expectedRuleOutcomes);
     }
 
-    private DataRetentionRules buildRules(List<DataRetentionRule> rules) {
+    private DataRetentionRules buildRules(final List<DataRetentionRule> rules) {
         final DataRetentionRules dataRetentionRules = new DataRetentionRules(rules);
         dataRetentionRules.setVersion(RULES_VERSION);
         return dataRetentionRules;

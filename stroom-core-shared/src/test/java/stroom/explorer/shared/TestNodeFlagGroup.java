@@ -17,7 +17,7 @@ class TestNodeFlagGroup {
 
     @TestFactory
     Stream<DynamicTest> testAddFlag() {
-        NodeFlagGroup expanderGroup = NodeFlagGroups.EXPANDER_GROUP;
+        final NodeFlagGroup expanderGroup = NodeFlagGroups.EXPANDER_GROUP;
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputType(new TypeLiteral<Tuple2<NodeFlag, Set<NodeFlag>>>() {
                 })

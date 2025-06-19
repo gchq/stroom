@@ -36,7 +36,7 @@ class TestCharReader {
     @Test
     void name() throws IOException {
 
-        Charset utf8 = StandardCharsets.UTF_8;
+        final Charset utf8 = StandardCharsets.UTF_8;
         final String text = "this is my test string😀Я.";
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(text.getBytes(utf8));
 
@@ -63,7 +63,7 @@ class TestCharReader {
 
     @Test
     void testMultibyte() throws IOException {
-        Charset utf8 = StandardCharsets.UTF_8;
+        final Charset utf8 = StandardCharsets.UTF_8;
         final String text = "ЯR.ЯR";
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(text.getBytes(utf8));
 
@@ -82,12 +82,12 @@ class TestCharReader {
 
     @Test
     void testReadTillChar() throws IOException {
-        Charset utf8 = StandardCharsets.UTF_8;
+        final Charset utf8 = StandardCharsets.UTF_8;
         final String text = "this is my string";
         //                   01234567890123456789
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(text.getBytes(utf8));
 
-        CharReader charReader = new CharReader(inputStream, false, utf8.name());
+        final CharReader charReader = new CharReader(inputStream, false, utf8.name());
 
         readNTimesAndAssert(
                 charReader,
@@ -99,12 +99,12 @@ class TestCharReader {
 
     @Test
     void testReadTillChar2() throws IOException {
-        Charset utf8 = StandardCharsets.UTF_8;
+        final Charset utf8 = StandardCharsets.UTF_8;
         final String text = "this is my string";
         //                   01234567890123456789
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(text.getBytes(utf8));
 
-        CharReader charReader = new CharReader(inputStream, false, utf8.name());
+        final CharReader charReader = new CharReader(inputStream, false, utf8.name());
 
         readNTimesAndAssert(
                 charReader,
@@ -179,7 +179,7 @@ class TestCharReader {
                         if (byteOrderMark != null) {
                             // Test requires us to manually add a bom at the beginning to ensure we can decode
                             // with the bom
-                            byte[] newArr = new byte[bytes.length + byteOrderMark.length()];
+                            final byte[] newArr = new byte[bytes.length + byteOrderMark.length()];
                             System.arraycopy(byteOrderMark.getBytes(), 0, newArr, 0, byteOrderMark.length());
                             System.arraycopy(bytes, 0, newArr, byteOrderMark.length(), bytes.length);
 
@@ -223,8 +223,8 @@ class TestCharReader {
     @Test
     void testBomInputStream() throws IOException {
         final String inputStr = "Hello";
-        byte[] strBytes = inputStr.getBytes(StandardCharsets.UTF_16LE);
-        byte[] bytes = new byte[strBytes.length + 2];
+        final byte[] strBytes = inputStr.getBytes(StandardCharsets.UTF_16LE);
+        final byte[] bytes = new byte[strBytes.length + 2];
 
         bytes[0] = (byte) 0xFF;
         bytes[1] = (byte) 0xFE;
@@ -232,7 +232,7 @@ class TestCharReader {
 
         LOGGER.info("{}", ByteArrayUtils.byteArrayToHex(bytes));
 
-        StringBuilder stringBuilder = new StringBuilder();
+        final StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0; i < bytes.length; i++) {
             stringBuilder.append(bytes[i])
                     .append(" ");
@@ -273,7 +273,7 @@ class TestCharReader {
         final List<DecodedChar> decodedChars = new ArrayList<>();
 
         // Read all chars and verify expected count
-        StringBuilder stringBuilder = new StringBuilder();
+        final StringBuilder stringBuilder = new StringBuilder();
         while (true) {
             final Optional<DecodedChar> optDecodedChar = charReader.read();
             if (optDecodedChar.isEmpty()) {
@@ -312,7 +312,7 @@ class TestCharReader {
             assertThat(optDecodeChar).isEmpty();
         } else {
             assertThat(optDecodeChar).isPresent();
-            DecodedChar decodedChar = optDecodeChar.get();
+            final DecodedChar decodedChar = optDecodeChar.get();
 
             assertThat(decodedChar.getAsString()).isEqualTo(expectedStr);
             assertThat(charReader.getLastByteOffsetRead()).hasValue(expectedByteOffset);

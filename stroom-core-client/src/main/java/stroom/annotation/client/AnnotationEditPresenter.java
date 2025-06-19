@@ -507,7 +507,7 @@ public class AnnotationEditPresenter
             copyToClipboard.addStyleName("dock-min allow-focus annotationHistoryCopyButton");
             copyToClipboard.addClickHandler(e -> {
                 textCopy.selectAll();
-                boolean success = copy(textCopy.getElement());
+                final boolean success = copy(textCopy.getElement());
                 if (!success) {
                     AlertEvent.fireError(
                             AnnotationEditPresenter.this,
@@ -875,7 +875,7 @@ public class AnnotationEditPresenter
             return days + " days ago";
         }
 
-        long diff = now.getTime() - time;
+        final long diff = now.getTime() - time;
         if (diff > ONE_HOUR) {
             final int hours = (int) (diff / ONE_HOUR);
             if (hours == 1) {

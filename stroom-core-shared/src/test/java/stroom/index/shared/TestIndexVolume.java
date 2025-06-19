@@ -34,7 +34,7 @@ class TestIndexVolume {
      */
     @Test
     public void testJsonBindings() {
-        IndexVolume indexVolume = JsonUtil.readValue(TEST_JSON, IndexVolume.class);
+        final IndexVolume indexVolume = JsonUtil.readValue(TEST_JSON, IndexVolume.class);
         Assertions.assertThat(indexVolume)
                 .isNotNull();
     }

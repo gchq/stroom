@@ -5,19 +5,22 @@ public class SecurityException extends RuntimeException {
     public SecurityException() {
     }
 
-    public SecurityException(String message) {
+    public SecurityException(final String message) {
         super(message);
     }
 
-    public SecurityException(String message, Throwable cause) {
+    public SecurityException(final String message, final Throwable cause) {
         super(message, cause);
     }
 
-    public SecurityException(Throwable cause) {
+    public SecurityException(final Throwable cause) {
         super(cause);
     }
 
-    public SecurityException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public SecurityException(final String message,
+                             final Throwable cause,
+                             final boolean enableSuppression,
+                             final boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 }

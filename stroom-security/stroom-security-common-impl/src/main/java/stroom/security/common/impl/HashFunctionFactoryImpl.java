@@ -200,9 +200,9 @@ public class HashFunctionFactoryImpl implements HashFunctionFactory {
             final String saltedVal = salt != null
                     ? salt + value
                     : value;
-            Argon2BytesGenerator generate = new Argon2BytesGenerator();
+            final Argon2BytesGenerator generate = new Argon2BytesGenerator();
             generate.init(buildParameters(salt));
-            byte[] result = new byte[HASH_LENGTH];
+            final byte[] result = new byte[HASH_LENGTH];
             generate.generateBytes(
                     saltedVal.getBytes(StandardCharsets.UTF_8),
                     result,

@@ -33,7 +33,7 @@ public interface InterruptibleSupplier<T> {
         return () -> {
             try {
                 return supplier.get();
-            } catch (InterruptedException e) {
+            } catch (final InterruptedException e) {
                 LOGGER.debug(() ->
                                 NullSafe.getOrElse(
                                         debugMsgSupplier,

@@ -52,7 +52,7 @@ class StoredQueryResourceImpl implements StoredQueryResource {
 
     @Override
     public ResultPage<StoredQuery> find(final FindStoredQueryCriteria criteria) {
-        ResultPage<StoredQuery> result;
+        final ResultPage<StoredQuery> result;
         final And.Builder<Void> andBuilder = And.builder();
 
         addCriteria(andBuilder, "Favorite", criteria::getFavourite);
@@ -105,7 +105,7 @@ class StoredQueryResourceImpl implements StoredQueryResource {
 
     @Override
     public StoredQuery create(final StoredQuery storedQuery) {
-        StoredQuery result;
+        final StoredQuery result;
 
         try {
             result = storedQueryServiceProvider.get().create(storedQuery);
@@ -120,7 +120,7 @@ class StoredQueryResourceImpl implements StoredQueryResource {
 
     @Override
     public StoredQuery fetch(final StoredQuery storedQuery) {
-        StoredQuery result;
+        final StoredQuery result;
         try {
             result = storedQueryServiceProvider.get().fetch(storedQuery.getId());
             documentEventLogProvider.get().view(result, null);
@@ -134,7 +134,7 @@ class StoredQueryResourceImpl implements StoredQueryResource {
 
     @Override
     public StoredQuery update(final StoredQuery storedQuery) {
-        StoredQuery result;
+        final StoredQuery result;
         StoredQuery before = null;
 
         try {

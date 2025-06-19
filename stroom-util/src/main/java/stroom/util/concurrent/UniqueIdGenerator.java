@@ -74,7 +74,7 @@ public class UniqueIdGenerator {
             return new State(System.currentTimeMillis(), INITIAL_SEQUENCE_NO);
         }
 
-        public static State ofNewTimestamp(long epochMs) {
+        public static State ofNewTimestamp(final long epochMs) {
             return new State(epochMs, INITIAL_SEQUENCE_NO);
         }
 

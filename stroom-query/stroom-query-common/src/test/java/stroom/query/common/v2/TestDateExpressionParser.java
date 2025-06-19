@@ -175,7 +175,7 @@ class TestDateExpressionParser {
         DateTimeException dateTimeException = null;
         try {
             DateExpressionParser.parse(expression, nowEpochMilli).get();
-        } catch (DateTimeException e) {
+        } catch (final DateTimeException e) {
             dateTimeException = e;
         }
         assertThat(dateTimeException.getMessage())

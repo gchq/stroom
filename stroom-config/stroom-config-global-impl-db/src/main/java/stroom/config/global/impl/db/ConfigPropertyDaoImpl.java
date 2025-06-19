@@ -133,7 +133,7 @@ class ConfigPropertyDaoImpl implements ConfigPropertyDao {
                         updateTracker(context, updatedConfigProperty);
                         return updatedConfigProperty;
                     });
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             if (e instanceof DataChangedException) {
                 // Possible someone has made a direct change in the db, naughty, so change the tracker
                 // such that the props will get refreshed on all nodes

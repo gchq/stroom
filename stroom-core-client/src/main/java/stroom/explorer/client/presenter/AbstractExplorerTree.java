@@ -86,7 +86,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
         cellTable.getElement().setClassName("explorerTree");
         cellTable.addColumn(new Column<ExplorerNode, ExplorerNode>(explorerCell) {
             @Override
-            public ExplorerNode getValue(ExplorerNode object) {
+            public ExplorerNode getValue(final ExplorerNode object) {
                 return object;
             }
         });
@@ -170,7 +170,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
         treeModel.refresh();
     }
 
-    private int getItemIndex(ExplorerNode item) {
+    private int getItemIndex(final ExplorerNode item) {
         final List<ExplorerNode> items = cellTable.getVisibleItems();
         if (items != null) {
             for (int i = 0; i < items.size(); i++) {

@@ -73,7 +73,7 @@ class FeedStatusServiceImpl implements FeedStatusService {
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest legacyRequest) {
         // Legacy API that does not require a perm check
         return securityContext.asProcessingUserResult(() -> {
-            FeedStatus feedStatus = feedProperties.getStatus(legacyRequest.getFeedName());
+            final FeedStatus feedStatus = feedProperties.getStatus(legacyRequest.getFeedName());
             return buildGetFeedStatusResponse(feedStatus);
         });
     }
@@ -122,7 +122,7 @@ class FeedStatusServiceImpl implements FeedStatusService {
                                 feedName, userDesc, feedStatus);
                         return buildGetFeedStatusResponse(feedStatus);
                     }));
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.debug(() -> LogUtil.message("Error getting feed status: {}", LogUtil.exceptionMessage(e)), e);
             throw e;
         }

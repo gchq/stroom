@@ -238,7 +238,7 @@ public class EffectiveMetaSet implements Iterable<EffectiveMeta> {
     public Optional<EffectiveMeta> first() {
         try {
             return Optional.ofNullable(effectiveMetas.first());
-        } catch (NoSuchElementException e) {
+        } catch (final NoSuchElementException e) {
             return Optional.empty();
         }
     }
@@ -249,7 +249,7 @@ public class EffectiveMetaSet implements Iterable<EffectiveMeta> {
     public Optional<EffectiveMeta> last() {
         try {
             return Optional.ofNullable(effectiveMetas.last());
-        } catch (NoSuchElementException e) {
+        } catch (final NoSuchElementException e) {
             return Optional.empty();
         }
     }

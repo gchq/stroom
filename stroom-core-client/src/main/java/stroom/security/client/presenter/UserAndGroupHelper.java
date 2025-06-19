@@ -222,7 +222,7 @@ public class UserAndGroupHelper {
                             try {
                                 final TableRowElement rowElement = dataGrid.getRowElement(idx.get());
                                 NullSafe.consume(rowElement, FocusUtil::focusRow);
-                            } catch (IndexOutOfBoundsException e) {
+                            } catch (final IndexOutOfBoundsException e) {
                                 GWT.log(idx.get() + " is out of bounds");
                             }
                         });

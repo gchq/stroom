@@ -7,7 +7,7 @@ import java.util.function.Function;
 
 public class TableUtil {
 
-    public static <T> String getString(T object, Function<T, String> function) {
+    public static <T> String getString(final T object, final Function<T, String> function) {
         if (object == null) {
             return "";
         }
@@ -18,7 +18,7 @@ public class TableUtil {
         return string;
     }
 
-    public static <T> SafeHtml getSafeHtml(T object, Function<T, String> function) {
+    public static <T> SafeHtml getSafeHtml(final T object, final Function<T, String> function) {
         if (object == null) {
             return SafeHtmlUtil.NBSP;
         }

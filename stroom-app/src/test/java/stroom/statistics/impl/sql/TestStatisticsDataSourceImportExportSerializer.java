@@ -136,6 +136,6 @@ class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegra
         assertThat(statisticsDataSource3).isNotNull();
         assertThat(statisticsDataSource3.getConfig()).isNotNull();
 
-        DocRef statisticDataSource3DocRef = DocRefUtil.create(statisticsDataSource3);
+        final DocRef statisticDataSource3DocRef = DocRefUtil.create(statisticsDataSource3);
     }
 }

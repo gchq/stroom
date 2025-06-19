@@ -344,7 +344,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         //  we can pass some kind of json path query to the persistence layer that the DBPersistence
         //  can translate to a MySQL json path query.
         final List<AnalyticRuleDoc> currentRules = new ArrayList<>();
-        List<DocRef> docRefs = analyticRuleStore.list();
+        final List<DocRef> docRefs = analyticRuleStore.list();
         for (final DocRef docRef : docRefs) {
             try {
                 final AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(docRef);

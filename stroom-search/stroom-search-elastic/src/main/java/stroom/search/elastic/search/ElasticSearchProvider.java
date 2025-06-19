@@ -223,7 +223,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     }
 
     @Override
-    public List<QueryField> getDataSourceFields(ElasticIndexDoc index) {
+    public List<QueryField> getDataSourceFields(final ElasticIndexDoc index) {
         final Map<String, FieldMapping> fieldMappings = getFieldMappings(index);
 
         return fieldMappings
@@ -243,7 +243,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                             final String aliasPath = getAliasPathFromMapping(fieldName, field.getValue());
                             final FieldMapping targetFieldMeta = fieldMappings.get(aliasPath);
                             nativeType = getFieldTypeFromMapping(aliasPath, targetFieldMeta);
-                        } catch (Exception e) {
+                        } catch (final Exception e) {
                             LOGGER.error("Could not determine mapping type for alias field '{}'", fieldName);
                         }
                     }
@@ -254,10 +254,10 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                                 ElasticNativeTypes.fromNativeType(fullName, nativeType);
 
                         return toDataSourceField(elasticFieldType, fieldName, fieldIsIndexed(field.getValue()));
-                    } catch (UnsupportedTypeException e) {
+                    } catch (final UnsupportedTypeException e) {
                         LOGGER.debug(e::getMessage, e);
                         return null;
-                    } catch (IllegalArgumentException e) {
+                    } catch (final IllegalArgumentException e) {
                         LOGGER.warn(e::getMessage, e);
                         return null;
                     }
@@ -336,7 +336,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                         final String aliasPath = getAliasPathFromMapping(fieldName, fieldMeta);
                         final FieldMapping targetFieldMeta = fieldMappings.get(aliasPath);
                         nativeType = getFieldTypeFromMapping(aliasPath, targetFieldMeta);
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         LOGGER.error("Could not determine mapping type for alias field '{}'", fieldName);
                     }
                 }
@@ -350,9 +350,9 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                         type,
                         nativeType,
                         indexed));
-            } catch (UnsupportedTypeException e) {
+            } catch (final UnsupportedTypeException e) {
                 LOGGER.debug(e::getMessage, e);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.error(e::getMessage, e);
             }
         });
@@ -388,7 +388,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                     return true;
                 }
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             return false;
         }
 

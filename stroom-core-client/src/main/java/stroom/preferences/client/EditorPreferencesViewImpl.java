@@ -104,7 +104,7 @@ public final class EditorPreferencesViewImpl
     }
 
     @Override
-    public void setEditorKeyBindings(EditorKeyBindings editorKeyBindings) {
+    public void setEditorKeyBindings(final EditorKeyBindings editorKeyBindings) {
         this.editorKeyBindings.setValue(editorKeyBindings.getDisplayValue());
     }
 

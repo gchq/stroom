@@ -130,7 +130,7 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
-        Meta originalMeta;
+        final Meta originalMeta;
 
         try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
             originalMeta = streamTarget.getMeta();

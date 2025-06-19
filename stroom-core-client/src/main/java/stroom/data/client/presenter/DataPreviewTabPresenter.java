@@ -47,7 +47,7 @@ public class DataPreviewTabPresenter extends ContentTabPresenter<DataPreviewTabV
         dataPresenter.fetchData(sourceLocation);
     }
 
-    public void setInitDataViewType(DataViewType initDataViewType) {
+    public void setInitDataViewType(final DataViewType initDataViewType) {
         this.dataPresenter.setInitDataViewType(initDataViewType);
     }
 

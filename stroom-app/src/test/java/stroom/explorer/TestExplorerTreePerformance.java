@@ -96,7 +96,7 @@ class TestExplorerTreePerformance extends AbstractCoreIntegrationTest {
 
             LOGGER.logDurationIfInfoEnabled(() -> {
                 explorerService.clear();
-                FetchExplorerNodeResult result = explorerService.getData(findExplorerNodeCriteria);
+                final FetchExplorerNodeResult result = explorerService.getData(findExplorerNodeCriteria);
                 assertThat(result.getRootNodes()).hasSize(2);
                 assertThat(result.getRootNodes().get(0).getDocRef())
                         .isEqualTo(ExplorerConstants.FAVOURITES_DOC_REF);
@@ -107,7 +107,7 @@ class TestExplorerTreePerformance extends AbstractCoreIntegrationTest {
             final int count = (int) Math.pow(MAX_CHILDREN, MAX_TREE_DEPTH) + MAX_CHILDREN + 1;
             LOGGER.info(() -> "Creating " + count + " tree nodes");
             LOGGER.logDurationIfInfoEnabled(() -> {
-                ExplorerTreeNode root = explorerTreeDao.createRoot(newTreeNode("test_node"));
+                final ExplorerTreeNode root = explorerTreeDao.createRoot(newTreeNode("test_node"));
                 addChildren(root, 1, MAX_TREE_DEPTH);
             }, "Created " + count + " tree nodes");
 
@@ -159,7 +159,7 @@ class TestExplorerTreePerformance extends AbstractCoreIntegrationTest {
         final AtomicReference<ExplorerNode> lastChild = new AtomicReference<>();
 
         explorerService.clear();
-        FetchExplorerNodeResult result = explorerService.getData(findExplorerNodeCriteria);
+        final FetchExplorerNodeResult result = explorerService.getData(findExplorerNodeCriteria);
         if (expected < 100) {
             LOGGER.debug("tree:\n{}", result.dumpTree());
         }

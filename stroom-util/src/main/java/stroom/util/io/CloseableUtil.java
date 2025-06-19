@@ -26,7 +26,7 @@ public class CloseableUtil {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CloseableUtil.class);
 
-    public static void closeLogAndIgnoreException(Closeable... closeableList) {
+    public static void closeLogAndIgnoreException(final Closeable... closeableList) {
         try {
             close(closeableList);
         } catch (final IOException e) {
@@ -34,10 +34,10 @@ public class CloseableUtil {
         }
     }
 
-    public static void close(Closeable... closeableList) throws IOException {
+    public static void close(final Closeable... closeableList) throws IOException {
         IOException lastException = null;
         if (closeableList != null) {
-            for (Closeable closeable : closeableList) {
+            for (final Closeable closeable : closeableList) {
                 if (closeable != null) {
                     try {
                         closeable.close();

@@ -101,7 +101,7 @@ class TestStroomYamlUtil {
 
     static String getYamlFromJavaModel() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        AppConfig appConfig = new AppConfig();
+        final AppConfig appConfig = new AppConfig();
         StroomYamlUtil.writeConfig(appConfig, byteArrayOutputStream);
         return byteArrayOutputStream.toString();
     }
@@ -134,7 +134,7 @@ class TestStroomYamlUtil {
 
     private static AppConfig loadYamlFile(final String filename) throws FileNotFoundException {
         LOGGER.info("1");
-        Path path = getStroomAppFile(filename);
+        final Path path = getStroomAppFile(filename);
         LOGGER.info("2");
 
         try {

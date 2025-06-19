@@ -417,7 +417,7 @@ public class Functions {
                         final NamedSignature namedSig = new NamedSignature(completionName, queryHelpSig);
                         completionItems.add(createCompletionSnippet(namedSig, INITIAL_SCORE));
                     }
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     throw new RuntimeException("Error converting FunctionDef " + functionDef.name(), e);
                 }
             }
@@ -467,7 +467,7 @@ public class Functions {
                         .limit(maxCompletions)
                         .forEach(resultList::add);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error adding function completions: {}", e.getMessage(), e);
         }
     }
@@ -497,7 +497,7 @@ public class Functions {
 
     private boolean addArgsBlockToInfo(final QueryHelpFunctionSignature signature,
                                        final DetailBuilder htmlBuilder) {
-        AtomicBoolean addedContent = new AtomicBoolean(false);
+        final AtomicBoolean addedContent = new AtomicBoolean(false);
         addedContent.set(!signature.getArgs().isEmpty());
 
         htmlBuilder.elem("div", "queryHelpDetail-table", div ->

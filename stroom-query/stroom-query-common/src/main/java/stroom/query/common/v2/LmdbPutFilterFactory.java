@@ -17,9 +17,9 @@ public class LmdbPutFilterFactory {
         final long maxResults = maxResultSizes.size(0);
 
         // Determine if we are going to limit the result count.
-        boolean limitResultCount = maxResults < Sizes.MAX_SIZE &&
-                !hasSort &&
-                !compiledDepths.hasGroup();
+        final boolean limitResultCount = maxResults < Sizes.MAX_SIZE &&
+                                         !hasSort &&
+                                         !compiledDepths.hasGroup();
         if (limitResultCount) {
             return new LimitedPutFilter(
                     totalResultCount,

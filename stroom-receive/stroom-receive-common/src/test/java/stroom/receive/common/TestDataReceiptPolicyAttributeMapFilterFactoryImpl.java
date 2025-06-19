@@ -420,7 +420,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                             now.minus(1, ChronoUnit.DAYS)));
         });
 
-        boolean result = factory.create()
+        final boolean result = factory.create()
                 .filter(createAttrMap(
                         FEED_1,
                         SYSTEM_1,
@@ -542,7 +542,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
 
     private DictionaryDoc createDict(final String name,
                                      final String... lines) {
-        DictionaryDoc dict = new DictionaryDoc();
+        final DictionaryDoc dict = new DictionaryDoc();
         dict.setUuid(UUID.randomUUID().toString());
         dict.setName(name);
         dict.setType(DictionaryDoc.TYPE);

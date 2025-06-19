@@ -532,7 +532,7 @@ public class ExplorerNodeEditTagsViewImpl
     private static class TagsKeyPressHandler implements KeyPressHandler {
 
         @Override
-        public void onKeyPress(KeyPressEvent event) {
+        public void onKeyPress(final KeyPressEvent event) {
 
 //            GWT.log("keypress: " + event.getCharCode());
 

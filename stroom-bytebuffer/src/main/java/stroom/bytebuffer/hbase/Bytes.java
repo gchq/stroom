@@ -125,7 +125,7 @@ public class Bytes implements Comparable<Bytes> {
      * @param b byte array, which can be null
      * @return 0 if b is null, otherwise returns length
      */
-    final public static int len(byte[] b) {
+    final public static int len(final byte[] b) {
         return b == null
                 ? 0
                 : b.length;
@@ -147,7 +147,7 @@ public class Bytes implements Comparable<Bytes> {
      *
      * @param bytes This array becomes the backing storage for the object.
      */
-    public Bytes(byte[] bytes) {
+    public Bytes(final byte[] bytes) {
         this(bytes, 0, bytes.length);
     }
 
@@ -233,7 +233,7 @@ public class Bytes implements Comparable<Bytes> {
      * smaller than right.
      */
     @Override
-    public int compareTo(Bytes that) {
+    public int compareTo(final Bytes that) {
         return BYTES_RAWCOMPARATOR.compare(this.bytes, this.offset, this.length, that.bytes,
                 that.offset, that.length);
     }
@@ -249,7 +249,7 @@ public class Bytes implements Comparable<Bytes> {
     }
 
     @Override
-    public boolean equals(Object right_obj) {
+    public boolean equals(final Object right_obj) {
         if (right_obj instanceof byte[]) {
             return compareTo((byte[]) right_obj) == 0;
         }
@@ -272,7 +272,7 @@ public class Bytes implements Comparable<Bytes> {
      */
     public static byte[][] toArray(final List<byte[]> array) {
         // List#toArray doesn't work on lists of byte [].
-        byte[][] results = new byte[array.size()][];
+        final byte[][] results = new byte[array.size()][];
         for (int i = 0; i < array.size(); i++) {
             results[i] = array.get(i);
         }
@@ -296,12 +296,12 @@ public class Bytes implements Comparable<Bytes> {
         }
 
         @Override
-        public int compare(byte[] left, byte[] right) {
+        public int compare(final byte[] left, final byte[] right) {
             return compareTo(left, right);
         }
 
         @Override
-        public int compare(byte[] b1, int s1, int l1, byte[] b2, int s2, int l2) {
+        public int compare(final byte[] b1, final int s1, final int l1, final byte[] b2, final int s2, final int l2) {
             return LexicographicalComparerHolder.BEST_COMPARER.compareTo(b1, s1, l1, b2, s2, l2);
         }
     }
@@ -317,12 +317,12 @@ public class Bytes implements Comparable<Bytes> {
     public static class RowEndKeyComparator extends ByteArrayComparator {
 
         @Override
-        public int compare(byte[] left, byte[] right) {
+        public int compare(final byte[] left, final byte[] right) {
             return compare(left, 0, left.length, right, 0, right.length);
         }
 
         @Override
-        public int compare(byte[] b1, int s1, int l1, byte[] b2, int s2, int l2) {
+        public int compare(final byte[] b1, final int s1, final int l1, final byte[] b2, final int s2, final int l2) {
             if (b1 == b2 && s1 == s2 && l1 == l2) {
                 return 0;
             }
@@ -354,11 +354,11 @@ public class Bytes implements Comparable<Bytes> {
      * @throws IOException e
      */
     public static byte[] readByteArray(final DataInput in) throws IOException {
-        int len = WritableUtils.readVInt(in);
+        final int len = WritableUtils.readVInt(in);
         if (len < 0) {
             throw new NegativeArraySizeException(Integer.toString(len));
         }
-        byte[] result = new byte[len];
+        final byte[] result = new byte[len];
         in.readFully(result, 0, len);
         return result;
     }
@@ -373,7 +373,7 @@ public class Bytes implements Comparable<Bytes> {
     public static byte[] readByteArrayThrowsRuntime(final DataInput in) {
         try {
             return readByteArray(in);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -420,9 +420,9 @@ public class Bytes implements Comparable<Bytes> {
      */
     public static int writeByteArray(final byte[] tgt, final int tgtOffset, final byte[] src,
                                      final int srcOffset, final int srcLength) {
-        byte[] vint = vintToBytes(srcLength);
+        final byte[] vint = vintToBytes(srcLength);
         System.arraycopy(vint, 0, tgt, tgtOffset, vint.length);
-        int offset = tgtOffset + vint.length;
+        final int offset = tgtOffset + vint.length;
         System.arraycopy(src, srcOffset, tgt, offset, srcLength);
         return offset + srcLength;
     }
@@ -437,8 +437,8 @@ public class Bytes implements Comparable<Bytes> {
      * @param srcLength source length
      * @return incremented offset
      */
-    public static int putBytes(byte[] tgtBytes, int tgtOffset, byte[] srcBytes, int srcOffset,
-                               int srcLength) {
+    public static int putBytes(final byte[] tgtBytes, final int tgtOffset, final byte[] srcBytes, final int srcOffset,
+                               final int srcLength) {
         System.arraycopy(srcBytes, srcOffset, tgtBytes, tgtOffset, srcLength);
         return tgtOffset + srcLength;
     }
@@ -451,7 +451,7 @@ public class Bytes implements Comparable<Bytes> {
      * @param b      byte to write out
      * @return incremented offset
      */
-    public static int putByte(byte[] bytes, int offset, byte b) {
+    public static int putByte(final byte[] bytes, final int offset, final byte b) {
         bytes[offset] = b;
         return offset + 1;
     }
@@ -464,8 +464,8 @@ public class Bytes implements Comparable<Bytes> {
      * @param buf    ByteBuffer to write out
      * @return incremented offset
      */
-    public static int putByteBuffer(byte[] bytes, int offset, ByteBuffer buf) {
-        int len = buf.remaining();
+    public static int putByteBuffer(final byte[] bytes, final int offset, final ByteBuffer buf) {
+        final int len = buf.remaining();
         buf.get(bytes, offset, len);
         return offset + len;
     }
@@ -479,14 +479,14 @@ public class Bytes implements Comparable<Bytes> {
      * @return the byte array
      * @see #getBytes(ByteBuffer)
      */
-    public static byte[] toBytes(ByteBuffer buf) {
-        ByteBuffer dup = buf.duplicate();
+    public static byte[] toBytes(final ByteBuffer buf) {
+        final ByteBuffer dup = buf.duplicate();
         dup.position(0);
         return readBytes(dup);
     }
 
-    private static byte[] readBytes(ByteBuffer buf) {
-        byte[] result = new byte[buf.remaining()];
+    private static byte[] readBytes(final ByteBuffer buf) {
+        final byte[] result = new byte[buf.remaining()];
         buf.get(result);
         return result;
     }
@@ -511,7 +511,7 @@ public class Bytes implements Comparable<Bytes> {
      * @param sep The separator to use.
      * @param b2  The second byte array.
      */
-    public static String toString(final byte[] b1, String sep, final byte[] b2) {
+    public static String toString(final byte[] b1, final String sep, final byte[] b2) {
         return toString(b1, 0, b1.length) + sep + toString(b2, 0, b2.length);
     }
 
@@ -523,17 +523,17 @@ public class Bytes implements Comparable<Bytes> {
      * @param off offset into array
      * @return String made from <code>b</code> or null
      */
-    public static String toString(final byte[] b, int off) {
+    public static String toString(final byte[] b, final int off) {
         if (b == null) {
             return null;
         }
-        int len = b.length - off;
+        final int len = b.length - off;
         if (len <= 0) {
             return "";
         }
         try {
             return new String(b, off, len, UTF8_CSN);
-        } catch (UnsupportedEncodingException e) {
+        } catch (final UnsupportedEncodingException e) {
             // should never happen!
             throw new IllegalArgumentException("UTF8 encoding is not supported", e);
         }
@@ -548,7 +548,7 @@ public class Bytes implements Comparable<Bytes> {
      * @param len length of utf-8 sequence
      * @return String made from <code>b</code> or null
      */
-    public static String toString(final byte[] b, int off, int len) {
+    public static String toString(final byte[] b, final int off, final int len) {
         if (b == null) {
             return null;
         }
@@ -557,7 +557,7 @@ public class Bytes implements Comparable<Bytes> {
         }
         try {
             return new String(b, off, len, UTF8_CSN);
-        } catch (UnsupportedEncodingException e) {
+        } catch (final UnsupportedEncodingException e) {
             // should never happen!
             throw new IllegalArgumentException("UTF8 encoding is not supported", e);
         }
@@ -586,7 +586,7 @@ public class Bytes implements Comparable<Bytes> {
      * @see #toBytes(ByteBuffer)
      * @see #getBytes(ByteBuffer)
      */
-    public static String toStringBinary(ByteBuffer buf) {
+    public static String toStringBinary(final ByteBuffer buf) {
         if (buf == null) {
             return "null";
         }
@@ -608,8 +608,8 @@ public class Bytes implements Comparable<Bytes> {
      * @param len length to write
      * @return string output
      */
-    public static String toStringBinary(final byte[] b, int off, int len) {
-        StringBuilder result = new StringBuilder();
+    public static String toStringBinary(final byte[] b, final int off, int len) {
+        final StringBuilder result = new StringBuilder();
         // Just in case we are passed a 'len' that is > buffer length...
         if (off >= b.length) {
             return result.toString();
@@ -618,7 +618,7 @@ public class Bytes implements Comparable<Bytes> {
             len = b.length - off;
         }
         for (int i = off; i < off + len; ++i) {
-            int ch = b[i] & 0xFF;
+            final int ch = b[i] & 0xFF;
             if (ch >= ' ' && ch <= '~' && ch != '\\') {
                 result.append((char) ch);
             } else {
@@ -630,7 +630,7 @@ public class Bytes implements Comparable<Bytes> {
         return result.toString();
     }
 
-    private static boolean isHexDigit(char c) {
+    private static boolean isHexDigit(final char c) {
         return (c >= 'A' && c <= 'F') || (c >= '0' && c <= '9');
     }
 
@@ -640,7 +640,7 @@ public class Bytes implements Comparable<Bytes> {
      * @param ch The hex digit.
      * @return The converted hex value as a byte.
      */
-    public static byte toBinaryFromHex(byte ch) {
+    public static byte toBinaryFromHex(final byte ch) {
         if (ch >= 'A' && ch <= 'F') {
             return (byte) ((byte) 10 + (byte) (ch - 'A'));
         }
@@ -648,16 +648,16 @@ public class Bytes implements Comparable<Bytes> {
         return (byte) (ch - '0');
     }
 
-    public static byte[] toBytesBinary(String in) {
+    public static byte[] toBytesBinary(final String in) {
         // this may be bigger than we need, but let's be safe.
-        byte[] b = new byte[in.length()];
+        final byte[] b = new byte[in.length()];
         int size = 0;
         for (int i = 0; i < in.length(); ++i) {
-            char ch = in.charAt(i);
+            final char ch = in.charAt(i);
             if (ch == '\\' && in.length() > i + 1 && in.charAt(i + 1) == 'x') {
                 // ok, take next 2 hex digits.
-                char hd1 = in.charAt(i + 2);
-                char hd2 = in.charAt(i + 3);
+                final char hd1 = in.charAt(i + 2);
+                final char hd2 = in.charAt(i + 3);
 
                 // they need to be A-F0-9:
                 if (!isHexDigit(hd1) || !isHexDigit(hd2)) {
@@ -665,7 +665,7 @@ public class Bytes implements Comparable<Bytes> {
                     continue;
                 }
                 // turn hex ASCII digit -> number
-                byte d = (byte) ((toBinaryFromHex((byte) hd1) << 4) + toBinaryFromHex((byte) hd2));
+                final byte d = (byte) ((toBinaryFromHex((byte) hd1) << 4) + toBinaryFromHex((byte) hd2));
 
                 b[size++] = d;
                 i += 3; // skip 3
@@ -674,7 +674,7 @@ public class Bytes implements Comparable<Bytes> {
             }
         }
         // resize:
-        byte[] b2 = new byte[size];
+        final byte[] b2 = new byte[size];
         System.arraycopy(b, 0, b2, 0, size);
         return b2;
     }
@@ -685,10 +685,10 @@ public class Bytes implements Comparable<Bytes> {
      * @param s string
      * @return the byte array
      */
-    public static byte[] toBytes(String s) {
+    public static byte[] toBytes(final String s) {
         try {
             return s.getBytes(UTF8_CSN);
-        } catch (UnsupportedEncodingException e) {
+        } catch (final UnsupportedEncodingException e) {
             // should never happen!
             throw new IllegalArgumentException("UTF8 decoding is not supported", e);
         }
@@ -727,7 +727,7 @@ public class Bytes implements Comparable<Bytes> {
      * @return the byte array
      */
     public static byte[] toBytes(long val) {
-        byte[] b = new byte[8];
+        final byte[] b = new byte[8];
         for (int i = 7; i > 0; i--) {
             b[i] = (byte) val;
             val >>>= 8;
@@ -742,7 +742,7 @@ public class Bytes implements Comparable<Bytes> {
      * @param bytes array
      * @return the long value
      */
-    public static long toLong(byte[] bytes) {
+    public static long toLong(final byte[] bytes) {
         return toLong(bytes, 0, SIZEOF_LONG);
     }
 
@@ -754,7 +754,7 @@ public class Bytes implements Comparable<Bytes> {
      * @param offset offset
      * @return the long value
      */
-    public static long toLong(byte[] bytes, int offset) {
+    public static long toLong(final byte[] bytes, final int offset) {
         return toLong(bytes, offset, SIZEOF_LONG);
     }
 
@@ -768,7 +768,7 @@ public class Bytes implements Comparable<Bytes> {
      * @throws IllegalArgumentException if length is not {@link #SIZEOF_LONG} or if there's not enough
      *                                  room in the array at the offset indicated.
      */
-    public static long toLong(byte[] bytes, int offset, final int length) {
+    public static long toLong(final byte[] bytes, final int offset, final int length) {
         if (length != SIZEOF_LONG || offset + length > bytes.length) {
             throw explainWrongLengthOrOffset(bytes, offset, length, SIZEOF_LONG);
         }
@@ -779,7 +779,7 @@ public class Bytes implements Comparable<Bytes> {
                                                                        final int offset,
                                                                        final int length,
                                                                        final int expectedLength) {
-        String reason;
+        final String reason;
         if (length != expectedLength) {
             reason = "Wrong length: " + length + ", expected " + expectedLength;
         } else {
@@ -799,7 +799,7 @@ public class Bytes implements Comparable<Bytes> {
      * @throws IllegalArgumentException if the byte array given doesn't have enough room at the offset
      *                                  specified.
      */
-    public static int putLong(byte[] bytes, int offset, long val) {
+    public static int putLong(final byte[] bytes, final int offset, final long val) {
         if (bytes.length - offset < SIZEOF_LONG) {
             throw new IllegalArgumentException("Not enough room to put a long at" + " offset " + offset
                                                + " in a " + bytes.length + " byte array");
@@ -814,7 +814,7 @@ public class Bytes implements Comparable<Bytes> {
      * @param bytes byte array
      * @return Float made from passed byte array.
      */
-    public static float toFloat(byte[] bytes) {
+    public static float toFloat(final byte[] bytes) {
         return toFloat(bytes, 0);
     }
 
@@ -826,7 +826,7 @@ public class Bytes implements Comparable<Bytes> {
      * @param offset offset into array
      * @return Float made from passed byte array.
      */
-    public static float toFloat(byte[] bytes, int offset) {
+    public static float toFloat(final byte[] bytes, final int offset) {
         return Float.intBitsToFloat(toInt(bytes, offset, SIZEOF_INT));
     }
 
@@ -838,7 +838,7 @@ public class Bytes implements Comparable<Bytes> {
      * @param f      float value
      * @return New offset in <code>bytes</code>
      */
-    public static int putFloat(byte[] bytes, int offset, float f) {
+    public static int putFloat(final byte[] bytes, final int offset, final float f) {
         return putInt(bytes, offset, Float.floatToRawIntBits(f));
     }
 
@@ -872,7 +872,7 @@ public class Bytes implements Comparable<Bytes> {
      * @param d      value
      * @return New offset into array <code>bytes</code>
      */
-    public static int putDouble(byte[] bytes, int offset, double d) {
+    public static int putDouble(final byte[] bytes, final int offset, final double d) {
         return putLong(bytes, offset, Double.doubleToLongBits(d));
     }
 
@@ -895,7 +895,7 @@ public class Bytes implements Comparable<Bytes> {
      * @return the byte array
      */
     public static byte[] toBytes(int val) {
-        byte[] b = new byte[4];
+        final byte[] b = new byte[4];
         for (int i = 3; i > 0; i--) {
             b[i] = (byte) val;
             val >>>= 8;
@@ -910,7 +910,7 @@ public class Bytes implements Comparable<Bytes> {
      * @param bytes byte array
      * @return the int value
      */
-    public static int toInt(byte[] bytes) {
+    public static int toInt(final byte[] bytes) {
         return toInt(bytes, 0, SIZEOF_INT);
     }
 
@@ -921,7 +921,7 @@ public class Bytes implements Comparable<Bytes> {
      * @param offset offset into array
      * @return the int value
      */
-    public static int toInt(byte[] bytes, int offset) {
+    public static int toInt(final byte[] bytes, final int offset) {
         return toInt(bytes, offset, SIZEOF_INT);
     }
 
@@ -935,7 +935,7 @@ public class Bytes implements Comparable<Bytes> {
      * @throws IllegalArgumentException if length is not {@link #SIZEOF_INT} or if there's not enough
      *                                  room in the array at the offset indicated.
      */
-    public static int toInt(byte[] bytes, int offset, final int length) {
+    public static int toInt(final byte[] bytes, final int offset, final int length) {
         if (length != SIZEOF_INT || offset + length > bytes.length) {
             throw explainWrongLengthOrOffset(bytes, offset, length, SIZEOF_INT);
         }
@@ -952,7 +952,7 @@ public class Bytes implements Comparable<Bytes> {
      * @throws IllegalArgumentException if there's not enough room in the array at the offset
      *                                  indicated.
      */
-    public static int readAsInt(byte[] bytes, int offset, final int length) {
+    public static int readAsInt(final byte[] bytes, final int offset, final int length) {
         if (offset + length > bytes.length) {
             throw new IllegalArgumentException("offset (" + offset + ") + length (" + length
                                                + ") exceed the" + " capacity of the array: " + bytes.length);
@@ -975,7 +975,7 @@ public class Bytes implements Comparable<Bytes> {
      * @throws IllegalArgumentException if the byte array given doesn't have enough room at the offset
      *                                  specified.
      */
-    public static int putInt(byte[] bytes, int offset, int val) {
+    public static int putInt(final byte[] bytes, final int offset, final int val) {
         if (bytes.length - offset < SIZEOF_INT) {
             throw new IllegalArgumentException("Not enough room to put an int at" + " offset " + offset
                                                + " in a " + bytes.length + " byte array");
@@ -990,7 +990,7 @@ public class Bytes implements Comparable<Bytes> {
      * @return the byte array
      */
     public static byte[] toBytes(short val) {
-        byte[] b = new byte[SIZEOF_SHORT];
+        final byte[] b = new byte[SIZEOF_SHORT];
         b[1] = (byte) val;
         val >>= 8;
         b[0] = (byte) val;
@@ -1003,7 +1003,7 @@ public class Bytes implements Comparable<Bytes> {
      * @param bytes byte array
      * @return the short value
      */
-    public static short toShort(byte[] bytes) {
+    public static short toShort(final byte[] bytes) {
         return toShort(bytes, 0, SIZEOF_SHORT);
     }
 
@@ -1014,7 +1014,7 @@ public class Bytes implements Comparable<Bytes> {
      * @param offset offset into array
      * @return the short value
      */
-    public static short toShort(byte[] bytes, int offset) {
+    public static short toShort(final byte[] bytes, final int offset) {
         return toShort(bytes, offset, SIZEOF_SHORT);
     }
 
@@ -1028,7 +1028,7 @@ public class Bytes implements Comparable<Bytes> {
      * @throws IllegalArgumentException if length is not {@link #SIZEOF_SHORT} or if there's not
      *                                  enough room in the array at the offset indicated.
      */
-    public static short toShort(byte[] bytes, int offset, final int length) {
+    public static short toShort(final byte[] bytes, final int offset, final int length) {
         if (length != SIZEOF_SHORT || offset + length > bytes.length) {
             throw explainWrongLengthOrOffset(bytes, offset, length, SIZEOF_SHORT);
         }
@@ -1043,7 +1043,7 @@ public class Bytes implements Comparable<Bytes> {
      * @return the byte array
      * @see #toBytes(ByteBuffer)
      */
-    public static byte[] getBytes(ByteBuffer buf) {
+    public static byte[] getBytes(final ByteBuffer buf) {
         return readBytes(buf.duplicate());
     }
 
@@ -1057,7 +1057,7 @@ public class Bytes implements Comparable<Bytes> {
      * @throws IllegalArgumentException if the byte array given doesn't have enough room at the offset
      *                                  specified.
      */
-    public static int putShort(byte[] bytes, int offset, short val) {
+    public static int putShort(final byte[] bytes, final int offset, final short val) {
         if (bytes.length - offset < SIZEOF_SHORT) {
             throw new IllegalArgumentException("Not enough room to put a short at" + " offset " + offset
                                                + " in a " + bytes.length + " byte array");
@@ -1078,7 +1078,7 @@ public class Bytes implements Comparable<Bytes> {
      * @throws IllegalArgumentException if the byte array given doesn't have enough room at the offset
      *                                  specified.
      */
-    public static int putAsShort(byte[] bytes, int offset, int val) {
+    public static int putAsShort(final byte[] bytes, final int offset, int val) {
         if (bytes.length - offset < SIZEOF_SHORT) {
             throw new IllegalArgumentException("Not enough room to put a short at" + " offset " + offset
                                                + " in a " + bytes.length + " byte array");
@@ -1092,10 +1092,10 @@ public class Bytes implements Comparable<Bytes> {
     /**
      * Convert a BigDecimal value to a byte array
      */
-    public static byte[] toBytes(BigDecimal val) {
-        byte[] valueBytes = val.unscaledValue().toByteArray();
-        byte[] result = new byte[valueBytes.length + SIZEOF_INT];
-        int offset = putInt(result, 0, val.scale());
+    public static byte[] toBytes(final BigDecimal val) {
+        final byte[] valueBytes = val.unscaledValue().toByteArray();
+        final byte[] result = new byte[valueBytes.length + SIZEOF_INT];
+        final int offset = putInt(result, 0, val.scale());
         putBytes(result, offset, valueBytes, 0, valueBytes.length);
         return result;
     }
@@ -1103,20 +1103,20 @@ public class Bytes implements Comparable<Bytes> {
     /**
      * Converts a byte array to a BigDecimal
      */
-    public static BigDecimal toBigDecimal(byte[] bytes) {
+    public static BigDecimal toBigDecimal(final byte[] bytes) {
         return toBigDecimal(bytes, 0, bytes.length);
     }
 
     /**
      * Converts a byte array to a BigDecimal value
      */
-    public static BigDecimal toBigDecimal(byte[] bytes, int offset, final int length) {
+    public static BigDecimal toBigDecimal(final byte[] bytes, final int offset, final int length) {
         if (bytes == null || length < SIZEOF_INT + 1 || (offset + length > bytes.length)) {
             return null;
         }
 
-        int scale = toInt(bytes, offset);
-        byte[] tcBytes = new byte[length - SIZEOF_INT];
+        final int scale = toInt(bytes, offset);
+        final byte[] tcBytes = new byte[length - SIZEOF_INT];
         System.arraycopy(bytes, offset + SIZEOF_INT, tcBytes, 0, length - SIZEOF_INT);
         return new BigDecimal(new BigInteger(tcBytes), scale);
     }
@@ -1129,13 +1129,13 @@ public class Bytes implements Comparable<Bytes> {
      * @param val    BigDecimal to write out
      * @return incremented offset
      */
-    public static int putBigDecimal(byte[] bytes, int offset, BigDecimal val) {
+    public static int putBigDecimal(final byte[] bytes, int offset, final BigDecimal val) {
         if (bytes == null) {
             return offset;
         }
 
-        byte[] valueBytes = val.unscaledValue().toByteArray();
-        byte[] result = new byte[valueBytes.length + SIZEOF_INT];
+        final byte[] valueBytes = val.unscaledValue().toByteArray();
+        final byte[] result = new byte[valueBytes.length + SIZEOF_INT];
         offset = putInt(result, offset, val.scale());
         return putBytes(result, offset, valueBytes, 0, valueBytes.length);
     }
@@ -1148,8 +1148,8 @@ public class Bytes implements Comparable<Bytes> {
      */
     public static byte[] vintToBytes(final long vint) {
         long i = vint;
-        int size = WritableUtils.getVIntSize(i);
-        byte[] result = new byte[size];
+        final int size = WritableUtils.getVIntSize(i);
+        final byte[] result = new byte[size];
         int offset = 0;
         if (i >= -112 && i <= 127) {
             result[offset] = (byte) i;
@@ -1175,8 +1175,8 @@ public class Bytes implements Comparable<Bytes> {
                 : -(len + 112);
 
         for (int idx = len; idx != 0; idx--) {
-            int shiftbits = (idx - 1) * 8;
-            long mask = 0xFFL << shiftbits;
+            final int shiftbits = (idx - 1) * 8;
+            final long mask = 0xFFL << shiftbits;
             result[offset++] = (byte) ((i & mask) >> shiftbits);
         }
         return result;
@@ -1190,14 +1190,14 @@ public class Bytes implements Comparable<Bytes> {
      */
     public static long bytesToVint(final byte[] buffer) {
         int offset = 0;
-        byte firstByte = buffer[offset++];
-        int len = WritableUtils.decodeVIntSize(firstByte);
+        final byte firstByte = buffer[offset++];
+        final int len = WritableUtils.decodeVIntSize(firstByte);
         if (len == 1) {
             return firstByte;
         }
         long i = 0;
         for (int idx = 0; idx < len - 1; idx++) {
-            byte b = buffer[offset++];
+            final byte b = buffer[offset++];
             i = i << 8;
             i = i | (b & 0xFF);
         }
@@ -1214,14 +1214,14 @@ public class Bytes implements Comparable<Bytes> {
      * @return deserialized long from buffer.
      */
     public static long readAsVLong(final byte[] buffer, final int offset) {
-        byte firstByte = buffer[offset];
-        int len = WritableUtils.decodeVIntSize(firstByte);
+        final byte firstByte = buffer[offset];
+        final int len = WritableUtils.decodeVIntSize(firstByte);
         if (len == 1) {
             return firstByte;
         }
         long i = 0;
         for (int idx = 0; idx < len - 1; idx++) {
-            byte b = buffer[offset + 1 + idx];
+            final byte b = buffer[offset + 1 + idx];
             i = i << 8;
             i = i | (b & 0xFF);
         }
@@ -1261,8 +1261,8 @@ public class Bytes implements Comparable<Bytes> {
      * @param length2 How much to compare from the right buffer
      * @return 0 if equal, &lt; 0 if left is less than right, etc.
      */
-    public static int compareTo(byte[] buffer1, int offset1, int length1, byte[] buffer2, int offset2,
-                                int length2) {
+    public static int compareTo(final byte[] buffer1, final int offset1, final int length1, final byte[] buffer2, final int offset2,
+                                final int length2) {
         return LexicographicalComparerHolder.BEST_COMPARER.compareTo(buffer1, offset1, length1, buffer2,
                 offset2, length2);
     }
@@ -1311,13 +1311,12 @@ public class Bytes implements Comparable<Bytes> {
          */
         static Converter getBestConverter() {
             try {
-                Class<?> theClass = Class.forName(UNSAFE_CONVERTER_NAME);
+                final Class<?> theClass = Class.forName(UNSAFE_CONVERTER_NAME);
 
                 // yes, UnsafeComparer does implement Comparer<byte[]>
-                @SuppressWarnings("unchecked")
-                Converter converter = (Converter) theClass.getConstructor().newInstance();
+                @SuppressWarnings("unchecked") final Converter converter = (Converter) theClass.getConstructor().newInstance();
                 return converter;
-            } catch (Throwable t) { // ensure we really catch *everything*
+            } catch (final Throwable t) { // ensure we really catch *everything*
                 return PureJavaConverter.INSTANCE;
             }
         }
@@ -1330,7 +1329,7 @@ public class Bytes implements Comparable<Bytes> {
             }
 
             @Override
-            long toLong(byte[] bytes, int offset, int length) {
+            long toLong(final byte[] bytes, final int offset, final int length) {
                 long l = 0;
                 for (int i = offset; i < offset + length; i++) {
                     l <<= 8;
@@ -1340,7 +1339,7 @@ public class Bytes implements Comparable<Bytes> {
             }
 
             @Override
-            int putLong(byte[] bytes, int offset, long val) {
+            int putLong(final byte[] bytes, final int offset, long val) {
                 for (int i = offset + 7; i > offset; i--) {
                     bytes[i] = (byte) val;
                     val >>>= 8;
@@ -1350,7 +1349,7 @@ public class Bytes implements Comparable<Bytes> {
             }
 
             @Override
-            int toInt(byte[] bytes, int offset, int length) {
+            int toInt(final byte[] bytes, final int offset, final int length) {
                 int n = 0;
                 for (int i = offset; i < (offset + length); i++) {
                     n <<= 8;
@@ -1360,7 +1359,7 @@ public class Bytes implements Comparable<Bytes> {
             }
 
             @Override
-            int putInt(byte[] bytes, int offset, int val) {
+            int putInt(final byte[] bytes, final int offset, int val) {
                 for (int i = offset + 3; i > offset; i--) {
                     bytes[i] = (byte) val;
                     val >>>= 8;
@@ -1370,7 +1369,7 @@ public class Bytes implements Comparable<Bytes> {
             }
 
             @Override
-            short toShort(byte[] bytes, int offset, int length) {
+            short toShort(final byte[] bytes, final int offset, final int length) {
                 short n = 0;
                 n = (short) ((n ^ bytes[offset]) & 0xFF);
                 n = (short) (n << 8);
@@ -1379,7 +1378,7 @@ public class Bytes implements Comparable<Bytes> {
             }
 
             @Override
-            int putShort(byte[] bytes, int offset, short val) {
+            int putShort(final byte[] bytes, final int offset, short val) {
                 bytes[offset + 1] = (byte) val;
                 val >>= 8;
                 bytes[offset] = (byte) val;
@@ -1406,32 +1405,32 @@ public class Bytes implements Comparable<Bytes> {
             }
 
             @Override
-            long toLong(byte[] bytes, int offset, int length) {
+            long toLong(final byte[] bytes, final int offset, final int length) {
                 return UnsafeAccess.toLong(bytes, offset);
             }
 
             @Override
-            int putLong(byte[] bytes, int offset, long val) {
+            int putLong(final byte[] bytes, final int offset, final long val) {
                 return UnsafeAccess.putLong(bytes, offset, val);
             }
 
             @Override
-            int toInt(byte[] bytes, int offset, int length) {
+            int toInt(final byte[] bytes, final int offset, final int length) {
                 return UnsafeAccess.toInt(bytes, offset);
             }
 
             @Override
-            int putInt(byte[] bytes, int offset, int val) {
+            int putInt(final byte[] bytes, final int offset, final int val) {
                 return UnsafeAccess.putInt(bytes, offset, val);
             }
 
             @Override
-            short toShort(byte[] bytes, int offset, int length) {
+            short toShort(final byte[] bytes, final int offset, final int length) {
                 return UnsafeAccess.toShort(bytes, offset);
             }
 
             @Override
-            int putShort(byte[] bytes, int offset, short val) {
+            int putShort(final byte[] bytes, final int offset, final short val) {
                 return UnsafeAccess.putShort(bytes, offset, val);
             }
         }
@@ -1457,13 +1456,12 @@ public class Bytes implements Comparable<Bytes> {
          */
         static Comparer<byte[]> getBestComparer() {
             try {
-                Class<?> theClass = Class.forName(UNSAFE_COMPARER_NAME);
+                final Class<?> theClass = Class.forName(UNSAFE_COMPARER_NAME);
 
                 // yes, UnsafeComparer does implement Comparer<byte[]>
-                @SuppressWarnings("unchecked")
-                Comparer<byte[]> comparer = (Comparer<byte[]>) theClass.getEnumConstants()[0];
+                @SuppressWarnings("unchecked") final Comparer<byte[]> comparer = (Comparer<byte[]>) theClass.getEnumConstants()[0];
                 return comparer;
-            } catch (Throwable t) { // ensure we really catch *everything*
+            } catch (final Throwable t) { // ensure we really catch *everything*
                 return lexicographicalComparerJavaImpl();
             }
         }
@@ -1472,18 +1470,18 @@ public class Bytes implements Comparable<Bytes> {
             INSTANCE;
 
             @Override
-            public int compareTo(byte[] buffer1, int offset1, int length1, byte[] buffer2, int offset2,
-                                 int length2) {
+            public int compareTo(final byte[] buffer1, final int offset1, final int length1, final byte[] buffer2, final int offset2,
+                                 final int length2) {
                 // Short circuit equal case
                 if (buffer1 == buffer2 && offset1 == offset2 && length1 == length2) {
                     return 0;
                 }
                 // Bring WritableComparator code local
-                int end1 = offset1 + length1;
-                int end2 = offset2 + length2;
+                final int end1 = offset1 + length1;
+                final int end2 = offset2 + length2;
                 for (int i = offset1, j = offset2; i < end1 && j < end2; i++, j++) {
-                    int a = (buffer1[i] & 0xff);
-                    int b = (buffer2[j] & 0xff);
+                    final int a = (buffer1[i] & 0xff);
+                    final int b = (buffer2[j] & 0xff);
                     if (a != b) {
                         return a - b;
                     }
@@ -1520,8 +1518,8 @@ public class Bytes implements Comparable<Bytes> {
              * @return 0 if equal, < 0 if left is less than right, etc.
              */
             @Override
-            public int compareTo(byte[] buffer1, int offset1, int length1, byte[] buffer2, int offset2,
-                                 int length2) {
+            public int compareTo(final byte[] buffer1, final int offset1, final int length1, final byte[] buffer2, final int offset2,
+                                 final int length2) {
 
                 // Short circuit equal case
                 if (buffer1 == buffer2 && offset1 == offset2 && length1 == length2) {
@@ -1529,7 +1527,7 @@ public class Bytes implements Comparable<Bytes> {
                 }
                 final int stride = 8;
                 final int minLength = Math.min(length1, length2);
-                int strideLimit = minLength & ~(stride - 1);
+                final int strideLimit = minLength & ~(stride - 1);
                 final long offset1Adj = offset1 + UnsafeAccess.BYTE_ARRAY_BASE_OFFSET;
                 final long offset2Adj = offset2 + UnsafeAccess.BYTE_ARRAY_BASE_OFFSET;
                 int i;
@@ -1539,8 +1537,8 @@ public class Bytes implements Comparable<Bytes> {
                  * than 4 bytes even on 32-bit. On the other hand, it is substantially faster on 64-bit.
                  */
                 for (i = 0; i < strideLimit; i += stride) {
-                    long lw = HBasePlatformDependent.getLong(buffer1, offset1Adj + i);
-                    long rw = HBasePlatformDependent.getLong(buffer2, offset2Adj + i);
+                    final long lw = HBasePlatformDependent.getLong(buffer1, offset1Adj + i);
+                    final long rw = HBasePlatformDependent.getLong(buffer2, offset2Adj + i);
                     if (lw != rw) {
                         if (!UnsafeAccess.LITTLE_ENDIAN) {
                             return ((lw + Long.MIN_VALUE) < (rw + Long.MIN_VALUE))
@@ -1556,15 +1554,15 @@ public class Bytes implements Comparable<Bytes> {
                          * that least significant nonzero byte. This comparison logic is based on UnsignedBytes
                          * comparator from guava v21
                          */
-                        int n = Long.numberOfTrailingZeros(lw ^ rw) & ~0x7;
+                        final int n = Long.numberOfTrailingZeros(lw ^ rw) & ~0x7;
                         return ((int) ((lw >>> n) & 0xFF)) - ((int) ((rw >>> n) & 0xFF));
                     }
                 }
 
                 // The epilogue to cover the last (minLength % stride) elements.
                 for (; i < minLength; i++) {
-                    int a = (buffer1[offset1 + i] & 0xFF);
-                    int b = (buffer2[offset2 + i] & 0xFF);
+                    final int a = (buffer1[offset1 + i] & 0xFF);
+                    final int b = (buffer2[offset2 + i] & 0xFF);
                     if (a != b) {
                         return a - b;
                     }
@@ -1583,11 +1581,11 @@ public class Bytes implements Comparable<Bytes> {
 
         static CommonPrefixer getBestCommonPrefixer() {
             try {
-                Class<? extends CommonPrefixer> theClass =
+                final Class<? extends CommonPrefixer> theClass =
                         Class.forName(UNSAFE_COMMON_PREFIXER_NAME).asSubclass(CommonPrefixer.class);
 
                 return theClass.getConstructor().newInstance();
-            } catch (Throwable t) { // ensure we really catch *everything*
+            } catch (final Throwable t) { // ensure we really catch *everything*
                 return CommonPrefixerHolder.PureJavaCommonPrefixer.INSTANCE;
             }
         }
@@ -1600,9 +1598,9 @@ public class Bytes implements Comparable<Bytes> {
             }
 
             @Override
-            public int findCommonPrefix(byte[] left, int leftOffset, int leftLength, byte[] right,
-                                        int rightOffset, int rightLength) {
-                int length = Math.min(leftLength, rightLength);
+            public int findCommonPrefix(final byte[] left, final int leftOffset, final int leftLength, final byte[] right,
+                                        final int rightOffset, final int rightLength) {
+                final int length = Math.min(leftLength, rightLength);
                 int result = 0;
 
                 while (result < length && left[leftOffset + result] == right[rightOffset + result]) {
@@ -1629,19 +1627,19 @@ public class Bytes implements Comparable<Bytes> {
             }
 
             @Override
-            public int findCommonPrefix(byte[] left, int leftOffset, int leftLength, byte[] right,
-                                        int rightOffset, int rightLength) {
+            public int findCommonPrefix(final byte[] left, final int leftOffset, final int leftLength, final byte[] right,
+                                        final int rightOffset, final int rightLength) {
                 final int stride = 8;
                 final int minLength = Math.min(leftLength, rightLength);
-                int strideLimit = minLength & ~(stride - 1);
+                final int strideLimit = minLength & ~(stride - 1);
                 final long leftOffsetAdj = leftOffset + UnsafeAccess.BYTE_ARRAY_BASE_OFFSET;
                 final long rightOffsetAdj = rightOffset + UnsafeAccess.BYTE_ARRAY_BASE_OFFSET;
                 int result = 0;
                 int i;
 
                 for (i = 0; i < strideLimit; i += stride) {
-                    long lw = HBasePlatformDependent.getLong(left, leftOffsetAdj + i);
-                    long rw = HBasePlatformDependent.getLong(right, rightOffsetAdj + i);
+                    final long lw = HBasePlatformDependent.getLong(left, leftOffsetAdj + i);
+                    final long rw = HBasePlatformDependent.getLong(right, rightOffsetAdj + i);
                     if (lw != rw) {
                         if (!UnsafeAccess.LITTLE_ENDIAN) {
                             return result + (Long.numberOfLeadingZeros(lw ^ rw) / Bytes.SIZEOF_LONG);
@@ -1655,8 +1653,8 @@ public class Bytes implements Comparable<Bytes> {
 
                 // The epilogue to cover the last (minLength % stride) elements.
                 for (; i < minLength; i++) {
-                    int il = (left[leftOffset + i]);
-                    int ir = (right[rightOffset + i]);
+                    final int il = (left[leftOffset + i]);
+                    final int ir = (right[rightOffset + i]);
                     if (il != ir) {
                         return result;
                     } else {
@@ -1713,8 +1711,8 @@ public class Bytes implements Comparable<Bytes> {
      * @param rightLen    length of right operand
      * @return True if equal
      */
-    public static boolean equals(final byte[] left, int leftOffset, int leftLen, final byte[] right,
-                                 int rightOffset, int rightLen) {
+    public static boolean equals(final byte[] left, final int leftOffset, final int leftLen, final byte[] right,
+                                 final int rightOffset, final int rightLen) {
         // short circuit case
         if (left == right && leftOffset == rightOffset && leftLen == rightLen) {
             return true;
@@ -1745,7 +1743,7 @@ public class Bytes implements Comparable<Bytes> {
      * @param buf right operand
      * @return True if equal
      */
-    public static boolean equals(byte[] a, ByteBuffer buf) {
+    public static boolean equals(final byte[] a, final ByteBuffer buf) {
         if (a == null) {
             return buf == null;
         }
@@ -1757,8 +1755,8 @@ public class Bytes implements Comparable<Bytes> {
         }
 
         // Thou shalt not modify the original byte buffer in what should be read only operations.
-        ByteBuffer b = buf.duplicate();
-        for (byte anA : a) {
+        final ByteBuffer b = buf.duplicate();
+        for (final byte anA : a) {
             if (anA != b.get()) {
                 return false;
             }
@@ -1769,7 +1767,7 @@ public class Bytes implements Comparable<Bytes> {
     /**
      * Return true if the byte array on the right is a prefix of the byte array on the left.
      */
-    public static boolean startsWith(byte[] bytes, byte[] prefix) {
+    public static boolean startsWith(final byte[] bytes, final byte[] prefix) {
         return bytes != null && prefix != null && bytes.length >= prefix.length
                && LexicographicalComparerHolder.BEST_COMPARER.compareTo(bytes, 0, prefix.length, prefix, 0,
                 prefix.length) == 0;
@@ -1839,7 +1837,7 @@ public class Bytes implements Comparable<Bytes> {
      * @return New array made from a, b and c
      */
     public static byte[] add(final byte[] a, final byte[] b, final byte[] c) {
-        byte[] result = new byte[a.length + b.length + c.length];
+        final byte[] result = new byte[a.length + b.length + c.length];
         System.arraycopy(a, 0, result, 0, a.length);
         System.arraycopy(b, 0, result, a.length, b.length);
         System.arraycopy(c, 0, result, a.length + b.length, c.length);
@@ -1857,7 +1855,7 @@ public class Bytes implements Comparable<Bytes> {
         for (int i = 0; i < arrays.length; i++) {
             length += arrays[i].length;
         }
-        byte[] result = new byte[length];
+        final byte[] result = new byte[length];
         int index = 0;
         for (int i = 0; i < arrays.length; i++) {
             System.arraycopy(arrays[i], 0, result, index, arrays[i].length);
@@ -1877,7 +1875,7 @@ public class Bytes implements Comparable<Bytes> {
         if (a.length < length) {
             return null;
         }
-        byte[] result = new byte[length];
+        final byte[] result = new byte[length];
         System.arraycopy(a, 0, result, 0, length);
         return result;
     }
@@ -1893,7 +1891,7 @@ public class Bytes implements Comparable<Bytes> {
         if (a.length < length) {
             return null;
         }
-        byte[] result = new byte[length];
+        final byte[] result = new byte[length];
         System.arraycopy(a, a.length - length, result, 0, length);
         return result;
     }
@@ -1906,7 +1904,7 @@ public class Bytes implements Comparable<Bytes> {
      * @return Value in <code>a</code> plus <code>length</code> prepended 0 bytes
      */
     public static byte[] padHead(final byte[] a, final int length) {
-        byte[] padding = new byte[length];
+        final byte[] padding = new byte[length];
         for (int i = 0; i < length; i++) {
             padding[i] = 0;
         }
@@ -1921,7 +1919,7 @@ public class Bytes implements Comparable<Bytes> {
      * @return Value in <code>a</code> plus <code>length</code> appended 0 bytes
      */
     public static byte[] padTail(final byte[] a, final int length) {
-        byte[] padding = new byte[length];
+        final byte[] padding = new byte[length];
         for (int i = 0; i < length; i++) {
             padding[i] = 0;
         }
@@ -1955,14 +1953,14 @@ public class Bytes implements Comparable<Bytes> {
      *                  i.e. one split.
      * @return Array of dividing values
      */
-    public static byte[][] split(final byte[] a, final byte[] b, boolean inclusive, final int num) {
-        byte[][] ret = new byte[num + 2][];
+    public static byte[][] split(final byte[] a, final byte[] b, final boolean inclusive, final int num) {
+        final byte[][] ret = new byte[num + 2][];
         int i = 0;
-        Iterable<byte[]> iter = iterateOnSplits(a, b, inclusive, num);
+        final Iterable<byte[]> iter = iterateOnSplits(a, b, inclusive, num);
         if (iter == null) {
             return null;
         }
-        for (byte[] elem : iter) {
+        for (final byte[] elem : iter) {
             ret[i++] = elem;
         }
         return ret;
@@ -1978,10 +1976,10 @@ public class Bytes implements Comparable<Bytes> {
     /**
      * Iterate over keys within the passed range.
      */
-    public static Iterable<byte[]> iterateOnSplits(final byte[] a, final byte[] b, boolean inclusive,
+    public static Iterable<byte[]> iterateOnSplits(final byte[] a, final byte[] b, final boolean inclusive,
                                                    final int num) {
-        byte[] aPadded;
-        byte[] bPadded;
+        final byte[] aPadded;
+        final byte[] bPadded;
         if (a.length < b.length) {
             aPadded = padTail(a, b.length - a.length);
             bPadded = b;
@@ -1998,7 +1996,7 @@ public class Bytes implements Comparable<Bytes> {
         if (num <= 0) {
             throw new IllegalArgumentException("num cannot be <= 0");
         }
-        byte[] prependHeader = {1, 0};
+        final byte[] prependHeader = {1, 0};
         final BigInteger startBI = new BigInteger(add(prependHeader, aPadded));
         final BigInteger stopBI = new BigInteger(add(prependHeader, bPadded));
         BigInteger diffBI = stopBI.subtract(startBI);
@@ -2008,8 +2006,8 @@ public class Bytes implements Comparable<Bytes> {
         final BigInteger splitsBI = BigInteger.valueOf(num + 1);
         // when diffBI < splitBI, use an additional byte to increase diffBI
         if (diffBI.compareTo(splitsBI) < 0) {
-            byte[] aPaddedAdditional = new byte[aPadded.length + 1];
-            byte[] bPaddedAdditional = new byte[bPadded.length + 1];
+            final byte[] aPaddedAdditional = new byte[aPadded.length + 1];
+            final byte[] bPaddedAdditional = new byte[bPadded.length + 1];
             for (int i = 0; i < aPadded.length; i++) {
                 aPaddedAdditional[i] = aPadded[i];
             }
@@ -2023,7 +2021,7 @@ public class Bytes implements Comparable<Bytes> {
         final BigInteger intervalBI;
         try {
             intervalBI = diffBI.divide(splitsBI);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOG.error("Exception caught during division", e);
             return null;
         }
@@ -2046,7 +2044,7 @@ public class Bytes implements Comparable<Bytes> {
                     return b;
                 }
 
-                BigInteger curBI = startBI.add(intervalBI.multiply(BigInteger.valueOf(i)));
+                final BigInteger curBI = startBI.add(intervalBI.multiply(BigInteger.valueOf(i)));
                 byte[] padded = curBI.toByteArray();
                 if (padded[1] == 0) {
                     padded = tail(padded, padded.length - 2);
@@ -2078,7 +2076,7 @@ public class Bytes implements Comparable<Bytes> {
      * @param offset offset to start from
      * @param length length to hash
      */
-    public static int hashCode(byte[] bytes, int offset, int length) {
+    public static int hashCode(final byte[] bytes, final int offset, final int length) {
         int hash = 1;
         for (int i = offset; i < offset + length; i++) {
             hash = (31 * hash) + bytes[i];
@@ -2093,7 +2091,7 @@ public class Bytes implements Comparable<Bytes> {
      * @return Array of byte arrays made from passed array of Text
      */
     public static byte[][] toByteArrays(final String[] t) {
-        byte[][] result = new byte[t.length][];
+        final byte[][] result = new byte[t.length][];
         for (int i = 0; i < t.length; i++) {
             result[i] = Bytes.toBytes(t[i]);
         }
@@ -2107,7 +2105,7 @@ public class Bytes implements Comparable<Bytes> {
      * @return Array of binary byte arrays made from passed array of binary strings
      */
     public static byte[][] toBinaryByteArrays(final String[] t) {
-        byte[][] result = new byte[t.length][];
+        final byte[][] result = new byte[t.length][];
         for (int i = 0; i < t.length; i++) {
             result[i] = Bytes.toBytesBinary(t[i]);
         }
@@ -2131,7 +2129,7 @@ public class Bytes implements Comparable<Bytes> {
      * @return A byte array of a byte array where first and only entry is <code>column</code>
      */
     public static byte[][] toByteArrays(final byte[] column) {
-        byte[][] result = new byte[1][];
+        final byte[][] result = new byte[1][];
         result[0] = column;
         return result;
     }
@@ -2149,15 +2147,15 @@ public class Bytes implements Comparable<Bytes> {
      * means that this function can return 2N + 1 different values ranging from -(N + 1) to N
      * - 1.
      */
-    public static int binarySearch(byte[][] arr, byte[] key, int offset, int length) {
+    public static int binarySearch(final byte[][] arr, final byte[] key, final int offset, final int length) {
         int low = 0;
         int high = arr.length - 1;
 
         while (low <= high) {
-            int mid = low + ((high - low) >> 1);
+            final int mid = low + ((high - low) >> 1);
             // we have to compare in this order, because the comparator order
             // has special logic when the 'left side' is a special key.
-            int cmp =
+            final int cmp =
                     Bytes.BYTES_RAWCOMPARATOR.compare(key, offset, length, arr[mid], 0, arr[mid].length);
             // key lives above the midpoint
             if (cmp > 0) {
@@ -2219,11 +2217,11 @@ public class Bytes implements Comparable<Bytes> {
      * @param amount value will be incremented on (deincremented if negative)
      * @return array of bytes containing incremented long (length == SIZEOF_LONG)
      */
-    public static byte[] incrementBytes(byte[] value, long amount) {
+    public static byte[] incrementBytes(final byte[] value, final long amount) {
         byte[] val = value;
         if (val.length < SIZEOF_LONG) {
             // Hopefully this doesn't happen too often.
-            byte[] newvalue;
+            final byte[] newvalue;
             if (val[0] < 0) {
                 newvalue = new byte[]{-1, -1, -1, -1, -1, -1, -1, -1};
             } else {
@@ -2244,7 +2242,7 @@ public class Bytes implements Comparable<Bytes> {
     }
 
     /* increment/deincrement for positive value */
-    private static byte[] binaryIncrementPos(byte[] value, long amount) {
+    private static byte[] binaryIncrementPos(final byte[] value, final long amount) {
         long amo = amount;
         int sign = 1;
         if (amount < 0) {
@@ -2252,9 +2250,9 @@ public class Bytes implements Comparable<Bytes> {
             sign = -1;
         }
         for (int i = 0; i < value.length; i++) {
-            int cur = ((int) amo % 256) * sign;
+            final int cur = ((int) amo % 256) * sign;
             amo = (amo >> 8);
-            int val = value[value.length - i - 1] & 0x0ff;
+            final int val = value[value.length - i - 1] & 0x0ff;
             int total = val + cur;
             if (total > 255) {
                 amo += sign;
@@ -2271,7 +2269,7 @@ public class Bytes implements Comparable<Bytes> {
     }
 
     /* increment/deincrement for negative value */
-    private static byte[] binaryIncrementNeg(byte[] value, long amount) {
+    private static byte[] binaryIncrementNeg(final byte[] value, final long amount) {
         long amo = amount;
         int sign = 1;
         if (amount < 0) {
@@ -2279,9 +2277,9 @@ public class Bytes implements Comparable<Bytes> {
             sign = -1;
         }
         for (int i = 0; i < value.length; i++) {
-            int cur = ((int) amo % 256) * sign;
+            final int cur = ((int) amo % 256) * sign;
             amo = (amo >> 8);
-            int val = (~value[value.length - i - 1] & 0x0ff) + 1;
+            final int val = (~value[value.length - i - 1] & 0x0ff) + 1;
             int total = cur - val;
             if (total >= 0) {
                 amo += sign;
@@ -2300,9 +2298,9 @@ public class Bytes implements Comparable<Bytes> {
     /**
      * Writes a string as a fixed-size field, padded with zeros.
      */
-    public static void writeStringFixedSize(final DataOutput out, String s, int size)
+    public static void writeStringFixedSize(final DataOutput out, final String s, final int size)
             throws IOException {
-        byte[] b = toBytes(s);
+        final byte[] b = toBytes(s);
         if (b.length > size) {
             throw new IOException("Trying to write " + b.length + " bytes (" + toStringBinary(b)
                                   + ") into a field of length " + size);
@@ -2317,8 +2315,8 @@ public class Bytes implements Comparable<Bytes> {
     /**
      * Reads a fixed-size field and interprets it as a string padded with zeros.
      */
-    public static String readStringFixedSize(final DataInput in, int size) throws IOException {
-        byte[] b = new byte[size];
+    public static String readStringFixedSize(final DataInput in, final int size) throws IOException {
+        final byte[] b = new byte[size];
         in.readFully(b);
         int n = b.length;
         while (n > 0 && b[n - 1] == 0) {
@@ -2335,11 +2333,11 @@ public class Bytes implements Comparable<Bytes> {
      * @param bytes the byte array to duplicate
      * @return a copy of the given byte array
      */
-    public static byte[] copy(byte[] bytes) {
+    public static byte[] copy(final byte[] bytes) {
         if (bytes == null) {
             return null;
         }
-        byte[] result = new byte[bytes.length];
+        final byte[] result = new byte[bytes.length];
         System.arraycopy(bytes, 0, result, 0, bytes.length);
         return result;
     }
@@ -2351,11 +2349,11 @@ public class Bytes implements Comparable<Bytes> {
      * @param bytes the byte array to copy from
      * @return a copy of the given designated byte array
      */
-    public static byte[] copy(byte[] bytes, final int offset, final int length) {
+    public static byte[] copy(final byte[] bytes, final int offset, final int length) {
         if (bytes == null) {
             return null;
         }
-        byte[] result = new byte[length];
+        final byte[] result = new byte[length];
         System.arraycopy(bytes, offset, result, 0, length);
         return result;
     }
@@ -2371,14 +2369,14 @@ public class Bytes implements Comparable<Bytes> {
      * @return The index of key if found. If not found, return -(index + 1), where negative indicates
      * "not found" and the "index + 1" handles the "-0" case.
      */
-    public static int unsignedBinarySearch(byte[] a, int fromIndex, int toIndex, byte key) {
-        int unsignedKey = key & 0xff;
+    public static int unsignedBinarySearch(final byte[] a, final int fromIndex, final int toIndex, final byte key) {
+        final int unsignedKey = key & 0xff;
         int low = fromIndex;
         int high = toIndex - 1;
 
         while (low <= high) {
-            int mid = low + ((high - low) >> 1);
-            int midVal = a[mid] & 0xff;
+            final int mid = low + ((high - low) >> 1);
+            final int midVal = a[mid] & 0xff;
 
             if (midVal < unsignedKey) {
                 low = mid + 1;
@@ -2399,7 +2397,7 @@ public class Bytes implements Comparable<Bytes> {
      * @return The incremented copy of "in". May be same length or 1 byte longer.
      */
     public static byte[] unsignedCopyAndIncrement(final byte[] input) {
-        byte[] copy = copy(input);
+        final byte[] copy = copy(input);
         if (copy == null) {
             throw new IllegalArgumentException("cannot increment null array");
         }
@@ -2412,13 +2410,13 @@ public class Bytes implements Comparable<Bytes> {
             }
         }
         // we maxed out the array
-        byte[] out = new byte[copy.length + 1];
+        final byte[] out = new byte[copy.length + 1];
         out[0] = 1;
         System.arraycopy(copy, 0, out, 1, copy.length);
         return out;
     }
 
-    public static boolean equals(List<byte[]> a, List<byte[]> b) {
+    public static boolean equals(final List<byte[]> a, final List<byte[]> b) {
         if (a == null) {
             if (b == null) {
                 return true;
@@ -2452,11 +2450,11 @@ public class Bytes implements Comparable<Bytes> {
 //    return true;
 //  }
 
-    public static List<byte[]> getUtf8ByteArrays(List<String> strings) {
+    public static List<byte[]> getUtf8ByteArrays(final List<String> strings) {
         if (strings.isEmpty()) {
             return Collections.emptyList();
         }
-        List<byte[]> byteArrays = new ArrayList<>(strings.size());
+        final List<byte[]> byteArrays = new ArrayList<>(strings.size());
         strings.forEach(s -> byteArrays.add(Bytes.toBytes(s)));
         return byteArrays;
     }
@@ -2469,7 +2467,7 @@ public class Bytes implements Comparable<Bytes> {
      * @return the least index {@code i} for which {@code array[i] == target}, or {@code -1} if no
      * such index exists.
      */
-    public static int indexOf(byte[] array, byte target) {
+    public static int indexOf(final byte[] array, final byte target) {
         for (int i = 0; i < array.length; i++) {
             if (array[i] == target) {
                 return i;
@@ -2489,7 +2487,7 @@ public class Bytes implements Comparable<Bytes> {
      * @param array  the array to search for the sequence {@code target}
      * @param target the array to search for as a sub-sequence of {@code array}
      */
-    public static int indexOf(byte[] array, byte[] target) {
+    public static int indexOf(final byte[] array, final byte[] target) {
         Preconditions.checkNotNull(array, "array");
         Preconditions.checkNotNull(target, "target");
         if (target.length == 0) {
@@ -2515,7 +2513,7 @@ public class Bytes implements Comparable<Bytes> {
      * @param target a primitive {@code byte} value
      * @return {@code true} if {@code target} is present as an element anywhere in {@code array}.
      */
-    public static boolean contains(byte[] array, byte target) {
+    public static boolean contains(final byte[] array, final byte target) {
         return indexOf(array, target) > -1;
     }
 
@@ -2526,7 +2524,7 @@ public class Bytes implements Comparable<Bytes> {
      * @param target an array of {@code byte}
      * @return {@code true} if {@code target} is present anywhere in {@code array}
      */
-    public static boolean contains(byte[] array, byte[] target) {
+    public static boolean contains(final byte[] array, final byte[] target) {
         return indexOf(array, target) > -1;
     }
 
@@ -2535,14 +2533,14 @@ public class Bytes implements Comparable<Bytes> {
      *
      * @param b array which needs to be filled with zeros
      */
-    public static void zero(byte[] b) {
+    public static void zero(final byte[] b) {
         zero(b, 0, b.length);
     }
 
     /**
      * Fill given array with zeros at the specified position.
      */
-    public static void zero(byte[] b, int offset, int length) {
+    public static void zero(final byte[] b, final int offset, final int length) {
         Preconditions.checkPositionIndex(offset, b.length, "offset");
         Preconditions.checkArgument(length > 0, "length must be greater than 0");
         Preconditions.checkPositionIndex(offset + length, b.length, "offset + length");
@@ -2561,7 +2559,7 @@ public class Bytes implements Comparable<Bytes> {
      *          {@link Bytes#secureRandom(byte[])}.
      * @param b array which needs to be filled with random bytes
      */
-    public static void random(byte[] b) {
+    public static void random(final byte[] b) {
         RNG.nextBytes(b);
     }
 
@@ -2575,11 +2573,11 @@ public class Bytes implements Comparable<Bytes> {
      * @param offset staring offset in array
      * @param length number of bytes to fill
      */
-    public static void random(byte[] b, int offset, int length) {
+    public static void random(final byte[] b, final int offset, final int length) {
         Preconditions.checkPositionIndex(offset, b.length, "offset");
         Preconditions.checkArgument(length > 0, "length must be greater than 0");
         Preconditions.checkPositionIndex(offset + length, b.length, "offset + length");
-        byte[] buf = new byte[length];
+        final byte[] buf = new byte[length];
         RNG.nextBytes(buf);
         System.arraycopy(buf, 0, b, offset, length);
     }
@@ -2592,7 +2590,7 @@ public class Bytes implements Comparable<Bytes> {
      *
      * @param b array which needs to be filled with random bytes
      */
-    public static void secureRandom(byte[] b) {
+    public static void secureRandom(final byte[] b) {
         SECURE_RNG.nextBytes(b);
     }
 
@@ -2604,11 +2602,11 @@ public class Bytes implements Comparable<Bytes> {
      * @param offset staring offset in array
      * @param length number of bytes to fill
      */
-    public static void secureRandom(byte[] b, int offset, int length) {
+    public static void secureRandom(final byte[] b, final int offset, final int length) {
         Preconditions.checkPositionIndex(offset, b.length, "offset");
         Preconditions.checkArgument(length > 0, "length must be greater than 0");
         Preconditions.checkPositionIndex(offset + length, b.length, "offset + length");
-        byte[] buf = new byte[length];
+        final byte[] buf = new byte[length];
         SECURE_RNG.nextBytes(buf);
         System.arraycopy(buf, 0, b, offset, length);
     }
@@ -2619,8 +2617,8 @@ public class Bytes implements Comparable<Bytes> {
      * @param maxByteCount the length of returned byte array
      * @return the created max byte array
      */
-    public static byte[] createMaxByteArray(int maxByteCount) {
-        byte[] maxByteArray = new byte[maxByteCount];
+    public static byte[] createMaxByteArray(final int maxByteCount) {
+        final byte[] maxByteArray = new byte[maxByteCount];
         for (int i = 0; i < maxByteArray.length; i++) {
             maxByteArray[i] = (byte) 0xff;
         }
@@ -2632,11 +2630,11 @@ public class Bytes implements Comparable<Bytes> {
      *
      * @return byte array
      */
-    public static byte[] multiple(byte[] srcBytes, int multiNum) {
+    public static byte[] multiple(final byte[] srcBytes, final int multiNum) {
         if (multiNum <= 0) {
             return new byte[0];
         }
-        byte[] result = new byte[srcBytes.length * multiNum];
+        final byte[] result = new byte[srcBytes.length * multiNum];
         for (int i = 0; i < multiNum; i++) {
             System.arraycopy(srcBytes, 0, result, i * srcBytes.length, srcBytes.length);
         }
@@ -2649,12 +2647,12 @@ public class Bytes implements Comparable<Bytes> {
     /**
      * Convert a byte range into a hex string
      */
-    public static String toHex(byte[] b, int offset, int length) {
+    public static String toHex(final byte[] b, final int offset, final int length) {
         Preconditions.checkArgument(length <= Integer.MAX_VALUE / 2);
-        int numChars = length * 2;
-        char[] ch = new char[numChars];
+        final int numChars = length * 2;
+        final char[] ch = new char[numChars];
         for (int i = 0; i < numChars; i += 2) {
-            byte d = b[offset + i / 2];
+            final byte d = b[offset + i / 2];
             ch[i] = HEX_CHARS[(d >> 4) & 0x0F];
             ch[i + 1] = HEX_CHARS[d & 0x0F];
         }
@@ -2664,11 +2662,11 @@ public class Bytes implements Comparable<Bytes> {
     /**
      * Convert a byte array into a hex string
      */
-    public static String toHex(byte[] b) {
+    public static String toHex(final byte[] b) {
         return toHex(b, 0, b.length);
     }
 
-    private static int hexCharToNibble(char ch) {
+    private static int hexCharToNibble(final char ch) {
         if (ch <= '9' && ch >= '0') {
             return ch - '0';
         } else if (ch >= 'a' && ch <= 'f') {
@@ -2679,7 +2677,7 @@ public class Bytes implements Comparable<Bytes> {
         throw new IllegalArgumentException("Invalid hex char: " + ch);
     }
 
-    private static byte hexCharsToByte(char c1, char c2) {
+    private static byte hexCharsToByte(final char c1, final char c2) {
         return (byte) ((hexCharToNibble(c1) << 4) | hexCharToNibble(c2));
     }
 
@@ -2687,10 +2685,10 @@ public class Bytes implements Comparable<Bytes> {
      * Create a byte array from a string of hash digits. The length of the string must be a multiple
      * of 2
      */
-    public static byte[] fromHex(String hex) {
+    public static byte[] fromHex(final String hex) {
         Preconditions.checkArgument(hex.length() % 2 == 0, "length must be a multiple of 2");
-        int len = hex.length();
-        byte[] b = new byte[len / 2];
+        final int len = hex.length();
+        final byte[] b = new byte[len / 2];
         for (int i = 0; i < len; i += 2) {
             b[i / 2] = hexCharsToByte(hex.charAt(i), hex.charAt(i + 1));
         }
@@ -2702,7 +2700,7 @@ public class Bytes implements Comparable<Bytes> {
      *
      * @return Index of delimiter having started from start of <code>b</code> moving rightward.
      */
-    public static int searchDelimiterIndex(final byte[] b, int offset, final int length,
+    public static int searchDelimiterIndex(final byte[] b, final int offset, final int length,
                                            final int delimiter) {
         if (b == null) {
             throw new IllegalArgumentException("Passed buffer is null");
@@ -2737,8 +2735,8 @@ public class Bytes implements Comparable<Bytes> {
         return result;
     }
 
-    public static int findCommonPrefix(byte[] left, byte[] right, int leftLength, int rightLength,
-                                       int leftOffset, int rightOffset) {
+    public static int findCommonPrefix(final byte[] left, final byte[] right, final int leftLength, final int rightLength,
+                                       final int leftOffset, final int rightOffset) {
         return CommonPrefixerHolder.BEST_COMMON_PREFIXER.findCommonPrefix(left, leftOffset, leftLength,
                 right, rightOffset, rightLength);
     }

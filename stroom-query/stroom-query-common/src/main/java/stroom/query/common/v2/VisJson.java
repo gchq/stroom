@@ -50,7 +50,7 @@ public class VisJson {
             }
 
             // Create an array of types.
-            String[][] types = new String[maxDepth + 1][];
+            final String[][] types = new String[maxDepth + 1][];
             for (final Entry<Integer, List<String>> entry : typeMap.entrySet()) {
                 int group = maxDepth;
                 if (entry.getKey() != null) {
@@ -63,7 +63,7 @@ public class VisJson {
             }
 
             // Create an array of sortDirections
-            String[][] sortDirections = new String[maxDepth + 1][];
+            final String[][] sortDirections = new String[maxDepth + 1][];
             for (final Entry<Integer, List<String>> entry : sortDirectionMap.entrySet()) {
                 int group = maxDepth;
                 if (entry.getKey() != null) {
@@ -133,7 +133,7 @@ public class VisJson {
 
             store = new Store();
             if (key instanceof List) {
-                List list = (List) key;
+                final List list = (List) key;
                 store.key = list.get(list.size() - 1);
             }
             // The type/sortDirection for all the keys in the level below (i.e in the values[])

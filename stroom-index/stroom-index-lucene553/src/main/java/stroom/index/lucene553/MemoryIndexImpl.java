@@ -42,7 +42,7 @@ class MemoryIndexImpl implements stroom.search.extraction.MemoryIndex {
             if (luceneIndexField.isIndexed()) {
                 final Analyzer fieldAnalyzer = searchExpressionQueryCache.getAnalyser(luceneIndexField);
                 final IndexableField field = FieldFactory.create(fieldValue);
-                TokenStream tokenStream = field.tokenStream(fieldAnalyzer, null);
+                final TokenStream tokenStream = field.tokenStream(fieldAnalyzer, null);
                 if (tokenStream != null) {
                     memoryIndex.addField(field.name(), tokenStream, field.boost());
                 }

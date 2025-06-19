@@ -150,7 +150,7 @@ public class ZipSplitter {
             }
             // Passed all the splits on, so delete the source
             deleteDir(sourceDir);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error splitting zip in {}: {}", sourceDir, LogUtil.exceptionMessage(e), e);
             throw new RuntimeException(e);
         } finally {
@@ -189,7 +189,7 @@ public class ZipSplitter {
         LOGGER.debug("splitZip() - START zipFilePath: {}, outputParentDir: {}", zipFilePath, outputParentDir);
         final List<Path> groupDirs = new ArrayList<>();
         final DurationTimer timer = LogUtil.startTimerIfDebugEnabled(LOGGER);
-        long id = 1;
+        final long id = 1;
         try (final ZipFile zipFile = ZipUtil.createZipFile(zipFilePath)) {
             // Only the entries in the map are to be included in the splits, so iterate over it
             // then copy all the entries for that feedKey from the source zip into the dest zip.

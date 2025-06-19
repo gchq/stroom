@@ -46,7 +46,7 @@ class TestNodeDaoImpl {
 
         injector.injectMembers(this);
 
-        try (Connection connection = nodeDbConnProvider.getConnection()) {
+        try (final Connection connection = nodeDbConnProvider.getConnection()) {
             for (final Table<?> table : TABLES) {
                 final String tableName = table.getName();
                 LOGGER.debug("Clearing table {}", tableName);

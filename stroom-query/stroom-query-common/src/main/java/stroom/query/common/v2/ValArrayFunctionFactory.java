@@ -37,7 +37,7 @@ public class ValArrayFunctionFactory implements ValueFunctionFactory<Val[]> {
             if (Type.LONG.equals(val.type()) || Type.DATE.equals(val.type())) {
                 return val.toLong();
             } else {
-                String string = val.toString();
+                final String string = val.toString();
                 if (string != null) {
                     try {
                         return DateUtil.parseNormalDateTimeString(string);

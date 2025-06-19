@@ -32,7 +32,7 @@ public class ConflictExceptionMapper implements ExceptionMapper<ConflictExceptio
     private static final Logger LOGGER = LoggerFactory.getLogger(ConflictExceptionMapper.class);
 
     @Override
-    public Response toResponse(ConflictException exception) {
+    public Response toResponse(final ConflictException exception) {
         LOGGER.debug(exception.getMessage());
         return Response.status(Response.Status.CONFLICT).entity(exception.getMessage()).build();
     }

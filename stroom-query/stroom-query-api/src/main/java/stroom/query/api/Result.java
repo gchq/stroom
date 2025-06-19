@@ -71,14 +71,14 @@ public abstract sealed class Result permits TableResult, FlatResult, VisResult, 
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        Result result = (Result) o;
+        final Result result = (Result) o;
         return Objects.equals(componentId, result.componentId) &&
                Objects.equals(errors, result.errors);
     }

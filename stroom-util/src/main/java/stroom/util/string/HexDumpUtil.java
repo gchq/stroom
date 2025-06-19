@@ -81,7 +81,7 @@ public class HexDumpUtil {
         Objects.requireNonNull(inputStream);
         Objects.requireNonNull(charset);
         // We want to start at an offset that is at the start of a line
-        long effectiveByteOffset = byteOffset == 0
+        final long effectiveByteOffset = byteOffset == 0
                 ? 0
                 : ((long) ((double) byteOffset / HexDump.MAX_BYTES_PER_LINE)) * HexDump.MAX_BYTES_PER_LINE;
 
@@ -99,7 +99,7 @@ public class HexDumpUtil {
         int lineCount = 0;
         final HexDumpBuilder hexDumpBuilder = new HexDumpBuilder();
         while (lineCount < maxHexDumpLines) {
-            int len = decodeHexDumpLine(inputStream, charsetDecoder, hexDumpBuilder, lineOffset);
+            final int len = decodeHexDumpLine(inputStream, charsetDecoder, hexDumpBuilder, lineOffset);
             if (len == -1) {
                 break;
             }
@@ -187,7 +187,7 @@ public class HexDumpUtil {
                 try {
                     final CharBuffer charBuffer = charsetDecoder.decode(singleByteBuffer);
                     chr = charBuffer.charAt(0);
-                } catch (CharacterCodingException e) {
+                } catch (final CharacterCodingException e) {
                     chr = DEFAULT_REPLACEMENT_CHAR;
                 }
                 final char printableChar = asPrintableChar(chr);
@@ -281,7 +281,7 @@ public class HexDumpUtil {
             try {
                 final CharBuffer charBuffer = charsetDecoder.decode(byteBuffer);
                 chr = charBuffer.charAt(0);
-            } catch (CharacterCodingException e) {
+            } catch (final CharacterCodingException e) {
                 chr = unknownCharReplacement;
             }
             final char printableChar = asPrintableChar(chr);

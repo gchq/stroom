@@ -287,7 +287,7 @@ public class ExpressionPredicateFactory {
         if (operator.getChildren() != null && !operator.getChildren().isEmpty()) {
             predicates = new ArrayList<>(operator.getChildren().size());
             for (final ExpressionItem child : operator.getChildren()) {
-                Optional<ScoringPredicate<T>> optional = createScoringPredicate(
+                final Optional<ScoringPredicate<T>> optional = createScoringPredicate(
                         child,
                         valueFunctionFactories,
                         dateTimeSettings,
@@ -967,7 +967,7 @@ public class ExpressionPredicateFactory {
         @Override
         public boolean test(final T values) {
             final Double val = extractionFunction.apply(values);
-            int compVal = CompareUtil.compareDouble(val, termNum);
+            final int compVal = CompareUtil.compareDouble(val, termNum);
             return compVal > 0;
         }
     }
@@ -991,7 +991,7 @@ public class ExpressionPredicateFactory {
         @Override
         public boolean test(final T values) {
             final Double val = extractionFunction.apply(values);
-            int compVal = CompareUtil.compareDouble(val, termNum);
+            final int compVal = CompareUtil.compareDouble(val, termNum);
             return compVal >= 0;
         }
     }
@@ -1015,7 +1015,7 @@ public class ExpressionPredicateFactory {
         @Override
         public boolean test(final T values) {
             final Double val = extractionFunction.apply(values);
-            int compVal = CompareUtil.compareDouble(val, termNum);
+            final int compVal = CompareUtil.compareDouble(val, termNum);
             return compVal < 0;
         }
     }
@@ -1039,7 +1039,7 @@ public class ExpressionPredicateFactory {
         @Override
         public boolean test(final T values) {
             final Double val = extractionFunction.apply(values);
-            int compVal = CompareUtil.compareDouble(val, termNum);
+            final int compVal = CompareUtil.compareDouble(val, termNum);
             return compVal <= 0;
         }
     }

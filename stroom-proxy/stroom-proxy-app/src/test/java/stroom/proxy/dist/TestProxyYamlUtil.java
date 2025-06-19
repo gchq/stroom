@@ -49,7 +49,7 @@ class TestProxyYamlUtil {
         final String actual;
         try {
             actual = getYamlFromJavaModel();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException("Error getting actual", e);
         }
         if (NullSafe.isBlankString(actual)) {
@@ -144,7 +144,7 @@ class TestProxyYamlUtil {
 
 
     private static ProxyConfig loadYamlFile(final String filename) throws FileNotFoundException {
-        Path path = getStroomProxyAppFile(filename);
+        final Path path = getStroomProxyAppFile(filename);
 
         try {
             return ProxyYamlUtil.readProxyConfig(path);

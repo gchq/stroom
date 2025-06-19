@@ -65,7 +65,7 @@ public enum ProcessingState {
     private static final ProcessingState[] states = new ProcessingState[ProcessingState.values().length];
 
     static {
-        for (ProcessingState state : ProcessingState.values()) {
+        for (final ProcessingState state : ProcessingState.values()) {
             if (states[state.getId()] != null) {
                 throw new RuntimeException("ID " + state.getId() + " is already in use");
             }

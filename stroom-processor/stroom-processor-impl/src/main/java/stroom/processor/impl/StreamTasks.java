@@ -25,7 +25,7 @@ class StreamTasks {
     private final List<StreamTask> streamTasks;
     private final long totalStreamTasks;
 
-    public StreamTasks(List<StreamTask> streamTasks, long totalStreamTasks) {
+    public StreamTasks(final List<StreamTask> streamTasks, final long totalStreamTasks) {
         this.streamTasks = streamTasks;
         this.totalStreamTasks = totalStreamTasks;
     }

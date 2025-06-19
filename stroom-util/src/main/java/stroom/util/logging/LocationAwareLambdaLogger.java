@@ -88,7 +88,7 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
                 case ERROR -> error(message);
                 default -> error("Unexpected logLevel: {}", logLevel);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
         }
     }
@@ -104,7 +104,7 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
                 case ERROR -> error(format, arg);
                 default -> error("Unexpected logLevel: {}", logLevel);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
         }
     }
@@ -123,7 +123,7 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
                 case ERROR -> error(format, arg1, arg2);
                 default -> error("Unexpected logLevel: {}", logLevel);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
         }
     }
@@ -139,7 +139,7 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
                 case ERROR -> error(format, args);
                 default -> error("Unexpected logLevel: {}", logLevel);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
         }
     }
@@ -175,7 +175,7 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
                 }
                 default -> error("Unexpected logLevel: {}", logLevel);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
         }
     }
@@ -213,7 +213,7 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
                 }
                 default -> error("Unexpected logLevel: {}", logLevel);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
         }
     }
@@ -254,7 +254,7 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
                 case ERROR -> logger.isErrorEnabled();
                 default -> throw new RuntimeException("Unexpected logLevel: " + logLevel);
             };
-        } catch (Exception e) {
+        } catch (final Exception e) {
             error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             return false;
         }

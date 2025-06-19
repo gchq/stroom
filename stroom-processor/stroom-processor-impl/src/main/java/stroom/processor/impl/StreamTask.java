@@ -140,108 +140,108 @@ class StreamTask {
         private StreamTaskBuilder() {
         }
 
-        public StreamTaskBuilder withFilterName(String filterName) {
+        public StreamTaskBuilder withFilterName(final String filterName) {
             this.filterName = filterName;
             return this;
         }
 
-        public StreamTaskBuilder withPipelineName(String pipelineName) {
+        public StreamTaskBuilder withPipelineName(final String pipelineName) {
             this.pipelineName = pipelineName;
             return this;
         }
 
-        public StreamTaskBuilder withPipelineId(Long pipelineId) {
+        public StreamTaskBuilder withPipelineId(final Long pipelineId) {
             this.pipelineId = pipelineId;
             return this;
         }
 
-        public StreamTaskBuilder withTrackerMs(Long trackerMs) {
+        public StreamTaskBuilder withTrackerMs(final Long trackerMs) {
             this.trackerMs = trackerMs;
             return this;
         }
 
-        public StreamTaskBuilder withTrackerPercent(Integer trackerPercent) {
+        public StreamTaskBuilder withTrackerPercent(final Integer trackerPercent) {
             this.trackerPercent = trackerPercent;
             return this;
         }
 
-        public StreamTaskBuilder withLastPollAge(String lastPollAge) {
+        public StreamTaskBuilder withLastPollAge(final String lastPollAge) {
             this.lastPollAge = lastPollAge;
             return this;
         }
 
-        public StreamTaskBuilder withTaskCount(Integer taskCount) {
+        public StreamTaskBuilder withTaskCount(final Integer taskCount) {
             this.taskCount = taskCount;
             return this;
         }
 
-        public StreamTaskBuilder withPriority(Integer priority) {
+        public StreamTaskBuilder withPriority(final Integer priority) {
             this.priority = priority;
             return this;
         }
 
-        public StreamTaskBuilder withStreamCount(Integer streamCount) {
+        public StreamTaskBuilder withStreamCount(final Integer streamCount) {
             this.streamCount = streamCount;
             return this;
         }
 
-        public StreamTaskBuilder withEventCount(Integer eventCount) {
+        public StreamTaskBuilder withEventCount(final Integer eventCount) {
             this.eventCount = eventCount;
             return this;
         }
 
-        public StreamTaskBuilder withStatus(String status) {
+        public StreamTaskBuilder withStatus(final String status) {
             this.status = status;
             return this;
         }
 
-        public StreamTaskBuilder withEnabled(Boolean enabled) {
+        public StreamTaskBuilder withEnabled(final Boolean enabled) {
             this.enabled = enabled;
             return this;
         }
 
-        public StreamTaskBuilder withFilter(QueryData filter) {
+        public StreamTaskBuilder withFilter(final QueryData filter) {
             this.filter = filter;
             return this;
         }
 
-        public StreamTaskBuilder withFilterId(Integer filterId) {
+        public StreamTaskBuilder withFilterId(final Integer filterId) {
             this.filterId = filterId;
             return this;
         }
 
-        public StreamTaskBuilder withCreateUser(String createUser) {
+        public StreamTaskBuilder withCreateUser(final String createUser) {
             this.createUser = createUser;
             return this;
         }
 
-        public StreamTaskBuilder withCreatedOn(Long createdOn) {
+        public StreamTaskBuilder withCreatedOn(final Long createdOn) {
             this.createdOn = createdOn;
             return this;
         }
 
-        public StreamTaskBuilder withUpdateUser(String updateUser) {
+        public StreamTaskBuilder withUpdateUser(final String updateUser) {
             this.updateUser = updateUser;
             return this;
         }
 
-        public StreamTaskBuilder withUpdatedOn(Long updatedOn) {
+        public StreamTaskBuilder withUpdatedOn(final Long updatedOn) {
             this.updatedOn = updatedOn;
             return this;
         }
 
-        public StreamTaskBuilder withMinStreamId(Long minStreamId) {
+        public StreamTaskBuilder withMinStreamId(final Long minStreamId) {
             this.minStreamId = minStreamId;
             return this;
         }
 
-        public StreamTaskBuilder withMinEventId(Long minEventId) {
+        public StreamTaskBuilder withMinEventId(final Long minEventId) {
             this.minEventId = minEventId;
             return this;
         }
 
         public StreamTask build() {
-            StreamTask streamTask = new StreamTask();
+            final StreamTask streamTask = new StreamTask();
             streamTask.priority = this.priority;
             streamTask.trackerPercent = this.trackerPercent;
             streamTask.minEventId = this.minEventId;

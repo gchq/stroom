@@ -66,21 +66,21 @@ class TestStroomStatsInternalStatisticsService {
 
         initMocks();
 
-        StroomStatsInternalStatisticsService stroomStatsInternalStatisticsService =
+        final StroomStatsInternalStatisticsService stroomStatsInternalStatisticsService =
                 new StroomStatsInternalStatisticsService(
                         mockStroomKafkaProducerFactory,
                         hBaseStatisticsConfig);
 
         //assemble test data
-        InternalStatisticEvent event1 = InternalStatisticEvent.createPlusOneCountStat(
+        final InternalStatisticEvent event1 = InternalStatisticEvent.createPlusOneCountStat(
                 InternalStatisticKey.MEMORY, 0, Collections.emptySortedMap());
-        InternalStatisticEvent event2 = InternalStatisticEvent.createPlusOneCountStat(
+        final InternalStatisticEvent event2 = InternalStatisticEvent.createPlusOneCountStat(
                 InternalStatisticKey.MEMORY, 1, Collections.emptySortedMap());
-        InternalStatisticEvent event3 = InternalStatisticEvent.createPlusOneCountStat(
+        final InternalStatisticEvent event3 = InternalStatisticEvent.createPlusOneCountStat(
                 InternalStatisticKey.MEMORY, 1, Collections.emptySortedMap());
-        DocRef docRefA = new DocRef(DOC_REF_TYPE_1, UUID.randomUUID().toString(), "myStat1");
-        DocRef docRefB = new DocRef(DOC_REF_TYPE_2, UUID.randomUUID().toString(), "myStat2");
-        Map<DocRef, List<InternalStatisticEvent>> map = Map.of(
+        final DocRef docRefA = new DocRef(DOC_REF_TYPE_1, UUID.randomUUID().toString(), "myStat1");
+        final DocRef docRefB = new DocRef(DOC_REF_TYPE_2, UUID.randomUUID().toString(), "myStat2");
+        final Map<DocRef, List<InternalStatisticEvent>> map = Map.of(
                 docRefA, Arrays.asList(event1, event2),
                 docRefB, Collections.singletonList(event3));
 
@@ -100,16 +100,16 @@ class TestStroomStatsInternalStatisticsService {
 
         initMocks();
 
-        StroomStatsInternalStatisticsService stroomStatsInternalStatisticsService =
+        final StroomStatsInternalStatisticsService stroomStatsInternalStatisticsService =
                 new StroomStatsInternalStatisticsService(
                         mockStroomKafkaProducerFactory,
                         hBaseStatisticsConfig
                 );
 
         //assemble test data
-        DocRef docRefA = new DocRef(DOC_REF_TYPE_1, UUID.randomUUID().toString(), "myStat1");
-        DocRef docRefB = new DocRef(DOC_REF_TYPE_2, UUID.randomUUID().toString(), "myStat2");
-        Map<DocRef, List<InternalStatisticEvent>> map = Map.of(
+        final DocRef docRefA = new DocRef(DOC_REF_TYPE_1, UUID.randomUUID().toString(), "myStat1");
+        final DocRef docRefB = new DocRef(DOC_REF_TYPE_2, UUID.randomUUID().toString(), "myStat2");
+        final Map<DocRef, List<InternalStatisticEvent>> map = Map.of(
                 docRefA, createNEvents(InternalStatisticKey.MEMORY, 100),
                 docRefB, createNEvents(InternalStatisticKey.CPU, 15));
 

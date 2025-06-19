@@ -151,11 +151,11 @@ public class ByteBufferPoolImpl2 implements ByteBufferPool {
             buffer.clear();
 
             try {
-                int capacity = buffer.capacity();
+                final int capacity = buffer.capacity();
                 bufferQueueMap.computeIfAbsent(capacity, k -> new LinkedBlockingQueue<>())
                         .offer(buffer);
 
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 // if a buffer is not released back to the pool then it is not the end of the world
                 // is we can just create more as required.
                 throw new RuntimeException("Error releasing buffer back to the pool", e);
@@ -178,7 +178,7 @@ public class ByteBufferPoolImpl2 implements ByteBufferPool {
      * must not be used outside of the work lambda.
      */
     @Override
-    public <T> T getWithBuffer(final int minCapacity, Function<ByteBuffer, T> work) {
+    public <T> T getWithBuffer(final int minCapacity, final Function<ByteBuffer, T> work) {
         ByteBuffer buffer = null;
         try {
             buffer = getBuffer(minCapacity);
@@ -195,7 +195,7 @@ public class ByteBufferPoolImpl2 implements ByteBufferPool {
      * must not be used outside of the work lambda.
      */
     @Override
-    public void doWithBuffer(final int minCapacity, Consumer<ByteBuffer> work) {
+    public void doWithBuffer(final int minCapacity, final Consumer<ByteBuffer> work) {
         ByteBuffer buffer = null;
         try {
             buffer = getBuffer(minCapacity);
@@ -255,7 +255,7 @@ public class ByteBufferPoolImpl2 implements ByteBufferPool {
     @Override
     public SystemInfoResult getSystemInfo() {
         try {
-            SystemInfoResult.Builder builder = SystemInfoResult.builder(this)
+            final SystemInfoResult.Builder builder = SystemInfoResult.builder(this)
                     .addDetail("Size", getCurrentPoolSize())
                     .addDetail("Largest buffer", largestBufferInPool.get());
 
@@ -269,7 +269,7 @@ public class ByteBufferPoolImpl2 implements ByteBufferPool {
                         .collect(HasHealthCheck.buildTreeMapCollector(Map.Entry::getKey, Map.Entry::getValue));
 
                 builder.addDetail("Buffer capacity counts", capacityCountsMap);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.error("Error getting capacity counts", e);
                 builder.addDetail("Buffer capacity counts", "Error getting counts");
             }
@@ -282,7 +282,7 @@ public class ByteBufferPoolImpl2 implements ByteBufferPool {
 //            }
 
             return builder.build();
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             return SystemInfoResult.builder(this)
                     .addError(e)
                     .build();

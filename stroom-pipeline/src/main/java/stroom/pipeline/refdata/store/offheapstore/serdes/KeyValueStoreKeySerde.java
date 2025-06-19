@@ -49,8 +49,8 @@ public class KeyValueStoreKeySerde implements Serde<KeyValueStoreKey> {
         // This advances the position to aftet the UID
         final UID uid = UIDSerde.getUid(byteBuffer);
 
-        try (Input input = new Input(new ByteBufferInputStream(byteBuffer))) {
-            String key = input.readString();
+        try (final Input input = new Input(new ByteBufferInputStream(byteBuffer))) {
+            final String key = input.readString();
             byteBuffer.flip();
             return new KeyValueStoreKey(uid, key);
         }
@@ -64,7 +64,7 @@ public class KeyValueStoreKeySerde implements Serde<KeyValueStoreKey> {
         byteBuffer.put(uidBuffer);
         uidBuffer.rewind();
 
-        try (Output output = new Output(new ByteBufferOutputStream(byteBuffer))) {
+        try (final Output output = new Output(new ByteBufferOutputStream(byteBuffer))) {
             output.writeString(keyValueStoreKey.getKey());
         }
         byteBuffer.flip();
@@ -73,7 +73,7 @@ public class KeyValueStoreKeySerde implements Serde<KeyValueStoreKey> {
 
     public void serializeWithoutKeyPart(final ByteBuffer byteBuffer, final KeyValueStoreKey key) {
 
-        int startPos = byteBuffer.position();
+        final int startPos = byteBuffer.position();
 
         serialize(byteBuffer, key);
 

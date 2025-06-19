@@ -175,9 +175,9 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
             tags.add(new StatisticTag(TAG2, TAG2_VAL));
 
             fillStatValSrc(tags);
-            SearchResponse searchResponse = doSearch(tags, false, null);
+            final SearchResponse searchResponse = doSearch(tags, false, null);
             searchResponseCreatorManager.destroy(searchResponse.getKey(), DestroyReason.NO_LONGER_NEEDED);
-            Map<String, Set<String>> expectedValuesMap = ImmutableMap.of(
+            final Map<String, Set<String>> expectedValuesMap = ImmutableMap.of(
                     TAG1, ImmutableSet.of(TAG1_VAL),
                     TAG2, ImmutableSet.of(TAG2_VAL));
 
@@ -193,14 +193,14 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
             tags.add(new StatisticTag(TAG2, TAG2_VAL));
 
             fillStatValSrc(tags);
-            Map<String, Set<String>> expectedValuesMap = ImmutableMap.of(
+            final Map<String, Set<String>> expectedValuesMap = ImmutableMap.of(
                     TAG1, ImmutableSet.of(TAG1_VAL),
                     TAG2, ImmutableSet.of(TAG2_VAL));
 
             SearchResponse searchResponse = null;
 
             // Incremental search so first n responses may not be complete
-            Instant timeoutTime = Instant.now().plusSeconds(10);
+            final Instant timeoutTime = Instant.now().plusSeconds(10);
 
             // keep asking for results till we get a complete one (or timeout)
             QueryKey queryKey = null;
@@ -223,12 +223,12 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
             tags.add(new StatisticTag(TAG2, TAG2_VAL));
 
             fillStatValSrc(tags);
-            Map<String, Set<String>> expectedValuesMap = ImmutableMap.of(
+            final Map<String, Set<String>> expectedValuesMap = ImmutableMap.of(
                     TAG1, ImmutableSet.of(TAG1_VAL),
                     TAG2, ImmutableSet.of(TAG2_VAL));
 
             //incremental but with a 10s timeout so should get our results on 1st try
-            SearchResponse searchResponse = doSearch(
+            final SearchResponse searchResponse = doSearch(
                     tags,
                     Op.AND,
                     true,
@@ -254,11 +254,11 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
             searchTags.add(new StatisticTag(TAG2, TAG2_VAL));
             searchTags.add(new StatisticTag(TAG2, TAG2_OTHER_VALUE_1));
 
-            Map<String, Set<String>> expectedValuesMap = ImmutableMap.of(
+            final Map<String, Set<String>> expectedValuesMap = ImmutableMap.of(
                     TAG1, ImmutableSet.of(TAG1_VAL),
                     TAG2, ImmutableSet.of(TAG2_VAL, TAG2_OTHER_VALUE_1));
 
-            SearchResponse searchResponse = doSearch(searchTags, Op.OR, false, null);
+            final SearchResponse searchResponse = doSearch(searchTags, Op.OR, false, null);
             searchResponseCreatorManager.destroy(searchResponse.getKey(), DestroyReason.NO_LONGER_NEEDED);
             doAsserts(searchResponse, 2, expectedValuesMap);
         }
@@ -277,11 +277,11 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
             final List<StatisticTag> searchTags = new ArrayList<>();
             searchTags.add(tags.get(1));
 
-            Map<String, Set<String>> expectedValuesMap = ImmutableMap.of(
+            final Map<String, Set<String>> expectedValuesMap = ImmutableMap.of(
                     TAG1, Collections.singleton(null),
                     TAG2, Collections.singleton(TAG2_VAL));
 
-            SearchResponse searchResponse = doSearch(searchTags, Op.OR, false, null);
+            final SearchResponse searchResponse = doSearch(searchTags, Op.OR, false, null);
             searchResponseCreatorManager.destroy(searchResponse.getKey(), DestroyReason.NO_LONGER_NEEDED);
             doAsserts(searchResponse, 1, expectedValuesMap);
         }
@@ -293,7 +293,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
         if (!ignoreAllTests) {
             final List<StatisticTag> tags = new ArrayList<>();
             // search on a tag value with loads of regex special chars in
-            String nastyVal = "xxx\\^$.|?*+()[{xxx";
+            final String nastyVal = "xxx\\^$.|?*+()[{xxx";
             tags.add(new StatisticTag(TAG1, nastyVal));
             tags.add(new StatisticTag(TAG2, TAG2_VAL));
 
@@ -303,11 +303,11 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
             final List<StatisticTag> searchTags = new ArrayList<>();
             searchTags.add(tags.get(0));
 
-            Map<String, Set<String>> expectedValuesMap = ImmutableMap.of(
+            final Map<String, Set<String>> expectedValuesMap = ImmutableMap.of(
                     TAG1, Collections.singleton(nastyVal),
                     TAG2, Collections.singleton(TAG2_VAL));
 
-            SearchResponse searchResponse = doSearch(searchTags, Op.OR, false, null);
+            final SearchResponse searchResponse = doSearch(searchTags, Op.OR, false, null);
             searchResponseCreatorManager.destroy(searchResponse.getKey(), DestroyReason.NO_LONGER_NEEDED);
             doAsserts(searchResponse, 1, expectedValuesMap);
         }
@@ -325,14 +325,14 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
                     return (TableResult) result;
                 })
                 .forEach(tableResult -> {
-                    String id = tableResult.getComponentId();
+                    final String id = tableResult.getComponentId();
                     LOGGER.debug("id: {}", id);
                     tableResult.getRows().forEach(row -> LOGGER.debug(String.join(",", row.getValues())));
 
                     assertThat(tableResult.getTotalResults())
                             .isEqualTo(expectedRowCount);
 
-                    List<String> fields = COMPONENT_ID_TO_FIELDS_MAP.get(id);
+                    final List<String> fields = COMPONENT_ID_TO_FIELDS_MAP.get(id);
                     assertThat(fields).isNotNull();
 
                     assertThat(tableResult.getRows()).hasSize(expectedRowCount);
@@ -345,9 +345,9 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
                     expectedValuesMap.forEach((field, expectedValues) -> {
                         //expectedValuesMap covers all component Ids so only consider the fields for this component
                         if (fields.contains(field)) {
-                            Integer idx = fieldMap.get(field);
+                            final Integer idx = fieldMap.get(field);
                             assertThat(idx).isNotNull();
-                            List<String> actualValues = tableResult.getRows().stream()
+                            final List<String> actualValues = tableResult.getRows().stream()
                                     .map(row -> row.getValues().get(idx))
                                     .collect(Collectors.toList());
 
@@ -408,7 +408,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
 
         final SearchRequest searchRequest = searchBuilder.build();
 
-        SearchResponse searchResponse = searchResponseCreatorManager.search(searchRequest);
+        final SearchResponse searchResponse = searchResponseCreatorManager.search(searchRequest);
         if (!isIncremental || searchResponse.complete()) {
             searchResponseCreatorManager.destroy(searchResponse.getKey(), DestroyReason.NO_LONGER_NEEDED);
         }
@@ -422,14 +422,14 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
         final TableSettings.Builder tableSettingsBuilder = TableSettings.builder();
 
 
-        List<String> fields = COMPONENT_ID_TO_FIELDS_MAP.get(componentId);
+        final List<String> fields = COMPONENT_ID_TO_FIELDS_MAP.get(componentId);
         Preconditions.checkNotNull(fields);
         fields.forEach(field -> addColumn(field, tableSettingsBuilder));
 
         return tableSettingsBuilder.build();
     }
 
-    private void addColumn(String name, final TableSettings.Builder tableSettingsBuilder) {
+    private void addColumn(final String name, final TableSettings.Builder tableSettingsBuilder) {
         final Column column = Column.builder()
                 .id(name)
                 .name(name)
@@ -483,7 +483,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
     }
 
     private int getRowCount(final String tableName) throws SQLException {
-        int count;
+        final int count;
         try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement(
                     "select count(*) from " + tableName)) {

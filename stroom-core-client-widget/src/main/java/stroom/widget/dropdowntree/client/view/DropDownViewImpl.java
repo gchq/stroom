@@ -84,7 +84,7 @@ public class DropDownViewImpl extends ViewWithUiHandlers<DropDownUiHandlers>
     }
 
     @Override
-    public void setText(final String text, boolean hasErrorMsg) {
+    public void setText(final String text, final boolean hasErrorMsg) {
         label.setText(text);
         label.setTitle(text);
         warningButton.setVisible(hasErrorMsg);

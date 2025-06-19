@@ -25,13 +25,13 @@ public class NextNameGenerator {
      * @return A new, incremented name.
      */
     public static String getNextName(final List<String> names, final String newNamePrefix, final String regex) {
-        var pattern = Pattern.compile(String.format("%s %s", newNamePrefix, regex));
-        var nextName = names.stream()
+        final var pattern = Pattern.compile(String.format("%s %s", newNamePrefix, regex));
+        final var nextName = names.stream()
                 // We only care about names in the new name format
                 .filter(name -> pattern.matcher(name).find())
                 // We only care about the increments, so let's extract those
                 .map(name -> {
-                    var matcher = pattern.matcher(name);
+                    final var matcher = pattern.matcher(name);
                     matcher.find();
                     return Integer.parseInt(matcher.group(1));
                 })

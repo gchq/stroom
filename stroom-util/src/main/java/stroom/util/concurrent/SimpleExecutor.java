@@ -49,7 +49,7 @@ public class SimpleExecutor {
      */
     private final AtomicInteger executorCompleteCount = new AtomicInteger(0);
 
-    public SimpleExecutor(int threadCount) {
+    public SimpleExecutor(final int threadCount) {
         this.threadCount = threadCount;
         this.executorService = Executors.newFixedThreadPool(threadCount);
     }
@@ -92,7 +92,7 @@ public class SimpleExecutor {
             defaultShortSleep();
 
             if (LOGGER.isDebugEnabled()) {
-                long time = System.currentTimeMillis();
+                final long time = System.currentTimeMillis();
                 if (time - lastTime > LOGGING_DEBUG_MS) {
                     LOGGER.debug("waitForComplete() - " + toString());
                 }
@@ -110,7 +110,7 @@ public class SimpleExecutor {
             defaultShortSleep();
 
             if (LOGGER.isDebugEnabled()) {
-                long time = System.currentTimeMillis();
+                final long time = System.currentTimeMillis();
 
                 if (time - lastTime > LOGGING_DEBUG_MS) {
                     LOGGER.debug("waitForComplete() - " + toString());
@@ -125,7 +125,7 @@ public class SimpleExecutor {
      *
      * @param now don't wait for pending jobs to start
      */
-    public void stop(boolean now) throws InterruptedException {
+    public void stop(final boolean now) throws InterruptedException {
         if (now) {
             executorService.shutdownNow();
         } else {

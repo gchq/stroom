@@ -152,7 +152,7 @@ class TestRequestAuthenticatorImpl {
                         outputUserIdentity = requestAuthenticator.authenticate(
                                 mockHttpServletRequest,
                                 attributeMap);
-                    } catch (StroomStreamException e) {
+                    } catch (final StroomStreamException e) {
                         stroomStatusCode = e.getStroomStreamStatus().getStroomStatusCode();
                     }
                     return Tuple.of(outputUserIdentity, stroomStatusCode);

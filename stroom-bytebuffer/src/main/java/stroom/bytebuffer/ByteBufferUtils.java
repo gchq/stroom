@@ -50,7 +50,7 @@ public class ByteBufferUtils {
     public static String byteBufferToHexAll(final ByteBuffer byteBuffer) {
         final StringBuilder sb = new StringBuilder();
         if (byteBuffer != null) {
-            int endOffsetEx = byteBuffer.limit();
+            final int endOffsetEx = byteBuffer.limit();
             for (int i = 0; i < endOffsetEx; i++) {
                 final byte[] oneByteArr = new byte[1];
                 if (i == byteBuffer.position()) {
@@ -125,7 +125,7 @@ public class ByteBufferUtils {
                                  final int len) {
         // Work from right to left
         for (int i = idx + len - 1; i >= idx; i--) {
-            byte b = byteBuffer.get(i);
+            final byte b = byteBuffer.get(i);
             if (b == (byte) 0xFF) {
                 // Byte rolls around to zero and we need to carry over to the next one
                 byteBuffer.put(i, (byte) 0x00);
@@ -150,7 +150,7 @@ public class ByteBufferUtils {
         String asInt;
         try {
             asInt = String.valueOf(byteBuffer.duplicate().getInt());
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.debug("Unable to convert to long", e);
             asInt = "CANT_CONVERT";
         }
@@ -172,7 +172,7 @@ public class ByteBufferUtils {
         String asLong;
         try {
             asLong = String.valueOf(byteBuffer.duplicate().getLong());
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.debug("Unable to convert to long", e);
             asLong = "CANT_CONVERT";
         }
@@ -220,7 +220,7 @@ public class ByteBufferUtils {
 //
 //    }
 
-    public static int compareTo(ByteBuffer buf1, int o1, int l1, ByteBuffer buf2, int o2, int l2) {
+    public static int compareTo(final ByteBuffer buf1, final int o1, final int l1, final ByteBuffer buf2, final int o2, final int l2) {
         return stroom.bytebuffer.hbase.ByteBufferUtils.compareTo(buf1, o1, l1, buf2, o2, l2);
     }
 
@@ -258,7 +258,7 @@ public class ByteBufferUtils {
     public static int compareAsLong(final long left, final ByteBuffer right, final int rightPos) {
 
         long val = left;
-        byte[] leftBytes = new byte[8];
+        final byte[] leftBytes = new byte[8];
         for (int i = 7; i >= 0; i--) {
             leftBytes[i] = (byte) (val & 0xFF);
             val >>= 8;
@@ -272,7 +272,7 @@ public class ByteBufferUtils {
         int cmp = 0;
 
         for (int i = 0; i < Long.BYTES && cmp == 0; i++) {
-            int iRight = i + rightPos;
+            final int iRight = i + rightPos;
             cmp = (i == 0 || (leftBytes[i] >= 0 == right.get(iRight) >= 0))
                     ? leftBytes[i] - right.get(iRight)
                     : right.get(iRight) - leftBytes[i];
@@ -350,7 +350,7 @@ public class ByteBufferUtils {
      * buffer. The new buffer will be flipped to set its position read for get operations
      */
     public static ByteBuffer copyToDirectBuffer(final ByteBuffer input) {
-        ByteBuffer output = ByteBuffer.allocateDirect(input.remaining());
+        final ByteBuffer output = ByteBuffer.allocateDirect(input.remaining());
         output.put(input);
         output.flip();
         input.rewind();
@@ -363,7 +363,7 @@ public class ByteBufferUtils {
      * buffer. The new buffer will be flipped to set its position read for get operations
      */
     public static ByteBuffer copyToHeapBuffer(final ByteBuffer input) {
-        ByteBuffer output = ByteBuffer.allocate(input.remaining());
+        final ByteBuffer output = ByteBuffer.allocate(input.remaining());
         output.put(input);
         output.flip();
         input.rewind();
@@ -374,15 +374,15 @@ public class ByteBufferUtils {
      * Credit for this code goes to Dima
      * (see https://stackoverflow.com/questions/34166809/faster-comparison-of-longs-in-byte-format)
      */
-    private static int compareAs(final ByteBuffer left, int leftPos,
-                                 final ByteBuffer right, int rightPos,
-                                 int length) {
+    private static int compareAs(final ByteBuffer left, final int leftPos,
+                                 final ByteBuffer right, final int rightPos,
+                                 final int length) {
 
 
         int cmp = 0;
         for (int i = 0; i < length && cmp == 0; i++) {
-            int iLeft = i + leftPos;
-            int iRight = i + rightPos;
+            final int iLeft = i + leftPos;
+            final int iRight = i + rightPos;
             cmp = (i == 0 || (left.get(iLeft) >= 0 == right.get(iRight) >= 0))
                     ? left.get(iLeft) - right.get(iRight)
                     : right.get(iRight) - left.get(iLeft);
@@ -406,8 +406,8 @@ public class ByteBufferUtils {
     public static int basicHashCode(final ByteBuffer byteBuffer) {
         int hash = 1;
 
-        int pos = byteBuffer.position();
-        int limit = byteBuffer.limit();
+        final int pos = byteBuffer.position();
+        final int limit = byteBuffer.limit();
         for (int i = pos; i < limit; ++i) {
             hash = 31 * hash + byteBuffer.get(i);
         }
@@ -424,7 +424,7 @@ public class ByteBufferUtils {
     /**
      * Get the requested length number of bytes from the specified index.
      */
-    public static byte[] toBytes(final ByteBuffer byteBuffer, int index, int length) {
+    public static byte[] toBytes(final ByteBuffer byteBuffer, final int index, final int length) {
         final byte[] arr = new byte[length];
         byteBuffer.get(index, arr, 0, length);
         return arr;
@@ -432,7 +432,7 @@ public class ByteBufferUtils {
 
     public static byte[] getBytes(final ByteBuffer byteBuffer) {
         final ByteBuffer dupBuffer = byteBuffer.duplicate();
-        byte[] result = new byte[dupBuffer.remaining()];
+        final byte[] result = new byte[dupBuffer.remaining()];
         dupBuffer.get(result);
         return result;
     }

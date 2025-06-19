@@ -13,7 +13,7 @@ class TestResultStoreLmdbConfig {
 
     @Test
     void testJsonSerialisation() {
-        ResultStoreLmdbConfig lmdbConfig = new ResultStoreLmdbConfig();
+        final ResultStoreLmdbConfig lmdbConfig = new ResultStoreLmdbConfig();
         final String json = JsonUtil.writeValueAsString(lmdbConfig);
         LOGGER.info("json:\n{}", json);
 

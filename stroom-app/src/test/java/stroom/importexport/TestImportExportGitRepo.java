@@ -103,18 +103,18 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
          * @param pathsFound      Map of patterns and whether they've been found
          * @param pathsNotMatched List of paths we've found that weren't matched.
          */
-        public GitFileVisitor(Path root,
-                              Map<Pattern, Boolean> pathsFound,
-                              List<String> pathsNotMatched) {
+        public GitFileVisitor(final Path root,
+                              final Map<Pattern, Boolean> pathsFound,
+                              final List<String> pathsNotMatched) {
             this.root = root;
             this.pathsFound = pathsFound;
             this.pathsNotMatched = pathsNotMatched;
         }
 
         private void checkPath(final Path path) {
-            String pathName = root.relativize(path).toString();
+            final String pathName = root.relativize(path).toString();
             boolean foundIt = false;
-            for (Map.Entry<Pattern, Boolean> entry : pathsFound.entrySet()) {
+            for (final Map.Entry<Pattern, Boolean> entry : pathsFound.entrySet()) {
                 if (entry.getKey().matcher(pathName).matches()) {
                     entry.setValue(Boolean.TRUE);
                     foundIt = true;
@@ -147,7 +147,7 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
             throws IOException {
 
         final Map<Pattern, Boolean> pathsFound = new HashMap<>();
-        for (var pathPattern : pathPatterns) {
+        for (final var pathPattern : pathPatterns) {
             pathsFound.put(Pattern.compile(pathPattern), Boolean.FALSE);
         }
 
@@ -184,7 +184,7 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 "GitRepo",
                 systemNode,
                 null);
-        GitRepoDoc gitRepoDoc = gitRepoStore.readDocument(gitRepoNode.getDocRef());
+        final GitRepoDoc gitRepoDoc = gitRepoStore.readDocument(gitRepoNode.getDocRef());
         gitRepoDoc.setDescription("Original Description");
         gitRepoStore.writeDocument(gitRepoDoc);
 
@@ -225,16 +225,16 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
 
         // List of paths to remove from the exported paths
         // Basically the path to the GitRepoDoc node
-        List<ExplorerNode> rootNodePath = List.of(ExplorerConstants.SYSTEM_NODE, gitRepoNode);
+        final List<ExplorerNode> rootNodePath = List.of(ExplorerConstants.SYSTEM_NODE, gitRepoNode);
 
         // List of nodes to export.
-        Set<DocRef> docRefsToExport = Set.of(
+        final Set<DocRef> docRefsToExport = Set.of(
                 gitRepoDoc.asDocRef(),
                 feedNode.getDocRef(),
                 pipelineNode.getDocRef());
 
         // List of doctypes to ignore - GitRepos so we ignore recursive repos
-        Set<String> docTypesToIgnore = Set.of(GitRepoDoc.TYPE);
+        final Set<String> docTypesToIgnore = Set.of(GitRepoDoc.TYPE);
 
         // Run the export to disk
         importExportSerializer.write(
@@ -244,7 +244,7 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 docTypesToIgnore,
                 true);
 
-        List<String> pathPatterns = List.of(
+        final List<String> pathPatterns = List.of(
                 "",
                 "folder1",
                 "folder1/FEED\\.Feed\\.[-a-f0-9]*.meta",
@@ -278,7 +278,7 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 "GitRepo",
                 systemNode,
                 null);
-        GitRepoDoc gitRepoDoc = gitRepoStore.readDocument(gitRepoNode.getDocRef());
+        final GitRepoDoc gitRepoDoc = gitRepoStore.readDocument(gitRepoNode.getDocRef());
         gitRepoDoc.setDescription("GitRepo Description");
         gitRepoStore.writeDocument(gitRepoDoc);
 
@@ -320,16 +320,16 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
 
         // List of paths to remove from the exported paths
         // Basically the path to the GitRepoDoc node
-        List<ExplorerNode> rootNodePath = List.of(ExplorerConstants.SYSTEM_NODE, gitRepoNode);
+        final List<ExplorerNode> rootNodePath = List.of(ExplorerConstants.SYSTEM_NODE, gitRepoNode);
 
         // List of nodes to export.
-        Set<DocRef> docRefsToExport = Set.of(
+        final Set<DocRef> docRefsToExport = Set.of(
                 gitRepoDoc.asDocRef(),
                 feedNode.getDocRef(),
                 pipelineNode.getDocRef());
 
         // List of doctypes to ignore - GitRepos so we ignore recursive repos
-        Set<String> docTypesToIgnore = Set.of(GitRepoDoc.TYPE);
+        final Set<String> docTypesToIgnore = Set.of(GitRepoDoc.TYPE);
 
         // Run the export to disk
         importExportSerializer.write(
@@ -339,7 +339,7 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 docTypesToIgnore,
                 true);
 
-        List<String> pathPatterns = List.of(
+        final List<String> pathPatterns = List.of(
                 "",
                 "folder1",
                 "folder1/FEED\\.Feed\\.[-a-f0-9]*.meta",
@@ -361,12 +361,12 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 "GitRepo",
                 systemNode,
                 null);
-        GitRepoDoc gitRepoDoc2 = gitRepoStore.readDocument(gitRepoNode2.getDocRef());
+        final GitRepoDoc gitRepoDoc2 = gitRepoStore.readDocument(gitRepoNode2.getDocRef());
         gitRepoDoc2.setDescription("GitRepo Description");
         gitRepoStore.writeDocument(gitRepoDoc2);
 
-        List<ImportState> importStates = new ArrayList<>();
-        ImportSettings importSettings = ImportSettings.builder()
+        final List<ImportState> importStates = new ArrayList<>();
+        final ImportSettings importSettings = ImportSettings.builder()
                 .importMode(ImportMode.IGNORE_CONFIRMATION)
                 .enableFilters(false)
                 .useImportFolders(true)
@@ -375,24 +375,24 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 .build();
         importExportSerializer.read(testDataDir, importStates, importSettings);
 
-        var folder12 = this.explorerNodeService.getNodesByName(gitRepoNode2, "folder1");
+        final var folder12 = this.explorerNodeService.getNodesByName(gitRepoNode2, "folder1");
         assertThat(folder12)
                 .as("GitRepo node has folder1 child")
                 .isNotEmpty()
                 .hasSize(1);
-        var folder12node = folder12.getFirst();
-        var feedNodeList = this.explorerNodeService.getNodesByName(folder12node, "FEED");
+        final var folder12node = folder12.getFirst();
+        final var feedNodeList = this.explorerNodeService.getNodesByName(folder12node, "FEED");
         assertThat(feedNodeList)
                 .as("folder1 has a FEED child")
                 .isNotEmpty()
                 .hasSize(1);
-        var folder22 = this.explorerNodeService.getNodesByName(gitRepoNode2, "folder2");
+        final var folder22 = this.explorerNodeService.getNodesByName(gitRepoNode2, "folder2");
         assertThat(folder22)
                 .as("GitRepo node has folder2 child")
                 .isNotEmpty()
                 .hasSize(1);
-        var folder22node = folder22.getFirst();
-        var pipelineNodeList = this.explorerNodeService.getNodesByName(folder22node, "Pipeline");
+        final var folder22node = folder22.getFirst();
+        final var pipelineNodeList = this.explorerNodeService.getNodesByName(folder22node, "Pipeline");
         assertThat(pipelineNodeList)
                 .as("folder2 has a pipeline child")
                 .isNotEmpty()

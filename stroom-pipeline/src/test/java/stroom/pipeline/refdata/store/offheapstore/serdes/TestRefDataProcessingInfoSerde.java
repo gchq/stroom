@@ -118,13 +118,13 @@ class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataProcessing
     @Test
     void wasAccessedAfter() {
 
-        RefDataProcessingInfo refDataProcessingInfo = new RefDataProcessingInfo(
+        final RefDataProcessingInfo refDataProcessingInfo = new RefDataProcessingInfo(
                 0L,
                 1000L,
                 100L,
                 ProcessingState.COMPLETE);
 
-        ByteBuffer valueBuffer = serialize(refDataProcessingInfo);
+        final ByteBuffer valueBuffer = serialize(refDataProcessingInfo);
 
         doAccessTest(refDataProcessingInfo.getLastAccessedTimeEpochMs(), valueBuffer, false);
         doAccessTest(refDataProcessingInfo.getLastAccessedTimeEpochMs() - 1, valueBuffer, true);
@@ -132,26 +132,26 @@ class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataProcessing
     }
 
     private void doAccessTest(final long timeUnderTestMs, final ByteBuffer valueBuffer, final boolean expectedResult) {
-        ByteBuffer timeBuffer = ByteBuffer.allocate(Long.BYTES);
+        final ByteBuffer timeBuffer = ByteBuffer.allocate(Long.BYTES);
         timeBuffer.putLong(timeUnderTestMs);
         timeBuffer.flip();
-        boolean result = RefDataProcessingInfoSerde.wasAccessedAfter(valueBuffer, timeBuffer);
+        final boolean result = RefDataProcessingInfoSerde.wasAccessedAfter(valueBuffer, timeBuffer);
         assertThat(result).isEqualTo(expectedResult);
     }
 
     @Test
     void testExtractProcessingState() {
 
-        for (ProcessingState processingState : ProcessingState.values()) {
-            RefDataProcessingInfo refDataProcessingInfo = new RefDataProcessingInfo(
+        for (final ProcessingState processingState : ProcessingState.values()) {
+            final RefDataProcessingInfo refDataProcessingInfo = new RefDataProcessingInfo(
                     0L,
                     1000L,
                     100L,
                     processingState);
 
-            ByteBuffer valueBuffer = serialize(refDataProcessingInfo);
+            final ByteBuffer valueBuffer = serialize(refDataProcessingInfo);
 
-            ProcessingState foundProcessingState = RefDataProcessingInfoSerde.extractProcessingState(valueBuffer);
+            final ProcessingState foundProcessingState = RefDataProcessingInfoSerde.extractProcessingState(valueBuffer);
 
             assertThat(foundProcessingState).isEqualTo(processingState);
         }
@@ -161,19 +161,19 @@ class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataProcessing
 
     @Test
     void testCreateProcessingStatePredicate() {
-        RefDataProcessingInfo refDataProcessingInfo1 = new RefDataProcessingInfo(
+        final RefDataProcessingInfo refDataProcessingInfo1 = new RefDataProcessingInfo(
                 0L,
                 1000L,
                 100L,
                 ProcessingState.COMPLETE);
 
-        RefDataProcessingInfo refDataProcessingInfo2 = new RefDataProcessingInfo(
+        final RefDataProcessingInfo refDataProcessingInfo2 = new RefDataProcessingInfo(
                 0L,
                 1000L,
                 100L,
                 ProcessingState.FAILED);
 
-        RefDataProcessingInfo refDataProcessingInfo3 = new RefDataProcessingInfo(
+        final RefDataProcessingInfo refDataProcessingInfo3 = new RefDataProcessingInfo(
                 0L,
                 1000L,
                 100L,

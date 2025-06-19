@@ -90,11 +90,11 @@ class TestStroomDuration {
     }
 
     void doParseTest(final String modelStringUtilInput, final String isoInput, final Duration expectedDuration) {
-        StroomDuration stroomDuration = StroomDuration.parse(modelStringUtilInput);
+        final StroomDuration stroomDuration = StroomDuration.parse(modelStringUtilInput);
         assertThat(stroomDuration.getDuration()).isEqualTo(expectedDuration);
         assertThat(stroomDuration.getValueAsStr()).isEqualTo(modelStringUtilInput);
 
-        StroomDuration stroomDuration2 = StroomDuration.parse(isoInput);
+        final StroomDuration stroomDuration2 = StroomDuration.parse(isoInput);
         assertThat(stroomDuration2.getDuration()).isEqualTo(expectedDuration);
         assertThat(stroomDuration2.getValueAsStr()).isEqualTo(isoInput);
 

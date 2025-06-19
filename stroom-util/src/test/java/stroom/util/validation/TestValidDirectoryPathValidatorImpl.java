@@ -34,17 +34,18 @@ class TestValidDirectoryPathValidatorImpl {
 
     @ValidDirectoryPath(ensureExistence = true)
     @Test
-    public void testIsValid_ensureExists_notExists(@TempDir Path tempDir) throws NoSuchMethodException {
-        ValidDirectoryPathValidatorImpl validDirectoryPathValidator = new ValidDirectoryPathValidatorImpl(
+    public void testIsValid_ensureExists_notExists(@TempDir final Path tempDir) throws NoSuchMethodException {
+        final ValidDirectoryPathValidatorImpl validDirectoryPathValidator = new ValidDirectoryPathValidatorImpl(
                 new SimplePathCreator(() -> tempDir, () -> tempDir));
 
-        final String methodName = new Object() {}
+        final String methodName = new Object() {
+        }
                 .getClass()
                 .getEnclosingMethod()
                 .getName();
 
         final ValidDirectoryPath validDirectoryPathAnno = TestValidDirectoryPathValidatorImpl.class.getMethod(
-                methodName, Path.class)
+                        methodName, Path.class)
                 .getAnnotation(ValidDirectoryPath.class);
 
         validDirectoryPathValidator.initialize(validDirectoryPathAnno);
@@ -61,11 +62,14 @@ class TestValidDirectoryPathValidatorImpl {
 
     @ValidDirectoryPath(ensureExistence = true)
     @Test
-    public void testIsValid_ensureExists_dirExists(@TempDir Path tempDir) throws NoSuchMethodException, IOException {
-        ValidDirectoryPathValidatorImpl validDirectoryPathValidator = new ValidDirectoryPathValidatorImpl(
+    public void testIsValid_ensureExists_dirExists(@TempDir final Path tempDir)
+            throws NoSuchMethodException, IOException {
+
+        final ValidDirectoryPathValidatorImpl validDirectoryPathValidator = new ValidDirectoryPathValidatorImpl(
                 new SimplePathCreator(() -> tempDir, () -> tempDir));
 
-        final String methodName = new Object() {}
+        final String methodName = new Object() {
+        }
                 .getClass()
                 .getEnclosingMethod()
                 .getName();
@@ -89,11 +93,12 @@ class TestValidDirectoryPathValidatorImpl {
 
     @ValidDirectoryPath()
     @Test
-    public void testIsValid_dirExists(@TempDir Path tempDir) throws NoSuchMethodException, IOException {
-        ValidDirectoryPathValidatorImpl validDirectoryPathValidator = new ValidDirectoryPathValidatorImpl(
+    public void testIsValid_dirExists(@TempDir final Path tempDir) throws NoSuchMethodException, IOException {
+        final ValidDirectoryPathValidatorImpl validDirectoryPathValidator = new ValidDirectoryPathValidatorImpl(
                 new SimplePathCreator(() -> tempDir, () -> tempDir));
 
-        final String methodName = new Object() {}
+        final String methodName = new Object() {
+        }
                 .getClass()
                 .getEnclosingMethod()
                 .getName();
@@ -118,11 +123,14 @@ class TestValidDirectoryPathValidatorImpl {
 
     @ValidDirectoryPath(ensureExistence = true)
     @Test
-    public void testIsValid_ensureExists_isFile(@TempDir Path tempDir) throws NoSuchMethodException, IOException {
-        ValidDirectoryPathValidatorImpl validDirectoryPathValidator = new ValidDirectoryPathValidatorImpl(
+    public void testIsValid_ensureExists_isFile(@TempDir final Path tempDir)
+            throws NoSuchMethodException, IOException {
+
+        final ValidDirectoryPathValidatorImpl validDirectoryPathValidator = new ValidDirectoryPathValidatorImpl(
                 new SimplePathCreator(() -> tempDir, () -> tempDir));
 
-        final String methodName = new Object() {}
+        final String methodName = new Object() {
+        }
                 .getClass()
                 .getEnclosingMethod()
                 .getName();
@@ -160,11 +168,12 @@ class TestValidDirectoryPathValidatorImpl {
 
     @ValidDirectoryPath()
     @Test
-    public void testIsValid_isFile(@TempDir Path tempDir) throws NoSuchMethodException, IOException {
-        ValidDirectoryPathValidatorImpl validDirectoryPathValidator = new ValidDirectoryPathValidatorImpl(
+    public void testIsValid_isFile(@TempDir final Path tempDir) throws NoSuchMethodException, IOException {
+        final ValidDirectoryPathValidatorImpl validDirectoryPathValidator = new ValidDirectoryPathValidatorImpl(
                 new SimplePathCreator(() -> tempDir, () -> tempDir));
 
-        final String methodName = new Object() {}
+        final String methodName = new Object() {
+        }
                 .getClass()
                 .getEnclosingMethod()
                 .getName();
@@ -202,11 +211,12 @@ class TestValidDirectoryPathValidatorImpl {
 
     @ValidDirectoryPath()
     @Test
-    public void testIsValid_nullDir(@TempDir Path tempDir) throws NoSuchMethodException, IOException {
-        ValidDirectoryPathValidatorImpl validDirectoryPathValidator = new ValidDirectoryPathValidatorImpl(
+    public void testIsValid_nullDir(@TempDir final Path tempDir) throws NoSuchMethodException, IOException {
+        final ValidDirectoryPathValidatorImpl validDirectoryPathValidator = new ValidDirectoryPathValidatorImpl(
                 new SimplePathCreator(() -> tempDir, () -> tempDir));
 
-        final String methodName = new Object() {}
+        final String methodName = new Object() {
+        }
                 .getClass()
                 .getEnclosingMethod()
                 .getName();
@@ -230,11 +240,12 @@ class TestValidDirectoryPathValidatorImpl {
 
     @ValidDirectoryPath()
     @Test
-    public void testIsValid_blankDir(@TempDir Path tempDir) throws NoSuchMethodException, IOException {
-        ValidDirectoryPathValidatorImpl validDirectoryPathValidator = new ValidDirectoryPathValidatorImpl(
+    public void testIsValid_blankDir(@TempDir final Path tempDir) throws NoSuchMethodException, IOException {
+        final ValidDirectoryPathValidatorImpl validDirectoryPathValidator = new ValidDirectoryPathValidatorImpl(
                 new SimplePathCreator(() -> tempDir, () -> tempDir));
 
-        final String methodName = new Object() {}
+        final String methodName = new Object() {
+        }
                 .getClass()
                 .getEnclosingMethod()
                 .getName();

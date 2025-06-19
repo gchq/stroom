@@ -68,7 +68,7 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
         if (node != null) {
             final SafeHtmlBuilder content = new SafeHtmlBuilder();
 
-            int expanderPadding = 4;
+            final int expanderPadding = 4;
 
             SvgImage expanderIcon = null;
             if (node.hasNodeFlag(NodeFlag.OPEN)) {
@@ -82,7 +82,7 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
             final SafeStyles paddingLeft = SafeStylesUtils.fromTrustedString("padding-left:" + indent + "px;");
 
             // Add expander.
-            SafeHtml expanderIconSafeHtml;
+            final SafeHtml expanderIconSafeHtml;
             String className = getCellClassName() + "-expander";
             if (expanderIcon != null) {
                 expanderIconSafeHtml = SafeHtmlUtils.fromTrustedString(expanderIcon.getSvg());

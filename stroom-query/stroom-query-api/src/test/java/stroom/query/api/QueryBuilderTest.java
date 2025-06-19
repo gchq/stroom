@@ -51,19 +51,19 @@ class QueryBuilderTest {
         assertThat(dataSource.getUuid()).isEqualTo(dataSourceUuid);
 
         // Examine the expression
-        ExpressionOperator root = query.getExpression();
+        final ExpressionOperator root = query.getExpression();
         assertThat(root).isNotNull();
         assertThat(root.getChildren()).hasSize(3);
 
-        ExpressionItem rootChild1 = root.getChildren().get(0);
-        ExpressionItem rootChild2 = root.getChildren().get(1);
-        ExpressionItem rootChild3 = root.getChildren().get(2);
+        final ExpressionItem rootChild1 = root.getChildren().get(0);
+        final ExpressionItem rootChild2 = root.getChildren().get(1);
+        final ExpressionItem rootChild3 = root.getChildren().get(2);
 
         assertThat(rootChild1 instanceof ExpressionTerm).isTrue();
         assertThat(((ExpressionTerm) rootChild1).getField()).isEqualTo("fieldX");
 
         assertThat(rootChild2 instanceof ExpressionOperator).isTrue();
-        ExpressionOperator child2Op = (ExpressionOperator) rootChild2;
+        final ExpressionOperator child2Op = (ExpressionOperator) rootChild2;
         assertThat(child2Op.op()).isEqualTo(Op.OR);
         assertThat(child2Op.getChildren()).hasSize(2);
 

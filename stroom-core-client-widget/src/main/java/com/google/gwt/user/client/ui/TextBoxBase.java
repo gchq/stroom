@@ -31,7 +31,7 @@ public class TextBoxBase extends ValueBoxBase<String> {
      *
      * @param elem the browser element to wrap
      */
-    protected TextBoxBase(Element elem) {
+    protected TextBoxBase(final Element elem) {
         super(elem, PassthroughRenderer.instance(), PassthroughParser.instance());
     }
 
@@ -40,7 +40,7 @@ public class TextBoxBase extends ValueBoxBase<String> {
      */
     @Override
     public String getValue() {
-        String raw = super.getValue();
+        final String raw = super.getValue();
         return raw == null
                 ? ""
                 : raw;
@@ -56,7 +56,7 @@ public class TextBoxBase extends ValueBoxBase<String> {
 
         private TextAlignment value;
 
-        private TextAlignConstant(TextAlignment value) {
+        private TextAlignConstant(final TextAlignment value) {
             this.value = value;
         }
 

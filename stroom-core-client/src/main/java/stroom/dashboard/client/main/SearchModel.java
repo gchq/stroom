@@ -164,7 +164,7 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
             final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
             if (dataSourceRef != null && expression != null) {
                 // Copy the expression.
-                ExpressionOperator currentExpression = ExpressionUtil.copyOperator(expression);
+                final ExpressionOperator currentExpression = ExpressionUtil.copyOperator(expression);
                 currentSearch = Search
                         .builder()
                         .dataSourceRef(dataSourceRef)

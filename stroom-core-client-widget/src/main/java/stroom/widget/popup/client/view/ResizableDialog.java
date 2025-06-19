@@ -314,7 +314,7 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
                 final Size heightSize = popupSize.getHeight();
 
                 if (resizeWidth && widthSize != null && widthSize.isResizable()) {
-                    double newWidth = moveX
+                    final double newWidth = moveX
                             ? dragStartWindow.getWidth() - dx
                             : dragStartWindow.getWidth() + dx;
                     double constrainedWidth = newWidth;
@@ -330,13 +330,13 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
                     constrainedWidth = Math.min(initialWindowWidth, constrainedWidth);
 
                     // If we were constrained then reduce the move distance.
-                    double constraintDiff = newWidth - constrainedWidth;
+                    final double constraintDiff = newWidth - constrainedWidth;
                     dx = dx + constraintDiff;
 
                     elem.getStyle().setPropertyPx("width", (int) constrainedWidth);
                 }
                 if (resizeHeight && heightSize != null && heightSize.isResizable()) {
-                    double newHeight = moveY
+                    final double newHeight = moveY
                             ? dragStartWindow.getHeight() - dy
                             : dragStartWindow.getHeight() + dy;
                     double constrainedHeight = newHeight;
@@ -352,7 +352,7 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
                     constrainedHeight = Math.min(initialWindowHeight, constrainedHeight);
 
                     // If we were constrained then reduce the move distance.
-                    double constraintDiff = newHeight - constrainedHeight;
+                    final double constraintDiff = newHeight - constrainedHeight;
                     dy = dy + constraintDiff;
 
                     elem.getStyle().setPropertyPx("height", (int) constrainedHeight);

@@ -80,27 +80,27 @@ public class StepControlViewImpl extends ViewWithUiHandlers<StepControlUIHandler
     }
 
     @Override
-    public void setStepFirstEnabled(boolean enabled) {
+    public void setStepFirstEnabled(final boolean enabled) {
         firstButton.setEnabled(enabled);
     }
 
     @Override
-    public void setStepBackwardEnabled(boolean enabled) {
+    public void setStepBackwardEnabled(final boolean enabled) {
         backwardButton.setEnabled(enabled);
     }
 
     @Override
-    public void setStepForwardEnabled(boolean enabled) {
+    public void setStepForwardEnabled(final boolean enabled) {
         forwardButton.setEnabled(enabled);
     }
 
     @Override
-    public void setStepLastEnabled(boolean enabled) {
+    public void setStepLastEnabled(final boolean enabled) {
         lastButton.setEnabled(enabled);
     }
 
     @Override
-    public void setStepRefreshEnabled(boolean enabled) {
+    public void setStepRefreshEnabled(final boolean enabled) {
         refreshButton.setEnabled(enabled);
     }
 

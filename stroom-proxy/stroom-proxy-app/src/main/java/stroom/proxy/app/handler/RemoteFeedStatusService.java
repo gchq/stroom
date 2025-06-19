@@ -78,7 +78,7 @@ public class RemoteFeedStatusService implements FeedStatusService, Managed {
      * @deprecated Use {@link FeedStatusService#getFeedStatus(GetFeedStatusRequestV2)}
      */
     @Deprecated
-    public GetFeedStatusResponse getFeedStatus(GetFeedStatusRequest legacyRequest) {
+    public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest legacyRequest) {
         return securityContextProvider.get().secureResult(REQUIRED_PERM_SET, () -> {
             final GetFeedStatusRequestV2 request = GetFeedStatusRequestAdapter.mapLegacyRequest(legacyRequest);
             return getFeedStatus(request);

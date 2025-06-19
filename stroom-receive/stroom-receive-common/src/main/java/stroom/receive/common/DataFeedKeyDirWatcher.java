@@ -93,8 +93,8 @@ public class DataFeedKeyDirWatcher extends AbstractDirChangeMonitor {
     private void processAllFiles() {
         // Re-scan the whole directory. The addDataFeedKeys method is idempotent
         LOGGER.info("Reading all data feed key files in {}", dirToWatch);
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dirToWatch)) {
-            AtomicInteger counter = new AtomicInteger();
+        try (final DirectoryStream<Path> dirStream = Files.newDirectoryStream(dirToWatch)) {
+            final AtomicInteger counter = new AtomicInteger();
             dirStream.forEach(path -> {
                 if (fileIncludeFilter == null || fileIncludeFilter.test(path)) {
                     processFile(path);
@@ -104,7 +104,7 @@ public class DataFeedKeyDirWatcher extends AbstractDirChangeMonitor {
                 }
             });
             LOGGER.info("Completed reading {} data feed key files in {}", counter, dirToWatch);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error reading contents of directory '{}': {}", dirToWatch, LogUtil.exceptionMessage(e));
         }
     }
@@ -114,7 +114,7 @@ public class DataFeedKeyDirWatcher extends AbstractDirChangeMonitor {
             LOGGER.info("Reading datafeed key file {}", path.toAbsolutePath().normalize());
             final ObjectReader reader = JsonUtil.getMapper().reader()
                     .with(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-            try (InputStream fileStream = new FileInputStream(path.toFile())) {
+            try (final InputStream fileStream = new FileInputStream(path.toFile())) {
                 try {
                     final HashedDataFeedKeys hashedDataFeedKeys = reader.readValue(fileStream,
                             HashedDataFeedKeys.class);
@@ -127,11 +127,11 @@ public class DataFeedKeyDirWatcher extends AbstractDirChangeMonitor {
                     } else {
                         LOGGER.info("No datafeed keys found in {}", path.toAbsolutePath().normalize());
                     }
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     LOGGER.debug("Error parsing file {}: {}", path, e.getMessage(), e);
                     LOGGER.error("Error parsing file {}: {} (enable DEBUG for stacktrace)", path, e.getMessage());
                 }
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 LOGGER.debug("Error reading file {}: {}", path, e.getMessage(), e);
                 LOGGER.error("Error reading file {}: {} (enable DEBUG for stacktrace)", path, e.getMessage());
             }

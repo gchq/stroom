@@ -69,7 +69,7 @@ public class GenerateProxyConfigProvidersModule {
                 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             """;
 
-    public static void main(String[] args) throws IOException {
+    public static void main(final String[] args) throws IOException {
 //        final ConfigMapper configMapper = new ConfigMapper();
         final Set<String> simpleNames = new HashSet<>();
         final Map<String, List<String>> simpleNameToFullNamesMap = new HashMap<>();
@@ -236,7 +236,7 @@ public class GenerateProxyConfigProvidersModule {
     }
 
     private static void updateFile(final String content) {
-        Path pwd = Paths.get(".")
+        final Path pwd = Paths.get(".")
                 .toAbsolutePath()
                 .normalize();
 
@@ -258,7 +258,7 @@ public class GenerateProxyConfigProvidersModule {
             LOGGER.info("Writing file " + moduleFile.toAbsolutePath());
             Files.writeString(moduleFile, content);
 
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException("Error reading content of " + moduleFile);
         }
     }

@@ -32,7 +32,7 @@ class AnnotationEventInfoProvider implements ObjectInfoProvider {
     @Override
     public BaseObject createBaseObject(final Object obj) {
         if (obj instanceof final Annotation annotation) {
-            OtherObject o = new OtherObject();
+            final OtherObject o = new OtherObject();
             o.setId(String.valueOf(annotation.getId()));
             o.setType("Annotation");
             o.setName(annotation.getName());

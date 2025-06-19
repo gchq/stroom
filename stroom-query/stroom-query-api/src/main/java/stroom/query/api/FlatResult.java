@@ -71,7 +71,7 @@ public final class FlatResult extends Result {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
@@ -81,7 +81,7 @@ public final class FlatResult extends Result {
         if (!super.equals(o)) {
             return false;
         }
-        FlatResult that = (FlatResult) o;
+        final FlatResult that = (FlatResult) o;
         return Objects.equals(structure, that.structure) &&
                 Objects.equals(values, that.values) &&
                 Objects.equals(size, that.size);
@@ -142,7 +142,7 @@ public final class FlatResult extends Result {
          * @return The {@link FlatResultBuilderImpl}, enabling method chaining
          */
         @Override
-        public FlatResultBuilderImpl structure(List<Column> structure) {
+        public FlatResultBuilderImpl structure(final List<Column> structure) {
             this.structure = structure;
             return this;
         }

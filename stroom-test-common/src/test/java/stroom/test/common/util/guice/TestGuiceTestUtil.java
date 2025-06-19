@@ -35,11 +35,11 @@ class TestGuiceTestUtil {
             bind(StandardBind.class).to(StandardBindImpl.class);
             bind(ExplicitSingletonBind.class).asEagerSingleton();
 
-            InterfaceInstanceBind interfaceInstanceBind = new InterfaceInstanceBind() {
+            final InterfaceInstanceBind interfaceInstanceBind = new InterfaceInstanceBind() {
             };
             bind(InterfaceInstanceBind.class).toInstance(interfaceInstanceBind);
 
-            ClassInstanceBind classInstanceBind = new ClassInstanceBind();
+            final ClassInstanceBind classInstanceBind = new ClassInstanceBind();
             bind(ClassInstanceBind.class).toInstance(classInstanceBind);
 
             bind(ProviderBind.class).toProvider(ProviderBindFactory.class);
@@ -47,11 +47,11 @@ class TestGuiceTestUtil {
 
             });
 
-            MapBinder<Integer, MapBinderBind> mapBinder = MapBinder.newMapBinder(
+            final MapBinder<Integer, MapBinderBind> mapBinder = MapBinder.newMapBinder(
                     binder(), Integer.class, MapBinderBind.class);
             mapBinder.addBinding(1).to(MapBinderBindImpl1.class);
 
-            Multibinder<MultiBinderBind> multiBinder = Multibinder.newSetBinder(
+            final Multibinder<MultiBinderBind> multiBinder = Multibinder.newSetBinder(
                     binder(), MultiBinderBind.class);
             multiBinder.addBinding().to(MultiBinderBindImpl1.class);
         }
@@ -65,11 +65,11 @@ class TestGuiceTestUtil {
             bind(StandardBind2.class).to(StandardBind2Impl.class)
                     .asEagerSingleton();
 
-            MapBinder<Integer, MapBinderBind> mapBinder = MapBinder.newMapBinder(
+            final MapBinder<Integer, MapBinderBind> mapBinder = MapBinder.newMapBinder(
                     binder(), Integer.class, MapBinderBind.class);
             mapBinder.addBinding(2).to(MapBinderBindImpl2.class);
 
-            Multibinder<MultiBinderBind> multiBinder = Multibinder.newSetBinder(
+            final Multibinder<MultiBinderBind> multiBinder = Multibinder.newSetBinder(
                     binder(), MultiBinderBind.class);
             multiBinder.addBinding().to(MultiBinderBindImpl2.class);
         }
@@ -81,11 +81,11 @@ class TestGuiceTestUtil {
         protected void configure() {
             bind(StandardBind3.class).to(StandardBind3Impl.class);
 
-            MapBinder<Integer, MapBinderBind> mapBinder = MapBinder.newMapBinder(
+            final MapBinder<Integer, MapBinderBind> mapBinder = MapBinder.newMapBinder(
                     binder(), Integer.class, MapBinderBind.class);
             mapBinder.addBinding(3).to(MapBinderBindImpl3.class);
 
-            Multibinder<MultiBinderBind> multiBinder = Multibinder.newSetBinder(
+            final Multibinder<MultiBinderBind> multiBinder = Multibinder.newSetBinder(
                     binder(), MultiBinderBind.class);
             multiBinder.addBinding().to(MultiBinderBindImpl3.class);
         }
@@ -100,7 +100,7 @@ class TestGuiceTestUtil {
     private static class StandardBindImpl implements StandardBind {
 
         @Inject
-        public StandardBindImpl(ImplicitSingletonBind implicitSingletonBind) {
+        public StandardBindImpl(final ImplicitSingletonBind implicitSingletonBind) {
         }
     }
 

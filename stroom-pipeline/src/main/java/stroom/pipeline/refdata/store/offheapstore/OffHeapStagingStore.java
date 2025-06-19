@@ -160,7 +160,7 @@ public class OffHeapStagingStore implements AutoCloseable {
                     throw new RuntimeException(LogUtil.message("Unsuccessful putOutcome {} putting entry to {}",
                             putOutcome, stagingDb.getDbName()));
                 }
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw new RuntimeException(LogUtil.message("""
                                 Error putting entry to staging store (db: {}): {}
                                 keyBuffer: {},
@@ -214,7 +214,7 @@ public class OffHeapStagingStore implements AutoCloseable {
         });
     }
 
-    public void logAllContents(Consumer<String> logEntryConsumer) {
+    public void logAllContents(final Consumer<String> logEntryConsumer) {
         Stream.of(keyValueStagingDb, rangeValueStagingDb)
                 .forEach(lmdbDb ->
                         lmdbDb.logDatabaseContents(logEntryConsumer));
@@ -293,7 +293,7 @@ public class OffHeapStagingStore implements AutoCloseable {
         if (autoCloseable != null) {
             try {
                 autoCloseable.close();
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.error("Error closing {}: {}", name, e.getMessage(), e);
             }
         } else {

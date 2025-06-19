@@ -27,71 +27,71 @@ class TestLookupIdentifier {
 
     @Test
     void isMapNested_true() {
-        String map = "map1" + LookupIdentifier.NEST_SEPARATOR +
-                "map2" + LookupIdentifier.NEST_SEPARATOR +
-                "map3";
+        final String map = "map1" + LookupIdentifier.NEST_SEPARATOR +
+                           "map2" + LookupIdentifier.NEST_SEPARATOR +
+                           "map3";
 
-        LookupIdentifier identifier = new LookupIdentifier(map, "key1", 12345);
+        final LookupIdentifier identifier = new LookupIdentifier(map, "key1", 12345);
         assertThat(identifier.isMapNested()).isTrue();
     }
 
     @Test
     void isMapNested_false() {
 
-        LookupIdentifier identifier = new LookupIdentifier("map1", "key1", 12345);
+        final LookupIdentifier identifier = new LookupIdentifier("map1", "key1", 12345);
         assertThat(identifier.isMapNested()).isFalse();
     }
 
     @Test
     void isMapNested_badlyFormatted1() {
         assertThatThrownBy(() -> {
-            String map = "map1" + LookupIdentifier.NEST_SEPARATOR;
+            final String map = "map1" + LookupIdentifier.NEST_SEPARATOR;
 
-            LookupIdentifier identifier = new LookupIdentifier(map, "key1", 12345);
+            final LookupIdentifier identifier = new LookupIdentifier(map, "key1", 12345);
         }).isInstanceOf(RuntimeException.class);
     }
 
     @Test
     void isMapNested_badlyFormatted2() {
         assertThatThrownBy(() -> {
-            String map = LookupIdentifier.NEST_SEPARATOR + "map1";
+            final String map = LookupIdentifier.NEST_SEPARATOR + "map1";
 
-            LookupIdentifier identifier = new LookupIdentifier(map, "key1", 12345);
+            final LookupIdentifier identifier = new LookupIdentifier(map, "key1", 12345);
         }).isInstanceOf(RuntimeException.class);
     }
 
     @Test
     void getPrimaryMapName_nested() {
-        String map = "map1" + LookupIdentifier.NEST_SEPARATOR +
-                "map2" + LookupIdentifier.NEST_SEPARATOR +
-                "map3";
+        final String map = "map1" + LookupIdentifier.NEST_SEPARATOR +
+                           "map2" + LookupIdentifier.NEST_SEPARATOR +
+                           "map3";
 
-        LookupIdentifier identifier = new LookupIdentifier(map, "key1", 12345);
+        final LookupIdentifier identifier = new LookupIdentifier(map, "key1", 12345);
         assertThat(identifier.getPrimaryMapName()).isEqualTo("map1");
         assertThat(identifier.getPrimaryMapName()).isNotEqualTo(identifier.getMap());
     }
 
     @Test
     void getPrimaryMapName_notNested() {
-        LookupIdentifier identifier = new LookupIdentifier("map1", "key1", 12345);
-        String primaryMapName = identifier.getPrimaryMapName();
+        final LookupIdentifier identifier = new LookupIdentifier("map1", "key1", 12345);
+        final String primaryMapName = identifier.getPrimaryMapName();
         assertThat(identifier.getPrimaryMapName()).isEqualTo(identifier.getMap());
     }
 
     @Test
     void getNestedLookupIdentifier() {
-        String map = "map1" + LookupIdentifier.NEST_SEPARATOR +
-                "map2" + LookupIdentifier.NEST_SEPARATOR +
-                "map3";
+        final String map = "map1" + LookupIdentifier.NEST_SEPARATOR +
+                           "map2" + LookupIdentifier.NEST_SEPARATOR +
+                           "map3";
 
-        LookupIdentifier identifier = new LookupIdentifier(map, "key1", 12345);
-        LookupIdentifier nestedIdentifier = identifier.getNestedLookupIdentifier("key2");
+        final LookupIdentifier identifier = new LookupIdentifier(map, "key1", 12345);
+        final LookupIdentifier nestedIdentifier = identifier.getNestedLookupIdentifier("key2");
         assertThat(nestedIdentifier.isMapNested()).isTrue();
         assertThat(nestedIdentifier.getPrimaryMapName()).isEqualTo("map2");
         assertThat(nestedIdentifier.getMap()).isEqualTo("map2" + LookupIdentifier.NEST_SEPARATOR + "map3");
         assertThat(nestedIdentifier.getKey()).isEqualTo("key2");
 
-        LookupIdentifier secondNestedIdentifier = nestedIdentifier.getNestedLookupIdentifier("key3");
+        final LookupIdentifier secondNestedIdentifier = nestedIdentifier.getNestedLookupIdentifier("key3");
         assertThat(secondNestedIdentifier.isMapNested()).isFalse();
         assertThat(secondNestedIdentifier.getMap()).isEqualTo("map3");
     }

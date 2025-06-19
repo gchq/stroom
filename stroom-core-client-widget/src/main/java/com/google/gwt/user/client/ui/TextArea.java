@@ -57,11 +57,11 @@ public class TextArea extends TextBoxBase {
      *
      * @param element the element to be wrapped
      */
-    public static TextArea wrap(Element element) {
+    public static TextArea wrap(final Element element) {
         // Assert that the element is attached.
         assert Document.get().getBody().isOrHasChild(element);
 
-        TextArea textArea = new TextArea(element);
+        final TextArea textArea = new TextArea(element);
 
         // Mark it attached and remember it for cleanup.
         textArea.onAttach();
@@ -84,7 +84,7 @@ public class TextArea extends TextBoxBase {
      *
      * @param element the element to be used
      */
-    protected TextArea(Element element) {
+    protected TextArea(final Element element) {
         super(element.<Element>cast());
         TextAreaElement.as(element);
     }
@@ -114,7 +114,7 @@ public class TextArea extends TextBoxBase {
      *
      * @param width the requested width, in characters
      */
-    public void setCharacterWidth(int width) {
+    public void setCharacterWidth(final int width) {
         getTextAreaElement().setCols(width);
     }
 
@@ -123,7 +123,7 @@ public class TextArea extends TextBoxBase {
      *
      * @param lines the number of visible lines
      */
-    public void setVisibleLines(int lines) {
+    public void setVisibleLines(final int lines) {
         getTextAreaElement().setRows(lines);
     }
 

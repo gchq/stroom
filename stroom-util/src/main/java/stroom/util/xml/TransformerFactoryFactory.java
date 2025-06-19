@@ -52,7 +52,7 @@ public final class TransformerFactoryFactory {
 
             final TransformerFactory factory = newInstance();
             LOGGER.info(IMP_USED + factory.getClass().getName());
-        } catch (Exception ex) {
+        } catch (final Exception ex) {
             LOGGER.error("Unable to create new TransformerFactory!", ex);
         }
     }
