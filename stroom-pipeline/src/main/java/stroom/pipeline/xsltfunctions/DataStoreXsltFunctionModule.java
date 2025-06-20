@@ -10,6 +10,8 @@ public class DataStoreXsltFunctionModule extends AbstractXsltFunctionModule {
     protected void configureFunctions() {
         bindFunction(BitmapLookupFunction.class);
         bindFunction(LookupFunction.class);
+        bindFunction(ParentForIdFunction.class);
+        bindFunction(ParentIdFunction.class);
         bindFunction(PartNoFunction.class);
         bindFunction(SourceIdFunction.class);
         bindFunction(StreamIdFunction.class);
@@ -49,6 +51,34 @@ public class DataStoreXsltFunctionModule extends AbstractXsltFunctionModule {
                             SequenceType.OPTIONAL_BOOLEAN,
                             SequenceType.OPTIONAL_BOOLEAN},
                     SequenceType.NODE_SEQUENCE,
+                    functionCallProvider);
+        }
+    }
+
+    private static class ParentForIdFunction extends StroomExtensionFunctionDefinition<ParentForId> {
+
+        @Inject
+        ParentForIdFunction(final Provider<ParentForId> functionCallProvider) {
+            super(
+                    ParentForId.FUNCTION_NAME,
+                    1,
+                    1,
+                    new SequenceType[]{SequenceType.SINGLE_STRING},
+                    SequenceType.OPTIONAL_STRING,
+                    functionCallProvider);
+        }
+    }
+
+    private static class ParentIdFunction extends StroomExtensionFunctionDefinition<ParentId> {
+
+        @Inject
+        ParentIdFunction(final Provider<ParentId> functionCallProvider) {
+            super(
+                    ParentId.FUNCTION_NAME,
+                    0,
+                    0,
+                    new SequenceType[]{},
+                    SequenceType.OPTIONAL_STRING,
                     functionCallProvider);
         }
     }

@@ -47,9 +47,13 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(LineToFunction.class);
         bindFunction(LinkFunction.class);
         bindFunction(LogFunction.class);
+        bindFunction(ManifestFunction.class);
+        bindFunction(ManifestForIdFunction.class);
         bindFunction(MetaFunction.class);
-        bindFunction(MetaKeysFunction.class);
         bindFunction(MetaAttributesFunction.class);
+        bindFunction(MetaKeysFunction.class);
+        bindFunction(MetaStreamFunction.class);
+        bindFunction(MetaStreamForIdFunction.class);
         bindFunction(NumericIPFunction.class);
         bindFunction(IPInCidrFunction.class);
         bindFunction(ParseDateTimeFunction.class);
@@ -520,12 +524,54 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         }
     }
 
+    private static class ManifestFunction extends StroomExtensionFunctionDefinition<Manifest> {
+
+        @Inject
+        ManifestFunction(final Provider<Manifest> functionCallProvider) {
+            super(
+                    Manifest.FUNCTION_NAME_NO_ARGS,
+                    0,
+                    0,
+                    new SequenceType[]{},
+                    SequenceType.NODE_SEQUENCE,
+                    functionCallProvider);
+        }
+    }
+
+    private static class ManifestForIdFunction extends StroomExtensionFunctionDefinition<Manifest> {
+
+        @Inject
+        ManifestForIdFunction(final Provider<Manifest> functionCallProvider) {
+            super(
+                    Manifest.FUNCTION_NAME_FOR_ID,
+                    1,
+                    1,
+                    new SequenceType[]{SequenceType.SINGLE_STRING},
+                    SequenceType.NODE_SEQUENCE,
+                    functionCallProvider);
+        }
+    }
+
     private static class MetaFunction extends StroomExtensionFunctionDefinition<Meta> {
 
         @Inject
         MetaFunction(final Provider<Meta> functionCallProvider) {
             super(
                     "meta",
+                    1,
+                    1,
+                    new SequenceType[]{SequenceType.SINGLE_STRING},
+                    SequenceType.OPTIONAL_STRING,
+                    functionCallProvider);
+        }
+    }
+
+    private static class MetaAttributesFunction extends StroomExtensionFunctionDefinition<MetaAttribute> {
+
+        @Inject
+        MetaAttributesFunction(final Provider<MetaAttribute> functionCallProvider) {
+            super(
+                    "meta-attribute",
                     1,
                     1,
                     new SequenceType[]{SequenceType.SINGLE_STRING},
@@ -548,16 +594,31 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         }
     }
 
-    private static class MetaAttributesFunction extends StroomExtensionFunctionDefinition<MetaAttribute> {
+    private static class MetaStreamFunction extends StroomExtensionFunctionDefinition<MetaStream> {
 
         @Inject
-        MetaAttributesFunction(final Provider<MetaAttribute> functionCallProvider) {
+        MetaStreamFunction(final Provider<MetaStream> functionCallProvider) {
             super(
-                    "meta-attribute",
-                    1,
-                    1,
-                    new SequenceType[]{SequenceType.SINGLE_STRING},
-                    SequenceType.OPTIONAL_STRING,
+                    MetaStream.FUNCTION_NAME_NO_ARGS,
+                    0,
+                    0,
+                    new SequenceType[]{},
+                    SequenceType.NODE_SEQUENCE,
+                    functionCallProvider);
+        }
+    }
+
+    private static class MetaStreamForIdFunction extends StroomExtensionFunctionDefinition<MetaStream> {
+
+        @Inject
+        MetaStreamForIdFunction(final Provider<MetaStream> functionCallProvider) {
+            super(
+                    MetaStream.FUNCTION_NAME_FOR_ID,
+                    2,
+                    2,
+                    new SequenceType[]{SequenceType.SINGLE_STRING,
+                            SequenceType.SINGLE_INTEGER},
+                    SequenceType.NODE_SEQUENCE,
                     functionCallProvider);
         }
     }

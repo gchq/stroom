@@ -16,6 +16,7 @@
 
 package stroom.data.store.mock;
 
+import stroom.data.store.api.AttributeMapFactory;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.OutputStreamProvider;
@@ -56,7 +57,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Singleton
-public class MockStore implements Store, Clearable {
+public class MockStore implements Store, Clearable, AttributeMapFactory {
 
     /**
      * Our stream data.
@@ -181,6 +182,16 @@ public class MockStore implements Store, Clearable {
             sb.append("\n");
         }
         return sb.toString();
+    }
+
+    @Override
+    public Map<String, String> getAttributes(final long metaId) {
+        return Map.of();
+    }
+
+    @Override
+    public AttributeMap getAttributeMapForPart(final long streamId, final long partNo) {
+        return new AttributeMap();
     }
 
     private static class SeekableByteArrayInputStream extends ByteArrayInputStream implements SeekableInputStream {

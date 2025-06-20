@@ -16,9 +16,9 @@
 
 package stroom.data.store.impl.fs;
 
+import stroom.data.store.api.AttributeMapFactory;
 import stroom.data.store.api.FsVolumeGroupService;
 import stroom.data.store.api.Store;
-import stroom.data.store.impl.AttributeMapFactory;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.util.guice.GuiceUtil;
