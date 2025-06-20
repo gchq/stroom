@@ -61,17 +61,58 @@ class TestCachedValue {
     }
 
     @Test
+    void singleThreadAsyncTest() {
+
+        final AtomicInteger version = new AtomicInteger(1);
+
+        final CachedValue<String, Integer> cachedValue = CachedValue.builder()
+                .withMaxCheckIntervalMillis(100)
+                .withStateSupplier(() -> {
+                    LOGGER.debug("Supplying state");
+                    return version.get();
+                })
+                .withValueFunction(state -> {
+                    // Getting the value takes a bit of time
+                    ThreadUtil.sleep(20);
+                    LOGGER.debug("Supplying value");
+                    return "version " + state;
+                })
+                .build();
+
+        assertThat(cachedValue.getValueAsync())
+                .isEqualTo("version 1");
+        assertThat(cachedValue.getValueAsync())
+                .isEqualTo("version 1");
+
+        version.incrementAndGet();
+
+        LOGGER.debug("Sleeping");
+        ThreadUtil.sleepIgnoringInterrupts(150);
+
+        assertThat(cachedValue.getValueAsync())
+                .isEqualTo("version 1");
+
+        LOGGER.debug("Sleeping");
+        ThreadUtil.sleepIgnoringInterrupts(150);
+
+        assertThat(cachedValue.getValueAsync())
+                .isEqualTo("version 2");
+
+        LOGGER.debug("Sleeping");
+        ThreadUtil.sleepIgnoringInterrupts(100);
+
+        assertThat(cachedValue.getValueAsync())
+                .isEqualTo("version 2");
+    }
+
+    @Test
     void multiThreadTest() throws InterruptedException {
-
-//        final AtomicInteger version = new AtomicInteger(1);
         final int version = 1;
-
 
         final CachedValue<String, Integer> cachedValue = CachedValue.builder()
                 .withMaxCheckIntervalSeconds(60)
                 .withStateSupplier(() -> {
                     LOGGER.debug("Supplying state");
-//                    return version.get();
                     return version;
                 })
                 .withValueFunction(state -> {
@@ -114,6 +155,70 @@ class TestCachedValue {
         }
 
         finishLatch.await(10, TimeUnit.SECONDS);
+        LOGGER.debug("Finished");
+    }
+
+    @Test
+    void multiThreadAsyncTest() throws InterruptedException {
+        final AtomicInteger version = new AtomicInteger(1);
+        final AtomicInteger updateCallCount = new AtomicInteger();
+
+        final CachedValue<Integer, Integer> cachedValue = CachedValue.builder()
+                .withMaxCheckIntervalMillis(5)
+                .withStateSupplier(() -> {
+                    LOGGER.debug("Supplying state");
+//                    return version.get();
+                    return version.get();
+                })
+                .withValueFunction(state -> {
+                    updateCallCount.incrementAndGet();
+                    LOGGER.debug("Supplying value");
+                    return state + 100;
+                })
+                .build();
+
+        final int threadCount = 3;
+        final CountDownLatch startLatch = new CountDownLatch(threadCount);
+        final CountDownLatch finishLatch = new CountDownLatch(threadCount);
+        final ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+
+        for (int i = 0; i < threadCount; i++) {
+            CompletableFuture.runAsync(() -> {
+                try {
+                    try {
+                        startLatch.countDown();
+                        LOGGER.debug("Thread waiting, startLatch {}", startLatch.getCount());
+                        startLatch.await(10, TimeUnit.SECONDS);
+                    } catch (final InterruptedException e) {
+                        LOGGER.debug("interrupted", e);
+                        throw new RuntimeException(e);
+                    }
+                    LOGGER.debug("Thread starting");
+                    int lastValue = -1;
+                    for (int j = 0; j < 100; j++) {
+                        final int value = cachedValue.getValueAsync();
+                        // Hard to assert anything other than the value is always initialised
+                        assertThat(value)
+                                .isNotNull()
+                                .isGreaterThanOrEqualTo(lastValue);
+                        lastValue = value;
+                        // Each thread will increment once
+                        if (j == 20) {
+                            version.incrementAndGet();
+                        }
+                    }
+                    finishLatch.countDown();
+                    LOGGER.debug("Thread finished, finishLatch {}", finishLatch.getCount());
+                } catch (final RuntimeException e) {
+                    LOGGER.debug("error", e);
+                    Assertions.fail(e.getMessage());
+                }
+            }, executorService);
+        }
+
+        // Wait for all threads to finish their work
+        finishLatch.await(10, TimeUnit.SECONDS);
+        LOGGER.debug("updateCallCount: {}", updateCallCount);
         LOGGER.debug("Finished");
     }
 

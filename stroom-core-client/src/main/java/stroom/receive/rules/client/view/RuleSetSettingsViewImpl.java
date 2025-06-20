@@ -56,6 +56,10 @@ public class RuleSetSettingsViewImpl extends ViewImpl implements RuleSetSettings
         this.expression.setWidget(view.asWidget());
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Binder extends UiBinder<Widget, RuleSetSettingsViewImpl> {
 
     }

@@ -88,7 +88,7 @@ public class CIKey implements Comparable<CIKey> {
     CIKey(final String key, final String lowerKey) {
         this.key = Objects.requireNonNull(key);
         this.lowerKey = Objects.requireNonNull(lowerKey);
-        this.hashCode = Objects.hash(key);
+        this.hashCode = Objects.hash(this.lowerKey);
     }
 
     /**
@@ -258,10 +258,27 @@ public class CIKey implements Comparable<CIKey> {
         } else if (key.isEmpty()) {
             return EMPTY_STRING;
         } else {
-            final String lowerKey = toLowerCase(key);
-            return NullSafe.requireNonNullElseGet(
-                    CIKeys.getCommonKeyByLowerCase(lowerKey),
-                    () -> CIKey.ofLowerCase(lowerKey));
+            // This assumes that doing the optimistic hashmap lookups is
+            // faster than lower-casing the key.
+            // First assume it matches the case exactly
+            CIKey ciKey = CIKeys.getCommonKey(key);
+            if (ciKey == null) {
+                // If the first char is lower case then there is a good change key is
+                // all lower case
+                final char firstChar = key.charAt(0);
+                if (Character.isLowerCase(firstChar)) {
+                    // Now assume it is already lower-case
+                    ciKey = CIKeys.getCommonKeyByLowerCase(key);
+                }
+                if (ciKey == null) {
+                    final String lowerKey = toLowerCase(key);
+                    ciKey = CIKeys.getCommonKeyByLowerCase(lowerKey);
+                    if (ciKey == null) {
+                        CIKey.ofLowerCase(lowerKey);
+                    }
+                }
+            }
+            return ciKey;
         }
     }
 
@@ -323,7 +340,6 @@ public class CIKey implements Comparable<CIKey> {
 
     @Override
     public int compareTo(final CIKey o) {
-//        Objects.requireNonNull(o);
         return COMPARATOR.compare(this, o);
     }
 
@@ -419,7 +435,15 @@ public class CIKey implements Comparable<CIKey> {
                 .collect(Collectors.toList());
     }
 
+    @JsonIgnore
     public static Set<CIKey> setOf(final String... keys) {
+        return NullSafe.stream(keys)
+                .map(CIKey::of)
+                .collect(Collectors.toSet());
+    }
+
+    @JsonIgnore
+    public static Set<CIKey> setOf(final Set<String> keys) {
         return NullSafe.stream(keys)
                 .map(CIKey::of)
                 .collect(Collectors.toSet());

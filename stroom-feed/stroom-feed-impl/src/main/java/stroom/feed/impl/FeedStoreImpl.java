@@ -100,7 +100,7 @@ public class FeedStoreImpl implements FeedStore {
 
         final DocRef created = store.createDocument(name);
 
-        // Double check the feed wasn't created elsewhere at the same time.
+        // Double-check the feed wasn't created elsewhere at the same time.
         if (checkDuplicateName(name, created)) {
             // Delete the newly created document as the name is duplicated.
 
@@ -108,9 +108,9 @@ public class FeedStoreImpl implements FeedStore {
             // permissions added to them until after they are created in the store.
             securityContext.asProcessingUser(() -> store.deleteDocument(created));
             throw new EntityServiceException("A feed named '" + name + "' already exists");
+        } else {
+            return created;
         }
-
-        return created;
     }
 
     @Override

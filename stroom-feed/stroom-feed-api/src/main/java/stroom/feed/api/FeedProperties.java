@@ -23,6 +23,8 @@ public interface FeedProperties {
 
     boolean isReference(String feedName);
 
+    boolean exists(String feedName);
+
     /**
      * DEPRECATED: To be replaced with policy based status decision, one day, maybe.
      */

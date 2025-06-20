@@ -14,20 +14,17 @@ public enum JerseyClientName {
     AWS_PUBLIC_KEYS,
 
     /**
-     * Client for Proxy to get content from a downstream stroom/proxy.
+     * Client for Proxy to communicate with a downstream (in datafeed flow terms) stroom
+     * or stroom-proxy instance. This client is used for obtaining receipt policy rules and
+     * verifying API keys.
      */
-    CONTENT_SYNC,
+    DOWNSTREAM,
 
     /**
      * The default client. Used if a named client has not been configured or where
      * you want multiple named clients to share similar config.
      */
     DEFAULT,
-
-    /**
-     * Client for proxy to get the feed status from a downstream stroom/proxy.
-     */
-    FEED_STATUS,
 
     /**
      * Client for the HttpPostFilter.

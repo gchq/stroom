@@ -17,15 +17,19 @@ public interface Metrics {
 
     LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(HasMetrics.class);
 
-    String DELTA = "delta";
-    String READ = "read";
-    String WRITE = "write";
-    String POSITION = "position";
-    String SIZE = "size";
-    String COUNT = "count";
     String AGE_MS = "ageMs";
+    String COUNT = "count";
+    String DELTA = "delta";
     String FILE_COUNT = "fileCount";
+    String HANDLE = "handle";
+    String POSITION = "position";
+    String READ = "read";
+    String RECEIVE = "receive";
+    String SEND = "send";
+    String SIZE = "size";
     String SIZE_IN_BYTES = "sizeInBytes";
+    String STREAM = "stream";
+    String WRITE = "write";
 
     /**
      * A builder for registering and in some cases also creating a {@link com.codahale.metrics.Metric}

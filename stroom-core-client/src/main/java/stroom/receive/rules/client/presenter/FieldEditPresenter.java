@@ -18,8 +18,11 @@
 package stroom.receive.rules.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.string.CIKey;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -35,29 +38,30 @@ import java.util.Set;
 
 public class FieldEditPresenter extends MyPresenterWidget<FieldEditPresenter.FieldEditView> {
 
-    private Set<String> otherFieldNames;
+    private Set<CIKey> otherFieldNames;
 
     @Inject
     public FieldEditPresenter(final EventBus eventBus, final FieldEditView view) {
         super(eventBus, view);
     }
 
-    public void read(final QueryField field, final Set<String> otherFieldNames) {
+    public void read(final QueryField field, final Set<CIKey> otherFieldNames) {
         this.otherFieldNames = otherFieldNames;
         getView().setFieldType(field.getFldType());
         getView().setName(field.getFldName());
     }
 
     public QueryField write() {
-        String name = getView().getName();
-        name = name.trim();
-
-        if (name.length() == 0) {
+        final String name = NullSafe.trim(getView().getName());
+        if (name.isEmpty()) {
             AlertEvent.fireWarn(this, "A field must have a name", null);
             return null;
         }
-        if (otherFieldNames.contains(name)) {
-            AlertEvent.fireWarn(this, "A field with this name already exists", null);
+        final CIKey ciName = CIKey.of(name);
+        if (otherFieldNames.contains(ciName)) {
+            AlertEvent.fireWarn(this,
+                    "A field with this name already exists. Field names are case insensitive.",
+                    null);
             return null;
         }
 
@@ -75,6 +79,20 @@ public class FieldEditPresenter extends MyPresenterWidget<FieldEditPresenter.Fie
                 .fire();
     }
 
+    private QueryField create(final FieldType type, final String name) {
+        return QueryField
+                .builder()
+                .fldName(name)
+                .fldType(type)
+                .queryable(true)
+                .conditionSet(ConditionSet.RECEIPT_POLICY_CONDITIONS)
+                .build();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
     public interface FieldEditView extends View, Focus {
 
         FieldType getFieldType();
@@ -84,14 +102,5 @@ public class FieldEditPresenter extends MyPresenterWidget<FieldEditPresenter.Fie
         String getName();
 
         void setName(final String name);
-    }
-
-    private QueryField create(final FieldType type, final String name) {
-        return QueryField
-                .builder()
-                .fldName(name)
-                .fldType(type)
-                .queryable(true)
-                .build();
     }
 }

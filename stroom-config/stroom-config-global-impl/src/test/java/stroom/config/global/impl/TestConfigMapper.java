@@ -61,6 +61,7 @@ import stroom.pipeline.refdata.ReferenceDataLmdbConfig;
 import stroom.planb.impl.PlanBConfig;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.receive.common.ReceiveDataConfig;
+import stroom.receive.rules.impl.StroomReceiptPolicyConfig;
 import stroom.search.elastic.ElasticConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
@@ -949,6 +950,7 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_PUBLIC_URI) final PublicUriConfig publicUri,
                 @JsonProperty(PROP_NAME_QUERY_DATASOURCE) final IndexFieldDbConfig queryDataSourceConfig,
                 @JsonProperty(PROP_NAME_RECEIVE) final ReceiveDataConfig receiveDataConfig,
+                @JsonProperty(PROP_NAME_RECEIPT_POLICY) final StroomReceiptPolicyConfig receiptPolicyConfig,
                 @JsonProperty(PROP_NAME_S3) final S3Config s3Config,
                 @JsonProperty(PROP_NAME_SEARCH) final SearchConfig searchConfig,
                 @JsonProperty(PROP_NAME_SECURITY) final SecurityConfig securityConfig,
@@ -1011,6 +1013,7 @@ class TestConfigMapper {
                     publicUri,
                     queryDataSourceConfig,
                     receiveDataConfig,
+                    receiptPolicyConfig,
                     s3Config,
                     searchConfig,
                     securityConfig,

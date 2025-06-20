@@ -19,6 +19,16 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class EventStoreConfig extends AbstractConfig implements IsProxyConfig {
 
+    public static final StroomDuration DEFAULT_ROLL_FREQUENCY = StroomDuration.ofSeconds(10);
+    public static final StroomDuration DEFAULT_MAX_AGE = StroomDuration.ofMinutes(1);
+    public static final long DEFAULT_MAX_EVENT_COUNT = Long.MAX_VALUE;
+    public static final long DEFAULT_MAX_BYTE_COUNT = Long.MAX_VALUE;
+    public static final int DEFAULT_FORWARD_QUEUE_SIZE = 1_000;
+    public static final CacheConfig DEFAULT_OPEN_FILES_CACHE_CONFIG = CacheConfig.builder()
+            .maximumSize(100)
+            .statisticsMode(CacheConfig.PROXY_DEFAULT_STATISTICS_MODE)
+            .build();
+
     @JsonProperty
     private final StroomDuration rollFrequency;
     @JsonProperty
@@ -33,31 +43,28 @@ public class EventStoreConfig extends AbstractConfig implements IsProxyConfig {
     private final int forwardQueueSize;
 
     public EventStoreConfig() {
-        rollFrequency = StroomDuration.ofSeconds(10);
-        maxAge = StroomDuration.ofMinutes(1);
-        maxEventCount = Long.MAX_VALUE;
-        maxByteCount = Long.MAX_VALUE;
-        openFilesCache = CacheConfig.builder()
-                .maximumSize(100)
-                .statisticsMode(CacheConfig.PROXY_DEFAULT_STATISTICS_MODE)
-                .build();
-        forwardQueueSize = 1_000;
+        rollFrequency = DEFAULT_ROLL_FREQUENCY;
+        maxAge = DEFAULT_MAX_AGE;
+        maxEventCount = DEFAULT_MAX_EVENT_COUNT;
+        maxByteCount = DEFAULT_MAX_BYTE_COUNT;
+        openFilesCache = DEFAULT_OPEN_FILES_CACHE_CONFIG;
+        forwardQueueSize = DEFAULT_FORWARD_QUEUE_SIZE;
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
     public EventStoreConfig(@JsonProperty("rollFrequency") final StroomDuration rollFrequency,
                             @JsonProperty("maxAge") final StroomDuration maxAge,
-                            @JsonProperty("maxEventCount") final long maxEventCount,
-                            @JsonProperty("maxByteCount") final long maxByteCount,
+                            @JsonProperty("maxEventCount") final Long maxEventCount,
+                            @JsonProperty("maxByteCount") final Long maxByteCount,
                             @JsonProperty("openFilesCache") final CacheConfig openFilesCache,
-                            @JsonProperty("forwardQueueSize") final int forwardQueueSize) {
-        this.rollFrequency = rollFrequency;
-        this.maxAge = maxAge;
-        this.maxEventCount = maxEventCount;
-        this.maxByteCount = maxByteCount;
-        this.openFilesCache = openFilesCache;
-        this.forwardQueueSize = forwardQueueSize;
+                            @JsonProperty("forwardQueueSize") final Integer forwardQueueSize) {
+        this.rollFrequency = Objects.requireNonNullElse(rollFrequency, DEFAULT_ROLL_FREQUENCY);
+        this.maxAge = Objects.requireNonNullElse(maxAge, DEFAULT_MAX_AGE);
+        this.maxEventCount = Objects.requireNonNullElse(maxEventCount, DEFAULT_MAX_EVENT_COUNT);
+        this.maxByteCount = Objects.requireNonNullElse(maxByteCount, DEFAULT_MAX_BYTE_COUNT);
+        this.openFilesCache = Objects.requireNonNullElse(openFilesCache, DEFAULT_OPEN_FILES_CACHE_CONFIG);
+        this.forwardQueueSize = Objects.requireNonNullElse(forwardQueueSize, DEFAULT_FORWARD_QUEUE_SIZE);
     }
 
     @NotNull

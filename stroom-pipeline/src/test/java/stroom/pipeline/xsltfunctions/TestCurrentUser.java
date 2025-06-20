@@ -33,7 +33,7 @@ class TestCurrentUser extends AbstractXsltFunctionTest<CurrentUser> {
         Mockito.when(mockCurrentUserHolder.getCurrentUser())
                 .thenReturn(new UserIdentity() {
                     @Override
-                    public String getSubjectId() {
+                    public String subjectId() {
                         return "user1";
                     }
                 });

@@ -63,7 +63,7 @@ public class FeedPropertiesImpl implements FeedProperties {
                 return resolveEncoding(feedName, childStreamTypeName, feedDoc.getContextEncoding());
 
             } else if (childStreamTypeName == null
-                    && metaService.isRaw(streamTypeName)) {
+                       && metaService.isRaw(streamTypeName)) {
                 // Child stream type is null for the data child streams
                 return resolveEncoding(feedName, streamTypeName, feedDoc.getEncoding());
 
@@ -87,14 +87,14 @@ public class FeedPropertiesImpl implements FeedProperties {
             }
 
             final String message = "Unsupported encoding '" +
-                    encoding +
-                    "' for feed '" +
-                    feedName +
-                    "' and type '" +
-                    streamTypeName +
-                    "'. Using default '" +
-                    StreamUtil.DEFAULT_CHARSET_NAME +
-                    "'.";
+                                   encoding +
+                                   "' for feed '" +
+                                   feedName +
+                                   "' and type '" +
+                                   streamTypeName +
+                                   "'. Using default '" +
+                                   StreamUtil.DEFAULT_CHARSET_NAME +
+                                   "'.";
             LOGGER.debug(message);
             throw new UnsupportedEncodingException(message);
         }
@@ -114,6 +114,12 @@ public class FeedPropertiesImpl implements FeedProperties {
         return feedDocCache.get(feedName)
                 .map(FeedDoc::isReference)
                 .orElse(false);
+    }
+
+    @Override
+    public boolean exists(final String feedName) {
+        return feedDocCache.get(feedName)
+                .isPresent();
     }
 
     @Override

@@ -21,7 +21,7 @@ public class DefaultOpenIdCredsUserIdentity implements UserIdentity, HasJwt {
     }
 
     @Override
-    public String getSubjectId() {
+    public String subjectId() {
         return id;
     }
 
@@ -45,8 +45,8 @@ public class DefaultOpenIdCredsUserIdentity implements UserIdentity, HasJwt {
     @Override
     public String toString() {
         return "DefaultOpenIdCredsUserIdentity{" +
-                "id='" + id + '\'' +
-                ", jwt='" + jwt + '\'' +
-                '}';
+               "id='" + id + '\'' +
+               ", jwt='" + jwt + '\'' +
+               '}';
     }
 }

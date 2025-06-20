@@ -17,13 +17,13 @@
 package stroom.item.client;
 
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.HasDescription;
 import stroom.util.shared.NullSafe;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 import java.util.Objects;
-import java.util.function.BiFunction;
 
 public class SimpleSelectionItemWrapper<T> implements SelectionItem {
 
@@ -56,6 +56,15 @@ public class SimpleSelectionItemWrapper<T> implements SelectionItem {
     }
 
     @Override
+    public String getDescription() {
+        if (item instanceof final HasDescription hasDescription) {
+            return hasDescription.getDescription();
+        } else {
+            return SelectionItem.super.getDescription();
+        }
+    }
+
+    @Override
     public SafeHtml getRenderedLabel() {
         if (renderFunction != null) {
             final SafeHtml safeHtml = renderFunction.apply(label, item);
@@ -68,7 +77,7 @@ public class SimpleSelectionItemWrapper<T> implements SelectionItem {
 
     @Override
     public boolean hasRenderedLabel() {
-        return renderFunction != null;
+        return renderFunction != null || NullSafe.isNonBlankString(getDescription());
     }
 
     @Override
@@ -101,18 +110,18 @@ public class SimpleSelectionItemWrapper<T> implements SelectionItem {
     @Override
     public String toString() {
         return "SimpleSelectionItemWrapper{" +
-                "label='" + label + '\'' +
-                ", item=" + item +
-                '}';
+               "label='" + label + '\'' +
+               ", item=" + item +
+               '}';
     }
 
 
     // --------------------------------------------------------------------------------
 
 
-    public interface RenderFunction<T> extends BiFunction<String, T, SafeHtml> {
+    @FunctionalInterface
+    public interface RenderFunction<T> {
 
-        @Override
         SafeHtml apply(String label, T item);
     }
 }

@@ -86,13 +86,8 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
         this.queryDatasourceDbConnProvider = queryDatasourceDbConnProvider;
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(IndexFieldFields.NAME_FIELD, INDEX_FIELD.NAME, string -> string);
-        expressionMapper.map(IndexFieldFields.TYPE_FIELD, INDEX_FIELD.TYPE, string -> {
-            final FieldType fieldType = FieldType.fromDisplayValue(string);
-            if (fieldType == null) {
-                return null;
-            }
-            return fieldType.getPrimitiveValue();
-        });
+        expressionMapper.map(IndexFieldFields.TYPE_FIELD, INDEX_FIELD.TYPE, string ->
+                NullSafe.get(FieldType.fromDisplayValue(string), FieldType::getPrimitiveValue));
         expressionMapper.map(IndexFieldFields.STORE_FIELD, INDEX_FIELD.STORED, Boolean::valueOf);
         expressionMapper.map(IndexFieldFields.INDEX_FIELD, INDEX_FIELD.INDEXED, Boolean::valueOf);
         expressionMapper.map(IndexFieldFields.POSITIONS_FIELD, INDEX_FIELD.TERM_POSITIONS, Boolean::valueOf);

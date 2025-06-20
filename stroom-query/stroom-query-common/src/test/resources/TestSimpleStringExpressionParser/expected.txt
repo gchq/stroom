@@ -80,7 +80,7 @@ AND {defaultField starts with this_}
 -----
 =^this_is_my_feed
 =====
-AND {defaultField starts with (case sensitive) this_is_my_feed}
+AND {defaultField starts with (CS) this_is_my_feed}
 -----
 $feed
 =====
@@ -88,7 +88,7 @@ AND {defaultField ends with feed}
 -----
 =$feed
 =====
-AND {defaultField ends with (case sensitive) feed}
+AND {defaultField ends with (CS) feed}
 -----
 ~timf
 =====
@@ -184,19 +184,19 @@ AND {defaultField matches regex ^man}
 -----
 =/(wo)?man$
 =====
-AND {defaultField matches regex (case sensitive) (wo)?man$}
+AND {defaultField matches regex (CS) (wo)?man$}
 -----
 =/^(wo)?man$
 =====
-AND {defaultField matches regex (case sensitive) ^(wo)?man$}
+AND {defaultField matches regex (CS) ^(wo)?man$}
 -----
 =/(wo?man$
 =====
-AND {defaultField matches regex (case sensitive) (wo?man$}
+AND {defaultField matches regex (CS) (wo?man$}
 -----
 =/^man
 =====
-AND {defaultField matches regex (case sensitive) ^man}
+AND {defaultField matches regex (CS) ^man}
 -----
 a
 =====

@@ -16,6 +16,7 @@
 
 package stroom.security.mock;
 
+import stroom.security.api.CommonSecurityContext;
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.AppPermissionDao;
 import stroom.security.impl.UserDao;
@@ -40,6 +41,11 @@ public class MockUserSecurityContextModule extends AbstractModule {
 
     @Override
     protected void configure() {
+    }
+
+    @Provides
+    public CommonSecurityContext commonSecurityContext(final SecurityContext securityContext) {
+        return securityContext;
     }
 
     @Provides

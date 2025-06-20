@@ -19,6 +19,8 @@ package stroom.query.api;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.query.api.datasource.QueryField;
+import stroom.util.shared.HasDescription;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.StringUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -58,6 +60,20 @@ public final class ExpressionTerm extends ExpressionItem {
                           "IN_DICTIONARY, IN_FOLDER or IS_DOC_REF")
     @JsonProperty
     private final DocRef docRef;
+
+    /**
+     * Convenience method for creating an enabled {@code field = value} {@link ExpressionTerm}
+     */
+    public static ExpressionTerm equals(final String field, final String value) {
+        return new ExpressionTerm(true, field, Condition.EQUALS, value, null);
+    }
+
+    /**
+     * Convenience method for creating an enabled {@code field = value} {@link ExpressionTerm}
+     */
+    public static ExpressionTerm equalsCaseSensitive(final String field, final String value) {
+        return new ExpressionTerm(true, field, Condition.EQUALS_CASE_SENSITIVE, value, null);
+    }
 
     @Override
     public boolean containsField(final String... fields) {
@@ -146,6 +162,7 @@ public final class ExpressionTerm extends ExpressionItem {
     @Override
     void append(final StringBuilder sb, final String pad, final boolean singleLine) {
         if (enabled()) {
+            //noinspection SizeReplaceableByIsEmpty // Cos GWT
             if (!singleLine && sb.length() > 0) {
                 sb.append("\n");
                 sb.append(pad);
@@ -175,9 +192,9 @@ public final class ExpressionTerm extends ExpressionItem {
 
     private void appendDocRef(final StringBuilder sb, final DocRef docRef) {
         if (docRef != null) {
-            if (docRef.getName() != null && docRef.getName().trim().length() > 0) {
+            if (NullSafe.isNonBlankString(docRef.getName())) {
                 sb.append(docRef.getName());
-            } else if (docRef.getUuid() != null && docRef.getUuid().trim().length() > 0) {
+            } else if (NullSafe.isNonBlankString(docRef.getUuid())) {
                 sb.append(docRef.getUuid());
             }
         }
@@ -187,22 +204,22 @@ public final class ExpressionTerm extends ExpressionItem {
     // --------------------------------------------------------------------------------
 
 
-    public enum Condition implements HasDisplayValue {
+    public enum Condition implements HasDisplayValue, HasDescription {
         CONTAINS("+",
                 "contains",
-                "contains"),
+                "contains (case-insensitive)"),
         EQUALS("=",
                 "=",
-                "equals"),
+                "equals (case-insensitive)"),
         STARTS_WITH("^",
                 "starts with",
-                "starts with"),
+                "starts with (case-insensitive)"),
         ENDS_WITH("$",
                 "ends with",
-                "ends with"),
+                "ends with (case-insensitive)"),
         NOT_EQUALS("!=",
                 "!=",
-                "not equals"),
+                "not equals (case-insensitive)"),
         GREATER_THAN(">",
                 ">",
                 "greater than"),
@@ -231,19 +248,22 @@ public final class ExpressionTerm extends ExpressionItem {
                 "word boundary"),
 
         CONTAINS_CASE_SENSITIVE("=+",
-                "contains (case sensitive)",
+                "contains (CS)",
                 "contains (case sensitive)"),
         EQUALS_CASE_SENSITIVE("==",
                 "==",
                 "equals (case sensitive)"),
+        NOT_EQUALS_CASE_SENSITIVE("!==",
+                "!==",
+                "equals (case sensitive)"),
         STARTS_WITH_CASE_SENSITIVE("=^",
-                "starts with (case sensitive)",
+                "starts with (CS)",
                 "starts with (case sensitive)"),
         ENDS_WITH_CASE_SENSITIVE("=$",
-                "ends with (case sensitive)",
+                "ends with (CS)",
                 "ends with (case sensitive)"),
         MATCHES_REGEX_CASE_SENSITIVE("=/",
-                "matches regex (case sensitive)",
+                "matches regex (CS)",
                 "matches regex (case sensitive)"),
 
         // Permission related conditions.
@@ -282,6 +302,7 @@ public final class ExpressionTerm extends ExpressionItem {
             return displayValue;
         }
 
+        @Override
         public String getDescription() {
             return description;
         }
@@ -331,6 +352,14 @@ public final class ExpressionTerm extends ExpressionItem {
 
         public Builder field(final QueryField value) {
             this.field = value.getFldName();
+            return this;
+        }
+
+        /**
+         * Equivalent to passing {@link Condition#EQUALS} to {@link Builder#condition(Condition)}.
+         */
+        public Builder equals() {
+            this.condition = Condition.EQUALS;
             return this;
         }
 

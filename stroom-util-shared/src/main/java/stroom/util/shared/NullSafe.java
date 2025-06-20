@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -134,13 +135,31 @@ public class NullSafe {
     /**
      * @return True if the array itself is non-null and all values in the array are non-null
      */
-    public static <T> boolean allNonNull(final T... vals) {
+    public static boolean allNonNull(final Object... vals) {
         if (vals == null) {
             return false;
         } else {
             boolean allNonNull = true;
-            for (final T val : vals) {
+            for (final Object val : vals) {
                 if (val == null) {
+                    allNonNull = false;
+                    break;
+                }
+            }
+            return allNonNull;
+        }
+    }
+
+    /**
+     * @return True if the array itself is non-null and all values in the array are non-null
+     */
+    public static boolean allNonNull(final Supplier<Object>... valueSuppliers) {
+        if (valueSuppliers == null) {
+            return false;
+        } else {
+            boolean allNonNull = true;
+            for (final Supplier<Object> supplier : valueSuppliers) {
+                if (supplier == null || supplier.get() == null) {
                     allNonNull = false;
                     break;
                 }
@@ -375,6 +394,12 @@ public class NullSafe {
     public static String trim(final String str) {
         return str != null
                 ? str.trim()
+                : "";
+    }
+
+    public static String subString(final String str, final int beginIndex, final int endIndex) {
+        return str != null
+                ? str.substring(beginIndex, endIndex)
                 : "";
     }
 
@@ -650,6 +675,30 @@ public class NullSafe {
     }
 
     /**
+     * Equivalent to {@link Iterable#forEach(Consumer)}, except consumer is only called for each non-null
+     * item in the iterable. If iterable or consumer are null it is a no-op.
+     */
+    public static <T> void forEach(final T[] items, final Consumer<? super T> consumer) {
+        if (items != null && consumer != null) {
+            for (final T item : items) {
+                if (item != null) {
+                    consumer.accept(item);
+                }
+            }
+        }
+    }
+
+    /**
+     * Equivalent to {@link Iterable#forEach(Consumer)}, except consumer is only called for each non-null
+     * item in the iterable. If iterable or consumer are null it is a no-op.
+     */
+    public static <K, V> void forEach(final Map<K, V> map, final BiConsumer<? super K, ? super V> consumer) {
+        if (map != null && !map.isEmpty() && consumer != null) {
+            map.forEach(consumer);
+        }
+    }
+
+    /**
      * Returns the passed value as a singleton list if non-null, else an empty list
      */
     public static <T> List<T> singletonList(final T item) {
@@ -756,25 +805,49 @@ public class NullSafe {
      * @param type The class of the {@link Enum} for use when constructing an empty {@link EnumSet}
      * @return A non-null {@link EnumSet}.
      */
-    public static <S extends Set<T>, T extends Enum<T>> Set<T> enumSet(final Class<T> type,
-                                                                       final S set) {
-        if (set instanceof EnumSet<?>) {
-            return set;
-        } else if (set == null || set.isEmpty()) {
-            return EnumSet.noneOf(type);
+    public static <S extends Collection<T>, T extends Enum<T>> Set<T> unmodifialbeEnumSet(
+            final Class<T> type,
+            final S collection) {
+        if (collection == null || collection.isEmpty()) {
+            return Collections.emptySet();
+        } else if (collection instanceof final EnumSet<?> enumSet) {
+            // Saves the copyOf
+            //noinspection unchecked
+            return Collections.unmodifiableSet((EnumSet<T>) enumSet);
+        } else if (collection.size() == 1) {
+            return Collections.singleton(collection.iterator().next());
         } else {
             // Make sure we get back an EnumSet as they are faster and more memory efficient
-            return EnumSet.copyOf(set);
+            return Collections.unmodifiableSet(EnumSet.copyOf(collection));
         }
     }
 
     /**
-     * Returns a non-null {@link EnumSet} containing all non-null items.
+     * Returns a non-null {@link EnumSet} containing the items in set.
+     * If set is not itself an {@link EnumSet} then the items will be copied into
+     * a new {@link EnumSet}.
+     *
+     * @param type The class of the {@link Enum} for use when constructing an empty {@link EnumSet}
+     * @return A non-null {@link EnumSet}.
+     */
+    public static <S extends Collection<T>, T extends Enum<T>> Set<T> mutableEnumSet(
+            final Class<T> type,
+            final S collection) {
+        if (collection == null || collection.isEmpty()) {
+            return EnumSet.noneOf(type);
+        } else {
+            // Make sure we get back an EnumSet as they are faster and more memory efficient
+            return EnumSet.copyOf(collection);
+        }
+    }
+
+    /**
+     * Returns a non-null mutable {@link EnumSet} containing all non-null items.
      *
      * @param type The class of the {@link Enum} for use when constructing an empty {@link EnumSet}.
      * @return A non-null {@link EnumSet}.
      */
-    public static <T extends Enum<T>> Set<T> enumSetOf(final Class<T> type, final T... items) {
+    public static <T extends Enum<T>> Set<T> mutableEnumSetOf(final Class<T> type, final T... items) {
         final EnumSet<T> enumSet = EnumSet.noneOf(type);
         if (items != null) {
             for (final T item : items) {
@@ -784,6 +857,24 @@ public class NullSafe {
             }
         }
         return enumSet;
+    }
+
+    /**
+     * Returns a non-null mutable {@link EnumSet} containing all non-null items.
+     *
+     * @param type The class of the {@link Enum} for use when constructing an empty {@link EnumSet}.
+     * @return A non-null {@link EnumSet}.
+     */
+    public static <T extends Enum<T>> Set<T> unmodifiableEnumSetOf(final Class<T> type, final T... items) {
+        final EnumSet<T> enumSet = EnumSet.noneOf(type);
+        if (items != null) {
+            for (final T item : items) {
+                if (item != null) {
+                    enumSet.add(item);
+                }
+            }
+        }
+        return Collections.unmodifiableSet(enumSet);
     }
 
     /**
@@ -825,15 +916,6 @@ public class NullSafe {
                 : "";
     }
 
-//    /**
-//     * Returns the passed stroomDuration if it is non-null else returns a ZERO {@link StroomDuration}
-//     */
-//    public static StroomDuration duration(final StroomDuration stroomDuration) {
-//        return stroomDuration != null
-//                ? stroomDuration
-//                : StroomDuration.ZERO;
-//    }
-
     /**
      * Returns the passed duration if it is non-null else returns a ZERO {@link SimpleDuration}
      */
@@ -842,16 +924,6 @@ public class NullSafe {
                 ? duration
                 : SimpleDuration.ZERO;
     }
-
-//    /**
-//     * Returns the passed duration if it is non-null else returns a ZERO {@link Duration}
-//     */
-//    public static Duration duration(final Duration duration) {
-//        return duration != null
-//                ? duration
-//                : Duration.ZERO;
-
-//    }
 
     /**
      * Apply getter to value if value is non-null.

@@ -33,6 +33,7 @@ import stroom.processor.shared.QueryData;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.datasource.QueryField;
+import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.content.shared.ContentTemplate;
 import stroom.receive.content.shared.ContentTemplates;
@@ -61,6 +62,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,6 +82,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
     private static final Pattern PATH_PARAM_REPLACE_PATTERN = Pattern.compile("[^a-zA-Z0-9 _-]");
     private static final Pattern PATH_STATIC_REPLACE_PATTERN = Pattern.compile("[^a-zA-Z0-9 /_-]");
     private static final Pattern GROUP_REPLACE_PATTERN = Pattern.compile("[^a-zA-Z0-9-]");
+    private static final Duration CHECK_INTERVAL = Duration.ofMinutes(1);
     private static final Set<String> COPYABLE_DOC_TYPES = Set.of(
             XsltDoc.TYPE,
             TextConverterDoc.TYPE);
@@ -118,7 +121,8 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                                           final ContentTemplateStore contentTemplateStore,
                                           final ProcessorFilterService processorFilterService,
                                           final PipelineService pipelineService,
-                                          final ExpressionMatcherFactory expressionMatcherFactory) {
+                                          final ExpressionMatcherFactory expressionMatcherFactory,
+                                          final ExpressionPredicateFactory expressionPredicateFactory) {
         this.receiveDataConfigProvider = receiveDataConfigProvider;
         this.autoContentCreationConfigProvider = autoContentCreationConfigProvider;
         this.documentPermissionService = documentPermissionService;
@@ -133,32 +137,40 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         this.contentTemplateStore = contentTemplateStore;
         this.processorFilterService = processorFilterService;
         this.pipelineService = pipelineService;
+
+        // TODO change to use ExpressionPredicateFactory
         this.cachedExpressionMatcher = CachedValue.builder()
-                .withMaxCheckIntervalMinutes(1)
+                .withMaxCheckInterval(CHECK_INTERVAL)
                 .withStateSupplier(() ->
                         autoContentCreationConfigProvider.get().getTemplateMatchFields())
                 .withValueFunction(templateMatchFields ->
                         createExpressionMatcher(expressionMatcherFactory, templateMatchFields))
                 .build();
         this.cachedDestinationPathTemplator = CachedValue.builder()
-                .withMaxCheckIntervalMinutes(1)
-                .withStateSupplier(() -> autoContentCreationConfigProvider.get().getDestinationExplorerPathTemplate())
-                .withValueFunction(template -> TemplateUtil.parseTemplate(
-                        template,
-                        str -> PATH_PARAM_REPLACE_PATTERN.matcher(NullSafe.trim(str)).replaceAll("_"),
-                        str -> PATH_STATIC_REPLACE_PATTERN.matcher(NullSafe.trim(str)).replaceAll("_")
-                ))
+                .withMaxCheckInterval(CHECK_INTERVAL)
+                .withStateSupplier(() ->
+                        autoContentCreationConfigProvider.get().getDestinationExplorerPathTemplate())
+                .withValueFunction(template ->
+                        TemplateUtil.parseTemplate(
+                                template,
+                                str -> PATH_PARAM_REPLACE_PATTERN.matcher(NullSafe.trim(str))
+                                        .replaceAll("_"),
+                                str -> PATH_STATIC_REPLACE_PATTERN.matcher(NullSafe.trim(str))
+                                        .replaceAll("_")
+                        ))
                 .build();
         this.cachedGroupTemplator = CachedValue.builder()
-                .withMaxCheckIntervalMinutes(1)
-                .withStateSupplier(() -> autoContentCreationConfigProvider.get().getGroupTemplate())
+                .withMaxCheckInterval(CHECK_INTERVAL)
+                .withStateSupplier(() ->
+                        autoContentCreationConfigProvider.get().getGroupTemplate())
                 .withValueFunction(template -> TemplateUtil.parseTemplate(
                         template,
                         ContentAutoCreationServiceImpl::cleanGroupString))
                 .build();
         this.cachedAdditionalGroupTemplator = CachedValue.builder()
-                .withMaxCheckIntervalMinutes(1)
-                .withStateSupplier(() -> autoContentCreationConfigProvider.get().getAdditionalGroupTemplate())
+                .withMaxCheckInterval(CHECK_INTERVAL)
+                .withStateSupplier(() ->
+                        autoContentCreationConfigProvider.get().getAdditionalGroupTemplate())
                 .withValueFunction(template -> TemplateUtil.parseTemplate(
                         template,
                         ContentAutoCreationServiceImpl::cleanGroupString))

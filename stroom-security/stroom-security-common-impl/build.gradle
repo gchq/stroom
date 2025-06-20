@@ -1,6 +1,7 @@
 ext.moduleName = 'stroom.security.common.impl'
 
 dependencies {
+    implementation project(':stroom-core-shared')
     implementation project(':stroom-docref')
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-security:stroom-security-api')
@@ -8,7 +9,10 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
+    implementation libs.bcrypt
+    implementation libs.bouncy.castle
     implementation libs.caffeine
+    implementation libs.commons.codec
     implementation libs.dropwizard.metrics.healthchecks
     implementation libs.dropwizard.lifecycle
     implementation libs.guava

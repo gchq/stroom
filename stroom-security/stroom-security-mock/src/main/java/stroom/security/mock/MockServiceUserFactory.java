@@ -18,7 +18,7 @@ public class MockServiceUserFactory implements ServiceUserFactory {
     public boolean isServiceUser(final UserIdentity userIdentity,
                                  final UserIdentity serviceUserIdentity) {
         return Objects.equals(
-                userIdentity.getSubjectId(),
+                userIdentity.subjectId(),
                 MockProcessingUserIdentity.PROCESSING_USER_ID);
     }
 
@@ -31,7 +31,7 @@ public class MockServiceUserFactory implements ServiceUserFactory {
         protected static final String PROCESSING_USER_ID = "MOCK_PROCESSING_USER";
 
         @Override
-        public String getSubjectId() {
+        public String subjectId() {
             return PROCESSING_USER_ID;
         }
 
@@ -44,17 +44,17 @@ public class MockServiceUserFactory implements ServiceUserFactory {
                 return false;
             }
             final MockProcessingUserIdentity that = (MockProcessingUserIdentity) o;
-            return Objects.equals(getSubjectId(), that.getSubjectId());
+            return Objects.equals(subjectId(), that.subjectId());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(getSubjectId());
+            return Objects.hash(subjectId());
         }
 
         @Override
         public String toString() {
-            return getSubjectId();
+            return subjectId();
         }
     }
 }

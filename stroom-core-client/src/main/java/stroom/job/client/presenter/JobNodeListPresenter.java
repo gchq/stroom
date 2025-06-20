@@ -169,7 +169,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
         // JobListPresenter may change a job
         registerHandler(getEventBus().addHandler(
                 JobChangeEvent.getType(), event -> {
-                    GWT.log("Handling JobChangeEvent " + event);
+//                    GWT.log("Handling JobChangeEvent " + event);
                     final String currentJobName = getJobNameCriteria();
                     final String affectedJobName = NullSafe.get(event, JobChangeEvent::getJob, Job::getName);
                     if (currentJobName != null && Objects.equals(currentJobName, affectedJobName)) {

@@ -11,6 +11,8 @@ import stroom.explorer.impl.ExplorerConfig;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.query.common.v2.ExpressionPredicateFactory;
+import stroom.receive.common.ReceiveDataConfig;
+import stroom.receive.rules.impl.StroomReceiptPolicyConfig;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.StroomOpenIdConfig;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
@@ -407,6 +409,8 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 () -> nodeInfo,
                 StroomOpenIdConfig::new,
                 ExplorerConfig::new,
-                AuthenticationConfig::new);
+                AuthenticationConfig::new,
+                StroomReceiptPolicyConfig::new,
+                ReceiveDataConfig::new);
     }
 }

@@ -53,7 +53,7 @@ public class UserIdentityImpl
     }
 
     @Override
-    public String getSubjectId() {
+    public String subjectId() {
         return userRef.getSubjectId();
     }
 

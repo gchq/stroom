@@ -25,10 +25,9 @@ import java.util.stream.Stream;
 
 public class SimpleStringExpressionParser {
 
-    // Add all supported conditions and sort them by longest operator string first so we can match longest prefixes
+    // Add all supported conditions and sort them by longest operator string first, so we can match longest prefixes
     // first.
-    private static final List<Condition> SUPPORTED_CONDITIONS = Stream
-            .of(
+    private static final List<Condition> SUPPORTED_CONDITIONS = Stream.of(
                     Condition.CONTAINS,
                     Condition.EQUALS,
                     Condition.STARTS_WITH,
@@ -44,7 +43,7 @@ public class SimpleStringExpressionParser {
                     Condition.STARTS_WITH_CASE_SENSITIVE,
                     Condition.ENDS_WITH_CASE_SENSITIVE,
                     Condition.MATCHES_REGEX_CASE_SENSITIVE)
-            .sorted(Comparator.comparingInt(c -> -c.getOperator().length()))
+            .sorted(Comparator.comparingInt((Condition c) -> c.getOperator().length()).reversed())
             .toList();
 
     public static Optional<ExpressionOperator> create(final FieldProvider fieldProvider,
@@ -404,6 +403,10 @@ public class SimpleStringExpressionParser {
         }
         return "";
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface FieldProvider {
 

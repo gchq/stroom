@@ -41,36 +41,42 @@ import javax.inject.Singleton;
 public class UiConfigCache implements HasHandlers {
 
     private static final GlobalConfigResource CONFIG_RESOURCE = GWT.create(GlobalConfigResource.class);
-    private static final int ONE_MINUTE = 1000 * 60;
+    private static final int ONE_MINUTE = 1_000 * 60;
 
     private final RestFactory restFactory;
     private ExtendedUiConfig clientProperties;
-    private boolean refreshing;
     private EventBus eventBus;
 
     @Inject
     public UiConfigCache(final RestFactory restFactory, final ClientSecurityContext securityContext) {
         this.restFactory = restFactory;
 
-        final Timer refreshTimer = new Timer() {
+        // Refreshing the client properties keeps them current and also ensures that all actions on the
+        // server belonging to the logged-in user are refreshed every minute so that the server doesn't
+        // try and terminate them.
+        final Timer refreshTimer = createRefreshTimer(securityContext);
+        refreshTimer.scheduleRepeating(ONE_MINUTE);
+    }
+
+    private Timer createRefreshTimer(final ClientSecurityContext securityContext) {
+        return new Timer() {
+            private boolean isRefreshInProgress;
+
             @Override
             public void run() {
                 // Don't auto refresh if we are already refreshing.
-                if (!refreshing) {
+                if (!isRefreshInProgress) {
                     // Don't auto refresh if we are not logged in as this will keep the user session
                     // alive unnecessarily.
                     if (securityContext.isLoggedIn()) {
-                        refreshing = true;
-                        refresh(result -> refreshing = result != null, new QuietTaskMonitorFactory());
+                        isRefreshInProgress = true;
+                        // Stop refreshing when we get an error
+                        refresh(result -> isRefreshInProgress = result == null,
+                                new QuietTaskMonitorFactory());
                     }
                 }
             }
         };
-
-        // Refreshing the client properties keeps them current and also ensures that all actions on the
-        // server belonging to the logged in user are refreshed every minute so that the server doesn't
-        // try and terminate them.
-        refreshTimer.scheduleRepeating(ONE_MINUTE);
     }
 
     public void refresh(final Consumer<ExtendedUiConfig> consumer,
@@ -83,7 +89,12 @@ public class UiConfigCache implements HasHandlers {
                     consumer.accept(result);
                     PropertyChangeEvent.fire(UiConfigCache.this, result);
                 })
-                .onFailure(error -> new DefaultErrorHandler(this, () -> consumer.accept(null)))
+                .onFailure(error -> {
+//                    GWT.log("Error refreshing uiConfig: "
+//                            + error.getException().getClass().getSimpleName()
+//                            + " - " + error.getMessage());
+                    new DefaultErrorHandler(this, () -> consumer.accept(null));
+                })
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
