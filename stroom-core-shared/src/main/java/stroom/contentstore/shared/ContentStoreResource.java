@@ -7,7 +7,6 @@ import stroom.util.shared.ResultPage;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -28,7 +27,7 @@ public interface ContentStoreResource extends RestResource, DirectRestService {
      * App Store.
      * @return a list of available content packs.
      */
-    @GET
+    @POST
     @Path("/list")
     @Operation(
             summary = "Lists Content Store Content Packs",
@@ -44,18 +43,38 @@ public interface ContentStoreResource extends RestResource, DirectRestService {
      * @param contentPack The content pack to check.
      * @return true if the content pack already exists, false otherwise.
      */
-    @GET
+    @POST
     @Path("/exists")
     @Operation(
             summary = "Checks to see if a GitRepoDoc exists for the Content Pack",
             operationId = "GitRepoDocExistsForContentPack")
     boolean exists(ContentStoreContentPack contentPack);
 
+    /**
+     * Creates a GitRepoDoc from a Content Pack.
+     * @param createGitRepoRequest The request
+     * @return Generic response.
+     */
     @POST
     @Path("/create")
     @Operation(
             summary = "Creates a GitRepoDoc from a Content Pack",
             operationId = "createGitRepoFromContentPack")
     ContentStoreResponse create(ContentStoreCreateGitRepoRequest createGitRepoRequest);
+
+    /**
+     * Checks to see if upgraded content is available for this
+     * content pack. Content packs that are not of installation status
+     * INSTALLED will be ignored and False returned.
+     * @param contentPack The content pack to check.
+     * @return retval.getValue() == true if upgraded content is available,
+     * false otherwise.
+     */
+    @POST
+    @Path("checkContentUpgradeAvailable")
+    @Operation(
+            summary = "Checks if updated content is available",
+            operationId = "checkContentUpgradeAvailable")
+    ContentStoreValueResponse<Boolean> checkContentUpgradeAvailable(ContentStoreContentPack contentPack);
 
 }

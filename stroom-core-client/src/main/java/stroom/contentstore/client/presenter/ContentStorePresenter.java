@@ -52,6 +52,7 @@ public class ContentStorePresenter extends ContentTabPresenter<ContentStoreView>
                                  final ContentStoreContentPackDetailsPresenter contentPackDetailsPresenter) {
         super(eventBus, view);
         this.contentPackListPresenter = contentPackListPresenter;
+        this.contentPackListPresenter.setContentStorePresenter(this);
         this.contentPackDetailsPresenter = contentPackDetailsPresenter;
         this.contentPackDetailsPresenter.setContentStorePresenter(this);
         this.setInSlot(CONTENT_PACK_LIST, contentPackListPresenter);
@@ -125,11 +126,12 @@ public class ContentStorePresenter extends ContentTabPresenter<ContentStoreView>
     }
 
     /**
-     * Redraws the list of content packs. Call this when something changes
+     * Updates the state of the UI. Call this when something changes
      * in the state of a content pack.
      */
-    public void redrawList() {
+    public void updateState() {
         this.contentPackListPresenter.redraw();
+        this.contentPackDetailsPresenter.setState();
     }
 
 }

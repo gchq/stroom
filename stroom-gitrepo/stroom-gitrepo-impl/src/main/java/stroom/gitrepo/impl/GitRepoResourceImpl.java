@@ -51,6 +51,9 @@ class GitRepoResourceImpl implements GitRepoResource {
      */
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GitRepoResourceImpl.class);
 
+    /**
+     * Injected constructor.
+     */
     @Inject
     GitRepoResourceImpl(final Provider<GitRepoStore> gitRepoStoreProvider,
                         final Provider<DocumentResourceHelper> documentResourceHelperProvider,

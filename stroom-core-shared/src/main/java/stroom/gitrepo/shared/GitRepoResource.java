@@ -42,6 +42,11 @@ import org.fusesource.restygwt.client.DirectRestService;
 @Consumes(MediaType.APPLICATION_JSON)
 public interface GitRepoResource extends RestResource, DirectRestService, FetchWithUuid<GitRepoDoc> {
 
+    /**
+     * Fetches a document given its UUID.
+     * @param uuid The UUID of the document to fetch
+     * @return The GitRepoDoc matching the UUID.
+     */
     @GET
     @Path("/{uuid}")
     @Operation(
@@ -49,6 +54,12 @@ public interface GitRepoResource extends RestResource, DirectRestService, FetchW
             operationId = "fetchGitRepo")
     GitRepoDoc fetch(@PathParam("uuid") String uuid);
 
+    /**
+     * Updates a GitRepoDoc in the DB.
+     * @param uuid The UUID of the document.
+     * @param doc The data of the document.
+     * @return The updated document.
+     */
     @PUT
     @Path("/{uuid}")
     @Operation(
@@ -57,6 +68,11 @@ public interface GitRepoResource extends RestResource, DirectRestService, FetchW
     GitRepoDoc update(@PathParam("uuid") String uuid,
                      @Parameter(description = "doc", required = true) GitRepoDoc doc);
 
+    /**
+     * Exports items from Stroom and pushes them into Git.
+     * @param gitRepoPushDto Contains all the data needed for the push.
+     * @return Object with ok/fail status and messages.
+     */
     @POST
     @Path("/pushToGit")
     @Operation(
@@ -65,6 +81,11 @@ public interface GitRepoResource extends RestResource, DirectRestService, FetchW
     GitRepoResponse pushToGit(
             @Parameter(description = "gitRepoPushDto", required = true) GitRepoPushDto gitRepoPushDto);
 
+    /**
+     * Pulls items from Git and imports them into Git.
+     * @param gitRepoDoc The document holding the Git settings.
+     * @return Object with ok/fail status and messages.
+     */
     @POST
     @Path("/pullFromGit")
     @Operation(
@@ -73,6 +94,17 @@ public interface GitRepoResource extends RestResource, DirectRestService, FetchW
     GitRepoResponse pullFromGit(
             @Parameter(description = "gitRepoDoc", required = true) GitRepoDoc gitRepoDoc);
 
+    /**
+     * Checks if updates are available for the given GitRepoDoc.
+     * Intensive operation - requires downloading the whole Git repo.
+     * Needs to become more sophisticated:
+     * <ul>
+     *     <li>Message of yes/no is insufficient - need boolean value</li>
+     *     <li>A message listing each thing that has been updated would be nice</li>
+     * </ul>
+     * @param gitRepoDoc Settings for Git.
+     * @return Object with ok/fail status and messages.
+     */
     @POST
     @Path("/areUpdatesAvailable")
     @Operation(

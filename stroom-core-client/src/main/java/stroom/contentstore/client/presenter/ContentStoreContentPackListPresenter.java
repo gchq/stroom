@@ -1,6 +1,8 @@
 package stroom.contentstore.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.contentstore.shared.ContentStoreContentPack;
+import stroom.contentstore.shared.ContentStoreContentPackStatus;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
@@ -20,6 +22,8 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -28,6 +32,12 @@ import java.util.function.Consumer;
  */
 public class ContentStoreContentPackListPresenter
         extends MyPresenterWidget<PagerView> {
+
+    /** Points to top level of this page. Allows updating state of everything. */
+    private ContentStorePresenter contentStorePresenter = null;
+
+    /** REST to the server */
+    final RestFactory restFactory;
 
     /** Table of content packs */
     final MyDataGrid<ContentStoreContentPack> dataGrid = new MyDataGrid<>();
@@ -38,6 +48,13 @@ public class ContentStoreContentPackListPresenter
     /** Data hookup */
     private final RestDataProvider<ContentStoreContentPack, ResultPage<ContentStoreContentPack>>
                 dataProvider;
+
+    /** Map of Content Packs -> status */
+    private final Map<ContentStoreContentPack, ContentStoreContentPackStatus> contentPackStatusCache
+                = new HashMap<>();
+
+    /** Flag set when we request a new page; used to ignore unwanted LOADED events */
+    private boolean requestedNewPage = false;
 
     /** Index of the first item in the list of content packs */
     private final static int FIRST_ITEM_INDEX = 0;
@@ -54,6 +71,7 @@ public class ContentStoreContentPackListPresenter
                                                 final PagerView view,
                                                 final RestFactory restFactory) {
         super(eventBus, view);
+        this.restFactory = restFactory;
 
         // Create the grid
         view.setDataWidget(dataGrid);
@@ -77,8 +95,9 @@ public class ContentStoreContentPackListPresenter
             public void onLoadingStateChanged(final LoadingStateChangeEvent event) {
 
                 // If any data has loaded, try to select something
-                if (event.getLoadingState().equals(LoadingState.LOADED)
-                    || event.getLoadingState().equals(LoadingState.PARTIALLY_LOADED)) {
+                // Note: MUST NOT use .equals() here - it won't work
+                if (event.getLoadingState() == LoadingState.LOADED
+                    || event.getLoadingState() == LoadingState.PARTIALLY_LOADED) {
 
                     // Got some data, so select the first row if there is one
                     if (gridSelectionModel.getSelected() == null
@@ -88,8 +107,51 @@ public class ContentStoreContentPackListPresenter
                         gridSelectionModel.setSelected(cp);
                     }
                 }
+
+                // Kick off the upgrade checks once everything has loaded
+                // Note: MUST NOT use .equals() here - it won't work
+                if (event.getLoadingState() == LoadingState.LOADED) {
+
+                    // We get a LOADED event on every redraw, so we
+                    // use a flag to detect the new page requests
+                    if (requestedNewPage) {
+                        requestedNewPage = false;
+                        loadStateFromCache();
+                        doUpgradeCheck();
+                    }
+                }
             }
         });
+    }
+
+    /**
+     * Called when the page has loaded to load up all the state
+     * we've found so far into the dataGrid Content Packs.
+     * Means we don't need to redo work if we page backwards.
+     */
+    private void loadStateFromCache() {
+        boolean dirty = false;
+        for (int iCp = 0; iCp < dataGrid.getVisibleItemCount(); ++iCp) {
+            ContentStoreContentPack cp = dataGrid.getVisibleItem(iCp);
+            if (cp != null) {
+                ContentStoreContentPackStatus status = contentPackStatusCache.get(cp);
+
+                // If the status exists and doesn't match the stored status
+                // then change it
+                if (status != null
+                    && !status.equals(cp.getInstallationStatus())) {
+
+                    cp.setInstallationStatus(status);
+                    dirty = true;
+                }
+            }
+        }
+
+        if (dirty) {
+            if (contentStorePresenter != null) {
+                contentStorePresenter.updateState();
+            }
+        }
     }
 
     /**
@@ -99,7 +161,7 @@ public class ContentStoreContentPackListPresenter
      * @param restFactory Where we get the REST stuff from
      * @return a data provider to plug into the data grid
      */
-    private static RestDataProvider<ContentStoreContentPack, ResultPage<ContentStoreContentPack>>
+    private RestDataProvider<ContentStoreContentPack, ResultPage<ContentStoreContentPack>>
     createDataProvider(final EventBus eventBus,
                        final PagerView view,
                        final RestFactory restFactory) {
@@ -112,7 +174,10 @@ public class ContentStoreContentPackListPresenter
                 PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
                 restFactory
                         .create(ContentStorePresenter.CONTENT_STORE_RESOURCE)
-                        .method((r) ->  r.list(pageRequest))
+                        .method((r) ->  {
+                            requestedNewPage = true;
+                            return r.list(pageRequest);
+                        })
                         .onSuccess(dataConsumer)
                         .onFailure(restErrorHandler)
                         .taskMonitorFactory(view)
@@ -147,7 +212,7 @@ public class ContentStoreContentPackListPresenter
         // Installation status
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder((ContentStoreContentPack cp) -> {
-                    return cp.isInstalled() ? "Installed" : "-";
+                    return cp.getInstallationStatus().toString();
                 })
                         .build(),
                 DataGridUtil.headingBuilder("Status")
@@ -171,6 +236,15 @@ public class ContentStoreContentPackListPresenter
     }
 
     /**
+     * Gives this component a reference to the top level of this page.
+     * Must be called before UI is used.
+     * @param contentStorePresenter The top level of this page. Must not be null.
+     */
+    void setContentStorePresenter(final ContentStorePresenter contentStorePresenter) {
+        this.contentStorePresenter = contentStorePresenter;
+    }
+
+    /**
      * @return the selected items in the grid.
      */
     public MultiSelectionModel<ContentStoreContentPack> getSelectionModel() {
@@ -183,5 +257,80 @@ public class ContentStoreContentPackListPresenter
     public void redraw() {
         dataGrid.redraw();
     }
+
+    /**
+     * Called once everything has loaded into the dataGrid.
+     */
+    private void doUpgradeCheck() {
+        if (dataGrid.getVisibleItemCount() > 0) {
+            doUpgradeCheckOn(0);
+        }
+    }
+
+    /**
+     * Called asynchronously to check a visible row.
+     * @param rowIndex The row to check. If too big then ignored.
+     */
+    private void doUpgradeCheckOn(final int rowIndex) {
+        if (rowIndex < dataGrid.getVisibleItemCount()) {
+            ContentStoreContentPack cp = dataGrid.getVisibleItem(rowIndex);
+            if (cp != null) {
+
+                // Only check items with status INSTALLED
+                // and that we haven't checked before
+                // Checking other items would waste processor power
+                ContentStoreContentPackStatus status = cp.getInstallationStatus();
+                if (cp.getGitCommit().isEmpty()
+                    && status.equals(ContentStoreContentPackStatus.INSTALLED)
+                    && !contentPackStatusCache.containsKey(cp)) {
+                    console("    Asking server about [" + rowIndex + "]: '"
+                            + cp.getUiName() + "': (" + cp.getInstallationStatus() + ")");
+
+                    restFactory
+                            .create(ContentStorePresenter.CONTENT_STORE_RESOURCE)
+                            .method(res -> res.checkContentUpgradeAvailable(cp))
+                            .onSuccess(upgradeAvailable -> {
+                                if (upgradeAvailable.getValue()) {
+                                    cp.setInstallationStatus(ContentStoreContentPackStatus.CONTENT_UPGRADABLE);
+                                    contentPackStatusCache.put(cp, ContentStoreContentPackStatus.CONTENT_UPGRADABLE);
+                                    if (contentStorePresenter != null) {
+                                        contentStorePresenter.updateState();
+                                    }
+                                } else {
+                                    contentPackStatusCache.put(cp, cp.getInstallationStatus());
+                                }
+
+                                // Check the next item
+                                doUpgradeCheckOn(rowIndex + 1);
+                            })
+                            .onFailure(restError -> {
+                                AlertEvent.fireError(dataGrid,
+                                        "Check for updated content failed",
+                                        restError.getMessage(),
+                                        null);
+                            })
+                            .taskMonitorFactory(getView())
+                            .exec();
+                } else {
+                    // Try the next content pack
+                    doUpgradeCheckOn(rowIndex + 1);
+                }
+            } else {
+                // Try the next row
+                doUpgradeCheckOn(rowIndex + 1);
+            }
+        } else {
+            // End of async chain
+        }
+    }
+
+    /**
+     * Writes to the Javascript console for debugging.
+     * @param text What to write.
+     */
+    public static native void console(String text)
+        /*-{
+        console.log(text);
+         }-*/;
 
 }
