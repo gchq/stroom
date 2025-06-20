@@ -9,6 +9,7 @@ import stroom.planb.impl.db.AbstractDb;
 import stroom.planb.impl.db.HashClashCommitRunnable;
 import stroom.planb.impl.db.LmdbWriter;
 import stroom.planb.impl.db.PlanBEnv;
+import stroom.planb.impl.db.SchemaInfo;
 import stroom.planb.impl.db.UsedLookupsRecorder;
 import stroom.planb.impl.serde.count.CountSerde;
 import stroom.planb.impl.serde.count.CountValuesSerde;
@@ -29,6 +30,7 @@ import stroom.planb.impl.serde.time.ZonedDayTimeSerde;
 import stroom.planb.impl.serde.time.ZonedHourTimeSerde;
 import stroom.planb.impl.serde.time.ZonedYearTimeSerde;
 import stroom.planb.impl.serde.valtime.InsertTimeSerde;
+import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.KeyType;
 import stroom.planb.shared.MaxValueSize;
@@ -45,6 +47,7 @@ import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
 import stroom.query.common.v2.ValArrayFunctionFactory;
 import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.UserTimeZoneUtil;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValLong;
@@ -52,6 +55,7 @@ import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.io.FileUtil;
+import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 
 import org.lmdbjava.CursorIterable;
@@ -62,7 +66,6 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -72,6 +75,8 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public class MetricDb extends AbstractDb<TemporalKey, Long> {
+
+    private static final int CURRENT_SCHEMA_VERSION = 1;
 
     private final MetricSettings settings;
     private final TemporalResolution temporalResolution;
@@ -87,7 +92,14 @@ public class MetricDb extends AbstractDb<TemporalKey, Long> {
                      final TemporalKeySerde keySerde,
                      final CountValuesSerde<Metric> valuesSerde,
                      final HashClashCommitRunnable hashClashCommitRunnable) {
-        super(env, byteBuffers, overwrite, hashClashCommitRunnable);
+        super(env,
+                byteBuffers,
+                overwrite,
+                hashClashCommitRunnable,
+                new SchemaInfo(
+                        CURRENT_SCHEMA_VERSION,
+                        JsonUtil.writeValueAsString(settings.getKeySchema()),
+                        JsonUtil.writeValueAsString(settings.getValueSchema())));
         this.settings = settings;
         this.temporalResolution = temporalResolution;
         this.keySerde = keySerde;
@@ -100,8 +112,12 @@ public class MetricDb extends AbstractDb<TemporalKey, Long> {
                                   final MetricSettings settings,
                                   final boolean readOnly) {
         final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
+        final Long mapSize = NullSafe.getOrElse(
+                settings,
+                AbstractPlanBSettings::getMaxStoreSize,
+                AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE);
         final PlanBEnv env = new PlanBEnv(path,
-                settings.getMaxStoreSize(),
+                mapSize,
                 20,
                 readOnly,
                 hashClashCommitRunnable);
@@ -112,19 +128,19 @@ public class MetricDb extends AbstractDb<TemporalKey, Long> {
         final KeyType keyType = NullSafe.getOrElse(
                 keySchema,
                 MetricKeySchema::getKeyType,
-                KeyType.TAGS);
+                MetricKeySchema.DEFAULT_KEY_TYPE);
         final HashLength keyHashLength = NullSafe.getOrElse(
                 keySchema,
                 MetricKeySchema::getHashLength,
-                HashLength.LONG);
+                MetricKeySchema.DEFAULT_HASH_LENGTH);
         final TemporalResolution temporalResolution = NullSafe.getOrElse(
                 keySchema,
                 MetricKeySchema::getTemporalResolution,
-                TemporalResolution.SECOND);
+                MetricKeySchema.DEFAULT_TEMPORAL_RESOLUTION);
         final UserTimeZone timeZone = NullSafe.getOrElse(
                 keySchema,
                 MetricKeySchema::getTimeZone,
-                UserTimeZone.utc());
+                MetricKeySchema.DEFAULT_TIME_ZONE);
 
         final MetricValueSchema valueSchema = NullSafe.getOrElse(
                 settings,
@@ -133,9 +149,9 @@ public class MetricDb extends AbstractDb<TemporalKey, Long> {
         final MaxValueSize valueType = NullSafe.getOrElse(
                 valueSchema,
                 MetricValueSchema::getValueType,
-                MaxValueSize.TWO);
+                MetricValueSchema.DEFAULT_MAX_VALUE_SIZE);
         // Rows will store hour precision.
-        final ZoneId zoneId = getZoneId(timeZone);
+        final ZoneId zoneId = UserTimeZoneUtil.getZoneId(timeZone);
 
         // The key time is always a coarse grained time with rows having multiple values.
         final TimeSerde keyTimeSerde = getKeyTimeSerde(temporalResolution, zoneId);
@@ -188,24 +204,6 @@ public class MetricDb extends AbstractDb<TemporalKey, Long> {
         };
     }
 
-    private static ZoneId getZoneId(final UserTimeZone userTimeZone) {
-        ZoneId zone = ZoneOffset.UTC;
-        if (userTimeZone != null) {
-            if (UserTimeZone.Use.UTC.equals(userTimeZone.getUse())) {
-                zone = ZoneOffset.UTC;
-            } else if (UserTimeZone.Use.LOCAL.equals(userTimeZone.getUse())) {
-                zone = ZoneId.systemDefault();
-            } else if (UserTimeZone.Use.ID.equals(userTimeZone.getUse())) {
-                zone = ZoneId.of(userTimeZone.getId());
-            } else if (UserTimeZone.Use.OFFSET.equals(userTimeZone.getUse())) {
-                zone = ZoneOffset.ofHoursMinutes(
-                        NullSafe.getInt(userTimeZone.getOffsetHours()),
-                        NullSafe.getInt(userTimeZone.getOffsetMinutes()));
-            }
-        }
-        return zone;
-    }
-
     private static CountSerde<Metric> getCountSerde(final MaxValueSize valueType, final MetricValueSchema valueSchema) {
         final UnsignedBytes unsignedBytes = switch (valueType) {
             case ONE -> UnsignedBytesInstances.ONE;
@@ -219,11 +217,12 @@ public class MetricDb extends AbstractDb<TemporalKey, Long> {
         };
         return new MetricCountSerde(
                 unsignedBytes,
-                Objects.requireNonNullElse(valueSchema.getStoreLatestValue(), true),
-                Objects.requireNonNullElse(valueSchema.getStoreMin(), false),
-                Objects.requireNonNullElse(valueSchema.getStoreMax(), false),
-                Objects.requireNonNullElse(valueSchema.getStoreCount(), false),
-                Objects.requireNonNullElse(valueSchema.getStoreSum(), false));
+                Objects.requireNonNullElse(valueSchema.getStoreLatestValue(),
+                        MetricValueSchema.DEFAULT_STORE_LATEST_VALUE),
+                Objects.requireNonNullElse(valueSchema.getStoreMin(), MetricValueSchema.DEFAULT_STORE_MIN),
+                Objects.requireNonNullElse(valueSchema.getStoreMax(), MetricValueSchema.DEFAULT_STORE_MAX),
+                Objects.requireNonNullElse(valueSchema.getStoreCount(), MetricValueSchema.DEFAULT_STORE_COUNT),
+                Objects.requireNonNullElse(valueSchema.getStoreSum(), MetricValueSchema.DEFAULT_STORE_SUM));
     }
 
     @Override
@@ -255,6 +254,10 @@ public class MetricDb extends AbstractDb<TemporalKey, Long> {
     public void merge(final Path source) {
         env.write(writer -> {
             try (final MetricDb sourceDb = MetricDb.create(source, byteBuffers, settings, true)) {
+                // Validate that the source DB has the same schema.
+                validateSchema(schemaInfo, sourceDb.getSchemaInfo());
+
+                // Merge.
                 sourceDb.env.read(readTxn -> {
                     sourceDb.iterate(readTxn, kv -> {
                         final Txn<ByteBuffer> writeTxn = writer.getWriteTxn();

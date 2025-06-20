@@ -117,16 +117,7 @@ class TestMetricDb {
             assertThat(value).isNotNull();
             assertThat(value).isEqualTo(109L);
 
-            final FieldIndex fieldIndex = new FieldIndex();
-            fieldIndex.create(MetricFields.KEY);
-            fieldIndex.create(MetricFields.TIME);
-            fieldIndex.create(MetricFields.RESOLUTION);
-            fieldIndex.create(MetricFields.VALUE);
-            fieldIndex.create(MetricFields.MIN);
-            fieldIndex.create(MetricFields.MAX);
-            fieldIndex.create(MetricFields.COUNT);
-            fieldIndex.create(MetricFields.SUM);
-            fieldIndex.create(MetricFields.AVERAGE);
+            final FieldIndex fieldIndex = getFieldIndex();
             final List<Val[]> results = new ArrayList<>();
             final ExpressionPredicateFactory expressionPredicateFactory = new ExpressionPredicateFactory();
             db.search(
@@ -147,6 +138,20 @@ class TestMetricDb {
             assertThat(results.getFirst()[7].toString()).isEqualTo("5950");
             assertThat(results.getFirst()[8].toString()).isEqualTo("59");
         }
+    }
+
+    private FieldIndex getFieldIndex() {
+        final FieldIndex fieldIndex = new FieldIndex();
+        fieldIndex.create(MetricFields.KEY);
+        fieldIndex.create(MetricFields.TIME);
+        fieldIndex.create(MetricFields.RESOLUTION);
+        fieldIndex.create(MetricFields.VALUE);
+        fieldIndex.create(MetricFields.MIN);
+        fieldIndex.create(MetricFields.MAX);
+        fieldIndex.create(MetricFields.COUNT);
+        fieldIndex.create(MetricFields.SUM);
+        fieldIndex.create(MetricFields.AVERAGE);
+        return fieldIndex;
     }
 
     @Test

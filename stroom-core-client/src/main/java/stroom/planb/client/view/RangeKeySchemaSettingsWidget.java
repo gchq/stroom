@@ -19,6 +19,7 @@ package stroom.planb.client.view;
 import stroom.item.client.SelectionBox;
 import stroom.planb.shared.RangeKeySchema;
 import stroom.planb.shared.RangeType;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -38,7 +39,7 @@ public class RangeKeySchemaSettingsWidget extends AbstractSettingsWidget impleme
     public RangeKeySchemaSettingsWidget(final Binder binder) {
         widget = binder.createAndBindUi(this);
         rangeType.addItems(RangeType.ORDERED_LIST);
-        rangeType.setValue(RangeType.LONG);
+        rangeType.setValue(RangeKeySchema.DEFAULT_RANGE_TYPE);
     }
 
     @Override
@@ -53,9 +54,8 @@ public class RangeKeySchemaSettingsWidget extends AbstractSettingsWidget impleme
 
     @Override
     public void setKeySchema(final RangeKeySchema rangeKeySchema) {
-        if (rangeKeySchema != null) {
-            rangeType.setValue(rangeKeySchema.getRangeType());
-        }
+        rangeType.setValue(NullSafe.getOrElse(rangeKeySchema,
+                RangeKeySchema::getRangeType, RangeKeySchema.DEFAULT_RANGE_TYPE));
     }
 
     public void onReadOnly(final boolean readOnly) {
