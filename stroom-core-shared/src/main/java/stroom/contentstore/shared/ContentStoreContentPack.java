@@ -96,9 +96,9 @@ public class ContentStoreContentPack {
     @JsonProperty
     private final Boolean gitNeedsAuth;
 
-    /** Whether this content pack is already installed */
+    /** The status of this content pack */
     @JsonProperty
-    private Boolean isInstalled = Boolean.FALSE;
+    private ContentStoreContentPackStatus installationStatus;
 
     /** Default Git path to use - the root */
     private static final String DEFAULT_GIT_PATH =
@@ -309,44 +309,46 @@ public class ContentStoreContentPack {
     }
 
     /**
-     * Used by JSON serialization to set the value of the isInstalled
-     * flag. Should not be called by normal code. Instead, call
-     * checkIfInstalled().
-     * @param isInstalled true if this content pack is already installed.
+     * @return The installation status of the content pack, whether not
+     * installed, installed or upgradable.
+     * Never returns null.
      */
-    @SuppressWarnings("unused")
-    public void setIsInstalled(final Boolean isInstalled) {
-        if (isInstalled == null) {
-            this.isInstalled = Boolean.FALSE;
-        } else {
-            this.isInstalled = isInstalled;
-        }
+    public ContentStoreContentPackStatus getInstallationStatus() {
+        return this.installationStatus;
     }
 
     /**
-     * Returns Boolean rather that boolean to keep JSON serialization happy.
-     * @return true if this content pack is already installed, as determined
-     * by the checkMatches() method. Never returns null.
+     * Used by JSON serialization to set the value of the installation status.
+     * @param status The status. Can be null in which case NOT_INSTALLED is assumed.
      */
-    public Boolean isInstalled() {
-        return isInstalled;
+    public void setInstallationStatus(ContentStoreContentPackStatus status) {
+        this.installationStatus = status == null ? ContentStoreContentPackStatus.NOT_INSTALLED
+                : status;
     }
 
     /**
      * Checks the given collection of GitRepoDocs to see if any of them
-     * match this content pack. If one does then mark this content pack
-     * as installed.
+     * match this content pack. If one does then it is installed &
+     * can be checked for possible upgrades.
+     * Result is stored in the object's data.
      * @param docs The collection of GitRepos that already exist. Must
      *             not be null but can be empty.
      */
-    public void checkIfInstalled(final Collection<GitRepoDoc> docs) {
+    public void checkInstallationStatus(final Collection<GitRepoDoc> docs) {
         Objects.requireNonNull(docs);
-        for (var doc : docs) {
+        ContentStoreContentPackStatus status = ContentStoreContentPackStatus.NOT_INSTALLED;
+        for (final GitRepoDoc doc : docs) {
             if (this.matches(doc)) {
-                this.isInstalled = Boolean.TRUE;
+                if (this.contentPackUpgrades(doc)) {
+                    status = ContentStoreContentPackStatus.PACK_UPGRADABLE;
+                } else {
+                    status = ContentStoreContentPackStatus.INSTALLED;
+                }
                 break;
             }
         }
+
+        this.installationStatus = status;
     }
 
     /**
@@ -375,6 +377,23 @@ public class ContentStoreContentPack {
 
         // Both must match
         return ownerIdMatch && contentPackIdMatch;
+    }
+
+    /**
+     * Checks if this content pack upgrades the given gitRepoDoc.
+     * Assumes that matches() has returned true before this is called.
+     * Checks if the URL, branch, path or commit hash have changed. If they
+     * have then this is an upgrade.
+     * @param gitRepoDoc The GitRepoDoc that matches this content pack
+     *                   but that we want to check for possible upgrades.
+     * @return true if this content pack could upgrade the given doc.
+     */
+    private boolean contentPackUpgrades(final GitRepoDoc gitRepoDoc) {
+        boolean gitSettingsMatch = Objects.equals(this.gitUrl, gitRepoDoc.getUrl())
+                && Objects.equals(this.gitBranch, gitRepoDoc.getBranch())
+                && Objects.equals(this.gitPath, gitRepoDoc.getPath())
+                && Objects.equals(this.gitCommit, gitRepoDoc.getCommit());
+        return !gitSettingsMatch;
     }
 
     /**
@@ -411,8 +430,7 @@ public class ContentStoreContentPack {
                && Objects.equals(gitBranch, that.gitBranch)
                && Objects.equals(gitPath, that.gitPath)
                && Objects.equals(gitCommit, that.gitCommit)
-               && Objects.equals(gitNeedsAuth, that.gitNeedsAuth)
-               && Objects.equals(isInstalled, that.isInstalled);
+               && Objects.equals(gitNeedsAuth, that.gitNeedsAuth);
     }
 
     @Override
@@ -431,8 +449,7 @@ public class ContentStoreContentPack {
                 gitBranch,
                 gitPath,
                 gitNeedsAuth,
-                gitCommit,
-                isInstalled);
+                gitCommit);
     }
 
     @Override
@@ -454,7 +471,6 @@ public class ContentStoreContentPack {
                + ", gitPath='" + gitPath + '\''
                + ", gitCommit='" + gitCommit + '\''
                + ", gitNeedsAuth='" + gitNeedsAuth + '\''
-               + ", isInstalled=" + isInstalled + '\''
                + '}';
     }
 }

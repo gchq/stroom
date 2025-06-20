@@ -156,66 +156,67 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
         if (!gitRepoDoc.getUrl().isEmpty()) {
             // Find the path to the root of the local Git repository
             final Path localDir = pathCreator.toAppPath(config.get().getLocalDir());
-            final Path gitWorkDir = localDir.resolve(gitRepoDoc.getUuid());
+            try (final AutoDeletingTempDirectory gitWorkDir = new AutoDeletingTempDirectory(localDir, "gitrepo-")) {
 
-            // Create Git object for the gitWork directory
-            try (Git git = this.gitConstructForPush(gitRepoDoc, gitWorkDir)) {
+                // Create Git object for the gitWork directory
+                try (Git git = this.gitConstructForPush(gitRepoDoc, gitWorkDir.getDirectory())) {
 
-                // The export directory is somewhere within the gitWorkDir,
-                // defined by the path the user specified
-                final Path exportDir = addDirectoryToPath(gitWorkDir, Paths.get(gitRepoDoc.getPath()));
-                this.ensureDirectoryExists(exportDir);
+                    // The export directory is somewhere within the gitWorkDir,
+                    // defined by the path the user specified
+                    final Path exportDir = addDirectoryToPath(gitWorkDir.getDirectory(), Paths.get(gitRepoDoc.getPath()));
+                    this.ensureDirectoryExists(exportDir);
 
-                // Delete all the files that are currently in the repo
-                // so we can overwrite any changes and detect deletions.
-                // We keep the README.md and the .git/ directory.
-                this.deleteFileTree(exportDir, true);
+                    // Delete all the files that are currently in the repo
+                    // so we can overwrite any changes and detect deletions.
+                    // We keep the README.md and the .git/ directory.
+                    this.deleteFileTree(exportDir, true);
 
-                // Export everything from Stroom to local git repo dir
-                ExportSummary exportSummary = this.export(
-                        gitRepoNodePath,
-                        gitRepoExplorerNode,
-                        exportDir);
-                messages.addAll(exportSummary.getMessages());
-                messages.add(new Message(Severity.INFO, "Export to disk successful"));
+                    // Export everything from Stroom to local git repo dir
+                    ExportSummary exportSummary = this.export(
+                            gitRepoNodePath,
+                            gitRepoExplorerNode,
+                            exportDir);
+                    messages.addAll(exportSummary.getMessages());
+                    messages.add(new Message(Severity.INFO, "Export to disk successful"));
 
-                // Has anything changed against the remote?
-                Status gitStatus = git.status().call();
-                if (!gitStatus.isClean()) {
+                    // Has anything changed against the remote?
+                    Status gitStatus = git.status().call();
+                    if (!gitStatus.isClean()) {
 
-                    this.gitStatusToMessages(gitStatus, messages);
+                        this.gitStatusToMessages(gitStatus, messages);
 
-                    // Add everything to commit & commit locally
-                    // Match already tracked files - detects deletions
-                    git.add().setUpdate(true).addFilepattern(".").call();
-                    // Match new files
-                    git.add().setUpdate(false).addFilepattern(".").call();
+                        // Add everything to commit & commit locally
+                        // Match already tracked files - detects deletions
+                        git.add().setUpdate(true).addFilepattern(".").call();
+                        // Match new files
+                        git.add().setUpdate(false).addFilepattern(".").call();
 
-                    RevCommit gitCommit = git.commit()
-                            .setCommitter(GIT_USERNAME, gitRepoDoc.getUsername())
-                            .setMessage(commitMessage)
-                            .call();
-                    messages.add(new Message(Severity.INFO, "Local commit successful"));
+                        RevCommit gitCommit = git.commit()
+                                .setCommitter(GIT_USERNAME, gitRepoDoc.getUsername())
+                                .setMessage(commitMessage)
+                                .call();
+                        messages.add(new Message(Severity.INFO, "Local commit successful"));
 
-                    // Push to remote
-                    git.push().setCredentialsProvider(this.getGitCreds(gitRepoDoc)).call();
-                    messages.add(new Message(Severity.INFO, "Pushed to Git"));
+                        // Push to remote
+                        git.push().setCredentialsProvider(this.getGitCreds(gitRepoDoc)).call();
+                        messages.add(new Message(Severity.INFO, "Pushed to Git"));
 
-                    // Store the commit version
-                    gitRepoDoc.setGitRemoteCommitName(gitCommit.getName());
-                    gitRepoStore.writeDocument(gitRepoDoc);
-                } else {
-                    // Jobs don't need to know that this didn't do anything
-                    if (calledFromUi) {
-                        throw new IOException("No local changes; therefore not pushing to Git");
+                        // Store the commit version
+                        gitRepoDoc.setGitRemoteCommitName(gitCommit.getName());
+                        gitRepoStore.writeDocument(gitRepoDoc);
                     } else {
-                        LOGGER.info("{}: No local changes; not pushing to Git", gitRepoDoc.getName());
+                        // Jobs don't need to know that this didn't do anything
+                        if (calledFromUi) {
+                            throw new IOException("No local changes; therefore not pushing to Git");
+                        } else {
+                            LOGGER.info("{}: No local changes; not pushing to Git", gitRepoDoc.getName());
+                        }
                     }
+                } catch (GitAPIException e) {
+                    this.throwException("Couldn't commit and push GIT", e, messages);
+                } catch (IOException e) {
+                    this.throwException("Error pushing to GIT", e, messages);
                 }
-            } catch (GitAPIException e) {
-                this.throwException("Couldn't commit and push GIT", e, messages);
-            } catch (IOException e) {
-                this.throwException("Error pushing to GIT", e, messages);
             }
         } else {
             if (calledFromUi) {
@@ -278,46 +279,46 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
         if (!gitRepoDoc.getUrl().isEmpty()) {
             // Find the path to the root of the local Git repository
             final Path localDir = pathCreator.toAppPath(config.get().getLocalDir());
-            final Path gitWork = localDir.resolve(gitRepoDoc.getUuid());
+            try (final AutoDeletingTempDirectory gitWorkDir = new AutoDeletingTempDirectory(localDir, "gitrepo-")) {
 
-            // Grab everything from server - it won't be too big
-            this.gitCloneForPull(gitRepoDoc, gitWork);
-            messages.add(new Message(Severity.INFO, "Cloned from Git repository"));
+                // Grab everything from server - it won't be too big
+                this.gitCloneForPull(gitRepoDoc, gitWorkDir.getDirectory());
+                messages.add(new Message(Severity.INFO, "Cloned from Git repository"));
 
-            // ImportSettings.auto() is used in a few places. This consists of
-            // .importMode(ImportMode.IGNORE_CONFIRMATION)
-            // .enableFilters(true)
-            // We want to make sure that the import goes to the root of the
-            // gitRepoDocRef rather than where it might have been in the
-            // original export.
+                // ImportSettings.auto() is used in a few places. This consists of
+                // .importMode(ImportMode.IGNORE_CONFIRMATION)
+                // .enableFilters(true)
+                // We want to make sure that the import goes to the root of the
+                // gitRepoDocRef rather than where it might have been in the
+                // original export.
 
-            List<ImportState> importStates = new ArrayList<>();
-            ImportSettings importSettings = ImportSettings.builder()
-                    .importMode(ImportMode.IGNORE_CONFIRMATION)
-                    .enableFilters(false)
-                    .useImportFolders(true)
-                    .useImportNames(true)
-                    .rootDocRef(gitRepoDocRef)
-                    .build();
+                List<ImportState> importStates = new ArrayList<>();
+                ImportSettings importSettings = ImportSettings.builder()
+                        .importMode(ImportMode.IGNORE_CONFIRMATION)
+                        .enableFilters(false)
+                        .useImportFolders(true)
+                        .useImportNames(true)
+                        .rootDocRef(gitRepoDocRef)
+                        .build();
 
-            // Set (remote) directory
-            final Path pathToImport;
-            if (gitRepoDoc.getPath() != null && !gitRepoDoc.getPath().isEmpty()) {
-                pathToImport = addDirectoryToPath(gitWork, Paths.get(gitRepoDoc.getPath()));
-            } else {
-                pathToImport = gitWork;
-            }
-
-            Set<DocRef> docRefs = importExportSerializer.read(pathToImport, importStates, importSettings);
-            for (DocRef docRef : docRefs) {
-                // ImportExportSerializerImpl adds the System docref to the returned set,
-                // but we don't use that here, so ignore it
-                if (!docRef.equals(ExplorerConstants.SYSTEM_DOC_REF)) {
-                    messages.add(new Message(Severity.INFO, "Imported '" + docRef.getName() + "'"));
+                // Set (remote) directory
+                final Path pathToImport;
+                if (gitRepoDoc.getPath() != null && !gitRepoDoc.getPath().isEmpty()) {
+                    pathToImport = addDirectoryToPath(gitWorkDir.directory, Paths.get(gitRepoDoc.getPath()));
+                } else {
+                    pathToImport = gitWorkDir.getDirectory();
                 }
-            }
-            messages.add(new Message(Severity.INFO, "Completed Git Pull"));
 
+                Set<DocRef> docRefs = importExportSerializer.read(pathToImport, importStates, importSettings);
+                for (DocRef docRef : docRefs) {
+                    // ImportExportSerializerImpl adds the System docref to the returned set,
+                    // but we don't use that here, so ignore it
+                    if (!docRef.equals(ExplorerConstants.SYSTEM_DOC_REF)) {
+                        messages.add(new Message(Severity.INFO, "Imported '" + docRef.getName() + "'"));
+                    }
+                }
+                messages.add(new Message(Severity.INFO, "Completed Git Pull"));
+            }
         } else {
             throw new IOException("Git repository URL isn't configured; cannot pull");
         }
@@ -639,14 +640,14 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
 
         if (!gitRepoDoc.getUrl().isEmpty()) {
             final Path localDir = pathCreator.toAppPath(config.get().getLocalDir());
-            final Path gitWorkDir = localDir.resolve(gitRepoDoc.getUuid());
-            try {
-                boolean updatesAvailable = this.gitUpdatesAvailable(gitRepoDoc, gitWorkDir);
-                LOGGER.info("==== Updates available: {}", updatesAvailable);
-                return updatesAvailable;
+            try (final AutoDeletingTempDirectory gitWorkDir = new AutoDeletingTempDirectory(localDir, "gitrepo-")) {
 
-            } catch (GitAPIException e) {
-                throw new IOException("Error checking for updates", e);
+                try {
+                    return this.gitUpdatesAvailable(gitRepoDoc, gitWorkDir.getDirectory());
+
+                } catch (GitAPIException e) {
+                    throw new IOException("Error checking for updates", e);
+                }
             }
         } else {
             return false;
@@ -690,4 +691,59 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
         return canonicalSubDirPath;
     }
 
+    public static class AutoDeletingTempDirectory implements AutoCloseable {
+
+        /**
+         * The directory that will automatically be deleted.
+         */
+        private final Path directory;
+
+        /**
+         * Constructor.
+         * @param location Where to create the temporary directory.
+         * @param prefix The start of the directory name.
+         */
+        public AutoDeletingTempDirectory(Path location, String prefix)
+        throws IOException {
+            this.directory = Files.createTempDirectory(location, prefix);
+        }
+
+        /**
+         * @return The temporary directory.
+         */
+        public Path getDirectory() {
+            return directory;
+        }
+
+        /**
+         * Automatically deletes the temporary directory.
+         * @throws IOException if something goes wrong.
+         */
+        @Override
+        public void close() throws IOException {
+
+            Files.walkFileTree(directory, new SimpleFileVisitor<>() {
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(Path p, BasicFileAttributes attrs)
+                        throws IOException {
+
+                    Files.delete(p);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult postVisitDirectory(Path dir, IOException ex)
+                        throws IOException {
+
+                    Files.delete(dir);
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        }
+    }
 }

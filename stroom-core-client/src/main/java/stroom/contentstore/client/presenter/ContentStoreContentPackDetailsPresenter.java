@@ -2,6 +2,7 @@ package stroom.contentstore.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.contentstore.shared.ContentStoreContentPack;
+import stroom.contentstore.shared.ContentStoreContentPackStatus;
 import stroom.contentstore.shared.ContentStoreCreateGitRepoRequest;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.MarkdownConverter;
@@ -75,6 +76,9 @@ public class ContentStoreContentPackDetailsPresenter
     /** Button to create the GitRepo */
     private final Button btnCreateGitRepo = new Button();
 
+    /** Button to upgrade the GitRepo to the latest content */
+    private final Button btnUpgradeGitRepo = new Button();
+
     /** Current content pack selected. Might be null */
     private ContentStoreContentPack contentPack = null;
 
@@ -137,9 +141,18 @@ public class ContentStoreContentPackDetailsPresenter
         // Install button
         btnCreateGitRepo.setText("Install");
         btnCreateGitRepo.addClickHandler(event -> btnCreateGitRepoClick());
+
+        // Upgrade Pack button
+        btnUpgradeGitRepo.setText("Upgrade");
+        btnUpgradeGitRepo.addClickHandler(event -> btnUpgradeGitRepoClick());
+
+        // Add buttons centrally into a row
+        HorizontalPanel pnlButtons = new HorizontalPanel();
+        pnlButtons.add(btnCreateGitRepo);
+        pnlButtons.add(btnUpgradeGitRepo);
         detailsFormatter.setColSpan(2, 0, 2);
         detailsFormatter.setHorizontalAlignment(2, 0, HasAutoHorizontalAlignment.ALIGN_CENTER);
-        detailsTable.setWidget(2, 0, btnCreateGitRepo);
+        detailsTable.setWidget(2, 0, pnlButtons);
 
         // Whether installed
         detailsTable.setHTML(3, 0, "Installed status:");
@@ -224,7 +237,7 @@ public class ContentStoreContentPackDetailsPresenter
         } else {
             this.lblIcon.setHTML(cp.getIconSvg());
             this.lblName.setText(cp.getUiName());
-            this.lblIsInstalled.setText(cp.isInstalled() ? "Installed" : "-");
+            this.lblIsInstalled.setText(cp.getInstallationStatus().toString());
             this.lblLicense.setText(cp.getLicenseName());
             this.lnkLicense.setHref(cp.getLicenseUrl());
             this.lnkLicense.setText(cp.getLicenseUrl());
@@ -264,16 +277,24 @@ public class ContentStoreContentPackDetailsPresenter
      * Sets the state of the UI components. Called when something
      * relevant changes.
      */
-    private void setState() {
+    public void setState() {
         if (contentPack != null) {
-            if (contentPack.isInstalled()) {
-                btnCreateGitRepo.setEnabled(false);
-            } else {
+            ContentStoreContentPackStatus status = contentPack.getInstallationStatus();
+            if (status.equals(ContentStoreContentPackStatus.NOT_INSTALLED)) {
                 btnCreateGitRepo.setEnabled(true);
+                btnUpgradeGitRepo.setEnabled(false);
+            } else if (status.equals(ContentStoreContentPackStatus.PACK_UPGRADABLE)
+                || status.equals(ContentStoreContentPackStatus.CONTENT_UPGRADABLE)) {
+                btnCreateGitRepo.setEnabled(false);
+                btnUpgradeGitRepo.setEnabled(true);
+            } else {
+                btnCreateGitRepo.setEnabled(false);
+                btnUpgradeGitRepo.setEnabled(false);
             }
 
         } else {
             btnCreateGitRepo.setEnabled(false);
+            btnUpgradeGitRepo.setEnabled(false);
         }
     }
 
@@ -344,9 +365,10 @@ public class ContentStoreContentPackDetailsPresenter
                                 "Creation success",
                                 result.getMessage(),
                                 () -> RefreshExplorerTreeEvent.fire(contentStorePresenter));
-                        // Mark the content pack as Installed
-                        cp.setIsInstalled(true);
-                        contentStorePresenter.redrawList();
+                        // Mark the content pack as Installed & update the UI
+                        cp.setInstallationStatus(ContentStoreContentPackStatus.INSTALLED);
+                        contentStorePresenter.updateState();
+                        this.setState();
                     } else {
                         AlertEvent.fireError(contentStorePresenter,
                                 "Create failed",
@@ -365,4 +387,44 @@ public class ContentStoreContentPackDetailsPresenter
 
     }
 
+    /**
+     * Called when the 'upgrade' button is pressed. This could
+     * be a pack upgrade or a content upgrade.
+     */
+    private void btnUpgradeGitRepoClick() {
+        //Window.alert("Upgrade button pressed");
+
+        // Only do anything if something is selected
+        if (contentPack != null) {
+            // Defensive copy of reference
+            ContentStoreContentPack cp = contentPack;
+            ContentStoreContentPackStatus status = cp.getInstallationStatus();
+
+            // Which kind of upgrade?
+            if (status.equals(ContentStoreContentPackStatus.CONTENT_UPGRADABLE)) {
+                doContentUpgrade(cp);
+            } else if (status.equals(ContentStoreContentPackStatus.PACK_UPGRADABLE)) {
+                doPackUpgrade(cp);
+            }
+            // Ignore any other status - button should be disabled
+        }
+    }
+
+    /**
+     * Called when the Upgrade button is clicked and the content
+     * can be upgraded.
+     * @param cp The current content pack. Must not be null.
+     */
+    private void doContentUpgrade(ContentStoreContentPack cp) {
+        // TODO do content upgrade
+    }
+
+    /**
+     * Called when the Upgrade button is clicked and the pack can
+     * be upgraded.
+     * @param cp The current content pack. Must not be null.
+     */
+    private void doPackUpgrade(ContentStoreContentPack cp) {
+        // TODO do pack upgrade
+    }
 }

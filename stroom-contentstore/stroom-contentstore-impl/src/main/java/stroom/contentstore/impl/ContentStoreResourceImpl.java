@@ -3,6 +3,7 @@ package stroom.contentstore.impl;
 import stroom.contentstore.shared.ContentStoreCreateGitRepoRequest;
 import stroom.contentstore.shared.ContentStoreResponse;
 import stroom.contentstore.shared.ContentStoreContentPack;
+import stroom.contentstore.shared.ContentStoreValueResponse;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.explorer.api.ExplorerService;
@@ -83,8 +84,6 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
 
     /**
      * REST method to return the list of content packs to the client.
-     * <br/>
-     * Gets called repeatedly by the client, every minute or so.
      *
      * @return A list of content packs. Never returns null but may
      * return an empty list.
@@ -127,8 +126,8 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
                     // Add the content store metadata
                     cp.setContentStoreMetadata(cs.getMeta());
 
-                    // Check if the content pack is already installed
-                    cp.checkIfInstalled(installedGitRepoDocs);
+                    // Check if content pack is installed or upgradable
+                    cp.checkInstallationStatus(installedGitRepoDocs);
                 }
 
                 LOGGER.info("Adding content packs from '{}' -> '{}'", appStoreUrl, cs);
@@ -188,7 +187,7 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
     /**
      * Checks to see if a GitRepo exists that matches the content pack.
      * Not a full check to see if there is a match; just compare
-     * Git URL, branch and path to try to avoid duplicate objects.
+     * content store owner ID and content pack ID.
      * @param contentPack The content pack to check for a match.
      * @return true if the GitRepo already exists; false if not.
      */
@@ -298,7 +297,7 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
     /**
      * Returns the response if something goes wrong.
      * @param errorMessage The error message to send back.
-     * @param messages List of messages. Must not be null but can be empty.
+     * @param messages List of messages. Can be null or empty.
      * @param cause The exception, if any. Can be null.
      * @return The response. Never null.
      */
@@ -312,7 +311,7 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
             buf.append("\n    ");
             buf.append(cause.getMessage());
         }
-        if (!messages.isEmpty()) {
+        if (messages != null && !messages.isEmpty()) {
             buf.append("\n\nAdditional information:");
             for (Message m : messages) {
                 buf.append("\n    ");
@@ -325,6 +324,51 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
                 cause);
 
         return new ContentStoreResponse(false, buf.toString());
+    }
+
+    @Override
+    public ContentStoreValueResponse<Boolean> checkContentUpgradeAvailable(final ContentStoreContentPack contentPack) {
+        LOGGER.info("Checking for upgrades for {}", contentPack.getUiName());
+
+        try {
+            // Find a matching GitRepoDoc
+            GitRepoDoc gitRepoDoc = null;
+            final List<DocRef> existingDocRefs = gitRepoStore.list();
+            for (DocRef existingDocRef : existingDocRefs) {
+                final GitRepoDoc existingGitRepoDoc = gitRepoStore.readDocument(existingDocRef);
+                if (contentPack.matches(existingGitRepoDoc)) {
+                    gitRepoDoc = existingGitRepoDoc;
+                    break;
+                }
+            }
+
+            // Check if updates are available for this doc
+            Boolean retval = Boolean.FALSE;
+            if (gitRepoDoc != null) {
+                retval = gitRepoStorageService.areUpdatesAvailable(gitRepoDoc);
+            }
+
+            return new ContentStoreValueResponse<>(
+                    true,
+                    retval,
+                    null);
+
+        } catch (IOException e) {
+
+            final StringBuilder buf =
+                    new StringBuilder("Error checking whether the content pack \"");
+            buf.append(contentPack.getUiName());
+            buf.append("\" can be upgraded:\n    ");
+            buf.append(e.getMessage());
+
+            LOGGER.error("{}",
+                    buf,
+                    e);
+
+            return new ContentStoreValueResponse<>(false,
+                    null,
+                    buf.toString());
+        }
     }
 
 }
