@@ -26,7 +26,7 @@ import java.util.Objects;
  * To add a help button to the right of the label you have two options:
  * <p>
  * <p/>
- * For plain text help use the {@code helpText} attr (any HTML will be escaped):
+ * For simple plain text help use the {@code helpText} attr (any HTML will be escaped):
  * <pre>{@code
  * <form:FormGroup ... helpText="This is my help text">
  * }</pre>
@@ -68,6 +68,10 @@ import java.util.Objects;
 public class FormGroup extends Composite implements HasWidgets {
 
     public static final String CLASS_NAME_FORM_GROUP_HELP = "form-group-help";
+    public static final String STYLE_FORM_GROUP_DESCRIPTION_CONTAINER = "form-group-description-container";
+    public static final String STYLE_FORM_GROUP_DESCRIPTION_CONTAINER_DISABLED =
+            STYLE_FORM_GROUP_DESCRIPTION_CONTAINER + "--disabled";
+
     private final FlowPanel formGroupPanel = new FlowPanel();
     private final FormLabel formLabel = new FormLabel();
     private final HelpButton helpButton = HelpButton.create();
@@ -86,13 +90,14 @@ public class FormGroup extends Composite implements HasWidgets {
     // Trumps helpText and helpHTML
     private SafeHtml helpTextOverride = null;
     private DescriptionHTML descriptionHTML = null;
+    private boolean disabled = false;
 
     public FormGroup() {
         feedbackLabel.setStyleName("invalid-feedback");
         formGroupPanel.addStyleName("form-group");
         labelPanel.addStyleName("form-group-label-container");
         formLabel.addStyleName("form-group-label");
-        descriptionPanel.addStyleName("form-group-description-container");
+        descriptionPanel.addStyleName(STYLE_FORM_GROUP_DESCRIPTION_CONTAINER);
         helpButton.addStyleName("form-group-help");
 
         // Don't want the user to have to tab over each help btn when you can
@@ -139,6 +144,25 @@ public class FormGroup extends Composite implements HasWidgets {
 
     public String getLabel() {
         return formLabel.getLabel();
+    }
+
+    /**
+     * If disabled, the {@link FormGroup} label and descriptionHtml text will be greyed out
+     * to show the group as being disabled. This helps when it is not easy to see that
+     * the control in the group is disabled.
+     */
+    public void setDisabled(final boolean disabled) {
+        this.disabled = disabled;
+        formLabel.setDisabled(disabled);
+        if (disabled) {
+            descriptionPanel.addStyleName(STYLE_FORM_GROUP_DESCRIPTION_CONTAINER_DISABLED);
+        } else {
+            descriptionPanel.removeStyleName(STYLE_FORM_GROUP_DESCRIPTION_CONTAINER_DISABLED);
+        }
+    }
+
+    public boolean isDisabled() {
+        return disabled;
     }
 
     /**

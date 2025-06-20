@@ -1123,7 +1123,7 @@ class ExplorerServiceImpl
 
                 // Copy the item to the destination folder.
                 String name = sourceNode.getDocRef().getName();
-                if (allowRename && !NullSafe.isBlankString(docName)) {
+                if (allowRename && NullSafe.isNonBlankString(docName)) {
                     name = docName;
                 }
                 final DocRef destinationDocRef = handler.copyDocument(

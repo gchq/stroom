@@ -49,8 +49,9 @@
 
     /* Headings, e.g. in markdown documentation, info tooltips, meta info */
     --heading-color: var(--blue-700);
-    /* <code> blocks, e.g. in markdown */
+    /* <code> blocks, e.g. in markdown or in FormGroup help/description */
     --code-color: var(--pink-700);
+    --code-color--disabled: rgb(from var(--code-color) r g b / 0.7);
     --border-color: #ebebeb;
 
     --header__border-color: #dddddd;

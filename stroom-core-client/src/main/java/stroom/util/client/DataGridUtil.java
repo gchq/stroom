@@ -599,6 +599,15 @@ public class DataGridUtil {
     }
 
     /**
+     * Returns a {@link Function} that will extract a boolean value from the row and
+     * render it as Yes/No.
+     */
+    public static <T_ROW> Function<T_ROW, String> toYesNoFunc(final Function<T_ROW, Boolean> valueExtractor) {
+        return (T_ROW row) ->
+                DataGridUtil.formatAsYesNo(valueExtractor.apply(row));
+    }
+
+    /**
      * Returns a {@link Function} that will call the toString method on the value returned
      * from passing the row through valueExtractor1 then valueExtractor2. If any intermediate value
      * is null, the returned function will return an empty string.

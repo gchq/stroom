@@ -20,6 +20,7 @@ package stroom.receive.content.client.presenter;
 import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.item.client.SelectionBox;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.ExpressionOperator;
@@ -50,7 +51,6 @@ public class ContentTemplateEditPresenter
     private final SimpleFieldSelectionListModel fieldSelectionBoxModel;
     private final DocSelectionBoxPresenter pipelineSelectionPresenter;
     private ContentTemplate originalTemplate;
-
 
     @Inject
     public ContentTemplateEditPresenter(final EventBus eventBus,
@@ -86,7 +86,9 @@ public class ContentTemplateEditPresenter
 
     @Override
     protected void onBind() {
-
+        registerHandler(getView().getTemplateTypeSelectionBox().addValueChangeHandler(event -> {
+            getView().setTemplateType(event.getValue());
+        }));
     }
 
     @Override
@@ -105,6 +107,7 @@ public class ContentTemplateEditPresenter
         view.setName(contentTemplate.getName());
         view.setDescription(contentTemplate.getDescription());
         view.setTemplateType(contentTemplate.getTemplateType());
+        view.setCopyDependencies(contentTemplate.isCopyElementDependencies());
         view.setProcessorPriority(contentTemplate.getProcessorPriority());
         view.setProcessorMaxConcurrent(contentTemplate.getProcessorMaxConcurrent());
         pipelineSelectionPresenter.setSelectedEntityReference(contentTemplate.getPipeline(), true);
@@ -117,6 +120,7 @@ public class ContentTemplateEditPresenter
                 .withName(view.getName())
                 .withDescription(view.getDescription())
                 .withTemplateType(view.getTemplateType())
+                .withCopyElementDependencies(view.isCopyDependencies())
                 .withPipeline(pipelineSelectionPresenter.getSelectedEntityReference())
                 .withExpression(expression)
                 .withProcessorPriority(view.getProcessorPriority())
@@ -148,9 +152,15 @@ public class ContentTemplateEditPresenter
 
         void setDescription(String description);
 
+        SelectionBox<TemplateType> getTemplateTypeSelectionBox();
+
         TemplateType getTemplateType();
 
         void setTemplateType(final TemplateType templateType);
+
+        boolean isCopyDependencies();
+
+        void setCopyDependencies(final boolean copyDependencies);
 
         void setPipelineSelector(final View view);
 
