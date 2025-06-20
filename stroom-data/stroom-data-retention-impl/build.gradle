@@ -19,6 +19,7 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
+    implementation libs.dropwizard.client
     implementation libs.eventLogging
     implementation libs.guice
     implementation libs.restygwt

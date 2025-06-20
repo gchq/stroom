@@ -8,7 +8,7 @@ stroomTestData = "0.2.3"
 # ------------3rd-party------------
 aws = "2.30.8"
 commons-io = "2.18.0"
-dropwizard = "4.0.12" # used to set the dropwizard-bom version, that controls lots of dependency versions
+dropwizard = "4.0.14" # used to set the dropwizard-bom version, that controls lots of dependency versions
 elasticsearch = "8.12.2"
 httpcore = "4.4.16" # Transient dependency of Elasticsearch
 flyway = "11.9.1"
@@ -43,7 +43,7 @@ commons-beanutils = { module = "commons-beanutils:commons-beanutils", version = 
 commons-codec = { module = "commons-codec:commons-codec" } # version controlled by dropwizard-dependencies
 commons-compress = { module = "org.apache.commons:commons-compress", version = "1.27.1" }
 commons-csv = { module = "org.apache.commons:commons-csv", version = "1.10.0" }
-commons-fileupload = { module = "org.apache.commons:commons-fileupload2-jakarta", version = "2.0.0-M1" }
+commons-fileupload = { module = "org.apache.commons:commons-fileupload2-jakarta-servlet6", version = "2.0.0-M4" }
 commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
 commons-lang = { module = "org.apache.commons:commons-lang3" } # version controlled by dropwizard-dependencies
 commons-pool2 = { module = "org.apache.commons:commons-pool2", version = "2.12.0" }
@@ -127,7 +127,7 @@ jetty-http = { module = "org.eclipse.jetty:jetty-http" } # version controlled by
 jetty-server = { module = "org.eclipse.jetty:jetty-server" } # version controlled by dropwizard-dependencies
 jetty-servlet = { module = "org.eclipse.jetty:jetty-servlet" } # version controlled by dropwizard-dependencies
 jetty-servlets = { module = "org.eclipse.jetty:jetty-servlets" } # version controlled by dropwizard-dependencies
-jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version = "7.1.0.202411261347-r" }
+jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version = "7.3.0.202506031305-r" }
 jinjava = { module = "com.hubspot.jinjava:jinjava", version = "2.7.2" }
 jmh-core = { module = "org.openjdk.jmh:jmh-core", version.ref = "jmh" }
 jmh-generator-annprocess = { module = "org.openjdk.jmh:jmh-generator-annprocess", version.ref = "jmh" }

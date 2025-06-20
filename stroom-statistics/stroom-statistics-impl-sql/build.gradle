@@ -28,6 +28,7 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.commons.pool2
+    implementation libs.dropwizard.client
     implementation libs.dropwizard.metrics.annotation
     implementation libs.eventLogging
     implementation libs.guava

@@ -14,11 +14,11 @@ import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.security.openid.api.TokenResponse;
 
 import event.logging.AuthenticateOutcomeReason;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.UriBuilder;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

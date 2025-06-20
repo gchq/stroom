@@ -31,6 +31,7 @@ dependencies {
 
     implementation libs.bcrypt
     implementation libs.caffeine
+    implementation libs.dropwizard.client
     implementation libs.dropwizard.metrics.annotation
     implementation libs.dropwizard.metrics.healthchecks
     implementation libs.eventLogging

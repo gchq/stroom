@@ -17,8 +17,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Min;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 @JsonPropertyOrder(alphabetic = true)
 public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
