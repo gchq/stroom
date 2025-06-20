@@ -33,8 +33,8 @@ import event.logging.EventAction;
 import event.logging.ProcessEventAction;
 import event.logging.Query;
 import event.logging.SearchEventAction;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Optional;
 

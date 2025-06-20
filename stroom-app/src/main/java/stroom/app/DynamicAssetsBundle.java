@@ -3,7 +3,7 @@ package stroom.app;
 import com.google.common.io.Resources;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.servlets.assets.AssetServlet;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

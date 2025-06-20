@@ -29,6 +29,7 @@ dependencies {
 
     implementation libs.caffeine
     implementation libs.commons.compress
+    implementation libs.dropwizard.client
     implementation libs.fast.infoset
     implementation libs.guava
     implementation libs.guice
