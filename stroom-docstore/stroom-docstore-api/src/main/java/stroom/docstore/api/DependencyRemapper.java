@@ -49,11 +49,14 @@ public class DependencyRemapper {
         if (expressionOperator.getChildren() != null) {
             final List<ExpressionItem> children = new ArrayList<>();
             expressionOperator.getChildren().forEach(expressionItem -> {
-                if (expressionItem instanceof ExpressionOperator) {
-                    children.add(remapExpression((ExpressionOperator) expressionItem));
-                } else if (expressionItem instanceof ExpressionTerm) {
-                    final ExpressionTerm expressionTerm = (ExpressionTerm) expressionItem;
-                    children.add(expressionTerm.copy().docRef(remap(expressionTerm.getDocRef())).build());
+                switch (expressionItem) {
+                    case final ExpressionOperator operator -> children.add(remapExpression(operator));
+                    case final ExpressionTerm expressionTerm -> {
+                        final ExpressionTerm termCopy = expressionTerm.copy()
+                                .docRef(remap(expressionTerm.getDocRef()))
+                                .build();
+                        children.add(termCopy);
+                    }
                 }
             });
             builder.children(children);

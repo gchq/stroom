@@ -49,10 +49,14 @@ html,body,div,span,table,tbody,tr,th,td,table th,table td,b,p,h1,h2,h3,h4,select
 }
 
 hr {
-  margin-top: 0.5em;
-  margin-bottom: 0.5em;
-  border: 0;
-  border-top: 1px solid var(--text-color);
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+    border: 0;
+    border-top: 1px solid var(--text-color);
+}
+
+code {
+    color: var(--code-color);
 }
 
 /*
