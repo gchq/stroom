@@ -117,8 +117,8 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
 
             final Action action = KeyBinding.test(event);
             if (clickable && isTickBox(event) &&
-                    ((BrowserEvents.MOUSEDOWN.equals(type) && MouseUtil.isPrimary(event)) ||
-                            (BrowserEvents.KEYDOWN.equals(type) && action == Action.SELECT))) {
+                ((BrowserEvents.MOUSEDOWN.equals(type) && MouseUtil.isPrimary(event)) ||
+                 (BrowserEvents.KEYDOWN.equals(type) && action == Action.SELECT))) {
                 event.preventDefault();
 
                 TickBoxState state = value;
@@ -197,7 +197,10 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
          * @param value   the value that generated the content
          * @param sb      the {@link SafeHtmlBuilder} to render into
          */
-        void render(TickBoxCell cell, Context context, TickBoxState value, SafeHtmlBuilder sb);
+        void render(TickBoxCell cell,
+                    Context context,
+                    TickBoxState value,
+                    SafeHtmlBuilder sb);
 
         SafeHtml getHTML(TickBoxState value);
     }
@@ -252,15 +255,23 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
             final SafeHtml safeHtml;
             switch (value) {
                 case TICK:
-                    safeHtml = SvgImageUtil.toSafeHtml(SvgImage.TICK, TICKBOX_CLASSNAME, additionalClassNames, TICK);
+                    safeHtml = SvgImageUtil.toSafeHtml(
+                            "Ticked",
+                            SvgImage.TICK,
+                            TICKBOX_CLASSNAME,
+                            additionalClassNames,
+                            TICK);
                     break;
                 case HALF_TICK:
                     safeHtml = template.halfTick(
+                            "Half-Ticked",
                             TICKBOX_CLASSNAME + additionalClassNames + HALF_TICK,
                             HALF_TICK_INNER);
                     break;
                 case UNTICK:
-                    safeHtml = template.untick(TICKBOX_CLASSNAME + additionalClassNames + UNTICK);
+                    safeHtml = template.untick(
+                            "Not Ticked",
+                            TICKBOX_CLASSNAME + additionalClassNames + UNTICK);
                     break;
                 default:
                     safeHtml = SafeHtmlUtils.EMPTY_SAFE_HTML;
@@ -277,11 +288,11 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
 
     public interface Template extends SafeHtmlTemplates {
 
-        @Template("<div class=\"{0}\"><div class=\"{1}\"></div></div>")
-        SafeHtml halfTick(String outerClassName, String innerClassName);
+        @Template("<div title=\"{0}\" class=\"{1}\"><div class=\"{2}\"></div></div>")
+        SafeHtml halfTick(String title, String outerClassName, String innerClassName);
 
-        @Template("<div class=\"{0}\"></div>")
-        SafeHtml untick(String outerClassName);
+        @Template("<div title=\"{0}\" class=\"{1}\"></div>")
+        SafeHtml untick(String title, String outerClassName);
     }
 
 

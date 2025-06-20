@@ -68,6 +68,7 @@ public class ContentTemplateTabPresenter
             ContentTemplateResource.class);
 
     private static final Preset DELETE_TEMPLATE_SVG_PRESET = SvgPresets.DELETE.title("Delete template");
+    //    private static final Preset DISABLE_TEMPLATE_SVG_PRESET = SvgPresets.DISABLE.title("Enable/Disable template");
     protected static final Preset ADD_ABOVE_SVG_PRESET = SvgPresets.ADD_ABOVE.title(
             "Add new template above the selected one");
     protected static final Preset ADD_BELOW_SVG_PRESET = SvgPresets.ADD_BELOW.title(
@@ -218,6 +219,12 @@ public class ContentTemplateTabPresenter
                                 .text("Delete template")
                                 .command(() ->
                                         deleteRule(contentTemplate)))
+//                .withIconMenuItem(itemBuilder ->
+//                        itemBuilder
+//                                .icon(SvgImage.DISABLE)
+//                                .text("Enable/Disable template")
+//                                .command(() ->
+//                                        setRuleEnabledState(contentTemplate, !contentTemplate.isEnabled())))
                 .withIconMenuItemIf(contentTemplate.getTemplateNumber() > 0, itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.UP)
@@ -235,21 +242,23 @@ public class ContentTemplateTabPresenter
     }
 
     private void addEnabledClickHandler() {
-        listPresenter.setEnabledStateHandler((currTemplate, isEnabled) -> {
-            if (contentTemplates != null) {
-                if (currTemplate != null) {
-                    final ContentTemplate newTemplate = currTemplate.withEnabledState(isEnabled);
-                    final int index = contentTemplates.indexOf(currTemplate);
-                    contentTemplates.set(index, newTemplate);
+        listPresenter.setEnabledStateHandler(this::setRuleEnabledState);
+    }
+
+    private void setRuleEnabledState(final ContentTemplate currTemplate, final boolean isEnabled) {
+        if (contentTemplates != null) {
+            if (currTemplate != null) {
+                final ContentTemplate newTemplate = currTemplate.withEnabledState(isEnabled);
+                final int index = contentTemplates.indexOf(currTemplate);
+                contentTemplates.set(index, newTemplate);
 //                    contentTemplates.remove(index);
 //                    contentTemplates.add(index, newTemplate);
 //                    index = contentTemplates.indexOf(newTemplate);
-                    update();
-                    setDirty(true);
-                    setSelected(contentTemplates.get(index));
-                }
+                update();
+                setDirty(true);
+                setSelected(contentTemplates.get(index));
             }
-        });
+        }
     }
 
     private void addListSelectionHandler() {

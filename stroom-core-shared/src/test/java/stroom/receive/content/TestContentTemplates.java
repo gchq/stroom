@@ -29,6 +29,7 @@ class TestContentTemplates {
                         ++templateNumber,
                         ExpressionOperator.builder().build(),
                         TemplateType.PROCESSOR_FILTER,
+                        false,
                         PipelineDoc.buildDocRef()
                                 .name("MyPipe1")
                                 .uuid("uuid123")
@@ -42,6 +43,7 @@ class TestContentTemplates {
                         ++templateNumber,
                         ExpressionOperator.builder().build(),
                         TemplateType.INHERIT_PIPELINE,
+                        true,
                         PipelineDoc.buildDocRef()
                                 .name("MyPipe2")
                                 .uuid("uuid456")

@@ -34,6 +34,7 @@ public final class SvgPresets {
     public static final Preset CLEAR = disabled(SvgImage.CLEAR, "Clear");
     public static final Preset CLIPBOARD = disabled(SvgImage.CLIPBOARD, "Clipboard");
     public static final Preset CLOSE = disabled(SvgImage.CLOSE, "Close");
+    public static final Preset CANCEL = enabled(SvgImage.CANCEL, "Cancel");
     public static final Preset COPY = disabled(SvgImage.COPY, "Copy");
     public static final Preset DELETE = disabled(SvgImage.DELETE, "Delete");
     public static final Preset DELETED = enabled(SvgImage.DELETE, "Deleted");
@@ -72,6 +73,7 @@ public final class SvgPresets {
     public static final Preset STOP = enabled(SvgImage.STOP, "Stop");
     public static final Preset TABLE = enabled(SvgImage.TABLE, "Table");
     public static final Preset TABLE_NESTED = enabled(SvgImage.TABLE_NESTED, "Nested Table");
+    public static final Preset TICK = enabled(SvgImage.TICK, "Tick");
     public static final Preset UNDO = disabled(SvgImage.UNDO, "Undo");
     public static final Preset UP = disabled(SvgImage.UP, "Up");
     public static final Preset UPLOAD = enabled(SvgImage.UPLOAD, "Upload");
