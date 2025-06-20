@@ -1799,6 +1799,15 @@ button.main-menu svg {
     margin-left: var(--control__gap--horizontal);
 }
 
+.form-group-description-container--disabled,
+.form-label--disabled {
+    color: var(--text-color--disabled);
+}
+
+.form-group-description-container--disabled code {
+    color: var(--code-color--disabled);
+}
+
 .help-button-tooltip {
     /* width: 500px; */
     max-width: 700px;

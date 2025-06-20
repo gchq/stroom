@@ -89,6 +89,10 @@ public class PipelineProperty implements Comparable<PipelineProperty> {
         return "element=" + element + ", name=" + name + ", value=" + value;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Builder {
 
         private String element;

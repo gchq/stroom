@@ -5,6 +5,7 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
+import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.expression.matcher.ExpressionMatcher;
@@ -19,6 +20,12 @@ import stroom.meta.shared.DataFormatNames;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.PipelineService;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.TextConverterDoc;
+import stroom.pipeline.shared.XsltDoc;
+import stroom.pipeline.shared.data.PipelineDataBuilder;
+import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.data.PipelineProperty.Builder;
+import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.ProcessorType;
@@ -54,6 +61,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -72,6 +80,9 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
     private static final Pattern PATH_PARAM_REPLACE_PATTERN = Pattern.compile("[^a-zA-Z0-9 _-]");
     private static final Pattern PATH_STATIC_REPLACE_PATTERN = Pattern.compile("[^a-zA-Z0-9 /_-]");
     private static final Pattern GROUP_REPLACE_PATTERN = Pattern.compile("[^a-zA-Z0-9-]");
+    private static final Set<String> COPYABLE_DOC_TYPES = Set.of(
+            XsltDoc.TYPE,
+            TextConverterDoc.TYPE);
 
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
     private final Provider<AutoContentCreationConfig> autoContentCreationConfigProvider;
@@ -462,7 +473,9 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                                         final ExplorerNode destFolder) {
 
         getMatchingTemplate(attributeMap)
-                .ifPresent(contentTemplate -> {
+                .ifPresentOrElse(contentTemplate -> {
+                    LOGGER.debug("createTemplatedContent() - Matched template {}, attributeMap: {}",
+                            contentTemplate, attributeMap);
                     final DocRef pipelineDocRef = Objects.requireNonNull(contentTemplate.getPipeline());
                     final PipelineDoc pipelineDoc;
                     try {
@@ -490,6 +503,9 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                                 destFolder,
                                 contentTemplate);
                     }
+                }, () -> {
+                    LOGGER.debug("createTemplatedContent() - No matching template for attributeMap: {}",
+                            attributeMap);
                 });
     }
 
@@ -497,32 +513,38 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                                        final DocRef pipelineDocRef,
                                        final DocRef feedDocRef,
                                        final ContentTemplate contentTemplate) {
-        final String type = NullSafe.nonBlankStringElse(streamType, StreamTypeNames.RAW_EVENTS);
+        try {
+            final String type = NullSafe.nonBlankStringElse(streamType, StreamTypeNames.RAW_EVENTS);
 
-        final ExpressionOperator expression = ExpressionOperator.builder()
-                .addDocRefTerm(MetaFields.FEED, Condition.IS_DOC_REF, feedDocRef)
-                .addTextTerm(MetaFields.TYPE, Condition.EQUALS, type)
-                .build();
-        // We are currently running as the user defined in config
-        final UserRef runAsUser = securityContext.getUserRef();
-        final CreateProcessFilterRequest request = CreateProcessFilterRequest.builder()
-                .queryData(QueryData.builder()
-                        .dataSource(MetaFields.STREAM_STORE_DOC_REF)
-                        .expression(expression)
-                        .build())
-                .pipeline(pipelineDocRef)
-                .processorType(ProcessorType.PIPELINE)
-                .priority(contentTemplate.getProcessorPriority())
-                .autoPriority(false)
-                .maxProcessingTasks(contentTemplate.getProcessorMaxConcurrent())
-                .enabled(true)
-                .runAsUser(runAsUser)
-                .build();
+            final ExpressionOperator expression = ExpressionOperator.builder()
+                    .addDocRefTerm(MetaFields.FEED, Condition.IS_DOC_REF, feedDocRef)
+                    .addTextTerm(MetaFields.TYPE, Condition.EQUALS, type)
+                    .build();
+            // We are currently running as the user defined in config
+            final UserRef runAsUser = securityContext.getUserRef();
+            final CreateProcessFilterRequest request = CreateProcessFilterRequest.builder()
+                    .queryData(QueryData.builder()
+                            .dataSource(MetaFields.STREAM_STORE_DOC_REF)
+                            .expression(expression)
+                            .build())
+                    .pipeline(pipelineDocRef)
+                    .processorType(ProcessorType.PIPELINE)
+                    .priority(contentTemplate.getProcessorPriority())
+                    .autoPriority(false)
+                    .maxProcessingTasks(contentTemplate.getProcessorMaxConcurrent())
+                    .enabled(true)
+                    .runAsUser(runAsUser)
+                    .build();
 
-        processorFilterService.create(request);
+            processorFilterService.create(request);
 
-        LOGGER.info("Created processor filter using contentTemplate '{}' for expression: {}, running as {}",
-                contentTemplate.getName(), expression, runAsUser);
+            LOGGER.info("Created processor filter using contentTemplate '{}' for expression: {}, running as {}",
+                    contentTemplate.getName(), expression, runAsUser);
+        } catch (final Exception e) {
+            LOGGER.error("Error creating processor filter on {}, contentTemplate: {}, feedDocRef: {}, {}",
+                    pipelineDocRef, contentTemplate, feedDocRef, LogUtil.exceptionMessage(e), e);
+            throw new RuntimeException(e);
+        }
     }
 
     private void createPipelineFromParent(final PipelineDoc parentPipelineDoc,
@@ -531,24 +553,109 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                                           final ExplorerNode destFolder,
                                           final ContentTemplate contentTemplate) {
 
-        explorerNodeService.getNode(parentPipelineDoc.asDocRef());
-        // Use feed name for the name of the new pipeline
-        final String pipeDocName = feedDocRef.getName();
-        final ExplorerNode newPipelineNode = explorerService.create(
-                PipelineDoc.TYPE,
-                pipeDocName,
-                destFolder,
-                PermissionInheritance.DESTINATION);
+        DocRef parentPipeDocRef = null;
+        try {
+            parentPipeDocRef = Objects.requireNonNull(parentPipelineDoc).asDocRef();
+            LOGGER.debug("createPipelineFromParent() - parentPipelineDoc: {}, feedDocRef: {}, " +
+                         "destFolder: {}, contentTemplate: {}",
+                    parentPipeDocRef, feedDocRef, destFolder, contentTemplate);
 
-        final String newPipelineUuid = newPipelineNode.getUuid();
-        final PipelineDoc newPipelineDoc = pipelineService.fetch(newPipelineUuid);
-        newPipelineDoc.setParentPipeline(parentPipelineDoc.asDocRef());
-        pipelineService.update(newPipelineUuid, newPipelineDoc);
+            // Use feed name for the name of the new pipeline
+            final String pipeDocName = feedDocRef.getName();
+            final ExplorerNode newPipelineNode = explorerService.create(
+                    PipelineDoc.TYPE,
+                    pipeDocName,
+                    destFolder,
+                    PermissionInheritance.DESTINATION);
 
-        LOGGER.info("Created pipeline {} with parentPipeline {} using contentTemplate '{}'",
-                newPipelineDoc.asDocRef(), parentPipelineDoc.asDocRef(), contentTemplate.getName());
+            // Update the new pipe so it inherits from the parent
+            final String newPipelineUuid = newPipelineNode.getUuid();
+            final PipelineDoc newPipelineDoc = pipelineService.fetch(newPipelineUuid);
+            newPipelineDoc.setParentPipeline(parentPipeDocRef);
 
-        // Now create the proc filter for the new pipe
-        createProcessorFilter(streamType, newPipelineDoc.asDocRef(), feedDocRef, contentTemplate);
+            if (contentTemplate.isCopyElementDependencies()) {
+                final Set<PipelineProperty> directEntityDependencies = getDirectEntityDependencies(parentPipelineDoc);
+                LOGGER.debug("createPipelineFromParent() - directEntityDependencies: {}", directEntityDependencies);
+                if (!directEntityDependencies.isEmpty()) {
+                    final Map<DocRef, DocRef> remappings = new HashMap<>(directEntityDependencies.size());
+                    for (final PipelineProperty property : directEntityDependencies) {
+                        final DocRef depDocRef = property.getValue().getEntity();
+                        final ExplorerNode dependencyNode = explorerNodeService.getNode(depDocRef)
+                                .orElseThrow(() ->
+                                        new RuntimeException("No explorer node found for " + property));
+                        final String newName = newPipelineDoc.getName() + "-" + property.getElement();
+                        final BulkActionResult result = explorerService.copy(
+                                List.of(dependencyNode),
+                                destFolder,
+                                true,
+                                newName,
+                                PermissionInheritance.DESTINATION);
+                        if (NullSafe.size(result.getExplorerNodes()) != 1) {
+                            throw new RuntimeException("Expecting exactly one node");
+                        }
+                        final ExplorerNode nodeCopy = result.getExplorerNodes().getFirst();
+                        LOGGER.debug(() -> LogUtil.message("createPipelineFromParent() - Copied: {} to: {}",
+                                dependencyNode.getDocRef(), nodeCopy.getDocRef()));
+                        remappings.put(dependencyNode.getDocRef(), nodeCopy.getDocRef());
+                    }
+                    // Update the pipeline so it uses
+                    final List<PipelineProperty> parentAddedProperties = parentPipelineDoc.getPipelineData()
+                            .getAddedProperties();
+                    final PipelineDataBuilder pipelineDataBuilder = new PipelineDataBuilder();
+                    for (final PipelineProperty parentAddedProperty : parentAddedProperties) {
+                        final DocRef propEntity = NullSafe.get(
+                                parentAddedProperty,
+                                PipelineProperty::getValue,
+                                PipelinePropertyValue::getEntity);
+
+                        final DocRef newPropEntity = remappings.get(propEntity);
+                        if (newPropEntity != null) {
+                            final PipelineProperty newPipelineProperty = new Builder(parentAddedProperty)
+                                    .value(new PipelinePropertyValue(newPropEntity))
+                                    .build();
+                            pipelineDataBuilder.addProperty(newPipelineProperty);
+                        }
+                    }
+                    newPipelineDoc.setPipelineData(pipelineDataBuilder.build());
+                }
+            }
+            pipelineService.update(newPipelineUuid, newPipelineDoc);
+
+            LOGGER.info("Created pipeline {} with parentPipeline {} using contentTemplate '{}'",
+                    newPipelineDoc.asDocRef(), parentPipeDocRef, contentTemplate.getName());
+
+            // Now create the proc filter for the new pipe
+            createProcessorFilter(streamType, newPipelineDoc.asDocRef(), feedDocRef, contentTemplate);
+        } catch (final RuntimeException e) {
+            LOGGER.error("Error creating pipeline that inherits {}, contentTemplate: {}, feedDocRef: {}, {}",
+                    parentPipeDocRef, contentTemplate, feedDocRef, LogUtil.exceptionMessage(e), e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Set<PipelineProperty> getDirectEntityDependencies(final PipelineDoc pipelineDoc) {
+        final Set<PipelineProperty> elmDepDocRefs = pipelineDoc.getPipelineData()
+                .getAddedProperties()
+                .stream()
+                .filter(prop -> {
+                    final DocRef docRef = NullSafe.get(
+                            prop,
+                            PipelineProperty::getValue,
+                            PipelinePropertyValue::getEntity);
+                    return isTypeSuitableForCopy(docRef);
+                })
+                .collect(Collectors.toSet());
+
+        LOGGER.debug("fetchDirectElementDependencies() - elmDepDocRefs: {}", elmDepDocRefs);
+        return elmDepDocRefs;
+    }
+
+    /**
+     * We don't want to copy feed/indexes
+     */
+    private boolean isTypeSuitableForCopy(final DocRef docRef) {
+        final String type = NullSafe.get(docRef, DocRef::getType);
+        return type != null
+               && COPYABLE_DOC_TYPES.contains(type);
     }
 }

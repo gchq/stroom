@@ -75,7 +75,11 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         implements PipelineStructureUiHandlers {
 
     private static final PipelineResource PIPELINE_RESOURCE = GWT.create(PipelineResource.class);
-    private static final DocRef NULL_SELECTION = DocRef.builder().uuid("").name("None").type("").build();
+    private static final DocRef NULL_SELECTION = DocRef.builder()
+            .uuid("")
+            .name("None")
+            .type("")
+            .build();
 
     private final DocSelectionBoxPresenter pipelinePresenter;
     private final RestFactory restFactory;
@@ -198,7 +202,6 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                 this.selectedElement = null;
 
                 if (pipelineModel == null) {
-
                     pipelineModel = new PipelineModel(elementTypes);
                     pipelineTreePresenter.setModel(pipelineModel);
                 }
@@ -231,7 +234,10 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                                 // false.
                                 setDirty(false);
                             } catch (final PipelineModelException e) {
-                                AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
+                                AlertEvent.fireError(
+                                        PipelineStructurePresenter.this,
+                                        e.getMessage(),
+                                        null);
                             }
                         })
                         .taskMonitorFactory(this)
@@ -469,7 +475,10 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
     @Override
     public void viewSource() {
         if (isDirty()) {
-            AlertEvent.fireError(this, "You must save changes to this pipeline before you can view the source", null);
+            AlertEvent.fireError(
+                    this,
+                    "You must save changes to this pipeline before you can view the source",
+                    null);
         } else {
             final EditorPresenter jsonEditor = jsonEditorProvider.get();
             jsonEditor.setMode(AceEditorMode.JSON);
@@ -547,8 +556,8 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
             restoreMenuItems = null;
         }
 
-        getView().setAddEnabled(!isReadOnly() && addMenuItems != null && !addMenuItems.isEmpty());
-        getView().setRestoreEnabled(!isReadOnly() && restoreMenuItems != null && !restoreMenuItems.isEmpty());
+        getView().setAddEnabled(!isReadOnly() && NullSafe.hasItems(addMenuItems));
+        getView().setRestoreEnabled(!isReadOnly() && NullSafe.hasItems(restoreMenuItems));
         getView().setRemoveEnabled(!isReadOnly()
                                    && advancedMode
                                    && selectedElement != null
