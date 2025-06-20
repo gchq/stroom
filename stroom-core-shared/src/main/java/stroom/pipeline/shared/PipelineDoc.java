@@ -153,7 +153,6 @@ public class PipelineDoc extends Doc {
 
     @Override
     public int hashCode() {
-
         return Objects.hash(super.hashCode(), description, parentPipeline, pipelineData);
     }
 }

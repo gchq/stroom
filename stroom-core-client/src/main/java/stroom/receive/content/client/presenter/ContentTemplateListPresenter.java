@@ -134,7 +134,20 @@ public class ContentTemplateListPresenter extends MyPresenterWidget<PagerView> i
                 DataGridUtil.headingBuilder("Type")
                         .withToolTip("The type of content to create.")
                         .build(),
-                160);
+                140);
+
+        dataGrid.addColumn(
+                DataGridUtil.readOnlyTickBoxColumnBuilder(TickBoxState.createTickBoxFunc(
+                                ContentTemplate::isCopyElementDependencies))
+                        .enabledWhen(ContentTemplate::isEnabled)
+                        .centerAligned()
+                        .build(),
+                DataGridUtil.headingBuilder("Copy Dependencies")
+                        .withToolTip("If Template Type is INHERIT_PIPELINE then this option allows you to copy " +
+                                     "any entities set within the properties of the pipeline being inherited from. " +
+                                     "It will not copy entities referenced on any ancestor pipelines.")
+                        .build(),
+                140);
 
         final DocRefCell.Builder<ContentTemplate> docRefCellBuilder =
                 new DocRefCell.Builder<ContentTemplate>()

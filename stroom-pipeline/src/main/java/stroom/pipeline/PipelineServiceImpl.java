@@ -27,6 +27,8 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.security.api.SecurityContext;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.PermissionException;
 
@@ -39,6 +41,8 @@ import java.util.Map;
 
 @Singleton
 public class PipelineServiceImpl implements PipelineService {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PipelineServiceImpl.class);
 
     private final PipelineStore pipelineStore;
     private final DocumentResourceHelper documentResourceHelper;

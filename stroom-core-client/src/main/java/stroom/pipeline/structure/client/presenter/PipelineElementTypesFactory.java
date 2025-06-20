@@ -54,9 +54,11 @@ public class PipelineElementTypesFactory {
                         final Map<String, PipelineElementType> elementTypesByName = new HashMap<>();
 
                         for (final PipelineElementType elementType : propertyTypes.keySet()) {
-                            final List<PipelineElementType> list = elementTypesByCategory
-                                    .computeIfAbsent(elementType.getCategory(), k -> new ArrayList<>());
-                            list.add(elementType);
+                            if (elementType.getCategory() != null) {
+                                elementTypesByCategory
+                                        .computeIfAbsent(elementType.getCategory(), k -> new ArrayList<>())
+                                        .add(elementType);
+                            }
                             elementTypesByName.put(elementType.getType(), elementType);
                         }
 

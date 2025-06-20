@@ -6,10 +6,14 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class FormLabel extends Composite {
 
+    public static final String BASE_STYLE = "form-label";
+    public static final String STYLE_FORM_LABEL_DISABLED = BASE_STYLE + "--disabled";
+
     private final Lbl lbl = new Lbl();
+    private boolean disabled = false;
 
     public FormLabel() {
-        lbl.setStyleName("form-label");
+        lbl.setStyleName(BASE_STYLE);
         initWidget(lbl);
     }
 
@@ -26,6 +30,18 @@ public class FormLabel extends Composite {
         return lbl.getElement().getInnerText();
     }
 
+    public void setDisabled(final boolean disabled) {
+        this.disabled = disabled;
+        if (disabled) {
+            lbl.addStyleName(STYLE_FORM_LABEL_DISABLED);
+        } else {
+            lbl.removeStyleName(STYLE_FORM_LABEL_DISABLED);
+        }
+    }
+
+    public boolean isDisabled() {
+        return disabled;
+    }
 
     // --------------------------------------------------------------------------------
 

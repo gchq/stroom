@@ -30,8 +30,11 @@ public class ErrorConsumerImpl implements ErrorConsumer {
     @Override
     public void add(final Supplier<String> message) {
         if (LOGGER.isTraceEnabled()) {
-            final RuntimeException exception = new RuntimeException(message.get());
-            LOGGER.trace(exception::getMessage, exception);
+            try {
+                throw new RuntimeException(message.get());
+            } catch (final RuntimeException e) {
+                LOGGER.trace(e::getMessage, e);
+            }
         }
 
         final int count = errorCount.incrementAndGet();
@@ -62,7 +65,7 @@ public class ErrorConsumerImpl implements ErrorConsumer {
 
     @Override
     public List<String> getErrors() {
-        if (errors.size() > 0) {
+        if (!errors.isEmpty()) {
             return new ArrayList<>(errors);
         } else {
             return Collections.emptyList();
