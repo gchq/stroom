@@ -108,24 +108,6 @@ class TestTemporalRangeStateDb {
             assertThat(state.val().type()).isEqualTo(Type.STRING);
             assertThat(state.val().toString()).isEqualTo("test");
 
-//            final TemporalRangeStateRequest stateRequest =
-//                    new TemporalRangeStateRequest("TEST_MAP", 11, refTime);
-//            final Optional<TemporalState> optional = stateDao.getState(stateRequest);
-//            assertThat(optional).isNotEmpty();
-//            final TemporalState res = optional.get();
-//            assertThat(res.key()).isEqualTo("11");
-//            assertThat(res.effectiveTime()).isEqualTo(refTime);
-//            assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
-//            assertThat(res.getValueAsString()).isEqualTo("test");
-//
-//            final FieldIndex fieldIndex = new FieldIndex();
-//            fieldIndex.create(RangeStateFields.KEY_START);
-//            final AtomicInteger count = new AtomicInteger();
-//            stateDao.search(new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex, null,
-//                    v -> count.incrementAndGet());
-//            assertThat(count.get()).isEqualTo(100);
-
-
             final FieldIndex fieldIndex = new FieldIndex();
             fieldIndex.create(TemporalRangeStateFields.KEY_START);
             fieldIndex.create(TemporalRangeStateFields.KEY_END);
@@ -322,45 +304,6 @@ class TestTemporalRangeStateDb {
         assertThat(state != null).isEqualTo(expected);
     }
 
-    //
-//    @Test
-//    void testRemoveOldData() {
-//        ScyllaDbUtil.test((sessionProvider, tableName) -> {
-//            final TemporalRangeStateDao stateDao = new TemporalRangeStateDao(sessionProvider, tableName);
-//
-//            Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-//            insertData(stateDao, refTime, "test", 100, 10);
-//            insertData(stateDao, refTime, "test", 10, -10);
-//
-//            assertThat(stateDao.count()).isEqualTo(109);
-//
-//            stateDao.removeOldData(refTime);
-//            assertThat(stateDao.count()).isEqualTo(100);
-//
-//            stateDao.removeOldData(Instant.now());
-//            assertThat(stateDao.count()).isEqualTo(0);
-//        });
-//    }
-//
-//    @Test
-//    void testCondense() {
-//        ScyllaDbUtil.test((sessionProvider, tableName) -> {
-//            final TemporalRangeStateDao stateDao = new TemporalRangeStateDao(sessionProvider, tableName);
-//
-//            Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-//            insertData(stateDao, refTime, "test", 100, 10);
-//            insertData(stateDao, refTime, "test", 10, -10);
-//
-//            assertThat(stateDao.count()).isEqualTo(109);
-//
-//            stateDao.condense(refTime);
-//            assertThat(stateDao.count()).isEqualTo(100);
-//
-//            stateDao.condense(Instant.now());
-//            assertThat(stateDao.count()).isEqualTo(1);
-//        });
-//    }
-//
     private void insertData(final TemporalRangeStateDb db,
                             final Instant refTime,
                             final String value,

@@ -20,6 +20,7 @@ import stroom.item.client.SelectionBox;
 import stroom.planb.shared.RangeType;
 import stroom.planb.shared.TemporalPrecision;
 import stroom.planb.shared.TemporalRangeKeySchema;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -43,9 +44,9 @@ public class TemporalRangeKeySchemaSettingsWidget
     public TemporalRangeKeySchemaSettingsWidget(final Binder binder) {
         widget = binder.createAndBindUi(this);
         rangeType.addItems(RangeType.ORDERED_LIST);
-        rangeType.setValue(RangeType.LONG);
+        rangeType.setValue(TemporalRangeKeySchema.DEFAULT_RANGE_TYPE);
         temporalPrecision.addItems(TemporalPrecision.ORDERED_LIST);
-        temporalPrecision.setValue(TemporalPrecision.MILLISECOND);
+        temporalPrecision.setValue(TemporalRangeKeySchema.DEFAULT_TEMPORAL_PRECISION);
     }
 
     @Override
@@ -60,10 +61,10 @@ public class TemporalRangeKeySchemaSettingsWidget
 
     @Override
     public void setKeySchema(final TemporalRangeKeySchema keySchema) {
-        if (keySchema != null) {
-            rangeType.setValue(keySchema.getRangeType());
-            temporalPrecision.setValue(keySchema.getTemporalPrecision());
-        }
+        rangeType.setValue(NullSafe.getOrElse(keySchema,
+                TemporalRangeKeySchema::getRangeType, TemporalRangeKeySchema.DEFAULT_RANGE_TYPE));
+        temporalPrecision.setValue(NullSafe.getOrElse(keySchema,
+                TemporalRangeKeySchema::getTemporalPrecision, TemporalRangeKeySchema.DEFAULT_TEMPORAL_PRECISION));
     }
 
     public void onReadOnly(final boolean readOnly) {

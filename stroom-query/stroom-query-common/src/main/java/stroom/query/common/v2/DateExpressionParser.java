@@ -22,6 +22,7 @@ import stroom.query.api.TimeRange;
 import stroom.query.api.token.AbstractToken;
 import stroom.query.api.token.TokenException;
 import stroom.query.api.token.TokenType;
+import stroom.query.language.functions.UserTimeZoneUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -283,30 +284,9 @@ public class DateExpressionParser {
             // Assume a timezone is specified on the string.
             return ZonedDateTime.parse(trimmed);
         } catch (final DateTimeParseException e) {
-
             try {
-                if (dateTimeSettings.getTimeZone() != null && dateTimeSettings.getTimeZone().getUse() != null) {
-                    switch (dateTimeSettings.getTimeZone().getUse()) {
-                        case LOCAL -> {
-                            final ZoneId zoneId = ZoneId.of(dateTimeSettings.getLocalZoneId());
-                            return LocalDateTime.parse(trimmed).atZone(zoneId);
-                        }
-                        case UTC -> {
-                            final ZoneId zoneId = ZoneId.of("Z");
-                            return LocalDateTime.parse(trimmed).atZone(zoneId);
-                        }
-                        case ID -> {
-                            final ZoneId zoneId = ZoneId.of(dateTimeSettings.getTimeZone().getId());
-                            return LocalDateTime.parse(trimmed).atZone(zoneId);
-                        }
-                        case OFFSET -> {
-                            final ZoneOffset zoneOffset = ZoneOffset
-                                    .ofHoursMinutes(dateTimeSettings.getTimeZone().getOffsetHours(),
-                                            dateTimeSettings.getTimeZone().getOffsetMinutes());
-                            return LocalDateTime.parse(trimmed).atOffset(zoneOffset).toZonedDateTime();
-                        }
-                    }
-                }
+                final ZoneId zoneId = UserTimeZoneUtil.getZoneId(dateTimeSettings.getTimeZone());
+                return LocalDateTime.parse(trimmed).atZone(zoneId);
             } catch (final RuntimeException ex) {
                 // Ignore error
             }

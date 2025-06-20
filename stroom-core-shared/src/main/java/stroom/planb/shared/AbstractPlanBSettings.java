@@ -58,6 +58,9 @@ public abstract sealed class AbstractPlanBSettings permits
         HistogramSettings,
         MetricSettings {
 
+    // 10 GiB
+    public static final Long DEFAULT_MAX_STORE_SIZE = 10737418240L;
+
     @JsonProperty
     private final Long maxStoreSize;
     @JsonProperty
@@ -87,10 +90,6 @@ public abstract sealed class AbstractPlanBSettings permits
 
     public Boolean getSynchroniseMerge() {
         return synchroniseMerge;
-    }
-
-    public boolean synchroniseMerge() {
-        return synchroniseMerge != null && synchroniseMerge;
     }
 
     public Boolean getOverwrite() {

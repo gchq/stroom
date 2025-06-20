@@ -136,19 +136,7 @@ class StoreShard implements Shard {
         long result = 0;
 
         // Find out how old data needs to be before we delete it.
-        RetentionSettings retention = null;
-        if (doc.getSettings() instanceof final StateSettings stateSettings) {
-            retention = stateSettings.getRetention();
-        } else if (doc.getSettings() instanceof final TemporalStateSettings temporalStateSettings) {
-            retention = temporalStateSettings.getRetention();
-        } else if (doc.getSettings() instanceof final RangeStateSettings rangeStateSettings) {
-            retention = rangeStateSettings.getRetention();
-        } else if (doc.getSettings() instanceof final TemporalRangeStateSettings temporalRangeStateSettings) {
-            retention = temporalRangeStateSettings.getRetention();
-        } else if (doc.getSettings() instanceof final SessionSettings sessionSettings) {
-            retention = sessionSettings.getRetention();
-        }
-
+        final RetentionSettings retention = getRetentionSettings(doc);
         final boolean useStateTime = NullSafe.getOrElse(retention, RetentionSettings::getUseStateTime, false);
 
         final Instant deleteBefore;
@@ -179,6 +167,22 @@ class StoreShard implements Shard {
         }
 
         return result;
+    }
+
+    private RetentionSettings getRetentionSettings(final PlanBDoc doc) {
+        RetentionSettings retention = null;
+        if (doc.getSettings() instanceof final StateSettings stateSettings) {
+            retention = stateSettings.getRetention();
+        } else if (doc.getSettings() instanceof final TemporalStateSettings temporalStateSettings) {
+            retention = temporalStateSettings.getRetention();
+        } else if (doc.getSettings() instanceof final RangeStateSettings rangeStateSettings) {
+            retention = rangeStateSettings.getRetention();
+        } else if (doc.getSettings() instanceof final TemporalRangeStateSettings temporalRangeStateSettings) {
+            retention = temporalRangeStateSettings.getRetention();
+        } else if (doc.getSettings() instanceof final SessionSettings sessionSettings) {
+            retention = sessionSettings.getRetention();
+        }
+        return retention;
     }
 
     @Override
@@ -429,13 +433,7 @@ class StoreShard implements Shard {
 
     @Override
     public void cleanup() {
-//        if (exclusiveReadLock.tryLock()) {
-//            try {
-//                close();
-//            } finally {
-//                exclusiveReadLock.unlock();
-//            }
-//        }
+
     }
 
     private void open() {

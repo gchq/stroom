@@ -49,7 +49,7 @@ public class TagsKeySerde implements KeyPrefixSerde {
             tagNameUids.add(tagNameUid);
         }
 
-        // Read all of the tag values.
+        // Read all the tag values.
         int i = 0;
         while (byteBuffer.remaining() > 0) {
             final long tagNameUid = tagNameUids.get(i);
@@ -203,7 +203,7 @@ public class TagsKeySerde implements KeyPrefixSerde {
                     uidLookupRecorder.recordUsed(writer, tagNameUid);
                 }
 
-                // Remember all of the tag values.
+                // Remember all the tag values.
                 while (byteBuffer.remaining() > 0) {
                     final long tagValueUid = getUid(byteBuffer);
                     uidLookupRecorder.recordUsed(writer, tagValueUid);

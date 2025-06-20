@@ -18,7 +18,6 @@ package stroom.planb.client.presenter;
 
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.client.presenter.HistogramSettingsPresenter.HistogramSettingsView;
-import stroom.planb.client.view.CondenseSettingsView;
 import stroom.planb.client.view.GeneralSettingsView;
 import stroom.planb.client.view.HistogramKeySchemaSettingsView;
 import stroom.planb.client.view.HistogramValueSchemaSettingsView;

@@ -60,8 +60,6 @@ import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -267,20 +265,16 @@ public class PlanBFilter extends AbstractXMLFilter {
     @Override
     public void endProcessing() {
         try {
-            try {
-                if (stagingValueOutputStream != null) {
-                    LOGGER.debug("closing stagingValueOutputStream");
-                    stagingValueOutputStream.close();
-                }
-            } finally {
-                try {
-                    writer.close();
-                } finally {
-                    super.endProcessing();
-                }
+            if (stagingValueOutputStream != null) {
+                LOGGER.debug("closing stagingValueOutputStream");
+                stagingValueOutputStream.close();
             }
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
+        } finally {
+            try {
+                writer.close();
+            } finally {
+                super.endProcessing();
+            }
         }
     }
 
@@ -655,7 +649,7 @@ public class PlanBFilter extends AbstractXMLFilter {
     private void addState(final PlanBDoc doc) {
         final KeyPrefix prefix = getKeyPrefix();
         if (prefix != null) {
-            LOGGER.trace("Putting key {} into table {}", prefix, mapName);
+            LOGGER.trace("Putting state key {} into table {}", prefix, mapName);
             final Val v = getVal();
             catchLmdbError(() -> writer.addState(doc, new State(prefix, v)));
         }
@@ -671,7 +665,7 @@ public class PlanBFilter extends AbstractXMLFilter {
                 error(LogUtil.message("Temporal state 'time' is null for {}", mapName));
 
             } else {
-                LOGGER.trace("Putting key {} into table {}", prefix, mapName);
+                LOGGER.trace("Putting temporal state key {} into table {}", prefix, mapName);
                 final TemporalKey k = TemporalKey
                         .builder()
                         .prefix(prefix)

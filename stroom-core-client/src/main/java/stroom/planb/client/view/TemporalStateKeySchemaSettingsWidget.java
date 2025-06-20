@@ -21,6 +21,7 @@ import stroom.planb.shared.HashLength;
 import stroom.planb.shared.KeyType;
 import stroom.planb.shared.TemporalPrecision;
 import stroom.planb.shared.TemporalStateKeySchema;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -49,11 +50,11 @@ public class TemporalStateKeySchemaSettingsWidget extends AbstractSettingsWidget
     public TemporalStateKeySchemaSettingsWidget(final Binder binder) {
         widget = binder.createAndBindUi(this);
         keyType.addItems(KeyType.ORDERED_LIST);
-        keyType.setValue(KeyType.VARIABLE);
+        keyType.setValue(TemporalStateKeySchema.DEFAULT_KEY_TYPE);
         hashLength.addItems(HashLength.ORDERED_LIST);
-        hashLength.setValue(HashLength.INTEGER);
+        hashLength.setValue(TemporalStateKeySchema.DEFAULT_HASH_LENGTH);
         temporalPrecision.addItems(TemporalPrecision.ORDERED_LIST);
-        temporalPrecision.setValue(TemporalPrecision.MILLISECOND);
+        temporalPrecision.setValue(TemporalStateKeySchema.DEFAULT_TEMPORAL_PRECISION);
         onKeyTypeChange();
     }
 
@@ -69,11 +70,12 @@ public class TemporalStateKeySchemaSettingsWidget extends AbstractSettingsWidget
 
     @Override
     public void setKeySchema(final TemporalStateKeySchema keySchema) {
-        if (keySchema != null) {
-            keyType.setValue(keySchema.getKeyType());
-            hashLength.setValue(keySchema.getHashLength());
-            temporalPrecision.setValue(keySchema.getTemporalPrecision());
-        }
+        keyType.setValue(NullSafe.getOrElse(keySchema,
+                TemporalStateKeySchema::getKeyType, TemporalStateKeySchema.DEFAULT_KEY_TYPE));
+        hashLength.setValue(NullSafe.getOrElse(keySchema,
+                TemporalStateKeySchema::getHashLength, TemporalStateKeySchema.DEFAULT_HASH_LENGTH));
+        temporalPrecision.setValue(NullSafe.getOrElse(keySchema,
+                TemporalStateKeySchema::getTemporalPrecision, TemporalStateKeySchema.DEFAULT_TEMPORAL_PRECISION));
         onKeyTypeChange();
     }
 

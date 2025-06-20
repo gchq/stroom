@@ -258,7 +258,7 @@ public class ShardWriters {
         }
 
         @Override
-        public void close() throws IOException {
+        public void close() {
             LOGGER.debug(() -> LogUtil.message("Plan B finished processing for {}", meta));
             final Path parent = dir.getParent();
             final Path zipFile = parent.resolve(dir.getFileName().toString() + SequentialFileStore.ZIP_EXTENSION);

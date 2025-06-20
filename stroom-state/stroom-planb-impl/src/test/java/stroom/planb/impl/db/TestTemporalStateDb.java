@@ -124,14 +124,9 @@ class TestTemporalStateDb {
             checkState(db, byteKey, refTime.minusMillis(1), false);
             // Check after time states.
             checkState(db, byteKey, refTime.plusMillis(1), true);
-
-//            final TemporalStateRequest stateRequest =
-//                    new TemporalStateRequest("TEST_MAP", "TEST_KEY", refTime);
             final TemporalKey key = TemporalKey.builder().prefix(byteKey).time(refTime).build();
             final Val value = db.get(key);
             assertThat(value).isNotNull();
-//            assertThat(res.key()).isEqualTo("TEST_KEY");
-//            assertThat(res.effectiveTime()).isEqualTo(refTime);
             assertThat(value.type()).isEqualTo(Type.STRING);
             assertThat(value.toString()).isEqualTo("test");
 
@@ -155,9 +150,6 @@ class TestTemporalStateDb {
             assertThat(results.getFirst()[3].toString()).isEqualTo("test");
 
 
-//            final AtomicInteger count = new AtomicInteger();
-//            stateDao.search(new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex, null,
-//                    v -> count.incrementAndGet());
 //            assertThat(count.get()).isEqualTo(100);
         }
     }

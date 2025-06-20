@@ -20,6 +20,7 @@ import stroom.item.client.SelectionBox;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.StateValueSchema;
 import stroom.planb.shared.StateValueType;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -45,9 +46,9 @@ public class StateValueSchemaSettingsWidget extends AbstractSettingsWidget imple
     public StateValueSchemaSettingsWidget(final Binder binder) {
         widget = binder.createAndBindUi(this);
         stateValueType.addItems(StateValueType.ORDERED_LIST);
-        stateValueType.setValue(StateValueType.VARIABLE);
+        stateValueType.setValue(StateValueSchema.DEFAULT_VALUE_TYPE);
         hashLength.addItems(HashLength.ORDERED_LIST);
-        hashLength.setValue(HashLength.INTEGER);
+        hashLength.setValue(StateValueSchema.DEFAULT_HASH_LENGTH);
         onStateValueTypeChange();
     }
 
@@ -62,11 +63,11 @@ public class StateValueSchemaSettingsWidget extends AbstractSettingsWidget imple
     }
 
     @Override
-    public void setValueSchema(final StateValueSchema stateValueSchema) {
-        if (stateValueSchema != null) {
-            stateValueType.setValue(stateValueSchema.getStateValueType());
-            hashLength.setValue(stateValueSchema.getHashLength());
-        }
+    public void setValueSchema(final StateValueSchema valueSchema) {
+        stateValueType.setValue(NullSafe.getOrElse(valueSchema,
+                StateValueSchema::getStateValueType, StateValueSchema.DEFAULT_VALUE_TYPE));
+        hashLength.setValue(NullSafe.getOrElse(valueSchema,
+                StateValueSchema::getHashLength, StateValueSchema.DEFAULT_HASH_LENGTH));
         onStateValueTypeChange();
     }
 

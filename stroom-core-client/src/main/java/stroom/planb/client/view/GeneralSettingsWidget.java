@@ -17,6 +17,7 @@
 package stroom.planb.client.view;
 
 import stroom.planb.client.presenter.PlanBSettingsUiHandlers;
+import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
@@ -29,9 +30,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 public class GeneralSettingsWidget extends AbstractSettingsWidget implements GeneralSettingsView {
-
-    // 10 GiB
-    static final Long DEFAULT_MAX_STORE_SIZE = 10737418240L;
 
     private final Widget widget;
 
@@ -69,15 +67,15 @@ public class GeneralSettingsWidget extends AbstractSettingsWidget implements Gen
         } catch (final RuntimeException e) {
             // Ignore.
         }
-        setMaxStoreSize(DEFAULT_MAX_STORE_SIZE);
-        return DEFAULT_MAX_STORE_SIZE;
+        setMaxStoreSize(AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE);
+        return AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE;
     }
 
     @Override
     public void setMaxStoreSize(final Long maxStoreSize) {
         this.maxStoreSize.setValue(ModelStringUtil.formatIECByteSizeString(
                 maxStoreSize == null
-                        ? DEFAULT_MAX_STORE_SIZE
+                        ? AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE
                         : maxStoreSize,
                 true,
                 ModelStringUtil.DEFAULT_SIGNIFICANT_FIGURES));

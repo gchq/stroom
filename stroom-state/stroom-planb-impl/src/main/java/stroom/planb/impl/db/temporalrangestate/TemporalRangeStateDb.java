@@ -14,6 +14,7 @@ import stroom.planb.impl.db.PlanBSearchHelper.Context;
 import stroom.planb.impl.db.PlanBSearchHelper.Converter;
 import stroom.planb.impl.db.PlanBSearchHelper.LazyKV;
 import stroom.planb.impl.db.PlanBSearchHelper.ValuesExtractor;
+import stroom.planb.impl.db.SchemaInfo;
 import stroom.planb.impl.db.UsedLookupsRecorder;
 import stroom.planb.impl.serde.temporalrangestate.ByteRangeKeySerde;
 import stroom.planb.impl.serde.temporalrangestate.IntegerRangeKeySerde;
@@ -30,6 +31,7 @@ import stroom.planb.impl.serde.time.TimeSerde;
 import stroom.planb.impl.serde.valtime.ValTime;
 import stroom.planb.impl.serde.valtime.ValTimeSerde;
 import stroom.planb.impl.serde.valtime.ValTimeSerdeFactory;
+import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.RangeType;
 import stroom.planb.shared.StateValueSchema;
@@ -47,6 +49,7 @@ import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.io.FileUtil;
+import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 
 import org.lmdbjava.CursorIterable;
@@ -64,7 +67,7 @@ import java.util.function.Function;
 
 public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
 
-    private static final String VALUE_LOOKUP_DB_NAME = "value";
+    private static final int CURRENT_SCHEMA_VERSION = 1;
 
     private final TemporalRangeStateSettings settings;
     private final TemporalRangeKeySerde keySerde;
@@ -79,7 +82,14 @@ public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
                                  final TemporalRangeKeySerde keySerde,
                                  final ValTimeSerde valueSerde,
                                  final HashClashCommitRunnable hashClashCommitRunnable) {
-        super(env, byteBuffers, overwrite, hashClashCommitRunnable);
+        super(env,
+                byteBuffers,
+                overwrite,
+                hashClashCommitRunnable,
+                new SchemaInfo(
+                        CURRENT_SCHEMA_VERSION,
+                        JsonUtil.writeValueAsString(settings.getKeySchema()),
+                        JsonUtil.writeValueAsString(settings.getValueSchema())));
         this.settings = settings;
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
@@ -92,8 +102,12 @@ public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
                                               final TemporalRangeStateSettings settings,
                                               final boolean readOnly) {
         final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
+        final Long mapSize = NullSafe.getOrElse(
+                settings,
+                AbstractPlanBSettings::getMaxStoreSize,
+                AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE);
         final PlanBEnv env = new PlanBEnv(path,
-                settings.getMaxStoreSize(),
+                mapSize,
                 20,
                 readOnly,
                 hashClashCommitRunnable);
@@ -101,22 +115,22 @@ public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
                 settings,
                 TemporalRangeStateSettings::getKeySchema,
                 TemporalRangeKeySchema::getRangeType,
-                RangeType.LONG);
+                TemporalRangeKeySchema.DEFAULT_RANGE_TYPE);
         final StateValueType stateValueType = NullSafe.getOrElse(
                 settings,
                 TemporalRangeStateSettings::getValueSchema,
                 StateValueSchema::getStateValueType,
-                StateValueType.VARIABLE);
+                StateValueSchema.DEFAULT_VALUE_TYPE);
         final HashLength valueHashLength = NullSafe.getOrElse(
                 settings,
                 TemporalRangeStateSettings::getValueSchema,
                 StateValueSchema::getHashLength,
-                HashLength.LONG);
+                StateValueSchema.DEFAULT_HASH_LENGTH);
         final TimeSerde timeSerde = createTimeSerde(NullSafe.getOrElse(
                 settings,
                 TemporalRangeStateSettings::getKeySchema,
                 TemporalRangeKeySchema::getTemporalPrecision,
-                TemporalPrecision.MILLISECOND));
+                TemporalRangeKeySchema.DEFAULT_TEMPORAL_PRECISION));
         final TemporalRangeKeySerde keySerde = createKeySerde(
                 rangeType,
                 byteBuffers,
@@ -184,6 +198,10 @@ public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
                     byteBuffers,
                     settings,
                     true)) {
+                // Validate that the source DB has the same schema.
+                validateSchema(schemaInfo, sourceDb.getSchemaInfo());
+
+                // Merge.
                 sourceDb.env.read(readTxn -> {
                     sourceDb.iterate(readTxn, kv -> {
                         if (sourceDb.keySerde.usesLookup(kv.key()) || sourceDb.valueSerde.usesLookup(kv.val())) {
