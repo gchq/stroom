@@ -34,6 +34,10 @@ public class PipelineElements extends AbstractAddRemove<PipelineElement> {
         super(add, remove);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Builder extends AbstractAddRemoveListBuilder<PipelineElement, PipelineElements, Builder> {
 
         public Builder() {
