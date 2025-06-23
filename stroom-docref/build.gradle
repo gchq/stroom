@@ -6,8 +6,7 @@ dependencies {
 
     testImplementation project(':stroom-test-common')
 
-    testImplementation libs.assertj.core
-    testImplementation libs.junit.jupiter.api
-    testImplementation libs.junit.jupiter.params
     testImplementation libs.vavr
+
+    testImplementation libs.bundles.common.test.implementation
 }

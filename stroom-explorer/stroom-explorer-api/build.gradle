@@ -7,6 +7,5 @@ dependencies {
 
     implementation libs.jackson.annotations
 
-    testRuntimeOnly libs.jakarta.activation
-    testRuntimeOnly libs.jaxb.impl
+    testRuntimeOnly libs.bundles.common.test.runtime
 }
