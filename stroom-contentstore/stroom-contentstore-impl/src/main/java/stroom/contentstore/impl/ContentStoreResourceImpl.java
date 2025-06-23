@@ -1,5 +1,6 @@
 package stroom.contentstore.impl;
 
+import stroom.contentstore.shared.ContentStoreContentPackWithDynamicState;
 import stroom.contentstore.shared.ContentStoreCreateGitRepoRequest;
 import stroom.contentstore.shared.ContentStoreResponse;
 import stroom.contentstore.shared.ContentStoreContentPack;
@@ -90,7 +91,7 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
      */
     @SuppressWarnings("unused")
     @Override
-    public ResultPage<ContentStoreContentPack> list(final PageRequest pageRequest) {
+    public ResultPage<ContentStoreContentPackWithDynamicState> list(final PageRequest pageRequest) {
 
         // Pull out the existing GitRepos so we know what exists
         final List<DocRef> existingDocRefs = gitRepoStore.list();
@@ -107,7 +108,7 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
         final ObjectMapper mapper = YamlUtil.getMapper();
 
         final List<String> contentStoreUrls = config.get().getContentStoreUrls();
-        final List<ContentStoreContentPack> contentPacks = new ArrayList<>();
+        final List<ContentStoreContentPackWithDynamicState> contentPacksWithState = new ArrayList<>();
 
         for (String appStoreUrl : contentStoreUrls) {
             LOGGER.info("Parsing appStore at '{}'", appStoreUrl);
@@ -127,11 +128,10 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
                     cp.setContentStoreMetadata(cs.getMeta());
 
                     // Check if content pack is installed or upgradable
-                    cp.checkInstallationStatus(installedGitRepoDocs);
+                    ContentStoreContentPackWithDynamicState cpWithState = new ContentStoreContentPackWithDynamicState(cp);
+                    cpWithState.checkInstallationStatus(installedGitRepoDocs);
+                    contentPacksWithState.add(cpWithState);
                 }
-
-                LOGGER.info("Adding content packs from '{}' -> '{}'", appStoreUrl, cs);
-                contentPacks.addAll(listOfContentPacks);
 
             } catch (URISyntaxException | MalformedURLException e) {
                 LOGGER.error("Cannot parse App Store URL '{}'.", appStoreUrl, e);
@@ -143,7 +143,7 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
         }
 
 
-        return ResultPage.createPageLimitedList(contentPacks, pageRequest);
+        return ResultPage.createPageLimitedList(contentPacksWithState, pageRequest);
     }
 
     /**
