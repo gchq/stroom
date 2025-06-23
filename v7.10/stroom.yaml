@@ -4865,9 +4865,29 @@ paths:
       summary: Get a detailed report of doc permissions for the specified user
       tags:
       - Doc Permissions
-  /pipeline/v1/fetchPipelineData:
+  /pipeline/v1/fetchPipelineJson:
     post:
-      operationId: fetchPipelineData
+      operationId: fetchPipelineJson
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocRef"
+        description: pipeline
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FetchPipelineJsonResponse"
+          description: default response
+      summary: Fetch the JSON for a pipeline
+      tags:
+      - Pipelines
+  /pipeline/v1/fetchPipelineLayers:
+    post:
+      operationId: fetchPipelineLayers
       requestBody:
         content:
           application/json:
@@ -4882,29 +4902,9 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/PipelineData"
+                  $ref: "#/components/schemas/PipelineLayer"
           description: default response
-      summary: Fetch data for a pipeline
-      tags:
-      - Pipelines
-  /pipeline/v1/fetchPipelineXml:
-    post:
-      operationId: fetchPipelineXml
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/DocRef"
-        description: pipeline
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/FetchPipelineXmlResponse"
-          description: default response
-      summary: Fetch the XML for a pipeline
+      summary: Fetch layers for a pipeline
       tags:
       - Pipelines
   /pipeline/v1/propertyTypes:
@@ -4922,14 +4922,14 @@ paths:
       summary: Get pipeline property types
       tags:
       - Pipelines
-  /pipeline/v1/savePipelineXml:
+  /pipeline/v1/savePipelineJson:
     put:
-      operationId: savePipelineXml
+      operationId: savePipelineJson
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SavePipelineXmlRequest"
+              $ref: "#/components/schemas/SavePipelineJsonRequest"
         description: request
         required: true
       responses:
@@ -4939,7 +4939,7 @@ paths:
               schema:
                 type: boolean
           description: default response
-      summary: Update a pipeline doc with XML directly
+      summary: Update a pipeline doc with JSON directly
       tags:
       - Pipelines
   /pipeline/v1/{uuid}:
@@ -9609,6 +9609,8 @@ components:
     ContentTemplate:
       type: object
       properties:
+        copyElementDependencies:
+          type: boolean
         description:
           type: string
         enabled:
@@ -9702,6 +9704,10 @@ components:
     CreateAnnotationRequest:
       type: object
       properties:
+        assignTo:
+          $ref: "#/components/schemas/UserRef"
+        comment:
+          type: string
         linkedEvents:
           type: array
           items:
@@ -9870,8 +9876,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ComponentConfig"
-          xml:
-            wrapped: true
         designMode:
           type: boolean
         layout:
@@ -9886,8 +9890,6 @@ components:
           $ref: "#/components/schemas/Size"
         timeRange:
           $ref: "#/components/schemas/TimeRange"
-      xml:
-        name: dashboard
     DashboardDoc:
       type: object
       properties:
@@ -10067,8 +10069,6 @@ components:
           - WEEKS
           - MONTHS
           - YEARS
-      xml:
-        name: dataRetentionRule
     DataRetentionRules:
       type: object
       properties:
@@ -10094,8 +10094,6 @@ components:
           type: string
         version:
           type: string
-      xml:
-        name: dataRetentionPolicy
     DateTimeFormatSettings:
       type: object
       allOf:
@@ -10288,8 +10286,6 @@ components:
           example: 9f6184b4-bd78-48bc-b0cd-6e51a357f6a6
       required:
       - uuid
-      xml:
-        name: doc
     DocRefInfo:
       type: object
       properties:
@@ -10513,6 +10509,7 @@ components:
           - SAVE
           - SAVEAS
           - SEARCH
+          - SELECTION
           - SETTINGS
           - SHARD_CLOSE
           - SHARD_FLUSH
@@ -11312,8 +11309,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ExpressionItem"
-          xml:
-            wrapped: true
         enabled:
           type: boolean
           description: Whether this item in the expression tree is enabled or not
@@ -11325,8 +11320,6 @@ components:
           - AND
           - OR
           - NOT
-      required:
-      - op
     ExpressionTerm:
       type: object
       allOf:
@@ -11616,13 +11609,13 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/NodeStatusResult"
-    FetchPipelineXmlResponse:
+    FetchPipelineJsonResponse:
       type: object
       properties:
+        json:
+          type: string
         pipeline:
           $ref: "#/components/schemas/DocRef"
-        xml:
-          type: string
     FetchProcessorRequest:
       type: object
       properties:
@@ -12900,8 +12893,6 @@ components:
         streamCount:
           type: integer
           format: int64
-      xml:
-        name: limits
     LinkEvents:
       type: object
       allOf:
@@ -13491,9 +13482,6 @@ components:
         value:
           type: string
           description: The property value
-      required:
-      - key
-      - value
     ParamInfo:
       type: object
       properties:
@@ -13522,14 +13510,8 @@ components:
           $ref: "#/components/schemas/PipelineLinks"
         pipelineReferences:
           $ref: "#/components/schemas/PipelineReferences"
-        processors:
-          type: array
-          items:
-            $ref: "#/components/schemas/Processor"
         properties:
           $ref: "#/components/schemas/PipelineProperties"
-      xml:
-        name: pipeline
     PipelineDoc:
       type: object
       properties:
@@ -13560,15 +13542,10 @@ components:
     PipelineElement:
       type: object
       properties:
-        elementType:
-          $ref: "#/components/schemas/PipelineElementType"
         id:
           type: string
         type:
           type: string
-      required:
-      - id
-      - type
     PipelineElementType:
       type: object
       properties:
@@ -13749,6 +13726,7 @@ components:
           - SAVE
           - SAVEAS
           - SEARCH
+          - SELECTION
           - SETTINGS
           - SHARD_CLOSE
           - SHARD_FLUSH
@@ -13795,26 +13773,24 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PipelineElement"
-          xml:
-            wrapped: true
         remove:
           type: array
           items:
             $ref: "#/components/schemas/PipelineElement"
-          xml:
-            wrapped: true
+    PipelineLayer:
+      type: object
+      properties:
+        pipelineData:
+          $ref: "#/components/schemas/PipelineData"
+        sourcePipeline:
+          $ref: "#/components/schemas/DocRef"
     PipelineLink:
       type: object
       properties:
         from:
           type: string
-        sourcePipeline:
-          $ref: "#/components/schemas/DocRef"
         to:
           type: string
-      required:
-      - from
-      - to
     PipelineLinks:
       type: object
       properties:
@@ -13822,14 +13798,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PipelineLink"
-          xml:
-            wrapped: true
         remove:
           type: array
           items:
             $ref: "#/components/schemas/PipelineLink"
-          xml:
-            wrapped: true
     PipelineProperties:
       type: object
       properties:
@@ -13837,14 +13809,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PipelineProperty"
-          xml:
-            wrapped: true
         remove:
           type: array
           items:
             $ref: "#/components/schemas/PipelineProperty"
-          xml:
-            wrapped: true
     PipelineProperty:
       type: object
       properties:
@@ -13852,15 +13820,8 @@ components:
           type: string
         name:
           type: string
-        propertyType:
-          $ref: "#/components/schemas/PipelinePropertyType"
-        sourcePipeline:
-          $ref: "#/components/schemas/DocRef"
         value:
           $ref: "#/components/schemas/PipelinePropertyValue"
-      required:
-      - element
-      - name
     PipelinePropertyType:
       type: object
       properties:
@@ -13909,16 +13870,8 @@ components:
           type: string
         pipeline:
           $ref: "#/components/schemas/DocRef"
-        sourcePipeline:
-          $ref: "#/components/schemas/DocRef"
         streamType:
           type: string
-      required:
-      - element
-      - feed
-      - name
-      - pipeline
-      - streamType
     PipelineReferences:
       type: object
       properties:
@@ -13926,14 +13879,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PipelineReference"
-          xml:
-            wrapped: true
         remove:
           type: array
           items:
             $ref: "#/components/schemas/PipelineReference"
-          xml:
-            wrapped: true
     PipelineStepRequest:
       type: object
       properties:
@@ -14098,8 +14047,6 @@ components:
         version:
           type: integer
           format: int32
-      xml:
-        name: parameters
     ProcessorFilter:
       type: object
       properties:
@@ -14458,8 +14405,6 @@ components:
             $ref: "#/components/schemas/Param"
         timeRange:
           $ref: "#/components/schemas/TimeRange"
-      xml:
-        name: query
     QueryDoc:
       type: object
       properties:
@@ -14703,8 +14648,6 @@ components:
           type: string
           description: The UUID that makes up the query key
           example: 7740bcd0-a49e-4c22-8540-044f85770716
-      required:
-      - uuid
     QuerySearchRequest:
       type: object
       properties:
@@ -14832,8 +14775,6 @@ components:
         ruleNumber:
           type: integer
           format: int32
-      xml:
-        name: dataReceiptRule
     ReceiveDataRules:
       type: object
       properties:
@@ -15647,13 +15588,13 @@ components:
           type: string
         version:
           type: string
-    SavePipelineXmlRequest:
+    SavePipelineJsonRequest:
       type: object
       properties:
+        json:
+          type: string
         pipeline:
           $ref: "#/components/schemas/DocRef"
-        xml:
-          type: string
     Schedule:
       type: object
       properties:
@@ -15835,8 +15776,6 @@ components:
       description: A request for new search or a follow up request for more data for
         an existing iterative search
       properties:
-        dateTimeLocale:
-          type: string
         dateTimeSettings:
           $ref: "#/components/schemas/DateTimeSettings"
         incremental:
@@ -15854,8 +15793,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ResultRequest"
-          xml:
-            wrapped: true
         searchRequestSource:
           $ref: "#/components/schemas/SearchRequestSource"
         timeout:
@@ -15873,12 +15810,6 @@ components:
             \ it will return the currently know results with complete=false, however\
             \ for a non-incremental query it will return no results, complete=false\
             \ and details of the timeout in the error field"
-      required:
-      - incremental
-      - query
-      - resultRequests
-      xml:
-        name: searchRequest
     SearchRequestSource:
       type: object
       properties:
@@ -16255,8 +16186,6 @@ components:
         width:
           type: integer
           format: int32
-      xml:
-        name: size
     SnapshotRequest:
       type: object
       properties:
@@ -16297,8 +16226,6 @@ components:
             type: string
         zkPath:
           type: string
-      xml:
-        name: connection
     SolrConnectionTestResponse:
       type: object
       properties:
@@ -16509,13 +16436,9 @@ components:
             type: array
             items:
               $ref: "#/components/schemas/LayoutConfig"
-            xml:
-              wrapped: true
           dimension:
             type: integer
             format: int32
-      xml:
-        name: splitLayout
     State:
       type: object
       allOf:
@@ -17049,8 +16972,6 @@ components:
           type: string
         visible:
           type: boolean
-      xml:
-        name: tab
     TabLayoutConfig:
       type: object
       allOf:
@@ -17064,10 +16985,6 @@ components:
             type: array
             items:
               $ref: "#/components/schemas/TabConfig"
-            xml:
-              wrapped: true
-      xml:
-        name: tabLayout
     TableBuilderAnalyticProcessConfig:
       type: object
       allOf:
