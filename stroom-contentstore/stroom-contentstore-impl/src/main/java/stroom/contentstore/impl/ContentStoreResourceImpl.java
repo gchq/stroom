@@ -254,7 +254,7 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
                 messages.addAll(pullMessages);
 
                 // Tell the user it worked
-                response = this.createOkResponse(contentPack, messages);
+                response = this.createOkResponse("Created", contentPack, messages);
 
             } catch (IOException e) {
                 response = this.createErrResponse(
@@ -274,15 +274,18 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
 
     /**
      * Creates the response to send back to the client if everything went ok.
+     * @param operation String describing what we've done - Created, Upgraded etc.
      * @param cp The content pack we were trying to import.
      * @param messages The list of messages to send back.
      * @return The response to send back. Never null.
      */
     private ContentStoreResponse createOkResponse(
+            final String operation,
             final ContentStoreContentPack cp,
             final List<Message> messages) {
 
-        final StringBuilder buf = new StringBuilder("Created '");
+        final StringBuilder buf = new StringBuilder(operation);
+        buf.append(" '");
         buf.append(cp.getUiName());
         buf.append("'\n");
         for (Message m : messages) {
@@ -290,7 +293,7 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
             buf.append(m);
         }
 
-        LOGGER.info("Created Content Pack: \n{}", buf);
+        LOGGER.info("{} Content Pack: \n{}", operation, buf);
         return new ContentStoreResponse(true, buf.toString());
     }
 
@@ -369,6 +372,44 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
                     null,
                     buf.toString());
         }
+    }
+
+    @Override
+    public ContentStoreResponse upgradeContentPack(ContentStoreContentPack contentPack) {
+        LOGGER.info("Upgrading {}", contentPack.getUiName());
+        ArrayList<Message> messages = new ArrayList<>();
+
+        try {
+            // Find a matching GitRepoDoc
+            GitRepoDoc gitRepoDoc = null;
+            final List<DocRef> existingDocRefs = gitRepoStore.list();
+            for (DocRef existingDocRef : existingDocRefs) {
+                final GitRepoDoc existingGitRepoDoc = gitRepoStore.readDocument(existingDocRef);
+                if (contentPack.matches(existingGitRepoDoc)) {
+                    gitRepoDoc = existingGitRepoDoc;
+                    break;
+                }
+            }
+
+            if (gitRepoDoc == null) {
+                throw new IOException("Cannot upgrade Content Pack as it is not installed");
+            }
+
+            // Do a pack upgrade
+            // i.e. copy settings from Content Pack into GitRepo
+            contentPack.updateSettingsIn(gitRepoDoc);
+
+            // Pull down any new content
+            messages.addAll(this.gitRepoStorageService.importDoc(gitRepoDoc));
+
+            return createOkResponse("Upgraded", contentPack, messages);
+
+        } catch (IOException e) {
+            return this.createErrResponse("Error upgrading content pack",
+                    messages,
+                    e);
+        }
+
     }
 
 }

@@ -71,10 +71,22 @@ public interface ContentStoreResource extends RestResource, DirectRestService {
      * false otherwise.
      */
     @POST
-    @Path("checkContentUpgradeAvailable")
+    @Path("/checkContentUpgradeAvailable")
     @Operation(
             summary = "Checks if updated content is available",
             operationId = "checkContentUpgradeAvailable")
     ContentStoreValueResponse<Boolean> checkContentUpgradeAvailable(ContentStoreContentPack contentPack);
+
+    /**
+     * Upgrades the content in a Content Pack to the latest available.
+     * @param contentPack The content pack to upgrade.
+     * @return Generic respose.
+     */
+    @POST
+    @Path("/upgradeContentPack")
+    @Operation(
+            summary = "Upgrades the content pack and its content",
+            operationId = "upgradeContentPack")
+    ContentStoreResponse upgradeContentPack(ContentStoreContentPack contentPack);
 
 }

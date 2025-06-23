@@ -368,7 +368,6 @@ public class ContentStoreContentPackDetailsPresenter
                         // Mark the content pack as Installed & update the UI
                         cp.setInstallationStatus(ContentStoreContentPackStatus.INSTALLED);
                         contentStorePresenter.updateState();
-                        this.setState();
                     } else {
                         AlertEvent.fireError(contentStorePresenter,
                                 "Create failed",
@@ -397,16 +396,7 @@ public class ContentStoreContentPackDetailsPresenter
         // Only do anything if something is selected
         if (contentPack != null) {
             // Defensive copy of reference
-            ContentStoreContentPack cp = contentPack;
-            ContentStoreContentPackStatus status = cp.getInstallationStatus();
-
-            // Which kind of upgrade?
-            if (status.equals(ContentStoreContentPackStatus.CONTENT_UPGRADABLE)) {
-                doContentUpgrade(cp);
-            } else if (status.equals(ContentStoreContentPackStatus.PACK_UPGRADABLE)) {
-                doPackUpgrade(cp);
-            }
-            // Ignore any other status - button should be disabled
+            doContentPackUpgrade(contentPack);
         }
     }
 
@@ -415,16 +405,34 @@ public class ContentStoreContentPackDetailsPresenter
      * can be upgraded.
      * @param cp The current content pack. Must not be null.
      */
-    private void doContentUpgrade(ContentStoreContentPack cp) {
-        // TODO do content upgrade
+    private void doContentPackUpgrade(ContentStoreContentPack cp) {
+        restFactory
+                .create(ContentStorePresenter.CONTENT_STORE_RESOURCE)
+                .method(res -> res.upgradeContentPack(cp))
+                .onSuccess(result -> {
+                    if (result.isOk()) {
+                        AlertEvent.fireInfo(contentStorePresenter,
+                                "Content pack upgrade success",
+                                result.getMessage(),
+                                () -> RefreshExplorerTreeEvent.fire(contentStorePresenter));
+                        // Mark the content pack as Installed & update the UI
+                        cp.setInstallationStatus(ContentStoreContentPackStatus.INSTALLED);
+                        contentStorePresenter.updateState();
+                    } else {
+                        AlertEvent.fireError(contentStorePresenter,
+                                "Content pack upgrade failed",
+                                result.getMessage(),
+                                () -> RefreshExplorerTreeEvent.fire(contentStorePresenter));
+                    }
+                })
+                .onFailure(restError -> {
+                    AlertEvent.fireError(contentStorePresenter,
+                            "Content pack upgrade failed",
+                            restError.getMessage(),
+                            () -> RefreshExplorerTreeEvent.fire(contentStorePresenter));
+                })
+                .taskMonitorFactory(btnCreateGitRepo)
+                .exec();
     }
 
-    /**
-     * Called when the Upgrade button is clicked and the pack can
-     * be upgraded.
-     * @param cp The current content pack. Must not be null.
-     */
-    private void doPackUpgrade(ContentStoreContentPack cp) {
-        // TODO do pack upgrade
-    }
 }
