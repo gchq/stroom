@@ -127,7 +127,7 @@ public class ContentStoreContentPackListPresenter
     /**
      * Called when the page has loaded to load up all the state
      * we've found so far into the dataGrid Content Packs.
-     * Means we don't need to redo work if we page backwards.
+     * Having a cache means we don't need to redo work if we page backwards.
      */
     private void loadStateFromCache() {
         boolean dirty = false;
@@ -175,6 +175,7 @@ public class ContentStoreContentPackListPresenter
                 restFactory
                         .create(ContentStorePresenter.CONTENT_STORE_RESOURCE)
                         .method((r) ->  {
+                            // Set flag so load event isn't ignored
                             requestedNewPage = true;
                             return r.list(pageRequest);
                         })
@@ -271,13 +272,13 @@ public class ContentStoreContentPackListPresenter
      */
     private void doUpgradeCheckOn(final int rowIndex) {
         if (rowIndex < dataGrid.getVisibleItemCount()) {
-            ContentStoreContentPackWithDynamicState cpws = dataGrid.getVisibleItem(rowIndex);
+            final ContentStoreContentPackWithDynamicState cpws = dataGrid.getVisibleItem(rowIndex);
             if (cpws != null) {
 
                 // Only check items with status INSTALLED
                 // and that we haven't checked before
                 // Checking other items would waste processor power
-                ContentStoreContentPackStatus status = cpws.getInstallationStatus();
+                final ContentStoreContentPackStatus status = cpws.getInstallationStatus();
                 if (cpws.getContentPack().getGitCommit().isEmpty()
                     && status.equals(ContentStoreContentPackStatus.INSTALLED)
                     && !contentPackStatusCache.containsKey(cpws.getContentPack())) {
