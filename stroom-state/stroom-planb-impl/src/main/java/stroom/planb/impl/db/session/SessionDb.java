@@ -16,6 +16,7 @@ import stroom.planb.impl.db.PlanBSearchHelper.Context;
 import stroom.planb.impl.db.PlanBSearchHelper.Converter;
 import stroom.planb.impl.db.PlanBSearchHelper.LazyKV;
 import stroom.planb.impl.db.PlanBSearchHelper.ValuesExtractor;
+import stroom.planb.impl.db.SchemaInfo;
 import stroom.planb.impl.db.UidLookupDb;
 import stroom.planb.impl.db.UsedLookupsRecorder;
 import stroom.planb.impl.serde.hash.HashFactory;
@@ -43,6 +44,7 @@ import stroom.planb.impl.serde.time.SecondTimeSerde;
 import stroom.planb.impl.serde.time.TimeSerde;
 import stroom.planb.impl.serde.valtime.InsertTimeSerde;
 import stroom.planb.impl.serde.valtime.InstantSerde;
+import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.KeyType;
 import stroom.planb.shared.SessionKeySchema;
@@ -58,6 +60,7 @@ import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.io.FileUtil;
+import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 
 import org.lmdbjava.CursorIterable;
@@ -77,6 +80,7 @@ import java.util.function.Predicate;
 
 public class SessionDb extends AbstractDb<Session, Session> {
 
+    private static final int CURRENT_SCHEMA_VERSION = 1;
     private static final String KEY_LOOKUP_DB_NAME = "key";
 
     private final SessionSettings settings;
@@ -94,7 +98,14 @@ public class SessionDb extends AbstractDb<Session, Session> {
                       final SessionSerde keySerde,
                       final InstantSerde valueSerde,
                       final HashClashCommitRunnable hashClashCommitRunnable) {
-        super(env, byteBuffers, overwrite, hashClashCommitRunnable);
+        super(env,
+                byteBuffers,
+                overwrite,
+                hashClashCommitRunnable,
+                new SchemaInfo(
+                        CURRENT_SCHEMA_VERSION,
+                        JsonUtil.writeValueAsString(settings.getKeySchema()),
+                ""));
         this.settings = settings;
         this.timeSerde = timeSerde;
         this.keySerde = keySerde;
@@ -108,8 +119,12 @@ public class SessionDb extends AbstractDb<Session, Session> {
                                    final SessionSettings settings,
                                    final boolean readOnly) {
         final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
+        final Long mapSize = NullSafe.getOrElse(
+                settings,
+                AbstractPlanBSettings::getMaxStoreSize,
+                AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE);
         final PlanBEnv env = new PlanBEnv(path,
-                settings.getMaxStoreSize(),
+                mapSize,
                 20,
                 readOnly,
                 hashClashCommitRunnable);
@@ -117,17 +132,17 @@ public class SessionDb extends AbstractDb<Session, Session> {
                 settings,
                 SessionSettings::getKeySchema,
                 SessionKeySchema::getKeyType,
-                KeyType.VARIABLE);
+                SessionKeySchema.DEFAULT_KEY_TYPE);
         final HashLength valueHashLength = NullSafe.getOrElse(
                 settings,
                 SessionSettings::getKeySchema,
                 SessionKeySchema::getHashLength,
-                HashLength.LONG);
+                SessionKeySchema.DEFAULT_HASH_LENGTH);
         final TimeSerde timeSerde = createTimeSerde(NullSafe.getOrElse(
                 settings,
                 SessionSettings::getKeySchema,
                 SessionKeySchema::getTemporalPrecision,
-                TemporalPrecision.MILLISECOND));
+                SessionKeySchema.DEFAULT_TEMPORAL_PRECISION));
         final SessionSerde keySerde = createKeySerde(
                 keyType,
                 valueHashLength,
@@ -241,6 +256,10 @@ public class SessionDb extends AbstractDb<Session, Session> {
     public void merge(final Path source) {
         env.write(writer -> {
             try (final SessionDb sourceDb = SessionDb.create(source, byteBuffers, settings, true)) {
+                // Validate that the source DB has the same schema.
+                validateSchema(schemaInfo, sourceDb.getSchemaInfo());
+
+                // Merge.
                 sourceDb.env.read(readTxn -> {
                     sourceDb.iterate(readTxn, kv -> {
                         if (sourceDb.keySerde.usesLookup(kv.key())) {

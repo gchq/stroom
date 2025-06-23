@@ -154,7 +154,7 @@ public class MergeProcessor {
         long start = receiveStore.getMinStoreId();
 
         if (start == -1) {
-            LOGGER.info("Store is empty");
+            LOGGER.info("Merge current store is empty");
             start = 0;
         }
 

@@ -18,6 +18,9 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class StateKeySchema {
 
+    public static final KeyType DEFAULT_KEY_TYPE = KeyType.VARIABLE;
+    public static final HashLength DEFAULT_HASH_LENGTH = HashLength.INTEGER;
+
     @JsonProperty
     final KeyType keyType;
 

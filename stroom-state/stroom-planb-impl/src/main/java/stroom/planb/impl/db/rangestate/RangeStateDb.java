@@ -14,6 +14,7 @@ import stroom.planb.impl.db.PlanBSearchHelper.Context;
 import stroom.planb.impl.db.PlanBSearchHelper.Converter;
 import stroom.planb.impl.db.PlanBSearchHelper.LazyKV;
 import stroom.planb.impl.db.PlanBSearchHelper.ValuesExtractor;
+import stroom.planb.impl.db.SchemaInfo;
 import stroom.planb.impl.db.UsedLookupsRecorder;
 import stroom.planb.impl.serde.rangestate.ByteRangeKeySerde;
 import stroom.planb.impl.serde.rangestate.IntegerRangeKeySerde;
@@ -23,6 +24,7 @@ import stroom.planb.impl.serde.rangestate.ShortRangeKeySerde;
 import stroom.planb.impl.serde.valtime.ValTime;
 import stroom.planb.impl.serde.valtime.ValTimeSerde;
 import stroom.planb.impl.serde.valtime.ValTimeSerdeFactory;
+import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.RangeKeySchema;
 import stroom.planb.shared.RangeStateSettings;
@@ -38,6 +40,7 @@ import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.io.FileUtil;
+import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 
 import org.lmdbjava.CursorIterable;
@@ -54,6 +57,8 @@ import java.util.function.Function;
 
 public class RangeStateDb extends AbstractDb<Key, Val> {
 
+    private static final int CURRENT_SCHEMA_VERSION = 1;
+
     private final RangeStateSettings settings;
     private final RangeKeySerde keySerde;
     private final ValTimeSerde valueSerde;
@@ -67,7 +72,14 @@ public class RangeStateDb extends AbstractDb<Key, Val> {
                          final RangeKeySerde keySerde,
                          final ValTimeSerde valueSerde,
                          final HashClashCommitRunnable hashClashCommitRunnable) {
-        super(env, byteBuffers, overwrite, hashClashCommitRunnable);
+        super(env,
+                byteBuffers,
+                overwrite,
+                hashClashCommitRunnable,
+                new SchemaInfo(
+                        CURRENT_SCHEMA_VERSION,
+                        JsonUtil.writeValueAsString(settings.getKeySchema()),
+                        JsonUtil.writeValueAsString(settings.getValueSchema())));
         this.settings = settings;
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
@@ -80,8 +92,12 @@ public class RangeStateDb extends AbstractDb<Key, Val> {
                                       final RangeStateSettings settings,
                                       final boolean readOnly) {
         final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
+        final Long mapSize = NullSafe.getOrElse(
+                settings,
+                AbstractPlanBSettings::getMaxStoreSize,
+                AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE);
         final PlanBEnv env = new PlanBEnv(path,
-                settings.getMaxStoreSize(),
+                mapSize,
                 20,
                 readOnly,
                 hashClashCommitRunnable);
@@ -89,17 +105,17 @@ public class RangeStateDb extends AbstractDb<Key, Val> {
                 settings,
                 RangeStateSettings::getKeySchema,
                 RangeKeySchema::getRangeType,
-                RangeType.LONG);
+                RangeKeySchema.DEFAULT_RANGE_TYPE);
         final StateValueType stateValueType = NullSafe.getOrElse(
                 settings,
                 RangeStateSettings::getValueSchema,
                 StateValueSchema::getStateValueType,
-                StateValueType.VARIABLE);
+                StateValueSchema.DEFAULT_VALUE_TYPE);
         final HashLength valueHashLength = NullSafe.getOrElse(
                 settings,
                 RangeStateSettings::getValueSchema,
                 StateValueSchema::getHashLength,
-                HashLength.LONG);
+                StateValueSchema.DEFAULT_HASH_LENGTH);
         final RangeKeySerde keySerde = createKeySerde(
                 rangeType,
                 byteBuffers);
@@ -154,6 +170,10 @@ public class RangeStateDb extends AbstractDb<Key, Val> {
                     byteBuffers,
                     settings,
                     true)) {
+                // Validate that the source DB has the same schema.
+                validateSchema(schemaInfo, sourceDb.getSchemaInfo());
+
+                // Merge.
                 sourceDb.env.read(readTxn -> {
                     sourceDb.iterate(readTxn, kv -> {
                         if (sourceDb.keySerde.usesLookup(kv.key()) || sourceDb.valueSerde.usesLookup(kv.val())) {

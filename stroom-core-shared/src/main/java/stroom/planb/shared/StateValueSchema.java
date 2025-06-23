@@ -18,6 +18,9 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class StateValueSchema {
 
+    public static final StateValueType DEFAULT_VALUE_TYPE = StateValueType.VARIABLE;
+    public static final HashLength DEFAULT_HASH_LENGTH = HashLength.INTEGER;
+
     @JsonProperty
     private final StateValueType stateValueType;
 

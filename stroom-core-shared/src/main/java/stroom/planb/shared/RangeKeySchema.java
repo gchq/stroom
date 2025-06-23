@@ -16,6 +16,8 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class RangeKeySchema {
 
+    public static final RangeType DEFAULT_RANGE_TYPE = RangeType.LONG;
+
     @JsonProperty
     final RangeType rangeType;
 

@@ -70,7 +70,7 @@ public class TagsKeySerde implements TemporalKeySerde {
                 tagNameUids.add(tagNameUid);
             }
 
-            // Read all of the tag values.
+            // Read all the tag values.
             int i = 0;
             while (prefixSlice.remaining() > 0) {
                 final long tagNameUid = tagNameUids.get(i);
@@ -239,7 +239,7 @@ public class TagsKeySerde implements TemporalKeySerde {
                     uidLookupRecorder.recordUsed(writer, tagNameUid);
                 }
 
-                // Remember all of the tag values.
+                // Remember all the tag values.
                 while (prefix.remaining() > 0) {
                     final long tagValueUid = getUid(prefix);
                     uidLookupRecorder.recordUsed(writer, tagValueUid);

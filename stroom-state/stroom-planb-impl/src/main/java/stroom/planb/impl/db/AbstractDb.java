@@ -1,5 +1,6 @@
 package stroom.planb.impl.db;
 
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.db.PlanBEnv.EnvInf;
 import stroom.util.json.JsonUtil;
@@ -15,15 +16,18 @@ import org.lmdbjava.Stat;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.function.Consumer;
 
 public abstract class AbstractDb<K, V> implements Db<K, V> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractDb.class);
-    private static final int CURRENT_SCHEMA_VERSION = 1;
 
     private static final String NAME = "db";
     private static final String INFO_NAME = "info_db";
@@ -34,36 +38,41 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
     protected final ByteBuffers byteBuffers;
     protected final Dbi<ByteBuffer> dbi;
     protected final Dbi<ByteBuffer> infoDbi;
+    protected final SchemaInfo schemaInfo;
 
     public AbstractDb(final PlanBEnv env,
                       final ByteBuffers byteBuffers,
                       final Boolean overwrite,
-                      final HashClashCommitRunnable hashClashCommitRunnable) {
+                      final HashClashCommitRunnable hashClashCommitRunnable,
+                      final SchemaInfo schema) {
         this.env = env;
         this.byteBuffers = byteBuffers;
 
         dbi = env.openDbi(NAME, DbiFlags.MDB_CREATE);
 
-        if (env.isReadOnly()) {
-            // Read schema version.
-            infoDbi = env.openDbi(INFO_NAME, DbiFlags.MDB_CREATE);
-            env.read(txn -> {
-                final int schemaVersion = readSchemaVersion(txn);
-                LOGGER.debug("Read schema version {}", schemaVersion);
-                return null;
-            });
+        // Read and validate that the schema is as expected.
+        infoDbi = env.openDbi(INFO_NAME, DbiFlags.MDB_CREATE);
+        this.schemaInfo = env.read(txn -> {
+            final Optional<SchemaInfo> optionalSchemaInfo = readSchema(txn);
+            // Validate schema.
+            return optionalSchemaInfo
+                    .map(actual -> {
+                        validateSchema(schema, actual);
+                        return actual;
+                    })
+                    .orElse(schema);
+        });
 
-        } else {
-            // Read and write schema version.
-            infoDbi = env.openDbi(INFO_NAME, DbiFlags.MDB_CREATE);
+        if (!env.isReadOnly()) {
             env.write(writer -> {
-                final int schemaVersion = readSchemaVersion(writer.getWriteTxn());
-                LOGGER.debug("Read schema version {}", schemaVersion);
-                writeSchemaVersion(writer.getWriteTxn(), CURRENT_SCHEMA_VERSION);
+                // Write schema.
+                writeSchema(writer, schema);
+
+                // Read and set the hash clash count.
                 hashClashCommitRunnable.setHashClashes(readHashClashes(writer.getWriteTxn()));
             });
-
-            hashClashCommitRunnable.setRunnable(txn -> writeHashClashes(txn, hashClashCommitRunnable.getHashClashes()));
+            hashClashCommitRunnable.setRunnable(txn ->
+                    writeHashClashes(txn, hashClashCommitRunnable.getHashClashes()));
         }
 
         this.putFlags = overwrite
@@ -71,30 +80,106 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
                 : new PutFlags[]{PutFlags.MDB_NOOVERWRITE};
     }
 
+    protected void validateSchema(final SchemaInfo expected,
+                                  final SchemaInfo actual) {
+        // Validate schema version.
+        if (!Objects.equals(expected.getSchemaVersion(), actual.getSchemaVersion())) {
+            throw new RuntimeException("Schema version mismatch: expected=" +
+                                       expected.getSchemaVersion() +
+                                       ", actual=" +
+                                       actual.getSchemaVersion());
+        }
+
+        // Validate key schema.
+        if (!Objects.equals(expected.getKeySchema(), actual.getKeySchema())) {
+            throw new RuntimeException("Key schema mismatch: expected=" +
+                                       expected.getKeySchema() +
+                                       ", actual=" +
+                                       actual.getKeySchema());
+        }
+
+        // Validate value schema.
+        if (!Objects.equals(expected.getValueSchema(), actual.getValueSchema())) {
+            throw new RuntimeException("Value schema mismatch: expected=" +
+                                       expected.getValueSchema() +
+                                       ", actual=" +
+                                       actual.getValueSchema());
+        }
+    }
+
     @Override
     public final long count() {
         return env.read(readTxn -> dbi.stat(readTxn).entries);
     }
 
-    private int readSchemaVersion(final Txn<ByteBuffer> txn) {
-        int version = -1;
-        try {
-            final ByteBuffer valueBuffer = infoDbi.get(txn, InfoKey.SCHEMA_VERSION.getByteBuffer());
-            if (valueBuffer != null) {
-                version = valueBuffer.getInt();
-            }
+    private Optional<SchemaInfo> readSchema(final Txn<ByteBuffer> txn) {
+        final OptionalInt optionalSchemaVersion = readInfoInt(txn, InfoKey.SCHEMA_VERSION);
+        if (optionalSchemaVersion.isEmpty()) {
+            return Optional.empty();
+        }
+        final String keySchema = readInfoString(txn, InfoKey.KEY_SCHEMA).orElse(null);
+        final String valueSchema = readInfoString(txn, InfoKey.VALUE_SCHEMA).orElse(null);
+        final SchemaInfo schemaInfo = new SchemaInfo(optionalSchemaVersion.getAsInt(), keySchema, valueSchema);
+        LOGGER.debug(() -> "SchemaInfo=" + schemaInfo);
+        return Optional.of(schemaInfo);
+    }
 
+    private OptionalInt readInfoInt(final Txn<ByteBuffer> txn,
+                                    final InfoKey infoKey) {
+        OptionalInt version = OptionalInt.empty();
+        try {
+            final ByteBuffer valueBuffer = infoDbi.get(txn, infoKey.getByteBuffer());
+            if (valueBuffer != null) {
+                final int v = valueBuffer.getInt();
+                version = OptionalInt.of(v);
+            }
         } catch (final Exception e) {
             LOGGER.debug(e::getMessage, e);
         }
         return version;
     }
 
-    private void writeSchemaVersion(final Txn<ByteBuffer> txn, final int schemaVersion) {
+    private Optional<String> readInfoString(final Txn<ByteBuffer> txn,
+                                            final InfoKey infoKey) {
+        Optional<String> info = Optional.empty();
+        try {
+            final ByteBuffer valueBuffer = infoDbi.get(txn, infoKey.getByteBuffer());
+            if (valueBuffer != null) {
+                final String string = ByteBufferUtils.toString(valueBuffer);
+                info = Optional.of(string);
+            }
+        } catch (final Exception e) {
+            LOGGER.error(e::getMessage, e);
+        }
+        return info;
+    }
+
+    private void writeSchema(final LmdbWriter writer, final SchemaInfo schemaInfo) {
+        writeInfoInt(writer.getWriteTxn(), InfoKey.SCHEMA_VERSION, schemaInfo.getSchemaVersion());
+        writeInfoString(writer.getWriteTxn(), InfoKey.KEY_SCHEMA, schemaInfo.getKeySchema());
+        writeInfoString(writer.getWriteTxn(), InfoKey.VALUE_SCHEMA, schemaInfo.getValueSchema());
+        writer.commit();
+    }
+
+    private void writeInfoInt(final Txn<ByteBuffer> txn,
+                              final InfoKey infoKey,
+                              final int schemaVersion) {
         byteBuffers.useInt(schemaVersion, byteBuffer -> {
-            infoDbi.put(txn, InfoKey.SCHEMA_VERSION.getByteBuffer(), byteBuffer);
+            infoDbi.put(txn, infoKey.getByteBuffer(), byteBuffer);
         });
     }
+
+    private void writeInfoString(final Txn<ByteBuffer> txn,
+                                 final InfoKey infoKey,
+                                 final String info) {
+        if (info != null) {
+            final byte[] bytes = info.getBytes(StandardCharsets.UTF_8);
+            byteBuffers.useBytes(bytes, byteBuffer -> {
+                infoDbi.put(txn, infoKey.getByteBuffer(), byteBuffer);
+            });
+        }
+    }
+
 
     private int readHashClashes(final Txn<ByteBuffer> txn) {
         int hashClashes = -1;
@@ -118,7 +203,9 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
 
     private enum InfoKey implements HasPrimitiveValue {
         SCHEMA_VERSION(0),
-        HASH_CLASHES(1);
+        HASH_CLASHES(1),
+        KEY_SCHEMA(2),
+        VALUE_SCHEMA(3);
 
         private final byte primitiveValue;
         private final ByteBuffer byteBuffer;
@@ -175,6 +262,10 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
         return JsonUtil.writeValueAsString(inf);
     }
 
+    protected SchemaInfo getSchemaInfo() {
+        return schemaInfo;
+    }
+
     public final Inf getInfo() {
         try {
             return env.read(txn -> {
@@ -182,12 +273,13 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
                     final EnvInf envInf = env.getInfo();
                     final Stat stat = dbi.stat(txn);
                     final DbInf dbInf = new DbInf("db", stat);
+                    final int schemaVersion = schemaInfo.getSchemaVersion();
 
                     return new Inf(
                             envInf,
                             Collections.singletonList(dbInf),
                             env.isReadOnly(),
-                            readSchemaVersion(txn),
+                            schemaVersion,
                             readHashClashes(txn));
                 } catch (final Exception e) {
                     LOGGER.debug(e::getMessage, e);
