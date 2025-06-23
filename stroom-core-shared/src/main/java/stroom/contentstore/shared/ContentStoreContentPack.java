@@ -9,7 +9,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.util.Collection;
 import java.util.Objects;
 
 /**
@@ -19,6 +18,7 @@ import java.util.Objects;
         "Contains the information for an Content Store Content Pack"
 )
 @JsonPropertyOrder({
+        "contentStoreMeta",
         "id",
         "uiName",
         "iconUrl",
@@ -31,8 +31,6 @@ import java.util.Objects;
         "gitPath",
         "gitCommit",
         "gitNeedsAuth",
-        "contentStoreUiName",
-        "isInstalled"
 })
 @JsonInclude(Include.NON_NULL)
 public class ContentStoreContentPack {
@@ -95,10 +93,6 @@ public class ContentStoreContentPack {
     /** Whether this repo requires authentication */
     @JsonProperty
     private final Boolean gitNeedsAuth;
-
-    /** The status of this content pack */
-    @JsonProperty
-    private ContentStoreContentPackStatus installationStatus;
 
     /** Default Git path to use - the root */
     private static final String DEFAULT_GIT_PATH =
@@ -309,49 +303,6 @@ public class ContentStoreContentPack {
     }
 
     /**
-     * @return The installation status of the content pack, whether not
-     * installed, installed or upgradable.
-     * Never returns null.
-     */
-    public ContentStoreContentPackStatus getInstallationStatus() {
-        return this.installationStatus;
-    }
-
-    /**
-     * Used by JSON serialization to set the value of the installation status.
-     * @param status The status. Can be null in which case NOT_INSTALLED is assumed.
-     */
-    public void setInstallationStatus(ContentStoreContentPackStatus status) {
-        this.installationStatus = status == null ? ContentStoreContentPackStatus.NOT_INSTALLED
-                : status;
-    }
-
-    /**
-     * Checks the given collection of GitRepoDocs to see if any of them
-     * match this content pack. If one does then it is installed &
-     * can be checked for possible upgrades.
-     * Result is stored in the object's data.
-     * @param docs The collection of GitRepos that already exist. Must
-     *             not be null but can be empty.
-     */
-    public void checkInstallationStatus(final Collection<GitRepoDoc> docs) {
-        Objects.requireNonNull(docs);
-        ContentStoreContentPackStatus status = ContentStoreContentPackStatus.NOT_INSTALLED;
-        for (final GitRepoDoc doc : docs) {
-            if (this.matches(doc)) {
-                if (this.contentPackUpgrades(doc)) {
-                    status = ContentStoreContentPackStatus.PACK_UPGRADABLE;
-                } else {
-                    status = ContentStoreContentPackStatus.INSTALLED;
-                }
-                break;
-            }
-        }
-
-        this.installationStatus = status;
-    }
-
-    /**
      * Returns whether this Content Pack matches the given GitRepoDoc.
      * Matches on the Content Store ownerID and the Content Pack ID.
      * Doesn't look at anything else, so may get clashes between
@@ -388,7 +339,7 @@ public class ContentStoreContentPack {
      *                   but that we want to check for possible upgrades.
      * @return true if this content pack could upgrade the given doc.
      */
-    private boolean contentPackUpgrades(final GitRepoDoc gitRepoDoc) {
+    boolean contentPackUpgrades(final GitRepoDoc gitRepoDoc) {
         boolean gitSettingsMatch = Objects.equals(this.gitUrl, gitRepoDoc.getUrl())
                 && Objects.equals(this.gitBranch, gitRepoDoc.getBranch())
                 && Objects.equals(this.gitPath, gitRepoDoc.getPath())

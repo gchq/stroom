@@ -32,7 +32,7 @@ public interface ContentStoreResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Lists Content Store Content Packs",
             operationId = "listContentStoreContentPacks")
-    ResultPage<ContentStoreContentPack> list(PageRequest pageRequest);
+    ResultPage<ContentStoreContentPackWithDynamicState> list(PageRequest pageRequest);
 
     /**
      * Checks to see if the content pack has already resulted in the

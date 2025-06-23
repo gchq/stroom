@@ -3,6 +3,7 @@ package stroom.contentstore.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.contentstore.shared.ContentStoreContentPack;
 import stroom.contentstore.shared.ContentStoreContentPackStatus;
+import stroom.contentstore.shared.ContentStoreContentPackWithDynamicState;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
@@ -40,14 +41,10 @@ public class ContentStoreContentPackListPresenter
     final RestFactory restFactory;
 
     /** Table of content packs */
-    final MyDataGrid<ContentStoreContentPack> dataGrid = new MyDataGrid<>();
+    final MyDataGrid<ContentStoreContentPackWithDynamicState> dataGrid = new MyDataGrid<>();
 
     /** Shows what is selected in the App Store list */
-    private final MultiSelectionModel<ContentStoreContentPack> gridSelectionModel;
-
-    /** Data hookup */
-    private final RestDataProvider<ContentStoreContentPack, ResultPage<ContentStoreContentPack>>
-                dataProvider;
+    private final MultiSelectionModel<ContentStoreContentPackWithDynamicState> gridSelectionModel;
 
     /** Map of Content Packs -> status */
     private final Map<ContentStoreContentPack, ContentStoreContentPackStatus> contentPackStatusCache
@@ -86,7 +83,10 @@ public class ContentStoreContentPackListPresenter
         this.initColumns(dataGrid);
 
         // Hook up the data
-        dataProvider = createDataProvider(eventBus, view, restFactory);
+        final RestDataProvider<ContentStoreContentPackWithDynamicState, ResultPage<ContentStoreContentPackWithDynamicState>>
+                dataProvider = createDataProvider(eventBus,
+                                                  view,
+                                                  restFactory);
         dataProvider.addDataDisplay(dataGrid);
 
         // Get notified when the data has loaded & load up the first item on the page
@@ -103,8 +103,8 @@ public class ContentStoreContentPackListPresenter
                     if (gridSelectionModel.getSelected() == null
                         && dataGrid.getRowCount() > 0) {
                         // Nothing selected and we've got data so set something selected
-                        ContentStoreContentPack cp = dataGrid.getVisibleItem(FIRST_ITEM_INDEX);
-                        gridSelectionModel.setSelected(cp);
+                        ContentStoreContentPackWithDynamicState cpds = dataGrid.getVisibleItem(FIRST_ITEM_INDEX);
+                        gridSelectionModel.setSelected(cpds);
                     }
                 }
 
@@ -132,16 +132,16 @@ public class ContentStoreContentPackListPresenter
     private void loadStateFromCache() {
         boolean dirty = false;
         for (int iCp = 0; iCp < dataGrid.getVisibleItemCount(); ++iCp) {
-            ContentStoreContentPack cp = dataGrid.getVisibleItem(iCp);
-            if (cp != null) {
-                ContentStoreContentPackStatus status = contentPackStatusCache.get(cp);
+            ContentStoreContentPackWithDynamicState cpws = dataGrid.getVisibleItem(iCp);
+            if (cpws != null) {
+                ContentStoreContentPackStatus status = contentPackStatusCache.get(cpws.getContentPack());
 
                 // If the status exists and doesn't match the stored status
                 // then change it
                 if (status != null
-                    && !status.equals(cp.getInstallationStatus())) {
+                    && !status.equals(cpws.getInstallationStatus())) {
 
-                    cp.setInstallationStatus(status);
+                    cpws.setInstallationStatus(status);
                     dirty = true;
                 }
             }
@@ -161,7 +161,7 @@ public class ContentStoreContentPackListPresenter
      * @param restFactory Where we get the REST stuff from
      * @return a data provider to plug into the data grid
      */
-    private RestDataProvider<ContentStoreContentPack, ResultPage<ContentStoreContentPack>>
+    private RestDataProvider<ContentStoreContentPackWithDynamicState, ResultPage<ContentStoreContentPackWithDynamicState>>
     createDataProvider(final EventBus eventBus,
                        final PagerView view,
                        final RestFactory restFactory) {
@@ -169,7 +169,7 @@ public class ContentStoreContentPackListPresenter
         return new RestDataProvider<>(eventBus) {
             @Override
             protected void exec(final Range range,
-                                final Consumer<ResultPage<ContentStoreContentPack>> dataConsumer,
+                                final Consumer<ResultPage<ContentStoreContentPackWithDynamicState>> dataConsumer,
                                 final RestErrorHandler restErrorHandler) {
                 PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
                 restFactory
@@ -190,11 +190,11 @@ public class ContentStoreContentPackListPresenter
      * Creates the columns for displaying the Content Packs.
      * @param dataGrid The widget to display stuff in.
      */
-    private void initColumns(final MyDataGrid<ContentStoreContentPack> dataGrid) {
+    private void initColumns(final MyDataGrid<ContentStoreContentPackWithDynamicState> dataGrid) {
 
         // Icon for content pack, pulled from String in content pack
         dataGrid.addResizableColumn(
-                DataGridUtil.svgStringColumn(ContentStoreContentPack::getIconSvg),
+                DataGridUtil.svgStringColumn(cpws -> cpws.getContentPack().getIconSvg()),
                 DataGridUtil.headingBuilder("")
                         .withToolTip("Content Pack Icon")
                         .build(),
@@ -202,7 +202,7 @@ public class ContentStoreContentPackListPresenter
 
         // Name of content pack
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder(ContentStoreContentPack::getUiName)
+                DataGridUtil.textColumnBuilder((ContentStoreContentPackWithDynamicState cpws) -> cpws.getContentPack().getUiName())
                         .build(),
                 DataGridUtil.headingBuilder("Content Pack")
                         .withToolTip("The name of the content pack")
@@ -211,9 +211,7 @@ public class ContentStoreContentPackListPresenter
 
         // Installation status
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder((ContentStoreContentPack cp) -> {
-                    return cp.getInstallationStatus().toString();
-                })
+                DataGridUtil.textColumnBuilder((ContentStoreContentPackWithDynamicState cpws) -> cpws.getInstallationStatus().toString())
                         .build(),
                 DataGridUtil.headingBuilder("Status")
                         .withToolTip("Whether installed, and if updates are available")
@@ -223,7 +221,7 @@ public class ContentStoreContentPackListPresenter
         // Which 'store' it is from
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(
-                        (ContentStoreContentPack cp) -> cp.getContentStoreMetadata().getOwnerName()
+                        (ContentStoreContentPackWithDynamicState cpws) -> cpws.getContentPack().getContentStoreMetadata().getOwnerName()
                         )
                         .build(),
                 DataGridUtil.headingBuilder("Store")
@@ -247,7 +245,7 @@ public class ContentStoreContentPackListPresenter
     /**
      * @return the selected items in the grid.
      */
-    public MultiSelectionModel<ContentStoreContentPack> getSelectionModel() {
+    public MultiSelectionModel<ContentStoreContentPackWithDynamicState> getSelectionModel() {
         return this.gridSelectionModel;
     }
 
@@ -273,31 +271,31 @@ public class ContentStoreContentPackListPresenter
      */
     private void doUpgradeCheckOn(final int rowIndex) {
         if (rowIndex < dataGrid.getVisibleItemCount()) {
-            ContentStoreContentPack cp = dataGrid.getVisibleItem(rowIndex);
-            if (cp != null) {
+            ContentStoreContentPackWithDynamicState cpws = dataGrid.getVisibleItem(rowIndex);
+            if (cpws != null) {
 
                 // Only check items with status INSTALLED
                 // and that we haven't checked before
                 // Checking other items would waste processor power
-                ContentStoreContentPackStatus status = cp.getInstallationStatus();
-                if (cp.getGitCommit().isEmpty()
+                ContentStoreContentPackStatus status = cpws.getInstallationStatus();
+                if (cpws.getContentPack().getGitCommit().isEmpty()
                     && status.equals(ContentStoreContentPackStatus.INSTALLED)
-                    && !contentPackStatusCache.containsKey(cp)) {
+                    && !contentPackStatusCache.containsKey(cpws.getContentPack())) {
                     console("    Asking server about [" + rowIndex + "]: '"
-                            + cp.getUiName() + "': (" + cp.getInstallationStatus() + ")");
+                            + cpws.getContentPack().getUiName() + "': (" + cpws.getInstallationStatus() + ")");
 
                     restFactory
                             .create(ContentStorePresenter.CONTENT_STORE_RESOURCE)
-                            .method(res -> res.checkContentUpgradeAvailable(cp))
+                            .method(res -> res.checkContentUpgradeAvailable(cpws.getContentPack()))
                             .onSuccess(upgradeAvailable -> {
                                 if (upgradeAvailable.getValue()) {
-                                    cp.setInstallationStatus(ContentStoreContentPackStatus.CONTENT_UPGRADABLE);
-                                    contentPackStatusCache.put(cp, ContentStoreContentPackStatus.CONTENT_UPGRADABLE);
+                                    cpws.setInstallationStatus(ContentStoreContentPackStatus.CONTENT_UPGRADABLE);
+                                    contentPackStatusCache.put(cpws.getContentPack(), cpws.getInstallationStatus());
                                     if (contentStorePresenter != null) {
                                         contentStorePresenter.updateState();
                                     }
                                 } else {
-                                    contentPackStatusCache.put(cp, cp.getInstallationStatus());
+                                    contentPackStatusCache.put(cpws.getContentPack(), cpws.getInstallationStatus());
                                 }
 
                                 // Check the next item

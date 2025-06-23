@@ -3,6 +3,7 @@ package stroom.contentstore.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.contentstore.shared.ContentStoreContentPack;
 import stroom.contentstore.shared.ContentStoreContentPackStatus;
+import stroom.contentstore.shared.ContentStoreContentPackWithDynamicState;
 import stroom.contentstore.shared.ContentStoreCreateGitRepoRequest;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.MarkdownConverter;
@@ -80,7 +81,7 @@ public class ContentStoreContentPackDetailsPresenter
     private final Button btnUpgradeGitRepo = new Button();
 
     /** Current content pack selected. Might be null */
-    private ContentStoreContentPack contentPack = null;
+    private ContentStoreContentPackWithDynamicState contentPackWithState = null;
 
     /** Used when we need an empty string */
     private final static String EMPTY = "";
@@ -212,14 +213,14 @@ public class ContentStoreContentPackDetailsPresenter
 
     /**
      * Displays all the details of the given content pack.
-     * @param cp The content pack to display. Can be null
-     *           in which case the display will be blank.
+     * @param cpws The content pack and its state to display. Can be null
+     *             in which case the display will be blank.
      */
-    public void setContentPack(final ContentStoreContentPack cp) {
+    public void setContentPack(final ContentStoreContentPackWithDynamicState cpws) {
         // Store for click handler
-        this.contentPack = cp;
+        this.contentPackWithState = cpws;
 
-        if (cp == null) {
+        if (cpws == null) {
             this.lblIcon.setHTML(EMPTY);
             this.lblName.setText(EMPTY);
             this.lblIsInstalled.setText(EMPTY);
@@ -235,21 +236,22 @@ public class ContentStoreContentPackDetailsPresenter
             this.lblGitCommit.setText(EMPTY);
             this.lblDetails.setHTML(EMPTY);
         } else {
-            this.lblIcon.setHTML(cp.getIconSvg());
-            this.lblName.setText(cp.getUiName());
-            this.lblIsInstalled.setText(cp.getInstallationStatus().toString());
-            this.lblLicense.setText(cp.getLicenseName());
-            this.lnkLicense.setHref(cp.getLicenseUrl());
-            this.lnkLicense.setText(cp.getLicenseUrl());
-            this.lblStroomPath.setText(resolveInstalledLocation(cp));
-            this.lnkGitUrl.setHref(cp.getGitUrl());
-            this.lnkGitUrl.setText(cp.getGitUrl());
-            this.lblGitBranch.setText(cp.getGitBranch());
-            this.lblGitPath.setText(cp.getGitPath());
-            this.lblGitCommit.setText(cp.getGitCommit());
+            this.lblIcon.setHTML(cpws.getContentPack().getIconSvg());
+            this.lblName.setText(cpws.getContentPack().getUiName());
+            this.lblIsInstalled.setText(cpws.getInstallationStatus().toString());
+            this.lblLicense.setText(cpws.getContentPack().getLicenseName());
+            this.lnkLicense.setHref(cpws.getContentPack().getLicenseUrl());
+            this.lnkLicense.setText(cpws.getContentPack().getLicenseUrl());
+            this.lblStroomPath.setText(resolveInstalledLocation(cpws.getContentPack()));
+            this.lnkGitUrl.setHref(cpws.getContentPack().getGitUrl());
+            this.lnkGitUrl.setText(cpws.getContentPack().getGitUrl());
+            this.lblGitBranch.setText(cpws.getContentPack().getGitBranch());
+            this.lblGitPath.setText(cpws.getContentPack().getGitPath());
+            this.lblGitCommit.setText(cpws.getContentPack().getGitCommit());
 
             // Details get converted to markdown
-            SafeHtml safeDetails = markdownConverter.convertMarkdownToHtml(cp.getDetails());
+            SafeHtml safeDetails = markdownConverter.convertMarkdownToHtml(
+                    cpws.getContentPack().getDetails());
             this.lblDetails.setHTML(safeDetails);
         }
 
@@ -278,8 +280,8 @@ public class ContentStoreContentPackDetailsPresenter
      * relevant changes.
      */
     public void setState() {
-        if (contentPack != null) {
-            ContentStoreContentPackStatus status = contentPack.getInstallationStatus();
+        if (contentPackWithState != null) {
+            ContentStoreContentPackStatus status = contentPackWithState.getInstallationStatus();
             if (status.equals(ContentStoreContentPackStatus.NOT_INSTALLED)) {
                 btnCreateGitRepo.setEnabled(true);
                 btnUpgradeGitRepo.setEnabled(false);
@@ -302,23 +304,23 @@ public class ContentStoreContentPackDetailsPresenter
      * Event handler called when the button 'Create Git Repo' is clicked.
      */
     private void btnCreateGitRepoClick() {
-        if (contentPack != null) {
+        if (contentPackWithState != null) {
 
             // Defensive copy of reference as everything is async
-            final ContentStoreContentPack cp = contentPack;
+            final ContentStoreContentPackWithDynamicState cpws = contentPackWithState;
 
             // Ask for credentials if (contentPack.getGitNeedsAuth())
-            if (cp.getGitNeedsAuth()) {
+            if (cpws.getContentPack().getGitNeedsAuth()) {
                 ShowPopupEvent.Builder builder = ShowPopupEvent.builder(credentialsDialog);
                 credentialsDialog.setupDialog(
-                        cp,
+                        cpws.getContentPack(),
                         builder);
                 builder.onHideRequest(e -> {
                             if (e.isOk()) {
                                 if (credentialsDialog.isValid()) {
                                     // Create the GitRepo with the given credentials
                                     e.hide();
-                                    requestGitRepoCreation(cp,
+                                    requestGitRepoCreation(cpws,
                                             credentialsDialog.getView().getUsername(),
                                             credentialsDialog.getView().getPassword());
                                 } else {
@@ -336,23 +338,23 @@ public class ContentStoreContentPackDetailsPresenter
 
             } else {
                 // No authentication needed
-                requestGitRepoCreation(cp, null, null);
+                requestGitRepoCreation(cpws, null, null);
             }
         }
     }
 
     /**
      * Performs the REST request to the server to create a GitRepo.
-     * @param cp The content pack. Must not be null.
+     * @param cpws The content pack with state. Must not be null.
      * @param username The username for authentication, if required.
      * @param password The password for authentication, if required.
      */
-    private void requestGitRepoCreation(final ContentStoreContentPack cp,
+    private void requestGitRepoCreation(final ContentStoreContentPackWithDynamicState cpws,
                                         final String username,
                                         final String password) {
 
         ContentStoreCreateGitRepoRequest request =
-                new ContentStoreCreateGitRepoRequest(cp,
+                new ContentStoreCreateGitRepoRequest(cpws.getContentPack(),
                         username,
                         password);
 
@@ -366,7 +368,7 @@ public class ContentStoreContentPackDetailsPresenter
                                 result.getMessage(),
                                 () -> RefreshExplorerTreeEvent.fire(contentStorePresenter));
                         // Mark the content pack as Installed & update the UI
-                        cp.setInstallationStatus(ContentStoreContentPackStatus.INSTALLED);
+                        cpws.setInstallationStatus(ContentStoreContentPackStatus.INSTALLED);
                         contentStorePresenter.updateState();
                     } else {
                         AlertEvent.fireError(contentStorePresenter,
@@ -394,21 +396,21 @@ public class ContentStoreContentPackDetailsPresenter
         //Window.alert("Upgrade button pressed");
 
         // Only do anything if something is selected
-        if (contentPack != null) {
+        if (contentPackWithState != null) {
             // Defensive copy of reference
-            doContentPackUpgrade(contentPack);
+            doContentPackUpgrade(contentPackWithState);
         }
     }
 
     /**
      * Called when the Upgrade button is clicked and the content
      * can be upgraded.
-     * @param cp The current content pack. Must not be null.
+     * @param cpws The current content pack and state. Must not be null.
      */
-    private void doContentPackUpgrade(ContentStoreContentPack cp) {
+    private void doContentPackUpgrade(ContentStoreContentPackWithDynamicState cpws) {
         restFactory
                 .create(ContentStorePresenter.CONTENT_STORE_RESOURCE)
-                .method(res -> res.upgradeContentPack(cp))
+                .method(res -> res.upgradeContentPack(cpws.getContentPack()))
                 .onSuccess(result -> {
                     if (result.isOk()) {
                         AlertEvent.fireInfo(contentStorePresenter,
@@ -416,7 +418,7 @@ public class ContentStoreContentPackDetailsPresenter
                                 result.getMessage(),
                                 () -> RefreshExplorerTreeEvent.fire(contentStorePresenter));
                         // Mark the content pack as Installed & update the UI
-                        cp.setInstallationStatus(ContentStoreContentPackStatus.INSTALLED);
+                        cpws.setInstallationStatus(ContentStoreContentPackStatus.INSTALLED);
                         contentStorePresenter.updateState();
                     } else {
                         AlertEvent.fireError(contentStorePresenter,

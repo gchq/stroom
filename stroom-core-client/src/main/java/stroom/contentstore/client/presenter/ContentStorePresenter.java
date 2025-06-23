@@ -1,7 +1,7 @@
 package stroom.contentstore.client.presenter;
 
 import stroom.contentstore.client.presenter.ContentStorePresenter.ContentStoreView;
-import stroom.contentstore.shared.ContentStoreContentPack;
+import stroom.contentstore.shared.ContentStoreContentPackWithDynamicState;
 import stroom.contentstore.shared.ContentStoreResource;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.svg.client.IconColour;
@@ -109,9 +109,9 @@ public class ContentStorePresenter extends ContentTabPresenter<ContentStoreView>
      * @param event The event (ignored - can be null)
      */
     private void contentPackListSelectionHandler(final MultiSelectEvent event) {
-        final ContentStoreContentPack cp =
+        final ContentStoreContentPackWithDynamicState cpws =
                 contentPackListPresenter.getSelectionModel().getSelected();
-        contentPackDetailsPresenter.setContentPack(cp);
+        contentPackDetailsPresenter.setContentPack(cpws);
     }
     
     /**
