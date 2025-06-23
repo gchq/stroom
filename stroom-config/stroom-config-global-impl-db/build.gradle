@@ -22,9 +22,8 @@ dependencies {
 
     testImplementation project(':stroom-test-common')
 
-    testImplementation libs.assertj.core
     testImplementation libs.guice.extension
-    testImplementation libs.junit.jupiter.api
 
-    testRuntimeOnly libs.junit.jupiter.engine
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
 }

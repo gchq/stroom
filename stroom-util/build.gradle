@@ -32,25 +32,14 @@ dependencies {
     implementation libs.xerces
 
     testImplementation project(':stroom-test-common')
-    testImplementation libs.assertj.core
     testImplementation libs.classgraph
     testImplementation libs.commons.lang
     testImplementation libs.dropwizard.validation
     testImplementation libs.guice.extension
-    testImplementation libs.junit.jupiter.api
-    testImplementation libs.mockito.core
-    testImplementation libs.mockito.junit.jupiter
     testImplementation libs.vavr
 
-    // The following logging libs are needed when running junits outside dropwizard
-    testRuntimeOnly libs.jakarta.activation
-    testRuntimeOnly libs.jaxb.impl
-    testRuntimeOnly libs.jcl.over.slf4j
-    testRuntimeOnly libs.jul.to.slf4j
-    testRuntimeOnly libs.junit.jupiter.engine
-    testRuntimeOnly libs.log4j.over.slf4j
-    testRuntimeOnly libs.logback.classic
-    testRuntimeOnly libs.logback.core
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
 }
 
 tasks.register('writeBuildProperties') {

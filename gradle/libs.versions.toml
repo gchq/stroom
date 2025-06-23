@@ -7,7 +7,7 @@ stroomTestData = "0.2.3"
 
 # ------------3rd-party------------
 aws = "2.30.8"
-commons-io = "2.18.0"
+commons-io = "2.19.0"
 dropwizard = "4.0.14" # used to set the dropwizard-bom version, that controls lots of dependency versions
 elasticsearch = "8.12.2"
 httpcore = "4.4.16" # Transient dependency of Elasticsearch
@@ -16,10 +16,10 @@ guice = "7.0.0"
 gwt = "2.12.2"
 jackson-swagger = "2.11.1" # Specific version of jackson for use with the swagger plugin
 jmh = "1.37"
-jooq = "3.20.1" # Defined at the top of this file
-junit-jupiter = "5.10.1"
+jooq = "3.20.5"
+junit-jupiter = "5.13.1"
 kafka = "3.9.0"
-poi = "5.4.0"
+poi = "5.4.1"
 scylladb = "4.18.0.2"
 simple-java-mail = "8.8.0"
 swagger = "2.2.21"
@@ -142,7 +142,7 @@ junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api" } # version
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine" } # version controlled by junit-bom
 junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params" } # version controlled by junit-bom
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" } # version controlled by junit-bom
-kafka-clients = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka"} # version controlled by junit-bom
+kafka-clients = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka" } # version controlled by junit-bom
 kryo = { module = "com.esotericsoftware:kryo", version = "5.5.0" }
 # lmdbjava 0.8.3 causes FFI errors on centos7 due to glibc version
 # See https:#github.com/gchq/stroom/issues/3485 & https:#github.com/gchq/stroom/issues/4133
@@ -212,3 +212,24 @@ jdeps = { id = "org.kordamp.gradle.jdeps", version = "0.16.0" }
 # dependency-graph-generator = { id = "com.vanniktech.dependency.graph.generator", version = "0.5.0" }
 
 swagger-gradle-plugin = { id = "io.swagger.core.v3.swagger-gradle-plugin", version = "2.2.19" }
+
+[bundles]
+common-test-implementation = [
+    "assertj-core",
+    "mockito-core",
+    "mockito-junit-jupiter",
+    "junit-jupiter-api",
+    "junit-jupiter-params"]
+
+common-test-runtime = [
+    "jakarta-activation",
+    "jakarta-el",
+    "jaxb-impl",
+    "junit-jupiter-engine",
+    "junit-platform-launcher",
+    # The following logging libs are needed when running junits outside dropwizard
+    "jcl-over-slf4j",
+    "jul-to-slf4j",
+    "log4j-over-slf4j",
+    "logback-classic",
+    "logback-core"]

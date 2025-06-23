@@ -287,31 +287,17 @@ dependencies {
     testImplementation libs.hibernate.jpa
     testImplementation libs.hikari
     testImplementation libs.jinjava
-    testImplementation libs.junit.jupiter.api
-    testImplementation libs.junit.platform.launcher
     testImplementation libs.lmdbjava
     testImplementation libs.saxon.he
     testImplementation libs.slf4j.api
     testImplementation libs.swagger.annotations
     testImplementation libs.vavr
 
-    testRuntimeOnly libs.jakarta.activation
-    testRuntimeOnly libs.jakarta.el
-    testRuntimeOnly libs.jaxb.impl
-    testRuntimeOnly libs.junit.jupiter.engine
-
-    // The following logging libs are needed when running junits outside dropwizard
-    testRuntimeOnly libs.jcl.over.slf4j
-    testRuntimeOnly libs.jul.to.slf4j
-    testRuntimeOnly libs.log4j.over.slf4j
-    testRuntimeOnly libs.logback.classic
-    testRuntimeOnly libs.logback.core
-
-    testImplementation libs.assertj.core
     testImplementation libs.dropwizard.client
     testImplementation libs.dropwizard.testing
-    testImplementation libs.mockito.core
-    testImplementation libs.mockito.junit.jupiter
+
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
 
     // These are for the gradle swagger plugin to ensure it is using the jakarta variants rather than the javax ones
     swaggerBuild platform(libs.dropwizard.dependencies) // So swaggerBuild can see the dep versions
