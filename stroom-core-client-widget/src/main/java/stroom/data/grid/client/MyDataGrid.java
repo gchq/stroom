@@ -38,13 +38,20 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.Header;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.FocusUtil;
+import com.google.gwt.user.client.ui.MenuBar;
+import com.google.gwt.user.client.ui.MenuItem;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.MenuBar;
+import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.RangeChangeEvent.Handler;
 import com.google.gwt.view.client.SelectionModel;
@@ -69,6 +76,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     private ResizeHandle<R> resizeHandle;
     private MoveHandle<R> moveHandle;
     private Heading moveHeading;
+    private PopupPanel contextMenu;
     private boolean allowMove = true;
     private boolean allowResize = true;
     private boolean allowHeaderSelection = true;
@@ -99,6 +107,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
         // Sink all mouse events.
         sinkEvents(Event.MOUSEEVENTS);
+        sinkEvents(Event.ONCONTEXTMENU);
     }
 
     public MultiSelectionModelImpl<R> addDefaultSelectionModel(final boolean allowMultiSelect) {
@@ -144,25 +153,143 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
     @Override
     protected void onBrowserEvent2(final Event event) {
-        final int eventType = event.getTypeInt();
-        if (Event.ONMOUSEMOVE == eventType) {
-            final Heading heading = getHeading(event);
-            if (heading != null) {
-                if (handlerRegistration == null) {
-                    // Show the resize handle immediately before
-                    // attaching the native event preview handler.
-                    final ResizeHandle<R> resizeHandle = getResizeHandle();
-                    if (resizeHandle.update(event, heading)) {
-                        doubleClickTester.clear();
-                        resizeHandle.show();
-                    }
+        if (event.getTypeInt() == Event.ONCONTEXTMENU) {
+            event.preventDefault();
+            event.stopPropagation();
 
-                    handlerRegistration = Event.addNativePreviewHandler(this);
-                }
+            final int clientX = event.getClientX();
+            final int clientY = event.getClientY();
+
+            //finding cell/row/column info
+            final Element target = event.getEventTarget().cast();
+            TableCellElement cell = findParentCell(target);
+            int rowIndex = -1, colIndex = -1;
+            if (cell != null) {
+                TableRowElement row = cell.getParentElement().cast();
+                rowIndex = row.getSectionRowIndex();
+                colIndex = cell.getCellIndex();
             }
+
+            showContextMenu(clientX, clientY, rowIndex, colIndex);
+            return;
         }
         super.onBrowserEvent2(event);
     }
+
+    private TableCellElement findParentCell(Element target) {
+        while (target != null && !"td".equalsIgnoreCase(target.getTagName())) {
+            target = target.getParentElement();
+        }
+        return (TableCellElement) target;
+    }
+
+    private void showContextMenu(int x, int y, int rowIndex, int colIndex) {
+        if (contextMenu != null && contextMenu.isShowing()) {
+            contextMenu.hide();
+        }
+        contextMenu = new PopupPanel(true);
+        MenuBar menu = new MenuBar(true);
+
+        menu.addItem(new MenuItem("Copy Cell", new Command() {
+            @Override
+            public void execute() {
+                exportCell(rowIndex, colIndex);
+            }
+        }));
+        menu.addItem(new MenuItem("Copy Row (CSV)", new Command() {
+            @Override
+            public void execute() {
+                exportRow(rowIndex);
+            }
+        }));
+        menu.addItem(new MenuItem("Copy Column (LSV)", new Command() {
+            @Override
+            public void execute() {
+                exportColumn(colIndex);
+            }
+        }));
+        menu.addItem(new MenuItem("Export Table as CSV", new Command() {
+            @Override
+            public void execute() {
+                exportTableAsCSV();
+            }
+        }));
+
+        contextMenu.setWidget(menu);
+        contextMenu.setPopupPosition(x, y);
+        contextMenu.show();
+    }
+
+    private void exportCell(int rowIndex, int colIndex) {
+        if (rowIndex >= 0 && colIndex >= 0) {
+            R row = getVisibleItem(rowIndex);
+            Column<R, ?> column = getColumn(colIndex);
+            Object value = column.getValue(row);
+            copyToClipboard(String.valueOf(value));
+        }
+    }
+
+    private void exportRow(int rowIndex) {
+        if (rowIndex >= 0) {
+            R row = getVisibleItem(rowIndex);
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < getColumnCount(); i++) {
+                if (i > 0) sb.append(",");
+                Object value = getColumn(i).getValue(row);
+                sb.append("\"").append(value != null ? value.toString().replace("\"", "\"\"") : "").append("\"");
+            }
+            copyToClipboard(sb.toString());
+        }
+    }
+
+    private void exportColumn(int colIndex) {
+        if (colIndex >= 0) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < getVisibleItemCount(); i++) {
+                if (i > 0) sb.append(";");
+                R row = getVisibleItem(i);
+                Object value = getColumn(colIndex).getValue(row);
+                sb.append(value != null ? value.toString() : "");
+            }
+            copyToClipboard(sb.toString());
+        }
+    }
+
+    private void exportTableAsCSV() {
+        //built a string of all the rows + all the columns
+        StringBuilder sb = new StringBuilder();
+        for (int col = 0; col < getColumnCount(); col++) {
+            if (col > 0) sb.append(",");
+            String header = getHeader(col) != null ? getHeader(col).getValue() + "" : "";
+            sb.append("\"").append(header.replace("\"", "\"\"")).append("\"");
+        }
+        sb.append("\n");
+        for (int row = 0; row < getVisibleItemCount(); row++) {
+            for (int col = 0; col < getColumnCount(); col++) {
+                if (col > 0) sb.append(",");
+                Object value = getColumn(col).getValue(getVisibleItem(row));
+                sb.append("\"").append(value != null ? value.toString().replace("\"", "\"\"") : "").append("\"");
+            }
+            sb.append("\n");
+        }
+        downloadCSV("table.csv", sb.toString());
+    }
+
+    //browser api to export csv or copy
+    private native void copyToClipboard(String text) /*-{
+        $wnd.navigator.clipboard.writeText(text);
+    }-*/;
+
+    private native void downloadCSV(String filename, String csv) /*-{
+        var blob = new Blob([csv], { type: "text/csv" });
+        var link = $doc.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.style.display = "none";
+        $doc.body.appendChild(link);
+        link.click();
+        $doc.body.removeChild(link);
+    }-*/;
 
     @Override
     public void onPreviewNativeEvent(final NativePreviewEvent nativePreviewEvent) {
