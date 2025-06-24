@@ -26,7 +26,7 @@ public class SvgStringCell extends AbstractCell<String> {
         } else {
             String className = "svgCell-icon";
 
-            sb.append(SvgImageUtil.toSafeHtml((String)null, value, className));
+            sb.append(SvgImageUtil.toSafeHtml((String) null, value, className));
         }
     }
 }

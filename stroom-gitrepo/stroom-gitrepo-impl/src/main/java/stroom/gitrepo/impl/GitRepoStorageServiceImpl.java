@@ -156,14 +156,16 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
         if (!gitRepoDoc.getUrl().isEmpty()) {
             // Find the path to the root of the local Git repository
             final Path localDir = pathCreator.toAppPath(config.get().getLocalDir());
-            try (final AutoDeletingTempDirectory gitWorkDir = new AutoDeletingTempDirectory(localDir, "gitrepo-")) {
+            try (final AutoDeletingTempDirectory gitWorkDir
+                    = new AutoDeletingTempDirectory(localDir, "gitrepo-")) {
 
                 // Create Git object for the gitWork directory
                 try (final Git git = this.gitConstructForPush(gitRepoDoc, gitWorkDir.getDirectory())) {
 
                     // The export directory is somewhere within the gitWorkDir,
                     // defined by the path the user specified
-                    final Path exportDir = addDirectoryToPath(gitWorkDir.getDirectory(), Paths.get(gitRepoDoc.getPath()));
+                    final Path exportDir = addDirectoryToPath(gitWorkDir.getDirectory(),
+                                                              Paths.get(gitRepoDoc.getPath()));
                     this.ensureDirectoryExists(exportDir);
 
                     // Delete all the files that are currently in the repo
@@ -172,10 +174,9 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                     this.deleteFileTree(exportDir, true);
 
                     // Export everything from Stroom to local git repo dir
-                    final ExportSummary exportSummary = this.export(
-                            gitRepoNodePath,
-                            gitRepoExplorerNode,
-                            exportDir);
+                    final ExportSummary exportSummary = this.export(gitRepoNodePath,
+                                                                    gitRepoExplorerNode,
+                                                                    exportDir);
                     messages.addAll(exportSummary.getMessages());
                     messages.add(new Message(Severity.INFO, "Export to disk successful"));
 
@@ -191,7 +192,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                         // Match new files
                         git.add().setUpdate(false).addFilepattern(".").call();
 
-                        RevCommit gitCommit = git.commit()
+                        final RevCommit gitCommit = git.commit()
                                 .setCommitter(GIT_USERNAME, gitRepoDoc.getUsername())
                                 .setMessage(commitMessage)
                                 .call();
@@ -703,8 +704,9 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
          * @param location Where to create the temporary directory.
          * @param prefix The start of the directory name.
          */
-        public AutoDeletingTempDirectory(Path location, String prefix)
-        throws IOException {
+        public AutoDeletingTempDirectory(final Path location, final String prefix)
+            throws IOException {
+
             this.directory = Files.createTempDirectory(location, prefix);
         }
 

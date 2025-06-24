@@ -14,13 +14,13 @@ import javax.inject.Inject;
  * Dialog to ask users for Commit message when pushing a commit to Git.
  */
 public class GitRepoCommitDialogPresenter
-extends MyPresenterWidget<GitRepoCommitDialogPresenter.GitRepoCommitDialogView> {
+    extends MyPresenterWidget<GitRepoCommitDialogPresenter.GitRepoCommitDialogView> {
 
     /** Width of dialog */
-    private final static int DIALOG_WIDTH = 400;
+    private static final int DIALOG_WIDTH = 400;
 
     /** Height of dialog */
-    private final static int DIALOG_HEIGHT = 400;
+    private static final int DIALOG_HEIGHT = 400;
 
     /**
      * Constructor. Injected.

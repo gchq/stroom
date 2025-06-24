@@ -172,6 +172,9 @@ appConfig:
     importAsSubjectId: "Administrators"
     importAsType: "GROUP"
     importDirectory: "content_pack_import"
+  contentStore:
+    urls:
+
   crossModule:
     db:
       connection:
