@@ -22,7 +22,8 @@ public class ContentStoreConfig extends AbstractConfig implements IsStroomConfig
     /**
      * Default location where the ContentStore config is stored.
      */
-    static final String DEFAULT_URL = "https://raw.githubusercontent.com/stroomworks4092/stroom-appstore/refs/heads/main/stroom-appstore.yml";
+    static final String DEFAULT_URL =
+            "https://raw.githubusercontent.com/stroomworks4092/stroom-appstore/refs/heads/main/stroom-appstore.yml";
 
     /**
      * List of App Store URLS
@@ -51,7 +52,8 @@ public class ContentStoreConfig extends AbstractConfig implements IsStroomConfig
     public ContentStoreConfig(@JsonProperty("urls") final ArrayList<String> contentStores) {
         this.contentStores = new ArrayList<>();
         if (contentStores == null || contentStores.isEmpty()) {
-            LOGGER.debug("No Content Store URLs supplied in the configuration file; using default of '{}'", DEFAULT_URL);
+            LOGGER.debug("No Content Store URLs supplied in the configuration file; using default of '{}'",
+                         DEFAULT_URL);
             this.contentStores.add(DEFAULT_URL);
         } else {
             this.contentStores.addAll(contentStores);

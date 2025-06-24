@@ -84,19 +84,19 @@ public class ContentStoreContentPackDetailsPresenter
     private ContentStoreContentPackWithDynamicState contentPackWithState = null;
 
     /** Used when we need an empty string */
-    private final static String EMPTY = "";
+    private static final String EMPTY = "";
 
     /** Target window of the licence URL */
-    private final static String LICENCE_URL_TARGET = "stroom-content-pack-licence";
+    private static final String LICENCE_URL_TARGET = "stroom-content-pack-licence";
 
     /** Title (hover-over) for the licence URL link */
-    private final static String LICENCE_URL_TITLE = "Link to licence (opens in new window)";
+    private static final String LICENCE_URL_TITLE = "Link to licence (opens in new window)";
 
     /** Target window of the Git URL */
-    private final static String GIT_URL_TARGET = "stroom-content-pack-git";
+    private static final String GIT_URL_TARGET = "stroom-content-pack-git";
 
     /** Title (hover-over) for the GIT URL link */
-    private final static String GIT_URL_TITLE = "Link to Git repository (opens in new window)";
+    private static final String GIT_URL_TITLE = "Link to Git repository (opens in new window)";
 
     /**
      * Injected constructor.
@@ -316,25 +316,25 @@ public class ContentStoreContentPackDetailsPresenter
                         cpws.getContentPack(),
                         builder);
                 builder.onHideRequest(e -> {
-                            if (e.isOk()) {
-                                if (credentialsDialog.isValid()) {
-                                    // Create the GitRepo with the given credentials
-                                    e.hide();
-                                    requestGitRepoCreation(cpws,
-                                            credentialsDialog.getView().getUsername(),
-                                            credentialsDialog.getView().getPassword());
-                                } else {
-                                    // Something is wrong
-                                    AlertEvent.fireWarn(credentialsDialog,
-                                            credentialsDialog.getValidationMessage(),
-                                            e::reset);
-                                }
-                            } else {
-                                // Cancel pressed
-                                e.hide();
-                            }
-                        })
-                        .fire();
+                    if (e.isOk()) {
+                        if (credentialsDialog.isValid()) {
+                            // Create the GitRepo with the given credentials
+                            e.hide();
+                            requestGitRepoCreation(cpws,
+                                                   credentialsDialog.getView().getUsername(),
+                                                   credentialsDialog.getView().getPassword());
+                        } else {
+                            // Something is wrong
+                            AlertEvent.fireWarn(credentialsDialog,
+                                                credentialsDialog.getValidationMessage(),
+                                                e::reset);
+                        }
+                    } else {
+                        // Cancel pressed
+                        e.hide();
+                    }
+                })
+                    .fire();
 
             } else {
                 // No authentication needed

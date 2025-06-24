@@ -4,6 +4,8 @@ import stroom.docs.shared.Description;
 import stroom.gitrepo.shared.GitRepoDoc;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
@@ -22,12 +24,15 @@ import java.util.Objects;
         "contentPack",
         "installationStatus"
 })
+@JsonInclude(Include.NON_NULL)
 public class ContentStoreContentPackWithDynamicState {
 
     /** The content pack we're wrapping */
+    @JsonProperty
     private final ContentStoreContentPack contentPack;
 
     /** The dynamic status of this content pack */
+    @JsonProperty
     private ContentStoreContentPackStatus installationStatus;
 
     /**
@@ -36,7 +41,7 @@ public class ContentStoreContentPackWithDynamicState {
      * @param contentPack The content store to wrap. Must not be null.
      */
     public ContentStoreContentPackWithDynamicState(
-            ContentStoreContentPack contentPack) {
+            @JsonProperty("contentPack") ContentStoreContentPack contentPack) {
         Objects.requireNonNull(contentPack);
         this.contentPack = contentPack;
         this.installationStatus = ContentStoreContentPackStatus.NOT_INSTALLED;

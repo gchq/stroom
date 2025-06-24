@@ -48,6 +48,12 @@ public class ContentStoreMetadata {
     /** Length to truncate fields to in toString() */
     private static final int TRUNC = 10;
 
+    private static final String ERR_OWNER_ID = "Error in Content Store specification: "
+        + "contentStore.meta.ownerId must be specified";
+
+    private static final String ERR_OWNER_NAME = "Error in Content Store specification: "
+        + "contentStore.meta.ownerName must be specified";
+
     /**
      * Called by YAML parser to construct the metadata associated with
      * a Content Store.
@@ -67,8 +73,8 @@ public class ContentStoreMetadata {
                                 @JsonProperty("ownerUrl") final String ownerUrl,
                                 @JsonProperty("ownerDescription") final String ownerDescription,
                                 @JsonProperty("authContact") final String authContact) {
-        Objects.requireNonNull(ownerId, "Error in Content Store specification: contentStore.meta.ownerId must be specified");
-        Objects.requireNonNull(ownerName, "Error in Content Store specification: contentStore.meta.ownerName must be specified");
+        Objects.requireNonNull(ownerId, ERR_OWNER_ID);
+        Objects.requireNonNull(ownerName, ERR_OWNER_NAME);
         this.ownerId = ownerId;
         this.ownerName = ownerName;
         this.ownerUrl = ownerUrl == null ? "" : ownerUrl;
@@ -123,7 +129,7 @@ public class ContentStoreMetadata {
         }
         final ContentStoreMetadata that = (ContentStoreMetadata) o;
         return Objects.equals(ownerId, that.ownerId)
-               &&Objects.equals(ownerName, that.ownerName)
+               && Objects.equals(ownerName, that.ownerName)
                && Objects.equals(ownerUrl, that.ownerUrl)
                && Objects.equals(ownerDescription, that.ownerDescription)
                && Objects.equals(authContact, that.authContact);

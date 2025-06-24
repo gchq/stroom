@@ -137,33 +137,35 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
      * @throws IOException if something goes wrong
      */
     @Override
-    public synchronized List<Message> exportDoc(GitRepoDoc gitRepoDoc,
+    public synchronized List<Message> exportDoc(final GitRepoDoc gitRepoDoc,
                                                 final String commitMessage,
                                                 boolean calledFromUi)
             throws IOException {
         LOGGER.debug("Exporting document '{}' to GIT; UUID is '{}'", gitRepoDoc.getUrl(), gitRepoDoc.getUuid());
-        List<Message> messages = new ArrayList<>();
+        final List<Message> messages = new ArrayList<>();
 
-        DocRef gitRepoDocRef = GitRepoDoc.getDocRef(gitRepoDoc.getUuid());
-        Optional<ExplorerNode> optGitRepoExplorerNode = explorerService.getFromDocRef(gitRepoDocRef);
-        ExplorerNode gitRepoExplorerNode = optGitRepoExplorerNode.orElseThrow(IOException::new);
+        final DocRef gitRepoDocRef = GitRepoDoc.getDocRef(gitRepoDoc.getUuid());
+        final Optional<ExplorerNode> optGitRepoExplorerNode = explorerService.getFromDocRef(gitRepoDocRef);
+        final ExplorerNode gitRepoExplorerNode = optGitRepoExplorerNode.orElseThrow(IOException::new);
 
         // Work out where the GitRepo node is in the explorer tree
-        List<ExplorerNode> gitRepoNodePath = this.explorerNodeService.getPath(gitRepoDocRef);
+        final List<ExplorerNode> gitRepoNodePath = this.explorerNodeService.getPath(gitRepoDocRef);
         gitRepoNodePath.add(gitRepoExplorerNode);
 
         // Only try to do anything if the settings exist
         if (!gitRepoDoc.getUrl().isEmpty()) {
             // Find the path to the root of the local Git repository
             final Path localDir = pathCreator.toAppPath(config.get().getLocalDir());
-            try (final AutoDeletingTempDirectory gitWorkDir = new AutoDeletingTempDirectory(localDir, "gitrepo-")) {
+            try (final AutoDeletingTempDirectory gitWorkDir
+                    = new AutoDeletingTempDirectory(localDir, "gitrepo-")) {
 
                 // Create Git object for the gitWork directory
-                try (Git git = this.gitConstructForPush(gitRepoDoc, gitWorkDir.getDirectory())) {
+                try (final Git git = this.gitConstructForPush(gitRepoDoc, gitWorkDir.getDirectory())) {
 
                     // The export directory is somewhere within the gitWorkDir,
                     // defined by the path the user specified
-                    final Path exportDir = addDirectoryToPath(gitWorkDir.getDirectory(), Paths.get(gitRepoDoc.getPath()));
+                    final Path exportDir = addDirectoryToPath(gitWorkDir.getDirectory(),
+                                                              Paths.get(gitRepoDoc.getPath()));
                     this.ensureDirectoryExists(exportDir);
 
                     // Delete all the files that are currently in the repo
@@ -172,15 +174,14 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                     this.deleteFileTree(exportDir, true);
 
                     // Export everything from Stroom to local git repo dir
-                    ExportSummary exportSummary = this.export(
-                            gitRepoNodePath,
-                            gitRepoExplorerNode,
-                            exportDir);
+                    final ExportSummary exportSummary = this.export(gitRepoNodePath,
+                                                                    gitRepoExplorerNode,
+                                                                    exportDir);
                     messages.addAll(exportSummary.getMessages());
                     messages.add(new Message(Severity.INFO, "Export to disk successful"));
 
                     // Has anything changed against the remote?
-                    Status gitStatus = git.status().call();
+                    final Status gitStatus = git.status().call();
                     if (!gitStatus.isClean()) {
 
                         this.gitStatusToMessages(gitStatus, messages);
@@ -191,7 +192,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                         // Match new files
                         git.add().setUpdate(false).addFilepattern(".").call();
 
-                        RevCommit gitCommit = git.commit()
+                        final RevCommit gitCommit = git.commit()
                                 .setCommitter(GIT_USERNAME, gitRepoDoc.getUsername())
                                 .setMessage(commitMessage)
                                 .call();
@@ -704,7 +705,8 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
          * @param prefix The start of the directory name.
          */
         public AutoDeletingTempDirectory(Path location, String prefix)
-        throws IOException {
+            throws IOException {
+
             this.directory = Files.createTempDirectory(location, prefix);
         }
 

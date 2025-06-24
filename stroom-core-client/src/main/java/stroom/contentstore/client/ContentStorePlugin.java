@@ -1,7 +1,7 @@
 package stroom.contentstore.client;
 
-import stroom.contentstore.client.presenter.ContentStorePresenter;
 import stroom.content.client.ContentPlugin;
+import stroom.contentstore.client.presenter.ContentStorePresenter;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;

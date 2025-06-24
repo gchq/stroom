@@ -36,7 +36,7 @@ import java.util.Objects;
 public class ContentStoreContentPack {
 
     @JsonProperty
-    private ContentStoreMetadata contentStoreMetadata = null;
+    private ContentStoreMetadata contentStoreMetadata;
 
     /** The ID of this Content Pack within the Content Store */
     @JsonProperty
@@ -141,7 +141,8 @@ public class ContentStoreContentPack {
                                    @JsonProperty("gitBranch") final String gitBranch,
                                    @JsonProperty("gitPath") final String gitPath,
                                    @JsonProperty("gitCommit") final String gitCommit,
-                                   @JsonProperty("gitNeedsAuth") final Boolean gitNeedsAuth) {
+                                   @JsonProperty("gitNeedsAuth") final Boolean gitNeedsAuth,
+                                   @JsonProperty("contentStoreMetadata") final ContentStoreMetadata metadata) {
 
         // Implementation note:
         // Objects.requireNonNullElse() isn't available in GWT
@@ -153,13 +154,14 @@ public class ContentStoreContentPack {
         this.licenseName = licenseName == null ? "" : licenseName;
         this.licenseUrl = licenseUrl == null ? "" : licenseUrl;
         this.stroomPath = stroomPath == null || stroomPath.isEmpty() ? "/" : stroomPath;
-        this.details = details == null ? "": details;
+        this.details = details == null ? "" : details;
         this.gitRepoName = gitRepoName == null || gitRepoName.isEmpty() ? uiName : gitRepoName;
         this.gitUrl = Objects.requireNonNull(gitUrl);
         this.gitBranch = Objects.requireNonNull(gitBranch);
         this.gitPath = gitPath == null ? DEFAULT_GIT_PATH : gitPath;
         this.gitCommit = gitCommit == null ? "" : gitCommit;
         this.gitNeedsAuth = gitNeedsAuth == null ? Boolean.FALSE : gitNeedsAuth;
+        this.contentStoreMetadata = metadata;
     }
 
     /**

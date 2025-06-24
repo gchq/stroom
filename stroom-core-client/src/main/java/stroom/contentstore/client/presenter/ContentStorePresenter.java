@@ -1,9 +1,9 @@
 package stroom.contentstore.client.presenter;
 
+import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.contentstore.client.presenter.ContentStorePresenter.ContentStoreView;
 import stroom.contentstore.shared.ContentStoreContentPackWithDynamicState;
 import stroom.contentstore.shared.ContentStoreResource;
-import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.MultiSelectEvent;
@@ -26,16 +26,16 @@ public class ContentStorePresenter extends ContentTabPresenter<ContentStoreView>
     public final ContentStoreContentPackDetailsPresenter contentPackDetailsPresenter;
 
     /** Label for the content */
-    private final static String LABEL = "Content Store";
+    private static final String LABEL = "Content Store";
 
     /** Tab type for the content (what is this?) */
-    private final static String TAB_TYPE = "Content Store";
+    private static final String TAB_TYPE = "Content Store";
 
     /** ID of the presenter for the list of content packs */
-    public final static String CONTENT_PACK_LIST = "CONTENT_PACK_LIST";
+    public static final String CONTENT_PACK_LIST = "CONTENT_PACK_LIST";
 
     /** Resource to access server-side data across the package */
-    final static ContentStoreResource CONTENT_STORE_RESOURCE
+    static final ContentStoreResource CONTENT_STORE_RESOURCE
             = GWT.create(ContentStoreResource.class);
 
     /**
@@ -113,7 +113,7 @@ public class ContentStorePresenter extends ContentTabPresenter<ContentStoreView>
                 contentPackListPresenter.getSelectionModel().getSelected();
         contentPackDetailsPresenter.setContentPack(cpws);
     }
-    
+
     /**
      * GWT view managed by this presenter.
      */

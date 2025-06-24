@@ -177,26 +177,29 @@ public class GitRepoSettingsPresenter
             ShowPopupEvent.Builder builder = ShowPopupEvent.builder(commitDialog);
             commitDialog.setupDialog(builder);
             builder.onHideRequest(e -> {
-                        if (e.isOk()) {
-                            // OK pressed so check if the dialog is valid
-                            if (commitDialog.isValid()) {
-                                e.hide();
-                                requestGitRepoPush(taskMonitorFactory,
-                                        commitDialog.getView().getCommitMessage());
-                            } else {
-                                // Something is wrong - tell user what it is and reset the dialog
-                                AlertEvent.fireWarn(commitDialog,
-                                        commitDialog.getValidationMessage(),
-                                        e::reset);
-                            }
-                        } else {
-                            // Cancel pressed
-                            e.hide();
-                        }
-                    })
-                    .fire();
+                if (e.isOk()) {
+                    // OK pressed so check if the dialog is valid
+                    if (commitDialog.isValid()) {
+                        e.hide();
+                        requestGitRepoPush(taskMonitorFactory,
+                                           commitDialog.getView().getCommitMessage());
+                    } else {
+                        // Something is wrong - tell user what it is and reset the dialog
+                        AlertEvent.fireWarn(commitDialog,
+                                            commitDialog.getValidationMessage(),
+                                            e::reset);
+                    }
+                } else {
+                    // Cancel pressed
+                    e.hide();
+                }
+            })
+                .fire();
         } else {
-            AlertEvent.fireWarn(this, "Git repository information not available", "", null);
+            AlertEvent.fireWarn(this,
+                    "Git repository information not available",
+                    "",
+                    null);
         }
     }
 
@@ -318,28 +321,28 @@ public class GitRepoSettingsPresenter
                 builder);
 
         builder.onHideRequest(e -> {
-                    if (e.isOk()) {
-                        // OK pressed
-                        if (credentialsDialog.isValid()) {
-                            // All good
-                            e.hide();
-                            // Store the values in this presenter
-                            gitRepoUsername = credentialsDialog.getView().getUsername();
-                            gitRepoPassword = credentialsDialog.getView().getPassword();
-                            // Mark the doc as dirty
-                            this.setDirty(true);
-                        } else {
-                            // Something wrong
-                            AlertEvent.fireWarn(credentialsDialog,
-                                    credentialsDialog.getValidationMessage(),
-                                    e::reset);
-                        }
-                    } else {
-                        // Cancel pressed
-                        e.hide();
-                    }
-                })
-                .fire();
+            if (e.isOk()) {
+                // OK pressed
+                if (credentialsDialog.isValid()) {
+                    // All good
+                    e.hide();
+                    // Store the values in this presenter
+                    gitRepoUsername = credentialsDialog.getView().getUsername();
+                    gitRepoPassword = credentialsDialog.getView().getPassword();
+                    // Mark the doc as dirty
+                    this.setDirty(true);
+                } else {
+                    // Something wrong
+                    AlertEvent.fireWarn(credentialsDialog,
+                                        credentialsDialog.getValidationMessage(),
+                                        e::reset);
+                }
+            } else {
+                // Cancel pressed
+                e.hide();
+            }
+        })
+            .fire();
     }
 
     public interface GitRepoSettingsView

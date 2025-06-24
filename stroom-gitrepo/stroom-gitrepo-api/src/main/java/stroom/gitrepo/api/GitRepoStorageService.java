@@ -25,9 +25,9 @@ public interface GitRepoStorageService {
      * @throws IOException if something goes wrong
      */
     List<Message> exportDoc(GitRepoDoc gitRepoDoc,
-                                                final String commitMessage,
-                                                boolean calledFromUi)
-    throws IOException;
+                            final String commitMessage,
+                            boolean calledFromUi)
+        throws IOException;
 
     /**
      * Called when the user presses the Pull from Git button in the UI.

@@ -1,23 +1,23 @@
 package stroom.contentstore.impl;
 
+import stroom.contentstore.shared.ContentStoreContentPack;
 import stroom.contentstore.shared.ContentStoreContentPackWithDynamicState;
 import stroom.contentstore.shared.ContentStoreCreateGitRepoRequest;
+import stroom.contentstore.shared.ContentStoreResource;
 import stroom.contentstore.shared.ContentStoreResponse;
-import stroom.contentstore.shared.ContentStoreContentPack;
 import stroom.contentstore.shared.ContentStoreValueResponse;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
-import stroom.gitrepo.api.GitRepoStore;
 import stroom.gitrepo.api.GitRepoStorageService;
+import stroom.gitrepo.api.GitRepoStore;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.util.shared.DocPath;
 import stroom.util.shared.Message;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
-import stroom.contentstore.shared.ContentStoreResource;
 import stroom.util.shared.Severity;
 import stroom.util.yaml.YamlUtil;
 
@@ -50,13 +50,13 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
     private final Provider<ContentStoreConfig> config;
 
     /** The store used to create a GitRepo */
-    private final GitRepoStore gitRepoStore;
+    private final Provider<GitRepoStore> gitRepoStore;
 
     /** Provides access to the Explorer Tree */
-    private final ExplorerService explorerService;
+    private final Provider<ExplorerService> explorerService;
 
     /** Allows this system to automatically pull content */
-    private final GitRepoStorageService gitRepoStorageService;
+    private final Provider<GitRepoStorageService> gitRepoStorageService;
 
     /** The size of the buffer used to copy stuff around */
     private static final int IO_BUF_SIZE = 4096;
@@ -74,9 +74,9 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
     @SuppressWarnings("unused")
     @Inject
     public ContentStoreResourceImpl(final Provider<ContentStoreConfig> config,
-                                    final GitRepoStore gitRepoStore,
-                                    final ExplorerService explorerService,
-                                    final GitRepoStorageService gitRepoStorageService) {
+                                    final Provider<GitRepoStore> gitRepoStore,
+                                    final Provider<ExplorerService> explorerService,
+                                    final Provider<GitRepoStorageService> gitRepoStorageService) {
         this.config = config;
         this.gitRepoStore = gitRepoStore;
         this.explorerService = explorerService;
@@ -94,11 +94,11 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
     public ResultPage<ContentStoreContentPackWithDynamicState> list(final PageRequest pageRequest) {
 
         // Pull out the existing GitRepos so we know what exists
-        final List<DocRef> existingDocRefs = gitRepoStore.list();
+        final List<DocRef> existingDocRefs = gitRepoStore.get().list();
         final ArrayList<GitRepoDoc> installedGitRepoDocs = new ArrayList<>(existingDocRefs.size());
         for (DocRef docRef : existingDocRefs) {
             // Not sure if store can return null, but handle it just in case...
-            final GitRepoDoc doc = gitRepoStore.readDocument(docRef);
+            final GitRepoDoc doc = gitRepoStore.get().readDocument(docRef);
             if (doc != null) {
                 installedGitRepoDocs.add(doc);
             }
@@ -128,7 +128,8 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
                     cp.setContentStoreMetadata(cs.getMeta());
 
                     // Check if content pack is installed or upgradable
-                    ContentStoreContentPackWithDynamicState cpWithState = new ContentStoreContentPackWithDynamicState(cp);
+                    ContentStoreContentPackWithDynamicState cpWithState =
+                            new ContentStoreContentPackWithDynamicState(cp);
                     cpWithState.checkInstallationStatus(installedGitRepoDocs);
                     contentPacksWithState.add(cpWithState);
                 }
@@ -193,9 +194,9 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
      */
     @Override
     public boolean exists(final ContentStoreContentPack contentPack) {
-        final List<DocRef> existingDocRefs = gitRepoStore.list();
+        final List<DocRef> existingDocRefs = gitRepoStore.get().list();
         for (DocRef existingDocRef : existingDocRefs) {
-            final GitRepoDoc existingGitRepoDoc = gitRepoStore.readDocument(existingDocRef);
+            final GitRepoDoc existingGitRepoDoc = gitRepoStore.get().readDocument(existingDocRef);
             if (contentPack.matches(existingGitRepoDoc)) {
                 return true;
             }
@@ -226,9 +227,9 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
                 // Put the document into the Explorer Tree
                 LOGGER.info("Creating DocPath from '{}'", contentPack.getStroomPath());
                 final DocPath docPathToGitRepo = DocPath.fromPathString(contentPack.getStroomPath());
-                final ExplorerNode parentNode = explorerService.ensureFolderPath(docPathToGitRepo,
+                final ExplorerNode parentNode = explorerService.get().ensureFolderPath(docPathToGitRepo,
                         PermissionInheritance.DESTINATION);
-                final ExplorerNode gitRepoNode = explorerService.create(
+                final ExplorerNode gitRepoNode = explorerService.get().create(
                         GitRepoDoc.TYPE,
                         contentPack.getGitRepoName(),
                         parentNode,
@@ -236,7 +237,7 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
 
                 // Update the GitRepoDoc
                 final DocRef docRef = gitRepoNode.getDocRef();
-                final GitRepoDoc gitRepoDoc = gitRepoStore.readDocument(docRef);
+                final GitRepoDoc gitRepoDoc = gitRepoStore.get().readDocument(docRef);
                 contentPack.updateSettingsIn(gitRepoDoc);
 
                 // Add credentials if necessary
@@ -247,10 +248,10 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
                 }
 
                 // Write doc to DB
-                gitRepoStore.writeDocument(gitRepoDoc);
+                gitRepoStore.get().writeDocument(gitRepoDoc);
 
                 // Do the pull
-                final List<Message> pullMessages = gitRepoStorageService.importDoc(gitRepoDoc);
+                final List<Message> pullMessages = gitRepoStorageService.get().importDoc(gitRepoDoc);
                 messages.addAll(pullMessages);
 
                 // Tell the user it worked
@@ -336,9 +337,9 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
         try {
             // Find a matching GitRepoDoc
             GitRepoDoc gitRepoDoc = null;
-            final List<DocRef> existingDocRefs = gitRepoStore.list();
+            final List<DocRef> existingDocRefs = gitRepoStore.get().list();
             for (DocRef existingDocRef : existingDocRefs) {
-                final GitRepoDoc existingGitRepoDoc = gitRepoStore.readDocument(existingDocRef);
+                final GitRepoDoc existingGitRepoDoc = gitRepoStore.get().readDocument(existingDocRef);
                 if (contentPack.matches(existingGitRepoDoc)) {
                     gitRepoDoc = existingGitRepoDoc;
                     break;
@@ -348,7 +349,7 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
             // Check if updates are available for this doc
             Boolean retval = Boolean.FALSE;
             if (gitRepoDoc != null) {
-                retval = gitRepoStorageService.areUpdatesAvailable(gitRepoDoc);
+                retval = gitRepoStorageService.get().areUpdatesAvailable(gitRepoDoc);
             }
 
             return new ContentStoreValueResponse<>(
@@ -382,9 +383,9 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
         try {
             // Find a matching GitRepoDoc
             GitRepoDoc gitRepoDoc = null;
-            final List<DocRef> existingDocRefs = gitRepoStore.list();
+            final List<DocRef> existingDocRefs = gitRepoStore.get().list();
             for (DocRef existingDocRef : existingDocRefs) {
-                final GitRepoDoc existingGitRepoDoc = gitRepoStore.readDocument(existingDocRef);
+                final GitRepoDoc existingGitRepoDoc = gitRepoStore.get().readDocument(existingDocRef);
                 if (contentPack.matches(existingGitRepoDoc)) {
                     gitRepoDoc = existingGitRepoDoc;
                     break;
@@ -400,7 +401,7 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
             contentPack.updateSettingsIn(gitRepoDoc);
 
             // Pull down any new content
-            messages.addAll(this.gitRepoStorageService.importDoc(gitRepoDoc));
+            messages.addAll(this.gitRepoStorageService.get().importDoc(gitRepoDoc));
 
             return createOkResponse("Upgraded", contentPack, messages);
 

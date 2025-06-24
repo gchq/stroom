@@ -21,12 +21,12 @@ public class GitRepoCredentialsDialogPresenter
     /**
      * Width of dialog
      */
-    private final static int DIALOG_WIDTH = 300;
+    private static final int DIALOG_WIDTH = 300;
 
     /**
      * Height of dialog
      */
-    private final static int DIALOG_HEIGHT = 300;
+    private static final int DIALOG_HEIGHT = 300;
 
     /**
      * Constructor. Injected.

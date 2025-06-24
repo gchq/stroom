@@ -54,7 +54,7 @@ public class ContentStoreContentPackListPresenter
     private boolean requestedNewPage = false;
 
     /** Index of the first item in the list of content packs */
-    private final static int FIRST_ITEM_INDEX = 0;
+    private static final int FIRST_ITEM_INDEX = 0;
 
     /**
      * Injected constructor.
@@ -83,7 +83,9 @@ public class ContentStoreContentPackListPresenter
         this.initColumns(dataGrid);
 
         // Hook up the data
-        final RestDataProvider<ContentStoreContentPackWithDynamicState, ResultPage<ContentStoreContentPackWithDynamicState>>
+        final RestDataProvider<ContentStoreContentPackWithDynamicState,
+                               ResultPage<ContentStoreContentPackWithDynamicState>>
+
                 dataProvider = createDataProvider(eventBus,
                                                   view,
                                                   restFactory);
@@ -161,10 +163,12 @@ public class ContentStoreContentPackListPresenter
      * @param restFactory Where we get the REST stuff from
      * @return a data provider to plug into the data grid
      */
-    private RestDataProvider<ContentStoreContentPackWithDynamicState, ResultPage<ContentStoreContentPackWithDynamicState>>
-    createDataProvider(final EventBus eventBus,
-                       final PagerView view,
-                       final RestFactory restFactory) {
+    private RestDataProvider<ContentStoreContentPackWithDynamicState,
+                             ResultPage<ContentStoreContentPackWithDynamicState>>
+
+        createDataProvider(final EventBus eventBus,
+                           final PagerView view,
+                           final RestFactory restFactory) {
 
         return new RestDataProvider<>(eventBus) {
             @Override
@@ -195,7 +199,8 @@ public class ContentStoreContentPackListPresenter
 
         // Icon for content pack, pulled from String in content pack
         dataGrid.addResizableColumn(
-                DataGridUtil.svgStringColumn(cpws -> cpws.getContentPack().getIconSvg()),
+                DataGridUtil.svgStringColumn(cpws
+                        -> cpws.getContentPack().getIconSvg()),
                 DataGridUtil.headingBuilder("")
                         .withToolTip("Content Pack Icon")
                         .build(),
@@ -203,7 +208,8 @@ public class ContentStoreContentPackListPresenter
 
         // Name of content pack
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder((ContentStoreContentPackWithDynamicState cpws) -> cpws.getContentPack().getUiName())
+                DataGridUtil.textColumnBuilder((ContentStoreContentPackWithDynamicState cpws)
+                                -> cpws.getContentPack().getUiName())
                         .build(),
                 DataGridUtil.headingBuilder("Content Pack")
                         .withToolTip("The name of the content pack")
@@ -212,7 +218,8 @@ public class ContentStoreContentPackListPresenter
 
         // Installation status
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder((ContentStoreContentPackWithDynamicState cpws) -> cpws.getInstallationStatus().toString())
+                DataGridUtil.textColumnBuilder((ContentStoreContentPackWithDynamicState cpws)
+                                -> cpws.getInstallationStatus().toString())
                         .build(),
                 DataGridUtil.headingBuilder("Status")
                         .withToolTip("Whether installed, and if updates are available")
@@ -222,7 +229,8 @@ public class ContentStoreContentPackListPresenter
         // Which 'store' it is from
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(
-                        (ContentStoreContentPackWithDynamicState cpws) -> cpws.getContentPack().getContentStoreMetadata().getOwnerName()
+                        (ContentStoreContentPackWithDynamicState cpws)
+                                -> cpws.getContentPack().getContentStoreMetadata().getOwnerName()
                         )
                         .build(),
                 DataGridUtil.headingBuilder("Store")

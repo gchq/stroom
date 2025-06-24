@@ -26,10 +26,10 @@ public class ContentStoreCredentialsDialogPresenter
     private final MarkdownConverter markdownConverter;
 
     /** Width of dialog */
-    private final static int DIALOG_WIDTH = 400;
+    private static final int DIALOG_WIDTH = 400;
 
     /** Height of dialog */
-    private final static int DIALOG_HEIGHT = 400;
+    private static final int DIALOG_HEIGHT = 400;
 
     /**
      * Constructor. Injected.
@@ -55,7 +55,9 @@ public class ContentStoreCredentialsDialogPresenter
 
         // Set the authentication contact information so users know how to
         // get some credentials
-        this.getView().setAuthContactHtml(markdownConverter.convertMarkdownToHtml(cp.getContentStoreMetadata().getAuthContact()));
+        final String markdown = cp.getContentStoreMetadata().getAuthContact();
+        final SafeHtml html = markdownConverter.convertMarkdownToHtml(markdown);
+        this.getView().setAuthContactHtml(html);
 
         // Configure the popup builder for this dialog
         builder.popupType(PopupType.OK_CANCEL_DIALOG)

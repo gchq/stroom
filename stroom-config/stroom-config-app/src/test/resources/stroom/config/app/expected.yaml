@@ -162,6 +162,9 @@ appConfig:
     importAsSubjectId: "Administrators"
     importAsType: "GROUP"
     importDirectory: "content_pack_import"
+  contentStore:
+    urls:
+    - "https://raw.githubusercontent.com/stroomworks4092/stroom-appstore/refs/heads/main/stroom-appstore.yml"
   core:
     db:
       connection:

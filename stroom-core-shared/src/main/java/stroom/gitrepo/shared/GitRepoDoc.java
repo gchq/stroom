@@ -66,7 +66,7 @@ public class GitRepoDoc extends Doc {
      * contentStoreMeta is null.
      */
     @JsonProperty
-    private ContentStoreMetadata contentStoreMeta;
+    private ContentStoreMetadata contentStoreMetadata;
 
     /**
      * If this is from a content store then this holds
@@ -125,7 +125,7 @@ public class GitRepoDoc extends Doc {
                       @JsonProperty("createUser") final String createUser,
                       @JsonProperty("updateUser") final String updateUser,
                       @JsonProperty("description") final String description,
-                      @JsonProperty("contentStoreMeta") final ContentStoreMetadata contentStoreMeta,
+                      @JsonProperty("contentStoreMetadata") final ContentStoreMetadata contentStoreMetadata,
                       @JsonProperty("contentStoreContentPackId") final String contentStoreContentPackId,
                       @JsonProperty("url") final String url,
                       @JsonProperty("username") final String username,
@@ -139,7 +139,7 @@ public class GitRepoDoc extends Doc {
         this.description = description;
 
         // Content Pack stuff, if any
-        this.contentStoreMeta = contentStoreMeta;
+        this.contentStoreMetadata = contentStoreMetadata;
         this.contentStoreContentPackId = contentStoreContentPackId;
 
         // Git settings
@@ -202,7 +202,7 @@ public class GitRepoDoc extends Doc {
         }
         final GitRepoDoc that = (GitRepoDoc) o;
         return Objects.equals(description, that.description)
-               && Objects.equals(contentStoreMeta, that.contentStoreMeta)
+               && Objects.equals(contentStoreMetadata, that.contentStoreMetadata)
                && Objects.equals(contentStoreContentPackId, that.contentStoreContentPackId)
                && Objects.equals(url, that.url)
                && Objects.equals(username, that.username)
@@ -218,7 +218,7 @@ public class GitRepoDoc extends Doc {
     public int hashCode() {
         return Objects.hash(super.hashCode(),
                 description,
-                contentStoreMeta,
+                contentStoreMetadata,
                 contentStoreContentPackId,
                 url,
                 username,
@@ -243,7 +243,7 @@ public class GitRepoDoc extends Doc {
      * If not a content pack then this returns null.
      */
     public ContentStoreMetadata getContentStoreMetadata() {
-        return this.contentStoreMeta;
+        return this.contentStoreMetadata;
     }
 
     /**
@@ -251,7 +251,7 @@ public class GitRepoDoc extends Doc {
      * a content store.
      */
     public void setContentStoreMetadata(final ContentStoreMetadata meta) {
-        this.contentStoreMeta = meta;
+        this.contentStoreMetadata = meta;
     }
 
     /**
@@ -346,16 +346,16 @@ public class GitRepoDoc extends Doc {
     @Override
     public String toString() {
         return "GitRepoDoc: {\n  "
-                + this.getName() + ",\n  "
-                + description + ",\n  "
-                + contentStoreMeta + ",\n"
-                + contentStoreContentPackId + ",\n"
-                + url + ",\n  "
-                + username + ",\n  "
-                + branch + "\n  "
-                + path + "\n  "
-                + commit +"\n  "
-                + gitRemoteCommitName + "\n  "
-                + autoPush + "\n}";
+               + this.getName() + ",\n  "
+               + description + ",\n  "
+               + contentStoreMetadata + ",\n"
+               + contentStoreContentPackId + ",\n"
+               + url + ",\n  "
+               + username + ",\n  "
+               + branch + "\n  "
+               + path + "\n  "
+               + commit + "\n  "
+               + gitRemoteCommitName + "\n  "
+               + autoPush + "\n}";
     }
 }
