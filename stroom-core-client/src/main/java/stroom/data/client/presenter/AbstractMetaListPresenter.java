@@ -69,7 +69,7 @@ import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.shared.GWT;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
@@ -154,7 +154,10 @@ public abstract class AbstractMetaListPresenter
                             .create(META_RESOURCE)
                             .method(res -> res.findMetaRow(criteria))
                             .onSuccess(dataConsumer)
-                            .onFailure(errorHandler)
+                            .onFailure(error -> {
+                                GWT.log(error.getMessage());
+                                dataConsumer.accept(new ResultPage<>(Collections.emptyList()));
+                            })
                             .taskMonitorFactory(view)
                             .exec();
                 } else {

@@ -87,8 +87,8 @@ public class DataPresenter
         extends MyPresenterWidget<ClassificationWrapperView>
         implements TextUiHandlers, Focus {
 
-    private static final DataResource DATA_RESOURCE = com.google.gwt.core.shared.GWT.create(DataResource.class);
-    private static final MetaResource META_RESOURCE = com.google.gwt.core.shared.GWT.create(MetaResource.class);
+    private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
+    private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
 
     private static final String CONTEXT_TAB_NAME = "Context";
     private static final String DATA_PREVIEW_TAB_NAME = "Data Preview";

@@ -28,6 +28,7 @@ import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.Range;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public abstract class RestDataProvider<R, T extends ResultPage<R>> extends AsyncDataProvider<R> implements HasHandlers {
@@ -51,7 +52,6 @@ public abstract class RestDataProvider<R, T extends ResultPage<R>> extends Async
     private void fetch(final Range range, final boolean force) {
         if (range != null) {
             requestedRange = range;
-
             if (!fetching) {
                 fetching = true;
                 doFetch(range);
@@ -64,19 +64,18 @@ public abstract class RestDataProvider<R, T extends ResultPage<R>> extends Async
     private void doFetch(final Range range) {
         exec(range,
                 resultList -> {
-                    if (requestedRange.equals(range) && !refetch) {
+                    if (refetch || !Objects.equals(requestedRange, range)) {
+                        refetch = false;
+                        doFetch(requestedRange);
+                    } else {
+                        fetching = false;
                         if (resultList != null) {
                             changeData(resultList);
                         }
-                        fetching = false;
-                    } else {
-                        refetch = false;
-                        doFetch(requestedRange);
                     }
                 }, error -> {
                     fetching = false;
                     refetch = false;
-
                     AlertEvent.fireErrorFromException(this, error.getException(), null);
                 });
     }

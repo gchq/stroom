@@ -41,6 +41,7 @@ public class SimpleStringExpressionParser {
                     Condition.WORD_BOUNDARY,
                     Condition.CONTAINS_CASE_SENSITIVE,
                     Condition.EQUALS_CASE_SENSITIVE,
+                    Condition.NOT_EQUALS_CASE_SENSITIVE,
                     Condition.STARTS_WITH_CASE_SENSITIVE,
                     Condition.ENDS_WITH_CASE_SENSITIVE,
                     Condition.MATCHES_REGEX_CASE_SENSITIVE)
@@ -49,6 +50,12 @@ public class SimpleStringExpressionParser {
 
     public static Optional<ExpressionOperator> create(final FieldProvider fieldProvider,
                                                       final String string) {
+        return create(fieldProvider, string, Condition.CONTAINS);
+    }
+
+    public static Optional<ExpressionOperator> create(final FieldProvider fieldProvider,
+                                                      final String string,
+                                                      final Condition defaultCondition) {
         if (NullSafe.isBlankString(string)) {
             return Optional.empty();
         }
@@ -71,13 +78,14 @@ public class SimpleStringExpressionParser {
         tokens = Tokeniser.categorise(TokenType.STRING, tokens);
 
         final TokenGroup tokenGroup = StructureBuilder.createBasic(tokens);
-        return Optional.of(processLogic(tokenGroup.getChildren(), fieldProvider));
+        return Optional.of(processLogic(tokenGroup.getChildren(), fieldProvider, defaultCondition));
     }
 
     private static ExpressionOperator processLogic(final List<AbstractToken> tokens,
-                                                   final FieldProvider fieldProvider) {
+                                                   final FieldProvider fieldProvider,
+                                                   final Condition defaultCondition) {
         // Replace all term tokens with expression items.
-        List<Object> out = gatherTerms(tokens, fieldProvider);
+        List<Object> out = gatherTerms(tokens, fieldProvider, defaultCondition);
 
         // Apply NOT operators.
         out = applyNotOperators(out);
@@ -111,7 +119,8 @@ public class SimpleStringExpressionParser {
 
 
     private static List<Object> gatherTerms(final List<AbstractToken> tokens,
-                                            final FieldProvider fieldProvider) {
+                                            final FieldProvider fieldProvider,
+                                            final Condition defaultCondition) {
         final List<Object> out = new ArrayList<>(tokens.size());
 
         // Gather terms.
@@ -119,18 +128,18 @@ public class SimpleStringExpressionParser {
         for (final AbstractToken token : tokens) {
             if (token.getTokenType().equals(TokenType.WHITESPACE)) {
                 if (!termTokens.isEmpty()) {
-                    createTerm(termTokens, fieldProvider).ifPresent(out::add);
+                    createTerm(termTokens, fieldProvider, defaultCondition).ifPresent(out::add);
                     termTokens.clear();
                 }
             } else if (termTokens.isEmpty() && token instanceof final KeywordGroup keywordGroup) {
-                out.add(processLogic(keywordGroup.getChildren(), fieldProvider));
+                out.add(processLogic(keywordGroup.getChildren(), fieldProvider, defaultCondition));
             } else if (termTokens.isEmpty() && token instanceof final TokenGroup tokenGroup) {
-                out.add(processLogic(tokenGroup.getChildren(), fieldProvider));
+                out.add(processLogic(tokenGroup.getChildren(), fieldProvider, defaultCondition));
             } else if (TokenType.AND.equals(token.getTokenType()) ||
                        TokenType.OR.equals(token.getTokenType()) ||
                        TokenType.NOT.equals(token.getTokenType())) {
                 if (!termTokens.isEmpty()) {
-                    createTerm(termTokens, fieldProvider).ifPresent(out::add);
+                    createTerm(termTokens, fieldProvider, defaultCondition).ifPresent(out::add);
                     termTokens.clear();
                 }
                 out.add(token);
@@ -139,7 +148,7 @@ public class SimpleStringExpressionParser {
             }
         }
         if (!termTokens.isEmpty()) {
-            createTerm(termTokens, fieldProvider).ifPresent(out::add);
+            createTerm(termTokens, fieldProvider, defaultCondition).ifPresent(out::add);
         }
 
         return out;
@@ -216,14 +225,15 @@ public class SimpleStringExpressionParser {
     }
 
     private static Optional<ExpressionItem> createTerm(final List<AbstractToken> tokens,
-                                                       final FieldProvider fieldProvider) {
+                                                       final FieldProvider fieldProvider,
+                                                       final Condition defaultCondition) {
         // Split tokens into whitespace separated groups and apply AND between them.
         final ExpressionOperator.Builder builder = ExpressionOperator.builder();
         final List<AbstractToken> current = new ArrayList<>();
         for (final AbstractToken token : tokens) {
             if (TokenType.WHITESPACE.equals(token.getTokenType())) {
                 if (!current.isEmpty()) {
-                    createInnerTerm(current, fieldProvider, builder);
+                    createInnerTerm(current, fieldProvider, builder, defaultCondition);
                     current.clear();
                 }
             } else {
@@ -232,7 +242,7 @@ public class SimpleStringExpressionParser {
         }
         // Add remaining.
         if (!current.isEmpty()) {
-            createInnerTerm(current, fieldProvider, builder);
+            createInnerTerm(current, fieldProvider, builder, defaultCondition);
         }
 
         final ExpressionOperator operator = builder.build();
@@ -247,7 +257,8 @@ public class SimpleStringExpressionParser {
 
     private static void createInnerTerm(final List<AbstractToken> in,
                                         final FieldProvider fieldProvider,
-                                        final ExpressionOperator.Builder parent) {
+                                        final ExpressionOperator.Builder parent,
+                                        final Condition defaultCondition) {
         final List<AbstractToken> remaining = new ArrayList<>(in);
         while (!remaining.isEmpty()) {
             final AbstractToken token = remaining.removeFirst();
@@ -276,7 +287,7 @@ public class SimpleStringExpressionParser {
                 // Resolve all fields.
                 if (!fieldName.isEmpty()) {
                     final Optional<String> qualifiedField = fieldProvider.getQualifiedField(fieldName);
-                    if (!qualifiedField.isEmpty()) {
+                    if (qualifiedField.isPresent()) {
                         fields = Collections.singletonList(qualifiedField.get());
                     } else {
                         throw new RuntimeException("Unknown field: " + fieldName);
@@ -326,7 +337,7 @@ public class SimpleStringExpressionParser {
                 final char[] chars = fieldValue.toCharArray();
                 final StringBuilder sb = new StringBuilder();
                 for (final char c : chars) {
-                    if (sb.length() > 0) {
+                    if (!sb.isEmpty()) {
                         sb.append(".*?");
                     }
                     if (Character.isLetterOrDigit(c)) {
@@ -341,7 +352,7 @@ public class SimpleStringExpressionParser {
 
             if (!fields.isEmpty()) {
                 if (condition == null) {
-                    condition = Condition.CONTAINS;
+                    condition = defaultCondition;
                 }
 
                 if (not) {

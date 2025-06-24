@@ -55,7 +55,7 @@ import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.TableBuilder;
 
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.shared.GWT;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.view.client.Range;

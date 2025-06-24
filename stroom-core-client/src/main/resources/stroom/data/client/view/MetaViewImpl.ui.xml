@@ -1,8 +1,13 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui">
-    <g:SimplePanel styleName="max">
-        <g:ThinSplitLayoutPanel styleName="max">
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:view="urn:import:stroom.widget.dropdowntree.client.view"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max dock-container-vertical">
+        <form:FormGroup ui:field="formGroup" addStyleNames="dock-min form-padding">
+            <view:QuickFilter ui:field="quickFilter"/>
+        </form:FormGroup>
+        <g:ThinSplitLayoutPanel styleName="dock-max overflow-hidden">
             <g:north size="200">
                 <g:SimplePanel ui:field="streamList" styleName="max"/>
             </g:north>
@@ -18,5 +23,5 @@
                 </g:ThinSplitLayoutPanel>
             </g:center>
         </g:ThinSplitLayoutPanel>
-    </g:SimplePanel>
+    </g:FlowPanel>
 </ui:UiBinder>

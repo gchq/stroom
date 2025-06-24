@@ -41,8 +41,6 @@ import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.datasource.QueryField;
-import stroom.query.client.presenter.DateTimeSettingsFactory;
-import stroom.query.shared.ExpressionResource;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
@@ -50,6 +48,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -58,10 +57,12 @@ import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
@@ -73,17 +74,16 @@ public class MetaPresenter
         extends MyPresenterWidget<MetaView>
         implements HasDataSelectionHandlers<Selection<Long>>,
         HasDocumentRead<Object>,
-        BeginSteppingHandler {
+        BeginSteppingHandler,
+        QuickFilterUiHandlers {
 
     public static final String DATA = "DATA";
     public static final String STREAM_RELATION_LIST = "STREAM_RELATION_LIST";
     public static final String STREAM_LIST = "STREAM_LIST";
 
-    private static final ExpressionResource EXPRESSION_RESOURCE = GWT.create(ExpressionResource.class);
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
 
     private final RestFactory restFactory;
-    private final DateTimeSettingsFactory dateTimeSettingsFactory;
     private final ExpressionValidator expressionValidator;
     private final MetaListPresenter metaListPresenter;
     private final MetaRelationListPresenter metaRelationListPresenter;
@@ -92,7 +92,6 @@ public class MetaPresenter
     private final Provider<ExpressionPresenter> streamListFilterPresenter;
     private final ButtonView streamListFilter;
     private final ButtonView streamListInfo;
-    private final ClientSecurityContext securityContext;
 
     private DocRef feedRef;
     private ButtonView streamListUpload;
@@ -117,7 +116,6 @@ public class MetaPresenter
                          final Provider<DataUploadPresenter> streamUploadPresenter,
                          final ClientSecurityContext securityContext,
                          final RestFactory restFactory,
-                         final DateTimeSettingsFactory dateTimeSettingsFactory,
                          final ExpressionValidator expressionValidator) {
         super(eventBus, view);
         this.metaListPresenter = metaListPresenter;
@@ -126,10 +124,9 @@ public class MetaPresenter
         this.streamUploadPresenter = streamUploadPresenter;
         this.dataPresenter = dataPresenter;
         this.restFactory = restFactory;
-        this.dateTimeSettingsFactory = dateTimeSettingsFactory;
         this.expressionValidator = expressionValidator;
-        this.securityContext = securityContext;
 
+        view.setUiHandlers(this);
         setInSlot(STREAM_LIST, metaListPresenter);
         setInSlot(STREAM_RELATION_LIST, metaRelationListPresenter);
         setInSlot(DATA, dataPresenter);
@@ -174,6 +171,16 @@ public class MetaPresenter
         // Init the buttons
         setStreamListSelectableEnabled(null);
         setStreamRelationListSelectableEnabled(null);
+    }
+
+    @Override
+    public void onFilterChange(final String text) {
+        restFactory
+                .create(META_RESOURCE)
+                .method(res -> res.parseFilterExpression(text))
+                .onSuccess(this::setExpression)
+                .taskMonitorFactory(this)
+                .exec();
     }
 
     private static Meta getMeta(final AbstractMetaListPresenter streamListPresenter, final long id) {
@@ -654,9 +661,8 @@ public class MetaPresenter
                                     res.getSelectionSummary(new SelectionSummaryRequest(
                                             selectedCriteria,
                                             DocumentPermission.EDIT)))
-                            .onSuccess(selectionSummary -> {
-                                isEnabledConsumer.accept(selectionSummary.getItemCount() > 0);
-                            })
+                            .onSuccess(selectionSummary ->
+                                    isEnabledConsumer.accept(selectionSummary.getItemCount() > 0))
                             .taskMonitorFactory(this)
                             .exec();
                 } else {
@@ -704,7 +710,8 @@ public class MetaPresenter
     // --------------------------------------------------------------------------------
 
 
-    public interface MetaView extends View {
+    public interface MetaView extends View, Focus, HasUiHandlers<QuickFilterUiHandlers> {
 
+        void setQuickFilterText(String quickFilterText);
     }
 }

@@ -18,17 +18,26 @@ package stroom.data.client.view;
 
 import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.MetaPresenter.MetaView;
+import stroom.widget.dropdowntree.client.view.QuickFilter;
+import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
+import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class MetaViewImpl extends ViewImpl implements MetaView {
+import java.util.Objects;
+
+public class MetaViewImpl extends ViewWithUiHandlers<QuickFilterUiHandlers> implements MetaView {
 
     private final Widget widget;
+
+    @UiField
+    QuickFilter quickFilter;
     @UiField
     SimplePanel streamList;
     @UiField
@@ -56,6 +65,25 @@ public class MetaViewImpl extends ViewImpl implements MetaView {
         } else if (MetaPresenter.DATA.equals(slot)) {
             data.setWidget(content);
         }
+    }
+
+    @Override
+    public void focus() {
+        quickFilter.focus();
+    }
+
+    @Override
+    public void setQuickFilterText(final String quickFilterText) {
+        final String currVal = quickFilter.getText();
+        quickFilter.setText(quickFilterText);
+        if (!Objects.equals(currVal, quickFilterText)) {
+            getUiHandlers().onFilterChange(quickFilterText);
+        }
+    }
+
+    @UiHandler("quickFilter")
+    void onFilterChange(final ValueChangeEvent<String> event) {
+        getUiHandlers().onFilterChange(quickFilter.getText());
     }
 
     public interface Binder extends UiBinder<Widget, MetaViewImpl> {

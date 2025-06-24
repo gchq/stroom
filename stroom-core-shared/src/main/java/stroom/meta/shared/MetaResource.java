@@ -16,6 +16,7 @@
 
 package stroom.meta.shared;
 
+import stroom.query.api.ExpressionOperator;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
@@ -85,4 +86,11 @@ public interface MetaResource extends RestResource, DirectRestService {
             summary = "Get a list of possible stream types",
             operationId = "getStreamTypes")
     List<String> getTypes();
+
+    @POST
+    @Path("parseFilterExpression")
+    @Operation(
+            summary = "Parse a filter expression and return an expression tree",
+            operationId = "parseFilterExpression")
+    ExpressionOperator parseFilterExpression(String filter);
 }

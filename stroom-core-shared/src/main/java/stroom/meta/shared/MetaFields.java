@@ -34,6 +34,7 @@ public class MetaFields {
     // Non grouped fields
     // Maps to the docref name (which is unique)
     public static final QueryField FEED = QueryField.createDocRefByUniqueName("Feed", "Feed");
+    public static final QueryField FEED_NAME = QueryField.createText("Feed Name");
 
     // Maps to the docref uuid
     public static final QueryField PIPELINE = QueryField.createDocRefByUuid(
@@ -80,6 +81,7 @@ public class MetaFields {
     static {
         // Non grouped fields
         FIELDS.add(FEED);
+        FIELDS.add(FEED_NAME);
         FIELDS.add(PIPELINE);
         FIELDS.add(PIPELINE_NAME);
         FIELDS.add(STATUS);

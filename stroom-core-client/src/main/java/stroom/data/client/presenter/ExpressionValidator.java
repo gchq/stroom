@@ -11,7 +11,7 @@ import stroom.query.shared.ExpressionResource;
 import stroom.query.shared.ValidateExpressionRequest;
 import stroom.task.client.TaskMonitorFactory;
 
-import com.google.gwt.core.shared.GWT;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
 

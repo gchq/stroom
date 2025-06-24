@@ -243,6 +243,7 @@ public class MetaDaoImpl implements MetaDao {
         expressionMapper.map(MetaFields.META_PROCESSOR_FILTER_ID, meta.PROCESSOR_FILTER_ID, Integer::valueOf);
         expressionMapper.map(MetaFields.META_PROCESSOR_TASK_ID, meta.PROCESSOR_TASK_ID, Long::valueOf);
         expressionMapper.multiMap(MetaFields.FEED, meta.FEED_ID, this::getFeedIds, true);
+        expressionMapper.multiMap(MetaFields.FEED_NAME, meta.FEED_ID, this::getFeedIds, true);
         expressionMapper.multiMap(MetaFields.TYPE, meta.TYPE_ID, this::getTypeIds);
         // Get a uuid for the selected pipe doc
         expressionMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, value -> value, false);

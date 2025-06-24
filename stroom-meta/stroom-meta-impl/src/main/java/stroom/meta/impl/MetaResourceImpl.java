@@ -327,4 +327,15 @@ class MetaResourceImpl implements MetaResource {
                 .sorted()
                 .collect(Collectors.toList());
     }
+
+    @Override
+    @AutoLogged(OperationType.UNLOGGED) // See no point in logging this as it is a precursor to an actual query.
+    public ExpressionOperator parseFilterExpression(final String filter) {
+        try {
+            return MetaExpressionHelper.parseFilterExpression(filter);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+        }
+        return null;
+    }
 }

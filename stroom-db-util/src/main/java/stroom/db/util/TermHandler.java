@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -68,20 +69,15 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
                 // TODO : Currently equality is used for wild carding with `*` but should probably use the
                 //  `MATCHES_REGEX` condition.
                 //  Also `is null` is being assumed if the value is null when we probably want to change this to
-                //  use the `IS_NULL` condition. Keeping this the same for now to reduce the change of breaking
+                //  use the `IS_NULL` condition. Keeping this the same for now to reduce the chance of breaking
                 //  backward compatibility.
                 return eq(term);
-
-//                if (fieldIsCaseSensitive) {
-//                    if (term.getValue() != null) {
-//                        return field.equalIgnoreCase(term.getValue());
-//                    }
-//                } else {
-//                    return getCondition(term, field::eq);
-//                }
             }
             case EQUALS_CASE_SENSITIVE -> {
-                return getCondition(term, field::eq);
+                return getCondition(term, field::equal);
+            }
+            case NOT_EQUALS_CASE_SENSITIVE -> {
+                return getCondition(term, field::notEqual);
             }
             case CONTAINS -> {
                 if (fieldIsCaseSensitive) {
@@ -127,16 +123,16 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
                 }
             }
             case GREATER_THAN -> {
-                return getSingleValue(term.getValue()).map(field::greaterThan).orElse(DSL.falseCondition());
+                return getCondition(term, field::greaterThan);
             }
             case GREATER_THAN_OR_EQUAL_TO -> {
-                return getSingleValue(term.getValue()).map(field::greaterOrEqual).orElse(DSL.falseCondition());
+                return getCondition(term, field::greaterOrEqual);
             }
             case LESS_THAN -> {
-                return getSingleValue(term.getValue()).map(field::lessThan).orElse(DSL.falseCondition());
+                return getCondition(term, field::lessThan);
             }
             case LESS_THAN_OR_EQUAL_TO -> {
-                return getSingleValue(term.getValue()).map(field::lessOrEqual).orElse(DSL.falseCondition());
+                return getCondition(term, field::lessOrEqual);
             }
             case IN -> {
                 final String value = NullSafe.get(term.getValue(), String::trim);
@@ -266,15 +262,15 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
 
     private Condition getCondition(final ExpressionTerm term,
                                    final Function<T, Condition> function) {
-        return getSingleValue(term.getValue()).map(function).orElse(DSL.falseCondition());
-    }
+        final List<T> values = converter.apply(NullSafe.singletonList(term.getValue()));
+        final List<Condition> conditions = values.stream().map(function).filter(Objects::nonNull).toList();
 
-    private Optional<T> getSingleValue(final String value) {
-        final List<T> values = converter.apply(NullSafe.singletonList(value));
-        if (values.size() == 1) {
-            return Optional.of(values.getFirst());
+        if (conditions.size() == 1) {
+            return conditions.getFirst();
+        } else if (!conditions.isEmpty()) {
+            return DSL.or(conditions);
         }
-        return Optional.empty();
+        return DSL.falseCondition();
     }
 
     private List<T> getValues(final String value) {

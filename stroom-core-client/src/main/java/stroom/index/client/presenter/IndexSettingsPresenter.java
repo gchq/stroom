@@ -36,7 +36,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.QueryConfig;
 import stroom.util.shared.NullSafe;
 
-import com.google.gwt.core.shared.GWT;
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
