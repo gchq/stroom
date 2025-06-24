@@ -6,7 +6,7 @@ stroomStats = "1.0-alpha.6"
 stroomTestData = "0.2.3"
 
 # ------------3rd-party------------
-aws = "2.30.8"
+aws = "2.31.68"
 commons-io = "2.19.0"
 dropwizard = "4.0.14" # used to set the dropwizard-bom version, that controls lots of dependency versions
 elasticsearch = "8.12.2"
@@ -20,7 +20,7 @@ jooq = "3.20.5"
 junit-jupiter = "5.13.1"
 kafka = "3.9.0"
 poi = "5.4.1"
-scylladb = "4.18.0.2"
+scylladb = "4.19.0.1"
 simple-java-mail = "8.8.0"
 swagger = "2.2.21"
 
