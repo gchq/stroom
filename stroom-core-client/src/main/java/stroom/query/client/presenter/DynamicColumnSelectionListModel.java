@@ -105,6 +105,7 @@ public class DynamicColumnSelectionListModel
                                                           final PageRequest pageRequest,
                                                           final ResultPage<QueryField> response) {
         final ResultPage<ColumnSelectionItem> counts = getCounts(filter, pageRequest);
+        final ResultPage<ColumnSelectionItem> custom = getCustom(filter, pageRequest);
         final ResultPage<ColumnSelectionItem> annotations = getAnnotations(filter, pageRequest);
 
         ResultPage<ColumnSelectionItem> resultPage = null;
@@ -113,11 +114,15 @@ public class DynamicColumnSelectionListModel
             add(filter, new ColumnSelectionItem(
                     null,
                     "Annotations",
-                    annotations.size() > 0), builder);
+                    !annotations.isEmpty()), builder);
             add(filter, new ColumnSelectionItem(
                     null,
                     "Counts",
-                    counts.size() > 0), builder);
+                    !counts.isEmpty()), builder);
+            add(filter, new ColumnSelectionItem(
+                    null,
+                    "Custom",
+                    !custom.isEmpty()), builder);
             add(filter, new ColumnSelectionItem(
                     null,
                     "Data Source",
@@ -126,6 +131,8 @@ public class DynamicColumnSelectionListModel
             resultPage = builder.build();
         } else if ("Counts.".equals(parentPath)) {
             resultPage = counts;
+        } else if ("Custom.".equals(parentPath)) {
+            resultPage = custom;
         } else if ("Annotations.".equals(parentPath)) {
             resultPage = annotations;
         } else if ("Data Source.".equals(parentPath)) {
@@ -163,6 +170,12 @@ public class DynamicColumnSelectionListModel
                 .expression("countGroups()")
                 .build();
         add(filter, ColumnSelectionItem.create(countGroups), builder);
+        return builder.build();
+    }
+
+    private ResultPage<ColumnSelectionItem> getCustom(final String filter,
+                                                      final PageRequest pageRequest) {
+        final ExactResultPageBuilder<ColumnSelectionItem> builder = new ExactResultPageBuilder<>(pageRequest);
         final Column custom = Column.builder()
                 .id(UniqueUtil.generateUUID())
                 .name("Custom")
