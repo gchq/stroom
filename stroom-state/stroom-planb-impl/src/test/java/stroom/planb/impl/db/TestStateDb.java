@@ -93,6 +93,7 @@ class TestStateDb {
             .maxStoreSize(ByteSize.ofGibibytes(100).getBytes())
             .retention(new RetentionSettings.Builder().duration(SimpleDuration.ZERO).enabled(true).build())
             .build();
+    private static final PlanBDoc DOC = getDoc(BASIC_SETTINGS);
     private static final String MAP_UUID = "map-uuid";
     private static final String MAP_NAME = "map-name";
     private static final Val MIN_FLOAT = ValFloat.create(Float.MIN_VALUE);
@@ -179,7 +180,7 @@ class TestStateDb {
         final Function<Integer, Val> valueFunction2 = i -> ValString.create("test2" + i);
         testWrite(dbPath2, BASIC_SETTINGS, 100, keyFunction2, valueFunction2);
 
-        try (final StateDb db = StateDb.create(dbPath1, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
+        try (final StateDb db = StateDb.create(dbPath1, BYTE_BUFFERS, DOC, false)) {
             db.merge(dbPath2);
         }
     }
@@ -239,7 +240,7 @@ class TestStateDb {
         try (final StateDb db = StateDb.create(
                 statePaths.getShardDir().resolve(MAP_UUID),
                 new ByteBuffers(new ByteBufferFactoryImpl()),
-                BASIC_SETTINGS,
+                DOC,
                 true)) {
             assertThat(db.count()).isEqualTo(2);
         }
@@ -252,7 +253,7 @@ class TestStateDb {
         try (final StateDb db = StateDb.create(
                 statePaths.getShardDir().resolve(MAP_UUID),
                 new ByteBuffers(new ByteBufferFactoryImpl()),
-                BASIC_SETTINGS,
+                DOC,
                 true)) {
             assertThat(db.count()).isEqualTo(2);
             assertThat(db.getInfo().env().dbNames().size()).isEqualTo(12);
@@ -265,7 +266,7 @@ class TestStateDb {
         try (final StateDb db = StateDb.create(
                 statePaths.getShardDir().resolve(MAP_UUID),
                 new ByteBuffers(new ByteBufferFactoryImpl()),
-                BASIC_SETTINGS,
+                DOC,
                 true)) {
             assertThat(db.count()).isEqualTo(0);
             System.err.println(db.getInfoString());
@@ -280,7 +281,7 @@ class TestStateDb {
         try (final StateDb db = StateDb.create(
                 statePaths.getShardDir().resolve(MAP_UUID),
                 new ByteBuffers(new ByteBufferFactoryImpl()),
-                BASIC_SETTINGS,
+                DOC,
                 true)) {
             assertThat(db.count()).isEqualTo(0);
             assertThat(db.getInfo().env().stat().entries).isEqualTo(12);
@@ -302,7 +303,7 @@ class TestStateDb {
         final AtomicBoolean writeComplete = new AtomicBoolean();
         final List<CompletableFuture<?>> list = new ArrayList<>();
 
-        try (final StateDb db1 = StateDb.create(source, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
+        try (final StateDb db1 = StateDb.create(source, BYTE_BUFFERS, DOC, false)) {
             list.add(CompletableFuture.runAsync(() -> {
                 insertData(db1, ITERATIONS, keyFunction, valueFunction);
                 writeComplete.set(true);
@@ -331,7 +332,7 @@ class TestStateDb {
                             try (final StateDb db2 = StateDb.create(
                                     target,
                                     BYTE_BUFFERS,
-                                    BASIC_SETTINGS,
+                                    DOC,
                                     true)) {
                                 assertThat(db2.count()).isGreaterThanOrEqualTo(0);
                             }
@@ -357,7 +358,7 @@ class TestStateDb {
         try (final StateDb db = StateDb.create(
                 tempDir,
                 BYTE_BUFFERS,
-                BASIC_SETTINGS,
+                DOC,
                 true)) {
             assertThat(db.count()).isEqualTo(1);
             final KeyPrefix key = KeyPrefix.create("TEST_KEY");
@@ -703,7 +704,7 @@ class TestStateDb {
                            final int insertRows,
                            final Function<Integer, KeyPrefix> keyFunction,
                            final Function<Integer, Val> valueFunction) {
-        try (final StateDb db = StateDb.create(dbDir, BYTE_BUFFERS, settings, false)) {
+        try (final StateDb db = StateDb.create(dbDir, BYTE_BUFFERS, getDoc(settings), false)) {
             insertData(db, insertRows, keyFunction, valueFunction);
         }
     }
@@ -714,7 +715,7 @@ class TestStateDb {
                           final Function<Integer, KeyPrefix> keyFunction,
                           final Function<Integer, Val> valueFunction) {
         final Val expectedVal = valueFunction.apply(insertRows - 1);
-        try (final StateDb db = StateDb.create(tempDir, BYTE_BUFFERS, settings, false)) {
+        try (final StateDb db = StateDb.create(tempDir, BYTE_BUFFERS, getDoc(settings), false)) {
             assertThat(db.count()).isEqualTo(1);
             final KeyPrefix key = keyFunction.apply(0);
             final Val value = db.get(key);
@@ -749,7 +750,7 @@ class TestStateDb {
                                 final int rows,
                                 final Function<Integer, KeyPrefix> keyFunction,
                                 final Function<Integer, Val> valueFunction) {
-        try (final StateDb db = StateDb.create(tempDir, BYTE_BUFFERS, settings, false)) {
+        try (final StateDb db = StateDb.create(tempDir, BYTE_BUFFERS, getDoc(settings), false)) {
             for (int i = 0; i < rows; i++) {
                 final KeyPrefix key = keyFunction.apply(i);
                 final Val value = db.get(key);
@@ -774,6 +775,10 @@ class TestStateDb {
                 db.insert(writer, new State(k, v));
             }
         });
+    }
+
+    private static PlanBDoc getDoc(final StateSettings settings) {
+        return PlanBDoc.builder().name("test").settings(settings).build();
     }
 
     private record KeyFunction(String description,

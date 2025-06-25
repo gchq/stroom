@@ -3,9 +3,11 @@ package stroom.planb.impl.db;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.db.PlanBEnv.EnvInf;
+import stroom.planb.shared.PlanBDoc;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.HasPrimitiveValue;
 
 import org.lmdbjava.CopyFlags;
@@ -27,7 +29,7 @@ import java.util.function.Consumer;
 
 public abstract class AbstractDb<K, V> implements Db<K, V> {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractDb.class);
+    protected static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractDb.class);
 
     private static final String NAME = "db";
     private static final String INFO_NAME = "info_db";
@@ -36,17 +38,20 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
 
     protected final PlanBEnv env;
     protected final ByteBuffers byteBuffers;
+    protected final PlanBDoc doc;
     protected final Dbi<ByteBuffer> dbi;
     protected final Dbi<ByteBuffer> infoDbi;
     protected final SchemaInfo schemaInfo;
 
     public AbstractDb(final PlanBEnv env,
                       final ByteBuffers byteBuffers,
+                      final PlanBDoc doc,
                       final Boolean overwrite,
                       final HashClashCommitRunnable hashClashCommitRunnable,
                       final SchemaInfo schema) {
         this.env = env;
         this.byteBuffers = byteBuffers;
+        this.doc = doc;
 
         dbi = env.openDbi(NAME, DbiFlags.MDB_CREATE);
 
@@ -84,26 +89,26 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
                                   final SchemaInfo actual) {
         // Validate schema version.
         if (!Objects.equals(expected.getSchemaVersion(), actual.getSchemaVersion())) {
-            throw new RuntimeException("Schema version mismatch: expected=" +
-                                       expected.getSchemaVersion() +
-                                       ", actual=" +
-                                       actual.getSchemaVersion());
+            throw new RuntimeException(LogUtil.message("Schema version mismatch for '{}': expected={}, actual={}",
+                    doc.getName(),
+                    expected.getSchemaVersion(),
+                    actual.getSchemaVersion()));
         }
 
         // Validate key schema.
         if (!Objects.equals(expected.getKeySchema(), actual.getKeySchema())) {
-            throw new RuntimeException("Key schema mismatch: expected=" +
-                                       expected.getKeySchema() +
-                                       ", actual=" +
-                                       actual.getKeySchema());
+            throw new RuntimeException(LogUtil.message("Key schema mismatch for '{}': expected={}, actual={}",
+                    doc.getName(),
+                    expected.getKeySchema(),
+                    actual.getKeySchema()));
         }
 
         // Validate value schema.
         if (!Objects.equals(expected.getValueSchema(), actual.getValueSchema())) {
-            throw new RuntimeException("Value schema mismatch: expected=" +
-                                       expected.getValueSchema() +
-                                       ", actual=" +
-                                       actual.getValueSchema());
+            throw new RuntimeException(LogUtil.message("Value schema mismatch for '{}': expected={}, actual={}",
+                    doc.getName(),
+                    expected.getValueSchema(),
+                    actual.getValueSchema()));
         }
     }
 
@@ -120,7 +125,7 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
         final String keySchema = readInfoString(txn, InfoKey.KEY_SCHEMA).orElse(null);
         final String valueSchema = readInfoString(txn, InfoKey.VALUE_SCHEMA).orElse(null);
         final SchemaInfo schemaInfo = new SchemaInfo(optionalSchemaVersion.getAsInt(), keySchema, valueSchema);
-        LOGGER.debug(() -> "SchemaInfo=" + schemaInfo);
+        LOGGER.debug(() -> LogUtil.message("store={}, schemaInfo={}", doc.getName(), schemaInfo));
         return Optional.of(schemaInfo);
     }
 
@@ -134,7 +139,7 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
                 version = OptionalInt.of(v);
             }
         } catch (final Exception e) {
-            LOGGER.debug(e::getMessage, e);
+            debug(e);
         }
         return version;
     }
@@ -149,7 +154,7 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
                 info = Optional.of(string);
             }
         } catch (final Exception e) {
-            LOGGER.error(e::getMessage, e);
+            error(e);
         }
         return info;
     }
@@ -190,7 +195,7 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
             }
 
         } catch (final Exception e) {
-            LOGGER.debug(e::getMessage, e);
+            debug(e);
         }
         return hashClashes;
     }
@@ -282,14 +287,22 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
                             schemaVersion,
                             readHashClashes(txn));
                 } catch (final Exception e) {
-                    LOGGER.debug(e::getMessage, e);
+                    debug(e);
                 }
                 return null;
             });
         } catch (final Exception e) {
-            LOGGER.debug(e::getMessage, e);
+            debug(e);
         }
         return null;
+    }
+
+    protected void debug(final Exception e) {
+        LOGGER.debug(LogUtil.message("store={}, message={}", doc.getName(), e.getMessage()), e);
+    }
+
+    protected void error(final Exception e) {
+        LOGGER.debug(LogUtil.message("store={}, message={}", doc.getName(), e.getMessage()), e);
     }
 
     public record Inf(EnvInf env, List<DbInf> db, boolean readOnly, int schemaVersion, int hashClashes) {

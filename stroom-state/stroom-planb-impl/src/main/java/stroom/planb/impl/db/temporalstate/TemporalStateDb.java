@@ -32,6 +32,7 @@ import stroom.planb.impl.serde.valtime.ValTimeSerdeFactory;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.KeyType;
+import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateValueSchema;
 import stroom.planb.shared.StateValueType;
 import stroom.planb.shared.TemporalPrecision;
@@ -47,6 +48,7 @@ import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.io.FileUtil;
 import stroom.util.json.JsonUtil;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import org.lmdbjava.CursorIterable;
@@ -66,7 +68,6 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
 
     private static final int CURRENT_SCHEMA_VERSION = 1;
 
-    private final TemporalStateSettings settings;
     private final TimeSerde timeSerde;
     private final TemporalKeySerde keySerde;
     private final ValTimeSerde valueSerde;
@@ -75,7 +76,7 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
 
     private TemporalStateDb(final PlanBEnv env,
                             final ByteBuffers byteBuffers,
-                            final Boolean overwrite,
+                            final PlanBDoc doc,
                             final TemporalStateSettings settings,
                             final TimeSerde timeSerde,
                             final TemporalKeySerde keySerde,
@@ -83,13 +84,13 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
                             final HashClashCommitRunnable hashClashCommitRunnable) {
         super(env,
                 byteBuffers,
-                overwrite,
+                doc,
+                settings.overwrite(),
                 hashClashCommitRunnable,
                 new SchemaInfo(
                         CURRENT_SCHEMA_VERSION,
                         JsonUtil.writeValueAsString(settings.getKeySchema()),
                         JsonUtil.writeValueAsString(settings.getValueSchema())));
-        this.settings = settings;
         this.timeSerde = timeSerde;
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
@@ -99,8 +100,15 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
 
     public static TemporalStateDb create(final Path path,
                                          final ByteBuffers byteBuffers,
-                                         final TemporalStateSettings settings,
+                                         final PlanBDoc doc,
                                          final boolean readOnly) {
+        final TemporalStateSettings settings;
+        if (doc.getSettings() instanceof final TemporalStateSettings temporalStateSettings) {
+            settings = temporalStateSettings;
+        } else {
+            settings = new TemporalStateSettings.Builder().build();
+        }
+
         final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
         final Long mapSize = NullSafe.getOrElse(
                 settings,
@@ -111,53 +119,63 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
                 20,
                 readOnly,
                 hashClashCommitRunnable);
-        final KeyType keyType = NullSafe.getOrElse(
-                settings,
-                TemporalStateSettings::getKeySchema,
-                TemporalStateKeySchema::getKeyType,
-                TemporalStateKeySchema.DEFAULT_KEY_TYPE);
-        final HashLength keyHashLength = NullSafe.getOrElse(
-                settings,
-                TemporalStateSettings::getKeySchema,
-                TemporalStateKeySchema::getHashLength,
-                TemporalStateKeySchema.DEFAULT_HASH_LENGTH);
-        final TimeSerde timeSerde = createTimeSerde(NullSafe.getOrElse(
-                settings,
-                TemporalStateSettings::getKeySchema,
-                TemporalStateKeySchema::getTemporalPrecision,
-                TemporalStateKeySchema.DEFAULT_TEMPORAL_PRECISION));
-        final StateValueType stateValueType = NullSafe.getOrElse(
-                settings,
-                TemporalStateSettings::getValueSchema,
-                StateValueSchema::getStateValueType,
-                StateValueSchema.DEFAULT_VALUE_TYPE);
-        final HashLength valueHashLength = NullSafe.getOrElse(
-                settings,
-                TemporalStateSettings::getValueSchema,
-                StateValueSchema::getHashLength,
-                StateValueSchema.DEFAULT_HASH_LENGTH);
-        final TemporalKeySerde keySerde = TemporalKeySerdeFactory.createKeySerde(
-                keyType,
-                keyHashLength,
-                env,
-                byteBuffers,
-                timeSerde,
-                hashClashCommitRunnable);
-        final ValTimeSerde valueSerde = ValTimeSerdeFactory.createValueSerde(
-                stateValueType,
-                valueHashLength,
-                env,
-                byteBuffers,
-                hashClashCommitRunnable);
-        return new TemporalStateDb(
-                env,
-                byteBuffers,
-                settings.overwrite(),
-                settings,
-                timeSerde,
-                keySerde,
-                valueSerde,
-                hashClashCommitRunnable);
+        try {
+            final KeyType keyType = NullSafe.getOrElse(
+                    settings,
+                    TemporalStateSettings::getKeySchema,
+                    TemporalStateKeySchema::getKeyType,
+                    TemporalStateKeySchema.DEFAULT_KEY_TYPE);
+            final HashLength keyHashLength = NullSafe.getOrElse(
+                    settings,
+                    TemporalStateSettings::getKeySchema,
+                    TemporalStateKeySchema::getHashLength,
+                    TemporalStateKeySchema.DEFAULT_HASH_LENGTH);
+            final TimeSerde timeSerde = createTimeSerde(NullSafe.getOrElse(
+                    settings,
+                    TemporalStateSettings::getKeySchema,
+                    TemporalStateKeySchema::getTemporalPrecision,
+                    TemporalStateKeySchema.DEFAULT_TEMPORAL_PRECISION));
+            final StateValueType stateValueType = NullSafe.getOrElse(
+                    settings,
+                    TemporalStateSettings::getValueSchema,
+                    StateValueSchema::getStateValueType,
+                    StateValueSchema.DEFAULT_VALUE_TYPE);
+            final HashLength valueHashLength = NullSafe.getOrElse(
+                    settings,
+                    TemporalStateSettings::getValueSchema,
+                    StateValueSchema::getHashLength,
+                    StateValueSchema.DEFAULT_HASH_LENGTH);
+            final TemporalKeySerde keySerde = TemporalKeySerdeFactory.createKeySerde(
+                    keyType,
+                    keyHashLength,
+                    env,
+                    byteBuffers,
+                    timeSerde,
+                    hashClashCommitRunnable);
+            final ValTimeSerde valueSerde = ValTimeSerdeFactory.createValueSerde(
+                    stateValueType,
+                    valueHashLength,
+                    env,
+                    byteBuffers,
+                    hashClashCommitRunnable);
+            return new TemporalStateDb(
+                    env,
+                    byteBuffers,
+                    doc,
+                    settings,
+                    timeSerde,
+                    keySerde,
+                    valueSerde,
+                    hashClashCommitRunnable);
+        } catch (final RuntimeException e) {
+            // Close the env if we get any exceptions to prevent them staying open.
+            try {
+                env.close();
+            } catch (final Exception e2) {
+                LOGGER.debug(LogUtil.message("store={}, message={}", doc.getName(), e.getMessage()), e);
+            }
+            throw e;
+        }
     }
 
     private static TimeSerde createTimeSerde(final TemporalPrecision temporalPrecision) {
@@ -192,7 +210,7 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
     @Override
     public void merge(final Path source) {
         env.write(writer -> {
-            try (final TemporalStateDb sourceDb = TemporalStateDb.create(source, byteBuffers, settings, true)) {
+            try (final TemporalStateDb sourceDb = TemporalStateDb.create(source, byteBuffers, doc, true)) {
                 // Validate that the source DB has the same schema.
                 validateSchema(schemaInfo, sourceDb.getSchemaInfo());
 

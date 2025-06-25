@@ -7,6 +7,7 @@ import stroom.planb.impl.db.temporalstate.TemporalStateDb;
 import stroom.planb.impl.db.temporalstate.TemporalStateRequest;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 import stroom.planb.impl.serde.temporalkey.TemporalKey;
+import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.TemporalStateSettings;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;
@@ -42,7 +43,7 @@ class TestStateLookupImpl {
             .Builder()
             .maxStoreSize(ByteSize.ofGibibytes(100).getBytes())
             .build();
-
+    private static final PlanBDoc DOC = getDoc(BASIC_SETTINGS);
     private static final String KV_TYPE = "KV";
     private static final String PADDING = IntStream.rangeClosed(1, 300)
             .boxed()
@@ -66,7 +67,7 @@ class TestStateLookupImpl {
         final Map<Integer, List<String>> mapNamesMap = new HashMap<>(refStreamDefCount);
         final List<Instant> lookupTimes = new ArrayList<>(refStreamDefCount);
 
-        try (final TemporalStateDb db = TemporalStateDb.create(tempDir, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
+        try (final TemporalStateDb db = TemporalStateDb.create(tempDir, BYTE_BUFFERS, DOC, false)) {
             db.write(writer -> {
                 for (int refStrmIdx = 0; refStrmIdx < refStreamDefCount; refStrmIdx++) {
                     final List<String> mapNames = mapNamesMap.computeIfAbsent(refStrmIdx,
@@ -98,7 +99,7 @@ class TestStateLookupImpl {
         try (final TemporalStateDb db = TemporalStateDb.create(
                 tempDir,
                 BYTE_BUFFERS,
-                new TemporalStateSettings.Builder().build(),
+                DOC,
                 true)) {
             final Random random = new Random(892374809);
             final Runnable work = () -> {
@@ -160,5 +161,9 @@ class TestStateLookupImpl {
             final int i) {
         return LogUtil.message("{}map{}",
                 type, i);
+    }
+
+    private static PlanBDoc getDoc(final TemporalStateSettings settings) {
+        return PlanBDoc.builder().name("test").settings(settings).build();
     }
 }
