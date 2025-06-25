@@ -16,6 +16,7 @@
 
 package stroom.data.grid.client;
 
+import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -199,7 +200,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                 colIndex = cell.getCellIndex();
             }
 
-            showContextMenu(clientX, clientY, rowIndex, colIndex);
+            showContextMenu(clientX, clientY, rowIndex, colIndex, target);
             return;
         }
         super.onBrowserEvent2(event);
@@ -212,8 +213,55 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         return (TableCellElement) target;
     }
 
-    private void showContextMenu(int x, int y, int rowIndex, int colIndex) {
+    private void showContextMenu(int x, int y, int rowIndex, int colIndex, final Element target) {
         final List<Item> menuItems = new ArrayList<>();
+
+        Element linkElement = target;
+        while (linkElement != null && !"a".equalsIgnoreCase(linkElement.getTagName())) {
+            linkElement = linkElement.getParentElement();
+        }
+
+        boolean isLink = false;
+        if (linkElement != null) {
+            final String href = linkElement.getAttribute("href");
+            if (href != null && !href.isEmpty() && !href.startsWith("javascript")) {
+                isLink = true;
+                menuItems.add(new IconMenuItem.Builder()
+                        .icon(SvgImage.COPY)
+                        .text("Copy Link URL")
+                        .command(() -> copyToClipboard(href))
+                        .build());
+                menuItems.add(new IconMenuItem.Builder()
+                        .icon(SvgImage.OPEN)
+                        .text("Follow URL")
+                        .command(() -> com.google.gwt.user.client.Window.open(href, "_blank", ""))
+                        .build());
+            }
+        }
+
+        if (isLink) {
+            menuItems.add(new stroom.widget.menu.client.presenter.Separator(1));
+        }
+
+        if (rowIndex >= 0 && colIndex >= 0) {
+            menuItems.add(new IconMenuItem.Builder()
+                    .icon(SvgImage.COPY)
+                    .text("Copy Cell")
+                    .command(() -> exportCell(rowIndex, colIndex))
+                    .build());
+
+            menuItems.add(new IconMenuItem.Builder()
+                    .icon(SvgImage.COPY)
+                    .text("Copy Row (CSV)")
+                    .command(() -> exportRow(rowIndex))
+                    .build());
+
+            menuItems.add(new IconMenuItem.Builder()
+                    .icon(SvgImage.COPY)
+                    .text("Copy Column (LSV)")
+                    .command(() -> exportColumn(colIndex))
+                    .build());
+        }
 
         menuItems.add(new IconMenuItem.Builder()
                 .icon(SvgImage.COPY)
