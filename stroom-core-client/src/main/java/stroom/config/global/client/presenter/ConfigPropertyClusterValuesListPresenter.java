@@ -37,7 +37,7 @@ public class ConfigPropertyClusterValuesListPresenter
                                                     final PagerView view) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>(1000);
+        dataGrid = new MyDataGrid<>(this, 1000);
         dataGrid.setMultiLine(true);
         view.setDataWidget(dataGrid);
 

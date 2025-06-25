@@ -70,7 +70,7 @@ public class DuplicateManagementListPresenter
         super(eventBus, view);
         this.restFactory = restFactory;
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
         deleteButton = view.addButton(SvgPresets.DELETE);

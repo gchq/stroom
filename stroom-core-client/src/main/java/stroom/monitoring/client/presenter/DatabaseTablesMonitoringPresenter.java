@@ -60,7 +60,7 @@ public class DatabaseTablesMonitoringPresenter
         super(eventBus, view);
         this.restFactory = restFactory;
 
-        dataGrid = new MyDataGrid<>(1000);
+        dataGrid = new MyDataGrid<>(this, 1000);
         view.setDataWidget(dataGrid);
 
         dataGrid.addResizableColumn(new OrderByColumn<DBTableStatus, String>(
