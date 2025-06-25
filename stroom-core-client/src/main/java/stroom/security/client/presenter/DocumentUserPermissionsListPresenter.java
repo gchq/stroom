@@ -103,7 +103,7 @@ public class DocumentUserPermissionsListPresenter
         this.securityContext = securityContext;
         documentTypeCache.fetch(this::setupColumns, this);
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);

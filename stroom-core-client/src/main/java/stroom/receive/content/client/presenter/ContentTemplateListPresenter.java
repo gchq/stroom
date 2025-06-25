@@ -68,7 +68,7 @@ public class ContentTemplateListPresenter extends MyPresenterWidget<PagerView> i
     public ContentTemplateListPresenter(final EventBus eventBus,
                                         final PagerView view) {
         super(eventBus, view);
-        this.dataGrid = new MyDataGrid<>();
+        this.dataGrid = new MyDataGrid<>(this);
         this.selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
         initTableColumns();

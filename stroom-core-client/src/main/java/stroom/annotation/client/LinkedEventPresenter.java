@@ -56,7 +56,7 @@ public class LinkedEventPresenter
                                 final AddEventLinkPresenter addEventLinkPresenter) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);
 

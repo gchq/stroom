@@ -97,7 +97,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
                                   final NodeManager nodeManager) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
         view.setDataWidget(dataGrid);
 
         this.restFactory = restFactory;

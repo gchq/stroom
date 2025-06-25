@@ -128,7 +128,7 @@ public abstract class AbstractMetaListPresenter
         this.pipelineSelection = pipelineSelection;
         this.expressionValidator = expressionValidator;
 
-        this.dataGrid = new MyDataGrid<>();
+        this.dataGrid = new MyDataGrid<>(this);
         selectionModel = new MultiSelectionModelImpl<>();
         selectionEventManager = new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);

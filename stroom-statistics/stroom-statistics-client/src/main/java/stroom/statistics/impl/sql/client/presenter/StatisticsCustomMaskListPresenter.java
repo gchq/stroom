@@ -72,7 +72,7 @@ public class StatisticsCustomMaskListPresenter extends DocumentEditPresenter<Pag
                                              final RestFactory restFactory) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 

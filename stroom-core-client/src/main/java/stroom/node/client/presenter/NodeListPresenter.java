@@ -93,7 +93,7 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
                              final UiConfigCache uiConfigCache) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
         view.setDataWidget(dataGrid);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
 

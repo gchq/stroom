@@ -15,7 +15,7 @@
  */
 
 .simplePopup-popup {
-	opacity: 0;
+	opacity: 100%;
     z-index: 100;
 }
 

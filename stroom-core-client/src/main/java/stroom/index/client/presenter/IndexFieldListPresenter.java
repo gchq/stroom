@@ -88,7 +88,7 @@ public class IndexFieldListPresenter
         view.setDataView(pagerView);
         view.setUiHandlers(this);
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         pagerView.setDataWidget(dataGrid);
 

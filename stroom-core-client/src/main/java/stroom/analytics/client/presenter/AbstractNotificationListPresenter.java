@@ -72,7 +72,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
         super(eventBus, view);
         this.editPresenterProvider = editPresenterProvider;
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
         selectionModel = new MultiSelectionModelImpl<>();
         selectionEventManager = new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);

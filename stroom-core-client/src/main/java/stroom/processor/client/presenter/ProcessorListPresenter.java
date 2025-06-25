@@ -116,7 +116,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         super(eventBus, view);
         this.securityContext = securityContext;
 
-        this.dataGrid = new MyDataGrid<>();
+        this.dataGrid = new MyDataGrid<>(this);
         this.selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 

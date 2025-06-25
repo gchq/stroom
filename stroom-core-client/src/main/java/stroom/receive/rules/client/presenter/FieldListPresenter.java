@@ -60,7 +60,7 @@ public class FieldListPresenter extends DocumentEditPresenter<PagerView, Receive
                               final FieldEditPresenter fieldEditPresenter) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 

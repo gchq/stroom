@@ -74,7 +74,7 @@ public class AccountsListPresenter
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
         this.editAccountPresenterProvider = editAccountPresenterProvider;
-        this.dataGrid = new MyDataGrid<>(1000);
+        this.dataGrid = new MyDataGrid<>(this, 1000);
         this.selectionModel = new MultiSelectionModelImpl<>();
         final DataGridSelectionEventManager<Account> selectionEventManager = new DataGridSelectionEventManager<>(
                 dataGrid, selectionModel, false);

@@ -85,7 +85,7 @@ public class ProcessorTaskListPresenter
         super(eventBus, view);
         this.restFactory = restFactory;
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
         view.setDataWidget(dataGrid);
 
         this.tooltipPresenter = tooltipPresenter;

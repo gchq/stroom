@@ -97,7 +97,7 @@ public class ApiKeysListPresenter
         this.editApiKeyPresenter = editApiKeyPresenter;
         this.uiConfigCache = uiConfigCache;
         this.pagerView = pagerView;
-        this.dataGrid = new MyDataGrid<>();
+        this.dataGrid = new MyDataGrid<>(this);
         this.selectionModel = dataGrid.addDefaultSelectionModel(true);
 //        this.selectionEventManager = new DataGridSelectionEventManager<>(
 //                dataGrid, selectionModel, false);

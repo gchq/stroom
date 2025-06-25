@@ -94,7 +94,7 @@ public class DependenciesPresenter
                                  final MenuPresenter menuPresenter) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>(100);
+        dataGrid = new MyDataGrid<>(this, 100);
         view.setDataWidget(dataGrid);
 
         this.restFactory = restFactory;
