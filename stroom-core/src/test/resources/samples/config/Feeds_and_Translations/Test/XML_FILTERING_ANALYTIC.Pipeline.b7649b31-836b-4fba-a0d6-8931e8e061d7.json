@@ -1,0 +1,151 @@
+{
+  "elements" : {
+    "add" : [ {
+      "id" : "combinedParser",
+      "type" : "CombinedParser"
+    }, {
+      "id" : "recordCountFilterRead",
+      "type" : "RecordCountFilter"
+    }, {
+      "id" : "splitFilter",
+      "type" : "SplitFilter"
+    }, {
+      "id" : "xsltFilter",
+      "type" : "XSLTFilter"
+    }, {
+      "id" : "recordCountFilterWrite",
+      "type" : "RecordCountFilter"
+    }, {
+      "id" : "xmlWriter",
+      "type" : "XMLWriter"
+    }, {
+      "id" : "streamAppender",
+      "type" : "StreamAppender"
+    }, {
+      "id" : "Source",
+      "type" : "Source"
+    } ]
+  },
+  "properties" : {
+    "add" : [ {
+      "element" : "splitFilter",
+      "name" : "splitDepth",
+      "value" : {
+        "integer" : 1
+      }
+    }, {
+      "element" : "splitFilter",
+      "name" : "splitCount",
+      "value" : {
+        "integer" : 2
+      }
+    }, {
+      "element" : "xsltFilter",
+      "name" : "xslt",
+      "value" : {
+        "entity" : {
+          "type" : "XSLT",
+          "uuid" : "6f684aed-4bd6-4ad8-af08-dccd75ae14ab",
+          "name" : "XML_FILTERING_ANALYTIC"
+        }
+      }
+    }, {
+      "element" : "recordCountFilterWrite",
+      "name" : "countRead",
+      "value" : {
+        "boolean" : false
+      }
+    }, {
+      "element" : "xmlWriter",
+      "name" : "indentOutput",
+      "value" : {
+        "boolean" : true
+      }
+    }, {
+      "element" : "streamAppender",
+      "name" : "feed",
+      "value" : {
+        "entity" : {
+          "type" : "Feed",
+          "uuid" : "1c09667a-fe2a-4758-80cd-1b9342b1475a",
+          "name" : "XML_FILTERING_ANALYTIC"
+        }
+      }
+    }, {
+      "element" : "streamAppender",
+      "name" : "streamType",
+      "value" : {
+        "string" : "Events"
+      }
+    } ]
+  },
+  "pipelineReferences" : {
+    "add" : [ {
+      "element" : "xsltFilter",
+      "name" : "pipelineReference",
+      "pipeline" : {
+        "type" : "Pipeline",
+        "uuid" : "da1c7351-086f-493b-866a-b42dbe990700",
+        "name" : "Reference Loader"
+      },
+      "feed" : {
+        "type" : "Feed",
+        "uuid" : "d865a073-9c21-442f-be53-efa385cb7aa2",
+        "name" : "BITMAP-REFERENCE"
+      },
+      "streamType" : "Reference"
+    }, {
+      "element" : "xsltFilter",
+      "name" : "pipelineReference",
+      "pipeline" : {
+        "type" : "Pipeline",
+        "uuid" : "da1c7351-086f-493b-866a-b42dbe990700",
+        "name" : "Reference Loader"
+      },
+      "feed" : {
+        "type" : "Feed",
+        "uuid" : "60f9f51d-e5d6-41f5-86b9-ae866b8c9fa3",
+        "name" : "FILENO_TO_LOCATION-REFERENCE"
+      },
+      "streamType" : "Reference"
+    }, {
+      "element" : "xsltFilter",
+      "name" : "pipelineReference",
+      "pipeline" : {
+        "type" : "Pipeline",
+        "uuid" : "da1c7351-086f-493b-866a-b42dbe990700",
+        "name" : "Reference Loader"
+      },
+      "feed" : {
+        "type" : "Feed",
+        "uuid" : "0ece027a-87a2-42c6-a6dd-e05adce6703b",
+        "name" : "IP_RANGE_TO_LOCATION-REFERENCE"
+      },
+      "streamType" : "Reference"
+    } ]
+  },
+  "links" : {
+    "add" : [ {
+      "from" : "combinedParser",
+      "to" : "recordCountFilterRead"
+    }, {
+      "from" : "recordCountFilterRead",
+      "to" : "splitFilter"
+    }, {
+      "from" : "splitFilter",
+      "to" : "xsltFilter"
+    }, {
+      "from" : "xsltFilter",
+      "to" : "recordCountFilterWrite"
+    }, {
+      "from" : "recordCountFilterWrite",
+      "to" : "xmlWriter"
+    }, {
+      "from" : "xmlWriter",
+      "to" : "streamAppender"
+    }, {
+      "from" : "Source",
+      "to" : "combinedParser"
+    } ]
+  }
+}

@@ -26,16 +26,15 @@ import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
-import stroom.pipeline.shared.FetchPropertyTypesResult;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.PipelineResource;
-import stroom.pipeline.shared.SavePipelineXmlRequest;
+import stroom.pipeline.shared.SavePipelineJsonRequest;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.pipeline.shared.data.PipelinePropertyType;
+import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.PipelineStructureView;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
@@ -62,36 +61,39 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineStructureView, PipelineDoc>
         implements PipelineStructureUiHandlers {
 
     private static final PipelineResource PIPELINE_RESOURCE = GWT.create(PipelineResource.class);
-    private static final DocRef NULL_SELECTION = DocRef.builder().uuid("").name("None").type("").build();
+    private static final DocRef NULL_SELECTION = DocRef.builder()
+            .uuid("")
+            .name("None")
+            .type("")
+            .build();
 
     private final DocSelectionBoxPresenter pipelinePresenter;
     private final RestFactory restFactory;
     private final NewElementPresenter newElementPresenter;
     private final PropertyListPresenter propertyListPresenter;
     private final PipelineReferenceListPresenter pipelineReferenceListPresenter;
-    private final Provider<EditorPresenter> xmlEditorProvider;
+    private final Provider<EditorPresenter> jsonEditorProvider;
     private final PipelineTreePresenter pipelineTreePresenter;
+    private final PipelineElementTypesFactory pipelineElementTypesFactory;
     private PipelineElement selectedElement;
     private PipelineModel pipelineModel;
     private DocRef docRef;
     private PipelineDoc pipelineDoc;
     private DocRef parentPipeline;
-    private Map<Category, List<PipelineElementType>> elementTypes;
     private boolean advancedMode;
 
     private List<Item> addMenuItems;
@@ -106,7 +108,8 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                                       final NewElementPresenter newElementPresenter,
                                       final PropertyListPresenter propertyListPresenter,
                                       final PipelineReferenceListPresenter pipelineReferenceListPresenter,
-                                      final Provider<EditorPresenter> xmlEditorProvider) {
+                                      final Provider<EditorPresenter> jsonEditorProvider,
+                                      final PipelineElementTypesFactory pipelineElementTypesFactory) {
         super(eventBus, view);
         this.pipelineTreePresenter = pipelineTreePresenter;
         this.pipelinePresenter = pipelinePresenter;
@@ -114,7 +117,8 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         this.newElementPresenter = newElementPresenter;
         this.propertyListPresenter = propertyListPresenter;
         this.pipelineReferenceListPresenter = pipelineReferenceListPresenter;
-        this.xmlEditorProvider = xmlEditorProvider;
+        this.jsonEditorProvider = jsonEditorProvider;
+        this.pipelineElementTypesFactory = pipelineElementTypesFactory;
 
         getView().setUiHandlers(this);
         getView().setInheritanceTree(pipelinePresenter.getView());
@@ -126,36 +130,6 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         pipelinePresenter.setRequiredPermissions(DocumentPermission.USE);
 
         // Get a map of all available elements and properties.
-        restFactory
-                .create(PIPELINE_RESOURCE)
-                .method(PipelineResource::getPropertyTypes)
-                .onSuccess(result -> {
-                    final Map<PipelineElementType, Map<String, PipelinePropertyType>> propertyTypes =
-                            result.stream().collect(Collectors.toMap(FetchPropertyTypesResult::getPipelineElementType,
-                                    FetchPropertyTypesResult::getPropertyTypes));
-
-                    propertyListPresenter.setPropertyTypes(propertyTypes);
-                    pipelineReferenceListPresenter.setPropertyTypes(propertyTypes);
-
-                    elementTypes = new HashMap<>();
-
-                    for (final PipelineElementType elementType : propertyTypes.keySet()) {
-                        List<PipelineElementType> list = elementTypes.get(elementType.getCategory());
-                        if (list == null) {
-                            list = new ArrayList<>();
-                            elementTypes.put(elementType.getCategory(), list);
-                        }
-
-                        list.add(elementType);
-                    }
-
-                    for (final List<PipelineElementType> types : elementTypes.values()) {
-                        Collections.sort(types);
-                    }
-                })
-                .taskMonitorFactory(this)
-                .exec();
-
         setAdvancedMode(true);
         enableButtons();
     }
@@ -192,7 +166,6 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                 pipelineTreePresenter.getSelectionModel().addSelectionChangeHandler(event -> {
                     selectedElement = pipelineTreePresenter.getSelectionModel().getSelectedObject();
 
-                    propertyListPresenter.setPipeline(pipelineDoc);
                     propertyListPresenter.setPipelineModel(pipelineModel);
                     propertyListPresenter.setCurrentElement(selectedElement);
 
@@ -215,58 +188,62 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
 
     @Override
     protected void onRead(final DocRef docRef, final PipelineDoc document, final boolean readOnly) {
-        pipelinePresenter.setEnabled(!readOnly);
-        propertyListPresenter.setReadOnly(readOnly);
-        pipelineReferenceListPresenter.setReadOnly(readOnly);
-        enableButtons();
+        pipelineElementTypesFactory.get(this, elementTypes -> {
+            pipelinePresenter.setEnabled(!readOnly);
+            propertyListPresenter.setReadOnly(readOnly);
+            pipelineReferenceListPresenter.setReadOnly(readOnly);
+            enableButtons();
 
-        if (document != null) {
-            final PipelineElement previousSelection = this.selectedElement;
+            if (document != null) {
+                final PipelineElement previousSelection = this.selectedElement;
 
-            this.docRef = docRef;
-            this.pipelineDoc = document;
-            this.selectedElement = null;
+                this.docRef = docRef;
+                this.pipelineDoc = document;
+                this.selectedElement = null;
 
-            if (pipelineModel == null) {
-                pipelineModel = new PipelineModel();
-                pipelineTreePresenter.setModel(pipelineModel);
+                if (pipelineModel == null) {
+                    pipelineModel = new PipelineModel(elementTypes);
+                    pipelineTreePresenter.setModel(pipelineModel);
+                }
+
+                if (document.getParentPipeline() != null) {
+                    this.parentPipeline = document.getParentPipeline();
+                }
+                pipelinePresenter.setSelectedEntityReference(document.getParentPipeline(), true);
+
+                restFactory
+                        .create(PIPELINE_RESOURCE)
+                        .method(res -> res.fetchPipelineLayers(docRef))
+                        .onSuccess(result -> {
+                            final PipelineLayer pipelineLayer = result.get(result.size() - 1);
+                            final List<PipelineLayer> baseStack = new ArrayList<>(result.size() - 1);
+
+                            // If there is a stack of pipeline data then we need
+                            // to make sure changes are reflected appropriately.
+                            for (int i = 0; i < result.size() - 1; i++) {
+                                baseStack.add(result.get(i));
+                            }
+
+                            try {
+                                pipelineModel.setPipelineLayer(pipelineLayer);
+                                pipelineModel.setBaseStack(baseStack);
+                                pipelineModel.build();
+                                pipelineTreePresenter.getSelectionModel().setSelected(previousSelection, true);
+
+                                // We have just loaded the pipeline so set dirty to
+                                // false.
+                                setDirty(false);
+                            } catch (final PipelineModelException e) {
+                                AlertEvent.fireError(
+                                        PipelineStructurePresenter.this,
+                                        e.getMessage(),
+                                        null);
+                            }
+                        })
+                        .taskMonitorFactory(this)
+                        .exec();
             }
-
-            if (document.getParentPipeline() != null) {
-                this.parentPipeline = document.getParentPipeline();
-            }
-            pipelinePresenter.setSelectedEntityReference(document.getParentPipeline(), true);
-
-            restFactory
-                    .create(PIPELINE_RESOURCE)
-                    .method(res -> res.fetchPipelineData(docRef))
-                    .onSuccess(result -> {
-                        final PipelineData pipelineData = result.get(result.size() - 1);
-                        final List<PipelineData> baseStack = new ArrayList<>(result.size() - 1);
-
-                        // If there is a stack of pipeline data then we need
-                        // to make sure changes are reflected appropriately.
-                        for (int i = 0; i < result.size() - 1; i++) {
-                            baseStack.add(result.get(i));
-                        }
-
-                        try {
-                            pipelineModel.setPipelineData(pipelineData);
-                            pipelineModel.setBaseStack(baseStack);
-                            pipelineModel.build();
-
-                            pipelineTreePresenter.getSelectionModel().setSelected(previousSelection, true);
-
-                            // We have just loaded the pipeline so set dirty to
-                            // false.
-                            setDirty(false);
-                        } catch (final PipelineModelException e) {
-                            AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
-                        }
-                    })
-                    .taskMonitorFactory(this)
-                    .exec();
-        }
+        });
     }
 
     @Override
@@ -290,14 +267,14 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
 
     @Override
     public void onAdd(final ClickEvent event) {
-        if (addMenuItems != null && addMenuItems.size() > 0) {
+        if (addMenuItems != null && !addMenuItems.isEmpty()) {
             showMenu(event, addMenuItems);
         }
     }
 
     @Override
     public void onRestore(final ClickEvent event) {
-        if (restoreMenuItems != null && restoreMenuItems.size() > 0) {
+        if (restoreMenuItems != null && !restoreMenuItems.isEmpty()) {
             showMenu(event, restoreMenuItems);
         }
     }
@@ -328,14 +305,14 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                 .priority(0)
                 .icon(SvgImage.ADD)
                 .text("Add")
-                .enabled(addMenuItems != null && addMenuItems.size() > 0)
+                .enabled(addMenuItems != null && !addMenuItems.isEmpty())
                 .children(addMenuItems)
                 .build());
         menuItems.add(new IconParentMenuItem.Builder()
                 .priority(1)
                 .icon(SvgImage.UNDO)
                 .text("Restore")
-                .enabled(restoreMenuItems != null && restoreMenuItems.size() > 0)
+                .enabled(restoreMenuItems != null && !restoreMenuItems.isEmpty())
                 .children(restoreMenuItems)
                 .build());
         menuItems.add(new IconMenuItem.Builder()
@@ -354,14 +331,15 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
 
         final PipelineElement parent = pipelineTreePresenter.getSelectionModel().getSelectedObject();
         if (parent != null) {
-            final PipelineElementType parentType = parent.getElementType();
+            final PipelineElementType parentType = pipelineModel.getElementType(parent);
             int childCount = 0;
             final List<PipelineElement> currentChildren = pipelineModel.getChildMap().get(parent);
             if (currentChildren != null) {
                 childCount = currentChildren.size();
             }
 
-            for (final Entry<Category, List<PipelineElementType>> entry : elementTypes.entrySet()) {
+            for (final Entry<Category, List<PipelineElementType>> entry :
+                    pipelineModel.getElementTypesByCategory().entrySet()) {
                 final Category category = entry.getKey();
                 if (category.getOrder() >= 0) {
                     final List<Item> children = new ArrayList<>();
@@ -380,7 +358,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                         }
                     }
 
-                    if (children.size() > 0) {
+                    if (!children.isEmpty()) {
                         children.sort(new MenuItems.ItemComparator());
                         final Item parentItem = new IconParentMenuItem.Builder()
                                 .priority(category.getOrder())
@@ -400,7 +378,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
     private List<Item> getRestoreMenuItems() {
         final List<PipelineElement> existingElements = getExistingElements();
 
-        if (existingElements.size() == 0) {
+        if (existingElements.isEmpty()) {
             return null;
         }
 
@@ -408,7 +386,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
 
         final PipelineElement parent = pipelineTreePresenter.getSelectionModel().getSelectedObject();
         if (parent != null) {
-            final PipelineElementType parentType = parent.getElementType();
+            final PipelineElementType parentType = pipelineModel.getElementType(parent);
             int childCount = 0;
             final List<PipelineElement> currentChildren = pipelineModel.getChildMap().get(parent);
             if (currentChildren != null) {
@@ -418,7 +396,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
             final Map<Category, List<Item>> categoryMenuItems = new HashMap<>();
             int pos = 0;
             for (final PipelineElement element : existingElements) {
-                final PipelineElementType pipelineElementType = element.getElementType();
+                final PipelineElementType pipelineElementType = pipelineModel.getElementType(element);
                 if (StructureValidationUtil.isValidChildType(parentType, pipelineElementType, childCount)) {
                     final Category category = pipelineElementType.getCategory();
 
@@ -475,7 +453,6 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
 
         if (selectedElement != null) {
             final List<PipelineElement> removedElements = pipelineModel.getRemovedElements();
-
             if (removedElements != null) {
                 existingElements.addAll(removedElements);
             }
@@ -498,39 +475,43 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
     @Override
     public void viewSource() {
         if (isDirty()) {
-            AlertEvent.fireError(this, "You must save changes to this pipeline before you can view the source", null);
+            AlertEvent.fireError(
+                    this,
+                    "You must save changes to this pipeline before you can view the source",
+                    null);
         } else {
-            final EditorPresenter xmlEditor = xmlEditorProvider.get();
-            xmlEditor.getIndicatorsOption().setAvailable(false);
-            xmlEditor.getIndicatorsOption().setOn(false);
-            xmlEditor.getStylesOption().setOn(true);
-            xmlEditor.getView().asWidget().getElement().addClassName("form-control-border default-min-sizes");
+            final EditorPresenter jsonEditor = jsonEditorProvider.get();
+            jsonEditor.setMode(AceEditorMode.JSON);
+//            jsonEditor.getIndicatorsOption().setAvailable(false);
+//            jsonEditor.getIndicatorsOption().setOn(false);
+//            jsonEditor.getStylesOption().setOn(true);
+            jsonEditor.getView().asWidget().getElement().addClassName("form-control-border default-min-sizes");
 
             final PopupSize popupSize = PopupSize.resizable(600, 400);
             restFactory
                     .create(PIPELINE_RESOURCE)
-                    .method(res -> res.fetchPipelineXml(docRef))
+                    .method(res -> res.fetchPipelineJson(docRef))
                     .onSuccess(result -> {
                         String text = "";
                         if (result != null) {
-                            text = result.getXml();
+                            text = result.getJson();
                         }
-                        xmlEditor.setText(text, true);
-                        ShowPopupEvent.builder(xmlEditor)
+                        jsonEditor.setText(text, true);
+                        ShowPopupEvent.builder(jsonEditor)
                                 .popupType(PopupType.OK_CANCEL_DIALOG)
                                 .popupSize(popupSize)
                                 .caption("Pipeline Source")
-                                .onShow(e -> xmlEditor.focus())
+                                .onShow(e -> jsonEditor.focus())
                                 .onHideRequest(e -> {
                                     if (e.isOk()) {
-                                        querySave(xmlEditor, e);
+                                        querySave(jsonEditor, e);
                                     } else {
                                         e.hide();
                                     }
                                 })
                                 .fire();
                     })
-                    .onFailure(throwable -> xmlEditor.setErrorText(
+                    .onFailure(throwable -> jsonEditor.setErrorText(
                             "Unable to display pipeline source",
                             throwable.getMessage()
                     ))
@@ -539,22 +520,22 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         }
     }
 
-    private void querySave(final EditorPresenter xmlEditor,
+    private void querySave(final EditorPresenter jsonEditor,
                            final HidePopupRequestEvent event) {
         ConfirmEvent.fire(PipelineStructurePresenter.this,
-                "Are you sure you want to save changes to the underlying XML?", ok -> {
+                "Are you sure you want to save changes to the underlying JSON?", ok -> {
                     if (ok) {
-                        doActualSave(xmlEditor, event);
+                        doActualSave(jsonEditor, event);
                     } else {
                         event.hide();
                     }
                 });
     }
 
-    private void doActualSave(final EditorPresenter xmlEditor, final HidePopupRequestEvent event) {
+    private void doActualSave(final EditorPresenter jsonEditor, final HidePopupRequestEvent event) {
         restFactory
                 .create(PIPELINE_RESOURCE)
-                .method(res -> res.savePipelineXml(new SavePipelineXmlRequest(docRef, xmlEditor.getText())))
+                .method(res -> res.savePipelineJson(new SavePipelineJsonRequest(docRef, jsonEditor.getText())))
                 .onSuccess(result -> {
                     // Hide the popup.
                     event.hide();
@@ -575,12 +556,12 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
             restoreMenuItems = null;
         }
 
-        getView().setAddEnabled(!isReadOnly() && addMenuItems != null && addMenuItems.size() > 0);
-        getView().setRestoreEnabled(!isReadOnly() && restoreMenuItems != null && restoreMenuItems.size() > 0);
+        getView().setAddEnabled(!isReadOnly() && NullSafe.hasItems(addMenuItems));
+        getView().setRestoreEnabled(!isReadOnly() && NullSafe.hasItems(restoreMenuItems));
         getView().setRemoveEnabled(!isReadOnly()
-                && advancedMode
-                && selectedElement != null
-                && !PipelineModel.SOURCE_ELEMENT.equals(selectedElement));
+                                   && advancedMode
+                                   && selectedElement != null
+                                   && !PipelineModel.SOURCE_ELEMENT.equals(selectedElement));
     }
 
     private DocRef getParentPipeline() {
@@ -607,7 +588,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         } else {
             restFactory
                     .create(PIPELINE_RESOURCE)
-                    .method(res -> res.fetchPipelineData(parentPipeline))
+                    .method(res -> res.fetchPipelineLayers(parentPipeline))
                     .onSuccess(result -> {
                         pipelineModel.setBaseStack(result);
 

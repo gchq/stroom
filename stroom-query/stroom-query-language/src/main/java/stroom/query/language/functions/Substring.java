@@ -82,7 +82,7 @@ class Substring extends AbstractFunction {
                     gen = new StaticValueFunction(ValString.EMPTY).createGenerator();
                 } else {
                     int start = startPos.intValue();
-                    int end = endPos.intValue();
+                    final int end = endPos.intValue();
 
                     if (start < 0) {
                         start = 0;
@@ -101,11 +101,11 @@ class Substring extends AbstractFunction {
     }
 
     private Function parsePosParam(final Param param, final String paramPos) throws ParseException {
-        Function function;
+        final Function function;
         if (param instanceof Function) {
             function = (Function) param;
         } else {
-            Integer pos = ((Val) param).toInteger();
+            final Integer pos = ((Val) param).toInteger();
             if (pos == null) {
                 throw new ParseException("Number expected as " + paramPos + " argument of '" + name + "' function", 0);
             }
@@ -184,8 +184,8 @@ class Substring extends AbstractFunction {
                 return ValErr.INSTANCE;
             }
 
-            int start = startPos;
-            int end = endPos;
+            final int start = startPos;
+            final int end = endPos;
 
             if (start < 0 || end < start || start >= value.length()) {
                 return ValString.EMPTY;

@@ -18,6 +18,7 @@ package stroom.app.docs;
 
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.docs.shared.Description;
+import stroom.docs.shared.NotDocumented;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeGroup;
@@ -59,7 +60,7 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
             DataRetentionRules.TYPE,
             ReceiveDataRules.TYPE);
 
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         final GenerateDocumentReferenceDoc generateDocumentReferenceDoc = new GenerateDocumentReferenceDoc();
         generateDocumentReferenceDoc.generateDocumentsReference();
     }
@@ -82,6 +83,7 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
                 .parallelStream()
                 // Not visible in UI currently
                 .filter(Predicate.not(ClassInfo::isInterface))
+                .filter(classInfo -> !classInfo.hasAnnotation(NotDocumented.class))
                 .map(this::mapClass)
                 .filter(Objects::nonNull)
                 .filter(docInfo ->
@@ -117,7 +119,7 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
                 final Field field = clazz.getField(DOCUMENT_TYPE_FIELD_NAME);
                 field.setAccessible(true);
                 docType = (DocumentType) field.get(null);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw new RuntimeException(LogUtil.message("Error reading field {} on {}: {}",
                         DOCUMENT_TYPE_FIELD_NAME, classInfo.getName(), e.getMessage(), e));
             }

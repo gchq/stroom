@@ -188,6 +188,8 @@ subprojects {
         implementation platform(libs.dropwizard.dependencies)
         implementation platform(libs.dropwizard.bom)
         implementation platform(libs.aws.bom)
+
+        testImplementation platform(libs.junit.bom)
     }
 
     //println project.getConfigurations().getByName("implementation").getAllDependencies()

@@ -253,7 +253,7 @@ public class TestUtil {
         final String json;
         try {
             json = objectMapper.writeValueAsString(object);
-        } catch (JsonProcessingException e) {
+        } catch (final JsonProcessingException e) {
             throw new RuntimeException(LogUtil.message(
                     "Error serialising {}: {}", object, e.getMessage()), e);
         }
@@ -267,7 +267,7 @@ public class TestUtil {
         final T object2;
         try {
             object2 = objectMapper.readValue(json, clazz);
-        } catch (JsonProcessingException e) {
+        } catch (final JsonProcessingException e) {
             throw new RuntimeException(LogUtil.message(
                     "Error deserialising {}: {}", json, e.getMessage()), e);
         }

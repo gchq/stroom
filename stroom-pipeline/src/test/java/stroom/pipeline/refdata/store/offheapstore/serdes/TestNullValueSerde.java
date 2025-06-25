@@ -13,7 +13,7 @@ class TestNullValueSerde extends AbstractSerdeTest<RefDataValue, RefDataValueSer
     @Test
     void testSerialisationDeserialisation() {
 
-        NullValue nullValue = NullValue.getInstance();
+        final NullValue nullValue = NullValue.getInstance();
         doSerialisationDeserialisationTest(nullValue);
     }
 

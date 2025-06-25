@@ -185,7 +185,7 @@ public class SelectionHandlersPresenter
         registerHandler(moveUpButton.addClickHandler(event -> {
             final ComponentSelectionHandler rule = listPresenter.getSelectionModel().getSelected();
             if (rule != null) {
-                int index = selectionHandlers.indexOf(rule);
+                final int index = selectionHandlers.indexOf(rule);
                 if (index > 0) {
                     selectionHandlers.remove(rule);
                     selectionHandlers.add(index - 1, rule);
@@ -197,7 +197,7 @@ public class SelectionHandlersPresenter
         registerHandler(moveDownButton.addClickHandler(event -> {
             final ComponentSelectionHandler rule = listPresenter.getSelectionModel().getSelected();
             if (rule != null) {
-                int index = selectionHandlers.indexOf(rule);
+                final int index = selectionHandlers.indexOf(rule);
                 if (index < selectionHandlers.size() - 1) {
                     selectionHandlers.remove(rule);
                     selectionHandlers.add(index + 1, rule);

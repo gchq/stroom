@@ -31,6 +31,7 @@ dependencies {
 
     implementation libs.bcrypt
     implementation libs.caffeine
+    implementation libs.dropwizard.client
     implementation libs.dropwizard.metrics.annotation
     implementation libs.dropwizard.metrics.healthchecks
     implementation libs.eventLogging
@@ -40,7 +41,6 @@ dependencies {
     implementation libs.jackson.databind
     implementation libs.jakarta.servlet.api
     implementation libs.jakarta.validation.api
-    implementation libs.jaxb.api
     implementation libs.jose4j
     implementation libs.restygwt
     implementation libs.simple.java.mail
@@ -53,10 +53,9 @@ dependencies {
 
     testImplementation project(':stroom-security:stroom-security-identity')
     testImplementation project(':stroom-test-common')
-    testImplementation libs.junit.jupiter.api
-    testImplementation libs.junit.jupiter.engine
-    testImplementation libs.assertj.core
     testImplementation libs.wiremock
-    testImplementation libs.mockito.core
     testImplementation libs.dropwizard.testing
+
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
 }

@@ -86,14 +86,14 @@ public final class Query {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        Query query = (Query) o;
+        final Query query = (Query) o;
         return Objects.equals(dataSource, query.dataSource) &&
                 Objects.equals(expression, query.expression) &&
                 Objects.equals(params, query.params) &&

@@ -384,7 +384,7 @@ public class ApiKeysListPresenter
                            final Consumer<ResultPage<HashedApiKey>> dataConsumer,
                            final RestErrorHandler errorHandler,
                            final TaskMonitorFactory taskMonitorFactory) {
-        ExpressionOperator expression = QuickFilterExpressionParser
+        final ExpressionOperator expression = QuickFilterExpressionParser
                 .parse(filter, FindApiKeyCriteria.DEFAULT_FIELDS, FindApiKeyCriteria.ALL_FIELDs_MAP);
 
         criteriaBuilder.expression(expression);

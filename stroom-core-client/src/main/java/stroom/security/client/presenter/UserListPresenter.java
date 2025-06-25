@@ -133,7 +133,7 @@ public class UserListPresenter
             dataGrid.addColumn(
                     DataGridUtil.updatableTickBoxColumnBuilder(TickBoxState.createTickBoxFunc(User::isEnabled))
 //                        .enabledWhen(this::isJobNodeEnabled)
-                            .withFieldUpdater((int index, User user, TickBoxState value) -> {
+                            .withFieldUpdater((final int index, final User user, final TickBoxState value) -> {
                                 if (user != null) {
                                     user.setEnabled(value.toBoolean());
                                     restFactory.create(USER_RESOURCE)

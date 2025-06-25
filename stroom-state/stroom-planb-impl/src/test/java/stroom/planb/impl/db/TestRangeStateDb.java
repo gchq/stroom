@@ -65,7 +65,7 @@ class TestRangeStateDb {
             .build();
 
     @Test
-    void test(@TempDir Path tempDir) {
+    void test(@TempDir final Path tempDir) {
         testWrite(tempDir);
 
         try (final RangeStateDb db = RangeStateDb.create(
@@ -88,14 +88,6 @@ class TestRangeStateDb {
             assertThat(state.key().getKeyEnd()).isEqualTo(30);
             assertThat(state.val().type()).isEqualTo(Type.STRING);
             assertThat(state.val().toString()).isEqualTo("test99");
-//
-//            final FieldIndex fieldIndex = new FieldIndex();
-//            fieldIndex.create(RangeStateFields.KEY_START);
-//            final AtomicInteger count = new AtomicInteger();
-//            rangeStateDao.search(new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex, null,
-//                    v -> count.incrementAndGet());
-//            assertThat(count.get()).isEqualTo(1);
-
 
             final FieldIndex fieldIndex = new FieldIndex();
             fieldIndex.create(RangeStateFields.KEY_START);

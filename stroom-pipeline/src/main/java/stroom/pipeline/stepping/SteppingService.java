@@ -245,7 +245,7 @@ public class SteppingService {
 
         // So we have got the stream so try and get the first pipeline that was
         // used to produce children for this stream.
-        String pipelineUuid = meta.getPipelineUuid();
+        final String pipelineUuid = meta.getPipelineUuid();
         if (pipelineUuid != null) {
             try {
                 // Ensure the current user is allowed to load this pipeline.
@@ -292,7 +292,7 @@ public class SteppingService {
                         null);
             }
 
-            if (elementInstance instanceof SupportsCodeInjection supportsCodeInjection) {
+            if (elementInstance instanceof final SupportsCodeInjection supportsCodeInjection) {
                 return supportsCodeInjection.findDoc(
                         request.getFeedName(),
                         request.getPipelineName(),

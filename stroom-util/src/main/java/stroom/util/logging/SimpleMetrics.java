@@ -331,7 +331,7 @@ public class SimpleMetrics {
                 calls++;
                 startTime = System.nanoTime();
             }
-            R r = supplier.get();
+            final R r = supplier.get();
             final long delta = System.nanoTime() - startTime;
             synchronized (this) {
                 calling = false;

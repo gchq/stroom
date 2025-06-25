@@ -126,7 +126,7 @@ public class ExplorerTreeModel {
         this.ensureVisible = null;
         if (NullSafe.hasItems(ensureVisible)) {
             this.ensureVisible = new HashSet<>();
-            for (ExplorerNode node : ensureVisible) {
+            for (final ExplorerNode node : ensureVisible) {
                 if (node != null && node.getUniqueKey() != null) {
                     this.ensureVisible.add(node.getUniqueKey());
 //                    GWT.log("setEnsureVisible: " + node.getName());
@@ -139,7 +139,7 @@ public class ExplorerTreeModel {
         this.ensureVisible = null;
         if (NullSafe.hasItems(ensureVisible)) {
             this.ensureVisible = new HashSet<>();
-            for (ExplorerNode node : ensureVisible) {
+            for (final ExplorerNode node : ensureVisible) {
                 if (node != null && node.getUniqueKey() != null) {
                     this.ensureVisible.add(node.getUniqueKey());
 //                    GWT.log("setEnsureVisible: " + node.getName());
@@ -251,7 +251,7 @@ public class ExplorerTreeModel {
                 if (nextSelection == null && includeNullSelection) {
                     nextSelection = NULL_SELECTION;
                 }
-                int index = rows.indexOf(nextSelection);
+                final int index = rows.indexOf(nextSelection);
                 if (index == -1) {
                     nextSelection = null;
 
@@ -331,7 +331,7 @@ public class ExplorerTreeModel {
     private void addToRows(final List<ExplorerNode> in,
                            final List<ExplorerNode> rows,
                            final Set<ExplorerNodeKey> openItems) {
-        for (ExplorerNode parent : in) {
+        for (final ExplorerNode parent : in) {
             if (openItems.contains(parent.getUniqueKey())) {
                 final ExplorerNode.Builder builder = parent.copy();
                 if (!parent.hasNodeFlag(NodeFlag.LEAF)) {

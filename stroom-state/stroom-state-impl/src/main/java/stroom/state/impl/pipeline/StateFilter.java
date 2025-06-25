@@ -803,7 +803,7 @@ public class StateFilter extends AbstractXMLFilter {
         }
     }
 
-    private boolean isAllWhitespace(char[] ch, final int start, final int length) {
+    private boolean isAllWhitespace(final char[] ch, final int start, final int length) {
 
         boolean isOnlyWhitespace = true;
         for (int i = start; i < start + length; i++) {

@@ -113,7 +113,7 @@ public class SettingsPresenter
         }
     }
 
-    public ComponentConfig write(ComponentConfig componentConfig) {
+    public ComponentConfig write(final ComponentConfig componentConfig) {
         ComponentConfig result = componentConfig;
         for (final Entry<TabData, ComponentDataModifier> entry : modifiers.entrySet()) {
             if (!getView().getTabBar().isTabHidden(entry.getKey())) {

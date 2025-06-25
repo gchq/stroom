@@ -439,7 +439,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 if (allBindValues.length > 0) {
 
                     // Insert tasks.
-                    DurationTimer durationTimer = DurationTimer.start();
+                    final DurationTimer durationTimer = DurationTimer.start();
                     try {
                         insertTasks(context, allBindValues);
                         creationState.totalTasksCreated = allBindValues.length;
@@ -1191,7 +1191,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     public int logicalDeleteByProcessorId(final int processorId) {
         final int count = JooqUtil.withDeadlockRetries(
                 () -> JooqUtil.contextResult(processorDbConnProvider, context -> {
-                    var query = context
+                    final var query = context
                             .update(PROCESSOR_TASK)
                             .set(PROCESSOR_TASK.STATUS, TaskStatus.DELETED.getPrimitiveValue())
                             .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))

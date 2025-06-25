@@ -5,21 +5,6 @@ dependencies {
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
-
-//
     implementation project(':stroom-docref')
-//    //implementation libs.eventLogging
-////    implementation libs.flyway.core
-//    //implementation libs.guice
-//    //implementation libs.jakarta.inject
-//
-    implementation libs.jaxb.api
-//
     implementation libs.slf4j.api
-//    testImplementation libs.junit.jupiter.api
-//
-//    testRuntimeOnly libs.mysql.connector.java
-//    testRuntimeOnly libs.jaxb.impl
-//    testRuntimeOnly libs.jakarta.activation
-//    testRuntimeOnly libs.junit.jupiter.engine
 }

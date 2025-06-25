@@ -194,7 +194,7 @@ public class Fields {
                             .forEach(resultList::add);
                 }
             });
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error adding field completions: {}", e.getMessage(), e);
         }
     }

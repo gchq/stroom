@@ -94,7 +94,7 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
     public FsVolumeGroup create() {
         ensureDefaultVolumes();
         final FsVolumeGroup indexVolumeGroup = new FsVolumeGroup();
-        var newName = NextNameGenerator.getNextName(volumeGroupDao.getNames(), "New group");
+        final var newName = NextNameGenerator.getNextName(volumeGroupDao.getNames(), "New group");
         indexVolumeGroup.setName(newName);
         AuditUtil.stamp(securityContext, indexVolumeGroup);
         final FsVolumeGroup result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
@@ -127,7 +127,7 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
     }
 
     @Override
-    public void delete(int id) {
+    public void delete(final int id) {
         securityContext.secure(AppPermission.MANAGE_VOLUMES_PERMISSION,
                 () -> {
 //                    //TODO Transaction?

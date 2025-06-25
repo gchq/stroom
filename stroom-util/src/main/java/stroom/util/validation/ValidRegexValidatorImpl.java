@@ -44,7 +44,7 @@ public class ValidRegexValidatorImpl implements ValidRegexValidator {
         if (value != null) {
             try {
                 Pattern.compile(value);
-            } catch (PatternSyntaxException e) {
+            } catch (final PatternSyntaxException e) {
                 final String msgTemplate =
                         context.getDefaultConstraintMessageTemplate() +
                                 ". caused by: " +

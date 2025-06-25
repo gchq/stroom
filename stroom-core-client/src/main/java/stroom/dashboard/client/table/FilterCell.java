@@ -62,7 +62,7 @@ public class FilterCell
          *
          * @param value a String value
          */
-        public ViewData(String value) {
+        public ViewData(final String value) {
             this.lastValue = value;
             this.curValue = value;
         }
@@ -72,11 +72,11 @@ public class FilterCell
          * are equal to those of the other object.
          */
         @Override
-        public boolean equals(Object other) {
+        public boolean equals(final Object other) {
             if (!(other instanceof ViewData)) {
                 return false;
             }
-            ViewData vd = (ViewData) other;
+            final ViewData vd = (ViewData) other;
             return equalsOrNull(lastValue, vd.lastValue) &&
                    equalsOrNull(curValue, vd.curValue);
         }
@@ -115,7 +115,7 @@ public class FilterCell
          * @param curValue the current value
          * @see #getCurrentValue()
          */
-        protected void setCurrentValue(String curValue) {
+        protected void setCurrentValue(final String curValue) {
             this.curValue = curValue;
         }
 
@@ -125,11 +125,11 @@ public class FilterCell
          * @param lastValue the last value
          * @see #getLastValue()
          */
-        protected void setLastValue(String lastValue) {
+        protected void setLastValue(final String lastValue) {
             this.lastValue = lastValue;
         }
 
-        private boolean equalsOrNull(Object a, Object b) {
+        private boolean equalsOrNull(final Object a, final Object b) {
             return (a != null)
                     ? a.equals(b)
                     : ((b == null)
@@ -154,22 +154,22 @@ public class FilterCell
     }
 
     @Override
-    public void onBrowserEvent(Context context,
-                               Element parent,
-                               Column column,
-                               NativeEvent event,
-                               ValueUpdater<Column> valueUpdater) {
+    public void onBrowserEvent(final Context context,
+                               final Element parent,
+                               final Column column,
+                               final NativeEvent event,
+                               final ValueUpdater<Column> valueUpdater) {
         super.onBrowserEvent(context, parent, column, event, valueUpdater);
 
         // Ignore events that don't target the input.
-        InputElement input = getInputElement(parent);
-        Element target = event.getEventTarget().cast();
+        final InputElement input = getInputElement(parent);
+        final Element target = event.getEventTarget().cast();
         if (!input.isOrHasChild(target)) {
             return;
         }
 
-        String eventType = event.getType();
-        Object key = context.getKey();
+        final String eventType = event.getType();
+        final Object key = context.getKey();
         if (BrowserEvents.CHANGE.equals(eventType)) {
             finishEditing(parent, column, key, valueUpdater);
         } else if (BrowserEvents.KEYUP.equals(eventType)) {
@@ -184,9 +184,9 @@ public class FilterCell
     }
 
     @Override
-    public void render(Context context, Column column, SafeHtmlBuilder sb) {
+    public void render(final Context context, final Column column, final SafeHtmlBuilder sb) {
         // Get the view data.
-        Object key = context.getKey();
+        final Object key = context.getKey();
         ViewData viewData = getViewData(key);
         final String value = getValue(column);
         if (viewData != null && viewData.getCurrentValue().equals(value)) {
@@ -194,7 +194,7 @@ public class FilterCell
             viewData = null;
         }
 
-        String s = (viewData != null)
+        final String s = (viewData != null)
                 ? viewData.getCurrentValue()
                 : value;
         if (s != null) {
@@ -210,7 +210,7 @@ public class FilterCell
                                  final Object key,
                                  final ValueUpdater<Column> valueUpdater) {
         final String value = getValue(column);
-        String newValue = getInputElement(parent).getValue();
+        final String newValue = getInputElement(parent).getValue();
 
         // Get the view data.
         ViewData vd = getViewData(key);
@@ -237,7 +237,7 @@ public class FilterCell
     }
 
     @Override
-    protected InputElement getInputElement(Element parent) {
+    protected InputElement getInputElement(final Element parent) {
         return super.getInputElement(parent).<InputElement>cast();
     }
 

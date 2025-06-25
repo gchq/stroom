@@ -54,7 +54,7 @@ public class SolrIndexClientCacheImpl implements SolrIndexClientCache, Clearable
                 this::destroy);
     }
 
-    private SolrClient create(SolrConnectionConfig solrConnectionConfig) {
+    private SolrClient create(final SolrConnectionConfig solrConnectionConfig) {
         return new SolrClientFactory().create(solrConnectionConfig);
     }
 

@@ -2,6 +2,7 @@ package stroom.planb.impl.serde.val;
 
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.planb.impl.db.Db;
+import stroom.planb.impl.db.KeyLength;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;
 
@@ -29,9 +30,7 @@ public class LimitedStringValSerde implements ValSerde {
     @Override
     public void write(final Txn<ByteBuffer> txn, final Val value, final Consumer<ByteBuffer> consumer) {
         final byte[] bytes = value.toString().getBytes(StandardCharsets.UTF_8);
-        if (bytes.length > limit) {
-            throw new RuntimeException("Key length exceeds " + limit + " bytes");
-        }
+        KeyLength.check(bytes.length, limit);
 
         // We are in a single write transaction so should be able to reuse the same buffer again and again.
         reusableWriteBuffer.clear();

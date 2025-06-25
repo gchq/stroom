@@ -22,6 +22,7 @@ import stroom.query.api.TimeRange;
 import stroom.query.api.token.AbstractToken;
 import stroom.query.api.token.TokenException;
 import stroom.query.api.token.TokenType;
+import stroom.query.language.functions.UserTimeZoneUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -283,30 +284,9 @@ public class DateExpressionParser {
             // Assume a timezone is specified on the string.
             return ZonedDateTime.parse(trimmed);
         } catch (final DateTimeParseException e) {
-
             try {
-                if (dateTimeSettings.getTimeZone() != null && dateTimeSettings.getTimeZone().getUse() != null) {
-                    switch (dateTimeSettings.getTimeZone().getUse()) {
-                        case LOCAL -> {
-                            final ZoneId zoneId = ZoneId.of(dateTimeSettings.getLocalZoneId());
-                            return LocalDateTime.parse(trimmed).atZone(zoneId);
-                        }
-                        case UTC -> {
-                            final ZoneId zoneId = ZoneId.of("Z");
-                            return LocalDateTime.parse(trimmed).atZone(zoneId);
-                        }
-                        case ID -> {
-                            final ZoneId zoneId = ZoneId.of(dateTimeSettings.getTimeZone().getId());
-                            return LocalDateTime.parse(trimmed).atZone(zoneId);
-                        }
-                        case OFFSET -> {
-                            final ZoneOffset zoneOffset = ZoneOffset
-                                    .ofHoursMinutes(dateTimeSettings.getTimeZone().getOffsetHours(),
-                                            dateTimeSettings.getTimeZone().getOffsetMinutes());
-                            return LocalDateTime.parse(trimmed).atOffset(zoneOffset).toZonedDateTime();
-                        }
-                    }
-                }
+                final ZoneId zoneId = UserTimeZoneUtil.getZoneId(dateTimeSettings.getTimeZone());
+                return LocalDateTime.parse(trimmed).atZone(zoneId);
             } catch (final RuntimeException ex) {
                 // Ignore error
             }
@@ -358,7 +338,7 @@ public class DateExpressionParser {
             boolean found;
             do {
                 found = false;
-                char c = chars[index];
+                final char c = chars[index];
                 if (c == '+') {
                     sign = c;
                     index++;
@@ -396,16 +376,16 @@ public class DateExpressionParser {
         final String expression = WHITESPACE.matcher(string).replaceAll("");
 
         int start = 0;
-        char[] chars = expression.toCharArray();
+        final char[] chars = expression.toCharArray();
 
         TimeFunction lastFunction = null;
         while (start < chars.length) {
             // Get digits.
-            int numStart = start;
+            final int numStart = start;
             while (Character.isDigit(chars[start])) {
                 start++;
             }
-            long num = Long.parseLong(new String(chars, numStart, start - numStart));
+            final long num = Long.parseLong(new String(chars, numStart, start - numStart));
 
             // Get duration type.
             final char type = chars[start++];

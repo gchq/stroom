@@ -115,7 +115,7 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
     }
 
     @Override
-    public IndexVolume update(IndexVolume indexVolume) {
+    public IndexVolume update(final IndexVolume indexVolume) {
         return genericDao.update(indexVolume);
     }
 
@@ -268,7 +268,7 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
         }
 
         return criteria.getSortList().stream().map(sort -> {
-            Field<?> field;
+            final Field<?> field;
             if (IndexVolumeFields.FIELD_ID.equals(sort.getId())) {
                 field = INDEX_VOLUME.ID;
             } else if (IndexVolumeFields.FIELD_NODE_NAME.equals(sort.getId())) {

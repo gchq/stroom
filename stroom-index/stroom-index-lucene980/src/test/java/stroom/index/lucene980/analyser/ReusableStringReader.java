@@ -45,19 +45,19 @@ final class ReusableStringReader extends Reader {
     int left;
     String s;
 
-    void init(String s) {
+    void init(final String s) {
         this.s = s;
         left = s.length();
         this.upto = 0;
     }
 
     @Override
-    public int read(char[] c) {
+    public int read(final char[] c) {
         return read(c, 0, c.length);
     }
 
     @Override
-    public int read(char[] c, int off, int len) {
+    public int read(final char[] c, final int off, final int len) {
         if (left > len) {
             s.getChars(upto, upto + len, c, off);
             upto += len;
@@ -69,7 +69,7 @@ final class ReusableStringReader extends Reader {
             return -1;
         } else {
             s.getChars(upto, upto + left, c, off);
-            int r = left;
+            final int r = left;
             left = 0;
             upto = s.length();
             return r;

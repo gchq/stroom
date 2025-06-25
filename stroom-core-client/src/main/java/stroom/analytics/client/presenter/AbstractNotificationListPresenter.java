@@ -243,7 +243,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
         dataGrid.addEndColumn(new EndColumn<>());
     }
 
-    private void replace(NotificationConfig notificationConfig) {
+    private void replace(final NotificationConfig notificationConfig) {
         final int index = list.indexOf(notificationConfig);
         if (index >= 0) {
             list.remove(notificationConfig);

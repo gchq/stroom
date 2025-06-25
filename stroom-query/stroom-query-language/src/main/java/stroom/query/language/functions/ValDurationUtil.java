@@ -129,7 +129,7 @@ public class ValDurationUtil {
     }
 
     private static ValErr exceptionToValErr(final Exception e) {
-        if (e instanceof DateTimeParseException dtpe) {
+        if (e instanceof final DateTimeParseException dtpe) {
             String msg = e.getMessage().stripTrailing();
             msg = msg.endsWith(".")
                     ? e.getMessage()
@@ -158,9 +158,9 @@ public class ValDurationUtil {
             }
             // Not ISO 8601 so have a go with our ModelStringUtil format
             return ModelStringUtil.parseDurationString(value);
-        } catch (DateTimeParseException e) {
+        } catch (final DateTimeParseException e) {
             throw e;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new DateTimeParseException(PARSE_ERROR_MESSAGE, value, 0);
         }
     }

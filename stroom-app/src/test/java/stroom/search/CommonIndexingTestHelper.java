@@ -70,13 +70,13 @@ public class CommonIndexingTestHelper {
         setup(OptionalInt.empty());
     }
 
-    public void setup(OptionalInt maxDocsPerShard) {
+    public void setup(final OptionalInt maxDocsPerShard) {
         // Add data.
         commonTranslationTestHelper.setup();
         runProcessing(1, maxDocsPerShard);
     }
 
-    public void setup(List<Path> dataFiles, OptionalInt maxDocsPerShard) {
+    public void setup(final List<Path> dataFiles, final OptionalInt maxDocsPerShard) {
         // Add data.
         commonTranslationTestHelper.setup(new ArrayList<>(dataFiles));
         runProcessing(dataFiles.size(), maxDocsPerShard);
@@ -87,7 +87,7 @@ public class CommonIndexingTestHelper {
         List<ProcessorResult> results = commonTranslationTestHelper.processAll();
 
         // 3 ref data streams plus our data streams
-        int expectedTaskCount = 3 + dataFileCount;
+        final int expectedTaskCount = 3 + dataFileCount;
 
         assertThat(results.size())
                 .isEqualTo(expectedTaskCount);

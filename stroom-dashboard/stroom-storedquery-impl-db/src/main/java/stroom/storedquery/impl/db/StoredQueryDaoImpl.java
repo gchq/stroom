@@ -141,7 +141,7 @@ class StoredQueryDaoImpl implements StoredQueryDao {
 
 
     @Override
-    public boolean delete(int id) {
+    public boolean delete(final int id) {
         final int count = JooqUtil.contextResult(storedQueryDbConnProvider, context -> context
                 .deleteFrom(QUERY)
                 .where(QUERY.ID.eq(id))
@@ -150,7 +150,7 @@ class StoredQueryDaoImpl implements StoredQueryDao {
     }
 
     @Override
-    public Optional<StoredQuery> fetch(int id) {
+    public Optional<StoredQuery> fetch(final int id) {
         return JooqUtil.contextResult(storedQueryDbConnProvider, context -> context
                         .select()
                         .from(QUERY)
@@ -200,7 +200,7 @@ class StoredQueryDaoImpl implements StoredQueryDao {
 
                     // Rank the rows with lowest ronNum being the most recent
                     // and highest rowNum being the oldest
-                    Table<?> inner = context
+                    final Table<?> inner = context
                             .select(
                                     QUERY.ID,
                                     rowNumField,

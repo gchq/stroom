@@ -36,7 +36,7 @@ class TestParallelExecutor {
                     outputQueue.add(item);
                     LOGGER.debug("item: {}, inputQueue.size: {}, outputQueue.size: {}",
                             item, inputQueue.size(), outputQueue.size());
-                } catch (InterruptedException e) {
+                } catch (final InterruptedException e) {
                     throw new UncheckedInterruptedException(e);
                 }
             };
@@ -97,7 +97,7 @@ class TestParallelExecutor {
                     outputQueue.add(item);
                     LOGGER.debug("item: {}, inputQueue.size: {}, outputQueue.size: {}",
                             item, inputQueue.size(), outputQueue.size());
-                } catch (InterruptedException e) {
+                } catch (final InterruptedException e) {
                     throw new UncheckedInterruptedException(e);
                 }
             };
@@ -216,7 +216,7 @@ class TestParallelExecutor {
                     outputQueue.add(item);
                     LOGGER.debug("item: {}, inputQueue.size: {}, outputQueue.size: {}",
                             item, inputQueue.size(), outputQueue.size());
-                } catch (InterruptedException e) {
+                } catch (final InterruptedException e) {
                     throw new UncheckedInterruptedException(e);
                 }
             };

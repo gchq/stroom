@@ -147,8 +147,8 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
             getView().setContent(rawPresenter.getView());
 
             final String title = "Unable to display stream ["
-                    + fetchDataResult.getSourceLocation().getIdentifierString()
-                    + "]";
+                                 + fetchDataResult.getSourceLocation().getIdentifierString()
+                                 + "]";
 
             final String errorText = String.join("\n", fetchDataResult.getErrors());
 
@@ -220,10 +220,10 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
                         if (inputChar == '<') {
                             inElementTag = true;
                         } else if (inputChar == '&'
-                                && i + 3 < inputLength
-                                && inputChars[i + 1] == 'l'
-                                && inputChars[i + 2] == 't'
-                                && inputChars[i + 3] == ';') {
+                                   && i + 3 < inputLength
+                                   && inputChars[i + 1] == 'l'
+                                   && inputChars[i + 2] == 't'
+                                   && inputChars[i + 3] == ';') {
                             inEscapedElement = true;
                         } else {
                             // If we aren't in an element or escaped element
@@ -254,11 +254,11 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
                         inElementTag = false;
 
                     } else if (inEscapedElement
-                            && inputChar == '&'
-                            && i + 3 < inputLength
-                            && inputChars[i + 1] == 'g'
-                            && inputChars[i + 2] == 't'
-                            && inputChars[i + 3] == ';') {
+                               && inputChar == '&'
+                               && i + 3 < inputLength
+                               && inputChars[i + 1] == 'g'
+                               && inputChars[i + 2] == 't'
+                               && inputChars[i + 3] == ';') {
                         inEscapedElement = false;
                     }
 
@@ -579,7 +579,8 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
                                 // If we are queueing more actions then don't update
                                 // the text.
                                 if (fetchDataQueue.size() == 0) {
-                                    String data = "The data has been deleted or reprocessed since this index was built";
+                                    final String data = "The data has been deleted or reprocessed since this " +
+                                                        "index was built";
                                     boolean isHtml = false;
                                     if (result != null) {
                                         if (result instanceof FetchDataResult) {

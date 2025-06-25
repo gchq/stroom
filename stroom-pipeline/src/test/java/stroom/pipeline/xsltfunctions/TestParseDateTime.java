@@ -263,7 +263,7 @@ class TestParseDateTime extends AbstractXsltFunctionTest<ParseDateTime> {
 //                    + "\n";
             try {
                 Files.writeString(tempFile, line, StandardOpenOption.APPEND);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new RuntimeException(e);
             }
         });
@@ -402,25 +402,25 @@ class TestParseDateTime extends AbstractXsltFunctionTest<ParseDateTime> {
 
     @Test
     void testCaseSensitivity_upperCaseMonth() {
-        ZonedDateTime time = callAsUTCToZonedDateTime("dd-MMM-yy", "18-APR-18");
+        final ZonedDateTime time = callAsUTCToZonedDateTime("dd-MMM-yy", "18-APR-18");
         assertThat(time.getMonth()).isEqualTo(Month.APRIL);
     }
 
     @Test
     void testCaseSensitivity_sentenceCaseMonth() {
-        ZonedDateTime time = callAsUTCToZonedDateTime("dd-MMM-yy", "18-Apr-18");
+        final ZonedDateTime time = callAsUTCToZonedDateTime("dd-MMM-yy", "18-Apr-18");
         assertThat(time.getMonth()).isEqualTo(Month.APRIL);
     }
 
     @Test
     void testCaseSensitivity_lowerCaseMonth() {
-        ZonedDateTime time = callAsUTCToZonedDateTime("dd-MMM-yy", "18-apr-18");
+        final ZonedDateTime time = callAsUTCToZonedDateTime("dd-MMM-yy", "18-apr-18");
         assertThat(time.getMonth()).isEqualTo(Month.APRIL);
     }
 
     @Test
     void testWithTimeZoneInStr1() {
-        ZonedDateTime time = callAsUTCToZonedDateTime(
+        final ZonedDateTime time = callAsUTCToZonedDateTime(
                 "dd-MM-yy HH:mm:ss xxx",
                 "18-04-18 01:01:01 +00:00");
         assertThat(time.toString())
@@ -429,7 +429,7 @@ class TestParseDateTime extends AbstractXsltFunctionTest<ParseDateTime> {
 
     @Test
     void testWithTimeZoneInStr2() {
-        ZonedDateTime time = callAsUTCToZonedDateTime(
+        final ZonedDateTime time = callAsUTCToZonedDateTime(
                 "dd-MM-yy HH:mm:ss Z", "18-04-18 01:01:01 +0000");
         assertThat(time.toString())
                 .isEqualTo("2018-04-18T01:01:01Z");
@@ -437,7 +437,7 @@ class TestParseDateTime extends AbstractXsltFunctionTest<ParseDateTime> {
 
     @Test
     void testWithTimeZoneInStr3() {
-        ZonedDateTime time = callAsUTCToZonedDateTime(
+        final ZonedDateTime time = callAsUTCToZonedDateTime(
                 "dd-MM-yy HH:mm:ss Z", "18-04-18 01:01:01 -0000");
         assertThat(time.toString())
                 .isEqualTo("2018-04-18T01:01:01Z");
@@ -445,7 +445,7 @@ class TestParseDateTime extends AbstractXsltFunctionTest<ParseDateTime> {
 
     @Test
     void testWithTimeZoneInStr4() {
-        ZonedDateTime time = callAsUTCToZonedDateTime(
+        final ZonedDateTime time = callAsUTCToZonedDateTime(
                 "dd-MM-yy HH:mm:ss xxx", "18-04-18 01:01:01 -00:00");
         assertThat(time.toString())
                 .isEqualTo("2018-04-18T01:01:01Z");
@@ -454,7 +454,7 @@ class TestParseDateTime extends AbstractXsltFunctionTest<ParseDateTime> {
     @Test
     void testWithTimeZoneInStr5a() {
         // Apr is in BST so UTC is one hr less
-        ZonedDateTime time = callAsUTCToZonedDateTime(
+        final ZonedDateTime time = callAsUTCToZonedDateTime(
                 "dd-MM-yy HH:mm:ss VV", "18-04-18 01:01:01 Europe/London");
         assertThat(time.toString())
                 .isEqualTo("2018-04-18T00:01:01Z");
@@ -463,7 +463,7 @@ class TestParseDateTime extends AbstractXsltFunctionTest<ParseDateTime> {
     @Test
     void testWithTimeZoneInStr5b() {
         // Jan is in GMT so matches UTC
-        ZonedDateTime time = callAsUTCToZonedDateTime(
+        final ZonedDateTime time = callAsUTCToZonedDateTime(
                 "dd-MM-yy HH:mm:ss VV", "18-01-18 01:01:01 Europe/London");
         assertThat(time.toString())
                 .isEqualTo("2018-01-18T01:01:01Z");
@@ -476,7 +476,7 @@ class TestParseDateTime extends AbstractXsltFunctionTest<ParseDateTime> {
                 .map(zoneId1 -> {
                     try {
                         return ZoneId.of(zoneId1);
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         LOGGER.warn("No ZoneId for '{}'", zoneId1);
                         return null;
                     }

@@ -339,7 +339,7 @@ class TestAppPermissionDaoImpl {
     }
 
     private UserRef createUserOrGroup(final String name, final boolean group) {
-        User user = User.builder()
+        final User user = User.builder()
                 .subjectId(name)
                 .displayName(name)
                 .uuid(UUID.randomUUID().toString())

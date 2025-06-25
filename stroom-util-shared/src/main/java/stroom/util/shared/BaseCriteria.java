@@ -63,14 +63,14 @@ public abstract class BaseCriteria {
         return pageRequest;
     }
 
-    protected Set<Long> clone(Set<Long> set) {
+    protected Set<Long> clone(final Set<Long> set) {
         if (set == null) {
             return null;
         }
         return new HashSet<>(set);
     }
 
-    protected void copyFrom(BaseCriteria other) {
+    protected void copyFrom(final BaseCriteria other) {
         if (other != null) {
             if (other.pageRequest == null) {
                 this.pageRequest = null;

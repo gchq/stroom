@@ -37,9 +37,9 @@ public class YamlUtil {
         // no way of getting the yaml file location from the dropwizard classes
         Path path = null;
 
-        for (String arg : args) {
+        for (final String arg : args) {
             if (arg.toLowerCase().endsWith("yml") || arg.toLowerCase().endsWith("yaml")) {
-                Path yamlFile = Path.of(arg);
+                final Path yamlFile = Path.of(arg);
                 if (Files.isRegularFile(yamlFile)) {
                     path = yamlFile;
                     break;
@@ -134,7 +134,7 @@ public class YamlUtil {
 
         try {
             return yamlObjectMapper.treeToValue(mergedNode, valueType);
-        } catch (JsonProcessingException e) {
+        } catch (final JsonProcessingException e) {
             throw new RuntimeException(LogUtil.message(
                     "Error converting merged tree to {}: {}", valueType.getName(), e.getMessage()), e);
         }
@@ -145,7 +145,7 @@ public class YamlUtil {
             final String node1Yaml = objectMapper.writeValueAsString(node1);
             final String node2Yaml = objectMapper.writeValueAsString(node2);
             DiffUtil.unifiedDiff(node1Yaml, node2Yaml, true, 3);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             LOGGER.debug("Error writing node tree to string: " + e.getMessage(), e);
         }
     }

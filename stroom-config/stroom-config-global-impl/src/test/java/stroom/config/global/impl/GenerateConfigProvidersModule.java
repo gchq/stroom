@@ -66,7 +66,7 @@ public class GenerateConfigProvidersModule {
                 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             """;
 
-    public static void main(String[] args) throws IOException {
+    public static void main(final String[] args) throws IOException {
         final ConfigMapper configMapper = new ConfigMapper();
         final Set<String> simpleNames = new HashSet<>();
         final Map<String, List<String>> simpleNameToFullNamesMap = new HashMap<>();
@@ -234,13 +234,13 @@ public class GenerateConfigProvidersModule {
     }
 
     private static void updateFile(final String content) {
-        Path pwd = Paths.get(".")
+        final Path pwd = Paths.get(".")
                 .toAbsolutePath()
                 .normalize();
 
         LOGGER.debug("PWD: {}", pwd.toString());
 
-        Path moduleFile = pwd.resolve("stroom-config/stroom-config-global-impl/src/main/java")
+        final Path moduleFile = pwd.resolve("stroom-config/stroom-config-global-impl/src/main/java")
                 .resolve(ConfigProvidersModule.class.getName().replace(".", File.separator) + ".java")
                 .normalize();
 
@@ -256,7 +256,7 @@ public class GenerateConfigProvidersModule {
             LOGGER.info("Writing file " + moduleFile.toAbsolutePath());
             Files.writeString(moduleFile, content);
 
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException("Error reading content of " + moduleFile);
         }
     }

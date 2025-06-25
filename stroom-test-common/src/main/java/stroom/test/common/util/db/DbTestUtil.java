@@ -7,7 +7,6 @@ import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceKey;
 import stroom.db.util.DbUrl;
 import stroom.db.util.HikariUtil;
-import stroom.util.db.ForceLegacyMigration;
 import stroom.util.exception.ThrowingConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -80,8 +79,6 @@ public class DbTestUtil {
         return dbModule.getConnectionProvider(
                 () -> config,
                 new TestDataSourceFactory(CommonDbConfig::new),
-                new ForceLegacyMigration() {
-                },
                 null);
     }
 
@@ -193,7 +190,7 @@ public class DbTestUtil {
                     }
                 }
 
-                for (String dbName : dbNames) {
+                for (final String dbName : dbNames) {
                     LOGGER.info("Dropping test database {}", dbName);
                     statement.executeUpdate("DROP DATABASE " + dbName + ";");
                 }
@@ -231,7 +228,7 @@ public class DbTestUtil {
     public static void ensureJdbcDriver(final ConnectionConfig connectionConfig) {
         try {
             Class.forName(connectionConfig.getClassName());
-        } catch (ClassNotFoundException e) {
+        } catch (final ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
     }
@@ -249,7 +246,7 @@ public class DbTestUtil {
                     }
                 }
 
-                for (String dbName : dbNames) {
+                for (final String dbName : dbNames) {
                     LOGGER.info("Dropping test database {}", dbName);
                     statement.executeUpdate("DROP DATABASE " + dbName + ";");
                 }
@@ -552,7 +549,7 @@ public class DbTestUtil {
     }
 
     public static void clearTables(final Connection connection, final List<String> tableNames) {
-        List<String> deleteStatements = tableNames.stream()
+        final List<String> deleteStatements = tableNames.stream()
                 .map(tableName -> "DELETE FROM " + tableName)
                 .toList();
 
@@ -560,7 +557,7 @@ public class DbTestUtil {
     }
 
     public static void truncateTables(final Connection connection, final List<String> tableNames) {
-        List<String> deleteStatements = tableNames.stream()
+        final List<String> deleteStatements = tableNames.stream()
                 .map(tableName -> "TRUNCATE TABLE " + tableName)
                 .collect(Collectors.toList());
 
@@ -585,12 +582,12 @@ public class DbTestUtil {
             sqlStatements.forEach(sql -> {
                 try {
                     statement.addBatch(sql);
-                } catch (SQLException e) {
+                } catch (final SQLException e) {
                     throw new RuntimeException(String.format("Error adding sql [%s] to batch", sql), e);
                 }
             });
-            int[] results = statement.executeBatch();
-            boolean isFailure = Arrays.stream(results)
+            final int[] results = statement.executeBatch();
+            final boolean isFailure = Arrays.stream(results)
                     .anyMatch(val -> val == Statement.EXECUTE_FAILED);
 
             if (isFailure) {

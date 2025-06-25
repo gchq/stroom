@@ -20,10 +20,10 @@ import stroom.suggestions.api.SuggestionsService;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.validation.constraints.NotNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -193,11 +193,11 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
                             Optional.of(Comparator.naturalOrder()))
                     .limit(LIMIT)
                     .toList();
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
             LOGGER.error("Thread interrupted", e);
             return Collections.emptyList();
-        } catch (ExecutionException e) {
+        } catch (final ExecutionException e) {
             throw new RuntimeException("Error getting feed name suggestions: " + e.getMessage(), e);
         }
     }

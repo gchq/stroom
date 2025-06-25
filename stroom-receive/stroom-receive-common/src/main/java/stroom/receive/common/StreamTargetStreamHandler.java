@@ -114,7 +114,7 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
     public long addEntry(final String entryName,
                          final InputStream inputStream,
                          final Consumer<Long> progressHandler) throws IOException {
-        long bytesWritten;
+        final long bytesWritten;
         LOGGER.debug(() -> "addEntry() - " + entryName);
 
         final StroomZipEntry entry = stroomZipEntries.addFile(entryName);

@@ -60,7 +60,7 @@ public class ElementRegistryFactoryImpl implements ElementRegistryFactory, Eleme
     }
 
     private ElementRegistry create() {
-        ElementRegistry registry;
+        final ElementRegistry registry;
 
         // Fudge a task scope context as many of the beans require one before
         // they can be created.

@@ -179,7 +179,7 @@ class TestInnerProcessEndToEnd {
 
                 // Examine data.
                 final Path storeDir = forwardFileDestination.getStoreDir();
-                long maxId = DirUtil.getMaxDirId(storeDir);
+                final long maxId = DirUtil.getMaxDirId(storeDir);
 
                 final Snapshot snapshot = DirectorySnapshot.of(storeDir);
                 LOGGER.info("snapshot:\n{}", snapshot);

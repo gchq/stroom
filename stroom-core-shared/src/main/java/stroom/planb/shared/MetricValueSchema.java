@@ -21,6 +21,13 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class MetricValueSchema {
 
+    public static final MaxValueSize DEFAULT_MAX_VALUE_SIZE = MaxValueSize.TWO;
+    public static final Boolean DEFAULT_STORE_LATEST_VALUE = true;
+    public static final Boolean DEFAULT_STORE_MIN = false;
+    public static final Boolean DEFAULT_STORE_MAX = false;
+    public static final Boolean DEFAULT_STORE_COUNT = false;
+    public static final Boolean DEFAULT_STORE_SUM = false;
+
     @JsonProperty
     private final MaxValueSize valueType;
     @JsonProperty

@@ -115,7 +115,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     public AuthStatus currentAuthState(final HttpServletRequest request) {
         LOGGER.debug("currentAuthState");
-        AuthStateImpl authState = getAuthState(request);
+        final AuthStateImpl authState = getAuthState(request);
 
         // Now we can check if we're logged in somehow (session or certs) and build the response accordingly
         if (authState != null) {
@@ -125,7 +125,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
         } else if (config.isAllowCertificateAuthentication()) {
             LOGGER.debug("Attempting login with certificate");
 
-            AuthStatus status = loginWithCertificate(request);
+            final AuthStatus status = loginWithCertificate(request);
             if (status.getError().isPresent()) {
                 LOGGER.error("Failed to log in with certificate, user: " + status.getError().get().getSubject()
                              + ", message: " + status.getError().get().getMessage());
@@ -147,7 +147,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
             final String cn = optionalCN.get();
             // Check for a certificate
             LOGGER.debug(() -> "Got CN: " + cn);
-            Optional<String> optionalUserId = getIdFromCertificate(cn);
+            final Optional<String> optionalUserId = getIdFromCertificate(cn);
 
             if (optionalUserId.isEmpty()) {
                 return new AuthStatusImpl(new BadRequestException(cn,
@@ -174,12 +174,12 @@ class AuthenticationServiceImpl implements AuthenticationService {
                         verifyAccountStateOrThrow(account, "locked", authType, () -> !account.isLocked());
                         verifyAccountStateOrThrow(account, "inactive", authType, () -> !account.isInactive());
                         verifyAccountStateOrThrow(account, "disabled", authType, account::isEnabled);
-                    } catch (BadRequestException badRequestException) {
+                    } catch (final BadRequestException badRequestException) {
                         return new AuthStatusImpl(badRequestException, true);
                     }
 
                     LOGGER.info("Logging user in: {}", userId);
-                    AuthStateImpl newState = new AuthStateImpl(
+                    final AuthStateImpl newState = new AuthStateImpl(
                             account,
                             false,
                             System.currentTimeMillis());
@@ -480,13 +480,13 @@ class AuthenticationServiceImpl implements AuthenticationService {
             isNew = false;
         }
 
-        AuthStatusImpl(AuthState state, boolean isNew) {
+        AuthStatusImpl(final AuthState state, final boolean isNew) {
             this.state = state;
             this.isNew = isNew;
             this.error = null;
         }
 
-        AuthStatusImpl(BadRequestException error, boolean isNew) {
+        AuthStatusImpl(final BadRequestException error, final boolean isNew) {
             this.error = error;
             this.isNew = isNew;
             this.state = null;

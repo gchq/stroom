@@ -67,7 +67,7 @@ class TaskProgressUtil {
                     .stream()
                     .flatMap(List::stream)
                     .collect(Collectors.toMap(TaskProgress::getId, Function.identity()));
-        } catch (Exception e) {
+        } catch (final Exception e) {
 //            try {
 //                input
 //                        .stream()
@@ -86,7 +86,7 @@ class TaskProgressUtil {
             throw new RuntimeException(e);
         }
 
-        List<TaskProgress> resultList = createList(totalMap, criteria, treeAction);
+        final List<TaskProgress> resultList = createList(totalMap, criteria, treeAction);
         final long total = resultList.size();
         final List<TaskProgress> trimmed = new ArrayList<>();
         for (int i = range.getStart(); i < range.getStart() + range.getLength() && i < resultList.size(); i++) {

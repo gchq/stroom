@@ -22,8 +22,8 @@ public class TestKafkaProducerAsync {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestKafkaProducerAsync.class);
 
-    public static void main(String[] args) {
-        Properties props = new Properties();
+    public static void main(final String[] args) {
+        final Properties props = new Properties();
         props.put("bootstrap.servers", "localhost:9092");
 //        props.put("acks", "0");
 
@@ -33,13 +33,13 @@ public class TestKafkaProducerAsync {
         props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
         props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
 
-        KafkaProducer<String, String> kafkaProducer = new KafkaProducer<>(props);
+        final KafkaProducer<String, String> kafkaProducer = new KafkaProducer<>(props);
 
         LOGGER.info("Sending records");
         final List<Future<RecordMetadata>> futures = IntStream.rangeClosed(1, 10)
                 .boxed()
                 .map(i -> {
-                    ProducerRecord<String, String> producerRecord = new ProducerRecord<>(
+                    final ProducerRecord<String, String> producerRecord = new ProducerRecord<>(
                             "sourceTopic", "key" + i, Instant.now().toString());
 
                     final Future<RecordMetadata> sendFuture = kafkaProducer.send(
@@ -59,7 +59,7 @@ public class TestKafkaProducerAsync {
         futures.forEach(recordMetadataFuture -> {
             try {
                 recordMetadataFuture.get();
-            } catch (InterruptedException | ExecutionException e) {
+            } catch (final InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
             }
         });

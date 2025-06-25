@@ -32,7 +32,7 @@ class TestFsTypePathDaoImpl extends StroomUnitTest {
         final FsDataStoreDbConnProvider fsDataStoreDbConnProvider = DbTestUtil.getTestDbDatasource(
                 new FsDataStoreDbModule(), new DataStoreServiceDbConfig());
 
-        FsTypePathDaoImpl fsTypePathDao = new FsTypePathDaoImpl(
+        final FsTypePathDaoImpl fsTypePathDao = new FsTypePathDaoImpl(
                 fsDataStoreDbConnProvider,
                 new CacheManagerImpl(),
                 FsVolumeConfig::new);

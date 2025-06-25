@@ -7,14 +7,9 @@ dependencies {
     implementation libs.eventLogging
     implementation libs.guice
     implementation libs.jackson.annotations
-    implementation libs.jaxb.api
     implementation libs.mockito.core
     implementation libs.mockito.junit.jupiter
     implementation libs.slf4j.api
 
-    testRuntimeOnly libs.jcl.over.slf4j
-    testRuntimeOnly libs.jul.to.slf4j
-    testRuntimeOnly libs.log4j.over.slf4j
-    testRuntimeOnly libs.logback.classic
-    testRuntimeOnly libs.logback.core
+    testRuntimeOnly libs.bundles.common.test.runtime
 }

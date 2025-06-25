@@ -69,8 +69,8 @@ class TestSearchResponseCreator {
                 searchResponseCreator.create(searchRequest,
                         searchResponseCreator.makeDefaultResultCreators(searchRequest)));
 
-        SearchResponse searchResponse = timedResult.getResult();
-        Duration actualDuration = timedResult.getDuration();
+        final SearchResponse searchResponse = timedResult.getResult();
+        final Duration actualDuration = timedResult.getDuration();
 
         assertThat(searchResponse).isNotNull();
         assertThat(searchResponse.getResults()).isNullOrEmpty();
@@ -105,8 +105,8 @@ class TestSearchResponseCreator {
                 searchResponseCreator.create(searchRequest,
                         searchResponseCreator.makeDefaultResultCreators(searchRequest)));
 
-        SearchResponse searchResponse = timedResult.getResult();
-        Duration actualDuration = timedResult.getDuration();
+        final SearchResponse searchResponse = timedResult.getResult();
+        final Duration actualDuration = timedResult.getDuration();
 
         assertResponseWithData(searchResponse);
 
@@ -119,11 +119,11 @@ class TestSearchResponseCreator {
 
     @Test
     void create_nonIncremental_completesBeforeTimeout() {
-        Duration clientTimeout = Duration.ofMillis(5_000);
+        final Duration clientTimeout = Duration.ofMillis(5_000);
 
         //store initially not complete
         Mockito.when(mockStore.isComplete()).thenReturn(false);
-        long sleepTime = 200L;
+        final long sleepTime = 200L;
         makeSearchStateAfter(sleepTime, true);
 
         final SearchRequest searchRequest = getSearchRequest(false, clientTimeout.toMillis());
@@ -133,8 +133,8 @@ class TestSearchResponseCreator {
                 searchResponseCreator.create(searchRequest,
                         searchResponseCreator.makeDefaultResultCreators(searchRequest)));
 
-        SearchResponse searchResponse = timedResult.getResult();
-        Duration actualDuration = timedResult.getDuration();
+        final SearchResponse searchResponse = timedResult.getResult();
+        final Duration actualDuration = timedResult.getDuration();
 
         assertResponseWithData(searchResponse);
 
@@ -163,8 +163,8 @@ class TestSearchResponseCreator {
                 searchResponseCreator.create(searchRequest,
                         searchResponseCreator.makeDefaultResultCreators(searchRequest)));
 
-        SearchResponse searchResponse = timedResult.getResult();
-        Duration actualDuration = timedResult.getDuration();
+        final SearchResponse searchResponse = timedResult.getResult();
+        final Duration actualDuration = timedResult.getDuration();
 
         assertThat(searchResponse).isNotNull();
         assertThat(searchResponse.getResults()).isNullOrEmpty();
@@ -179,7 +179,7 @@ class TestSearchResponseCreator {
 
     @Test
     void create_incremental_timesOutWithDataThenCompletes() {
-        Duration clientTimeout = Duration.ofMillis(500);
+        final Duration clientTimeout = Duration.ofMillis(500);
 
         //store is immediately complete to replicate a synchronous store
         Mockito.when(mockStore.isComplete()).thenReturn(false);
@@ -192,7 +192,7 @@ class TestSearchResponseCreator {
                 searchResponseCreator.create(searchRequest,
                         searchResponseCreator.makeDefaultResultCreators(searchRequest)));
 
-        SearchResponse searchResponse = timedResult.getResult();
+        final SearchResponse searchResponse = timedResult.getResult();
         Duration actualDuration = timedResult.getDuration();
 
         assertResponseWithData(searchResponse);
@@ -205,16 +205,16 @@ class TestSearchResponseCreator {
 
         //Now the search request is sent again but this time the data will be available and the search complete
         //so should return immediately
-        long sleepTime = 200L;
+        final long sleepTime = 200L;
         makeSearchStateAfter(sleepTime, true);
 
-        SearchRequest searchRequest2 = getSearchRequest(true, clientTimeout.toMillis());
+        final SearchRequest searchRequest2 = getSearchRequest(true, clientTimeout.toMillis());
 
         timedResult = DurationTimer.measure(() ->
                 searchResponseCreator.create(searchRequest2,
                         searchResponseCreator.makeDefaultResultCreators(searchRequest2)));
 
-        SearchResponse searchResponse2 = timedResult.getResult();
+        final SearchResponse searchResponse2 = timedResult.getResult();
         actualDuration = timedResult.getDuration();
 
         assertResponseWithData(searchResponse2);
@@ -244,7 +244,7 @@ class TestSearchResponseCreator {
     }
 
     private SearchRequest getSearchRequest(final boolean isIncremental, final Long timeout) {
-        String key = UUID.randomUUID().toString();
+        final String key = UUID.randomUUID().toString();
         return SearchRequest.builder()
                 .key(key)
                 .addResultRequests(ResultRequest.builder()
@@ -360,7 +360,7 @@ class TestSearchResponseCreator {
         assertThat(searchResponse).isNotNull();
         assertThat(searchResponse.getResults()).hasSize(1);
         assertThat(searchResponse.getResults().getFirst()).isInstanceOf(TableResult.class);
-        TableResult tableResult = (TableResult) searchResponse.getResults().getFirst();
+        final TableResult tableResult = (TableResult) searchResponse.getResults().getFirst();
         assertThat(tableResult.getTotalResults()).isEqualTo(1);
     }
 

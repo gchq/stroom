@@ -57,8 +57,8 @@ class TestMapDefinitionSerde extends AbstractSerdeTest<MapDefinition, MapDefinit
 
     @Test
     void serialize_nullMapName_verifySerialisedForm() {
-        RefStreamDefinitionSerde refStreamDefinitionSerde = new RefStreamDefinitionSerde();
-        MapDefinitionSerde mapDefinitionSerde = new MapDefinitionSerde();
+        final RefStreamDefinitionSerde refStreamDefinitionSerde = new RefStreamDefinitionSerde();
+        final MapDefinitionSerde mapDefinitionSerde = new MapDefinitionSerde();
 
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 UUID.randomUUID().toString(),
@@ -66,16 +66,16 @@ class TestMapDefinitionSerde extends AbstractSerdeTest<MapDefinition, MapDefinit
                 123456L);
         final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, null);
 
-        ByteBuffer refStreamDefBuffer = ByteBuffer.allocate(60);
+        final ByteBuffer refStreamDefBuffer = ByteBuffer.allocate(60);
         refStreamDefinitionSerde.serialize(refStreamDefBuffer, refStreamDefinition);
 
-        ByteBuffer mapDefBuffer = ByteBuffer.allocate(60);
+        final ByteBuffer mapDefBuffer = ByteBuffer.allocate(60);
         mapDefinitionSerde.serialize(mapDefBuffer, mapDefinition);
 
         assertThat(refStreamDefBuffer).isEqualTo(mapDefBuffer);
 
         final MapDefinition mapDefinition2 = new MapDefinition(refStreamDefinition, "myMapName");
-        ByteBuffer mapDefBuffer2 = ByteBuffer.allocate(60);
+        final ByteBuffer mapDefBuffer2 = ByteBuffer.allocate(60);
         mapDefinitionSerde.serialize(mapDefBuffer2, mapDefinition2);
 
         assertThat(mapDefBuffer2.remaining()).isGreaterThan(mapDefBuffer.remaining());

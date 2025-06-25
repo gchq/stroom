@@ -75,7 +75,7 @@ public class ResizeHandle<R> extends Widget {
             }
             // See if we can resize this column.
             final ColSettings settings = colSettings.get(childIndex);
-            boolean canResizeThisColumn = settings.isResizable();
+            final boolean canResizeThisColumn = settings.isResizable();
 
             // If we can't resize this column or the previous one then return no
             // handle as no resize will be possible.
@@ -137,7 +137,7 @@ public class ResizeHandle<R> extends Widget {
         return event.getClientX() - startPos;
     }
 
-    public void endResize(int diff) {
+    public void endResize(final int diff) {
         if (diff != 0) {
             resize(startPos + diff - offset);
 
@@ -147,7 +147,7 @@ public class ResizeHandle<R> extends Widget {
             if (existingWidth > 0) {
                 final ColSettings settings = colSettings.get(colNo);
                 if (settings.isResizable()) {
-                    int newWidth = Math.max(existingWidth + diff, MIN_COL_WIDTH);
+                    final int newWidth = Math.max(existingWidth + diff, MIN_COL_WIDTH);
                     if (newWidth != existingWidth) {
                         // DataGrid allows you to resize a column by index
                         // rather than getting the column first but if you do
@@ -210,7 +210,7 @@ public class ResizeHandle<R> extends Widget {
     }
 
     public void resize(final NativeEvent event) {
-        int left = event.getClientX() - offset;
+        final int left = event.getClientX() - offset;
         resize(left);
     }
 

@@ -170,7 +170,7 @@ public final class DateUtil {
             // Our format requires a zone offset, e.g. 'Z', '+02', '+00:00', '-02:00', etc.
             final ZonedDateTime zonedDateTime = ZonedDateTime.parse(date, DEFAULT_ISO_PARSER);
             return zonedDateTime.toInstant();
-        } catch (DateTimeParseException e) {
+        } catch (final DateTimeParseException e) {
             throw new IllegalArgumentException("Unable to parse date: \"" + date + "\": " + e.getMessage(), e);
         }
     }
@@ -232,7 +232,7 @@ public final class DateUtil {
                     zonedDateTime = ZonedDateTime.parse(date, DEFAULT_ISO_PARSER);
                 }
                 return NORMAL_STROOM_TIME_FORMATTER.format(zonedDateTime);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.debug("Unable to parse date: \"" + date + "\": " + LogUtil.exceptionMessage(e), e);
                 if (ignoreErrors) {
                     return date;
@@ -247,7 +247,7 @@ public final class DateUtil {
     private static long parseDateAsMillisSinceEpoch(final String dateStr) {
         try {
             return Long.parseLong(dateStr);
-        } catch (NumberFormatException e) {
+        } catch (final NumberFormatException e) {
             throw new IllegalArgumentException(LogUtil.message(
                     "Unable to parse date '{}' as numeric milliseconds since epoch: {}",
                     dateStr,

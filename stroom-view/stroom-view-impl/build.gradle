@@ -37,13 +37,6 @@ dependencies {
     implementation libs.restygwt
     implementation libs.slf4j.api
 
-    //--------testing----------
-    testImplementation libs.assertj.core
-    testCompileOnly libs.junit.jupiter.api
-    testImplementation libs.jaxb.api
-    testImplementation libs.mockito.core
-
-    testRuntimeOnly libs.junit.jupiter.engine
-    testRuntimeOnly libs.logback.classic
-    testRuntimeOnly libs.logback.core
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
 }

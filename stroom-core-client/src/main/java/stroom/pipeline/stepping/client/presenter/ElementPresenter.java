@@ -36,6 +36,8 @@ import stroom.pipeline.shared.stepping.FindElementDocRequest;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
+import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
+import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.util.shared.ErrorType;
 import stroom.util.shared.HasData;
 import stroom.util.shared.Indicators;
@@ -74,7 +76,9 @@ public class ElementPresenter
     private final Provider<EditorPresenter> editorProvider;
     private final DocumentPluginRegistry documentPluginRegistry;
     private final RestFactory restFactory;
+    private final PipelineElementTypesFactory pipelineElementTypesFactory;
 
+    private PipelineModel pipelineModel;
     private PipelineElement element;
     private List<PipelineProperty> properties;
     private String feedName;
@@ -84,7 +88,6 @@ public class ElementPresenter
     private boolean dirtyCode;
     private DocRef loadedDoc;
     private HasData hasData;
-    private final EnumMap<IndicatorType, IndicatorLines> indicatorsMap = new EnumMap<>(IndicatorType.class);
     private final EnumMap<IndicatorType, EditorPresenter> presenterMap = new EnumMap<>(IndicatorType.class);
 
     private Indicators indicators;
@@ -106,12 +109,14 @@ public class ElementPresenter
                             final Provider<ClassificationWrapperView> classificationWrapperViewProvider,
                             final Provider<EditorPresenter> editorProvider,
                             final DocumentPluginRegistry documentPluginRegistry,
-                            final RestFactory restFactory) {
+                            final RestFactory restFactory,
+                            final PipelineElementTypesFactory pipelineElementTypesFactory) {
         super(eventBus, view);
         this.classificationWrapperViewProvider = classificationWrapperViewProvider;
         this.editorProvider = editorProvider;
         this.documentPluginRegistry = documentPluginRegistry;
         this.restFactory = restFactory;
+        this.pipelineElementTypesFactory = pipelineElementTypesFactory;
     }
 
     public void load(final Consumer<Boolean> consumer) {
@@ -119,7 +124,7 @@ public class ElementPresenter
             loaded = true;
             boolean loading = false;
 
-            if (element.getElementType().hasRole(PipelineElementType.ROLE_HAS_CODE)) {
+            if (pipelineModel.hasRole(element, PipelineElementType.ROLE_HAS_CODE)) {
                 getView().setCodeView(getCodePresenter(element).getView());
 
                 try {
@@ -151,7 +156,7 @@ public class ElementPresenter
 
             // We only care about seeing input if the element mutates the input
             // some how.
-            if (element.getElementType().hasRole(PipelineElementType.ROLE_MUTATOR)) {
+            if (pipelineModel.hasRole(element, PipelineElementType.ROLE_MUTATOR)) {
                 getView().setInputView(getInputView());
             }
 
@@ -231,7 +236,8 @@ public class ElementPresenter
                 .collect(Collectors.joining("\n"));
     }
 
-    private void loadEntityRef(final DocRef entityRef, final Consumer<Boolean> future) {
+    private void loadEntityRef(final DocRef entityRef,
+                               final Consumer<Boolean> future) {
         if (entityRef != null) {
             final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(entityRef.getType());
             documentPlugin.load(entityRef,
@@ -312,7 +318,7 @@ public class ElementPresenter
 
             registerHandler(codePresenter.getView().asWidget().addDomHandler(e -> {
                 if (KeyCodes.KEY_ENTER == e.getNativeKeyCode() &&
-                        (e.isShiftKeyDown() || e.isControlKeyDown())) {
+                    (e.isShiftKeyDown() || e.isControlKeyDown())) {
                     e.preventDefault();
                     if (stepRequestHandler != null) {
                         stepRequestHandler.accept(StepType.REFRESH);
@@ -339,12 +345,6 @@ public class ElementPresenter
         final IndicatorLines indicatorLines = NullSafe.get(
                 indicators,
                 indicators2 -> IndicatorLines.filter(indicators2, false, types));
-
-        if (indicatorLines == null || indicatorLines.isEmpty()) {
-            indicatorsMap.remove(indicatorType);
-        } else {
-            indicatorsMap.put(indicatorType, indicatorLines);
-        }
 
         final EditorPresenter editorPresenter = presenterMap.get(indicatorType);
         if (editorPresenter != null) {
@@ -446,7 +446,7 @@ public class ElementPresenter
     public boolean hasCodePane() {
         return NullSafe.test(
                 element,
-                elm -> elm.getElementType().hasRole(PipelineElementType.ROLE_HAS_CODE));
+                elm -> pipelineModel.hasRole(elm, PipelineElementType.ROLE_HAS_CODE));
     }
 
     public void setElement(final PipelineElement element) {
@@ -480,15 +480,13 @@ public class ElementPresenter
     public void clearAllIndicators() {
         this.indicators = null;
         for (final IndicatorType indicatorType : IndicatorType.values()) {
-            setIndicatorsOnEditor(indicatorType, (Indicators) null);
+            setIndicatorsOnEditor(indicatorType, null);
         }
         updateLogView();
     }
 
     private EditorPresenter getCodePresenter(final PipelineElement element) {
-        GWT.log("id: " + element.getId()
-                + ", type: " + element.getType()
-                + ", typeType: " + NullSafe.get(element.getElementType(), PipelineElementType::getType));
+        GWT.log("id: " + element.getId() + ", type: " + element.getType());
         if (codePresenter == null) {
             codePresenter = editorProvider.get();
             presenterMap.put(IndicatorType.CODE, codePresenter);
@@ -573,7 +571,7 @@ public class ElementPresenter
 
             // Turn on line numbers for the output presenter if this is a validation step as the output needs to show
             // validation errors in the gutter.
-            if (element != null && element.getElementType().hasRole(PipelineElementType.ROLE_VALIDATOR)) {
+            if (element != null && pipelineModel.hasRole(element, PipelineElementType.ROLE_VALIDATOR)) {
                 outputPresenter.getLineNumbersOption().setOn(true);
             }
 
@@ -625,6 +623,10 @@ public class ElementPresenter
 
     public void setStepRequestHandler(final Consumer<StepType> onStepRefreshRequest) {
         this.stepRequestHandler = onStepRefreshRequest;
+    }
+
+    public void setPipelineModel(final PipelineModel pipelineModel) {
+        this.pipelineModel = pipelineModel;
     }
 
     public interface ElementView extends View {
@@ -723,15 +725,15 @@ public class ElementPresenter
                         ? "(" + paneType.displayName + " pane) - "
                         : "";
                 locationStr = typeStr
-                        + "["
-                        + location.toString().replace(String.valueOf(Location.UNKNOWN_VALUE), "?")
-                        + "] ";
+                              + "["
+                              + location.toString().replace(String.valueOf(Location.UNKNOWN_VALUE), "?")
+                              + "] ";
             } else {
                 locationStr = "";
             }
             return severity + ": "
-                    + locationStr
-                    + message;
+                   + locationStr
+                   + message;
         }
 
         @Override

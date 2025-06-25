@@ -216,7 +216,7 @@ public class ApiKeyService {
                 attempts++;
                 try {
                     return createNewApiKey(createHashedApiKeyRequest);
-                } catch (DuplicateApiKeyException e) {
+                } catch (final DuplicateApiKeyException e) {
                     LOGGER.debug("Duplicate hash on attempt {}, going round again", attempts);
                 }
             } while (attempts < MAX_CREATION_ATTEMPTS);
@@ -365,7 +365,7 @@ public class ApiKeyService {
         final ApiKeyHasher apiKeyHasher = getApiKeyHasher(hashAlgorithm);
         try {
             return apiKeyHasher.verify(apiKeyStr, hash);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.debug("Error verifying hash '{}' with algorithm: {}", hash, hashAlgorithm, e);
             // Swallow it.
             // Bcrypt for example, includes details of the salt in the key, so if the key is rubbish
@@ -424,7 +424,7 @@ public class ApiKeyService {
 
         String hash(String apiKeyStr);
 
-        default boolean verify(String apiKeyStr, String hash) {
+        default boolean verify(final String apiKeyStr, final String hash) {
             final String computedHash = hash(Objects.requireNonNull(apiKeyStr));
             return Objects.equals(Objects.requireNonNull(hash), computedHash);
         }
@@ -524,9 +524,9 @@ public class ApiKeyService {
         @Override
         public String hash(final String apiKeyStr) {
             Objects.requireNonNull(apiKeyStr);
-            Argon2BytesGenerator generate = new Argon2BytesGenerator();
+            final Argon2BytesGenerator generate = new Argon2BytesGenerator();
             generate.init(argon2Parameters);
-            byte[] result = new byte[HASH_LENGTH];
+            final byte[] result = new byte[HASH_LENGTH];
             generate.generateBytes(
                     apiKeyStr.trim().getBytes(StandardCharsets.UTF_8),
                     result,

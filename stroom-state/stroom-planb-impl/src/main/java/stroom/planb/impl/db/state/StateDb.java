@@ -13,6 +13,7 @@ import stroom.planb.impl.db.PlanBSearchHelper.Context;
 import stroom.planb.impl.db.PlanBSearchHelper.Converter;
 import stroom.planb.impl.db.PlanBSearchHelper.LazyKV;
 import stroom.planb.impl.db.PlanBSearchHelper.ValuesExtractor;
+import stroom.planb.impl.db.SchemaInfo;
 import stroom.planb.impl.db.UsedLookupsRecorder;
 import stroom.planb.impl.serde.KeySerde;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
@@ -21,6 +22,7 @@ import stroom.planb.impl.serde.keyprefix.KeyPrefixSerdeFactory;
 import stroom.planb.impl.serde.valtime.ValTime;
 import stroom.planb.impl.serde.valtime.ValTimeSerde;
 import stroom.planb.impl.serde.valtime.ValTimeSerdeFactory;
+import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.KeyType;
 import stroom.planb.shared.StateKeySchema;
@@ -35,6 +37,7 @@ import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.io.FileUtil;
+import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 
 import org.lmdbjava.CursorIterable;
@@ -50,7 +53,7 @@ import java.util.function.Function;
 
 public class StateDb extends AbstractDb<KeyPrefix, Val> {
 
-    private static final String KEY_LOOKUP_DB_NAME = "key";
+    private static final int CURRENT_SCHEMA_VERSION = 1;
 
     private final StateSettings settings;
     private final KeySerde<KeyPrefix> keySerde;
@@ -65,7 +68,14 @@ public class StateDb extends AbstractDb<KeyPrefix, Val> {
                     final KeySerde<KeyPrefix> keySerde,
                     final ValTimeSerde valueSerde,
                     final HashClashCommitRunnable hashClashCommitRunnable) {
-        super(env, byteBuffers, overwrite, hashClashCommitRunnable);
+        super(env,
+                byteBuffers,
+                overwrite,
+                hashClashCommitRunnable,
+                new SchemaInfo(
+                        CURRENT_SCHEMA_VERSION,
+                        JsonUtil.writeValueAsString(settings.getKeySchema()),
+                        JsonUtil.writeValueAsString(settings.getValueSchema())));
         this.settings = settings;
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
@@ -78,8 +88,12 @@ public class StateDb extends AbstractDb<KeyPrefix, Val> {
                                  final StateSettings settings,
                                  final boolean readOnly) {
         final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
+        final Long mapSize = NullSafe.getOrElse(
+                settings,
+                AbstractPlanBSettings::getMaxStoreSize,
+                AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE);
         final PlanBEnv env = new PlanBEnv(path,
-                settings.getMaxStoreSize(),
+                mapSize,
                 20,
                 readOnly,
                 hashClashCommitRunnable);
@@ -87,22 +101,22 @@ public class StateDb extends AbstractDb<KeyPrefix, Val> {
                 settings,
                 StateSettings::getKeySchema,
                 StateKeySchema::getKeyType,
-                KeyType.VARIABLE);
+                StateKeySchema.DEFAULT_KEY_TYPE);
         final HashLength keyHashLength = NullSafe.getOrElse(
                 settings,
                 StateSettings::getKeySchema,
                 StateKeySchema::getHashLength,
-                HashLength.LONG);
+                StateKeySchema.DEFAULT_HASH_LENGTH);
         final StateValueType stateValueType = NullSafe.getOrElse(
                 settings,
                 StateSettings::getValueSchema,
                 StateValueSchema::getStateValueType,
-                StateValueType.VARIABLE);
+                StateValueSchema.DEFAULT_VALUE_TYPE);
         final HashLength valueHashLength = NullSafe.getOrElse(
                 settings,
                 StateSettings::getValueSchema,
                 StateValueSchema::getHashLength,
-                HashLength.LONG);
+                StateValueSchema.DEFAULT_HASH_LENGTH);
         final KeyPrefixSerde keySerde = KeyPrefixSerdeFactory.createKeySerde(
                 keyType,
                 keyHashLength,
@@ -147,6 +161,10 @@ public class StateDb extends AbstractDb<KeyPrefix, Val> {
     public void merge(final Path source) {
         env.write(writer -> {
             try (final StateDb sourceDb = StateDb.create(source, byteBuffers, settings, true)) {
+                // Validate that the source DB has the same schema.
+                validateSchema(schemaInfo, sourceDb.getSchemaInfo());
+
+                // Merge.
                 sourceDb.env.read(readTxn -> {
                     sourceDb.iterate(readTxn, kv -> {
                         if (sourceDb.keySerde.usesLookup(kv.key()) || sourceDb.valueSerde.usesLookup(kv.val())) {

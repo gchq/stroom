@@ -52,7 +52,7 @@ public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public FeedStatusConfig(@JsonProperty("enabled") Boolean enabled,
+    public FeedStatusConfig(@JsonProperty("enabled") final Boolean enabled,
                             @JsonProperty("defaultStatus") final FeedStatus defaultStatus,
                             @JsonProperty("url") final String feedStatusUrl,
                             @JsonProperty(PROP_NAME_API_KEY) final String apiKey,

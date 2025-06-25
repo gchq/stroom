@@ -16,6 +16,8 @@
 
 package stroom.query.language.functions;
 
+import stroom.util.logging.LogUtil;
+
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ScanResult;
 import org.slf4j.Logger;
@@ -47,7 +49,7 @@ public class FunctionFactory {
 //        final StringBuilder functions = new StringBuilder();
 
         // Scan the class path to find all the classes with @FunctionDef
-        try (ScanResult result = new ClassGraph()
+        try (final ScanResult result = new ClassGraph()
                 .acceptPackages(Function.class.getPackageName())
                 .enableAnnotationInfo()
                 .enableClassInfo()
@@ -76,9 +78,9 @@ public class FunctionFactory {
                                         if (ALIAS_MAP.containsKey(name)) {
                                             final Class<? extends Function> existingClass = ALIAS_MAP.get(name);
                                             throw new RuntimeException(("Name/alias [" + name +
-                                                    "] for class " + clazz.getName() +
-                                                    " already exists for class " +
-                                                    existingClass.getName()));
+                                                                        "] for class " + clazz.getName() +
+                                                                        " already exists for class " +
+                                                                        existingClass.getName()));
                                         }
                                         ALIAS_MAP.put(name, functionClazz);
                                     });
@@ -114,11 +116,17 @@ public class FunctionFactory {
                 return clazz
                         .getConstructor(String.class)
                         .newInstance(functionName);
-            } catch (final NoSuchMethodException
-                           | InvocationTargetException
+            } catch (final InvocationTargetException
                            | InstantiationException
                            | IllegalAccessException e) {
                 throw new RuntimeException(e.getMessage(), e);
+            } catch (final NoSuchMethodException e) {
+                throw new RuntimeException(LogUtil.message(
+                        "Expecting to find a constructor like {}(expressionContext, functionName) " +
+                        "of {}(functionName). {}",
+                        clazz.getSimpleName(),
+                        clazz.getSimpleName(),
+                        LogUtil.exceptionMessage(e)), e);
             }
         }
 

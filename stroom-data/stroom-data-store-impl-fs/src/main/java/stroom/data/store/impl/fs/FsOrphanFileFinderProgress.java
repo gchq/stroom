@@ -69,7 +69,7 @@ class FsOrphanFileFinderProgress {
         log();
     }
 
-    void addScanPending(int value) {
+    void addScanPending(final int value) {
         scanPending.addAndGet(value);
     }
 

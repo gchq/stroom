@@ -47,7 +47,7 @@ public class DirtyEvent extends GwtEvent<DirtyEvent.DirtyHandler> {
     }
 
     @Override
-    protected void dispatch(DirtyHandler handler) {
+    protected void dispatch(final DirtyHandler handler) {
         handler.onDirty(this);
     }
 

@@ -16,13 +16,13 @@
 
 package stroom.query.language.functions;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = FloorMonth.NAME,
         commonCategory = FunctionCategory.DATE,
-        commonSubCategories = RoundDate.FLOOR_SUB_CATEGORY,
+        commonSubCategories = AbstractRoundDateTime.FLOOR_SUB_CATEGORY,
         commonReturnType = ValLong.class,
         commonReturnDescription = "The time as milliseconds since the epoch (1st Jan 1970).",
         signatures = @FunctionSignature(
@@ -30,28 +30,27 @@ import java.time.LocalDateTime;
                 args = @FunctionArg(
                         name = "time",
                         description = "The time to round in milliseconds since the epoch or as a string " +
-                                "formatted using the default date format.",
+                                      "formatted using the default date format.",
                         argType = Val.class)))
-class FloorMonth extends RoundDate {
+class FloorMonth extends AbstractRoundDateTime {
 
     static final String NAME = "floorMonth";
-    private static final Calc CALC = new Calc();
 
-    public FloorMonth(final String name) {
-        super(name);
+    public FloorMonth(final ExpressionContext expressionContext, final String name) {
+        super(expressionContext, name);
     }
 
     @Override
-    protected RoundCalculator getCalculator() {
-        return CALC;
+    protected DateTimeAdjuster getAdjuster() {
+        return FloorMonth::floor;
     }
 
-    static class Calc extends RoundDateCalculator {
-
-
-        @Override
-        protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            return dateTime.toLocalDate().withDayOfMonth(1).atStartOfDay();
-        }
+    public static ZonedDateTime floor(final ZonedDateTime zonedDateTime) {
+        return zonedDateTime
+                .withDayOfMonth(1)
+                .withHour(0)
+                .withMinute(0)
+                .withSecond(0)
+                .withNano(0);
     }
 }

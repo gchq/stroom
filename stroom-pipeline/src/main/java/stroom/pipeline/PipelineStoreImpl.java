@@ -25,9 +25,12 @@ import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
+import stroom.pipeline.legacy.PipelineDataMigration;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorFilterUtil;
@@ -43,6 +46,7 @@ import jakarta.inject.Singleton;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
@@ -52,15 +56,27 @@ public class PipelineStoreImpl implements PipelineStore {
     private final Store<PipelineDoc> store;
     private final Provider<ProcessorFilterService> processorFilterServiceProvider;
     private final Provider<ProcessorService> processorServiceProvider;
+    private final PipelineDataMigration pipelineDataMigration;
 
     @Inject
     public PipelineStoreImpl(final StoreFactory storeFactory,
                              final PipelineSerialiser serialiser,
                              final Provider<ProcessorFilterService> processorFilterServiceProvider,
-                             final Provider<ProcessorService> processorServiceProvider) {
+                             final Provider<ProcessorService> processorServiceProvider,
+                             final PipelineDataMigration pipelineDataMigration) {
         this.processorServiceProvider = processorServiceProvider;
         this.store = storeFactory.createStore(serialiser, PipelineDoc.TYPE, PipelineDoc.class);
         this.processorFilterServiceProvider = processorFilterServiceProvider;
+        this.pipelineDataMigration = pipelineDataMigration;
+
+        // TODO : Remove this code when we move past version 7.10
+        store.migratePipelines(data -> {
+            if (pipelineDataMigration.migrate(data)) {
+                return Optional.of(data);
+            } else {
+                return Optional.empty();
+            }
+        });
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -101,7 +117,7 @@ public class PipelineStoreImpl implements PipelineStore {
     }
 
     @Override
-    public DocRefInfo info(DocRef docRef) {
+    public DocRefInfo info(final DocRef docRef) {
         return store.info(docRef);
     }
 
@@ -137,34 +153,56 @@ public class PipelineStoreImpl implements PipelineStore {
 
             final PipelineData pipelineData = doc.getPipelineData();
             if (pipelineData != null) {
-                remapPipelineReferences(pipelineData.getAddedPipelineReferences(), dependencyRemapper);
-                remapPipelineReferences(pipelineData.getRemovedPipelineReferences(), dependencyRemapper);
-                remapPipelineProperties(pipelineData.getAddedProperties(), dependencyRemapper);
-                remapPipelineProperties(pipelineData.getRemovedProperties(), dependencyRemapper);
+                final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
+                builder.getProperties().getAddList().clear();
+                remapPipelineProperties(
+                        pipelineData.getAddedProperties(),
+                        builder.getProperties().getAddList(), dependencyRemapper);
+                builder.getProperties().getRemoveList().clear();
+                remapPipelineProperties(
+                        pipelineData.getRemovedProperties(),
+                        builder.getProperties().getRemoveList(), dependencyRemapper);
+
+                builder.getReferences().getAddList().clear();
+                remapPipelineReferences(
+                        pipelineData.getAddedPipelineReferences(),
+                        builder.getReferences().getAddList(), dependencyRemapper);
+                builder.getReferences().getRemoveList().clear();
+                remapPipelineReferences(
+                        pipelineData.getRemovedPipelineReferences(),
+                        builder.getReferences().getRemoveList(), dependencyRemapper);
+
+                doc.setPipelineData(builder.build());
             }
         };
     }
 
     public void remapPipelineProperties(final List<PipelineProperty> pipelineProperties,
+                                        final List<PipelineProperty> dest,
                                         final DependencyRemapper dependencyRemapper) {
         if (pipelineProperties != null) {
             pipelineProperties.forEach(pipelineProperty -> {
-                if (pipelineProperty.getValue() != null) {
-                    pipelineProperty.getValue()
-                            .setEntity(dependencyRemapper.remap(pipelineProperty.getValue().getEntity()));
+                if (pipelineProperty.getValue() == null || pipelineProperty.getValue().getEntity() == null) {
+                    dest.add(pipelineProperty);
+                } else {
+                    dest.add(new PipelineProperty.Builder(pipelineProperty)
+                            .value(new PipelinePropertyValue(dependencyRemapper
+                                    .remap(pipelineProperty.getValue().getEntity())))
+                            .build());
                 }
             });
         }
     }
 
     public void remapPipelineReferences(final List<PipelineReference> pipelineReferences,
+                                        final List<PipelineReference> dest,
                                         final DependencyRemapper dependencyRemapper) {
         if (pipelineReferences != null) {
-            pipelineReferences.forEach(pipelineReference -> {
-                pipelineReference.setFeed(dependencyRemapper.remap(pipelineReference.getFeed()));
-                pipelineReference.setPipeline(dependencyRemapper.remap(pipelineReference.getPipeline()));
-                pipelineReference.setSourcePipeline(dependencyRemapper.remap(pipelineReference.getSourcePipeline()));
-            });
+            pipelineReferences.forEach(pipelineReference ->
+                    dest.add(new PipelineReference.Builder(pipelineReference)
+                            .feed(dependencyRemapper.remap(pipelineReference.getFeed()))
+                            .pipeline(dependencyRemapper.remap(pipelineReference.getPipeline()))
+                            .build()));
         }
     }
 
@@ -204,6 +242,8 @@ public class PipelineStoreImpl implements PipelineStore {
                                  final Map<String, byte[]> dataMap,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
+        // Migrate the data we are importing.
+        pipelineDataMigration.migrate(dataMap);
         return store.importDocument(docRef, dataMap, importState, importSettings);
     }
 
@@ -218,13 +258,13 @@ public class PipelineStoreImpl implements PipelineStore {
     }
 
     @Override
-    public Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef) {
-        Set<DocRef> processorFilters = new HashSet<>();
+    public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
+        final Set<DocRef> processorFilters = new HashSet<>();
 
         if (docRef != null && PipelineDoc.TYPE.equals(docRef.getType())) {
-            ResultPage<ProcessorFilter> filterResultPage = processorFilterServiceProvider.get().find(docRef);
+            final ResultPage<ProcessorFilter> filterResultPage = processorFilterServiceProvider.get().find(docRef);
 
-            List<DocRef> docRefs = filterResultPage.getValues().stream()
+            final List<DocRef> docRefs = filterResultPage.getValues().stream()
                     .filter(ProcessorFilterUtil::shouldExport)
                     .map(v -> new DocRef(ProcessorFilter.ENTITY_TYPE, v.getUuid()))
                     .toList();

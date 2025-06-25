@@ -228,7 +228,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
             basicLmdbDb.getValueSerde().serialize(valueBuffer, "YY");
 
             // now get the value again and it should be correct
-            String val = basicLmdbDb.get("MyKey").get();
+            final String val = basicLmdbDb.get("MyKey").get();
 
             assertThat(val).isEqualTo("MyValue");
         });
@@ -249,18 +249,18 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
 
         assertThat(basicLmdbDb.getEntryCount()).isEqualTo(1);
 
-        ByteBuffer keyBuffer = ByteBuffer.allocateDirect(50);
+        final ByteBuffer keyBuffer = ByteBuffer.allocateDirect(50);
         basicLmdbDb.getKeySerde().serialize(keyBuffer, "MyKey");
 
-        AtomicReference<ByteBuffer> valueBufRef = new AtomicReference<>();
+        final AtomicReference<ByteBuffer> valueBufRef = new AtomicReference<>();
         // now get the value again and it should be correct
         lmdbEnv.getWithReadTxn(txn -> {
-            ByteBuffer valueBuffer = basicLmdbDb.getAsBytes(txn, keyBuffer).get();
+            final ByteBuffer valueBuffer = basicLmdbDb.getAsBytes(txn, keyBuffer).get();
 
             // hold on to the buffer for later
             valueBufRef.set(valueBuffer);
 
-            String val = basicLmdbDb.getValueSerde().deserialize(valueBuffer);
+            final String val = basicLmdbDb.getValueSerde().deserialize(valueBuffer);
 
             assertThat(val).isEqualTo("MyValue");
 
@@ -280,7 +280,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
 
     @Test
     void testDupSupport() {
-        BasicLmdbDb<String, String> db = new BasicLmdbDb<>(
+        final BasicLmdbDb<String, String> db = new BasicLmdbDb<>(
                 lmdbEnv,
                 new ByteBufferPoolFactory().getByteBufferPool(),
                 new StringSerde(),
@@ -325,7 +325,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
 
     @Test
     void testDupSupport_unsortedValues() {
-        BasicLmdbDb<UnSortedDupKey<String>, String> db = new BasicLmdbDb<>(
+        final BasicLmdbDb<UnSortedDupKey<String>, String> db = new BasicLmdbDb<>(
                 lmdbEnv,
                 new ByteBufferPoolFactory().getByteBufferPool(),
                 new UnSortedDupKeySerde<>(new StringSerde()),
@@ -377,7 +377,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
 
     @Test
     void testDupSupport_noDupData() {
-        BasicLmdbDb<String, String> db = new BasicLmdbDb<>(
+        final BasicLmdbDb<String, String> db = new BasicLmdbDb<>(
                 lmdbEnv,
                 new ByteBufferPoolFactory().getByteBufferPool(),
                 new StringSerde(),
@@ -442,7 +442,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         basicLmdbDb.put("key3", "value3", false);
 
         lmdbEnv.doWithReadTxn(txn -> {
-            Optional<ByteBuffer> optKeyBuffer = basicLmdbDb.getAsBytes(txn, "key2");
+            final Optional<ByteBuffer> optKeyBuffer = basicLmdbDb.getAsBytes(txn, "key2");
 
             assertThat(optKeyBuffer).isNotEmpty();
         });
@@ -457,13 +457,13 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
 
         lmdbEnv.doWithReadTxn(txn -> {
 
-            try (PooledByteBuffer pooledKeyBuffer = basicLmdbDb.getPooledKeyBuffer()) {
-                ByteBuffer keyBuffer = pooledKeyBuffer.getByteBuffer();
+            try (final PooledByteBuffer pooledKeyBuffer = basicLmdbDb.getPooledKeyBuffer()) {
+                final ByteBuffer keyBuffer = pooledKeyBuffer.getByteBuffer();
                 basicLmdbDb.serializeKey(keyBuffer, "key2");
-                Optional<ByteBuffer> optValueBuffer = basicLmdbDb.getAsBytes(txn, keyBuffer);
+                final Optional<ByteBuffer> optValueBuffer = basicLmdbDb.getAsBytes(txn, keyBuffer);
 
                 assertThat(optValueBuffer).isNotEmpty();
-                String val = basicLmdbDb.deserializeKey(optValueBuffer.get());
+                final String val = basicLmdbDb.deserializeKey(optValueBuffer.get());
                 assertThat(val).isEqualTo("value2");
             }
         });
@@ -908,11 +908,11 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
 
         lmdbEnv.doWithReadTxn(txn -> {
 
-            try (PooledByteBuffer pooledStartKeyBuffer = basicLmdbDb.getPooledKeyBuffer();
-                    PooledByteBuffer pooledEndKeyBuffer = basicLmdbDb.getPooledKeyBuffer()) {
+            try (final PooledByteBuffer pooledStartKeyBuffer = basicLmdbDb.getPooledKeyBuffer();
+                    final PooledByteBuffer pooledEndKeyBuffer = basicLmdbDb.getPooledKeyBuffer()) {
 
-                ByteBuffer startKeyBuffer = pooledStartKeyBuffer.getByteBuffer();
-                ByteBuffer endKeyBuffer = pooledEndKeyBuffer.getByteBuffer();
+                final ByteBuffer startKeyBuffer = pooledStartKeyBuffer.getByteBuffer();
+                final ByteBuffer endKeyBuffer = pooledEndKeyBuffer.getByteBuffer();
 
                 final String startKey = "key2";
                 final String endKey = "key3";
@@ -989,7 +989,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                 basicLmdbDb.streamEntries(txn, KeyRange.all(), stream ->
                         stream
                                 .filter(entry -> {
-                                    int i = Integer.parseInt(entry.getKey());
+                                    final int i = Integer.parseInt(entry.getKey());
                                     return i > 3 && i <= 7;
                                 })
                                 .peek(entry -> LOGGER.info("key: '{}', value: '{}'",
@@ -1042,14 +1042,14 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         basicLmdbDb2.put("key2", "value3", false);
 
         lmdbEnv.doWithReadTxn(txn -> {
-            ByteBuffer keyBuffer = ByteBuffer.allocateDirect(100);
+            final ByteBuffer keyBuffer = ByteBuffer.allocateDirect(100);
             basicLmdbDb.serializeKey(keyBuffer, "key1");
-            ByteBuffer keyBufferCopy = keyBuffer.asReadOnlyBuffer();
+            final ByteBuffer keyBufferCopy = keyBuffer.asReadOnlyBuffer();
 
-            ByteBuffer valueBuffer = basicLmdbDb.getAsBytes(txn, keyBuffer).get();
-            ByteBuffer keyBuffer2 = ByteBufferUtils.copyToDirectBuffer(valueBuffer);
-            String value = basicLmdbDb.deserializeValue(valueBuffer);
-            ByteBuffer valueBufferCopy = valueBuffer.asReadOnlyBuffer();
+            final ByteBuffer valueBuffer = basicLmdbDb.getAsBytes(txn, keyBuffer).get();
+            final ByteBuffer keyBuffer2 = ByteBufferUtils.copyToDirectBuffer(valueBuffer);
+            final String value = basicLmdbDb.deserializeValue(valueBuffer);
+            final ByteBuffer valueBufferCopy = valueBuffer.asReadOnlyBuffer();
 
             assertThat(value).isEqualTo("key2");
             assertThat(keyBuffer).isEqualTo(keyBufferCopy);
@@ -1057,10 +1057,10 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
             assertThat(valueBuffer).isEqualTo(keyBuffer2);
 
             // now use the value from the last get() as the key for a new get()
-            ByteBuffer valueBuffer2 = basicLmdbDb.getAsBytes(txn, valueBuffer).get();
+            final ByteBuffer valueBuffer2 = basicLmdbDb.getAsBytes(txn, valueBuffer).get();
 
-            String value2 = basicLmdbDb.deserializeValue(valueBuffer2);
-            String valueBufferDeserialised = basicLmdbDb.deserializeKey(valueBuffer);
+            final String value2 = basicLmdbDb.deserializeValue(valueBuffer2);
+            final String valueBufferDeserialised = basicLmdbDb.deserializeKey(valueBuffer);
 
             assertThat(value2).isEqualTo("value2");
 
@@ -1076,9 +1076,9 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
             assertThat(keyBuffer2).isNotEqualTo(valueBuffer);
 
             // We can't use valueBuffer for our key here is it now points to "value2"
-            ByteBuffer valueBuffer3 = basicLmdbDb2.getAsBytes(txn, keyBuffer2).get();
+            final ByteBuffer valueBuffer3 = basicLmdbDb2.getAsBytes(txn, keyBuffer2).get();
 
-            String value3 = basicLmdbDb2.deserializeValue(valueBuffer3);
+            final String value3 = basicLmdbDb2.deserializeValue(valueBuffer3);
 
             assertThat(value3).isEqualTo("value3");
             assertThat(keyBuffer).isEqualTo(keyBufferCopy);
@@ -1092,22 +1092,22 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
 
         lmdbEnv.doWithReadTxn(txn -> {
 
-            ByteBuffer keyBuffer1 = ByteBuffer.allocateDirect(100);
+            final ByteBuffer keyBuffer1 = ByteBuffer.allocateDirect(100);
             basicLmdbDb.serializeKey(keyBuffer1, "key1");
 
-            ByteBuffer valueBuffer1 = basicLmdbDb.getAsBytes(txn, keyBuffer1).get();
-            ByteBuffer valueBuffer1Copy = valueBuffer1.asReadOnlyBuffer();
+            final ByteBuffer valueBuffer1 = basicLmdbDb.getAsBytes(txn, keyBuffer1).get();
+            final ByteBuffer valueBuffer1Copy = valueBuffer1.asReadOnlyBuffer();
             assertThat(valueBuffer1Copy).isEqualTo(valueBuffer1);
             String value1 = basicLmdbDb.deserializeValue(valueBuffer1);
 
             assertThat(value1).isEqualTo("value1");
 
             // now do another get on a different key to get a different value
-            ByteBuffer keyBuffer2 = ByteBuffer.allocateDirect(100);
+            final ByteBuffer keyBuffer2 = ByteBuffer.allocateDirect(100);
             basicLmdbDb.serializeKey(keyBuffer2, "key2");
-            ByteBuffer valueBuffer2 = basicLmdbDb.getAsBytes(txn, keyBuffer2).get();
+            final ByteBuffer valueBuffer2 = basicLmdbDb.getAsBytes(txn, keyBuffer2).get();
 
-            String value2 = basicLmdbDb.deserializeValue(valueBuffer2);
+            final String value2 = basicLmdbDb.deserializeValue(valueBuffer2);
             assertThat(value2).isEqualTo("value2");
 
             // The valueBuffer1 is tied to the txn's cursor which has now moved to key2 => value2,
@@ -1125,17 +1125,17 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
 
         lmdbEnv.doWithReadTxn(txn -> {
 
-            ByteBuffer keyBuffer1 = ByteBuffer.allocateDirect(100);
+            final ByteBuffer keyBuffer1 = ByteBuffer.allocateDirect(100);
             basicLmdbDb.serializeKey(keyBuffer1, "key1");
 
-            ByteBuffer startKeyBuf = ByteBuffer.allocateDirect(100);
+            final ByteBuffer startKeyBuf = ByteBuffer.allocateDirect(100);
             basicLmdbDb.serializeKey(startKeyBuf, "key1");
 
             // Same start/end key
             final KeyRange<ByteBuffer> keyRange = KeyRange.closed(startKeyBuf, startKeyBuf);
 
             ByteBuffer foundKeyBuffer = null;
-            try (CursorIterable<ByteBuffer> cursorIterable = basicLmdbDb.iterate(txn, keyRange)) {
+            try (final CursorIterable<ByteBuffer> cursorIterable = basicLmdbDb.iterate(txn, keyRange)) {
                 final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
                 if (iterator.hasNext()) {
                     foundKeyBuffer = iterator.next().key();
@@ -1150,7 +1150,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                     .isEqualTo("key1");
 
             // now do another get on a different key to get a different value
-            ByteBuffer keyBuffer2 = ByteBuffer.allocateDirect(100);
+            final ByteBuffer keyBuffer2 = ByteBuffer.allocateDirect(100);
             basicLmdbDb.serializeKey(keyBuffer2, "key2");
             basicLmdbDb.getAsBytes(txn, keyBuffer2).get();
 
@@ -1390,7 +1390,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
     @Test
     void testConcurrentEnvs() throws IOException, ExecutionException, InterruptedException {
 
-        try (TemporaryPathCreator temporaryPathCreator = new TemporaryPathCreator()) {
+        try (final TemporaryPathCreator temporaryPathCreator = new TemporaryPathCreator()) {
             final EnvFlags[] envFlags = new EnvFlags[]{
                     EnvFlags.MDB_NOTLS
             };
@@ -1412,7 +1412,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                 countDownLatch.countDown();
                 try {
                     countDownLatch.await();
-                } catch (InterruptedException e) {
+                } catch (final InterruptedException e) {
                     throw new RuntimeException(e);
                 }
 
@@ -1420,7 +1420,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                     LOGGER.info("Closing writeTxn1");
                     writeTxn1.commit();
                     writeTxn1.close();
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     throw new RuntimeException(e);
                 }
             });
@@ -1433,7 +1433,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                 countDownLatch.countDown();
                 try {
                     countDownLatch.await();
-                } catch (InterruptedException e) {
+                } catch (final InterruptedException e) {
                     throw new RuntimeException(e);
                 }
 
@@ -1441,7 +1441,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                     LOGGER.info("Closing writeTxn2");
                     writeTxn2.commit();
                     writeTxn2.close();
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     throw new RuntimeException(e);
                 }
             });
@@ -1532,7 +1532,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
      */
     @Test
     void testPutsWithConcurrentReadTxn() throws ExecutionException, InterruptedException {
-        try (TemporaryPathCreator temporaryPathCreator = new TemporaryPathCreator()) {
+        try (final TemporaryPathCreator temporaryPathCreator = new TemporaryPathCreator()) {
             final BasicLmdbDb<String, String> basicLmdb1 = createDb(
                     temporaryPathCreator,
                     new EnvFlags[]{EnvFlags.MDB_NOTLS},
@@ -1665,11 +1665,11 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         basicLmdbDb.logDatabaseContents(LOGGER::info);
     }
 
-    private String buildKey(int i) {
+    private String buildKey(final int i) {
         return String.format("%02d", i);
     }
 
-    private String buildValue(int i) {
+    private String buildValue(final int i) {
         return "value" + i;
     }
 
@@ -1680,7 +1680,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
             if (!success) {
                 throw new RuntimeException("Timed out");
             }
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
             throw new RuntimeException(e);
         }
     }

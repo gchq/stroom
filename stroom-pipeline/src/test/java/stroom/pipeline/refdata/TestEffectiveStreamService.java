@@ -45,12 +45,13 @@ class TestEffectiveStreamService {
 
     @BeforeEach
     void setUp() {
-        pipelineReference = new PipelineReference();
-        pipelineReference.setFeed(DocRef.builder()
-                .name(FEED_NAME)
-                .type(FeedDoc.TYPE)
-                .build());
-        pipelineReference.setStreamType(StreamTypeNames.REFERENCE);
+        pipelineReference = new PipelineReference(
+                null,
+                DocRef.builder()
+                        .name(FEED_NAME)
+                        .type(FeedDoc.TYPE)
+                        .build(),
+                StreamTypeNames.REFERENCE);
     }
 
     @Test
@@ -83,10 +84,8 @@ class TestEffectiveStreamService {
 
         doDetermineTest(Set.of(
                         effectiveStream1),
-                optEffectiveStream -> {
-                    Assertions.assertThat(optEffectiveStream)
-                            .hasValue(effectiveStream1);
-                });
+                optEffectiveStream -> Assertions.assertThat(optEffectiveStream)
+                        .hasValue(effectiveStream1));
     }
 
     @Test
@@ -98,10 +97,8 @@ class TestEffectiveStreamService {
         doDetermineTest(
                 Set.of(
                         effectiveStream1),
-                optEffectiveStream -> {
-                    Assertions.assertThat(optEffectiveStream)
-                            .hasValue(effectiveStream1);
-                });
+                optEffectiveStream -> Assertions.assertThat(optEffectiveStream)
+                        .hasValue(effectiveStream1));
     }
 
     @Test
@@ -121,10 +118,8 @@ class TestEffectiveStreamService {
                         effectiveStream1,
                         effectiveStream2,
                         effectiveStream3),
-                optEffectiveStream -> {
-                    Assertions.assertThat(optEffectiveStream)
-                            .hasValue(effectiveStream2);
-                });
+                optEffectiveStream -> Assertions.assertThat(optEffectiveStream)
+                        .hasValue(effectiveStream2));
     }
 
     @Test
@@ -144,10 +139,8 @@ class TestEffectiveStreamService {
                         effectiveStream1,
                         effectiveStream2,
                         effectiveStream3),
-                optEffectiveStream -> {
-                    Assertions.assertThat(optEffectiveStream)
-                            .hasValue(effectiveStream2);
-                });
+                optEffectiveStream -> Assertions.assertThat(optEffectiveStream)
+                        .hasValue(effectiveStream2));
     }
 
     @Test

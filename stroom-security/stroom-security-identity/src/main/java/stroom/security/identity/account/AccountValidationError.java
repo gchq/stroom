@@ -30,7 +30,7 @@ public enum AccountValidationError {
     @NotNull
     private final String message;
 
-    AccountValidationError(@NotNull String message) {
+    AccountValidationError(@NotNull final String message) {
         this.message = message;
     }
 

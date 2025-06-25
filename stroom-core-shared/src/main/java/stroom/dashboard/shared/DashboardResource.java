@@ -94,7 +94,7 @@ public interface DashboardResource extends RestResource, DirectRestService, Fetc
             summary = "Download search results",
             operationId = "downloadDashboardSearchResultsLocal")
     default ResourceGeneration downloadSearchResults(
-            @Parameter(description = "request", required = true) DownloadSearchResultsRequest request) {
+            @Parameter(description = "request", required = true) final DownloadSearchResultsRequest request) {
         return downloadSearchResults(null, request);
     }
 
@@ -113,7 +113,7 @@ public interface DashboardResource extends RestResource, DirectRestService, Fetc
             summary = "Perform a new search or get new results",
             operationId = "dashboardSearch")
     default DashboardSearchResponse search(
-            @Parameter(description = "request", required = true) DashboardSearchRequest request) {
+            @Parameter(description = "request", required = true) final DashboardSearchRequest request) {
         return search(null, request);
     }
 
@@ -132,7 +132,7 @@ public interface DashboardResource extends RestResource, DirectRestService, Fetc
             summary = "Get unique column values so the user can filter table results more easily",
             operationId = "getColumnValues")
     default ColumnValues getColumnValues(
-            @Parameter(description = "request", required = true) ColumnValuesRequest request) {
+            @Parameter(description = "request", required = true) final ColumnValuesRequest request) {
         return getColumnValues(null, request);
     }
 }

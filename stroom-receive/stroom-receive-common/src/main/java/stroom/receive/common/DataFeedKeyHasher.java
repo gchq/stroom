@@ -20,7 +20,7 @@ interface DataFeedKeyHasher {
      * @param salt        An optional salt to include in the verification
      * @return True if verification is successful
      */
-    default boolean verify(String dataFeedKey, String hash, String salt) {
+    default boolean verify(final String dataFeedKey, final String hash, final String salt) {
         final HashOutput hashOutput = hash(Objects.requireNonNull(dataFeedKey));
         return Objects.equals(Objects.requireNonNull(hash), hashOutput.hash);
     }

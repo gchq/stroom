@@ -70,8 +70,6 @@ public class CoreModule extends AbstractModule {
         install(new stroom.kafka.impl.KafkaConfigHandlerModule());
         install(new stroom.kafka.impl.KafkaConfigModule());
         install(new stroom.kafka.pipeline.KafkaPipelineModule());
-        install(new stroom.legacy.db.LegacyModule());
-        install(new stroom.legacy.impex_6_1.LegacyImpexModule());
         install(new stroom.meta.impl.MetaModule());
         install(new stroom.meta.impl.db.MetaDaoModule());
         install(new stroom.node.impl.NodeModule());

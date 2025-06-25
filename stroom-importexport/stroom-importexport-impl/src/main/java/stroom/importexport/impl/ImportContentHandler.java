@@ -35,7 +35,10 @@ public abstract class ImportContentHandler extends DefaultHandler {
     abstract void handleAttribute(String property, Object value);
 
     @Override
-    public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+    public void startElement(final String uri,
+                             final String localName,
+                             final String qName,
+                             final Attributes attributes) throws SAXException {
         super.startElement(uri, localName, qName, attributes);
         if (depth == 3 && localName.equals("doc")) {
             type = null;
@@ -49,7 +52,7 @@ public abstract class ImportContentHandler extends DefaultHandler {
     }
 
     @Override
-    public void endElement(String uri, String localName, String qName) throws SAXException {
+    public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         super.endElement(uri, localName, qName);
         if (depth == 2) {
             if (inDoc) {
@@ -76,7 +79,7 @@ public abstract class ImportContentHandler extends DefaultHandler {
     }
 
     @Override
-    public void characters(char[] ch, int start, int length) throws SAXException {
+    public void characters(final char[] ch, final int start, final int length) throws SAXException {
         super.characters(ch, start, length);
         content.append(ch, start, length);
     }

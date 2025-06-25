@@ -561,7 +561,7 @@ public class DataGridUtil {
         return new ColumnBuilder<T_ROW, CommandLink, Cell<CommandLink>>(valueExtractor, CommandLinkCell::new);
     }
 
-    public static void addCommandLinkFieldUpdater(Column<?, CommandLink> column) {
+    public static void addCommandLinkFieldUpdater(final Column<?, CommandLink> column) {
         column.setFieldUpdater((index, object, value) -> {
             if (NullSafe.allNonNull(value, value.getCommand())) {
                 value.getCommand().execute();
@@ -595,6 +595,15 @@ public class DataGridUtil {
     public static <T_ROW> Function<T_ROW, String> toStringFunc(final Function<T_ROW, Object> valueExtractor) {
         return (T_ROW row) ->
                 NullSafe.toStringOrElse(row, valueExtractor, "");
+    }
+
+    /**
+     * Returns a {@link Function} that will extract a boolean value from the row and
+     * render it as Yes/No.
+     */
+    public static <T_ROW> Function<T_ROW, String> toYesNoFunc(final Function<T_ROW, Boolean> valueExtractor) {
+        return (T_ROW row) ->
+                DataGridUtil.formatAsYesNo(valueExtractor.apply(row));
     }
 
     /**

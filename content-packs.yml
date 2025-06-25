@@ -5,8 +5,8 @@
     repo: {
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
-      branch: "planb",
-      commit: "73bf8b6123c76faa61f4edba4e4bbee42fcf07f5"
+      branch: "7.10",
+      commit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
     }
   }, {
     name : "event-logging-xml-schema",
@@ -14,8 +14,8 @@
     repo: {
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
-      branch: "planb",
-      commit: "73bf8b6123c76faa61f4edba4e4bbee42fcf07f5"
+      branch: "7.10",
+      commit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
     }
   }, {
     name: "example-index",
@@ -23,8 +23,8 @@
     repo: {
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
-      branch: "planb",
-      commit: "73bf8b6123c76faa61f4edba4e4bbee42fcf07f5"
+      branch: "7.10",
+      commit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
     }
   }, {
     name: "internal-dashboards",
@@ -32,8 +32,8 @@
     repo: {
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
-      branch: "planb",
-      commit: "73bf8b6123c76faa61f4edba4e4bbee42fcf07f5"
+      branch: "7.10",
+      commit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
     }
   }, {
     name: "internal-statistics-sql",
@@ -41,8 +41,8 @@
     repo: {
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
-      branch: "planb",
-      commit: "73bf8b6123c76faa61f4edba4e4bbee42fcf07f5"
+      branch: "7.10",
+      commit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
     }
   }, {
     name: "internal-statistics-stroom-stats",
@@ -50,8 +50,8 @@
     repo: {
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
-      branch: "planb",
-      commit: "73bf8b6123c76faa61f4edba4e4bbee42fcf07f5"
+      branch: "7.10",
+      commit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
     }
   }, {
     name: "standard-pipelines",
@@ -59,8 +59,8 @@
     repo: {
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
-      branch: "planb",
-      commit: "73bf8b6123c76faa61f4edba4e4bbee42fcf07f5"
+      branch: "7.10",
+      commit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
     }
   }, {
     name: "stroom-101",
@@ -68,8 +68,8 @@
     repo: {
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
-      branch: "planb",
-      commit: "73bf8b6123c76faa61f4edba4e4bbee42fcf07f5"
+      branch: "7.10",
+      commit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
     }
   }, {
     name: "stroom-logs",
@@ -77,8 +77,8 @@
     repo: {
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
-      branch: "planb",
-      commit: "73bf8b6123c76faa61f4edba4e4bbee42fcf07f5"
+      branch: "7.10",
+      commit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
     }
   }, {
     name: "template-pipelines",
@@ -86,8 +86,8 @@
     repo: {
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
-      branch: "planb",
-      commit: "73bf8b6123c76faa61f4edba4e4bbee42fcf07f5"
+      branch: "7.10",
+      commit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
     }
   }, {
     name: "state",
@@ -95,8 +95,8 @@
     repo: {
       name: "state",
       uri : "https://github.com/gchq/stroom-content.git",
-      branch: "planb",
-      commit: "73bf8b6123c76faa61f4edba4e4bbee42fcf07f5"
+      branch: "7.10",
+      commit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
     }
   }, {
     name: "planb",
@@ -104,8 +104,8 @@
     repo: {
       name: "planb",
       uri : "https://github.com/gchq/stroom-content.git",
-      branch: "planb",
-      commit: "73bf8b6123c76faa61f4edba4e4bbee42fcf07f5"
+      branch: "7.10",
+      commit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
     }
   }, {
     name: "stroom-visualisations",
@@ -113,8 +113,8 @@
     repo: {
       name: "stroom-visualisations-dev",
       uri : "https://github.com/gchq/stroom-visualisations-dev.git",
-      branch: "7.2",
-      commit: "d95c1588bc13a697a818bffea6ed213239a1f993"
+      branch: "main",
+      commit: "5d650d01bd2839e5f89e9f897d2f0e7a733690f2"
     }
   } ]
 }

@@ -163,7 +163,7 @@ public class Split extends Expression implements Match {
     }
 
     @Override
-    public int start(int group) {
+    public int start(final int group) {
         if (group > 2) {
             throw new IndexOutOfBoundsException("No group " + group);
         }
@@ -177,7 +177,7 @@ public class Split extends Expression implements Match {
     }
 
     @Override
-    public int end(int group) {
+    public int end(final int group) {
         if (group > 2) {
             throw new IndexOutOfBoundsException("No group " + group);
         }

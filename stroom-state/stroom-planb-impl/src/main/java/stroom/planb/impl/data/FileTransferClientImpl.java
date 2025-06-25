@@ -9,10 +9,12 @@ import stroom.security.api.SecurityContext;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.zip.ZipUtil;
 
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
@@ -21,7 +23,6 @@ import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -103,6 +104,11 @@ public class FileTransferClientImpl implements FileTransferClient {
 
                 // Send the data to all nodes.
                 for (final String nodeName : targetNodes) {
+                    LOGGER.debug(() -> LogUtil.message(
+                            "Plan B sending data {} to {}",
+                            fileDescriptor.getInfo(path),
+                            nodeName));
+
                     if (nodeInfo == null || NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
                         // Allow file move if the only target is the local node.
                         final boolean allowMove = targetNodes.size() == 1;

@@ -260,7 +260,7 @@ public class ThinSplitLayoutPanel extends DockLayoutPanel {
     }
 
     @Override
-    public void setWidgetHidden(Widget widget, boolean hidden) {
+    public void setWidgetHidden(final Widget widget, final boolean hidden) {
         super.setWidgetHidden(widget, hidden);
         // If we are hiding a widget then we also need to hide its splitter else you get an
         // orphaned splitter appearing

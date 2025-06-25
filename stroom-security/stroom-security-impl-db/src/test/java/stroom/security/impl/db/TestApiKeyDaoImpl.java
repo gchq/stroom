@@ -336,7 +336,7 @@ class TestApiKeyDaoImpl {
         createApiKey(user2, keyName, hash2, prefix2);
     }
 
-    private void doFetchVerifiedIdentityTest(final HashedApiKey apiKey, boolean isValid) {
+    private void doFetchVerifiedIdentityTest(final HashedApiKey apiKey, final boolean isValid) {
 
         final List<HashedApiKey> apiKeys = apiKeyDao.fetchValidApiKeysByPrefix(apiKey.getApiKeyPrefix());
         if (isValid) {
@@ -414,7 +414,7 @@ class TestApiKeyDaoImpl {
 
         try {
             return apiKeyDao.create(createHashedApiKeyRequest, hashedApiKeyParts);
-        } catch (DuplicateApiKeyException e) {
+        } catch (final DuplicateApiKeyException e) {
             throw new RuntimeException(e);
         }
     }

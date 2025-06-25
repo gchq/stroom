@@ -59,11 +59,11 @@ public class TextBox extends TextBoxBase {
      *
      * @param element the element to be wrapped
      */
-    public static TextBox wrap(Element element) {
+    public static TextBox wrap(final Element element) {
         // Assert that the element is attached.
         assert Document.get().getBody().isOrHasChild(element);
 
-        TextBox textBox = new TextBox(element);
+        final TextBox textBox = new TextBox(element);
 
         // Mark it attached and remember it for cleanup.
         textBox.onAttach();
@@ -86,12 +86,12 @@ public class TextBox extends TextBoxBase {
      *
      * @param element the element to be used
      */
-    protected TextBox(Element element) {
+    protected TextBox(final Element element) {
         super(element);
         assert InputElement.as(element).getType().equalsIgnoreCase("text");
     }
 
-    TextBox(Element element, String styleName) {
+    TextBox(final Element element, final String styleName) {
         super(element);
         if (styleName != null) {
             setStyleName(styleName);
@@ -121,7 +121,7 @@ public class TextBox extends TextBoxBase {
      *
      * @param length the maximum length, in characters
      */
-    public void setMaxLength(int length) {
+    public void setMaxLength(final int length) {
         getInputElement().setMaxLength(length);
     }
 
@@ -130,7 +130,7 @@ public class TextBox extends TextBoxBase {
      *
      * @param length the number of visible characters
      */
-    public void setVisibleLength(int length) {
+    public void setVisibleLength(final int length) {
         getInputElement().setSize(length);
     }
 

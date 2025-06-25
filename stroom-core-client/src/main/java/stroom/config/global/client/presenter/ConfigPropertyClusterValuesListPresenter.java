@@ -52,13 +52,13 @@ public class ConfigPropertyClusterValuesListPresenter
 
     // For DEV testing only, when you don't have two nodes
     private Map<String, Set<String>> makeDemoData() {
-        Supplier<String> junkTextSupplier = () ->
+        final Supplier<String> junkTextSupplier = () ->
                 IntStream.rangeClosed(1, 5)
                         .boxed()
                         .map(i -> this.getClass().getCanonicalName())
                         .collect(Collectors.joining(" "));
 
-        Map<String, Set<String>> demoMap = new HashMap<>();
+        final Map<String, Set<String>> demoMap = new HashMap<>();
         IntStream.rangeClosed(1, 9)
                 .forEach(i -> {
                     demoMap.put("value " + i + junkTextSupplier.get(), IntStream.rangeClosed(i * 10, (i * 10) + 9)

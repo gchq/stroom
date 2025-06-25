@@ -36,7 +36,7 @@ public class MockIndexVolumeService implements IndexVolumeService {
     }
 
     @Override
-    public IndexVolume create(IndexVolume indexVolume) {
+    public IndexVolume create(final IndexVolume indexVolume) {
         return null;
     }
 
@@ -46,12 +46,12 @@ public class MockIndexVolumeService implements IndexVolumeService {
     }
 
     @Override
-    public IndexVolume update(IndexVolume indexVolume) {
+    public IndexVolume update(final IndexVolume indexVolume) {
         return null;
     }
 
     @Override
-    public Boolean delete(int id) {
+    public Boolean delete(final int id) {
         return true;
     }
 

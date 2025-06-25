@@ -88,7 +88,7 @@ public class UserPreferencesManager {
         applyUserPreferences(this.currentPreferences, userPreferences);
 
         final Element element = RootPanel.getBodyElement().getParentElement();
-        String className = getCurrentPreferenceClasses();
+        final String className = getCurrentPreferenceClasses();
         element.setClassName(className);
 
         ClientTimeZone.setTimeZone(getTimeZone(currentUserPreferences));

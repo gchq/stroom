@@ -329,7 +329,7 @@ class SecurityContextImpl implements SecurityContext {
      */
     @Override
     public <T> T asUserResult(final UserIdentity userIdentity, final Supplier<T> supplier) {
-        T result;
+        final T result;
         boolean success = false;
         try {
             pushUser(userIdentity);
@@ -413,7 +413,7 @@ class SecurityContextImpl implements SecurityContext {
      */
     @Override
     public <T> T useAsReadResult(final Supplier<T> supplier) {
-        T result;
+        final T result;
         boolean success = false;
         try {
             elevatePermissions();
@@ -481,7 +481,7 @@ class SecurityContextImpl implements SecurityContext {
      */
     @Override
     public <T> T secureResult(final AppPermission permission, final Supplier<T> supplier) {
-        T result;
+        final T result;
 
         // Initiate current check type.
         final Boolean currentCheckType = checkTypeThreadLocal.get();
@@ -548,7 +548,7 @@ class SecurityContextImpl implements SecurityContext {
      */
     @Override
     public <T> T secureResult(final Supplier<T> supplier) {
-        T result;
+        final T result;
 
         // Initiate current check type.
         final Boolean currentCheckType = checkTypeThreadLocal.get();
@@ -643,8 +643,8 @@ class SecurityContextImpl implements SecurityContext {
     }
 
     private boolean inGroup(final UserRef userRef,
-                          final String groupName,
-                          final Set<UserRef> examined) {
+                            final String groupName,
+                            final Set<UserRef> examined) {
         final Set<UserRef> userGroups = userGroupsCache.getGroups(userRef);
         if (userGroups != null) {
             for (final UserRef userGroup : userGroups) {

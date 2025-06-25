@@ -131,7 +131,7 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
                     diffLines ->
                             log("Comparing original and modified yaml:\n{}",
                                     String.join("\n", diffLines)));
-        } catch (IOException e) {
+        } catch (final IOException e) {
             log("Unable to read file " + path, e);
         }
     }
@@ -225,7 +225,7 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
         }
     }
 
-    private void log(final String msg, Object... args) {
+    private void log(final String msg, final Object... args) {
         if (logChanges) {
             // Use system.out as we have no logger at this point
             System.out.println(LogUtil.message(msg, args));

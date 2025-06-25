@@ -89,10 +89,10 @@ final class FileSystemUtil {
         return Paths.get(path);
     }
 
-    static String encodeFileName(String fileName) {
-        StringBuilder builder = new StringBuilder();
+    static String encodeFileName(final String fileName) {
+        final StringBuilder builder = new StringBuilder();
         for (int i = 0; i < fileName.length(); i++) {
-            char c = fileName.charAt(i);
+            final char c = fileName.charAt(i);
             if (Character.isLetter(c) || Character.isDigit(c) || c == '.' || c == ' ' || c == '-' || c == '_') {
                 builder.append(c);
             } else {
@@ -103,8 +103,8 @@ final class FileSystemUtil {
         return builder.toString();
     }
 
-    static String decodeFileName(String fileName) {
-        StringBuilder builder = new StringBuilder();
+    static String decodeFileName(final String fileName) {
+        final StringBuilder builder = new StringBuilder();
         for (int i = 0; i < fileName.length(); i++) {
             char c = fileName.charAt(i);
             if (c == '#') {
@@ -120,7 +120,7 @@ final class FileSystemUtil {
 
     static boolean deleteAnyPath(final Collection<Path> files) {
         boolean ok = true;
-        for (Path file : files) {
+        for (final Path file : files) {
             if (!deleteAnyPath(file)) {
                 ok = false;
             }
@@ -146,7 +146,7 @@ final class FileSystemUtil {
 
     static boolean isAllFile(final Collection<Path> files) {
         boolean allFiles = true;
-        for (Path file : files) {
+        for (final Path file : files) {
             allFiles &= Files.isRegularFile(file);
         }
         return allFiles;
@@ -154,7 +154,7 @@ final class FileSystemUtil {
 
     static boolean isAllParentDirectoryExist(final Collection<Path> files) {
         boolean allDirs = true;
-        for (Path file : files) {
+        for (final Path file : files) {
             allDirs &= Files.isDirectory(file.getParent());
         }
         return allDirs;
@@ -162,7 +162,7 @@ final class FileSystemUtil {
 
     static boolean updateLastModified(final Collection<Path> files, final long lastModified) {
         boolean allOk = true;
-        for (Path file : files) {
+        for (final Path file : files) {
             try {
                 Files.setLastModifiedTime(file, FileTime.fromMillis(lastModified));
             } catch (final IOException e) {

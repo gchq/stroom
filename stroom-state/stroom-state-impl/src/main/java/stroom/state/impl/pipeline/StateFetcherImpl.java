@@ -20,7 +20,7 @@ public class StateFetcherImpl implements StateFetcher {
     }
 
     @Override
-    public Val getState(String map, String key, long effectiveTimeMs) {
+    public Val getState(final String map, final String key, final long effectiveTimeMs) {
         for (final StateProvider provider : providers) {
             final Val val = provider.getState(map, key, effectiveTimeMs);
             if (val != null && !Type.NULL.equals(val.type())) {

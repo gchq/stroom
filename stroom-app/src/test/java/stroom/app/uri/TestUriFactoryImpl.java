@@ -16,9 +16,9 @@ public class TestUriFactoryImpl {
 
     @Test
     void testAll() {
-        NodeUriConfig nodeUriConfig = new NodeUriConfig();
-        PublicUriConfig publicUriConfig = new PublicUriConfig();
-        UiUriConfig uiUriConfig = new UiUriConfig();
+        final NodeUriConfig nodeUriConfig = new NodeUriConfig();
+        final PublicUriConfig publicUriConfig = new PublicUriConfig();
+        final UiUriConfig uiUriConfig = new UiUriConfig();
         test(nodeUriConfig,
                 publicUriConfig,
                 uiUriConfig,

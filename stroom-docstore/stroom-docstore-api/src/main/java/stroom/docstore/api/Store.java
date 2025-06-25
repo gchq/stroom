@@ -10,6 +10,7 @@ import stroom.util.shared.Message;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -60,8 +61,6 @@ public interface Store<D extends Doc>
 
     boolean exists(DocRef docRef);
 
-//    Set<DocRef> listDocuments();
-
     DocRef importDocument(
             DocRef docRef,
             Map<String, byte[]> dataMap,
@@ -77,28 +76,9 @@ public interface Store<D extends Doc>
      */
     List<DocRef> list();
 
-    /**
-     * Find by exact case-sensitive match on the name
-     */
-//    default List<DocRef> findByName(String name) {
-//        return name != null
-//                ? findByNames(List.of(name), false)
-//                : Collections.emptyList();
-//    }
-//
-//    /**
-//     * Find by case-sensitive match on the name.
-//     * If allowWildCards is true '*' can be used to denote a 0-many char wild card.
-//     */
-//    default List<DocRef> findByName(final String name,
-//                                    final boolean allowWildCards) {
-//        return name != null
-//                ? findByNames(List.of(name), allowWildCards)
-//                : Collections.emptyList();
-//    }
-//
-//    List<DocRef> findByNames(final List<String> name,
-//                             final boolean allowWildCards);
+    // This is only used to migrate pipelines. Do not use!!!
+    @Deprecated
+    void migratePipelines(Function<Map<String, byte[]>, Optional<Map<String, byte[]>>> function);
 
     interface DocumentCreator<D extends Doc> {
 

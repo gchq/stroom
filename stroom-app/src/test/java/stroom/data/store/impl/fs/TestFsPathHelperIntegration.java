@@ -66,8 +66,6 @@ public class TestFsPathHelperIntegration {
 
         Guice.createInjector(
                         localModule,
-                        new FsTestModule(),
-//                        new FsDataStoreDbModule(),
                         new FsDataStoreDbModule(),
                         new FsDataStoreDaoModule(),
                         new MockClusterLockModule(),
@@ -99,7 +97,7 @@ public class TestFsPathHelperIntegration {
         final FsVolumeConfig fsVolumeConfig = new FsVolumeConfig();
         final String metaTypeExt = fsVolumeConfig.getMetaTypeExtension(streamType).orElseThrow();
 
-        Path rootPath = fsPathHelper.getRootPath(volPath, simpleMeta);
+        final Path rootPath = fsPathHelper.getRootPath(volPath, simpleMeta);
 
         final List<String> pathParts = new ArrayList<>(rootPath.getNameCount());
         for (final Path path : rootPath) {
@@ -189,7 +187,7 @@ public class TestFsPathHelperIntegration {
                 )
                 .collect(Collectors.toList());
 
-        DurationTimer durationTimer = DurationTimer.start();
+        final DurationTimer durationTimer = DurationTimer.start();
         for (final SimpleMeta meta : metaList) {
             rootPath = fsPathHelper.getRootPath(
                     volPath,

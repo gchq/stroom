@@ -99,7 +99,7 @@ public final class PropertyUtil {
                     final Object childValue;
                     try {
                         childValue = prop.getValueFromConfigObject();
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         LOGGER.error("Error getting value for prop {}, object {}", prop, object, e);
                         throw e;
                     }
@@ -314,7 +314,7 @@ public final class PropertyUtil {
         try {
             objectMapper.writeValue(tb, source);
             return (T) objectMapper.readValue(tb.asParser(), source.getClass());
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message("Error copying object {}: {}", source, e.getMessage()), e);
         }
     }
@@ -376,7 +376,7 @@ public final class PropertyUtil {
                 .collect(Collectors.toList());
     }
 
-    public static Class<?> getDataType(Class<?> clazz) {
+    public static Class<?> getDataType(final Class<?> clazz) {
         if (clazz.isPrimitive()) {
             return clazz;
         }
@@ -388,11 +388,11 @@ public final class PropertyUtil {
         return clazz;
     }
 
-    public static Class<?> getDataType(Type type) {
+    public static Class<?> getDataType(final Type type) {
         if (type instanceof Class) {
             return getDataType((Class<?>) type);
         } else if (type instanceof ParameterizedType) {
-            ParameterizedType pt = (ParameterizedType) type;
+            final ParameterizedType pt = (ParameterizedType) type;
             return getDataType(pt.getRawType());
         } else {
             throw new RuntimeException(LogUtil.message("Unexpected type of type {}",
@@ -400,12 +400,12 @@ public final class PropertyUtil {
         }
     }
 
-    public static List<Type> getGenericTypes(Type type) {
+    public static List<Type> getGenericTypes(final Type type) {
         if (type instanceof Class) {
             return Collections.emptyList();
         } else if (type instanceof ParameterizedType) {
-            ParameterizedType pt = (ParameterizedType) type;
-            Type[] specificTypes = pt.getActualTypeArguments();
+            final ParameterizedType pt = (ParameterizedType) type;
+            final Type[] specificTypes = pt.getActualTypeArguments();
 
             return Arrays.asList(specificTypes);
         } else {
@@ -568,10 +568,10 @@ public final class PropertyUtil {
                     throw new RuntimeException("Missing @JsonCreator constructor for class " + objectClass.getName());
                 }
                 return constructor.newInstance(args);
-            } catch (InvocationTargetException
-                     | IllegalAccessException
-                     | InstantiationException
-                     | IllegalArgumentException e) {
+            } catch (final InvocationTargetException
+                           | IllegalAccessException
+                           | InstantiationException
+                           | IllegalArgumentException e) {
                 throw new RuntimeException(
                         LogUtil.message("Error creating new instance of {} with args {}. Message: {}",
                                 objectClass.getName(),
@@ -732,7 +732,7 @@ public final class PropertyUtil {
         public Object getValueFromConfigObject() {
             try {
                 return getter.invoke(parentObject);
-            } catch (IllegalAccessException | InvocationTargetException e) {
+            } catch (final IllegalAccessException | InvocationTargetException e) {
                 throw new RuntimeException(LogUtil.message("Error getting value for prop {}", name), e);
             }
         }
@@ -740,7 +740,7 @@ public final class PropertyUtil {
         public Object getValueFromConfigObject(final Object obj) {
             try {
                 return getter.invoke(obj);
-            } catch (IllegalAccessException | InvocationTargetException e) {
+            } catch (final IllegalAccessException | InvocationTargetException e) {
                 throw new RuntimeException(LogUtil.message("Error getting value for prop {}", name), e);
             }
         }
@@ -750,7 +750,7 @@ public final class PropertyUtil {
                 if (setter != null) {
                     setter.invoke(parentObject, newValue);
                 }
-            } catch (IllegalAccessException | InvocationTargetException e) {
+            } catch (final IllegalAccessException | InvocationTargetException e) {
                 throw new RuntimeException(LogUtil.message("Error setting value for prop {}", name), e);
             }
         }
@@ -758,7 +758,7 @@ public final class PropertyUtil {
         public void setValueOnConfigObject(final Object parentObject, final Object newValue) {
             try {
                 setter.invoke(parentObject, newValue);
-            } catch (IllegalAccessException | InvocationTargetException e) {
+            } catch (final IllegalAccessException | InvocationTargetException e) {
                 throw new RuntimeException(LogUtil.message("Error setting value for prop {} on {}",
                         name, parentObject), e);
             }

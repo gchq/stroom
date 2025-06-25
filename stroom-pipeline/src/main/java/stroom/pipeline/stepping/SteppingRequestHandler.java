@@ -225,7 +225,7 @@ class SteppingRequestHandler {
     }
 
     private SteppingResult createResult(final boolean complete) {
-        StepData stepData;
+        final StepData stepData;
         // Set the output.
         if (controller.getLastFoundLocation() != null) {
             currentLocation = controller.getLastFoundLocation();

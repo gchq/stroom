@@ -20,7 +20,7 @@ class TestStringPredicateFactory {
 
     @TestFactory
     List<DynamicTest> fuzzyMatcherTestFactory() {
-        List<DynamicTest> tests = new ArrayList<>();
+        final List<DynamicTest> tests = new ArrayList<>();
 
         // Each test is run in normal ("foorbar") and negated form ("!foorbar")
         tests.addAll(List.of(
@@ -301,7 +301,7 @@ class TestStringPredicateFactory {
 
     @TestFactory
     List<DynamicTest> comparatorTestFactory() {
-        List<DynamicTest> tests = new ArrayList<>();
+        final List<DynamicTest> tests = new ArrayList<>();
 
         tests.addAll(List.of(
 

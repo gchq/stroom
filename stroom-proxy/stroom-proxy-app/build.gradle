@@ -32,7 +32,6 @@ dependencies {
     implementation project(':stroom-explorer:stroom-docrefinfo-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-meta:stroom-meta-api')
-    implementation project(':stroom-legacy:stroom-legacy-impex_6_1')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-proxy:stroom-proxy-remote-api')
     implementation project(':stroom-proxy:stroom-proxy-repo')
@@ -67,7 +66,6 @@ dependencies {
     implementation libs.jackson.databind
     implementation libs.jakarta.servlet.api
     implementation libs.jakarta.inject
-    implementation libs.jaxb.api
     implementation libs.jetty.server
     implementation libs.jose4j
     implementation libs.kafka.clients
@@ -79,7 +77,6 @@ dependencies {
 
     testImplementation project(':stroom-test-common')
 
-    testImplementation libs.assertj.core
     testImplementation libs.classgraph
     testImplementation libs.data.faker
     testImplementation libs.dropwizard.testing
@@ -89,21 +86,11 @@ dependencies {
     testImplementation libs.jinjava
     testImplementation libs.jmh.core
     testImplementation libs.jmh.generator.annprocess
-    testImplementation libs.junit.jupiter.api
-    testImplementation libs.junit.jupiter.api
     testImplementation libs.mbknor.jackson.jsonSchema
-    testImplementation libs.mockito.junit.jupiter
     testImplementation libs.wiremock
 
-    // The following logging libs are needed when running junits outside dropwizard
-    testRuntimeOnly libs.jakarta.activation
-    testRuntimeOnly libs.jaxb.impl
-    testRuntimeOnly libs.jcl.over.slf4j
-    testRuntimeOnly libs.jul.to.slf4j
-    testRuntimeOnly libs.junit.jupiter.engine
-    testRuntimeOnly libs.log4j.over.slf4j
-    testRuntimeOnly libs.logback.classic
-    testRuntimeOnly libs.logback.core
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
 }
 
 jar {
@@ -263,8 +250,11 @@ tasks.register('downloadSend', Download) {
 
     // Github rate limits unless you authenticate so use the special
     // auto generated workflow GITHUB_TOKEN
-    def token = "$System.env.PAT_FOR_PUBLIC_REPOS"
-    if (token != null && token != "") {
+    //def token = "$System.env.PAT_FOR_PUBLIC_REPOS"
+    def token = System.getenv('GITHUB_TOKEN')
+    if (token != null && !token.isEmpty()) {
+        // Don't log the actual token obvs
+        println "Adding auth token for ${src}"
         header 'Authorization', "Bearer $token"
     }
 }
@@ -276,8 +266,11 @@ tasks.register('downloadSendArgs', Download) {
 
     // Github rate limits unless you authenticate so use the special
     // auto generated workflow GITHUB_TOKEN
-    def token = "$System.env.PAT_FOR_PUBLIC_REPOS"
-    if (token != null && token != "") {
+    //def token = "$System.env.PAT_FOR_PUBLIC_REPOS"
+    def token = System.getenv('GITHUB_TOKEN')
+    if (token != null && !token.isEmpty()) {
+        // Don't log the actual token obvs
+        println "Adding auth token for ${src}"
         header 'Authorization', "Bearer $token"
     }
 }

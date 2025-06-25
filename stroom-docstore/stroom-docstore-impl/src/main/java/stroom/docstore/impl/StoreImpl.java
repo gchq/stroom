@@ -27,7 +27,6 @@ import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Store;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.importexport.api.ImportConverter;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
@@ -58,6 +57,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
@@ -71,7 +71,6 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     private final Persistence persistence;
     private final EntityEventBus entityEventBus;
-    private final ImportConverter importConverter;
     private final SecurityContext securityContext;
     private final Provider<DocRefDecorator> docRefInfoServiceProvider;
 
@@ -82,7 +81,6 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     @Inject
     StoreImpl(final Persistence persistence,
               final EntityEventBus entityEventBus,
-              final ImportConverter importConverter,
               final SecurityContext securityContext,
               final Provider<DocRefDecorator> docRefInfoServiceProvider,
               final DocumentSerialiser2<D> serialiser,
@@ -90,7 +88,6 @@ public class StoreImpl<D extends Doc> implements Store<D> {
               final Class<D> clazz) {
         this.persistence = persistence;
         this.entityEventBus = entityEventBus;
-        this.importConverter = importConverter;
         this.securityContext = securityContext;
         this.docRefInfoServiceProvider = docRefInfoServiceProvider;
         this.serialiser = serialiser;
@@ -336,15 +333,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                                  final Map<String, byte[]> dataMap,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
-        // Convert legacy import format to the new format if necessary.
-        final Map<String, byte[]> convertedDataMap = importConverter.convert(
-                docRef,
-                dataMap,
-                importState,
-                importSettings,
-                securityContext.getUserIdentityForAudit());
-
-        if (convertedDataMap != null) {
+        if (dataMap != null) {
             Objects.requireNonNull(docRef);
             final String uuid = docRef.getUuid();
             try {
@@ -366,7 +355,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                         final List<String> updatedFields = importState.getUpdatedFieldList();
                         checkForUpdatedFields(
                                 existingDocument,
-                                convertedDataMap,
+                                dataMap,
                                 new AuditFieldFilter<>(),
                                 updatedFields);
                         if (updatedFields.isEmpty()) {
@@ -383,7 +372,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                         }
                     }
 
-                    importDocument(docRef, existingDocument, uuid, convertedDataMap);
+                    importDocument(docRef, existingDocument, uuid, dataMap);
                 }
 
             } catch (final RuntimeException e) {
@@ -564,19 +553,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                     toDocRefDisplayString(docRef)));
         }
 
-        final Map<String, byte[]> data = persistence.getLockFactory().lockResult(uuid, () -> {
-            try {
-                return persistence.read(docRef);
-            } catch (final IOException e) {
-                LOGGER.error(e.getMessage(), e);
-                throw new UncheckedIOException(
-                        LogUtil.message("Error reading {} from store {}, {}",
-                                toDocRefDisplayString(docRef),
-                                persistence.getClass().getSimpleName(),
-                                e.getMessage()), e);
-            }
-        });
-
+        final Map<String, byte[]> data = readPersistence(docRef);
         if (data != null) {
             try {
                 return serialiser.read(data);
@@ -705,20 +682,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
             return Collections.emptyMap();
         }
 
-        final String uuid = docRef.getUuid();
-        final Map<String, byte[]> data = persistence.getLockFactory().lockResult(uuid, () -> {
-            try {
-                return persistence.read(new DocRef(type, uuid));
-            } catch (final IOException e) {
-                LOGGER.error(e.getMessage(), e);
-                throw new UncheckedIOException(
-                        LogUtil.message("Error reading {} from store {}, {}",
-                                toDocRefDisplayString(uuid),
-                                persistence.getClass().getSimpleName(),
-                                e.getMessage()), e);
-            }
-        });
-
+        final Map<String, byte[]> data = readPersistence(docRef);
         if (data == null) {
             return Collections.emptyMap();
         }
@@ -729,12 +693,37 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> new String(e.getValue(), StandardCharsets.UTF_8)));
     }
 
-    private String toDocRefDisplayString(final String uuid) {
-        if (uuid == null) {
-            return "";
-        } else {
-            return toDocRefDisplayString(new DocRef(type, uuid));
-        }
+    private Map<String, byte[]> readPersistence(final DocRef docRef) {
+        return persistence.getLockFactory().lockResult(docRef.getUuid(), () -> {
+            try {
+                return persistence.read(docRef);
+            } catch (final IOException e) {
+                LOGGER.error(e.getMessage(), e);
+                throw new UncheckedIOException(
+                        LogUtil.message("Error reading {} from store {}, {}",
+                                toDocRefDisplayString(docRef),
+                                persistence.getClass().getSimpleName(),
+                                e.getMessage()), e);
+            }
+        });
+    }
+
+    @Deprecated // remove once pipelines have been migrated.
+    public void migratePipelines(final Function<Map<String, byte[]>, Optional<Map<String, byte[]>>> function) {
+        persistence.list(type).forEach(docRef ->
+                persistence.getLockFactory().lock(docRef.getUuid(), () -> {
+                    final Map<String, byte[]> data = readPersistence(docRef);
+                    if (data != null) {
+                        final Optional<Map<String, byte[]>> migrated = function.apply(data);
+                        migrated.ifPresent(newData -> {
+                            try {
+                                persistence.write(docRef, true, newData);
+                            } catch (final Exception e) {
+                                LOGGER.error(e::getMessage, e);
+                            }
+                        });
+                    }
+                }));
     }
 
     private String toDocRefDisplayString(final DocRef docRef) {
@@ -744,14 +733,14 @@ public class StoreImpl<D extends Doc> implements Store<D> {
             try {
                 return DocRefUtil.createTypedDocRefString(docRefInfoServiceProvider.get()
                         .decorate(docRef));
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 // This method is for use in decorating the docref for exception messages
                 // so swallow any errors.
                 LOGGER.debug("Error decorating docRef {}: {}",
                         docRef, LogUtil.exceptionMessage(e), e);
                 try {
                     return DocRefUtil.createTypedDocRefString(docRef);
-                } catch (Exception ex) {
+                } catch (final Exception ex) {
                     LOGGER.debug("Error displaying docRef {}: {}",
                             docRef, LogUtil.exceptionMessage(e), e);
                     return docRef.toString();

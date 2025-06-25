@@ -60,7 +60,7 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
     @Override
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     public ResultPage<ProcessorTask> find(final ExpressionCriteria criteria) {
-        ResultPage<ProcessorTask> result;
+        final ResultPage<ProcessorTask> result;
 
         final Query.Builder<Void> queryBuilder = Query.builder();
         StroomEventLoggingUtil.appendExpression(queryBuilder, criteria.getExpression());
@@ -90,7 +90,7 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
     @Override
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     public ResultPage<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria) {
-        ResultPage<ProcessorTaskSummary> result;
+        final ResultPage<ProcessorTaskSummary> result;
 
         final Query.Builder<Void> queryBuilder = Query.builder();
         StroomEventLoggingUtil.appendExpression(queryBuilder, criteria.getExpression());

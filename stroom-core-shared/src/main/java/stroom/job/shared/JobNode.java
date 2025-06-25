@@ -190,7 +190,7 @@ public class JobNode implements HasAuditInfo, HasIntegerId {
         return nodeName;
     }
 
-    public void setNodeName(String nodeName) {
+    public void setNodeName(final String nodeName) {
         this.nodeName = nodeName;
     }
 

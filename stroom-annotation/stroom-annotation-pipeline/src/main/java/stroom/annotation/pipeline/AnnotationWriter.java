@@ -137,15 +137,15 @@ class AnnotationWriter extends AbstractXMLFilter {
                 long streamId = 0;
                 try {
                     streamId = Long.parseLong(lastStreamId);
-                } catch (NumberFormatException ex) {
+                } catch (final NumberFormatException ex) {
                     log(Severity.ERROR, "StreamId must be a long integer.  Got " + lastStreamId, null);
                 }
                 if (streamId > 0) {
                     try {
-                        long eventId = Long.parseLong(lastEventId);
+                        final long eventId = Long.parseLong(lastEventId);
 
                         currentEventIds.add(new EventId(streamId, eventId));
-                    } catch (NumberFormatException ex) {
+                    } catch (final NumberFormatException ex) {
                         log(Severity.ERROR, "EventId must be a long integer.  Got " + lastEventId, null);
                     }
                 }
@@ -176,7 +176,7 @@ class AnnotationWriter extends AbstractXMLFilter {
     }
 
     @Override
-    public void characters(char[] ch, int start, int length) throws SAXException {
+    public void characters(final char[] ch, final int start, final int length) throws SAXException {
         content.append(ch, start, length);
         super.characters(ch, start, length);
     }

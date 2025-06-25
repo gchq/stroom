@@ -42,7 +42,7 @@ public class TrackersPlugin extends NodeToolsPlugin {
     }
 
     @Override
-    protected void addChildItems(BeforeRevealMenubarEvent event) {
+    protected void addChildItems(final BeforeRevealMenubarEvent event) {
 //        //TODO what are the correct permissions?
 //        if (getSecurityContext().hasAppPermission(AppPermissionEnum.MANAGE_JOBS_PERMISSION)) {
 //            clientPropertyCache.get()

@@ -27,7 +27,6 @@ import stroom.explorer.impl.DocRefInfoModule;
 import stroom.explorer.impl.MockExplorerModule;
 import stroom.feed.impl.FeedModule;
 import stroom.importexport.impl.ImportExportModule;
-import stroom.legacy.impex_6_1.LegacyImpexModule;
 import stroom.meta.mock.MockMetaModule;
 import stroom.meta.statistics.api.MetaStatistics;
 import stroom.node.api.NodeInfo;
@@ -80,7 +79,6 @@ public class CliModule extends AbstractModule {
         install(new FeedModule());
         install(new PipelineScopeModule());
         install(new ImportExportModule());
-        install(new LegacyImpexModule());
 //        install(new stroom.jobsystem.JobSystemModule());
 //        install(new stroom.lifecycle.LifecycleModule());
         install(new stroom.event.logging.impl.EventLoggingModule());

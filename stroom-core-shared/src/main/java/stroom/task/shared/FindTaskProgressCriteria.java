@@ -127,12 +127,12 @@ public class FindTaskProgressCriteria extends BaseCriteria {
 
     public void validateSortField() {
         if (this.getSortList().isEmpty()) {
-            CriteriaFieldSort defaultSort = new CriteriaFieldSort(FindTaskProgressCriteria.FIELD_SUBMIT_TIME,
+            final CriteriaFieldSort defaultSort = new CriteriaFieldSort(FindTaskProgressCriteria.FIELD_SUBMIT_TIME,
                     false,
                     true);
             this.getSortList().add(defaultSort);
         } else {
-            for (CriteriaFieldSort sort : this.getSortList()) {
+            for (final CriteriaFieldSort sort : this.getSortList()) {
                 if (!Arrays.asList(
                         FindTaskProgressCriteria.FIELD_AGE,
                         FindTaskProgressCriteria.FIELD_INFO,

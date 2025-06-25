@@ -21,9 +21,9 @@ package stroom.security.identity.token;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Deprecated // Keeping it else it breaks the React code
@@ -93,7 +93,7 @@ public class CreateApiKeyRequest {
         return tokenType;
     }
 
-    public void setTokenType(String tokenType) {
+    public void setTokenType(final String tokenType) {
         this.tokenType = tokenType;
     }
 
@@ -101,7 +101,7 @@ public class CreateApiKeyRequest {
         return enabled;
     }
 
-    public void setEnabled(boolean enabled) {
+    public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
     }
 
@@ -110,7 +110,7 @@ public class CreateApiKeyRequest {
         return comments;
     }
 
-    public void setComments(@Nullable String comments) {
+    public void setComments(@Nullable final String comments) {
         this.comments = comments;
     }
 

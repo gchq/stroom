@@ -120,7 +120,7 @@ public class FindInContentPresenter
         cellTable.addStyleName("FindCellTable");
 
         selectionModel = new MultiSelectionModelImpl<>();
-        SelectionEventManager<FindInContentResult> selectionEventManager = new SelectionEventManager<>(
+        final SelectionEventManager<FindInContentResult> selectionEventManager = new SelectionEventManager<>(
                 cellTable,
                 selectionModel,
                 this::openDocument,

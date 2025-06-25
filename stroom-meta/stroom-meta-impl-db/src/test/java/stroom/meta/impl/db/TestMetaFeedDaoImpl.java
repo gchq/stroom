@@ -100,7 +100,7 @@ class TestMetaFeedDaoImpl {
 
     @Test
     void testDuplicateCreate() {
-        String feedName = "TEST";
+        final String feedName = "TEST";
         final Optional<Integer> id1 = feedDao.get(feedName);
         final Optional<Integer> id2 = feedDao.tryCreate(feedName);
         final Optional<Integer> id3 = feedDao.tryCreate(feedName);
@@ -119,13 +119,13 @@ class TestMetaFeedDaoImpl {
 
     @Test
     void testGet() {
-        String feedName = "FOO";
+        final String feedName = "FOO";
         Optional<Integer> optId = feedDao.get(feedName);
 
         assertThat(optId)
                 .isEmpty();
 
-        Integer id = feedDao.getOrCreate(feedName);
+        final Integer id = feedDao.getOrCreate(feedName);
 
         assertThat(id)
                 .isNotNull();

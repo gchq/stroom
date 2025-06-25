@@ -43,12 +43,12 @@ public class BrowserRouterAssetsBundle implements ConfiguredBundle<Configuration
     }
 
     @Override
-    public void initialize(Bootstrap<?> bootstrap) {
+    public void initialize(final Bootstrap<?> bootstrap) {
         // nothing doing
     }
 
     @Override
-    public void run(Configuration configuration, Environment environment) {
+    public void run(final Configuration configuration, final Environment environment) {
         LOGGER.info("Registering AssetBundle with name: {} for path {}", assetsName, uriPath + '*');
         environment.servlets().addServlet(assetsName, createServlet()).addMapping(uriPath + '*');
     }

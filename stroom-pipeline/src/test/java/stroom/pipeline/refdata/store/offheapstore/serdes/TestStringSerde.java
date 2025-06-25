@@ -27,7 +27,7 @@ class TestStringSerde extends AbstractSerdeTest<String, StringSerde> {
 
     @Test
     void testSerialisationDeserialisation() {
-        String str = "this is my string";
+        final String str = "this is my string";
 
         doSerialisationDeserialisationTest(str);
     }

@@ -6,8 +6,6 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.jackson.annotations
-    implementation libs.jaxb.api
-    
-    testRuntimeOnly libs.jakarta.activation
-    testRuntimeOnly libs.jaxb.impl
+
+    testRuntimeOnly libs.bundles.common.test.runtime
 }

@@ -36,7 +36,7 @@ public class HostNameUtil {
                 if (hostName == null || hostName.isEmpty()) {
                     hostName = "Unknown";
                 }
-            } catch (UnknownHostException e) {
+            } catch (final UnknownHostException e) {
                 LOGGER.error("Unable to determine hostname, using 'Unknown'", e);
                 hostName = "Unknown";
             }

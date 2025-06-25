@@ -13,9 +13,9 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import com.google.inject.assistedinject.Assisted;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.EnvFlags;
@@ -163,7 +163,7 @@ public class RefDataLmdbEnv {
 
     public void registerDatabases(final LmdbDb... lmdbDbs) {
         if (lmdbDbs != null) {
-            for (LmdbDb lmdbDb : lmdbDbs) {
+            for (final LmdbDb lmdbDb : lmdbDbs) {
                 this.databaseMap.put(lmdbDb.getDbName(), lmdbDb);
             }
         }
@@ -172,8 +172,8 @@ public class RefDataLmdbEnv {
     /**
      * For use in testing at SMALL scale. Dumps the content of each DB to the logger.
      */
-    public void logAllContents(Consumer<String> logEntryConsumer) {
-        AtomicLong counter = new AtomicLong();
+    public void logAllContents(final Consumer<String> logEntryConsumer) {
+        final AtomicLong counter = new AtomicLong();
         final Consumer<String> countingConsumer = str -> {
             counter.incrementAndGet();
             logEntryConsumer.accept(str);
@@ -189,7 +189,7 @@ public class RefDataLmdbEnv {
     }
 
     public long getEntryCount(final String dbName) {
-        LmdbDb lmdbDb = databaseMap.get(dbName);
+        final LmdbDb lmdbDb = databaseMap.get(dbName);
         if (lmdbDb == null) {
             throw new IllegalArgumentException(LogUtil.message("No database with name {} exists", dbName));
         }

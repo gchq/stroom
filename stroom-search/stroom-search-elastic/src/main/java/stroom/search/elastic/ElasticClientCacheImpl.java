@@ -56,7 +56,7 @@ public class ElasticClientCacheImpl implements ElasticClientCache, Clearable {
                 this::destroy);
     }
 
-    private ElasticsearchClient create(ElasticConnectionConfig elasticConnectionConfig) {
+    private ElasticsearchClient create(final ElasticConnectionConfig elasticConnectionConfig) {
         if (elasticConnectionConfig == null) {
             throw new NullPointerException("Elasticsearch connection config not provided");
         }

@@ -210,9 +210,6 @@ The table below includes licences for all Maven dependencies.
 | org.xerial.snappy                | snappy-java                                  | 1.0.4.1          | APL 2.0       |           |               |
 | stax                             | stax-api                                     | 1.0.1            | APL 2.0       |           |               |
 | xalan                            | xalan                                        | 2.7.0            | APL 2.0       |           |               |
-| xml-apis                         | xml-apis                                     | 1.0.b2           | APL 2.0       |           |               |
-| xml-apis                         | xml-apis                                     | 1.3.03           | APL 2.0       |           |               |
-| xml-apis                         | xml-apis-ext                                 | 1.3.04           | APL 2.0       |           |               |
 | xmlenc                           | xmlenc                                       | 0.52             | MIT           |           |               |
 | xom                              | xom                                          | 1.2.5            | LGPL          |           |               |
 

@@ -106,7 +106,7 @@ class TestTemporalStateDb {
                             ValString.create(StateValueTestUtil.makeString(1000))), refTime)));
 
     @Test
-    void test(@TempDir Path tempDir) {
+    void test(@TempDir final Path tempDir) {
         testWrite(tempDir);
 
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
@@ -124,14 +124,9 @@ class TestTemporalStateDb {
             checkState(db, byteKey, refTime.minusMillis(1), false);
             // Check after time states.
             checkState(db, byteKey, refTime.plusMillis(1), true);
-
-//            final TemporalStateRequest stateRequest =
-//                    new TemporalStateRequest("TEST_MAP", "TEST_KEY", refTime);
             final TemporalKey key = TemporalKey.builder().prefix(byteKey).time(refTime).build();
             final Val value = db.get(key);
             assertThat(value).isNotNull();
-//            assertThat(res.key()).isEqualTo("TEST_KEY");
-//            assertThat(res.effectiveTime()).isEqualTo(refTime);
             assertThat(value.type()).isEqualTo(Type.STRING);
             assertThat(value.toString()).isEqualTo("test");
 
@@ -155,15 +150,12 @@ class TestTemporalStateDb {
             assertThat(results.getFirst()[3].toString()).isEqualTo("test");
 
 
-//            final AtomicInteger count = new AtomicInteger();
-//            stateDao.search(new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex, null,
-//                    v -> count.incrementAndGet());
 //            assertThat(count.get()).isEqualTo(100);
         }
     }
 
     @Test
-    void testGetState(@TempDir Path tempDir) {
+    void testGetState(@TempDir final Path tempDir) {
         final KeyPrefix name = KeyPrefix.create("test");
         final Instant effectiveTime = Instant.parse("2000-01-01T00:00:00.000Z");
         try (final TemporalStateDb db = TemporalStateDb.create(tempDir, BYTE_BUFFERS, BASIC_SETTINGS, false)) {

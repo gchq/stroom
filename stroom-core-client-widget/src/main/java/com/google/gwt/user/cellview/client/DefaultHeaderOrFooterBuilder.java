@@ -20,7 +20,7 @@ import java.util.Objects;
 
 public class DefaultHeaderOrFooterBuilder<T> extends AbstractHeaderOrFooterBuilder<T> {
 
-    public DefaultHeaderOrFooterBuilder(AbstractCellTable<T> table, boolean isFooter) {
+    public DefaultHeaderOrFooterBuilder(final AbstractCellTable<T> table, final boolean isFooter) {
         super(table, isFooter);
     }
 
@@ -78,11 +78,11 @@ public class DefaultHeaderOrFooterBuilder<T> extends AbstractHeaderOrFooterBuild
                                 ? style.firstColumnFooter()
                                 : style.firstColumnHeader()));
 
-                TableRowBuilder tr = this.startRow();
+                final TableRowBuilder tr = this.startRow();
 
                 int curColumn;
                 for (curColumn = 1; curColumn < columnCount; ++curColumn) {
-                    Header<?> header = this.getHeader(curColumn);
+                    final Header<?> header = this.getHeader(curColumn);
                     if (header != prevHeader) {
                         this.buildTableHeader(
                                 tr,
@@ -153,7 +153,7 @@ public class DefaultHeaderOrFooterBuilder<T> extends AbstractHeaderOrFooterBuild
         return -1;
     }
 
-    private void buildTableHeader(final TableRowBuilder tr, Column<T, ?> column, Header<?> header,
+    private void buildTableHeader(final TableRowBuilder tr, final Column<T, ?> column, final Header<?> header,
                                   final boolean isSortable,
                                   final boolean isSorted,
                                   final boolean isSortAscending,

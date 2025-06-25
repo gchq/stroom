@@ -1,8 +1,5 @@
 ext.moduleName = 'stroom.search.api'
 
 dependencies {
-//    implementation project(':stroom-query:stroom-query-api')
 
-//    implementation libs.jackson.annotations
-//    implementation libs.jaxb.api
 }

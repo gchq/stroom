@@ -9,11 +9,11 @@ public class RoundRobinCollection<T> {
     private final List<T> list = new ArrayList<>();
     private volatile int index;
 
-    public synchronized void add(T item) {
+    public synchronized void add(final T item) {
         list.add(item);
     }
 
-    public synchronized void remove(T item) {
+    public synchronized void remove(final T item) {
         list.remove(item);
     }
 

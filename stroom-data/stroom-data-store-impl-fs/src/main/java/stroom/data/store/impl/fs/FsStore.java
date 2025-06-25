@@ -18,13 +18,18 @@
 package stroom.data.store.impl.fs;
 
 
+import stroom.data.shared.StreamTypeNames;
+import stroom.data.store.api.AttributeMapFactory;
 import stroom.data.store.api.DataException;
+import stroom.data.store.api.InputStreamProvider;
+import stroom.data.store.api.SizeAwareInputStream;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
-import stroom.data.store.impl.AttributeMapFactory;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
@@ -36,6 +41,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
@@ -48,6 +54,8 @@ import java.util.Map;
 class FsStore implements Store, AttributeMapFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsStore.class);
+
+    private static final int MINIMUM_BYTE_COUNT = 10;
 
     private final FsPathHelper fileSystemStreamPathHelper;
     private final MetaService metaService;
@@ -120,7 +128,7 @@ class FsStore implements Store, AttributeMapFactory {
         try {
             if (target instanceof final FsTarget fsTarget) {
                 fsTarget.delete();
-            } else if (target instanceof S3Target s3Target) {
+            } else if (target instanceof final S3Target s3Target) {
                 s3Target.delete();
             }
         } catch (final RuntimeException e) {
@@ -202,4 +210,31 @@ class FsStore implements Store, AttributeMapFactory {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
+
+    @Override
+    public AttributeMap getAttributeMapForPart(final long streamId, final long partNo) {
+        try (final Source source = openSource(streamId)) {
+            final AttributeMap attributeMap = new AttributeMap();
+
+            // Setup meta data.
+            final InputStreamProvider provider = source.get(partNo);
+            if (provider != null) {
+                // Get the input stream.
+                final SizeAwareInputStream inputStream = provider.get(StreamTypeNames.META);
+
+                // Make sure we got an input stream.
+                if (inputStream != null) {
+                    // Only use meta data if we actually have some.
+                    final long byteCount = inputStream.size();
+                    if (byteCount > MINIMUM_BYTE_COUNT) {
+                        AttributeMapUtil.read(inputStream, attributeMap);
+                    }
+                }
+            }
+            return attributeMap;
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
 }

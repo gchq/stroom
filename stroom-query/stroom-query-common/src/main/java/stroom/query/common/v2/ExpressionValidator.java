@@ -167,7 +167,7 @@ public class ExpressionValidator {
 
     private void isValidDateStr(final String dateStr) {
         try {
-            Optional<ZonedDateTime> optDateTime = DateExpressionParser.parse(dateStr, dateTimeSettings);
+            final Optional<ZonedDateTime> optDateTime = DateExpressionParser.parse(dateStr, dateTimeSettings);
 
             if (optDateTime.isEmpty()) {
                 throw new ExpressionValidationException(LogUtil.message(
@@ -176,7 +176,7 @@ public class ExpressionValidator {
                         "\n\nA relative date time expression, e.g. 'now() - 7d'.",
                         dateStr));
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             String msg = NullSafe.getOrElse(
                     e.getMessage(),
                     String::trim,

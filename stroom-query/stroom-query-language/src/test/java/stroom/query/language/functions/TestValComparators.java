@@ -133,7 +133,7 @@ class TestValComparators {
         doTestContract(vals);
 
         // Make sure we can sort the full list without exception
-        List<Val> sortedList = vals.stream()
+        final List<Val> sortedList = vals.stream()
                 .sorted(comparator)
                 .collect(Collectors.toList());
     }
@@ -415,9 +415,9 @@ class TestValComparators {
 //            return new Vals(val1, val2, val3);
 //        }
 
-        static Vals of(Object obj1,
-                       Object obj2,
-                       Object obj3) {
+        static Vals of(final Object obj1,
+                       final Object obj2,
+                       final Object obj3) {
             return new Vals(
                     Val.create(obj1),
                     Val.create(obj2),

@@ -19,6 +19,7 @@ package stroom.data.store.impl;
 import stroom.data.shared.DataInfoSection;
 import stroom.data.shared.DataInfoSection.Entry;
 import stroom.data.shared.UploadDataRequest;
+import stroom.data.store.api.AttributeMapFactory;
 import stroom.data.store.api.DataService;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
@@ -339,7 +340,7 @@ class DataServiceImpl implements DataService {
                                         .collect(Collectors.joining(","))));
                 return childTypes;
             });
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error(LogUtil.message("Error fetching child stream types for id {}, part number {}",
                     id, partNo), e);
             throw e;
@@ -349,7 +350,7 @@ class DataServiceImpl implements DataService {
     private String convertDuration(final String value) {
         try {
             return ModelStringUtil.formatDurationString(Long.parseLong(value));
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             // Ignore.
         }
         return value;
@@ -357,9 +358,9 @@ class DataServiceImpl implements DataService {
 
     private String convertTime(final String value) {
         try {
-            long valLong = Long.parseLong(value);
+            final long valLong = Long.parseLong(value);
             return DateUtil.createNormalDateTimeString(valLong) + " (" + valLong + ")";
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             // Ignore.
         }
         return value;
@@ -374,7 +375,7 @@ class DataServiceImpl implements DataService {
             } else {
                 return iecByteSizeStr;
             }
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             // Ignore.
         }
         return value;
@@ -383,7 +384,7 @@ class DataServiceImpl implements DataService {
     private String convertCount(final String value) {
         try {
             return ModelStringUtil.formatCsv(Long.parseLong(value));
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             // Ignore.
         }
         return value;

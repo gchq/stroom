@@ -187,7 +187,7 @@ public final class StreamUtil {
     public static String fileToString(final Path file) {
         try {
             return Files.readString(file, DEFAULT_CHARSET);
-        } catch (IOException ioEx) {
+        } catch (final IOException ioEx) {
             // Wrap it
             throw new UncheckedIOException(ioEx);
         }
@@ -202,7 +202,7 @@ public final class StreamUtil {
     public static String fileToString(final Path file, final Charset charset) {
         try {
             return Files.readString(file, charset);
-        } catch (IOException ioEx) {
+        } catch (final IOException ioEx) {
             // Wrap it
             throw new UncheckedIOException(ioEx);
         }

@@ -117,12 +117,12 @@ public class AnalyticsDataSetup {
         // Add extraction pipeline.
         final DocRef searchResultPipeline = storeCreationTool.getSearchResultPipeline(
                 "Search result",
-                resourcePath.resolve("dynamic-result-pipeline.xml"),
+                resourcePath.resolve("dynamic-result-pipeline.json"),
                 resourcePath.resolve("dynamic-index.xsl"));
 
         // Add view.
         final DocRef viewDocRef = viewStore.createDocument("index_view");
-        ViewDoc viewDoc = viewStore.readDocument(viewDocRef);
+        final ViewDoc viewDoc = viewStore.readDocument(viewDocRef);
         viewDoc.setDataSource(indexDocRef);
         viewDoc.setPipeline(searchResultPipeline);
         viewDoc.setFilter(ExpressionOperator.builder()
@@ -138,10 +138,10 @@ public class AnalyticsDataSetup {
         // Add some data.
         commonTranslationTestHelper.setup();
         // Translate data.
-        List<ProcessorResult> results = commonTranslationTestHelper.processAll();
+        final List<ProcessorResult> results = commonTranslationTestHelper.processAll();
 
         // 3 ref data streams plus our data streams
-        int expectedTaskCount = 3 + 1;
+        final int expectedTaskCount = 3 + 1;
 
         assertThat(results.size())
                 .isEqualTo(expectedTaskCount);
@@ -158,7 +158,7 @@ public class AnalyticsDataSetup {
         // Create index pipeline.
         final DocRef indexPipeline = storeCreationTool.getIndexPipeline(
                 "Dynamic Index",
-                resourcePath.resolve("indexing-pipeline.xml"),
+                resourcePath.resolve("indexing-pipeline.json"),
                 resourcePath.resolve("dynamic-index.xsl"),
                 indexDocRef);
 
@@ -183,7 +183,7 @@ public class AnalyticsDataSetup {
         }
 
         // Translate data.
-        List<ProcessorResult> results = commonTranslationTestHelper.processAll();
+        final List<ProcessorResult> results = commonTranslationTestHelper.processAll();
         assertThat(results.size()).isEqualTo(1);
 
         results.forEach(this::assertProcessorResult);
@@ -221,7 +221,7 @@ public class AnalyticsDataSetup {
         }
 
         // Translate data.
-        List<ProcessorResult> results = commonTranslationTestHelper.processAll();
+        final List<ProcessorResult> results = commonTranslationTestHelper.processAll();
 
         assertThat(results.size())
                 .isEqualTo(1);

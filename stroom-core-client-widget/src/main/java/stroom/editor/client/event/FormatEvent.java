@@ -38,7 +38,7 @@ public class FormatEvent extends GwtEvent<FormatEvent.FormatHandler> {
     }
 
     @Override
-    protected void dispatch(FormatHandler handler) {
+    protected void dispatch(final FormatHandler handler) {
         handler.onFormat(this);
     }
 

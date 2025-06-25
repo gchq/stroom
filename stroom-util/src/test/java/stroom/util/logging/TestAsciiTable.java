@@ -225,7 +225,7 @@ class TestAsciiTable {
         final int seed = 123;
         final int min = 0;
         final int max = 64;
-        Random random = new Random(seed);
+        final Random random = new Random(seed);
         final List<Tuple2<Integer, String>> data = IntStream.rangeClosed(1, 15)
                 .boxed()
                 .map(i -> {

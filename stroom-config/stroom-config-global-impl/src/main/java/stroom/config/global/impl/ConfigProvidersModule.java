@@ -350,14 +350,7 @@ public class ConfigProvidersModule extends AbstractModule {
                 stroom.kafka.impl.KafkaConfig.class);
     }
 
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
-    stroom.legacy.db.LegacyConfig getLegacyConfig(
-            final ConfigMapper configMapper) {
-        return configMapper.getConfigObject(
-                stroom.legacy.db.LegacyConfig.class);
-    }
+
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides

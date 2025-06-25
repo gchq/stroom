@@ -67,7 +67,7 @@ class Min extends AbstractAggregateFunction {
                 }
                 return current;
 
-            } catch (RuntimeException e) {
+            } catch (final RuntimeException e) {
                 return ValErr.create(e.getMessage());
             }
         }

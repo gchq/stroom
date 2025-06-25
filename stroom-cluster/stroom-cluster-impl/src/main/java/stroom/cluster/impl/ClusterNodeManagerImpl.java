@@ -287,7 +287,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
         updateClusterStateAsync(REQUERY_DELAY, true);
     }
 
-    private List<String> asList(Set<String> set) {
+    private List<String> asList(final Set<String> set) {
         final List<String> list = new ArrayList<>(set);
         list.sort((o1, o2) -> {
             if (o1 != null && o2 != null) {

@@ -221,7 +221,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
     }
 
     private void onChangeData(final ProcessorListRowResultPage data) {
-        ProcessorListRow selected = selectionModel.getSelected();
+        final ProcessorListRow selected = selectionModel.getSelected();
 
         if (nextSelection != null) {
             for (final ProcessorListRow row : data.getValues()) {
@@ -550,7 +550,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
     private void addRunAsUserColumn() {
         dataGrid.addResizableColumn(
                 DataGridUtil.userRefColumnBuilder(
-                                (ProcessorListRow row) -> {
+                                (final ProcessorListRow row) -> {
                                     if (row instanceof ProcessorFilterRow) {
                                         final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
                                         return Optional
@@ -566,7 +566,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                                 securityContext,
                                 true,
                                 DisplayType.AUTO)
-                        .enabledWhen((ProcessorListRow row) -> {
+                        .enabledWhen((final ProcessorListRow row) -> {
                             if (row instanceof ProcessorFilterRow) {
                                 final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
                                 return Optional

@@ -131,7 +131,7 @@ class TestIndexFieldDaoImpl {
         CompletableFuture.runAsync(() -> JooqUtil.context(indexDbConnProvider, context -> {
             try {
                 startLatch.await();
-            } catch (InterruptedException e) {
+            } catch (final InterruptedException e) {
                 throw new RuntimeException(e);
             }
 
@@ -223,7 +223,7 @@ class TestIndexFieldDaoImpl {
 
     @Test
     void addUpdateDeleteFields() {
-        List<IndexField> fields = getFields(DOC_REF_1);
+        final List<IndexField> fields = getFields(DOC_REF_1);
         assertThat(fields.size())
                 .isEqualTo(0);
 

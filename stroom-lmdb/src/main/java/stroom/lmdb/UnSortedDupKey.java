@@ -42,7 +42,7 @@ public class UnSortedDupKey<K> {
         return id.getValue();
     }
 
-    public static <K> UnsortedDupKeyFactory<K> createFactory(final TypeLiteral<K> keyType, int idLength) {
+    public static <K> UnsortedDupKeyFactory<K> createFactory(final TypeLiteral<K> keyType, final int idLength) {
         return new UnsortedDupKeyFactory<>(keyType, idLength);
     }
 

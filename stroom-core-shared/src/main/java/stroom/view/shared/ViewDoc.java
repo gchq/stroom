@@ -78,8 +78,8 @@ public class ViewDoc extends Doc {
                    @JsonProperty("createUser") final String createUser,
                    @JsonProperty("updateUser") final String updateUser,
                    @JsonProperty("description") final String description,
-                   @JsonProperty("dataSource") DocRef dataSource,
-                   @JsonProperty("filter") ExpressionOperator filter,
+                   @JsonProperty("dataSource") final DocRef dataSource,
+                   @JsonProperty("filter") final ExpressionOperator filter,
                    @JsonProperty("pipeline") final DocRef pipeline) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;

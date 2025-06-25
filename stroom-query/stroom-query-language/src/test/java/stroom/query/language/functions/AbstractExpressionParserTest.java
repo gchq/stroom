@@ -82,8 +82,8 @@ public abstract class AbstractExpressionParserTest {
             }
 
             private Iterable<StoredValues> join(final int limit, final boolean trimTop) {
-                int start;
-                int end;
+                final int start;
+                final int end;
                 if (trimTop) {
                     end = values.size() - 1;
                     start = Math.max(0, values.size() - limit);
@@ -117,7 +117,7 @@ public abstract class AbstractExpressionParserTest {
         buffer.flip();
         print(buffer);
 
-        StoredValues newStoredValues;
+        final StoredValues newStoredValues;
         try (final KryoDataReader reader = new KryoDataReader(new ByteBufferInput(buffer))) {
             newStoredValues = valueReferenceIndex.read(reader);
         }
@@ -129,7 +129,7 @@ public abstract class AbstractExpressionParserTest {
 
     protected static void print(final ByteBuffer byteBuffer) {
         final ByteBuffer copy = byteBuffer.duplicate();
-        byte[] bytes = new byte[copy.limit()];
+        final byte[] bytes = new byte[copy.limit()];
         for (int i = 0; i < copy.limit(); i++) {
             bytes[i] = copy.get();
         }
@@ -195,7 +195,7 @@ public abstract class AbstractExpressionParserTest {
             final Generator gen = exp.createGenerator();
 
             gen.set(Val.of(300), storedValues);
-            Val out = gen.eval(storedValues, null);
+            final Val out = gen.eval(storedValues, null);
             assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
 
             final List<StoredValues> childValues = new ArrayList<>();
@@ -264,7 +264,7 @@ public abstract class AbstractExpressionParserTest {
             fieldIndex.create("val" + i);
         }
 
-        Expression exp;
+        final Expression exp;
         try {
             exp = parser.parse(expressionContext, fieldIndex, expression);
         } catch (final ParseException e) {
@@ -286,7 +286,7 @@ public abstract class AbstractExpressionParserTest {
     protected void assertThatItEvaluatesToValErr(final String expression, final Val... values) {
         createGenerator(expression, (gen, storedValues) -> {
             gen.set(Val.of(values), storedValues);
-            Val out = gen.eval(storedValues, null);
+            final Val out = gen.eval(storedValues, null);
             System.out.println(expression + " - " +
                                out.getClass().getSimpleName() + ": " +
                                out +
@@ -323,7 +323,7 @@ public abstract class AbstractExpressionParserTest {
         final String expression = String.format("(${val1}%s${val2})", operator);
         createGenerator(expression, 2, (gen, storedValues) -> {
             gen.set(Val.of(val1, val2), storedValues);
-            Val out = gen.eval(storedValues, null);
+            final Val out = gen.eval(storedValues, null);
 
             System.out.printf("[%s: %s] %s [%s: %s] => [%s: %s%s]%n",
                     val1.getClass().getSimpleName(), val1,
@@ -343,7 +343,7 @@ public abstract class AbstractExpressionParserTest {
 
     protected void assertTypeOf(final String expression, final String expectedType) {
         createGenerator(expression, (gen, storedValues) -> {
-            Val out = gen.eval(storedValues, null);
+            final Val out = gen.eval(storedValues, null);
 
             System.out.printf("%s => [%s:%s%s]%n",
                     expression,
@@ -364,7 +364,7 @@ public abstract class AbstractExpressionParserTest {
         final String expression = "typeOf(${val1})";
         createGenerator(expression, (gen, storedValues) -> {
             gen.set(Val.of(val1), storedValues);
-            Val out = gen.eval(storedValues, null);
+            final Val out = gen.eval(storedValues, null);
 
             System.out.printf("%s - [%s:%s] => [%s:%s%s]%n",
                     expression,
@@ -386,7 +386,7 @@ public abstract class AbstractExpressionParserTest {
         final String expression = String.format("%s(${val1})", function);
         createGenerator(expression, 2, (gen, storedValues) -> {
             gen.set(Val.of(val1), storedValues);
-            Val out = gen.eval(storedValues, null);
+            final Val out = gen.eval(storedValues, null);
 
             System.out.printf("%s([%s: %s]) => [%s: %s%s]%n",
                     function,

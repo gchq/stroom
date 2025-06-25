@@ -29,7 +29,7 @@ public class StroomReceiptIdGenerator implements ReceiptIdGenerator {
         if (NullSafe.isBlankString(nodeName)) {
             throw new IllegalArgumentException("nodeName is blank");
         }
-        String nodeId = createSafeString(nodeName);
+        final String nodeId = createSafeString(nodeName);
         if (!Objects.equals(nodeName, nodeId)) {
             LOGGER.info("Using nodeId '{}' for receiptId meta attribute as derived from nodeName '{}'",
                     nodeId, nodeName);

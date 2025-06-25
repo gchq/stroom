@@ -47,7 +47,7 @@ public class PropertyPathDecorator {
 
                     if (HasPropertyPath.class.isAssignableFrom(propValueType)) {
                         if (propValue != null) {
-                            HasPropertyPath childConfigObject = (HasPropertyPath) propValue;
+                            final HasPropertyPath childConfigObject = (HasPropertyPath) propValue;
                             decoratePaths(childConfigObject, propPath);
                         }
                     }

@@ -52,7 +52,7 @@ class TestReaderRecorder {
             inputBuffer.clear();
 
             while (!charDecoded && loopCnt++ < 10) {
-                byte b = myByteBuffer.getByte(byteOffset++);
+                final byte b = myByteBuffer.getByte(byteOffset++);
                 LOGGER.info("byteOffset: {}, byte: {}",
                         byteOffset,
                         ByteArrayUtils.byteArrayToString(new byte[]{b}));
@@ -74,10 +74,10 @@ class TestReaderRecorder {
                 // for any non ascii chars.
                 if (!coderResult.isMalformed()) {
                     charDecoded = true;
-                    char decodedChar = outputBuffer.array()[0];
+                    final char decodedChar = outputBuffer.array()[0];
                     outputStringBuilder.append(decodedChar);
 
-                    int decodedCharByteSize = String.valueOf(decodedChar).getBytes(charset).length;
+                    final int decodedCharByteSize = String.valueOf(decodedChar).getBytes(charset).length;
 
                     LOGGER.info("Char {} ({}), byteCnt: {}",
                             decodedChar,

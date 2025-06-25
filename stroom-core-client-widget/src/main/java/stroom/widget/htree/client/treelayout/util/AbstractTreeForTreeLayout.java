@@ -51,7 +51,7 @@ public abstract class AbstractTreeForTreeLayout<T_TREE_NODE> implements TreeForT
 
     private final T_TREE_NODE root;
 
-    public AbstractTreeForTreeLayout(T_TREE_NODE root) {
+    public AbstractTreeForTreeLayout(final T_TREE_NODE root) {
         this.root = root;
     }
 
@@ -85,32 +85,32 @@ public abstract class AbstractTreeForTreeLayout<T_TREE_NODE> implements TreeForT
     }
 
     @Override
-    public boolean isLeaf(T_TREE_NODE node) {
+    public boolean isLeaf(final T_TREE_NODE node) {
         return getChildrenList(node).isEmpty();
     }
 
     @Override
-    public boolean isChildOfParent(T_TREE_NODE node, T_TREE_NODE parentNode) {
+    public boolean isChildOfParent(final T_TREE_NODE node, final T_TREE_NODE parentNode) {
         return getParent(node) == parentNode;
     }
 
     @Override
-    public List<T_TREE_NODE> getChildren(T_TREE_NODE node) {
+    public List<T_TREE_NODE> getChildren(final T_TREE_NODE node) {
         return getChildrenList(node);
     }
 
     @Override
-    public Iterable<T_TREE_NODE> getChildrenReverse(T_TREE_NODE node) {
+    public Iterable<T_TREE_NODE> getChildrenReverse(final T_TREE_NODE node) {
         return IterableUtil.createReverseIterable(getChildrenList(node));
     }
 
     @Override
-    public T_TREE_NODE getFirstChild(T_TREE_NODE parentNode) {
+    public T_TREE_NODE getFirstChild(final T_TREE_NODE parentNode) {
         return getChildrenList(parentNode).get(0);
     }
 
     @Override
-    public T_TREE_NODE getLastChild(T_TREE_NODE parentNode) {
+    public T_TREE_NODE getLastChild(final T_TREE_NODE parentNode) {
         return ListUtil.getLast(getChildrenList(parentNode));
     }
 }

@@ -74,7 +74,7 @@ public class TestKafkaProducerFactoryImpl {
         assertThat(sharedKafkaProducer1.getConfigUuid()).isEqualTo(kafkaConfigDoc1.getUuid());
         assertThat(sharedKafkaProducer1.getConfigVersion()).isEqualTo(kafkaConfigDoc1.getVersion());
 
-        KafkaProducer<String, byte[]> kafkaProducer1 = sharedKafkaProducer1.getKafkaProducer().get();
+        final KafkaProducer<String, byte[]> kafkaProducer1 = sharedKafkaProducer1.getKafkaProducer().get();
 
         assertThat(kafkaProducer1).isNotNull();
 
@@ -88,7 +88,7 @@ public class TestKafkaProducerFactoryImpl {
         assertThat(sharedKafkaProducer2.getConfigUuid()).isEqualTo(kafkaConfigDoc2.getUuid());
         assertThat(sharedKafkaProducer2.getConfigVersion()).isEqualTo(kafkaConfigDoc2.getVersion());
 
-        KafkaProducer<String, byte[]> kafkaProducer2 = sharedKafkaProducer2.getKafkaProducer().get();
+        final KafkaProducer<String, byte[]> kafkaProducer2 = sharedKafkaProducer2.getKafkaProducer().get();
 
         assertThat(kafkaProducer2).isNotNull();
 
@@ -104,7 +104,7 @@ public class TestKafkaProducerFactoryImpl {
         assertThat(sharedKafkaProducer1B.getConfigUuid()).isEqualTo(kafkaConfigDoc1.getUuid());
         assertThat(sharedKafkaProducer1B.getConfigVersion()).isEqualTo(kafkaConfigDoc1.getVersion());
 
-        KafkaProducer<String, byte[]> kafkaProducer1b = sharedKafkaProducer1B.getKafkaProducer().get();
+        final KafkaProducer<String, byte[]> kafkaProducer1b = sharedKafkaProducer1B.getKafkaProducer().get();
 
         assertThat(kafkaProducer1b).isNotNull();
 
@@ -171,7 +171,7 @@ public class TestKafkaProducerFactoryImpl {
         assertThat(sharedKafkaProducer1C.getConfigUuid()).isEqualTo(kafkaConfigDoc1mk1.getUuid());
         assertThat(sharedKafkaProducer1C.getConfigVersion()).isEqualTo(kafkaConfigDoc1mk2.getVersion());
 
-        KafkaProducer<String, byte[]> kafkaProducer1c = sharedKafkaProducer1C.getKafkaProducer().get();
+        final KafkaProducer<String, byte[]> kafkaProducer1c = sharedKafkaProducer1C.getKafkaProducer().get();
 
         assertThat(kafkaProducer1c).isNotNull();
 

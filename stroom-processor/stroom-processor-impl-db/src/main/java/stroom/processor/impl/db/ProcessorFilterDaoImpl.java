@@ -62,13 +62,13 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
             new RecordToProcessorFilterTrackerMapper();
 
     private final ProcessorDbConnProvider processorDbConnProvider;
-    private final QueryDataXMLSerialiser queryDataXMLSerialiser;
+    private final QueryDataSerialiser queryDataXMLSerialiser;
     private final ExpressionMapper expressionMapper;
 
     @Inject
     ProcessorFilterDaoImpl(final ProcessorDbConnProvider processorDbConnProvider,
                            final ExpressionMapperFactory expressionMapperFactory,
-                           final QueryDataXMLSerialiser queryDataXMLSerialiser,
+                           final QueryDataSerialiser queryDataXMLSerialiser,
                            final Provider<UserRefLookup> userRefLookupProvider) {
         this.processorDbConnProvider = processorDbConnProvider;
         this.queryDataXMLSerialiser = queryDataXMLSerialiser;
@@ -284,7 +284,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     }
 
     public int logicallyDeleteOldFilters(final Instant deleteThreshold, final DSLContext context) {
-        var query = context
+        final var query = context
                 .update(PROCESSOR_FILTER)
                 .set(PROCESSOR_FILTER.DELETED, true)
                 .set(PROCESSOR_FILTER.VERSION, PROCESSOR_FILTER.VERSION.plus(1))

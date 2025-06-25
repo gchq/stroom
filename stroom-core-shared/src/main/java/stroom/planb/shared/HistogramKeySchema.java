@@ -21,6 +21,11 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class HistogramKeySchema {
 
+    public static final KeyType DEFAULT_KEY_TYPE = KeyType.TAGS;
+    public static final HashLength DEFAULT_HASH_LENGTH = HashLength.INTEGER;
+    public static final TemporalResolution DEFAULT_TEMPORAL_RESOLUTION = TemporalResolution.SECOND;
+    public static final UserTimeZone DEFAULT_TIME_ZONE = UserTimeZone.utc();
+
     @JsonProperty
     private final KeyType keyType;
     @JsonPropertyDescription("The hash length to use for foreign keys")

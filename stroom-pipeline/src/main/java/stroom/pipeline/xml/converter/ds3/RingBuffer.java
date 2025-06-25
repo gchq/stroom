@@ -51,7 +51,7 @@ public class RingBuffer implements CharSequence, Serializable {
     }
 
     public static RingBuffer fromString(final String string) {
-        char[] chars = string.toCharArray();
+        final char[] chars = string.toCharArray();
         return new RingBuffer(chars, 0, chars.length);
     }
 
@@ -296,7 +296,7 @@ public class RingBuffer implements CharSequence, Serializable {
         int pos = 0;
         while (len > 0) {
             if (off + len > buffer.length) {
-                int copied = buffer.length - off;
+                final int copied = buffer.length - off;
                 System.arraycopy(buffer, off, chars, pos, copied);
                 len -= copied;
                 pos += copied;
@@ -325,7 +325,7 @@ public class RingBuffer implements CharSequence, Serializable {
      * Moves the offset forward by the specified amount and reduces the
      * remaining length by the same amount.
      */
-    public void move(int increment) {
+    public void move(final int increment) {
         offset += increment;
         length -= increment;
 
@@ -350,8 +350,8 @@ public class RingBuffer implements CharSequence, Serializable {
     public boolean equals(final Object other) {
         if (other instanceof RingBuffer) {
             final RingBuffer buffer = (RingBuffer) other;
-            int len1 = length;
-            int len2 = buffer.length;
+            final int len1 = length;
+            final int len2 = buffer.length;
 
             if (len1 != len2) {
                 return false;

@@ -44,6 +44,9 @@ import java.util.stream.Stream;
  */
 public class NullSafe {
 
+    private static final Predicate<?> ALWAYS_TRUE_PREDICATE = ignored -> true;
+    private static final Predicate<?> ALWAYS_FALSE_PREDICATE = ignored -> false;
+
     private NullSafe() {
     }
 
@@ -1583,7 +1586,7 @@ public class NullSafe {
         if (value == null) {
             throw new NullPointerException(buildNullValueMsg("value", messageSupplier));
         } else {
-            R result = Objects.requireNonNull(getter, "Null getter")
+            final R result = Objects.requireNonNull(getter, "Null getter")
                     .apply(value);
             if (result == null) {
                 throw new NullPointerException(buildNullGetterResultMsg(0, messageSupplier));
@@ -1626,7 +1629,7 @@ public class NullSafe {
     /**
      * GWT currently doesn't emulate requireNonNullElse
      */
-    public static <T> T requireNonNullElse(T obj, T other) {
+    public static <T> T requireNonNullElse(final T obj, final T other) {
         return (obj != null)
                 ? obj
                 : Objects.requireNonNull(other, "other");
@@ -1635,12 +1638,26 @@ public class NullSafe {
     /**
      * GWT currently doesn't emulate requireNonNullElse
      */
-    public static <T> T requireNonNullElseGet(T obj, Supplier<? extends T> supplier) {
+    public static <T> T requireNonNullElseGet(final T obj, final Supplier<? extends T> supplier) {
         return (obj != null)
                 ? obj
                 : Objects.requireNonNull(
                         Objects.requireNonNull(supplier, "supplier").get(),
                         "supplier.get()");
+    }
+
+    /**
+     * If predicate is non-null return it, else return a Predicate that always returns defaultOutcome.
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> Predicate<T> predicate(final Predicate<T> predicate, final boolean defaultOutcome) {
+        return predicate != null
+                ? predicate
+                : (defaultOutcome
+                        ? (Predicate<T>) ALWAYS_TRUE_PREDICATE
+                        : (Predicate<T>) ALWAYS_FALSE_PREDICATE);
+//        return requireNonNullElseGet(predicate, () -> ignored -> defaultOutcome);
+
     }
 
     private static String buildNullValueMsg(final String variableName,

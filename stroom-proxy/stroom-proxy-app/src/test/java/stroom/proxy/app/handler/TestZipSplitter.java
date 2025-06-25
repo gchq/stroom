@@ -87,7 +87,7 @@ class TestZipSplitter {
                                 NumericFileNameUtil.create(counter.incrementAndGet()));
                         Files.move(consumedPath, destPath);
                         consumedPaths.add(destPath);
-                    } catch (IOException ex) {
+                    } catch (final IOException ex) {
                         throw new RuntimeException(ex);
                     }
                 });
@@ -210,7 +210,7 @@ class TestZipSplitter {
                                 NumericFileNameUtil.create(counter.incrementAndGet()));
                         Files.move(consumedPath, destPath);
                         consumedPaths.add(destPath);
-                    } catch (IOException ex) {
+                    } catch (final IOException ex) {
                         throw new RuntimeException(ex);
                     }
                 });
@@ -333,7 +333,7 @@ class TestZipSplitter {
                                 NumericFileNameUtil.create(counter.incrementAndGet()));
                         Files.move(consumedPath, destPath);
                         consumedPaths.add(destPath);
-                    } catch (IOException ex) {
+                    } catch (final IOException ex) {
                         throw new RuntimeException(ex);
                     }
                 });
@@ -459,7 +459,7 @@ class TestZipSplitter {
                                 NumericFileNameUtil.create(counter.incrementAndGet()));
                         Files.move(consumedPath, destPath);
                         consumedPaths.add(destPath);
-                    } catch (IOException ex) {
+                    } catch (final IOException ex) {
                         throw new RuntimeException(ex);
                     }
                 });

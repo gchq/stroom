@@ -266,7 +266,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         if (!Files.exists(path)) {
             try {
                 Files.createDirectories(path);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 return ValidationResult.error(LogUtil.message(
                         "Error creating index volume path '{}': {}",
                         path,
@@ -290,13 +290,13 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
                 LOGGER.debug("About to delete file {}", tempFile);
                 try {
                     Files.deleteIfExists(tempFile);
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     LOGGER.error("Unable to delete temporary file {}. You can manually delete this file.",
                             tempFile, e);
                 }
             }, 5, TimeUnit.SECONDS);
 
-        } catch (IOException e) {
+        } catch (final IOException e) {
             return ValidationResult.error(LogUtil.message(
                     "Error creating test file in directory {}. " +
                     "Does Stroom have the right permissions on this directory? " +
@@ -322,7 +322,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
     }
 
     @Override
-    public IndexVolume create(IndexVolume indexVolume) {
+    public IndexVolume create(final IndexVolume indexVolume) {
         AuditUtil.stamp(securityContext, indexVolume);
 
         final List<String> names = indexVolumeDao.getAll().stream().map(i -> Strings.isNullOrEmpty(i.getNodeName())
@@ -349,7 +349,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
     }
 
     @Override
-    public IndexVolume update(IndexVolume indexVolume) {
+    public IndexVolume update(final IndexVolume indexVolume) {
         final IndexVolume loadedIndexVolume = securityContext.secureResult(() ->
                 indexVolumeDao.fetch(indexVolume.getId()).orElse(
                         null));
@@ -485,14 +485,14 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
                                    final String type,
                                    final Long bytes) {
         if (bytes != null) {
-            SortedMap<String, String> tags = ImmutableSortedMap.<String, String>naturalOrder()
+            final SortedMap<String, String> tags = ImmutableSortedMap.<String, String>naturalOrder()
                     .put("Id", String.valueOf(volume.getId()))
                     .put("Path", volume.getPath())
                     .put("Type", type)
                     .put("Node", nodeInfo.getThisNodeName())
                     .build();
 
-            InternalStatisticEvent event = InternalStatisticEvent.createValueStat(
+            final InternalStatisticEvent event = InternalStatisticEvent.createValueStat(
                     InternalStatisticKey.VOLUMES, timeMs, tags, bytes.doubleValue());
             events.add(event);
         }

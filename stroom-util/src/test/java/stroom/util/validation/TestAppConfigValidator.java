@@ -34,7 +34,7 @@ public class TestAppConfigValidator {
     private AppConfigValidator appConfigValidator;
 
     @BeforeEach
-    void beforeEach(@TempDir Path tempDir) {
+    void beforeEach(@TempDir final Path tempDir) {
         final Injector injector = Guice.createInjector(
                 new TestingHomeAndTempProvidersModule(tempDir),
                 new ValidationModule());
@@ -44,9 +44,9 @@ public class TestAppConfigValidator {
     @Test
     void testMyPojo_good() {
 
-        var myPojo = new MyPojoErrors();
+        final var myPojo = new MyPojoErrors();
 
-        ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateRecursively(myPojo);
+        final ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateRecursively(myPojo);
 
         LOGGER.info(result.toString());
         result.handleViolations((constraintViolation, validationSeverity) ->
@@ -64,7 +64,7 @@ public class TestAppConfigValidator {
 //        final Injector injector = Guice.createInjector(new ValidationModule());
 //        injector.injectMembers(this);
 
-        var myPojo = new MyPojoErrors();
+        final var myPojo = new MyPojoErrors();
         myPojo.setBooleanValue(false);
         myPojo.setRegexValue("(((");
         myPojo.setCronValue("xxxxxxxxxxxxx");
@@ -75,7 +75,7 @@ public class TestAppConfigValidator {
         myPojo.getChild().setCronValue("xxxxxxxxxxxxx");
         myPojo.getChild().setIntValue(0);
 
-        ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateRecursively(myPojo);
+        final ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateRecursively(myPojo);
 
         LOGGER.info(result.toString());
         result.handleViolations((constraintViolation, validationSeverity) -> {
@@ -92,7 +92,7 @@ public class TestAppConfigValidator {
 //        final Injector injector = Guice.createInjector(new ValidationModule());
 //        injector.injectMembers(this);
 
-        var myPojo = new MyPojoErrors();
+        final var myPojo = new MyPojoErrors();
         myPojo.setBooleanValue(false);
         myPojo.setRegexValue("(((");
         myPojo.setCronValue("xxxxxxxxxxxxx");
@@ -103,7 +103,7 @@ public class TestAppConfigValidator {
         myPojo.getChild().setCronValue("xxxxxxxxxxxxx");
         myPojo.getChild().setIntValue(0);
 
-        ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validate(myPojo);
+        final ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validate(myPojo);
 
         LOGGER.info(result.toString());
         result.handleViolations((constraintViolation, validationSeverity) -> {
@@ -120,13 +120,13 @@ public class TestAppConfigValidator {
 //        final Injector injector = Guice.createInjector(new ValidationModule());
 //        injector.injectMembers(this);
 
-        var myPojo = new MyPojoWarnings();
+        final var myPojo = new MyPojoWarnings();
         myPojo.setBooleanValue(false);
         myPojo.setRegexValue("(((");
         myPojo.setCronValue("xxxxxxxxxxxxx");
         myPojo.setIntValue(0);
 
-        ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validate(myPojo);
+        final ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validate(myPojo);
 
         LOGGER.info(result.toString());
         result.handleViolations((constraintViolation, validationSeverity) -> {

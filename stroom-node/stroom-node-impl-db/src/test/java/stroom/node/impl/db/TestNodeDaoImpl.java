@@ -6,12 +6,10 @@ import stroom.node.shared.Node;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.AuditUtil;
-import stroom.util.db.ForceLegacyMigration;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import jakarta.inject.Inject;
@@ -44,19 +42,11 @@ class TestNodeDaoImpl {
         final Injector injector = Guice.createInjector(
                 new DbTestModule(),
                 new NodeDbModule(),
-                new NodeDaoModule(),
-                new AbstractModule() {
-                    @Override
-                    protected void configure() {
-                        // Not using all the DB modules so just bind to an empty anonymous class
-                        bind(ForceLegacyMigration.class).toInstance(new ForceLegacyMigration() {
-                        });
-                    }
-                });
+                new NodeDaoModule());
 
         injector.injectMembers(this);
 
-        try (Connection connection = nodeDbConnProvider.getConnection()) {
+        try (final Connection connection = nodeDbConnProvider.getConnection()) {
             for (final Table<?> table : TABLES) {
                 final String tableName = table.getName();
                 LOGGER.debug("Clearing table {}", tableName);

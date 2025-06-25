@@ -16,7 +16,7 @@ public class BasicExceptionMapper implements ExceptionMapper<Throwable> {
     @Override
     public Response toResponse(final Throwable exception) {
         if (exception instanceof WebApplicationException) {
-            WebApplicationException wae = (WebApplicationException) exception;
+            final WebApplicationException wae = (WebApplicationException) exception;
             return wae.getResponse();
         } else if (exception.getClass().getName().contains("AuthenticationException") ||
                 exception.getClass().getName().contains("TokenException") ||

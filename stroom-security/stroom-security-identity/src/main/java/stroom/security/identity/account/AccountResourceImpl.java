@@ -216,25 +216,25 @@ class AccountResourceImpl implements AccountResource {
                 .getResultAndLog();
     }
 
-    private MultiObject getBefore(int accountId) {
+    private MultiObject getBefore(final int accountId) {
         User user = User.builder().withId("" + accountId).build();
 
         try {
-            Optional<Account> accountOptional = securityContextProvider.get().asProcessingUserResult(
+            final Optional<Account> accountOptional = securityContextProvider.get().asProcessingUserResult(
                     () -> serviceProvider.get().read(accountId)
             );
             if (accountOptional.isPresent()) {
                 user = userForAccount(accountOptional.get());
             }
-        } catch (Exception ex) {
+        } catch (final Exception ex) {
             //Ignore
         }
 
         return MultiObject.builder().addUser(user).build();
     }
 
-    private User userForAccount(Account account) {
-        User.Builder<Void> builder = User.builder();
+    private User userForAccount(final Account account) {
+        final User.Builder<Void> builder = User.builder();
 
         if (account == null) {
             builder.withState("Not found");
@@ -284,7 +284,7 @@ class AccountResourceImpl implements AccountResource {
                 // Password change so log that separately
                 logChangePassword(accountId, afterUser, null);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             // Password change so log that separately
             logChangePassword(accountId, afterUser, e);
             throw e;

@@ -181,7 +181,7 @@ class Joining extends AbstractFunction implements AggregateFunction {
         public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
             final List<String> list = stringListReference.get(storedValues);
             final StringBuilder sb = new StringBuilder();
-            for (String s : list) {
+            for (final String s : list) {
                 sb.append(s);
                 sb.append(delimiter);
             }
@@ -209,7 +209,7 @@ class Joining extends AbstractFunction implements AggregateFunction {
             int trimSize = 0;
 
             int totalLength = 0;
-            for (String s : list) {
+            for (final String s : list) {
                 totalLength += s.length();
                 trimSize++;
                 if (totalLength >= maxStringLength) {

@@ -45,7 +45,7 @@ public class FilterFieldMapper<T_ROW> {
         final Function<T_ROW, String> valueExtractor = row -> {
             final String result;
             if (row != null) {
-                T_FIELD fieldVal = function1.apply(row);
+                final T_FIELD fieldVal = function1.apply(row);
                 if (fieldVal != null) {
                     result = function2.apply(fieldVal);
                 } else {
@@ -73,9 +73,9 @@ public class FilterFieldMapper<T_ROW> {
         final Function<T_ROW, String> valueExtractor = row -> {
             final String result;
             if (row != null) {
-                T_FIELD fieldVal = function1.apply(row);
+                final T_FIELD fieldVal = function1.apply(row);
                 if (fieldVal != null) {
-                    T_SUB_FIELD subFieldVal = function2.apply(fieldVal);
+                    final T_SUB_FIELD subFieldVal = function2.apply(fieldVal);
                     if (subFieldVal != null) {
                         return function3.apply(subFieldVal);
                     } else {
@@ -99,7 +99,7 @@ public class FilterFieldMapper<T_ROW> {
     public String extractFieldValue(final T_ROW row) {
         // Useful is unit tests, VERY noisy with lots of data
         if (LOGGER.isTraceEnabled()) {
-            String val = valueExtractor.apply(row);
+            final String val = valueExtractor.apply(row);
             LOGGER.trace("Extracted [{}] from field {} in [{}]", val, fieldDefinition, row);
             return val;
         } else {

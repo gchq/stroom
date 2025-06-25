@@ -55,7 +55,7 @@ class TestProcessingInfoDb extends AbstractStoreDbTest {
     @Test
     void testPutAndGet() {
 
-        byte version = 0;
+        final byte version = 0;
         final RefStreamDefinition refStreamDefinitionA = buildUniqueRefStreamDefinition();
         final RefStreamDefinition refStreamDefinitionB = buildUniqueRefStreamDefinition();
 
@@ -83,10 +83,10 @@ class TestProcessingInfoDb extends AbstractStoreDbTest {
         assertThat(putOutcome.isDuplicate())
                 .hasValue(false);
 
-        Map<String, String> dbInfo = processingInfoDb.getDbInfo();
+        final Map<String, String> dbInfo = processingInfoDb.getDbInfo();
         LOGGER.debug("DB info: {}", dbInfo);
 
-        int entries = Optional.ofNullable(dbInfo.get("entries")).map(Integer::parseInt).orElse(-1);
+        final int entries = Optional.ofNullable(dbInfo.get("entries")).map(Integer::parseInt).orElse(-1);
         assertThat(entries).isEqualTo(2);
 
         final RefDataProcessingInfo refDataProcessingInfoA2 = processingInfoDb.get(refStreamDefinitionA).get();
@@ -97,7 +97,7 @@ class TestProcessingInfoDb extends AbstractStoreDbTest {
     @Test
     void updateState() {
 
-        byte version = 0;
+        final byte version = 0;
         final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
 
         RefDataProcessingInfo refDataProcessingInfoBefore = new RefDataProcessingInfo(
@@ -158,7 +158,7 @@ class TestProcessingInfoDb extends AbstractStoreDbTest {
     @Test
     void testUpdateLastAccessTime() {
 
-        byte version = 0;
+        final byte version = 0;
         final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
 
         final RefDataProcessingInfo refDataProcessingInfoBefore = new RefDataProcessingInfo(
@@ -197,7 +197,7 @@ class TestProcessingInfoDb extends AbstractStoreDbTest {
                 345L,
                 ProcessingState.LOAD_IN_PROGRESS);
 
-        PutOutcome putOutcome;
+        final PutOutcome putOutcome;
 
         // initial put into empty db so will succeed
         putOutcome = processingInfoDb.put(refStreamDefinition, refDataProcessingInfoBefore, false);

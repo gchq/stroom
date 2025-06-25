@@ -28,7 +28,7 @@ public class ExpressionResourceImpl implements ExpressionResource {
         try {
             expressionValidator.validate(request.getExpressionItem());
             return ValidateExpressionResult.ok();
-        } catch (ExpressionValidationException e) {
+        } catch (final ExpressionValidationException e) {
             return ValidateExpressionResult.failed(e);
         }
     }

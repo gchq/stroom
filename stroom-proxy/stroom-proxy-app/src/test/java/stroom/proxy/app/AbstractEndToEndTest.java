@@ -74,12 +74,12 @@ public abstract class AbstractEndToEndTest extends AbstractApplicationTest {
                     throw new RuntimeException(LogUtil.message("Proxy is unhealthy, got {} code",
                             response.getStatus()));
                 }
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 // Expected, so sleep and go round again
             }
             try {
                 Thread.sleep(100);
-            } catch (InterruptedException ex) {
+            } catch (final InterruptedException ex) {
                 Thread.currentThread().interrupt();
                 throw new RuntimeException("Interrupted while sleeping");
             }

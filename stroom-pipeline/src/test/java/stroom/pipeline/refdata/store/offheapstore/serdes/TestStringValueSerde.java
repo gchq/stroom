@@ -18,7 +18,7 @@ class TestStringValueSerde extends AbstractSerdeTest<RefDataValue, RefDataValueS
     @Test
     void testSerialisationDeserialisation() {
 
-        StringValue stringValue = new StringValue("this is my String");
+        final StringValue stringValue = new StringValue("this is my String");
         doSerialisationDeserialisationTest(stringValue);
     }
 

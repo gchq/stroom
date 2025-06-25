@@ -226,7 +226,7 @@ public class WordListPresenter extends MyPresenterWidget<PagerView> implements R
         } else {
             final String sortId = fieldSort.getId();
             final boolean isDescending = fieldSort.isDesc();
-            Comparator<Word> comparator;
+            final Comparator<Word> comparator;
             if (FIELD_WORD.equals(sortId)) {
                 comparator = buildComparator(isDescending, wordComparator, sourceNameComparator);
             } else if (FIELD_SOURCE_NAME.equals(sortId)) {

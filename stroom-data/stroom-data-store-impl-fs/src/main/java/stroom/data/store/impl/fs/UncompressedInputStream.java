@@ -44,7 +44,7 @@ class UncompressedInputStream extends InputStream implements SeekableInputStream
     // Use to help track non-closed streams
     private final StreamCloser streamCloser = new BasicStreamCloser();
 
-    UncompressedInputStream(final Path file, boolean lazy) throws IOException {
+    UncompressedInputStream(final Path file, final boolean lazy) throws IOException {
         FileChannel fileChannel = null;
         BlockBufferedInputStream blockBufferedInputStream = null;
 
@@ -67,7 +67,7 @@ class UncompressedInputStream extends InputStream implements SeekableInputStream
             // LAZY
             return -1;
         } else {
-            int rtn = streamAdaptor.read();
+            final int rtn = streamAdaptor.read();
             if (rtn != -1) {
                 position++;
             }
@@ -84,7 +84,7 @@ class UncompressedInputStream extends InputStream implements SeekableInputStream
             // LAZY
             return -1;
         } else {
-            int read = streamAdaptor.read(b);
+            final int read = streamAdaptor.read(b);
             if (read != -1) {
                 position += read;
             }
@@ -103,7 +103,7 @@ class UncompressedInputStream extends InputStream implements SeekableInputStream
             // LAZY
             return -1;
         } else {
-            int read = streamAdaptor.read(b, off, len);
+            final int read = streamAdaptor.read(b, off, len);
             if (read != -1) {
                 position += read;
             }

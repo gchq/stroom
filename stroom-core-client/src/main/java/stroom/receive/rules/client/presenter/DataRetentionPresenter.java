@@ -104,7 +104,7 @@ public class DataRetentionPresenter
 
             // Get the current state of the rules saved or dirty
             final DataRetentionRules currentRules = retentionPolicyPresenter.getPolicy();
-            int currentPolicyHash = currentRules.hashCode();
+            final int currentPolicyHash = currentRules.hashCode();
             if (lastPolicyHash == null || currentPolicyHash != lastPolicyHash) {
                 lastPolicyHash = currentPolicyHash;
                 // Rules have changed, so any current data is invalid

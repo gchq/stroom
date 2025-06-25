@@ -30,7 +30,7 @@ public final class StroomStatisticsServerTestFileUtil {
     private static final String PROJECT_NAME = "stroom-statistics-impl";
 
     static {
-        Path dir = Paths.get("../" + PROJECT_NAME + "/src/test/resources");
+        final Path dir = Paths.get("../" + PROJECT_NAME + "/src/test/resources");
         if (!Files.isDirectory(dir)) {
             throw new RuntimeException("Test data directory not found: " + FileUtil.getCanonicalPath(dir));
         }

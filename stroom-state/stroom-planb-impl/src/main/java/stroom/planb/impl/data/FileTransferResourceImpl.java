@@ -32,7 +32,6 @@ import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.StreamingOutput;
 
 import java.io.InputStream;
-import java.util.function.Supplier;
 
 @AutoLogged(OperationType.UNLOGGED)
 public class FileTransferResourceImpl implements FileTransferResource {
@@ -55,7 +54,7 @@ public class FileTransferResourceImpl implements FileTransferResource {
             // stream.
             fileTransferServiceProvider.get().checkSnapshotStatus(request);
 
-            // Stream the snapshhot content to the client as ZIP data
+            // Stream the snapshot content to the client as ZIP data
             final StreamingOutput streamingOutput = output -> {
                 try {
                     fileTransferServiceProvider.get().fetchSnapshot(request, output);
@@ -89,15 +88,9 @@ public class FileTransferResourceImpl implements FileTransferResource {
                              final String fileName,
                              final boolean synchroniseMerge,
                              final InputStream inputStream) {
-        final Supplier<String> messageDetail = () -> LogUtil.message(
-                "createTime={}, metaId={}, fileHash={}, fileName={}",
-                createTime,
-                metaId,
-                fileHash,
-                fileName);
-
+        final FileInfo fileInfo = new FileInfo(createTime, metaId, fileHash, fileName);
         try {
-            LOGGER.debug(() -> "Receiving part: " + messageDetail.get());
+            LOGGER.debug(() -> "Receiving part: " + fileInfo);
             fileTransferServiceProvider.get().receivePart(
                     createTime,
                     metaId,
@@ -105,17 +98,17 @@ public class FileTransferResourceImpl implements FileTransferResource {
                     fileName,
                     synchroniseMerge,
                     inputStream);
-            LOGGER.debug(() -> "Successfully received part: " + messageDetail.get());
+            LOGGER.debug(() -> "Successfully received part: " + fileInfo);
             return Response
                     .ok()
                     .build();
         } catch (final PermissionException e) {
-            LOGGER.error(LogUtil.message("Permission exception receiving part: " + messageDetail.get()), e);
+            LOGGER.error(LogUtil.message("Permission exception receiving part: " + fileInfo), e);
             return Response
                     .status(Status.UNAUTHORIZED.getStatusCode(), e.getMessage())
                     .build();
         } catch (final Exception e) {
-            LOGGER.error(LogUtil.message("Exception receiving part: " + messageDetail.get()), e);
+            LOGGER.error(LogUtil.message("Exception receiving part: " + fileInfo), e);
             return Response
                     .status(Status.INTERNAL_SERVER_ERROR.getStatusCode(), e.getMessage())
                     .build();

@@ -16,119 +16,37 @@
 
 package stroom.pipeline.shared.data;
 
-import stroom.pipeline.shared.stepping.SteppingFilterSettings;
-import stroom.util.shared.NullSafe;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlTransient;
-import jakarta.xml.bind.annotation.XmlType;
 
 import java.util.Objects;
 
-/**
- * <p>
- * Java class for Element complex type.
- * <p>
- * <p>
- * The following schema fragment specifies the expected content contained within
- * this class.
- * <p>
- * <pre>
- * &lt;complexType name="Element">
- *   &lt;complexContent>
- *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
- *       &lt;sequence>
- *         &lt;element name="id" type="{http://www.w3.org/2001/XMLSchema}string"/>
- *         &lt;element name="type" type="{http://www.w3.org/2001/XMLSchema}string"/>
- *       &lt;/sequence>
- *     &lt;/restriction>
- *   &lt;/complexContent>
- * &lt;/complexType>
- * </pre>
- */
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "Element", propOrder = {"id", "type"})
 @JsonInclude(Include.NON_NULL)
-@JsonPropertyOrder({"elementType", "source", "id", "type"})
+@JsonPropertyOrder({"id", "type"})
 public class PipelineElement implements Comparable<PipelineElement> {
 
-    @XmlTransient
     @JsonProperty
-    private PipelineElementType elementType;
-
-    @XmlElement(required = true)
+    private final String id;
     @JsonProperty
-    private String id;
-    @XmlElement(required = true)
-    @JsonProperty
-    private String type;
-
-    // Only used in the UI to filter stepping. Not persisted.
-    @XmlTransient
-    @JsonIgnore
-    private SteppingFilterSettings steppingFilterSettings = null;
-
-    public PipelineElement() {
-    }
-
-    public PipelineElement(final String id, final String type) {
-        this.id = id;
-        this.type = type;
-    }
+    private final String type;
 
     @JsonCreator
-    public PipelineElement(@JsonProperty("elementType") final PipelineElementType elementType,
-                           @JsonProperty("id") final String id,
+    public PipelineElement(@JsonProperty("id") final String id,
                            @JsonProperty("type") final String type) {
-        this.elementType = elementType;
         this.id = id;
         this.type = type;
-    }
-
-    public PipelineElementType getElementType() {
-        return elementType;
-    }
-
-    public void setElementType(final PipelineElementType elementType) {
-        this.elementType = elementType;
     }
 
     public String getId() {
         return id;
     }
 
-    public void setId(final String value) {
-        this.id = value;
-    }
-
     public String getType() {
         return type;
-    }
-
-    public void setType(final String value) {
-        this.type = value;
-    }
-
-    @JsonIgnore
-    public void setSteppingFilterSettings(final SteppingFilterSettings steppingFilterSettings) {
-        this.steppingFilterSettings = steppingFilterSettings;
-    }
-
-    @JsonIgnore
-    public SteppingFilterSettings getSteppingFilterSettings() {
-        return steppingFilterSettings;
-    }
-
-    public boolean hasActiveFilters() {
-        return NullSafe.test(steppingFilterSettings, SteppingFilterSettings::hasActiveFilters);
     }
 
     @Override
@@ -146,7 +64,7 @@ public class PipelineElement implements Comparable<PipelineElement> {
         }
         final PipelineElement that = (PipelineElement) o;
         return id.equals(that.id) &&
-                type.equals(that.type);
+               type.equals(that.type);
     }
 
     @Override
@@ -166,5 +84,35 @@ public class PipelineElement implements Comparable<PipelineElement> {
     @JsonIgnore
     public String getDisplayName() {
         return type + " '" + id + "'";
+    }
+
+    public static class Builder {
+
+        private String id;
+        private String type;
+
+        public Builder() {
+        }
+
+        public Builder(final PipelineElement element) {
+            if (element != null) {
+                this.id = element.id;
+                this.type = element.type;
+            }
+        }
+
+        public Builder id(final String id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder type(final String type) {
+            this.type = type;
+            return this;
+        }
+
+        public PipelineElement build() {
+            return new PipelineElement(id, type);
+        }
     }
 }

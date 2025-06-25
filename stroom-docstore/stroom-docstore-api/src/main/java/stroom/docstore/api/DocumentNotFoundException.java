@@ -24,7 +24,7 @@ public class DocumentNotFoundException extends RuntimeException {
 
     private final DocRef docRef;
 
-    public DocumentNotFoundException(DocRef docRef) {
+    public DocumentNotFoundException(final DocRef docRef) {
         super("Document not found: " + docRef);
         this.docRef = docRef;
     }

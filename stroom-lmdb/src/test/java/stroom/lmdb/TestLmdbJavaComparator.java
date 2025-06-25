@@ -73,8 +73,8 @@ public class TestLmdbJavaComparator extends AbstractLmdbDbTest {
                 new StringSerde(),
                 "testSigned");
 
-        ByteBuffer byteBuffer1 = ByteBuffer.allocate(2);
-        ByteBuffer byteBuffer2 = ByteBuffer.allocate(2);
+        final ByteBuffer byteBuffer1 = ByteBuffer.allocate(2);
+        final ByteBuffer byteBuffer2 = ByteBuffer.allocate(2);
 
         byteBuffer1.put((byte) 0x00);
         byteBuffer1.put((byte) 0x00);

@@ -8,7 +8,7 @@ public class DetailBuilder extends AbstractHtmlBuilder<DetailBuilder> {
         startElem("div");
     }
 
-    public DetailBuilder title(String title) {
+    public DetailBuilder title(final String title) {
         elem("b", b -> b.append(title));
         emptyElem("hr");
         return self();

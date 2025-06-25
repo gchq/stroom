@@ -53,10 +53,10 @@ public class FlatDataWriterBuilder {
         return this::mapRecords;
     }
 
-    private Stream<String> mapRecords(List<Field> fieldDefinitions, Stream<DataRecord> recordStream) {
-        Function<DataRecord, String> dataMapper = getDataMapper();
+    private Stream<String> mapRecords(final List<Field> fieldDefinitions, final Stream<DataRecord> recordStream) {
+        final Function<DataRecord, String> dataMapper = getDataMapper();
 
-        Stream<String> dataStream = recordStream.map(dataMapper);
+        final Stream<String> dataStream = recordStream.map(dataMapper);
         if (isHeaderIncluded) {
             return Stream.concat(generateHeaderRow(fieldDefinitions), dataStream);
         } else {
@@ -67,7 +67,7 @@ public class FlatDataWriterBuilder {
     private Stream<String> generateHeaderRow(final List<Field> fieldDefinitions) {
 
         final Function<String, String> enclosureMapper = getEnclosureMapper();
-        String header = fieldDefinitions.stream()
+        final String header = fieldDefinitions.stream()
                 .map(Field::getName)
                 .map(enclosureMapper)
                 .collect(Collectors.joining(delimiter));

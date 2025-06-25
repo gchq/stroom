@@ -139,7 +139,7 @@ abstract class ManualCheckStreamPerformance {
     }
 
     public long readLargeFileTest() throws IOException {
-        try (OutputStream os = getOutputStream()) {
+        try (final OutputStream os = getOutputStream()) {
             for (int i = 0; i < testSize; i++) {
                 os.write("some data that may compress quite well TEST\n".getBytes(StreamUtil.DEFAULT_CHARSET));
                 os.write(("some other information TEST\n" + i).getBytes(StreamUtil.DEFAULT_CHARSET));
@@ -157,7 +157,7 @@ abstract class ManualCheckStreamPerformance {
 
         final long startTime = System.currentTimeMillis();
 
-        try (LineNumberReader reader = new LineNumberReader(
+        try (final LineNumberReader reader = new LineNumberReader(
                 new InputStreamReader(getInputStream(), StreamUtil.DEFAULT_CHARSET))) {
             String line = null;
             while ((line = reader.readLine()) != null) {
@@ -175,7 +175,7 @@ abstract class ManualCheckStreamPerformance {
     public long seekLargeFileTest() throws IOException {
         final byte[] sb = "some data that may compress quite well TEST\n".getBytes(StreamUtil.DEFAULT_CHARSET);
 
-        try (OutputStream os = getOutputStream()) {
+        try (final OutputStream os = getOutputStream()) {
             for (int i = 0; i < testSize; i++) {
                 os.write(sb);
             }
@@ -187,9 +187,9 @@ abstract class ManualCheckStreamPerformance {
 
         final long startTime = System.currentTimeMillis();
 
-        try (InputStream is = getInputStream()) {
+        try (final InputStream is = getInputStream()) {
             StreamUtil.skip(is, (testSize / 2) * sb.length);
-            try (LineNumberReader reader = new LineNumberReader(
+            try (final LineNumberReader reader = new LineNumberReader(
                     new InputStreamReader(is, StreamUtil.DEFAULT_CHARSET))) {
                 final String line1 = reader.readLine();
                 final String line2 = reader.readLine();

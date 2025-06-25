@@ -45,7 +45,7 @@ public class SelectionHandlerExpressionBuilder {
                 .enabled(operator.getEnabled())
                 .op(operator.getOp());
         if (operator.getChildren() != null) {
-            for (ExpressionItem child : operator.getChildren()) {
+            for (final ExpressionItem child : operator.getChildren()) {
                 if (child instanceof final ExpressionOperator childOperator) {
                     builder.addOperator(replaceExpressionParameters(childOperator, componentId));
 

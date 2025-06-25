@@ -61,7 +61,7 @@ public final class DocumentUserPermissionsViewImpl
     }
 
     @Override
-    public void setDocUserPermissionListView(View view) {
+    public void setDocUserPermissionListView(final View view) {
         docUserPermissionsList.setWidget(view.asWidget());
     }
 

@@ -21,67 +21,40 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlElementWrapper;
-import jakarta.xml.bind.annotation.XmlType;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "PipelineReferences", propOrder = {"add", "remove"})
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({"add", "remove"})
-public class PipelineReferences {
-
-    @XmlElementWrapper(name = "add")
-    @XmlElement(name = "reference")
-    @JsonProperty
-    private final List<PipelineReference> add;
-
-    @XmlElementWrapper(name = "remove")
-    @XmlElement(name = "reference")
-    @JsonProperty
-    private final List<PipelineReference> remove;
-
-    public PipelineReferences() {
-        add = new ArrayList<>();
-        remove = new ArrayList<>();
-    }
+public class PipelineReferences extends AbstractAddRemove<PipelineReference> {
 
     @JsonCreator
     public PipelineReferences(@JsonProperty("add") final List<PipelineReference> add,
                               @JsonProperty("remove") final List<PipelineReference> remove) {
-        this.add = add;
-        this.remove = remove;
+        super(add, remove);
     }
 
-    public List<PipelineReference> getAdd() {
-        return add;
-    }
 
-    public List<PipelineReference> getRemove() {
-        return remove;
-    }
+    // --------------------------------------------------------------------------------
 
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
+
+    public static class Builder extends AbstractAddRemoveListBuilder<PipelineReference, PipelineReferences, Builder> {
+
+        public Builder() {
+
         }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        final PipelineReferences that = (PipelineReferences) o;
-        return Objects.equals(add, that.add) &&
-                Objects.equals(remove, that.remove);
-    }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(add, remove);
+        public Builder(final PipelineReferences references) {
+            super(references);
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public PipelineReferences build() {
+            return new PipelineReferences(copyAddList(), copyRemoveList());
+        }
     }
 }

@@ -75,11 +75,11 @@ class JsonToXml extends StroomExtensionFunctionCall {
 
         try {
             parser.parse(new InputSource(new StringReader(json)));
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException("Error parsing JSON - " + e.getMessage(), e);
         }
 
-        Sequence sequence = builder.getCurrentRoot();
+        final Sequence sequence = builder.getCurrentRoot();
 
         // Reset the builder, detaching it from the constructed
         // document.

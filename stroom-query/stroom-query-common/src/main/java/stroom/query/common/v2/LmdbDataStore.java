@@ -831,7 +831,7 @@ public class LmdbDataStore implements DataStore {
     private <R> void getChildren(final LmdbReadContext readContext,
                                  final Key parentKey,
                                  final int depth,
-                                 long limit,
+                                 final long limit,
                                  final boolean trimTop,
                                  final OpenGroups openGroups,
                                  final TimeFilter timeFilter,
@@ -1170,7 +1170,7 @@ public class LmdbDataStore implements DataStore {
         public Val createValue(final Key key,
                                final StoredValues storedValues,
                                final int index) {
-            Val val;
+            final Val val;
             if (!dataStore.compiledDepths.getValueIndicesByDepth()[key.getDepth()][index]) {
                 val = ValNull.INSTANCE;
 

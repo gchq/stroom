@@ -21,27 +21,16 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.xml.bind.annotation.XmlType;
 
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "limits", propOrder = {"streamCount", "eventCount", "durationMs"})
-@XmlRootElement(name = "limits")
 @JsonInclude(Include.NON_NULL)
 public class Limits {
 
-    @XmlElement(name = "streamCount")
     @JsonProperty
     private Long streamCount;
 
-    @XmlElement(name = "eventCount")
     @JsonProperty
     private Long eventCount;
 
-    @XmlElement(name = "durationMs")
     @JsonProperty
     private Long durationMs;
 
@@ -61,7 +50,7 @@ public class Limits {
         return streamCount;
     }
 
-    public void setStreamCount(Long streamCount) {
+    public void setStreamCount(final Long streamCount) {
         this.streamCount = streamCount;
     }
 
@@ -69,7 +58,7 @@ public class Limits {
         return eventCount;
     }
 
-    public void setEventCount(Long eventCount) {
+    public void setEventCount(final Long eventCount) {
         this.eventCount = eventCount;
     }
 
@@ -77,7 +66,7 @@ public class Limits {
         return durationMs;
     }
 
-    public void setDurationMs(Long durationMs) {
+    public void setDurationMs(final Long durationMs) {
         this.durationMs = durationMs;
     }
 

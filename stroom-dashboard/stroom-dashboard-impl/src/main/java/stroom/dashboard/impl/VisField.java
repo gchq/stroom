@@ -21,14 +21,11 @@ import stroom.query.api.Sort;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlType;
 
 import java.io.Serializable;
 
 @JsonPropertyOrder({"id", "sort"})
 @JsonInclude(Include.NON_NULL)
-@XmlType(name = "VisField", propOrder = {"id", "sort"})
 public class VisField implements Serializable {
 
     private static final long serialVersionUID = 1272545271946712570L;
@@ -48,7 +45,6 @@ public class VisField implements Serializable {
         this.sort = sort;
     }
 
-    @XmlElement
     public String getId() {
         return id;
     }
@@ -57,7 +53,6 @@ public class VisField implements Serializable {
         this.id = id;
     }
 
-    @XmlElement
     public Sort getSort() {
         return sort;
     }

@@ -123,7 +123,7 @@ public class FlatResultCreator implements ResultCreator {
 
             } else {
                 final StringBuilder sb = new StringBuilder();
-                for (Val val : values) {
+                for (final Val val : values) {
                     if (val != null) {
                         sb.append(val);
                     }

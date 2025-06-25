@@ -102,7 +102,7 @@ public class SystemInfoResourceImpl implements SystemInfoResource {
                         return systemInfoServiceProvider.get().get(providerName, queryParams)
                                 .orElseThrow(() ->
                                         new NotFoundException(LogUtil.message("Name {} not found", providerName)));
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         LOGGER.error(LogUtil.message("Error getting system info for {}. {}",
                                 providerName, e.getMessage()), e);
                         throw e;

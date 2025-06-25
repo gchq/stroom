@@ -31,8 +31,8 @@ public class QueryHelpDetailProvider implements HasTaskMonitorFactory, HasHandle
         this.restFactory = restFactory;
     }
 
-    public void getDetail(QueryHelpRow row,
-                          Consumer<QueryHelpDetail> consumer) {
+    public void getDetail(final QueryHelpRow row,
+                          final Consumer<QueryHelpDetail> consumer) {
         restFactory
                 .create(QUERY_RESOURCE)
                 .method(res -> res.fetchDetail(row))

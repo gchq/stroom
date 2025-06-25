@@ -173,17 +173,17 @@ class TestRangeStoreDb extends AbstractStoreDbTest {
                 .isEqualTo(CompareResult.MAP_UID_MISMATCH);
     }
 
-    private void getAndAssert(Txn<ByteBuffer> txn, UID uid, long key, int expectedValue) {
+    private void getAndAssert(final Txn<ByteBuffer> txn, final UID uid, final long key, final int expectedValue) {
         LOGGER.debug("getAndAssert {}, {}, {}", uid, key, expectedValue);
-        Optional<ValueStoreKey> optValueStoreKey = rangeStoreDb.get(txn, uid, key);
+        final Optional<ValueStoreKey> optValueStoreKey = rangeStoreDb.get(txn, uid, key);
         assertThat(optValueStoreKey).isNotEmpty();
         assertThat(optValueStoreKey.get()).isEqualTo(val(expectedValue));
     }
 
-    private void getAndAssertNotFound(Txn<ByteBuffer> txn, UID uid, long key) {
+    private void getAndAssertNotFound(final Txn<ByteBuffer> txn, final UID uid, final long key) {
         LOGGER.debug("getAndAssertNotFound {}, {}", uid, key);
 
-        Optional<ValueStoreKey> optValueStoreKey = rangeStoreDb.get(txn, uid, key);
+        final Optional<ValueStoreKey> optValueStoreKey = rangeStoreDb.get(txn, uid, key);
         assertThat(optValueStoreKey).isEmpty();
     }
 
@@ -211,7 +211,7 @@ class TestRangeStoreDb extends AbstractStoreDbTest {
         rangeStoreDb.logDatabaseContents();
 
         lmdbEnv.doWithReadTxn(txn -> {
-            Optional<ValueStoreKey> optValueStoreKey = rangeStoreDb.get(txn, UID_2, 5);
+            final Optional<ValueStoreKey> optValueStoreKey = rangeStoreDb.get(txn, UID_2, 5);
             assertThat(optValueStoreKey).isNotEmpty();
             assertThat(optValueStoreKey.get()).isEqualTo(val(11));
         });
@@ -254,10 +254,10 @@ class TestRangeStoreDb extends AbstractStoreDbTest {
     @Test
     void testSortOrder() {
         final ValueStoreKey valueStoreKey = new ValueStoreKey(123, (short) 0);
-        int max = 100_000;
-        int fromDelta = 30;
-        int firstFrom = 10;
-        int rangeSize = 15;
+        final int max = 100_000;
+        final int fromDelta = 30;
+        final int firstFrom = 10;
+        final int rangeSize = 15;
 
         final AtomicInteger putCount = new AtomicInteger();
         lmdbEnv.doWithWriteTxn(writeTxn -> {
@@ -379,7 +379,7 @@ class TestRangeStoreDb extends AbstractStoreDbTest {
 
     private void doForEachTest(final UID uid, final int expectedEntryCount) throws Exception {
         try (final BatchingWriteTxn batchingWriteTxn = lmdbEnv.openBatchingWriteTxn(2)) {
-            AtomicInteger cnt = new AtomicInteger(0);
+            final AtomicInteger cnt = new AtomicInteger(0);
             rangeStoreDb.deleteMapEntries(
                     batchingWriteTxn,
                     uid,
@@ -436,11 +436,11 @@ class TestRangeStoreDb extends AbstractStoreDbTest {
 //                buf -> valueSerde.deserialize(buf).toString());
 //    }
 
-    private RangeStoreKey key(UID uid, long fromInc, long toExc) {
+    private RangeStoreKey key(final UID uid, final long fromInc, final long toExc) {
         return new RangeStoreKey(uid, new Range<>(fromInc, toExc));
     }
 
-    private ValueStoreKey val(int val) {
+    private ValueStoreKey val(final int val) {
         return new ValueStoreKey(val, (short) val);
     }
 
@@ -467,17 +467,17 @@ class TestRangeStoreDb extends AbstractStoreDbTest {
         IntStream.rangeClosed(1, 1000000)
                 .forEach(i -> {
                     executorService.submit(() -> {
-                        String key = keys.get(new Random().nextInt(keys.size()));
+                        final String key = keys.get(new Random().nextInt(keys.size()));
                         LOGGER.debug("Using key {} on thread {}", key, Thread.currentThread().getName());
-                        Semaphore semaphore = stripedSemaphore.get(key);
+                        final Semaphore semaphore = stripedSemaphore.get(key);
 
                         try {
                             try {
                                 semaphore.acquire();
-                            } catch (InterruptedException e) {
+                            } catch (final InterruptedException e) {
                                 e.printStackTrace();
                             }
-                            AtomicInteger atomicInteger = map.get(key);
+                            final AtomicInteger atomicInteger = map.get(key);
                             boolean success = atomicInteger.compareAndSet(0, 1);
                             if (!success) {
                                 throw new RuntimeException("compare and set failed");

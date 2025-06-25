@@ -60,7 +60,7 @@ class TestHeapHistogramStatisticsExecutor {
         Mockito.verify(mockInternalStatisticsReceiver, Mockito.timeout(5_000).times(2))
                 .putEvents(eventsCaptor.capture());
 
-        List<List<InternalStatisticEvent>> argValues = eventsCaptor.getAllValues();
+        final List<List<InternalStatisticEvent>> argValues = eventsCaptor.getAllValues();
 
         //We must have some stroom classes in the list
         assertThat(argValues.get(0).size() > 0).isTrue();
@@ -70,13 +70,13 @@ class TestHeapHistogramStatisticsExecutor {
 
 
         //Ensure all class names start with stroom as that was the regex applied in the property
-        for (List<InternalStatisticEvent> statisticEvents : argValues) {
+        for (final List<InternalStatisticEvent> statisticEvents : argValues) {
             assertThat(statisticEvents.stream()
                     .map(STAT_TO_CLASS_NAME_MAPPER)
                     .allMatch(className -> className.startsWith("stroom"))).isTrue();
 
             //check this class features in the list
-            Pattern thisClassPattern = Pattern.compile(this.getClass().getName());
+            final Pattern thisClassPattern = Pattern.compile(this.getClass().getName());
             assertThat(statisticEvents.stream()
                     .map(STAT_TO_CLASS_NAME_MAPPER)
                     .anyMatch(thisClassPattern.asPredicate())).isTrue();
@@ -102,7 +102,7 @@ class TestHeapHistogramStatisticsExecutor {
         Mockito.verify(mockInternalStatisticsReceiver, Mockito.timeout(5_000).times(2))
                 .putEvents(eventsCaptor.capture());
 
-        List<List<InternalStatisticEvent>> argValues = eventsCaptor.getAllValues();
+        final List<List<InternalStatisticEvent>> argValues = eventsCaptor.getAllValues();
 
         //We must have some classes in the list
         assertThat(argValues.get(0).size() > 0).isTrue();
@@ -111,7 +111,7 @@ class TestHeapHistogramStatisticsExecutor {
         assertThat(argValues.get(0).size() == argValues.get(1).size()).isTrue();
 
         //Ensure we have multiple starting letters of the class names to show a variety of classes are coming back
-        for (List<InternalStatisticEvent> statisticEvents : argValues) {
+        for (final List<InternalStatisticEvent> statisticEvents : argValues) {
             assertThat(statisticEvents.stream()
                     .map(STAT_TO_CLASS_NAME_MAPPER)
                     .map(className -> className.substring(0, 1))
@@ -122,13 +122,13 @@ class TestHeapHistogramStatisticsExecutor {
 
     @Test
     void testRegex() {
-        String regex = "((?<=\\$\\$)[0-9a-f]+|(?<=\\$\\$Lambda\\$)[0-9]+\\/[0-9]+)";
+        final String regex = "((?<=\\$\\$)[0-9a-f]+|(?<=\\$\\$Lambda\\$)[0-9]+\\/[0-9]+)";
 
-        Pattern pattern = Pattern.compile(regex);
+        final Pattern pattern = Pattern.compile(regex);
 
-        String input = "stroom.query.audit.client.DocRefResourceHttpClient$$Lambda$46/1402766141";
+        final String input = "stroom.query.audit.client.DocRefResourceHttpClient$$Lambda$46/1402766141";
 
-        String output = pattern.matcher(input).replaceAll("--");
+        final String output = pattern.matcher(input).replaceAll("--");
 
         assertThat(output).isEqualTo("stroom.query.audit.client.DocRefResourceHttpClient$$Lambda$--");
     }

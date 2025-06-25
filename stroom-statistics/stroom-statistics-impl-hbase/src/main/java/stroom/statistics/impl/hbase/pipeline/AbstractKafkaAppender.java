@@ -81,13 +81,13 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
         try {
             this.sharedKafkaProducer = kafkaProducerFactory.getSharedProducer(kafkaConfigRef);
         } catch (final RuntimeException e) {
-            String msg = "Error initialising kafka producer - " + e.getMessage();
+            final String msg = "Error initialising kafka producer - " + e.getMessage();
             log(Severity.FATAL_ERROR, msg, e);
             throw LoggedException.create(msg);
         }
 
         kafkaProducer = sharedKafkaProducer.getKafkaProducer().orElseThrow(() -> {
-            String msg = "No Kafka producer connector is available, check Stroom's configuration";
+            final String msg = "No Kafka producer connector is available, check Stroom's configuration";
             log(Severity.FATAL_ERROR, msg, null);
             throw LoggedException.create(msg);
         });
@@ -121,7 +121,7 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
                                 Thread.currentThread().interrupt();
 
                                 throw ProcessException.create("Thread interrupted");
-                            } catch (ExecutionException e) {
+                            } catch (final ExecutionException e) {
                                 log(Severity.ERROR, "Error sending message to Kafka", e);
                             }
                         }
@@ -188,7 +188,7 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
         //no point in sending just a header and footer with no body
         if (byteArrayOutputStream.size() > 0 && byteArrayOutputStream.size() > header.length) {
             writeFooter();
-            byte[] streamCopy = byteArrayOutputStream.toByteArray();
+            final byte[] streamCopy = byteArrayOutputStream.toByteArray();
 
             sendMessage(streamCopy);
         }
@@ -208,7 +208,7 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
                 //keep hold of the future so we can wait for it at the end of processing
                 kafkaMetaFutures.add(sendFuture);
             }
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             error(e);
         }
     }

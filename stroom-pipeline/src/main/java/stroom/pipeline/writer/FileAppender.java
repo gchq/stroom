@@ -157,7 +157,7 @@ public class FileAppender extends AbstractAppender {
 
         try {
             return PosixFilePermissions.fromString(filePermissions);
-        } catch (IllegalArgumentException e) {
+        } catch (final IllegalArgumentException e) {
             LOGGER.debug("Invalid file permissions format: '" + filePermissions + "'");
             return null;
         }

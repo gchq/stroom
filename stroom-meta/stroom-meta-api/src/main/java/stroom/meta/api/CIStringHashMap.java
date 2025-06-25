@@ -39,8 +39,8 @@ class CIStringHashMap implements Map<String, String> {
     }
 
     @Override
-    public String getOrDefault(Object key, String defaultVal) {
-        String val = map.get(new CIString((String) key));
+    public String getOrDefault(final Object key, final String defaultVal) {
+        final String val = map.get(new CIString((String) key));
         return val == null
                 ? defaultVal
                 : val;

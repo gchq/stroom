@@ -160,7 +160,7 @@ public class MockSecurityContext implements SecurityContext, ContentPackUserServ
     }
 
     @Override
-    public UserRef getUserRef(String subjectId, boolean isGroup) {
+    public UserRef getUserRef(final String subjectId, final boolean isGroup) {
         return getUserRef();
     }
 

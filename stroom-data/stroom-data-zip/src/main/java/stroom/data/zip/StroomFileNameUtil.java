@@ -59,7 +59,7 @@ public final class StroomFileNameUtil {
      * @param path The path to clean.
      * @return A cleaned path.
      */
-    private static String clean(String path) {
+    private static String clean(final String path) {
         final StringBuilder sb = new StringBuilder();
         final String[] parts = path.split(PATH_SEPARATOR_STRING);
         for (final String part : parts) {
@@ -80,7 +80,7 @@ public final class StroomFileNameUtil {
      * @param part The part of the path to clean.
      * @return A cleaned path part.
      */
-    private static String cleanPart(String part) {
+    private static String cleanPart(final String part) {
         final char[] in = part.toCharArray();
         final char[] out = new char[in.length];
         int outIndex = 0;
@@ -145,7 +145,7 @@ public final class StroomFileNameUtil {
         // Append file extensions.
         if (fileExtensions != null) {
             final StringBuilder sb = new StringBuilder(path);
-            for (String extension : fileExtensions) {
+            for (final String extension : fileExtensions) {
                 if (extension != null) {
                     sb.append(extension);
                 }

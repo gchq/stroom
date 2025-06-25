@@ -385,7 +385,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .builder()
                 .sourceType(SourceType.TABLE_BUILDER_ANALYTIC)
                 .build();
-        LmdbDataStore dataStore = (LmdbDataStore)
+        final LmdbDataStore dataStore = (LmdbDataStore)
                 create(
                         searchRequestSource,
                         queryKey,
@@ -430,7 +430,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         dataStore.close();
 
         // Try and open the datastore again.
-        LmdbDataStore dataStore2 = (LmdbDataStore)
+        final LmdbDataStore dataStore2 = (LmdbDataStore)
                 create(
                         searchRequestSource,
                         queryKey,

@@ -73,7 +73,7 @@ class MetaResourceImpl implements MetaResource {
     private final Provider<StroomEventLoggingService> eventLoggingServiceProvider;
 
     @Inject
-    MetaResourceImpl(Provider<MetaService> metaServiceProvider,
+    MetaResourceImpl(final Provider<MetaService> metaServiceProvider,
                      final Provider<StroomEventLoggingService> eventLoggingServiceProvider) {
         this.metaServiceProvider = metaServiceProvider;
         this.eventLoggingServiceProvider = eventLoggingServiceProvider;
@@ -110,7 +110,7 @@ class MetaResourceImpl implements MetaResource {
             final String metaIdStr = term.getValue();
 
             try {
-                long metaId = Long.parseLong(metaIdStr);
+                final long metaId = Long.parseLong(metaIdStr);
                 final Meta meta = metaServiceProvider.get().getMeta(metaId, true);
                 dataItems.add(Data.builder()
                         .withName("Feed")
@@ -121,7 +121,7 @@ class MetaResourceImpl implements MetaResource {
                         .withValue(meta.getTypeName())
                         .build());
                 currentStatus = meta.getStatus().getDisplayValue();
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.error(LogUtil.message("Error fetching meta for id '{}' for audit logging: {}",
                         metaIdStr, LogUtil.exceptionMessage(e), e));
             }
@@ -172,13 +172,13 @@ class MetaResourceImpl implements MetaResource {
 
         final EventAction eventAction;
         if (isDelete) {
-            DeleteEventAction.Builder<Void> deleteBuilder = DeleteEventAction.builder()
+            final DeleteEventAction.Builder<Void> deleteBuilder = DeleteEventAction.builder()
                     .addData(dataItems);
             NullSafe.firstNonNull(baseObjectBefore, baseObjectAfter)
                     .ifPresent(deleteBuilder::withObjects);
             eventAction = deleteBuilder.build();
         } else {
-            UpdateEventAction.Builder<Void> updateBuilder = UpdateEventAction.builder()
+            final UpdateEventAction.Builder<Void> updateBuilder = UpdateEventAction.builder()
                     .withAfter(MultiObject.builder()
                             .withObjects(baseObjectAfter)
                             .build())
@@ -244,7 +244,7 @@ class MetaResourceImpl implements MetaResource {
                         DateUtil::createNormalDateTimeString);
                 addData(dataItems, "MaxCreateTime", maxCreateTime);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error(LogUtil.message("Error building selection summary for criteria {}: {}",
                     criteria, LogUtil.exceptionMessage(e), e));
         }

@@ -188,7 +188,7 @@ public class TestDataUtil {
             try {
                 AttributeMapUtil.read(metaPaths.getFirst(), attributeMap);
                 return attributeMap;
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
         }
@@ -206,12 +206,12 @@ public class TestDataUtil {
             final Path path = entriesPaths.getFirst();
             try {
                 final FeedKeyInterner feedKeyInterner = FeedKey.createInterner();
-                try (Stream<String> stream = Files.lines(path)) {
+                try (final Stream<String> stream = Files.lines(path)) {
                     return stream.map(ThrowingFunction.unchecked(line ->
                                     ZipEntryGroup.read(line, feedKeyInterner)))
                             .toList();
                 }
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
         }
@@ -273,7 +273,7 @@ public class TestDataUtil {
                     }
                 } else if (StroomZipFileType.META.hasExtension(path)) {
                     try {
-                        try (InputStream inputStream = zipFile.getInputStream(entry)) {
+                        try (final InputStream inputStream = zipFile.getInputStream(entry)) {
                             final AttributeMap attributeMap = new AttributeMap();
                             AttributeMapUtil.read(inputStream, attributeMap);
                             final var prevVal = basePathToMetaMap.put(basePath, new Item<>(path, attributeMap));
@@ -281,7 +281,7 @@ public class TestDataUtil {
                                 throw new RuntimeException("Duplicate meta entry for basePath " + basePath);
                             }
                         }
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         throw new UncheckedIOException(e);
                     }
                 } else if (StroomZipFileType.DATA.hasExtension(path)

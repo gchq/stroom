@@ -22,7 +22,7 @@ public class DocumentActionHandlers {
         return handlersMap.get(new DocumentTypeName(type));
     }
 
-    public void forEach(Consumer<DocumentActionHandler> consumer) {
+    public void forEach(final Consumer<DocumentActionHandler> consumer) {
         handlersMap.values()
                 .stream()
                 .filter(Objects::nonNull)

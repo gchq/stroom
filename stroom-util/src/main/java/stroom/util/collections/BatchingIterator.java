@@ -25,7 +25,7 @@ public class BatchingIterator<T> implements Iterator<List<T>> {
      * @param <T>            type of items in the stream
      * @return a stream of batches taken sequentially from the original stream
      */
-    public static <T> Stream<List<T>> batchedStreamOf(Stream<T> originalStream, int batchSize) {
+    public static <T> Stream<List<T>> batchedStreamOf(final Stream<T> originalStream, final int batchSize) {
         return asStream(new BatchingIterator<>(originalStream.iterator(), batchSize));
     }
 
@@ -38,11 +38,11 @@ public class BatchingIterator<T> implements Iterator<List<T>> {
      * @param <T>                type of items in the stream
      * @return a stream of batches taken sequentially from the original stream
      */
-    public static <T> Stream<List<T>> batchedStreamOf(Collection<T> originalCollection, int batchSize) {
+    public static <T> Stream<List<T>> batchedStreamOf(final Collection<T> originalCollection, final int batchSize) {
         return asStream(new BatchingIterator<>(originalCollection.iterator(), batchSize));
     }
 
-    private static <T> Stream<T> asStream(Iterator<T> iterator) {
+    private static <T> Stream<T> asStream(final Iterator<T> iterator) {
         return StreamSupport.stream(
                 Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED), false);
     }
@@ -51,7 +51,7 @@ public class BatchingIterator<T> implements Iterator<List<T>> {
     private List<T> currentBatch;
     private final Iterator<T> sourceIterator;
 
-    private BatchingIterator(Iterator<T> sourceIterator, int batchSize) {
+    private BatchingIterator(final Iterator<T> sourceIterator, final int batchSize) {
         this.batchSize = batchSize;
         this.sourceIterator = sourceIterator;
     }

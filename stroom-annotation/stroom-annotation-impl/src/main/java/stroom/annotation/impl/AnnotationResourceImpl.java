@@ -58,7 +58,7 @@ class AnnotationResourceImpl implements AnnotationResource {
     @Override
     public Annotation getAnnotationById(final Long annotationId) {
         LOGGER.info(() -> "Getting annotation " + annotationId);
-        Annotation annotation;
+        final Annotation annotation;
         try {
             annotation = annotationService.get().getAnnotationById(annotationId).orElse(null);
             if (annotation != null) {
@@ -74,7 +74,7 @@ class AnnotationResourceImpl implements AnnotationResource {
     @Override
     public Annotation getAnnotationByRef(final DocRef annotationRef) {
         LOGGER.info(() -> "Getting annotation " + annotationRef);
-        Annotation annotation;
+        final Annotation annotation;
         try {
             annotation = annotationService.get().getAnnotationByRef(annotationRef).orElse(null);
             if (annotation != null) {
@@ -94,7 +94,7 @@ class AnnotationResourceImpl implements AnnotationResource {
 
     @Override
     public Annotation createAnnotation(final CreateAnnotationRequest request) {
-        Annotation annotation;
+        final Annotation annotation;
         LOGGER.info(() -> "Creating annotation " + request);
         try {
             annotation = annotationService.get().createAnnotation(request);
@@ -147,8 +147,8 @@ class AnnotationResourceImpl implements AnnotationResource {
                     throw new RuntimeException("Unable to find annotation");
                 }
 
-                DocRef docRef = before.asDocRef();
-                boolean success = annotationService.get().change(new SingleAnnotationChangeRequest(docRef,
+                final DocRef docRef = before.asDocRef();
+                final boolean success = annotationService.get().change(new SingleAnnotationChangeRequest(docRef,
                         request.getChange()));
                 if (success) {
                     after = annotationService.get().getAnnotationByRef(docRef).orElse(null);
@@ -195,7 +195,7 @@ class AnnotationResourceImpl implements AnnotationResource {
 
     @Override
     public Boolean deleteAnnotation(final DocRef annotationRef) {
-        Boolean success;
+        final Boolean success;
         LOGGER.info(() -> "Deleting annotation " + annotationRef);
         try {
             success = annotationService.get().deleteAnnotation(annotationRef);

@@ -85,7 +85,7 @@ class TestProxyOpenIdConfig extends AbstractValidatorTest {
 
             Assertions.assertThat(abstractOpenIdConfig3)
                     .isEqualTo(proxyOpenIdConfig);
-        } catch (JsonProcessingException e) {
+        } catch (final JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }

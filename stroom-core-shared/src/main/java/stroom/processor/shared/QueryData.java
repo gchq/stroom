@@ -25,15 +25,10 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.xml.bind.annotation.XmlType;
 
 import java.io.Serializable;
 import java.util.List;
 
-@XmlType(name = "query", propOrder = {"dataSource", "expression", "params", "timeRange", "limits"})
-@XmlRootElement(name = "query")
 @JsonInclude(Include.NON_NULL)
 public class QueryData implements Serializable {
 
@@ -64,7 +59,6 @@ public class QueryData implements Serializable {
         this.limits = limits;
     }
 
-    @XmlElement
     public DocRef getDataSource() {
         return dataSource;
     }
@@ -73,7 +67,6 @@ public class QueryData implements Serializable {
         this.dataSource = dataSource;
     }
 
-    @XmlElement
     public ExpressionOperator getExpression() {
         return expression;
     }
@@ -82,7 +75,6 @@ public class QueryData implements Serializable {
         this.expression = expression;
     }
 
-    @XmlElement
     public List<Param> getParams() {
         return params;
     }
@@ -99,7 +91,6 @@ public class QueryData implements Serializable {
         this.timeRange = timeRange;
     }
 
-    @XmlElement
     public Limits getLimits() {
         return limits;
     }

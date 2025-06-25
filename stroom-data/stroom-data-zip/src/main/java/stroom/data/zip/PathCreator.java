@@ -11,7 +11,7 @@ import java.util.List;
 
 class PathCreator {
 
-    static String replaceTimeVars(String path) {
+    static String replaceTimeVars(final String path) {
         // Replace some of the path elements with system variables.
         final ZonedDateTime dateTime = ZonedDateTime.now(ZoneOffset.UTC);
         return replaceTimeVars(path, dateTime);
@@ -77,7 +77,7 @@ class PathCreator {
         if (attributeMap != null) {
             final String[] vars = findVars(result);
             for (final String var : vars) {
-                String value = attributeMap.get(var);
+                final String value = attributeMap.get(var);
                 if (value != null) {
                     result = replace(result, var, value);
                 }

@@ -105,7 +105,7 @@ public class ProcessorTaskListPresenter
         dataGrid.addColumn(new InfoColumn<ProcessorTask>() {
             @Override
             protected void showInfo(final ProcessorTask row, final PopupPosition popupPosition) {
-                FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
+                final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
                 findMetaCriteria.setExpression(MetaExpressionUtil.createDataIdExpression(row.getMetaId()));
 
                 restFactory

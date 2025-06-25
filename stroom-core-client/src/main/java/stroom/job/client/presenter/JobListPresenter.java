@@ -183,7 +183,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
         return selectionModel;
     }
 
-    public void setChangeHandler(Consumer<Job> changeHandler) {
+    public void setChangeHandler(final Consumer<Job> changeHandler) {
         this.changeHandler = changeHandler;
     }
 
@@ -192,7 +192,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
      * @param name The name of the job
      * @return The name formatted as a markdown anchor, i.e. "My Job" => "#my-job"
      */
-    private String formatAnchor(String name) {
+    private String formatAnchor(final String name) {
         return "#" + name.replace(' ', '-')
                 .toLowerCase();
     }

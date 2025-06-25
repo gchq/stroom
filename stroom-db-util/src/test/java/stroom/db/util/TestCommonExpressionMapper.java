@@ -293,7 +293,7 @@ class TestCommonExpressionMapper {
 
     private Condition doTest(final ExpressionItem expressionItem) {
         // create a noddy term mapper that doesn't need any generated code
-        Function<ExpressionTerm, Condition> handler = expressionTerm ->
+        final Function<ExpressionTerm, Condition> handler = expressionTerm ->
                 DSL.condition(expressionTerm.getField() + "=" + expressionTerm.getValue());
 
         final CommonExpressionMapper mapper = new CommonExpressionMapper();

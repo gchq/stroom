@@ -46,7 +46,7 @@ public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
                                                @JsonProperty("expression") final ExpressionOperator expression,
                                                @JsonProperty("docRef") final DocRef docRef,
                                                @JsonProperty("userRef") final UserRef userRef,
-                                               @JsonProperty("showLevel") PermissionShowLevel showLevel) {
+                                               @JsonProperty("showLevel") final PermissionShowLevel showLevel) {
         super(pageRequest, sortList, expression);
         this.docRef = docRef;
         this.userRef = userRef;

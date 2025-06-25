@@ -99,7 +99,7 @@ public class SearchExpressionQueryBuilder {
                             .map(this::getQuery)
                             .filter(Objects::nonNull).toList();
 
-                    BoolQuery.Builder boolQueryBuilder = QueryBuilders.bool();
+                    final BoolQuery.Builder boolQueryBuilder = QueryBuilders.bool();
                     final Op op = operator.getOp();
                     if (op == null || op.equals(Op.AND)) {
                         innerChildQueries.forEach(boolQueryBuilder::must);
@@ -273,8 +273,8 @@ public class SearchExpressionQueryBuilder {
             final TriFunction<Condition, String, String, FieldValue> valueParser,
             final DocRef docRef
     ) {
-        FieldValue fieldValue;
-        List<FieldValue> fieldValues;
+        final FieldValue fieldValue;
+        final List<FieldValue> fieldValues;
 
         switch (condition) {
             case EQUALS -> {
@@ -396,7 +396,7 @@ public class SearchExpressionQueryBuilder {
             } else {
                 throw new IllegalArgumentException();
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new IllegalArgumentException("Invalid IPv4 address format: " + value + " for field \"" +
                     fieldName + "\"");
         }

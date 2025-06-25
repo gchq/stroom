@@ -18,8 +18,8 @@ public interface ThrowingConsumer<T, E extends Throwable> {
         return (t) -> {
             try {
                 consumer.accept(t);
-            } catch (Throwable e) {
-                if (e instanceof IOException ioe) {
+            } catch (final Throwable e) {
+                if (e instanceof final IOException ioe) {
                     throw new UncheckedIOException(ioe);
                 } else {
                     throw new RuntimeException(e);

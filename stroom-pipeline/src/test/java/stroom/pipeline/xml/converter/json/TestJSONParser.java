@@ -95,8 +95,8 @@ class TestJSONParser extends StroomUnitTest {
     @Disabled
     @Test
     void testVeryLargeArray() throws IOException {
-        int maxDepth = 5;
-        JsonType[][] structure = new JsonType[maxDepth][];
+        final int maxDepth = 5;
+        final JsonType[][] structure = new JsonType[maxDepth][];
         structure[0] = new JsonType[]{JsonType.ARRAY};
         structure[1] = new JsonType[]{JsonType.OBJECT};
         structure[2] = new JsonType[]{
@@ -171,7 +171,7 @@ class TestJSONParser extends StroomUnitTest {
 
         final String stem = "VeryLargeArray";
         final Path testDir = getTestDir();
-        Path input = testDir.resolve(stem + ".in");
+        final Path input = testDir.resolve(stem + ".in");
         new JSONTestDataCreator().writeFile(input, structure);
         test(stem, "", false);
     }
@@ -179,8 +179,8 @@ class TestJSONParser extends StroomUnitTest {
     @Disabled
     @Test
     void testVeryLargeObject() throws IOException {
-        int maxDepth = 5;
-        JsonType[][] structure = new JsonType[maxDepth][];
+        final int maxDepth = 5;
+        final JsonType[][] structure = new JsonType[maxDepth][];
         structure[0] = new JsonType[]{JsonType.OBJECT};
         structure[1] = new JsonType[]{JsonType.OBJECT};
         structure[2] = new JsonType[]{
@@ -255,7 +255,7 @@ class TestJSONParser extends StroomUnitTest {
 
         final String stem = "VeryLargeObject";
         final Path testDir = getTestDir();
-        Path input = testDir.resolve(stem + ".in");
+        final Path input = testDir.resolve(stem + ".in");
         new JSONTestDataCreator().writeFile(input, structure);
         test(stem, "", false);
     }

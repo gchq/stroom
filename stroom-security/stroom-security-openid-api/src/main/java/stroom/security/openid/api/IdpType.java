@@ -43,7 +43,7 @@ public enum IdpType {
 
     // Support case-insensitive de-ser, but default to uppercase for ser
     @JsonCreator
-    public static IdpType fromString(String type) {
+    public static IdpType fromString(final String type) {
         // Seems to deser as "null" if not set in the yaml
         return (type == null || type.equalsIgnoreCase("null"))
                 ? null

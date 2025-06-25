@@ -23,6 +23,7 @@ import event.logging.AuthenticateOutcomeReason;
 import event.logging.Data;
 import event.logging.OtherObject;
 import event.logging.ViewEventAction;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,7 +31,6 @@ import jakarta.ws.rs.RedirectionException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response.Status;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.PublicJsonWebKey;
 import org.slf4j.Logger;
@@ -88,7 +88,7 @@ class OpenIdResourceImpl implements OpenIdResource {
                 prompt);
 
         if (result.getStatus().isPresent() && result.getStatus().get().isNew()) {
-            AuthStatus status = result.getStatus().get();
+            final AuthStatus status = result.getStatus().get();
 
             final AuthenticateEventAction.Builder<Void> eventBuilder = event.logging.AuthenticateEventAction.builder()
                     .withAction(AuthenticateAction.LOGON)

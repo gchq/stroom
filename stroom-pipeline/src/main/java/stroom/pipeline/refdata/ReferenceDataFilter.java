@@ -520,7 +520,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 try {
                     stagingValueOutputStream.setTypeId(StringValue.TYPE_ID);
                     stagingValueOutputStream.write(value);
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     throw new RuntimeException(LogUtil.message(
                             "Error writing string to stagingValueOutputStream: {}\n{}", e.getMessage(), value), e);
                 }
@@ -743,7 +743,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         this.overrideExistingValues = overrideExistingValues;
     }
 
-    private boolean isAllWhitespace(char[] ch, final int start, final int length) {
+    private boolean isAllWhitespace(final char[] ch, final int start, final int length) {
 
         boolean isOnlyWhitespace = true;
         for (int i = start; i < start + length; i++) {

@@ -71,8 +71,10 @@ public class MergeProcessor {
     public void add(final FileDescriptor fileDescriptor,
                     final Path file,
                     final boolean synchroniseMerge) throws IOException {
+        final FileInfo fileInfo = fileDescriptor.getInfo(file);
         if (synchroniseMerge) {
             final CountDownLatch countDownLatch = new CountDownLatch(1);
+            LOGGER.debug(() -> "Plan B adding part for synchronous merge : " + fileInfo);
             receiveStore.add(fileDescriptor, file, countDownLatch);
             try {
                 countDownLatch.await();
@@ -81,6 +83,7 @@ public class MergeProcessor {
                 Thread.currentThread().interrupt();
             }
         } else {
+            LOGGER.debug(() -> "Plan B adding part for merge : " + fileInfo);
             receiveStore.add(fileDescriptor, file, null);
         }
     }
@@ -151,7 +154,7 @@ public class MergeProcessor {
         long start = receiveStore.getMinStoreId();
 
         if (start == -1) {
-            LOGGER.info("Store is empty");
+            LOGGER.info("Merge current store is empty");
             start = 0;
         }
 

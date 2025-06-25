@@ -57,6 +57,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -875,8 +876,8 @@ class TestNullSafe {
                         })
                 .withOutputType(boolean.class)
                 .withTestFunction(testCase -> {
-                    var mapWrapper = testCase.getInput()._1;
-                    var getter = testCase.getInput()._2;
+                    final var mapWrapper = testCase.getInput()._1;
+                    final var getter = testCase.getInput()._2;
                     return NullSafe.isEmptyMap(mapWrapper, getter);
                 })
                 .withSimpleEqualityAssertion()
@@ -900,8 +901,8 @@ class TestNullSafe {
                         })
                 .withOutputType(boolean.class)
                 .withTestFunction(testCase -> {
-                    var mapWrapper = testCase.getInput()._1;
-                    var getter = testCase.getInput()._2;
+                    final var mapWrapper = testCase.getInput()._1;
+                    final var getter = testCase.getInput()._2;
                     return NullSafe.hasEntries(mapWrapper, getter);
                 })
                 .withSimpleEqualityAssertion()
@@ -1139,8 +1140,8 @@ class TestNullSafe {
                 .withInputTypes(String.class, String.class)
                 .withOutputType(Boolean.class)
                 .withTestFunction(testCase -> {
-                    var str = testCase.getInput()._1;
-                    var subStr = testCase.getInput()._2;
+                    final var str = testCase.getInput()._1;
+                    final var subStr = testCase.getInput()._2;
                     return NullSafe.contains(str, subStr);
                 })
                 .withSimpleEqualityAssertion()
@@ -1160,8 +1161,8 @@ class TestNullSafe {
                 .withInputTypes(String.class, String.class)
                 .withOutputType(Boolean.class)
                 .withTestFunction(testCase -> {
-                    var str = testCase.getInput()._1;
-                    var subStr = testCase.getInput()._2;
+                    final var str = testCase.getInput()._1;
+                    final var subStr = testCase.getInput()._2;
                     return NullSafe.containsIgnoringCase(str, subStr);
                 })
                 .withSimpleEqualityAssertion()
@@ -1184,8 +1185,8 @@ class TestNullSafe {
                 })
                 .withOutputType(Boolean.class)
                 .withTestFunction(testCase -> {
-                    var collection = testCase.getInput()._1;
-                    var item = testCase.getInput()._2;
+                    final var collection = testCase.getInput()._1;
+                    final var item = testCase.getInput()._2;
                     return NullSafe.collectionContains(collection, item);
                 })
                 .withSimpleEqualityAssertion()
@@ -1204,8 +1205,8 @@ class TestNullSafe {
                 })
                 .withOutputType(Boolean.class)
                 .withTestFunction(testCase -> {
-                    var map = testCase.getInput()._1;
-                    var key = testCase.getInput()._2;
+                    final var map = testCase.getInput()._1;
+                    final var key = testCase.getInput()._2;
                     return NullSafe.containsKey(map, key);
                 })
                 .withSimpleEqualityAssertion()
@@ -1230,8 +1231,8 @@ class TestNullSafe {
                 })
                 .withOutputType(boolean.class)
                 .withTestFunction(testCase -> {
-                    var stringWrapper = testCase.getInput()._1;
-                    var getter = testCase.getInput()._2;
+                    final var stringWrapper = testCase.getInput()._1;
+                    final var getter = testCase.getInput()._2;
                     return NullSafe.isEmptyString(stringWrapper, getter);
                 })
                 .withSimpleEqualityAssertion()
@@ -1256,8 +1257,8 @@ class TestNullSafe {
                 })
                 .withOutputType(boolean.class)
                 .withTestFunction(testCase -> {
-                    var stringWrapper = testCase.getInput()._1;
-                    var getter = testCase.getInput()._2;
+                    final var stringWrapper = testCase.getInput()._1;
+                    final var getter = testCase.getInput()._2;
                     return NullSafe.isBlankString(stringWrapper, getter);
                 })
                 .withSimpleEqualityAssertion()
@@ -2204,6 +2205,29 @@ class TestNullSafe {
                 .build();
     }
 
+    @TestFactory
+    Stream<DynamicTest> testPredicate() {
+        final String valToTest = "foo";
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple2<Predicate<String>, Boolean>>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> {
+                    final Predicate<String> predicate = NullSafe.predicate(
+                            testCase.getInput()._1,
+                            testCase.getInput()._2());
+                    return predicate.test(valToTest);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(null, true), true)
+                .addCase(Tuple.of(null, false), false)
+                .addCase(Tuple.of(x -> x.equals("foo"), true), true)
+                .addCase(Tuple.of(x -> x.equals("foo"), false), true)
+                .addCase(Tuple.of(x -> x.equals("bar"), true), false)
+                .addCase(Tuple.of(x -> x.equals("bar"), false), false)
+                .build();
+    }
+
     private void doConsumeTest(final Consumer<Consumer<Long>> action, final long expectedValue) {
         final AtomicLong val = new AtomicLong(-1);
         final Consumer<Long> consumer = val::set;
@@ -2220,8 +2244,8 @@ class TestNullSafe {
         final int iterations = 100_000_000;
         final Level5 otherLevel5 = new Level5(-1);
         LOGGER.info("Iterations: {}", iterations);
-        MutableLong totalNanosNullSafe = new MutableLong(0);
-        MutableLong totalNanosOptional = new MutableLong(0);
+        final MutableLong totalNanosNullSafe = new MutableLong(0);
+        final MutableLong totalNanosOptional = new MutableLong(0);
         for (int i = 0; i < 3; i++) {
             totalNanosNullSafe.setValue(0L);
 
@@ -2350,7 +2374,7 @@ class TestNullSafe {
 
         final TimedCase pureJavaIfCase = TimedCase.of("Pure java if", (round, iterations) -> {
             for (int i = 0; i < iterations; i++) {
-                Integer val = vals[i];
+                final Integer val = vals[i];
                 if (val == null) {
                     outputs[i] = null;
                 } else {
@@ -2361,7 +2385,7 @@ class TestNullSafe {
 
         final TimedCase pureJavaTernaryCase = TimedCase.of("Pure java ternary", (round, iterations) -> {
             for (int i = 0; i < iterations; i++) {
-                Integer val = vals[i];
+                final Integer val = vals[i];
                 outputs[i] = val != null
                         ? val.toString()
                         : null;
@@ -2370,7 +2394,7 @@ class TestNullSafe {
 
         final TimedCase nullSafeCase = TimedCase.of("NullSafe", (round, iterations) -> {
             for (int i = 0; i < iterations; i++) {
-                Integer val = vals[i];
+                final Integer val = vals[i];
                 outputs[i] = NullSafe.get(val, Objects::toString);
             }
         });

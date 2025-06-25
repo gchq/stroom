@@ -201,7 +201,7 @@ class ExplorerServiceImpl
             }
             return result;
 
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error fetching nodes with criteria {}", criteria, e);
             throw e;
         }
@@ -246,7 +246,7 @@ class ExplorerServiceImpl
         filteredModel.sort(this::getPriority);
 
         // If the name filter has changed then we want to temporarily expand all nodes.
-        Set<ExplorerNodeKey> temporaryOpenItems;
+        final Set<ExplorerNodeKey> temporaryOpenItems;
         if (filter.isNameFilterChange()) {
             if (NullSafe.isBlankString(filter.getNameFilter()) || nodeStates.openNodes.isEmpty()) {
                 temporaryOpenItems = Collections.emptySet();
@@ -258,7 +258,7 @@ class ExplorerServiceImpl
             temporaryOpenItems = null;
         }
 
-        List<ExplorerNodeKey> openedItems = new ArrayList<>();
+        final List<ExplorerNodeKey> openedItems = new ArrayList<>();
         List<ExplorerNode> rootNodes = addRoots(
                 filteredModel,
                 openItems,
@@ -345,7 +345,7 @@ class ExplorerServiceImpl
         if (openItems == null) {
             return null;
         } else {
-            if (openItems instanceof OpenItemsImpl openItemsImpl) {
+            if (openItems instanceof final OpenItemsImpl openItemsImpl) {
                 try {
                     return openItemsImpl.getOpenItemSet()
                             .stream()
@@ -355,7 +355,7 @@ class ExplorerServiceImpl
                                          + node.getName()
                                          + " (" + node.getUuid() + ")")
                             .collect(Collectors.joining("\n"));
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     LOGGER.trace(e::getMessage, e);
                     return Objects.toString(openItems);
                 }
@@ -405,7 +405,7 @@ class ExplorerServiceImpl
 
     private static Optional<ExplorerNode> removeMatchingNode(final List<ExplorerNode> nodes,
                                                              final ExplorerNode targetNode) {
-        List<ExplorerNode> list = NullSafe.list(nodes);
+        final List<ExplorerNode> list = NullSafe.list(nodes);
 
         for (int i = 0; i < list.size(); i++) {
             final ExplorerNode node = list.get(i);
@@ -879,7 +879,7 @@ class ExplorerServiceImpl
                                      final List<ExplorerNodeKey> openedItems,
                                      final LocalMetrics metrics) {
         return metrics.measure("addChildren", () -> {
-            ExplorerNode.Builder builder = parent.copy();
+            final ExplorerNode.Builder builder = parent.copy();
             builder.depth(currentDepth);
 
             final ExplorerNodeKey parentNodeKey = parent.getUniqueKey();
@@ -927,7 +927,7 @@ class ExplorerServiceImpl
         final DocRef folderRef = getDestinationFolderRef(destinationFolder);
         final ExplorerActionHandler handler = explorerActionHandlers.getHandler(type);
 
-        DocRef result;
+        final DocRef result;
 
         // Create the document.
         try {
@@ -977,7 +977,7 @@ class ExplorerServiceImpl
                     docPath, explorerNodeService.getRoot()));
         }
         Objects.requireNonNull(docPath);
-        AtomicReference<ExplorerNode> parentNode = new AtomicReference<>(baseNode);
+        final AtomicReference<ExplorerNode> parentNode = new AtomicReference<>(baseNode);
         docPath.forEach((idx, pathPart) -> {
             final List<ExplorerNode> childNodes = explorerNodeService.getNodesByNameAndType(
                     parentNode.get(),
@@ -1123,7 +1123,7 @@ class ExplorerServiceImpl
 
                 // Copy the item to the destination folder.
                 String name = sourceNode.getDocRef().getName();
-                if (allowRename && !NullSafe.isBlankString(docName)) {
+                if (allowRename && NullSafe.isNonBlankString(docName)) {
                     name = docName;
                 }
                 final DocRef destinationDocRef = handler.copyDocument(
@@ -1371,7 +1371,7 @@ class ExplorerServiceImpl
     private ExplorerNode rename(final ExplorerActionHandler handler,
                                 final ExplorerNode explorerNode,
                                 final String docName) {
-        DocRef result;
+        final DocRef result;
 
         try {
             result = handler.renameDocument(explorerNode.getDocRef(), docName);
@@ -1671,7 +1671,7 @@ class ExplorerServiceImpl
 
             return ResultPage.createPageLimitedList(results, request.getPageRequest());
 
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error finding nodes with request {}", request, e);
             throw e;
         }
@@ -1720,7 +1720,7 @@ class ExplorerServiceImpl
 
             return ResultPage.createPageLimitedList(results, request.getPageRequest());
 
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error finding nodes with request {}", request, e);
             throw e;
         }
@@ -1767,7 +1767,7 @@ class ExplorerServiceImpl
                 }
                 return true;
             });
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error finding nodes with request {}", request, e);
             throw e;
         }
@@ -1950,7 +1950,7 @@ class ExplorerServiceImpl
             }
             final StringBuilder parentPath = new StringBuilder();
             for (int i = parents.size() - 1; i >= 0; i--) {
-                String parent = parents.get(i);
+                final String parent = parents.get(i);
                 parentPath.append(parent);
                 if (i > 0) {
                     parentPath.append(" / ");

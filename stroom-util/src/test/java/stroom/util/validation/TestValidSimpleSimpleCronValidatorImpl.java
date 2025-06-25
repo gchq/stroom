@@ -30,8 +30,8 @@ class TestValidSimpleSimpleCronValidatorImpl extends AbstractValidatorTest {
         doValidationTest("xxxxx", false);
     }
 
-    void doValidationTest(final String value, boolean expectedResult) {
-        var myPojo = new Pojo();
+    void doValidationTest(final String value, final boolean expectedResult) {
+        final var myPojo = new Pojo();
         myPojo.simpleCron = value;
 
         final Set<ConstraintViolation<Pojo>> results = validate(myPojo);

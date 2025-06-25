@@ -14,10 +14,10 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.SimpleMetrics;
 
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;

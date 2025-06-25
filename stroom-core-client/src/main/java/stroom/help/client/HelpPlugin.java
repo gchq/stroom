@@ -48,7 +48,7 @@ public class HelpPlugin extends Plugin {
 
         clientPropertyCache.get(result -> {
             if (result != null) {
-                IconMenuItem helpMenuItem;
+                final IconMenuItem helpMenuItem;
                 final String helpUrl = result.getHelpUrl();
                 if (NullSafe.isNonBlankString(helpUrl)) {
                     helpMenuItem = new IconMenuItem.Builder()

@@ -16,14 +16,13 @@
 
 package stroom.query.language.functions;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+import java.time.ZonedDateTime;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = RoundMinute.NAME,
         commonCategory = FunctionCategory.DATE,
-        commonSubCategories = RoundDate.ROUND_SUB_CATEGORY,
+        commonSubCategories = AbstractRoundDateTime.ROUND_SUB_CATEGORY,
         commonReturnType = ValLong.class,
         commonReturnDescription = "The time as milliseconds since the epoch (1st Jan 1970).",
         signatures = @FunctionSignature(
@@ -31,32 +30,24 @@ import java.time.temporal.ChronoUnit;
                 args = @FunctionArg(
                         name = "time",
                         description = "The time to round in milliseconds since the epoch or as a string " +
-                                "formatted using the default date format.",
+                                      "formatted using the default date format.",
                         argType = Val.class)))
-class RoundMinute extends RoundDate {
+class RoundMinute extends AbstractRoundDateTime {
 
     static final String NAME = "roundMinute";
-    private static final Calc CALC = new Calc();
 
-    public RoundMinute(final String name) {
-        super(name);
+    public RoundMinute(final ExpressionContext expressionContext, final String name) {
+        super(expressionContext, name);
     }
 
     @Override
-    protected RoundCalculator getCalculator() {
-        return CALC;
-    }
-
-    static class Calc extends RoundDateCalculator {
-
-
-        @Override
-        protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            LocalDateTime result = dateTime.truncatedTo(ChronoUnit.MINUTES);
-            if (dateTime.isAfter(result.plusSeconds(30))) {
+    protected DateTimeAdjuster getAdjuster() {
+        return zonedDateTime -> {
+            ZonedDateTime result = FloorMinute.floor(zonedDateTime);
+            if (zonedDateTime.isAfter(result.plusSeconds(30))) {
                 result = result.plusMinutes(1);
             }
             return result;
-        }
+        };
     }
 }

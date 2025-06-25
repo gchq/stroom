@@ -293,7 +293,7 @@ public class TermEditor extends Composite {
     }
 
     private List<Condition> getConditions(final QueryField field) {
-        ConditionSet conditions;
+        final ConditionSet conditions;
         if (field != null && field.getConditionSet() != null) {
             conditions = field.getConditionSet();
 

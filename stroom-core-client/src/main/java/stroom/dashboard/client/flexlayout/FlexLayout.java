@@ -509,7 +509,7 @@ public class FlexLayout extends Composite {
 
                 // Change the selected tab in the source tab
                 // layout if we have moved the selected tab.
-                int sourceIndex = currentParent.indexOf(tabConfig);
+                final int sourceIndex = currentParent.indexOf(tabConfig);
                 final Integer selectedIndex = currentParent.getSelected();
                 if (selectedIndex != null && selectedIndex.equals(sourceIndex)) {
                     currentParent.setSelected(sourceIndex - 1);
@@ -701,7 +701,7 @@ public class FlexLayout extends Composite {
                 if (targetSplitLayoutConfig.getDimension() != dim) {
                     // The target split layout is not the correct dimension so we will need to look at the parent
                     // layout.
-                    SplitLayoutConfig parentSplitLayoutConfig = targetSplitLayoutConfig.getParent();
+                    final SplitLayoutConfig parentSplitLayoutConfig = targetSplitLayoutConfig.getParent();
                     if (parentSplitLayoutConfig == null) {
                         // There is no parent of the target so we will create a new parent split to wrap the current
                         // target and insert the new tab layout in the correct location.
@@ -921,7 +921,7 @@ public class FlexLayout extends Composite {
 
     private void stopSplitResize(final double x, final double y) {
         final SplitInfo splitInfo = selectedSplitter.getSplitInfo();
-        SplitLayoutConfig layoutConfig = splitInfo.getLayoutConfig();
+        final SplitLayoutConfig layoutConfig = splitInfo.getLayoutConfig();
         final int dim = layoutConfig.getDimension();
         final double initialChange = getEventPos(dim, x, y) - startPos[dim];
 

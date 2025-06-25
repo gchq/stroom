@@ -31,8 +31,8 @@ public class DumpRefDataOffHeapStore {
      * <p>
      * Not advisable to use if there are large amounts of data in the store.
      */
-    public static void main(String[] args) {
-        Path storeDir;
+    public static void main(final String[] args) {
+        final Path storeDir;
         if (args.length > 0) {
             storeDir = Paths.get(args[0]);
         } else {
@@ -45,11 +45,11 @@ public class DumpRefDataOffHeapStore {
 
         LOGGER.info("Using storeDir {}", storeDir.toAbsolutePath().normalize());
 
-        ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig()
+        final ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig()
                 .withLmdbConfig(new ReferenceDataLmdbConfig()
                         .withLocalDir(storeDir.toAbsolutePath().toString()));
 
-        Injector injector = Guice.createInjector(
+        final Injector injector = Guice.createInjector(
                 new AbstractModule() {
                     @Override
                     protected void configure() {
@@ -59,8 +59,8 @@ public class DumpRefDataOffHeapStore {
                     }
                 });
 
-        RefDataStoreFactory refDataStoreFactory = injector.getInstance(RefDataStoreFactory.class);
-        RefDataStore refDataStore = refDataStoreFactory.getOffHeapStore();
+        final RefDataStoreFactory refDataStoreFactory = injector.getInstance(RefDataStoreFactory.class);
+        final RefDataStore refDataStore = refDataStoreFactory.getOffHeapStore();
 
         refDataStore.logAllContents(LOGGER::info);
     }

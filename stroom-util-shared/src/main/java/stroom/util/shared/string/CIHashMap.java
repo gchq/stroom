@@ -151,14 +151,14 @@ public class CIHashMap<V> extends HashMap<CIKey, V> {
     /**
      * Create a {@link CIKey} keyed map
      */
-    public static <V> CIHashMap<V> of(String k1, V v1) {
+    public static <V> CIHashMap<V> of(final String k1, final V v1) {
         return new CIHashMap<>(CIKey.mapOf(k1, v1));
     }
 
     /**
      * Create a {@link CIKey} keyed map
      */
-    public static <V> CIHashMap<V> of(String k1, V v1, String k2, V v2) {
+    public static <V> CIHashMap<V> of(final String k1, final V v1, final String k2, final V v2) {
         return new CIHashMap<>(CIKey.mapOf(
                 k1, v1,
                 k2, v2));
@@ -167,9 +167,9 @@ public class CIHashMap<V> extends HashMap<CIKey, V> {
     /**
      * Create a {@link CIKey} keyed map
      */
-    public static <V> CIHashMap<V> of(String k1, V v1,
-                                      String k2, V v2,
-                                      String k3, V v3) {
+    public static <V> CIHashMap<V> of(final String k1, final V v1,
+                                      final String k2, final V v2,
+                                      final String k3, final V v3) {
         return new CIHashMap<>(CIKey.mapOf(
                 k1, v1,
                 k2, v2,
@@ -179,10 +179,10 @@ public class CIHashMap<V> extends HashMap<CIKey, V> {
     /**
      * Create a {@link CIKey} keyed map
      */
-    public static <V> CIHashMap<V> of(String k1, V v1,
-                                      String k2, V v2,
-                                      String k3, V v3,
-                                      String k4, V v4) {
+    public static <V> CIHashMap<V> of(final String k1, final V v1,
+                                      final String k2, final V v2,
+                                      final String k3, final V v3,
+                                      final String k4, final V v4) {
         return new CIHashMap<>(CIKey.mapOf(
                 k1, v1,
                 k2, v2,
@@ -193,11 +193,11 @@ public class CIHashMap<V> extends HashMap<CIKey, V> {
     /**
      * Create a {@link CIKey} keyed map
      */
-    public static <V> CIHashMap<V> of(String k1, V v1,
-                                      String k2, V v2,
-                                      String k3, V v3,
-                                      String k4, V v4,
-                                      String k5, V v5) {
+    public static <V> CIHashMap<V> of(final String k1, final V v1,
+                                      final String k2, final V v2,
+                                      final String k3, final V v3,
+                                      final String k4, final V v4,
+                                      final String k5, final V v5) {
         return new CIHashMap<>(CIKey.mapOf(
                 k1, v1,
                 k2, v2,
@@ -209,12 +209,12 @@ public class CIHashMap<V> extends HashMap<CIKey, V> {
     /**
      * Create a {@link CIKey} keyed map
      */
-    public static <V> CIHashMap<V> of(String k1, V v1,
-                                      String k2, V v2,
-                                      String k3, V v3,
-                                      String k4, V v4,
-                                      String k5, V v5,
-                                      String k6, V v6) {
+    public static <V> CIHashMap<V> of(final String k1, final V v1,
+                                      final String k2, final V v2,
+                                      final String k3, final V v3,
+                                      final String k4, final V v4,
+                                      final String k5, final V v5,
+                                      final String k6, final V v6) {
         return new CIHashMap<>(CIKey.mapOf(
                 k1, v1,
                 k2, v2,
@@ -227,13 +227,13 @@ public class CIHashMap<V> extends HashMap<CIKey, V> {
     /**
      * Create a {@link CIKey} keyed map
      */
-    public static <V> CIHashMap<V> of(String k1, V v1,
-                                      String k2, V v2,
-                                      String k3, V v3,
-                                      String k4, V v4,
-                                      String k5, V v5,
-                                      String k6, V v6,
-                                      String k7, V v7) {
+    public static <V> CIHashMap<V> of(final String k1, final V v1,
+                                      final String k2, final V v2,
+                                      final String k3, final V v3,
+                                      final String k4, final V v4,
+                                      final String k5, final V v5,
+                                      final String k6, final V v6,
+                                      final String k7, final V v7) {
         return new CIHashMap<>(CIKey.mapOf(
                 k1, v1,
                 k2, v2,
@@ -247,14 +247,14 @@ public class CIHashMap<V> extends HashMap<CIKey, V> {
     /**
      * Create a {@link CIKey} keyed map
      */
-    public static <V> CIHashMap<V> of(String k1, V v1,
-                                      String k2, V v2,
-                                      String k3, V v3,
-                                      String k4, V v4,
-                                      String k5, V v5,
-                                      String k6, V v6,
-                                      String k7, V v7,
-                                      String k8, V v8) {
+    public static <V> CIHashMap<V> of(final String k1, final V v1,
+                                      final String k2, final V v2,
+                                      final String k3, final V v3,
+                                      final String k4, final V v4,
+                                      final String k5, final V v5,
+                                      final String k6, final V v6,
+                                      final String k7, final V v7,
+                                      final String k8, final V v8) {
         return new CIHashMap<>(CIKey.mapOf(
                 k1, v1,
                 k2, v2,

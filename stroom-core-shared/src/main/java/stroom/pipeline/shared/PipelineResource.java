@@ -17,7 +17,7 @@
 package stroom.pipeline.shared;
 
 import stroom.docref.DocRef;
-import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -59,25 +59,25 @@ public interface PipelineResource extends RestResource, DirectRestService, Fetch
                        @Parameter(description = "doc", required = true) PipelineDoc doc);
 
     @PUT
-    @Path("/savePipelineXml")
+    @Path("/savePipelineJson")
     @Operation(
-            summary = "Update a pipeline doc with XML directly",
-            operationId = "savePipelineXml")
-    Boolean savePipelineXml(@Parameter(description = "request", required = true) SavePipelineXmlRequest request);
+            summary = "Update a pipeline doc with JSON directly",
+            operationId = "savePipelineJson")
+    Boolean savePipelineJson(@Parameter(description = "request", required = true) SavePipelineJsonRequest request);
 
     @POST
-    @Path("/fetchPipelineXml")
+    @Path("/fetchPipelineJson")
     @Operation(
-            summary = "Fetch the XML for a pipeline",
-            operationId = "fetchPipelineXml")
-    FetchPipelineXmlResponse fetchPipelineXml(@Parameter(description = "pipeline", required = true) DocRef pipeline);
+            summary = "Fetch the JSON for a pipeline",
+            operationId = "fetchPipelineJson")
+    FetchPipelineJsonResponse fetchPipelineJson(@Parameter(description = "pipeline", required = true) DocRef pipeline);
 
     @POST
-    @Path("/fetchPipelineData")
+    @Path("/fetchPipelineLayers")
     @Operation(
-            summary = "Fetch data for a pipeline",
-            operationId = "fetchPipelineData")
-    List<PipelineData> fetchPipelineData(@Parameter(description = "pipeline", required = true) DocRef pipeline);
+            summary = "Fetch layers for a pipeline",
+            operationId = "fetchPipelineLayers")
+    List<PipelineLayer> fetchPipelineLayers(@Parameter(description = "pipeline", required = true) DocRef pipeline);
 
     @GET
     @Path("/propertyTypes")

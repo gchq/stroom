@@ -112,7 +112,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
                 feedName = NullSafe.trim(attributeMap.get(StandardHeaderArguments.FEED));
 
                 // Get the type name from the header arguments if supplied.
-                String typeName = NullSafe.trim(attributeMap.get(StandardHeaderArguments.TYPE));
+                final String typeName = NullSafe.trim(attributeMap.get(StandardHeaderArguments.TYPE));
 
                 taskContextFactory.context("Receiving Data", taskContext -> {
                     final Consumer<Long> progressHandler =

@@ -591,7 +591,7 @@ class DynamicTestBuilder {
                 // Not sure if there is anything useful we can show for the lambda so just do this
                 stringBuilder.append("lambda");
             } else {
-                String valStr = value.toString();
+                final String valStr = value.toString();
 
                 stringBuilder.append("'")
                         .append(valStr)
@@ -604,7 +604,7 @@ class DynamicTestBuilder {
             LOGGER.debug("Running action: {}", name);
             try {
                 action.run();
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw new RuntimeException(
                         LogUtil.message("Error running action: " + name + ". " + e.getMessage()), e);
             }
@@ -612,7 +612,7 @@ class DynamicTestBuilder {
 
         private Stream<DynamicTest> createDynamicTestStream() {
 
-            AtomicInteger caseCounter = new AtomicInteger();
+            final AtomicInteger caseCounter = new AtomicInteger();
 
             return testCases.stream()
                     .sequential()
@@ -635,7 +635,7 @@ class DynamicTestBuilder {
                             Throwable actualThrowable = null;
                             try {
                                 actualOutput = testAction.apply(testCase);
-                            } catch (Throwable t) {
+                            } catch (final Throwable t) {
                                 actualThrowable = t;
                                 if (!testCase.isExpectedToThrow()) {
                                     Assertions.fail(LogUtil.message(

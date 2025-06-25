@@ -29,7 +29,7 @@ public class HideMenuEvent
     }
 
     @Override
-    protected void dispatch(Handler handler) {
+    protected void dispatch(final Handler handler) {
         handler.onHide(this);
     }
 
@@ -43,7 +43,7 @@ public class HideMenuEvent
         public Builder() {
         }
 
-        public void fire(HasHandlers hasHandlers) {
+        public void fire(final HasHandlers hasHandlers) {
             hasHandlers.fireEvent(new HideMenuEvent());
         }
     }

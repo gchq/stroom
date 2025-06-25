@@ -66,11 +66,11 @@ public class StringCriteria implements Serializable, HasIsConstrained, Clearable
         this.matchNull = matchNull;
     }
 
-    public static List<StringCriteria> convertStringList(List<String> strings) {
-        List<StringCriteria> criteriaList = new ArrayList<>();
+    public static List<StringCriteria> convertStringList(final List<String> strings) {
+        final List<StringCriteria> criteriaList = new ArrayList<>();
 
         if (strings != null) {
-            for (String string : strings) {
+            for (final String string : strings) {
                 criteriaList.add(new StringCriteria(string));
             }
         }

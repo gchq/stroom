@@ -27,10 +27,9 @@ dependencies {
     runtimeOnly libs.mysql.connector.java
 
     testImplementation project(':stroom-test-common')
-    testImplementation libs.junit.jupiter.api
-    testImplementation libs.junit.jupiter.engine
-    testImplementation libs.assertj.core
     testImplementation libs.wiremock
-    testImplementation libs.mockito.core
     testImplementation libs.dropwizard.testing
+
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
 }

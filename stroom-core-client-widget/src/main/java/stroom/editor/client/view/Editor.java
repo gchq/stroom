@@ -182,14 +182,14 @@ public class Editor extends Composite implements
         }
     }
 
-    public void replaceSelectedText(String text) {
+    public void replaceSelectedText(final String text) {
         if (started) {
             editor.replaceSelectedText(text);
             this.text = editor.getText();
         }
     }
 
-    public void insertSnippet(String snippet) {
+    public void insertSnippet(final String snippet) {
         if (started) {
             editor.insertSnippet(snippet);
             this.text = editor.getText();

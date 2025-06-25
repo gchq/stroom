@@ -31,7 +31,7 @@ public interface Serde<T> {
         return false;
     }
 
-    default UsedLookupsRecorder getUsedLookupsRecorder(PlanBEnv env) {
+    default UsedLookupsRecorder getUsedLookupsRecorder(final PlanBEnv env) {
         return USED_LOOKUPS_RECORDER;
     }
 }

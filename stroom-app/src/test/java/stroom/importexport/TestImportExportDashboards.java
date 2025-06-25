@@ -135,7 +135,7 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
                     "Test Script",
                     folder2,
                     null);
-            ScriptDoc script = scriptStore.readDocument(scriptNode.getDocRef());
+            final ScriptDoc script = scriptStore.readDocument(scriptNode.getDocRef());
             script.setData("Test Data");
             scriptStore.writeDocument(script);
             assertThat(scriptStore.list().size()).isEqualTo(1);

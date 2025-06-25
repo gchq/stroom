@@ -50,17 +50,17 @@ public class StroomStatsStoreSettingsViewImpl extends ViewWithUiHandlers<StroomS
     public StroomStatsStoreSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
 
-        for (StatisticType item : StatisticType.values()) {
+        for (final StatisticType item : StatisticType.values()) {
             //assumes enum declaration order is sufficient
             statisticType.addItem(item);
         }
 
-        for (StatisticRollUpType item : StatisticRollUpType.values()) {
+        for (final StatisticRollUpType item : StatisticRollUpType.values()) {
             //assumes enum declaration order is sufficient
             rollUpType.addItem(item);
         }
 
-        for (EventStoreTimeIntervalEnum item : EventStoreTimeIntervalEnum.values()) {
+        for (final EventStoreTimeIntervalEnum item : EventStoreTimeIntervalEnum.values()) {
             //assumes enum declaration order is sufficient
             precision.addItem(item);
         }

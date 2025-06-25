@@ -193,7 +193,7 @@ public class NodeServiceImpl implements NodeService {
             try {
                 final Builder builder = createBuilder(queryParams, url);
 
-                try (Response response = responseBuilderFunc.apply(builder)) {
+                try (final Response response = responseBuilderFunc.apply(builder)) {
 
                     LOGGER.debug(() -> "Response status " + response.getStatus());
                     if (response.getStatus() != Status.OK.getStatusCode()) {
@@ -238,7 +238,7 @@ public class NodeServiceImpl implements NodeService {
             try {
                 final Builder builder = createBuilder(queryParams, url);
 
-                try (Response response = responseBuilderFunc.apply(builder)) {
+                try (final Response response = responseBuilderFunc.apply(builder)) {
 
                     LOGGER.debug(() -> "Response status " + response.getStatus());
                     if (response.getStatus() != Status.OK.getStatusCode()

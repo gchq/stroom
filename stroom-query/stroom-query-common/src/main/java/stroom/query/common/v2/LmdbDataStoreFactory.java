@@ -191,7 +191,7 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                         return FileVisitResult.CONTINUE;
                     }
                 });
-            } catch (IOException | RuntimeException e) {
+            } catch (final IOException | RuntimeException e) {
                 LOGGER.error("Error calculating disk usage for path {}",
                         searchResultStoreDir.normalize(), e);
                 // Return -1 to indicate a failure

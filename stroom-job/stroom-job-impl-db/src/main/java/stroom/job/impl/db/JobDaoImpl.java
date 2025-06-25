@@ -79,17 +79,17 @@ public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
     }
 
     @Override
-    public boolean delete(int id) {
+    public boolean delete(final int id) {
         return genericDao.delete(id);
     }
 
     @Override
-    public Optional<Job> fetch(int id) {
+    public Optional<Job> fetch(final int id) {
         return genericDao.fetch(id);
     }
 
     @Override
-    public ResultPage<Job> find(FindJobCriteria criteria) {
+    public ResultPage<Job> find(final FindJobCriteria criteria) {
         final Collection<Condition> conditions = JooqUtil.conditions(
                 JooqUtil.getStringCondition(JOB.NAME, criteria.getName()));
 

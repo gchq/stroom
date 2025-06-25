@@ -74,7 +74,7 @@ public class JSONWriter extends AbstractWriter {
     }
 
     private JsonGenerator createGenerator() {
-        JsonGenerator jsonGenerator;
+        final JsonGenerator jsonGenerator;
         try {
             jsonGenerator = jsonFactory.createGenerator(new IgnoreCloseWriter(getWriter()));
             if (indentOutput) {

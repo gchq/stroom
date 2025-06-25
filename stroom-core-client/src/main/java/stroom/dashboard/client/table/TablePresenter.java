@@ -603,7 +603,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     public static QueryField buildDsField(final Column column) {
-        Type colType = Optional.ofNullable(column.getFormat())
+        final Type colType = Optional.ofNullable(column.getFormat())
                 .map(Format::getType)
                 .orElse(Type.GENERAL);
 
@@ -626,7 +626,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                             .build();
 
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             GWT.log(e.getMessage());
             throw new RuntimeException(e);
         }
@@ -661,7 +661,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         ? row.getValues().get(i)
                         : "";
 
-                SafeStylesBuilder stylesBuilder = new SafeStylesBuilder();
+                final SafeStylesBuilder stylesBuilder = new SafeStylesBuilder();
 
                 // Wrap
                 if (column.getFormat() != null &&
@@ -736,7 +736,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 getTableComponentSettings().getConditionalFormattingRules().stream()
                         .map(ConditionalFormattingRule::getExpression)
                         .forEach(expressionOperator -> {
-                            boolean wasRuleModified = renameField(expressionOperator, oldName, newName);
+                            final boolean wasRuleModified = renameField(expressionOperator, oldName, newName);
                             if (wasRuleModified) {
                                 wasModified.compareAndSet(false, true);
                             }
@@ -933,7 +933,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .componentId(componentConfig.getId())
                 .build();
 
-        ComponentSettings settings = componentConfig.getSettings();
+        final ComponentSettings settings = componentConfig.getSettings();
         if (!(settings instanceof TableComponentSettings)) {
             setSettings(createSettings());
         }
@@ -1070,7 +1070,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         final DashboardContext dashboardContext = getDashboardContext();
         final List<Column> columnsIn = tableComponentSettings.getColumns();
         if (columnsIn != null) {
-            List<Column> columnsOut = new ArrayList<>(columnsIn.size());
+            final List<Column> columnsOut = new ArrayList<>(columnsIn.size());
             columnsIn.forEach(column -> {
                 final Column.Builder columnBuilder = column.copy();
                 if (column.getExpression() != null) {
@@ -1101,7 +1101,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         // Resolve parameters in conditional formatting.
         final List<ConditionalFormattingRule> rulesIn = tableComponentSettings.getConditionalFormattingRules();
         if (rulesIn != null) {
-            List<ConditionalFormattingRule> rulesOut = new ArrayList<>(rulesIn.size());
+            final List<ConditionalFormattingRule> rulesOut = new ArrayList<>(rulesIn.size());
             rulesIn.forEach(rule -> {
                 rulesOut.add(rule.copy().expression(dashboardContext.replaceExpression(rule.getExpression(),
                         true)).build());

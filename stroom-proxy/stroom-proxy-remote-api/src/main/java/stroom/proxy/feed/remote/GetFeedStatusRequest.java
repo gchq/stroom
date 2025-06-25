@@ -64,7 +64,7 @@ public class GetFeedStatusRequest extends RemoteRequest {
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
+        final StringBuilder builder = new StringBuilder();
         builder.append("feed status request - feed: '");
         builder.append(feedName);
         builder.append("'");

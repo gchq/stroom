@@ -43,7 +43,7 @@ public class InputStreamProviderImpl implements InputStreamProvider {
         root = factory.getSegmentInputStreamProvider(null);
     }
 
-    private void logDebug(String msg) {
+    private void logDebug(final String msg) {
         LOGGER.debug(msg + meta.getId());
     }
 

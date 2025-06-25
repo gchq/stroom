@@ -92,7 +92,7 @@ class TestCachedValue {
                         startLatch.countDown();
                         LOGGER.debug("Thread waiting, startLatch {}", startLatch.getCount());
                         startLatch.await(10, TimeUnit.SECONDS);
-                    } catch (InterruptedException e) {
+                    } catch (final InterruptedException e) {
                         LOGGER.debug("interrupted", e);
                         throw new RuntimeException(e);
                     }
@@ -106,7 +106,7 @@ class TestCachedValue {
                             .isTrue();
                     finishLatch.countDown();
                     LOGGER.debug("Thread finished, finishLatch {}", finishLatch.getCount());
-                } catch (RuntimeException e) {
+                } catch (final RuntimeException e) {
                     LOGGER.debug("error", e);
                     Assertions.fail(e.getMessage());
                 }

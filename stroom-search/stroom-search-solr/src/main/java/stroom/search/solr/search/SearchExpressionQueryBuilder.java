@@ -516,7 +516,7 @@ public class SearchExpressionQueryBuilder {
         // we can't expect to do a sentence match. In this case we need to
         // modify the query so that each word becomes a new term in a boolean
         // query.
-        String val = value.trim();
+        final String val = value.trim();
 //        if (in || !AnalyzerType.KEYWORD.equals(field.getAnalyzerType())) {
 //            // If the field has been analysed then we need to analyse the search
 //            // query to create matching terms.

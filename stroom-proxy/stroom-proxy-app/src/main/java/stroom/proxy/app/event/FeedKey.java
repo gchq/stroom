@@ -16,7 +16,7 @@ public record FeedKey(String feed, String type) {
         String feed = null;
         String type = null;
 
-        String[] parts = string.split(DELIMITER);
+        final String[] parts = string.split(DELIMITER);
         if (parts.length > 0) {
             feed = decode(parts[0]);
         }
@@ -26,14 +26,14 @@ public record FeedKey(String feed, String type) {
         return new FeedKey(feed, type);
     }
 
-    private static String encode(String string) {
+    private static String encode(final String string) {
         if (string == null) {
             return "";
         }
         return URLEncoder.encode(string, StandardCharsets.UTF_8);
     }
 
-    private static String decode(String string) {
+    private static String decode(final String string) {
         if (string == null) {
             return null;
         }

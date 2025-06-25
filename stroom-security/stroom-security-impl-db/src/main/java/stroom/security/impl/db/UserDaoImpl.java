@@ -471,7 +471,7 @@ public class UserDaoImpl implements UserDao {
                     .execute());
             LOGGER.debug("addUserToGroup - userUuid: {}, groupUuid: {}, count: {}",
                     userUuid, groupUuid, insertCount);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message(
                     "Error adding user to group - userUuid: {}, groupUuid: {}", userUuid, groupUuid), e);
         }
@@ -488,7 +488,7 @@ public class UserDaoImpl implements UserDao {
                     .execute());
             LOGGER.debug("removeUserFromGroup - userUuid: {}, groupUuid: {}, count: {}",
                     userUuid, groupUuid, updateCount);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message(
                     "Error removing user from group - userUuid: {}, groupUuid: {}", userUuid, groupUuid), e);
         }
@@ -528,7 +528,7 @@ public class UserDaoImpl implements UserDao {
 
             LOGGER.debug("insertOrUpdateStroomUserArchiveRecord - changeCount: {} for userUuid: {}",
                     changeCount, userUuid);
-        } catch (DataAccessException e) {
+        } catch (final DataAccessException e) {
             throw new RuntimeException(LogUtil.message("Error upserting archive record for userUuid {}", userUuid), e);
         }
     }

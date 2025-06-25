@@ -33,7 +33,6 @@ dependencies {
     implementation libs.eventLogging
     implementation libs.guice
     implementation libs.jackson.annotations
-    implementation libs.jaxb.api
     implementation libs.jakarta.inject
     implementation libs.kryo
     implementation libs.slf4j.api
@@ -44,22 +43,9 @@ dependencies {
     testImplementation project(':stroom-lmdb')
     testImplementation project(':stroom-test-common')
 
-    testImplementation libs.assertj.core
     testImplementation libs.dropwizard.client
     testImplementation libs.dropwizard.testing
-    testImplementation libs.junit.jupiter.api
-    testImplementation libs.mockito.core
-    testImplementation libs.mockito.junit.jupiter
 
-    testRuntimeOnly libs.jakarta.activation
-    testRuntimeOnly libs.jakarta.el
-    testRuntimeOnly libs.jaxb.impl
-    testRuntimeOnly libs.junit.jupiter.engine
-
-    // The following logging libs are needed when running junits outside dropwizard
-    testRuntimeOnly libs.jcl.over.slf4j
-    testRuntimeOnly libs.jul.to.slf4j
-    testRuntimeOnly libs.log4j.over.slf4j
-    testRuntimeOnly libs.logback.classic
-    testRuntimeOnly libs.logback.core
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
 }

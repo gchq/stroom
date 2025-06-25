@@ -43,7 +43,7 @@ class TestStandardJwtContextFactory {
                     final String header = Base64.getEncoder()
                             .encodeToString(json.getBytes(StandardCharsets.UTF_8));
 
-                    JwsParts jwsParts = new JwsParts(
+                    final JwsParts jwsParts = new JwsParts(
                             null,
                             header,
                             null,
@@ -92,7 +92,7 @@ class TestStandardJwtContextFactory {
 
         final String header = Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
 
-        JwsParts jwsParts = new JwsParts(
+        final JwsParts jwsParts = new JwsParts(
                 null,
                 header,
                 null,
@@ -120,7 +120,7 @@ class TestStandardJwtContextFactory {
 
         final String header = Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
 
-        JwsParts jwsParts = new JwsParts(
+        final JwsParts jwsParts = new JwsParts(
                 null,
                 header,
                 null,
@@ -148,7 +148,7 @@ class TestStandardJwtContextFactory {
 
         final String header = Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
 
-        JwsParts jwsParts = new JwsParts(
+        final JwsParts jwsParts = new JwsParts(
                 null,
                 header,
                 null,
@@ -175,7 +175,7 @@ class TestStandardJwtContextFactory {
 
         final String header = Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
 
-        JwsParts jwsParts = new JwsParts(
+        final JwsParts jwsParts = new JwsParts(
                 null,
                 header,
                 null,
@@ -202,7 +202,7 @@ class TestStandardJwtContextFactory {
 
         final String header = Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
 
-        JwsParts jwsParts = new JwsParts(
+        final JwsParts jwsParts = new JwsParts(
                 null,
                 header,
                 null,
@@ -228,7 +228,7 @@ class TestStandardJwtContextFactory {
 
         final String header = Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
 
-        JwsParts jwsParts = new JwsParts(
+        final JwsParts jwsParts = new JwsParts(
                 null,
                 header,
                 null,
@@ -254,7 +254,7 @@ class TestStandardJwtContextFactory {
 
         final String header = Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
 
-        JwsParts jwsParts = new JwsParts(
+        final JwsParts jwsParts = new JwsParts(
                 null,
                 header,
                 null,

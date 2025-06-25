@@ -46,7 +46,7 @@ class ImportExportActionHandlersImpl implements ImportExportActionHandlers {
     public Map<String, ImportExportActionHandler> getHandlers() {
         if (handlers == null) {
             final Map<String, ImportExportActionHandler> map = new HashMap<>();
-            for (ImportExportActionHandler handler : importExportActionHandlerProviders.get()) {
+            for (final ImportExportActionHandler handler : importExportActionHandlerProviders.get()) {
                 final String type = handler.getType();
 
                 final ImportExportActionHandler existingActionHandler = map.putIfAbsent(type, handler);

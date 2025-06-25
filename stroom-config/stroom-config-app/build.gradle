@@ -39,7 +39,6 @@ dependencies {
     implementation project(':stroom-job:stroom-job-impl')
     implementation project(':stroom-job:stroom-job-impl-db')
     implementation project(':stroom-kafka:stroom-kafka-impl')
-    implementation project(':stroom-legacy:stroom-legacy-db-migration')
     implementation project(':stroom-lifecycle:stroom-lifecycle-impl')
     implementation project(':stroom-lmdb')
     implementation project(':stroom-meta:stroom-meta-impl')
@@ -80,21 +79,12 @@ dependencies {
 
     testImplementation project(':stroom-test-common')
 
-    testImplementation libs.assertj.core
     testImplementation libs.jackson.datatype.jdk8
-    testImplementation libs.junit.jupiter.api
     testImplementation libs.mbknor.jackson.jsonSchema
     testImplementation libs.java.diff.utils
 
-    // The following logging libs are needed when running junits outside dropwizard
-    testRuntimeOnly libs.jakarta.activation
-    testRuntimeOnly libs.jaxb.impl
-    testRuntimeOnly libs.jcl.over.slf4j
-    testRuntimeOnly libs.jul.to.slf4j
-    testRuntimeOnly libs.junit.jupiter.engine
-    testRuntimeOnly libs.log4j.over.slf4j
-    testRuntimeOnly libs.logback.classic
-    testRuntimeOnly libs.logback.core
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
 }
 
 // Create an example yaml config file from the compile-time defaults

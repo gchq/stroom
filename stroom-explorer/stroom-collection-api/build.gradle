@@ -4,5 +4,4 @@ dependencies {
     implementation project(':stroom-docref')
 
     implementation libs.jackson.annotations
-    implementation libs.jaxb.api
 }

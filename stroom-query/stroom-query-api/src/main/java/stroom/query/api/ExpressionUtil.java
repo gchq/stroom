@@ -177,40 +177,73 @@ public class ExpressionUtil {
     }
 
     public static ExpressionOperator copyOperator(final ExpressionOperator operator) {
+        return copyOperator(operator, null);
+    }
+
+    /**
+     * Return a deep copy of operator where items are only included in the copy if filter
+     * returns true. If an operator is excluded by the filter, then any of its children are
+     * also excluded.
+     */
+    public static ExpressionOperator copyOperator(final ExpressionOperator operator,
+                                                  final Predicate<ExpressionItem> filter) {
         if (operator == null) {
             return null;
         }
 
-        final ExpressionOperator.Builder builder = ExpressionOperator
-                .builder()
-                .enabled(operator.getEnabled())
-                .op(operator.getOp());
-        if (operator.getChildren() != null) {
-            operator.getChildren().forEach(item -> {
-                if (item instanceof ExpressionOperator) {
-                    builder.addOperator(copyOperator((ExpressionOperator) item));
+        final Predicate<ExpressionItem> effectiveFilter = NullSafe.predicate(filter, true);
 
-                } else if (item instanceof ExpressionTerm) {
-                    builder.addTerm(copyTerm((ExpressionTerm) item));
-                }
-            });
+        if (effectiveFilter.test(operator)) {
+            final ExpressionOperator.Builder builder = ExpressionOperator
+                    .builder()
+                    .enabled(operator.getEnabled())
+                    .op(operator.getOp());
+            if (operator.getChildren() != null) {
+                operator.getChildren()
+                        .stream()
+                        .filter(effectiveFilter)
+                        .forEach(item -> {
+                            ExpressionItem childCopy = null;
+                            if (item instanceof ExpressionOperator) {
+                                childCopy = copyOperator((ExpressionOperator) item, effectiveFilter);
+
+                            } else if (item instanceof ExpressionTerm) {
+                                childCopy = copyTerm((ExpressionTerm) item, effectiveFilter);
+                            }
+                            NullSafe.consume(childCopy, builder::addItem);
+                        });
+            }
+            return builder.build();
+        } else {
+            return null;
         }
-        return builder.build();
     }
 
     public static ExpressionTerm copyTerm(final ExpressionTerm term) {
+        return copyTerm(term, null);
+    }
+
+    /**
+     * Return a copy of term if filter returns true.
+     */
+    public static ExpressionTerm copyTerm(final ExpressionTerm term,
+                                          final Predicate<ExpressionItem> filter) {
         if (term == null) {
             return null;
         }
-
-        return ExpressionTerm
-                .builder()
-                .enabled(term.getEnabled())
-                .field(term.getField())
-                .condition(term.getCondition())
-                .value(term.getValue())
-                .docRef(term.getDocRef())
-                .build();
+        final Predicate<ExpressionItem> effectiveFilter = NullSafe.predicate(filter, true);
+        if (effectiveFilter.test(term)) {
+            return ExpressionTerm
+                    .builder()
+                    .enabled(term.getEnabled())
+                    .field(term.getField())
+                    .condition(term.getCondition())
+                    .value(term.getValue())
+                    .docRef(term.getDocRef())
+                    .build();
+        } else {
+            return null;
+        }
     }
 
     public static SearchRequest replaceExpressionParameters(final SearchRequest searchRequest) {
@@ -255,7 +288,7 @@ public class ExpressionUtil {
                 .enabled(operator.getEnabled())
                 .op(operator.getOp());
         if (operator.getChildren() != null) {
-            for (ExpressionItem child : operator.getChildren()) {
+            for (final ExpressionItem child : operator.getChildren()) {
                 if (child instanceof ExpressionOperator) {
                     final ExpressionOperator childOperator = (ExpressionOperator) child;
                     builder.addOperator(replaceExpressionParameters(childOperator, paramValues, keepUnmatched));

@@ -60,7 +60,7 @@ public class TestFlatFileExtension {
 
                     try (final Stream<String> stream = Files.lines(p)) {
                         stream.forEach(LOGGER::debug);
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         Assertions.fail(e.getLocalizedMessage());
                     }
                 });

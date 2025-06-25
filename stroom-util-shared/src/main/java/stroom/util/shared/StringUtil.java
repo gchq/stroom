@@ -113,7 +113,7 @@ public class StringUtil {
      * See the tests for examples.
      */
     public static String addWhitespaceQuoting(final String storedText) {
-        String userText;
+        final String userText;
         if (storedText == null || storedText.isEmpty()) {
             userText = storedText;
         } else {

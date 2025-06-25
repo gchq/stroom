@@ -58,7 +58,7 @@ public class StagingValueOutputStream
         final byte[] paddingBytes = new byte[META_LENGTH];
         try {
             pooledByteBufferOutputStream.write(paddingBytes);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message("Error padding out pooledByteBufferOutputStream: {}",
                     e.getMessage()), e);
         }
@@ -172,7 +172,7 @@ public class StagingValueOutputStream
                 valueBuffer = fullBuffer.slice(
                         VALUE_OFFSET,
                         fullBuffer.remaining() - META_LENGTH);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw new RuntimeException(LogUtil.message("""
                                 Error slicing valueBuffer (offset: {}, length: {}) from fullBuffer: {}
                                 byteBuffer: {}""",

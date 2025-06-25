@@ -62,8 +62,8 @@ public class RangeStoreKeySerde implements Serde<RangeStoreKey> {
         // advance the position now we have a dup of the UID portion
         byteBuffer.position(byteBuffer.position() + UID.UID_ARRAY_LENGTH);
 
-        long rangeFromInc = byteBuffer.getLong();
-        long rangeToExc = byteBuffer.getLong();
+        final long rangeFromInc = byteBuffer.getLong();
+        final long rangeToExc = byteBuffer.getLong();
         byteBuffer.flip();
 
         return new RangeStoreKey(mapUid, new Range<>(rangeFromInc, rangeToExc));
@@ -89,7 +89,7 @@ public class RangeStoreKeySerde implements Serde<RangeStoreKey> {
 //        uidPartBuffer.limit(UID.UID_ARRAY_LENGTH);
 
         if (ByteBufferUtils.containsPrefix(byteBuffer, mapDefinitionUid.getBackingBuffer())) {
-            long rangeFromInc = byteBuffer.getLong(RANGE_FROM_OFFSET);
+            final long rangeFromInc = byteBuffer.getLong(RANGE_FROM_OFFSET);
 
             if (key >= rangeFromInc) {
                 final long rangeToExc = byteBuffer.getLong(RANGE_TO_OFFSET);

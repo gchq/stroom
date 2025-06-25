@@ -174,10 +174,10 @@ public class LmdbUtils {
     }
 
     public static void dumpBuffer(final ByteBuffer byteBuffer, final String description) {
-        StringBuilder stringBuilder = new StringBuilder();
+        final StringBuilder stringBuilder = new StringBuilder();
 
         for (int i = byteBuffer.position(); i < byteBuffer.limit(); i++) {
-            byte b = byteBuffer.get(i);
+            final byte b = byteBuffer.get(i);
             stringBuilder.append(byteToHex(b));
             stringBuilder.append(" ");
         }
@@ -185,10 +185,10 @@ public class LmdbUtils {
     }
 
     public static String byteBufferToHex(final ByteBuffer byteBuffer) {
-        StringBuilder stringBuilder = new StringBuilder();
+        final StringBuilder stringBuilder = new StringBuilder();
 
         for (int i = byteBuffer.position(); i < byteBuffer.limit(); i++) {
-            byte b = byteBuffer.get(i);
+            final byte b = byteBuffer.get(i);
             stringBuilder.append(byteToHex(b));
             stringBuilder.append(" ");
         }
@@ -226,10 +226,12 @@ public class LmdbUtils {
      *
      * @return The newly allocated {@link ByteBuffer}
      */
-    public static <T> ByteBuffer buildDbKeyBuffer(final Env<ByteBuffer> lmdbEnv, final T keyObject, Serde<T> keySerde) {
+    public static <T> ByteBuffer buildDbKeyBuffer(final Env<ByteBuffer> lmdbEnv,
+                                                  final T keyObject,
+                                                  final Serde<T> keySerde) {
         try {
             return buildDbBuffer(keyObject, keySerde, lmdbEnv.getMaxKeySize());
-        } catch (BufferOverflowException e) {
+        } catch (final BufferOverflowException e) {
             throw new RuntimeException(LogUtil.message(
                     "The serialised form of keyObject {} is too big for an LMDB key, max bytes is {}",
                     keyObject, lmdbEnv.getMaxKeySize()), e);
@@ -243,7 +245,7 @@ public class LmdbUtils {
      * @return The newly allocated {@link ByteBuffer}
      */
     public static <T> ByteBuffer buildDbBuffer(final T object, final Serde<T> serde, final int bufferSize) {
-        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(bufferSize);
+        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(bufferSize);
         serde.serialize(byteBuffer, object);
         return byteBuffer;
     }
@@ -260,7 +262,7 @@ public class LmdbUtils {
                 getEntryCount(env, txn, dbi), new String(dbi.getName())));
 
         // loop over all DB entries
-        try (CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(txn, KeyRange.all())) {
+        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(txn, KeyRange.all())) {
             for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
                 stringBuilder.append(LogUtil.message("\n  key: [{}] - value [{}]",
                         keyToStringFunc.apply(keyVal.key()),
@@ -328,14 +330,14 @@ public class LmdbUtils {
                                           final Function<ByteBuffer, String> valueToStringFunc,
                                           final Consumer<String> logEntryConsumer) {
 
-        StringBuilder stringBuilder = new StringBuilder();
+        final StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(LogUtil.message("Dumping entries in range {} [[{}] to [{}]] for database [{}]",
                 keyRange.getType().toString(),
                 ByteBufferUtils.byteBufferToHex(keyRange.getStart()),
                 ByteBufferUtils.byteBufferToHex(keyRange.getStop()),
                 new String(dbi.getName())));
 
-        try (CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(txn, keyRange)) {
+        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(txn, keyRange)) {
             for (final CursorIterable.KeyVal<ByteBuffer> keyVal : cursorIterable) {
                 stringBuilder.append(LogUtil.message("\n  key: [{}] - value [{}]",
                         keyToStringFunc.apply(keyVal.key()),

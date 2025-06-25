@@ -9,5 +9,4 @@ dependencies {
     implementation project(':stroom-importexport:stroom-importexport-api')
 
     implementation libs.jackson.annotations
-    implementation libs.jaxb.api
 }

@@ -133,7 +133,7 @@ public final class Job implements HasAuditInfo, HasIntegerId {
         return enabled;
     }
 
-    public void setEnabled(boolean enabled) {
+    public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
     }
 
@@ -141,7 +141,7 @@ public final class Job implements HasAuditInfo, HasIntegerId {
         return description;
     }
 
-    public void setDescription(String description) {
+    public void setDescription(final String description) {
         this.description = description;
     }
 
@@ -154,7 +154,7 @@ public final class Job implements HasAuditInfo, HasIntegerId {
         return advanced;
     }
 
-    public void setAdvanced(boolean advanced) {
+    public void setAdvanced(final boolean advanced) {
         this.advanced = advanced;
     }
 

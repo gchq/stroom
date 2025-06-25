@@ -35,45 +35,34 @@ public class TagsKeySerde implements KeyPrefixSerde {
         this.byteBuffers = byteBuffers;
     }
 
-    private void putUid(final ByteBuffer byteBuffer, final long uid) {
-        byteBuffer.clear();
-        UnsignedBytesInstances.forValue(uid).put(byteBuffer, uid);
-        byteBuffer.flip();
-    }
-
     @Override
     public KeyPrefix read(final Txn<ByteBuffer> txn, final ByteBuffer byteBuffer) {
         final List<Tag> tags = new ArrayList<>();
-        byteBuffers.use(Integer.BYTES, uidBuffer -> {
-            // The first 4 bytes gives us a lookup to the tag combination uid.
-            final long tagSetUid = uidUnsignedBytes.get(byteBuffer);
-            putUid(uidBuffer, tagSetUid);
-            final ByteBuffer tagSetByteBuffer = uidLookupDb.getValue(txn, uidBuffer);
+        // The first 4 bytes gives us a lookup to the tag combination uid.
+        final long tagSetUid = getUid(byteBuffer);
+        final ByteBuffer tagSetByteBuffer = uidLookupDb.getValue(txn, tagSetUid);
 
-            // Decompose the tag combination down into tag names.
-            final List<Long> tagNameUids = new ArrayList<>();
-            while (tagSetByteBuffer.remaining() > 0) {
-                final long tagNameUid = uidUnsignedBytes.get(tagSetByteBuffer);
-                tagNameUids.add(tagNameUid);
-            }
+        // Decompose the tag combination down into tag names.
+        final List<Long> tagNameUids = new ArrayList<>();
+        while (tagSetByteBuffer.remaining() > 0) {
+            final long tagNameUid = getUid(tagSetByteBuffer);
+            tagNameUids.add(tagNameUid);
+        }
 
-            // Read all of the tag values.
-            int i = 0;
-            while (byteBuffer.remaining() > 0) {
-                final long tagNameUid = tagNameUids.get(i);
-                putUid(uidBuffer, tagNameUid);
-                final ByteBuffer tagNameByteBuffer = uidLookupDb.getValue(txn, uidBuffer);
-                final Val tagName = ValSerdeUtil.read(tagNameByteBuffer);
+        // Read all the tag values.
+        int i = 0;
+        while (byteBuffer.remaining() > 0) {
+            final long tagNameUid = tagNameUids.get(i);
+            final ByteBuffer tagNameByteBuffer = uidLookupDb.getValue(txn, tagNameUid);
+            final Val tagName = ValSerdeUtil.read(tagNameByteBuffer);
 
-                final long tagValueUid = uidUnsignedBytes.get(byteBuffer);
-                putUid(uidBuffer, tagValueUid);
-                final ByteBuffer tagValueByteBuffer = uidLookupDb.getValue(txn, uidBuffer);
-                final Val tagValue = ValSerdeUtil.read(tagValueByteBuffer);
-                final Tag tag = new Tag(tagName.toString(), tagValue);
-                tags.add(tag);
-                i++;
-            }
-        });
+            final long tagValueUid = getUid(byteBuffer);
+            final ByteBuffer tagValueByteBuffer = uidLookupDb.getValue(txn, tagValueUid);
+            final Val tagValue = ValSerdeUtil.read(tagValueByteBuffer);
+            final Tag tag = new Tag(tagName.toString(), tagValue);
+            tags.add(tag);
+            i++;
+        }
 
         return KeyPrefix.create(tags);
     }
@@ -97,7 +86,7 @@ public class TagsKeySerde implements KeyPrefixSerde {
                 ValSerdeUtil.write(tagName, byteBuffers, byteBuffer -> {
                     uidLookupDb.put(txn, byteBuffer, uidByteBuffer -> {
                         final long uid = UnsignedBytesInstances.ofLength(uidByteBuffer.remaining()).get(uidByteBuffer);
-                        uidUnsignedBytes.put(tagSetByteBuffer, uid);
+                        putUid(tagSetByteBuffer, uid);
                         return null;
                     });
                     return null;
@@ -111,13 +100,13 @@ public class TagsKeySerde implements KeyPrefixSerde {
         });
 
         byteBuffers.use(Integer.BYTES + (tags.size() * Integer.BYTES), keyByteBuffer -> {
-            uidUnsignedBytes.put(keyByteBuffer, tagSetUid);
+            putUid(keyByteBuffer, tagSetUid);
             for (final Tag tag : tags) {
                 final Val tagValue = tag.getTagValue();
                 ValSerdeUtil.write(tagValue, byteBuffers, byteBuffer -> {
                     uidLookupDb.put(txn, byteBuffer, uidByteBuffer -> {
                         final long uid = UnsignedBytesInstances.ofLength(uidByteBuffer.remaining()).get(uidByteBuffer);
-                        uidUnsignedBytes.put(keyByteBuffer, uid);
+                        putUid(keyByteBuffer, uid);
                         return null;
                     });
                     return null;
@@ -147,7 +136,7 @@ public class TagsKeySerde implements KeyPrefixSerde {
                                             .orElseThrow(KeyNotFoundException::new);
                                     final long uid = UnsignedBytesInstances.ofLength(uidByteBuffer.remaining())
                                             .get(uidByteBuffer);
-                                    uidUnsignedBytes.put(tagSetByteBuffer, uid);
+                                    putUid(tagSetByteBuffer, uid);
                                     return null;
                                 });
                                 return null;
@@ -166,7 +155,7 @@ public class TagsKeySerde implements KeyPrefixSerde {
 
             return byteBuffers.use(Integer.BYTES + (tags.size() * Integer.BYTES),
                     keyByteBuffer -> {
-                        uidUnsignedBytes.put(keyByteBuffer, tagSetUid);
+                        putUid(keyByteBuffer, tagSetUid);
                         for (final Tag tag : tags) {
                             final Val tagValue = tag.getTagValue();
                             ValSerdeUtil.write(tagValue, byteBuffers, byteBuffer -> {
@@ -175,7 +164,7 @@ public class TagsKeySerde implements KeyPrefixSerde {
                                             .orElseThrow(KeyNotFoundException::new);
                                     final long uid = UnsignedBytesInstances.ofLength(uidByteBuffer.remaining())
                                             .get(uidByteBuffer);
-                                    uidUnsignedBytes.put(keyByteBuffer, uid);
+                                    putUid(keyByteBuffer, uid);
                                     return null;
                                 });
                                 return null;
@@ -202,30 +191,25 @@ public class TagsKeySerde implements KeyPrefixSerde {
 
             @Override
             public void recordUsed(final LmdbWriter writer, final ByteBuffer byteBuffer) {
-                byteBuffers.use(Integer.BYTES, uidBuffer -> {
-                    // The first 4 bytes gives us a lookup to the tag combination uid.
-                    final long tagSetUid = uidUnsignedBytes.get(byteBuffer);
-                    putUid(uidBuffer, tagSetUid);
-                    uidLookupRecorder.recordUsed(writer, uidBuffer);
+                // The first 4 bytes gives us a lookup to the tag combination uid.
+                final long tagSetUid = getUid(byteBuffer);
+                uidLookupRecorder.recordUsed(writer, tagSetUid);
 
-                    final ByteBuffer tagSetByteBuffer = uidLookupDb.getValue(writer.getWriteTxn(), uidBuffer);
+                final ByteBuffer tagSetByteBuffer = uidLookupDb.getValue(writer.getWriteTxn(), tagSetUid);
 
-                    // Remember each tag name used.
-                    while (tagSetByteBuffer.remaining() > 0) {
-                        final long tagNameUid = uidUnsignedBytes.get(tagSetByteBuffer);
-                        putUid(uidBuffer, tagNameUid);
-                        uidLookupRecorder.recordUsed(writer, uidBuffer);
-                    }
+                // Remember each tag name used.
+                while (tagSetByteBuffer.remaining() > 0) {
+                    final long tagNameUid = getUid(tagSetByteBuffer);
+                    uidLookupRecorder.recordUsed(writer, tagNameUid);
+                }
 
-                    // Remember all of the tag values.
-                    while (byteBuffer.remaining() > 0) {
-                        final long tagValueUid = uidUnsignedBytes.get(byteBuffer);
-                        putUid(uidBuffer, tagValueUid);
-                        uidLookupRecorder.recordUsed(writer, uidBuffer);
-                    }
+                // Remember all the tag values.
+                while (byteBuffer.remaining() > 0) {
+                    final long tagValueUid = getUid(byteBuffer);
+                    uidLookupRecorder.recordUsed(writer, tagValueUid);
+                }
 
-                    writer.tryCommit();
-                });
+                writer.tryCommit();
             }
 
             @Override
@@ -233,6 +217,14 @@ public class TagsKeySerde implements KeyPrefixSerde {
                 uidLookupRecorder.deleteUnused(readTxn, writer);
             }
         };
+    }
+
+    private void putUid(final ByteBuffer byteBuffer, final long uid) {
+        uidUnsignedBytes.put(byteBuffer, uid);
+    }
+
+    private long getUid(final ByteBuffer byteBuffer) {
+        return uidUnsignedBytes.get(byteBuffer);
     }
 
     private static class KeyNotFoundException extends RuntimeException {

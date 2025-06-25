@@ -209,7 +209,7 @@ public class UserTaskManagerPresenter
 
     @Override
     public void onTerminate(final TaskProgress taskProgress) {
-        String message = "Are you sure you want to terminate this task?";
+        final String message = "Are you sure you want to terminate this task?";
         ConfirmEvent.fire(UserTaskManagerPresenter.this, message, result -> {
             final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
             findTaskCriteria.addId(taskProgress.getId());

@@ -86,7 +86,7 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache, HasSystemInfo {
     }
 
     public void flush(final boolean block) {
-        SQLStatisticAggregateMap flushMap;
+        final SQLStatisticAggregateMap flushMap;
 
         mapLock.lock();
         try {
@@ -137,7 +137,10 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache, HasSystemInfo {
                 }
 
             } catch (final InterruptedException e) {
-                LOGGER.error(MarkerFactory.getMarker("FATAL"), "doFlush() - Not expecting InterruptedException", e);
+                LOGGER.error(
+                        MarkerFactory.getMarker("FATAL"),
+                        "doFlush() - Not expecting InterruptedException",
+                        e);
 
                 // Continue to interrupt this thread.
                 Thread.currentThread().interrupt();

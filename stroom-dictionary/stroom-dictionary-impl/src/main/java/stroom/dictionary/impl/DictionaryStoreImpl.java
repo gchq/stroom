@@ -101,7 +101,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
     }
 
     @Override
-    public DocRefInfo info(DocRef docRef) {
+    public DocRefInfo info(final DocRef docRef) {
         return store.info(docRef);
     }
 
@@ -184,7 +184,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
         } else {
             try {
                 return docRefDecorator.decorate(docRef, true);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 // Likely docRef doesn't exist, so we will just leave it as is, i.e.
                 // a broken dep
                 LOGGER.debug(() -> LogUtil.message("Unable to decorate docRef {}: {}",
@@ -231,7 +231,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
     }
 
     @Override
-    public Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef) {
+    public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
         return null;
     }
 

@@ -21,12 +21,12 @@ public class FindCellTable<T> extends MyCellTable<T> {
         this(100);
     }
 
-    public FindCellTable(int pageSize) {
+    public FindCellTable(final int pageSize) {
         super(pageSize);
         addStyleName("FindCellTable");
 
         selectionModel = new MultiSelectionModelImpl<>();
-        SelectionEventManager<T> selectionEventManager = new SelectionEventManager<>(
+        final SelectionEventManager<T> selectionEventManager = new SelectionEventManager<>(
                 this,
                 selectionModel,
                 doc -> {
@@ -52,7 +52,7 @@ public class FindCellTable<T> extends MyCellTable<T> {
         }
     }
 
-    public HandlerRegistration addFocusHandler(FocusEvent.Handler handler) {
+    public HandlerRegistration addFocusHandler(final FocusEvent.Handler handler) {
         return addHandler(handler, FocusEvent.getType());
     }
 

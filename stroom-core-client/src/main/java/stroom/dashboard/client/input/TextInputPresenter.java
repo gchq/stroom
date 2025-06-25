@@ -78,7 +78,7 @@ public class TextInputPresenter
     public void read(final ComponentConfig componentConfig) {
         super.read(componentConfig);
 
-        ComponentSettings settings = componentConfig.getSettings();
+        final ComponentSettings settings = componentConfig.getSettings();
         if (!(settings instanceof TextInputComponentSettings)) {
             setSettings(createSettings());
         }

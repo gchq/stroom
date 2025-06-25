@@ -53,7 +53,7 @@ class TestLazyValue {
                     assertThat(val)
                             .isEqualTo(VALUE);
                     finishedLatch.countDown();
-                } catch (InterruptedException e) {
+                } catch (final InterruptedException e) {
                     throw new RuntimeException(e);
                 }
             }, executorService);
@@ -100,7 +100,7 @@ class TestLazyValue {
                     assertThat(val)
                             .isEqualTo(VALUE);
                     finishedLatch.countDown();
-                } catch (InterruptedException e) {
+                } catch (final InterruptedException e) {
                     throw new RuntimeException(e);
                 }
             }, executorService);
@@ -147,7 +147,7 @@ class TestLazyValue {
                     assertThat(val)
                             .isNull();
                     finishedLatch.countDown();
-                } catch (InterruptedException e) {
+                } catch (final InterruptedException e) {
                     throw new RuntimeException(e);
                 }
             }, executorService);

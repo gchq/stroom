@@ -48,13 +48,13 @@ class TestPooledByteBufferOutputStream {
 
     @Test
     void testWrite_noWrites() {
-        ByteBufferPool byteBufferPool = getByteBufferPool();
-        try (PooledByteBufferOutputStream pooledByteBufferOutputStream = new PooledByteBufferOutputStream(
+        final ByteBufferPool byteBufferPool = getByteBufferPool();
+        try (final PooledByteBufferOutputStream pooledByteBufferOutputStream = new PooledByteBufferOutputStream(
                 byteBufferPool,
                 2)) {
-            int initialCapacity = pooledByteBufferOutputStream.getByteBuffer().capacity();
+            final int initialCapacity = pooledByteBufferOutputStream.getByteBuffer().capacity();
 
-            ByteBuffer pooledByteBuffer = pooledByteBufferOutputStream.getByteBuffer();
+            final ByteBuffer pooledByteBuffer = pooledByteBufferOutputStream.getByteBuffer();
 
             assertThat(pooledByteBuffer.capacity())
                     .isEqualTo(initialCapacity);
@@ -63,10 +63,10 @@ class TestPooledByteBufferOutputStream {
 
     @Test
     void testWrite_expansion() throws IOException {
-        ByteBufferPool byteBufferPool = getByteBufferPool();
+        final ByteBufferPool byteBufferPool = getByteBufferPool();
 
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(0);
-        try (PooledByteBufferOutputStream pooledByteBufferOutputStream = new PooledByteBufferOutputStream(
+        try (final PooledByteBufferOutputStream pooledByteBufferOutputStream = new PooledByteBufferOutputStream(
                 byteBufferPool,
                 10)) {
 
@@ -88,7 +88,7 @@ class TestPooledByteBufferOutputStream {
             assertThat(byteBufferPool.getCurrentPoolSize())
                     .isEqualTo(2);
 
-            ByteBuffer byteBuffer = pooledByteBufferOutputStream.getByteBuffer();
+            final ByteBuffer byteBuffer = pooledByteBufferOutputStream.getByteBuffer();
 
             assertThat(byteBuffer.capacity())
                     .isGreaterThanOrEqualTo(1000);
@@ -99,7 +99,7 @@ class TestPooledByteBufferOutputStream {
 
         //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-        try (PooledByteBufferOutputStream pooledByteBufferOutputStream = new PooledByteBufferOutputStream(
+        try (final PooledByteBufferOutputStream pooledByteBufferOutputStream = new PooledByteBufferOutputStream(
                 byteBufferPool,
                 10)) {
             // grabs a buffer from pool
@@ -117,7 +117,7 @@ class TestPooledByteBufferOutputStream {
 
             assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(2);
 
-            ByteBuffer byteBuffer = pooledByteBufferOutputStream.getByteBuffer();
+            final ByteBuffer byteBuffer = pooledByteBufferOutputStream.getByteBuffer();
 
             assertThat(byteBuffer.capacity()).isGreaterThanOrEqualTo(6);
         }
@@ -130,7 +130,7 @@ class TestPooledByteBufferOutputStream {
                 .forEach(i -> {
                     try {
                         outputStream.write((byte) 0);
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         throw new RuntimeException(e);
                     }
                 });
@@ -140,14 +140,14 @@ class TestPooledByteBufferOutputStream {
     @TestFactory
     @Execution(ExecutionMode.SAME_THREAD)
     Stream<DynamicTest> testExpansionWithDifferentWriteMethods() {
-        AtomicInteger iteration = new AtomicInteger(1);
+        final AtomicInteger iteration = new AtomicInteger(1);
 
         final Map<String, BiConsumer<Integer, PooledByteBufferOutputStream>> writeMethodMap = Map.of(
                 "byte", (cnt, pooledStream) -> {
                     for (int i = 0; i < cnt; i++) {
                         try {
                             pooledStream.write((byte) iteration.get());
-                        } catch (IOException e) {
+                        } catch (final IOException e) {
                             throw new RuntimeException(e);
                         }
                     }
@@ -160,7 +160,7 @@ class TestPooledByteBufferOutputStream {
 //                    }
                     try {
                         pooledStream.write(arr);
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         throw new RuntimeException(e);
                     }
                 },
@@ -172,7 +172,7 @@ class TestPooledByteBufferOutputStream {
 //                    }
                     try {
                         pooledStream.write(arr, 2, cnt);
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         throw new RuntimeException(e);
                     }
                 },
@@ -184,7 +184,7 @@ class TestPooledByteBufferOutputStream {
                     byteBuffer.flip();
                     try {
                         pooledStream.write(byteBuffer);
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         throw new RuntimeException(e);
                     }
                 });
@@ -197,7 +197,7 @@ class TestPooledByteBufferOutputStream {
                             // Reset the counter for each dynamic test
                             iteration.set(1);
 
-                            ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
+                            final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
                             final PooledByteBufferOutputStream pooledStream = new PooledByteBufferOutputStream(
                                     byteBufferPool, 10);
 
@@ -229,7 +229,7 @@ class TestPooledByteBufferOutputStream {
                                     .hasValue(1000);
                             iteration.incrementAndGet();
 
-                            ByteBuffer byteBuffer = pooledStream.getByteBuffer();
+                            final ByteBuffer byteBuffer = pooledStream.getByteBuffer();
 
                             LOGGER.info(ByteBufferUtils.byteBufferInfo(byteBuffer));
 
@@ -239,7 +239,7 @@ class TestPooledByteBufferOutputStream {
                             iteration.set(1);
                             Stream.of(6, 6, 80, 80)
                                     .forEach(cnt -> {
-                                        byte expValue = (byte) iteration.getAndIncrement();
+                                        final byte expValue = (byte) iteration.getAndIncrement();
                                         // Make sure the bytes are all set correctly
                                         // Each write pass used a different value
                                         for (int j = 0; j < cnt; j++) {
@@ -253,11 +253,11 @@ class TestPooledByteBufferOutputStream {
 
     @Test
     void testRelease() throws IOException {
-        ByteBufferPool byteBufferPool = getByteBufferPool();
+        final ByteBufferPool byteBufferPool = getByteBufferPool();
 
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(0);
 
-        try (PooledByteBufferOutputStream pooledByteBufferOutputStream = new PooledByteBufferOutputStream(
+        try (final PooledByteBufferOutputStream pooledByteBufferOutputStream = new PooledByteBufferOutputStream(
                 byteBufferPool,
                 2)) {
             pooledByteBufferOutputStream.write(new byte[]{0, 0});
@@ -269,10 +269,10 @@ class TestPooledByteBufferOutputStream {
 
     @Test
     void testRelease2() throws IOException {
-        ByteBufferPool byteBufferPool = getByteBufferPool();
+        final ByteBufferPool byteBufferPool = getByteBufferPool();
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(0);
 
-        try (PooledByteBufferOutputStream pooledByteBufferOutputStream = new PooledByteBufferOutputStream(
+        try (final PooledByteBufferOutputStream pooledByteBufferOutputStream = new PooledByteBufferOutputStream(
                 byteBufferPool,
                 2)) {
 
@@ -289,7 +289,7 @@ class TestPooledByteBufferOutputStream {
         try (final PooledByteBufferOutputStream pooledByteBufferOutputStream = new PooledByteBufferOutputStream(
                 byteBufferPool,
                 2)) {
-            ByteBuffer byteBuffer = ByteBuffer.allocate(20);
+            final ByteBuffer byteBuffer = ByteBuffer.allocate(20);
             byteBuffer.position(5);
             byteBuffer.putLong(Long.MAX_VALUE);
             byteBuffer.flip();

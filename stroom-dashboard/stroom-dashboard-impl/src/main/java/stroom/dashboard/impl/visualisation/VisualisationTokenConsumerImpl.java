@@ -153,7 +153,7 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
     }
 
     private VisualisationDoc loadVisualisation(final AbstractToken token, final String visName) {
-        VisualisationDoc visualisationDoc;
+        final VisualisationDoc visualisationDoc;
 
         // Load visualisation.
         final DocRef docRef = docResolver.resolveDocRef(VisualisationDoc.TYPE, visName);
@@ -183,8 +183,8 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
         final Map<String, String> params = new HashMap<>();
         for (int i = 0; i < children.size(); i++) {
             AbstractToken t = children.get(i);
-            String controlId;
-            String controlValue;
+            final String controlId;
+            final String controlValue;
 
             // Get param name.
             if (!TokenType.isString(t)) {
@@ -280,8 +280,8 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
             }
         }
 
-        List<Column> columns = new ArrayList<>();
-        List<Long> limits = new ArrayList<>();
+        final List<Column> columns = new ArrayList<>();
+        final List<Long> limits = new ArrayList<>();
 
         VisNest nest = mapNest(structure.getNest(), settingResolver);
         VisValues values = mapVisValues(structure.getValues(), settingResolver);
@@ -384,9 +384,9 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
             return null;
         }
 
-        Boolean enabled = settingResolver.resolveBoolean(sort.getEnabled());
+        final Boolean enabled = settingResolver.resolveBoolean(sort.getEnabled());
         if (enabled != null && enabled) {
-            String dir = settingResolver.resolveString(sort.getDirection());
+            final String dir = settingResolver.resolveString(sort.getDirection());
 
             if (dir != null) {
                 final SortDirection direction;
@@ -425,7 +425,7 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
 
     private VisLimit mapVisLimit(final VisSettings.Limit limit, final SettingResolver settingResolver) {
         if (limit != null) {
-            Boolean enabled = settingResolver.resolveBoolean(limit.getEnabled());
+            final Boolean enabled = settingResolver.resolveBoolean(limit.getEnabled());
             if (enabled == null || enabled) {
                 final VisLimit copy = new VisLimit();
                 copy.setSize(settingResolver.resolveLong(limit.getSize()));
@@ -499,7 +499,7 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
         }
 
         public Boolean resolveBoolean(final String value) {
-            String str = resolveString(value);
+            final String str = resolveString(value);
             if (str == null) {
                 return null;
             }
@@ -507,7 +507,7 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
         }
 
         public Integer resolveInteger(final String value) {
-            String str = resolveString(value);
+            final String str = resolveString(value);
             if (str == null) {
                 return null;
             }
@@ -515,7 +515,7 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
         }
 
         public Long resolveLong(final String value) {
-            String str = resolveString(value);
+            final String str = resolveString(value);
             if (str == null) {
                 return null;
             }

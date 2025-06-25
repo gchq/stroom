@@ -42,7 +42,7 @@ public class ListUtil {
      * @param list [!list.isEmpty()]
      * @return the last element of the list
      */
-    public static <T> T getLast(List<T> list) {
+    public static <T> T getLast(final List<T> list) {
         return list.get(list.size() - 1);
     }
 

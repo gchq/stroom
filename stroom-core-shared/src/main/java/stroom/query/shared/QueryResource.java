@@ -92,7 +92,7 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
             summary = "Download search results",
             operationId = "downloadQuerySearchResultsLocal")
     default ResourceGeneration downloadSearchResults(
-            @Parameter(description = "request", required = true) DownloadQueryResultsRequest request) {
+            @Parameter(description = "request", required = true) final DownloadQueryResultsRequest request) {
         return downloadSearchResults(null, request);
     }
 
@@ -112,7 +112,7 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
             summary = "Get unique column values so the user can filter table results more easily",
             operationId = "getColumnValues")
     default ColumnValues getColumnValues(
-            @Parameter(description = "request", required = true) QueryColumnValuesRequest request) {
+            @Parameter(description = "request", required = true) final QueryColumnValuesRequest request) {
         return getColumnValues(null, request);
     }
 
@@ -132,7 +132,7 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
             summary = "Perform a new search or get new results",
             operationId = "querySearchLocal")
     default DashboardSearchResponse search(
-            @Parameter(description = "request", required = true) QuerySearchRequest request) {
+            @Parameter(description = "request", required = true) final QuerySearchRequest request) {
         return search(null, request);
     }
 

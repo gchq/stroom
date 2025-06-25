@@ -121,7 +121,7 @@ public class UserDependenciesListPresenter
 
                 if (userRef != null) {
                     // TODO fix fields
-                    ExpressionOperator expression = QuickFilterExpressionParser
+                    final ExpressionOperator expression = QuickFilterExpressionParser
                             .parse(filter, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELDS_MAP);
                     criteriaBuilder.sortList(CriteriaUtil.createSortList(dataGrid.getColumnSortList()));
 

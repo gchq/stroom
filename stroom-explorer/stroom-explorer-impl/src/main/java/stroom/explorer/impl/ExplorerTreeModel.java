@@ -164,8 +164,8 @@ class ExplorerTreeModel implements EntityEvent.Handler {
 
     private UnmodifiableTreeModel updateModel(final long id, final long creationTime) {
         return securityContext.asProcessingUserResult(() -> {
-            TreeModel newModel;
-            UnmodifiableTreeModel newUnmodifiableModel;
+            final TreeModel newModel;
+            final UnmodifiableTreeModel newUnmodifiableModel;
             performingRebuild.incrementAndGet();
             try {
                 LOGGER.debug("Updating model for id {}", id);

@@ -30,7 +30,7 @@ public class StringListReference implements ValueReference<List<String>> {
     @Override
     public void read(final StoredValues storedValues, final DataReader reader) {
         final int length = reader.readInt();
-        List<String> list = new ArrayList<>(length);
+        final List<String> list = new ArrayList<>(length);
         for (int i = 0; i < length; i++) {
             list.add(reader.readString());
         }
@@ -39,7 +39,7 @@ public class StringListReference implements ValueReference<List<String>> {
 
     @Override
     public void write(final StoredValues storedValues, final DataWriter writer) {
-        List<String> list = get(storedValues);
+        final List<String> list = get(storedValues);
         writer.writeInt(list.size());
         for (final String string : list) {
             writer.writeString(string);

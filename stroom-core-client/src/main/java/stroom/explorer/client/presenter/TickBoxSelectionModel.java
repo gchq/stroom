@@ -95,7 +95,7 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerNode> 
 
     private void removeDescendants(final ExplorerNode item) {
         modifyState(item, TickBoxState.UNTICK);
-        Set<ExplorerNode> set = descendants.get(item);
+        final Set<ExplorerNode> set = descendants.get(item);
         if (set != null) {
             for (final ExplorerNode descendant : set) {
                 removeDescendants(descendant);

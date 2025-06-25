@@ -26,7 +26,7 @@ public class ExpressionCopier {
 
                 final ExpressionOperator.Builder copiedOperatorBuilder = copyOperator(childOperator);
                 if (copiedOperatorBuilder != null) {
-                    ExpressionOperator copiedOperator = copiedOperatorBuilder.build();
+                    final ExpressionOperator copiedOperator = copiedOperatorBuilder.build();
                     if (copiedOperator != null) {
                         builder.addOperator(copiedOperator);
                     }
@@ -36,7 +36,7 @@ public class ExpressionCopier {
                 final ExpressionTerm childTerm = (ExpressionTerm) child;
                 final ExpressionTerm.Builder copiedTermBuilder = copyTerm(childTerm);
                 if (copiedTermBuilder != null) {
-                    ExpressionTerm copiedTerm = copiedTermBuilder.build();
+                    final ExpressionTerm copiedTerm = copiedTermBuilder.build();
                     if (copiedTerm != null) {
                         builder.addTerm(copiedTerm);
                     }

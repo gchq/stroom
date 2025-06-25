@@ -19,14 +19,7 @@ package stroom.dashboard.shared;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlSeeAlso;
-import jakarta.xml.bind.annotation.XmlType;
 
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "LayoutConfig")
-@XmlSeeAlso({SplitLayoutConfig.class, TabLayoutConfig.class})
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         property = "type"

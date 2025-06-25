@@ -63,7 +63,7 @@ public class LmdbEnv implements AutoCloseable {
 
             final EnvFlags[] envFlagsArr = envFlags.toArray(new EnvFlags[0]);
             env = builder.open(lmdbEnvDir.getEnvDir().toFile(), envFlagsArr);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message(
                     "Error creating LMDB env at {}: {}",
                     lmdbEnvDir.toString(), e.getMessage()), e);

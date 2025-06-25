@@ -152,7 +152,7 @@ class SessionListListener implements HttpSessionListener, HttpSessionIdListener,
                 LOGGER.debug("Sending request to {} for node {}", url, nodeName);
                 WebTarget webTarget = webTargetFactory.create(url);
                 webTarget = UriBuilderUtil.addParam(webTarget, SessionResource.NODE_NAME_PARAM, nodeName);
-                try (Response response = webTarget
+                try (final Response response = webTarget
                         .request(MediaType.APPLICATION_JSON)
                         .get()) {
 
@@ -162,7 +162,7 @@ class SessionListListener implements HttpSessionListener, HttpSessionIdListener,
 
                     sessionList = response.readEntity(SessionListResponse.class);
                 }
-            } catch (Throwable e) {
+            } catch (final Throwable e) {
                 throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
         }

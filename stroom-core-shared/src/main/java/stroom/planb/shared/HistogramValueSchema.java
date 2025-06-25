@@ -16,6 +16,8 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class HistogramValueSchema {
 
+    public static final MaxValueSize DEFAULT_VALUE_TYPE = MaxValueSize.TWO;
+
     @JsonProperty
     private final MaxValueSize valueType;
 

@@ -29,18 +29,18 @@ public abstract class AbstractValidatorTest {
         ).getInstance(Validator.class);
     }
 
-    public <T> Set<ConstraintViolation<T>> validate(T object) {
+    public <T> Set<ConstraintViolation<T>> validate(final T object) {
         return getValidator().validate(object);
     }
 
-    public <T> Set<ConstraintViolation<T>> validateValidValue(T object) {
+    public <T> Set<ConstraintViolation<T>> validateValidValue(final T object) {
         final Set<ConstraintViolation<T>> violations = getValidator().validate(object);
         Assertions.assertThat(violations)
                 .isEmpty();
         return violations;
     }
 
-    public <T> Set<ConstraintViolation<T>> validateInvalidValue(T object) {
+    public <T> Set<ConstraintViolation<T>> validateInvalidValue(final T object) {
         final Set<ConstraintViolation<T>> violations = getValidator().validate(object);
         Assertions.assertThat(violations)
                 .hasSize(1);

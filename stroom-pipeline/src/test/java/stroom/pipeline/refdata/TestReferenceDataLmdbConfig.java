@@ -13,7 +13,7 @@ class TestReferenceDataLmdbConfig {
 
     @Test
     void testJsonSerialisation() {
-        ReferenceDataLmdbConfig lmdbConfig = new ReferenceDataLmdbConfig();
+        final ReferenceDataLmdbConfig lmdbConfig = new ReferenceDataLmdbConfig();
         final String json = JsonUtil.writeValueAsString(lmdbConfig);
         LOGGER.info("json:\n{}", json);
 

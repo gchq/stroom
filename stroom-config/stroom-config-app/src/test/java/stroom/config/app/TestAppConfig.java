@@ -39,7 +39,7 @@ class TestAppConfig {
     }
 
     private void checkProperties(final Class<?> clazz, final String indent) {
-        for (Field field : clazz.getDeclaredFields()) {
+        for (final Field field : clazz.getDeclaredFields()) {
             final Class<?> fieldClass = field.getType();
 
             // We are trying to inspect props that are themselves config objects

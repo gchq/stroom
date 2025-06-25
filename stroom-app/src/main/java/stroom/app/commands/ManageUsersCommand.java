@@ -180,7 +180,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
 
     private void listPermissions(final Namespace namespace) {
         if (namespace.getBoolean(LIST_PERMISSIONS_ARG_NAME)) {
-            String perms = Arrays.stream(AppPermission.values())
+            final String perms = Arrays.stream(AppPermission.values())
                     .map(AppPermission::getDisplayValue)
                     .sorted()
                     .collect(Collectors.joining("\n"));
@@ -202,7 +202,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                                         new RuntimeException(LogUtil.message(
                                                 "No username supplied for {}. Argument value: '{}'",
                                                 CREATE_USER_ARG_NAME, userCsvData)));
-                    } catch (RuntimeException e) {
+                    } catch (final RuntimeException e) {
                         throw new RuntimeException(LogUtil.message(
                                 "Error parsing value for {}. Argument value: '{}'",
                                 CREATE_USER_ARG_NAME, userCsvData));
@@ -247,7 +247,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                                         "Created user '" + userName + "'",
                                         "  ");
                             });
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.debug("Error", e);
             throw new RuntimeException("Error " + msg + ":" + e.getMessage(), e);
         }
@@ -279,7 +279,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                                 logCreateGroupEvent(groupName, true, null);
                                 indentedInfo(LOGGER, "Created group '" + groupName + "'", "  ");
                             });
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.debug("Error", e);
             throw new RuntimeException("Error " + msg + ":" + e.getMessage(), e);
         }
@@ -312,7 +312,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                         + targetGroup.toDisplayString() + "'",
                         "  ");
 
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.debug("Error", e);
                 logAddOrRemoveFromGroupEvent(
                         userOrGroupId,
@@ -353,7 +353,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                         + " from group " + targetGroup.toDisplayString(),
                         "  ");
 
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.debug("Error", e);
                 logAddOrRemoveFromGroupEvent(
                         userOrGroupId,
@@ -404,7 +404,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                     indentedInfo(LOGGER, LogUtil.message("Granted application permission '{}' to '{}'",
                             permission, userOrGroup.toInfoString()), "  ");
                 }
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.debug("Error", e);
                 logAddOrRemoveFromGroupEvent(
                         userOrGroupId,
@@ -462,7 +462,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                             failMsg,
                             false);
                 }
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.debug("Error", e);
                 logAddOrRemoveFromGroupEvent(
                         userOrGroupId,
@@ -502,7 +502,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                                          "Falling back to treating it as a displayName",
                     expectedUserType.displayName, subjectId, argGroupName));
         }
-        stroom.security.shared.User userOrGroup = optUserOrGroup
+        final stroom.security.shared.User userOrGroup = optUserOrGroup
                 .orElseThrow(() -> new RuntimeException(LogUtil.message(
                         "A {} cannot be found with a subjectId or displayName matching identifier '{}' " +
                         "in arg group '{}'",

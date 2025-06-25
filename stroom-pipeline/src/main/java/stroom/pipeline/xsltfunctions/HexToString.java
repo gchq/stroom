@@ -32,7 +32,7 @@ class HexToString extends StroomExtensionFunctionCall {
     public static final String FUNCTION_NAME = "hex-to-string";
 
     @Override
-    protected Sequence call(String functionName, XPathContext context, Sequence[] arguments) {
+    protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
         String result = null;
 
         try {

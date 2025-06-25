@@ -18,6 +18,8 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class TemporalStateKeySchema extends StateKeySchema {
 
+    public static final TemporalPrecision DEFAULT_TEMPORAL_PRECISION = TemporalPrecision.MILLISECOND;
+
     @JsonProperty
     private final TemporalPrecision temporalPrecision;
 

@@ -41,8 +41,8 @@ public class TestCIKeyPerf {
     @Benchmark
     @BenchmarkMode(Mode.Throughput)
     @Measurement(iterations = ITERATIONS)
-    public void getUnknownCIKey(Blackhole blackhole) {
-        CIKey ciKey = CIKey.of("Food");
+    public void getUnknownCIKey(final Blackhole blackhole) {
+        final CIKey ciKey = CIKey.of("Food");
         blackhole.consume(ciKey);
     }
 
@@ -51,8 +51,8 @@ public class TestCIKeyPerf {
     @Benchmark
     @BenchmarkMode(Mode.Throughput)
     @Measurement(iterations = ITERATIONS)
-    public void getKnownCIKey(Blackhole blackhole) {
-        CIKey ciKey = CIKey.of("Feed");
+    public void getKnownCIKey(final Blackhole blackhole) {
+        final CIKey ciKey = CIKey.of("Feed");
         blackhole.consume(ciKey);
     }
 
@@ -61,8 +61,8 @@ public class TestCIKeyPerf {
     @Benchmark
     @BenchmarkMode(Mode.Throughput)
     @Measurement(iterations = ITERATIONS)
-    public void getDynamicCIKey(Blackhole blackhole) {
-        CIKey ciKey = CIKey.ofDynamicKey("Fume");
+    public void getDynamicCIKey(final Blackhole blackhole) {
+        final CIKey ciKey = CIKey.ofDynamicKey("Fume");
         blackhole.consume(ciKey);
     }
 
@@ -71,8 +71,8 @@ public class TestCIKeyPerf {
     @Benchmark
     @BenchmarkMode(Mode.Throughput)
     @Measurement(iterations = ITERATIONS)
-    public void getUnknownLowerCIKey(Blackhole blackhole) {
-        CIKey ciKey = CIKey.ofLowerCase("feet");
+    public void getUnknownLowerCIKey(final Blackhole blackhole) {
+        final CIKey ciKey = CIKey.ofLowerCase("feet");
         blackhole.consume(ciKey);
     }
 }

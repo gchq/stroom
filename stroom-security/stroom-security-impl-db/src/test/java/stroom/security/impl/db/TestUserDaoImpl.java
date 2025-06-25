@@ -412,8 +412,8 @@ class TestUserDaoImpl {
         assertUser2Perms.run();
     }
 
-    private User createUser(final String name, boolean group) {
-        User userOrGroup = User.builder()
+    private User createUser(final String name, final boolean group) {
+        final User userOrGroup = User.builder()
                 .subjectId(name)
                 .uuid(UUID.randomUUID().toString())
                 .group(group)

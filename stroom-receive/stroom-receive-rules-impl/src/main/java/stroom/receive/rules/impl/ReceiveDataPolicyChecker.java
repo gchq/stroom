@@ -83,7 +83,7 @@ class ReceiveDataPolicyChecker {
             ReceiveDataRules dataReceiptPolicy = null;
             try {
                 dataReceiptPolicy = ruleSetService.readDocument(policyRef);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.error("Error reading rule set {}. The default receive all policy will be applied",
                         policyRef, e);
             }

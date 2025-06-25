@@ -130,7 +130,7 @@ public final class ManageGlobalPropertyEditPresenter
 
     @Override
     protected void onBind() {
-        ClickHandler iconClickHandler = event -> {
+        final ClickHandler iconClickHandler = event -> {
             if (MouseUtil.isPrimary(event)) {
                 onOpenClusterValues();
             }
@@ -200,7 +200,7 @@ public final class ManageGlobalPropertyEditPresenter
             effectiveValueWarningsButton.setVisible(false);
         } else {
             if (uniqueEffectiveValuesCount > 1 || uniqueSourcesCount > 1 || didAnyNodesError()) {
-                String msg;
+                final String msg;
 
                 if (didAnyNodesError()) {
                     msg = "Error fetching values from all nodes in the cluster";
@@ -399,7 +399,7 @@ public final class ManageGlobalPropertyEditPresenter
     }
 
     private void setUiSourceText() {
-        String text;
+        final String text;
 //        if (didAnyNodesError()) {
 //            text = NODES_UNAVAILABLE_MSG;
 //        } else
@@ -413,7 +413,7 @@ public final class ManageGlobalPropertyEditPresenter
     }
 
     private void setUiEffectiveValueText() {
-        String text;
+        final String text;
 //        if (didAnyNodesError()) {
 //            text = NODES_UNAVAILABLE_MSG;
 //        } else
@@ -453,7 +453,7 @@ public final class ManageGlobalPropertyEditPresenter
     private void write(final HidePopupRequestEvent event) {
         refreshValuesOnChange();
 
-        ConfigProperty configPropertyToSave = getEntity();
+        final ConfigProperty configPropertyToSave = getEntity();
 
 
         if (configPropertyToSave.getId() == null) {
@@ -542,7 +542,7 @@ public final class ManageGlobalPropertyEditPresenter
             if (result != null) {
                 final String helpUrl = result.getHelpUrlProperties();
                 if (helpUrl != null && helpUrl.trim().length() > 0) {
-                    String url = helpUrl + formatAnchor(anchor);
+                    final String url = helpUrl + formatAnchor(anchor);
                     Window.open(url, "_blank", "");
                 } else {
                     AlertEvent.fireError(
@@ -554,7 +554,7 @@ public final class ManageGlobalPropertyEditPresenter
         }, this);
     }
 
-    protected String formatAnchor(String name) {
+    protected String formatAnchor(final String name) {
         return "#" + name.replace(' ', '-').toLowerCase();
     }
 

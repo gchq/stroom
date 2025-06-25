@@ -174,7 +174,7 @@ public class AttributesImpl implements Attributes, Serializable {
      */
     @Override
     public int getIndex(final String uri, final String localName) {
-        int max = length * 5;
+        final int max = length * 5;
         for (int i = 0; i < max; i += 5) {
             if (data[i].equals(uri) && data[i + 1].equals(localName)) {
                 return i / 5;
@@ -192,7 +192,7 @@ public class AttributesImpl implements Attributes, Serializable {
      */
     @Override
     public int getIndex(final String qName) {
-        int max = length * 5;
+        final int max = length * 5;
         for (int i = 0; i < max; i += 5) {
             if (data[i + 2].equals(qName)) {
                 return i / 5;
@@ -212,7 +212,7 @@ public class AttributesImpl implements Attributes, Serializable {
      */
     @Override
     public String getType(final String uri, final String localName) {
-        int max = length * 5;
+        final int max = length * 5;
         for (int i = 0; i < max; i += 5) {
             if (data[i].equals(uri) && data[i + 1].equals(localName)) {
                 return data[i + 3];
@@ -230,7 +230,7 @@ public class AttributesImpl implements Attributes, Serializable {
      */
     @Override
     public String getType(final String qName) {
-        int max = length * 5;
+        final int max = length * 5;
         for (int i = 0; i < max; i += 5) {
             if (data[i + 2].equals(qName)) {
                 return data[i + 3];
@@ -250,7 +250,7 @@ public class AttributesImpl implements Attributes, Serializable {
      */
     @Override
     public String getValue(final String uri, final String localName) {
-        int max = length * 5;
+        final int max = length * 5;
         for (int i = 0; i < max; i += 5) {
             if (data[i].equals(uri) && data[i + 1].equals(localName)) {
                 return data[i + 4];
@@ -268,7 +268,7 @@ public class AttributesImpl implements Attributes, Serializable {
      */
     @Override
     public String getValue(final String qName) {
-        int max = length * 5;
+        final int max = length * 5;
         for (int i = 0; i < max; i += 5) {
             if (data[i + 2].equals(qName)) {
                 return data[i + 4];

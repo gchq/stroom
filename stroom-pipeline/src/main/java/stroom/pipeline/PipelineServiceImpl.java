@@ -19,14 +19,16 @@ package stroom.pipeline;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.pipeline.factory.ElementRegistryFactory;
 import stroom.pipeline.factory.PipelineDataValidator;
 import stroom.pipeline.factory.PipelineStackLoader;
 import stroom.pipeline.shared.PipelineDataMerger;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.security.api.SecurityContext;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.PermissionException;
 
@@ -36,17 +38,17 @@ import jakarta.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Singleton
 public class PipelineServiceImpl implements PipelineService {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PipelineServiceImpl.class);
 
     private final PipelineStore pipelineStore;
     private final DocumentResourceHelper documentResourceHelper;
     private final PipelineStackLoader pipelineStackLoader;
     private final PipelineDataValidator pipelineDataValidator;
     private final PipelineSerialiser pipelineSerialiser;
-    private final ElementRegistryFactory elementRegistryFactory;
     private final SecurityContext securityContext;
 
     @Inject
@@ -55,14 +57,12 @@ public class PipelineServiceImpl implements PipelineService {
                         final PipelineStackLoader pipelineStackLoaderProvider,
                         final PipelineDataValidator pipelineDataValidatorProvider,
                         final PipelineSerialiser pipelineSerialiserProvider,
-                        final ElementRegistryFactory elementRegistryFactoryProvider,
                         final SecurityContext securityContext) {
         this.pipelineStore = pipelineStoreProvider;
         this.documentResourceHelper = documentResourceHelperProvider;
         this.pipelineStackLoader = pipelineStackLoaderProvider;
         this.pipelineDataValidator = pipelineDataValidatorProvider;
         this.pipelineSerialiser = pipelineSerialiserProvider;
-        this.elementRegistryFactory = elementRegistryFactoryProvider;
         this.securityContext = securityContext;
     }
 
@@ -87,14 +87,14 @@ public class PipelineServiceImpl implements PipelineService {
     }
 
     @Override
-    public Boolean savePipelineXml(final DocRef pipeline, final String xml) {
+    public Boolean savePipelineJson(final DocRef pipeline, final String json) {
         final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipeline);
 
         if (pipelineDoc == null) {
             return false;
         }
 
-        final PipelineData pipelineData = pipelineSerialiser.getPipelineDataFromXml(xml);
+        final PipelineData pipelineData = pipelineSerialiser.getPipelineDataFromJson(json);
         pipelineDoc.setPipelineData(pipelineData);
         pipelineStore.writeDocument(pipelineDoc);
 
@@ -102,17 +102,17 @@ public class PipelineServiceImpl implements PipelineService {
     }
 
     @Override
-    public String fetchPipelineXml(final DocRef pipeline) {
+    public String fetchPipelineJson(final DocRef pipeline) {
         final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipeline);
         if (pipelineDoc != null) {
-            return pipelineSerialiser.getXmlFromPipelineData(pipelineDoc.getPipelineData());
+            return pipelineSerialiser.getJsonFromPipelineData(pipelineDoc.getPipelineData());
         }
 
         return null;
     }
 
     @Override
-    public List<PipelineData> fetchPipelineData(final DocRef pipeline) {
+    public List<PipelineLayer> fetchPipelineLayers(final DocRef pipeline) {
         return securityContext.secureResult(() -> {
             try {
                 final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipeline);
@@ -121,7 +121,7 @@ public class PipelineServiceImpl implements PipelineService {
                 // long as they have 'use' permission on them.
                 return securityContext.useAsReadResult(() -> {
                     final List<PipelineDoc> pipelines = pipelineStackLoader.loadPipelineStack(pipelineDoc);
-                    final List<PipelineData> result = new ArrayList<>(pipelines.size());
+                    final List<PipelineLayer> result = new ArrayList<>(pipelines.size());
 
                     final Map<String, PipelineElementType> elementMap = PipelineDataMerger.createElementMap();
                     for (final PipelineDoc pipe : pipelines) {
@@ -129,8 +129,8 @@ public class PipelineServiceImpl implements PipelineService {
 
                         // Validate the pipeline data and add element and property type
                         // information.
-                        pipelineDataValidator.validate(DocRefUtil.create(pipe), pipelineData, elementMap);
-                        result.add(pipelineData);
+                        pipelineDataValidator.validate(pipelineData, elementMap);
+                        result.add(new PipelineLayer(DocRefUtil.create(pipe), pipelineData));
                     }
 
                     return result;
@@ -141,14 +141,5 @@ public class PipelineServiceImpl implements PipelineService {
                         e.getMessage().replaceAll("permission to read", "permission to use"));
             }
         });
-    }
-
-    @Override
-    public List<String> findUuidsByName(final String nameFilter) {
-        return securityContext.secureResult(() ->
-                pipelineStore.findByName(nameFilter, true)
-                        .stream()
-                        .map(DocRef::getUuid)
-                        .collect(Collectors.toList()));
     }
 }

@@ -23,12 +23,13 @@ class TestContentTemplates {
     void testSerde() throws IOException {
 
         int templateNumber = 0;
-        ContentTemplates contentTemplates = new ContentTemplates(List.of(
+        final ContentTemplates contentTemplates = new ContentTemplates(List.of(
                 new ContentTemplate(
                         true,
                         ++templateNumber,
                         ExpressionOperator.builder().build(),
                         TemplateType.PROCESSOR_FILTER,
+                        false,
                         PipelineDoc.buildDocRef()
                                 .name("MyPipe1")
                                 .uuid("uuid123")
@@ -42,6 +43,7 @@ class TestContentTemplates {
                         ++templateNumber,
                         ExpressionOperator.builder().build(),
                         TemplateType.INHERIT_PIPELINE,
+                        true,
                         PipelineDoc.buildDocRef()
                                 .name("MyPipe2")
                                 .uuid("uuid456")
@@ -76,7 +78,7 @@ class TestContentTemplates {
         final List<ContentTemplate> contentTemplates = new ArrayList<>();
         int iter = 1;
         for (int i = 5; i > 0; i--) {
-            ContentTemplate contentTemplate = ContentTemplate.builder()
+            final ContentTemplate contentTemplate = ContentTemplate.builder()
                     .withName(String.valueOf(iter))
                     .withTemplateNumber(i)
                     .build();

@@ -152,7 +152,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
                         getCacheHitRatio(row.getMap()));
             } else {
                 addStatColumn(name, -1, row -> {
-                    String value = row.getMap().get(cacheInfoKey);
+                    final String value = row.getMap().get(cacheInfoKey);
                     return formatValue(cacheInfoKey, value);
                 });
             }
@@ -232,7 +232,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
         } else {
             try {
                 return ModelStringUtil.formatCsv(Long.parseLong(value));
-            } catch (NumberFormatException e) {
+            } catch (final NumberFormatException e) {
                 return value;
             }
         }
@@ -242,7 +242,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
         return CASE_CONVERSION_REGEX.replace(str, "$1 $2");
     }
 
-    private void addColumn(Column<CacheInfo, ?> column, String name, int width) {
+    private void addColumn(final Column<CacheInfo, ?> column, final String name, final int width) {
         columns.add(column);
         final int newWidth = width == -1
                 ? determineColumnWidth(name)

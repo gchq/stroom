@@ -516,7 +516,7 @@ public class ManageGlobalPropertyListPresenter
             if (!Objects.equals(filter, criteria.getQuickFilterInput())) {
                 criteria.setQuickFilterInput(filter);
                 // Need to reset the range else the name criteria can push us outside the page we are on
-                Range range = dataGrid.getVisibleRange();
+                final Range range = dataGrid.getVisibleRange();
                 dataGrid.setVisibleRange(0, range.getLength());
                 refresh();
             }

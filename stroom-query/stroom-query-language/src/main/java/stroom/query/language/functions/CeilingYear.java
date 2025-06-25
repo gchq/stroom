@@ -16,13 +16,13 @@
 
 package stroom.query.language.functions;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = CeilingYear.NAME,
         commonCategory = FunctionCategory.DATE,
-        commonSubCategories = RoundDate.CEILING_SUB_CATEGORY,
+        commonSubCategories = AbstractRoundDateTime.CEILING_SUB_CATEGORY,
         commonReturnType = ValLong.class,
         commonReturnDescription = "The time as milliseconds since the epoch (1st Jan 1970).",
         signatures = @FunctionSignature(
@@ -30,32 +30,24 @@ import java.time.LocalDateTime;
                 args = @FunctionArg(
                         name = "time",
                         description = "The time to round in milliseconds since the epoch or as a string " +
-                                "formatted using the default date format.",
+                                      "formatted using the default date format.",
                         argType = Val.class)))
-class CeilingYear extends RoundDate {
+class CeilingYear extends AbstractRoundDateTime {
 
     static final String NAME = "ceilingYear";
-    private static final Calc CALC = new Calc();
 
-    public CeilingYear(final String name) {
-        super(name);
+    public CeilingYear(final ExpressionContext expressionContext, final String name) {
+        super(expressionContext, name);
     }
 
     @Override
-    protected RoundCalculator getCalculator() {
-        return CALC;
-    }
-
-    static class Calc extends RoundDateCalculator {
-
-        @Override
-        protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            LocalDateTime result = dateTime.toLocalDate().withDayOfYear(1).atStartOfDay();
-            if (dateTime.isAfter(result)) {
+    protected DateTimeAdjuster getAdjuster() {
+        return zonedDateTime -> {
+            ZonedDateTime result = FloorYear.floor(zonedDateTime);
+            if (zonedDateTime.isAfter(result)) {
                 result = result.plusYears(1);
             }
-
             return result;
-        }
+        };
     }
 }

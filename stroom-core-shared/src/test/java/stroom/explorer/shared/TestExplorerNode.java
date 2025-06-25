@@ -20,7 +20,7 @@ class TestExplorerNode {
 
     @Test
     void testSerDeser() {
-        ExplorerNode node = ExplorerNode.builder()
+        final ExplorerNode node = ExplorerNode.builder()
                 .addNodeFlags(NodeFlag.CLOSED, NodeFlag.FOLDER, NodeFlag.FAVOURITE)
                 .addNodeFlag(NodeFlag.FILTER_MATCH)
                 .build();
@@ -33,7 +33,7 @@ class TestExplorerNode {
 
     @Test
     void testHasNodeFlag_false() {
-        ExplorerNode node = ExplorerNode.builder()
+        final ExplorerNode node = ExplorerNode.builder()
                 .build();
 
         assertThat(node.hasNodeFlag(NodeFlag.OPEN))
@@ -48,7 +48,7 @@ class TestExplorerNode {
 
     @Test
     void testHasNodeFlag_true() {
-        ExplorerNode node = ExplorerNode.builder()
+        final ExplorerNode node = ExplorerNode.builder()
                 .addNodeFlag(NodeFlag.OPEN)
                 .addNodeFlag(NodeFlag.FAVOURITE)
                 .addNodeFlag(NodeFlag.FOLDER)
@@ -68,7 +68,7 @@ class TestExplorerNode {
 
     @Test
     void testHasNodeGroup_true() {
-        ExplorerNode node = ExplorerNode.builder()
+        final ExplorerNode node = ExplorerNode.builder()
                 .addNodeFlag(NodeFlag.OPEN)
                 .addNodeFlag(NodeFlag.FAVOURITE)
                 .addNodeFlag(NodeFlag.FILTER_MATCH)
@@ -82,7 +82,7 @@ class TestExplorerNode {
 
     @Test
     void testHasNodeGroup_false() {
-        ExplorerNode node = ExplorerNode.builder()
+        final ExplorerNode node = ExplorerNode.builder()
                 .addNodeFlag(NodeFlag.FAVOURITE)
                 .build();
 

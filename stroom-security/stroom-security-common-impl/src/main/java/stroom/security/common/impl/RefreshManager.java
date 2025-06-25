@@ -115,13 +115,13 @@ public class RefreshManager implements Managed {
                         LOGGER.debug(() -> LogUtil.message("Consumed in-active {}", itemToString(delayedRefreshable)));
                     }
 
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     LOGGER.error("Error consuming {} - {}",
                             itemToString(delayedRefreshable), LogUtil.exceptionMessage(e), e);
                     // We have to log, swallow and carry on, else our single thread dies
                 }
             }
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
             LOGGER.debug("Refresh delay queue interrupted, assume shutdown is happening so do no more");
         }
@@ -231,7 +231,7 @@ public class RefreshManager implements Managed {
         private final long expireTimeEpochMs;
         private final Refreshable refreshable;
 
-        DelayedRefreshable(Refreshable refreshable) {
+        DelayedRefreshable(final Refreshable refreshable) {
             Objects.requireNonNull(refreshable);
             this.refreshable = Objects.requireNonNull(refreshable);
             // We need to snapshot the expireTime as that is mutable on the Refreshable
@@ -263,7 +263,7 @@ public class RefreshManager implements Managed {
         @Override
         public long getDelay(final TimeUnit unit) {
             final long nowMs = System.currentTimeMillis();
-            long diffMs = expireTimeWithBufferEpochMs - nowMs;
+            final long diffMs = expireTimeWithBufferEpochMs - nowMs;
             LOGGER.trace(() -> LogUtil.message("now: {}, expireTime: {}, expireTimeWithBuffer: {}, delayMs:  {} ({})",
                     LogUtil.instant(nowMs),
                     LogUtil.instant(expireTimeEpochMs),

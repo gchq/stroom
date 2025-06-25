@@ -140,7 +140,7 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasSystemInfo {
     }
 
     private void removeRedundantSharedKafkaProducers() {
-        boolean didRemoveElements = allSharedProducersMap.values().removeIf(sharedKafkaProducer ->
+        final boolean didRemoveElements = allSharedProducersMap.values().removeIf(sharedKafkaProducer ->
                 sharedKafkaProducer.isSuperseded() && sharedKafkaProducer.getUseCount() <= 0);
         if (LOGGER.isDebugEnabled()) {
             if (didRemoveElements) {
@@ -165,7 +165,7 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasSystemInfo {
         LOGGER.debug("returnAction called for {}", sharedKafkaProducer);
         if (sharedKafkaProducer != null && sharedKafkaProducer.hasKafkaProducer()) {
             if (sharedKafkaProducer instanceof SharedKafkaProducerImpl) {
-                SharedKafkaProducerImpl sharedKafkaProducerImpl = (SharedKafkaProducerImpl) sharedKafkaProducer;
+                final SharedKafkaProducerImpl sharedKafkaProducerImpl = (SharedKafkaProducerImpl) sharedKafkaProducer;
                 sharedKafkaProducerImpl.decrementUseCount();
                 LOGGER.debug("superseded is {} and useCount is {} after decrement",
                         sharedKafkaProducerImpl.isSuperseded(), sharedKafkaProducerImpl.getUseCount());
@@ -193,7 +193,7 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasSystemInfo {
             // what data is on what topic. It is also up to the use of the KP to serialise down to a byte[]
             LOGGER.debug("Creating KafkaProducer for {}", key);
             kafkaProducer = new KafkaProducer<>(producerProperties, new StringSerializer(), new ByteArraySerializer());
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message("Error creating KafkaProducer for {} - {}: {}",
                     kafkaConfigDoc.getName(),
                     kafkaConfigDoc.getUuid(),
@@ -222,13 +222,13 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasSystemInfo {
                 });
     }
 
-    public static Properties getProperties(KafkaConfigDoc doc) {
-        Properties properties = new Properties();
+    public static Properties getProperties(final KafkaConfigDoc doc) {
+        final Properties properties = new Properties();
         if (doc.getData() != null && !doc.getData().isEmpty()) {
-            StringReader reader = new StringReader(doc.getData());
+            final StringReader reader = new StringReader(doc.getData());
             try {
                 properties.load(reader);
-            } catch (IOException ex) {
+            } catch (final IOException ex) {
                 LOGGER.error("Unable to read kafka properties from {} - {}", doc.getName(), doc.getUuid(), ex);
             }
         }
@@ -240,7 +240,7 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasSystemInfo {
 
         final List<Map<String, Object>> producerInfo = allSharedProducersMap.values().stream()
                 .map(sharedKafkaProducer -> {
-                    Map<String, Object> map = new HashMap<>();
+                    final Map<String, Object> map = new HashMap<>();
                     map.put("docName", sharedKafkaProducer.getConfigName());
                     map.put("docUuid", sharedKafkaProducer.getConfigUuid());
                     map.put("docVersion", sharedKafkaProducer.getConfigVersion());

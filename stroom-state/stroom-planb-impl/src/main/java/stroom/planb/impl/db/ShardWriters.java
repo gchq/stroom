@@ -26,6 +26,7 @@ import stroom.planb.shared.PlanBDoc;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.zip.ZipUtil;
 
@@ -41,6 +42,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Singleton
 public class ShardWriters {
@@ -255,7 +258,8 @@ public class ShardWriters {
         }
 
         @Override
-        public void close() throws IOException {
+        public void close() {
+            LOGGER.debug(() -> LogUtil.message("Plan B finished processing for {}", meta));
             final Path parent = dir.getParent();
             final Path zipFile = parent.resolve(dir.getFileName().toString() + SequentialFileStore.ZIP_EXTENSION);
 
@@ -269,6 +273,20 @@ public class ShardWriters {
                             .anyMatch(WriterInstance::isSynchroniseMerge);
 
                     // Zip all.
+                    LOGGER.debug(() -> LogUtil.message("Plan B zipping data for {}", meta));
+                    LOGGER.trace(() -> {
+                        try (final Stream<Path> stream = Files.list(dir)) {
+                            final String paths = stream
+                                    .map(Path::getFileName)
+                                    .map(Path::toString)
+                                    .collect(Collectors.joining(", "));
+                            return "Dir contents = " + paths;
+                        } catch (final IOException e) {
+                            LOGGER.error(e::getMessage, e);
+                        }
+                        return null;
+                    });
+
                     ZipUtil.zip(zipFile, dir);
                     final String fileHash = FileHashUtil.hash(zipFile);
 
@@ -276,6 +294,10 @@ public class ShardWriters {
                             System.currentTimeMillis(),
                             meta.getId(),
                             fileHash);
+                    LOGGER.debug(() -> LogUtil.message(
+                            "Plan B sending data {} for {}",
+                            zipFile.getFileName().toString(),
+                            meta));
                     fileTransferClient.storePart(fileDescriptor, zipFile, synchroniseMerge);
                 }
             } catch (final IOException e) {

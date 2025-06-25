@@ -45,7 +45,7 @@ public final class StroomCoreServerTestFileUtil {
 
     public static Path getTestResourcesDir() {
         if (TEST_RESOURCES_DIR == null) {
-            Path dir = getProjectDir().resolve("src/test/resources");
+            final Path dir = getProjectDir().resolve("src/test/resources");
             if (!Files.isDirectory(dir)) {
                 throw new RuntimeException("Test data directory not found: " + FileUtil.getCanonicalPath(dir));
             }
@@ -56,7 +56,7 @@ public final class StroomCoreServerTestFileUtil {
 
     public static Path getTestOutputDir() {
         if (TEST_OUTPUT_DIR == null) {
-            Path dir = getProjectDir().resolve("test-output");
+            final Path dir = getProjectDir().resolve("test-output");
             try {
                 Files.createDirectories(dir);
             } catch (final IOException e) {

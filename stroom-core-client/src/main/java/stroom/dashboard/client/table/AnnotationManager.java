@@ -203,7 +203,7 @@ public class AnnotationManager {
     }
 
     public List<Long> getAnnotationIdList(final List<TableRow> selectedItems) {
-        Set<String> values = new HashSet<>();
+        final Set<String> values = new HashSet<>();
 
         // Get annotation ids from annotation id column.
         final DocRef dataSource = dataSourceSupplier.get();

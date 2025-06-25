@@ -16,14 +16,13 @@
 
 package stroom.query.language.functions;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+import java.time.ZonedDateTime;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = CeilingHour.NAME,
         commonCategory = FunctionCategory.DATE,
-        commonSubCategories = RoundDate.CEILING_SUB_CATEGORY,
+        commonSubCategories = AbstractRoundDateTime.CEILING_SUB_CATEGORY,
         commonReturnType = ValLong.class,
         commonReturnDescription = "The time as milliseconds since the epoch (1st Jan 1970).",
         signatures = @FunctionSignature(
@@ -32,31 +31,24 @@ import java.time.temporal.ChronoUnit;
                         @FunctionArg(
                                 name = "time",
                                 description = "The time to round in milliseconds since the epoch or as a string " +
-                                        "formatted using the default date format.",
+                                              "formatted using the default date format.",
                                 argType = Val.class)}))
-class CeilingHour extends RoundDate {
+class CeilingHour extends AbstractRoundDateTime {
 
     static final String NAME = "ceilingHour";
-    private static final Calc CALC = new Calc();
 
-    public CeilingHour(final String name) {
-        super(name);
+    public CeilingHour(final ExpressionContext expressionContext, final String name) {
+        super(expressionContext, name);
     }
 
     @Override
-    protected RoundCalculator getCalculator() {
-        return CALC;
-    }
-
-    static class Calc extends RoundDateCalculator {
-
-        @Override
-        protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            LocalDateTime result = dateTime.truncatedTo(ChronoUnit.HOURS);
-            if (dateTime.isAfter(result)) {
+    protected DateTimeAdjuster getAdjuster() {
+        return zonedDateTime -> {
+            ZonedDateTime result = FloorHour.floor(zonedDateTime);
+            if (zonedDateTime.isAfter(result)) {
                 result = result.plusHours(1);
             }
             return result;
-        }
+        };
     }
 }

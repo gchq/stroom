@@ -15,7 +15,7 @@ public class IsSubsetOfValidatorImpl implements IsSubsetOfValidator {
     private Set<String> allowedValues;
 
     @Override
-    public void initialize(IsSubsetOf constraintAnnotation) {
+    public void initialize(final IsSubsetOf constraintAnnotation) {
         allowedValues = new HashSet<>(Arrays.asList(constraintAnnotation.allowedValues()));
     }
 

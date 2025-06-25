@@ -42,7 +42,7 @@ public class GetFeedStatusResponse extends RemoteResponse {
         this.stroomStatusCode = stroomStatusCode;
     }
 
-    public static GetFeedStatusResponse createOKResponse(FeedStatus feedStatus) {
+    public static GetFeedStatusResponse createOKResponse(final FeedStatus feedStatus) {
         return new GetFeedStatusResponse(feedStatus, null);
     }
 
@@ -78,7 +78,7 @@ public class GetFeedStatusResponse extends RemoteResponse {
         return status;
     }
 
-    public void setStatus(FeedStatus feedStatus) {
+    public void setStatus(final FeedStatus feedStatus) {
         this.status = feedStatus;
     }
 
@@ -86,7 +86,7 @@ public class GetFeedStatusResponse extends RemoteResponse {
         return message;
     }
 
-    public void setMessage(String message) {
+    public void setMessage(final String message) {
         this.message = message;
     }
 
@@ -96,7 +96,7 @@ public class GetFeedStatusResponse extends RemoteResponse {
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
+        final StringBuilder builder = new StringBuilder();
         builder.append("response ");
         builder.append(status);
         if (message != null) {

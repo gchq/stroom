@@ -285,7 +285,7 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 //        GWT.log("Initialising editor with elementId " + elementId);
 
         nextId++;
-        FlowPanel div = new FlowPanel();
+        final FlowPanel div = new FlowPanel();
         div.getElement().setId(elementId);
         initWidget(div);
         divElement = div.getElement();
@@ -297,7 +297,7 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
      * @param unused this parameter is ignored
      */
     @Deprecated
-    public AceEditor(boolean unused) {
+    public AceEditor(final boolean unused) {
         this();
     }
 
@@ -345,7 +345,7 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 		langTools.addCompleter(completer);
 	}-*/;
 
-    private static AceCompletionCallback wrapCompletionCallback(JavaScriptObject jsCallback) {
+    private static AceCompletionCallback wrapCompletionCallback(final JavaScriptObject jsCallback) {
 
         return new AceCompletionCallbackImpl(jsCallback);
     }
@@ -589,7 +589,7 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
      * @param position the position to obtain the absolute index of (base zero)
      * @return An index to the current location in the document
      */
-    public int getIndexFromPosition(AceEditorCursorPosition position) {
+    public int getIndexFromPosition(final AceEditorCursorPosition position) {
         return getIndexFromPositionImpl(position.toJsObject());
     }
 
@@ -768,7 +768,7 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
      * @param command the command (one of the values in the
      *                {@link AceCommand} enumeration)
      */
-    public void execCommand(AceCommand command) {
+    public void execCommand(final AceCommand command) {
         execCommand(command, null);
     }
 
@@ -780,7 +780,7 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
      *                {@link AceCommand} enumeration)
      * @param args    command arguments (string or map)
      */
-    public void execCommand(AceCommand command, AceCommandArgs args) {
+    public void execCommand(final AceCommand command, final AceCommandArgs args) {
         execCommand(command.getName(), args);
     }
 
@@ -801,7 +801,7 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
      * @param command one word command
      * @param arg     command argument
      */
-    public void execCommand(String command, String arg) {
+    public void execCommand(final String command, final String arg) {
         execCommandHidden(command, arg);
     }
 
@@ -811,7 +811,7 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
      * @param command one word command
      * @param args    command arguments of type {@link AceCommandArgs}
      */
-    public void execCommand(String command, AceCommandArgs args) {
+    public void execCommand(final String command, final AceCommandArgs args) {
         execCommandHidden(command, args);
     }
 
@@ -940,7 +940,7 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
     }
 
     @Override
-    public void setValue(String value) {
+    public void setValue(final String value) {
         this.setText(value);
     }
 
@@ -1050,18 +1050,18 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
      * Remove all the displayed markers.
      */
     public void removeAllMarkers() {
-        Integer[] ids = this.markers.keySet().toArray(new Integer[0]);
-        for (Integer id : ids) {
+        final Integer[] ids = this.markers.keySet().toArray(new Integer[0]);
+        for (final Integer id : ids) {
             removeMarker(id);
         }
     }
 
-    private void addMarker(int id, AceRange range) {
+    private void addMarker(final int id, final AceRange range) {
         markers.put(id, range);
     }
 
-    private void removeRegisteredMarker(int id) {
-        AceRange range = markers.remove(id);
+    private void removeRegisteredMarker(final int id) {
+        final AceRange range = markers.remove(id);
         range.detach();
     }
 
@@ -1109,7 +1109,7 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
      *
      * @param cmdLine implementation of command line
      */
-    public void initializeCommandLine(AceCommandLine cmdLine) {
+    public void initializeCommandLine(final AceCommandLine cmdLine) {
         this.commandLine = cmdLine;
         this.commandLine.setCommandLineListener(command -> execCommand(command));
     }

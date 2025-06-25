@@ -34,7 +34,7 @@ public interface InterruptibleFunction<T, R> {
         return t -> {
             try {
                 return function.apply(t);
-            } catch (InterruptedException e) {
+            } catch (final InterruptedException e) {
                 LOGGER.debug(() ->
                                 NullSafe.getOrElse(
                                         debugMsgSupplier,

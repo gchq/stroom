@@ -59,7 +59,7 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
 
     protected static SearchResponse search(final SearchRequest searchRequest,
                                            final ResultStoreManager resultStoreManager) {
-        SearchResponse response = resultStoreManager.search(searchRequest);
+        final SearchResponse response = resultStoreManager.search(searchRequest);
         resultStoreManager.destroy(response.getKey(), DestroyReason.NO_LONGER_NEEDED);
         if (!response.complete()) {
             throw new RuntimeException("NOT COMPLETE");
@@ -148,13 +148,13 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
         } else {
             assertThat(rows).hasSize(componentIds.size());
 
-            int count = rows.values().iterator().next().size();
+            final int count = rows.values().iterator().next().size();
             assertThat(count).as("Correct number of results found").isEqualTo(expectResultCount);
         }
         resultMapConsumer.accept(rows);
     }
 
-    protected SearchResponse search(SearchRequest searchRequest) {
+    protected SearchResponse search(final SearchRequest searchRequest) {
         return search(searchRequest, resultStoreManager);
     }
 

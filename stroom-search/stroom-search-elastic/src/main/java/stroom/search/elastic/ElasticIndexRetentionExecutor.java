@@ -136,7 +136,7 @@ public class ElasticIndexRetentionExecutor {
                             info(taskContext, () ->
                                     "Deleting data from Elasticsearch index '" + elasticIndex.getName() + "'");
 
-                            DeleteByQueryRequest request = DeleteByQueryRequest.of(r -> r
+                            final DeleteByQueryRequest request = DeleteByQueryRequest.of(r -> r
                                     .index(elasticIndex.getIndexName())
                                     .query(query)
                                     .timeout(Time.of(t -> t.time(String.format("%ds", DELETE_REQUEST_TIMEOUT_SECONDS))))
@@ -145,7 +145,7 @@ public class ElasticIndexRetentionExecutor {
                             );
 
                             elasticClient.deleteByQuery(request);
-                        } catch (Exception e) {
+                        } catch (final Exception e) {
                             LOGGER.error(e::getMessage, e);
                         }
                     });

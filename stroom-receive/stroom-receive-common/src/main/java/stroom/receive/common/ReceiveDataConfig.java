@@ -340,7 +340,7 @@ public class ReceiveDataConfig
     }
 
     public static Builder copy(final ReceiveDataConfig receiveDataConfig) {
-        Builder builder = new Builder();
+        final Builder builder = new Builder();
         builder.receiptPolicyUuid = receiveDataConfig.getReceiptPolicyUuid();
         builder.metaTypes = receiveDataConfig.getMetaTypes();
         builder.enabledAuthenticationTypes = receiveDataConfig.getEnabledAuthenticationTypes();

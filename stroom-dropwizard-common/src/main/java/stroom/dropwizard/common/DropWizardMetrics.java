@@ -73,7 +73,7 @@ public class DropWizardMetrics {
                 .sorted(Comparator.comparing(MetricsUtil.NamedMetric::name, String::compareToIgnoreCase))
                 .toList();
 
-        int maxNameLength = namedMetrics.stream()
+        final int maxNameLength = namedMetrics.stream()
                 .mapToInt(namedMetric -> namedMetric.name().length())
                 .max()
                 .orElse(0);
@@ -118,10 +118,10 @@ public class DropWizardMetrics {
             return null;
         } else {
             return switch (metric) {
-                case Histogram val -> Histogram.class.getSimpleName();
-                case Counter val -> Counter.class.getSimpleName();
-                case Metered val -> Metered.class.getSimpleName();
-                case Gauge<?> val -> Gauge.class.getSimpleName();
+                case final Histogram val -> Histogram.class.getSimpleName();
+                case final Counter val -> Counter.class.getSimpleName();
+                case final Metered val -> Metered.class.getSimpleName();
+                case final Gauge<?> val -> Gauge.class.getSimpleName();
                 default -> metric.getClass().getSimpleName();
             };
         }

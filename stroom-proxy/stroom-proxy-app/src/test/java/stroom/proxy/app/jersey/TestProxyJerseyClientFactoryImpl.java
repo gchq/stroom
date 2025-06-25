@@ -22,7 +22,7 @@ class TestProxyJerseyClientFactoryImpl {
      * Mostly to make sure the factory ctor works ok
      */
     @Test
-    void test(@TempDir Path tempDir) {
+    void test(@TempDir final Path tempDir) {
 
         final Config config = new Config();
         final JerseyClientConfiguration jerseyClientConfiguration = new JerseyClientConfiguration();
@@ -31,7 +31,7 @@ class TestProxyJerseyClientFactoryImpl {
         config.setJerseyClients(Map.of(
                 JerseyClientName.DEFAULT.name(), jerseyClientConfiguration));
 
-        ProxyJerseyClientFactoryImpl proxyJerseyClientFactory = new ProxyJerseyClientFactoryImpl(
+        final ProxyJerseyClientFactoryImpl proxyJerseyClientFactory = new ProxyJerseyClientFactoryImpl(
                 config,
                 () -> new BuildInfo(0L, "1.2.3", 0L),
                 new Environment("test"),

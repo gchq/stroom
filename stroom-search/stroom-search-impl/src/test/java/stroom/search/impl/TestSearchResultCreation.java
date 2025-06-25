@@ -581,7 +581,7 @@ class TestSearchResultCreation {
         final Map<DocRef, ValuesConsumer> receivers = new HashMap<>();
         coprocessors.forEachExtractionCoprocessor((docRef, coprocessorSet) -> {
             // Create a receiver that will send data to all coprocessors.
-            ValuesConsumer receiver;
+            final ValuesConsumer receiver;
             if (coprocessorSet.size() == 1) {
                 receiver = coprocessorSet.iterator().next();
             } else {

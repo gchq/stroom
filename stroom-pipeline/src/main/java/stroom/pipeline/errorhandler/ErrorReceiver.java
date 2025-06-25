@@ -35,22 +35,22 @@ public interface ErrorReceiver {
             Throwable e);
 
     default void log(
-            Severity severity,
-            Location location,
-            String elementId,
-            String message,
-            Throwable e) {
+            final Severity severity,
+            final Location location,
+            final String elementId,
+            final String message,
+            final Throwable e) {
         log(severity, location, elementId, message, null, e);
     }
 
     // Different name to avoid confusion with varargs
     default void logTemplate(
-            Severity severity,
-            Location location,
-            String elementId,
-            String messageTemplate,
-            Throwable e,
-            Object... messageArgs) {
+            final Severity severity,
+            final Location location,
+            final String elementId,
+            final String messageTemplate,
+            final Throwable e,
+            final Object... messageArgs) {
         if (messageArgs == null || messageArgs.length == 0) {
             log(severity, location, elementId, messageTemplate, e);
         } else {

@@ -37,9 +37,9 @@ import stroom.util.time.TimeUtils;
 import com.google.common.collect.Ordering;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -257,8 +257,8 @@ public class DataRetentionPolicyExecutor {
         if (rules != null) {
             activeRules = rules.stream()
                     .filter(rule -> rule.isEnabled()
-                            && rule.getExpression() != null
-                            && rule.getExpression().enabled())
+                                    && rule.getExpression() != null
+                                    && rule.getExpression().enabled())
                     .collect(Collectors.toList());
         } else {
             activeRules = Collections.emptyList();
@@ -305,7 +305,7 @@ public class DataRetentionPolicyExecutor {
         info(() -> {
             return LogUtil.message(
                     "Considering streams created " +
-                            "between {}, {} rule actions:\n{}",
+                    "between {}, {} rule actions:\n{}",
                     getPeriodInfo(period, now),
                     sortedRuleActions.size(),
                     sortedRuleActions.stream()
@@ -463,11 +463,11 @@ public class DataRetentionPolicyExecutor {
                         .sorted(Entry.comparingByKey())
                         .map(entry ->
                                 "createTime: "
-                                        + entry.getKey()
-                                        + " => (ruleAge: "
-                                        + entry.getValue().getRuleAge()
-                                        + ", lastRunTime: "
-                                        + entry.getValue().getLastRunTime())
+                                + entry.getKey()
+                                + " => (ruleAge: "
+                                + entry.getValue().getRuleAge()
+                                + ", lastRunTime: "
+                                + entry.getValue().getLastRunTime())
                         .collect(Collectors.joining("\n"))));
 
         return trackersByEarliestCreateTime;
@@ -503,12 +503,12 @@ public class DataRetentionPolicyExecutor {
         LOGGER.debug(() -> "earliestRetainedCreationTimeMap:\n" + earliestRetainedCreationTimeMap.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey(Comparator.reverseOrder()))
                 .map(entry -> "createTime: "
-                        + entry.getKey() + " ("
-                        + TimeUtils.instantAsAge(entry.getKey(), now)
-                        + " ago) => "
-                        + entry.getValue().stream()
-                        .sorted(Comparator.comparing(DataRetentionRule::getRuleNumber))
-                        .collect(Collectors.toList()))
+                              + entry.getKey() + " ("
+                              + TimeUtils.instantAsAge(entry.getKey(), now)
+                              + " ago) => "
+                              + entry.getValue().stream()
+                                      .sorted(Comparator.comparing(DataRetentionRule::getRuleNumber))
+                                      .collect(Collectors.toList()))
                 .collect(Collectors.joining("\n")));
 
         return earliestRetainedCreationTimeMap;
@@ -517,7 +517,7 @@ public class DataRetentionPolicyExecutor {
     /**
      * Gets the earliest meta create time that would be retained by this rule.
      */
-    private static Instant getEarliestRetainedCreateTime(final DataRetentionRule rule, Instant now) {
+    private static Instant getEarliestRetainedCreateTime(final DataRetentionRule rule, final Instant now) {
         return DataRetentionCreationTimeUtil.minus(now, rule);
     }
 

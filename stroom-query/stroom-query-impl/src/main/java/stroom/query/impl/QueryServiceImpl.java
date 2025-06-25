@@ -230,7 +230,7 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
         return securityContext.secureResult(AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
             final QuerySearchRequest searchRequest = request.getSearchRequest();
             final QueryKey queryKey = searchRequest.getQueryKey();
-            ResourceKey resourceKey;
+            final ResourceKey resourceKey;
             long totalRowCount = 0;
             final SearchRequest mappedRequest = mapRequest(searchRequest);
 
@@ -471,7 +471,7 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                             "Dashboard Search",
                             TerminateHandlerFactory.NOOP_FACTORY,
                             taskContext -> {
-                                DashboardSearchResponse searchResponse;
+                                final DashboardSearchResponse searchResponse;
                                 try {
                                     taskContext.info(() -> "Polling for new search results");
                                     httpServletRequestHolder.set(httpServletRequest);
@@ -526,7 +526,7 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
         SearchRequest mappedRequest = searchRequestFactory.create(query, sampleRequest, expressionContext);
 
         // Mutate expression with selection expression.
-        Query qry = mappedRequest.getQuery();
+        final Query qry = mappedRequest.getQuery();
         ExpressionOperator expression = qry.getExpression();
         expression = ExpressionUtil.combine(
                 expression,
@@ -542,7 +542,7 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
         // Fix table result requests.
         final List<ResultRequest> resultRequests = mappedRequest.getResultRequests();
         if (resultRequests != null) {
-            List<ResultRequest> modifiedResultRequests = new ArrayList<>();
+            final List<ResultRequest> modifiedResultRequests = new ArrayList<>();
             for (final ResultRequest resultRequest : resultRequests) {
 
                 // Modify result request to apply additional UI table preferences.
@@ -584,7 +584,7 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
 
                 final List<Column> modifiedColumns = new ArrayList<>();
                 for (final Column column : tableSettings.getColumns()) {
-                    Column.Builder columnBuilder = column.copy();
+                    final Column.Builder columnBuilder = column.copy();
                     final Column pref = prefs.get(column.getId());
                     if (pref != null) {
                         columnBuilder.filter(pref.getFilter());
@@ -628,7 +628,7 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
         LOGGER.trace(() -> "processRequest() " + searchRequest);
         DashboardSearchResponse result = null;
 
-        QueryKey queryKey = searchRequest.getQueryKey();
+        final QueryKey queryKey = searchRequest.getQueryKey();
         final String query = searchRequest.getQuery();
         Exception exception = null;
         SearchRequest mappedRequest = null;

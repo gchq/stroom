@@ -571,7 +571,7 @@ public class DocumentPluginEventManager extends Plugin {
         }
     }
 
-    private void handleDeleteResult(final BulkActionResult result, ResultCallback callback) {
+    private void handleDeleteResult(final BulkActionResult result, final ResultCallback callback) {
         boolean success = true;
         if (NullSafe.isNonBlankString(result.getMessage())) {
             AlertEvent.fireInfo(DocumentPluginEventManager.this,
@@ -1370,7 +1370,7 @@ public class DocumentPluginEventManager extends Plugin {
     private MenuItem createCopyAsMenuItem(final List<ExplorerNode> allNodes,
                                           final List<ExplorerNode> readableNodes,
                                           final int priority) {
-        List<Item> children = createCopyAsChildMenuItems(allNodes, readableNodes);
+        final List<Item> children = createCopyAsChildMenuItems(allNodes, readableNodes);
 
         return new IconParentMenuItem.Builder()
                 .priority(priority)

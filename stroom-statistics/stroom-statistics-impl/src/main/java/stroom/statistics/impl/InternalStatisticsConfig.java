@@ -28,7 +28,8 @@ import java.util.stream.Collectors;
 public class InternalStatisticsConfig extends AbstractConfig implements IsStroomConfig {
 
     private static final String DESCRIPTION_PREFIX = "A list of DocRefs, one for each statistic store that " +
-            "events for this internal statistic will be sent to. This internal statistic describes ";
+                                                     "events for this internal statistic will be sent to. " +
+                                                     "This internal statistic describes ";
 
     private static final Map<InternalStatisticKey, Function<InternalStatisticsConfig, List<DocRef>>>
             KEY_TO_DOC_REFS_GETTER_MAP = new EnumMap<>(InternalStatisticKey.class);
@@ -276,14 +277,14 @@ public class InternalStatisticsConfig extends AbstractConfig implements IsStroom
     }
 
     @JsonPropertyDescription(DESCRIPTION_PREFIX + "values from a Java heap histogram based on the number of " +
-            "bytes used by each class.")
+                             "bytes used by each class.")
     @JsonProperty("heapHistogramBytes")
     public List<DocRef> getHeapHistogramBytesDocRefs() {
         return heapHistogramBytesDocRefs;
     }
 
     @JsonPropertyDescription(DESCRIPTION_PREFIX + "values from a Java heap histogram based on the number of " +
-            "instances used by each class.")
+                             "instances used by each class.")
     @JsonProperty("heapHistogramInstances")
     public List<DocRef> getHeapHistogramInstancesDocRefs() {
         return heapHistogramInstancesDocRefs;
@@ -308,7 +309,7 @@ public class InternalStatisticsConfig extends AbstractConfig implements IsStroom
     }
 
     @JsonPropertyDescription(DESCRIPTION_PREFIX
-            + "the total number of map entries in the off heap reference data store.")
+                             + "the total number of map entries in the off heap reference data store.")
     @JsonProperty("refDataStoreEntryCount")
     public List<DocRef> getRefDataStoreEntryCount() {
         return refDataStoreEntryCount;
@@ -321,7 +322,7 @@ public class InternalStatisticsConfig extends AbstractConfig implements IsStroom
     }
 
     @JsonPropertyDescription(DESCRIPTION_PREFIX
-            + "the total number of streams in the off heap reference data store.")
+                             + "the total number of streams in the off heap reference data store.")
     @JsonProperty("refDataStoreStreamCount")
     public List<DocRef> getRefDataStoreStreamCount() {
         return refDataStoreStreamCount;
@@ -373,7 +374,8 @@ public class InternalStatisticsConfig extends AbstractConfig implements IsStroom
      */
     @JsonIgnore
     public List<DocRef> getEnabledDocRefs(final InternalStatisticKey internalStatisticKey) {
-        Function<InternalStatisticsConfig, List<DocRef>> func = KEY_TO_DOC_REFS_GETTER_MAP.get(internalStatisticKey);
+        final Function<InternalStatisticsConfig, List<DocRef>> func = KEY_TO_DOC_REFS_GETTER_MAP.get(
+                internalStatisticKey);
         Objects.requireNonNull(func, () -> LogUtil.message(
                 "Key {} is not known. You need to added it to KEY_TO_DOC_REFS_GETTER_MAP"));
 
@@ -385,22 +387,22 @@ public class InternalStatisticsConfig extends AbstractConfig implements IsStroom
     @Override
     public String toString() {
         return "InternalStatisticsConfig{" +
-                "enabledStoreTypes=" + enabledStoreTypes +
-                ", benchmarkClusterDocRefs=" + benchmarkClusterDocRefs +
-                ", cpuDocRefs=" + cpuDocRefs +
-                ", eventsPerSecondDocRefs=" + eventsPerSecondDocRefs +
-                ", heapHistogramBytesDocRefs=" + heapHistogramBytesDocRefs +
-                ", heapHistogramInstancesDocRefs=" + heapHistogramInstancesDocRefs +
-                ", memoryDocRefs=" + memoryDocRefs +
-                ", metaDataStreamSizeDocRefs=" + metaDataStreamSizeDocRefs +
-                ", metaDataStreamsReceivedDocRefs=" + metaDataStreamsReceivedDocRefs +
-                ", refDataStoreSize=" + refDataStoreSize +
-                ", pipelineStreamProcessorDocRefs=" + pipelineStreamProcessorDocRefs +
-                ", searchResultsStoreSize=" + searchResultsStoreSize +
-                ", searchResultsStoreCount=" + searchResultsStoreCount +
-                ", streamTaskQueueSizeDocRefs=" + streamTaskQueueSizeDocRefs +
-                ", volumesDocRefs=" + volumesDocRefs +
-                '}';
+               "enabledStoreTypes=" + enabledStoreTypes +
+               ", benchmarkClusterDocRefs=" + benchmarkClusterDocRefs +
+               ", cpuDocRefs=" + cpuDocRefs +
+               ", eventsPerSecondDocRefs=" + eventsPerSecondDocRefs +
+               ", heapHistogramBytesDocRefs=" + heapHistogramBytesDocRefs +
+               ", heapHistogramInstancesDocRefs=" + heapHistogramInstancesDocRefs +
+               ", memoryDocRefs=" + memoryDocRefs +
+               ", metaDataStreamSizeDocRefs=" + metaDataStreamSizeDocRefs +
+               ", metaDataStreamsReceivedDocRefs=" + metaDataStreamsReceivedDocRefs +
+               ", refDataStoreSize=" + refDataStoreSize +
+               ", pipelineStreamProcessorDocRefs=" + pipelineStreamProcessorDocRefs +
+               ", searchResultsStoreSize=" + searchResultsStoreSize +
+               ", searchResultsStoreCount=" + searchResultsStoreCount +
+               ", streamTaskQueueSizeDocRefs=" + streamTaskQueueSizeDocRefs +
+               ", volumesDocRefs=" + volumesDocRefs +
+               '}';
     }
 }
 

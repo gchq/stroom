@@ -340,7 +340,7 @@ public class EmbeddedQueryPresenter
         return currentVisPresenter != null;
     }
 
-    public void showTable(boolean show) {
+    public void showTable(final boolean show) {
         if (show) {
             setSettings(getQuerySettings().copy().showTable(Boolean.TRUE).build());
             setDirty(true);
@@ -360,8 +360,8 @@ public class EmbeddedQueryPresenter
             final QueryDocPresenter queryDocPresenter = queryDocPresenterProvider.get();
             queryDocPresenter.setSaveInterceptor(() -> {
                 final QueryDoc embeddedQueryDoc = queryDocPresenter.write(doc);
-                EmbeddedQueryComponentSettings settings = getQuerySettings();
-                EmbeddedQueryComponentSettings updatedSettings = settings
+                final EmbeddedQueryComponentSettings settings = getQuerySettings();
+                final EmbeddedQueryComponentSettings updatedSettings = settings
                         .copy()
                         .embeddedQueryDoc(embeddedQueryDoc)
                         .build();

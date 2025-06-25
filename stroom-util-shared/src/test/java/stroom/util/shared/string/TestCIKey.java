@@ -141,7 +141,7 @@ public class TestCIKey {
                 .withTestFunction(testCase -> {
                     final String str = testCase.getInput()._1;
                     final CIKey ciKey = CIKey.of(testCase.getInput()._2);
-                    boolean isEqual = equalsIgnoreCase(str, ciKey);
+                    final boolean isEqual = equalsIgnoreCase(str, ciKey);
                     // Test the other overloaded equalsIgnoreCase methods too
                     assertThat(equalsIgnoreCase(ciKey, str))
                             .isEqualTo(isEqual);
@@ -352,7 +352,7 @@ public class TestCIKey {
     void testSerialisation2() throws JsonProcessingException {
         final SerdeTestClass serdeTestClass = new SerdeTestClass(CIKey.of("foo"), "bar");
 
-        String json = JsonUtil.getMapper()
+        final String json = JsonUtil.getMapper()
                 .writeValueAsString(serdeTestClass);
 
         LOGGER.info("json\n{}", json);
@@ -377,8 +377,8 @@ public class TestCIKey {
 
     @Test
     void trimmed() {
-        CIKey ciKey1 = CIKey.trimmed("  Foo   ");
-        CIKey ciKey2 = CIKey.of("Foo");
+        final CIKey ciKey1 = CIKey.trimmed("  Foo   ");
+        final CIKey ciKey2 = CIKey.of("Foo");
 
         assertThat(ciKey1)
                 .isEqualTo(ciKey2);
@@ -393,7 +393,7 @@ public class TestCIKey {
     @Test
     void testOfLowerCase() {
         final String key = "foo";
-        CIKey ciKey = CIKey.ofLowerCase(key);
+        final CIKey ciKey = CIKey.ofLowerCase(key);
         assertThat(ciKey.get())
                 .isSameAs(key);
         assertThat(ciKey.getAsLowerCase())
@@ -403,10 +403,10 @@ public class TestCIKey {
     @Test
     void testOfDynamicKey() {
         final String key = "UUID";
-        CIKey ciKey1 = CIKeys.UUID;
-        CIKey ciKey2 = CIKey.of(key);
-        CIKey ciKey3 = CIKey.ofDynamicKey(key);
-        CIKey ciKey4 = CIKey.ofDynamicKey(key);
+        final CIKey ciKey1 = CIKeys.UUID;
+        final CIKey ciKey2 = CIKey.of(key);
+        final CIKey ciKey3 = CIKey.ofDynamicKey(key);
+        final CIKey ciKey4 = CIKey.ofDynamicKey(key);
 
         assertThat(ciKey1)
                 .isSameAs(ciKey2);
@@ -579,7 +579,7 @@ public class TestCIKey {
             doWorkOnThreads(cpuCount, iterations, executorService, () -> {
                 for (int j = 0; j < keys.size(); j++) {
                     String key = keys.get(j);
-                    String lowerKey = lowerKeys.get(j);
+                    final String lowerKey = lowerKeys.get(j);
                     if (key == null && lowerKey == null) {
                         // this is ok
                     } else if (key == null) {
@@ -622,7 +622,7 @@ public class TestCIKey {
         for (final CompletableFuture<Void> future : futures) {
             try {
                 future.get();
-            } catch (InterruptedException | ExecutionException e) {
+            } catch (final InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
             }
         }

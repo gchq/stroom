@@ -133,7 +133,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
      * Setup some test data.
      */
     private DocRef setupFeed(final String feedName) {
-        List<DocRef> docRefs = feedService.findByName(feedName);
+        final List<DocRef> docRefs = feedService.findByName(feedName);
         if (docRefs != null && docRefs.size() > 0) {
             return docRefs.get(0);
         }
@@ -158,7 +158,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
         return year + "-01-01T00:00:00.000Z," + (year + 1) + "-01-01T00:00:00.000Z";
     }
 
-    private String createToDateWithOffset(long time, int offset) {
+    private String createToDateWithOffset(final long time, final int offset) {
         final long from = time;
         final long to = time + (offset * 1000 * 60 * 60 * 24);
         return DateUtil.createNormalDateTimeString(from) + "," + DateUtil.createNormalDateTimeString(to);
@@ -241,7 +241,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
                 .feedName(FEED1)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
-        Meta rootMeta;
+        final Meta rootMeta;
         try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
             rootMeta = streamTarget.getMeta();
             TargetUtil.write(streamTarget, testString);
@@ -252,7 +252,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .parent(rootMeta)
                 .build();
-        Meta childMeta;
+        final Meta childMeta;
         try (final Target childTarget = streamStore.openTarget(childProperties)) {
             childMeta = childTarget.getMeta();
             TargetUtil.write(childTarget, testString);
@@ -263,7 +263,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .parent(childMeta)
                 .build();
-        Meta grandChildMeta;
+        final Meta grandChildMeta;
         try (final Target grandChildTarget = streamStore.openTarget(grandChildProperties)) {
             grandChildMeta = grandChildTarget.getMeta();
             TargetUtil.write(grandChildTarget, testString);
@@ -423,7 +423,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
                 .feedName(FEED1)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
-        Meta meta;
+        final Meta meta;
         try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
             meta = streamTarget.getMeta();
             TargetUtil.write(streamTarget, testString);
@@ -541,7 +541,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
 
-        Meta exactMetaData;
+        final Meta exactMetaData;
         try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
             exactMetaData = streamTarget.getMeta();
             TargetUtil.write(streamTarget, testString);
@@ -575,7 +575,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
 
-        Meta exactMetaData;
+        final Meta exactMetaData;
         try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
             exactMetaData = streamTarget.getMeta();
         }
@@ -699,8 +699,8 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
 
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
-        Meta meta;
-        Target t;
+        final Meta meta;
+        final Target t;
         try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
             meta = streamTarget.getMeta();
             t = streamTarget;
@@ -734,7 +734,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
 
-        Meta meta;
+        final Meta meta;
         try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
             meta = streamTarget.getMeta();
             TargetUtil.write(streamTarget, "xyz");

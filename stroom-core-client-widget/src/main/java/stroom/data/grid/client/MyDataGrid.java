@@ -49,11 +49,13 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
+import com.google.gwt.user.client.ui.CustomScrollPanel;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.gwt.user.client.ui.FocusUtil;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.HeaderPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -89,6 +91,9 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     private boolean allowResize = true;
     private boolean allowHeaderSelection = true;
 
+    private int horzPos = 0;
+    private int vertPos = 0;
+
     private final DoubleClickTester doubleClickTester = new DoubleClickTester();
 
     public MyDataGrid(final HasHandlers globalEventBus) {
@@ -116,6 +121,21 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
         // Sink all mouse events.
         sinkEvents(Event.MOUSEEVENTS);
+
+        final HeaderPanel headerPanel = (HeaderPanel) getWidget();
+        final CustomScrollPanel customScrollPanel = (CustomScrollPanel) headerPanel.getContentWidget();
+
+        customScrollPanel.addScrollHandler(event -> {
+            horzPos = customScrollPanel.getHorizontalScrollPosition();
+            vertPos = customScrollPanel.getVerticalScrollPosition();
+        });
+
+        addAttachHandler(event -> {
+            if (horzPos > 0 || vertPos > 0) {
+                customScrollPanel.setVerticalScrollPosition(vertPos);
+                customScrollPanel.setHorizontalScrollPosition(horzPos);
+            }
+        });
         sinkEvents(Event.ONCONTEXTMENU);
     }
 

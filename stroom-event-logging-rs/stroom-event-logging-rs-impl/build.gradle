@@ -33,15 +33,12 @@ dependencies {
     implementation libs.slf4j.api
     implementation libs.jakarta.servlet.api
     implementation libs.jakarta.inject
-    implementation libs.jaxb.api
     implementation libs.jersey.common
     implementation libs.ws.rs.api
 
     testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-event-logging:stroom-event-logging-mock')
-    testImplementation libs.assertj.core
-    testCompileOnly libs.junit.jupiter.api
-    testImplementation libs.mockito.core
 
-    testRuntimeOnly libs.junit.jupiter.engine
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
 }

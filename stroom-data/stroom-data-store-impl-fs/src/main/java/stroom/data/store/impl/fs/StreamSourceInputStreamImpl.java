@@ -30,7 +30,7 @@ class StreamSourceInputStreamImpl extends SizeAwareInputStream {
     }
 
     @Override
-    public synchronized void mark(int readlimit) {
+    public synchronized void mark(final int readlimit) {
         inputStream.mark(readlimit);
     }
 
@@ -46,13 +46,13 @@ class StreamSourceInputStreamImpl extends SizeAwareInputStream {
 
     @SuppressWarnings("NullableProblems")
     @Override
-    public int read(byte[] b, int off, int len) throws IOException {
+    public int read(final byte[] b, final int off, final int len) throws IOException {
         return inputStream.read(b, off, len);
     }
 
     @SuppressWarnings("NullableProblems")
     @Override
-    public int read(byte[] b) throws IOException {
+    public int read(final byte[] b) throws IOException {
         return inputStream.read(b);
     }
 
@@ -62,13 +62,13 @@ class StreamSourceInputStreamImpl extends SizeAwareInputStream {
     }
 
     @Override
-    public long skip(long n) throws IOException {
+    public long skip(final long n) throws IOException {
         return inputStream.skip(n);
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
-    public final boolean equals(Object obj) {
+    public final boolean equals(final Object obj) {
         return inputStream.equals(obj);
     }
 
