@@ -183,6 +183,23 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
     @Override
     protected void onBrowserEvent2(final Event event) {
+        final int eventType = event.getTypeInt();
+        if (Event.ONMOUSEMOVE == eventType) {
+            final Heading heading = getHeading(event);
+            if (heading != null) {
+                if (handlerRegistration == null) {
+                    // Show the resize handle immediately before
+                    // attaching the native event preview handler.
+                    final ResizeHandle<R> resizeHandle = getResizeHandle();
+                    if (resizeHandle.update(event, heading)) {
+                        doubleClickTester.clear();
+                        resizeHandle.show();
+                    }
+
+                    handlerRegistration = Event.addNativePreviewHandler(this);
+                }
+            }
+        }
         if (event.getTypeInt() == Event.ONCONTEXTMENU) {
             event.preventDefault();
             event.stopPropagation();
@@ -192,10 +209,10 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
             //finding cell/row/column info
             final Element target = event.getEventTarget().cast();
-            TableCellElement cell = findParentCell(target);
+            final TableCellElement cell = findParentCell(target);
             int rowIndex = -1, colIndex = -1;
             if (cell != null) {
-                TableRowElement row = cell.getParentElement().cast();
+                final TableRowElement row = cell.getParentElement().cast();
                 rowIndex = row.getSectionRowIndex();
                 colIndex = cell.getCellIndex();
             }
@@ -213,7 +230,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         return (TableCellElement) target;
     }
 
-    private void showContextMenu(int x, int y, int rowIndex, int colIndex, final Element target) {
+    private void showContextMenu(final int x, final int y, final int rowIndex, final int colIndex, final Element target) {
         final List<Item> menuItems = new ArrayList<>();
 
         Element linkElement = target;
@@ -299,35 +316,35 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                 .fire(globalEventBus);
     }
 
-    private void exportCell(int rowIndex, int colIndex) {
+    private void exportCell(final int rowIndex, final int colIndex) {
         if (rowIndex >= 0 && colIndex >= 0) {
-            R row = getVisibleItem(rowIndex);
-            Column<R, ?> column = getColumn(colIndex);
-            Object value = column.getValue(row);
+            final R row = getVisibleItem(rowIndex);
+            final Column<R, ?> column = getColumn(colIndex);
+            final Object value = column.getValue(row);
             copyToClipboard(String.valueOf(value));
         }
     }
 
-    private void exportRow(int rowIndex) {
+    private void exportRow(final int rowIndex) {
         if (rowIndex >= 0) {
-            R row = getVisibleItem(rowIndex);
-            StringBuilder sb = new StringBuilder();
+            final R row = getVisibleItem(rowIndex);
+            final StringBuilder sb = new StringBuilder();
             for (int i = 0; i < getColumnCount(); i++) {
                 if (i > 0) sb.append(",");
-                Object value = getColumn(i).getValue(row);
+                final Object value = getColumn(i).getValue(row);
                 sb.append("\"").append(value != null ? value.toString().replace("\"", "\"\"") : "").append("\"");
             }
             copyToClipboard(sb.toString());
         }
     }
 
-    private void exportColumn(int colIndex) {
+    private void exportColumn(final int colIndex) {
         if (colIndex >= 0) {
-            StringBuilder sb = new StringBuilder();
+            final StringBuilder sb = new StringBuilder();
             for (int i = 0; i < getVisibleItemCount(); i++) {
                 if (i > 0) sb.append(";");
-                R row = getVisibleItem(i);
-                Object value = getColumn(colIndex).getValue(row);
+                final R row = getVisibleItem(i);
+                final Object value = getColumn(colIndex).getValue(row);
                 sb.append(value != null ? value.toString() : "");
             }
             copyToClipboard(sb.toString());
@@ -335,17 +352,17 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     }
 
     private void copyTableAsCSV() {
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         for (int col = 0; col < getColumnCount(); col++) {
             if (col > 0) sb.append(",");
-            String header = getHeader(col) != null ? getHeader(col).getValue() + "" : "";
+            final String header = getHeader(col) != null ? getHeader(col).getValue() + "" : "";
             sb.append("\"").append(header.replace("\"", "\"\"")).append("\"");
         }
         sb.append("\n");
         for (int row = 0; row < getVisibleItemCount(); row++) {
             for (int col = 0; col < getColumnCount(); col++) {
                 if (col > 0) sb.append(",");
-                Object value = getColumn(col).getValue(getVisibleItem(row));
+                final Object value = getColumn(col).getValue(getVisibleItem(row));
                 sb.append("\"").append(value != null ? value.toString().replace("\"", "\"\"") : "").append("\"");
             }
             sb.append("\n");
@@ -355,17 +372,17 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
     private void exportTableAsCSV() {
         //built a string of all the rows + all the columns
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         for (int col = 0; col < getColumnCount(); col++) {
             if (col > 0) sb.append(",");
-            String header = getHeader(col) != null ? getHeader(col).getValue() + "" : "";
+            final String header = getHeader(col) != null ? getHeader(col).getValue() + "" : "";
             sb.append("\"").append(header.replace("\"", "\"\"")).append("\"");
         }
         sb.append("\n");
         for (int row = 0; row < getVisibleItemCount(); row++) {
             for (int col = 0; col < getColumnCount(); col++) {
                 if (col > 0) sb.append(",");
-                Object value = getColumn(col).getValue(getVisibleItem(row));
+                final Object value = getColumn(col).getValue(getVisibleItem(row));
                 sb.append("\"").append(value != null ? value.toString().replace("\"", "\"\"") : "").append("\"");
             }
             sb.append("\n");
@@ -578,9 +595,9 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
         // If we still have a narrow col see if there is any text content.
         if (minWidth < 10) {
-            String text = col.getInnerText();
+            final String text = col.getInnerText();
             tempDiv.setInnerHTML(text);
-            double scrollWidth = ElementUtil.getSubPixelOffsetWidth(tempDiv);
+            final double scrollWidth = ElementUtil.getSubPixelOffsetWidth(tempDiv);
             minWidth = Math.max(minWidth, scrollWidth);
         }
 
@@ -599,7 +616,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                 el = el.getFirstChildElement();
             }
 
-            String text = el.getInnerText();
+            final String text = el.getInnerText();
 
             if (text.length() > 0) {
                 tempDiv.setInnerHTML(text);
@@ -847,7 +864,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                 final ColSettings settings = colSettings.get(i);
                 if (settings != null) {
                     final String stringWidth = getColumnWidth(col);
-                    int w = getPx(stringWidth);
+                    final int w = getPx(stringWidth);
                     totalColWidth += w;
                     if (settings.isFill()) {
                         totalWeight += settings.getFillWeight();
