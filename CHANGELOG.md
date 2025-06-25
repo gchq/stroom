@@ -13,6 +13,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.10-beta.5] - 2025-06-25
+
+* Issue **#5002** : Fix Plan B env staying open after error.
+
+* Issue **#5003** : Fix query date time formatting.
+
+* Issue **#4974** : Improve logging.
+
+
 ## [v7.10-beta.4] - 2025-06-23
 
 * Issue **#3083** : Allow data() table function to show the Info pane.
@@ -1548,7 +1557,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.10-beta.4...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.10-beta.5...HEAD
+[v7.10-beta.5]: https://github.com/gchq/stroom/compare/v7.10-beta.4...v7.10-beta.5
 [v7.10-beta.4]: https://github.com/gchq/stroom/compare/v7.10-beta.3...v7.10-beta.4
 [v7.10-beta.3]: https://github.com/gchq/stroom/compare/v7.10-beta.2...v7.10-beta.3
 [v7.10-beta.2]: https://github.com/gchq/stroom/compare/v7.10-beta.1...v7.10-beta.2
