@@ -200,7 +200,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                 }
             }
         }
-        if (event.getTypeInt() == Event.ONCONTEXTMENU) {
+        else if (event.getTypeInt() == Event.ONCONTEXTMENU) {
             event.preventDefault();
             event.stopPropagation();
 
