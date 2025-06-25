@@ -214,8 +214,14 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                 .build());
 
         menuItems.add(new IconMenuItem.Builder()
+                .icon(SvgImage.COPY)
+                .text("Copy Page (CSV)")
+                .command(this::copyTableAsCSV)
+                .build());
+
+        menuItems.add(new IconMenuItem.Builder()
                 .icon(SvgImage.DOWNLOAD)
-                .text("Export Table as CSV")
+                .text("Export Page (CSV)")
                 .command(this::exportTableAsCSV)
                 .build());
 
@@ -258,6 +264,25 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
             }
             copyToClipboard(sb.toString());
         }
+    }
+
+    private void copyTableAsCSV() {
+        StringBuilder sb = new StringBuilder();
+        for (int col = 0; col < getColumnCount(); col++) {
+            if (col > 0) sb.append(",");
+            String header = getHeader(col) != null ? getHeader(col).getValue() + "" : "";
+            sb.append("\"").append(header.replace("\"", "\"\"")).append("\"");
+        }
+        sb.append("\n");
+        for (int row = 0; row < getVisibleItemCount(); row++) {
+            for (int col = 0; col < getColumnCount(); col++) {
+                if (col > 0) sb.append(",");
+                Object value = getColumn(col).getValue(getVisibleItem(row));
+                sb.append("\"").append(value != null ? value.toString().replace("\"", "\"\"") : "").append("\"");
+            }
+            sb.append("\n");
+        }
+        copyToClipboard(sb.toString());
     }
 
     private void exportTableAsCSV() {
