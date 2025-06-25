@@ -150,27 +150,27 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
             switch (logLevel) {
                 case TRACE -> {
                     if (isTraceEnabled()) {
-                        trace(messageSupplier.get());
+                        trace(getSafeMessage(messageSupplier));
                     }
                 }
                 case DEBUG -> {
                     if (isDebugEnabled()) {
-                        debug(messageSupplier.get());
+                        debug(getSafeMessage(messageSupplier));
                     }
                 }
                 case INFO -> {
                     if (isInfoEnabled()) {
-                        info(messageSupplier.get());
+                        info(getSafeMessage(messageSupplier));
                     }
                 }
                 case WARN -> {
                     if (isWarnEnabled()) {
-                        warn(messageSupplier.get());
+                        warn(getSafeMessage(messageSupplier));
                     }
                 }
                 case ERROR -> {
                     if (isErrorEnabled()) {
-                        error(messageSupplier.get());
+                        error(getSafeMessage(messageSupplier));
                     }
                 }
                 default -> error("Unexpected logLevel: {}", logLevel);
@@ -188,27 +188,27 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
             switch (logLevel) {
                 case TRACE -> {
                     if (isTraceEnabled()) {
-                        trace(messageSupplier.get(), t);
+                        trace(getSafeMessage(messageSupplier), t);
                     }
                 }
                 case DEBUG -> {
                     if (isDebugEnabled()) {
-                        debug(messageSupplier.get(), t);
+                        debug(getSafeMessage(messageSupplier), t);
                     }
                 }
                 case INFO -> {
                     if (isInfoEnabled()) {
-                        info(messageSupplier.get(), t);
+                        info(getSafeMessage(messageSupplier), t);
                     }
                 }
                 case WARN -> {
                     if (isWarnEnabled()) {
-                        warn(messageSupplier.get(), t);
+                        warn(getSafeMessage(messageSupplier), t);
                     }
                 }
                 case ERROR -> {
                     if (isErrorEnabled()) {
-                        error(messageSupplier.get(), t);
+                        error(getSafeMessage(messageSupplier), t);
                     }
                 }
                 default -> error("Unexpected logLevel: {}", logLevel);
@@ -268,7 +268,7 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
             final T result = timedWork.get();
             final Duration duration = durationTimer.get();
             log(LocationAwareLogger.TRACE_INT,
-                    () -> LogUtil.getDurationMessage(workDescriptionSupplier.get(), duration),
+                    () -> LogUtil.getDurationMessage(getSafeMessage(workDescriptionSupplier), duration),
                     null);
             return result;
         } else {
@@ -284,7 +284,7 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
             final T result = timedWork.get();
             final Duration duration = durationTimer.get();
             log(LocationAwareLogger.TRACE_INT,
-                    () -> LogUtil.getDurationMessage(workDescriptionFunction.apply(result), duration),
+                    () -> LogUtil.getDurationMessage(getSafeMessage(workDescriptionFunction, result), duration),
                     null);
             return result;
         } else {
@@ -300,7 +300,7 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
             final T result = timedWork.get();
             final Duration duration = durationTimer.get();
             log(LocationAwareLogger.DEBUG_INT,
-                    () -> LogUtil.getDurationMessage(workDescriptionSupplier.get(), duration),
+                    () -> LogUtil.getDurationMessage(getSafeMessage(workDescriptionSupplier), duration),
                     null);
             return result;
         } else {
@@ -316,7 +316,7 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
             final T result = timedWork.get();
             final Duration duration = durationTimer.get();
             log(LocationAwareLogger.DEBUG_INT,
-                    () -> LogUtil.getDurationMessage(workDescriptionFunction.apply(result), duration),
+                    () -> LogUtil.getDurationMessage(getSafeMessage(workDescriptionFunction, result), duration),
                     null);
             return result;
         } else {
@@ -331,7 +331,7 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
             final T result = timedWork.get();
             final Duration duration = durationTimer.get();
             log(LocationAwareLogger.INFO_INT,
-                    () -> LogUtil.getDurationMessage(workDescriptionSupplier.get(), duration),
+                    () -> LogUtil.getDurationMessage(getSafeMessage(workDescriptionSupplier), duration),
                     null);
             return result;
         } else {
@@ -347,7 +347,7 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
             final T result = timedWork.get();
             final Duration duration = durationTimer.get();
             log(LocationAwareLogger.INFO_INT,
-                    () -> LogUtil.getDurationMessage(workDescriptionFunction.apply(result), duration),
+                    () -> LogUtil.getDurationMessage(getSafeMessage(workDescriptionFunction, result), duration),
                     null);
             return result;
         } else {
@@ -360,7 +360,7 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
         if (logger.isTraceEnabled()) {
             final Duration duration = DurationTimer.measure(timedWork);
             log(LocationAwareLogger.TRACE_INT,
-                    () -> LogUtil.getDurationMessage(workDescriptionSupplier.get(), duration),
+                    () -> LogUtil.getDurationMessage(getSafeMessage(workDescriptionSupplier), duration),
                     null);
         } else {
             timedWork.run();
@@ -372,7 +372,7 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
         if (logger.isDebugEnabled()) {
             final Duration duration = DurationTimer.measure(timedWork);
             log(LocationAwareLogger.DEBUG_INT,
-                    () -> LogUtil.getDurationMessage(workDescriptionSupplier.get(), duration),
+                    () -> LogUtil.getDurationMessage(getSafeMessage(workDescriptionSupplier), duration),
                     null);
         } else {
             timedWork.run();
@@ -384,7 +384,7 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
         if (logger.isInfoEnabled()) {
             final Duration duration = DurationTimer.measure(timedWork);
             log(LocationAwareLogger.INFO_INT,
-                    () -> LogUtil.getDurationMessage(workDescriptionSupplier.get(), duration),
+                    () -> LogUtil.getDurationMessage(getSafeMessage(workDescriptionSupplier), duration),
                     null);
         } else {
             timedWork.run();
@@ -414,7 +414,8 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
 
     private void log(final int severity, final Supplier<String> message, final Throwable t) {
         try {
-            logger.log(null, FQCN, severity, message.get(), null, t);
+            logger.log(null, FQCN, severity, getSafeMessage(message), null, t);
+
         } catch (final RuntimeException e) {
             try {
                 logger.log(null,
@@ -427,6 +428,46 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
                 ex.printStackTrace();
             }
         }
+    }
+
+    private String getSafeMessage(final Supplier<String> supplier) {
+        if (supplier != null) {
+            try {
+                return supplier.get();
+            } catch (final RuntimeException e) {
+                try {
+                    logger.log(null,
+                            FQCN,
+                            LocationAwareLogger.ERROR_INT,
+                            "ERROR LOGGING MESSAGE - " + e.getMessage(),
+                            null,
+                            e);
+                } catch (final RuntimeException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+        return null;
+    }
+
+    private <T> String getSafeMessage(final Function<T, String> function, final T t) {
+        if (function != null) {
+            try {
+                return function.apply(t);
+            } catch (final RuntimeException e) {
+                try {
+                    logger.log(null,
+                            FQCN,
+                            LocationAwareLogger.ERROR_INT,
+                            "ERROR LOGGING MESSAGE - " + e.getMessage(),
+                            null,
+                            e);
+                } catch (final RuntimeException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+        return null;
     }
 
     public String getName() {
