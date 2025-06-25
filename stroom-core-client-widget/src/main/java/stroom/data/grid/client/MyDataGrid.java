@@ -17,6 +17,11 @@
 package stroom.data.grid.client;
 
 import stroom.hyperlink.client.HyperlinkEvent;
+import stroom.svg.shared.SvgImage;
+import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.presenter.Item;
+import stroom.widget.menu.client.presenter.ShowMenuEvent;
+import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.util.client.DoubleClickTester;
 import stroom.widget.util.client.ElementUtil;
@@ -34,6 +39,7 @@ import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
@@ -43,6 +49,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
+import com.google.web.bindery.event.shared.EventBus;
 import com.google.gwt.user.client.ui.FocusUtil;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
@@ -70,6 +77,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     private final SimplePanel emptyTableWidget = new SimplePanel();
     private final SimplePanel loadingTableWidget = new SimplePanel();
     private final List<ColSettings> colSettings = new ArrayList<>();
+    private final HasHandlers globalEventBus;
 
     private HeadingListener headingListener;
     private HandlerRegistration handlerRegistration;
@@ -83,12 +91,13 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
     private final DoubleClickTester doubleClickTester = new DoubleClickTester();
 
-    public MyDataGrid() {
-        this(DEFAULT_LIST_PAGE_SIZE);
+    public MyDataGrid(final HasHandlers globalEventBus) {
+        this(globalEventBus, DEFAULT_LIST_PAGE_SIZE);
     }
 
-    public MyDataGrid(final int size) {
+    public MyDataGrid(final HasHandlers globalEventBus, final int size) {
         super(size, RESOURCES);
+        this.globalEventBus = globalEventBus;
         setAutoHeaderRefreshDisabled(true);
         setAutoFooterRefreshDisabled(true);
 
@@ -184,40 +193,36 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     }
 
     private void showContextMenu(int x, int y, int rowIndex, int colIndex) {
-        if (contextMenu != null && contextMenu.isShowing()) {
-            contextMenu.hide();
-        }
-        contextMenu = new PopupPanel(true);
-        MenuBar menu = new MenuBar(true);
+        final List<Item> menuItems = new ArrayList<>();
 
-        menu.addItem(new MenuItem("Copy Cell", new Command() {
-            @Override
-            public void execute() {
-                exportCell(rowIndex, colIndex);
-            }
-        }));
-        menu.addItem(new MenuItem("Copy Row (CSV)", new Command() {
-            @Override
-            public void execute() {
-                exportRow(rowIndex);
-            }
-        }));
-        menu.addItem(new MenuItem("Copy Column (LSV)", new Command() {
-            @Override
-            public void execute() {
-                exportColumn(colIndex);
-            }
-        }));
-        menu.addItem(new MenuItem("Export Table as CSV", new Command() {
-            @Override
-            public void execute() {
-                exportTableAsCSV();
-            }
-        }));
+        menuItems.add(new IconMenuItem.Builder()
+                .icon(SvgImage.COPY)
+                .text("Copy Cell")
+                .command(() -> exportCell(rowIndex, colIndex))
+                .build());
 
-        contextMenu.setWidget(menu);
-        contextMenu.setPopupPosition(x, y);
-        contextMenu.show();
+        menuItems.add(new IconMenuItem.Builder()
+                .icon(SvgImage.COPY)
+                .text("Copy Row (CSV)")
+                .command(() -> exportRow(rowIndex))
+                .build());
+
+        menuItems.add(new IconMenuItem.Builder()
+                .icon(SvgImage.COPY)
+                .text("Copy Column (LSV)")
+                .command(() -> exportColumn(colIndex))
+                .build());
+
+        menuItems.add(new IconMenuItem.Builder()
+                .icon(SvgImage.DOWNLOAD)
+                .text("Export Table as CSV")
+                .command(this::exportTableAsCSV)
+                .build());
+
+        ShowMenuEvent.builder()
+                .items(menuItems)
+                .popupPosition(new PopupPosition(x, y))
+                .fire(globalEventBus);
     }
 
     private void exportCell(int rowIndex, int colIndex) {
