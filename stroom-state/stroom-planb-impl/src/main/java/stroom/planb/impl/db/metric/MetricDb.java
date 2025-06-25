@@ -160,7 +160,7 @@ public class MetricDb extends AbstractDb<TemporalKey, Long> {
                     MetricValueSchema::getValueType,
                     MetricValueSchema.DEFAULT_MAX_VALUE_SIZE);
             // Rows will store hour precision.
-            final ZoneId zoneId = UserTimeZoneUtil.getZoneId(timeZone);
+            final ZoneId zoneId = UserTimeZoneUtil.getZoneId(timeZone, null);
 
             // The key time is always a coarse grained time with rows having multiple values.
             final TimeSerde keyTimeSerde = getKeyTimeSerde(temporalResolution, zoneId);

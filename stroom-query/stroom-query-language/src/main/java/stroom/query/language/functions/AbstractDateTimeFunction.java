@@ -39,7 +39,7 @@ abstract class AbstractDateTimeFunction extends AbstractFunction {
     private ZoneId getZoneId() {
         final DateTimeSettings dateTimeSettings = expressionContext.getDateTimeSettings();
         Objects.requireNonNull(dateTimeSettings, "dateTimeSettings not set in searchRequest");
-        return UserTimeZoneUtil.getZoneId(dateTimeSettings.getTimeZone());
+        return UserTimeZoneUtil.getZoneId(dateTimeSettings);
     }
 
     @Override

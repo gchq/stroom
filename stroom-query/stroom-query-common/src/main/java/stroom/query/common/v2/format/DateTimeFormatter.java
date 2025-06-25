@@ -42,24 +42,27 @@ public class DateTimeFormatter implements Formatter {
     }
 
     public static DateTimeFormatter create(final DateTimeFormatSettings dateTimeFormat,
-                                           final DateTimeSettings defaultDateTimeSettings) {
+                                           final DateTimeSettings dateTimeSettings) {
         java.time.format.DateTimeFormatter format = null;
 
         String pattern = null;
         UserTimeZone timeZone = null;
-        if (dateTimeFormat != null && !dateTimeFormat.isUsePreferences()) {
-            pattern = dateTimeFormat.getPattern();
-            timeZone = dateTimeFormat.getTimeZone();
-        } else if (defaultDateTimeSettings != null) {
-            pattern = defaultDateTimeSettings.getDateTimePattern();
-            timeZone = defaultDateTimeSettings.getTimeZone();
+        String localZoneId = null;
+        if (dateTimeSettings != null) {
+            pattern = dateTimeSettings.getDateTimePattern();
+            timeZone = dateTimeSettings.getTimeZone();
+            localZoneId = dateTimeSettings.getLocalZoneId();
         }
+
+        if (dateTimeFormat != null && !dateTimeFormat.isUsePreferences()) {
+            pattern = NullSafe.getOrElse(dateTimeFormat, DateTimeFormatSettings::getPattern, pattern);
+            timeZone = NullSafe.getOrElse(dateTimeFormat, DateTimeFormatSettings::getTimeZone, timeZone);
+        }
+        final ZoneId zoneId = UserTimeZoneUtil.getZoneId(timeZone, localZoneId);
 
         if (!NullSafe.isBlankString(pattern)) {
             format = java.time.format.DateTimeFormatter.ofPattern(pattern, Locale.ENGLISH);
         }
-
-        final ZoneId zoneId = UserTimeZoneUtil.getZoneId(timeZone);
         return new DateTimeFormatter(format, zoneId);
     }
 
