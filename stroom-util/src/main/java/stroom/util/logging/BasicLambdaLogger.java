@@ -42,7 +42,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
     public void debug(final Supplier<String> message) {
         try {
             if (logger.isDebugEnabled()) {
-                    logger.debug(getSafeMessage(message));
+                logger.debug(getSafeMessage(message));
             }
         } catch (final RuntimeException e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
