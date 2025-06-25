@@ -26,6 +26,7 @@ import stroom.planb.impl.serde.valtime.ValTimeSerde;
 import stroom.planb.impl.serde.valtime.ValTimeSerdeFactory;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.HashLength;
+import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.RangeKeySchema;
 import stroom.planb.shared.RangeStateSettings;
 import stroom.planb.shared.RangeType;
@@ -41,6 +42,7 @@ import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.io.FileUtil;
 import stroom.util.json.JsonUtil;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import org.lmdbjava.CursorIterable;
@@ -59,7 +61,6 @@ public class RangeStateDb extends AbstractDb<Key, Val> {
 
     private static final int CURRENT_SCHEMA_VERSION = 1;
 
-    private final RangeStateSettings settings;
     private final RangeKeySerde keySerde;
     private final ValTimeSerde valueSerde;
     private final UsedLookupsRecorder keyRecorder;
@@ -67,20 +68,20 @@ public class RangeStateDb extends AbstractDb<Key, Val> {
 
     private RangeStateDb(final PlanBEnv env,
                          final ByteBuffers byteBuffers,
-                         final Boolean overwrite,
+                         final PlanBDoc doc,
                          final RangeStateSettings settings,
                          final RangeKeySerde keySerde,
                          final ValTimeSerde valueSerde,
                          final HashClashCommitRunnable hashClashCommitRunnable) {
         super(env,
                 byteBuffers,
-                overwrite,
+                doc,
+                settings.overwrite(),
                 hashClashCommitRunnable,
                 new SchemaInfo(
                         CURRENT_SCHEMA_VERSION,
                         JsonUtil.writeValueAsString(settings.getKeySchema()),
                         JsonUtil.writeValueAsString(settings.getValueSchema())));
-        this.settings = settings;
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
         this.keyRecorder = keySerde.getUsedLookupsRecorder(env);
@@ -89,8 +90,15 @@ public class RangeStateDb extends AbstractDb<Key, Val> {
 
     public static RangeStateDb create(final Path path,
                                       final ByteBuffers byteBuffers,
-                                      final RangeStateSettings settings,
+                                      final PlanBDoc doc,
                                       final boolean readOnly) {
+        final RangeStateSettings settings;
+        if (doc.getSettings() instanceof final RangeStateSettings rangeStateSettings) {
+            settings = rangeStateSettings;
+        } else {
+            settings = new RangeStateSettings.Builder().build();
+        }
+
         final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
         final Long mapSize = NullSafe.getOrElse(
                 settings,
@@ -101,38 +109,48 @@ public class RangeStateDb extends AbstractDb<Key, Val> {
                 20,
                 readOnly,
                 hashClashCommitRunnable);
-        final RangeType rangeType = NullSafe.getOrElse(
-                settings,
-                RangeStateSettings::getKeySchema,
-                RangeKeySchema::getRangeType,
-                RangeKeySchema.DEFAULT_RANGE_TYPE);
-        final StateValueType stateValueType = NullSafe.getOrElse(
-                settings,
-                RangeStateSettings::getValueSchema,
-                StateValueSchema::getStateValueType,
-                StateValueSchema.DEFAULT_VALUE_TYPE);
-        final HashLength valueHashLength = NullSafe.getOrElse(
-                settings,
-                RangeStateSettings::getValueSchema,
-                StateValueSchema::getHashLength,
-                StateValueSchema.DEFAULT_HASH_LENGTH);
-        final RangeKeySerde keySerde = createKeySerde(
-                rangeType,
-                byteBuffers);
-        final ValTimeSerde valueSerde = ValTimeSerdeFactory.createValueSerde(
-                stateValueType,
-                valueHashLength,
-                env,
-                byteBuffers,
-                hashClashCommitRunnable);
-        return new RangeStateDb(
-                env,
-                byteBuffers,
-                settings.overwrite(),
-                settings,
-                keySerde,
-                valueSerde,
-                hashClashCommitRunnable);
+        try {
+            final RangeType rangeType = NullSafe.getOrElse(
+                    settings,
+                    RangeStateSettings::getKeySchema,
+                    RangeKeySchema::getRangeType,
+                    RangeKeySchema.DEFAULT_RANGE_TYPE);
+            final StateValueType stateValueType = NullSafe.getOrElse(
+                    settings,
+                    RangeStateSettings::getValueSchema,
+                    StateValueSchema::getStateValueType,
+                    StateValueSchema.DEFAULT_VALUE_TYPE);
+            final HashLength valueHashLength = NullSafe.getOrElse(
+                    settings,
+                    RangeStateSettings::getValueSchema,
+                    StateValueSchema::getHashLength,
+                    StateValueSchema.DEFAULT_HASH_LENGTH);
+            final RangeKeySerde keySerde = createKeySerde(
+                    rangeType,
+                    byteBuffers);
+            final ValTimeSerde valueSerde = ValTimeSerdeFactory.createValueSerde(
+                    stateValueType,
+                    valueHashLength,
+                    env,
+                    byteBuffers,
+                    hashClashCommitRunnable);
+            return new RangeStateDb(
+                    env,
+                    byteBuffers,
+                    doc,
+                    settings,
+                    keySerde,
+                    valueSerde,
+                    hashClashCommitRunnable);
+        } catch (final RuntimeException e) {
+            // Close the env if we get any exceptions to prevent them staying open.
+            try {
+                env.close();
+            } catch (final Exception e2) {
+                LOGGER.debug(LogUtil.message("store={}, message={}", doc.getName(), e.getMessage()), e);
+            }
+            throw e;
+        }
     }
 
     private static RangeKeySerde createKeySerde(final RangeType rangeType,
@@ -166,10 +184,7 @@ public class RangeStateDb extends AbstractDb<Key, Val> {
     @Override
     public void merge(final Path source) {
         env.write(writer -> {
-            try (final RangeStateDb sourceDb = RangeStateDb.create(source,
-                    byteBuffers,
-                    settings,
-                    true)) {
+            try (final RangeStateDb sourceDb = RangeStateDb.create(source, byteBuffers, doc, true)) {
                 // Validate that the source DB has the same schema.
                 validateSchema(schemaInfo, sourceDb.getSchemaInfo());
 

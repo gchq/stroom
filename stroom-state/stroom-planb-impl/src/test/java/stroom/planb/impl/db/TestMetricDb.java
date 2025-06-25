@@ -31,6 +31,7 @@ import stroom.planb.shared.MaxValueSize;
 import stroom.planb.shared.MetricKeySchema;
 import stroom.planb.shared.MetricSettings;
 import stroom.planb.shared.MetricValueSchema;
+import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.TemporalResolution;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -73,6 +74,7 @@ class TestMetricDb {
                     .storeSum(true)
                     .build())
             .build();
+    private static final PlanBDoc DOC = getDoc(BASIC_SETTINGS);
 
     private final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
     private final List<KeyFunction> keyFunctions = List.of(
@@ -95,7 +97,7 @@ class TestMetricDb {
     @Test
     void test(@TempDir final Path tempDir) {
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-        try (final MetricDb db = MetricDb.create(tempDir, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
+        try (final MetricDb db = MetricDb.create(tempDir, BYTE_BUFFERS, DOC, false)) {
             for (int i = 0; i < 100; i++) {
                 insertData(db, refTime, i + 10, 10, 1);
             }
@@ -104,7 +106,7 @@ class TestMetricDb {
         try (final MetricDb db = MetricDb.create(
                 tempDir,
                 BYTE_BUFFERS,
-                BASIC_SETTINGS,
+                DOC,
                 true)) {
             assertThat(db.count()).isEqualTo(1);
 
@@ -158,7 +160,7 @@ class TestMetricDb {
     void testGetMetric(@TempDir final Path tempDir) {
         final KeyPrefix tags = getTags();
         final Instant time = Instant.parse("2000-01-01T00:00:00.000Z");
-        try (final MetricDb db = MetricDb.create(tempDir, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
+        try (final MetricDb db = MetricDb.create(tempDir, BYTE_BUFFERS, DOC, false)) {
             db.write(writer -> {
                 final TemporalKey k = getKey(time);
                 db.insert(writer, new TemporalValue(k, 1L));
@@ -168,7 +170,7 @@ class TestMetricDb {
         try (final MetricDb db = MetricDb.create(
                 tempDir,
                 BYTE_BUFFERS,
-                BASIC_SETTINGS,
+                DOC,
                 true)) {
             assertThat(db.count()).isEqualTo(1);
             checkMetric(db, tags, time, 1L);
@@ -256,7 +258,7 @@ class TestMetricDb {
         testWrite(dbPath1);
         testWrite(dbPath2);
 
-        try (final MetricDb db = MetricDb.create(dbPath1, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
+        try (final MetricDb db = MetricDb.create(dbPath1, BYTE_BUFFERS, DOC, false)) {
             db.merge(dbPath2);
         }
     }
@@ -268,7 +270,7 @@ class TestMetricDb {
 
         testWrite(dbPath);
 
-        try (final MetricDb db = MetricDb.create(dbPath, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
+        try (final MetricDb db = MetricDb.create(dbPath, BYTE_BUFFERS, DOC, false)) {
             assertThat(db.count()).isEqualTo(1);
             db.deleteOldData(Instant.MIN, true);
             assertThat(db.count()).isEqualTo(1);
@@ -283,7 +285,7 @@ class TestMetricDb {
         Files.createDirectory(dbPath);
 
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-        try (final MetricDb db = MetricDb.create(dbPath, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
+        try (final MetricDb db = MetricDb.create(dbPath, BYTE_BUFFERS, DOC, false)) {
             insertData(db, refTime, 1L, 100, 60 * 60 * 24);
             insertData(db, refTime, 1L, 100, 60 * 60 * 24);
             insertData(db, refTime, 1L, 10, -60 * 60 * 24);
@@ -301,7 +303,7 @@ class TestMetricDb {
 
     private void testWrite(final Path dbDir) {
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-        try (final MetricDb db = MetricDb.create(dbDir, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
+        try (final MetricDb db = MetricDb.create(dbDir, BYTE_BUFFERS, DOC, false)) {
             insertData(db, refTime, 1, 100, 10);
         }
     }
@@ -311,7 +313,7 @@ class TestMetricDb {
                            final int insertRows,
                            final Function<Integer, TemporalKey> keyFunction,
                            final Function<Integer, Long> valueFunction) {
-        try (final MetricDb db = MetricDb.create(dbDir, BYTE_BUFFERS, settings, false)) {
+        try (final MetricDb db = MetricDb.create(dbDir, BYTE_BUFFERS, getDoc(settings), false)) {
             insertData(db, insertRows, keyFunction, valueFunction);
         }
     }
@@ -334,7 +336,7 @@ class TestMetricDb {
                                 final int rows,
                                 final Function<Integer, TemporalKey> keyFunction,
                                 final Function<Integer, Long> valueFunction) {
-        try (final MetricDb db = MetricDb.create(dbDir, BYTE_BUFFERS, settings, true)) {
+        try (final MetricDb db = MetricDb.create(dbDir, BYTE_BUFFERS, getDoc(settings), true)) {
             for (int i = 0; i < rows; i++) {
                 final TemporalKey key = keyFunction.apply(i);
                 final Long value = db.get(key);
@@ -365,6 +367,10 @@ class TestMetricDb {
         final TemporalKey key = new TemporalKey(tags, time);
         final Long state = db.get(key);
         assertThat(state).isEqualTo(expected);
+    }
+
+    private static PlanBDoc getDoc(final MetricSettings settings) {
+        return PlanBDoc.builder().name("test").settings(settings).build();
     }
 
     private record KeyFunction(String description,

@@ -28,6 +28,7 @@ import stroom.planb.impl.db.temporalstate.TemporalStateRequest;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 import stroom.planb.impl.serde.temporalkey.TemporalKey;
 import stroom.planb.shared.KeyType;
+import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateValueSchema;
 import stroom.planb.shared.TemporalPrecision;
 import stroom.planb.shared.TemporalStateKeySchema;
@@ -73,6 +74,7 @@ class TestTemporalStateDb {
             .Builder()
             .maxStoreSize(ByteSize.ofGibibytes(100).getBytes())
             .build();
+    private static final PlanBDoc DOC = getDoc(BASIC_SETTINGS);
 
     private final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
     private final List<KeyFunction> keyFunctions = List.of(
@@ -113,7 +115,7 @@ class TestTemporalStateDb {
         try (final TemporalStateDb db = TemporalStateDb.create(
                 tempDir,
                 BYTE_BUFFERS,
-                BASIC_SETTINGS,
+                DOC,
                 true)) {
             assertThat(db.count()).isEqualTo(100);
 
@@ -158,7 +160,7 @@ class TestTemporalStateDb {
     void testGetState(@TempDir final Path tempDir) {
         final KeyPrefix name = KeyPrefix.create("test");
         final Instant effectiveTime = Instant.parse("2000-01-01T00:00:00.000Z");
-        try (final TemporalStateDb db = TemporalStateDb.create(tempDir, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
+        try (final TemporalStateDb db = TemporalStateDb.create(tempDir, BYTE_BUFFERS, DOC, false)) {
             db.write(writer -> {
                 final TemporalKey k = TemporalKey
                         .builder()
@@ -173,7 +175,7 @@ class TestTemporalStateDb {
         try (final TemporalStateDb db = TemporalStateDb.create(
                 tempDir,
                 BYTE_BUFFERS,
-                BASIC_SETTINGS,
+                DOC,
                 true)) {
             assertThat(db.count()).isEqualTo(1);
             checkState(db, name, effectiveTime, true);
@@ -257,7 +259,7 @@ class TestTemporalStateDb {
         testWrite(dbPath1);
         testWrite(dbPath2);
 
-        try (final TemporalStateDb db = TemporalStateDb.create(dbPath1, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
+        try (final TemporalStateDb db = TemporalStateDb.create(dbPath1, BYTE_BUFFERS, DOC, false)) {
             db.merge(dbPath2);
         }
     }
@@ -269,7 +271,7 @@ class TestTemporalStateDb {
 
         testWrite(dbPath);
 
-        try (final TemporalStateDb db = TemporalStateDb.create(dbPath, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
+        try (final TemporalStateDb db = TemporalStateDb.create(dbPath, BYTE_BUFFERS, DOC, false)) {
             assertThat(db.count()).isEqualTo(100);
             db.condense(Instant.now());
             db.deleteOldData(Instant.MIN, true);
@@ -286,7 +288,7 @@ class TestTemporalStateDb {
         Files.createDirectory(dbPath);
 
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-        try (final TemporalStateDb db = TemporalStateDb.create(dbPath, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
+        try (final TemporalStateDb db = TemporalStateDb.create(dbPath, BYTE_BUFFERS, DOC, false)) {
             insertData(db, refTime, KeyPrefix.create("TEST_KEY"), "test", 100, 60 * 60 * 24);
             insertData(db, refTime, KeyPrefix.create("TEST_KEY2"), "test2", 100, 60 * 60 * 24);
             insertData(db, refTime, KeyPrefix.create("TEST_KEY"), "test", 10, -60 * 60 * 24);
@@ -306,7 +308,7 @@ class TestTemporalStateDb {
 
     private void testWrite(final Path dbDir) {
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-        try (final TemporalStateDb db = TemporalStateDb.create(dbDir, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
+        try (final TemporalStateDb db = TemporalStateDb.create(dbDir, BYTE_BUFFERS, DOC, false)) {
             insertData(db, refTime, KeyPrefix.create("TEST_KEY"), "test", 100, 10);
         }
     }
@@ -316,7 +318,7 @@ class TestTemporalStateDb {
                            final int insertRows,
                            final Function<Integer, TemporalKey> keyFunction,
                            final Function<Integer, Val> valueFunction) {
-        try (final TemporalStateDb db = TemporalStateDb.create(dbDir, BYTE_BUFFERS, settings, false)) {
+        try (final TemporalStateDb db = TemporalStateDb.create(dbDir, BYTE_BUFFERS, getDoc(settings), false)) {
             insertData(db, insertRows, keyFunction, valueFunction);
         }
     }
@@ -339,7 +341,7 @@ class TestTemporalStateDb {
                                 final int rows,
                                 final Function<Integer, TemporalKey> keyFunction,
                                 final Function<Integer, Val> valueFunction) {
-        try (final TemporalStateDb db = TemporalStateDb.create(dbDir, BYTE_BUFFERS, settings, true)) {
+        try (final TemporalStateDb db = TemporalStateDb.create(dbDir, BYTE_BUFFERS, getDoc(settings), true)) {
             for (int i = 0; i < rows; i++) {
                 final TemporalKey key = keyFunction.apply(i);
                 final TemporalState temporalState = db.getState(new TemporalStateRequest(key));
@@ -378,6 +380,10 @@ class TestTemporalStateDb {
                 new TemporalStateRequest(new TemporalKey(key, effectiveTime));
         final TemporalState state = db.getState(request);
         assertThat(state != null).isEqualTo(expected);
+    }
+
+    private static PlanBDoc getDoc(final TemporalStateSettings settings) {
+        return PlanBDoc.builder().name("test").settings(settings).build();
     }
 
     private record KeyFunction(String description,

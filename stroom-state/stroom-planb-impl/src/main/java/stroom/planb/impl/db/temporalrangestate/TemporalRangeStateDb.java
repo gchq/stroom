@@ -33,6 +33,7 @@ import stroom.planb.impl.serde.valtime.ValTimeSerde;
 import stroom.planb.impl.serde.valtime.ValTimeSerdeFactory;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.HashLength;
+import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.RangeType;
 import stroom.planb.shared.StateValueSchema;
 import stroom.planb.shared.StateValueType;
@@ -50,6 +51,7 @@ import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.io.FileUtil;
 import stroom.util.json.JsonUtil;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import org.lmdbjava.CursorIterable;
@@ -69,7 +71,6 @@ public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
 
     private static final int CURRENT_SCHEMA_VERSION = 1;
 
-    private final TemporalRangeStateSettings settings;
     private final TemporalRangeKeySerde keySerde;
     private final ValTimeSerde valueSerde;
     private final UsedLookupsRecorder keyRecorder;
@@ -77,20 +78,20 @@ public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
 
     private TemporalRangeStateDb(final PlanBEnv env,
                                  final ByteBuffers byteBuffers,
-                                 final Boolean overwrite,
+                                 final PlanBDoc doc,
                                  final TemporalRangeStateSettings settings,
                                  final TemporalRangeKeySerde keySerde,
                                  final ValTimeSerde valueSerde,
                                  final HashClashCommitRunnable hashClashCommitRunnable) {
         super(env,
                 byteBuffers,
-                overwrite,
+                doc,
+                settings.overwrite(),
                 hashClashCommitRunnable,
                 new SchemaInfo(
                         CURRENT_SCHEMA_VERSION,
                         JsonUtil.writeValueAsString(settings.getKeySchema()),
                         JsonUtil.writeValueAsString(settings.getValueSchema())));
-        this.settings = settings;
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
         this.keyRecorder = keySerde.getUsedLookupsRecorder(env);
@@ -99,8 +100,15 @@ public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
 
     public static TemporalRangeStateDb create(final Path path,
                                               final ByteBuffers byteBuffers,
-                                              final TemporalRangeStateSettings settings,
+                                              final PlanBDoc doc,
                                               final boolean readOnly) {
+        final TemporalRangeStateSettings settings;
+        if (doc.getSettings() instanceof final TemporalRangeStateSettings temporalRangeStateSettings) {
+            settings = temporalRangeStateSettings;
+        } else {
+            settings = new TemporalRangeStateSettings.Builder().build();
+        }
+
         final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
         final Long mapSize = NullSafe.getOrElse(
                 settings,
@@ -111,44 +119,54 @@ public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
                 20,
                 readOnly,
                 hashClashCommitRunnable);
-        final RangeType rangeType = NullSafe.getOrElse(
-                settings,
-                TemporalRangeStateSettings::getKeySchema,
-                TemporalRangeKeySchema::getRangeType,
-                TemporalRangeKeySchema.DEFAULT_RANGE_TYPE);
-        final StateValueType stateValueType = NullSafe.getOrElse(
-                settings,
-                TemporalRangeStateSettings::getValueSchema,
-                StateValueSchema::getStateValueType,
-                StateValueSchema.DEFAULT_VALUE_TYPE);
-        final HashLength valueHashLength = NullSafe.getOrElse(
-                settings,
-                TemporalRangeStateSettings::getValueSchema,
-                StateValueSchema::getHashLength,
-                StateValueSchema.DEFAULT_HASH_LENGTH);
-        final TimeSerde timeSerde = createTimeSerde(NullSafe.getOrElse(
-                settings,
-                TemporalRangeStateSettings::getKeySchema,
-                TemporalRangeKeySchema::getTemporalPrecision,
-                TemporalRangeKeySchema.DEFAULT_TEMPORAL_PRECISION));
-        final TemporalRangeKeySerde keySerde = createKeySerde(
-                rangeType,
-                byteBuffers,
-                timeSerde);
-        final ValTimeSerde valueSerde = ValTimeSerdeFactory.createValueSerde(
-                stateValueType,
-                valueHashLength,
-                env,
-                byteBuffers,
-                hashClashCommitRunnable);
-        return new TemporalRangeStateDb(
-                env,
-                byteBuffers,
-                settings.overwrite(),
-                settings,
-                keySerde,
-                valueSerde,
-                hashClashCommitRunnable);
+        try {
+            final RangeType rangeType = NullSafe.getOrElse(
+                    settings,
+                    TemporalRangeStateSettings::getKeySchema,
+                    TemporalRangeKeySchema::getRangeType,
+                    TemporalRangeKeySchema.DEFAULT_RANGE_TYPE);
+            final StateValueType stateValueType = NullSafe.getOrElse(
+                    settings,
+                    TemporalRangeStateSettings::getValueSchema,
+                    StateValueSchema::getStateValueType,
+                    StateValueSchema.DEFAULT_VALUE_TYPE);
+            final HashLength valueHashLength = NullSafe.getOrElse(
+                    settings,
+                    TemporalRangeStateSettings::getValueSchema,
+                    StateValueSchema::getHashLength,
+                    StateValueSchema.DEFAULT_HASH_LENGTH);
+            final TimeSerde timeSerde = createTimeSerde(NullSafe.getOrElse(
+                    settings,
+                    TemporalRangeStateSettings::getKeySchema,
+                    TemporalRangeKeySchema::getTemporalPrecision,
+                    TemporalRangeKeySchema.DEFAULT_TEMPORAL_PRECISION));
+            final TemporalRangeKeySerde keySerde = createKeySerde(
+                    rangeType,
+                    byteBuffers,
+                    timeSerde);
+            final ValTimeSerde valueSerde = ValTimeSerdeFactory.createValueSerde(
+                    stateValueType,
+                    valueHashLength,
+                    env,
+                    byteBuffers,
+                    hashClashCommitRunnable);
+            return new TemporalRangeStateDb(
+                    env,
+                    byteBuffers,
+                    doc,
+                    settings,
+                    keySerde,
+                    valueSerde,
+                    hashClashCommitRunnable);
+        } catch (final RuntimeException e) {
+            // Close the env if we get any exceptions to prevent them staying open.
+            try {
+                env.close();
+            } catch (final Exception e2) {
+                LOGGER.debug(LogUtil.message("store={}, message={}", doc.getName(), e.getMessage()), e);
+            }
+            throw e;
+        }
     }
 
     private static TimeSerde createTimeSerde(final TemporalPrecision temporalPrecision) {
@@ -196,7 +214,7 @@ public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
         env.write(writer -> {
             try (final TemporalRangeStateDb sourceDb = TemporalRangeStateDb.create(source,
                     byteBuffers,
-                    settings,
+                    doc,
                     true)) {
                 // Validate that the source DB has the same schema.
                 validateSchema(schemaInfo, sourceDb.getSchemaInfo());
