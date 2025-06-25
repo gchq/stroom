@@ -156,7 +156,7 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
                     HistogramValueSchema::getValueType,
                     HistogramValueSchema.DEFAULT_VALUE_TYPE);
             // Rows will store hour precision.
-            final ZoneId zoneId = UserTimeZoneUtil.getZoneId(timeZone);
+            final ZoneId zoneId = UserTimeZoneUtil.getZoneId(timeZone, null);
 
             // The key time is always a coarse grained time with rows having multiple values.
             final TimeSerde keyTimeSerde = getKeyTimeSerde(temporalResolution, zoneId);

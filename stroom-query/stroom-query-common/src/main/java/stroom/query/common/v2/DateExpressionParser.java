@@ -285,7 +285,7 @@ public class DateExpressionParser {
             return ZonedDateTime.parse(trimmed);
         } catch (final DateTimeParseException e) {
             try {
-                final ZoneId zoneId = UserTimeZoneUtil.getZoneId(dateTimeSettings.getTimeZone());
+                final ZoneId zoneId = UserTimeZoneUtil.getZoneId(dateTimeSettings);
                 return LocalDateTime.parse(trimmed).atZone(zoneId);
             } catch (final RuntimeException ex) {
                 // Ignore error
