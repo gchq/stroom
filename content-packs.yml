@@ -109,7 +109,7 @@
     }
   }, {
     name: "stroom-visualisations",
-    path: "war/stroom-content",
+    path: "war/stroom_content",
     repo: {
       name: "stroom-visualisations-dev",
       uri : "https://github.com/gchq/stroom-visualisations-dev.git",
