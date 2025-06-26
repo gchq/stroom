@@ -366,7 +366,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
             final TableCellElement cellElement = rowElement.getCells().getItem(col);
             if (cellElement != null) {
                 //strip htnl tags
-                return cellElement.getInnerText();
+                return normalizeWhitespace(cellElement.getInnerText());
             }
         }
         return "";
@@ -391,10 +391,12 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     }
 
     private void exportRow(final int rowIndex) {
+        final int columnOffset = getColumnOffset();
+
         if (rowIndex >= 0) {
             final StringBuilder sb = new StringBuilder();
-            for (int col = 0; col < getColumnCount(); col++) {
-                if (col > 0) {
+            for (int col = columnOffset; col < getColumnCount(); col++) {
+                if (col > columnOffset) {
                     sb.append(",");
                 }
                 sb.append(escapeCsv(getCellText(rowIndex, col)));
@@ -427,24 +429,25 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     private void exportTableAsCSV(final CommandWithCsv command) {
         final StringBuilder sb = new StringBuilder();
         final TableSectionElement head = getTableHeadElement();
+        final int columnOffset = getColumnOffset();
 
         //headers
         if (head != null && head.getRows().getLength() > 0) {
             final TableRowElement headerRow = head.getRows().getItem(0);
-            for (int col = 0; col < getColumnCount(); col++) {
-                if (col > 0) {
+            for (int col = columnOffset; col < getColumnCount(); col++) {
+                if (col > columnOffset) {
                     sb.append(",");
                 }
                 final TableCellElement th = headerRow.getCells().getItem(col);
-                sb.append(escapeCsv(th.getInnerText()));
+                sb.append(escapeCsv(normalizeWhitespace(th.getInnerText())));
             }
             sb.append("\n");
         }
 
         //rows
         for (int row = 0; row < getVisibleItemCount(); row++) {
-            for (int col = 0; col < getColumnCount(); col++) {
-                if (col > 0) {
+            for (int col = columnOffset; col < getColumnCount(); col++) {
+                if (col > columnOffset) {
                     sb.append(",");
                 }
                 sb.append(escapeCsv(getCellText(row, col)));
@@ -473,6 +476,30 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         link.click();
         $doc.body.removeChild(link);
     }-*/;
+
+    private int getColumnOffset() {
+        final TableSectionElement head = getTableHeadElement();
+        int columnOffset = 0;
+
+        if (head != null && head.getRows().getLength() > 0) {
+            final TableRowElement headerRow = head.getRows().getItem(0);
+            for (int col = 0; col < getColumnCount(); col++) {
+                final TableCellElement th = headerRow.getCells().getItem(col);
+
+                final String string = escapeCsv(normalizeWhitespace(th.getInnerText()));
+                if (string.isEmpty()) {
+                    columnOffset++;
+                } else {
+                    break;
+                }
+            }
+        }
+        return columnOffset;
+    }
+
+    private String normalizeWhitespace(final String text) {
+        return text.replaceAll("\\s+", " ").trim();
+    }
 
     @Override
     public void onPreviewNativeEvent(final NativePreviewEvent nativePreviewEvent) {
