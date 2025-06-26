@@ -29,7 +29,14 @@ abstract class AbstractRoundDateTime extends AbstractDateTimeFunction {
     private Function function;
 
     public AbstractRoundDateTime(final ExpressionContext expressionContext, final String name) {
-        super(expressionContext, name, 1, 3);
+        super(expressionContext, name, 1, 1);
+    }
+
+    public AbstractRoundDateTime(final ExpressionContext expressionContext,
+                                 final String name,
+                                 final int minParams,
+                                 final int maxParams) {
+        super(expressionContext, name, minParams, maxParams);
     }
 
     @Override

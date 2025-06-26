@@ -4,11 +4,11 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.stream.Stream;
 
-public class TestRoundTime extends AbstractFunctionTest<RoundTime> {
+public class TestCeilingTime extends AbstractFunctionTest<CeilingTime> {
 
     @Override
-    Class<RoundTime> getFunctionType() {
-        return RoundTime.class;
+    Class<CeilingTime> getFunctionType() {
+        return CeilingTime.class;
     }
 
     @Override
@@ -25,12 +25,12 @@ public class TestRoundTime extends AbstractFunctionTest<RoundTime> {
 
         final LocalDateTime hourlyInput = LocalDateTime.of(2025, 4, 7, 10, 29, 30);
         final long hourlyInputMillis = hourlyInput.atZone(ZoneOffset.UTC).toInstant().toEpochMilli();
-        final LocalDateTime hourlyRounded = LocalDateTime.of(2025, 4, 7, 10, 0, 0);
+        final LocalDateTime hourlyRounded = LocalDateTime.of(2025, 4, 7, 11, 0, 0);
         final long hourlyExpectedMillis = hourlyRounded.atZone(ZoneOffset.UTC).toInstant().toEpochMilli();
 
         final LocalDateTime dailyInput = LocalDateTime.of(2025, 4, 7, 11, 44, 30);
         final long dailyInputMillis = dailyInput.atZone(ZoneOffset.UTC).toInstant().toEpochMilli();
-        final LocalDateTime dailyRounded = LocalDateTime.of(2025, 4, 7, 0, 0, 0);
+        final LocalDateTime dailyRounded = LocalDateTime.of(2025, 4, 8, 0, 0, 0);
         final long dailyExpectedMillis = dailyRounded.atZone(ZoneOffset.UTC).toInstant().toEpochMilli();
 
         final LocalDateTime secondsInput = LocalDateTime.of(2025, 4, 7, 10, 0, 14, 750_000_000);
@@ -55,37 +55,37 @@ public class TestRoundTime extends AbstractFunctionTest<RoundTime> {
 
         return Stream.of(
                 TestCase.of(
-                        "Round time with valid inputs",
+                        "Ceiling time with valid inputs",
                         ValDate.create(expectedMillis),
                         ValDate.create(inputMillis),
                         ValString.create("PT15M")       //duration
                 ),
                 TestCase.of(
-                        "Round time with invalid duration",
+                        "Ceiling time with invalid duration",
                         ValErr.create("Invalid duration format: INVALID"),
                         ValDate.create(inputMillis),
                         ValString.create("INVALID")
                 ),
                 TestCase.of(
-                        "Round to 15 minutes",
+                        "Ceiling to 15 minutes",
                         ValDate.create(expectedMillisWithZone),
                         ValDate.create(inputMillisWithZone),
                         ValString.create("PT15M")
                 ),
                 TestCase.of(
-                        "Round to hourly",
+                        "Ceiling to hourly",
                         ValDate.create(hourlyExpectedMillis),
                         ValDate.create(hourlyInputMillis),
                         ValString.create("PT1H")
                 ),
                 TestCase.of(
-                        "Round to daily",
+                        "Ceiling to daily",
                         ValDate.create(dailyExpectedMillis),
                         ValDate.create(dailyInputMillis),
                         ValString.create("P1D")
                 ),
                 TestCase.of(
-                        "Round to 15 seconds",
+                        "Ceiling to 15 seconds",
                         ValDate.create(secondsExpectedMillis),
                         ValDate.create(secondsInputMillis),
                         ValString.create("PT15S")
