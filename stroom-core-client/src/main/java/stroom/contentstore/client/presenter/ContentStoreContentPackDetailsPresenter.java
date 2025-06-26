@@ -433,7 +433,7 @@ public class ContentStoreContentPackDetailsPresenter
                             restError.getMessage(),
                             () -> RefreshExplorerTreeEvent.fire(contentStorePresenter));
                 })
-                .taskMonitorFactory(btnCreateGitRepo)
+                .taskMonitorFactory(btnUpgradeGitRepo)
                 .exec();
     }
 
