@@ -233,27 +233,62 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     private void showContextMenu(final int x, final int y, final int rowIndex, final int colIndex, final Element target) {
         final List<Item> menuItems = new ArrayList<>();
 
+        String url = null;
+
         Element linkElement = target;
         while (linkElement != null && !"a".equalsIgnoreCase(linkElement.getTagName())) {
             linkElement = linkElement.getParentElement();
         }
 
-        boolean isLink = false;
         if (linkElement != null) {
             final String href = linkElement.getAttribute("href");
             if (href != null && !href.isEmpty() && !href.startsWith("javascript")) {
-                isLink = true;
-                menuItems.add(new IconMenuItem.Builder()
-                        .icon(SvgImage.COPY)
-                        .text("Copy Link URL")
-                        .command(() -> copyToClipboard(href))
-                        .build());
-                menuItems.add(new IconMenuItem.Builder()
-                        .icon(SvgImage.OPEN)
-                        .text("Follow URL")
-                        .command(() -> com.google.gwt.user.client.Window.open(href, "_blank", ""))
-                        .build());
+                url = href;
             }
+        }
+
+        if (url == null) {
+            Element customLinkElement = target;
+            while (customLinkElement != null && !customLinkElement.hasAttribute("link")) {
+                customLinkElement = customLinkElement.getParentElement();
+            }
+
+            if (customLinkElement != null) {
+                final String linkAttr = customLinkElement.getAttribute("link");
+                if (linkAttr != null && linkAttr.contains("](") && linkAttr.endsWith(")")) {
+                    final int urlStart = linkAttr.lastIndexOf("](") + 2;
+                    final int urlEnd = linkAttr.length() - 1;
+                    if (urlStart < urlEnd) {
+                        url = linkAttr.substring(urlStart, urlEnd);
+                        if (url.startsWith("https%3A%2F%2F")) {
+                            url = "https://" + url.substring("https%3A%2F%2F".length());
+                        }
+                        url = com.google.gwt.http.client.URL.decode(url);
+                    }
+                }
+            }
+        }
+
+        boolean isLink = false;
+        if (url != null) {
+            isLink = true;
+            final String finalUrl = url;
+            menuItems.add(new IconMenuItem.Builder()
+                    .icon(SvgImage.COPY)
+                    .text("Copy Link URL")
+                    .command(() -> copyToClipboard(finalUrl))
+                    .build());
+            menuItems.add(new IconMenuItem.Builder()
+                    .icon(SvgImage.OPEN)
+                    .text("Follow URL")
+                    .command(() -> {
+                        String toOpen = finalUrl;
+                        if (!(toOpen.startsWith("http://") || toOpen.startsWith("https://"))) {
+                            toOpen = "https://" + toOpen;
+                        }
+                        com.google.gwt.user.client.Window.open(toOpen, "_blank", "");
+                    })
+                    .build());
         }
 
         if (rowIndex >= 0 && colIndex >= 0) {
@@ -325,23 +360,44 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         }
     }
 
+    private String getCellText(final int row, final int col) {
+        final TableRowElement rowElement = getRowElement(row);
+        if (rowElement != null) {
+            final TableCellElement cellElement = rowElement.getCells().getItem(col);
+            if (cellElement != null) {
+                //strip htnl tags
+                return cellElement.getInnerText();
+            }
+        }
+        return "";
+    }
+
+    private String escapeCsv(final String text) {
+        if (text == null) {
+            return "";
+        }
+        final String cleanedText = text.replace('\n', ' ');
+        if (cleanedText.contains(",") || cleanedText.contains("\"")) {
+            final String escapedText = cleanedText.replace("\"", "\"\"");
+            return "\"" + escapedText + "\"";
+        }
+        return cleanedText;
+    }
+
     private void exportCell(final int rowIndex, final int colIndex) {
         if (rowIndex >= 0 && colIndex >= 0) {
-            final R row = getVisibleItem(rowIndex);
-            final Column<R, ?> column = getColumn(colIndex);
-            final Object value = column.getValue(row);
-            copyToClipboard(String.valueOf(value));
+            copyToClipboard(getCellText(rowIndex, colIndex));
         }
     }
 
     private void exportRow(final int rowIndex) {
         if (rowIndex >= 0) {
-            final R row = getVisibleItem(rowIndex);
             final StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < getColumnCount(); i++) {
-                if (i > 0) sb.append(",");
-                final Object value = getColumn(i).getValue(row);
-                sb.append("\"").append(value != null ? value.toString().replace("\"", "\"\"") : "").append("\"");
+            for (int col = 0; col < getColumnCount(); col++) {
+                if (col > 0) {
+                    sb.append(",");
+                }
+                sb.append(escapeCsv(getCellText(rowIndex, col)));
             }
             copyToClipboard(sb.toString());
         }
@@ -350,53 +406,56 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     private void exportColumn(final int colIndex) {
         if (colIndex >= 0) {
             final StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < getVisibleItemCount(); i++) {
-                if (i > 0) sb.append(";");
-                final R row = getVisibleItem(i);
-                final Object value = getColumn(colIndex).getValue(row);
-                sb.append(value != null ? value.toString() : "");
+            for (int row = 0; row < getVisibleItemCount(); row++) {
+                if (row > 0) {
+                    sb.append("\n");
+                }
+                sb.append(getCellText(row, colIndex));
             }
             copyToClipboard(sb.toString());
         }
     }
 
     private void copyTableAsCSV() {
-        final StringBuilder sb = new StringBuilder();
-        for (int col = 0; col < getColumnCount(); col++) {
-            if (col > 0) sb.append(",");
-            final String header = getHeader(col) != null ? getHeader(col).getValue() + "" : "";
-            sb.append("\"").append(header.replace("\"", "\"\"")).append("\"");
-        }
-        sb.append("\n");
-        for (int row = 0; row < getVisibleItemCount(); row++) {
-            for (int col = 0; col < getColumnCount(); col++) {
-                if (col > 0) sb.append(",");
-                final Object value = getColumn(col).getValue(getVisibleItem(row));
-                sb.append("\"").append(value != null ? value.toString().replace("\"", "\"\"") : "").append("\"");
-            }
-            sb.append("\n");
-        }
-        copyToClipboard(sb.toString());
+        exportTableAsCSV(this::copyToClipboard);
     }
 
     private void exportTableAsCSV() {
-        //built a string of all the rows + all the columns
+        exportTableAsCSV(csv -> downloadCSV("table.csv", csv));
+    }
+
+    private void exportTableAsCSV(final CommandWithCsv command) {
         final StringBuilder sb = new StringBuilder();
-        for (int col = 0; col < getColumnCount(); col++) {
-            if (col > 0) sb.append(",");
-            final String header = getHeader(col) != null ? getHeader(col).getValue() + "" : "";
-            sb.append("\"").append(header.replace("\"", "\"\"")).append("\"");
-        }
-        sb.append("\n");
-        for (int row = 0; row < getVisibleItemCount(); row++) {
+        final TableSectionElement head = getTableHeadElement();
+
+        //headers
+        if (head != null && head.getRows().getLength() > 0) {
+            final TableRowElement headerRow = head.getRows().getItem(0);
             for (int col = 0; col < getColumnCount(); col++) {
-                if (col > 0) sb.append(",");
-                final Object value = getColumn(col).getValue(getVisibleItem(row));
-                sb.append("\"").append(value != null ? value.toString().replace("\"", "\"\"") : "").append("\"");
+                if (col > 0) {
+                    sb.append(",");
+                }
+                final TableCellElement th = headerRow.getCells().getItem(col);
+                sb.append(escapeCsv(th.getInnerText()));
             }
             sb.append("\n");
         }
-        downloadCSV("table.csv", sb.toString());
+
+        //rows
+        for (int row = 0; row < getVisibleItemCount(); row++) {
+            for (int col = 0; col < getColumnCount(); col++) {
+                if (col > 0) {
+                    sb.append(",");
+                }
+                sb.append(escapeCsv(getCellText(row, col)));
+            }
+            sb.append("\n");
+        }
+        command.execute(sb.toString());
+    }
+
+    private interface CommandWithCsv {
+        void execute(String csv);
     }
 
     //browser api to export csv or copy
