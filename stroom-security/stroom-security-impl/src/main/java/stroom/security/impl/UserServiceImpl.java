@@ -184,7 +184,13 @@ class UserServiceImpl implements UserService, ContentPackUserService {
 
     @Override
     public ResultPage<User> find(final FindUserCriteria criteria) {
-        return securityContext.secureResult(() -> userDao.find(criteria));
+        return securityContext.secureResult(() -> {
+            if (securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
+                return userDao.find(criteria);
+            } else {
+                return userDao.findRestrictedUserList(securityContext.getUserRef().getUuid(), criteria);
+            }
+        });
     }
 
     @Override
