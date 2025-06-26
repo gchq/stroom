@@ -395,6 +395,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                         .join(ANNOTATION_DATA_LINK).on(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
                         .where(ANNOTATION_DATA_LINK.STREAM_ID.eq(eventId.getStreamId())
                                 .and(ANNOTATION_DATA_LINK.EVENT_ID.eq(eventId.getEventId())))
+                        .and(ANNOTATION.DELETED.isFalse())
                         .fetch())
                 .map(this::mapToAnnotation);
     }
