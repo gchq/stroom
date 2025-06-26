@@ -16,7 +16,6 @@
 
 package stroom.data.grid.client;
 
-import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -29,8 +28,8 @@ import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.cell.client.Cell.Context;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Node;
@@ -46,23 +45,16 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.Header;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.CustomScrollPanel;
-import com.google.web.bindery.event.shared.EventBus;
 import com.google.gwt.user.client.ui.FocusUtil;
-import com.google.gwt.user.client.ui.MenuBar;
-import com.google.gwt.user.client.ui.MenuItem;
-import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.HeaderPanel;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.MenuBar;
-import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.RangeChangeEvent.Handler;
 import com.google.gwt.view.client.SelectionModel;
@@ -210,7 +202,8 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
             //finding cell/row/column info
             final Element target = event.getEventTarget().cast();
             final TableCellElement cell = findParentCell(target);
-            int rowIndex = -1, colIndex = -1;
+            int rowIndex = -1;
+            int colIndex = -1;
             if (cell != null) {
                 final TableRowElement row = cell.getParentElement().cast();
                 rowIndex = row.getSectionRowIndex();
@@ -230,40 +223,68 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         return (TableCellElement) target;
     }
 
-    private void showContextMenu(final int x, final int y, final int rowIndex, final int colIndex, final Element target) {
+    private void showContextMenu(final int x, final int y, final int rowIndex,
+                                 final int colIndex, final Element target) {
         final List<Item> menuItems = new ArrayList<>();
+        boolean specialItems = false;
 
         String url = null;
 
-        Element linkElement = target;
-        while (linkElement != null && !"a".equalsIgnoreCase(linkElement.getTagName())) {
-            linkElement = linkElement.getParentElement();
-        }
+        if (rowIndex >= 0 && colIndex >= 0) {
+            final Column<R, ?> column = getColumn(colIndex);
+            final com.google.gwt.cell.client.Cell<?> cell = column.getCell();
 
-        if (linkElement != null) {
-            final String href = linkElement.getAttribute("href");
-            if (href != null && !href.isEmpty() && !href.startsWith("javascript")) {
-                url = href;
+            //checking if the cell has its own context meun
+            if (cell instanceof HasContextMenus) {
+                final R rowValue = getVisibleItem(rowIndex);
+                final Object cellValue = column.getValue(rowValue);
+                final Object key = getKeyProvider() != null
+                        ? getKeyProvider().getKey(rowValue)
+                        : null;
+                final Context context = new Context(rowIndex, colIndex, key);
+
+                @SuppressWarnings("unchecked")
+                final HasContextMenus<Object> hasContextMenus = (HasContextMenus<Object>) cell;
+                final List<Item> cellMenuItems = hasContextMenus.getContextMenuItems(context, cellValue);
+
+                if (cellMenuItems != null && !cellMenuItems.isEmpty()) {
+                    menuItems.addAll(cellMenuItems);
+                    specialItems = true;
+                }
             }
-        }
 
-        if (url == null) {
-            Element customLinkElement = target;
-            while (customLinkElement != null && !customLinkElement.hasAttribute("link")) {
-                customLinkElement = customLinkElement.getParentElement();
-            }
+            if (!specialItems) {
+                Element linkElement = target;
+                while (linkElement != null && !"a".equalsIgnoreCase(linkElement.getTagName())) {
+                    linkElement = linkElement.getParentElement();
+                }
 
-            if (customLinkElement != null) {
-                final String linkAttr = customLinkElement.getAttribute("link");
-                if (linkAttr != null && linkAttr.contains("](") && linkAttr.endsWith(")")) {
-                    final int urlStart = linkAttr.lastIndexOf("](") + 2;
-                    final int urlEnd = linkAttr.length() - 1;
-                    if (urlStart < urlEnd) {
-                        url = linkAttr.substring(urlStart, urlEnd);
-                        if (url.startsWith("https%3A%2F%2F")) {
-                            url = "https://" + url.substring("https%3A%2F%2F".length());
+                if (linkElement != null) {
+                    final String href = linkElement.getAttribute("href");
+                    if (href != null && !href.isEmpty() && !href.startsWith("javascript")) {
+                        url = href;
+                    }
+                }
+
+                if (url == null) {
+                    Element customLinkElement = target;
+                    while (customLinkElement != null && !customLinkElement.hasAttribute("link")) {
+                        customLinkElement = customLinkElement.getParentElement();
+                    }
+
+                    if (customLinkElement != null) {
+                        final String linkAttr = customLinkElement.getAttribute("link");
+                        if (linkAttr != null && linkAttr.contains("](") && linkAttr.endsWith(")")) {
+                            final int urlStart = linkAttr.lastIndexOf("](") + 2;
+                            final int urlEnd = linkAttr.length() - 1;
+                            if (urlStart < urlEnd) {
+                                url = linkAttr.substring(urlStart, urlEnd);
+                                if (url.startsWith("https%3A%2F%2F")) {
+                                    url = "https://" + url.substring("https%3A%2F%2F".length());
+                                }
+                                url = com.google.gwt.http.client.URL.decode(url);
+                            }
                         }
-                        url = com.google.gwt.http.client.URL.decode(url);
                     }
                 }
             }
@@ -296,7 +317,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
             final com.google.gwt.cell.client.Cell<?> cell = column.getCell();
             boolean cellItemsAdded = false;
 
-            if (cell instanceof HasContextMenus) {
+            if (!specialItems && cell instanceof HasContextMenus) {
                 final R rowValue = getVisibleItem(rowIndex);
                 final Object cellValue = column.getValue(rowValue);
                 final Object key = getKeyProvider() != null
@@ -715,7 +736,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
             if (text.length() > 0) {
                 tempDiv.setInnerHTML(text);
-                double offsetWidth = ElementUtil.getSubPixelOffsetWidth(tempDiv) + 1;
+                final double offsetWidth = ElementUtil.getSubPixelOffsetWidth(tempDiv) + 1;
                 minWidth = Math.max(minWidth, offsetWidth);
             }
         }
@@ -755,7 +776,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     private Heading getHeading(final Element target, final int initialX) {
         int childIndex;
         Element th = target;
-        Element headerRow;
+        final Element headerRow;
 
         // Get parent th.
         while (th != null && !"th".equalsIgnoreCase(th.getTagName())) {

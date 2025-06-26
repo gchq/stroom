@@ -18,4 +18,5 @@ public interface HasContextMenus<C> {
      * @return A list of {@link Item}s to be added to the context menu, or null/empty if none.
      */
     List<Item> getContextMenuItems(Context context, C value);
+
 }
