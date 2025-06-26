@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-@JsonPropertyOrder({"componentId", "mappings", "requestedRange", "openGroups", "resultStyle", "fetch"})
+@JsonPropertyOrder({"componentId", "mappings", "requestedRange", "openGroups", "resultStyle", "fetch", "expandAll"})
 @JsonInclude(Include.NON_NULL)
 @Schema(description = "A definition for how to return the raw results of the query in the SearchResponse, " +
                       "e.g. sorted, grouped, limited, etc.")
@@ -53,9 +53,17 @@ public final class ResultRequest {
     @JsonProperty
     private final TimeFilter timeFilter;
 
+    /**
+     * @deprecated Use {@link GroupSelection#selectedGroups} instead.
+     */
     @Schema(description = "A set of group keys of parent rows we want to display children for")
     @JsonProperty
+    @Deprecated
     private final Set<String> openGroups;
+
+    @Schema(description = "Contains a set of group keys of parent rows we want to show (or not show) children for")
+    @JsonProperty
+    private final GroupSelection groupSelection;
 
     @Schema(description = "The style of results required. FLAT will provide a FlatResult object, while TABLE will " +
                           "provide a TableResult object")
@@ -74,7 +82,8 @@ public final class ResultRequest {
                          @JsonProperty("timeFilter") final TimeFilter timeFilter,
                          @JsonProperty("openGroups") final Set<String> openGroups,
                          @JsonProperty("resultStyle") final ResultStyle resultStyle,
-                         @JsonProperty("fetch") final Fetch fetch) {
+                         @JsonProperty("fetch") final Fetch fetch,
+                         @JsonProperty("groupSelection") final GroupSelection groupSelection) {
         this.componentId = componentId;
         this.mappings = mappings;
         this.requestedRange = requestedRange;
@@ -82,6 +91,7 @@ public final class ResultRequest {
         this.openGroups = openGroups;
         this.resultStyle = resultStyle;
         this.fetch = fetch;
+        this.groupSelection = groupSelection;
     }
 
     public static Builder builder() {
@@ -112,6 +122,10 @@ public final class ResultRequest {
         return resultStyle;
     }
 
+    public GroupSelection getGroupSelection() {
+        return groupSelection;
+    }
+
     /**
      * The fetch type determines if the request actually wants data returned or if it only wants data if the data has
      * changed since the last request was made.
@@ -137,12 +151,14 @@ public final class ResultRequest {
                Objects.equals(timeFilter, that.timeFilter) &&
                Objects.equals(openGroups, that.openGroups) &&
                resultStyle == that.resultStyle &&
-               fetch == that.fetch;
+               fetch == that.fetch &&
+               Objects.equals(groupSelection, that.groupSelection);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(componentId, mappings, requestedRange, timeFilter, openGroups, resultStyle, fetch);
+        return Objects.hash(componentId, mappings, requestedRange, timeFilter, openGroups, resultStyle, fetch,
+                groupSelection);
     }
 
     @Override
@@ -155,6 +171,7 @@ public final class ResultRequest {
                ", openGroups=" + openGroups +
                ", resultStyle=" + resultStyle +
                ", fetch=" + fetch +
+               ", groupSelection=" + groupSelection +
                '}';
     }
 
@@ -199,6 +216,7 @@ public final class ResultRequest {
         private Set<String> openGroups;
         private ResultRequest.ResultStyle resultStyle;
         private ResultRequest.Fetch fetch;
+        private GroupSelection groupSelection;
 
         private Builder() {
         }
@@ -211,6 +229,7 @@ public final class ResultRequest {
             openGroups = resultRequest.openGroups;
             resultStyle = resultRequest.resultStyle;
             fetch = resultRequest.fetch;
+            groupSelection = resultRequest.groupSelection;
         }
 
         /**
@@ -238,6 +257,11 @@ public final class ResultRequest {
 
         public Builder openGroups(final Set<String> openGroups) {
             this.openGroups = openGroups;
+            return this;
+        }
+
+        public Builder groupSelection(final GroupSelection groupSelection) {
+            this.groupSelection = groupSelection;
             return this;
         }
 
@@ -296,7 +320,8 @@ public final class ResultRequest {
         }
 
         public ResultRequest build() {
-            return new ResultRequest(componentId, mappings, requestedRange, timeFilter, openGroups, resultStyle, fetch);
+            return new ResultRequest(componentId, mappings, requestedRange, timeFilter,
+                    openGroups, resultStyle, fetch, groupSelection);
         }
     }
 }

@@ -47,6 +47,7 @@ import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnRef;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.api.GroupSelection;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.QueryKey;
 import stroom.query.api.Result;
@@ -121,7 +122,10 @@ public class QueryResultTablePresenter
     private boolean pause;
 
     private OffsetRange requestedRange = OffsetRange.ZERO_100;
-    private Set<String> openGroups = null;
+    private GroupSelection groupSelection = new GroupSelection();
+
+    private final ButtonView expandAllButton;
+    private final ButtonView collapseAllButton;
 
     private final ButtonView downloadButton;
     private final DownloadPresenter downloadPresenter;
@@ -197,11 +201,19 @@ public class QueryResultTablePresenter
             }
         };
         expanderColumn.setFieldUpdater((index, result, value) -> {
-            toggleOpenGroup(result.getGroupKey());
+            toggleGroup(result.getGroupKey());
             refresh();
         });
 
         pagerView.getRefreshButton().setAllowPause(true);
+
+        expandAllButton = pagerView.addButton(SvgPresets.EXPAND_ALL);
+        expandAllButton.setTitle("Expand All");
+        expandAllButton.setEnabled(false);
+
+        collapseAllButton = pagerView.addButton(SvgPresets.COLLAPSE_ALL);
+        collapseAllButton.setTitle("Collapse All");
+        collapseAllButton.setEnabled(false);
 
         // Download
         downloadButton = pagerView.addButton(SvgPresets.DOWNLOAD);
@@ -230,24 +242,12 @@ public class QueryResultTablePresenter
         this.dashboardContext = dashboardContext;
     }
 
-    private void toggleOpenGroup(final String group) {
-        openGroup(group, !isGroupOpen(group));
-    }
-
-    private void openGroup(final String group, final boolean open) {
-        if (openGroups == null) {
-            openGroups = new HashSet<>();
-        }
-
-        if (open) {
-            openGroups.add(group);
+    private void toggleGroup(final String group) {
+        if (groupSelection.isExpandMode() == groupSelection.isGroupOpen(group)) {
+            groupSelection.add(group);
         } else {
-            openGroups.remove(group);
+            groupSelection.remove(group);
         }
-    }
-
-    private boolean isGroupOpen(final String group) {
-        return openGroups != null && openGroups.contains(group);
     }
 
 //    public void setRequestedRange(final OffsetRange requestedRange) {
@@ -255,8 +255,8 @@ public class QueryResultTablePresenter
 //    }
 
     @Override
-    public Set<String> getOpenGroups() {
-        return openGroups;
+    public GroupSelection getGroupSelection() {
+        return groupSelection;
     }
 
     @Override
@@ -285,6 +285,16 @@ public class QueryResultTablePresenter
 //        }));
 
         registerHandler(pagerView.getRefreshButton().addClickHandler(event -> setPause(!pause, true)));
+
+        registerHandler(expandAllButton.addClickHandler(event -> {
+            groupSelection = new GroupSelection(true, new HashSet<>());
+            refresh();
+        }));
+
+        registerHandler(collapseAllButton.addClickHandler(event -> {
+            groupSelection = new GroupSelection(false, new HashSet<>());
+            refresh();
+        }));
 
         registerHandler(downloadButton.addClickHandler(event -> {
             if (currentSearchModel != null) {
@@ -728,7 +738,7 @@ public class QueryResultTablePresenter
             // Create an expander for the row.
             Expander expander = null;
             if (row.getDepth() < maxDepth) {
-                final boolean open = isGroupOpen(row.getGroupKey());
+                final boolean open = groupSelection.isGroupOpen(row.getGroupKey());
                 expander = new Expander(row.getDepth(), open, false);
             } else if (row.getDepth() > 0) {
                 expander = new Expander(row.getDepth(), false, true);
@@ -744,6 +754,9 @@ public class QueryResultTablePresenter
         // Set the expander column width.
         expanderColumnWidth = ExpanderCell.getColumnWidth(maxDepth);
         dataGrid.setColumnWidth(expanderColumn, expanderColumnWidth, Unit.PX);
+
+        expandAllButton.setEnabled(maxDepth > 0);
+        collapseAllButton.setEnabled(maxDepth > 0);
 
         return processed;
     }

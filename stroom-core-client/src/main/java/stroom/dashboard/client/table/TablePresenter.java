@@ -66,6 +66,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.Format;
 import stroom.query.api.Format.Type;
+import stroom.query.api.GroupSelection;
 import stroom.query.api.IncludeExcludeFilter;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.ParamUtil;
@@ -150,9 +151,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private TableResultRequest tableResultRequest = TableResultRequest.builder()
             .requestedRange(OffsetRange.ZERO_1000)
             .build();
+    private GroupSelection groupSelection = new GroupSelection();
     private final List<com.google.gwt.user.cellview.client.Column<TableRow, ?>> existingColumns = new ArrayList<>();
     private final List<HandlerRegistration> searchModelHandlerRegistrations = new ArrayList<>();
     private final ButtonView addColumnButton;
+    private final ButtonView expandAllButton;
+    private final ButtonView collapseAllButton;
     private final ButtonView downloadButton;
     private final InlineSvgToggleButton valueFilterButton;
     private final ButtonView annotateButton;
@@ -223,6 +227,14 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         addColumnButton = pagerView.addButton(SvgPresets.ADD);
         addColumnButton.setTitle("Add Column");
 
+        expandAllButton = pagerView.addButton(SvgPresets.EXPAND_ALL);
+        expandAllButton.setTitle("Expand All");
+        expandAllButton.setEnabled(false);
+
+        collapseAllButton = pagerView.addButton(SvgPresets.COLLAPSE_ALL);
+        collapseAllButton.setTitle("Collapse All");
+        collapseAllButton.setEnabled(false);
+
         // Download
         downloadButton = pagerView.addButton(SvgPresets.DOWNLOAD);
         downloadButton.setVisible(securityContext
@@ -273,9 +285,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             }
         };
         expanderColumn.setFieldUpdater((index, result, value) -> {
+            toggleGroup(result.getGroupKey());
             tableResultRequest = tableResultRequest
                     .copy()
-                    .openGroup(result.getGroupKey(), !value.isExpanded())
+                    .groupSelection(groupSelection)
                     .build();
             refresh();
         });
@@ -284,6 +297,14 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         annotationManager.setDataSourceSupplier(() -> getTableComponentSettings().getDataSourceRef());
         annotationManager.setColumnSupplier(() -> getTableComponentSettings().getColumns());
+    }
+
+    private void toggleGroup(final String group) {
+        if (groupSelection.isExpandMode() == groupSelection.isGroupOpen(group)) {
+            groupSelection.add(group);
+        } else {
+            groupSelection.remove(group);
+        }
     }
 
     @Override
@@ -316,6 +337,26 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             if (MouseUtil.isPrimary(event)) {
                 onAddColumn(event);
             }
+        }));
+
+        registerHandler(expandAllButton.addClickHandler(event -> {
+            groupSelection = new GroupSelection(true, new HashSet<>());
+
+            tableResultRequest = tableResultRequest
+                    .copy()
+                    .groupSelection(groupSelection)
+                    .build();
+            refresh();
+        }));
+
+        registerHandler(collapseAllButton.addClickHandler(event -> {
+            groupSelection = new GroupSelection(false, new HashSet<>());
+
+            tableResultRequest = tableResultRequest
+                    .copy()
+                    .groupSelection(groupSelection)
+                    .build();
+            refresh();
         }));
 
         registerHandler(downloadButton.addClickHandler(event -> {
@@ -684,7 +725,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             // Create an expander for the row.
             Expander expander = null;
             if (row.getDepth() < maxDepth) {
-                final boolean open = tableResultRequest.isGroupOpen(row.getGroupKey());
+                final boolean open = groupSelection.isGroupOpen(row.getGroupKey());
                 expander = new Expander(row.getDepth(), open, false);
             } else if (row.getDepth() > 0) {
                 expander = new Expander(row.getDepth(), false, true);
@@ -700,6 +741,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         // Set the expander column width.
         expanderColumnWidth = ExpanderCell.getColumnWidth(maxDepth);
         dataGrid.setColumnWidth(expanderColumn, expanderColumnWidth, Unit.PX);
+
+        expandAllButton.setEnabled(maxDepth > 0);
+        collapseAllButton.setEnabled(maxDepth > 0);
 
         return processed;
     }

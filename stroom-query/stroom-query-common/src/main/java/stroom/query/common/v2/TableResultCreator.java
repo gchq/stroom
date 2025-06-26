@@ -17,6 +17,7 @@
 package stroom.query.common.v2;
 
 import stroom.query.api.Column;
+import stroom.query.api.GroupSelection;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.Result;
 import stroom.query.api.ResultRequest;
@@ -33,7 +34,6 @@ import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class TableResultCreator implements ResultCreator {
@@ -101,11 +101,20 @@ public class TableResultCreator implements ResultCreator {
                         expressionPredicateFactory,
                         errorConsumer);
 
-                final Set<Key> openGroups = keyFactory.decodeSet(resultRequest.getOpenGroups());
+                final OpenGroups openGroups;
+                final GroupSelection groupSelection = NullSafe.firstNonNull(resultRequest.getGroupSelection())
+                        .orElse(new GroupSelection(false, resultRequest.getOpenGroups()));
+                if (groupSelection.hasGroupsSelected()) {
+                    openGroups = new OpenGroupsImpl(keyFactory.decodeSet(
+                            groupSelection.getSelectedGroups()), !groupSelection.isExpandMode());
+                } else {
+                    openGroups = groupSelection.isExpandMode() ? OpenGroups.ALL : OpenGroups.NONE;
+                }
+
                 dataStore.fetch(
                         columns,
                         range,
-                        new OpenGroupsImpl(openGroups),
+                        openGroups,
                         resultRequest.getTimeFilter(),
                         rowCreator,
                         row -> {

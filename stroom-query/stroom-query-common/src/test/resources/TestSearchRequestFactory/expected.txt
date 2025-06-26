@@ -98,7 +98,11 @@ select StreamId, EventId, EventTime, Status
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandMode" : false,
+      "selectedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
@@ -211,7 +215,11 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandMode" : false,
+      "selectedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
@@ -332,7 +340,11 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandMode" : false,
+      "selectedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
@@ -444,7 +456,11 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandMode" : false,
+      "selectedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
@@ -556,7 +572,11 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandMode" : false,
+      "selectedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
@@ -654,7 +674,11 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandMode" : false,
+      "selectedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
@@ -723,7 +747,11 @@ select StreamId
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandMode" : false,
+      "selectedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
@@ -821,7 +849,11 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandMode" : false,
+      "selectedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
@@ -919,7 +951,11 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandMode" : false,
+      "selectedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
@@ -1017,7 +1053,11 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandMode" : false,
+      "selectedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
@@ -1068,7 +1108,11 @@ select StreamId as "Stream Id", count as Count
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandMode" : false,
+      "selectedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
@@ -1169,7 +1213,11 @@ select comp
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandMode" : false,
+      "selectedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
@@ -1221,7 +1269,11 @@ select StreamId, EventTime
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandMode" : false,
+      "selectedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
@@ -1273,7 +1325,11 @@ select ${Stream Id}, ${Event Time}
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandMode" : false,
+      "selectedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
@@ -1335,7 +1391,11 @@ select ${Stream Id}, ${Event Time}
       }
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandMode" : false,
+      "selectedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
@@ -1397,7 +1457,11 @@ select ${Event Time}
       }
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandMode" : false,
+      "selectedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
@@ -1468,7 +1532,11 @@ select StreamId
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandMode" : false,
+      "selectedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
@@ -1537,7 +1605,11 @@ select StreamId
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandMode" : false,
+      "selectedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
@@ -1665,7 +1737,11 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandMode" : false,
+      "selectedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
@@ -1786,7 +1862,11 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandMode" : false,
+      "selectedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
@@ -1908,7 +1988,11 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandMode" : false,
+      "selectedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
@@ -2026,7 +2110,11 @@ select StreamId, EventId, EventTime, Status
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandMode" : false,
+      "selectedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
@@ -2153,7 +2241,11 @@ select StreamId, EventId, EventTime, Status
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandMode" : false,
+      "selectedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {

@@ -31,6 +31,7 @@ import stroom.docref.DocRef;
 import stroom.query.api.Column;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.Format;
+import stroom.query.api.GroupSelection;
 import stroom.query.api.Param;
 import stroom.query.api.ParamUtil;
 import stroom.query.api.Query;
@@ -140,13 +141,21 @@ public class SearchRequestMapper {
         final List<ResultRequest> resultRequests = new ArrayList<>(searchRequest.getComponentResultRequests().size());
         for (final ComponentResultRequest componentResultRequest : searchRequest.getComponentResultRequests()) {
             if (componentResultRequest instanceof final TableResultRequest tableResultRequest) {
+
+                final GroupSelection groupSelection;
+                if (tableResultRequest.getGroupSelection() == null) {
+                    groupSelection = new GroupSelection(false, tableResultRequest.getOpenGroups());
+                } else {
+                    groupSelection = tableResultRequest.getGroupSelection();
+                }
+
                 final ResultRequest copy = ResultRequest.builder()
                         .componentId(tableResultRequest.getComponentId())
                         .addMappings(tableResultRequest.getTableSettings())
                         .requestedRange(tableResultRequest.getRequestedRange())
                         .resultStyle(ResultStyle.TABLE)
                         .fetch(tableResultRequest.getFetch())
-                        .openGroups(tableResultRequest.getOpenGroups())
+                        .groupSelection(groupSelection)
                         .build();
                 resultRequests.add(copy);
 
