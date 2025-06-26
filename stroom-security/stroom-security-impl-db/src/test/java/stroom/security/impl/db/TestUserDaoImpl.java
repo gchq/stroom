@@ -195,6 +195,50 @@ class TestUserDaoImpl {
 
     }
 
+
+    @Test
+    void findRestrictedUserList() {
+        // Given
+        final List<String> userNames = IntStream.range(0, 3)
+                .mapToObj(i -> String.format("SomePerson_%s", UUID.randomUUID()))
+                .toList();
+        final String groupName = String.format("SomeGroup_%s", UUID.randomUUID());
+
+        final List<String> otherUserNames = IntStream.range(0, 3)
+                .mapToObj(i -> String.format("OtherPerson_%s", UUID.randomUUID()))
+                .toList();
+        final String otherGroupName = String.format("OtherGroup_%s", UUID.randomUUID());
+
+        // Create others.
+        final User otherGroup = createUser(otherGroupName, true);
+        final List<User> otherUsers = otherUserNames.stream()
+                .map(name -> createUser(name, false))
+                .peek(u -> userDao.addUserToGroup(u.getUuid(), otherGroup.getUuid()))
+                .toList();
+
+        // Create users.
+        final User group = createUser(groupName, true);
+        final List<User> users = userNames.stream()
+                .map(name -> createUser(name, false))
+                .peek(u -> userDao.addUserToGroup(u.getUuid(), group.getUuid()))
+                .toList();
+
+        final String otherGroupName2 = String.format("OtherGroup2_%s", UUID.randomUUID());
+        final User otherGroup2 = createUser(otherGroupName2, true);
+        users.forEach(u -> userDao.addUserToGroup(u.getUuid(), otherGroup2.getUuid()));
+
+        // Make sure we can only see users.
+        final ResultPage<User> visibleUsers = userDao
+                .findRestrictedUserList(users.getFirst().getUuid(), new FindUserCriteria());
+
+        assertThat(visibleUsers.size()).isEqualTo(5);
+        assertThat(visibleUsers.getValues()).containsAll(users);
+        assertThat(visibleUsers.getValues()).contains(group);
+        assertThat(visibleUsers.getValues()).contains(otherGroup2);
+    }
+
+
+
     @Test
     void getBySubjectId_notFound() {
 

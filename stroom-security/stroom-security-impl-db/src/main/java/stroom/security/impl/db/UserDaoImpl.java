@@ -29,6 +29,7 @@ import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.exception.DataAccessException;
 import org.jooq.exception.IntegrityConstraintViolationException;
+import org.jooq.impl.DSL;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -295,7 +296,62 @@ public class UserDaoImpl implements UserDao {
         } else {
             list = getMatchingUsersOrGroups(condition, orderFields, offset, limit);
         }
+        return ResultPage.createCriterialBasedList(list, criteria);
+    }
 
+    @Override
+    public ResultPage<User> findRestrictedUserList(final String userUuid, final FindUserCriteria criteria) {
+        final Condition condition = expressionMapper.apply(criteria.getExpression())
+                .and(STROOM_USER.ENABLED.isTrue());
+        final Collection<OrderField<?>> orderFields = createOrderFields(criteria);
+        final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
+        final int offset = JooqUtil.getOffset(criteria.getPageRequest());
+//        final List<User> list = JooqUtil.contextResult(securityDbConnProvider, context -> context
+//                        .selectDistinct()
+//                        .from(STROOM_USER_GROUP.GROUP_UUID)
+//                        .join(STROOM_USER_GROUP)
+//                        .on(STROOM_USER.UUID.eq(STROOM_USER_GROUP.GROUP_UUID))
+//                        .where(STROOM_USER_GROUP.USER_UUID.eq(userUuid))
+//                        .and(condition)
+//                        .orderBy(orderFields)
+//                        .offset(offset)
+//                        .limit(limit)
+//                        .fetch())
+//                .stream()
+//                .map(RECORD_TO_USER_MAPPER)
+//                .toList();
+//
+//        condition = condition.and(STROOM_USER.)
+//
+//
+//        select * from stroom_user where stroom_user.uuid in (select distinct stroom_user_group.group_uuid from stroom_user_group where stroom_user_group.user_uuid = "aaf7d28b-2210-40dc-85e8-62222f09f8ce")
+//        or stroom_user.uuid in (select distinct stroom_user_group.user_uuid from stroom_user_group where stroom_user_group.group_uuid in (select distinct stroom_user_group.group_uuid from stroom_user_group where stroom_user_group.user_uuid = "aaf7d28b-2210-40dc-85e8-62222f09f8ce"));
+//
+
+        final var select1 = DSL
+                .selectDistinct(STROOM_USER_GROUP.GROUP_UUID)
+                .from(STROOM_USER_GROUP)
+                .where(STROOM_USER_GROUP.USER_UUID.eq(userUuid));
+        final var select2 = DSL
+                .selectDistinct(STROOM_USER_GROUP.USER_UUID)
+                .from(STROOM_USER_GROUP)
+                .where(STROOM_USER_GROUP.GROUP_UUID.in(select1));
+
+
+        LOGGER.debug("findRestrictedUserList - condition: {}", condition);
+        final List<User> list;
+        list = JooqUtil.contextResult(securityDbConnProvider, context -> context
+                        .select()
+                        .from(STROOM_USER)
+                        .where(condition)
+                        .and(STROOM_USER.UUID.in(select1).or(STROOM_USER.UUID.in(select2)))
+                        .orderBy(orderFields)
+                        .offset(offset)
+                        .limit(limit)
+                        .fetch())
+                .stream()
+                .map(RECORD_TO_USER_MAPPER)
+                .toList();
         return ResultPage.createCriterialBasedList(list, criteria);
     }
 
