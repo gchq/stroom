@@ -259,26 +259,6 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
             menuItems.add(new stroom.widget.menu.client.presenter.Separator(1));
         }
 
-        if (rowIndex >= 0 && colIndex >= 0) {
-            menuItems.add(new IconMenuItem.Builder()
-                    .icon(SvgImage.COPY)
-                    .text("Copy Cell")
-                    .command(() -> exportCell(rowIndex, colIndex))
-                    .build());
-
-            menuItems.add(new IconMenuItem.Builder()
-                    .icon(SvgImage.COPY)
-                    .text("Copy Row (CSV)")
-                    .command(() -> exportRow(rowIndex))
-                    .build());
-
-            menuItems.add(new IconMenuItem.Builder()
-                    .icon(SvgImage.COPY)
-                    .text("Copy Column (LSV)")
-                    .command(() -> exportColumn(colIndex))
-                    .build());
-        }
-
         menuItems.add(new IconMenuItem.Builder()
                 .icon(SvgImage.COPY)
                 .text("Copy Cell")
