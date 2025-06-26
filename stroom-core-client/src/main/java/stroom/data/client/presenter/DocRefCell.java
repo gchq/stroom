@@ -2,6 +2,7 @@ package stroom.data.client.presenter;
 
 import stroom.core.client.UrlParameters;
 import stroom.data.grid.client.EventCell;
+import stroom.data.grid.client.HasContextMenus;
 import stroom.docref.DocRef;
 import stroom.docref.DocRef.DisplayType;
 import stroom.docstore.shared.DocumentType;
@@ -42,7 +43,7 @@ import java.util.function.Function;
 import static com.google.gwt.dom.client.BrowserEvents.MOUSEDOWN;
 
 public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
-        implements HasHandlers, EventCell {
+        implements HasHandlers, EventCell, HasContextMenus<T_ROW> {
 
     private static final String ICON_CLASS_NAME = "svgIcon";
     private static final String COPY_CLASS_NAME = "docRefLinkCopy";
@@ -102,60 +103,47 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                                final NativeEvent event,
                                final ValueUpdater<T_ROW> valueUpdater) {
         super.onBrowserEvent(context, parent, value, event, valueUpdater);
-        final DocRef docRef = NullSafe.get(value, docRefFunction);
-        if (docRef != null) {
-            if (MOUSEDOWN.equals(event.getType())) {
-                if (MouseUtil.isPrimary(event)) {
-                    onEnterKeyDown(context, parent, value, event, valueUpdater);
-                } else {
-                    final String type;
-                    final DocumentType documentType = DocumentTypeRegistry.get(docRef.getType());
-                    type = NullSafe.getOrElse(documentType, DocumentType::getDisplayType,
-                            docRef.getType());
-
-                    final List<Item> menuItems = new ArrayList<>();
-                    int priority = 1;
-                    menuItems.add(new IconMenuItem.Builder()
-                            .priority(priority++)
-                            .icon(SvgImage.OPEN)
-                            .text("Open " + type)
-                            .command(() -> OpenDocumentEvent.fire(this, docRef, true))
-                            .build());
-                    menuItems.add(createCopyAsMenuItem(docRef, priority++));
-
-                    ShowMenuEvent
-                            .builder()
-                            .items(menuItems)
-                            .popupPosition(new PopupPosition(event.getClientX(), event.getClientY()))
-                            .fire(this);
-                }
+        if (MOUSEDOWN.equals(event.getType())) {
+            if (MouseUtil.isPrimary(event)) {
+                onEnterKeyDown(context, parent, value, event, valueUpdater);
             }
+            //context menu logic now handled by grid
+        }
+    }
+
+    @Override
+    public List<Item> getContextMenuItems(final Context context, final T_ROW value) {
+        final List<Item> menuItems = new ArrayList<>();
+        final DocRef docRef = NullSafe.get(value, docRefFunction);
+
+        if (docRef != null) {
+            final String type;
+            final DocumentType documentType = DocumentTypeRegistry.get(docRef.getType());
+            type = NullSafe.getOrElse(documentType, DocumentType::getDisplayType, docRef.getType());
+
+            int priority = 1;
+            menuItems.add(new IconMenuItem.Builder()
+                    .priority(priority++)
+                    .icon(SvgImage.OPEN)
+                    .text("Open " + type)
+                    .command(() -> OpenDocumentEvent.fire(this, docRef, true))
+                    .build());
+            menuItems.add(createCopyAsMenuItem(docRef, priority++));
+
         } else {
             final String text = cellTextFunction.apply(value).asString();
-            if (MOUSEDOWN.equals(event.getType())) {
-                if (MouseUtil.isPrimary(event)) {
-                    final Element element = event.getEventTarget().cast();
-                    if (ElementUtil.hasClassName(element, CopyTextUtil.COPY_CLASS_NAME, 5)) {
-                        if (text != null) {
-                            ClipboardUtil.copy(text);
-                        }
-                    }
-                } else if (NullSafe.isNonBlankString(text)) {
-                    final List<Item> menuItems = new ArrayList<>();
-                    menuItems.add(new IconMenuItem.Builder()
-                            .priority(1)
-                            .icon(SvgImage.COPY)
-                            .text("Copy")
-                            .command(() -> ClipboardUtil.copy(text))
-                            .build());
-                    ShowMenuEvent
-                            .builder()
-                            .items(menuItems)
-                            .popupPosition(new PopupPosition(event.getClientX(), event.getClientY()))
-                            .fire(this);
-                }
+            if (NullSafe.isNonBlankString(text)) {
+                menuItems.add(new IconMenuItem.Builder()
+                        .priority(1)
+                        .icon(SvgImage.COPY)
+                        .text("Copy")
+                        .command(() -> ClipboardUtil.copy(text))
+                        .build());
             }
         }
+        return menuItems.isEmpty()
+                ? null
+                : menuItems;
     }
 
     @Override

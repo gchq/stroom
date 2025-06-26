@@ -30,6 +30,7 @@ import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Node;
@@ -255,27 +256,54 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
             }
         }
 
-        if (isLink) {
-            menuItems.add(new stroom.widget.menu.client.presenter.Separator(1));
+        if (rowIndex >= 0 && colIndex >= 0) {
+            final Column<R, ?> column = getColumn(colIndex);
+            final com.google.gwt.cell.client.Cell<?> cell = column.getCell();
+            boolean cellItemsAdded = false;
+
+            if (cell instanceof HasContextMenus) {
+                final R rowValue = getVisibleItem(rowIndex);
+                final Object cellValue = column.getValue(rowValue);
+                final Object key = getKeyProvider() != null
+                        ? getKeyProvider().getKey(rowValue)
+                        : null;
+                final Context context = new Context(rowIndex, colIndex, key);
+
+                @SuppressWarnings("unchecked")
+                final HasContextMenus<Object> hasContextMenus = (HasContextMenus<Object>) cell;
+                final List<Item> cellMenuItems = hasContextMenus.getContextMenuItems(context, cellValue);
+
+                if (cellMenuItems != null && !cellMenuItems.isEmpty()) {
+                    if (!menuItems.isEmpty()) {
+                        menuItems.add(new stroom.widget.menu.client.presenter.Separator(1));
+                    }
+                    menuItems.addAll(cellMenuItems);
+                    cellItemsAdded = true;
+                }
+            }
+
+            if (isLink || cellItemsAdded) {
+                menuItems.add(new stroom.widget.menu.client.presenter.Separator(1));
+            }
+
+            menuItems.add(new IconMenuItem.Builder()
+                    .icon(SvgImage.COPY)
+                    .text("Copy Cell")
+                    .command(() -> exportCell(rowIndex, colIndex))
+                    .build());
+
+            menuItems.add(new IconMenuItem.Builder()
+                    .icon(SvgImage.COPY)
+                    .text("Copy Row (CSV)")
+                    .command(() -> exportRow(rowIndex))
+                    .build());
+
+            menuItems.add(new IconMenuItem.Builder()
+                    .icon(SvgImage.COPY)
+                    .text("Copy Column (LSV)")
+                    .command(() -> exportColumn(colIndex))
+                    .build());
         }
-
-        menuItems.add(new IconMenuItem.Builder()
-                .icon(SvgImage.COPY)
-                .text("Copy Cell")
-                .command(() -> exportCell(rowIndex, colIndex))
-                .build());
-
-        menuItems.add(new IconMenuItem.Builder()
-                .icon(SvgImage.COPY)
-                .text("Copy Row (CSV)")
-                .command(() -> exportRow(rowIndex))
-                .build());
-
-        menuItems.add(new IconMenuItem.Builder()
-                .icon(SvgImage.COPY)
-                .text("Copy Column (LSV)")
-                .command(() -> exportColumn(colIndex))
-                .build());
 
         menuItems.add(new IconMenuItem.Builder()
                 .icon(SvgImage.COPY)
@@ -289,10 +317,12 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                 .command(this::exportTableAsCSV)
                 .build());
 
-        ShowMenuEvent.builder()
-                .items(menuItems)
-                .popupPosition(new PopupPosition(x, y))
-                .fire(globalEventBus);
+        if (!menuItems.isEmpty()) {
+            ShowMenuEvent.builder()
+                    .items(menuItems)
+                    .popupPosition(new PopupPosition(x, y))
+                    .fire(globalEventBus);
+        }
     }
 
     private void exportCell(final int rowIndex, final int colIndex) {
