@@ -30,7 +30,7 @@ import java.util.function.Supplier;
 @FunctionDef(
         name = ParseDate.NAME,
         commonCategory = FunctionCategory.DATE,
-        commonReturnType = ValLong.class,
+        commonReturnType = ValDate.class,
         commonReturnDescription = "The date as number of milliseconds since the epoch.",
         signatures = {
                 @FunctionSignature(

@@ -23,14 +23,13 @@ import java.time.ZonedDateTime;
         name = FloorMinute.NAME,
         commonCategory = FunctionCategory.DATE,
         commonSubCategories = AbstractRoundDateTime.FLOOR_SUB_CATEGORY,
-        commonReturnType = ValLong.class,
-        commonReturnDescription = "The time as milliseconds since the epoch (1st Jan 1970).",
+        commonReturnType = ValDate.class,
+        commonReturnDescription = "The result date and time.",
         signatures = @FunctionSignature(
                 description = "Rounds the supplied time down to the start of the current minute.",
                 args = @FunctionArg(
                         name = "time",
-                        description = "The time to round in milliseconds since the epoch or as a string " +
-                                      "formatted using the default date format.",
+                        description = "The time to round.",
                         argType = Val.class)))
 class FloorMinute extends AbstractRoundDateTime {
 
