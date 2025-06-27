@@ -80,10 +80,9 @@ public final class SetupSampleData {
         final SetupSampleDataBean setupSampleDataBean = injector.getInstance(SetupSampleDataBean.class);
         setupSampleDataBean.run(true);
 
-        // Load the content packs specified in the definition.
-        final Path contentPackDefinition = configFile.getParent().resolve("content-packs.yml");
-        final ContentImportService contentImportService = injector.getInstance(ContentImportService.class);
-        contentImportService.importFromDefinitionYaml(contentPackDefinition);
+        // Pull in content packs from the content store
+        final ContentStoreTestSetup devSetup = injector.getInstance(ContentStoreTestSetup.class);
+        devSetup.installSampleDataPacks();
 
         // Stop task manager
         injector.getInstance(TaskManager.class).shutdown();
