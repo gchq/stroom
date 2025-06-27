@@ -27,7 +27,7 @@ import stroom.search.impl.EventSearchTaskHandler;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.impl.ExecutorProviderImpl;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.ContentImportService;
+import stroom.test.ContentStoreTestSetup;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -58,14 +58,14 @@ public class TestVisualisationTokenConsumer extends AbstractCoreIntegrationTest 
     @Inject
     private ExpressionContextFactory expressionContextFactory;
     @Inject
-    private ContentImportService contentImportService;
+    private ContentStoreTestSetup contentStoreTestSetup;
 
 
     @BeforeEach
     void setup() {
         if (!doneSetup) {
             commonIndexingTestHelper.setup();
-            contentImportService.importVisualisations();
+            contentStoreTestSetup.installVisualisations();
             doneSetup = true;
         }
     }
