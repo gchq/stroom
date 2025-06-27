@@ -5,10 +5,10 @@ import java.net.UnknownHostException;
 import java.util.Objects;
 
 public class HostAddress {
-    private final InetAddress InetAddress;
+    private final InetAddress inetAddress;
 
     private HostAddress(final InetAddress inetAddress) {
-        this.InetAddress = inetAddress;
+        this.inetAddress = inetAddress;
     }
 
     public static HostAddress of(final String host) {
@@ -20,32 +20,32 @@ public class HostAddress {
     }
 
     public String getHostAddress() {
-        return InetAddress.getHostAddress();
+        return inetAddress.getHostAddress();
     }
 
     public String getHostName() {
-        return InetAddress.getHostName();
+        return inetAddress.getHostName();
     }
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o){
+        if (this == o) {
             return true;
         }
-        if (!(o instanceof HostAddress)){
+        if (!(o instanceof HostAddress)) {
             return false;
         }
         final HostAddress that = (HostAddress) o;
-        return Objects.equals(InetAddress, that.InetAddress);
+        return Objects.equals(inetAddress, that.inetAddress);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(InetAddress);
+        return Objects.hash(inetAddress);
     }
 
     @Override
     public String toString() {
-        return InetAddress.toString();
+        return inetAddress.toString();
     }
 }
