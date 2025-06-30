@@ -68,7 +68,7 @@ public class QuerySearchRequest {
     @JsonProperty
     private final OffsetRange requestedRange;
     /**
-     * @deprecated Use {@link GroupSelection#selectedGroups} instead.
+     * @deprecated Use {@link GroupSelection#openGroups} instead.
      */
     @JsonProperty
     @Deprecated

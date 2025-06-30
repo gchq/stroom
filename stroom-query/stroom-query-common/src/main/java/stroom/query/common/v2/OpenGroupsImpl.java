@@ -6,9 +6,11 @@ import java.util.Set;
 public class OpenGroupsImpl implements OpenGroups {
 
     private final Set<Key> openKeys;
-    private boolean isOpen = true;
+    private final Set<Key> closedKeys;
+    private int expandedDepth = 0;
 
     public OpenGroupsImpl(final Key openKeys) {
+        this.closedKeys = new HashSet<>();
         this.openKeys = new HashSet<>();
         this.openKeys.add(openKeys);
     }
@@ -18,17 +20,19 @@ public class OpenGroupsImpl implements OpenGroups {
     }
 
     public OpenGroupsImpl(final Set<Key> openKeys) {
+        this.closedKeys = new HashSet<>();
         this.openKeys = new HashSet<>(openKeys);
     }
 
-    public OpenGroupsImpl(final Set<Key> openKeys, final boolean isOpen) {
+    public OpenGroupsImpl(final int expandedDepth, final Set<Key> openKeys, final Set<Key> closedKeys) {
+        this.closedKeys = new HashSet<>(closedKeys);
         this.openKeys = new HashSet<>(openKeys);
-        this.isOpen = isOpen;
+        this.expandedDepth = expandedDepth;
     }
 
     @Override
     public boolean isOpen(final Key key) {
-        return openKeys.contains(key) == isOpen;
+        return (key.getDepth() < expandedDepth || openKeys.contains(key)) && !closedKeys.contains(key);
     }
 
     @Override

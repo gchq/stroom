@@ -57,6 +57,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 
 public class SearchRequestMapper {
 
@@ -142,12 +143,8 @@ public class SearchRequestMapper {
         for (final ComponentResultRequest componentResultRequest : searchRequest.getComponentResultRequests()) {
             if (componentResultRequest instanceof final TableResultRequest tableResultRequest) {
 
-                final GroupSelection groupSelection;
-                if (tableResultRequest.getGroupSelection() == null) {
-                    groupSelection = new GroupSelection(false, tableResultRequest.getOpenGroups());
-                } else {
-                    groupSelection = tableResultRequest.getGroupSelection();
-                }
+                final GroupSelection groupSelection = Optional.ofNullable(tableResultRequest.getGroupSelection())
+                        .orElse(GroupSelection.builder().openGroups(tableResultRequest.getOpenGroups()).build());
 
                 final ResultRequest copy = ResultRequest.builder()
                         .componentId(tableResultRequest.getComponentId())

@@ -363,14 +363,14 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                             request.getFilter(),
                             dateTimeSettings);
 
-                    final OpenGroups openGroups;
-                    final GroupSelection groupSelection = NullSafe.firstNonNull(resultRequest.getGroupSelection())
-                            .orElse(new GroupSelection(false, resultRequest.getOpenGroups()));
+                    OpenGroups openGroups = OpenGroups.NONE;
+                    final GroupSelection groupSelection = Optional.ofNullable(resultRequest.getGroupSelection())
+                            .orElse(GroupSelection.builder().openGroups(resultRequest.getOpenGroups()).build());
                     if (groupSelection.hasGroupsSelected()) {
-                        openGroups = new OpenGroupsImpl(dataStore.getKeyFactory().decodeSet(
-                                groupSelection.getSelectedGroups()), !groupSelection.isExpandMode());
-                    } else {
-                        openGroups = groupSelection.isExpandMode() ? OpenGroups.ALL : OpenGroups.NONE;
+                        openGroups = new OpenGroupsImpl(
+                                groupSelection.getExpandedDepth(),
+                                dataStore.getKeyFactory().decodeSet(groupSelection.getOpenGroups()),
+                                dataStore.getKeyFactory().decodeSet(groupSelection.getClosedGroups()));
                     }
 
                     final int index = dataStore
@@ -564,12 +564,8 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                 }
 
                 // Modify result request to open grouped rows and change result display range.
-                final GroupSelection groupSelection;
-                if (searchRequest.getGroupSelection() == null) {
-                    groupSelection = new GroupSelection(false, searchRequest.getOpenGroups());
-                } else {
-                    groupSelection = searchRequest.getGroupSelection();
-                }
+                final GroupSelection groupSelection = Optional.ofNullable(searchRequest.getGroupSelection())
+                        .orElse(GroupSelection.builder().openGroups(resultRequest.getOpenGroups()).build());
 
                 modified = modified
                         .copy()

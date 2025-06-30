@@ -34,6 +34,7 @@ import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class TableResultCreator implements ResultCreator {
@@ -101,14 +102,14 @@ public class TableResultCreator implements ResultCreator {
                         expressionPredicateFactory,
                         errorConsumer);
 
-                final OpenGroups openGroups;
-                final GroupSelection groupSelection = NullSafe.firstNonNull(resultRequest.getGroupSelection())
-                        .orElse(new GroupSelection(false, resultRequest.getOpenGroups()));
+                OpenGroups openGroups = OpenGroups.NONE;
+                final GroupSelection groupSelection = Optional.ofNullable(resultRequest.getGroupSelection())
+                        .orElse(GroupSelection.builder().openGroups(resultRequest.getOpenGroups()).build());
                 if (groupSelection.hasGroupsSelected()) {
-                    openGroups = new OpenGroupsImpl(keyFactory.decodeSet(
-                            groupSelection.getSelectedGroups()), !groupSelection.isExpandMode());
-                } else {
-                    openGroups = groupSelection.isExpandMode() ? OpenGroups.ALL : OpenGroups.NONE;
+                    openGroups = new OpenGroupsImpl(
+                            groupSelection.getExpandedDepth(),
+                            keyFactory.decodeSet(groupSelection.getOpenGroups()),
+                            keyFactory.decodeSet(groupSelection.getClosedGroups()));
                 }
 
                 dataStore.fetch(

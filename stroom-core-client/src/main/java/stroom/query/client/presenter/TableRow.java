@@ -19,15 +19,18 @@ public class TableRow {
     private final String groupKey;
     private final Map<String, Cell> cells;
     private final String matchingRule;
+    private final int depth;
 
     public TableRow(final Expander expander,
                     final String groupKey,
                     final Map<String, Cell> cells,
-                    final String matchingRule) {
+                    final String matchingRule,
+                    final int depth) {
         this.expander = expander;
         this.groupKey = groupKey;
         this.cells = cells;
         this.matchingRule = matchingRule;
+        this.depth = depth;
     }
 
     public Expander getExpander() {
@@ -46,6 +49,10 @@ public class TableRow {
         } else {
             return SafeHtmlUtil.NBSP;
         }
+    }
+
+    public int getDepth() {
+        return depth;
     }
 
     public String getMatchingRule() {

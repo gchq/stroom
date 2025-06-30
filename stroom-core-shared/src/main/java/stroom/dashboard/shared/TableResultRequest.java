@@ -48,7 +48,7 @@ public final class TableResultRequest extends ComponentResultRequest {
     @JsonProperty
     private final OffsetRange requestedRange;
     /**
-     * @deprecated Use {@link GroupSelection#selectedGroups} instead.
+     * @deprecated Use {@link GroupSelection#openGroups} instead.
      */
     @JsonProperty
     @Deprecated
@@ -145,7 +145,7 @@ public final class TableResultRequest extends ComponentResultRequest {
         private TableSettings tableSettings;
         private OffsetRange requestedRange = OffsetRange.ZERO_100;
         private Set<String> openGroups;
-        private GroupSelection groupSelection;
+        private GroupSelection groupSelection = new GroupSelection();
 
         private Builder() {
         }

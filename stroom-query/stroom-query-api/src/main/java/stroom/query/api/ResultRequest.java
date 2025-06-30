@@ -54,7 +54,7 @@ public final class ResultRequest {
     private final TimeFilter timeFilter;
 
     /**
-     * @deprecated Use {@link GroupSelection#selectedGroups} instead.
+     * @deprecated Use {@link GroupSelection#openGroups} instead.
      */
     @Schema(description = "A set of group keys of parent rows we want to display children for")
     @JsonProperty

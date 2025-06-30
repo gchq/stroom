@@ -1,7 +1,5 @@
 package stroom.query.api;
 
-import stroom.util.shared.NullSafe;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -10,53 +8,68 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
-@JsonPropertyOrder({"expandMode", "selectedGroups"})
+@JsonPropertyOrder({"expandedDepth", "openGroups", "closedGroups"})
 @JsonInclude(Include.NON_NULL)
 public class GroupSelection {
     @JsonProperty
-    private final boolean expandMode;
+    private final int expandedDepth;
     @JsonProperty
-    private final Set<String> selectedGroups;
+    private final Set<String> openGroups;
+    @JsonProperty
+    private final Set<String> closedGroups;
 
     public GroupSelection() {
-        this(false, new HashSet<>());
+        this(0, new HashSet<>(), new HashSet<>());
     }
 
     @JsonCreator
-    public GroupSelection(@JsonProperty("expandMode") final boolean expandMode,
-                          @JsonProperty("selectedGroups") final Set<String> selectedGroups) {
-        this.expandMode = expandMode;
-        this.selectedGroups = NullSafe.firstNonNull(selectedGroups).orElse(new HashSet<>());
+    public GroupSelection(@JsonProperty("expandedDepth") final int expandedDepth,
+                          @JsonProperty("openGroups") final Set<String> openGroups,
+                          @JsonProperty("closedGroups") final Set<String> closedGroups) {
+        this.expandedDepth = expandedDepth;
+        this.openGroups = Optional.ofNullable(openGroups).orElse(new HashSet<>());
+        this.closedGroups = Optional.ofNullable(closedGroups).orElse(new HashSet<>());
     }
 
-    public boolean isExpandMode() {
-        return expandMode;
+    public int getExpandedDepth() {
+        return expandedDepth;
     }
 
-    public Set<String> getSelectedGroups() {
-        return selectedGroups;
+    public Set<String> getOpenGroups() {
+        return openGroups;
     }
 
-    public void add(final String group) {
-        selectedGroups.add(group);
+    public Set<String> getClosedGroups() {
+        return closedGroups;
     }
 
-    public void remove(final String group) {
-        selectedGroups.remove(group);
+    public void open(final String group) {
+        openGroups.add(group);
+        closedGroups.remove(group);
     }
 
-    public boolean isGroupSelected(final String group) {
-        return selectedGroups != null && selectedGroups.contains(group);
+    public void close(final String group) {
+        closedGroups.add(group);
+        openGroups.remove(group);
     }
 
-    public boolean isGroupOpen(final String group) {
-        return (expandMode && !isGroupSelected(group)) || (!expandMode && isGroupSelected(group));
+    public boolean isGroupOpen(final String group, final int depth) {
+        return (depth < expandedDepth || openGroups.contains(group)) && !closedGroups.contains(group);
     }
 
     public boolean hasGroupsSelected() {
-        return selectedGroups != null && !selectedGroups.isEmpty();
+        return expandedDepth > 0 || hasOpenGroups() || hasClosedGroups();
+    }
+
+    public boolean hasOpenGroups() {
+        return !openGroups.isEmpty();
+    }
+
+    public boolean hasClosedGroups() {
+        return !closedGroups.isEmpty();
     }
 
     @Override
@@ -65,20 +78,78 @@ public class GroupSelection {
             return false;
         }
         final GroupSelection that = (GroupSelection) o;
-        return expandMode == that.expandMode &&
-               Objects.equals(selectedGroups, that.selectedGroups);
+        return expandedDepth == that.expandedDepth &&
+               Objects.equals(openGroups, that.openGroups) &&
+               Objects.equals(closedGroups, that.closedGroups);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(expandMode, selectedGroups);
+        return Objects.hash(expandedDepth, openGroups, closedGroups);
     }
 
     @Override
     public String toString() {
         return "GroupSelection{" +
-               "expandMode=" + expandMode +
-               ", selectedGroups=" + selectedGroups +
+               "minDepth=" + expandedDepth +
+               ", openGroups=" + openGroups +
+               ", closedGroups=" + closedGroups +
                '}';
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
+
+        private int expandedDepth;
+        private Set<String> openGroups;
+        private Set<String> closedGroups;
+
+        private Builder() {}
+
+        private Builder(final GroupSelection groupSelection) {
+            this.expandedDepth = groupSelection.expandedDepth;
+            this.closedGroups = groupSelection.closedGroups;
+            this.openGroups = groupSelection.openGroups;
+        }
+
+        public Builder expand(final int maxDepth) {
+            if (expandedDepth < maxDepth) {
+                ++expandedDepth;
+            }
+            return this;
+        }
+
+        public Builder collapse() {
+            if (expandedDepth > 0) {
+                --expandedDepth;
+            }
+            return this;
+        }
+
+        public Builder expandedDepth(final int expandedDepth) {
+            this.expandedDepth = expandedDepth;
+            return this;
+        }
+
+        public Builder openGroups(final Set<String> openGroups) {
+            this.openGroups = openGroups;
+            return this;
+        }
+
+        public Builder closedGroups(final Set<String> closedGroups) {
+            this.closedGroups = closedGroups;
+            return this;
+        }
+
+        public GroupSelection build() {
+            return new GroupSelection(expandedDepth, openGroups, closedGroups);
+        }
     }
 }

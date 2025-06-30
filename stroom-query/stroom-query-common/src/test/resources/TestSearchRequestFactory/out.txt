@@ -100,8 +100,9 @@ select StreamId, EventId, EventTime, Status
     "resultStyle" : "TABLE",
     "fetch" : "ALL",
     "groupSelection" : {
-      "expandMode" : false,
-      "selectedGroups" : [ ]
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
     }
   } ],
   "incremental" : false,
@@ -217,8 +218,9 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "resultStyle" : "TABLE",
     "fetch" : "ALL",
     "groupSelection" : {
-      "expandMode" : false,
-      "selectedGroups" : [ ]
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
     }
   } ],
   "incremental" : false,
@@ -342,8 +344,9 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "resultStyle" : "TABLE",
     "fetch" : "ALL",
     "groupSelection" : {
-      "expandMode" : false,
-      "selectedGroups" : [ ]
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
     }
   } ],
   "incremental" : false,
@@ -458,8 +461,9 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "resultStyle" : "TABLE",
     "fetch" : "ALL",
     "groupSelection" : {
-      "expandMode" : false,
-      "selectedGroups" : [ ]
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
     }
   } ],
   "incremental" : false,
@@ -574,8 +578,9 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "resultStyle" : "TABLE",
     "fetch" : "ALL",
     "groupSelection" : {
-      "expandMode" : false,
-      "selectedGroups" : [ ]
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
     }
   } ],
   "incremental" : false,
@@ -676,8 +681,9 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "resultStyle" : "TABLE",
     "fetch" : "ALL",
     "groupSelection" : {
-      "expandMode" : false,
-      "selectedGroups" : [ ]
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
     }
   } ],
   "incremental" : false,
@@ -749,8 +755,9 @@ select StreamId
     "resultStyle" : "TABLE",
     "fetch" : "ALL",
     "groupSelection" : {
-      "expandMode" : false,
-      "selectedGroups" : [ ]
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
     }
   } ],
   "incremental" : false,
@@ -851,8 +858,9 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "resultStyle" : "TABLE",
     "fetch" : "ALL",
     "groupSelection" : {
-      "expandMode" : false,
-      "selectedGroups" : [ ]
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
     }
   } ],
   "incremental" : false,
@@ -953,8 +961,9 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "resultStyle" : "TABLE",
     "fetch" : "ALL",
     "groupSelection" : {
-      "expandMode" : false,
-      "selectedGroups" : [ ]
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
     }
   } ],
   "incremental" : false,
@@ -1055,8 +1064,9 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "resultStyle" : "TABLE",
     "fetch" : "ALL",
     "groupSelection" : {
-      "expandMode" : false,
-      "selectedGroups" : [ ]
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
     }
   } ],
   "incremental" : false,
@@ -1110,8 +1120,9 @@ select StreamId as "Stream Id", count as Count
     "resultStyle" : "TABLE",
     "fetch" : "ALL",
     "groupSelection" : {
-      "expandMode" : false,
-      "selectedGroups" : [ ]
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
     }
   } ],
   "incremental" : false,
@@ -1215,8 +1226,9 @@ select comp
     "resultStyle" : "TABLE",
     "fetch" : "ALL",
     "groupSelection" : {
-      "expandMode" : false,
-      "selectedGroups" : [ ]
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
     }
   } ],
   "incremental" : false,
@@ -1271,8 +1283,9 @@ select StreamId, EventTime
     "resultStyle" : "TABLE",
     "fetch" : "ALL",
     "groupSelection" : {
-      "expandMode" : false,
-      "selectedGroups" : [ ]
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
     }
   } ],
   "incremental" : false,
@@ -1327,8 +1340,9 @@ select ${Stream Id}, ${Event Time}
     "resultStyle" : "TABLE",
     "fetch" : "ALL",
     "groupSelection" : {
-      "expandMode" : false,
-      "selectedGroups" : [ ]
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
     }
   } ],
   "incremental" : false,
@@ -1393,8 +1407,9 @@ select ${Stream Id}, ${Event Time}
     "resultStyle" : "TABLE",
     "fetch" : "ALL",
     "groupSelection" : {
-      "expandMode" : false,
-      "selectedGroups" : [ ]
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
     }
   } ],
   "incremental" : false,
@@ -1459,8 +1474,9 @@ select ${Event Time}
     "resultStyle" : "TABLE",
     "fetch" : "ALL",
     "groupSelection" : {
-      "expandMode" : false,
-      "selectedGroups" : [ ]
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
     }
   } ],
   "incremental" : false,
@@ -1534,8 +1550,9 @@ select StreamId
     "resultStyle" : "TABLE",
     "fetch" : "ALL",
     "groupSelection" : {
-      "expandMode" : false,
-      "selectedGroups" : [ ]
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
     }
   } ],
   "incremental" : false,
@@ -1607,8 +1624,9 @@ select StreamId
     "resultStyle" : "TABLE",
     "fetch" : "ALL",
     "groupSelection" : {
-      "expandMode" : false,
-      "selectedGroups" : [ ]
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
     }
   } ],
   "incremental" : false,
@@ -1739,8 +1757,9 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "resultStyle" : "TABLE",
     "fetch" : "ALL",
     "groupSelection" : {
-      "expandMode" : false,
-      "selectedGroups" : [ ]
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
     }
   } ],
   "incremental" : false,
@@ -1864,8 +1883,9 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "resultStyle" : "TABLE",
     "fetch" : "ALL",
     "groupSelection" : {
-      "expandMode" : false,
-      "selectedGroups" : [ ]
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
     }
   } ],
   "incremental" : false,
@@ -1990,8 +2010,9 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "resultStyle" : "TABLE",
     "fetch" : "ALL",
     "groupSelection" : {
-      "expandMode" : false,
-      "selectedGroups" : [ ]
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
     }
   } ],
   "incremental" : false,
@@ -2112,8 +2133,9 @@ select StreamId, EventId, EventTime, Status
     "resultStyle" : "TABLE",
     "fetch" : "ALL",
     "groupSelection" : {
-      "expandMode" : false,
-      "selectedGroups" : [ ]
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
     }
   } ],
   "incremental" : false,
@@ -2243,8 +2265,9 @@ select StreamId, EventId, EventTime, Status
     "resultStyle" : "TABLE",
     "fetch" : "ALL",
     "groupSelection" : {
-      "expandMode" : false,
-      "selectedGroups" : [ ]
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
     }
   } ],
   "incremental" : false,

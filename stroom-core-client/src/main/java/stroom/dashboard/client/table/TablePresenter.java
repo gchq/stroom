@@ -180,6 +180,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private ExpressionOperator currentSelectionFilter;
     private final TableRowStyles tableRowStyles;
     private boolean initialised;
+    private int maxDepth;
 
     @Inject
     public TablePresenter(final EventBus eventBus,
@@ -228,11 +229,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         addColumnButton.setTitle("Add Column");
 
         expandAllButton = pagerView.addButton(SvgPresets.EXPAND_ALL);
-        expandAllButton.setTitle("Expand All");
+        expandAllButton.setTitle("Expand");
         expandAllButton.setEnabled(false);
 
         collapseAllButton = pagerView.addButton(SvgPresets.COLLAPSE_ALL);
-        collapseAllButton.setTitle("Collapse All");
+        collapseAllButton.setTitle("Collapse");
         collapseAllButton.setEnabled(false);
 
         // Download
@@ -284,8 +285,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 return row.getExpander();
             }
         };
-        expanderColumn.setFieldUpdater((index, result, value) -> {
-            toggleGroup(result.getGroupKey());
+        expanderColumn.setFieldUpdater((index, row, value) -> {
+            toggle(row);
             tableResultRequest = tableResultRequest
                     .copy()
                     .groupSelection(groupSelection)
@@ -299,11 +300,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         annotationManager.setColumnSupplier(() -> getTableComponentSettings().getColumns());
     }
 
-    private void toggleGroup(final String group) {
-        if (groupSelection.isExpandMode() == groupSelection.isGroupOpen(group)) {
-            groupSelection.add(group);
+    private void toggle(final TableRow row) {
+        if (groupSelection.isGroupOpen(row.getGroupKey(), row.getDepth())) {
+            groupSelection.close(row.getGroupKey());
         } else {
-            groupSelection.remove(group);
+            groupSelection.open(row.getGroupKey());
         }
     }
 
@@ -340,7 +341,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }));
 
         registerHandler(expandAllButton.addClickHandler(event -> {
-            groupSelection = new GroupSelection(true, new HashSet<>());
+            groupSelection = groupSelection.copy()
+                    .closedGroups(new HashSet<>())
+                    .expand(maxDepth)
+                    .build();
 
             tableResultRequest = tableResultRequest
                     .copy()
@@ -350,7 +354,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }));
 
         registerHandler(collapseAllButton.addClickHandler(event -> {
-            groupSelection = new GroupSelection(false, new HashSet<>());
+            groupSelection = groupSelection.copy()
+                    .collapse()
+                    .openGroups(new HashSet<>())
+                    .build();
 
             tableResultRequest = tableResultRequest
                     .copy()
@@ -676,22 +683,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private List<TableRow> processData(final List<Column> columns, final List<Row> values) {
         // See if any fields have more than 1 level. If they do then we will add
         // an expander column.
-        int maxGroup = -1;
-        final boolean showDetail = getTableComponentSettings().showDetail();
-        for (final Column column : columns) {
-            if (column.getGroup() != null) {
-                maxGroup = Math.max(maxGroup, column.getGroup());
-            }
-        }
-
-        int maxDepth = -1;
-        if (maxGroup > 0 && showDetail) {
-            maxDepth = maxGroup + 1;
-        } else if (maxGroup > 0) {
-            maxDepth = maxGroup;
-        } else if (maxGroup == 0 && showDetail) {
-            maxDepth = 1;
-        }
+        maxDepth = getMaxDepth(columns);
 
         final List<TableRow> processed = new ArrayList<>(values.size());
         for (final Row row : values) {
@@ -725,7 +717,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             // Create an expander for the row.
             Expander expander = null;
             if (row.getDepth() < maxDepth) {
-                final boolean open = groupSelection.isGroupOpen(row.getGroupKey());
+                final boolean open = groupSelection.isGroupOpen(row.getGroupKey(), row.getDepth());
                 expander = new Expander(row.getDepth(), open, false);
             } else if (row.getDepth() > 0) {
                 expander = new Expander(row.getDepth(), false, true);
@@ -735,17 +727,47 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     expander,
                     row.getGroupKey(),
                     cellsMap,
-                    row.getMatchingRule()));
+                    row.getMatchingRule(),
+                    row.getDepth()));
         }
 
         // Set the expander column width.
         expanderColumnWidth = ExpanderCell.getColumnWidth(maxDepth);
         dataGrid.setColumnWidth(expanderColumn, expanderColumnWidth, Unit.PX);
 
-        expandAllButton.setEnabled(maxDepth > 0);
-        collapseAllButton.setEnabled(maxDepth > 0);
+        final int expandedDepth = groupSelection.getExpandedDepth();
+        final boolean enableExpandButton = maxDepth > 0 &&
+            (expandedDepth < maxDepth || groupSelection.hasClosedGroups());
+        expandAllButton.setEnabled(enableExpandButton);
+        expandAllButton.setTitle(enableExpandButton ? "Expand Level " +
+            Math.min(maxDepth, expandedDepth + 1) : "Expand");
+
+        final boolean enableCollapseButton = maxDepth > 0 && (expandedDepth > 0 || groupSelection.hasOpenGroups());
+        collapseAllButton.setEnabled(enableCollapseButton);
+        collapseAllButton.setTitle(enableCollapseButton ? "Collapse Level " +
+            Math.min(maxDepth, Math.max(1, groupSelection.getExpandedDepth())) : "Collapse");
 
         return processed;
+    }
+
+    private int getMaxDepth(final List<Column> columns) {
+        int maxGroup = -1;
+        final boolean showDetail = getTableComponentSettings().showDetail();
+        for (final Column column : columns) {
+            if (column.getGroup() != null) {
+                maxGroup = Math.max(maxGroup, column.getGroup());
+            }
+        }
+
+        int maxDepth = -1;
+        if (maxGroup > 0 && showDetail) {
+            maxDepth = maxGroup + 1;
+        } else if (maxGroup > 0) {
+            maxDepth = maxGroup;
+        } else if (maxGroup == 0 && showDetail) {
+            maxDepth = 1;
+        }
+        return maxDepth;
     }
 
     private void addExpanderColumn() {
