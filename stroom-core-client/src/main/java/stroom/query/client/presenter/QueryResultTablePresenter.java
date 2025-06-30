@@ -28,6 +28,8 @@ import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.DownloadPresenter;
 import stroom.dashboard.client.table.FormatPresenter;
 import stroom.dashboard.client.table.HasComponentSelection;
+import stroom.dashboard.client.table.TableCollapseButton;
+import stroom.dashboard.client.table.TableExpandButton;
 import stroom.dashboard.client.table.TableRowStyles;
 import stroom.dashboard.client.table.cf.RulesPresenter;
 import stroom.dashboard.shared.ColumnValues;
@@ -93,7 +95,6 @@ import com.gwtplatform.mvp.client.View;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -124,8 +125,8 @@ public class QueryResultTablePresenter
     private OffsetRange requestedRange = OffsetRange.ZERO_100;
     private GroupSelection groupSelection = new GroupSelection();
 
-    private final ButtonView expandAllButton;
-    private final ButtonView collapseAllButton;
+    private final TableExpandButton expandButton;
+    private final TableCollapseButton collapseButton;
 
     private final ButtonView downloadButton;
     private final DownloadPresenter downloadPresenter;
@@ -208,13 +209,11 @@ public class QueryResultTablePresenter
 
         pagerView.getRefreshButton().setAllowPause(true);
 
-        expandAllButton = pagerView.addButton(SvgPresets.EXPAND_ALL);
-        expandAllButton.setTitle("Expand All");
-        expandAllButton.setEnabled(false);
+        expandButton = TableExpandButton.create();
+        pagerView.addButton(expandButton);
 
-        collapseAllButton = pagerView.addButton(SvgPresets.COLLAPSE_ALL);
-        collapseAllButton.setTitle("Collapse All");
-        collapseAllButton.setEnabled(false);
+        collapseButton = TableCollapseButton.create();
+        pagerView.addButton(collapseButton);
 
         // Download
         downloadButton = pagerView.addButton(SvgPresets.DOWNLOAD);
@@ -287,19 +286,13 @@ public class QueryResultTablePresenter
 
         registerHandler(pagerView.getRefreshButton().addClickHandler(event -> setPause(!pause, true)));
 
-        registerHandler(expandAllButton.addClickHandler(event -> {
-            groupSelection = groupSelection.copy()
-                    .closedGroups(new HashSet<>())
-                    .expand(maxDepth)
-                    .build();
+        registerHandler(expandButton.addClickHandler(event -> {
+            groupSelection = expandButton.expand(groupSelection, maxDepth);
             refresh();
         }));
 
-        registerHandler(collapseAllButton.addClickHandler(event -> {
-            groupSelection = groupSelection.copy()
-                    .collapse()
-                    .openGroups(new HashSet<>())
-                    .build();
+        registerHandler(collapseButton.addClickHandler(event -> {
+            groupSelection = collapseButton.collapse(groupSelection);
             refresh();
         }));
 
@@ -748,17 +741,8 @@ public class QueryResultTablePresenter
         expanderColumnWidth = ExpanderCell.getColumnWidth(maxDepth);
         dataGrid.setColumnWidth(expanderColumn, expanderColumnWidth, Unit.PX);
 
-        final int expandedDepth = groupSelection.getExpandedDepth();
-        final boolean enableExpandButton = maxDepth > 0 &&
-            (expandedDepth < maxDepth || groupSelection.hasClosedGroups());
-        expandAllButton.setEnabled(enableExpandButton);
-        expandAllButton.setTitle(enableExpandButton ? "Expand Level " +
-            Math.min(maxDepth, expandedDepth + 1) : "Expand");
-
-        final boolean enableCollapseButton = maxDepth > 0 && (expandedDepth > 0 || groupSelection.hasOpenGroups());
-        collapseAllButton.setEnabled(enableCollapseButton);
-        collapseAllButton.setTitle(enableCollapseButton ? "Collapse Level " +
-            Math.min(maxDepth, Math.max(1, groupSelection.getExpandedDepth())) : "Collapse");
+        expandButton.update(groupSelection, maxDepth);
+        collapseButton.update(groupSelection, maxDepth);
 
         return processed;
     }

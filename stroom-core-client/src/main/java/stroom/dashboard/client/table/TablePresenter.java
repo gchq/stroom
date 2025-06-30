@@ -155,8 +155,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final List<com.google.gwt.user.cellview.client.Column<TableRow, ?>> existingColumns = new ArrayList<>();
     private final List<HandlerRegistration> searchModelHandlerRegistrations = new ArrayList<>();
     private final ButtonView addColumnButton;
-    private final ButtonView expandAllButton;
-    private final ButtonView collapseAllButton;
+    private final TableExpandButton expandButton;
+    private final TableCollapseButton collapseButton;
     private final ButtonView downloadButton;
     private final InlineSvgToggleButton valueFilterButton;
     private final ButtonView annotateButton;
@@ -228,13 +228,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         addColumnButton = pagerView.addButton(SvgPresets.ADD);
         addColumnButton.setTitle("Add Column");
 
-        expandAllButton = pagerView.addButton(SvgPresets.EXPAND_ALL);
-        expandAllButton.setTitle("Expand");
-        expandAllButton.setEnabled(false);
+        expandButton = TableExpandButton.create();
+        pagerView.addButton(expandButton);
 
-        collapseAllButton = pagerView.addButton(SvgPresets.COLLAPSE_ALL);
-        collapseAllButton.setTitle("Collapse");
-        collapseAllButton.setEnabled(false);
+        collapseButton = TableCollapseButton.create();
+        pagerView.addButton(collapseButton);
 
         // Download
         downloadButton = pagerView.addButton(SvgPresets.DOWNLOAD);
@@ -340,11 +338,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             }
         }));
 
-        registerHandler(expandAllButton.addClickHandler(event -> {
-            groupSelection = groupSelection.copy()
-                    .closedGroups(new HashSet<>())
-                    .expand(maxDepth)
-                    .build();
+        registerHandler(expandButton.addClickHandler(event -> {
+            groupSelection = expandButton.expand(groupSelection, maxDepth);
 
             tableResultRequest = tableResultRequest
                     .copy()
@@ -353,11 +348,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             refresh();
         }));
 
-        registerHandler(collapseAllButton.addClickHandler(event -> {
-            groupSelection = groupSelection.copy()
-                    .collapse()
-                    .openGroups(new HashSet<>())
-                    .build();
+        registerHandler(collapseButton.addClickHandler(event -> {
+            groupSelection = collapseButton.collapse(groupSelection);
 
             tableResultRequest = tableResultRequest
                     .copy()
@@ -735,17 +727,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         expanderColumnWidth = ExpanderCell.getColumnWidth(maxDepth);
         dataGrid.setColumnWidth(expanderColumn, expanderColumnWidth, Unit.PX);
 
-        final int expandedDepth = groupSelection.getExpandedDepth();
-        final boolean enableExpandButton = maxDepth > 0 &&
-            (expandedDepth < maxDepth || groupSelection.hasClosedGroups());
-        expandAllButton.setEnabled(enableExpandButton);
-        expandAllButton.setTitle(enableExpandButton ? "Expand Level " +
-            Math.min(maxDepth, expandedDepth + 1) : "Expand");
-
-        final boolean enableCollapseButton = maxDepth > 0 && (expandedDepth > 0 || groupSelection.hasOpenGroups());
-        collapseAllButton.setEnabled(enableCollapseButton);
-        collapseAllButton.setTitle(enableCollapseButton ? "Collapse Level " +
-            Math.min(maxDepth, Math.max(1, groupSelection.getExpandedDepth())) : "Collapse");
+        expandButton.update(groupSelection, maxDepth);
+        collapseButton.update(groupSelection, maxDepth);
 
         return processed;
     }
