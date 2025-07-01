@@ -35,14 +35,6 @@ dependencies {
     implementation libs.vavr
 
     runtimeOnly libs.mysql.connector.java
-
-    // The following logging libs are needed when running junits outside dropwizard
-    runtimeOnly libs.jcl.over.slf4j
-    runtimeOnly libs.jul.to.slf4j
-    runtimeOnly libs.log4j.over.slf4j
-    runtimeOnly libs.logback.classic
-    runtimeOnly libs.logback.core
-
-    runtimeOnly libs.junit.jupiter.engine
+    runtimeOnly libs.bundles.common.test.runtime
     runtimeOnly libs.jersey.test.framework.grizzly2
 }

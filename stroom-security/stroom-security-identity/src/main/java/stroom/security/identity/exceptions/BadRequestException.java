@@ -19,7 +19,7 @@
 package stroom.security.identity.exceptions;
 
 import event.logging.AuthenticateOutcomeReason;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import jakarta.annotation.Nullable;
 
 public class BadRequestException extends RuntimeException {
 

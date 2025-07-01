@@ -26,6 +26,7 @@ import stroom.planb.impl.db.StateValueTestUtil.ValueFunction;
 import stroom.planb.impl.db.temporalrangestate.TemporalRangeStateDb;
 import stroom.planb.impl.db.temporalrangestate.TemporalRangeStateFields;
 import stroom.planb.impl.db.temporalrangestate.TemporalRangeStateRequest;
+import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.RangeType;
 import stroom.planb.shared.StateValueSchema;
 import stroom.planb.shared.TemporalPrecision;
@@ -65,6 +66,7 @@ class TestTemporalRangeStateDb {
             .Builder()
             .maxStoreSize(ByteSize.ofGibibytes(100).getBytes())
             .build();
+    private static final PlanBDoc DOC = getDoc(BASIC_SETTINGS);
 
     @Test
     void test(@TempDir final Path tempDir) {
@@ -74,7 +76,7 @@ class TestTemporalRangeStateDb {
         try (final TemporalRangeStateDb db = TemporalRangeStateDb.create(
                 tempDir,
                 BYTE_BUFFERS,
-                new TemporalRangeStateSettings.Builder().build(),
+                DOC,
                 true)) {
             assertThat(db.count()).isEqualTo(100);
             testGet(db);
@@ -107,24 +109,6 @@ class TestTemporalRangeStateDb {
             assertThat(state.key().getTime()).isEqualTo(refTime);
             assertThat(state.val().type()).isEqualTo(Type.STRING);
             assertThat(state.val().toString()).isEqualTo("test");
-
-//            final TemporalRangeStateRequest stateRequest =
-//                    new TemporalRangeStateRequest("TEST_MAP", 11, refTime);
-//            final Optional<TemporalState> optional = stateDao.getState(stateRequest);
-//            assertThat(optional).isNotEmpty();
-//            final TemporalState res = optional.get();
-//            assertThat(res.key()).isEqualTo("11");
-//            assertThat(res.effectiveTime()).isEqualTo(refTime);
-//            assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
-//            assertThat(res.getValueAsString()).isEqualTo("test");
-//
-//            final FieldIndex fieldIndex = new FieldIndex();
-//            fieldIndex.create(RangeStateFields.KEY_START);
-//            final AtomicInteger count = new AtomicInteger();
-//            stateDao.search(new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex, null,
-//                    v -> count.incrementAndGet());
-//            assertThat(count.get()).isEqualTo(100);
-
 
             final FieldIndex fieldIndex = new FieldIndex();
             fieldIndex.create(TemporalRangeStateFields.KEY_START);
@@ -223,7 +207,10 @@ class TestTemporalRangeStateDb {
                            final int insertRows,
                            final Function<Integer, Key> keyFunction,
                            final Function<Integer, Val> valueFunction) {
-        try (final TemporalRangeStateDb db = TemporalRangeStateDb.create(dbDir, BYTE_BUFFERS, settings, false)) {
+        try (final TemporalRangeStateDb db = TemporalRangeStateDb.create(dbDir,
+                BYTE_BUFFERS,
+                getDoc(settings),
+                false)) {
             insertData(db, insertRows, keyFunction, valueFunction);
         }
     }
@@ -246,7 +233,7 @@ class TestTemporalRangeStateDb {
                                 final int rows,
                                 final Function<Integer, Key> keyFunction,
                                 final Function<Integer, Val> valueFunction) {
-        try (final TemporalRangeStateDb db = TemporalRangeStateDb.create(dbDir, BYTE_BUFFERS, settings, true)) {
+        try (final TemporalRangeStateDb db = TemporalRangeStateDb.create(dbDir, BYTE_BUFFERS, getDoc(settings), true)) {
             for (int i = 0; i < rows; i++) {
                 final Key key = keyFunction.apply(i);
                 final TemporalRangeState temporalState = db.getState(
@@ -270,7 +257,7 @@ class TestTemporalRangeStateDb {
         testWrite(dbPath2);
 
         try (final TemporalRangeStateDb db = TemporalRangeStateDb
-                .create(dbPath1, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
+                .create(dbPath1, BYTE_BUFFERS, DOC, false)) {
             db.merge(dbPath2);
         }
     }
@@ -283,7 +270,7 @@ class TestTemporalRangeStateDb {
         testWrite(dbPath);
 
         try (final TemporalRangeStateDb db = TemporalRangeStateDb
-                .create(dbPath, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
+                .create(dbPath, BYTE_BUFFERS, DOC, false)) {
             assertThat(db.count()).isEqualTo(100);
             db.condense(Instant.now());
             db.deleteOldData(Instant.MIN, true);
@@ -298,7 +285,7 @@ class TestTemporalRangeStateDb {
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
 
         try (final TemporalRangeStateDb db = TemporalRangeStateDb
-                .create(dbDir, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
+                .create(dbDir, BYTE_BUFFERS, DOC, false)) {
             insertData(db, refTime, "test", 100, 10);
         }
     }
@@ -322,45 +309,6 @@ class TestTemporalRangeStateDb {
         assertThat(state != null).isEqualTo(expected);
     }
 
-    //
-//    @Test
-//    void testRemoveOldData() {
-//        ScyllaDbUtil.test((sessionProvider, tableName) -> {
-//            final TemporalRangeStateDao stateDao = new TemporalRangeStateDao(sessionProvider, tableName);
-//
-//            Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-//            insertData(stateDao, refTime, "test", 100, 10);
-//            insertData(stateDao, refTime, "test", 10, -10);
-//
-//            assertThat(stateDao.count()).isEqualTo(109);
-//
-//            stateDao.removeOldData(refTime);
-//            assertThat(stateDao.count()).isEqualTo(100);
-//
-//            stateDao.removeOldData(Instant.now());
-//            assertThat(stateDao.count()).isEqualTo(0);
-//        });
-//    }
-//
-//    @Test
-//    void testCondense() {
-//        ScyllaDbUtil.test((sessionProvider, tableName) -> {
-//            final TemporalRangeStateDao stateDao = new TemporalRangeStateDao(sessionProvider, tableName);
-//
-//            Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-//            insertData(stateDao, refTime, "test", 100, 10);
-//            insertData(stateDao, refTime, "test", 10, -10);
-//
-//            assertThat(stateDao.count()).isEqualTo(109);
-//
-//            stateDao.condense(refTime);
-//            assertThat(stateDao.count()).isEqualTo(100);
-//
-//            stateDao.condense(Instant.now());
-//            assertThat(stateDao.count()).isEqualTo(1);
-//        });
-//    }
-//
     private void insertData(final TemporalRangeStateDb db,
                             final Instant refTime,
                             final String value,
@@ -374,5 +322,9 @@ class TestTemporalRangeStateDb {
                 db.insert(writer, new TemporalRangeState(k, v));
             }
         });
+    }
+
+    private static PlanBDoc getDoc(final TemporalRangeStateSettings settings) {
+        return PlanBDoc.builder().name("test").settings(settings).build();
     }
 }

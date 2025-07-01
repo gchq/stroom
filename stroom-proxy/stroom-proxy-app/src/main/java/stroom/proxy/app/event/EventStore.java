@@ -15,10 +15,10 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.metrics.Metrics;
 
 import com.codahale.metrics.Timer;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;

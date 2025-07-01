@@ -54,7 +54,7 @@ public class FileTransferResourceImpl implements FileTransferResource {
             // stream.
             fileTransferServiceProvider.get().checkSnapshotStatus(request);
 
-            // Stream the snapshhot content to the client as ZIP data
+            // Stream the snapshot content to the client as ZIP data
             final StreamingOutput streamingOutput = output -> {
                 try {
                     fileTransferServiceProvider.get().fetchSnapshot(request, output);

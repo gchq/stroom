@@ -1,6 +1,5 @@
 package stroom.query.language.functions;
 
-import java.text.ParseException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -10,37 +9,43 @@ import java.time.format.DateTimeParseException;
         name = RoundTime.NAME,
         commonCategory = FunctionCategory.DATE,
         commonSubCategories = AbstractRoundDateTime.ROUND_SUB_CATEGORY,
-        commonReturnType = ValLong.class,
-        commonReturnDescription = "The time as milliseconds since the epoch (1st Jan 1970).",
-        signatures = @FunctionSignature(
-                description = "Rounds the supplied time to the nearest duration, applying an optional offset.",
+        commonReturnType = ValDate.class,
+        commonReturnDescription = "The result date and time.",
+        signatures =
+        @FunctionSignature(
+                description = "Rounds the supplied time to the nearest duration.",
                 args = {
                         @FunctionArg(
                                 name = "time",
-                                description = "The time to round in milliseconds since the epoch.",
-                                argType = ValLong.class),
+                                description = "The time to round.",
+                                argType = ValDate.class),
                         @FunctionArg(
                                 name = "duration",
                                 description = "The duration to round by in ISO-8601 format " +
                                               "(e.g., 'PT5M' for 5 minutes).",
-                                argType = ValString.class),
-                        @FunctionArg(
-                                name = "offset",
-                                description = "The offset to apply in ISO-8601 format (e.g., 'PT1M' for 1 minute).",
                                 argType = ValString.class)
-                }))
+                })
+)
 class RoundTime extends AbstractRoundDateTime {
 
     static final String NAME = "roundTime";
 
     public RoundTime(final ExpressionContext expressionContext, final String name) {
-        super(expressionContext, name);
+        super(expressionContext, name, 2, 2);
     }
 
     @Override
-    public void setParams(final Param[] params) throws ParseException {
-        super.setParams(params);
-
+    protected DateTimeAdjuster getAdjuster() {
+        return zonedDateTime -> {
+            final long duration = parseDuration(params[1], "duration").toMillis();
+            final long millis = zonedDateTime.toInstant().toEpochMilli();
+            final long remainder = millis % duration;
+            long roundedMillis = millis - remainder;
+            if (remainder >= duration / 2) {
+                roundedMillis += duration;
+            }
+            return ZonedDateTime.ofInstant(Instant.ofEpochMilli(roundedMillis), zoneId);
+        };
     }
 
     private Duration parseDuration(final Param param, final String paramName) {
@@ -52,21 +57,5 @@ class RoundTime extends AbstractRoundDateTime {
         } catch (final DateTimeParseException e) {
             throw new IllegalArgumentException("Invalid " + paramName + " format: " + param);
         }
-    }
-
-    @Override
-    protected DateTimeAdjuster getAdjuster() {
-        return zonedDateTime -> {
-            final long duration = parseDuration(params[1], "duration").toMillis();
-            final long offset = parseDuration(params[2], "offset").toMillis();
-            long millis = zonedDateTime.toInstant().toEpochMilli();
-            millis = millis - offset;
-            final long remainder = millis % duration;
-            long roundedMillis = millis - remainder;
-            if (remainder >= duration / 2) {
-                roundedMillis += duration;
-            }
-            return ZonedDateTime.ofInstant(Instant.ofEpochMilli(roundedMillis + offset), zoneId);
-        };
     }
 }

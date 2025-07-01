@@ -154,16 +154,20 @@ public class PipelineStoreImpl implements PipelineStore {
             final PipelineData pipelineData = doc.getPipelineData();
             if (pipelineData != null) {
                 final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
+                builder.getProperties().getAddList().clear();
                 remapPipelineProperties(
                         pipelineData.getAddedProperties(),
                         builder.getProperties().getAddList(), dependencyRemapper);
+                builder.getProperties().getRemoveList().clear();
                 remapPipelineProperties(
                         pipelineData.getRemovedProperties(),
                         builder.getProperties().getRemoveList(), dependencyRemapper);
 
+                builder.getReferences().getAddList().clear();
                 remapPipelineReferences(
                         pipelineData.getAddedPipelineReferences(),
                         builder.getReferences().getAddList(), dependencyRemapper);
+                builder.getReferences().getRemoveList().clear();
                 remapPipelineReferences(
                         pipelineData.getRemovedPipelineReferences(),
                         builder.getReferences().getRemoveList(), dependencyRemapper);

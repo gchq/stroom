@@ -15,12 +15,12 @@ public class TestRoundTime extends AbstractFunctionTest<RoundTime> {
     Stream<TestCase> getTestCases() {
         final LocalDateTime input = LocalDateTime.of(2025, 4, 7, 10, 44, 30, 550_000_000);
         final long inputMillis = input.atZone(ZoneOffset.UTC).toInstant().toEpochMilli();
-        final LocalDateTime rounded = LocalDateTime.of(2025, 4, 7, 10, 50, 0);
+        final LocalDateTime rounded = LocalDateTime.of(2025, 4, 7, 10, 45, 0);
         final long expectedMillis = rounded.atZone(ZoneOffset.UTC).toInstant().toEpochMilli();
 
         final LocalDateTime inputWithZone = LocalDateTime.of(2025, 4, 7, 10, 44, 30, 550_000_000);
         final long inputMillisWithZone = inputWithZone.atZone(ZoneOffset.ofHours(2)).toInstant().toEpochMilli();
-        final LocalDateTime roundedWithZone = LocalDateTime.of(2025, 4, 7, 10, 50, 0);
+        final LocalDateTime roundedWithZone = LocalDateTime.of(2025, 4, 7, 10, 45, 0);
         final long expectedMillisWithZone = roundedWithZone.atZone(ZoneOffset.ofHours(2)).toInstant().toEpochMilli();
 
         final LocalDateTime hourlyInput = LocalDateTime.of(2025, 4, 7, 10, 29, 30);
@@ -48,9 +48,9 @@ public class TestRoundTime extends AbstractFunctionTest<RoundTime> {
         final LocalDateTime beforeRounded = LocalDateTime.of(2025, 4, 7, 10, 30, 0);
         final long beforeExpectedMillis = beforeRounded.atZone(ZoneOffset.UTC).toInstant().toEpochMilli();
 
-        final LocalDateTime crossDayInput = LocalDateTime.of(2025, 4, 7, 23, 51, 0);
+        final LocalDateTime crossDayInput = LocalDateTime.of(2025, 4, 7, 23, 55, 0);
         final long crossDayInputMillis = crossDayInput.atZone(ZoneOffset.UTC).toInstant().toEpochMilli();
-        final LocalDateTime crossDayRounded = LocalDateTime.of(2025, 4, 7, 23, 55, 0);
+        final LocalDateTime crossDayRounded = LocalDateTime.of(2025, 4, 8, 0, 0, 0);
         final long crossDayExpectedMillis = crossDayRounded.atZone(ZoneOffset.UTC).toInstant().toEpochMilli();
 
         return Stream.of(
@@ -58,78 +58,61 @@ public class TestRoundTime extends AbstractFunctionTest<RoundTime> {
                         "Round time with valid inputs",
                         ValDate.create(expectedMillis),
                         ValDate.create(inputMillis),
-                        ValString.create("PT15M"),       //duration
-                        ValString.create("PT5M")        //offset
+                        ValString.create("PT15M")       //duration
                 ),
                 TestCase.of(
                         "Round time with invalid duration",
                         ValErr.create("Invalid duration format: INVALID"),
                         ValDate.create(inputMillis),
-                        ValString.create("INVALID"),
-                        ValString.create("PT1M")
-                ),
-                TestCase.of(
-                        "Round time with invalid offset",
-                        ValErr.create("Invalid offset format: INVALID"),
-                        ValDate.create(inputMillis),
-                        ValString.create("PT5M"),
                         ValString.create("INVALID")
                 ),
                 TestCase.of(
-                        "Round time with timezone offset",
+                        "Round to 15 minutes",
                         ValDate.create(expectedMillisWithZone),
                         ValDate.create(inputMillisWithZone),
-                        ValString.create("PT15M"),
-                        ValString.create("PT5M")
+                        ValString.create("PT15M")
                 ),
                 TestCase.of(
-                        "Round to hourly with zero offset",
+                        "Round to hourly",
                         ValDate.create(hourlyExpectedMillis),
                         ValDate.create(hourlyInputMillis),
-                        ValString.create("PT1H"),
-                        ValString.create("PT0M")
+                        ValString.create("PT1H")
                 ),
                 TestCase.of(
-                        "Round to daily with offset",
+                        "Round to daily",
                         ValDate.create(dailyExpectedMillis),
                         ValDate.create(dailyInputMillis),
-                        ValString.create("P1D"),
-                        ValString.create("PT0M")
+                        ValString.create("P1D")
                 ),
                 TestCase.of(
-                        "Round to nearest 30 seconds",
+                        "Round to 15 seconds",
                         ValDate.create(secondsExpectedMillis),
                         ValDate.create(secondsInputMillis),
-                        ValString.create("PT15S"),
-                        ValString.create("PT0S")
+                        ValString.create("PT15S")
                 ),
                 TestCase.of(
                         "Null input value",
                         ValNull.INSTANCE,
                         ValNull.INSTANCE,
-                        ValString.create("PT15M"),
-                        ValString.create("PT5M")
+                        ValString.create("PT15M")
                 ),
                 TestCase.of(
                         "Exactly on boundary",
                         ValDate.create(exactExpectedMillis),
                         ValDate.create(exactInputMillis),
-                        ValString.create("PT30M"),
-                        ValString.create("PT0M")
+                        ValString.create("PT30M")
                 ),
                 TestCase.of(
                         "Just before boundary",
                         ValDate.create(beforeExpectedMillis),
                         ValDate.create(beforeInputMillis),
-                        ValString.create("PT30M"),
-                        ValString.create("PT0M")
+                        ValString.create("PT30M")
                 ),
                 TestCase.of(
                         "Cross day boundary",
                         ValDate.create(crossDayExpectedMillis),
                         ValDate.create(crossDayInputMillis),
-                        ValString.create("PT15M"),
-                        ValString.create("PT10M")
+                        ValString.create("PT15M")
                 )
         );
     }

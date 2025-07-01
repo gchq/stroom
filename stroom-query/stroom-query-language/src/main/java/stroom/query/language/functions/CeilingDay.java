@@ -23,15 +23,14 @@ import java.time.ZonedDateTime;
         name = CeilingDay.NAME,
         commonCategory = FunctionCategory.DATE,
         commonSubCategories = AbstractRoundDateTime.CEILING_SUB_CATEGORY,
-        commonReturnType = ValLong.class,
-        commonReturnDescription = "The time as milliseconds since the epoch (1st Jan 1970).",
+        commonReturnType = ValDate.class,
+        commonReturnDescription = "The result date and time.",
         signatures = @FunctionSignature(
                 description = "Rounds the supplied time up to the start of the next day.",
                 args = {
                         @FunctionArg(
                                 name = "time",
-                                description = "The time to round in milliseconds since the epoch or as a string " +
-                                              "formatted using the default date format.",
+                                description = "The time to round.",
                                 argType = Val.class)}))
 class CeilingDay extends AbstractRoundDateTime {
 

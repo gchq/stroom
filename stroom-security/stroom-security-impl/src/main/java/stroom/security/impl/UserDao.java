@@ -28,7 +28,22 @@ public interface UserDao {
 
     User update(User user);
 
+    /**
+     * Find users and groups.
+     *
+     * @param criteria Criteria to apply.
+     * @return A page of users.
+     */
     ResultPage<User> find(FindUserCriteria criteria);
+
+    /**
+     * Find users and groups that are direct parents or siblings of the current user.
+     *
+     * @param userUuid The current user uuid.
+     * @param criteria Additional criteria to apply.
+     * @return A page of users.
+     */
+    ResultPage<User> findRestrictedUserList(String userUuid, FindUserCriteria criteria);
 
     ResultPage<User> findUsersInGroup(String groupUuid, FindUserCriteria criteria);
 

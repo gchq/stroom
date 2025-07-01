@@ -47,7 +47,7 @@ public class FileTransferServiceImpl implements FileTransferService {
      * @param outputStream The output stream to write the snapshot to.
      */
     @Override
-    public void fetchSnapshot(final SnapshotRequest request, final OutputStream outputStream) throws IOException {
+    public void fetchSnapshot(final SnapshotRequest request, final OutputStream outputStream) {
         // We will have already checked that we have a processing user but check again just in case.
         if (!securityContext.isProcessingUser()) {
             throw new PermissionException(securityContext.getUserRef(), "Only processing users can use this resource");

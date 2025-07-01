@@ -16,6 +16,7 @@
 
 package stroom.data.store.mock;
 
+import stroom.data.store.api.AttributeMapFactory;
 import stroom.data.store.api.DataService;
 import stroom.data.store.api.FsVolumeGroupService;
 import stroom.data.store.api.Store;
@@ -28,6 +29,7 @@ public class MockStreamStoreModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        bind(AttributeMapFactory.class).to(MockStore.class);
         bind(Store.class).to(MockStore.class);
         bind(DataService.class).to(MockDataService.class);
         bind(FsVolumeGroupService.class).to(MockFsVolumeGroupService.class);

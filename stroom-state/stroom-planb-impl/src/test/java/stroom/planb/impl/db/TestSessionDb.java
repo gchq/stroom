@@ -27,6 +27,7 @@ import stroom.planb.impl.db.session.SessionDb;
 import stroom.planb.impl.db.session.SessionFields;
 import stroom.planb.impl.db.session.SessionRequest;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
+import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.SessionKeySchema;
 import stroom.planb.shared.SessionSettings;
 import stroom.planb.shared.TemporalPrecision;
@@ -64,6 +65,7 @@ class TestSessionDb {
             .Builder()
             .maxStoreSize(ByteSize.ofGibibytes(100).getBytes())
             .build();
+    private static final PlanBDoc DOC = getDoc(BASIC_SETTINGS);
     private static final ByteBuffers BYTE_BUFFERS = new ByteBuffers(new ByteBufferFactoryImpl());
 
     @Test
@@ -78,7 +80,7 @@ class TestSessionDb {
         try (final SessionDb db = SessionDb.create(
                 tempDir,
                 BYTE_BUFFERS,
-                BASIC_SETTINGS,
+                DOC,
                 true)) {
             assertThat(db.count()).isEqualTo(109);
             testGet(db, key, refTime, 10);
@@ -184,7 +186,7 @@ class TestSessionDb {
                            final int insertRows,
                            final Function<Integer, KeyPrefix> valueFunction,
                            final Instant refTime) {
-        try (final SessionDb db = SessionDb.create(dbDir, BYTE_BUFFERS, settings, false)) {
+        try (final SessionDb db = SessionDb.create(dbDir, BYTE_BUFFERS, getDoc(settings), false)) {
             insertData(db, valueFunction, refTime, insertRows, 0);
         }
     }
@@ -194,7 +196,7 @@ class TestSessionDb {
                                 final int rows,
                                 final Function<Integer, KeyPrefix> valueFunction,
                                 final Instant time) {
-        try (final SessionDb db = SessionDb.create(dbDir, BYTE_BUFFERS, settings, true)) {
+        try (final SessionDb db = SessionDb.create(dbDir, BYTE_BUFFERS, getDoc(settings), true)) {
             for (int i = 0; i < rows; i++) {
                 final KeyPrefix key = valueFunction.apply(i);
                 final Session session = db.getState(new SessionRequest(key, time));
@@ -215,7 +217,7 @@ class TestSessionDb {
         testWrite(dbPath1);
         testWrite(dbPath2);
 
-        try (final SessionDb db = SessionDb.create(dbPath1, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
+        try (final SessionDb db = SessionDb.create(dbPath1, BYTE_BUFFERS, DOC, false)) {
             db.merge(dbPath2);
         }
     }
@@ -227,7 +229,7 @@ class TestSessionDb {
 
         testWrite(dbPath);
 
-        try (final SessionDb db = SessionDb.create(dbPath, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
+        try (final SessionDb db = SessionDb.create(dbPath, BYTE_BUFFERS, DOC, false)) {
             assertThat(db.count()).isEqualTo(109);
             db.condense(Instant.now());
             db.deleteOldData(Instant.MIN, true);
@@ -243,7 +245,7 @@ class TestSessionDb {
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
         final InstantRange highRange;
         final InstantRange lowRange;
-        try (final SessionDb db = SessionDb.create(dbDir, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
+        try (final SessionDb db = SessionDb.create(dbDir, BYTE_BUFFERS, DOC, false)) {
             highRange = insertData(db, i -> key, refTime, 100, 10);
             lowRange = insertData(db, i -> key, refTime, 10, -10);
         }
@@ -299,5 +301,9 @@ class TestSessionDb {
             reference.set(new InstantRange(min, max));
         });
         return reference.get();
+    }
+
+    private static PlanBDoc getDoc(final SessionSettings settings) {
+        return PlanBDoc.builder().name("test").settings(settings).build();
     }
 }

@@ -16,6 +16,7 @@ import stroom.planb.impl.db.PlanBSearchHelper.Context;
 import stroom.planb.impl.db.PlanBSearchHelper.Converter;
 import stroom.planb.impl.db.PlanBSearchHelper.LazyKV;
 import stroom.planb.impl.db.PlanBSearchHelper.ValuesExtractor;
+import stroom.planb.impl.db.SchemaInfo;
 import stroom.planb.impl.db.UidLookupDb;
 import stroom.planb.impl.db.UsedLookupsRecorder;
 import stroom.planb.impl.serde.hash.HashFactory;
@@ -43,8 +44,10 @@ import stroom.planb.impl.serde.time.SecondTimeSerde;
 import stroom.planb.impl.serde.time.TimeSerde;
 import stroom.planb.impl.serde.valtime.InsertTimeSerde;
 import stroom.planb.impl.serde.valtime.InstantSerde;
+import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.KeyType;
+import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.SessionKeySchema;
 import stroom.planb.shared.SessionSettings;
 import stroom.planb.shared.TemporalPrecision;
@@ -58,6 +61,8 @@ import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.io.FileUtil;
+import stroom.util.json.JsonUtil;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import org.lmdbjava.CursorIterable;
@@ -77,9 +82,9 @@ import java.util.function.Predicate;
 
 public class SessionDb extends AbstractDb<Session, Session> {
 
+    private static final int CURRENT_SCHEMA_VERSION = 1;
     private static final String KEY_LOOKUP_DB_NAME = "key";
 
-    private final SessionSettings settings;
     private final TimeSerde timeSerde;
     private final SessionSerde keySerde;
     private final InstantSerde valueSerde;
@@ -88,14 +93,21 @@ public class SessionDb extends AbstractDb<Session, Session> {
 
     private SessionDb(final PlanBEnv env,
                       final ByteBuffers byteBuffers,
-                      final Boolean overwrite,
+                      final PlanBDoc doc,
                       final SessionSettings settings,
                       final TimeSerde timeSerde,
                       final SessionSerde keySerde,
                       final InstantSerde valueSerde,
                       final HashClashCommitRunnable hashClashCommitRunnable) {
-        super(env, byteBuffers, overwrite, hashClashCommitRunnable);
-        this.settings = settings;
+        super(env,
+                byteBuffers,
+                doc,
+                settings.overwrite(),
+                hashClashCommitRunnable,
+                new SchemaInfo(
+                        CURRENT_SCHEMA_VERSION,
+                        JsonUtil.writeValueAsString(settings.getKeySchema()),
+                        ""));
         this.timeSerde = timeSerde;
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
@@ -105,46 +117,67 @@ public class SessionDb extends AbstractDb<Session, Session> {
 
     public static SessionDb create(final Path path,
                                    final ByteBuffers byteBuffers,
-                                   final SessionSettings settings,
+                                   final PlanBDoc doc,
                                    final boolean readOnly) {
+        final SessionSettings settings;
+        if (doc.getSettings() instanceof final SessionSettings sessionSettings) {
+            settings = sessionSettings;
+        } else {
+            settings = new SessionSettings.Builder().build();
+        }
+
         final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
+        final Long mapSize = NullSafe.getOrElse(
+                settings,
+                AbstractPlanBSettings::getMaxStoreSize,
+                AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE);
         final PlanBEnv env = new PlanBEnv(path,
-                settings.getMaxStoreSize(),
+                mapSize,
                 20,
                 readOnly,
                 hashClashCommitRunnable);
-        final KeyType keyType = NullSafe.getOrElse(
-                settings,
-                SessionSettings::getKeySchema,
-                SessionKeySchema::getKeyType,
-                KeyType.VARIABLE);
-        final HashLength valueHashLength = NullSafe.getOrElse(
-                settings,
-                SessionSettings::getKeySchema,
-                SessionKeySchema::getHashLength,
-                HashLength.LONG);
-        final TimeSerde timeSerde = createTimeSerde(NullSafe.getOrElse(
-                settings,
-                SessionSettings::getKeySchema,
-                SessionKeySchema::getTemporalPrecision,
-                TemporalPrecision.MILLISECOND));
-        final SessionSerde keySerde = createKeySerde(
-                keyType,
-                valueHashLength,
-                env,
-                byteBuffers,
-                timeSerde,
-                hashClashCommitRunnable);
-        final InstantSerde valueSerde = new InstantSerde(new InsertTimeSerde());
-        return new SessionDb(
-                env,
-                byteBuffers,
-                settings.overwrite(),
-                settings,
-                timeSerde,
-                keySerde,
-                valueSerde,
-                hashClashCommitRunnable);
+        try {
+            final KeyType keyType = NullSafe.getOrElse(
+                    settings,
+                    SessionSettings::getKeySchema,
+                    SessionKeySchema::getKeyType,
+                    SessionKeySchema.DEFAULT_KEY_TYPE);
+            final HashLength valueHashLength = NullSafe.getOrElse(
+                    settings,
+                    SessionSettings::getKeySchema,
+                    SessionKeySchema::getHashLength,
+                    SessionKeySchema.DEFAULT_HASH_LENGTH);
+            final TimeSerde timeSerde = createTimeSerde(NullSafe.getOrElse(
+                    settings,
+                    SessionSettings::getKeySchema,
+                    SessionKeySchema::getTemporalPrecision,
+                    SessionKeySchema.DEFAULT_TEMPORAL_PRECISION));
+            final SessionSerde keySerde = createKeySerde(
+                    keyType,
+                    valueHashLength,
+                    env,
+                    byteBuffers,
+                    timeSerde,
+                    hashClashCommitRunnable);
+            final InstantSerde valueSerde = new InstantSerde(new InsertTimeSerde());
+            return new SessionDb(
+                    env,
+                    byteBuffers,
+                    doc,
+                    settings,
+                    timeSerde,
+                    keySerde,
+                    valueSerde,
+                    hashClashCommitRunnable);
+        } catch (final RuntimeException e) {
+            // Close the env if we get any exceptions to prevent them staying open.
+            try {
+                env.close();
+            } catch (final Exception e2) {
+                LOGGER.debug(LogUtil.message("store={}, message={}", doc.getName(), e.getMessage()), e);
+            }
+            throw e;
+        }
     }
 
     private static TimeSerde createTimeSerde(final TemporalPrecision temporalPrecision) {
@@ -240,7 +273,11 @@ public class SessionDb extends AbstractDb<Session, Session> {
     @Override
     public void merge(final Path source) {
         env.write(writer -> {
-            try (final SessionDb sourceDb = SessionDb.create(source, byteBuffers, settings, true)) {
+            try (final SessionDb sourceDb = SessionDb.create(source, byteBuffers, doc, true)) {
+                // Validate that the source DB has the same schema.
+                validateSchema(schemaInfo, sourceDb.getSchemaInfo());
+
+                // Merge.
                 sourceDb.env.read(readTxn -> {
                     sourceDb.iterate(readTxn, kv -> {
                         if (sourceDb.keySerde.usesLookup(kv.key())) {
