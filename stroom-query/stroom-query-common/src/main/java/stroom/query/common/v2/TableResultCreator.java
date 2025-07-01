@@ -42,21 +42,32 @@ public class TableResultCreator implements ResultCreator {
 
     private final FormatterFactory formatterFactory;
     private final ExpressionPredicateFactory expressionPredicateFactory;
+    private final AnnotationsPostProcessorFactory annotationsPostProcessorFactory;
 
     private final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
     private final boolean cacheLastResult;
     private TableResult lastResult;
 
-    public TableResultCreator(final FormatterFactory formatterFactory,
-                              final ExpressionPredicateFactory expressionPredicateFactory) {
-        this(formatterFactory, expressionPredicateFactory, false);
+    public TableResultCreator() {
+        this(new FormatterFactory(null),
+                new ExpressionPredicateFactory(),
+                AnnotationsPostProcessorFactory.NO_OP,
+                false);
     }
 
     public TableResultCreator(final FormatterFactory formatterFactory,
                               final ExpressionPredicateFactory expressionPredicateFactory,
+                              final AnnotationsPostProcessorFactory annotationsPostProcessorFactory) {
+        this(formatterFactory, expressionPredicateFactory, annotationsPostProcessorFactory, false);
+    }
+
+    public TableResultCreator(final FormatterFactory formatterFactory,
+                              final ExpressionPredicateFactory expressionPredicateFactory,
+                              final AnnotationsPostProcessorFactory annotationsPostProcessorFactory,
                               final boolean cacheLastResult) {
         this.formatterFactory = formatterFactory;
         this.expressionPredicateFactory = expressionPredicateFactory;
+        this.annotationsPostProcessorFactory = annotationsPostProcessorFactory;
         this.cacheLastResult = cacheLastResult;
     }
 
@@ -99,7 +110,8 @@ public class TableResultCreator implements ResultCreator {
                         tableSettings.getConditionalFormattingRules(),
                         dataStore.getDateTimeSettings(),
                         expressionPredicateFactory,
-                        errorConsumer);
+                        errorConsumer,
+                        annotationsPostProcessorFactory.createProcessor(columns));
 
                 final Set<Key> openGroups = keyFactory.decodeSet(resultRequest.getOpenGroups());
                 dataStore.fetch(

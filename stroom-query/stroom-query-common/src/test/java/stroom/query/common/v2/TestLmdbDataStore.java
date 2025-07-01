@@ -127,8 +127,6 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
 
     @Test
     void testBigValues() {
-        final FormatterFactory formatterFactory = new FormatterFactory(null);
-
         final TableSettings tableSettings = TableSettings.builder()
                 .addColumns(Column.builder()
                         .id("Text")
@@ -171,9 +169,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                     .addMappings(tableSettings)
                     .requestedRange(new OffsetRange(0, 3000))
                     .build();
-            final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                    formatterFactory,
-                    new ExpressionPredicateFactory());
+            final TableResultCreator tableComponentResultCreator = new TableResultCreator();
             final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                     dataStore,
                     tableResultRequest);
@@ -257,7 +253,8 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                             .build();
                     final TableResultCreator tableComponentResultCreator = new TableResultCreator(
                             formatterFactory,
-                            new ExpressionPredicateFactory());
+                            new ExpressionPredicateFactory(),
+                            AnnotationsPostProcessorFactory.NO_OP);
                     final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                             dataStore,
                             tableResultRequest);
@@ -280,7 +277,8 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
 
                     final TableResultCreator tableComponentResultCreator2 = new TableResultCreator(
                             formatterFactory,
-                            new ExpressionPredicateFactory());
+                            new ExpressionPredicateFactory(),
+                            AnnotationsPostProcessorFactory.NO_OP);
                     final TableResult searchResult2 = (TableResult) tableComponentResultCreator2.create(
                             dataStore,
                             tableResultRequest2);
@@ -305,7 +303,8 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
 
                     final TableResultCreator tableComponentResultCreator3 = new TableResultCreator(
                             formatterFactory,
-                            new ExpressionPredicateFactory());
+                            new ExpressionPredicateFactory(),
+                            AnnotationsPostProcessorFactory.NO_OP);
                     final TableResult searchResult3 = (TableResult) tableComponentResultCreator2.create(
                             dataStore,
                             tableResultRequest3);
@@ -345,7 +344,8 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                     .build();
             final TableResultCreator tableComponentResultCreator = new TableResultCreator(
                     formatterFactory,
-                    new ExpressionPredicateFactory());
+                    new ExpressionPredicateFactory(),
+                    AnnotationsPostProcessorFactory.NO_OP);
             final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                     dataStore,
                     tableResultRequest);
@@ -417,7 +417,8 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .build();
         final TableResultCreator tableComponentResultCreator = new TableResultCreator(
                 formatterFactory,
-                new ExpressionPredicateFactory());
+                new ExpressionPredicateFactory(),
+                AnnotationsPostProcessorFactory.NO_OP);
         TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                 dataStore,
                 tableResultRequest);

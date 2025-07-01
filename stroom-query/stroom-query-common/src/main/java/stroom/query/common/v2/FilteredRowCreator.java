@@ -25,17 +25,20 @@ public class FilteredRowCreator implements ItemMapper<Row> {
     private final ErrorConsumer errorConsumer;
     private final Formatter[] columnFormatters;
     private final Predicate<Val[]> rowFilter;
+    private final AnnotationsPostProcessor annotationsPostProcessor;
 
     private FilteredRowCreator(final int[] columnIndexMapping,
                                final KeyFactory keyFactory,
                                final ErrorConsumer errorConsumer,
                                final Formatter[] columnFormatters,
-                               final Predicate<Val[]> rowFilter) {
+                               final Predicate<Val[]> rowFilter,
+                               final AnnotationsPostProcessor annotationsPostProcessor) {
         this.columnIndexMapping = columnIndexMapping;
         this.keyFactory = keyFactory;
         this.errorConsumer = errorConsumer;
         this.columnFormatters = columnFormatters;
         this.rowFilter = rowFilter;
+        this.annotationsPostProcessor = annotationsPostProcessor;
     }
 
     public static ItemMapper<Row> create(final List<Column> originalColumns,
@@ -46,7 +49,8 @@ public class FilteredRowCreator implements ItemMapper<Row> {
                                          final ExpressionOperator rowFilterExpression,
                                          final DateTimeSettings dateTimeSettings,
                                          final ErrorConsumer errorConsumer,
-                                         final ExpressionPredicateFactory expressionPredicateFactory) {
+                                         final ExpressionPredicateFactory expressionPredicateFactory,
+                                         final AnnotationsPostProcessor annotationsPostProcessor) {
         // Combine filters.
         final Optional<Predicate<Val[]>> optionalCombinedPredicate = createValuesPredicate(
                 newColumns,
@@ -62,7 +66,8 @@ public class FilteredRowCreator implements ItemMapper<Row> {
                     newColumns,
                     formatterFactory,
                     keyFactory,
-                    errorConsumer);
+                    errorConsumer,
+                    annotationsPostProcessor);
         }
 
         final int[] columnIndexMapping = RowUtil.createColumnIndexMapping(originalColumns, newColumns);
@@ -73,7 +78,8 @@ public class FilteredRowCreator implements ItemMapper<Row> {
                 keyFactory,
                 errorConsumer,
                 formatters,
-                optionalCombinedPredicate.get());
+                optionalCombinedPredicate.get(),
+                annotationsPostProcessor);
     }
 
     public static Optional<Predicate<Val[]>> createValuesPredicate(final List<Column> newColumns,
@@ -105,27 +111,28 @@ public class FilteredRowCreator implements ItemMapper<Row> {
     }
 
     @Override
-    public final Row create(final Item item) {
-        Row row = null;
-
+    public final List<Row> create(final Item item) {
         // Create values array.
         final Val[] values = RowUtil.createValuesArray(item, columnIndexMapping);
-        if (rowFilter.test(values)) {
-            // Now apply formatting choices.
-            final List<String> stringValues = RowUtil.convertValues(values, columnFormatters);
-            try {
-                row = Row.builder()
-                        .groupKey(keyFactory.encode(item.getKey(), errorConsumer))
-                        .values(stringValues)
-                        .depth(item.getKey().getDepth())
-                        .build();
-            } catch (final RuntimeException e) {
-                LOGGER.debug(e.getMessage(), e);
-                errorConsumer.add(e);
-            }
-        }
-
-        return row;
+        return annotationsPostProcessor
+                .convert(values, errorConsumer, (annotationId, vals) -> {
+                    try {
+                        if (rowFilter.test(vals)) {
+                            // Now apply formatting choices.
+                            final List<String> stringValues = RowUtil.convertValues(vals, columnFormatters);
+                            return Row.builder()
+                                    .groupKey(keyFactory.encode(item.getKey(), errorConsumer))
+                                    .annotationId(annotationId)
+                                    .values(stringValues)
+                                    .depth(item.getKey().getDepth())
+                                    .build();
+                        }
+                    } catch (final RuntimeException e) {
+                        LOGGER.debug(e.getMessage(), e);
+                        errorConsumer.add(e);
+                    }
+                    return null;
+                });
     }
 
     @Override

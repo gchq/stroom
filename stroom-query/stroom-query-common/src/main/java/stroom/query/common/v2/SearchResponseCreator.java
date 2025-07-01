@@ -49,6 +49,7 @@ public class SearchResponseCreator {
     private final ExpressionContext expressionContext;
     private final MapDataStoreFactory mapDataStoreFactory;
     private final ExpressionPredicateFactory expressionPredicateFactory;
+    private final AnnotationsPostProcessorFactory annotationsPostProcessorFactory;
 
     private final Map<String, ResultCreator> cachedResultCreators = new HashMap<>();
 
@@ -59,12 +60,14 @@ public class SearchResponseCreator {
                                  final ResultStore store,
                                  final ExpressionContext expressionContext,
                                  final MapDataStoreFactory mapDataStoreFactory,
-                                 final ExpressionPredicateFactory expressionPredicateFactory) {
+                                 final ExpressionPredicateFactory expressionPredicateFactory,
+                                 final AnnotationsPostProcessorFactory annotationsPostProcessorFactory) {
         this.sizesProvider = sizesProvider;
         this.store = Objects.requireNonNull(store);
         this.expressionContext = expressionContext;
         this.mapDataStoreFactory = mapDataStoreFactory;
         this.expressionPredicateFactory = expressionPredicateFactory;
+        this.annotationsPostProcessorFactory = annotationsPostProcessorFactory;
     }
 
     /**
@@ -303,6 +306,7 @@ public class SearchResponseCreator {
                     resultCreator = new TableResultCreator(
                             formatterFactory,
                             expressionPredicateFactory,
+                            annotationsPostProcessorFactory,
                             cacheLastResult);
 
                 } else if (ResultStyle.VIS.equals(resultRequest.getResultStyle())) {

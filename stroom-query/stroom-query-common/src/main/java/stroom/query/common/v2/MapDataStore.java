@@ -310,22 +310,25 @@ public class MapDataStore implements DataStore {
 
         // Transfer the sorted items to the result.
         for (final Item item : list) {
-            fetchState.totalRowCount++;
-            if (!fetchState.reachedRowLimit) {
-                if (range.getOffset() <= fetchState.offset) {
-                    final R row = mapper.create(item);
-                    resultConsumer.accept(row);
-                    fetchState.length++;
-                    fetchState.reachedRowLimit = fetchState.length >= range.getLength();
-                    if (fetchState.reachedRowLimit) {
-                        if (fetchState.countRows) {
-                            fetchState.justCount = true;
-                        } else {
-                            fetchState.keepGoing = false;
+            if (!fetchState.reachedRowLimit && range.getOffset() <= fetchState.offset) {
+                mapper.create(item).forEach(row -> {
+                    fetchState.totalRowCount++;
+                    if (!fetchState.reachedRowLimit) {
+                        resultConsumer.accept(row);
+                        fetchState.length++;
+                        fetchState.reachedRowLimit = fetchState.length >= range.getLength();
+                        if (fetchState.reachedRowLimit) {
+                            if (fetchState.countRows) {
+                                fetchState.justCount = true;
+                            } else {
+                                fetchState.keepGoing = false;
+                            }
                         }
+                        fetchState.offset++;
                     }
-                    fetchState.offset++;
-                }
+                });
+            } else {
+                fetchState.totalRowCount++;
             }
 
             // Add children if the group is open.
@@ -596,11 +599,11 @@ public class MapDataStore implements DataStore {
         private void logTruncation() {
             dataStore.errorConsumer.add(() ->
                     "Truncating data for vis '" +
-                            dataStore.componentId +
-                            "' to " +
-                            trimmedSize +
-                            " data points at depth " +
-                            depth);
+                    dataStore.componentId +
+                    "' to " +
+                    trimmedSize +
+                    " data points at depth " +
+                    depth);
         }
 
         private synchronized List<ItemImpl> copy() {

@@ -37,6 +37,7 @@ import stroom.query.api.SearchRequest;
 import stroom.query.api.TableResult;
 import stroom.query.api.TableResultBuilder;
 import stroom.query.api.TimeFilter;
+import stroom.query.common.v2.AnnotationsPostProcessorFactory;
 import stroom.query.common.v2.CurrentDbState;
 import stroom.query.common.v2.DeleteCommand;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -119,6 +120,7 @@ public class TableBuilderAnalyticExecutor {
     private final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper;
     private final FieldValueExtractorFactory fieldValueExtractorFactory;
     private final ExpressionPredicateFactory expressionPredicateFactory;
+    private final AnnotationsPostProcessorFactory annotationsPostProcessorFactory;
     private final AnalyticRuleStore analyticRuleStore;
     private final ViewStore viewStore;
     private final MetaService metaService;
@@ -145,6 +147,7 @@ public class TableBuilderAnalyticExecutor {
                                         final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper,
                                         final FieldValueExtractorFactory fieldValueExtractorFactory,
                                         final ExpressionPredicateFactory expressionPredicateFactory,
+                                        final AnnotationsPostProcessorFactory annotationsPostProcessorFactory,
                                         final AnalyticRuleStore analyticRuleStore,
                                         final ViewStore viewStore,
                                         final MetaService metaService,
@@ -167,6 +170,7 @@ public class TableBuilderAnalyticExecutor {
         this.analyticRuleSearchRequestHelper = analyticRuleSearchRequestHelper;
         this.fieldValueExtractorFactory = fieldValueExtractorFactory;
         this.expressionPredicateFactory = expressionPredicateFactory;
+        this.annotationsPostProcessorFactory = annotationsPostProcessorFactory;
         this.analyticRuleStore = analyticRuleStore;
         this.viewStore = viewStore;
         this.metaService = metaService;
@@ -741,7 +745,8 @@ public class TableBuilderAnalyticExecutor {
             final FormatterFactory formatterFactory = new FormatterFactory(searchRequest.getDateTimeSettings());
             final TableResultCreator resultCreator = new TableResultCreator(
                     formatterFactory,
-                    expressionPredicateFactory) {
+                    expressionPredicateFactory,
+                    annotationsPostProcessorFactory) {
                 @Override
                 public TableResultBuilder createTableResultBuilder() {
                     return tableResultConsumer;

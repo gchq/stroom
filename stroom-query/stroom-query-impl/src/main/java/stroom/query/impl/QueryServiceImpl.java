@@ -54,6 +54,8 @@ import stroom.query.api.datasource.QueryFieldProvider;
 import stroom.query.api.token.Token;
 import stroom.query.api.token.TokenException;
 import stroom.query.api.token.TokenType;
+import stroom.query.common.v2.AnnotationColumnValueProvider;
+import stroom.query.common.v2.AnnotationsPostProcessorFactory;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.ExpressionContextFactory;
@@ -150,6 +152,7 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
     private final ExpressionContextFactory expressionContextFactory;
     private final ResourceStore resourceStore;
     private final ExpressionPredicateFactory expressionPredicateFactory;
+    private final AnnotationsPostProcessorFactory annotationsPostProcessorFactory;
     private final ValPredicateFactory valPredicateFactory;
     private final QueryNodeResolver queryNodeResolver;
 
@@ -168,6 +171,7 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                      final ExpressionContextFactory expressionContextFactory,
                      final ResourceStore resourceStore,
                      final ExpressionPredicateFactory expressionPredicateFactory,
+                     final AnnotationsPostProcessorFactory annotationsPostProcessorFactory,
                      final ValPredicateFactory valPredicateFactory,
                      final QueryNodeResolver queryNodeResolver) {
         this.queryStore = queryStore;
@@ -184,6 +188,7 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
         this.expressionContextFactory = expressionContextFactory;
         this.resourceStore = resourceStore;
         this.expressionPredicateFactory = expressionPredicateFactory;
+        this.annotationsPostProcessorFactory = annotationsPostProcessorFactory;
         this.valPredicateFactory = valPredicateFactory;
         this.queryNodeResolver = queryNodeResolver;
     }
@@ -282,7 +287,9 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                                         sampleGenerator,
                                         target);
                                 final TableResultCreator tableResultCreator =
-                                        new TableResultCreator(formatterFactory, expressionPredicateFactory) {
+                                        new TableResultCreator(formatterFactory,
+                                                expressionPredicateFactory,
+                                                annotationsPostProcessorFactory) {
                                             @Override
                                             public TableResultBuilder createTableResultBuilder() {
                                                 return searchResultWriter;
@@ -371,20 +378,24 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                             .toList()
                             .indexOf(request.getColumn().getId());
                     if (index != -1) {
+                        final AnnotationColumnValueProvider columnValueProvider =
+                                annotationsPostProcessorFactory.createValues(dataStore.getColumns(), index);
                         dataStore.fetch(
                                 dataStore.getColumns(),
                                 OffsetRange.UNBOUNDED,
                                 new OpenGroupsImpl(openGroups),
                                 timeFilter,
                                 item -> {
-                                    final Val val = item.getValue(index);
-                                    if (predicate.test(val)) {
-                                        final String string = val.toString();
-                                        if (string != null && dedupe.add(string)) {
-                                            list.add(string);
+                                    final List<Val> values = columnValueProvider.getValues(item);
+                                    values.forEach(val -> {
+                                        if (predicate.test(val)) {
+                                            final String string = val.toString();
+                                            if (string != null && dedupe.add(string)) {
+                                                list.add(string);
+                                            }
                                         }
-                                    }
-                                    return null;
+                                    });
+                                    return Collections.emptyList();
                                 },
                                 row -> {
 

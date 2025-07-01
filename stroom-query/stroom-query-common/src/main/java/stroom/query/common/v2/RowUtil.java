@@ -144,26 +144,4 @@ public class RowUtil {
         }
         return stringValues;
     }
-
-    static List<String> convertValuesDirectly(final Item item,
-                                              final int[] columnIndexMapping,
-                                              final Formatter[] columnFormatters) {
-        final List<String> stringValues = new ArrayList<>(columnIndexMapping.length);
-        for (int i = 0; i < columnIndexMapping.length; i++) {
-            try {
-                final int index = columnIndexMapping[i];
-                final Val val;
-                if (index != -1) {
-                    val = item.getValue(index);
-                } else {
-                    val = ValNull.INSTANCE;
-                }
-                stringValues.add(columnFormatters[i].format(val));
-            } catch (final RuntimeException e) {
-                LOGGER.error(LogUtil.message("Error getting column value for column index {}", i), e);
-                throw e;
-            }
-        }
-        return stringValues;
-    }
 }

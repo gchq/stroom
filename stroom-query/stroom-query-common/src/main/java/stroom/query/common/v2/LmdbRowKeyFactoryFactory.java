@@ -23,20 +23,8 @@ public class LmdbRowKeyFactoryFactory {
         DB_STATE_KEY.flip();
     }
 
-    public static final KeyRange<ByteBuffer> DB_STATE_KEY_RANGE = KeyRange.closed(DB_STATE_KEY, DB_STATE_KEY);
-    public static final KeyRange<ByteBuffer> ALL = KeyRange.all();
-
     private LmdbRowKeyFactoryFactory() {
         // Non instantiable.
-    }
-
-    public static boolean isNotStateKey(final ByteBuffer key) {
-        return key.limit() != LmdbRowKeyFactoryFactory.DB_STATE_KEY_LENGTH;
-    }
-
-    public static boolean isStateKey(final ByteBuffer key) {
-        return key.limit() == LmdbRowKeyFactoryFactory.DB_STATE_KEY_LENGTH &&
-                key.equals(LmdbRowKeyFactoryFactory.DB_STATE_KEY);
     }
 
     public static LmdbRowKeyFactory create(final ByteBufferFactory byteBufferFactory,
@@ -45,7 +33,7 @@ public class LmdbRowKeyFactoryFactory {
                                            final CompiledDepths compiledDepths,
                                            final StoredValueKeyFactory storedValueKeyFactory) {
         final boolean flat = compiledDepths.getMaxDepth() == 0 &&
-                compiledDepths.getMaxGroupDepth() <= compiledDepths.getMaxDepth();
+                             compiledDepths.getMaxGroupDepth() <= compiledDepths.getMaxDepth();
         if (flat) {
             if (keyFactoryConfig.addTimeToKey()) {
                 if (compiledDepths.hasGroup()) {
@@ -77,7 +65,7 @@ public class LmdbRowKeyFactoryFactory {
     }
 
     public static KeyRange<ByteBuffer> all() {
-        return ALL;
+        return KeyRange.all();
     }
 
     /**
@@ -531,7 +519,7 @@ public class LmdbRowKeyFactoryFactory {
 
         private boolean isDetailLevel(final int depth) {
             return depth == compiledDepths.getMaxDepth() &&
-                    compiledDepths.getMaxGroupDepth() < compiledDepths.getMaxDepth();
+                   compiledDepths.getMaxGroupDepth() < compiledDepths.getMaxDepth();
         }
 
         @Override
@@ -762,7 +750,7 @@ public class LmdbRowKeyFactoryFactory {
 
         private boolean isDetailLevel(final int depth) {
             return depth == compiledDepths.getMaxDepth() &&
-                    compiledDepths.getMaxGroupDepth() < compiledDepths.getMaxDepth();
+                   compiledDepths.getMaxGroupDepth() < compiledDepths.getMaxDepth();
         }
 
         @Override

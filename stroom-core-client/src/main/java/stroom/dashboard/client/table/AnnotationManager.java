@@ -157,37 +157,37 @@ public class AnnotationManager {
                 }
             }
 
-            if (streamIdFieldId != null ||
-                eventIdFieldId != null ||
-                eventIdListFieldId != null ||
-                annotationIdFieldId != null) {
-                for (final TableRow row : selectedItems) {
-                    // Add stream and event id fields.
-                    if (streamIdFieldId != null && eventIdFieldId != null) {
-                        try {
-                            final Long streamId = toLong(row.getText(streamIdFieldId));
-                            final Long eventId = toLong(row.getText(eventIdFieldId));
-                            if (streamId != null && eventId != null) {
-                                eventIdList.add(new EventId(streamId, eventId));
-                            }
-                        } catch (final RuntimeException e) {
-                            Console.log(e::getMessage, e);
+            for (final TableRow row : selectedItems) {
+                // Add stream and event id fields.
+                if (streamIdFieldId != null && eventIdFieldId != null) {
+                    try {
+                        final Long streamId = toLong(row.getText(streamIdFieldId));
+                        final Long eventId = toLong(row.getText(eventIdFieldId));
+                        if (streamId != null && eventId != null) {
+                            eventIdList.add(new EventId(streamId, eventId));
                         }
+                    } catch (final RuntimeException e) {
+                        Console.log(e::getMessage, e);
                     }
+                }
 
-                    // Add event lists.
-                    if (eventIdListFieldId != null) {
-                        final String eventIdListString = row.getText(eventIdListFieldId);
-                        EventId.parseList(eventIdListString, eventIdList);
-                    }
+                // Add event lists.
+                if (eventIdListFieldId != null) {
+                    final String eventIdListString = row.getText(eventIdListFieldId);
+                    EventId.parseList(eventIdListString, eventIdList);
+                }
 
-                    // Add annotation ids.
-                    if (annotationIdFieldId != null) {
-                        final Long annotationId = toLong(row.getText(annotationIdFieldId));
-                        if (annotationId != null) {
-                            annotationIdList.add(annotationId);
-                        }
+                // Add annotation ids.
+                if (annotationIdFieldId != null) {
+                    final Long annotationId = toLong(row.getText(annotationIdFieldId));
+                    if (annotationId != null && !annotationIdList.contains(annotationId)) {
+                        annotationIdList.add(annotationId);
                     }
+                }
+
+                // Add annotation id from row data.
+                if (row.getAnnotationId() != null && !annotationIdList.contains(row.getAnnotationId())) {
+                    annotationIdList.add(row.getAnnotationId());
                 }
             }
         }

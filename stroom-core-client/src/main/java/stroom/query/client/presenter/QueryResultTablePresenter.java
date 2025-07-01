@@ -737,6 +737,7 @@ public class QueryResultTablePresenter
             processed.add(new TableRow(
                     expander,
                     row.getGroupKey(),
+                    row.getAnnotationId(),
                     cellsMap,
                     row.getMatchingRule()));
         }

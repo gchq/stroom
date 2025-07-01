@@ -21,6 +21,7 @@ import stroom.annotation.shared.AnnotationCreator;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.query.api.datasource.DataSourceProvider;
+import stroom.query.common.v2.AnnotationsPostProcessorFactory;
 import stroom.search.extraction.AnnotationsDecoratorFactory;
 import stroom.searchable.api.Searchable;
 import stroom.util.RunnableWrapper;
@@ -39,6 +40,7 @@ public class AnnotationModule extends AbstractModule {
         bind(AnnotationCreator.class).to(AnnotationService.class);
 
         bind(AnnotationsDecoratorFactory.class).to(AnnotationReceiverDecoratorFactory.class);
+        bind(AnnotationsPostProcessorFactory.class).to(AnnotationsPostProcessorFactoryImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(AnnotationResourceImpl.class);

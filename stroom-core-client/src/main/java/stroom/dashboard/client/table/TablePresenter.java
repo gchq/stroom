@@ -693,6 +693,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             processed.add(new TableRow(
                     expander,
                     row.getGroupKey(),
+                    row.getAnnotationId(),
                     cellsMap,
                     row.getMatchingRule()));
         }

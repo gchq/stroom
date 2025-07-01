@@ -50,6 +50,8 @@ import stroom.query.api.SearchRequestSource;
 import stroom.query.api.SearchResponse;
 import stroom.query.api.TableResultBuilder;
 import stroom.query.api.TimeFilter;
+import stroom.query.common.v2.AnnotationColumnValueProvider;
+import stroom.query.common.v2.AnnotationsPostProcessorFactory;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.Key;
@@ -131,6 +133,7 @@ class DashboardServiceImpl implements DashboardService {
     private final ResultStoreManager searchResponseCreatorManager;
     private final NodeInfo nodeInfo;
     private final ExpressionPredicateFactory expressionPredicateFactory;
+    private final AnnotationsPostProcessorFactory annotationsPostProcessorFactory;
     private final ValPredicateFactory valPredicateFactory;
     private final QueryNodeResolver queryNodeResolver;
 
@@ -148,6 +151,7 @@ class DashboardServiceImpl implements DashboardService {
                          final ResultStoreManager searchResponseCreatorManager,
                          final NodeInfo nodeInfo,
                          final ExpressionPredicateFactory expressionPredicateFactory,
+                         final AnnotationsPostProcessorFactory annotationsPostProcessorFactory,
                          final ValPredicateFactory valPredicateFactory,
                          final QueryNodeResolver queryNodeResolver) {
         this.dashboardStore = dashboardStore;
@@ -163,6 +167,7 @@ class DashboardServiceImpl implements DashboardService {
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.nodeInfo = nodeInfo;
         this.expressionPredicateFactory = expressionPredicateFactory;
+        this.annotationsPostProcessorFactory = annotationsPostProcessorFactory;
         this.valPredicateFactory = valPredicateFactory;
         this.queryNodeResolver = queryNodeResolver;
     }
@@ -327,7 +332,9 @@ class DashboardServiceImpl implements DashboardService {
                                         sampleGenerator,
                                         target);
                                 final TableResultCreator tableResultCreator =
-                                        new TableResultCreator(formatterFactory, expressionPredicateFactory) {
+                                        new TableResultCreator(formatterFactory,
+                                                expressionPredicateFactory,
+                                                annotationsPostProcessorFactory) {
                                             @Override
                                             public TableResultBuilder createTableResultBuilder() {
                                                 return searchResultWriter;
@@ -467,8 +474,7 @@ class DashboardServiceImpl implements DashboardService {
                 }
             } catch (final RuntimeException e) {
                 exception = e;
-                final Search finalSearch = search;
-                LOGGER.debug(() -> "Error processing search " + finalSearch, e);
+                LOGGER.debug(() -> "Error processing search " + search, e);
 
                 result = new DashboardSearchResponse(
                         nodeInfo.getThisNodeName(),
@@ -579,7 +585,6 @@ class DashboardServiceImpl implements DashboardService {
                             request.getSearchRequest().getDateTimeSettings());
 
                     final Set<Key> openGroups = dataStore.getKeyFactory().decodeSet(resultRequest.getOpenGroups());
-
                     final int index = dataStore
                             .getColumns()
                             .stream()
@@ -587,20 +592,24 @@ class DashboardServiceImpl implements DashboardService {
                             .toList()
                             .indexOf(request.getColumn().getId());
                     if (index != -1) {
+                        final AnnotationColumnValueProvider columnValueProvider =
+                                annotationsPostProcessorFactory.createValues(dataStore.getColumns(), index);
                         dataStore.fetch(
                                 dataStore.getColumns(),
                                 OffsetRange.UNBOUNDED,
                                 new OpenGroupsImpl(openGroups),
                                 timeFilter,
                                 item -> {
-                                    final Val val = item.getValue(index);
-                                    if (predicate.test(val)) {
-                                        final String string = val.toString();
-                                        if (string != null && dedupe.add(string)) {
-                                            list.add(string);
+                                    final List<Val> values = columnValueProvider.getValues(item);
+                                    values.forEach(val -> {
+                                        if (predicate.test(val)) {
+                                            final String string = val.toString();
+                                            if (string != null && dedupe.add(string)) {
+                                                list.add(string);
+                                            }
                                         }
-                                    }
-                                    return null;
+                                    });
+                                    return Collections.emptyList();
                                 },
                                 row -> {
 

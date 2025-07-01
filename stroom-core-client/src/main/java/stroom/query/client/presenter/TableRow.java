@@ -17,15 +17,18 @@ public class TableRow {
 
     private final Expander expander;
     private final String groupKey;
+    private final Long annotationId;
     private final Map<String, Cell> cells;
     private final String matchingRule;
 
     public TableRow(final Expander expander,
                     final String groupKey,
+                    final Long annotationId,
                     final Map<String, Cell> cells,
                     final String matchingRule) {
         this.expander = expander;
         this.groupKey = groupKey;
+        this.annotationId = annotationId;
         this.cells = cells;
         this.matchingRule = matchingRule;
     }
@@ -36,6 +39,10 @@ public class TableRow {
 
     public String getGroupKey() {
         return groupKey;
+    }
+
+    public Long getAnnotationId() {
+        return annotationId;
     }
 
     public SafeHtml getValue(final String fieldId) {
@@ -102,8 +109,7 @@ public class TableRow {
 
         } else {
             parts.forEach(p -> {
-                if (p instanceof Hyperlink) {
-                    final Hyperlink hyperlink = (Hyperlink) p;
+                if (p instanceof final Hyperlink hyperlink) {
                     if (!hyperlink.getText().trim().isEmpty()) {
                         sb.appendHtmlConstant("<u link=\"" + hyperlink + "\">");
                         appendText(hyperlink.getText(), sb);
@@ -162,6 +168,7 @@ public class TableRow {
         return "TableRow{" +
                "expander=" + expander +
                ", groupKey='" + groupKey + '\'' +
+               ", annotationId='" + annotationId + '\'' +
                ", cells=" + cells +
                '}';
     }
@@ -175,12 +182,13 @@ public class TableRow {
             return false;
         }
         final TableRow tableRow = (TableRow) o;
-        return Objects.equals(groupKey, tableRow.groupKey);
+        return Objects.equals(groupKey, tableRow.groupKey) &&
+               Objects.equals(annotationId, tableRow.annotationId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(groupKey);
+        return Objects.hash(groupKey, annotationId);
     }
 
     public static class Cell {

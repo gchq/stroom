@@ -1,8 +1,10 @@
 package stroom.query.common.v2;
 
+import java.util.List;
+
 public interface ItemMapper<R> {
 
-    R create(Item item);
+    List<R> create(Item item);
 
     default boolean hidesRows() {
         return false;

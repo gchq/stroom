@@ -90,7 +90,8 @@ class TestSearchResponseCreator {
                 mockStore,
                 new ExpressionContextFactory().createContext(searchRequest),
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
-                new ExpressionPredicateFactory());
+                new ExpressionPredicateFactory(),
+                AnnotationsPostProcessorFactory.NO_OP);
     }
 
     @Test
@@ -314,10 +315,11 @@ class TestSearchResponseCreator {
                                   final ItemMapper<R> mapper,
                                   final Consumer<R> resultConsumer,
                                   final Consumer<Long> totalRowCountConsumer) {
-                resultConsumer.accept(mapper.create(item));
+                final List<R> list = mapper.create(item);
                 if (totalRowCountConsumer != null) {
-                    totalRowCountConsumer.accept(1L);
+                    totalRowCountConsumer.accept((long) list.size());
                 }
+                list.forEach(resultConsumer);
             }
 
             @Override
@@ -368,13 +370,13 @@ class TestSearchResponseCreator {
                                          final Duration actualDuration,
                                          final Duration tolerance) {
         LOGGER.info(() -> "Expected: " +
-                expectedDuration +
-                ", actual: " +
-                actualDuration +
-                ", tolerance: " +
-                tolerance +
-                ", diff " +
-                expectedDuration.minus(actualDuration).abs());
+                          expectedDuration +
+                          ", actual: " +
+                          actualDuration +
+                          ", tolerance: " +
+                          tolerance +
+                          ", diff " +
+                          expectedDuration.minus(actualDuration).abs());
 
         assertThat(actualDuration).isGreaterThanOrEqualTo(expectedDuration);
         assertThat(actualDuration).isLessThanOrEqualTo(expectedDuration.plus(tolerance));

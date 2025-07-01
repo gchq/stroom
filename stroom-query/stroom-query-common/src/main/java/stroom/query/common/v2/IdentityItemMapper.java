@@ -1,5 +1,8 @@
 package stroom.query.common.v2;
 
+import java.util.Collections;
+import java.util.List;
+
 public class IdentityItemMapper implements ItemMapper<Item> {
 
     public static final IdentityItemMapper INSTANCE = new IdentityItemMapper();
@@ -9,7 +12,7 @@ public class IdentityItemMapper implements ItemMapper<Item> {
     }
 
     @Override
-    public Item create(final Item item) {
-        return item;
+    public List<Item> create(final Item item) {
+        return Collections.singletonList(item);
     }
 }
