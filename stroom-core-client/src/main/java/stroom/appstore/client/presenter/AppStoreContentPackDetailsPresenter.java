@@ -2,6 +2,7 @@ package stroom.appstore.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.appstore.shared.AppStoreContentPack;
+import stroom.appstore.shared.AppStoreCreateGitRepoRequest;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.MarkdownConverter;
@@ -41,6 +42,9 @@ public class AppStoreContentPackDetailsPresenter
 
     /** Displays the name of the content pack */
     private final Label lblName = new Label();
+
+    /** Displays whether the content pack is installed */
+    private final Label lblIsInstalled = new Label();
 
     /** Displays the basic license info */
     private final Label lblLicense = new Label();
@@ -123,35 +127,39 @@ public class AppStoreContentPackDetailsPresenter
         detailsFormatter.setColSpan(0, 0, 2);
         detailsFormatter.setHorizontalAlignment(0, 0, HasAutoHorizontalAlignment.ALIGN_CENTER);
 
+        // Whether installed
+        detailsTable.setHTML(1, 0, "Installed status:");
+        detailsTable.setWidget(1, 1, lblIsInstalled);
+
         // License
-        detailsTable.setHTML(1, 0, "License:");
-        detailsTable.setWidget(1, 1, lblLicense);
+        detailsTable.setHTML(2, 0, "License:");
+        detailsTable.setWidget(2, 1, lblLicense);
 
         lnkLicense.setTarget(LICENCE_URL_TARGET);
         lnkLicense.setTitle(LICENCE_URL_TITLE);
-        detailsTable.setHTML(2, 0, "License details:");
-        detailsTable.setWidget(2, 1, lnkLicense);
+        detailsTable.setHTML(3, 0, "License details:");
+        detailsTable.setWidget(3, 1, lnkLicense);
 
         // Installed location
-        detailsTable.setHTML(3, 0, "Installed location:");
-        detailsTable.setWidget(3, 1, lblStroomPath);
+        detailsTable.setHTML(4, 0, "Installed location:");
+        detailsTable.setWidget(4, 1, lblStroomPath);
 
         // Git details
         lnkGitUrl.setTarget(GIT_URL_TARGET);
         lnkGitUrl.setTitle(GIT_URL_TITLE);
-        detailsTable.setHTML(4, 0, "Git URL:");
-        detailsTable.setWidget(4, 1, lnkGitUrl);
-        detailsTable.setHTML(5, 0, "Git branch:");
-        detailsTable.setWidget(5, 1, lblGitBranch);
-        detailsTable.setHTML(6, 0, "Git path:");
-        detailsTable.setWidget(6, 1, lblGitPath);
-        detailsTable.setHTML(7, 0, "Git commit:");
-        detailsTable.setWidget(7, 1, lblGitCommit);
+        detailsTable.setHTML(5, 0, "Git URL:");
+        detailsTable.setWidget(5, 1, lnkGitUrl);
+        detailsTable.setHTML(6, 0, "Git branch:");
+        detailsTable.setWidget(6, 1, lblGitBranch);
+        detailsTable.setHTML(7, 0, "Git path:");
+        detailsTable.setWidget(7, 1, lblGitPath);
+        detailsTable.setHTML(8, 0, "Git commit:");
+        detailsTable.setWidget(8, 1, lblGitCommit);
 
         // Details
         lblDetails.setWordWrap(true);
-        detailsTable.setHTML(8, 0, "Info:");
-        detailsTable.setWidget(8, 1, lblDetails);
+        detailsTable.setHTML(9, 0, "Info:");
+        detailsTable.setWidget(9, 1, lblDetails);
 
         // Buttons
         btnCreateGitRepo.setText("Install");
@@ -200,6 +208,7 @@ public class AppStoreContentPackDetailsPresenter
         if (cp == null) {
             this.lblIcon.setHTML(EMPTY);
             this.lblName.setText(EMPTY);
+            this.lblIsInstalled.setText(EMPTY);
             this.lblLicense.setText(EMPTY);
             this.lnkLicense.setHref(EMPTY);
             this.lnkLicense.setText(EMPTY);
@@ -214,10 +223,11 @@ public class AppStoreContentPackDetailsPresenter
         } else {
             this.lblIcon.setHTML(cp.getIconSvg());
             this.lblName.setText(cp.getUiName());
+            this.lblIsInstalled.setText(cp.isInstalled() ? "Installed" : "-");
             this.lblLicense.setText(cp.getLicenseName());
             this.lnkLicense.setHref(cp.getLicenseUrl());
             this.lnkLicense.setText(cp.getLicenseUrl());
-            this.lblStroomPath.setText(cp.getStroomPath());
+            this.lblStroomPath.setText(resolveInstalledLocation(cp));
             this.lnkGitUrl.setHref(cp.getGitUrl());
             this.lnkGitUrl.setText(cp.getGitUrl());
             this.lblGitBranch.setText(cp.getGitBranch());
@@ -234,25 +244,48 @@ public class AppStoreContentPackDetailsPresenter
     }
 
     /**
+     * Utility to generate the installed location field.
+     * @param cp The content pack with the info. Must not be null.
+     * @return The string to display to the user.
+     */
+    private String resolveInstalledLocation(AppStoreContentPack cp) {
+        String stroomPath = cp.getStroomPath();
+        String gitRepoName = cp.getGitRepoName();
+        StringBuilder buf = new StringBuilder(stroomPath);
+        if (!stroomPath.endsWith("/")) {
+            buf.append('/');
+        }
+        buf.append(gitRepoName);
+        return buf.toString();
+    }
+
+    /**
      * Sets the state of the UI components. Called when something
      * relevant changes.
      */
     private void setState() {
         if (contentPack != null) {
-            btnCreateGitRepo.setEnabled(true);
+            if (contentPack.isInstalled()) {
+                btnCreateGitRepo.setEnabled(false);
+                chkPull.setEnabled(false);
+            } else {
+                btnCreateGitRepo.setEnabled(true);
 
-            // Check if this has already been installed
-            // TODO This doesn't work :-(
-            restFactory
-                    .create(AppStorePresenter.APP_STORE_RESOURCE)
-                    .method(res -> res.exists(contentPack))
-                    .onSuccess(exists -> {
-                        btnCreateGitRepo.setEnabled(!exists);
-                    });
+                // Only enable the autopull button if the
+                // repo doesn't need authentication
+                if (contentPack.getGitNeedsAuth()) {
+                    chkPull.setEnabled(false);
+                    chkPull.setValue(false);
+                } else {
+                    chkPull.setEnabled(true);
+                    chkPull.setValue(true);
+                }
+            }
+
         } else {
             btnCreateGitRepo.setEnabled(false);
+            chkPull.setEnabled(false);
         }
-
     }
 
     /**
@@ -260,10 +293,15 @@ public class AppStoreContentPackDetailsPresenter
      */
     private void btnCreateGitRepoClick() {
         if (contentPack != null) {
-            // TODO chkPull and automatically pull down the content pack
+
+            // Only enable autoPull if widget is enabled and checked
+            boolean autoPull = chkPull.isEnabled() && chkPull.getValue();
+            AppStoreCreateGitRepoRequest request =
+                    new AppStoreCreateGitRepoRequest(contentPack, autoPull);
+
             restFactory
                     .create(AppStorePresenter.APP_STORE_RESOURCE)
-                    .method(res -> res.create(contentPack))
+                    .method(res -> res.create(request))
                     .onSuccess(result -> {
                         if (result.isOk()) {
                             AlertEvent.fireInfo(appStorePresenter,

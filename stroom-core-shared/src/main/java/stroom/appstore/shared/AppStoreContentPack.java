@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Collection;
 import java.util.Objects;
 
 /**
@@ -24,10 +25,14 @@ import java.util.Objects;
         "iconSvg",
         "licenseName",
         "licenseUrl",
+        "gitRepoName",
         "gitUrl",
         "gitBranch",
         "gitPath",
-        "gitCommit"
+        "gitCommit",
+        "gitNeedsAuth",
+        "contentStoreUiName",
+        "isInstalled"
 })
 @JsonInclude(Include.NON_NULL)
 public class AppStoreContentPack {
@@ -64,6 +69,10 @@ public class AppStoreContentPack {
     @JsonProperty
     private final String details;
 
+    /** Name of the GitRepoDoc */
+    @JsonProperty
+    private final String gitRepoName;
+
     /** Git remote repository URL */
     @JsonProperty
     private final String gitUrl;
@@ -80,9 +89,17 @@ public class AppStoreContentPack {
     @JsonProperty
     private final String gitCommit;
 
+    /** Whether this repo requires authentication */
+    @JsonProperty
+    private final Boolean gitNeedsAuth;
+
     /** Name of the Content Store - resolved later */
     @JsonProperty
     private String contentStoreUiName;
+
+    /** Whether this content pack is already installed */
+    @JsonProperty
+    private Boolean isInstalled = Boolean.FALSE;
 
     /** Default Git path to use - the root */
     private static final String DEFAULT_GIT_PATH =
@@ -104,12 +121,18 @@ public class AppStoreContentPack {
      * @param stroomPath Where the pack will be installed in Stroom.
      *                   Can be null in which case it will be installed in
      *                   the root of the Explorer Tree.
+     * @param gitRepoName The name of the GitRepoDoc to create. That is, the
+     *                    name as shown in the Explorer Tree. Can be null or
+     *                    empty string, in which case the uiName will be used
+     *                    instead.
      * @param gitUrl URL of remote Git repository. Must not be null.
      * @param gitBranch Name of Git branch. Must not be null.
      * @param gitPath Path to files we're interested in. Can be null in which
      *                case the root will be used.
      * @param gitCommit Hash of the Git commit to pull. Can be null in which
      *                  case the latest commit will be pulled.
+     * @param gitNeedsAuth Whether this GIT repo needs authentication to pull
+     *                     stuff from.
      */
     @JsonCreator
     public AppStoreContentPack(@JsonProperty("stroomName") final String stroomName,
@@ -120,10 +143,12 @@ public class AppStoreContentPack {
                                @JsonProperty("licenseUrl") final String licenseUrl,
                                @JsonProperty("stroomPath") final String stroomPath,
                                @JsonProperty("details") final String details,
+                               @JsonProperty("gitRepoName") final String gitRepoName,
                                @JsonProperty("gitUrl") final String gitUrl,
                                @JsonProperty("gitBranch") final String gitBranch,
                                @JsonProperty("gitPath") final String gitPath,
-                               @JsonProperty("gitCommit") final String gitCommit) {
+                               @JsonProperty("gitCommit") final String gitCommit,
+                               @JsonProperty("gitNeedsAuth") final Boolean gitNeedsAuth) {
 
         // Implementation note:
         // Objects.requireNonNullElse() isn't available in GWT
@@ -136,10 +161,12 @@ public class AppStoreContentPack {
         this.licenseUrl = licenseUrl == null ? "" : licenseUrl;
         this.stroomPath = stroomPath == null || stroomPath.isEmpty() ? "/" : stroomPath;
         this.details = details == null ? "": details;
+        this.gitRepoName = gitRepoName == null || gitRepoName.isEmpty() ? uiName : gitRepoName;
         this.gitUrl = Objects.requireNonNull(gitUrl);
         this.gitBranch = Objects.requireNonNull(gitBranch);
         this.gitPath = gitPath == null ? DEFAULT_GIT_PATH : gitPath;
         this.gitCommit = gitCommit == null ? "" : gitCommit;
+        this.gitNeedsAuth = gitNeedsAuth == null ? Boolean.FALSE : gitNeedsAuth;
     }
 
     /**
@@ -214,6 +241,14 @@ public class AppStoreContentPack {
     }
 
     /**
+     * @return The name of the GitRepoDoc to create. Based on the gitRepoName
+     * field in the YAML, or if that is null or empty, the uiName.
+     */
+    public String getGitRepoName() {
+        return gitRepoName;
+    }
+
+    /**
      * @return The URL of the remote Git repository.
      * Never returns null.
      */
@@ -246,6 +281,14 @@ public class AppStoreContentPack {
     }
 
     /**
+     * @return Whether this Git repo needs authentication to pull stuff from.
+     * Never returns null.
+     */
+    public Boolean getGitNeedsAuth() {
+        return gitNeedsAuth;
+    }
+
+    /**
      * Sets the name of the content store that this belongs to.
      * Resolved later. This structure may change.
      */
@@ -258,6 +301,47 @@ public class AppStoreContentPack {
      */
     public String getContentStoreUiName() {
         return contentStoreUiName;
+    }
+
+    /**
+     * Used by JSON serialization to set the value of the isInstalled
+     * flag. Should not be called by normal code. Instead, call
+     * checkIfInstalled().
+     * @param isInstalled true if this content pack is already installed.
+     */
+    @SuppressWarnings("unused")
+    public void setIsInstalled(Boolean isInstalled) {
+        if (isInstalled == null) {
+            this.isInstalled = Boolean.FALSE;
+        } else {
+            this.isInstalled = isInstalled;
+        }
+    }
+
+    /**
+     * Returns Boolean rather that boolean to keep JSON serialization happy.
+     * @return true if this content pack is already installed, as determined
+     * by the checkMatches() method. Never returns null.
+     */
+    public Boolean isInstalled() {
+        return isInstalled;
+    }
+
+    /**
+     * Checks the given collection of GitRepoDocs to see if any of them
+     * match this content pack. If one does then mark this content pack
+     * as installed.
+     * @param docs The collection of GitRepos that already exist. Must
+     *             not be null but can be empty.
+     */
+    public void checkIfInstalled(Collection<GitRepoDoc> docs) {
+        Objects.requireNonNull(docs);
+        for (var doc : docs) {
+            if (this.matches(doc)) {
+                this.isInstalled = Boolean.TRUE;
+                break;
+            }
+        }
     }
 
     /**
@@ -299,11 +383,14 @@ public class AppStoreContentPack {
                && Objects.equals(licenseUrl, that.licenseUrl)
                && Objects.equals(stroomPath, that.stroomPath)
                && Objects.equals(details, that.details)
+               && Objects.equals(gitRepoName, that.gitRepoName)
                && Objects.equals(gitUrl, that.gitUrl)
                && Objects.equals(gitBranch, that.gitBranch)
                && Objects.equals(gitPath, that.gitPath)
                && Objects.equals(gitCommit, that.gitCommit)
-               && Objects.equals(contentStoreUiName, that.contentStoreUiName);
+               && Objects.equals(gitNeedsAuth, that.gitNeedsAuth)
+               && Objects.equals(contentStoreUiName, that.contentStoreUiName)
+               && Objects.equals(isInstalled, that.isInstalled);
     }
 
     @Override
@@ -316,11 +403,14 @@ public class AppStoreContentPack {
                 licenseUrl,
                 stroomPath,
                 details,
+                gitRepoName,
                 gitUrl,
                 gitBranch,
                 gitPath,
+                gitNeedsAuth,
                 gitCommit,
-                contentStoreUiName);
+                contentStoreUiName,
+                isInstalled);
     }
 
     @Override
@@ -335,11 +425,14 @@ public class AppStoreContentPack {
                ", licenseUrl='" + licenseUrl + '\'' +
                ", stroomPath='" + stroomPath + '\'' +
                ", details='" + details.substring(0, Math.min(details.length(), DETAILS_TRUNC)) + '\'' +
+               ", gitRepoName='" + gitRepoName + '\'' +
                ", gitUrl='" + gitUrl + '\'' +
                ", gitBranch='" + gitBranch + '\'' +
                ", gitPath='" + gitPath + '\'' +
                ", gitCommit='" + gitCommit + '\'' +
+               ", gitNeedsAuth='" + gitNeedsAuth + '\'' +
                ", contentStore UI name='" + contentStoreUiName + '\'' +
+               ", isInstalled=" + isInstalled + '\'' +
                '}';
     }
 }

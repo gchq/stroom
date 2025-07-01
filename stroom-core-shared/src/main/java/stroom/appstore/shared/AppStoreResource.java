@@ -56,6 +56,6 @@ public interface AppStoreResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Creates a GitRepoDoc from a Content Pack",
             operationId = "createGitRepoFromContentPack")
-    AppStoreResponse create(AppStoreContentPack contentPack);
+    AppStoreResponse create(AppStoreCreateGitRepoRequest createGitRepoRequest);
 
 }
