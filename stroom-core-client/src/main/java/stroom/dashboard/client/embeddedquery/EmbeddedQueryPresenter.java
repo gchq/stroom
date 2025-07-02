@@ -33,6 +33,7 @@ import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.EmbeddedQueryComponentSettings;
+import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
@@ -630,6 +631,7 @@ public class EmbeddedQueryPresenter
                 loadedQueryRef = queryRef;
                 queryClient.loadQueryDoc(queryRef, result ->
                                 updateQueryDoc(result, settings),
+                        new DefaultErrorHandler(this, null),
                         this);
             }
         } else if (!Objects.equals(settings.getEmbeddedQueryDoc().asDocRef(), loadedQueryRef)) {
