@@ -119,7 +119,7 @@ class TestDuplicateCheckFactoryImpl {
         final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
         try (final DuplicateCheck duplicateCheck = createDuplicateCheck(duplicateCheckFactory, analyticRuleUuid)) {
             for (int i = 0; i < 223; i++) {
-                final Values values = Values.of("test" + 1);
+                final Values values = Values.of("test" + i);
                 assertThat(duplicateCheck.check(values)).isTrue();
                 assertThat(duplicateCheck.check(values)).isFalse();
             }
