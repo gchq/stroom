@@ -1,9 +1,9 @@
 package stroom.proxy.repo;
 
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.util.collections.CollectionUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -12,16 +12,15 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 
 @JsonPropertyOrder(alphabetic = true)
 public class LogStreamConfig extends AbstractConfig implements IsProxyConfig {
 
+    // Is a list, so they get logged in the desired order
     private final List<String> metaKeys;
 
     public LogStreamConfig() {
-        // Linked
         this(List.of(
                 StandardHeaderArguments.GUID,
                 StandardHeaderArguments.RECEIPT_ID,
@@ -31,15 +30,14 @@ public class LogStreamConfig extends AbstractConfig implements IsProxyConfig {
                 StandardHeaderArguments.REMOTE_HOST,
                 StandardHeaderArguments.REMOTE_ADDRESS,
                 StandardHeaderArguments.REMOTE_DN,
-                StandardHeaderArguments.REMOTE_CERT_EXPIRY));
+                StandardHeaderArguments.REMOTE_CERT_EXPIRY,
+                StandardHeaderArguments.DATA_RECEIPT_RULE));
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
     public LogStreamConfig(@JsonProperty("metaKeys") final List<String> metaKeys) {
-        this.metaKeys = NullSafe.stream(metaKeys)
-                .distinct()
-                .collect(Collectors.toList());
+        this.metaKeys = CollectionUtil.cleanItems(metaKeys, String::trim, true);
     }
 
     @JsonProperty

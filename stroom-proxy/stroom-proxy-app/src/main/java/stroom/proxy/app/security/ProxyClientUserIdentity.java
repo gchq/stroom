@@ -29,7 +29,7 @@ public class ProxyClientUserIdentity implements UserIdentity {
     }
 
     @Override
-    public String getSubjectId() {
+    public String subjectId() {
         return id;
     }
 
@@ -50,9 +50,9 @@ public class ProxyClientUserIdentity implements UserIdentity {
     @Override
     public String toString() {
         return "ProxyUserIdentity{" +
-                "id='" + id + '\'' +
-                ", displayName='" + displayName + '\'' +
-                ", fullName='" + fullName + '\'' +
-                '}';
+               "id='" + id + '\'' +
+               ", displayName='" + displayName + '\'' +
+               ", fullName='" + fullName + '\'' +
+               '}';
     }
 }

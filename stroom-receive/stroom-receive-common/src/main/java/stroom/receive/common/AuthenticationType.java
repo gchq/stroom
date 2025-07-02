@@ -4,7 +4,7 @@ import stroom.docref.HasDisplayValue;
 
 public enum AuthenticationType implements HasDisplayValue {
     DATA_FEED_KEY("Data feed key"),
-    TOKEN("OAuth Token"),
+    TOKEN("OAuth Token or API Key"),
     CERTIFICATE("Client certificate"),
     ;
 

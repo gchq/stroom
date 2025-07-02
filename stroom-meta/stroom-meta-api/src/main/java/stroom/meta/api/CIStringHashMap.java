@@ -16,7 +16,23 @@ import java.util.stream.Collectors;
  */
 class CIStringHashMap implements Map<String, String> {
 
-    private final HashMap<CIString, String> map = new HashMap<>();
+    private final HashMap<CIString, String> map;
+
+    public CIStringHashMap() {
+        map = new HashMap<>();
+    }
+
+    public CIStringHashMap(final int initialCapacity) {
+        map = new HashMap<>(initialCapacity);
+    }
+
+    public CIStringHashMap(final CIStringHashMap ciStringHashMap) {
+        if (ciStringHashMap == null || ciStringHashMap.isEmpty()) {
+            map = new HashMap<>();
+        } else {
+            map = new HashMap<>(ciStringHashMap.map);
+        }
+    }
 
     @Override
     public void clear() {
@@ -33,11 +49,27 @@ class CIStringHashMap implements Map<String, String> {
         return map.containsValue(value);
     }
 
+    /**
+     * Get the value corresponding to the key.
+     * If the value is non-null then it will be already trimmed
+     * as all values are trimmed on entry into the map.
+     *
+     * @param key the key whose associated value is to be returned
+     * @return The trimmed value or null.
+     */
     @Override
     public String get(final Object key) {
         return map.get(new CIString((String) key));
     }
 
+    /**
+     * Get the value corresponding to the key.
+     * If the value is non-null then it will be already trimmed
+     * as all values are trimmed on entry into the map.
+     *
+     * @param key the key whose associated value is to be returned
+     * @return The trimmed value from the map or defaultVal
+     */
     @Override
     public String getOrDefault(final Object key, final String defaultVal) {
         final String val = map.get(new CIString((String) key));

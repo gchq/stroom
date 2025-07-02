@@ -5,7 +5,7 @@ import stroom.preferences.client.UserPreferencesManager;
 import stroom.security.client.presenter.EditApiKeyPresenter.EditApiKeyView;
 import stroom.security.client.presenter.EditApiKeyPresenter.Mode;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
-import stroom.security.shared.HashAlgorithm;
+import stroom.security.shared.ApiKeyHashAlgorithm;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.ClipboardUtil;
 import stroom.widget.button.client.ButtonPanel;
@@ -48,7 +48,7 @@ public class EditApiKeyViewImpl
     @UiField
     MyDateBox expiresOnDateBox;
     @UiField
-    SelectionBox<HashAlgorithm> hashAlgorithmSelectionBox;
+    SelectionBox<ApiKeyHashAlgorithm> hashAlgorithmSelectionBox;
     @UiField
     CustomCheckBox enabledCheckBox;
 
@@ -76,8 +76,8 @@ public class EditApiKeyViewImpl
         widget.addAttachHandler(event -> focus());
 //        this.uiConfigCache = uiConfigCache;
 
-        hashAlgorithmSelectionBox.addItems(Arrays.stream(HashAlgorithm.values())
-                .sorted(Comparator.comparing(HashAlgorithm::getDisplayValue))
+        hashAlgorithmSelectionBox.addItems(Arrays.stream(ApiKeyHashAlgorithm.values())
+                .sorted(Comparator.comparing(ApiKeyHashAlgorithm::getDisplayValue))
                 .collect(Collectors.toList()));
 
 //        ownerSelectionBox.setDisplayValueFunction(UserName::getUserIdentityForAudit);
@@ -226,12 +226,12 @@ public class EditApiKeyViewImpl
     }
 
     @Override
-    public void setHashAlgorithm(final HashAlgorithm hashAlgorithm) {
+    public void setHashAlgorithm(final ApiKeyHashAlgorithm hashAlgorithm) {
         hashAlgorithmSelectionBox.setValue(hashAlgorithm);
     }
 
     @Override
-    public HashAlgorithm getHashAlgorithm() {
+    public ApiKeyHashAlgorithm getHashAlgorithm() {
         return hashAlgorithmSelectionBox.getValue();
     }
 

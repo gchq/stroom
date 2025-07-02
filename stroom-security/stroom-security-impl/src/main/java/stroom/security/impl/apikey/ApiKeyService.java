@@ -5,24 +5,28 @@ import stroom.cache.api.StroomCache;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.exception.AuthenticationException;
+import stroom.security.common.impl.ApiKeyGenerator;
 import stroom.security.common.impl.JwtUtil;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.BasicUserIdentity;
 import stroom.security.impl.HashedApiKeyParts;
 import stroom.security.impl.UserCache;
+import stroom.security.shared.ApiKeyHashAlgorithm;
 import stroom.security.shared.AppPermission;
+import stroom.security.shared.AppPermissionSet;
 import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.CreateHashedApiKeyResponse;
 import stroom.security.shared.FindApiKeyCriteria;
-import stroom.security.shared.HashAlgorithm;
 import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.User;
+import stroom.security.shared.VerifyApiKeyRequest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserDesc;
 import stroom.util.shared.UserRef;
 import stroom.util.string.Base58;
 
@@ -54,19 +58,24 @@ import java.util.stream.Stream;
 public class ApiKeyService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ApiKeyService.class);
+    private static final AppPermissionSet REQUIRED_PERMISSION_SET = AppPermissionSet.oneOf(
+            AppPermission.VERIFY_API_KEY,
+            AppPermission.STROOM_PROXY);
+
     private static final String CACHE_NAME = "API Key cache";
     private static final int MAX_CREATION_ATTEMPTS = 100;
-    private static final Map<HashAlgorithm, ApiKeyHasher> API_KEY_HASHER_MAP = Stream.of(
+    private static final Map<ApiKeyHashAlgorithm, ApiKeyHasher> API_KEY_HASHER_MAP = Stream.of(
                     new ShaThree256ApiKeyHasher(),
                     new ShaTwo256ApiKeyHasher(),
                     new BCryptApiKeyHasher(),
-                    new Argon2ApiKeyHasher())
+                    new Argon2ApiKeyHasher(),
+                    new ShaTwo512ApiKeyHasher())
             .collect(Collectors.toMap(ApiKeyHasher::getType, Function.identity()));
 
     static {
         // Make sure all enum values have an associated impl
-        final Set<HashAlgorithm> keySet = API_KEY_HASHER_MAP.keySet();
-        for (final HashAlgorithm hashAlgorithm : HashAlgorithm.values()) {
+        final Set<ApiKeyHashAlgorithm> keySet = API_KEY_HASHER_MAP.keySet();
+        for (final ApiKeyHashAlgorithm hashAlgorithm : ApiKeyHashAlgorithm.values()) {
             if (!keySet.contains(hashAlgorithm)) {
                 throw new RuntimeException("No ApiKeyHasher implementation defined for algorithm " + hashAlgorithm);
             }
@@ -136,13 +145,30 @@ public class ApiKeyService {
         }
     }
 
+    public Optional<UserDesc> verifyApiKey(final VerifyApiKeyRequest request) {
+        return securityContext.secureResult(REQUIRED_PERMISSION_SET, () -> {
+            final Optional<UserDesc> optUserDesc = fetchVerifiedIdentity(request.getApiKey())
+                    .filter(userIdentity -> {
+                        final AppPermissionSet requiredAppPermissions = request.getRequiredAppPermissions();
+                        if (AppPermissionSet.isEmpty(requiredAppPermissions)) {
+                            return true;
+                        } else {
+                            return securityContext.hasAppPermissions(userIdentity, requiredAppPermissions);
+                        }
+                    })
+                    .map(UserIdentity::asUserDesc);
+            LOGGER.debug("verifyApiKey() - request: {}, optUserDesc: {}", request, optUserDesc);
+            return optUserDesc;
+        });
+    }
+
     /**
      * Fetch the verified {@link UserIdentity} for the passed API key.
      * If the hash of the API key matches one in the database and that key is enabled
      * and not expired then the {@link UserIdentity} will be returned, else an empty {@link Optional}
      * is returned.
      */
-    public Optional<UserIdentity> fetchVerifiedIdentity(final String apiKeyStr) {
+    Optional<UserIdentity> fetchVerifiedIdentity(final String apiKeyStr) {
         if (NullSafe.isBlankString(apiKeyStr)) {
             return Optional.empty();
         } else {
@@ -236,7 +262,8 @@ public class ApiKeyService {
         final CreateHashedApiKeyRequest request = ensureExpireTimeEpochMs(createHashedApiKeyRequest);
 
         final String apiKeyStr = apiKeyGenerator.generateRandomApiKey();
-        final HashAlgorithm hashAlgorithm = Objects.requireNonNull(createHashedApiKeyRequest.getHashAlgorithm());
+        final ApiKeyHashAlgorithm hashAlgorithm = Objects.requireNonNull(
+                createHashedApiKeyRequest.getHashAlgorithm());
         final String apiKeyHash = computeApiKeyHash(apiKeyStr, hashAlgorithm);
         final HashedApiKeyParts hashedApiKeyParts = new HashedApiKeyParts(
                 apiKeyHash,
@@ -342,23 +369,25 @@ public class ApiKeyService {
     }
 
     String computeApiKeyHash(final String apiKeyStr) {
-        return computeApiKeyHash(apiKeyStr, HashAlgorithm.DEFAULT);
+        return computeApiKeyHash(apiKeyStr, ApiKeyHashAlgorithm.DEFAULT);
     }
 
-    String computeApiKeyHash(final String apiKeyStr, final HashAlgorithm hashAlgorithm) {
+    String computeApiKeyHash(final String apiKeyStr, final ApiKeyHashAlgorithm hashAlgorithm) {
         Objects.requireNonNull(apiKeyStr);
         Objects.requireNonNull(hashAlgorithm);
         final ApiKeyHasher apiKeyHasher = getApiKeyHasher(hashAlgorithm);
         return apiKeyHasher.hash(apiKeyStr.trim());
     }
 
-    private static ApiKeyHasher getApiKeyHasher(final HashAlgorithm hashAlgorithm) {
+    private static ApiKeyHasher getApiKeyHasher(final ApiKeyHashAlgorithm hashAlgorithm) {
         final ApiKeyHasher apiKeyHasher = API_KEY_HASHER_MAP.get(hashAlgorithm);
         Objects.requireNonNull(apiKeyHasher, () -> "No ApiKeyHasher implementation for algorithm " + hashAlgorithm);
         return apiKeyHasher;
     }
 
-    boolean verifyApiKeyHash(final String apiKeyStr, final String hash, final HashAlgorithm hashAlgorithm) {
+    boolean verifyApiKeyHash(final String apiKeyStr,
+                             final String hash,
+                             final ApiKeyHashAlgorithm hashAlgorithm) {
         Objects.requireNonNull(apiKeyStr);
         Objects.requireNonNull(hash);
         Objects.requireNonNull(hashAlgorithm);
@@ -420,6 +449,10 @@ public class ApiKeyService {
     // --------------------------------------------------------------------------------
 
 
+    /**
+     * These hashers were written before {@link stroom.security.api.HashFunction} and differ
+     * slightly (even though they both share the same, so they can stay here just for api key use.
+     */
     private interface ApiKeyHasher {
 
         String hash(String apiKeyStr);
@@ -429,7 +462,7 @@ public class ApiKeyService {
             return Objects.equals(Objects.requireNonNull(hash), computedHash);
         }
 
-        HashAlgorithm getType();
+        ApiKeyHashAlgorithm getType();
     }
 
 
@@ -445,8 +478,8 @@ public class ApiKeyService {
         }
 
         @Override
-        public HashAlgorithm getType() {
-            return HashAlgorithm.SHA3_256;
+        public ApiKeyHashAlgorithm getType() {
+            return ApiKeyHashAlgorithm.SHA3_256;
         }
     }
 
@@ -463,8 +496,25 @@ public class ApiKeyService {
         }
 
         @Override
-        public HashAlgorithm getType() {
-            return HashAlgorithm.SHA2_256;
+        public ApiKeyHashAlgorithm getType() {
+            return ApiKeyHashAlgorithm.SHA2_256;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class ShaTwo512ApiKeyHasher implements ApiKeyHasher {
+
+        @Override
+        public String hash(final String value) {
+            return DigestUtils.sha512Hex(value);
+        }
+
+        @Override
+        public ApiKeyHashAlgorithm getType() {
+            return ApiKeyHashAlgorithm.SHA2_512;
         }
     }
 
@@ -489,8 +539,8 @@ public class ApiKeyService {
         }
 
         @Override
-        public HashAlgorithm getType() {
-            return HashAlgorithm.BCRYPT;
+        public ApiKeyHashAlgorithm getType() {
+            return ApiKeyHashAlgorithm.BCRYPT;
         }
     }
 
@@ -538,9 +588,10 @@ public class ApiKeyService {
             return Base58.encode(result);
         }
 
+
         @Override
-        public HashAlgorithm getType() {
-            return HashAlgorithm.ARGON_2;
+        public ApiKeyHashAlgorithm getType() {
+            return ApiKeyHashAlgorithm.ARGON_2;
         }
     }
 }

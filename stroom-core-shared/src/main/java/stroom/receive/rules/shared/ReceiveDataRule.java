@@ -43,7 +43,7 @@ public class ReceiveDataRule {
     @JsonProperty
     private final ExpressionOperator expression;
     @JsonProperty
-    private final RuleAction action;
+    private final ReceiveAction action;
 
     @JsonCreator
     public ReceiveDataRule(@JsonProperty("ruleNumber") final int ruleNumber,
@@ -51,13 +51,22 @@ public class ReceiveDataRule {
                            @JsonProperty("name") final String name,
                            @JsonProperty("enabled") final boolean enabled,
                            @JsonProperty("expression") final ExpressionOperator expression,
-                           @JsonProperty("action") final RuleAction action) {
+                           @JsonProperty("action") final ReceiveAction action) {
         this.ruleNumber = ruleNumber;
         this.creationTime = creationTime;
         this.name = name;
         this.enabled = enabled;
         this.expression = expression;
-        this.action = action;
+        this.action = Objects.requireNonNull(action);
+    }
+
+    private ReceiveDataRule(final Builder builder) {
+        this(builder.ruleNumber,
+                builder.creationTime,
+                builder.name,
+                builder.enabled,
+                builder.expression,
+                builder.action);
     }
 
     public int getRuleNumber() {
@@ -80,7 +89,7 @@ public class ReceiveDataRule {
         return expression;
     }
 
-    public RuleAction getAction() {
+    public ReceiveAction getAction() {
         return action;
     }
 
@@ -94,11 +103,11 @@ public class ReceiveDataRule {
         }
         final ReceiveDataRule that = (ReceiveDataRule) o;
         return ruleNumber == that.ruleNumber &&
-                creationTime == that.creationTime &&
-                enabled == that.enabled &&
-                Objects.equals(name, that.name) &&
-                Objects.equals(expression, that.expression) &&
-                action == that.action;
+               creationTime == that.creationTime &&
+               enabled == that.enabled &&
+               Objects.equals(name, that.name) &&
+               Objects.equals(expression, that.expression) &&
+               action == that.action;
     }
 
     @Override
@@ -116,5 +125,75 @@ public class ReceiveDataRule {
             ruleName = String.valueOf(ruleNumber);
         }
         return ruleName;
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return copy(this);
+    }
+
+    public static Builder copy(final ReceiveDataRule copy) {
+        final Builder builder = new Builder();
+        builder.ruleNumber = copy.getRuleNumber();
+        builder.creationTime = copy.getCreationTime();
+        builder.name = copy.getName();
+        builder.enabled = copy.isEnabled();
+        builder.expression = copy.getExpression();
+        builder.action = copy.getAction();
+        return builder;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static final class Builder {
+
+        private int ruleNumber;
+        private long creationTime;
+        private String name;
+        private boolean enabled;
+        private ExpressionOperator expression;
+        private ReceiveAction action;
+
+        private Builder() {
+        }
+
+        public Builder withRuleNumber(final int ruleNumber) {
+            this.ruleNumber = ruleNumber;
+            return this;
+        }
+
+        public Builder withCreationTime(final long creationTime) {
+            this.creationTime = creationTime;
+            return this;
+        }
+
+        public Builder withName(final String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder withEnabled(final boolean enabled) {
+            this.enabled = enabled;
+            return this;
+        }
+
+        public Builder withExpression(final ExpressionOperator expression) {
+            this.expression = expression;
+            return this;
+        }
+
+        public Builder withAction(final ReceiveAction action) {
+            this.action = action;
+            return this;
+        }
+
+        public ReceiveDataRule build() {
+            return new ReceiveDataRule(this);
+        }
     }
 }

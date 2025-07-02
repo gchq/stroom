@@ -6,8 +6,14 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -21,6 +27,11 @@ import java.util.function.Supplier;
  * greater than checkInterval. If hasStateChangedCheck returns true then
  * it will call valueSupplier to obtain a new value.
  * </p>
+ * <p>
+ * You have the option of calling {@link CachedValue#getValue()} which may trigger a synchronous
+ * update of the value if old, or {@link CachedValue#getValueAsync()} which may trigger an
+ * asynchronous update and return the current value without waiting.
+ * </p>
  *
  * @param <V> The type of the value.
  * @param <S> The type of the state used to determine if the value needs to be updated.
@@ -31,10 +42,12 @@ public class CachedValue<V, S> {
     private static final int UNINITIALISED = 0;
 
     private final long checkIntervalMs;
-    private final Function<S, V> valueSupplier;
+    private final BiFunction<S, V, V> valueSupplier;
     private final Supplier<S> stateSupplier;
+    private final AtomicBoolean isAsyncUpdateInProgress = new AtomicBoolean(false);
 
     private final AtomicLong nextCheckEpochMs = new AtomicLong(UNINITIALISED);
+    private final Executor executor;
     private volatile S state = null;
     private volatile V value = null;
 
@@ -53,22 +66,30 @@ public class CachedValue<V, S> {
      *                         Value returned must implement equals method to determine if it has changed.
      */
     private CachedValue(final Duration maxCheckInterval,
-                        final Function<S, V> valueSupplier,
-                        final Supplier<S> stateSupplier) {
+                        final BiFunction<S, V, V> valueSupplier,
+                        final Supplier<S> stateSupplier,
+                        final Executor executor) {
         this.checkIntervalMs = Objects.requireNonNull(maxCheckInterval).toMillis();
         this.valueSupplier = Objects.requireNonNull(valueSupplier);
         this.stateSupplier = stateSupplier;
+        // isAsyncUpdateInProgress prevents two threads from doing an async update concurrently
+        // so use a newSingleThreadExecutor by default
+        this.executor = Objects.requireNonNullElseGet(executor, Executors::newSingleThreadExecutor);
     }
 
     private CheckResult<S> checkUpdateRequired() {
-        final long nowMs = System.currentTimeMillis();
-        if (nowMs == UNINITIALISED) {
+        final long nextCheckEpochMsVal = nextCheckEpochMs.get();
+        if (nextCheckEpochMsVal == UNINITIALISED) {
             LOGGER.debug("Uninitialised");
-            return CheckResult.updateRequired(NullSafe.get(stateSupplier, Supplier::get));
+            return CheckResult.initialiseRequired(NullSafe.get(stateSupplier, Supplier::get));
         } else {
-            final long oldNextCheck = nextCheckEpochMs.get();
-            LOGGER.debug("oldNextCheck: {}, nowMs: {}", oldNextCheck, nowMs);
-            if (nowMs > oldNextCheck) {
+            final long nowMs = System.currentTimeMillis();
+            LOGGER.debug(() -> LogUtil.message("oldNextCheck: {}, nowMs: {}, delta: {}",
+                    Instant.ofEpochMilli(nextCheckEpochMsVal),
+                    Instant.ofEpochMilli(nowMs),
+                    Duration.between(Instant.ofEpochMilli(nextCheckEpochMsVal), Instant.ofEpochMilli(nowMs))));
+
+            if (nowMs > nextCheckEpochMsVal) {
                 if (stateSupplier == null) {
                     // No state to check
                     LOGGER.debug("Stateless update required");
@@ -92,29 +113,87 @@ public class CachedValue<V, S> {
 
     /**
      * Gets the updatable value. If it has not been updated for longer than maxCheckInterval
-     * then the state will be fetched and, if the state has changed, the value will be
+     * or is uninitialised, then the state will be fetched and, if the state has changed, the value will be
      * updated synchronously.
+     * <p>
+     * If this is a stateless {@link CachedValue} then an update will happen if the value is
+     * uninitialised or the time since last updated is greater than maxCheckInterval.
+     * </p>
      */
     public V getValue() {
         // If uninitialised or we have passed the next check time then get the state
         // to see if it has changed. If it has then update the value.
         if (checkUpdateRequired().isUpdateRequired) {
-            synchronized (this) {
-                // Recheck under lock
-                final CheckResult<S> checkResult = checkUpdateRequired();
-                if (checkResult.isUpdateRequired) {
-                    final V newValue = valueSupplier.apply(checkResult.newState);
-                    LOGGER.debug(() -> LogUtil.message(
-                            "Updating value - nextCheck: {}, state: {}, newState: {}, value: {}, newValue: {}",
-                            nextCheckEpochMs.get(), state, checkResult.newState, value, newValue));
-                    state = checkResult.newState;
-                    value = newValue;
-                    nextCheckEpochMs.set(System.currentTimeMillis() + checkIntervalMs);
-                }
+            // Re-check under lock and update if required
+            checkAndUpdateUnderLock();
+        } else {
+            LOGGER.debug("getValue() - No update required");
+        }
+        LOGGER.debug("getValue() - Returning {}", value);
+        return value;
+    }
+
+    /**
+     * Gets the updatable value. If it has not been updated for longer than maxCheckInterval
+     * then it will trigger an asynchronous check of the state and potential update of the value.
+     * <p>
+     * This method will always return the current known value WITHOUT waiting for the async update to happen.
+     * However, if the value is uninitialised, a synchronous update will happen.
+     * </p>
+     */
+    public V getValueAsync() {
+        // If uninitialised or we have passed the next check time then get the state
+        // to see if it has changed. If it has then update the value.
+        final CheckResult<S> checkResult = checkUpdateRequired();
+        if (!checkResult.isValueInitialised) {
+            // Value is not initialised, so we are forced to do it synchronously
+            checkAndUpdateUnderLock();
+        } else if (checkResult.isUpdateRequired) {
+            // No point us updating if another thread has kicked one off
+            if (isAsyncUpdateInProgress.compareAndSet(false, true)) {
+                LOGGER.debug("getValueAsync() - Creating an async task to check and update under lock");
+                // It is possible that when the async code runs another thread may
+                // have already updated the value, so it will do nothing
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        checkAndUpdateUnderLock();
+                        LOGGER.debug("getValueAsync() - Completed async task");
+                    } catch (final Throwable e) {
+                        LOGGER.error("getValueAsync() - Error running async checkAndUpdateUnderLock(): {}",
+                                LogUtil.exceptionMessage(e), e);
+                    } finally {
+                        isAsyncUpdateInProgress.set(false);
+                    }
+                }, executor);
+            } else {
+                LOGGER.debug("getValueAsync() - Another thread has initiated an update");
+            }
+        } else {
+            LOGGER.debug("getValueAsync() - No update required");
+        }
+        LOGGER.debug("getValueAsync() - Returning {}", value);
+        // Return the value held now without waiting for the async update to complete
+        return value;
+    }
+
+    private void checkAndUpdateUnderLock() {
+        synchronized (this) {
+            // Recheck under lock
+            final CheckResult<S> checkResult = checkUpdateRequired();
+            if (checkResult.isUpdateRequired) {
+                final V newValue = valueSupplier.apply(checkResult.newState, value);
+                LOGGER.debug(() -> LogUtil.message(
+                        "Updating value - nextCheck: {}, state: {}, newState: {}, value: {}, newValue: {}",
+                        Instant.ofEpochMilli(nextCheckEpochMs.get()), state, checkResult.newState, value, newValue));
+                state = checkResult.newState;
+                value = newValue;
+                final long newNextCheckEpochMs = System.currentTimeMillis() + checkIntervalMs;
+                LOGGER.debug(() -> LogUtil.message("newNextCheckEpochMs: {}", newNextCheckEpochMs));
+                nextCheckEpochMs.set(newNextCheckEpochMs);
+            } else {
+                LOGGER.debug("No update required (under lock)");
             }
         }
-        LOGGER.debug("Returning {}", value);
-        return value;
     }
 
     /**
@@ -186,17 +265,24 @@ public class CachedValue<V, S> {
         }
 
         /**
+         * Use this method when your cached value is dependent on state, e.g. the state supplies the variables
+         * for constructing an object that is expensive to construct. For a given state, the value should always
+         * be the same, i.e. if the state does not change, the value also won't.
+         *
          * @param stateSupplier Will generally be called once per checkInterval unless multiple threads
          *                      call {@link CachedValue#getValue()} at once, in which case
          *                      it may be called by multiple threads at once. Should be side effect free.
          *                      Value returned must implement equals method to determine if it has changed.
+         *                      If the state returned has not changed since the last time it was supplied,
+         *                      no update to the value will happen.
          */
         public <S> BuilderStage3a<S> withStateSupplier(final Supplier<S> stateSupplier) {
             return new BuilderStage3a<>(this, stateSupplier);
         }
 
         /**
-         * Updating the value is not dependent on any state.
+         * Updating the value is not dependent on any state, only the time since the last
+         * update.
          */
         public BuilderStage3b withoutStateSupplier() {
             return new BuilderStage3b(this);
@@ -228,6 +314,25 @@ public class CachedValue<V, S> {
             return new BuilderStage4<>(
                     builderStage2.maxCheckInterval,
                     stateSupplier,
+                    (state, ignored) ->
+                            valueFunction.apply(state));
+        }
+
+        /**
+         * @param valueFunction Will be called on first call of {@link CachedValue#getValue()}
+         *                      then any time the value supplied by stateSupplier changes. If multiple
+         *                      threads call {@link CachedValue#getValue()} at once valueSupplier
+         *                      may be called by each thread. Should be side effect free.
+         *                      <p>
+         *                      The current state and value will be passed into valueFunction. In the
+         *                      event of an error in valueFunction the current value can be used in place
+         *                      of a new value.
+         *                      </p>
+         */
+        public <V> BuilderStage4<S, V> withValueFunction(final BiFunction<S, V, V> valueFunction) {
+            return new BuilderStage4<>(
+                    builderStage2.maxCheckInterval,
+                    stateSupplier,
                     valueFunction);
         }
     }
@@ -254,7 +359,22 @@ public class CachedValue<V, S> {
             return new BuilderStage4<>(
                     builderStage2.maxCheckInterval,
                     null,
-                    (Void ignored) -> valueSupplier.get());
+                    (Void ignoredState, V ignoredVal) ->
+                            valueSupplier.get());
+        }
+
+        /**
+         * @param valueSupplier Will be called on first call of {@link CachedValue#getValue()}
+         *                      then any time the value supplied by stateSupplier changes. If multiple
+         *                      threads call {@link CachedValue#getValue()} at once valueSupplier
+         *                      may be called by each thread. Should be side effect free.
+         */
+        public <V> BuilderStage4<Void, V> withValueSupplier(final Function<V, V> valueSupplier) {
+            return new BuilderStage4<>(
+                    builderStage2.maxCheckInterval,
+                    null,
+                    (Void ignoredState, V currVal) ->
+                            valueSupplier.apply(currVal));
         }
     }
 
@@ -266,18 +386,29 @@ public class CachedValue<V, S> {
 
         private final Duration maxCheckInterval;
         private final Supplier<S> stateSupplier;
-        private final Function<S, V> valueFunction;
+        private final BiFunction<S, V, V> valueFunction;
+        private Executor executor;
 
         private BuilderStage4(final Duration maxCheckInterval,
                               final Supplier<S> stateSupplier,
-                              final Function<S, V> valueFunction) {
+                              final BiFunction<S, V, V> valueFunction) {
             this.maxCheckInterval = maxCheckInterval;
             this.stateSupplier = stateSupplier;
             this.valueFunction = valueFunction;
         }
 
+        /**
+         * Optionally provide an executor to use with {@link CachedValue#getValueAsync()}, e.g.
+         * to use a cached thread pool. If not provided, {@link Executors#newSingleThreadExecutor()}
+         * will be used by default.
+         */
+        public BuilderStage4<S, V> withExecutor(final Executor executor) {
+            this.executor = executor;
+            return this;
+        }
+
         public CachedValue<V, S> build() {
-            return new CachedValue<>(maxCheckInterval, valueFunction, stateSupplier);
+            return new CachedValue<>(maxCheckInterval, valueFunction, stateSupplier, executor);
         }
     }
 
@@ -286,14 +417,19 @@ public class CachedValue<V, S> {
 
 
     private record CheckResult<S>(boolean isUpdateRequired,
+                                  boolean isValueInitialised,
                                   S newState) {
 
+        private static <S> CheckResult<S> initialiseRequired(final S state) {
+            return new CheckResult<>(true, false, state);
+        }
+
         private static <S> CheckResult<S> updateRequired(final S state) {
-            return new CheckResult<>(true, state);
+            return new CheckResult<>(true, true, state);
         }
 
         private static <S> CheckResult<S> noUpdateRequired() {
-            return new CheckResult<>(false, null);
+            return new CheckResult<>(false, true, null);
         }
     }
 }

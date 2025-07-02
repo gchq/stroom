@@ -3,7 +3,7 @@ package stroom.query.api.datasource;
 import stroom.query.api.ExpressionTerm.Condition;
 
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -64,6 +64,49 @@ public enum ConditionSet {
             Condition.NOT_EQUALS,
             Condition.IN,
             Condition.IN_DICTIONARY),
+    CASE_SENSITIVE_TEXT(
+            Condition.EQUALS,
+            Condition.NOT_EQUALS,
+            Condition.EQUALS_CASE_SENSITIVE,
+            Condition.NOT_EQUALS_CASE_SENSITIVE,
+            Condition.IN,
+            Condition.IN_DICTIONARY),
+
+    // Receipt Policy Rules
+    /**
+     * Conditions that support obfuscation/hashing of the values in receipt policy
+     * rule expression terms.
+     */
+    OBFUSCATABLE_CONDITIONS(
+            Condition.EQUALS_CASE_SENSITIVE,
+            Condition.NOT_EQUALS_CASE_SENSITIVE,
+            Condition.BETWEEN,
+            Condition.IN,
+            Condition.IN_DICTIONARY),
+
+    // Must include all the values from OBFUSCATABLE_CONDITIONS
+    RECEIPT_POLICY_CONDITIONS(
+            Condition.EQUALS_CASE_SENSITIVE,
+            Condition.NOT_EQUALS_CASE_SENSITIVE,
+            Condition.IN,
+            Condition.IN_DICTIONARY,
+            Condition.EQUALS,
+            Condition.NOT_EQUALS,
+            Condition.BETWEEN,
+            Condition.CONTAINS,
+            Condition.CONTAINS_CASE_SENSITIVE,
+            Condition.GREATER_THAN,
+            Condition.GREATER_THAN_OR_EQUAL_TO,
+            Condition.LESS_THAN,
+            Condition.LESS_THAN_OR_EQUAL_TO,
+            Condition.IS_NULL,
+            Condition.IS_NOT_NULL,
+            Condition.MATCHES_REGEX,
+            Condition.MATCHES_REGEX_CASE_SENSITIVE,
+            Condition.STARTS_WITH,
+            Condition.STARTS_WITH_CASE_SENSITIVE,
+            Condition.ENDS_WITH,
+            Condition.ENDS_WITH_CASE_SENSITIVE),
 
     // Elastic Conditions.
     ELASTIC_NUMERIC(
@@ -272,10 +315,10 @@ public enum ConditionSet {
 
     public static ConditionSet getElastic(final FieldType elasticIndexFieldType) {
         if (FieldType.DATE.equals(elasticIndexFieldType) ||
-                FieldType.IPV4_ADDRESS.equals(elasticIndexFieldType) ||
-                FieldType.ID.equals(elasticIndexFieldType) ||
-                FieldType.LONG.equals(elasticIndexFieldType) ||
-                FieldType.INTEGER.equals(elasticIndexFieldType)) {
+            FieldType.IPV4_ADDRESS.equals(elasticIndexFieldType) ||
+            FieldType.ID.equals(elasticIndexFieldType) ||
+            FieldType.LONG.equals(elasticIndexFieldType) ||
+            FieldType.INTEGER.equals(elasticIndexFieldType)) {
             return ConditionSet.ELASTIC_NUMERIC;
         }
         return ConditionSet.ELASTIC_TEXT;
@@ -297,7 +340,7 @@ public enum ConditionSet {
 
     ConditionSet(final Condition... arr) {
         conditionList = Arrays.asList(arr);
-        conditionSet = new HashSet<>(conditionList);
+        conditionSet = EnumSet.copyOf(conditionList);
     }
 
     public boolean supportsCondition(final Condition condition) {

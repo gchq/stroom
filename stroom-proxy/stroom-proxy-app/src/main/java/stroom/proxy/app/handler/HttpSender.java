@@ -59,6 +59,7 @@ public class HttpSender implements StreamDestination {
     // TODO Consider whether a UNKNOWN_ERROR(500) is recoverable or not
     private static final Set<StroomStatusCode> NON_RECOVERABLE_STATUS_CODES = EnumSet.of(
             StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA,
+            StroomStatusCode.REJECTED_BY_POLICY_RULES,
             StroomStatusCode.UNEXPECTED_DATA_TYPE,
             StroomStatusCode.FEED_MUST_BE_SPECIFIED);
 
@@ -89,7 +90,7 @@ public class HttpSender implements StreamDestination {
         this.proxyServices = proxyServices;
         this.sendTimer = metrics.registrationBuilder(getClass())
                 .addNamePart(forwarderName)
-                .addNamePart("send")
+                .addNamePart(Metrics.SEND)
                 .timer()
                 .createAndRegister();
     }
@@ -103,8 +104,6 @@ public class HttpSender implements StreamDestination {
 
         // We need to add the authentication token to our headers
         final Map<String, String> authHeaders = userIdentityFactory.getServiceUserAuthHeaders();
-        attributeMap.putAll(authHeaders);
-
         attributeMap.computeIfAbsent(StandardHeaderArguments.GUID, k -> UUID.randomUUID().toString());
 
         LOGGER.debug(() -> LogUtil.message(
@@ -187,13 +186,14 @@ public class HttpSender implements StreamDestination {
 
     private void addAuthHeaders(final BasicHttpRequest request) {
         Objects.requireNonNull(request);
-        final String apiKey = config.getApiKey();
-        if (NullSafe.isNonBlankString(apiKey)) {
-            request.addHeader("Authorization", "Bearer " + apiKey.trim());
-        }
-
-        // Allows sending to systems on the same OpenId realm as us using an access token
-        if (config.isAddOpenIdAccessToken()) {
+        final String apiKey = NullSafe.trim(config.getApiKey());
+        if (!apiKey.isEmpty()) {
+            LOGGER.debug(() -> LogUtil.message("addAuthHeaders() - Using configured apiKey {}",
+                    NullSafe.subString(apiKey, 0, 15)));
+            userIdentityFactory.getAuthHeaders(apiKey)
+                    .forEach(request::addHeader);
+        } else if (config.isAddOpenIdAccessToken()) {
+            // Allows sending to systems on the same OpenId realm as us using an access token
             LOGGER.debug(() -> LogUtil.message(
                     "'{}' - Setting request props (values truncated):\n{}",
                     forwarderName,
@@ -212,6 +212,8 @@ public class HttpSender implements StreamDestination {
 
             userIdentityFactory.getServiceUserAuthHeaders()
                     .forEach(request::addHeader);
+        } else {
+            LOGGER.debug("authHeaders() - No headers added");
         }
     }
 

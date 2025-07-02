@@ -66,12 +66,12 @@ public class QueryField implements Field, HasDisplayValue {
     @JsonCreator
     public QueryField(@Deprecated @JsonProperty("type") final String type,
                       @Deprecated @JsonProperty("name") final String name,
-
                       @JsonProperty("fldName") final String fldName,
                       @JsonProperty("fldType") final FieldType fldType,
                       @JsonProperty("conditionSet") final ConditionSet conditionSet,
                       @JsonProperty("docRefType") final String docRefType,
                       @JsonProperty("queryable") final Boolean queryable) {
+        // Don't use NullSafe as this breaks some tests
         this.fldName = fldName != null
                 ? fldName
                 : name;

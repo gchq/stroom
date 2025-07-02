@@ -22,6 +22,9 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 
+/**
+ * Helper class for posting data to /datafeed on a proxy
+ */
 public class PostDataHelper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PostDataHelper.class);
