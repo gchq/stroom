@@ -16,7 +16,7 @@
 
 package stroom.query.impl;
 
-import stroom.query.common.v2.AnnotationsPostProcessorFactory;
+import stroom.query.common.v2.AnnotationMapperFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.shared.QueryHelpType;
 import stroom.security.mock.MockSecurityContext;
@@ -54,7 +54,7 @@ class TestQueryServiceImpl {
                 null,
                 null,
                 new ExpressionPredicateFactory(),
-                AnnotationsPostProcessorFactory.NO_OP,
+                AnnotationMapperFactory.NO_OP,
                 null,
                 null);
 

@@ -21,7 +21,6 @@ import stroom.query.api.OffsetRange;
 import stroom.query.api.Result;
 import stroom.query.api.ResultRequest;
 import stroom.query.api.ResultRequest.Fetch;
-import stroom.query.api.Row;
 import stroom.query.api.TableResult;
 import stroom.query.api.TableResultBuilder;
 import stroom.query.api.TableSettings;
@@ -42,7 +41,7 @@ public class TableResultCreator implements ResultCreator {
 
     private final FormatterFactory formatterFactory;
     private final ExpressionPredicateFactory expressionPredicateFactory;
-    private final AnnotationsPostProcessorFactory annotationsPostProcessorFactory;
+    private final AnnotationMapperFactory annotationMapperFactory;
 
     private final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
     private final boolean cacheLastResult;
@@ -51,23 +50,23 @@ public class TableResultCreator implements ResultCreator {
     public TableResultCreator() {
         this(new FormatterFactory(null),
                 new ExpressionPredicateFactory(),
-                AnnotationsPostProcessorFactory.NO_OP,
+                AnnotationMapperFactory.NO_OP,
                 false);
     }
 
     public TableResultCreator(final FormatterFactory formatterFactory,
                               final ExpressionPredicateFactory expressionPredicateFactory,
-                              final AnnotationsPostProcessorFactory annotationsPostProcessorFactory) {
-        this(formatterFactory, expressionPredicateFactory, annotationsPostProcessorFactory, false);
+                              final AnnotationMapperFactory annotationMapperFactory) {
+        this(formatterFactory, expressionPredicateFactory, annotationMapperFactory, false);
     }
 
     public TableResultCreator(final FormatterFactory formatterFactory,
                               final ExpressionPredicateFactory expressionPredicateFactory,
-                              final AnnotationsPostProcessorFactory annotationsPostProcessorFactory,
+                              final AnnotationMapperFactory annotationMapperFactory,
                               final boolean cacheLastResult) {
         this.formatterFactory = formatterFactory;
         this.expressionPredicateFactory = expressionPredicateFactory;
-        this.annotationsPostProcessorFactory = annotationsPostProcessorFactory;
+        this.annotationMapperFactory = annotationMapperFactory;
         this.cacheLastResult = cacheLastResult;
     }
 
@@ -99,29 +98,36 @@ public class TableResultCreator implements ResultCreator {
             resultBuilder.columns(columns);
 
             if (RowValueFilter.matches(columns)) {
-                // Create the row creator.
-                final ItemMapper<Row> rowCreator = ConditionalFormattingRowCreator.create(
-                        dataStore.getColumns(),
+                ItemMapper mapper;
+                mapper = SimpleMapper.create(dataStore.getColumns(), columns);
+                mapper = annotationMapperFactory.createMapper(columns, errorConsumer, mapper);
+                mapper = FilteredMapper.create(
                         columns,
                         tableSettings.applyValueFilters(),
-                        formatterFactory,
-                        keyFactory,
-                        tableSettings.getAggregateFilter(),
+                        tableSettings.getValueFilter(),
+                        dataStore.getDateTimeSettings(),
+                        errorConsumer,
+                        expressionPredicateFactory,
+                        mapper);
+                mapper = ConditionalFormattingMapper.create(
+                        columns,
                         tableSettings.getConditionalFormattingRules(),
                         dataStore.getDateTimeSettings(),
                         expressionPredicateFactory,
                         errorConsumer,
-                        annotationsPostProcessorFactory.createProcessor(columns));
+                        mapper);
 
+                final RowCreator rowCreator = SimpleRowCreator
+                        .create(columns, formatterFactory, keyFactory, errorConsumer);
                 final Set<Key> openGroups = keyFactory.decodeSet(resultRequest.getOpenGroups());
                 dataStore.fetch(
                         columns,
                         range,
                         new OpenGroupsImpl(openGroups),
                         resultRequest.getTimeFilter(),
-                        rowCreator,
-                        row -> {
-                            resultBuilder.addRow(row);
+                        mapper,
+                        item -> {
+                            resultBuilder.addRow(rowCreator.create(item));
                             pageLength.incrementAndGet();
                         },
                         resultBuilder::totalResults);

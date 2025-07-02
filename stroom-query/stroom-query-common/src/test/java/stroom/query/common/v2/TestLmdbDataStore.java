@@ -254,7 +254,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                     final TableResultCreator tableComponentResultCreator = new TableResultCreator(
                             formatterFactory,
                             new ExpressionPredicateFactory(),
-                            AnnotationsPostProcessorFactory.NO_OP);
+                            AnnotationMapperFactory.NO_OP);
                     final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                             dataStore,
                             tableResultRequest);
@@ -278,7 +278,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                     final TableResultCreator tableComponentResultCreator2 = new TableResultCreator(
                             formatterFactory,
                             new ExpressionPredicateFactory(),
-                            AnnotationsPostProcessorFactory.NO_OP);
+                            AnnotationMapperFactory.NO_OP);
                     final TableResult searchResult2 = (TableResult) tableComponentResultCreator2.create(
                             dataStore,
                             tableResultRequest2);
@@ -304,7 +304,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                     final TableResultCreator tableComponentResultCreator3 = new TableResultCreator(
                             formatterFactory,
                             new ExpressionPredicateFactory(),
-                            AnnotationsPostProcessorFactory.NO_OP);
+                            AnnotationMapperFactory.NO_OP);
                     final TableResult searchResult3 = (TableResult) tableComponentResultCreator2.create(
                             dataStore,
                             tableResultRequest3);
@@ -345,7 +345,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
             final TableResultCreator tableComponentResultCreator = new TableResultCreator(
                     formatterFactory,
                     new ExpressionPredicateFactory(),
-                    AnnotationsPostProcessorFactory.NO_OP);
+                    AnnotationMapperFactory.NO_OP);
             final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                     dataStore,
                     tableResultRequest);
@@ -418,7 +418,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         final TableResultCreator tableComponentResultCreator = new TableResultCreator(
                 formatterFactory,
                 new ExpressionPredicateFactory(),
-                AnnotationsPostProcessorFactory.NO_OP);
+                AnnotationMapperFactory.NO_OP);
         TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                 dataStore,
                 tableResultRequest);

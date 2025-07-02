@@ -1,9 +1,8 @@
 package stroom.query.common.v2;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.stream.Stream;
 
-public class IdentityItemMapper implements ItemMapper<Item> {
+public class IdentityItemMapper implements ItemMapper {
 
     public static final IdentityItemMapper INSTANCE = new IdentityItemMapper();
 
@@ -12,7 +11,7 @@ public class IdentityItemMapper implements ItemMapper<Item> {
     }
 
     @Override
-    public List<Item> create(final Item item) {
-        return Collections.singletonList(item);
+    public Stream<Item> create(final Item item) {
+        return Stream.of(item);
     }
 }

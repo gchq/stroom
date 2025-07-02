@@ -28,7 +28,7 @@ import stroom.query.api.TableSettings;
 import stroom.query.api.TimeFilter;
 import stroom.query.common.v2.AbstractResultStoreConfig;
 import stroom.query.common.v2.AnalyticResultStoreConfig;
-import stroom.query.common.v2.AnnotationsPostProcessorFactory;
+import stroom.query.common.v2.AnnotationMapperFactory;
 import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.ErrorConsumerImpl;
@@ -88,7 +88,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
     private final SecurityContext securityContext;
     private final ByteBufferFactory bufferFactory;
     private final ExpressionPredicateFactory expressionPredicateFactory;
-    private final AnnotationsPostProcessorFactory annotationsPostProcessorFactory;
+    private final AnnotationMapperFactory annotationMapperFactory;
     private final AnalyticRuleStore analyticRuleStore;
 
     @Inject
@@ -103,7 +103,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                               final SecurityContext securityContext,
                               final ByteBufferFactory bufferFactory,
                               final ExpressionPredicateFactory expressionPredicateFactory,
-                              final AnnotationsPostProcessorFactory annotationsPostProcessorFactory) {
+                              final AnnotationMapperFactory annotationMapperFactory) {
         this.lmdbEnvDirFactory = lmdbEnvDirFactory;
         this.analyticRuleStore = analyticRuleStore;
         this.analyticStoreConfigProvider = analyticStoreConfigProvider;
@@ -114,7 +114,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         this.securityContext = securityContext;
         this.bufferFactory = bufferFactory;
         this.expressionPredicateFactory = expressionPredicateFactory;
-        this.annotationsPostProcessorFactory = annotationsPostProcessorFactory;
+        this.annotationMapperFactory = annotationMapperFactory;
 
         this.analyticResultStoreDir = getLocalDir(analyticStoreConfigProvider.get(), pathCreator);
 
@@ -439,7 +439,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 final TableResultCreator resultCreator = new TableResultCreator(
                         formatterFactory,
                         expressionPredicateFactory,
-                        annotationsPostProcessorFactory);
+                        annotationMapperFactory);
                 ResultRequest resultRequest = searchRequest.getResultRequests().getFirst();
                 TableSettings tableSettings = resultRequest.getMappings().getFirst();
                 tableSettings = tableSettings

@@ -1,10 +1,10 @@
 package stroom.query.common.v2;
 
-import java.util.List;
+import java.util.stream.Stream;
 
-public interface ItemMapper<R> {
+public interface ItemMapper {
 
-    List<R> create(Item item);
+    Stream<Item> create(Item item);
 
     default boolean hidesRows() {
         return false;

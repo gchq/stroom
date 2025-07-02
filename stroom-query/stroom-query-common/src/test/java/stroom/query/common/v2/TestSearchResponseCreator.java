@@ -91,7 +91,7 @@ class TestSearchResponseCreator {
                 new ExpressionContextFactory().createContext(searchRequest),
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
                 new ExpressionPredicateFactory(),
-                AnnotationsPostProcessorFactory.NO_OP);
+                AnnotationMapperFactory.NO_OP);
     }
 
     @Test
@@ -293,6 +293,16 @@ class TestSearchResponseCreator {
             public Val getValue(final int index) {
                 return null;
             }
+
+            @Override
+            public int size() {
+                return 0;
+            }
+
+            @Override
+            public Val[] toArray() {
+                return Val.EMPTY_VALUES;
+            }
         };
 
         final CompletionState completionState = new CompletionStateImpl();
@@ -308,18 +318,19 @@ class TestSearchResponseCreator {
             }
 
             @Override
-            public <R> void fetch(final List<Column> columns,
-                                  final OffsetRange range,
-                                  final OpenGroups openGroups,
-                                  final TimeFilter timeFilter,
-                                  final ItemMapper<R> mapper,
-                                  final Consumer<R> resultConsumer,
-                                  final Consumer<Long> totalRowCountConsumer) {
-                final List<R> list = mapper.create(item);
-                if (totalRowCountConsumer != null) {
-                    totalRowCountConsumer.accept((long) list.size());
-                }
-                list.forEach(resultConsumer);
+            public void fetch(final List<Column> columns,
+                              final OffsetRange range,
+                              final OpenGroups openGroups,
+                              final TimeFilter timeFilter,
+                              final ItemMapper mapper,
+                              final Consumer<Item> resultConsumer,
+                              final Consumer<Long> totalRowCountConsumer) {
+                mapper.create(item).forEach(i -> {
+                    resultConsumer.accept(i);
+                    if (totalRowCountConsumer != null) {
+                        totalRowCountConsumer.accept(1L);
+                    }
+                });
             }
 
             @Override

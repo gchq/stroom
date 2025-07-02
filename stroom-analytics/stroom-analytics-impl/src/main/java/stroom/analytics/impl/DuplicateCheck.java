@@ -1,10 +1,10 @@
 package stroom.analytics.impl;
 
-import stroom.query.api.Row;
+import stroom.query.language.functions.Values;
 
 public interface DuplicateCheck extends AutoCloseable {
 
-    boolean check(Row row);
+    boolean check(Values values);
 
     void close();
 }

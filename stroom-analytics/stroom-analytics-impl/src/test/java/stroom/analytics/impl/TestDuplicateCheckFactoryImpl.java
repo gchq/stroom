@@ -33,11 +33,11 @@ import stroom.lmdb.LmdbLibrary;
 import stroom.lmdb.LmdbLibraryConfig;
 import stroom.lmdb2.LmdbEnvDirFactory;
 import stroom.query.api.Column;
-import stroom.query.api.Row;
 import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.DuplicateCheckStoreConfig;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Values;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
@@ -65,49 +65,49 @@ class TestDuplicateCheckFactoryImpl {
 
     @Test
     void test() {
-        final Row row = Row.builder().groupKey("test").values(List.of("test")).build();
+        final Values values = Values.of("test");
         final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
         try (final DuplicateCheck duplicateCheck = createDuplicateCheck(duplicateCheckFactory, "test")) {
-            assertThat(duplicateCheck.check(row)).isTrue();
+            assertThat(duplicateCheck.check(values)).isTrue();
             for (int i = 0; i < 10; i++) {
-                assertThat(duplicateCheck.check(row)).isFalse();
+                assertThat(duplicateCheck.check(values)).isFalse();
             }
         }
     }
 
     @Test
     void testReload() {
-        final Row row = Row.builder().groupKey("test").values(List.of("test")).build();
+        final Values values = Values.of("test");
         final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
         try (final DuplicateCheck duplicateCheck = createDuplicateCheck(duplicateCheckFactory, "test")) {
-            assertThat(duplicateCheck.check(row)).isTrue();
+            assertThat(duplicateCheck.check(values)).isTrue();
             for (int i = 0; i < 10; i++) {
-                assertThat(duplicateCheck.check(row)).isFalse();
+                assertThat(duplicateCheck.check(values)).isFalse();
             }
         }
 
         try (final DuplicateCheck duplicateCheck2 = createDuplicateCheck(duplicateCheckFactory, "test")) {
             for (int i = 0; i < 10; i++) {
-                assertThat(duplicateCheck2.check(row)).isFalse();
+                assertThat(duplicateCheck2.check(values)).isFalse();
             }
         }
     }
 
     @Test
     void testDifferentAnalytic() {
-        final Row row = Row.builder().groupKey("test").values(List.of("test")).build();
+        final Values values = Values.of("test");
         final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
         try (final DuplicateCheck duplicateCheck1 = createDuplicateCheck(duplicateCheckFactory, "test1")) {
-            assertThat(duplicateCheck1.check(row)).isTrue();
+            assertThat(duplicateCheck1.check(values)).isTrue();
             for (int i = 0; i < 10; i++) {
-                assertThat(duplicateCheck1.check(row)).isFalse();
+                assertThat(duplicateCheck1.check(values)).isFalse();
             }
         }
 
         try (final DuplicateCheck duplicateCheck2 = createDuplicateCheck(duplicateCheckFactory, "test2")) {
-            assertThat(duplicateCheck2.check(row)).isTrue();
+            assertThat(duplicateCheck2.check(values)).isTrue();
             for (int i = 0; i < 10; i++) {
-                assertThat(duplicateCheck2.check(row)).isFalse();
+                assertThat(duplicateCheck2.check(values)).isFalse();
             }
         }
     }
@@ -119,9 +119,9 @@ class TestDuplicateCheckFactoryImpl {
         final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
         try (final DuplicateCheck duplicateCheck = createDuplicateCheck(duplicateCheckFactory, analyticRuleUuid)) {
             for (int i = 0; i < 223; i++) {
-                final Row row = Row.builder().groupKey("test" + i).values(List.of("test" + i)).build();
-                assertThat(duplicateCheck.check(row)).isTrue();
-                assertThat(duplicateCheck.check(row)).isFalse();
+                final Values values = Values.of("test" + 1);
+                assertThat(duplicateCheck.check(values)).isTrue();
+                assertThat(duplicateCheck.check(values)).isFalse();
             }
         }
 

@@ -51,7 +51,7 @@ import stroom.query.api.SearchResponse;
 import stroom.query.api.TableResultBuilder;
 import stroom.query.api.TimeFilter;
 import stroom.query.common.v2.AnnotationColumnValueProvider;
-import stroom.query.common.v2.AnnotationsPostProcessorFactory;
+import stroom.query.common.v2.AnnotationMapperFactory;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.Key;
@@ -111,6 +111,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @AutoLogged
 class DashboardServiceImpl implements DashboardService {
@@ -133,7 +134,7 @@ class DashboardServiceImpl implements DashboardService {
     private final ResultStoreManager searchResponseCreatorManager;
     private final NodeInfo nodeInfo;
     private final ExpressionPredicateFactory expressionPredicateFactory;
-    private final AnnotationsPostProcessorFactory annotationsPostProcessorFactory;
+    private final AnnotationMapperFactory annotationMapperFactory;
     private final ValPredicateFactory valPredicateFactory;
     private final QueryNodeResolver queryNodeResolver;
 
@@ -151,7 +152,7 @@ class DashboardServiceImpl implements DashboardService {
                          final ResultStoreManager searchResponseCreatorManager,
                          final NodeInfo nodeInfo,
                          final ExpressionPredicateFactory expressionPredicateFactory,
-                         final AnnotationsPostProcessorFactory annotationsPostProcessorFactory,
+                         final AnnotationMapperFactory annotationMapperFactory,
                          final ValPredicateFactory valPredicateFactory,
                          final QueryNodeResolver queryNodeResolver) {
         this.dashboardStore = dashboardStore;
@@ -167,7 +168,7 @@ class DashboardServiceImpl implements DashboardService {
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.nodeInfo = nodeInfo;
         this.expressionPredicateFactory = expressionPredicateFactory;
-        this.annotationsPostProcessorFactory = annotationsPostProcessorFactory;
+        this.annotationMapperFactory = annotationMapperFactory;
         this.valPredicateFactory = valPredicateFactory;
         this.queryNodeResolver = queryNodeResolver;
     }
@@ -334,7 +335,7 @@ class DashboardServiceImpl implements DashboardService {
                                 final TableResultCreator tableResultCreator =
                                         new TableResultCreator(formatterFactory,
                                                 expressionPredicateFactory,
-                                                annotationsPostProcessorFactory) {
+                                                annotationMapperFactory) {
                                             @Override
                                             public TableResultBuilder createTableResultBuilder() {
                                                 return searchResultWriter;
@@ -593,7 +594,7 @@ class DashboardServiceImpl implements DashboardService {
                             .indexOf(request.getColumn().getId());
                     if (index != -1) {
                         final AnnotationColumnValueProvider columnValueProvider =
-                                annotationsPostProcessorFactory.createValues(dataStore.getColumns(), index);
+                                annotationMapperFactory.createValues(dataStore.getColumns(), index);
                         dataStore.fetch(
                                 dataStore.getColumns(),
                                 OffsetRange.UNBOUNDED,
@@ -609,7 +610,7 @@ class DashboardServiceImpl implements DashboardService {
                                             }
                                         }
                                     });
-                                    return Collections.emptyList();
+                                    return Stream.empty();
                                 },
                                 row -> {
 

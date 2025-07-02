@@ -35,9 +35,9 @@ public class DetectionValue {
     @Override
     public String toString() {
         return "DetectionValue{" +
-                "name='" + name + '\'' +
-                ", value='" + value + '\'' +
-                '}';
+               "name='" + name + '\'' +
+               ", value='" + value + '\'' +
+               '}';
     }
 
     @Override

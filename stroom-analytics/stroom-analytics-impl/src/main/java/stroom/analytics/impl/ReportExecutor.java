@@ -50,7 +50,7 @@ import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.api.SearchRequestSource.SourceType;
 import stroom.query.api.TableResultBuilder;
-import stroom.query.common.v2.AnnotationsPostProcessorFactory;
+import stroom.query.common.v2.AnnotationMapperFactory;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.ErrorConsumerImpl;
 import stroom.query.common.v2.ExpressionContextFactory;
@@ -107,7 +107,7 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
     private final ExpressionContextFactory expressionContextFactory;
     private final ExecutionScheduleDao executionScheduleDao;
     private final ExpressionPredicateFactory expressionPredicateFactory;
-    private final AnnotationsPostProcessorFactory annotationsPostProcessorFactory;
+    private final AnnotationMapperFactory annotationMapperFactory;
     private final Provider<ReportUiDefaultConfig> reportUiDefaultConfigProvider;
     private final TempDirProvider tempDirProvider;
     private final Store streamStore;
@@ -129,7 +129,7 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                           final ExpressionContextFactory expressionContextFactory,
                           final ExecutionScheduleDao executionScheduleDao1,
                           final ExpressionPredicateFactory expressionPredicateFactory,
-                          final AnnotationsPostProcessorFactory annotationsPostProcessorFactory,
+                          final AnnotationMapperFactory annotationMapperFactory,
                           final Provider<ReportUiDefaultConfig> reportUiDefaultConfigProvider,
                           final TempDirProvider tempDirProvider,
                           final Store streamStore,
@@ -150,7 +150,7 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
         this.expressionContextFactory = expressionContextFactory;
         this.executionScheduleDao = executionScheduleDao1;
         this.expressionPredicateFactory = expressionPredicateFactory;
-        this.annotationsPostProcessorFactory = annotationsPostProcessorFactory;
+        this.annotationMapperFactory = annotationMapperFactory;
         this.reportUiDefaultConfigProvider = reportUiDefaultConfigProvider;
         this.tempDirProvider = tempDirProvider;
         this.streamStore = streamStore;
@@ -357,7 +357,7 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                             new TableResultCreator(
                                     formatterFactory,
                                     expressionPredicateFactory,
-                                    annotationsPostProcessorFactory) {
+                                    annotationMapperFactory) {
                                 @Override
                                 public TableResultBuilder createTableResultBuilder() {
                                     return searchResultWriter;
