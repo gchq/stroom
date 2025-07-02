@@ -1,5 +1,6 @@
 package stroom.query.client;
 
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.shared.QueryDoc;
@@ -24,11 +25,13 @@ public class QueryClient {
 
     public void loadQueryDoc(final DocRef queryRef,
                              final Consumer<QueryDoc> consumer,
+                             final RestErrorHandler errorHandler,
                              final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(QUERY_RESOURCE)
                 .method(res -> res.fetch(queryRef.getUuid()))
                 .onSuccess(consumer)
+                .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
