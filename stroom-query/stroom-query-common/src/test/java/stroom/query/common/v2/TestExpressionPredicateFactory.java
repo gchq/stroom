@@ -1,6 +1,9 @@
 package stroom.query.common.v2;
 
 import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
 import stroom.query.api.UserTimeZone;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
@@ -19,6 +22,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -411,6 +415,97 @@ class TestExpressionPredicateFactory {
         testWildcardReplacement("th\\?is", "th?is");
         testWildcardReplacement("th\\is", "th\\is");
         testWildcardReplacement("*user1 (xxx) yyy*", ".*user1\\Q \\E\\Q(\\Exxx\\Q)\\E\\Q \\Eyyy.*");
+    }
+
+    @Test
+    void testNullExpression() {
+        final QueryField field = QueryField.createText("myField");
+        final ValueFunctionFactories<String> valueFunctionFactories = StringValueFunctionFactory.create(field);
+
+        final ExpressionOperator expressionOperator = null;
+
+        final Predicate<String> stringPredicate = new ExpressionPredicateFactory().create(
+                expressionOperator,
+                valueFunctionFactories);
+
+        assertThat(stringPredicate.test("foo"))
+                .isTrue();
+        assertThat(stringPredicate.test("bar"))
+                .isTrue();
+    }
+
+    @Test
+    void testNullOperator() {
+        final QueryField field = QueryField.createText("myField");
+        final ValueFunctionFactories<String> valueFunctionFactories = StringValueFunctionFactory.create(field);
+
+        final ExpressionOperator expressionOperator = ExpressionOperator.builder()
+                .op(null)
+                .build();
+
+        final Predicate<String> stringPredicate = new ExpressionPredicateFactory().create(
+                expressionOperator,
+                valueFunctionFactories);
+
+        assertThat(stringPredicate.test("foo"))
+                .isTrue();
+        assertThat(stringPredicate.test("bar"))
+                .isTrue();
+    }
+
+    @Test
+    void testEmptyOperator_and() {
+        final QueryField field = QueryField.createText("myField");
+        final ValueFunctionFactories<String> valueFunctionFactories = StringValueFunctionFactory.create(field);
+
+        final ExpressionOperator expressionOperator = ExpressionOperator.builder()
+                .op(Op.AND)
+                .build();
+
+        final Predicate<String> stringPredicate = new ExpressionPredicateFactory().create(expressionOperator,
+                valueFunctionFactories);
+
+        assertThat(stringPredicate.test("foo"))
+                .isTrue();
+        assertThat(stringPredicate.test("bar"))
+                .isTrue();
+    }
+
+    @Test
+    void testEmptyOperator_or() {
+        final QueryField field = QueryField.createText("myField");
+        final ValueFunctionFactories<String> valueFunctionFactories = StringValueFunctionFactory.create(field);
+
+        final ExpressionOperator expressionOperator = ExpressionOperator.builder()
+                .op(Op.OR)
+                .build();
+
+        final Predicate<String> stringPredicate = new ExpressionPredicateFactory().create(expressionOperator,
+                valueFunctionFactories);
+
+        assertThat(stringPredicate.test("foo"))
+                .isTrue();
+        assertThat(stringPredicate.test("bar"))
+                .isTrue();
+    }
+
+    @Test
+    void testCreate() {
+        final QueryField field = QueryField.createText("myField");
+        final ValueFunctionFactories<String> valueFunctionFactories = StringValueFunctionFactory.create(field);
+
+        final ExpressionOperator expressionOperator = ExpressionOperator.builder()
+                .op(Op.AND)
+                .addTerm(ExpressionTerm.equals(field.getFldName(), "foo"))
+                .build();
+
+        final Predicate<String> stringPredicate = new ExpressionPredicateFactory().create(expressionOperator,
+                valueFunctionFactories);
+
+        assertThat(stringPredicate.test("foo"))
+                .isTrue();
+        assertThat(stringPredicate.test("bar"))
+                .isFalse();
     }
 
     private void testWildcardReplacement(final String in, final String expected) {

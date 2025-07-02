@@ -6,12 +6,13 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.app.handler.ForwardHttpPostConfig;
-import stroom.proxy.feed.remote.FeedStatus;
-import stroom.proxy.feed.remote.GetFeedStatusRequest;
+import stroom.proxy.feed.remote.GetFeedStatusRequestV2;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.proxy.repo.AggregatorConfig;
-import stroom.receive.common.FeedStatusResource;
+import stroom.receive.common.FeedStatusResourceV2;
 import stroom.receive.common.ReceiveDataServlet;
+import stroom.security.shared.ApiKeyCheckResource;
+import stroom.security.shared.ApiKeyResource;
 import stroom.test.common.TestUtil;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.date.DateUtil;
@@ -39,6 +40,7 @@ import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.github.tomakehurst.wiremock.matching.UrlPattern;
 import com.github.tomakehurst.wiremock.stubbing.ServeEvent;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
+import jakarta.ws.rs.core.Response.Status;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.assertj.core.api.Assertions;
@@ -144,6 +146,14 @@ public class MockHttpDestination {
                         .withHeader("Content-Type", "application/json")
                         .withBody(responseJson)));
         LOGGER.info("Setup WireMock POST stub for {}", feedStatusPath);
+
+        final String apiKeyVerificationPath = getApiKeyVerificationPath();
+
+        WireMock.stubFor(WireMock.post(apiKeyVerificationPath)
+                .willReturn(WireMock.aResponse()
+                        .withStatus(Status.NO_CONTENT.getStatusCode())
+                        .withHeader("Content-Type", "application/json")));
+        LOGGER.info("Setup WireMock POST stub for {}", apiKeyVerificationPath);
 
         final String datafeedPath = getDataFeedPath();
         WireMock.stubFor(datafeedBuilderFunc.apply(WireMock.post(datafeedPath)));
@@ -324,25 +334,37 @@ public class MockHttpDestination {
         return WireMock.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(getDataFeedPath())));
     }
 
-    private List<GetFeedStatusRequest> getPostsToFeedStatusCheck() {
+    private List<GetFeedStatusRequestV2> getPostsToFeedStatusCheck() {
         return WireMock.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(getFeedStatusPath())))
                 .stream()
-                .map(req -> extractContent(req, GetFeedStatusRequest.class))
+                .map(req -> extractContent(req, GetFeedStatusRequestV2.class))
                 .toList();
+    }
+
+    void assertFeedStatusCheckNotCalled() {
+        // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
+        Assertions.assertThat(getPostsToFeedStatusCheck())
+                .isEmpty();
     }
 
     void assertFeedStatusCheck() {
         // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
         Assertions.assertThat(getPostsToFeedStatusCheck())
-                .extracting(GetFeedStatusRequest::getFeedName)
+                .extracting(GetFeedStatusRequestV2::getFeedName)
                 .filteredOn(feed -> !"DUMMY_FEED".equals(feed))
                 .containsExactly(TestConstants.FEED_TEST_EVENTS_1, TestConstants.FEED_TEST_EVENTS_2);
     }
 
     private static String getFeedStatusPath() {
         return ResourcePaths.buildAuthenticatedApiPath(
-                FeedStatusResource.BASE_RESOURCE_PATH,
-                FeedStatusResource.GET_FEED_STATUS_PATH_PART);
+                FeedStatusResourceV2.BASE_RESOURCE_PATH,
+                FeedStatusResourceV2.GET_FEED_STATUS_PATH_PART);
+    }
+
+    private static String getApiKeyVerificationPath() {
+        return ResourcePaths.buildAuthenticatedApiPath(
+                ApiKeyResource.BASE_PATH,
+                ApiKeyCheckResource.VERIFY_API_KEY_PATH_PART);
     }
 
     /**
@@ -467,14 +489,24 @@ public class MockHttpDestination {
     }
 
     static FeedStatusConfig createFeedStatusConfig() {
-        return new FeedStatusConfig(
-                true,
-                FeedStatus.Receive,
-                "http://localhost:"
-                + MockHttpDestination.DEFAULT_STROOM_PORT
-                + ResourcePaths.buildAuthenticatedApiPath(FeedStatusResource.BASE_RESOURCE_PATH),
-                null,
-                null);
+        return new FeedStatusConfig(null, null);
+//        return new FeedStatusConfig(
+////                true,
+////                FeedStatus.Receive,
+//                "http://localhost:"
+//                + MockHttpDestination.DEFAULT_STROOM_PORT
+//                + getFeedStatusPath(),
+////                null,
+//                null);
+    }
+
+    static DownstreamHostConfig createDownstreamHostConfig() {
+        return DownstreamHostConfig.builder()
+                .withEnabled(true)
+                .withScheme("http")
+                .withHostname("localhost")
+                .withPort(MockHttpDestination.DEFAULT_STROOM_PORT)
+                .build();
     }
 
     void assertSimpleDataFeedRequestContent(final int expected) {

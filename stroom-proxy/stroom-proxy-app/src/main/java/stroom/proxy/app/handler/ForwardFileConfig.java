@@ -25,8 +25,10 @@ public final class ForwardFileConfig
     public static final TemplatingMode DEFAULT_TEMPLATING_MODE = TemplatingMode.REPLACE_UNKNOWN_PARAMS;
 
     private static final String DEFAULT_SUB_PATH_TEMPLATE = "${year}${month}${day}/${feed}";
-    private static final boolean DEFAULT_ATOMIC_MOVE_ENABLED = true;
+    private static final boolean DEFAULT_IS_ATOMIC_MOVE_ENABLED = true;
     private static final LivenessCheckMode DEFAULT_LIVENESS_CHECK_MODE = LivenessCheckMode.READ;
+    public static final boolean DEFAULT_IS_ENABLED = true;
+    public static final boolean DEFAULT_IS_INSTANT = false;
 
     private final boolean enabled;
     private final boolean instant;
@@ -39,15 +41,15 @@ public final class ForwardFileConfig
     private final boolean atomicMoveEnabled;
 
     public ForwardFileConfig() {
-        enabled = true;
-        instant = false;
+        enabled = DEFAULT_IS_ENABLED;
+        instant = DEFAULT_IS_INSTANT;
         name = null;
         path = null;
         subPathTemplate = null;
         forwardQueueConfig = new ForwardFileQueueConfig();
         livenessCheckPath = null;
-        livenessCheckMode = LivenessCheckMode.READ;
-        atomicMoveEnabled = DEFAULT_ATOMIC_MOVE_ENABLED;
+        livenessCheckMode = DEFAULT_LIVENESS_CHECK_MODE;
+        atomicMoveEnabled = DEFAULT_IS_ATOMIC_MOVE_ENABLED;
     }
 
     @SuppressWarnings("unused")
@@ -69,7 +71,7 @@ public final class ForwardFileConfig
         this.forwardQueueConfig = Objects.requireNonNullElseGet(forwardQueueConfig, ForwardFileQueueConfig::new);
         this.livenessCheckPath = livenessCheckPath;
         this.livenessCheckMode = Objects.requireNonNullElse(livenessCheckMode, DEFAULT_LIVENESS_CHECK_MODE);
-        this.atomicMoveEnabled = Objects.requireNonNullElse(atomicMoveEnabled, DEFAULT_ATOMIC_MOVE_ENABLED);
+        this.atomicMoveEnabled = Objects.requireNonNullElse(atomicMoveEnabled, DEFAULT_IS_ATOMIC_MOVE_ENABLED);
     }
 
     private ForwardFileConfig(final Builder builder) {

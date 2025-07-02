@@ -16,8 +16,11 @@
 
 package stroom.ui.config.shared;
 
-import stroom.security.shared.HashAlgorithm;
+import stroom.receive.rules.shared.ReceiptCheckMode;
+import stroom.security.shared.ApiKeyHashAlgorithm;
 import stroom.util.shared.NotInjectableConfig;
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.collection.GwtCollectionUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -58,12 +61,37 @@ public class ExtendedUiConfig {
     @JsonPropertyDescription("The maximum expiry age for new API keys in millis. Defaults to 365 days.")
     private final long maxApiKeyExpiryAgeMs;
 
+    @JsonProperty
+    @JsonPropertyDescription("The set of fields used in data receipt policy checking whose values are obfuscated " +
+                             "when sent to a proxy.")
+    private final Set<String> obfuscatedFields;
+
+    @JsonProperty
+    @JsonPropertyDescription(
+            "The type of check performed on received data.")
+    private final ReceiptCheckMode receiptCheckMode;
 
     public ExtendedUiConfig() {
         this.externalIdentityProvider = false;
         this.uiConfig = new UiConfig();
         this.dependencyWarningsEnabled = false;
         this.maxApiKeyExpiryAgeMs = 365L * 24 * 60 * 60 * 1_000;
+        // This set of values comes from
+        // stroom.receive.rules.impl.StroomReceiptPolicyConfig.DEFAULT_OBFUSCATED_FIELDS,
+        // and it MUST be in alphabetic order.
+        this.obfuscatedFields = GwtCollectionUtil.asUnmodifiabledConsistentOrderSet(
+                "AccountId",
+                "AccountName",
+                "Component",
+                "Feed",
+                "ReceivedPath",
+                "RemoteDN",
+                "RemoteHost",
+                "System",
+                "UploadUsername",
+                "UploadUserId",
+                "X-Forwarded-For");
+        this.receiptCheckMode = ReceiptCheckMode.getDefault();
     }
 
     @JsonCreator
@@ -71,12 +99,17 @@ public class ExtendedUiConfig {
             @JsonProperty("uiConfig") final UiConfig uiConfig,
             @JsonProperty("externalIdentityProvider") final boolean externalIdentityProvider,
             @JsonProperty("dependencyWarningsEnabled") final boolean dependencyWarningsEnabled,
-            @JsonProperty("maxApiKeyExpiryAgeMs") final long maxApiKeyExpiryAgeMs) {
+            @JsonProperty("maxApiKeyExpiryAgeMs") final long maxApiKeyExpiryAgeMs,
+            @JsonProperty("obfuscatedFields") final Set<String> obfuscatedFields,
+            @JsonProperty("receiptCheckMode") final ReceiptCheckMode receiptCheckMode) {
 
         this.uiConfig = uiConfig;
         this.externalIdentityProvider = externalIdentityProvider;
         this.dependencyWarningsEnabled = dependencyWarningsEnabled;
         this.maxApiKeyExpiryAgeMs = maxApiKeyExpiryAgeMs;
+        // Ensures serialisation tests work
+        this.obfuscatedFields = GwtCollectionUtil.asUnmodifiabledConsistentOrderSet(obfuscatedFields);
+        this.receiptCheckMode = NullSafe.requireNonNullElse(receiptCheckMode, ReceiptCheckMode.getDefault());
     }
 
     public UiConfig getUiConfig() {
@@ -234,7 +267,7 @@ public class ExtendedUiConfig {
     }
 
     @JsonIgnore
-    public HashAlgorithm getDefaultApiKeyHashAlgorithm() {
+    public ApiKeyHashAlgorithm getDefaultApiKeyHashAlgorithm() {
         return uiConfig.getDefaultApiKeyHashAlgorithm();
     }
 
@@ -257,6 +290,14 @@ public class ExtendedUiConfig {
         return maxApiKeyExpiryAgeMs;
     }
 
+    public Set<String> getObfuscatedFields() {
+        return obfuscatedFields;
+    }
+
+    public ReceiptCheckMode getReceiptCheckMode() {
+        return receiptCheckMode;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -266,13 +307,22 @@ public class ExtendedUiConfig {
             return false;
         }
         final ExtendedUiConfig that = (ExtendedUiConfig) o;
-        return externalIdentityProvider == that.externalIdentityProvider && Objects.equals(uiConfig,
-                that.uiConfig);
+        return externalIdentityProvider == that.externalIdentityProvider
+               && dependencyWarningsEnabled == that.dependencyWarningsEnabled
+               && maxApiKeyExpiryAgeMs == that.maxApiKeyExpiryAgeMs
+               && Objects.equals(uiConfig, that.uiConfig)
+               && Objects.equals(obfuscatedFields, that.obfuscatedFields)
+               && Objects.equals(receiptCheckMode, that.receiptCheckMode);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uiConfig, externalIdentityProvider);
+        return Objects.hash(uiConfig,
+                externalIdentityProvider,
+                dependencyWarningsEnabled,
+                maxApiKeyExpiryAgeMs,
+                obfuscatedFields,
+                receiptCheckMode);
     }
 
     @Override
@@ -280,6 +330,10 @@ public class ExtendedUiConfig {
         return "ExtendedUiConfig{" +
                "uiConfig=" + uiConfig +
                ", externalIdentityProvider=" + externalIdentityProvider +
+               ", dependencyWarningsEnabled=" + dependencyWarningsEnabled +
+               ", maxApiKeyExpiryAgeMs=" + maxApiKeyExpiryAgeMs +
+               ", obfuscatedFields=" + obfuscatedFields +
+               ", receiptCheckMode=" + receiptCheckMode +
                '}';
     }
 }

@@ -22,7 +22,6 @@ import jakarta.validation.constraints.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-
 @JsonPropertyOrder(alphabetic = true)
 public class AutoContentCreationConfig
         extends AbstractConfig

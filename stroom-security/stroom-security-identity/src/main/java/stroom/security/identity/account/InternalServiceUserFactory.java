@@ -42,7 +42,7 @@ public class InternalServiceUserFactory implements ServiceUserFactory {
         final UserIdentity userIdentity = new InternalIdpProcessingUserIdentity(
                 REFRESH_BUFFER, this::createServiceUserToken);
         LOGGER.info("Created internal processing user identity '{}' " +
-                "(token expiry duration: {}, refresh buffer: {})",
+                    "(token expiry duration: {}, refresh buffer: {})",
                 userIdentity, EXPIRY_DURATION, REFRESH_BUFFER);
         return userIdentity;
     }
@@ -54,7 +54,7 @@ public class InternalServiceUserFactory implements ServiceUserFactory {
             return false;
         } else {
             return userIdentity instanceof InternalIdpProcessingUserIdentity
-                    && Objects.equals(userIdentity.getSubjectId(), serviceUserIdentity.getSubjectId());
+                   && Objects.equals(userIdentity.subjectId(), serviceUserIdentity.subjectId());
         }
     }
 

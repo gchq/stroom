@@ -7,6 +7,7 @@ import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -45,9 +46,12 @@ public class TemporaryPathCreator implements PathCreator, AutoCloseable {
     public TemporaryPathCreator(final Path tempBaseDir) {
         try {
             baseDir = tempBaseDir;
-            LOGGER.debug(() -> "Created directory " + baseDir.toAbsolutePath().normalize());
             homeDir = baseDir.resolve("home");
             tempDir = baseDir.resolve("temp");
+            LOGGER.debug(() -> LogUtil.message(
+                    "Created home dir: {}, temp dir: {}",
+                    homeDir.toAbsolutePath().normalize(),
+                    tempDir.toAbsolutePath().normalize()));
             Files.createDirectories(homeDir);
             Files.createDirectories(tempDir);
         } catch (final IOException e) {
@@ -66,8 +70,16 @@ public class TemporaryPathCreator implements PathCreator, AutoCloseable {
         FileUtil.deleteDir(baseDir);
     }
 
+    public Path getTempDir() {
+        return tempDirProvider.get();
+    }
+
     public TempDirProvider getTempDirProvider() {
         return tempDirProvider;
+    }
+
+    public Path getHomeDir() {
+        return homeDirProvider.get();
     }
 
     public HomeDirProvider getHomeDirProvider() {

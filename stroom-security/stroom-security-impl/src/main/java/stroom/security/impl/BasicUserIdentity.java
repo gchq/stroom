@@ -17,7 +17,7 @@ public class BasicUserIdentity implements UserIdentity, HasUserRef {
     }
 
     @Override
-    public String getSubjectId() {
+    public String subjectId() {
         return userRef.getSubjectId();
     }
 
@@ -56,7 +56,7 @@ public class BasicUserIdentity implements UserIdentity, HasUserRef {
     @Override
     public String toString() {
         return "BasicUserIdentity{" +
-                "userRef='" + userRef + '\'' +
-                '}';
+               "userRef='" + userRef + '\'' +
+               '}';
     }
 }

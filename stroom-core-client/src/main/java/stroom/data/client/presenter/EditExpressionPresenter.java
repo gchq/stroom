@@ -29,6 +29,7 @@ import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -93,7 +94,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         registerHandler(expressionPresenter.addDataSelectionHandler(event -> setButtonsEnabled()));
         registerHandler(expressionPresenter.addContextMenuHandler(event -> {
             final List<Item> menuItems = addExpressionActionsToMenu();
-            if (menuItems.size() > 0) {
+            if (NullSafe.hasItems(menuItems)) {
                 showMenu(menuItems, event.getPopupPosition());
             }
         }));
@@ -251,6 +252,10 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface EditExpressionView extends View {
 

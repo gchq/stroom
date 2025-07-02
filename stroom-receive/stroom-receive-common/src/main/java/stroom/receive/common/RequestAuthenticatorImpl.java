@@ -35,7 +35,7 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
     private final Provider<CertificateAuthenticator> certificateAuthenticatorProvider;
     private final Provider<AllowUnauthenticatedAuthenticator> allowUnauthenticatedAuthenticatorProvider;
 
-    private final CachedValue<AuthenticatorFilter, ConfigState> updatableAttributeMapFilter;
+    private final CachedValue<AuthenticatorFilter, ConfigState> cachedAuthenticationFilter;
 
     @Inject
     public RequestAuthenticatorImpl(
@@ -50,7 +50,7 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
         this.receiveDataConfigProvider = receiveDataConfigProvider;
 
         // Every 60s, see if config has changed and if so create a new filter
-        this.updatableAttributeMapFilter = CachedValue.builder()
+        this.cachedAuthenticationFilter = CachedValue.builder()
                 .withMaxCheckIntervalSeconds(60)
                 .withStateSupplier(() -> ConfigState.fromConfig(receiveDataConfigProvider.get()))
                 .withValueFunction(this::createFilter)
@@ -65,11 +65,11 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
     public UserIdentity authenticate(final HttpServletRequest request,
                                      final AttributeMap attributeMap) {
         try {
-            final AuthenticatorFilter filter = updatableAttributeMapFilter.getValue();
+            final AuthenticatorFilter filter = cachedAuthenticationFilter.getValue();
             LOGGER.debug(() -> "Using filter: " + filter.getClass().getName());
             final Optional<UserIdentity> optUserIdentity = filter.authenticate(request, attributeMap);
 
-            final ConfigState configState = updatableAttributeMapFilter.getState();
+            final ConfigState configState = cachedAuthenticationFilter.getState();
             final Set<AuthenticationType> enabledAuthenticationTypes = configState.enabledAuthenticationTypes;
             final boolean isAuthRequired = configState.isAuthenticationRequired;
 
@@ -181,7 +181,7 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
             // username will be more useful for a human to read.
             // Set them to null if we have no identity to prevent clients from setting these
             // headers themselves.
-            final String uploadUserId = optUserIdentity.map(UserIdentity::getSubjectId)
+            final String uploadUserId = optUserIdentity.map(UserIdentity::subjectId)
                     .filter(NullSafe::isNonBlankString)
                     .orElse(null);
             final String uploadUsername = optUserIdentity.map(UserIdentity::getDisplayName)
@@ -202,16 +202,15 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
 
 
     private record ConfigState(
-            String receiptPolicyUuid,
             boolean isAuthenticationRequired,
             Set<AuthenticationType> enabledAuthenticationTypes) {
 
         public static ConfigState fromConfig(final ReceiveDataConfig receiveDataConfig) {
 
             return new ConfigState(
-                    receiveDataConfig.getReceiptPolicyUuid(),
                     receiveDataConfig.isAuthenticationRequired(),
-                    NullSafe.enumSet(AuthenticationType.class, receiveDataConfig.getEnabledAuthenticationTypes()));
+                    NullSafe.mutableEnumSet(AuthenticationType.class,
+                            receiveDataConfig.getEnabledAuthenticationTypes()));
         }
 
         public boolean isEnabled(final AuthenticationType authenticationType) {

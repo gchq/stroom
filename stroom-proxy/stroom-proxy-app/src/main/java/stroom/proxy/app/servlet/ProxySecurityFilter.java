@@ -16,10 +16,10 @@
 
 package stroom.proxy.app.servlet;
 
-import stroom.proxy.app.ContentSyncConfig;
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.event.EventResource;
 import stroom.proxy.app.handler.FeedStatusConfig;
+import stroom.security.api.CommonSecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
 import stroom.util.authentication.DefaultOpenIdCredentials;
@@ -58,12 +58,14 @@ public class ProxySecurityFilter implements Filter {
     private static final String IGNORE_URI_REGEX = "ignoreUri";
     private static final String BEARER = "Bearer ";
     private static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final String EVENT_RESOURCE_PATH = ResourcePaths.buildAuthenticatedApiPath(
+            EventResource.BASE_RESOURCE_PATH);
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxySecurityFilter.class);
 
-    private final Provider<ContentSyncConfig> contentSyncConfigProvider;
     private final Provider<FeedStatusConfig> feedStatusConfigProvider;
     private final Provider<ProxyConfig> proxyConfigProvider;
+    private final Provider<CommonSecurityContext> securityContextProvider;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final UserIdentityFactory userIdentityFactory;
     private final AuthenticationBypassChecker authenticationBypassChecker;
@@ -71,15 +73,15 @@ public class ProxySecurityFilter implements Filter {
     private Pattern pattern = null;
 
     @Inject
-    public ProxySecurityFilter(final Provider<ContentSyncConfig> contentSyncConfigProvider,
-                               final Provider<FeedStatusConfig> feedStatusConfigProvider,
+    public ProxySecurityFilter(final Provider<FeedStatusConfig> feedStatusConfigProvider,
                                final Provider<ProxyConfig> proxyConfigProvider,
+                               final Provider<CommonSecurityContext> securityContextProvider,
                                final DefaultOpenIdCredentials defaultOpenIdCredentials,
                                final UserIdentityFactory userIdentityFactory,
                                final AuthenticationBypassChecker authenticationBypassChecker) {
-        this.contentSyncConfigProvider = contentSyncConfigProvider;
         this.feedStatusConfigProvider = feedStatusConfigProvider;
         this.proxyConfigProvider = proxyConfigProvider;
+        this.securityContextProvider = securityContextProvider;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.userIdentityFactory = userIdentityFactory;
         this.authenticationBypassChecker = authenticationBypassChecker;
@@ -153,10 +155,8 @@ public class ProxySecurityFilter implements Filter {
                     servletName, fullPath, servletPath);
             chain.doFilter(request, response);
         } else {
-            final boolean isApiRequest = fullPath.contains(ResourcePaths.API_ROOT_PATH);
-
-            if (isApiRequest) {
-                if (fullPath.contains(EventResource.BASE_RESOURCE_PATH)) {
+            if (isApiRequest(servletPath)) {
+                if (isEventResourceRequest(fullPath)) {
                     // Allow all event requests through as security is applied elsewhere.
                     chain.doFilter(request, response);
                 } else {
@@ -166,8 +166,9 @@ public class ProxySecurityFilter implements Filter {
                     if (optUserIdentity.isPresent()) {
                         LOGGER.debug("Authenticated request to fullPath: {}, servletPath: {}, userIdentity: {}",
                                 fullPath, servletPath, optUserIdentity.get());
-                        chain.doFilter(request, response);
 
+                        securityContextProvider.get().asUser(optUserIdentity.get(), () ->
+                                process(request, response, chain));
                     } else {
                         LOGGER.debug("Unauthorised request to fullPath: {}, servletPath: {}", fullPath, servletPath);
                         response.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
@@ -256,5 +257,23 @@ public class ProxySecurityFilter implements Filter {
 
     @Override
     public void destroy() {
+    }
+
+    private boolean isApiRequest(final String servletPath) {
+        return servletPath.startsWith(ResourcePaths.API_ROOT_PATH);
+    }
+
+    private boolean isEventResourceRequest(final String fullPath) {
+        return fullPath.startsWith(EVENT_RESOURCE_PATH);
+    }
+
+    private void process(final HttpServletRequest request,
+                         final HttpServletResponse response,
+                         final FilterChain chain) {
+        try {
+            chain.doFilter(request, response);
+        } catch (final IOException | ServletException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

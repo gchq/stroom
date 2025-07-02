@@ -39,7 +39,7 @@ public class InternalIdpProcessingUserIdentity implements HasRefreshable, UserId
     }
 
     @Override
-    public String getSubjectId() {
+    public String subjectId() {
         return INTERNAL_PROCESSING_USER;
     }
 
@@ -57,17 +57,17 @@ public class InternalIdpProcessingUserIdentity implements HasRefreshable, UserId
             return false;
         }
         final InternalIdpProcessingUserIdentity that = (InternalIdpProcessingUserIdentity) o;
-        return Objects.equals(getSubjectId(), that.getSubjectId());
+        return Objects.equals(subjectId(), that.subjectId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getSubjectId());
+        return Objects.hash(subjectId());
     }
 
     @Override
     public String toString() {
-        return getSubjectId();
+        return subjectId();
     }
 
     @Override

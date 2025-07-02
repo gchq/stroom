@@ -15,6 +15,20 @@ public class TimeUtils {
     }
 
     /**
+     * @return The {@link Duration} between now and futureInstant.
+     */
+    public static Duration durationUntil(final Instant futureInstant) {
+        return Duration.between(Instant.now(), futureInstant);
+    }
+
+    /**
+     * @return The {@link Duration} between pastInstant and now.
+     */
+    public static Duration durationSince(final Instant pastInstant) {
+        return Duration.between(pastInstant, Instant.now());
+    }
+
+    /**
      * Converts a duration, e.g. 30days into a point in time in the past, i.e.
      * current system time minus the duration.
      */

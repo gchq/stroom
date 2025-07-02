@@ -17,25 +17,45 @@ import java.util.regex.Pattern;
  */
 public class AttributeMap extends CIStringHashMap {
 
+    // TODO change AttributeMap to not extend, and instead implement Map<CIKey, String> and delegate to
+    //  a Map<CIKey, String>.
+    //  See changes to AttributeMap, AttributeMapUtil and their tests in the branch
+    //  gh-4365-stroomql-case-sens-fields-7.6
+
     // Delimiter within a value
     static final String VALUE_DELIMITER = ",";
     static final Pattern VALUE_DELIMITER_PATTERN = Pattern.compile(Pattern.quote(VALUE_DELIMITER));
 
     private final boolean overrideEmbeddedMeta;
 
+    public AttributeMap() {
+        this.overrideEmbeddedMeta = false;
+    }
+
     public AttributeMap(final boolean overrideEmbeddedMeta) {
+        super();
         this.overrideEmbeddedMeta = overrideEmbeddedMeta;
     }
 
     public AttributeMap(final boolean overrideEmbeddedMeta, final Map<String, String> values) {
+        super(values != null
+                ? values.size()
+                : 16);
         this.overrideEmbeddedMeta = overrideEmbeddedMeta;
         if (values != null) {
             putAll(values);
         }
     }
 
-    public AttributeMap() {
-        this.overrideEmbeddedMeta = false;
+    /**
+     * Create a new {@link AttributeMap} from an existing {@link AttributeMap}, populating
+     * the new map with all attributeMap's entries.
+     *
+     * @param attributeMap Cannot be null.
+     */
+    public AttributeMap(final AttributeMap attributeMap) {
+        super(Objects.requireNonNull(attributeMap));
+        this.overrideEmbeddedMeta = attributeMap.overrideEmbeddedMeta;
     }
 
     public AttributeMap(final Map<String, String> values) {
@@ -97,6 +117,18 @@ public class AttributeMap extends CIStringHashMap {
             // Already normalised, so use super.put not the local one
             return super.put(key, dateStr);
         }
+    }
+
+    public Long getAsEpochMillis(final String key) {
+        return NullSafe.get(
+                get(key),
+                DateUtil::parseNormalDateTimeString);
+    }
+
+    public Instant getAsInstant(final String key) {
+        return NullSafe.get(
+                get(key),
+                DateUtil::parseNormalDateTimeStringToInstant);
     }
 
     /**
@@ -337,6 +369,18 @@ public class AttributeMap extends CIStringHashMap {
         public Builder put(final String key, final String value) {
             Objects.requireNonNull(key);
             attributes.put(key, value);
+            return this;
+        }
+
+        public Builder putDateTime(final String key, final Instant value) {
+            Objects.requireNonNull(key);
+            attributes.putDateTime(key, value);
+            return this;
+        }
+
+        public Builder putDateTime(final String key, final Long value) {
+            Objects.requireNonNull(key);
+            attributes.putDateTime(key, value);
             return this;
         }
 

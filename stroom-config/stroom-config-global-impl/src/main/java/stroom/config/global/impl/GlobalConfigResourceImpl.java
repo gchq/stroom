@@ -14,6 +14,8 @@ import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.explorer.impl.ExplorerConfig;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
+import stroom.receive.common.ReceiveDataConfig;
+import stroom.receive.rules.impl.StroomReceiptPolicyConfig;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfiguration;
@@ -23,6 +25,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.rest.RestUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.Unauthenticated;
@@ -60,6 +63,8 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     private final Provider<OpenIdConfiguration> openIdConfigProvider;
     private final Provider<ExplorerConfig> explorerConfigProvider;
     private final Provider<AuthenticationConfig> authenticationConfigProvider;
+    private final Provider<StroomReceiptPolicyConfig> stroomReceiptPolicyConfigProvider;
+    private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
 
     @Inject
     GlobalConfigResourceImpl(final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
@@ -70,7 +75,9 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                              final Provider<NodeInfo> nodeInfoProvider,
                              final Provider<OpenIdConfiguration> openIdConfigProvider,
                              final Provider<ExplorerConfig> explorerConfigProvider,
-                             final Provider<AuthenticationConfig> authenticationConfigProvider) {
+                             final Provider<AuthenticationConfig> authenticationConfigProvider,
+                             final Provider<StroomReceiptPolicyConfig> stroomReceiptPolicyConfigProvider,
+                             final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
 
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
         this.globalConfigServiceProvider = Objects.requireNonNull(globalConfigServiceProvider);
@@ -81,6 +88,8 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         this.openIdConfigProvider = openIdConfigProvider;
         this.explorerConfigProvider = explorerConfigProvider;
         this.authenticationConfigProvider = authenticationConfigProvider;
+        this.stroomReceiptPolicyConfigProvider = stroomReceiptPolicyConfigProvider;
+        this.receiveDataConfigProvider = receiveDataConfigProvider;
     }
 
 
@@ -278,8 +287,9 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     @Timed
     @Override
     public ExtendedUiConfig fetchExtendedUiConfig() {
-        final IdpType idpType = openIdConfigProvider.get().getIdentityProviderType();
-        final boolean isExternalIdp = idpType != null && idpType.isExternal();
+        final boolean isExternalIdp = NullSafe.test(
+                openIdConfigProvider.get().getIdentityProviderType(),
+                IdpType::isExternal);
 
         // Add additional back-end config that is also need in the UI without having to expose
         // the back-end config classes.
@@ -287,16 +297,16 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                 uiConfig.get(),
                 isExternalIdp,
                 explorerConfigProvider.get().getDependencyWarningsEnabled(),
-                authenticationConfigProvider.get().getMaxApiKeyExpiryAge().toMillis());
+                authenticationConfigProvider.get().getMaxApiKeyExpiryAge().toMillis(),
+                stroomReceiptPolicyConfigProvider.get().getObfuscatedFields(),
+                receiveDataConfigProvider.get().getReceiptCheckMode());
     }
 
     private Query buildRawQuery(final String userInput) {
         return Strings.isNullOrEmpty(userInput)
                 ? new Query()
                 : Query.builder()
-                        .withRaw("Configuration property matches \""
-                                 + Objects.requireNonNullElse(userInput, "")
-                                 + "\"")
+                        .withRaw("Configuration property matches \"" + userInput + "\"")
                         .build();
     }
 }

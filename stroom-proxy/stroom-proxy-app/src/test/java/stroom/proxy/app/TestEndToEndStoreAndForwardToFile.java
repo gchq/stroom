@@ -2,6 +2,7 @@ package stroom.proxy.app;
 
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.receive.common.ReceiveDataConfig;
+import stroom.receive.rules.shared.ReceiptCheckMode;
 import stroom.security.openid.api.IdpType;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -43,8 +44,10 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
                         .build())
                 .addForwardFileDestination(MockFileDestination.createForwardFileConfig())
                 .feedStatusConfig(MockHttpDestination.createFeedStatusConfig())
+                .downstreamHostConfig(MockHttpDestination.createDownstreamHostConfig())
                 .receiveDataConfig(ReceiveDataConfig.builder()
                         .withAuthenticationRequired(false)
+                        .withReceiptCheckMode(ReceiptCheckMode.FEED_STATUS)
                         .build())
                 .build();
     }

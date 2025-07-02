@@ -27,6 +27,12 @@ public class ExpressionUtil {
                 .build();
     }
 
+    public static ExpressionOperator equalsCaseSense(final String field, final String value) {
+        return ExpressionOperator.builder()
+                .addTerm(field, Condition.EQUALS_CASE_SENSITIVE, value)
+                .build();
+    }
+
     public static ExpressionOperator equalsBoolean(final QueryField field, final boolean value) {
         return ExpressionOperator.builder()
                 .addBooleanTerm(field, Condition.EQUALS, value)
@@ -124,8 +130,10 @@ public class ExpressionUtil {
     }
 
     public static List<String> fields(final ExpressionOperator expressionOperator) {
-        return terms(expressionOperator,
-                null).stream().map(ExpressionTerm::getField).collect(Collectors.toList());
+        return terms(expressionOperator, null)
+                .stream()
+                .map(ExpressionTerm::getField)
+                .collect(Collectors.toList());
     }
 
     public static List<String> values(final ExpressionOperator expressionOperator) {

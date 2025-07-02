@@ -12,8 +12,9 @@ import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.SimpleMetrics;
+import stroom.util.metrics.Metrics;
 
+import com.codahale.metrics.Timer;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -37,6 +38,7 @@ public class EventStore implements EventConsumer {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EventStore.class);
     private static final String CACHE_NAME = "Event Store Open Appenders";
+    public static final String EVENT_STORE_NAME_PART = "eventStore";
 
     private final ReceiverFactory receiverFactory;
     private final Path dir;
@@ -45,13 +47,15 @@ public class EventStore implements EventConsumer {
     private final Map<FeedKey, EventAppender> stores;
     private final EventSerialiser eventSerialiser;
     private final LinkedBlockingQueue<Path> forwardQueue;
+    private final Timer handleTimer;
 
     @Inject
     public EventStore(final ReceiverFactory receiverFactory,
                       final Provider<EventStoreConfig> eventStoreConfigProvider,
                       final DataDirProvider dataDirProvider,
                       final FileStores fileStores,
-                      final CacheManager cacheManager) {
+                      final CacheManager cacheManager,
+                      final Metrics metrics) {
         this.eventStoreConfigProvider = eventStoreConfigProvider;
         final EventStoreConfig eventStoreConfig = eventStoreConfigProvider.get();
         this.forwardQueue = new LinkedBlockingQueue<>(eventStoreConfig.getForwardQueueSize());
@@ -74,6 +78,12 @@ public class EventStore implements EventConsumer {
 
         this.stores = new ConcurrentHashMap<>();
         this.eventSerialiser = new EventSerialiser();
+
+        this.handleTimer = metrics.registrationBuilder(getClass())
+                .addNamePart(EVENT_STORE_NAME_PART)
+                .addNamePart(Metrics.HANDLE)
+                .timer()
+                .createAndRegister();
 
         forwardOldFiles();
     }
@@ -162,7 +172,7 @@ public class EventStore implements EventConsumer {
             }
 
             // Consume the data
-            SimpleMetrics.measure("ProxyRequestHandler - handle", () -> {
+            handleTimer.time(() -> {
                 final AtomicBoolean success = new AtomicBoolean();
                 try (final BufferedInputStream inputStream = new BufferedInputStream(Files.newInputStream(file))) {
                     receiverFactory
@@ -203,10 +213,7 @@ public class EventStore implements EventConsumer {
                         final UniqueId receiptId,
                         final String data) {
         try {
-            final String feed = attributeMap.get("Feed");
-            final String type = attributeMap.get("type");
-            final FeedKey feedKey = new FeedKey(feed, type);
-
+            final FeedKey feedKey = FeedKey.from(attributeMap);
             final String string = eventSerialiser.serialise(
                     receiptId,
                     feedKey,
