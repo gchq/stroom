@@ -16,8 +16,8 @@
 
 package stroom.widget.dropdowntree.client.view;
 
-import stroom.svg.client.SvgPresets;
-import stroom.widget.button.client.SvgButton;
+import stroom.svg.shared.SvgImage;
+import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.util.client.HtmlBuilder;
 
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -54,8 +54,8 @@ public class QuickFilter extends FlowPanel
             .toSafeHtml();
 
     private final TextBox textBox = new TextBox();
-    private final SvgButton clearButton;
-    private final SvgButton helpButton;
+    private final InlineSvgButton clearButton;
+    private final InlineSvgButton helpButton;
     private final HandlerManager handlerManager = new HandlerManager(this);
     private Supplier<SafeHtml> popupTextSupplier;
     private String lastInput = "";
@@ -74,11 +74,15 @@ public class QuickFilter extends FlowPanel
         textBox.addStyleName("allow-focus");
         textBox.getElement().setAttribute("placeholder", "Quick Filter");
 
-        clearButton = SvgButton.create(SvgPresets.CLEAR.title("Clear Filter"));
-        clearButton.addStyleName("clear");
+        clearButton = new InlineSvgButton();
+        clearButton.setSvg(SvgImage.CLEAR);
+        clearButton.setTitle("Clear Filter");
+        clearButton.addStyleName("clear info");
 
-        helpButton = SvgButton.create(SvgPresets.HELP.title("Quick Filter Syntax Help"));
-        helpButton.addStyleName("info");
+        helpButton = new InlineSvgButton();
+        helpButton.setSvg(SvgImage.HELP_OUTLINE);
+        helpButton.setTitle("Quick Filter Syntax Help");
+        helpButton.addStyleName("help-button info");
 
         add(textBox);
         add(clearButton);
