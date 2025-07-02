@@ -120,7 +120,7 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
         final boolean outerJoin = !annotationFilter;
 
         if (streamIdIndex == -1 || eventIdIndex == -1 || mutators.isEmpty()) {
-            return AnnotationMapperFactory.NO_OP.createMapper(newColumns, errorConsumer, parentMapper);
+            return parentMapper;
         }
 
         final AnnotationService annotationService = annotationServiceProvider.get();

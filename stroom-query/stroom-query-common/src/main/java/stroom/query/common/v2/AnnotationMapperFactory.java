@@ -5,18 +5,15 @@ import stroom.query.language.functions.ref.ErrorConsumer;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Stream;
 
 public interface AnnotationMapperFactory {
-
-    ItemMapper PASS_THOROUGH = Stream::of;
 
     AnnotationMapperFactory NO_OP = new AnnotationMapperFactory() {
         @Override
         public ItemMapper createMapper(final List<Column> newColumns,
-                                             final ErrorConsumer errorConsumer,
-                                             final ItemMapper parentMapper) {
-            return PASS_THOROUGH;
+                                       final ErrorConsumer errorConsumer,
+                                       final ItemMapper parentMapper) {
+            return parentMapper;
         }
 
         @Override
@@ -27,8 +24,8 @@ public interface AnnotationMapperFactory {
     };
 
     ItemMapper createMapper(List<Column> newColumns,
-                                  ErrorConsumer errorConsumer,
-                                  ItemMapper parentMapper);
+                            ErrorConsumer errorConsumer,
+                            ItemMapper parentMapper);
 
     AnnotationColumnValueProvider createValues(List<Column> columns, int columnIndex);
 }
