@@ -26,6 +26,10 @@ public interface RefDataValueConsumer {
 
     void consume(final RefDataValue refDataValue);
 
+
+    // --------------------------------------------------------------------------------
+
+
     interface Factory {
 
         RefDataValueConsumer create(

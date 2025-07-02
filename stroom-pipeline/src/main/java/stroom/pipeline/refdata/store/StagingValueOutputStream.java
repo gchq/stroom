@@ -107,11 +107,15 @@ public class StagingValueOutputStream
     @Override
     public long getValueHashCode(final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
         if (valueStoreHashAlgorithm != null
-                && !Objects.equals(this.valueStoreHashAlgorithm, valueStoreHashAlgorithm)) {
+            && !Objects.equals(this.valueStoreHashAlgorithm, valueStoreHashAlgorithm)) {
             return valueStoreHashAlgorithm.hash(getValueBuffer());
         } else {
             return getValueHashCode();
         }
+    }
+
+    public ValueStoreHashAlgorithm getValueStoreHashAlgorithm() {
+        return valueStoreHashAlgorithm;
     }
 
     /**
@@ -137,7 +141,7 @@ public class StagingValueOutputStream
     @Override
     public boolean isNullValue() {
         return NullValue.TYPE_ID == getTypeId()
-                || getValueBuffer().remaining() == 0;
+               || getValueBuffer().remaining() == 0;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package stroom.pipeline.refdata.store.onheapstore;
 
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.MapDefinition;
@@ -152,7 +153,7 @@ class OnHeapRefDataLoader implements RefDataLoader {
                         refStreamDefinition);
             } else {
                 LOGGER.error("Failed to load {} entries out of {} attempts with outcome {}, " +
-                                "map names [{}] in {} for {}",
+                             "map names [{}] in {} for {}",
                         successfulPutsCounter,
                         putsCounter,
                         processingState,
@@ -204,8 +205,8 @@ class OnHeapRefDataLoader implements RefDataLoader {
 
     @Override
     public void put(final MapDefinition mapDefinition,
-                          final Range<Long> keyRange,
-                          final StagingValue refDataValue) {
+                    final Range<Long> keyRange,
+                    final StagingValue refDataValue) {
 
         checkCurrentState(LoaderState.INITIALISED);
         // ensure we have a sub map for our mapDef
@@ -347,26 +348,27 @@ class OnHeapRefDataLoader implements RefDataLoader {
         // Ensure nulls are consistent
         if (newRefDataValue.isNullValue() && !(newRefDataValue instanceof NullValue)) {
             newRefDataValue = NullValue.getInstance();
-        }
 
-        if (newRefDataValue instanceof StagingValueOutputStream) {
-
-            final StagingValueOutputStream stagingValueOutputStream = (StagingValueOutputStream) newRefDataValue;
+        } else if (newRefDataValue instanceof final StagingValueOutputStream stagingValueOutputStream) {
             final int typeId = stagingValueOutputStream.getTypeId();
-
-            return switch (typeId) {
+            newRefDataValue = switch (typeId) {
                 case NullValue.TYPE_ID -> NullValue.getInstance();
                 case StringValue.TYPE_ID -> new StringValue(stagingValueOutputStream);
-                case FastInfosetValue.TYPE_ID -> new FastInfosetValue(stagingValueOutputStream);
+                case FastInfosetValue.TYPE_ID -> {
+                    final ByteBuffer heapBuffer = ByteBuffer.allocate(stagingValueOutputStream.getValueBuffer()
+                            .remaining());
+                    ByteBufferUtils.copy(stagingValueOutputStream.getValueBuffer(), heapBuffer);
+                    yield new FastInfosetValue(
+                            heapBuffer,
+                            stagingValueOutputStream.getValueHashCode(),
+                            stagingValueOutputStream.getValueStoreHashAlgorithm());
+                }
                 default -> throw new RuntimeException("Unexpected type " + typeId);
             };
-        }
-
-        if (refDataValue instanceof FastInfosetValue) {
+        } else if (newRefDataValue instanceof final FastInfosetValue fastInfosetValue) {
             // FastInfosetValue may contain a buffer that is reused, so we need to copy
             // it into a new heap buffer
             LOGGER.debug("Copying fastInfosetValue to a heap based buffer");
-            final FastInfosetValue fastInfosetValue = (FastInfosetValue) refDataValue;
             newRefDataValue = fastInfosetValue.copy(() ->
                     ByteBuffer.allocate(fastInfosetValue.size()));
         }
