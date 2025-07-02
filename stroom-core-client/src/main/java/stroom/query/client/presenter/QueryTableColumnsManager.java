@@ -201,22 +201,22 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
     public void resizeColumn(final int colIndex, final int size) {
         final Column column = getColumn(colIndex);
         if (column != null) {
-            final List<Column> newColumns = replaceColumn(column, column.copy().width(size).build());
+            final List<Column> newColumns = replaceColumns(getColumns(), column, column.copy().width(size).build());
             tablePresenter.updateColumns(newColumns);
-            tablePresenter.setDirty(true);
+            tablePresenter.setPreferredColumns(newColumns);
         }
     }
 
     private void changeSort(final Column column, final SortDirection direction) {
         final List<Column> columns = tablePresenter.getCurrentColumns();
+        List<Column> newColumns = columns;
         boolean change = false;
 
         if (direction == null) {
             if (column.getSort() != null) {
                 final int order = column.getSort().getOrder();
-                final List<Column> newColumns = replaceColumn(column, column.copy().sort(null).build());
-                tablePresenter.updateColumns(newColumns);
-                increaseSortOrder(columns, order);
+                newColumns = increaseSortOrder(columns, order);
+                newColumns = replaceColumns(newColumns, column, column.copy().sort(null).build());
                 change = true;
             }
         } else {
@@ -224,8 +224,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
             if (sort == null) {
                 final int lowestSortOrder = getLowestSortOrder(columns);
                 final Sort newSort = new Sort(lowestSortOrder + 1, direction);
-                final List<Column> newColumns = replaceColumn(column, column.copy().sort(newSort).build());
-                tablePresenter.updateColumns(newColumns);
+                newColumns = replaceColumns(columns, column, column.copy().sort(newSort).build());
                 change = true;
             } else {
                 final int lowestSortOrder = getLowestSortOrder(columns);
@@ -233,20 +232,17 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                     // Increase sort order on all columns where the sort order is
                     // lower than this columns sort order as this column will now
                     // have the lowest order.
-                    increaseSortOrder(columns, column.getSort().getOrder());
-
+                    newColumns = increaseSortOrder(columns, column.getSort().getOrder());
                     final Sort newSort = new Sort(lowestSortOrder, direction);
-                    final List<Column> newColumns = replaceColumn(column, column.copy().sort(newSort).build());
-                    tablePresenter.updateColumns(newColumns);
-
+                    newColumns = replaceColumns(newColumns, column, column.copy().sort(newSort).build());
                     change = true;
                 }
             }
         }
 
         if (change) {
-            tablePresenter.setDirty(true);
-//            tablePresenter.updateColumns();
+            tablePresenter.updateColumns(newColumns);
+            tablePresenter.setPreferredColumns(newColumns);
             tablePresenter.refresh();
         }
     }
@@ -264,22 +260,23 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
         return lowestOrder;
     }
 
-    private void increaseSortOrder(final List<Column> columns, final int order) {
+    private List<Column> increaseSortOrder(final List<Column> columns, final int order) {
+        List<Column> newColumns = columns;
         for (final Column column : columns) {
             final Sort sort = column.getSort();
             if (sort != null && sort.getOrder() > order) {
                 final Sort newSort = new Sort(sort.getOrder() - 1, sort.getDirection());
-                final List<Column> newColumns = replaceColumn(column, column.copy().sort(newSort).build());
-                tablePresenter.updateColumns(newColumns);
+                newColumns = replaceColumns(newColumns, column, column.copy().sort(newSort).build());
             }
         }
+        return newColumns;
     }
 
     public void showFormat(final Column column) {
         formatPresenter.show(column, (oldColumn, newColumn) -> {
-            final List<Column> newColumns = replaceColumn(oldColumn, newColumn);
+            final List<Column> newColumns = replaceColumns(getColumns(), oldColumn, newColumn);
             tablePresenter.updateColumns(newColumns);
-            tablePresenter.setDirty(true);
+            tablePresenter.setPreferredColumns(newColumns);
             tablePresenter.refresh();
         });
     }
@@ -287,10 +284,9 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
     private void filterColumn(final Column column) {
         columnFilterPresenter.setColumnFilter(column.getColumnFilter());
         columnFilterPresenter.show(column, (oldColumn, newColumn) -> {
-            final List<Column> newColumns = replaceColumn(oldColumn, newColumn);
+            final List<Column> newColumns = replaceColumns(getColumns(), oldColumn, newColumn);
             tablePresenter.updateColumns(newColumns);
-            tablePresenter.setDirty(true);
-//            tablePresenter.updateColumns();
+            tablePresenter.setPreferredColumns(newColumns);
             tablePresenter.onColumnFilterChange();
         });
     }
@@ -301,8 +297,6 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
         columns.add(0, column);
         tablePresenter.updateColumns(columns);
         tablePresenter.setPreferredColumns(columns);
-//        tablePresenter.setDirty(true);
-//        tablePresenter.updateColumns(columns);
     }
 
     private void moveLast(final Column column) {
@@ -311,13 +305,13 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
         columns.add(column);
         tablePresenter.updateColumns(columns);
         tablePresenter.setPreferredColumns(columns);
-//        tablePresenter.setDirty(true);
-//        tablePresenter.updateColumns(columns);
     }
 
-    private List<Column> replaceColumn(final Column oldColumn, final Column newColumn) {
+    private List<Column> replaceColumns(final List<Column> sourceColumns,
+                                        final Column oldColumn,
+                                        final Column newColumn) {
         final List<Column> columns = new ArrayList<>();
-        for (final Column column : getColumns()) {
+        for (final Column column : sourceColumns) {
             if (column.getId().equals(oldColumn.getId())) {
                 if (newColumn != null) {
                     columns.add(newColumn);
@@ -326,7 +320,6 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                 columns.add(column);
             }
         }
-        tablePresenter.setPreferredColumns(columns);
         return columns;
     }
 
@@ -351,8 +344,10 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                 }
             }
 
-            replaceColumn(column, column.copy().columnFilter(columnFilter).build());
-//        tablePresenter.setDirty(true);
+            final List<Column> newColumns =
+                    replaceColumns(getColumns(), column, column.copy().columnFilter(columnFilter).build());
+            tablePresenter.updateColumns(newColumns);
+            tablePresenter.setPreferredColumns(newColumns);
             tablePresenter.setFocused(false);
             tablePresenter.onColumnFilterChange();
         }
@@ -365,9 +360,11 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
             // focus from column filter textbox.
             column.setColumnValueSelection(columnValueSelection);
 
-            replaceColumn(column, column.copy().columnValueSelection(columnValueSelection).build());
+            final List<Column> newColumns = replaceColumns(getColumns(), column,
+                    column.copy().columnValueSelection(columnValueSelection).build());
+            tablePresenter.updateColumns(newColumns);
+            tablePresenter.setPreferredColumns(newColumns);
             tablePresenter.setFocused(false);
-//            tablePresenter.setDirty(true);
             tablePresenter.onColumnFilterChange();
         }
     }
@@ -386,20 +383,18 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
 //    }
 
     private void showColumn(final Column column) {
-        final List<Column> newColumns = replaceColumn(column, column.copy().visible(true).build());
+        final List<Column> newColumns = replaceColumns(getColumns(), column, column.copy().visible(true).build());
         tablePresenter.updateColumns(newColumns);
-//        tablePresenter.setDirty(true);
-//        tablePresenter.updateColumns(columns);
+        tablePresenter.setPreferredColumns(newColumns);
     }
 
     private void hideColumn(final Column column) {
         if (getVisibleColumnCount() <= 1) {
             AlertEvent.fireError(tablePresenter, "You cannot remove or hide all columns", null);
         } else {
-            final List<Column> newColumns = replaceColumn(column, column.copy().visible(false).build());
+            final List<Column> newColumns = replaceColumns(getColumns(), column, column.copy().visible(false).build());
             tablePresenter.updateColumns(newColumns);
-//            tablePresenter.setDirty(true);
-//            tablePresenter.updateColumns();
+            tablePresenter.setPreferredColumns(newColumns);
         }
     }
 
