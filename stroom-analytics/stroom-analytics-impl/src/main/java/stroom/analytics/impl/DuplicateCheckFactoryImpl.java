@@ -70,7 +70,8 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
             return new DuplicateCheck() {
                 @Override
                 public boolean check(final Values values) {
-                    final DuplicateCheckRow duplicateCheckRow = duplicateCheckRowFactory.createDuplicateCheckRow(values);
+                    final DuplicateCheckRow duplicateCheckRow =
+                            duplicateCheckRowFactory.createDuplicateCheckRow(values);
                     final boolean success = store.tryInsert(duplicateCheckRow);
                     if (duplicateNotificationConfig.isSuppressDuplicateNotifications()) {
                         return success;
