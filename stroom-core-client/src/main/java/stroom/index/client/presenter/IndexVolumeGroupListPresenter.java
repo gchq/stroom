@@ -55,7 +55,7 @@ public class IndexVolumeGroupListPresenter extends MyPresenterWidget<PagerView> 
                                          final RestFactory restFactory) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
         getWidget().getElement().addClassName("default-min-sizes");

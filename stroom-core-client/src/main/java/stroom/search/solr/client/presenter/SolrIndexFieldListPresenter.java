@@ -82,7 +82,7 @@ public class SolrIndexFieldListPresenter extends DocumentEditPresenter<SolrIndex
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         pagerView.setDataWidget(dataGrid);
 

@@ -69,7 +69,7 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
         this.resultStoreModel = resultStoreModel;
         this.resultStoreSettingsPresenter = resultStoreSettingsPresenter;
 
-        final MyDataGrid<ResultStoreInfo> dataGrid = new MyDataGrid<>();
+        final MyDataGrid<ResultStoreInfo> dataGrid = new MyDataGrid<>(this);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
 

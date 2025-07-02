@@ -77,7 +77,7 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
         this.restFactory = restFactory;
         this.delayedUpdate = new DelayedUpdate(this::update);
 
-        final MyDataGrid<CacheIdentity> dataGrid = new MyDataGrid<>();
+        final MyDataGrid<CacheIdentity> dataGrid = new MyDataGrid<>(this);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
 

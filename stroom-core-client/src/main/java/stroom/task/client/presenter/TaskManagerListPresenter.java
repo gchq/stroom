@@ -143,7 +143,7 @@ public class TaskManagerListPresenter
         this.dateTimeFormatter = dateTimeFormatter;
         this.securityContext = securityContext;
 
-        dataGrid = new MyDataGrid<>(1000);
+        dataGrid = new MyDataGrid<>(this, 1000);
         view.setDataWidget(dataGrid);
 
         autoRefreshButton = new InlineSvgToggleButton();

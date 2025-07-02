@@ -107,7 +107,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
                                           final PipelineElementTypesFactory pipelineElementTypesFactory) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);

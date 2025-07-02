@@ -55,7 +55,7 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> implements H
                              final PagerView view) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
 
