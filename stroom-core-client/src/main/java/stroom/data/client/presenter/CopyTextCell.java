@@ -1,13 +1,12 @@
 package stroom.data.client.presenter;
 
 import stroom.data.grid.client.EventCell;
+import stroom.data.grid.client.HasContextMenus;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.ClipboardUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.ShowMenuEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 
@@ -26,7 +25,7 @@ import java.util.List;
 
 import static com.google.gwt.dom.client.BrowserEvents.MOUSEDOWN;
 
-public class CopyTextCell extends AbstractCell<String> implements HasHandlers, EventCell {
+public class CopyTextCell extends AbstractCell<String> implements HasHandlers, EventCell, HasContextMenus<String> {
 
     private final EventBus eventBus;
 
@@ -55,21 +54,23 @@ public class CopyTextCell extends AbstractCell<String> implements HasHandlers, E
         if (MOUSEDOWN.equals(event.getType())) {
             if (MouseUtil.isPrimary(event)) {
                 onEnterKeyDown(context, parent, value, event, valueUpdater);
-            } else if (NullSafe.isNonBlankString(value)) {
-                final List<Item> menuItems = new ArrayList<>();
-                menuItems.add(new IconMenuItem.Builder()
-                        .priority(1)
-                        .icon(SvgImage.COPY)
-                        .text("Copy")
-                        .command(() -> ClipboardUtil.copy(value))
-                        .build());
-                ShowMenuEvent
-                        .builder()
-                        .items(menuItems)
-                        .popupPosition(new PopupPosition(event.getClientX(), event.getClientY()))
-                        .fire(this);
             }
         }
+    }
+
+    @Override
+    public List<Item> getContextMenuItems(final Context context, final String value) {
+        if (NullSafe.isNonBlankString(value)) {
+            final List<Item> menuItems = new ArrayList<>();
+            menuItems.add(new IconMenuItem.Builder()
+                    .priority(1)
+                    .icon(SvgImage.COPY)
+                    .text("Copy")
+                    .command(() -> ClipboardUtil.copy(value))
+                    .build());
+            return menuItems;
+        }
+        return null;
     }
 
     @Override

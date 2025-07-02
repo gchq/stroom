@@ -60,7 +60,7 @@ public class StroomStatsStoreFieldListPresenter extends DocumentEditPresenter<Pa
 
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 

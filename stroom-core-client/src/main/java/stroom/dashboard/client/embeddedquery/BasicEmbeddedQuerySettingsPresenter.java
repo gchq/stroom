@@ -22,6 +22,7 @@ import stroom.dashboard.client.main.BasicSettingsView;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.EmbeddedQueryComponentSettings;
+import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.client.presenter.DocSelectionPopup;
@@ -169,10 +170,27 @@ public class BasicEmbeddedQuerySettingsPresenter
         chooser.setCaption("Choose Query To Copy");
         chooser.setIncludedTypes(QueryDoc.TYPE);
         chooser.setRequiredPermissions(DocumentPermission.USE);
-        chooser.show(doc -> {
+        chooser.show((doc, e) -> {
             if (doc != null) {
-                queryClient.loadQueryDoc(doc, queryDoc -> loaded = queryDoc, this);
-                AlertEvent.fireInfo(this, "Copy of '" + loaded.getName() + "' complete", null);
+                queryClient.loadQueryDoc(doc,
+                        queryDoc -> {
+                            loaded = queryDoc;
+                            if (loaded == null) {
+                                AlertEvent.fireError(
+                                        this,
+                                        "Error loading '" + doc + "'",
+                                        e::hide);
+                            } else {
+                                AlertEvent.fireInfo(
+                                        this,
+                                        "Copy of '" + loaded.getName() + "' complete",
+                                        e::hide);
+                            }
+                        },
+                        new DefaultErrorHandler(this, e::hide),
+                        this);
+            } else {
+                e.hide();
             }
         });
     }

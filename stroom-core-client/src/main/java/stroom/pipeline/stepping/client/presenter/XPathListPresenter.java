@@ -49,7 +49,7 @@ public class XPathListPresenter extends MyPresenterWidget<PagerView>
                               final PagerView view) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 

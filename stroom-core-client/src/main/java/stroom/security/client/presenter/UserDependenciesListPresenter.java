@@ -60,7 +60,7 @@ public class UserDependenciesListPresenter
         this.restFactory = restFactory;
         this.pagerView = pagerView;
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);
 

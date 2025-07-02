@@ -70,7 +70,7 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
         super(eventBus, view);
         this.restFactory = restFactory;
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 

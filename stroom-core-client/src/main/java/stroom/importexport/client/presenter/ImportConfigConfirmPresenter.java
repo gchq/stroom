@@ -107,7 +107,7 @@ public class ImportConfigConfirmPresenter extends
 
         this.view = view;
 
-        dataGrid = new MyDataGrid<>(MyDataGrid.MASSIVE_LIST_PAGE_SIZE);
+        dataGrid = new MyDataGrid<>(this, MyDataGrid.MASSIVE_LIST_PAGE_SIZE);
 
         view.setDataGrid(dataGrid);
         view.setRootFolderView(rootFolderPresenter.getView());
