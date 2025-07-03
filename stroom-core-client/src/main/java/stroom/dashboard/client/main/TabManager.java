@@ -138,6 +138,14 @@ public class TabManager {
         dashboardPresenter.onDirty();
     }
 
+    private void maximiseTab(final TabConfig tabConfig) {
+        dashboardPresenter.maximiseTabs(tabConfig);
+    }
+
+    private void restoreTabs() {
+        dashboardPresenter.restoreTabs();
+    }
+
     private void hideTab(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
         if (tabLayoutConfig.getVisibleTabCount() <= 1) {
             AlertEvent.fireError(dashboardPresenter, "You cannot remove or hide all tabs", null);
@@ -171,25 +179,30 @@ public class TabManager {
         // Create settings menu.
         menuItems.add(createSettingsMenu(tabConfig));
 
-        // Create hide menu.
-        menuItems.add(createHideMenu(tabLayoutConfig, tabConfig));
+        if (!dashboardPresenter.isMaximised()) {
+            // Create hide menu.
+            menuItems.add(createHideMenu(tabLayoutConfig, tabConfig));
 
-        // Create show menu.
-        final Item showMenu = createShowMenu(tabLayoutConfig);
-        if (showMenu != null) {
-            menuItems.add(showMenu);
-        }
+            // Create show menu.
+            final Item showMenu = createShowMenu(tabLayoutConfig);
+            if (showMenu != null) {
+                menuItems.add(showMenu);
+            }
 
-        // Create duplicate menus.
-        menuItems.add(createDuplicateMenu(tabLayoutConfig, tabConfig));
-        if (tabLayoutConfig.getAllTabCount() > 1) {
-            menuItems.add(createDuplicateTabPanelMenu(tabLayoutConfig));
-        }
+            // Create duplicate menus.
+            menuItems.add(createDuplicateMenu(tabLayoutConfig, tabConfig));
+            if (tabLayoutConfig.getAllTabCount() > 1) {
+                menuItems.add(createDuplicateTabPanelMenu(tabLayoutConfig));
+            }
 
-        // Create remove menus.
-        menuItems.add(createRemoveMenu(tabLayoutConfig, tabConfig));
-        if (tabLayoutConfig.getAllTabCount() > 1) {
-            menuItems.add(createRemoveTabPanel(tabLayoutConfig));
+            // Create remove menus.
+            menuItems.add(createRemoveMenu(tabLayoutConfig, tabConfig));
+            if (tabLayoutConfig.getAllTabCount() > 1) {
+                menuItems.add(createRemoveTabPanel(tabLayoutConfig));
+            }
+            menuItems.add(createMaximiseMenu(tabConfig));
+        } else {
+            menuItems.add(createRestoreMenu());
         }
 
         if (component instanceof EmbeddedQueryPresenter) {
@@ -303,6 +316,24 @@ public class TabManager {
                 .icon(SvgImage.DELETE)
                 .text("Remove All")
                 .command(() -> removeTabPanel(tabLayoutConfig))
+                .build();
+    }
+
+    private Item createMaximiseMenu(final TabConfig tabConfig) {
+        return new IconMenuItem.Builder()
+                .priority(10)
+                .icon(SvgImage.MAXIMISE)
+                .text("Maximise")
+                .command(() -> maximiseTab(tabConfig))
+                .build();
+    }
+
+    private Item createRestoreMenu() {
+        return new IconMenuItem.Builder()
+                .priority(10)
+                .icon(SvgImage.MINIMISE)
+                .text("Restore")
+                .command(this::restoreTabs)
                 .build();
     }
 

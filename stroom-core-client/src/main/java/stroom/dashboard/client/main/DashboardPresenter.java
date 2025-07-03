@@ -135,6 +135,8 @@ public class DashboardPresenter
     private final InlineSvgButton addComponentButton;
     private final InlineSvgButton setConstraintsButton;
     private final InlineSvgButton selectionInfoButton;
+    private final InlineSvgButton maximiseTabsButton;
+    private final InlineSvgButton restoreTabsButton;
     private final ButtonPanel editToolbar;
 
     @Inject
@@ -184,6 +186,14 @@ public class DashboardPresenter
         selectionInfoButton.setTitle("View Current Selection");
         selectionInfoButton.setVisible(false);
 
+        maximiseTabsButton = new InlineSvgButton();
+        maximiseTabsButton.setSvg(SvgImage.MAXIMISE);
+        maximiseTabsButton.setTitle("Maximise");
+
+        restoreTabsButton = new InlineSvgButton();
+        restoreTabsButton.setSvg(SvgImage.MINIMISE);
+        restoreTabsButton.setTitle("Restore");
+        restoreTabsButton.setVisible(false);
 
 //                <g:FlowPanel styleName="DashboardViewImpl-top dock-min dock-container-horizontal">
 //            <g:FlowPanel styleName="dock-max">
@@ -205,6 +215,8 @@ public class DashboardPresenter
         editToolbar.addButton(addComponentButton);
         editToolbar.addButton(setConstraintsButton);
         editToolbar.addButton(selectionInfoButton);
+        editToolbar.addButton(maximiseTabsButton);
+        editToolbar.add(restoreTabsButton);
 
         NullSafe.consumeNonBlankString(urlParameters.getTitle(), true, this::setCustomTitle);
 //        final String linkParams = ;
@@ -257,6 +269,16 @@ public class DashboardPresenter
                 onSelectionInfo();
             }
         }));
+        registerHandler(maximiseTabsButton.addClickHandler(e -> {
+            if (MouseUtil.isPrimary(e)) {
+                maximiseTabs(null);
+            }
+        }));
+        registerHandler(restoreTabsButton.addClickHandler(e -> {
+            if (MouseUtil.isPrimary(e)) {
+                restoreTabs();
+            }
+        }));
     }
 
     @Override
@@ -269,6 +291,8 @@ public class DashboardPresenter
     }
 
     private void onConstraints() {
+        restoreTabs();
+
         final LayoutConstraintPresenter presenter = layoutConstraintPresenterProvider.get();
         final HandlerRegistration handlerRegistration = presenter.addValueChangeHandler(e -> {
             if (!Objects.equals(e.getValue(), layoutConstraints)) {
@@ -321,6 +345,8 @@ public class DashboardPresenter
 //    }
 
     private void onAdd(final ClickEvent event) {
+        restoreTabs();
+
         final Element target = event.getNativeEvent().getEventTarget().cast();
 
         final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft() - 3,
@@ -792,6 +818,22 @@ public class DashboardPresenter
                 }
             });
         }
+    }
+
+    public void maximiseTabs(final TabConfig tabConfig) {
+        maximiseTabsButton.setVisible(false);
+        restoreTabsButton.setVisible(true);
+        layoutPresenter.maximiseTabs(tabConfig);
+    }
+
+    public void restoreTabs() {
+        maximiseTabsButton.setVisible(true);
+        restoreTabsButton.setVisible(false);
+        layoutPresenter.restoreTabs();
+    }
+
+    public boolean isMaximised() {
+        return layoutPresenter.isMaximised();
     }
 
     void toggleStart() {
