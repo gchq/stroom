@@ -31,6 +31,7 @@ import stroom.planb.shared.HistogramSettings;
 import stroom.planb.shared.HistogramValueSchema;
 import stroom.planb.shared.KeyType;
 import stroom.planb.shared.MaxValueSize;
+import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.TemporalResolution;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -65,6 +66,7 @@ class TestHistogramDb {
             .Builder()
             .maxStoreSize(ByteSize.ofGibibytes(100).getBytes())
             .build();
+    private static final PlanBDoc DOC = getDoc(BASIC_SETTINGS);
 
     private final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
     private final List<KeyFunction> keyFunctions = List.of(
@@ -92,7 +94,7 @@ class TestHistogramDb {
         try (final HistogramDb db = HistogramDb.create(
                 tempDir,
                 BYTE_BUFFERS,
-                BASIC_SETTINGS,
+                DOC,
                 true)) {
             assertThat(db.count()).isEqualTo(1);
 
@@ -131,7 +133,7 @@ class TestHistogramDb {
     void testGetHistogram(@TempDir final Path tempDir) {
         final KeyPrefix tags = getTags();
         final Instant time = Instant.parse("2000-01-01T00:00:00.000Z");
-        try (final HistogramDb db = HistogramDb.create(tempDir, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
+        try (final HistogramDb db = HistogramDb.create(tempDir, BYTE_BUFFERS, DOC, false)) {
             db.write(writer -> {
                 final TemporalKey k = getKey(time);
                 db.insert(writer, new TemporalValue(k, 1L));
@@ -141,7 +143,7 @@ class TestHistogramDb {
         try (final HistogramDb db = HistogramDb.create(
                 tempDir,
                 BYTE_BUFFERS,
-                BASIC_SETTINGS,
+                DOC,
                 true)) {
             assertThat(db.count()).isEqualTo(1);
             checkHistogram(db, tags, time, 1L);
@@ -229,7 +231,7 @@ class TestHistogramDb {
         testWrite(dbPath1);
         testWrite(dbPath2);
 
-        try (final HistogramDb db = HistogramDb.create(dbPath1, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
+        try (final HistogramDb db = HistogramDb.create(dbPath1, BYTE_BUFFERS, DOC, false)) {
             db.merge(dbPath2);
         }
     }
@@ -241,7 +243,7 @@ class TestHistogramDb {
 
         testWrite(dbPath);
 
-        try (final HistogramDb db = HistogramDb.create(dbPath, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
+        try (final HistogramDb db = HistogramDb.create(dbPath, BYTE_BUFFERS, DOC, false)) {
             assertThat(db.count()).isEqualTo(1);
             db.deleteOldData(Instant.MIN, true);
             assertThat(db.count()).isEqualTo(1);
@@ -256,7 +258,7 @@ class TestHistogramDb {
         Files.createDirectory(dbPath);
 
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-        try (final HistogramDb db = HistogramDb.create(dbPath, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
+        try (final HistogramDb db = HistogramDb.create(dbPath, BYTE_BUFFERS, DOC, false)) {
             insertData(db, refTime, 1L, 100, 60 * 60 * 24);
             insertData(db, refTime, 1L, 100, 60 * 60 * 24);
             insertData(db, refTime, 1L, 10, -60 * 60 * 24);
@@ -274,7 +276,7 @@ class TestHistogramDb {
 
     private void testWrite(final Path dbDir) {
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-        try (final HistogramDb db = HistogramDb.create(dbDir, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
+        try (final HistogramDb db = HistogramDb.create(dbDir, BYTE_BUFFERS, DOC, false)) {
             insertData(db, refTime, 1, 100, 10);
         }
     }
@@ -284,7 +286,7 @@ class TestHistogramDb {
                            final int insertRows,
                            final Function<Integer, TemporalKey> keyFunction,
                            final Function<Integer, Long> valueFunction) {
-        try (final HistogramDb db = HistogramDb.create(dbDir, BYTE_BUFFERS, settings, false)) {
+        try (final HistogramDb db = HistogramDb.create(dbDir, BYTE_BUFFERS, getDoc(settings), false)) {
             insertData(db, insertRows, keyFunction, valueFunction);
         }
     }
@@ -307,7 +309,7 @@ class TestHistogramDb {
                                 final int rows,
                                 final Function<Integer, TemporalKey> keyFunction,
                                 final Function<Integer, Long> valueFunction) {
-        try (final HistogramDb db = HistogramDb.create(dbDir, BYTE_BUFFERS, settings, true)) {
+        try (final HistogramDb db = HistogramDb.create(dbDir, BYTE_BUFFERS, getDoc(settings), true)) {
             for (int i = 0; i < rows; i++) {
                 final TemporalKey key = keyFunction.apply(i);
                 final Long value = db.get(key);
@@ -338,6 +340,10 @@ class TestHistogramDb {
         final TemporalKey key = new TemporalKey(tags, time);
         final Long state = db.get(key);
         assertThat(state).isEqualTo(expected);
+    }
+
+    private static PlanBDoc getDoc(final HistogramSettings settings) {
+        return PlanBDoc.builder().name("test").settings(settings).build();
     }
 
     private record KeyFunction(String description,

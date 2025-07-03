@@ -96,7 +96,7 @@ public class AppUserPermissionsListPresenter
         this.uiConfigCache = uiConfigCache;
         this.securityContext = securityContext;
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
         selectionModel = new MultiSelectionModelImpl<>();
         final DataGridSelectionEventManager<AppUserPermissions> selectionEventManager =
                 new DataGridSelectionEventManager<>(

@@ -58,7 +58,7 @@ public class StatisticsFieldListPresenter extends DocumentEditPresenter<PagerVie
                                         final StatisticsFieldEditPresenter statisticsFieldEditPresenter) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 

@@ -19,6 +19,7 @@ package stroom.data.store.impl;
 import stroom.data.shared.DataInfoSection;
 import stroom.data.shared.DataInfoSection.Entry;
 import stroom.data.shared.UploadDataRequest;
+import stroom.data.store.api.AttributeMapFactory;
 import stroom.data.store.api.DataService;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;

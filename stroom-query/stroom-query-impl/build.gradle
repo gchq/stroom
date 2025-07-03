@@ -19,7 +19,6 @@ ext.moduleName = 'stroom.query.impl'
 dependencies {
     implementation project(':stroom-core-shared')
     implementation project(':stroom-dashboard:stroom-dashboard-impl')
-//    implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-explorer:stroom-docrefinfo-api')
@@ -27,7 +26,6 @@ dependencies {
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-dictionary:stroom-dictionary-api')
-//    implementation project(':stroom-lmdb')
     implementation project(':stroom-query:stroom-query-language')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
@@ -42,29 +40,13 @@ dependencies {
     implementation project(':stroom-view:stroom-view-api')
 
     implementation libs.eventLogging
-//
-//    implementation libs.guava
     implementation libs.guice
-//    implementation libs.jackson.annotations
-//    implementation libs.jackson.core
-//    implementation libs.jackson.databind
-//    implementation libs.jackson.core
     implementation libs.jakarta.servlet.api
-//    implementation libs.jakarta.validation.api
     implementation libs.jakarta.inject
-//    implementation libs.kryo
-//    implementation libs.lmdbjava
     implementation libs.restygwt
     implementation libs.slf4j.api
     implementation libs.ws.rs.api
-//    implementation libs.zero.allocation.hashing
 
-    //--------testing----------
-    testImplementation libs.assertj.core
-    testCompileOnly libs.junit.jupiter.api
-    testImplementation libs.mockito.core
-
-    testRuntimeOnly libs.junit.jupiter.engine
-    testRuntimeOnly libs.logback.classic
-    testRuntimeOnly libs.logback.core
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
 }

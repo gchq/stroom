@@ -9,6 +9,7 @@ import stroom.planb.impl.db.AbstractDb;
 import stroom.planb.impl.db.HashClashCommitRunnable;
 import stroom.planb.impl.db.LmdbWriter;
 import stroom.planb.impl.db.PlanBEnv;
+import stroom.planb.impl.db.SchemaInfo;
 import stroom.planb.impl.db.UsedLookupsRecorder;
 import stroom.planb.impl.serde.count.CountSerde;
 import stroom.planb.impl.serde.count.CountValuesSerde;
@@ -29,12 +30,14 @@ import stroom.planb.impl.serde.time.ZonedDayTimeSerde;
 import stroom.planb.impl.serde.time.ZonedHourTimeSerde;
 import stroom.planb.impl.serde.time.ZonedYearTimeSerde;
 import stroom.planb.impl.serde.valtime.InsertTimeSerde;
+import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.HistogramKeySchema;
 import stroom.planb.shared.HistogramSettings;
 import stroom.planb.shared.HistogramValueSchema;
 import stroom.planb.shared.KeyType;
 import stroom.planb.shared.MaxValueSize;
+import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.TemporalResolution;
 import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
@@ -45,6 +48,7 @@ import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
 import stroom.query.common.v2.ValArrayFunctionFactory;
 import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.UserTimeZoneUtil;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValLong;
@@ -52,6 +56,8 @@ import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.io.FileUtil;
+import stroom.util.json.JsonUtil;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import org.lmdbjava.CursorIterable;
@@ -62,7 +68,6 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -72,7 +77,8 @@ import java.util.function.Predicate;
 
 public class HistogramDb extends AbstractDb<TemporalKey, Long> {
 
-    private final HistogramSettings settings;
+    private static final int CURRENT_SCHEMA_VERSION = 1;
+
     private final TemporalResolution temporalResolution;
     private final TemporalKeySerde keySerde;
     private final UsedLookupsRecorder keyRecorder;
@@ -80,14 +86,21 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
 
     private HistogramDb(final PlanBEnv env,
                         final ByteBuffers byteBuffers,
-                        final Boolean overwrite,
+                        final PlanBDoc doc,
                         final HistogramSettings settings,
                         final TemporalResolution temporalResolution,
                         final TemporalKeySerde keySerde,
                         final CountValuesSerde<Long> valuesSerde,
                         final HashClashCommitRunnable hashClashCommitRunnable) {
-        super(env, byteBuffers, overwrite, hashClashCommitRunnable);
-        this.settings = settings;
+        super(env,
+                byteBuffers,
+                doc,
+                settings.overwrite(),
+                hashClashCommitRunnable,
+                new SchemaInfo(
+                        CURRENT_SCHEMA_VERSION,
+                        JsonUtil.writeValueAsString(settings.getKeySchema()),
+                        JsonUtil.writeValueAsString(settings.getValueSchema())));
         this.temporalResolution = temporalResolution;
         this.keySerde = keySerde;
         this.valuesSerde = valuesSerde;
@@ -96,72 +109,93 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
 
     public static HistogramDb create(final Path path,
                                      final ByteBuffers byteBuffers,
-                                     final HistogramSettings settings,
+                                     final PlanBDoc doc,
                                      final boolean readOnly) {
+        final HistogramSettings settings;
+        if (doc.getSettings() instanceof final HistogramSettings histogramSettings) {
+            settings = histogramSettings;
+        } else {
+            settings = new HistogramSettings.Builder().build();
+        }
+
         final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
+        final Long mapSize = NullSafe.getOrElse(
+                settings,
+                AbstractPlanBSettings::getMaxStoreSize,
+                AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE);
         final PlanBEnv env = new PlanBEnv(path,
-                settings.getMaxStoreSize(),
+                mapSize,
                 20,
                 readOnly,
                 hashClashCommitRunnable);
-        final KeyType keyType = NullSafe.getOrElse(
-                settings,
-                HistogramSettings::getKeySchema,
-                HistogramKeySchema::getKeyType,
-                KeyType.TAGS);
-        final HashLength keyHashLength = NullSafe.getOrElse(
-                settings,
-                HistogramSettings::getKeySchema,
-                HistogramKeySchema::getHashLength,
-                HashLength.LONG);
-        final TemporalResolution temporalResolution = NullSafe.getOrElse(
-                settings,
-                HistogramSettings::getKeySchema,
-                HistogramKeySchema::getTemporalResolution,
-                TemporalResolution.SECOND);
-        final UserTimeZone timeZone = NullSafe.getOrElse(
-                settings,
-                HistogramSettings::getKeySchema,
-                HistogramKeySchema::getTimeZone,
-                UserTimeZone.utc());
+        try {
+            final KeyType keyType = NullSafe.getOrElse(
+                    settings,
+                    HistogramSettings::getKeySchema,
+                    HistogramKeySchema::getKeyType,
+                    HistogramKeySchema.DEFAULT_KEY_TYPE);
+            final HashLength keyHashLength = NullSafe.getOrElse(
+                    settings,
+                    HistogramSettings::getKeySchema,
+                    HistogramKeySchema::getHashLength,
+                    HistogramKeySchema.DEFAULT_HASH_LENGTH);
+            final TemporalResolution temporalResolution = NullSafe.getOrElse(
+                    settings,
+                    HistogramSettings::getKeySchema,
+                    HistogramKeySchema::getTemporalResolution,
+                    HistogramKeySchema.DEFAULT_TEMPORAL_RESOLUTION);
+            final UserTimeZone timeZone = NullSafe.getOrElse(
+                    settings,
+                    HistogramSettings::getKeySchema,
+                    HistogramKeySchema::getTimeZone,
+                    HistogramKeySchema.DEFAULT_TIME_ZONE);
 
-        final MaxValueSize valueType = NullSafe.getOrElse(
-                settings,
-                HistogramSettings::getValueSchema,
-                HistogramValueSchema::getValueType,
-                MaxValueSize.TWO);
-        // Rows will store hour precision.
-        final ZoneId zoneId = getZoneId(timeZone);
+            final MaxValueSize valueType = NullSafe.getOrElse(
+                    settings,
+                    HistogramSettings::getValueSchema,
+                    HistogramValueSchema::getValueType,
+                    HistogramValueSchema.DEFAULT_VALUE_TYPE);
+            // Rows will store hour precision.
+            final ZoneId zoneId = UserTimeZoneUtil.getZoneId(timeZone, null);
 
-        // The key time is always a coarse grained time with rows having multiple values.
-        final TimeSerde keyTimeSerde = getKeyTimeSerde(temporalResolution, zoneId);
-        final InsertTimeSerde insertTimeSerde = new InsertTimeSerde();
-        final CountSerde<Long> countSerde = getCountSerde(valueType);
-        final TemporalIndex temporalIndex = getTemporalIndex(temporalResolution);
-        final CountValuesSerde<Long> valueSerde = new CountValuesSerdeImpl<>(
-                byteBuffers,
-                countSerde,
-                insertTimeSerde,
-                zoneId,
-                temporalIndex);
+            // The key time is always a coarse grained time with rows having multiple values.
+            final TimeSerde keyTimeSerde = getKeyTimeSerde(temporalResolution, zoneId);
+            final InsertTimeSerde insertTimeSerde = new InsertTimeSerde();
+            final CountSerde<Long> countSerde = getCountSerde(valueType);
+            final TemporalIndex temporalIndex = getTemporalIndex(temporalResolution);
+            final CountValuesSerde<Long> valueSerde = new CountValuesSerdeImpl<>(
+                    byteBuffers,
+                    countSerde,
+                    insertTimeSerde,
+                    zoneId,
+                    temporalIndex);
 
-        final TemporalKeySerde keySerde = TemporalKeySerdeFactory.createKeySerde(
-                keyType,
-                keyHashLength,
-                env,
-                byteBuffers,
-                keyTimeSerde,
-                hashClashCommitRunnable);
+            final TemporalKeySerde keySerde = TemporalKeySerdeFactory.createKeySerde(
+                    keyType,
+                    keyHashLength,
+                    env,
+                    byteBuffers,
+                    keyTimeSerde,
+                    hashClashCommitRunnable);
 
-        return new HistogramDb(
-                env,
-                byteBuffers,
-                settings.overwrite(),
-                settings,
-                temporalResolution,
-                keySerde,
-                valueSerde,
-                hashClashCommitRunnable);
+            return new HistogramDb(
+                    env,
+                    byteBuffers,
+                    doc,
+                    settings,
+                    temporalResolution,
+                    keySerde,
+                    valueSerde,
+                    hashClashCommitRunnable);
+        } catch (final RuntimeException e) {
+            // Close the env if we get any exceptions to prevent them staying open.
+            try {
+                env.close();
+            } catch (final Exception e2) {
+                LOGGER.debug(LogUtil.message("store={}, message={}", doc.getName(), e.getMessage()), e);
+            }
+            throw e;
+        }
     }
 
     private static TimeSerde getKeyTimeSerde(final TemporalResolution temporalResolution,
@@ -182,24 +216,6 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
             case MONTH -> new MonthOfYearTemporalIndex();
             case YEAR -> new YearTemporalIndex();
         };
-    }
-
-    private static ZoneId getZoneId(final UserTimeZone userTimeZone) {
-        ZoneId zone = ZoneOffset.UTC;
-        if (userTimeZone != null) {
-            if (UserTimeZone.Use.UTC.equals(userTimeZone.getUse())) {
-                zone = ZoneOffset.UTC;
-            } else if (UserTimeZone.Use.LOCAL.equals(userTimeZone.getUse())) {
-                zone = ZoneId.systemDefault();
-            } else if (UserTimeZone.Use.ID.equals(userTimeZone.getUse())) {
-                zone = ZoneId.of(userTimeZone.getId());
-            } else if (UserTimeZone.Use.OFFSET.equals(userTimeZone.getUse())) {
-                zone = ZoneOffset.ofHoursMinutes(
-                        NullSafe.getInt(userTimeZone.getOffsetHours()),
-                        NullSafe.getInt(userTimeZone.getOffsetMinutes()));
-            }
-        }
-        return zone;
     }
 
     private static CountSerde<Long> getCountSerde(final MaxValueSize valueType) {
@@ -244,7 +260,11 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
     @Override
     public void merge(final Path source) {
         env.write(writer -> {
-            try (final HistogramDb sourceDb = HistogramDb.create(source, byteBuffers, settings, true)) {
+            try (final HistogramDb sourceDb = HistogramDb.create(source, byteBuffers, doc, true)) {
+                // Validate that the source DB has the same schema.
+                validateSchema(schemaInfo, sourceDb.getSchemaInfo());
+
+                // Merge.
                 sourceDb.env.read(readTxn -> {
                     sourceDb.iterate(readTxn, kv -> {
                         final Txn<ByteBuffer> writeTxn = writer.getWriteTxn();

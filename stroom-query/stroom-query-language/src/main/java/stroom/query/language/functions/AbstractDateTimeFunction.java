@@ -20,7 +20,6 @@ import stroom.query.api.DateTimeSettings;
 
 import java.text.ParseException;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.Objects;
 
 abstract class AbstractDateTimeFunction extends AbstractFunction {
@@ -40,22 +39,7 @@ abstract class AbstractDateTimeFunction extends AbstractFunction {
     private ZoneId getZoneId() {
         final DateTimeSettings dateTimeSettings = expressionContext.getDateTimeSettings();
         Objects.requireNonNull(dateTimeSettings, "dateTimeSettings not set in searchRequest");
-        switch (dateTimeSettings.getTimeZone().getUse()) {
-            case LOCAL -> {
-                return ZoneId.of(dateTimeSettings.getLocalZoneId());
-            }
-            case ID -> {
-                return ZoneId.of(dateTimeSettings.getTimeZone().getId());
-            }
-            case OFFSET -> {
-                return ZoneOffset
-                        .ofHoursMinutes(dateTimeSettings.getTimeZone().getOffsetHours(),
-                                dateTimeSettings.getTimeZone().getOffsetMinutes());
-            }
-            default -> {
-                return ZoneOffset.UTC;
-            }
-        }
+        return UserTimeZoneUtil.getZoneId(dateTimeSettings);
     }
 
     @Override

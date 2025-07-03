@@ -26,6 +26,7 @@ import stroom.planb.impl.db.StateValueTestUtil.ValueFunction;
 import stroom.planb.impl.db.rangestate.RangeStateDb;
 import stroom.planb.impl.db.rangestate.RangeStateFields;
 import stroom.planb.impl.db.rangestate.RangeStateRequest;
+import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.RangeKeySchema;
 import stroom.planb.shared.RangeStateSettings;
 import stroom.planb.shared.RangeType;
@@ -63,6 +64,7 @@ class TestRangeStateDb {
             .Builder()
             .maxStoreSize(ByteSize.ofGibibytes(100).getBytes())
             .build();
+    private static final PlanBDoc DOC = getDoc(BASIC_SETTINGS);
 
     @Test
     void test(@TempDir final Path tempDir) {
@@ -71,7 +73,7 @@ class TestRangeStateDb {
         try (final RangeStateDb db = RangeStateDb.create(
                 tempDir,
                 BYTE_BUFFERS,
-                BASIC_SETTINGS,
+                DOC,
                 true)) {
             assertThat(db.count()).isEqualTo(1);
             testGet(db);
@@ -88,14 +90,6 @@ class TestRangeStateDb {
             assertThat(state.key().getKeyEnd()).isEqualTo(30);
             assertThat(state.val().type()).isEqualTo(Type.STRING);
             assertThat(state.val().toString()).isEqualTo("test99");
-//
-//            final FieldIndex fieldIndex = new FieldIndex();
-//            fieldIndex.create(RangeStateFields.KEY_START);
-//            final AtomicInteger count = new AtomicInteger();
-//            rangeStateDao.search(new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex, null,
-//                    v -> count.incrementAndGet());
-//            assertThat(count.get()).isEqualTo(1);
-
 
             final FieldIndex fieldIndex = new FieldIndex();
             fieldIndex.create(RangeStateFields.KEY_START);
@@ -200,7 +194,7 @@ class TestRangeStateDb {
                            final int insertRows,
                            final Function<Integer, Key> keyFunction,
                            final Function<Integer, Val> valueFunction) {
-        try (final RangeStateDb db = RangeStateDb.create(dbDir, BYTE_BUFFERS, settings, false)) {
+        try (final RangeStateDb db = RangeStateDb.create(dbDir, BYTE_BUFFERS, getDoc(settings), false)) {
             insertData(db, insertRows, keyFunction, valueFunction);
         }
     }
@@ -223,7 +217,7 @@ class TestRangeStateDb {
                                 final int rows,
                                 final Function<Integer, Key> keyFunction,
                                 final Function<Integer, Val> valueFunction) {
-        try (final RangeStateDb db = RangeStateDb.create(dbDir, BYTE_BUFFERS, settings, true)) {
+        try (final RangeStateDb db = RangeStateDb.create(dbDir, BYTE_BUFFERS, getDoc(settings), true)) {
             for (int i = 0; i < rows; i++) {
                 final Key key = keyFunction.apply(i);
                 final RangeState state = db.getState(new RangeStateRequest(key.getKeyStart()));
@@ -245,13 +239,13 @@ class TestRangeStateDb {
         testWrite(dbPath1);
         testWrite(dbPath2);
 
-        try (final RangeStateDb db = RangeStateDb.create(dbPath1, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
+        try (final RangeStateDb db = RangeStateDb.create(dbPath1, BYTE_BUFFERS, DOC, false)) {
             db.merge(dbPath2);
         }
     }
 
     private void testWrite(final Path dbDir) {
-        try (final RangeStateDb db = RangeStateDb.create(dbDir, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
+        try (final RangeStateDb db = RangeStateDb.create(dbDir, BYTE_BUFFERS, DOC, false)) {
             insertData(db, 100);
         }
     }
@@ -273,5 +267,9 @@ class TestRangeStateDb {
                 db.insert(writer, new RangeState(k, v));
             }
         });
+    }
+
+    private static PlanBDoc getDoc(final RangeStateSettings settings) {
+        return PlanBDoc.builder().name("test").settings(settings).build();
     }
 }

@@ -54,7 +54,7 @@ public class ElasticIndexFieldListPresenter extends DocumentEditPresenter<Elasti
         super(eventBus, view);
         this.dateTimeFormatter = dateTimeFormatter;
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
         dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);
 

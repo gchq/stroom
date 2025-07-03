@@ -10,16 +10,10 @@ dependencies {
     implementation libs.jose4j
     implementation libs.ws.rs.api
 
-    testImplementation libs.assertj.core
     testImplementation libs.jackson.core
     testImplementation libs.jackson.databind
-    testImplementation libs.junit.jupiter.api
     testImplementation libs.slf4j.api
 
-    testRuntimeOnly libs.jcl.over.slf4j
-    testRuntimeOnly libs.jul.to.slf4j
-    testRuntimeOnly libs.junit.jupiter.engine
-    testRuntimeOnly libs.log4j.over.slf4j
-    testRuntimeOnly libs.logback.classic
-    testRuntimeOnly libs.logback.core
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
 }

@@ -13,6 +13,63 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11-beta.1] - 2025-07-02
+
+* Add the Receive Data Rules screen to the Administration menu which requires the `Manage Data Receipt Rules` app permission. Add the following new config properties to the `receive` branch: `obfuscatedFields`, `obfuscationHashAlgorithm`, `receiptCheckMode` and `receiptRulesInitialFields`. Remove the property `receiptPolicyUuid`. Add the proxy config property `contentSync.receiveDataRulesUrl`.
+
+* The proxy config property `feedStatus.enabled` has been replaced by `receive.receiptCheckMode` which takes values `FEED_STATUS`, `RECEIPT_POLICY` or `NONE`.
+
+* In the proxy config, the named Jersey clients CONTENT_SYNC and FEED_STATUS have been removed and replaced with DOWNSTREAM.
+
+
+## [v7.10-beta.6] - 2025-06-26
+
+* Issue **#5007** : Add ceilingTime() and floorTime().
+
+* Issue **#4977** : Limit user visibility in annotations.
+
+* Issue **#4976** : Exclude deleted annotations.
+
+
+## [v7.10-beta.5] - 2025-06-25
+
+* Issue **#5002** : Fix Plan B env staying open after error.
+
+* Issue **#5003** : Fix query date time formatting.
+
+* Issue **#4974** : Improve logging.
+
+
+## [v7.10-beta.4] - 2025-06-23
+
+* Issue **#3083** : Allow data() table function to show the Info pane.
+
+* Issue **#4959** : Remove terms with field `Status` from re-process filter expressions.
+
+* Issue **#4974** : NPE debug.
+
+* Issue **#4965** : Add dashboard screen to show current selection parameters.
+
+* Issue **#4943** : Fix annotation creation to set provided assigned and status.
+
+* Issue **#4496** : Add parse-dateTime xslt function.
+
+* Issue **#4496** : Add format-dateTime xslt function.
+
+* Issue **#4983** : Upgrade Flyway to work with newer version of MySQL.
+
+* Issue **#3122** : Make date/time rounding functions time zone sensitive.
+
+* Issue **#4984** : Add debug for Plan B tagged keys.
+
+* Issue **#4969** : Add a checkbox to Content Templates edit screen to make it copy (and re-map) any xslt/textConverter docs in the inherited pipeline.
+
+* Issue **#4991** : Add Plan B schema validation to ensure stores remain compatible especially when merging parts.
+
+* Issue **#4854** : Maintain scrollbar position on datagrid.
+
+* Issue **#4726** : Get meta for parent stream.
+
 * Fix primitive value conversion of query field types.
 
 * Issue **#4940** : Fix duplicate store error log.
@@ -1518,7 +1575,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.10-beta.3...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.1...HEAD
+[v7.11-beta.1]: https://github.com/gchq/stroom/compare/v7.10-beta.6...v7.11-beta.1
+[v7.10-beta.6]: https://github.com/gchq/stroom/compare/v7.10-beta.5...v7.10-beta.6
+[v7.10-beta.5]: https://github.com/gchq/stroom/compare/v7.10-beta.4...v7.10-beta.5
+[v7.10-beta.4]: https://github.com/gchq/stroom/compare/v7.10-beta.3...v7.10-beta.4
 [v7.10-beta.3]: https://github.com/gchq/stroom/compare/v7.10-beta.2...v7.10-beta.3
 [v7.10-beta.2]: https://github.com/gchq/stroom/compare/v7.10-beta.1...v7.10-beta.2
 [v7.10-beta.1]: https://github.com/gchq/stroom/compare/v7.9-beta.12...v7.10-beta.1

@@ -8,15 +8,7 @@ import stroom.planb.impl.db.session.SessionDb;
 import stroom.planb.impl.db.state.StateDb;
 import stroom.planb.impl.db.temporalrangestate.TemporalRangeStateDb;
 import stroom.planb.impl.db.temporalstate.TemporalStateDb;
-import stroom.planb.shared.HistogramSettings;
-import stroom.planb.shared.MetricSettings;
 import stroom.planb.shared.PlanBDoc;
-import stroom.planb.shared.RangeStateSettings;
-import stroom.planb.shared.SessionSettings;
-import stroom.planb.shared.StateSettings;
-import stroom.planb.shared.TemporalRangeStateSettings;
-import stroom.planb.shared.TemporalStateSettings;
-import stroom.util.shared.NullSafe;
 
 import java.nio.file.Path;
 
@@ -31,63 +23,49 @@ public class PlanBDb {
                 return StateDb.create(
                         targetPath,
                         byteBuffers,
-                        NullSafe.getOrElse(doc,
-                                d -> (StateSettings) doc.getSettings(),
-                                new StateSettings.Builder().build()),
+                        doc,
                         readOnly);
             }
             case TEMPORAL_STATE -> {
                 return TemporalStateDb.create(
                         targetPath,
                         byteBuffers,
-                        NullSafe.getOrElse(doc,
-                                d -> (TemporalStateSettings) doc.getSettings(),
-                                new TemporalStateSettings.Builder().build()),
+                        doc,
                         readOnly);
             }
             case RANGED_STATE -> {
                 return RangeStateDb.create(
                         targetPath,
                         byteBuffers,
-                        NullSafe.getOrElse(doc,
-                                d -> (RangeStateSettings) doc.getSettings(),
-                                new RangeStateSettings.Builder().build()),
+                        doc,
                         readOnly);
             }
             case TEMPORAL_RANGED_STATE -> {
                 return TemporalRangeStateDb.create(
                         targetPath,
                         byteBuffers,
-                        NullSafe.getOrElse(doc,
-                                d -> (TemporalRangeStateSettings) doc.getSettings(),
-                                new TemporalRangeStateSettings.Builder().build()),
+                        doc,
                         readOnly);
             }
             case SESSION -> {
                 return SessionDb.create(
                         targetPath,
                         byteBuffers,
-                        NullSafe.getOrElse(doc,
-                                d -> (SessionSettings) doc.getSettings(),
-                                new SessionSettings.Builder().build()),
+                        doc,
                         readOnly);
             }
             case HISTOGRAM -> {
                 return HistogramDb.create(
                         targetPath,
                         byteBuffers,
-                        NullSafe.getOrElse(doc,
-                                d -> (HistogramSettings) doc.getSettings(),
-                                new HistogramSettings.Builder().build()),
+                        doc,
                         readOnly);
             }
             case METRIC -> {
                 return MetricDb.create(
                         targetPath,
                         byteBuffers,
-                        NullSafe.getOrElse(doc,
-                                d -> (MetricSettings) doc.getSettings(),
-                                new MetricSettings.Builder().build()),
+                        doc,
                         readOnly);
             }
 
