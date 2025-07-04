@@ -16,10 +16,12 @@
 
 package stroom.pipeline.structure.client.view;
 
+import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.PipelineStructureView;
 import stroom.pipeline.structure.client.presenter.PipelineStructureUiHandlers;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.SvgButton;
+import stroom.widget.form.client.FormGroup;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -29,6 +31,7 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Hyperlink;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -49,7 +52,13 @@ public class PipelineStructureViewImpl extends ViewWithUiHandlers<PipelineStruct
     @UiField
     ScrollPanel treeContainer;
     @UiField
+    ThinSplitLayoutPanel bottomThinSplitLayoutPanel;
+    @UiField
+    FormGroup propertiesFormGroup;
+    @UiField
     SimplePanel properties;
+    @UiField
+    FormGroup pipelineReferencesFormGroup;
     @UiField
     SimplePanel pipelineReferences;
     @UiField
@@ -107,6 +116,35 @@ public class PipelineStructureViewImpl extends ViewWithUiHandlers<PipelineStruct
         remove.setEnabled(enabled);
     }
 
+    @Override
+    public void setCurrentElement(final PipelineElement selectedElement) {
+        if (selectedElement != null) {
+            final String elementText = selectedElement.getType() + " Element '" + selectedElement.getId() + "'";
+            propertiesFormGroup.setLabel("Properties for " + elementText);
+            if ("XSLTFilter".equals(selectedElement.getType())) {
+                pipelineReferencesFormGroup.setLabel("Reference Loaders for " + elementText);
+                setPipelineReferencesVisibility(true);
+            } else {
+                setPipelineReferencesVisibility(false);
+            }
+        } else {
+            propertiesFormGroup.setLabel("Pipeline Element Properties (No Pipeline Element Selected)");
+            setPipelineReferencesVisibility(false);
+        }
+        // Re-draw the splitter
+        bottomThinSplitLayoutPanel.onResize();
+    }
+
+    private void setPipelineReferencesVisibility(final boolean isVisible) {
+        pipelineReferencesFormGroup.setVisible(isVisible);
+        bottomThinSplitLayoutPanel.setWidgetHidden(pipelineReferencesFormGroup.asWidget(), !isVisible);
+        if (isVisible) {
+            bottomThinSplitLayoutPanel.setVSplits(0.4);
+        } else {
+            bottomThinSplitLayoutPanel.setVSplits();
+        }
+    }
+
     @UiHandler("add")
     void onAddClick(final ClickEvent event) {
         if (getUiHandlers() != null) {
@@ -136,6 +174,10 @@ public class PipelineStructureViewImpl extends ViewWithUiHandlers<PipelineStruct
             }
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, PipelineStructureViewImpl> {
 

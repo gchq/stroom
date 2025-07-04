@@ -125,6 +125,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         getView().setTreeView(pipelineTreePresenter.getView());
         getView().setProperties(propertyListPresenter.getView());
         getView().setPipelineReferences(pipelineReferenceListPresenter.getView());
+        getView().setCurrentElement(null);
 
         pipelinePresenter.setIncludedTypes(PipelineDoc.TYPE);
         pipelinePresenter.setRequiredPermissions(DocumentPermission.USE);
@@ -172,6 +173,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                     pipelineReferenceListPresenter.setPipeline(pipelineDoc);
                     pipelineReferenceListPresenter.setPipelineModel(pipelineModel);
                     pipelineReferenceListPresenter.setCurrentElement(selectedElement);
+                    getView().setCurrentElement(selectedElement);
 
                     enableButtons();
                 }));
@@ -628,6 +630,8 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         void setRestoreEnabled(boolean enabled);
 
         void setRemoveEnabled(boolean enabled);
+
+        void setCurrentElement(PipelineElement selectedElement);
     }
 
 

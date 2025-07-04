@@ -182,13 +182,19 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
                         cellBuilder)
                 .build();
 
-        dataGrid.addResizableColumn(pipelineCol, "Pipeline", 200);
+        dataGrid.addResizableColumn(
+                pipelineCol,
+                DataGridUtil.headingBuilder("Pipeline")
+                        .withToolTip("The pipeline that will process the reference data.")
+                        .build(),
+                200);
     }
 
     private void addFeedColumn() {
         // Feed.
         final DocRefCell.Builder<PipelineReference> cellBuilder = new Builder<PipelineReference>()
                 .eventBus(getEventBus())
+                .showIcon(true)
                 .cssClassFunction(this::getStateCssClass)
                 .cellTextFunction(pipelineReference -> {
                     if (pipelineReference == null || pipelineReference.getFeed() == null) {
@@ -208,20 +214,31 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
                         cellBuilder)
                 .build();
 
-        dataGrid.addResizableColumn(feedCol, "Feed", 350);
+        dataGrid.addResizableColumn(
+                feedCol,
+                DataGridUtil.headingBuilder("Feed")
+                        .withToolTip("The feed that contains the reference data to be loaded.")
+                        .build(),
+                350);
     }
 
     private void addStreamTypeColumn() {
         // Stream type.
-        dataGrid.addResizableColumn(new Column<PipelineReference, SafeHtml>(new SafeHtmlCell()) {
-            @Override
-            public SafeHtml getValue(final PipelineReference pipelineReference) {
-                if (pipelineReference.getStreamType() == null) {
-                    return null;
-                }
-                return getSafeHtmlWithState(pipelineReference, pipelineReference.getStreamType());
-            }
-        }, "Type", 200);
+        dataGrid.addResizableColumn(
+                new Column<PipelineReference, SafeHtml>(new SafeHtmlCell()) {
+                    @Override
+                    public SafeHtml getValue(final PipelineReference pipelineReference) {
+                        if (pipelineReference.getStreamType() == null) {
+                            return null;
+                        }
+                        return getSafeHtmlWithState(pipelineReference, pipelineReference.getStreamType());
+                    }
+                },
+                DataGridUtil.headingBuilder("Type")
+                        .withToolTip("The stream type of the reference data to be processed by the loader pipeline " +
+                                     "(typically Reference, Raw Reference or Context).")
+                        .build(),
+                200);
     }
 
     private void addInheritedFromColumn() {
@@ -229,6 +246,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
         @SuppressWarnings("checkstyle:LineLength") // cos GWT
         final DocRefCell.Builder<PipelineReference> cellBuilder = new Builder<PipelineReference>()
                 .eventBus(getEventBus())
+                .showIcon(true)
                 .cssClassFunction(this::getStateCssClass)
                 .cellTextFunction(pipelineReference -> {
                     final DocRef source = pipelineModel.getBaseData().getPipelineReferenceSource(pipelineReference);
@@ -250,7 +268,12 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
                         cellBuilder)
                 .build();
 
-        dataGrid.addResizableColumn(inheritedFromCol, "Inherited From", 350);
+        dataGrid.addResizableColumn(
+                inheritedFromCol,
+                DataGridUtil.headingBuilder("Inherited From")
+                        .withToolTip("The ancestor pipeline that this loader has been inherited from (if applicable).")
+                        .build(),
+                350);
     }
 
     private void addEndColumn() {

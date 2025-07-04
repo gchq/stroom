@@ -1,6 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:v="urn:import:stroom.widget.button.client">
+             xmlns:v="urn:import:stroom.widget.button.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
     <g:SimplePanel addStyleNames="dock-container-vertical">
         <g:ThinSplitLayoutPanel vSplits="0.4" styleName="dock-max">
             <g:north size="200">
@@ -24,18 +25,38 @@
                 </g:FlowPanel>
             </g:north>
             <g:center>
-                <g:ThinSplitLayoutPanel vSplits="0.5" styleName="max">
-                    <g:north size="200">
-                        <g:SimplePanel ui:field="properties"
-                                       styleName="dashboard-panel"/>
-                    </g:north>
-                    <g:center>
-                        <g:SimplePanel ui:field="pipelineReferences"
-                                       styleName="dashboard-panel"/>
+                <g:ThinSplitLayoutPanel ui:field="bottomThinSplitLayoutPanel" vSplits="0.4" styleName="max">
+                    <g:center >
+                        <form:FormGroup ui:field="propertiesFormGroup"
+                                        label="Pipeline Element Properties"
+                                        addStyleNames="form-label-padding">
+                            <form:HelpHTML>
+                                <p>Some pipeline elements have properties to configure their behaviour.</p>
+                                <p>Property values may be inherited from ancestor pipelines or overridden.</p>
+                                <p>Values that inherited or are defaults will be greyed out.</p>
+                            </form:HelpHTML>
+                            <g:SimplePanel ui:field="properties"
+                                           styleName="max"/>
+                        </form:FormGroup>
                     </g:center>
+                    <g:south size="200">
+                        <form:FormGroup ui:field="pipelineReferencesFormGroup"
+                                        label="Reference Loaders"
+                                        addStyleNames="form-label-padding">
+                            <form:HelpHTML>
+                                <p>Reference loaders allow reference data to be loaded and used by
+                                    <code>lookup()</code> and <code>bitmap-lookup()</code> calls in the XSLT.</p>
+                                <p>Reference streams provided by these loaders will be queried in the order in which
+                                    they appear in this list.</p>
+                                <p>Loaders may be inherited from ancestor pipelines.</p>
+                            </form:HelpHTML>
+                            <g:SimplePanel ui:field="pipelineReferences"
+                                           styleName="max"/>
+                        </form:FormGroup>
+                    </g:south>
                 </g:ThinSplitLayoutPanel>
             </g:center>
         </g:ThinSplitLayoutPanel>
     </g:SimplePanel>
 </ui:UiBinder>
- 
+

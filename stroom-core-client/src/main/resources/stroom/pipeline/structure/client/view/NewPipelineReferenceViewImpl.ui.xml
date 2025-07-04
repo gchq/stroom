@@ -4,18 +4,26 @@
         xmlns:g="urn:import:com.google.gwt.user.client.ui"
         xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="newPipelineReferenceElementId" label="Element Id">
+        <form:FormGroup identity="newPipelineReferenceElementId"
+                        label="Element Id">
             <g:Label ui:field="element" addStyleNames="stroom-control-label"/>
         </form:FormGroup>
-        <form:FormGroup identity="newPipelineReferencePipeline" label="Pipeline">
+        <form:FormGroup identity="newPipelineReferencePipeline"
+                        label="Pipeline"
+                        helpText="The pipeline that will process the reference data.">
             <g:SimplePanel ui:field="pipeline" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="newPipelineReferenceFeed" label="Feed">
+        <form:FormGroup identity="newPipelineReferenceFeed"
+                        label="Feed"
+                        helpText="The feed that contains the reference data to be loaded.">
             <g:SimplePanel ui:field="feed" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="newPipelineReferenceType" label="Type">
+        <form:FormGroup identity="newPipelineReferenceType"
+                        label="Type"
+                        helpText="The stream type of the reference data to be processed by the loader pipeline
+                        (typically Reference, Raw Reference or Context).">
             <g:SimplePanel ui:field="type" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>
- 
+
