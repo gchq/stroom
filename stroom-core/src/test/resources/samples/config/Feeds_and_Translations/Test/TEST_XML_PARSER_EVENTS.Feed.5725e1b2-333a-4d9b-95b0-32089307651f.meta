@@ -1,0 +1,12 @@
+{
+  "type" : "Feed",
+  "uuid" : "5725e1b2-333a-4d9b-95b0-32089307651f",
+  "name" : "TEST_XML_PARSER-EVENTS",
+  "version" : "5857edb3-3d09-49f4-a803-fe06c516851c",
+  "description" : "TEST_XML_PARSER-EVENTS",
+  "encoding" : "UTF-8",
+  "contextEncoding" : "UTF-8",
+  "reference" : false,
+  "streamType" : "Raw Events",
+  "status" : "RECEIVE"
+}

@@ -114,7 +114,7 @@ class GitRepoResourceImpl implements GitRepoResource {
         try {
             LOGGER.info("Pulling from Git repo: {}", gitRepoDoc.getUrl());
             final List<Message> messages = gitRepoStorageServiceProvider.get()
-                    .importDoc(gitRepoDoc);
+                    .importDoc(gitRepoDoc, false);
             response = this.createResponse(messages);
         } catch (final Exception e) {
             response = new GitRepoResponse(false, e.getMessage());
@@ -139,7 +139,7 @@ class GitRepoResourceImpl implements GitRepoResource {
             } else {
                 response = new GitRepoResponse(true, "No updates available");
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             response = new GitRepoResponse(false, e.getMessage());
         }
 

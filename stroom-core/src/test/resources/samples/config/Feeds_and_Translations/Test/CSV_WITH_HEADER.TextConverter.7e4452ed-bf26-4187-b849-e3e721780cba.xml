@@ -1,0 +1,20 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<dataSplitter xmlns="data-splitter:3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="data-splitter:3 file://data-splitter-v3.0.1.xsd" version="3.0">
+  <!-- The first line contains the field names -->
+  <split delimiter="\n" maxMatch="1">
+    <group>
+      <split delimiter="," containerStart="&#34;" containerEnd="&#34;">
+        <var id="heading" />
+      </split>
+    </group>
+  </split>
+
+  <!-- All subsequent lines are records -->
+  <split delimiter="\n">
+    <group>
+      <split delimiter="," containerStart="&#34;" containerEnd="&#34;">
+        <data name="$heading$1" value="$1" />
+      </split>
+    </group>
+  </split>
+</dataSplitter>

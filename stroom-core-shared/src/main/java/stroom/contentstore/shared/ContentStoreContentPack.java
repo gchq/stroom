@@ -192,7 +192,7 @@ public class ContentStoreContentPack {
      * can resolve the icon if it hasn't been set yet.
      * @param iconSvg The SVG content for the icon.
      */
-    public void setIconSvg(String iconSvg) {
+    public void setIconSvg(final String iconSvg) {
         this.iconSvg = iconSvg;
     }
 
@@ -317,16 +317,16 @@ public class ContentStoreContentPack {
         // Check if Content Store ownerId matches
         boolean ownerIdMatch = false;
         if (this.contentStoreMetadata != null) {
-            String myOwnerId = this.contentStoreMetadata.getOwnerId();
+            final String myOwnerId = this.contentStoreMetadata.getOwnerId();
             if (gitRepoDoc.getContentStoreMetadata() != null) {
-                String gitRepoOwnerId = gitRepoDoc.getContentStoreMetadata().getOwnerId();
+                final String gitRepoOwnerId = gitRepoDoc.getContentStoreMetadata().getOwnerId();
 
                 ownerIdMatch = myOwnerId.equals(gitRepoOwnerId);
             }
         }
 
         // Check content pack ID
-        boolean contentPackIdMatch = Objects.equals(this.id, gitRepoDoc.getContentStoreContentPackId());
+        final boolean contentPackIdMatch = Objects.equals(this.id, gitRepoDoc.getContentStoreContentPackId());
 
         // Both must match
         return ownerIdMatch && contentPackIdMatch;
@@ -342,10 +342,10 @@ public class ContentStoreContentPack {
      * @return true if this content pack could upgrade the given doc.
      */
     boolean contentPackUpgrades(final GitRepoDoc gitRepoDoc) {
-        boolean gitSettingsMatch = Objects.equals(this.gitUrl, gitRepoDoc.getUrl())
-                && Objects.equals(this.gitBranch, gitRepoDoc.getBranch())
-                && Objects.equals(this.gitPath, gitRepoDoc.getPath())
-                && Objects.equals(this.gitCommit, gitRepoDoc.getCommit());
+        final boolean gitSettingsMatch = Objects.equals(this.gitUrl, gitRepoDoc.getUrl())
+                                         && Objects.equals(this.gitBranch, gitRepoDoc.getBranch())
+                                         && Objects.equals(this.gitPath, gitRepoDoc.getPath())
+                                         && Objects.equals(this.gitCommit, gitRepoDoc.getCommit());
         return !gitSettingsMatch;
     }
 
@@ -407,23 +407,23 @@ public class ContentStoreContentPack {
 
     @Override
     public String toString() {
-        String svgContent = (iconSvg == null ? "null" : "<svg content>");
+        final String svgContent = (iconSvg == null ? "null" : "<svg content>");
         return "ContentStoreContentPack{"
-               + "contentStore Metadata='" + contentStoreMetadata + '\''
-               + "ID='" + id + '\''
-               + "  uiName='" + uiName + '\''
-               + ", iconUrl='" + iconUrl + '\''
-               + ", iconSvg='" + svgContent + '\''
-               + ", licenseName='" + licenseName + '\''
-               + ", licenseUrl='" + licenseUrl + '\''
-               + ", stroomPath='" + stroomPath + '\''
-               + ", details='" + details.substring(0, Math.min(details.length(), DETAILS_TRUNC)) + '\''
-               + ", gitRepoName='" + gitRepoName + '\''
-               + ", gitUrl='" + gitUrl + '\''
-               + ", gitBranch='" + gitBranch + '\''
-               + ", gitPath='" + gitPath + '\''
-               + ", gitCommit='" + gitCommit + '\''
-               + ", gitNeedsAuth='" + gitNeedsAuth + '\''
-               + '}';
+               + "\n  contentStoreMetadata='" + contentStoreMetadata
+               + "'\n  ID='" + id
+               + "'\n  uiName='" + uiName
+               + "'\n  iconUrl='" + iconUrl
+               + "'\n  iconSvg='" + svgContent
+               + "'\n  licenseName='" + licenseName
+               + "'\n  licenseUrl='" + licenseUrl
+               + "'\n  stroomPath='" + stroomPath
+               + "'\n  details='" + details.substring(0, Math.min(details.length(), DETAILS_TRUNC))
+               + "'\n  gitRepoName='" + gitRepoName
+               + "'\n  gitUrl='" + gitUrl
+               + "'\n  gitBranch='" + gitBranch
+               + "'\n  gitPath='" + gitPath
+               + "'\n  gitCommit='" + gitCommit
+               + "'\n  gitNeedsAuth='" + gitNeedsAuth
+               + "\n}";
     }
 }

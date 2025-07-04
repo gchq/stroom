@@ -1,0 +1,11 @@
+{
+  "type" : "Pipeline",
+  "uuid" : "e0af6f2d-ea17-4635-ae5a-114a2be861d3",
+  "name" : "DATA_VIEWING_XML_MULTI_LINE-EVENTS",
+  "version" : "48ba426e-8836-4149-ad9d-c1901ff76fe6",
+  "parentPipeline" : {
+    "type" : "Pipeline",
+    "uuid" : "b07a43a9-f970-4642-9452-42a38fbd447e",
+    "name" : "Event Data (XML)"
+  }
+}

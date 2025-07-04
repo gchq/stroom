@@ -1,6 +1,5 @@
 package stroom.analytics;
 
-import stroom.test.ContentStoreTestSetup;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
@@ -29,6 +28,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.CommonTranslationTestHelper;
+import stroom.test.ContentStoreTestSetup;
 import stroom.test.StoreCreationTool;
 import stroom.test.common.ProjectPathUtil;
 import stroom.util.io.StreamUtil;

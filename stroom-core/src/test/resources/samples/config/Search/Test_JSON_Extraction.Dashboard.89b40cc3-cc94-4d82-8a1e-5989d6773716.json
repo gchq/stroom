@@ -1,0 +1,110 @@
+{
+  "components" : [ {
+    "type" : "table",
+    "id" : "table-IIO1T",
+    "name" : "Table",
+    "settings" : {
+      "type" : "table",
+      "queryId" : "query-JT8D7",
+      "fields" : [ {
+        "name" : "StreamId",
+        "expression" : "${StreamId}",
+        "format" : {
+          "type" : "NUMBER"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "name" : "EventId",
+        "expression" : "${EventId}",
+        "format" : {
+          "type" : "NUMBER"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "name" : "Json",
+        "expression" : "${Json}",
+        "width" : 1313,
+        "visible" : true,
+        "special" : false
+      }, {
+        "name" : "StreamId",
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : false
+      }, {
+        "name" : "EventId",
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : false
+      } ],
+      "extractionPipeline" : {
+        "type" : "Pipeline",
+        "uuid" : "13143179-b494-4146-ac4b-9a6010cada89",
+        "name" : "JSON extraction"
+      },
+      "maxResults" : [ 1000000 ]
+    }
+  }, {
+    "type" : "query",
+    "id" : "query-JT8D7",
+    "name" : "Query",
+    "settings" : {
+      "type" : "query",
+      "dataSource" : {
+        "type" : "Index",
+        "uuid" : "57a35b9a-083c-4a93-a813-fc3ddfe1ff44",
+        "name" : "Example index"
+      },
+      "expression" : {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "term",
+          "field" : "EventTime",
+          "condition" : "LESS_THAN",
+          "value" : "2019-09-11T00:00:00.000Z"
+        } ]
+      },
+      "automate" : {
+        "open" : false,
+        "refresh" : false
+      }
+    }
+  } ],
+  "layout" : {
+    "type" : "splitLayout",
+    "preferredSize" : {
+      "width" : 0,
+      "height" : 0
+    },
+    "dimension" : 1,
+    "children" : [ {
+      "type" : "tabLayout",
+      "preferredSize" : {
+        "width" : 0,
+        "height" : 0
+      },
+      "tabs" : [ {
+        "id" : "query-JT8D7",
+        "visible" : true
+      } ],
+      "selected" : 0
+    }, {
+      "type" : "tabLayout",
+      "preferredSize" : {
+        "width" : 0,
+        "height" : 378
+      },
+      "tabs" : [ {
+        "id" : "table-IIO1T",
+        "visible" : true
+      } ],
+      "selected" : 0
+    } ]
+  }
+}

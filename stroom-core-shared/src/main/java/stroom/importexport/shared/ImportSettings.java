@@ -27,6 +27,8 @@ public class ImportSettings {
     private final boolean useImportFolders;
     @JsonProperty
     private final DocRef rootDocRef;
+    @JsonProperty
+    private final boolean mockEnvironment;
 
     @JsonCreator
     public ImportSettings(@JsonProperty("importMode") final ImportMode importMode,
@@ -34,13 +36,15 @@ public class ImportSettings {
                           @JsonProperty("enableFiltersFromTime") final Long enableFiltersFromTime,
                           @JsonProperty("useImportNames") final boolean useImportNames,
                           @JsonProperty("useImportFolders") final boolean useImportFolders,
-                          @JsonProperty("rootDocRef") final DocRef rootDocRef) {
+                          @JsonProperty("rootDocRef") final DocRef rootDocRef,
+                          @JsonProperty("mockEnvironment") final boolean mockEnvironment) {
         this.importMode = importMode;
         this.enableFilters = enableFilters;
         this.enableFiltersFromTime = enableFiltersFromTime;
         this.useImportNames = useImportNames;
         this.useImportFolders = useImportFolders;
         this.rootDocRef = rootDocRef;
+        this.mockEnvironment = mockEnvironment;
     }
 
     public ImportMode getImportMode() {
@@ -65,6 +69,10 @@ public class ImportSettings {
 
     public DocRef getRootDocRef() {
         return rootDocRef;
+    }
+
+    public boolean isMockEnvironment() {
+        return mockEnvironment;
     }
 
     public static boolean ok(final ImportSettings importSettings,
@@ -111,6 +119,7 @@ public class ImportSettings {
                 useImportNames == that.useImportNames &&
                 useImportFolders == that.useImportFolders &&
                 importMode == that.importMode &&
+                mockEnvironment == that.mockEnvironment &&
                 Objects.equals(enableFiltersFromTime, that.enableFiltersFromTime) &&
                 Objects.equals(rootDocRef, that.rootDocRef);
     }
@@ -128,6 +137,7 @@ public class ImportSettings {
                ", useImportNames=" + useImportNames +
                ", useImportFolders=" + useImportFolders +
                ", rootDocRef=" + rootDocRef +
+               ", isMockEnvironment=" + mockEnvironment +
                '}';
     }
 
@@ -138,7 +148,8 @@ public class ImportSettings {
                 enableFiltersFromTime,
                 useImportNames,
                 useImportFolders,
-                rootDocRef);
+                rootDocRef,
+                mockEnvironment);
     }
 
     public enum ImportMode {
@@ -157,6 +168,7 @@ public class ImportSettings {
         private boolean useImportNames;
         private boolean useImportFolders;
         private DocRef rootDocRef;
+        private boolean mockEnvironment;
 
         public Builder importMode(final ImportMode importMode) {
             this.importMode = importMode;
@@ -188,6 +200,15 @@ public class ImportSettings {
             return this;
         }
 
+        /**
+         * Used to flag to the Import/Export serializer that the environment is mocked for
+         * test and thus the ExplorerTree is missing.
+         */
+        public Builder isMockEnvironment(final boolean mockEnvironment) {
+            this.mockEnvironment = mockEnvironment;
+            return this;
+        }
+
         public ImportSettings build() {
             return new ImportSettings(
                     importMode,
@@ -195,7 +216,8 @@ public class ImportSettings {
                     enableFiltersFromTime,
                     useImportNames,
                     useImportFolders,
-                    rootDocRef);
+                    rootDocRef,
+                    mockEnvironment);
         }
     }
 }

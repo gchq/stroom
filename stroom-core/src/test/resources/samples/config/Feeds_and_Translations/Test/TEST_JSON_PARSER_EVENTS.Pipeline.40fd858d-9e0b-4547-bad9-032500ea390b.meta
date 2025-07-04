@@ -1,0 +1,6 @@
+{
+  "type" : "Pipeline",
+  "uuid" : "40fd858d-9e0b-4547-bad9-032500ea390b",
+  "name" : "TEST_JSON_PARSER-EVENTS",
+  "version" : "887d1ea7-b23c-40d7-8684-0d72f322fb5a"
+}

@@ -21,7 +21,7 @@ import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -95,7 +95,10 @@ public class MockExplorerNodeService implements ExplorerNodeService {
 
     @Override
     public List<ExplorerNode> getPath(final DocRef docRef) {
-        return Collections.singletonList(createTestNode());
+        // Make sure returned list is mutable
+        final ArrayList<ExplorerNode> path = new ArrayList<>(1);
+        path.add(createTestNode());
+        return path;
     }
 
     @Override
@@ -105,22 +108,26 @@ public class MockExplorerNodeService implements ExplorerNodeService {
 
     @Override
     public List<ExplorerNode> getDescendants(final DocRef folderRef) {
-        return Collections.emptyList();
+        // Make sure returned list is mutable
+        return new ArrayList<>();
     }
 
     @Override
     public List<ExplorerNode> getChildren(final DocRef folderRef) {
-        return Collections.emptyList();
+        // Make sure returned list is mutable
+        return new ArrayList<>();
     }
 
     @Override
     public List<ExplorerNode> getNodesByName(final ExplorerNode parent, final String name) {
-        return Collections.emptyList();
+        // Make sure returned list is mutable
+        return new ArrayList<>();
     }
 
     @Override
     public List<ExplorerNode> getNodesByNameAndType(final ExplorerNode parent, final String name, final String type) {
-        return Collections.emptyList();
+        // Make sure returned list is mutable
+        return new ArrayList<>();
     }
 
     @Override

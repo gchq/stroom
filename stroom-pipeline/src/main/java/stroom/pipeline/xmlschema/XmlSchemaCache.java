@@ -17,6 +17,8 @@
 
 package stroom.pipeline.xmlschema;
 
+import stroom.docref.DocRef;
+import stroom.security.api.SecurityContext;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.xmlschema.shared.XmlSchemaDoc;
@@ -42,10 +44,13 @@ public class XmlSchemaCache implements EntityEvent.Handler {
     private final XmlSchemaStore xmlSchemaStore;
     private final List<ClearHandler> clearHandlers = new ArrayList<>();
     private final Map<FindXMLSchemaCriteria, SchemaSet> schemaSets = new ConcurrentHashMap<>();
+    private final SecurityContext securityContext;
 
     @Inject
-    public XmlSchemaCache(final XmlSchemaStore xmlSchemaStore) {
+    public XmlSchemaCache(final XmlSchemaStore xmlSchemaStore,
+                          final SecurityContext securityContext) {
         this.xmlSchemaStore = xmlSchemaStore;
+        this.securityContext = securityContext;
     }
 
     /**
@@ -70,66 +75,71 @@ public class XmlSchemaCache implements EntityEvent.Handler {
     }
 
     public SchemaSet getSchemaSet(final FindXMLSchemaCriteria criteria) {
-        SchemaSet schemaSet = schemaSets.get(criteria);
-        if (schemaSet == null) {
-            try {
-                final Map<String, List<XmlSchemaDoc>> schemaNameMap = new HashMap<>();
-                final Map<String, List<XmlSchemaDoc>> schemaNamespaceURIMap = new HashMap<>();
-                final Map<String, List<XmlSchemaDoc>> schemaSystemIdMap = new HashMap<>();
-                final List<String> systemIdList = new ArrayList<>();
 
-                // Get a list of matching schemas.
-                final List<XmlSchemaDoc> schemas = xmlSchemaStore.find(criteria).getValues();
-                schemas.forEach(schema -> {
-                    addToMap(schemaNameMap, schema.getName(), schema);
-                    addToMap(schemaNamespaceURIMap, schema.getNamespaceURI(), schema);
-                    addToMap(schemaSystemIdMap, schema.getSystemId(), schema);
+        return securityContext.asProcessingUserResult(() -> {
+            SchemaSet schemaSet = schemaSets.get(criteria);
+            if (schemaSet == null) {
+                try {
+                    final Map<String, List<XmlSchemaDoc>> schemaNameMap = new HashMap<>();
+                    final Map<String, List<XmlSchemaDoc>> schemaNamespaceURIMap = new HashMap<>();
+                    final Map<String, List<XmlSchemaDoc>> schemaSystemIdMap = new HashMap<>();
+                    final List<String> systemIdList = new ArrayList<>();
 
-                    if (schema.getSystemId() != null) {
-                        final String systemId = schema.getSystemId().trim();
-                        if (systemId.length() > 0) {
-                            systemIdList.add(systemId);
+                    // Get a list of matching schemas.
+                    final List<DocRef> allSchemas = xmlSchemaStore.list();
+
+                    final List<XmlSchemaDoc> schemas = xmlSchemaStore.find(criteria).getValues();
+                    schemas.forEach(schema -> {
+                        addToMap(schemaNameMap, schema.getName(), schema);
+                        addToMap(schemaNamespaceURIMap, schema.getNamespaceURI(), schema);
+                        addToMap(schemaSystemIdMap, schema.getSystemId(), schema);
+
+                        if (schema.getSystemId() != null) {
+                            final String systemId = schema.getSystemId().trim();
+                            if (systemId.length() > 0) {
+                                systemIdList.add(systemId);
+                            }
+                        }
+                    });
+
+                    // Create location string.
+                    Collections.sort(systemIdList);
+                    final StringBuilder sb = new StringBuilder();
+                    for (final String systemId : systemIdList) {
+                        sb.append(systemId);
+                        sb.append("\n");
+                    }
+                    if (sb.length() > 0) {
+                        sb.setLength(sb.length() - 1);
+                    }
+                    final String locations = sb.toString();
+
+                    schemaSet = new SchemaSet(schemaNameMap, schemaNamespaceURIMap, schemaSystemIdMap, locations);
+
+                    // Cache this info for future use.
+
+                    // There was a memory leak in XMLSchemaCache due
+                    // to schema criteria map keys not implementing equals properly.
+                    // This has been fixed but has highlighted the issue that a
+                    // proper cache should be used instead of a map to allow
+                    // this to scale better.
+                    schemaSets.put(criteria, schemaSet);
+
+                    if (schemaSets.size() > 100) {
+                        LOGGER.error("Too many schema sets.");
+
+                        while (schemaSets.size() > 50) {
+                            schemaSets.remove(schemaSets.keySet().iterator().next());
                         }
                     }
-                });
 
-                // Create location string.
-                Collections.sort(systemIdList);
-                final StringBuilder sb = new StringBuilder();
-                for (final String systemId : systemIdList) {
-                    sb.append(systemId);
-                    sb.append("\n");
+                } catch (final RuntimeException e) {
+                    LOGGER.error("Unable to get schema set!", e);
                 }
-                if (sb.length() > 0) {
-                    sb.setLength(sb.length() - 1);
-                }
-                final String locations = sb.toString();
-
-                schemaSet = new SchemaSet(schemaNameMap, schemaNamespaceURIMap, schemaSystemIdMap, locations);
-
-                // Cache this info for future use.
-
-                // There was a memory leak in XMLSchemaCache due
-                // to schema criteria map keys not implementing equals properly.
-                // This has been fixed but has highlighted the issue that a
-                // proper cache should be used instead of a map to allow
-                // this to scale better.
-                schemaSets.put(criteria, schemaSet);
-
-                if (schemaSets.size() > 100) {
-                    LOGGER.error("Too many schema sets.");
-
-                    while (schemaSets.size() > 50) {
-                        schemaSets.remove(schemaSets.keySet().iterator().next());
-                    }
-                }
-
-            } catch (final RuntimeException e) {
-                LOGGER.error("Unable to get schema set!", e);
             }
-        }
 
-        return schemaSet;
+            return schemaSet;
+        });
     }
 
     private void addToMap(final Map<String, List<XmlSchemaDoc>> map, final String name, final XmlSchemaDoc xmlSchema) {

@@ -265,16 +265,22 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
      * @throws IOException if something goes wrong
      */
     @Override
-    public synchronized List<Message> importDoc(final GitRepoDoc gitRepoDoc) throws IOException {
-        List<Message> messages = new ArrayList<>();
+    public synchronized List<Message> importDoc(
+            final GitRepoDoc gitRepoDoc,
+            final boolean isMockEnvironment)
+            throws IOException {
+        final List<Message> messages = new ArrayList<>();
 
         final DocRef gitRepoDocRef = GitRepoDoc.getDocRef(gitRepoDoc.getUuid());
-        final Optional<ExplorerNode> optGitRepoExplorerNode = explorerService.getFromDocRef(gitRepoDocRef);
-        final ExplorerNode gitRepoExplorerNode = optGitRepoExplorerNode.orElseThrow(IOException::new);
 
-        // Work out where the GitRepo node is in the explorer tree
-        final List<ExplorerNode> gitRepoNodePath = this.explorerNodeService.getPath(gitRepoDocRef);
-        gitRepoNodePath.add(gitRepoExplorerNode);
+        if (!isMockEnvironment) {
+            final Optional<ExplorerNode> optGitRepoExplorerNode = explorerService.getFromDocRef(gitRepoDocRef);
+            final ExplorerNode gitRepoExplorerNode = optGitRepoExplorerNode.get();
+
+            // Work out where the GitRepo node is in the explorer tree
+            final List<ExplorerNode> gitRepoNodePath = this.explorerNodeService.getPath(gitRepoDocRef);
+            gitRepoNodePath.add(gitRepoExplorerNode);
+        }
 
         // Only try to do anything if the settings exist
         if (!gitRepoDoc.getUrl().isEmpty()) {
@@ -300,12 +306,19 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                         .useImportFolders(true)
                         .useImportNames(true)
                         .rootDocRef(gitRepoDocRef)
+                        .isMockEnvironment(isMockEnvironment)
                         .build();
 
                 // Set (remote) directory
                 final Path pathToImport;
                 if (gitRepoDoc.getPath() != null && !gitRepoDoc.getPath().isEmpty()) {
-                    pathToImport = addDirectoryToPath(gitWorkDir.directory, Paths.get(gitRepoDoc.getPath()));
+                    pathToImport = addDirectoryToPath(gitWorkDir.getDirectory(), Paths.get(gitRepoDoc.getPath()));
+                    // Sanity check to avoid mystery import failures
+                    if (!pathToImport.toFile().exists()) {
+                        throw new IOException("The path to import '"
+                                              + gitRepoDoc.getPath()
+                                              + "' doesn't exist within the Git repository.");
+                    }
                 } else {
                     pathToImport = gitWorkDir.getDirectory();
                 }
@@ -549,7 +562,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
             }
         } else {
             // We want a particular commit so get everything - all commits
-            try (Git git = Git.cloneRepository()
+            try (final Git git = Git.cloneRepository()
                     .setURI(gitRepoDoc.getUrl())
                     .setDirectory(gitWorkDir.toFile())
                     .setCredentialsProvider(this.getGitCreds(gitRepoDoc))
@@ -563,7 +576,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                 gitRepoDoc.setGitRemoteCommitName(this.gitGetCurrentRevCommitName(git));
                 gitRepoStore.writeDocument(gitRepoDoc);
 
-            } catch (GitAPIException e) {
+            } catch (final GitAPIException e) {
                 LOGGER.error("Error cloning git commit '{}': {}", gitCommit, e.getMessage(), e);
                 throw new IOException("Git error cloning / checking out commit '"
                                       + gitCommit
@@ -596,7 +609,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                 gitRepoDoc.getUrl(),
                 gitWorkDir);
 
-        try (Git git = Git.cloneRepository()
+        try (final Git git = Git.cloneRepository()
                 .setURI(gitRepoDoc.getUrl())
                 .setDirectory(gitWorkDir.toFile())
                 .setCredentialsProvider(this.getGitCreds(gitRepoDoc))
@@ -605,7 +618,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                 .setCloneAllBranches(false)
                 .call()) {
 
-            String gitCommitName = this.gitGetCurrentRevCommitName(git);
+            final String gitCommitName = this.gitGetCurrentRevCommitName(git);
             LOGGER.info("Stroom commit: {}; git commit available: {}; match: {}",
                     gitRepoDoc.getGitRemoteCommitName(),
                     gitCommitName,
@@ -621,7 +634,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
      * @param git The Git instance to query.
      * @return The string that identifies the commit.
      */
-    private String gitGetCurrentRevCommitName(Git git) throws GitAPIException {
+    private String gitGetCurrentRevCommitName(final Git git) throws GitAPIException {
         return git
                 .log()
                 .setMaxCount(1)
@@ -636,7 +649,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
      * @throws IOException if something goes wrong.
      */
     @Override
-    public boolean areUpdatesAvailable(GitRepoDoc gitRepoDoc) throws IOException {
+    public boolean areUpdatesAvailable(final GitRepoDoc gitRepoDoc) throws IOException {
         LOGGER.info("Checking if updates are available for '{}'", gitRepoDoc.getUrl());
 
         if (!gitRepoDoc.getUrl().isEmpty()) {
@@ -646,7 +659,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                 try {
                     return this.gitUpdatesAvailable(gitRepoDoc, gitWorkDir.getDirectory());
 
-                } catch (GitAPIException e) {
+                } catch (final GitAPIException e) {
                     throw new IOException("Error checking for updates", e);
                 }
             }
@@ -706,7 +719,14 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
          */
         public AutoDeletingTempDirectory(final Path location, final String prefix)
             throws IOException {
+            // Try to create parent directories
+            if (!location.toFile().exists()) {
+                if (!location.toFile().mkdirs()){
+                    throw new IOException("Could not create directories for Git repository");
+                }
+            }
 
+            // Create the temporary directory
             this.directory = Files.createTempDirectory(location, prefix);
         }
 
@@ -726,12 +746,12 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
 
             Files.walkFileTree(directory, new SimpleFileVisitor<>() {
                 @Override
-                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) {
                     return FileVisitResult.CONTINUE;
                 }
 
                 @Override
-                public FileVisitResult visitFile(Path p, BasicFileAttributes attrs)
+                public FileVisitResult visitFile(final Path p, final BasicFileAttributes attrs)
                         throws IOException {
 
                     Files.delete(p);
@@ -739,7 +759,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                 }
 
                 @Override
-                public FileVisitResult postVisitDirectory(Path dir, IOException ex)
+                public FileVisitResult postVisitDirectory(final Path dir, final IOException ex)
                         throws IOException {
 
                     Files.delete(dir);

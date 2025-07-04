@@ -1,0 +1,11 @@
+{
+  "type" : "Pipeline",
+  "uuid" : "05dfe822-2a9d-47e7-9251-79260d4c6244",
+  "name" : "XML_JSON-EVENTS",
+  "version" : "f86d3691-e8df-4a6b-a8a2-42cc1be08800",
+  "parentPipeline" : {
+    "type" : "Pipeline",
+    "uuid" : "bd7be478-632b-40fe-8fda-f578ec57e959",
+    "name" : "Common Test Event Pipeline"
+  }
+}

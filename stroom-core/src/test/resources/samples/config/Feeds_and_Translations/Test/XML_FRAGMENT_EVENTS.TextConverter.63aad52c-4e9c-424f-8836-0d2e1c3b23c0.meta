@@ -1,0 +1,7 @@
+{
+  "type" : "TextConverter",
+  "uuid" : "63aad52c-4e9c-424f-8836-0d2e1c3b23c0",
+  "name" : "XML_FRAGMENT-EVENTS",
+  "version" : "a2d8ea09-dc98-4f33-8160-37f59aac7b32",
+  "converterType" : "XML_FRAGMENT"
+}

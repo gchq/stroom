@@ -18,8 +18,7 @@ dependencies {
     implementation libs.restygwt
     implementation libs.slf4j.api
 
-    testImplementation libs.assertj.core
-    testImplementation libs.junit.jupiter.api
-    testImplementation libs.junit.jupiter.engine
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
 
 }

@@ -14,30 +14,39 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class ContentStoreResponse {
 
+    /**
+     * Return status; used to flag different error statuses.
+     */
+    public enum Status {
+            OK,
+        GENERAL_ERR,
+        ALREADY_EXISTS
+    }
+
     @JsonProperty
-    private final boolean ok;
+    private final Status status;
 
     @JsonProperty
     private final String message;
 
     /**
      * Constructor.
-     * @param ok      If the API call worked
+     * @param status  If the API call worked. Must not be null.
      * @param message Any message. Must not be null.
      */
     @JsonCreator
-    public ContentStoreResponse(@JsonProperty("ok") final boolean ok,
+    public ContentStoreResponse(@JsonProperty("status") final ContentStoreResponse.Status status,
                                 @JsonProperty("message") final String message) {
         Objects.requireNonNull(message);
-        this.ok = ok;
+        this.status = status;
         this.message = message;
     }
 
     /**
-     * @return true if call worked, false if there was an error.
+     * @return Returns the status of the operation.
      */
-    public boolean isOk() {
-        return ok;
+    public Status getStatus() {
+        return status;
     }
 
     /**

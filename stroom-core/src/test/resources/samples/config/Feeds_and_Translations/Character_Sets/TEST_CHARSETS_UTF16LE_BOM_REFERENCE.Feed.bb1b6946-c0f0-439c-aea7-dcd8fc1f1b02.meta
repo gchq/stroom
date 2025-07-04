@@ -1,0 +1,13 @@
+{
+  "type" : "Feed",
+  "uuid" : "bb1b6946-c0f0-439c-aea7-dcd8fc1f1b02",
+  "name" : "TEST_CHARSETS_UTF16LE_BOM-REFERENCE",
+  "version" : "85fa45e8-6f9b-4703-98f9-8c4c1dc47a95",
+  "description" : "",
+  "classification" : "",
+  "encoding" : "UTF-16LE",
+  "contextEncoding" : "UTF-16LE",
+  "reference" : false,
+  "streamType" : "Raw Reference",
+  "status" : "RECEIVE"
+}

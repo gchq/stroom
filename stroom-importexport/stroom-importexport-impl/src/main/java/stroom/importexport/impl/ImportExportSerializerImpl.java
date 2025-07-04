@@ -386,22 +386,24 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         }
         importState.setDestPath(createPath(destPath, destName));
 
+        // Only do this if we're not mocked up
         // If we are creating a new node or moving an existing one then create the destination folders and check
         // permissions.
         DocRef folderRef = null;
         ExplorerNode parentNode = null;
-        if (importState.getState() == State.NEW || moving) {
-            // Create parent folders for the new node.
-            final ExplorerNode parent = explorerNodeService.getRoot();
-            parentNode = getOrCreateParentFolder(parent,
-                                                 importPath,
-                                                 ImportSettings.ok(importSettings, importState));
-
-            // Check permissions on the parent folder.
-            folderRef = new DocRef(parentNode.getType(), parentNode.getUuid(), parentNode.getName());
-            if (!securityContext.hasDocumentCreatePermission(folderRef, docRef.getType())) {
-                throw new PermissionException(securityContext.getUserRef(),
-                        "You do not have permission to create '" + docRef + "' in '" + folderRef);
+        if (!importSettings.isMockEnvironment()) {
+            if (importState.getState() == State.NEW || moving) {
+                // Create parent folders for the new node.
+                final ExplorerNode parent = explorerNodeService.getRoot();
+                parentNode = getOrCreateParentFolder(parent,
+                        importPath,
+                        ImportSettings.ok(importSettings, importState));
+                // Check permissions on the parent folder.
+                folderRef = new DocRef(parentNode.getType(), parentNode.getUuid(), parentNode.getName());
+                if (!securityContext.hasDocumentCreatePermission(folderRef, docRef.getType())) {
+                    throw new PermissionException(securityContext.getUserRef(),
+                            "You do not have permission to create '" + docRef + "' in '" + folderRef);
+                }
             }
         }
 
@@ -422,38 +424,40 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                     throw new RuntimeException("Import failed - no DocRef returned");
                 }
 
-                // Add explorer node afterwards on successful import as they won't be controlled by
-                // doc service.
-                if (ImportSettings.ok(importSettings, importState)) {
-                    final ExplorerNode explorerNode = ExplorerNode
-                            .builder()
-                            .docRef(docRef)
-                            .build();
+                if (!importSettings.isMockEnvironment()) {
+                    // Add explorer node afterwards on successful import as they won't be controlled by
+                    // doc service.
+                    if (ImportSettings.ok(importSettings, importState)) {
+                        final ExplorerNode explorerNode = ExplorerNode
+                                .builder()
+                                .docRef(docRef)
+                                .build();
 
-                    // Create, rename and/or move explorer node.
-                    if (existingNode.isEmpty()) {
-                        explorerNodeService.createNode(
-                                imported,
-                                folderRef,
-                                PermissionInheritance.DESTINATION);
-                        explorerService.rebuildTree();
-                    } else {
-                        if (importSettings.isUseImportNames()) {
-                            explorerService.rename(explorerNode, docRef.getName());
-                        }
-                        if (moving) {
-                            explorerService.move(
-                                    Collections.singletonList(explorerNode),
-                                    parentNode,
+                        // Create, rename and/or move explorer node.
+                        if (existingNode.isEmpty()) {
+                            explorerNodeService.createNode(
+                                    imported,
+                                    folderRef,
                                     PermissionInheritance.DESTINATION);
+                            explorerService.rebuildTree();
+                        } else {
+                            if (importSettings.isUseImportNames()) {
+                                explorerService.rename(explorerNode, docRef.getName());
+                            }
+                            if (moving) {
+                                explorerService.move(
+                                        Collections.singletonList(explorerNode),
+                                        parentNode,
+                                        PermissionInheritance.DESTINATION);
+                            }
                         }
-                    }
 
-                    importExportDocumentEventLog.importDocument(
-                            docRef.getType(),
-                            imported.getUuid(),
-                            docRef.getName(),
-                            null);
+                        importExportDocumentEventLog.importDocument(
+                                docRef.getType(),
+                                imported.getUuid(),
+                                docRef.getName(),
+                                null);
+                    }
                 }
             } else {
                 // We can't import this item so remove it from the map.

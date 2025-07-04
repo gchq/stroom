@@ -5,6 +5,7 @@ import stroom.contentstore.shared.ContentStoreContentPack;
 import stroom.contentstore.shared.ContentStoreContentPackStatus;
 import stroom.contentstore.shared.ContentStoreContentPackWithDynamicState;
 import stroom.contentstore.shared.ContentStoreCreateGitRepoRequest;
+import stroom.contentstore.shared.ContentStoreResponse.Status;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
@@ -126,7 +127,7 @@ public class ContentStoreContentPackDetailsPresenter
         // Main layout
         final FlexTable detailsTable = new FlexTable();
         detailsTable.addStyleName("contentstore-details-table");
-        FlexCellFormatter detailsFormatter = detailsTable.getFlexCellFormatter();
+        final FlexCellFormatter detailsFormatter = detailsTable.getFlexCellFormatter();
 
         // Title - name of content pack
         lblName.addStyleName("contentstore-details-heading");
@@ -148,7 +149,7 @@ public class ContentStoreContentPackDetailsPresenter
         btnUpgradeGitRepo.addClickHandler(event -> btnUpgradeGitRepoClick());
 
         // Add buttons centrally into a row
-        HorizontalPanel pnlButtons = new HorizontalPanel();
+        final HorizontalPanel pnlButtons = new HorizontalPanel();
         pnlButtons.add(btnCreateGitRepo);
         pnlButtons.add(btnUpgradeGitRepo);
         detailsFormatter.setColSpan(2, 0, 2);
@@ -250,7 +251,7 @@ public class ContentStoreContentPackDetailsPresenter
             this.lblGitCommit.setText(cpws.getContentPack().getGitCommit());
 
             // Details get converted to markdown
-            SafeHtml safeDetails = markdownConverter.convertMarkdownToHtml(
+            final SafeHtml safeDetails = markdownConverter.convertMarkdownToHtml(
                     cpws.getContentPack().getDetails());
             this.lblDetails.setHTML(safeDetails);
         }
@@ -265,9 +266,9 @@ public class ContentStoreContentPackDetailsPresenter
      * @return The string to display to the user.
      */
     private String resolveInstalledLocation(final ContentStoreContentPack cp) {
-        String stroomPath = cp.getStroomPath();
-        String gitRepoName = cp.getGitRepoName();
-        StringBuilder buf = new StringBuilder(stroomPath);
+        final String stroomPath = cp.getStroomPath();
+        final String gitRepoName = cp.getGitRepoName();
+        final StringBuilder buf = new StringBuilder(stroomPath);
         if (!stroomPath.endsWith("/")) {
             buf.append('/');
         }
@@ -281,7 +282,7 @@ public class ContentStoreContentPackDetailsPresenter
      */
     public void setState() {
         if (contentPackWithState != null) {
-            ContentStoreContentPackStatus status = contentPackWithState.getInstallationStatus();
+            final ContentStoreContentPackStatus status = contentPackWithState.getInstallationStatus();
             if (status.equals(ContentStoreContentPackStatus.NOT_INSTALLED)) {
                 btnCreateGitRepo.setEnabled(true);
                 btnUpgradeGitRepo.setEnabled(false);
@@ -311,7 +312,7 @@ public class ContentStoreContentPackDetailsPresenter
 
             // Ask for credentials if (contentPack.getGitNeedsAuth())
             if (cpws.getContentPack().getGitNeedsAuth()) {
-                ShowPopupEvent.Builder builder = ShowPopupEvent.builder(credentialsDialog);
+                final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(credentialsDialog);
                 credentialsDialog.setupDialog(
                         cpws.getContentPack(),
                         builder);
@@ -353,7 +354,7 @@ public class ContentStoreContentPackDetailsPresenter
                                         final String username,
                                         final String password) {
 
-        ContentStoreCreateGitRepoRequest request =
+        final ContentStoreCreateGitRepoRequest request =
                 new ContentStoreCreateGitRepoRequest(cpws.getContentPack(),
                         username,
                         password);
@@ -362,7 +363,7 @@ public class ContentStoreContentPackDetailsPresenter
                 .create(ContentStorePresenter.CONTENT_STORE_RESOURCE)
                 .method(res -> res.create(request))
                 .onSuccess(result -> {
-                    if (result.isOk()) {
+                    if (result.getStatus().equals(Status.OK)) {
                         AlertEvent.fireInfo(contentStorePresenter,
                                 "Creation success",
                                 result.getMessage(),
@@ -407,12 +408,12 @@ public class ContentStoreContentPackDetailsPresenter
      * can be upgraded.
      * @param cpws The current content pack and state. Must not be null.
      */
-    private void doContentPackUpgrade(ContentStoreContentPackWithDynamicState cpws) {
+    private void doContentPackUpgrade(final ContentStoreContentPackWithDynamicState cpws) {
         restFactory
                 .create(ContentStorePresenter.CONTENT_STORE_RESOURCE)
                 .method(res -> res.upgradeContentPack(cpws.getContentPack()))
                 .onSuccess(result -> {
-                    if (result.isOk()) {
+                    if (result.getStatus().equals(Status.OK)) {
                         AlertEvent.fireInfo(contentStorePresenter,
                                 "Content pack upgrade success",
                                 result.getMessage(),

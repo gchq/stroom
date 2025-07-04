@@ -33,10 +33,13 @@ public interface GitRepoStorageService {
      * Called when the user presses the Pull from Git button in the UI.
      *
      * @param gitRepoDoc The document holding the Git repo settings
+     * @param isMockEnvironment Whether we're in a Mock environment during testing
+     *                          thus ExplorerTree isn't there.
      * @return A list of messages about the import
      * @throws IOException if something goes wrong
      */
-    List<Message> importDoc(GitRepoDoc gitRepoDoc) throws IOException;
+    List<Message> importDoc(GitRepoDoc gitRepoDoc,
+                            boolean isMockEnvironment) throws IOException;
 
     /**
      * Checks if any updates are available in the Git Repo.

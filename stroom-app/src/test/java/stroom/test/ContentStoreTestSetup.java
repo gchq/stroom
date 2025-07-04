@@ -1,16 +1,17 @@
 package stroom.test;
 
-import stroom.contentstore.impl.ContentStoreConfig;
 import stroom.contentstore.impl.ContentStoreResourceImpl;
 import stroom.contentstore.shared.ContentStoreContentPack;
 import stroom.contentstore.shared.ContentStoreContentPackWithDynamicState;
 import stroom.contentstore.shared.ContentStoreCreateGitRepoRequest;
 import stroom.contentstore.shared.ContentStoreResponse;
+import stroom.contentstore.shared.ContentStoreResponse.Status;
 import stroom.test.common.ProjectPathUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,11 +25,14 @@ import java.util.List;
  */
 public class ContentStoreTestSetup {
 
-    /** Thing to do the actual import */
-    private final ContentStoreResourceImpl contentStoreResource;
+    /** Provider of the Thing to do the actual import */
+    private final Provider<ContentStoreResourceImpl> contentStoreResourceProvider;
+
+    /** Thing to do the actual work */
+    private ContentStoreResourceImpl contentStoreResource;
 
     /** Stuff in the Content Store */
-    private final List<ContentStoreContentPackWithDynamicState> contentStoreContents;
+    private List<ContentStoreContentPackWithDynamicState> contentStoreContents;
 
     /** Every ID in the content store - SetupSampleData installs all of them */
     private final List<String> samplePackIds = new ArrayList<>();
@@ -41,36 +45,44 @@ public class ContentStoreTestSetup {
             "event-logging-xml-schema",
             "standard-pipelines",
             "template-pipelines",
-            "state",
             "planb"
     );
 
     /**
      * Constructor - injected.
-     * @param contentStoreResource Injected service for managing content stores and packs.
+     * @param contentStoreResourceProvider Injected service for managing content stores and packs.
      */
     @Inject
     public ContentStoreTestSetup(
-            final ContentStoreConfig contentStoreConfig,
-            final ContentStoreResourceImpl contentStoreResource) {
+            final Provider<ContentStoreResourceImpl> contentStoreResourceProvider) {
 
-        // Hack to force the content store config to use our content store config file
-        contentStoreConfig.resetUrlsToFile(
-                ProjectPathUtil.getRepoRoot(),
-                "content-store-sample-data.yml");
+        this.contentStoreResourceProvider = contentStoreResourceProvider;
+    }
 
-        // Store the backend
-        this.contentStoreResource = contentStoreResource;
+    /**
+     * Load the content store, if necessary.
+     * Cannot be called from injected constructor.
+     */
+    private synchronized void cacheContentStore() {
+        if (contentStoreContents == null) {
 
-        // Get all the items in one go
-        PageRequest pageRequest = new PageRequest(0, Integer.MAX_VALUE);
-        ResultPage<ContentStoreContentPackWithDynamicState> page = contentStoreResource.list(pageRequest);
+            // Hack to force the content store config to use our content store config file
+            contentStoreResource = contentStoreResourceProvider.get();
+            contentStoreResource.resetContentStoreUrlsToFile(
+                    ProjectPathUtil.getRepoRoot(),
+                    "content-store-sample-data.yml");
 
-        this.contentStoreContents = page.stream().toList();
+            // Get all the items in one go
+            final PageRequest pageRequest = new PageRequest(0, Integer.MAX_VALUE);
+            final ResultPage<ContentStoreContentPackWithDynamicState> page =
+                    contentStoreResource.list(pageRequest);
 
-        // List out all the IDs so we can install them if necessary
-        for (ContentStoreContentPackWithDynamicState cpds : contentStoreContents) {
-            this.samplePackIds.add(cpds.getContentPack().getId());
+            contentStoreContents = page.stream().toList();
+
+            // List out all the IDs so we can install them if necessary
+            for (final ContentStoreContentPackWithDynamicState cpds : contentStoreContents) {
+                samplePackIds.add(cpds.getContentPack().getId());
+            }
         }
     }
 
@@ -80,10 +92,11 @@ public class ContentStoreTestSetup {
      * @throws RuntimeException If something goes wrong.
      */
     public void install(final String contentPackId) throws RuntimeException {
+        this.cacheContentStore();
 
         // Find the content pack
         ContentStoreContentPack cp = null;
-        for (ContentStoreContentPackWithDynamicState cpds : this.contentStoreContents) {
+        for (final ContentStoreContentPackWithDynamicState cpds : this.contentStoreContents) {
             if (cpds.getContentPack().getId().equals(contentPackId)) {
                 cp = cpds.getContentPack();
                 break;
@@ -101,12 +114,15 @@ public class ContentStoreTestSetup {
         }
 
         // Install the pack
-        ContentStoreCreateGitRepoRequest request = new ContentStoreCreateGitRepoRequest(cp, null, null);
-        ContentStoreResponse response = contentStoreResource.create(request);
-        if (!response.isOk()) {
+        final ContentStoreCreateGitRepoRequest request =
+                new ContentStoreCreateGitRepoRequest(cp, null, null);
+        final ContentStoreResponse response = contentStoreResource.create(request);
+        final ContentStoreResponse.Status status = response.getStatus();
+        if (!(status.equals(Status.OK) || status.equals(Status.ALREADY_EXISTS))) {
             throw new RuntimeException("Couldn't create content pack with ID '"
-            + contentPackId + "': " + response.getMessage());
+                + contentPackId + "': " + response.getMessage());
         }
+
     }
 
     /**
@@ -115,7 +131,7 @@ public class ContentStoreTestSetup {
      * @throws RuntimeException If something goes wrong.
      */
     public void install(final Collection<String> contentPackIds) throws RuntimeException {
-        for (String id : contentPackIds) {
+        for (final String id : contentPackIds) {
             install(id);
         }
     }

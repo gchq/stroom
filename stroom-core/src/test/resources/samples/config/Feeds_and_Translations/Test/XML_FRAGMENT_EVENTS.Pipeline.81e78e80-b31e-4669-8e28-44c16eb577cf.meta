@@ -1,0 +1,11 @@
+{
+  "type" : "Pipeline",
+  "uuid" : "81e78e80-b31e-4669-8e28-44c16eb577cf",
+  "name" : "XML_FRAGMENT-EVENTS",
+  "version" : "0527b137-ebe3-4a8e-8521-5623f532b736",
+  "parentPipeline" : {
+    "type" : "Pipeline",
+    "uuid" : "bd7be478-632b-40fe-8fda-f578ec57e959",
+    "name" : "Common Test Event Pipeline"
+  }
+}

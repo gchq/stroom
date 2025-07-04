@@ -12,8 +12,10 @@ import stroom.docstore.impl.DocStoreModule;
 import stroom.docstore.impl.memory.MemoryPersistenceModule;
 import stroom.documentation.impl.DocumentationModule;
 import stroom.event.logging.api.DocumentEventLog;
+import stroom.event.logging.mock.MockStroomEventLoggingModule;
 import stroom.explorer.impl.MockExplorerModule;
 import stroom.feed.impl.FeedModule;
+import stroom.importexport.impl.ImportExportModule;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.mock.MockMetaModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
@@ -22,13 +24,21 @@ import stroom.pipeline.PipelineService;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.receive.common.RequestAuthenticator;
 import stroom.receive.rules.impl.ReceiveDataRuleSetModule;
+import stroom.security.api.ContentPackUserService;
 import stroom.security.api.UserIdentity;
+import stroom.security.mock.MockSecurityContext;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.security.mock.MockSecurityModule;
 import stroom.task.impl.TaskContextModule;
 import stroom.test.common.MockMetricsModule;
 import stroom.test.common.util.guice.GuiceTestUtil;
 import stroom.util.entityevent.EntityEventBus;
+import stroom.util.io.HomeDirProvider;
+import stroom.util.io.HomeDirProviderImpl;
+import stroom.util.io.PathConfig;
+import stroom.util.io.StroomPathConfig;
+import stroom.util.io.TempDirProvider;
+import stroom.util.io.TempDirProviderImpl;
 import stroom.util.pipeline.scope.PipelineScopeModule;
 
 import com.google.inject.AbstractModule;
@@ -47,6 +57,8 @@ public class TestBaseModule extends AbstractModule {
         install(new DocStoreModule());
         install(new MockDocRefInfoModule());
         install(new FeedModule());
+        install(new stroom.gitrepo.impl.GitRepoModule());
+        install(new ImportExportModule());
         install(new MemoryPersistenceModule());
         install(new MockClusterLockModule());
         install(new MockExplorerModule());
@@ -57,6 +69,7 @@ public class TestBaseModule extends AbstractModule {
         install(new MockSecurityModule());
         install(new MockSecurityContextModule());
         install(new MockStreamStoreModule());
+        install(new MockStroomEventLoggingModule());
         install(new PipelineScopeModule());
         install(new ReceiveDataModule());
         install(new ReceiveDataRuleSetModule());
@@ -67,6 +80,11 @@ public class TestBaseModule extends AbstractModule {
                 .addMockBindingFor(ProcessorFilterService.class);
 
         bind(DocumentEventLog.class).toProvider(Providers.of(null));
+
+        bind(HomeDirProvider.class).to(HomeDirProviderImpl.class);
+        bind(ContentPackUserService.class).to(MockSecurityContext.class); //?
+        bind(PathConfig.class).to(StroomPathConfig.class);
+        bind(TempDirProvider.class).to(TempDirProviderImpl.class);
     }
 
     @SuppressWarnings("unused")
