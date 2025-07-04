@@ -363,15 +363,8 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                             request.getFilter(),
                             dateTimeSettings);
 
-                    OpenGroups openGroups = OpenGroups.NONE;
-                    final GroupSelection groupSelection = Optional.ofNullable(resultRequest.getGroupSelection())
-                            .orElse(GroupSelection.builder().openGroups(resultRequest.getOpenGroups()).build());
-                    if (groupSelection.hasGroupsSelected()) {
-                        openGroups = new OpenGroupsImpl(
-                                groupSelection.getExpandedDepth(),
-                                dataStore.getKeyFactory().decodeSet(groupSelection.getOpenGroups()),
-                                dataStore.getKeyFactory().decodeSet(groupSelection.getClosedGroups()));
-                    }
+                    final OpenGroups openGroups = OpenGroupsImpl.fromGroupSelection(
+                            resultRequest.getGroupSelection(), dataStore.getKeyFactory());
 
                     final int index = dataStore
                             .getColumns()
@@ -564,12 +557,9 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                 }
 
                 // Modify result request to open grouped rows and change result display range.
-                final GroupSelection groupSelection = Optional.ofNullable(searchRequest.getGroupSelection())
-                        .orElse(GroupSelection.builder().openGroups(resultRequest.getOpenGroups()).build());
-
                 modified = modified
                         .copy()
-                        .groupSelection(groupSelection)
+                        .groupSelection(searchRequest.getGroupSelection())
                         .requestedRange(range)
                         .build();
 

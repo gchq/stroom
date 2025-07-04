@@ -580,15 +580,8 @@ class DashboardServiceImpl implements DashboardService {
                             request.getFilter(),
                             request.getSearchRequest().getDateTimeSettings());
 
-                    OpenGroups openGroups = OpenGroups.NONE;
-                    final GroupSelection groupSelection = Optional.ofNullable(resultRequest.getGroupSelection())
-                        .orElse(GroupSelection.builder().openGroups(resultRequest.getOpenGroups()).build());
-                    if (groupSelection.hasGroupsSelected()) {
-                        openGroups = new OpenGroupsImpl(
-                                groupSelection.getExpandedDepth(),
-                                dataStore.getKeyFactory().decodeSet(groupSelection.getOpenGroups()),
-                                dataStore.getKeyFactory().decodeSet(groupSelection.getClosedGroups()));
-                    }
+                    final OpenGroups openGroups = OpenGroupsImpl.fromGroupSelection(
+                            resultRequest.getGroupSelection(), dataStore.getKeyFactory());
 
                     final int index = dataStore
                             .getColumns()

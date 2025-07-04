@@ -1,5 +1,7 @@
 package stroom.query.api;
 
+import stroom.util.shared.NullSafe;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -22,7 +24,7 @@ public class GroupSelection {
     private final Set<String> closedGroups;
 
     public GroupSelection() {
-        this(0, new HashSet<>(), new HashSet<>());
+        this(0, null, null);
     }
 
     @JsonCreator
@@ -30,8 +32,8 @@ public class GroupSelection {
                           @JsonProperty("openGroups") final Set<String> openGroups,
                           @JsonProperty("closedGroups") final Set<String> closedGroups) {
         this.expandedDepth = expandedDepth;
-        this.openGroups = Optional.ofNullable(openGroups).orElse(new HashSet<>());
-        this.closedGroups = Optional.ofNullable(closedGroups).orElse(new HashSet<>());
+        this.openGroups = openGroups == null ? new HashSet<>() : new HashSet<>(openGroups);
+        this.closedGroups = closedGroups == null ? new HashSet<>() : new HashSet<>(closedGroups);
     }
 
     public int getExpandedDepth() {
@@ -65,11 +67,11 @@ public class GroupSelection {
     }
 
     public boolean hasOpenGroups() {
-        return !openGroups.isEmpty();
+        return !NullSafe.isEmptyCollection(openGroups);
     }
 
     public boolean hasClosedGroups() {
-        return !closedGroups.isEmpty();
+        return !NullSafe.isEmptyCollection(closedGroups);
     }
 
     @Override

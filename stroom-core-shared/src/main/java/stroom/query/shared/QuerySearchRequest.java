@@ -100,7 +100,8 @@ public class QuerySearchRequest {
         this.storeHistory = storeHistory;
         this.requestedRange = requestedRange;
         this.openGroups = openGroups;
-        this.groupSelection = groupSelection;
+        this.groupSelection = groupSelection == null ?
+                GroupSelection.builder().openGroups(openGroups).build() : groupSelection;
         this.queryTablePreferences = queryTablePreferences;
     }
 
@@ -134,10 +135,6 @@ public class QuerySearchRequest {
 
     public OffsetRange getRequestedRange() {
         return requestedRange;
-    }
-
-    public Set<String> getOpenGroups() {
-        return openGroups;
     }
 
     public GroupSelection getGroupSelection() {

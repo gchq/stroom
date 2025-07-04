@@ -37,7 +37,7 @@ import java.util.Set;
         "tableSettings",
         "requestedRange",
         "openGroups",
-        "expandAll"})
+        "groupSelection"})
 @JsonInclude(Include.NON_NULL)
 public final class TableResultRequest extends ComponentResultRequest {
 
@@ -69,7 +69,8 @@ public final class TableResultRequest extends ComponentResultRequest {
         this.tableSettings = tableSettings;
         this.requestedRange = requestedRange;
         this.openGroups = openGroups;
-        this.groupSelection = groupSelection;
+        this.groupSelection = groupSelection == null ?
+                GroupSelection.builder().openGroups(openGroups).build() : groupSelection;
     }
 
     public static Builder builder() {

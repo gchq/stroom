@@ -31,7 +31,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-@JsonPropertyOrder({"componentId", "mappings", "requestedRange", "openGroups", "resultStyle", "fetch", "expandAll"})
+@JsonPropertyOrder({"componentId", "mappings", "requestedRange", "openGroups", "resultStyle", "fetch",
+        "groupSelection"})
 @JsonInclude(Include.NON_NULL)
 @Schema(description = "A definition for how to return the raw results of the query in the SearchResponse, " +
                       "e.g. sorted, grouped, limited, etc.")
@@ -91,7 +92,8 @@ public final class ResultRequest {
         this.openGroups = openGroups;
         this.resultStyle = resultStyle;
         this.fetch = fetch;
-        this.groupSelection = groupSelection;
+        this.groupSelection = groupSelection == null ?
+                GroupSelection.builder().openGroups(openGroups).build() : groupSelection;
     }
 
     public static Builder builder() {

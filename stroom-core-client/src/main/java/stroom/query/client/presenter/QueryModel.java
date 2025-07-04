@@ -214,7 +214,6 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                     .copy()
                     .queryKey(queryKey)
                     .storeHistory(false)
-//                    .openGroups(resultComponent.getOpenGroups())
                     .groupSelection(resultComponent.getGroupSelection())
                     .requestedRange(resultComponent.getRequestedRange())
                     .queryTablePreferences(queryTablePreferencesSupplier.get())
