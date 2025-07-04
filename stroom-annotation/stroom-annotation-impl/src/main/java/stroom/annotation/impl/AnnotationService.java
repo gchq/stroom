@@ -68,7 +68,6 @@ import java.util.Set;
 
 public class AnnotationService implements Searchable, AnnotationCreator, HasUserDependencies {
 
-    private static final DocRef ANNOTATIONS_PSEUDO_DOC_REF = new DocRef("Annotations", "Annotations", "Annotations");
     public static final String ANNOTATION_RETENTION_JOB_NAME = "Annotation Retention";
 
     private final AnnotationDao annotationDao;
@@ -131,13 +130,13 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
 
     @Override
     public String getDataSourceType() {
-        return ANNOTATIONS_PSEUDO_DOC_REF.getType();
+        return AnnotationFields.ANNOTATIONS_PSEUDO_DOC_REF.getType();
     }
 
     @Override
     public List<DocRef> getDataSourceDocRefs() {
         if (securityContext.hasAppPermission(AppPermission.ANNOTATIONS)) {
-            return Collections.singletonList(ANNOTATIONS_PSEUDO_DOC_REF);
+            return Collections.singletonList(AnnotationFields.ANNOTATIONS_PSEUDO_DOC_REF);
         }
         return Collections.emptyList();
     }
@@ -149,7 +148,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
 
     @Override
     public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
-        if (!ANNOTATIONS_PSEUDO_DOC_REF.equals(criteria.getDataSourceRef())) {
+        if (!AnnotationFields.ANNOTATIONS_PSEUDO_DOC_REF.equals(criteria.getDataSourceRef())) {
             return ResultPage.empty();
         }
         return fieldInfoResultPageFactory.create(criteria, AnnotationFields.FIELDS);

@@ -2,10 +2,11 @@ package stroom.annotation.impl;
 
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.EventId;
-import stroom.query.common.v2.AnnotatedItem;
 import stroom.query.common.v2.Item;
 import stroom.query.common.v2.ItemMapper;
+import stroom.query.common.v2.SimpleItem;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -20,6 +21,7 @@ public class AnnotationMapper implements ItemMapper {
 
     private final AnnotationService annotationService;
     private final ItemMapper parentMapper;
+    private final int annotationIdIndex;
     private final int streamIdIndex;
     private final int eventIdIndex;
     private final boolean outerJoin;
@@ -28,6 +30,7 @@ public class AnnotationMapper implements ItemMapper {
 
     public AnnotationMapper(final AnnotationService annotationService,
                             final ItemMapper parentMapper,
+                            final int annotationIdIndex,
                             final int streamIdIndex,
                             final int eventIdIndex,
                             final boolean outerJoin,
@@ -35,6 +38,7 @@ public class AnnotationMapper implements ItemMapper {
                             final ErrorConsumer errorConsumer) {
         this.annotationService = annotationService;
         this.parentMapper = parentMapper;
+        this.annotationIdIndex = annotationIdIndex;
         this.streamIdIndex = streamIdIndex;
         this.eventIdIndex = eventIdIndex;
         this.outerJoin = outerJoin;
@@ -80,7 +84,8 @@ public class AnnotationMapper implements ItemMapper {
                                     mutator.mutate(copy, annotation);
                                 }
 
-                                return new AnnotatedItem(item.getKey(), copy, annotation.getId());
+                                copy[annotationIdIndex] = ValLong.create(annotation.getId());
+                                return new SimpleItem(item.getKey(), copy);
                             });
                 }
             } catch (final RuntimeException e) {

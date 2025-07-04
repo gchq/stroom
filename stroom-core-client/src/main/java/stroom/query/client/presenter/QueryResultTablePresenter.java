@@ -17,10 +17,11 @@
 package stroom.query.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.annotation.client.AnnotationChangeEvent;
+import stroom.annotation.shared.AnnotationFields;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
 import stroom.dashboard.client.main.DashboardContext;
-import stroom.dashboard.client.table.AnnotationManager;
 import stroom.dashboard.client.table.ColumnFilterPresenter;
 import stroom.dashboard.client.table.ColumnValuesDataSupplier;
 import stroom.dashboard.client.table.ColumnValuesFilterPresenter;
@@ -73,14 +74,11 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
-import stroom.widget.util.client.SafeHtmlUtil;
 
-import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -215,10 +213,8 @@ public class QueryResultTablePresenter
 
         // Annotate
         annotateButton = pagerView.addButton(SvgPresets.ANNOTATE);
-        annotateButton.setVisible(securityContext
-                .hasAppPermission(AppPermission.ANNOTATIONS));
+        annotateButton.setVisible(annotationManager.isEnabled());
 
-        annotationManager.setDataSourceSupplier(() -> currentDataSource);
         annotationManager.setColumnSupplier(() -> currentColumns);
     }
 
@@ -314,11 +310,25 @@ public class QueryResultTablePresenter
 
         registerHandler(selectionModel.addSelectionHandler(event -> {
             if (event.getSelectionType().isDoubleSelect()) {
-                final List<Long> annotationIdList = annotationManager.getAnnotationIdList(
+                final Set<Long> annotationIdList = annotationManager.getAnnotationIds(
                         selectionModel.getSelectedItems());
                 if (annotationIdList.size() == 1) {
-                    annotationManager.editAnnotation(annotationIdList.get(0));
+                    annotationManager.editAnnotation(annotationIdList.iterator().next());
                 }
+            }
+        }));
+
+        registerHandler(getEventBus().addHandler(AnnotationChangeEvent.getType(), e -> {
+            final DocRef dataSource = currentDataSource;
+            if (dataSource != null &&
+                AnnotationFields.ANNOTATIONS_PSEUDO_DOC_REF.getType().equals(dataSource.getType())) {
+                // If this is an annotations data source then force a new search.
+                forceNewSearch();
+            } else if (getCurrentColumns()
+                    .stream()
+                    .anyMatch(col -> col.getId().contains("__annotation_"))) {
+                // If the table contains annotations fields then just refresh to redecorate.
+                refresh();
             }
         }));
     }
@@ -368,6 +378,25 @@ public class QueryResultTablePresenter
 
     public void setFocused(final boolean focused) {
         dataGrid.setFocused(focused);
+    }
+
+    public void forceNewSearch() {
+        if (currentSearchModel != null) {
+            pagerView.getRefreshButton().setRefreshing(true);
+            currentSearchModel.forceNewSearch(QueryModel.TABLE_COMPONENT_ID, result -> {
+                try {
+                    if (result != null) {
+                        setDataInternal(result);
+                    }
+                } catch (final Exception e) {
+                    GWT.log(e.getMessage());
+                } finally {
+                    pagerView.getRefreshButton().setRefreshing(currentSearchModel.isSearching());
+                }
+            });
+        } else {
+            RefreshRequestEvent.fire(this);
+        }
     }
 
     public void refresh() {
@@ -659,18 +688,9 @@ public class QueryResultTablePresenter
     }
 
     private void addColumn(final Column column) {
-        final com.google.gwt.user.cellview.client.Column<TableRow, SafeHtml> col =
-                new com.google.gwt.user.cellview.client.Column<TableRow, SafeHtml>(new SafeHtmlCell()) {
-                    @Override
-                    public SafeHtml getValue(final TableRow row) {
-                        if (row == null) {
-                            return SafeHtmlUtil.NBSP;
-                        }
-
-                        return row.getValue(column.getId());
-                    }
-                };
-
+        final com.google.gwt.user.cellview.client.Column<TableRow, TableRow> col =
+                new com.google.gwt.user.cellview.client.IdentityColumn<TableRow>(
+                        new TableRowCell(annotationManager, column));
         final ColumnHeader columnHeader = new ColumnHeader(column, columnsManager);
         dataGrid.addResizableColumn(col, columnHeader, column.getWidth());
         existingColumns.add(col);

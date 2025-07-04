@@ -2,6 +2,7 @@ package stroom.query.common.v2;
 
 import stroom.query.api.Column;
 import stroom.query.api.Row;
+import stroom.query.api.SpecialColumns;
 import stroom.query.common.v2.format.Formatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.Val;
@@ -21,13 +22,16 @@ public class SimpleRowCreator implements RowCreator {
     private final KeyFactory keyFactory;
     private final ErrorConsumer errorConsumer;
     private final Formatter[] columnFormatters;
+    private final int annotationIdIndex;
 
     private SimpleRowCreator(final Formatter[] columnFormatters,
                              final KeyFactory keyFactory,
-                             final ErrorConsumer errorConsumer) {
+                             final ErrorConsumer errorConsumer,
+                             final int annotationIdIndex) {
         this.columnFormatters = columnFormatters;
         this.keyFactory = keyFactory;
         this.errorConsumer = errorConsumer;
+        this.annotationIdIndex = annotationIdIndex;
     }
 
     public static RowCreator create(final List<Column> newColumns,
@@ -35,22 +39,28 @@ public class SimpleRowCreator implements RowCreator {
                                     final KeyFactory keyFactory,
                                     final ErrorConsumer errorConsumer) {
         final Formatter[] formatters = RowUtil.createFormatters(newColumns, formatterFactory);
+        final int annotationIdIndex = getColumnIndexById(newColumns, SpecialColumns.RESERVED_ID);
         return new SimpleRowCreator(
                 formatters,
                 keyFactory,
-                errorConsumer);
+                errorConsumer,
+                annotationIdIndex);
     }
 
     @Override
     public Row create(final Item item) {
+        // Extract the annotation id to give to the row.
         Long annotationId = null;
-        String ruleId = null;
-        if (item instanceof final AnnotatedItem annotatedItem) {
-            annotationId = annotatedItem.getAnnotationId();
-        } else if (item instanceof final ConditionalFormattedItem conditionalFormattedItem) {
-            if (conditionalFormattedItem.getItem() instanceof final AnnotatedItem annotatedItem) {
-                annotationId = annotatedItem.getAnnotationId();
+        if (annotationIdIndex != -1) {
+            final Val val = item.getValue(annotationIdIndex);
+            if (val != null) {
+                annotationId = val.toLong();
             }
+        }
+
+        // Extract the rule id to give to the row.
+        String ruleId = null;
+        if (item instanceof final ConditionalFormattedItem conditionalFormattedItem) {
             ruleId = conditionalFormattedItem.getRuleId();
         }
 
@@ -77,5 +87,15 @@ public class SimpleRowCreator implements RowCreator {
             }
         }
         return stringValues;
+    }
+
+    private static int getColumnIndexById(final List<Column> columns, final String id) {
+        for (int i = 0; i < columns.size(); i++) {
+            final Column column = columns.get(i);
+            if (id.equals(column.getId())) {
+                return i;
+            }
+        }
+        return -1;
     }
 }

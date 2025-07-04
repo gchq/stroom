@@ -94,8 +94,9 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
 
     @Override
     public ItemMapper createMapper(final List<Column> newColumns,
-                                         final ErrorConsumer errorConsumer,
-                                         final ItemMapper parentMapper) {
+                                   final ErrorConsumer errorConsumer,
+                                   final ItemMapper parentMapper) {
+        final int annotationIdIndex = getColumnIndexById(newColumns, SpecialColumns.RESERVED_ID);
         final int streamIdIndex = getColumnIndexById(newColumns, SpecialColumns.RESERVED_STREAM_ID);
         final int eventIdIndex = getColumnIndexById(newColumns, SpecialColumns.RESERVED_EVENT_ID);
         final List<Mutator> mutators = new ArrayList<>();
@@ -119,7 +120,7 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
         // Allow an outer join if we don't have a filter on annotations.
         final boolean outerJoin = !annotationFilter;
 
-        if (streamIdIndex == -1 || eventIdIndex == -1 || mutators.isEmpty()) {
+        if (annotationIdIndex == -1 || streamIdIndex == -1 || eventIdIndex == -1 || mutators.isEmpty()) {
             return parentMapper;
         }
 
@@ -127,6 +128,7 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
         return new AnnotationMapper(
                 annotationService,
                 parentMapper,
+                annotationIdIndex,
                 streamIdIndex,
                 eventIdIndex,
                 outerJoin,
@@ -195,6 +197,4 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
         }
         return -1;
     }
-
-
 }
