@@ -24,8 +24,8 @@ import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorExpressionUtil;
 import stroom.processor.shared.QueryData;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.CommonTranslationTestHelper;
 import stroom.test.ContentStoreTestSetup;
@@ -117,7 +117,7 @@ public class AnalyticsDataSetup {
         // Add extraction pipeline.
         final DocRef searchResultPipeline = storeCreationTool.getSearchResultPipeline(
                 "Search result",
-                resourcePath.resolve("dynamic-result-pipeline.xml"),
+                resourcePath.resolve("dynamic-result-pipeline.json"),
                 resourcePath.resolve("dynamic-index.xsl"));
 
         // Add view.
@@ -158,7 +158,7 @@ public class AnalyticsDataSetup {
         // Create index pipeline.
         final DocRef indexPipeline = storeCreationTool.getIndexPipeline(
                 "Dynamic Index",
-                resourcePath.resolve("indexing-pipeline.xml"),
+                resourcePath.resolve("indexing-pipeline.json"),
                 resourcePath.resolve("dynamic-index.xsl"),
                 indexDocRef);
 
