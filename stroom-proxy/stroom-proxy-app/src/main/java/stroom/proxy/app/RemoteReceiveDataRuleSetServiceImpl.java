@@ -146,17 +146,13 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
                         NullSafe.get(currRuleState, RuleState::hashedReceiveDataRules));
 
                 if (hashedReceiveDataRules != null) {
-                    final HashAlgorithm hashAlgorithm = hashedReceiveDataRules.getHashAlgorithm();
-                    final HashFunction hashFunction = hashFunctionFactory.getHashFunction(hashAlgorithm);
-                    final AttributeMapHasher attributeMapHasher = new AttributeMapHasher(
-                            hashFunction,
-                            hashedReceiveDataRules.getFieldNameToSaltMap());
+                    final AttributeMapper attributeMapper = buildAttributeMapper(hashedReceiveDataRules);
                     final WordListProvider wordListProvider = wordListProviderFactory.create(
                             hashedReceiveDataRules.getUuidToFlattenedDictMap());
                     final BundledRules bundledRules = new BundledRules(
                             hashedReceiveDataRules.getReceiveDataRules(),
                             wordListProvider,
-                            attributeMapHasher);
+                            attributeMapper);
                     return new RuleState(hashedReceiveDataRules, bundledRules);
                 } else {
                     // A null return will mean a receive-all filter
@@ -164,6 +160,21 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
                 }
             }, "createRuleBundle");
         });
+    }
+
+    private AttributeMapper buildAttributeMapper(final HashedReceiveDataRules hashedReceiveDataRules) {
+        // If no fields are hashed then there will be no hashAlgorithm
+        final HashAlgorithm hashAlgorithm = hashedReceiveDataRules.getHashAlgorithm();
+        final AttributeMapper attributeMapper;
+        if (hashAlgorithm != null) {
+            final HashFunction hashFunction = hashFunctionFactory.getHashFunction(hashAlgorithm);
+            attributeMapper = new AttributeMapHasher(
+                    hashFunction,
+                    hashedReceiveDataRules.getFieldNameToSaltMap());
+        } else {
+            attributeMapper = AttributeMapper.IDENTITY;
+        }
+        return attributeMapper;
     }
 
     private synchronized HashedReceiveDataRules fetchRulesFromRemote(
