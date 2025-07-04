@@ -10480,6 +10480,7 @@ components:
           - FUNCTION
           - GENERATE
           - HELP
+          - HELP_OUTLINE
           - HIDE
           - HIDE_MENU
           - HISTORY
@@ -13750,6 +13751,7 @@ components:
           - FUNCTION
           - GENERATE
           - HELP
+          - HELP_OUTLINE
           - HIDE
           - HIDE_MENU
           - HISTORY
