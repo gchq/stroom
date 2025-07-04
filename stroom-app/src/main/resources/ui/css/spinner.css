@@ -72,7 +72,7 @@
 
 .SpinnerLarge .spinner-border {
     display: inline-block;
-    width: 0;
+    width: 22px;
     height: 22px;
     vertical-align: text-bottom;
     border: 3px solid var(--navigation-icon-button__color);
@@ -82,15 +82,14 @@
     animation: spinner-border .75s linear infinite;
     opacity: 0;
 
-    transition: width 0.5s ease-in-out, opacity 0.5s ease-in-out;
-    -webkit-transition: width 0.5s ease-in-out, opacity 0.5s ease-in-out;
-    -moz-transition: width 0.5s ease-in-out, opacity 0.5s ease-in-out;
-    -o-transition: width 0.5s ease-in-out, opacity 0.5s ease-in-out;
+    transition: opacity 0.5s ease;
+    -webkit-transition: opacity 0.5s ease;
+    -moz-transition: opacity 0.5s ease;
+    -o-transition: opacity 0.5s ease;
 }
 
 .SpinnerLarge.spinner__visible .spinner-border {
     opacity: 1;
-    width: 22px;
 }
 
 .SpinnerLarge.spinner-center {
@@ -103,6 +102,12 @@
     z-index: 10;
 }
 
+.SpinnerLarge.soft .spinner-border {
+    transition: opacity 1s ease-in-out;
+    -webkit-transition: opacity 1s ease-in-out;
+    -moz-transition: opacity 1s ease-in-out;
+    -o-transition:opacity 1s ease-in-out;
+}
 
 /*
     MAIN LOADING SPINNER

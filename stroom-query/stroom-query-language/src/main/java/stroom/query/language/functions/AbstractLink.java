@@ -57,13 +57,6 @@ abstract class AbstractLink extends AbstractManyChildFunction {
             return ValString.create(sb.toString());
         }
 
-        String getString(final Val val) {
-            if (val.type().isValue()) {
-                return val.toString();
-            }
-            return "";
-        }
-
         String getEscapedString(final Val val) {
             if (val.type().isValue()) {
                 return EncodingUtil.encodeUrl(val.toString());

@@ -59,6 +59,7 @@ public class TableFilterPresenter
 
     public void show(final Column column,
                      final BiConsumer<Column, Column> columnChangeConsumer) {
+        columnFilterPresenter.setColumnFilter(column.getColumnFilter());
         includeExcludeFilterPresenter.setFilter(column.getFilter());
 
         final PopupSize popupSize = PopupSize.resizable(400, 500);

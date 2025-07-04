@@ -32,7 +32,6 @@ public class SpinnerLarge extends Composite implements TaskMonitorFactory {
     private static final Binder uiBinder = GWT.create(Binder.class);
 
     private int taskCount;
-    private boolean soft;
     private boolean visible = true;
     private final Timer hideTimer;
 
@@ -84,7 +83,11 @@ public class SpinnerLarge extends Composite implements TaskMonitorFactory {
     }
 
     public void setSoft(final boolean soft) {
-//        this.soft = soft;
+        if (soft) {
+            addStyleName("soft");
+        } else {
+            removeStyleName("soft");
+        }
     }
 
     interface Binder extends UiBinder<Widget, SpinnerLarge> {

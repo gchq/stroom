@@ -4,6 +4,7 @@ import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.serde.temporalkey.TemporalKey;
 import stroom.planb.impl.serde.valtime.InsertTimeSerde;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.Values;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;
@@ -117,7 +118,7 @@ public final class CountValuesSerdeImpl<T> implements CountValuesSerde<T> {
     public void getValues(final TemporalKey key,
                           final ByteBuffer byteBuffer,
                           final List<ValConverter<T>> valConverters,
-                          final Consumer<Val[]> consumer) {
+                          final Consumer<Values> consumer) {
         final ZonedDateTime zonedDateTime = ZonedDateTime.ofInstant(key.getTime(), zoneId);
         for (int entry = 0; entry < temporalIndex.getEntries(); entry++) {
             final T value = countSerde.get(byteBuffer);
@@ -129,7 +130,7 @@ public final class CountValuesSerdeImpl<T> implements CountValuesSerde<T> {
                 vals[i] = valConverter.convert(temporalKey, value);
                 i++;
             }
-            consumer.accept(vals);
+            consumer.accept(Values.of(vals));
         }
     }
 }

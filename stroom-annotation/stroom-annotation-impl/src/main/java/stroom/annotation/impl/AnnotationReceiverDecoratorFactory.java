@@ -56,6 +56,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Deprecated // Users should no longer use pre decoration
 class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationReceiverDecoratorFactory.class);

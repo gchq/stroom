@@ -46,14 +46,14 @@ import stroom.query.api.Format;
 import stroom.query.api.UserTimeZone;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
-import stroom.query.common.v2.ValArrayFunctionFactory;
+import stroom.query.common.v2.ValuesFunctionFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.UserTimeZoneUtil;
-import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
+import stroom.query.language.functions.Values;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.io.FileUtil;
 import stroom.util.json.JsonUtil;
@@ -311,10 +311,10 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
         fields.forEach(fieldIndex::create);
         env.read(readTxn -> {
 
-            final ValueFunctionFactories<Val[]> valueFunctionFactories = createValueFunctionFactories(fieldIndex);
-            final Optional<Predicate<Val[]>> optionalPredicate = expressionPredicateFactory
+            final ValueFunctionFactories<Values> valueFunctionFactories = createValueFunctionFactories(fieldIndex);
+            final Optional<Predicate<Values>> optionalPredicate = expressionPredicateFactory
                     .createOptional(criteria.getExpression(), valueFunctionFactories, dateTimeSettings);
-            final Predicate<Val[]> predicate = optionalPredicate.orElse(vals -> true);
+            final Predicate<Values> predicate = optionalPredicate.orElse(vals -> true);
             final List<ValConverter<Long>> valConverters = createValuesExtractor(fieldIndex);
 
             // TODO : It would be faster if we limit the iteration to keys based on the criteria.
@@ -323,7 +323,7 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
                     final TemporalKey key = keySerde.read(readTxn, keyVal.key());
                     valuesSerde.getValues(key, keyVal.val(), valConverters, vals -> {
                         if (predicate.test(vals)) {
-                            consumer.accept(vals);
+                            consumer.accept(vals.toArray());
                         }
                     });
                 }
@@ -333,13 +333,13 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
         });
     }
 
-    public static ValueFunctionFactories<Val[]> createValueFunctionFactories(final FieldIndex fieldIndex) {
+    public static ValueFunctionFactories<Values> createValueFunctionFactories(final FieldIndex fieldIndex) {
         return fieldName -> {
             final Integer index = fieldIndex.getPos(fieldName);
             if (index == null) {
                 throw new RuntimeException("Unexpected field: " + fieldName);
             }
-            return new ValArrayFunctionFactory(Column.builder().format(Format.TEXT).build(), index);
+            return new ValuesFunctionFactory(Column.builder().format(Format.TEXT).build(), index);
         };
     }
 

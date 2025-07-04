@@ -34,6 +34,7 @@ import stroom.query.api.TableResultBuilder;
 import stroom.query.api.TableSettings;
 import stroom.query.api.TimeFilter;
 import stroom.query.api.datasource.QueryField;
+import stroom.query.common.v2.AnnotationMapperFactory;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -87,6 +88,7 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
     private final TaskContextFactory taskContextFactory;
     private final AnalyticDataStores analyticDataStores;
     private final ExpressionPredicateFactory expressionPredicateFactory;
+    private final AnnotationMapperFactory annotationMapperFactory;
 
     private final LongAdder hitCount = new LongAdder();
     private final LongAdder extractionCount = new LongAdder();
@@ -99,13 +101,15 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                                    final ExecutorProvider executorProvider,
                                    final TaskContextFactory taskContextFactory,
                                    final AnalyticDataStores analyticDataStores,
-                                   final ExpressionPredicateFactory expressionPredicateFactory) {
+                                   final ExpressionPredicateFactory expressionPredicateFactory,
+                                   final AnnotationMapperFactory annotationMapperFactory) {
         this.annotationsDecoratorFactory = annotationsDecoratorFactory;
         this.securityContext = securityContext;
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
         this.analyticDataStores = analyticDataStores;
         this.expressionPredicateFactory = expressionPredicateFactory;
+        this.annotationMapperFactory = annotationMapperFactory;
     }
 
     @Override
@@ -248,7 +252,8 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                     final FormatterFactory formatterFactory = new FormatterFactory(searchRequest.getDateTimeSettings());
                     final TableResultCreator resultCreator = new TableResultCreator(
                             formatterFactory,
-                            expressionPredicateFactory) {
+                            expressionPredicateFactory,
+                            annotationMapperFactory) {
                         @Override
                         public TableResultBuilder createTableResultBuilder() {
                             return tableResultConsumer;

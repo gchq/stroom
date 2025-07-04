@@ -201,61 +201,78 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
         }
     }
 
+    public void forceNewSearch(final String componentId,
+                               final Consumer<Result> resultConsumer) {
+        final boolean exec = exec(componentId, resultConsumer, null);
+        // If no exec happened then let the caller know.
+        if (!exec) {
+            resultConsumer.accept(null);
+        }
+    }
+
     /**
      * Refresh the search data for the specified component.
      */
     public void refresh(final String componentId, final Consumer<Result> resultConsumer) {
         boolean exec = false;
-        final QueryKey queryKey = currentQueryKey;
-        final ResultComponent resultComponent = resultComponents.get(componentId);
-        if (resultComponent != null && queryKey != null) {
-            final QuerySearchRequest request = currentSearch
-                    .copy()
-                    .queryKey(queryKey)
-                    .storeHistory(false)
-                    .openGroups(resultComponent.getOpenGroups())
-                    .requestedRange(resultComponent.getRequestedRange())
-                    .queryTablePreferences(queryTablePreferencesSupplier.get())
-                    .build();
-
-            exec = true;
-            restFactory
-                    .create(QUERY_RESOURCE)
-                    .method(res -> res.search(currentNode, request))
-                    .onSuccess(response -> {
-                        Result result = null;
-                        try {
-                            if (response != null && response.getResults() != null) {
-                                currentHighlights = response.getHighlights();
-                                for (final Result componentResult : response.getResults()) {
-                                    if (componentId.equals(componentResult.getComponentId())) {
-                                        result = componentResult;
-                                    }
-                                }
-                            }
-                        } catch (final RuntimeException e) {
-                            GWT.log(e.getMessage());
-                        }
-                        resultConsumer.accept(result);
-                    })
-                    .onFailure(throwable -> {
-                        try {
-                            if (queryKey.equals(currentQueryKey)) {
-                                setErrors(Collections.singletonList(throwable.toString()));
-                            }
-                        } catch (final RuntimeException e) {
-                            GWT.log(e.getMessage());
-                        }
-                        resultConsumer.accept(null);
-                    })
-                    .taskMonitorFactory(taskMonitorFactory)
-                    .exec();
+        if (currentQueryKey != null) {
+            exec = exec(componentId, resultConsumer, currentQueryKey);
         }
 
         // If no exec happened then let the caller know.
         if (!exec) {
             resultConsumer.accept(null);
         }
+    }
+
+    private boolean exec(final String componentId,
+                         final Consumer<Result> resultConsumer,
+                         final QueryKey queryKey) {
+        final ResultComponent resultComponent = resultComponents.get(componentId);
+        if (resultComponent == null) {
+            return false;
+        }
+
+        final QuerySearchRequest request = currentSearch
+                .copy()
+                .queryKey(queryKey)
+                .storeHistory(false)
+                .openGroups(resultComponent.getOpenGroups())
+                .requestedRange(resultComponent.getRequestedRange())
+                .queryTablePreferences(queryTablePreferencesSupplier.get())
+                .build();
+        restFactory
+                .create(QUERY_RESOURCE)
+                .method(res -> res.search(currentNode, request))
+                .onSuccess(response -> {
+                    Result result = null;
+                    try {
+                        if (response != null && response.getResults() != null) {
+                            currentHighlights = response.getHighlights();
+                            for (final Result componentResult : response.getResults()) {
+                                if (componentId.equals(componentResult.getComponentId())) {
+                                    result = componentResult;
+                                }
+                            }
+                        }
+                    } catch (final RuntimeException e) {
+                        GWT.log(e.getMessage());
+                    }
+                    resultConsumer.accept(result);
+                })
+                .onFailure(throwable -> {
+                    try {
+                        if (queryKey.equals(currentQueryKey)) {
+                            setErrors(Collections.singletonList(throwable.toString()));
+                        }
+                    } catch (final RuntimeException e) {
+                        GWT.log(e.getMessage());
+                    }
+                    resultConsumer.accept(null);
+                })
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+        return true;
     }
 
     private void deleteStore(final String node, final QueryKey queryKey, final DestroyReason destroyReason) {

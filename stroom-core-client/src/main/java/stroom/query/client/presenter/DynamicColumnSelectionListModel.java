@@ -1,5 +1,6 @@
 package stroom.query.client.presenter;
 
+import stroom.annotation.shared.AnnotationColumns;
 import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.dashboard.client.main.UniqueUtil;
 import stroom.docref.DocRef;
@@ -106,11 +107,16 @@ public class DynamicColumnSelectionListModel
                                                           final ResultPage<QueryField> response) {
         final ResultPage<ColumnSelectionItem> counts = getCounts(filter, pageRequest);
         final ResultPage<ColumnSelectionItem> custom = getCustom(filter, pageRequest);
+        final ResultPage<ColumnSelectionItem> annotationLinks = getAnnotationLinks(filter, pageRequest);
         final ResultPage<ColumnSelectionItem> annotations = getAnnotations(filter, pageRequest);
 
         ResultPage<ColumnSelectionItem> resultPage = null;
         if (NullSafe.isBlankString(parentPath)) {
             final ExactResultPageBuilder<ColumnSelectionItem> builder = new ExactResultPageBuilder<>(pageRequest);
+            add(filter, new ColumnSelectionItem(
+                    null,
+                    "Annotation Links",
+                    !annotationLinks.isEmpty()), builder);
             add(filter, new ColumnSelectionItem(
                     null,
                     "Annotations",
@@ -133,6 +139,8 @@ public class DynamicColumnSelectionListModel
             resultPage = counts;
         } else if ("Custom.".equals(parentPath)) {
             resultPage = custom;
+        } else if ("Annotation Links.".equals(parentPath)) {
+            resultPage = annotationLinks;
         } else if ("Annotations.".equals(parentPath)) {
             resultPage = annotations;
         } else if ("Data Source.".equals(parentPath)) {
@@ -184,8 +192,8 @@ public class DynamicColumnSelectionListModel
         return builder.build();
     }
 
-    private ResultPage<ColumnSelectionItem> getAnnotations(final String filter,
-                                                           final PageRequest pageRequest) {
+    private ResultPage<ColumnSelectionItem> getAnnotationLinks(final String filter,
+                                                               final PageRequest pageRequest) {
         final ExactResultPageBuilder<ColumnSelectionItem> builder = new ExactResultPageBuilder<>(pageRequest);
         if (dataSourceRef != null &&
             dataSourceRef.getType() != null &&
@@ -195,6 +203,24 @@ public class DynamicColumnSelectionListModel
                 "ElasticIndex".equals(dataSourceRef.getType())) {
                 AnnotationDecorationFields.DECORATION_FIELDS.forEach(field -> {
                     final ColumnSelectionItem columnSelectionItem = ColumnSelectionItem.create(field);
+                    add(filter, columnSelectionItem, builder);
+                });
+            }
+        }
+        return builder.build();
+    }
+
+    private ResultPage<ColumnSelectionItem> getAnnotations(final String filter,
+                                                           final PageRequest pageRequest) {
+        final ExactResultPageBuilder<ColumnSelectionItem> builder = new ExactResultPageBuilder<>(pageRequest);
+        if (dataSourceRef != null &&
+            dataSourceRef.getType() != null &&
+            clientSecurityContext.hasAppPermission(AppPermission.ANNOTATIONS)) {
+            if ("Index".equals(dataSourceRef.getType()) ||
+                "SolrIndex".equals(dataSourceRef.getType()) ||
+                "ElasticIndex".equals(dataSourceRef.getType())) {
+                AnnotationColumns.COLUMNS.forEach(column -> {
+                    final ColumnSelectionItem columnSelectionItem = ColumnSelectionItem.create(column);
                     add(filter, columnSelectionItem, builder);
                 });
             }

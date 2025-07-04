@@ -1,7 +1,7 @@
 package stroom.planb.impl.serde.count;
 
 import stroom.planb.impl.serde.temporalkey.TemporalKey;
-import stroom.query.language.functions.Val;
+import stroom.query.language.functions.Values;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;
@@ -31,5 +31,5 @@ public interface CountValuesSerde<T> {
     void getValues(TemporalKey key,
                    ByteBuffer byteBuffer,
                    List<ValConverter<T>> valConverters,
-                   Consumer<Val[]> consumer);
+                   Consumer<Values> consumer);
 }

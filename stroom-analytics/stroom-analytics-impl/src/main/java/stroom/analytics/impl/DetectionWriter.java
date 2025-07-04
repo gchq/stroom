@@ -157,7 +157,7 @@ public class DetectionWriter implements DetectionConsumer {
         if (value.getName() != null) {
             attrs.addAttribute(NAMESPACE, NAME, NAME, XML_TYPE_STRING, value.getName());
         }
-        writeDataElement(VALUE, attrs, value.getValue());
+        writeDataElement(VALUE, attrs, value.getValue().toString());
     }
 
 

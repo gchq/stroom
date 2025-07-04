@@ -71,7 +71,6 @@ public class Dialog extends AbstractPopupPanel implements TaskMonitorFactory {
      */
     public Dialog(final DialogActionUiHandlers dialogEventHandler) {
         this(dialogEventHandler, false);
-        spinner.setSoft(true);
         spinner.setVisible(false);
     }
 

@@ -233,15 +233,6 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
         detectionConsumer.accept(detection);
     }
 
-    public static Long getSafeLong(final String value) {
-        try {
-            return Long.parseLong(value);
-        } catch (final RuntimeException e) {
-            LOGGER.debug(e.getMessage(), e);
-        }
-        return null;
-    }
-
     public static Long getSafeLong(final Val value) {
         try {
             return value.toLong();

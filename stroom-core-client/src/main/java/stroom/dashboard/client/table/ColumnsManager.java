@@ -318,7 +318,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
     public void addColumn(final int index, final Column templateColumn) {
         final String columnName = makeUniqueColumnName(templateColumn.getName());
         final Column newColumn = templateColumn.copy()
-                .id(createRandomColumnId())
+                .id(createRandomColumnId() + NullSafe.string(templateColumn.getId()))
                 .name(columnName)
                 .build();
 
@@ -433,7 +433,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
         }
     }
 
-    private List<Column> getColumns() {
+    public List<Column> getColumns() {
         if (tablePresenter.getSettings() != null && tablePresenter.getTableComponentSettings().getColumns() != null) {
             return new ArrayList<>(tablePresenter.getTableComponentSettings().getColumns());
         }
