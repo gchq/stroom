@@ -26,11 +26,13 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Singleton
 public class ShardManager {
@@ -79,7 +81,7 @@ public class ShardManager {
             // snapshot node.
             return nodeInfo != null && !nodes.isEmpty() && !nodes.contains(nodeInfo.getThisNodeName());
         } catch (final RuntimeException e) {
-            LOGGER.error(() -> "isSnapshotNode() " + e.getMessage(), e);
+            error("isSnapshotNode()", e);
             LOGGER.error(e::getMessage, e);
             throw e;
         }
@@ -121,7 +123,7 @@ public class ShardManager {
                                     }
                                 }
                             } catch (final Exception e) {
-                                LOGGER.error(() -> "condenseAll1() " + e.getMessage(), e);
+                                error("condenseAll1()", e);
                                 LOGGER.error(e::getMessage, e);
                             }
                         });
@@ -130,10 +132,20 @@ public class ShardManager {
             });
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
         } catch (final RuntimeException e) {
-            LOGGER.error(() -> "condenseAll2() " + e.getMessage(), e);
+            error("condenseAll2()", e);
             LOGGER.error(e::getMessage, e);
             throw e;
         }
+    }
+
+    private void error(final String message, final Exception e) {
+        LOGGER.error(() -> message +
+                           " " +
+                           e.getMessage() +
+                           "\n" +
+                           Arrays.stream(e.getStackTrace())
+                                   .map(Object::toString)
+                                   .collect(Collectors.joining("\n")), e);
     }
 
     public void compactAll() {
@@ -160,12 +172,12 @@ public class ShardManager {
                         }
                     }
                 } catch (final Exception e) {
-                    LOGGER.error(() -> "compactAll1() " + e.getMessage(), e);
+                    error("compactAll1()", e);
                     LOGGER.error(e::getMessage, e);
                 }
             });
         } catch (final RuntimeException e) {
-            LOGGER.error(() -> "compactAll2() " + e.getMessage(), e);
+            error("compactAll2()", e);
             LOGGER.error(e::getMessage, e);
             throw e;
         }
@@ -176,7 +188,7 @@ public class ShardManager {
             final Shard shard = getShardForDocUuid(request.getPlanBDocRef().getUuid());
             shard.checkSnapshotStatus(request);
         } catch (final RuntimeException e) {
-            LOGGER.error(() -> "checkSnapshotStatus() " + e.getMessage(), e);
+            error("checkSnapshotStatus()", e);
             LOGGER.error(e::getMessage, e);
             throw e;
         }
@@ -188,7 +200,7 @@ public class ShardManager {
             shardMap.values().forEach(shard -> futures.add(CompletableFuture.runAsync(shard::createSnapshot)));
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
         } catch (final RuntimeException e) {
-            LOGGER.error(() -> "createSnapshots() " + e.getMessage(), e);
+            error("createSnapshots()", e);
             LOGGER.error(e::getMessage, e);
             throw e;
         }
@@ -204,12 +216,12 @@ public class ShardManager {
                         StreamUtil.streamToStream(Files.newInputStream(path), outputStream);
                     }
                 } catch (final Exception e) {
-                    LOGGER.error(() -> "fetchSnapshot1() " + e.getMessage(), e);
+                    error("fetchSnapshot1()", e);
                     LOGGER.error(e::getMessage, e);
                 }
             }
         } catch (final RuntimeException e) {
-            LOGGER.error(() -> "fetchSnapshot2() " + e.getMessage(), e);
+            error("fetchSnapshot2()", e);
             LOGGER.error(e::getMessage, e);
             throw e;
         }
@@ -220,7 +232,7 @@ public class ShardManager {
             final Shard shard = getShardForMapName(mapName);
             return shard.get(function);
         } catch (final RuntimeException e) {
-            LOGGER.error(() -> "get() " + e.getMessage(), e);
+            error("get()", e);
             LOGGER.error(e::getMessage, e);
             throw e;
         }
@@ -230,7 +242,7 @@ public class ShardManager {
         try {
             shardMap.values().forEach(Shard::cleanup);
         } catch (final RuntimeException e) {
-            LOGGER.error(() -> "cleanup() " + e.getMessage(), e);
+            error("cleanup()", e);
             LOGGER.error(e::getMessage, e);
             throw e;
         }
