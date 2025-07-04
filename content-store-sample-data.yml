@@ -228,21 +228,6 @@ contentPacks:
     gitPath: source/template-pipelines/stroomContent/
     gitCommit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
 
-#  -
-#    id: state
-#    uiName: State
-#    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-content/refs/heads/planb/source/state/content-pack-icon.svg
-#    licenseName: Apache 2.0
-#    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
-#    stroomPath: /
-#    details: |
-#      # State
-#    gitRepoName: State
-#    gitUrl: "https://github.com/gchq/stroom-content.git"
-#    gitBranch: "7.10"
-#    gitPath: source/state/stroomContent/
-#    gitCommit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
-
   -
     id: planb
     uiName: Plan B
