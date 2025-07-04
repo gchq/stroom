@@ -107,7 +107,7 @@ public class GitRepoSettingsPresenter
         // Local copy of the initial value of the doc
         gitRepoDoc = doc;
 
-        GitRepoSettingsView view = this.getView();
+        final GitRepoSettingsView view = this.getView();
         if (doc.getContentStoreMetadata() != null) {
             view.setContentStoreName(doc.getContentStoreMetadata().getOwnerName());
             view.setContentPackName(doc.getName());
@@ -136,7 +136,7 @@ public class GitRepoSettingsPresenter
      */
     @Override
     protected GitRepoDoc onWrite(final GitRepoDoc doc) {
-        GitRepoSettingsView view = this.getView();
+        final GitRepoSettingsView view = this.getView();
         doc.setUrl(view.getUrl());
         doc.setBranch(view.getBranch());
         doc.setPath(view.getPath());
@@ -174,7 +174,7 @@ public class GitRepoSettingsPresenter
 
         // Use the gitRepoDoc saved in the onRead() method, if available
         if (gitRepoDoc != null) {
-            ShowPopupEvent.Builder builder = ShowPopupEvent.builder(commitDialog);
+            final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(commitDialog);
             commitDialog.setupDialog(builder);
             builder.onHideRequest(e -> {
                 if (e.isOk()) {
@@ -312,9 +312,9 @@ public class GitRepoSettingsPresenter
      * Called from View when the Set Credentials button is pressed.
      */
     @Override
-    public void onShowCredentialsDialog(TaskMonitorFactory taskMonitorFactory) {
+    public void onShowCredentialsDialog(final TaskMonitorFactory taskMonitorFactory) {
 
-        ShowPopupEvent.Builder builder = ShowPopupEvent.builder(credentialsDialog);
+        final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(credentialsDialog);
         credentialsDialog.setupDialog(
                 gitRepoUsername,
                 gitRepoPassword,

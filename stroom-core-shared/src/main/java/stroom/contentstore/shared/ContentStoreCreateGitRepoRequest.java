@@ -49,7 +49,7 @@ public class ContentStoreCreateGitRepoRequest {
                                             @JsonProperty("password") final String password) {
         Objects.requireNonNull(contentPack);
         this.contentPack = contentPack;
-        boolean gitNeedsAuth = contentPack.getGitNeedsAuth();
+        final boolean gitNeedsAuth = contentPack.getGitNeedsAuth();
         this.username = gitNeedsAuth && username != null ? username : "";
         this.password = gitNeedsAuth && password != null ? password : "";
     }

@@ -105,7 +105,7 @@ public class ContentStoreContentPackListPresenter
                     if (gridSelectionModel.getSelected() == null
                         && dataGrid.getRowCount() > 0) {
                         // Nothing selected and we've got data so set something selected
-                        ContentStoreContentPackWithDynamicState cpds = dataGrid.getVisibleItem(FIRST_ITEM_INDEX);
+                        final ContentStoreContentPackWithDynamicState cpds = dataGrid.getVisibleItem(FIRST_ITEM_INDEX);
                         gridSelectionModel.setSelected(cpds);
                     }
                 }
@@ -134,9 +134,9 @@ public class ContentStoreContentPackListPresenter
     private void loadStateFromCache() {
         boolean dirty = false;
         for (int iCp = 0; iCp < dataGrid.getVisibleItemCount(); ++iCp) {
-            ContentStoreContentPackWithDynamicState cpws = dataGrid.getVisibleItem(iCp);
+            final ContentStoreContentPackWithDynamicState cpws = dataGrid.getVisibleItem(iCp);
             if (cpws != null) {
-                ContentStoreContentPackStatus status = contentPackStatusCache.get(cpws.getContentPack());
+                final ContentStoreContentPackStatus status = contentPackStatusCache.get(cpws.getContentPack());
 
                 // If the status exists and doesn't match the stored status
                 // then change it
@@ -175,7 +175,7 @@ public class ContentStoreContentPackListPresenter
             protected void exec(final Range range,
                                 final Consumer<ResultPage<ContentStoreContentPackWithDynamicState>> dataConsumer,
                                 final RestErrorHandler restErrorHandler) {
-                PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
+                final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
                 restFactory
                         .create(ContentStorePresenter.CONTENT_STORE_RESOURCE)
                         .method((r) ->  {
