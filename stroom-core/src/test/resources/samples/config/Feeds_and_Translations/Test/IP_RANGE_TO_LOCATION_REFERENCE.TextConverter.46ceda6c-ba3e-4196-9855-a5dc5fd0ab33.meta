@@ -1,0 +1,7 @@
+{
+  "type" : "TextConverter",
+  "uuid" : "46ceda6c-ba3e-4196-9855-a5dc5fd0ab33",
+  "name" : "IP_RANGE_TO_LOCATION-REFERENCE",
+  "version" : "daac11e6-f5df-4a13-9d3b-e20625001166",
+  "converterType" : "NONE"
+}

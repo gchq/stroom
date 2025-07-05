@@ -1,0 +1,12 @@
+{
+  "type" : "Feed",
+  "uuid" : "60f9f51d-e5d6-41f5-86b9-ae866b8c9fa3",
+  "name" : "FILENO_TO_LOCATION-REFERENCE",
+  "version" : "2b6627d8-863e-4cd0-b227-c236435cd338",
+  "description" : "FILENO_TO_LOCATION-REFERENCE",
+  "encoding" : "UTF-8",
+  "contextEncoding" : "UTF-8",
+  "reference" : true,
+  "streamType" : "Raw Reference",
+  "status" : "RECEIVE"
+}

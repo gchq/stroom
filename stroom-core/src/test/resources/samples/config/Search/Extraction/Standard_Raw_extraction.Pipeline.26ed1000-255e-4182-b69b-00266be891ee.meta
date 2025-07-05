@@ -1,0 +1,11 @@
+{
+  "type" : "Pipeline",
+  "uuid" : "26ed1000-255e-4182-b69b-00266be891ee",
+  "name" : "Standard Raw extraction",
+  "version" : "db4ba406-29ed-4b35-bc73-623fc08c47f8",
+  "parentPipeline" : {
+    "type" : "Pipeline",
+    "uuid" : "3d9d60e9-61c2-4c88-a57b-7bc584dd970e",
+    "name" : "Search Extraction"
+  }
+}

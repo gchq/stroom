@@ -1,0 +1,6 @@
+{
+  "type" : "Pipeline",
+  "uuid" : "a092e9bc-3e55-405a-a9ab-5927b78e2410",
+  "name" : "RAW_STREAMING_FORK-EVENTS",
+  "version" : "80ad862e-c4bc-46b5-be59-bc3afcd957b3"
+}

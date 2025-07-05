@@ -1,0 +1,116 @@
+{
+  "components" : [ {
+    "type" : "table",
+    "id" : "table-IIO1T",
+    "name" : "Table",
+    "settings" : {
+      "type" : "table",
+      "queryId" : "query-JT8D7",
+      "fields" : [ {
+        "id" : "table-IIO1T|2PINZ",
+        "name" : "Key",
+        "expression" : "${Key}",
+        "sort" : {
+          "order" : 1,
+          "direction" : "ASCENDING"
+        },
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "table-IIO1T|M8K5J",
+        "name" : "Value",
+        "expression" : "${Value}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "table-IIO1T|1XIXK",
+        "name" : "Stream ID",
+        "expression" : "${Stream ID}",
+        "format" : {
+          "type" : "NUMBER"
+        },
+        "width" : 74,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "table-IIO1T|8Q4FZ",
+        "name" : "Effective Time",
+        "expression" : "${Effective Time}",
+        "sort" : {
+          "order" : 0,
+          "direction" : "DESCENDING"
+        },
+        "format" : {
+          "type" : "DATE_TIME"
+        },
+        "width" : 188,
+        "visible" : true,
+        "special" : false
+      } ],
+      "maxResults" : [ 1000000 ]
+    }
+  }, {
+    "type" : "query",
+    "id" : "query-JT8D7",
+    "name" : "Query",
+    "settings" : {
+      "type" : "query",
+      "dataSource" : {
+        "type" : "Searchable",
+        "uuid" : "Reference Data Store",
+        "name" : "Reference Data Store (This Node Only)"
+      },
+      "expression" : {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "term",
+          "field" : "Map Name",
+          "condition" : "EQUALS",
+          "value" : "USER_TO_EFF_DATE_MAP"
+        } ]
+      },
+      "automate" : {
+        "open" : true,
+        "refresh" : false,
+        "refreshInterval" : "10s"
+      }
+    }
+  } ],
+  "layout" : {
+    "type" : "splitLayout",
+    "preferredSize" : {
+      "width" : 200,
+      "height" : 200
+    },
+    "dimension" : 1,
+    "children" : [ {
+      "type" : "tabLayout",
+      "preferredSize" : {
+        "width" : 200,
+        "height" : 200
+      },
+      "tabs" : [ {
+        "id" : "query-JT8D7"
+      } ],
+      "selected" : 0
+    }, {
+      "type" : "tabLayout",
+      "preferredSize" : {
+        "width" : 200,
+        "height" : 200
+      },
+      "tabs" : [ {
+        "id" : "table-IIO1T"
+      } ],
+      "selected" : 0
+    } ]
+  }
+}
