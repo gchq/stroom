@@ -93,7 +93,7 @@ public class ScheduledProcessListPresenter
 
         final CriteriaFieldSort defaultSort = new CriteriaFieldSort(ExecutionScheduleFields.ID, true, true);
         request = ExecutionScheduleRequest.builder().sortList(Collections.singletonList(defaultSort)).build();
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
         selectionModel = new MultiSelectionModelImpl<>();
         selectionEventManager = new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);

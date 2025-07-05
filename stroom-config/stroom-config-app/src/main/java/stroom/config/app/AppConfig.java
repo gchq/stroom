@@ -49,6 +49,7 @@ import stroom.pipeline.PipelineConfig;
 import stroom.planb.impl.PlanBConfig;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.receive.common.ReceiveDataConfig;
+import stroom.receive.rules.impl.StroomReceiptPolicyConfig;
 import stroom.search.elastic.ElasticConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
@@ -116,6 +117,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_PUBLIC_URI = "publicUri";
     public static final String PROP_NAME_QUERY_HISTORY = "queryHistory";
     public static final String PROP_NAME_RECEIVE = "receive";
+    public static final String PROP_NAME_RECEIPT_POLICY = "receiptPolicy";
     public static final String PROP_NAME_S3 = "s3";
     public static final String PROP_NAME_SEARCH = "search";
     public static final String PROP_NAME_SECURITY = "security";
@@ -164,6 +166,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final PublicUriConfig publicUri;
     private final IndexFieldDbConfig queryDataSourceConfig;
     private final ReceiveDataConfig receiveDataConfig;
+    private final StroomReceiptPolicyConfig receiptPolicyConfig;
     private final S3Config s3Config;
     private final SearchConfig searchConfig;
     private final SecurityConfig securityConfig;
@@ -217,6 +220,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                 new PublicUriConfig(),
                 new IndexFieldDbConfig(),
                 new ReceiveDataConfig(),
+                new StroomReceiptPolicyConfig(),
                 new S3Config(),
                 new SearchConfig(),
                 new SecurityConfig(),
@@ -269,6 +273,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_PUBLIC_URI) final PublicUriConfig publicUri,
                      @JsonProperty(PROP_NAME_QUERY_DATASOURCE) final IndexFieldDbConfig queryDataSourceConfig,
                      @JsonProperty(PROP_NAME_RECEIVE) final ReceiveDataConfig receiveDataConfig,
+                     @JsonProperty(PROP_NAME_RECEIPT_POLICY) final StroomReceiptPolicyConfig receiptPolicyConfig,
                      @JsonProperty(PROP_NAME_S3) final S3Config s3Config,
                      @JsonProperty(PROP_NAME_SEARCH) final SearchConfig searchConfig,
                      @JsonProperty(PROP_NAME_SECURITY) final SecurityConfig securityConfig,
@@ -317,6 +322,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.publicUri = publicUri;
         this.queryDataSourceConfig = queryDataSourceConfig;
         this.receiveDataConfig = receiveDataConfig;
+        this.receiptPolicyConfig = receiptPolicyConfig;
         this.s3Config = s3Config;
         this.searchConfig = searchConfig;
         this.securityConfig = securityConfig;
@@ -528,6 +534,11 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty(PROP_NAME_RECEIVE)
     public ReceiveDataConfig getReceiveDataConfig() {
         return receiveDataConfig;
+    }
+
+    @JsonProperty(PROP_NAME_RECEIPT_POLICY)
+    public StroomReceiptPolicyConfig getReceiptPolicyConfig() {
+        return receiptPolicyConfig;
     }
 
     @JsonProperty(PROP_NAME_LOGGING)

@@ -51,7 +51,6 @@ public class StroomStreamStatus {
         return builder.toString();
     }
 
-
     public String toString() {
         final StringBuilder clientDetailsStringBuilder = new StringBuilder();
         AttributeMapUtil.appendAttributes(
@@ -60,7 +59,8 @@ public class StroomStreamStatus {
                 StandardHeaderArguments.X_FORWARDED_FOR,
                 StandardHeaderArguments.REMOTE_HOST,
                 StandardHeaderArguments.REMOTE_ADDRESS,
-                StandardHeaderArguments.RECEIVED_PATH);
+                StandardHeaderArguments.RECEIVED_PATH,
+                StandardHeaderArguments.DATA_RECEIPT_RULE);
 
         final String clientDetailsStr = clientDetailsStringBuilder.isEmpty()
                 ? ""

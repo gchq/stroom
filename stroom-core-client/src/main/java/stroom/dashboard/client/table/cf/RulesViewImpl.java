@@ -47,6 +47,11 @@ public class RulesViewImpl extends ViewImpl implements RulesPresenter.RulesView 
         this.table.setWidget(view.asWidget());
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Binder extends UiBinder<Widget, RulesViewImpl> {
+
     }
 }

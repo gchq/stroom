@@ -67,7 +67,7 @@ public class ContentTemplatePlugin extends MonitoringPlugin<ContentTemplateTabPr
 
     private MenuItem createContentTemplateMenuItem() {
         return new IconMenuItem.Builder()
-                .priority(51)
+                .priority(55)
                 .icon(ContentTemplates.DOCUMENT_TYPE.getIcon())
                 .text("Content Templates")
                 .action(getOpenAction())

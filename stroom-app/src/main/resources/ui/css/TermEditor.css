@@ -73,7 +73,8 @@
 }
 
 .termEditor-item.condition {
-	width: 140px;
+    /* Need room for 'matches regex (case sensitive)' */
+	width: 160px;
 	padding-right: 25px;
 }
 

@@ -35,6 +35,7 @@ public class TestEndToEndStoreAndForwardToHttp extends AbstractEndToEndTest {
                         .build())
                 .addForwardHttpDestination(MockHttpDestination.createForwardHttpPostConfig(false))
                 .feedStatusConfig(MockHttpDestination.createFeedStatusConfig())
+                .downstreamHostConfig(MockHttpDestination.createDownstreamHostConfig())
                 .receiveDataConfig(ReceiveDataConfig.builder()
                         .withAuthenticationRequired(false)
                         .build())

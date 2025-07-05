@@ -13,6 +13,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11-beta.1] - 2025-07-02
+
+* Add the Receive Data Rules screen to the Administration menu which requires the `Manage Data Receipt Rules` app permission. Add the following new config properties to the `receive` branch: `obfuscatedFields`, `obfuscationHashAlgorithm`, `receiptCheckMode` and `receiptRulesInitialFields`. Remove the property `receiptPolicyUuid`. Add the proxy config property `contentSync.receiveDataRulesUrl`.
+
+* The proxy config property `feedStatus.enabled` has been replaced by `receive.receiptCheckMode` which takes values `FEED_STATUS`, `RECEIPT_POLICY` or `NONE`.
+
+* In the proxy config, the named Jersey clients CONTENT_SYNC and FEED_STATUS have been removed and replaced with DOWNSTREAM.
+
+
 ## [v7.10-beta.6] - 2025-06-26
 
 * Issue **#5007** : Add ceilingTime() and floorTime().
@@ -1566,7 +1575,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.10-beta.6...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.1...HEAD
+[v7.11-beta.1]: https://github.com/gchq/stroom/compare/v7.10-beta.6...v7.11-beta.1
 [v7.10-beta.6]: https://github.com/gchq/stroom/compare/v7.10-beta.5...v7.10-beta.6
 [v7.10-beta.5]: https://github.com/gchq/stroom/compare/v7.10-beta.4...v7.10-beta.5
 [v7.10-beta.4]: https://github.com/gchq/stroom/compare/v7.10-beta.3...v7.10-beta.4

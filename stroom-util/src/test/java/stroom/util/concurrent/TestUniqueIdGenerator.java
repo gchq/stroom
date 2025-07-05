@@ -111,9 +111,12 @@ class TestUniqueIdGenerator {
 
         final int totalCount = iterations * cores;
         final Duration duration = timer.get();
-        LOGGER.info("Generated {} uniqueIds in {}, millis per iter: {}",
+        LOGGER.info("Generated {} uniqueIds in {}, " +
+                    "uniqueIds/sec: {}, " +
+                    "millis per iter: {}",
                 ModelStringUtil.formatCsv(totalCount),
                 duration,
+                totalCount / (double) duration.toMillis() * 1000,
                 duration.toMillis() / (double) totalCount);
 
         final List<UniqueId> allIds = new ArrayList<>(totalCount);

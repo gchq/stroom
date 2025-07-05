@@ -41,7 +41,7 @@ public class ContentStoreContentPackListPresenter
     final RestFactory restFactory;
 
     /** Table of content packs */
-    final MyDataGrid<ContentStoreContentPackWithDynamicState> dataGrid = new MyDataGrid<>();
+    final MyDataGrid<ContentStoreContentPackWithDynamicState> dataGrid;
 
     /** Shows what is selected in the App Store list */
     private final MultiSelectionModel<ContentStoreContentPackWithDynamicState> gridSelectionModel;
@@ -69,6 +69,7 @@ public class ContentStoreContentPackListPresenter
                                                 final RestFactory restFactory) {
         super(eventBus, view);
         this.restFactory = restFactory;
+        this.dataGrid = new MyDataGrid<>(this);
 
         // Create the grid
         view.setDataWidget(dataGrid);

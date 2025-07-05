@@ -6,6 +6,8 @@ import stroom.meta.api.AttributeMap;
 import stroom.proxy.StroomStatusCode;
 import stroom.security.api.UserIdentity;
 import stroom.util.PredicateUtil;
+import stroom.util.collections.CollectionUtil;
+import stroom.util.collections.CollectionUtil.DuplicateMode;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -27,7 +29,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +40,6 @@ import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -95,17 +95,12 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
 
     private Map<DataFeedKeyHashAlgorithm, DataFeedKeyHasher> buildHashFunctionMap(
             final Set<DataFeedKeyHasher> dataFeedKeyHashers) {
-        final Map<DataFeedKeyHashAlgorithm, DataFeedKeyHasher> hashFunctionMap;
-        hashFunctionMap = NullSafe.stream(dataFeedKeyHashers)
-                .collect(Collectors.toMap(
-                        DataFeedKeyHasher::getAlgorithm,
-                        Function.identity(),
-                        (dataFeedKeyHasher, dataFeedKeyHasher2) -> {
-                            throw new IllegalArgumentException("Dupplicate keys");
-                        },
-                        () -> new EnumMap<>(DataFeedKeyHashAlgorithm.class))
-                );
-        return hashFunctionMap;
+
+        return CollectionUtil.enumMapBy(
+                DataFeedKeyHashAlgorithm.class,
+                DataFeedKeyHasher::getAlgorithm,
+                DuplicateMode.THROW,
+                dataFeedKeyHashers);
     }
 
     private Optional<HashedDataFeedKey> getDataFeedKey(final HttpServletRequest request,

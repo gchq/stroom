@@ -375,8 +375,6 @@ public class ConfigProvidersModule extends AbstractModule {
                 stroom.kafka.impl.KafkaConfig.class);
     }
 
-
-
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
@@ -555,6 +553,15 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.receive.common.ReceiveDataConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.receive.rules.impl.StroomReceiptPolicyConfig getStroomReceiptPolicyConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.receive.rules.impl.StroomReceiptPolicyConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -963,16 +970,6 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.config.common.UriConfig getUriConfigButThrow(
-            final ConfigMapper configMapper) {
-        throw new UnsupportedOperationException(
-                "stroom.config.common.UriConfig cannot be injected directly. "
-                        + "Inject a config class that uses it or one of its sub-class instead.");
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
     stroom.query.common.v2.AbstractResultStoreConfig getAbstractResultStoreConfigButThrow(
             final ConfigMapper configMapper) {
         throw new UnsupportedOperationException(
@@ -1007,6 +1004,16 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         throw new UnsupportedOperationException(
                 "stroom.security.identity.config.SmtpConfig cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.util.net.UriConfig getUriConfigButThrow(
+            final ConfigMapper configMapper) {
+        throw new UnsupportedOperationException(
+                "stroom.util.net.UriConfig cannot be injected directly. "
                         + "Inject a config class that uses it or one of its sub-class instead.");
     }
 

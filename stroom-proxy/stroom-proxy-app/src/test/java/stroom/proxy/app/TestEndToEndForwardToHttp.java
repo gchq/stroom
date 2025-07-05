@@ -34,6 +34,7 @@ public class TestEndToEndForwardToHttp extends AbstractEndToEndTest {
                 .pathConfig(createProxyPathConfig())
                 .addForwardHttpDestination(MockHttpDestination.createForwardHttpPostConfig(true))
                 .feedStatusConfig(MockHttpDestination.createFeedStatusConfig())
+                .downstreamHostConfig(MockHttpDestination.createDownstreamHostConfig())
                 .receiveDataConfig(ReceiveDataConfig.builder()
                         .withAuthenticationRequired(false)
                         .build())

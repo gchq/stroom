@@ -924,7 +924,7 @@ class TestSearchResultCreation {
         }
 
         @Override
-        public String getSubjectId() {
+        public String subjectId() {
             return null;
         }
     }

@@ -25,7 +25,7 @@ public class CreateHashedApiKeyRequest {
     @JsonProperty
     private final boolean enabled;
     @JsonProperty
-    private final HashAlgorithm hashAlgorithm;
+    private final ApiKeyHashAlgorithm hashAlgorithm;
 
     @JsonCreator
     public CreateHashedApiKeyRequest(@JsonProperty("owner") final UserRef owner,
@@ -33,7 +33,7 @@ public class CreateHashedApiKeyRequest {
                                      @JsonProperty("name") final String name,
                                      @JsonProperty("comments") final String comments,
                                      @JsonProperty("enabled") final boolean enabled,
-                                     @JsonProperty("hashAlgorithm") final HashAlgorithm hashAlgorithm) {
+                                     @JsonProperty("hashAlgorithm") final ApiKeyHashAlgorithm hashAlgorithm) {
         this.owner = Objects.requireNonNull(owner);
         this.expireTimeMs = expireTimeMs;
         this.name = Objects.requireNonNull(name);
@@ -86,7 +86,7 @@ public class CreateHashedApiKeyRequest {
         return enabled;
     }
 
-    public HashAlgorithm getHashAlgorithm() {
+    public ApiKeyHashAlgorithm getHashAlgorithm() {
         return hashAlgorithm;
     }
 
@@ -113,13 +113,13 @@ public class CreateHashedApiKeyRequest {
     @Override
     public String toString() {
         return "CreateApiKeyRequest{" +
-                "owner=" + owner +
-                ", expireTimeMs=" + expireTimeMs +
-                ", name='" + name + '\'' +
-                ", comments='" + comments + '\'' +
-                ", enabled=" + enabled +
-                ", hashAlgorithm=" + hashAlgorithm +
-                '}';
+               "owner=" + owner +
+               ", expireTimeMs=" + expireTimeMs +
+               ", name='" + name + '\'' +
+               ", comments='" + comments + '\'' +
+               ", enabled=" + enabled +
+               ", hashAlgorithm=" + hashAlgorithm +
+               '}';
     }
 
     // --------------------------------------------------------------------------------
@@ -132,7 +132,7 @@ public class CreateHashedApiKeyRequest {
         private String name;
         private String comments;
         private boolean enabled = true;
-        private HashAlgorithm hashAlgorithm = HashAlgorithm.DEFAULT;
+        private ApiKeyHashAlgorithm hashAlgorithm = ApiKeyHashAlgorithm.DEFAULT;
 
         private Builder() {
         }
@@ -166,7 +166,7 @@ public class CreateHashedApiKeyRequest {
             return this;
         }
 
-        public Builder withHashAlgorithm(final HashAlgorithm val) {
+        public Builder withHashAlgorithm(final ApiKeyHashAlgorithm val) {
             hashAlgorithm = val;
             return this;
         }

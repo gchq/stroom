@@ -2,6 +2,7 @@ package stroom.test.common;
 
 import stroom.test.common.DynamicTestBuilder.InitialBuilder;
 import stroom.util.concurrent.ThreadUtil;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.AsciiTable.TableBuilder;
@@ -30,6 +31,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -276,6 +280,35 @@ public class TestUtil {
                 .isEqualTo(object);
 
         return object2;
+    }
+
+    public static void multiThread(final int threads,
+                                   final Runnable work) {
+
+        final CountDownLatch startLatch = new CountDownLatch(threads);
+        final CountDownLatch endLatch = new CountDownLatch(threads);
+        try (final ExecutorService executorService = Executors.newFixedThreadPool(threads)) {
+            for (int i = 0; i < threads; i++) {
+                executorService.submit(() -> {
+//                    LOGGER.trace("Starting thread");
+                    startLatch.countDown();
+                    try {
+                        startLatch.await();
+                    } catch (final InterruptedException e) {
+                        throw UncheckedInterruptedException.create(e);
+                    }
+
+                    work.run();
+                    endLatch.countDown();
+//                    LOGGER.trace("Ending task");
+                });
+            }
+        }
+        try {
+            endLatch.await();
+        } catch (final InterruptedException e) {
+            throw UncheckedInterruptedException.create(e);
+        }
     }
 
     public static void comparePerformance(final int rounds,

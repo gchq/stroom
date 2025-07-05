@@ -38,9 +38,9 @@ public class TestCredentialsServiceUserFactory implements ServiceUserFactory {
             return false;
         } else {
             return userIdentity instanceof DefaultOpenIdCredsUserIdentity
-                    && Objects.equals(
-                    userIdentity.getSubjectId(),
-                    serviceUserIdentity.getSubjectId());
+                   && Objects.equals(
+                    userIdentity.subjectId(),
+                    serviceUserIdentity.subjectId());
         }
     }
 }

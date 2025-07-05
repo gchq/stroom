@@ -76,7 +76,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
         this.restFactory = restFactory;
         this.tooltipPresenter = tooltipPresenter;
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
 

@@ -6,11 +6,17 @@ dependencies {
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-data:stroom-data-store-api')
     implementation project(':stroom-data:stroom-data-zip')
+    implementation project(':stroom-dictionary:stroom-dictionary-api')
+    implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+    implementation project(':stroom-explorer:stroom-docrefinfo-api')
     implementation project(':stroom-feed:stroom-feed-api')
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-meta:stroom-meta-statistics-api')
     implementation project(':stroom-proxy:stroom-proxy-remote-api')
+    implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-query:stroom-query-common')
+    implementation project(':stroom-search:stroom-expression-matcher')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
@@ -29,6 +35,7 @@ dependencies {
     implementation libs.jackson.databind
     implementation libs.jakarta.servlet.api
     implementation libs.jakarta.inject
+    implementation libs.restygwt
     implementation libs.slf4j.api
     implementation libs.swagger.annotations
     implementation libs.ws.rs.api

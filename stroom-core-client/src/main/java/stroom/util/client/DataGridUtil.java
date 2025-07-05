@@ -25,6 +25,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.docref.DocRef;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Preset;
+import stroom.util.client.DataGridComparatorFactory.Builder;
 import stroom.util.shared.Expander;
 import stroom.util.shared.GwtUtil;
 import stroom.util.shared.ModelStringUtil;
@@ -627,5 +628,9 @@ public class DataGridUtil {
             final Function<T_VAL1, Object> valueExtractor2) {
         return (T_ROW row) ->
                 NullSafe.toStringOrElse(row, valueExtractor1, valueExtractor2, "");
+    }
+
+    public static <T> Builder<T> comparatorFactoryBuilder(final DataGrid<T> dataGrid) {
+        return DataGridComparatorFactory.builder(dataGrid);
     }
 }

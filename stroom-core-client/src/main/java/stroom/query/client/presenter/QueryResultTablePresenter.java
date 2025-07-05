@@ -162,7 +162,7 @@ public class QueryResultTablePresenter
         tableRowStyles = new TableRowStyles(userPreferencesManager);
 
         this.pagerView = pagerView;
-        this.dataGrid = new MyDataGrid<>();
+        this.dataGrid = new MyDataGrid<>(this);
         dataGrid.addStyleName("TablePresenter");
         dataGrid.setRowStyles(tableRowStyles);
         selectionModel = new MultiSelectionModelImpl<>();

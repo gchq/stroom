@@ -68,7 +68,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
                                           final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 

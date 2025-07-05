@@ -28,7 +28,6 @@ import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
@@ -48,8 +47,8 @@ public class RuleSetListPresenter extends MyPresenterWidget<PagerView> implement
                                 final PagerView view) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>();
-        selectionModel = dataGrid.addDefaultSelectionModel(false);
+        dataGrid = new MyDataGrid<>(this);
+        selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 
         initTableColumns();
@@ -67,33 +66,61 @@ public class RuleSetListPresenter extends MyPresenterWidget<PagerView> implement
         // Rule.
         dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder((ReceiveDataRule row) ->
-                        getSafeHtml(row, row2 -> Integer.toString(row2.getRuleNumber())))
+                                getSafeHtml(row, row2 -> Integer.toString(row2.getRuleNumber())))
+                        .enabledWhen(ReceiveDataRule::isEnabled)
                         .rightAligned()
                         .build(),
-                DataGridUtil.createRightAlignedHeader("Rule"),
-                40);
+                DataGridUtil.headingBuilder("Rule")
+                        .withToolTip("The number of the rule. Rules are evaluated in ascending order of rule number.")
+                        .rightAligned()
+                        .build(),
+                60);
 
         // Name.
         dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder((ReceiveDataRule row) ->
-                        getSafeHtml(row, ReceiveDataRule::getName))
+                                getSafeHtml(row, ReceiveDataRule::getName))
+                        .enabledWhen(ReceiveDataRule::isEnabled)
                         .build(),
-                "Name",
-                ColumnSizeConstants.MEDIUM_COL);
+                DataGridUtil.headingBuilder("Name")
+                        .withToolTip("The optional name of the rule. The name is only an aid in distinguishing rules.")
+                        .build(),
+                ColumnSizeConstants.BIG_COL);
 
         // Expression.
         dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder((ReceiveDataRule row) ->
-                        getSafeHtml(row, row2 -> row2.getExpression().toString()))
+                                getSafeHtml(row, row2 -> row2.getExpression().toString()))
+                        .enabledWhen(ReceiveDataRule::isEnabled)
                         .build(),
-                "Expression",
+                DataGridUtil.headingBuilder("Expression")
+                        .withToolTip("The expression to evaluate against the received meta entries.")
+                        .build(),
                 500);
 
         // Action.
         dataGrid.addResizableColumn(
-                DataGridUtil.safeHtmlColumn((ReceiveDataRule row) ->
-                        getSafeHtml(row, row2 -> row2.getAction().getDisplayValue())),
-                "Action",
+                DataGridUtil.htmlColumnBuilder((ReceiveDataRule row) ->
+                                getSafeHtml(row, row2 -> row2.getAction().getDisplayValue()))
+                        .enabledWhen(ReceiveDataRule::isEnabled)
+                        .build(),
+                DataGridUtil.headingBuilder("Action")
+                        .withToolTip("The action to perform if the rule matches against the received meta entries.")
+                        .build(),
+                ColumnSizeConstants.SMALL_COL);
+
+        dataGrid.addResizableColumn(
+                DataGridUtil.htmlColumnBuilder((ReceiveDataRule row) ->
+                                getSafeHtml(row,
+                                        row2 -> (row2.isEnabled()
+                                                ? "Enabled"
+                                                : "Disabled")))
+                        .enabledWhen(ReceiveDataRule::isEnabled)
+                        .build(),
+                DataGridUtil.headingBuilder("State")
+                        .withToolTip("Whether this rule is enabled or disabled. A disabled rule will be ignored " +
+                                     "when checking incoming data.")
+                        .build(),
                 ColumnSizeConstants.SMALL_COL);
 
         DataGridUtil.addEndColumn(dataGrid);
@@ -115,14 +142,17 @@ public class RuleSetListPresenter extends MyPresenterWidget<PagerView> implement
     private SafeHtml getSafeHtml(final ReceiveDataRule row,
                                  final Function<ReceiveDataRule, String> valueFunc) {
         final String value = valueFunc.apply(row);
-        if (row.isEnabled()) {
-            return SafeHtmlUtils.fromString(value);
-        } else {
-            final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-            builder.appendHtmlConstant("<span style=\"color:grey\">");
-            builder.appendEscaped(value);
-            builder.appendHtmlConstant("</span>");
-            return builder.toSafeHtml();
-        }
+        return SafeHtmlUtils.fromString(value);
+//        if (row.isEnabled()) {
+//            return SafeHtmlUtils.fromString(value);
+//        } else {
+//            return new SafeHtmlBuilder()
+//                    .appendHtmlConstant("<span title=\"")
+//                    .appendEscaped(value)
+//                    .appendHtmlConstant("\">")
+//                    .appendEscaped(value)
+//                    .appendHtmlConstant("</span>")
+//                    .toSafeHtml();
+//        }
     }
 }

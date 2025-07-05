@@ -2,8 +2,10 @@ ext.moduleName = 'stroom.receive.rules.impl'
 
 dependencies {
     implementation project(':stroom-core-shared')
+    implementation project(':stroom-cluster:stroom-cluster-lock-api')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
@@ -11,17 +13,22 @@ dependencies {
     implementation project(':stroom-proxy:stroom-proxy-remote-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-receive:stroom-receive-common')
-    implementation project(':stroom-search:stroom-expression-matcher')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
 
+    implementation libs.dropwizard.validation
     implementation libs.guice
     implementation libs.jakarta.servlet.api
     implementation libs.jakarta.inject
     implementation libs.restygwt
     implementation libs.slf4j.api
 
+    testImplementation project(':stroom-security:stroom-security-mock')
+    testImplementation project(':stroom-test-common')
+
     testImplementation libs.bundles.common.test.implementation
+    testImplementation libs.commons.codec
+
     testRuntimeOnly libs.bundles.common.test.runtime
 }

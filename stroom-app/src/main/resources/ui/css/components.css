@@ -1849,6 +1849,7 @@ button.main-menu svg {
     width: 16px;
     height: 16px;
     /* margin-bottom: 0.6em; */
+    color: var(--navigation-icon-button__color);
 }
 
 .form-heading {

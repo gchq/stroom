@@ -40,6 +40,7 @@ dependencies {
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-receive:stroom-receive-common')
+    implementation project(':stroom-receive:stroom-receive-rules-impl')
     implementation project(':stroom-search:stroom-search-elastic')
     implementation project(':stroom-search:stroom-search-extraction')
     implementation project(':stroom-search:stroom-search-impl')

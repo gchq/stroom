@@ -75,7 +75,7 @@ public class StroomStatsStoreCustomMaskListPresenter
                                                    final RestFactory restFactory) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 

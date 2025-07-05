@@ -78,7 +78,7 @@ public class ScheduledProcessHistoryListPresenter
 
         final CriteriaFieldSort defaultSort = new CriteriaFieldSort(ExecutionHistoryFields.ID, true, true);
         request = ExecutionHistoryRequest.builder().sortList(Collections.singletonList(defaultSort)).build();
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
         selectionModel = new MultiSelectionModelImpl<>();
         selectionEventManager = new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);

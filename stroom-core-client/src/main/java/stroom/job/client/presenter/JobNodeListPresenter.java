@@ -100,7 +100,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
         this.restFactory = restFactory;
         this.nodeManager = nodeManager;
 
-        this.dataGrid = new MyDataGrid<>();
+        this.dataGrid = new MyDataGrid<>(this);
         this.dataGrid.addDefaultSelectionModel(true);
         this.redrawDelayedUpdate = new DelayedUpdate(REDRAW_TIMER_DELAY_MS, dataGrid::redraw);
         this.selectionModel = dataGrid.addDefaultSelectionModel(true);
@@ -169,7 +169,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
         // JobListPresenter may change a job
         registerHandler(getEventBus().addHandler(
                 JobChangeEvent.getType(), event -> {
-                    GWT.log("Handling JobChangeEvent " + event);
+//                    GWT.log("Handling JobChangeEvent " + event);
                     final String currentJobName = getJobNameCriteria();
                     final String affectedJobName = NullSafe.get(event, JobChangeEvent::getJob, Job::getName);
                     if (currentJobName != null && Objects.equals(currentJobName, affectedJobName)) {

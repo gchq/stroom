@@ -100,7 +100,7 @@ public class IndexShardPresenter
                                final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
         view.setDataWidget(dataGrid);
 
         this.tooltipPresenter = tooltipPresenter;

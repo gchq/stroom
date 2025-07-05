@@ -1,6 +1,7 @@
 package stroom.security.api;
 
 import stroom.util.shared.HasAuditableUserIdentity;
+import stroom.util.shared.UserDesc;
 
 import java.util.Optional;
 
@@ -15,14 +16,14 @@ public interface UserIdentity extends HasAuditableUserIdentity {
      * These values are often UUIDs and thus not pretty to look at for an admin.
      * For the internal IDP this would likely be a more human friendly username.
      */
-    String getSubjectId();
+    String subjectId();
 
     /**
      * @return The non-unique username for the user, e.g. 'jbloggs'. In the absence of a specific
      * value this should just return the subjectId.
      */
     default String getDisplayName() {
-        return getSubjectId();
+        return subjectId();
     }
 
     /**
@@ -34,7 +35,7 @@ public interface UserIdentity extends HasAuditableUserIdentity {
 
     @Override
     default String getUserIdentityForAudit() {
-        final String subjectId = getSubjectId();
+        final String subjectId = subjectId();
         final String displayName = getDisplayName();
         // GWT so no Objects.requireNonNullElse()
         if (displayName != null) {
@@ -42,6 +43,10 @@ public interface UserIdentity extends HasAuditableUserIdentity {
         } else {
             return subjectId;
         }
+    }
+
+    default UserDesc asUserDesc() {
+        return new UserDesc(subjectId(), getDisplayName(), getFullName().orElse(null));
     }
 
     // TODO: 28/11/2022 Potentially worth introducing scopes, e.g. a datafeed scope so only tokens

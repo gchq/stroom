@@ -40,6 +40,7 @@ public class TestEndToEndStoreAndForwardToFileAndHttp extends AbstractEndToEndTe
                 .addForwardFileDestination(MockFileDestination.createForwardFileConfig()) // forward to file and http
                 .addForwardHttpDestination(MockHttpDestination.createForwardHttpPostConfig(false))
                 .feedStatusConfig(MockHttpDestination.createFeedStatusConfig())
+                .downstreamHostConfig(MockHttpDestination.createDownstreamHostConfig())
                 .receiveDataConfig(ReceiveDataConfig.builder()
                         .withAuthenticationRequired(false)
                         .build())
