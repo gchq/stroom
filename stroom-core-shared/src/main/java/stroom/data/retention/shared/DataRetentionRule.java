@@ -73,6 +73,17 @@ public class DataRetentionRule {
         this.forever = forever;
     }
 
+    private DataRetentionRule(final Builder builder) {
+        ruleNumber = builder.ruleNumber;
+        creationTime = builder.creationTime;
+        name = builder.name;
+        enabled = builder.enabled;
+        expression = builder.expression;
+        age = builder.age;
+        timeUnit = builder.timeUnit;
+        forever = builder.forever;
+    }
+
     public static DataRetentionRule foreverRule(final int ruleNumber,
                                                 final long creationTime,
                                                 final String name,
@@ -107,6 +118,23 @@ public class DataRetentionRule {
                 age,
                 timeUnit,
                 false);
+    }
+
+    public Builder copy() {
+        return copy(this);
+    }
+
+    public static Builder copy(final DataRetentionRule copy) {
+        final Builder builder = new Builder();
+        builder.ruleNumber = copy.getRuleNumber();
+        builder.creationTime = copy.getCreationTime();
+        builder.name = copy.getName();
+        builder.enabled = copy.isEnabled();
+        builder.expression = copy.getExpression();
+        builder.age = copy.getAge();
+        builder.timeUnit = copy.getTimeUnit();
+        builder.forever = copy.isForever();
+        return builder;
     }
 
     public int getRuleNumber() {
@@ -172,13 +200,13 @@ public class DataRetentionRule {
         }
         final DataRetentionRule that = (DataRetentionRule) o;
         return ruleNumber == that.ruleNumber &&
-                creationTime == that.creationTime &&
-                enabled == that.enabled &&
-                age == that.age &&
-                forever == that.forever &&
-                Objects.equals(name, that.name) &&
-                Objects.equals(expression, that.expression) &&
-                timeUnit == that.timeUnit;
+               creationTime == that.creationTime &&
+               enabled == that.enabled &&
+               age == that.age &&
+               forever == that.forever &&
+               Objects.equals(name, that.name) &&
+               Objects.equals(expression, that.expression) &&
+               timeUnit == that.timeUnit;
     }
 
     @Override
@@ -204,5 +232,72 @@ public class DataRetentionRule {
 
     public static Comparator<DataRetentionRule> comparingByDescendingRuleNumber() {
         return Comparator.comparing(DataRetentionRule::getRuleNumber).reversed();
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static final class Builder {
+
+        private int ruleNumber;
+        private long creationTime;
+        private String name;
+        private boolean enabled;
+        private ExpressionOperator expression;
+        private int age;
+        private TimeUnit timeUnit;
+        private boolean forever;
+
+        private Builder() {
+        }
+
+        public Builder withRuleNumber(final int ruleNumber) {
+            this.ruleNumber = ruleNumber;
+            return this;
+        }
+
+        public Builder withCreationTime(final long creationTime) {
+            this.creationTime = creationTime;
+            return this;
+        }
+
+        public Builder withName(final String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder withEnabled(final boolean enabled) {
+            this.enabled = enabled;
+            return this;
+        }
+
+        public Builder withExpression(final ExpressionOperator expression) {
+            this.expression = expression;
+            return this;
+        }
+
+        public Builder withAge(final int age) {
+            this.age = age;
+            return this;
+        }
+
+        public Builder withTimeUnit(final TimeUnit timeUnit) {
+            this.timeUnit = timeUnit;
+            return this;
+        }
+
+        public Builder withForever(final boolean forever) {
+            this.forever = forever;
+            return this;
+        }
+
+        public DataRetentionRule build() {
+            return new DataRetentionRule(this);
+        }
     }
 }

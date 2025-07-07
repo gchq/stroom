@@ -137,6 +137,10 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
         return new Builder(this);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Builder extends AbstractAnalyticRuleDocBuilder<ReportDoc, Builder> {
 
         private ReportSettings reportSettings;

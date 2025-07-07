@@ -18,9 +18,8 @@
 package stroom.data.retention.impl;
 
 import stroom.data.retention.shared.DataRetentionRules;
-import stroom.docstore.api.DocumentStore;
+import stroom.docstore.api.SingletonDocumentStore;
 
-public interface DataRetentionRulesService extends DocumentStore<DataRetentionRules> {
+public interface DataRetentionRulesService extends SingletonDocumentStore<DataRetentionRules> {
 
-    DataRetentionRules getOrCreate();
 }

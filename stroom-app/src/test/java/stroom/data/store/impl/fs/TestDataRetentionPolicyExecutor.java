@@ -153,7 +153,7 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
     }
 
     private void setupDataRetentionRules(final String feedName) {
-        final DocRef docRef = dataRetentionRulesService.createDocument("test");
+        final DocRef docRef = dataRetentionRulesService.getOrCreate().asDocRef();
         final DataRetentionRules dataRetentionRules = dataRetentionRulesService.readDocument(docRef);
 
         final ExpressionOperator.Builder builder = ExpressionOperator.builder();

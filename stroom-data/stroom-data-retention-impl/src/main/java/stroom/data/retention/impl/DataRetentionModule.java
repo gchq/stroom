@@ -39,7 +39,7 @@ public class DataRetentionModule extends AbstractModule {
                 .bindJobTo(DataRetention.class, builder -> builder
                         .name(DataRetentionPolicyExecutor.JOB_NAME)
                         .description("Delete data that exceeds the retention period " +
-                                "specified by data retention policy")
+                                     "specified by data retention policy")
                         .cronSchedule(CronExpressions.EVERY_DAY_AT_MIDNIGHT.getExpression()));
     }
 
@@ -48,6 +48,10 @@ public class DataRetentionModule extends AbstractModule {
     DataRetentionRules getRules(final DataRetentionRulesService dataRetentionRulesService) {
         return dataRetentionRulesService.getOrCreate();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class DataRetention extends RunnableWrapper {
 

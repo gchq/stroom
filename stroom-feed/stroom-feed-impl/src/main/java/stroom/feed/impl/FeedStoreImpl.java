@@ -175,7 +175,7 @@ public class FeedStoreImpl implements FeedStore {
     @Override
     public void remapDependencies(final DocRef docRef,
                                   final Map<DocRef, DocRef> remappings) {
-        store.remapDependencies(docRef, remappings, null);
+        store.remapDependencies(docRef, remappings);
     }
 
     ////////////////////////////////////////////////////////////////////////

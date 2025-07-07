@@ -94,8 +94,8 @@ public class StateDocStoreImpl implements StateDocStore {
     private void validateName(final String name) {
         if (!ScyllaDbNameValidator.isValidName(name)) {
             throw new EntityServiceException("The state store name must match the pattern '" +
-                    ScyllaDbNameValidator.getPattern() +
-                    "'");
+                                             ScyllaDbNameValidator.getPattern() +
+                                             "'");
         }
     }
 
@@ -107,7 +107,7 @@ public class StateDocStoreImpl implements StateDocStore {
         final List<DocRef> list = list();
         for (final DocRef docRef : list) {
             if (name.equals(docRef.getName()) &&
-                    (whitelistDocRef == null || !whitelistDocRef.equals(docRef))) {
+                (whitelistDocRef == null || !whitelistDocRef.equals(docRef))) {
                 return true;
             }
         }
@@ -249,7 +249,7 @@ public class StateDocStoreImpl implements StateDocStore {
     @Override
     public void remapDependencies(final DocRef docRef,
                                   final Map<DocRef, DocRef> remappings) {
-        store.remapDependencies(docRef, remappings, null);
+        store.remapDependencies(docRef, remappings);
     }
 
     ////////////////////////////////////////////////////////////////////////

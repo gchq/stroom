@@ -42,26 +42,30 @@ public class DependencyRemapper {
     }
 
     public ExpressionOperator remapExpression(final ExpressionOperator expressionOperator) {
-        final ExpressionOperator.Builder builder = ExpressionOperator
-                .builder()
-                .enabled(expressionOperator.getEnabled())
-                .op(expressionOperator.getOp());
-        if (expressionOperator.getChildren() != null) {
-            final List<ExpressionItem> children = new ArrayList<>();
-            expressionOperator.getChildren().forEach(expressionItem -> {
-                switch (expressionItem) {
-                    case final ExpressionOperator operator -> children.add(remapExpression(operator));
-                    case final ExpressionTerm expressionTerm -> {
-                        final ExpressionTerm termCopy = expressionTerm.copy()
-                                .docRef(remap(expressionTerm.getDocRef()))
-                                .build();
-                        children.add(termCopy);
+        if (expressionOperator != null) {
+            final ExpressionOperator.Builder builder = ExpressionOperator
+                    .builder()
+                    .enabled(expressionOperator.getEnabled())
+                    .op(expressionOperator.getOp());
+            if (expressionOperator.getChildren() != null) {
+                final List<ExpressionItem> children = new ArrayList<>();
+                expressionOperator.getChildren().forEach(expressionItem -> {
+                    switch (expressionItem) {
+                        case final ExpressionOperator operator -> children.add(remapExpression(operator));
+                        case final ExpressionTerm expressionTerm -> {
+                            final ExpressionTerm termCopy = expressionTerm.copy()
+                                    .docRef(remap(expressionTerm.getDocRef()))
+                                    .build();
+                            children.add(termCopy);
+                        }
                     }
-                }
-            });
-            builder.children(children);
+                });
+                builder.children(children);
+            }
+            return builder.build();
+        } else {
+            return null;
         }
-        return builder.build();
     }
 
     public Set<DocRef> getDependencies() {

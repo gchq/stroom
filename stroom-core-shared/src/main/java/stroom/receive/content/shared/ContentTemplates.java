@@ -4,7 +4,7 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRef.TypedBuilder;
 import stroom.docs.shared.Description;
 import stroom.docs.shared.NotDocumented;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractSingletonDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.svg.shared.SvgImage;
@@ -28,9 +28,16 @@ import java.util.stream.Collectors;
 @Description("")
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
-public class ContentTemplates extends Doc {
+public class ContentTemplates extends AbstractSingletonDoc {
 
     public static final String TYPE = "ContentTemplates";
+
+    // =============================================================================
+    // DO NOT CHANGE THIS UUID VALUE as it should be the same on all stroom clusters
+    // to allow import/export to work
+    // =============================================================================
+    public static final String SINGLETON_UUID = "4f05f416-c5e6-48ff-aee7-bd905a1cd7a7";
+
     public static final DocumentType DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.CONFIGURATION,
             TYPE,
@@ -42,6 +49,11 @@ public class ContentTemplates extends Doc {
 
     public ContentTemplates() {
         contentTemplates = Collections.emptyList();
+    }
+
+    @Override
+    protected String getSingletonUuid() {
+        return SINGLETON_UUID;
     }
 
     public ContentTemplates(final List<ContentTemplate> contentTemplates) {
@@ -89,17 +101,17 @@ public class ContentTemplates extends Doc {
         return workingList;
     }
 
-    private ContentTemplates(final Builder builder) {
-        setType(builder.type);
-        setUuid(builder.uuid);
-        setName(builder.name);
-        setVersion(builder.version);
-        setCreateTimeMs(builder.createTimeMs);
-        setUpdateTimeMs(builder.updateTimeMs);
-        setCreateUser(builder.createUser);
-        setUpdateUser(builder.updateUser);
-        contentTemplates = builder.contentTemplates;
-    }
+//    private ContentTemplates(final Builder builder) {
+//        setType(builder.type);
+//        setUuid(builder.uuid);
+//        setName(builder.name);
+//        setVersion(builder.version);
+//        setCreateTimeMs(builder.createTimeMs);
+//        setUpdateTimeMs(builder.updateTimeMs);
+//        setCreateUser(builder.createUser);
+//        setUpdateUser(builder.updateUser);
+//        contentTemplates = builder.contentTemplates;
+//    }
 
     /**
      * @return A new {@link DocRef} for this document's type with the supplied uuid.
@@ -122,17 +134,7 @@ public class ContentTemplates extends Doc {
     }
 
     public static Builder copy(final ContentTemplates copy) {
-        final Builder builder = new Builder();
-        builder.type = copy.getType();
-        builder.uuid = copy.getUuid();
-        builder.name = copy.getName();
-        builder.version = copy.getVersion();
-        builder.createTimeMs = copy.getCreateTimeMs();
-        builder.updateTimeMs = copy.getUpdateTimeMs();
-        builder.createUser = copy.getCreateUser();
-        builder.updateUser = copy.getUpdateUser();
-        builder.contentTemplates = copy.getContentTemplates();
-        return builder;
+        return new Builder(copy);
     }
 
     public List<ContentTemplate> getContentTemplates() {
@@ -198,63 +200,27 @@ public class ContentTemplates extends Doc {
     // --------------------------------------------------------------------------------
 
 
-    public static final class Builder {
+    public static final class Builder
+            extends AbstractSingletonDoc.AbstractBuilder<ContentTemplates, ContentTemplates.Builder> {
 
-        private String type;
-        private String uuid;
-        private String name;
-        private String version;
-        private Long createTimeMs;
-        private Long updateTimeMs;
-        private String createUser;
-        private String updateUser;
         private List<ContentTemplate> contentTemplates;
 
         private Builder() {
         }
 
-        private static Builder builder() {
-            return new Builder();
+        private Builder(final ContentTemplates doc) {
+            super(doc);
+            this.contentTemplates = doc.contentTemplates;
         }
 
-        public Builder withType(final String type) {
-            this.type = type;
-            return this;
+        @Override
+        protected String getUuid() {
+            return SINGLETON_UUID;
         }
 
-        public Builder withUuid(final String uuid) {
-            this.uuid = uuid;
-            return this;
-        }
-
-        public Builder withName(final String name) {
-            this.name = name;
-            return this;
-        }
-
-        public Builder withVersion(final String version) {
-            this.version = version;
-            return this;
-        }
-
-        public Builder withCreateTimeMs(final Long createTimeMs) {
-            this.createTimeMs = createTimeMs;
-            return this;
-        }
-
-        public Builder withUpdateTimeMs(final Long updateTimeMs) {
-            this.updateTimeMs = updateTimeMs;
-            return this;
-        }
-
-        public Builder withCreateUser(final String createUser) {
-            this.createUser = createUser;
-            return this;
-        }
-
-        public Builder withUpdateUser(final String updateUser) {
-            this.updateUser = updateUser;
-            return this;
+        @Override
+        protected String getType() {
+            return TYPE;
         }
 
         public Builder withContentTemplates(final List<ContentTemplate> contentTemplates) {
@@ -262,8 +228,22 @@ public class ContentTemplates extends Doc {
             return this;
         }
 
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
         public ContentTemplates build() {
-            return new ContentTemplates(this);
+            return new ContentTemplates(
+                    type,
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    contentTemplates);
         }
     }
 }

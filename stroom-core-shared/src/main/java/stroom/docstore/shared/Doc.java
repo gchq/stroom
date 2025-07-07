@@ -21,6 +21,7 @@ import stroom.docref.DocRef;
 import stroom.util.shared.Document;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -167,6 +168,11 @@ public abstract class Doc implements Document {
         this.updateUser = updateUser;
     }
 
+    @JsonIgnore
+    public boolean isSingleton() {
+        return false;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -177,13 +183,13 @@ public abstract class Doc implements Document {
         }
         final Doc doc = (Doc) o;
         return Objects.equals(type, doc.type) &&
-                Objects.equals(uuid, doc.uuid) &&
-                Objects.equals(name, doc.name) &&
-                Objects.equals(version, doc.version) &&
-                Objects.equals(createTimeMs, doc.createTimeMs) &&
-                Objects.equals(updateTimeMs, doc.updateTimeMs) &&
-                Objects.equals(createUser, doc.createUser) &&
-                Objects.equals(updateUser, doc.updateUser);
+               Objects.equals(uuid, doc.uuid) &&
+               Objects.equals(name, doc.name) &&
+               Objects.equals(version, doc.version) &&
+               Objects.equals(createTimeMs, doc.createTimeMs) &&
+               Objects.equals(updateTimeMs, doc.updateTimeMs) &&
+               Objects.equals(createUser, doc.createUser) &&
+               Objects.equals(updateUser, doc.updateUser);
     }
 
     @Override
@@ -194,10 +200,10 @@ public abstract class Doc implements Document {
     @Override
     public String toString() {
         return "DocRef{" +
-                "type='" + type + '\'' +
-                ", uuid='" + uuid + '\'' +
-                ", name='" + name + '\'' +
-                '}';
+               "type='" + type + '\'' +
+               ", uuid='" + uuid + '\'' +
+               ", name='" + name + '\'' +
+               '}';
     }
 
 

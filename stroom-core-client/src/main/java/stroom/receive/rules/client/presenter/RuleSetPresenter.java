@@ -182,7 +182,9 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
                 "Stroom is currently configured with a receiptCheckMode of '" +
                 receiptCheckMode.name() + "' so these Data Receipt Rules will have no effect.\n\n" +
                 "To use Data Receipt Rules, change the receiptCheckMode property to '" +
-                ReceiptCheckMode.RECEIPT_POLICY + "'.";
+                ReceiptCheckMode.RECEIPT_POLICY + "'.\n\n" +
+                "It is still possible to edit the rules, but they will have no effect until the " +
+                "configuration property is changed.";
         AlertEvent.fireWarn(this, msg, null, null);
     }
 

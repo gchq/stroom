@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public interface Store<D extends Doc>
@@ -21,7 +22,19 @@ public interface Store<D extends Doc>
     // START OF ExplorerActionHandler
     ////////////////////////////////////////////////////////////////////////
 
+    /**
+     * Create a new document with a given name and a randomly generated UUID.
+     */
     DocRef createDocument(String name);
+
+    /**
+     * Create a new document with a given name and uuid.
+     * This is intended for use with singleton documents that have a hard-coded
+     * and globally unique UUID.
+     * If uuid is null a randomly generated UUID will be used, which is the
+     * equivalent of calling {@link Store#createDocument(String)}.
+     */
+    DocRef createDocument(String name, String uuid);
 
     DocRef copyDocument(String originalUuid,
                         String newName);
@@ -46,7 +59,25 @@ public interface Store<D extends Doc>
 
     Set<DocRef> getDependencies(DocRef docRef, BiConsumer<D, DependencyRemapper> mapper);
 
-    void remapDependencies(DocRef docRef, Map<DocRef, DocRef> remappings, BiConsumer<D, DependencyRemapper> mapper);
+    /**
+     * Use this for docs with no dependencies that need remapping
+     */
+    void remapDependencies(DocRef docRef,
+                           Map<DocRef, DocRef> remappings);
+
+    /**
+     * Use this for docs that can be mutated by mapper.
+     */
+    void remapDependencies(DocRef docRef,
+                           Map<DocRef, DocRef> remappings,
+                           BiConsumer<D, DependencyRemapper> mapper);
+
+    /**
+     * Use this for docs that cannot be mutated by mapper.
+     */
+    void remapDependencies(DocRef docRef,
+                           Map<DocRef, DocRef> remappings,
+                           BiFunction<D, DependencyRemapper, D> mapper);
 
     ////////////////////////////////////////////////////////////////////////
     // END OF HasDependencies

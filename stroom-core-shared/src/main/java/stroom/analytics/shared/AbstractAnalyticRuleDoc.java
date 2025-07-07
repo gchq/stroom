@@ -261,6 +261,10 @@ public abstract class AbstractAnalyticRuleDoc extends Doc {
                '}';
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public abstract static class AbstractAnalyticRuleDocBuilder
             <T extends AbstractAnalyticRuleDoc, B extends AbstractAnalyticRuleDocBuilder<T, ?>>
             extends AbstractBuilder<AbstractAnalyticRuleDoc, B> {

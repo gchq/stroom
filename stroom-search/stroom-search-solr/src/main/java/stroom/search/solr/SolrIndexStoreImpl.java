@@ -138,7 +138,7 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
     @Override
     public void remapDependencies(final DocRef docRef,
                                   final Map<DocRef, DocRef> remappings) {
-        store.remapDependencies(docRef, remappings, null);
+        store.remapDependencies(docRef, remappings);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -230,7 +230,7 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
                                     deleteCount.incrementAndGet();
                                 } catch (final RuntimeException | SolrServerException | IOException e) {
                                     final String message = "Failed to delete field '" + field.getFldName() +
-                                            "' - " + e.getMessage();
+                                                           "' - " + e.getMessage();
                                     messages.add(message);
                                     LOGGER.error(() -> message, e);
                                 }

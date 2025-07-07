@@ -61,6 +61,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -101,9 +102,17 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     @Override
     public final DocRef createDocument(final String name) {
-        Objects.requireNonNull(name);
+        return createDocument(name, (String) null);
+    }
 
-        final D document = create(type, UUID.randomUUID().toString(), name);
+    @Override
+    public DocRef createDocument(final String name, final String uuid) {
+        Objects.requireNonNull(name);
+        final D document = create(
+                type,
+                Objects.requireNonNullElseGet(uuid, () -> UUID.randomUUID().toString()),
+                name);
+
         document.setVersion(UUID.randomUUID().toString());
 
         // Add audit data.
@@ -256,17 +265,34 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     }
 
     @Override
+    public void remapDependencies(final DocRef docRef, final Map<DocRef, DocRef> remappings) {
+        // Nothing to remap
+    }
+
+    @Override
     public void remapDependencies(final DocRef docRef,
                                   final Map<DocRef, DocRef> remappings,
                                   final BiConsumer<D, DependencyRemapper> mapper) {
+        if (mapper != null) {
+            remapDependencies(docRef, remappings, (doc, dependencyRemapper) -> {
+                mapper.accept(doc, dependencyRemapper);
+                return doc;
+            });
+        }
+    }
+
+    @Override
+    public void remapDependencies(final DocRef docRef,
+                                  final Map<DocRef, DocRef> remappings,
+                                  final BiFunction<D, DependencyRemapper, D> mapper) {
         if (mapper != null) {
             try {
                 final D doc = readDocument(docRef);
                 if (doc != null) {
                     final DependencyRemapper dependencyRemapper = new DependencyRemapper(remappings);
-                    mapper.accept(doc, dependencyRemapper);
+                    final D modifiedDoc = mapper.apply(doc, dependencyRemapper);
                     if (dependencyRemapper.isChanged()) {
-                        writeDocument(doc);
+                        writeDocument(modifiedDoc);
                     }
                 }
             } catch (final RuntimeException e) {

@@ -4,7 +4,7 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
- * A value that is lazily evaluated using a provided {@link Supplier}.
+ * A value that is lazily initialised using a provided {@link Supplier}.
  *
  * @param <T> The type of the lazy value.
  */
