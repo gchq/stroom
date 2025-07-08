@@ -140,9 +140,10 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
 
             try {
                 final URI uri = new URI(appStoreUrl);
-                final InputStream istr = new BufferedInputStream(uri.toURL().openStream());
-                final ContentStore cs = mapper.readValue(istr, ContentStore.class);
-
+                final ContentStore cs;
+                try (final InputStream istr = new BufferedInputStream(uri.toURL().openStream())) {
+                    cs = mapper.readValue(istr, ContentStore.class);
+                }
                 // Fill in any extra data needed by the content packs
                 final List<ContentStoreContentPack> listOfContentPacks = cs.getContentPacks();
                 for (final ContentStoreContentPack cp : listOfContentPacks) {

@@ -26,6 +26,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
 import stroom.importexport.api.ImportExportSerializer;
+import stroom.importexport.api.ImportExportSpec.ImportExportCaller;
 import stroom.importexport.shared.ImportSettings;
 import stroom.index.api.IndexVolumeGroupService;
 import stroom.index.impl.IndexStore;
@@ -295,7 +296,11 @@ public final class SetupSampleDataBean {
 
         if (Files.exists(configDir)) {
             LOGGER.info("Loading config from {}", configDir.toAbsolutePath().normalize());
-            importExportSerializer.read(configDir, null, ImportSettings.auto());
+            importExportSerializer.read(
+                    configDir,
+                    null,
+                    ImportSettings.auto(),
+                    ImportExportCaller.EXPORT);
 
 //            // Enable all flags for all feeds.
 //            final List<FeedDoc> feeds = feedService.find(new FindFeedCriteria());

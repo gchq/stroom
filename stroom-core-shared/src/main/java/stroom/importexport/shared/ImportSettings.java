@@ -91,8 +91,6 @@ public class ImportSettings {
 
     /**
      * Auto import of content plus auto enable filters for demo and testing.
-     *
-     * @return
      */
     public static ImportSettings auto() {
         return builder().importMode(ImportMode.IGNORE_CONFIRMATION).enableFilters(true).build();

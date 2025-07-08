@@ -18,6 +18,7 @@ package stroom.importexport.api;
 
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.importexport.api.ImportExportSpec.ImportExportCaller;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 
@@ -39,7 +40,8 @@ public interface ImportExportSerializer {
      */
     Set<DocRef> read(Path dir,
                      List<ImportState> importStateList,
-                     ImportSettings importSettings);
+                     ImportSettings importSettings,
+                     ImportExportCaller reader);
 
     /**
      * Walk the supplied tree of DocRefs and export all to the given path
@@ -47,11 +49,13 @@ public interface ImportExportSerializer {
      * @param docRefs         Set of the DocRefs and root folder DocRefs (as per that returned by
      *                        ImportExportSerializer.read()
      * @param omitAuditFields do not export audit fields (e.g. last update time / last update user)
+     * @param spec             Spec for the export.
      * @return summary of the export.
      */
     ExportSummary write(final Path dir,
                         final Set<DocRef> docRefs,
-                        final boolean omitAuditFields);
+                        final boolean omitAuditFields,
+                        final ImportExportSpec spec);
 
     /**
      * Variant of the write() method to be used when exporting to Git.
@@ -65,11 +69,13 @@ public interface ImportExportSerializer {
      * @param typesToIgnore    Set of the Doc types that shouldn't be exported, nor
      *                         their children. Must not be null.
      * @param omitAuditFields  Do not export audit fields.
+     * @param spec             Spec for the export.
      * @return summary of the export.
      */
     ExportSummary write(final List<ExplorerNode> rootNode,
                         final Path dir,
                         final Set<DocRef> docRefs,
                         final Set<String> typesToIgnore,
-                        final boolean omitAuditFields);
+                        final boolean omitAuditFields,
+                        final ImportExportSpec spec);
 }

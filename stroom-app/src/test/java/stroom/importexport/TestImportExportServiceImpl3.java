@@ -67,7 +67,7 @@ class TestImportExportServiceImpl3 extends AbstractCoreIntegrationTest {
         final List<String> list = ZipUtil.pathList(testFile);
 
         // Expected size is 1 greater than batch size because it should contain the parent folder for the feeds.
-        final int expectedSize = BATCH_SIZE * 2;
+        final int expectedSize = BATCH_SIZE * 2 + 1;
 
         assertThat(list.size())
                 .isEqualTo(expectedSize);

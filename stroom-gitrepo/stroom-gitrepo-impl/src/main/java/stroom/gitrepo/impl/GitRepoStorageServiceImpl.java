@@ -10,6 +10,8 @@ import stroom.gitrepo.api.GitRepoStore;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.importexport.api.ExportSummary;
 import stroom.importexport.api.ImportExportSerializer;
+import stroom.importexport.api.ImportExportSpec;
+import stroom.importexport.api.ImportExportSpec.ImportExportCaller;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
@@ -323,7 +325,12 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                     pathToImport = gitWorkDir.getDirectory();
                 }
 
-                final Set<DocRef> docRefs = importExportSerializer.read(pathToImport, importStates, importSettings);
+                final Set<DocRef> docRefs = importExportSerializer.read(
+                        pathToImport,
+                        importStates,
+                        importSettings,
+                        ImportExportCaller.GITREPO);
+
                 for (final DocRef docRef : docRefs) {
                     // ImportExportSerializerImpl adds the System docref to the returned set,
                     // but we don't use that here, so ignore it
@@ -479,7 +486,8 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                 exportDir,
                 docRefs,
                 docTypesToIgnore,
-                true);
+                true,
+                ImportExportSpec.buildGitRepoSpec());
     }
 
     /**
@@ -721,7 +729,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
             throws IOException {
             // Try to create parent directories
             if (!location.toFile().exists()) {
-                if (!location.toFile().mkdirs()){
+                if (!location.toFile().mkdirs()) {
                     throw new IOException("Could not create directories for Git repository");
                 }
             }

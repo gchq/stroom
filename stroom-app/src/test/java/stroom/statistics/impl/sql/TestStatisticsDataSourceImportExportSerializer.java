@@ -24,6 +24,8 @@ import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.api.ImportExportSerializer;
+import stroom.importexport.api.ImportExportSpec;
+import stroom.importexport.api.ImportExportSpec.ImportExportCaller;
 import stroom.importexport.shared.ImportSettings;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.statistics.impl.sql.entity.StatisticStoreStore;
@@ -88,16 +90,24 @@ class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegra
         FileUtil.deleteDir(testDataDir);
         FileUtil.mkdirs(testDataDir);
 
-        importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true);
+        importExportSerializer.write(
+                testDataDir,
+                buildFindFolderCriteria(),
+                true,
+                ImportExportSpec.buildExportSpec());
 
-        assertThat(FileUtil.count(testDataDir)).isEqualTo(2);
+        assertThat(FileUtil.count(testDataDir)).isEqualTo(3);
 
         // now clear out the java entities and import from file
         commonTestControl.clear();
 
         assertThat(statisticStoreStore.list().size()).isEqualTo(0);
 
-        importExportSerializer.read(testDataDir, null, ImportSettings.auto());
+        importExportSerializer.read(
+                testDataDir,
+                null,
+                ImportSettings.auto(),
+                ImportExportCaller.EXPORT);
 
         final List<DocRef> dataSources = statisticStoreStore.list();
 

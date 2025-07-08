@@ -88,7 +88,7 @@ contentPacks:
     iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-content/refs/heads/planb/source/event-logging-xml-schema/content-pack-icon.svg
     licenseName: Apache 2.0
     licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
-    stroomPath: /XML Schemas/
+    stroomPath: /XML Schemas
     details: |
       # Event Logging XML Schema
 
