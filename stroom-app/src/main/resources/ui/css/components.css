@@ -1028,6 +1028,19 @@
     float: left;
 }
 
+.copyNameIcon {
+    display: flex;
+    height: 2em;
+    align-items: center;
+    padding: 5px;
+}
+
+.inline-label-icon {
+    display: flex;
+    align-items: center;
+    padding: 5px;
+}
+
 .globalPropertyEditViewImpl-textArea {
     width: 100%;
     height: 100px;

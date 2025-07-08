@@ -19,13 +19,17 @@ package stroom.config.global.client.view;
 import stroom.config.global.client.presenter.ManageGlobalPropertyEditPresenter.GlobalPropertyEditView;
 import stroom.config.global.client.presenter.ManageGlobalPropertyEditUiHandlers;
 import stroom.svg.client.Preset;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HasText;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextArea;
@@ -41,6 +45,8 @@ public final class GlobalPropertyEditViewImpl
 
     @UiField
     Label name;
+    @UiField
+    HTML copyNameIcon;
     @UiField
     TextArea description;
     @UiField
@@ -107,6 +113,14 @@ public final class GlobalPropertyEditViewImpl
             if (getUiHandlers() != null) {
                 getUiHandlers().onChangeOverrideValue();
             }
+        });
+
+        final SafeHtml copyIcon = SafeHtmlUtils.fromTrustedString(
+                SvgImage.COPY.getSvg().replace("<svg", "<svg width='16' height='16'")
+        );
+        copyNameIcon.setHTML(copyIcon.asString());
+        copyNameIcon.addClickHandler(event -> {
+            copyToClipboard(name.getText());
         });
     }
 
@@ -225,4 +239,13 @@ public final class GlobalPropertyEditViewImpl
     public interface Binder extends UiBinder<Widget, GlobalPropertyEditViewImpl> {
 
     }
+
+    private native void copyToClipboard(String text) /*-{
+    var textarea = $doc.createElement("textarea");
+    textarea.value = text;
+    $doc.body.appendChild(textarea);
+    textarea.select();
+    $doc.execCommand("copy");
+    $doc.body.removeChild(textarea);
+}-*/;
 }
