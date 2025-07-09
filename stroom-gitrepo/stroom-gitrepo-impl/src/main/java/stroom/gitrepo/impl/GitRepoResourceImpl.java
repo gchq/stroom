@@ -95,6 +95,10 @@ class GitRepoResourceImpl implements GitRepoResource {
                                        true);
             response = this.createResponse(messages);
         } catch (final Exception e) {
+            LOGGER.error("Error pushing to Git URL '{}': {}",
+                    gitRepoPushDto.getGitRepoDoc().getUrl(),
+                    e.getMessage(),
+                    e);
             response = new GitRepoResponse(false, e.getMessage());
         }
         return response;

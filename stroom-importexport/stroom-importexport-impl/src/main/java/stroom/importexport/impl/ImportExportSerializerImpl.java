@@ -618,12 +618,17 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
      * <p>
      *     This method is package-scope static so it can have unit tests.
      * </p>
+     * <p>
+     *     If the GitRepo path (rootPath) is /A/B/C and the path in the
+     *     nodefile is /B/C/D, this will create a collapsed nodefile path
+     *     of /D so the full path is /A/B/C/D with no duplicates.
+     * </p>
      * @param rootPath Where we're importing to.
      * @param importedPath The path to process of the thing being imported.
      * @param reader What is trying to do the import?
      * @param spec The spec item read from disk to give us info about the
      *             data on disk.
-     * @return The path collapsed as necessary.
+     * @return The node path collapsed as necessary.
      */
     static String collapseRootIfNecessary(final String rootPath,
                                           final String importedPath,

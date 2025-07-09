@@ -180,7 +180,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                                                                     gitRepoExplorerNode,
                                                                     exportDir);
                     messages.addAll(exportSummary.getMessages());
-                    messages.add(new Message(Severity.INFO, "Export to disk successful"));
+                    addMessage(messages, Severity.INFO, "Export to disk successful");
 
                     // Has anything changed against the remote?
                     final Status gitStatus = git.status().call();
@@ -198,11 +198,11 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                                 .setCommitter(GIT_USERNAME, gitRepoDoc.getUsername())
                                 .setMessage(commitMessage)
                                 .call();
-                        messages.add(new Message(Severity.INFO, "Local commit successful"));
+                        addMessage(messages, Severity.INFO, "Local commit successful");
 
                         // Push to remote
                         git.push().setCredentialsProvider(this.getGitCreds(gitRepoDoc)).call();
-                        messages.add(new Message(Severity.INFO, "Pushed to Git"));
+                        addMessage(messages, Severity.INFO, "Pushed to Git");
 
                         // Store the commit version
                         gitRepoDoc.setGitRemoteCommitName(gitCommit.getName());
@@ -230,6 +230,33 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
         }
 
         return messages;
+    }
+
+    /**
+     * Adds a message to the list of messages, logging the message at the appropriate level.
+     * @param messages The list of messages
+     * @param severity How severe the issue is
+     * @param message The message to add / log.
+     */
+    private void addMessage(final List<Message> messages,
+                            final Severity severity,
+                            final String message) {
+        Objects.requireNonNull(messages);
+        Objects.requireNonNull(severity);
+
+        switch (severity) {
+            case Severity.INFO:
+                LOGGER.info(message);
+                break;
+            case Severity.WARNING:
+                LOGGER.warn(message);
+                break;
+            case Severity.ERROR:
+            case Severity.FATAL_ERROR:
+                LOGGER.error(message);
+        }
+
+        messages.add(new Message(severity, message));
     }
 
     /**
@@ -277,11 +304,13 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
 
         if (!isMockEnvironment) {
             final Optional<ExplorerNode> optGitRepoExplorerNode = explorerService.getFromDocRef(gitRepoDocRef);
-            final ExplorerNode gitRepoExplorerNode = optGitRepoExplorerNode.get();
+            if (optGitRepoExplorerNode.isPresent()) {
+                final ExplorerNode gitRepoExplorerNode = optGitRepoExplorerNode.get();
 
-            // Work out where the GitRepo node is in the explorer tree
-            final List<ExplorerNode> gitRepoNodePath = this.explorerNodeService.getPath(gitRepoDocRef);
-            gitRepoNodePath.add(gitRepoExplorerNode);
+                // Work out where the GitRepo node is in the explorer tree
+                final List<ExplorerNode> gitRepoNodePath = this.explorerNodeService.getPath(gitRepoDocRef);
+                gitRepoNodePath.add(gitRepoExplorerNode);
+            }
         }
 
         // Only try to do anything if the settings exist
@@ -565,6 +594,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                 gitRepoStore.writeDocument(gitRepoDoc);
 
             } catch (final GitAPIException e) {
+                LOGGER.error("Git error cloning repository '{}': {}", gitRepoDoc.getUrl(), e.getMessage(), e);
                 throw new IOException("Git error cloning repository "
                                       + gitRepoDoc.getUrl(), e);
             }
@@ -668,7 +698,9 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                     return this.gitUpdatesAvailable(gitRepoDoc, gitWorkDir.getDirectory());
 
                 } catch (final GitAPIException e) {
-                    throw new IOException("Error checking for updates", e);
+                    LOGGER.error("Error checking for updates for GitRepo '{}': {}",
+                            gitRepoDoc.getName(), e.getMessage(), e);
+                    throw new IOException("Error checking for updates: " + e.getMessage(), e);
                 }
             }
         } else {
@@ -713,6 +745,9 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
         return canonicalSubDirPath;
     }
 
+    /**
+     * Class to ensure that the temporary directory gets deleted (if possible).
+     */
     public static class AutoDeletingTempDirectory implements AutoCloseable {
 
         /**
