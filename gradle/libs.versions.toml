@@ -128,6 +128,7 @@ jetty-server = { module = "org.eclipse.jetty:jetty-server" } # version controlle
 jetty-servlet = { module = "org.eclipse.jetty:jetty-servlet" } # version controlled by dropwizard-dependencies
 jetty-servlets = { module = "org.eclipse.jetty:jetty-servlets" } # version controlled by dropwizard-dependencies
 jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version = "7.3.0.202506031305-r" }
+jgitssh = { module = "org.eclipse.jgit:org.eclipse.jgit.ssh.jsch", version = "7.3.0.202506031305-r" }
 jinjava = { module = "com.hubspot.jinjava:jinjava", version = "2.7.2" }
 jmh-core = { module = "org.openjdk.jmh:jmh-core", version.ref = "jmh" }
 jmh-generator-annprocess = { module = "org.openjdk.jmh:jmh-generator-annprocess", version.ref = "jmh" }
