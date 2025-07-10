@@ -176,6 +176,11 @@ class GitRepoStoreImpl implements GitRepoStore {
         return null;
     }
 
+    @Override
+    public boolean canExport(final DocRef docRef) {
+        return store.canExport(docRef);
+    }
+
     ////////////////////////////////////////////////////////////////////////
     // END OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////

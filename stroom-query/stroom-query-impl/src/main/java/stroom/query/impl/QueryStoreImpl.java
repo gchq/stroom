@@ -158,13 +158,13 @@ class QueryStoreImpl implements QueryStore {
                                     if (remapped != null) {
                                         String query = doc.getQuery();
                                         if (remapped.getName() != null &&
-                                                !remapped.getName().isBlank() &&
-                                                !Objects.equals(remapped.getName(), docRef.getName())) {
+                                            !remapped.getName().isBlank() &&
+                                            !Objects.equals(remapped.getName(), docRef.getName())) {
                                             query = query.replaceFirst(docRef.getName(), remapped.getName());
                                         }
                                         if (remapped.getUuid() != null &&
-                                                !remapped.getUuid().isBlank() &&
-                                                !Objects.equals(remapped.getUuid(), docRef.getUuid())) {
+                                            !remapped.getUuid().isBlank() &&
+                                            !Objects.equals(remapped.getUuid(), docRef.getUuid())) {
                                             query = query.replaceFirst(docRef.getUuid(), remapped.getUuid());
                                         }
                                         doc.setQuery(query);
@@ -234,6 +234,11 @@ class QueryStoreImpl implements QueryStore {
     @Override
     public String getType() {
         return store.getType();
+    }
+
+    @Override
+    public boolean canExport(final DocRef docRef) {
+        return store.canExport(docRef);
     }
 
     @Override

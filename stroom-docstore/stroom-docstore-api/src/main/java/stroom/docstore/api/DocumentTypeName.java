@@ -6,9 +6,11 @@ import java.util.Objects;
 public class DocumentTypeName implements Serializable {
 
     private final String name;
+    private final int hashCode;
 
     public DocumentTypeName(final String name) {
         this.name = name;
+        this.hashCode = Objects.hash(name);
     }
 
     @Override
@@ -25,7 +27,7 @@ public class DocumentTypeName implements Serializable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(name);
+        return hashCode;
     }
 
     @Override

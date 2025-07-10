@@ -788,6 +788,15 @@ select option:disabled {
     height: 100%;
 }
 
+/* Used to force overflow */
+.zero-height {
+    height: 0px !important;
+}
+
+.zero-width {
+    width: 0px !important;
+}
+
 .popupPanel-dragGlass {
     position: absolute;
     left: 0;
@@ -839,6 +848,26 @@ select option:disabled {
 
 .h-100 {
     height: 100% !important;
+}
+
+.h-1em {
+    height: 1em !important;
+}
+
+.h-2em {
+    height: 2em !important;
+}
+
+.h-3em {
+    height: 3em !important;
+}
+
+.h-5em {
+    height: 5em !important;
+}
+
+.h-10em {
+    height: 10em !important;
 }
 
 .scrollable {

@@ -752,6 +752,11 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                 }));
     }
 
+    @Override
+    public boolean canExport(final DocRef docRef) {
+        return securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW);
+    }
+
     private String toDocRefDisplayString(final DocRef docRef) {
         if (docRef == null || !NullSafe.isBlankString(docRef.getName())) {
             return "";

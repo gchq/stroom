@@ -1,0 +1,29 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="exportConfigOptionsViewImpl max form overflow-hidden">
+
+        <form:FormGroup identity="exportConfigOptionsIncludeFiltersFrmGrp"
+                        label="Include pipeline processor filters"
+                        helpText="If ticked, any processor filters belonging to an exported
+                        Pipeline will also be exported with the Pipeline."
+                        addStyleNames="overflow-hidden">
+            <tickbox:CustomCheckBox ui:field="includeProcFiltersCheckBox"
+                                    identity="exportConfigOptionsIncludeFiltersFrmGrp"
+                                    label="Include"/>
+        </form:FormGroup>
+
+        <form:FormGroup identity="exportConfigOptionsSingletonsFrmGrp"
+                        label="Non-Explorer Items"
+                        helpText="Select the items to export that do not appear in the explorer
+                        tree. If this list is empty then you do not have the necessary permissions
+                        to export any non-explorer items."
+                        addStyleNames="overflow-hidden">
+            <g:SimplePanel ui:field="singletonDocsPanel"
+                           styleName="form-control-border form-control-background h-10em"/>
+        </form:FormGroup>
+
+    </g:FlowPanel>
+</ui:UiBinder>

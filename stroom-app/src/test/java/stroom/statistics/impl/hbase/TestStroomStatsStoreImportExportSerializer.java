@@ -21,7 +21,9 @@ package stroom.statistics.impl.hbase;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.importexport.api.ExportMode;
 import stroom.importexport.api.ImportExportSerializer;
+import stroom.importexport.shared.ExportContentRequest;
 import stroom.importexport.shared.ImportSettings;
 import stroom.statistics.impl.hbase.entity.StroomStatsStoreStore;
 import stroom.statistics.impl.hbase.shared.StatisticField;
@@ -38,7 +40,6 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -79,7 +80,11 @@ class TestStroomStatsStoreImportExportSerializer extends AbstractCoreIntegration
         FileUtil.deleteDir(testDataDir);
         FileUtil.mkdirs(testDataDir);
 
-        importExportSerializer.write(testDataDir, Set.of(statNode.getDocRef()), true);
+        importExportSerializer.write(
+                testDataDir,
+                new ExportContentRequest(statNode.getDocRef(), true),
+                true,
+                ExportMode.EXPORT);
 
         assertThat(FileUtil.count(testDataDir)).isEqualTo(2);
 

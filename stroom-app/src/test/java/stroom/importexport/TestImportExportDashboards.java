@@ -36,6 +36,7 @@ import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.impl.ImportExportService;
+import stroom.importexport.shared.ExportContentRequest;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.index.impl.IndexStore;
@@ -254,11 +255,15 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         }
 
         // Export all
-        importExportService.exportConfig(docRefs, resourceStore.getTempFile(file));
+        importExportService.exportConfig(
+                new ExportContentRequest(docRefs, true),
+                resourceStore.getTempFile(file));
 
         final ResourceKey exportConfig = resourceStore.createTempFile("ExportPlain.zip");
 
-        importExportService.exportConfig(docRefs, resourceStore.getTempFile(exportConfig));
+        importExportService.exportConfig(
+                new ExportContentRequest(docRefs, true),
+                resourceStore.getTempFile(exportConfig));
 
         if (!update) {
             // Delete everything.

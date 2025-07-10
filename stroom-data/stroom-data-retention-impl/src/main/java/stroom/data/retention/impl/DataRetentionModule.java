@@ -17,8 +17,10 @@
 package stroom.data.retention.impl;
 
 import stroom.data.retention.shared.DataRetentionRules;
+import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.util.RunnableWrapper;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.scheduler.CronExpressions;
 
@@ -31,6 +33,9 @@ public class DataRetentionModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(DataRetentionRulesService.class).to(DataRetentionRulesServiceImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(DataRetentionRulesServiceImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(DataRetentionRulesResourceImpl.class);

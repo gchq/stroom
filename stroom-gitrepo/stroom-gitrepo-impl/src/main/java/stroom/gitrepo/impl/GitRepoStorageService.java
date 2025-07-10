@@ -7,8 +7,10 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.gitrepo.api.GitRepoConfig;
 import stroom.gitrepo.shared.GitRepoDoc;
-import stroom.importexport.api.ExportSummary;
+import stroom.importexport.api.ExportMode;
 import stroom.importexport.api.ImportExportSerializer;
+import stroom.importexport.shared.ExportContentRequest;
+import stroom.importexport.shared.ExportSummary;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
@@ -119,9 +121,9 @@ public class GitRepoStorageService {
      * @param gitRepoDoc    The document that we're pushing the button on.
      *                      Must not be null.
      * @param commitMessage The Git commit message. Must not be null.
-     * @param calledFromUi True if the method is being called from the UI over
-     *                     REST, false if being called from a Job.
-     *                     Affects how some errors are handled.
+     * @param calledFromUi  True if the method is being called from the UI over
+     *                      REST, false if being called from a Job.
+     *                      Affects how some errors are handled.
      * @return The export summary. Might return if the export hasn't yet taken
      * place.
      * @throws IOException if something goes wrong
@@ -443,12 +445,14 @@ public class GitRepoStorageService {
         this.recurseExplorerNodes(node, docRefs);
         final Set<String> docTypesToIgnore = Set.of(GitRepoDoc.TYPE);
 
+        final ExportContentRequest exportContentRequest = new ExportContentRequest(docRefs, true);
         return importExportSerializer.write(
                 gitRepoNodePath,
                 exportDir,
-                docRefs,
+                exportContentRequest,
                 docTypesToIgnore,
-                true);
+                true,
+                ExportMode.EXPORT);
     }
 
     /**

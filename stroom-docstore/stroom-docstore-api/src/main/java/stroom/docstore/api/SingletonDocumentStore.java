@@ -17,6 +17,7 @@
 
 package stroom.docstore.api;
 
+import stroom.docref.DocRef;
 import stroom.docstore.shared.AbstractSingletonDoc;
 import stroom.importexport.api.ImportExportActionHandler;
 
@@ -38,6 +39,10 @@ public interface SingletonDocumentStore<D extends AbstractSingletonDoc>
      * @return The fixed UUID for the single instance of this document type
      */
     String getSingletonUuid();
+
+    String getSingletonName();
+
+    DocRef getSingletonDocRef();
 
     @Override // from ImportExportActionHandler
     default boolean isSingleton() {

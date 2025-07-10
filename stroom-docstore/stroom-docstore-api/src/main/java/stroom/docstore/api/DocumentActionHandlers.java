@@ -11,10 +11,12 @@ import java.util.stream.Stream;
 @Singleton
 public class DocumentActionHandlers {
 
+    @SuppressWarnings("rawtypes") // Guice doesn't like it
     private final Map<DocumentTypeName, DocumentActionHandler> handlersMap;
 
     @Inject
-    public DocumentActionHandlers(final Map<DocumentTypeName, DocumentActionHandler> handlersMap) {
+    public DocumentActionHandlers(
+            @SuppressWarnings("rawtypes") final Map<DocumentTypeName, DocumentActionHandler> handlersMap) {
         this.handlersMap = handlersMap;
     }
 
@@ -22,6 +24,7 @@ public class DocumentActionHandlers {
         return handlersMap.get(new DocumentTypeName(type));
     }
 
+    @SuppressWarnings("rawtypes")
     public void forEach(final Consumer<DocumentActionHandler> consumer) {
         handlersMap.values()
                 .stream()
@@ -29,6 +32,7 @@ public class DocumentActionHandlers {
                 .forEach(consumer);
     }
 
+    @SuppressWarnings("rawtypes")
     public Stream<DocumentActionHandler> stream() {
         return handlersMap.values()
                 .stream()

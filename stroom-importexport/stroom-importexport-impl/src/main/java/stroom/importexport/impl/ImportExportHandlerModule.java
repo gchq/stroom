@@ -22,12 +22,15 @@ import stroom.util.guice.RestResourcesBinder;
 import com.google.inject.AbstractModule;
 
 public class ImportExportHandlerModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(DependencyService.class).to(DependencyServiceImpl.class);
 
         bind(ContentService.class).to(ContentServiceImpl.class);
 
+        RestResourcesBinder.create(binder())
+                .bind(ContentResourceV1Impl.class);
         RestResourcesBinder.create(binder())
                 .bind(ContentResourceImpl.class);
     }

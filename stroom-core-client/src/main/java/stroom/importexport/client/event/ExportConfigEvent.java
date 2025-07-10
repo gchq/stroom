@@ -52,15 +52,19 @@ public class ExportConfigEvent extends GwtEvent<ExportConfigEvent.Handler> {
 
     @Override
     protected void dispatch(final Handler handler) {
-        handler.onExport(this);
+        handler.onExportEvent(this);
     }
 
     public List<ExplorerNode> getSelection() {
         return selection;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Handler extends EventHandler {
 
-        void onExport(ExportConfigEvent event);
+        void onExportEvent(ExportConfigEvent event);
     }
 }

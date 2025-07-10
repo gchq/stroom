@@ -25,14 +25,18 @@ import stroom.importexport.client.presenter.DependenciesInfoPresenter.Dependenci
 import stroom.importexport.client.presenter.DependenciesInfoPresenter.DependenciesInfoView;
 import stroom.importexport.client.presenter.DependenciesInfoViewImpl;
 import stroom.importexport.client.presenter.DependenciesTabPresenter;
+import stroom.importexport.client.presenter.ExportConfigOptionsPresenter;
+import stroom.importexport.client.presenter.ExportConfigOptionsPresenter.ExportConfigOptionsView;
 import stroom.importexport.client.presenter.ExportConfigPresenter;
-import stroom.importexport.client.presenter.ExportConfigPresenter.ExportConfigView;
+import stroom.importexport.client.presenter.ExportConfigSelectionPresenter;
+import stroom.importexport.client.presenter.ExportConfigSelectionPresenter.ExportConfigSelectionView;
 import stroom.importexport.client.presenter.ImportConfigConfirmPresenter;
 import stroom.importexport.client.presenter.ImportConfigConfirmPresenter.ImportConfigConfirmView;
 import stroom.importexport.client.presenter.ImportConfigPresenter;
 import stroom.importexport.client.presenter.ImportConfigPresenter.ImportConfigView;
 import stroom.importexport.client.view.DependenciesTabViewImpl;
-import stroom.importexport.client.view.ExportConfigViewImpl;
+import stroom.importexport.client.view.ExportConfigOptionsViewImpl;
+import stroom.importexport.client.view.ExportConfigSelectionViewImpl;
 import stroom.importexport.client.view.ImportConfigConfirmViewImpl;
 import stroom.importexport.client.view.ImportConfigViewImpl;
 
@@ -57,9 +61,13 @@ public class ImportExportConfigModule extends PluginModule {
         bindPlugin(ExportConfigPlugin.class);
         bind(ExportConfigPresenter.ExportProxy.class).asEagerSingleton();
         bindPresenterWidget(
-                ExportConfigPresenter.class,
-                ExportConfigView.class,
-                ExportConfigViewImpl.class);
+                ExportConfigSelectionPresenter.class,
+                ExportConfigSelectionView.class,
+                ExportConfigSelectionViewImpl.class);
+        bindPresenterWidget(
+                ExportConfigOptionsPresenter.class,
+                ExportConfigOptionsView.class,
+                ExportConfigOptionsViewImpl.class);
 
         // Dependencies.
         bindPlugin(DependenciesPlugin.class);

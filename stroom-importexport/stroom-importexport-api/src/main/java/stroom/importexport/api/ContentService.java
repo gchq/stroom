@@ -19,9 +19,10 @@ package stroom.importexport.api;
 import stroom.docref.DocRef;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
+import stroom.importexport.shared.ExportContentRequest;
+import stroom.importexport.shared.ExportSummary;
 import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportConfigResponse;
-import stroom.util.shared.DocRefs;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResultPage;
@@ -33,11 +34,15 @@ public interface ContentService {
 
     ImportConfigResponse importContent(ImportConfigRequest request);
 
-    ResourceGeneration exportContent(DocRefs docRefs);
+    ResourceGeneration exportContent(ExportContentRequest request);
+
+    ExportSummary fetchExportSummary(ExportContentRequest request);
 
     ResultPage<Dependency> fetchDependencies(DependencyCriteria criteria);
 
     Map<DocRef, Set<DocRef>> fetchBrokenDependencies();
 
     ResourceKey exportAll();
+
+    Set<DocRef> fetchSingletonDocs();
 }

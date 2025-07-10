@@ -279,6 +279,11 @@ public class PipelineStoreImpl implements PipelineStore {
         return store.getType();
     }
 
+    @Override
+    public boolean canExport(final DocRef docRef) {
+        return store.canExport(docRef);
+    }
+
     ////////////////////////////////////////////////////////////////////////
     // END OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////

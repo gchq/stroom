@@ -53,7 +53,8 @@ public class ExportConfigPlugin extends Plugin {
                             .priority(202)
                             .icon(SvgImage.DOWNLOAD)
                             .text("Export")
-                            .command(() -> ExportConfigEvent.fire(ExportConfigPlugin.this, null))
+                            .command(() ->
+                                    ExportConfigEvent.fire(ExportConfigPlugin.this, null))
                             .build());
         }
     }

@@ -46,6 +46,10 @@ public final class ExplorerConstants {
                && Objects.equals(SYSTEM_NODE.getUuid(), uuid);
     }
 
+    public static boolean isSystemNode(final String uuid) {
+        return Objects.equals(SYSTEM_NODE.getUuid(), uuid);
+    }
+
     /**
      * Tests whether a node is the root Favourites node
      */
@@ -111,4 +115,18 @@ public final class ExplorerConstants {
                                   || GitRepoDoc.TYPE.equals(docRef.getType())
                                   || Objects.equals(SYSTEM_DOC_REF, docRef));
     }
+
+//    public static ExplorerNode asSystemRootedNode(final ExplorerNode node) {
+//        if (node == null) {
+//            return null;
+//        } else {
+//            if (node.getRootNodeUuid() != null && isSystemNode(node.getRootNodeUuid())) {
+//                return node;
+//            } else {
+//                return node.copy()
+//                        .rootNodeUuid(SYSTEM_NODE.getUuid())
+//                        .build();
+//            }
+//        }
+//    }
 }

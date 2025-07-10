@@ -16,9 +16,10 @@
 
 package stroom.importexport.impl;
 
-import stroom.docref.DocRef;
-import stroom.importexport.api.ExportSummary;
+import stroom.importexport.api.ExportMode;
 import stroom.importexport.api.ImportExportSerializer;
+import stroom.importexport.shared.ExportContentRequest;
+import stroom.importexport.shared.ExportSummary;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.util.io.FileUtil;
@@ -32,7 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
+import java.util.Objects;
 
 /**
  * Service to export standing data in and out from Stroom. It uses a ZIP format to
@@ -51,10 +52,10 @@ public class ImportExportServiceImpl implements ImportExportService {
     }
 
     @Override
-    public List<ImportState> importConfig(final Path data,
+    public List<ImportState> importConfig(final Path zipFile,
                                           final ImportSettings importSettings,
                                           final List<ImportState> confirmList) {
-        doImport(data, confirmList, importSettings);
+        doImport(zipFile, confirmList, importSettings);
         confirmList.sort(Comparator.comparing(ImportState::getSourcePath));
         return confirmList;
     }
@@ -81,26 +82,33 @@ public class ImportExportServiceImpl implements ImportExportService {
      * Export the selected folder data.
      */
     @Override
-    public ExportSummary exportConfig(final Set<DocRef> docRefs,
-                                      final Path zipFile) {
-        final Path explodeDir = workingZipDir(zipFile);
-        try {
-            Files.createDirectories(explodeDir);
+    public ExportSummary exportConfig(final ExportContentRequest request,
+                                      final Path zipFile,
+                                      final ExportMode exportMode) {
+        Objects.requireNonNull(exportMode);
+        return switch (exportMode) {
+            case DRY_RUN -> importExportSerializer.write(
+                    null, request, true, exportMode);
+            case EXPORT -> {
+                final Path explodeDir = workingZipDir(zipFile);
+                try {
+                    Files.createDirectories(explodeDir);
 
-            // Serialize the config in a human readable tree structure.
-            final ExportSummary exportSummary = importExportSerializer.write(
-                    explodeDir, docRefs, true);
+                    // Serialize the config in a human readable tree structure.
+                    final ExportSummary exportSummary = importExportSerializer.write(
+                            explodeDir, request, true, exportMode);
 
-            // Now zip the dir.
-            ZipUtil.zip(zipFile, explodeDir);
+                    // Now zip the dir.
+                    ZipUtil.zip(zipFile, explodeDir);
 
-            return exportSummary;
-
-        } catch (final IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        } finally {
-            FileUtil.deleteDir(explodeDir);
-        }
+                    yield exportSummary;
+                } catch (final IOException e) {
+                    throw new RuntimeException(e.getMessage(), e);
+                } finally {
+                    FileUtil.deleteDir(explodeDir);
+                }
+            }
+        };
     }
 
     private Path workingZipDir(final Path zipFile) {

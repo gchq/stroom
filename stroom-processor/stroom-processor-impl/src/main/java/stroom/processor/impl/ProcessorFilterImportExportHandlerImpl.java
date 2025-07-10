@@ -47,6 +47,8 @@ import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.ProcessorType;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Message;
 import stroom.util.shared.ResultPage;
@@ -71,6 +73,7 @@ public class ProcessorFilterImportExportHandlerImpl
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorFilterImportExportHandlerImpl.class);
     private static final String META = "meta";
 
+    private final SecurityContext securityContext;
     private final ImportExportDocumentEventLog importExportDocumentEventLog;
     private final ProcessorFilterService processorFilterService;
     private final ProcessorService processorService;
@@ -83,11 +86,13 @@ public class ProcessorFilterImportExportHandlerImpl
     private final Serialiser2<ProcessorFilter> delegate;
 
     @Inject
-    ProcessorFilterImportExportHandlerImpl(final ProcessorFilterService processorFilterService,
+    ProcessorFilterImportExportHandlerImpl(final SecurityContext securityContext,
+                                           final ProcessorFilterService processorFilterService,
                                            final ProcessorService processorService,
                                            final ImportExportDocumentEventLog importExportDocumentEventLog,
                                            final Serialiser2Factory serialiser2Factory,
                                            final Provider<DocRefInfoService> docRefInfoServiceProvider) {
+        this.securityContext = securityContext;
         this.processorFilterService = processorFilterService;
         this.processorService = processorService;
         this.importExportDocumentEventLog = importExportDocumentEventLog;
@@ -286,6 +291,26 @@ public class ProcessorFilterImportExportHandlerImpl
     }
 
     @Override
+    public boolean canExport(final DocRef docRef) {
+        if (docRef == null) {
+            return false;
+        } else {
+            // Map the proc filter docRef to a pipe docRef so we can check perms on the parent pipe
+            final ProcessorFilter processorFilter = findProcessorFilter(docRef);
+            final String pipelineUuid = processorFilter.getPipelineUuid();
+            if (pipelineUuid == null) {
+                return false;
+            } else {
+                final DocRef pipeDocRef = PipelineDoc.buildDocRef()
+                        .uuid(pipelineUuid)
+                        .name(processorFilter.getPipelineName())
+                        .build();
+                return securityContext.hasDocumentPermission(pipeDocRef, DocumentPermission.VIEW);
+            }
+        }
+    }
+
+    @Override
     public DocRef findNearestExplorerDocRef(final DocRef docref) {
         if (docref != null && ProcessorFilter.ENTITY_TYPE.equals(docref.getType())) {
             final ProcessorFilter processorFilter = findProcessorFilter(docref);
@@ -373,7 +398,7 @@ public class ProcessorFilterImportExportHandlerImpl
 
         final Processor result;
         final RuntimeException ex;
-        if (page.size() == 0) {
+        if (page.isEmpty()) {
             if (pipelineUuid != null) {
                 // Create the missing processor
                 result = processorService.create(

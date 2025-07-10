@@ -324,6 +324,10 @@ public class DocumentCreatePermissionsListPresenter
         return null;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface DocumentCreatePermissionsListView extends View {
 
         void setTable(Widget widget);

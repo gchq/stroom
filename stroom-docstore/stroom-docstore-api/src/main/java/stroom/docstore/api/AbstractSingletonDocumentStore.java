@@ -9,6 +9,7 @@ import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermissionSet;
 import stroom.util.shared.Message;
+import stroom.util.shared.NullSafe;
 
 import java.util.Collections;
 import java.util.List;
@@ -66,6 +67,7 @@ public abstract class AbstractSingletonDocumentStore<D extends AbstractSingleton
     /**
      * The name of the singleton document
      */
+    @Override
     public abstract String getSingletonName();
 
     /**
@@ -89,6 +91,7 @@ public abstract class AbstractSingletonDocumentStore<D extends AbstractSingleton
 
     protected abstract BiFunction<D, DependencyRemapper, D> getReMapper();
 
+    @Override
     public DocRef getSingletonDocRef() {
         return singletonDocRef;
     }
@@ -204,6 +207,13 @@ public abstract class AbstractSingletonDocumentStore<D extends AbstractSingleton
     @Override
     public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
         return null;
+    }
+
+    @Override
+    public boolean canExport(final DocRef docRef) {
+        return Objects.equals(docRef, singletonDocRef)
+               && NullSafe.equalProperties(docRef, singletonDocRef, DocRef::getType)
+               && securityContext.hasAppPermissions(requiredPermissions);
     }
 
     @Override

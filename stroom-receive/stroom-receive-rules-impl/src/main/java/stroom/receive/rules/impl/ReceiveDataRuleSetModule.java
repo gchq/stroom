@@ -16,10 +16,12 @@
 
 package stroom.receive.rules.impl;
 
+import stroom.importexport.api.ImportExportActionHandler;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactoryImpl;
 import stroom.receive.common.ReceiveDataRuleSetResourceImpl;
 import stroom.receive.common.ReceiveDataRuleSetService;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
@@ -30,6 +32,10 @@ public class ReceiveDataRuleSetModule extends AbstractModule {
     protected void configure() {
         bind(ReceiveDataRuleSetService.class).to(ReceiveDataRuleSetServiceImpl.class);
         bind(ReceiveDataRuleSetStore.class).to(ReceiveDataRuleSetStoreImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(ReceiveDataRuleSetStoreImpl.class);
+
         bind(DataReceiptPolicyAttributeMapFilterFactory.class).to(DataReceiptPolicyAttributeMapFilterFactoryImpl.class);
 
 //        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)

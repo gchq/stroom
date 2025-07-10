@@ -261,6 +261,11 @@ class ReportStoreImpl implements ReportStore {
     }
 
     @Override
+    public boolean canExport(final DocRef docRef) {
+        return store.canExport(docRef);
+    }
+
+    @Override
     public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
         return null;
     }

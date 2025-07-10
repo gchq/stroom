@@ -27,6 +27,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -34,7 +35,7 @@ import jakarta.ws.rs.core.MediaType;
 import org.fusesource.restygwt.client.DirectRestService;
 
 @Tag(name = "Content")
-@Path("/content" + ResourcePaths.V1)
+@Path("/content" + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface ContentResource extends RestResource, DirectRestService {
@@ -53,7 +54,15 @@ public interface ContentResource extends RestResource, DirectRestService {
             summary = "Export content",
             operationId = "exportContent")
     ResourceGeneration exportContent(
-            @NotNull @Parameter(description = "docRefs", required = true) DocRefs docRefs);
+            @NotNull @Parameter(description = "request", required = true) ExportContentRequest exportContentRequest);
+
+    @POST
+    @Path("fetchExportSummary")
+    @Operation(
+            summary = "Fetch export summary",
+            operationId = "fetchExportSummary")
+    ExportSummary fetchExportSummary(
+            @NotNull @Parameter(description = "request", required = true) ExportContentRequest exportContentRequest);
 
     @POST
     @Path("fetchDependencies")
@@ -62,4 +71,12 @@ public interface ContentResource extends RestResource, DirectRestService {
             operationId = "fetchContentDependencies")
     ResultPage<Dependency> fetchDependencies(
             @Parameter(description = "criteria", required = true) DependencyCriteria criteria);
+
+    @GET
+    @Path("fetchSingletons")
+    @Operation(
+            summary = "Fetch singleton documents",
+            operationId = "fetchSingletons")
+    DocRefs fetchSingletons();
+
 }

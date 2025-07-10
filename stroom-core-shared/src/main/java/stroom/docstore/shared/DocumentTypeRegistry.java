@@ -1,6 +1,8 @@
 package stroom.docstore.shared;
 
+import stroom.data.retention.shared.DataRetentionRules;
 import stroom.explorer.shared.ExplorerConstants;
+import stroom.receive.content.shared.ContentTemplates;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 
@@ -229,7 +231,16 @@ public class DocumentTypeRegistry {
             "PlanBShards",
             "Plan B Shards",
             SvgImage.DOCUMENT_SEARCHABLE);
-
+    public static final DocumentType DATA_RETENTION_RULES_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INTERNAL,
+            DataRetentionRules.TYPE,
+            "Data Retention Rules",
+            SvgImage.DOCUMENT_DATA_RETENTION_RULES);
+    public static final DocumentType CONTENT_TEMPLATES_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INTERNAL,
+            ContentTemplates.TYPE,
+            "Content Templates",
+            SvgImage.DOCUMENT_CONTENT_TEMPLATES);
 
     static {
         put(ANALYTICS_STORE_DOCUMENT_TYPE);
@@ -249,7 +260,6 @@ public class DocumentTypeRegistry {
         put(PROCESSOR_DOCUMENT_TYPE);
         put(PROCESSOR_FILTER_DOCUMENT_TYPE);
         put(QUERY_DOCUMENT_TYPE);
-        put(RECEIVE_DATA_RULESET_DOCUMENT_TYPE);
         put(REPORT_DOCUMENT_TYPE);
         put(S3_CONFIG_DOCUMENT_TYPE);
         put(SCRIPT_DOCUMENT_TYPE);
@@ -276,6 +286,11 @@ public class DocumentTypeRegistry {
         put(INDEX_SHARDS_DOCUMENT_TYPE);
         put(PROCESSOR_TASK_DOCUMENT_TYPE);
         put(PLAN_B_SHARD_INFO_DOCUMENT_TYPE);
+
+        // Singletons
+        put(DATA_RETENTION_RULES_DOCUMENT_TYPE);
+        put(RECEIVE_DATA_RULESET_DOCUMENT_TYPE);
+        put(CONTENT_TEMPLATES_DOCUMENT_TYPE);
     }
 
     private static void put(final DocumentType documentType) {

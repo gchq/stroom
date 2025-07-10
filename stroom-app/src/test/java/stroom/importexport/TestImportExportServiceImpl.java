@@ -26,6 +26,7 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.impl.ImportExportService;
+import stroom.importexport.shared.ExportContentRequest;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.pipeline.PipelineStore;
@@ -142,11 +143,15 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         docRefs.add(folder2.getDocRef());
 
         // Export
-        importExportService.exportConfig(docRefs, resourceStore.getTempFile(file));
+        importExportService.exportConfig(
+                new ExportContentRequest(docRefs, true),
+                resourceStore.getTempFile(file));
 
         final ResourceKey exportConfig = resourceStore.createTempFile("ExportPlain.zip");
 
-        importExportService.exportConfig(docRefs, resourceStore.getTempFile(exportConfig));
+        importExportService.exportConfig(
+                new ExportContentRequest(docRefs, true),
+                resourceStore.getTempFile(exportConfig));
 
         // Delete it and check
         pipelineStore.deleteDocument(tran2.asDocRef());
@@ -174,10 +179,10 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         assertThat(pipelineStore.list().size()).isEqualTo(startTranslationSize);
 
         final ResourceKey fileChild = resourceStore.createTempFile("ExportChild.zip");
-        final Set<DocRef> criteriaChild = new HashSet<>();
-        criteriaChild.add(folder2child2.getDocRef());
 
         // Export
-        importExportService.exportConfig(criteriaChild, resourceStore.getTempFile(fileChild));
+        importExportService.exportConfig(
+                new ExportContentRequest(folder2child2.getDocRef(), true),
+                resourceStore.getTempFile(fileChild));
     }
 }

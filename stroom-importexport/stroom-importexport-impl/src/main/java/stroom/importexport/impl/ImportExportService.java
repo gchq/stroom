@@ -16,31 +16,38 @@
 
 package stroom.importexport.impl;
 
-import stroom.docref.DocRef;
-import stroom.importexport.api.ExportSummary;
+import stroom.importexport.api.ExportMode;
+import stroom.importexport.shared.ExportContentRequest;
+import stroom.importexport.shared.ExportSummary;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Set;
 
 /**
  * API to get data in and out.
  */
 public interface ImportExportService {
 
-    List<ImportState> importConfig(Path data,
+    List<ImportState> importConfig(Path zipFile,
                                    ImportSettings importSettings,
                                    List<ImportState> confirmList);
+
+    default ExportSummary exportConfig(final ExportContentRequest request,
+                                       final Path destinationZipFile) {
+        return exportConfig(request, destinationZipFile, ExportMode.EXPORT);
+    }
 
     /**
      * Export a Stroom repository
      * <p>
      * Also in the zip file output content that can be exploded and stored in
      * source control. Used for tracking changes with XSLT and feeds.
+     *
      * @return
      */
-    ExportSummary exportConfig(Set<DocRef> docRefs,
-                               Path data);
+    ExportSummary exportConfig(ExportContentRequest request,
+                               Path destinationZipFile,
+                               ExportMode exportMode);
 }

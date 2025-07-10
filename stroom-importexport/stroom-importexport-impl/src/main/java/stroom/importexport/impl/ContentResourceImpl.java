@@ -5,11 +5,15 @@ import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.explorer.api.ExplorerNodeService;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.api.ContentService;
+import stroom.importexport.api.ExportMode;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
+import stroom.importexport.shared.ExportContentRequest;
+import stroom.importexport.shared.ExportSummary;
 import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportConfigResponse;
 import stroom.importexport.shared.ImportSettings;
@@ -31,6 +35,7 @@ import com.google.common.base.Strings;
 import event.logging.AdvancedQuery;
 import event.logging.ComplexLoggedOutcome;
 import event.logging.Criteria;
+import event.logging.Data;
 import event.logging.ExportEventAction;
 import event.logging.Folder;
 import event.logging.ImportEventAction;
@@ -142,48 +147,80 @@ public class ContentResourceImpl implements ContentResource {
                 .build();
     }
 
+    private MultiObject buildExportSource(final ExportContentRequest request) {
+        return securityContextProvider.get().asProcessingUserResult(() -> {
+            final ExplorerNodeService explorerNodeService = explorerNodeServiceProvider.get();
+            final MultiObject.Builder<Void> builder = MultiObject.builder();
+            request.getDocRefs()
+                    .forEach(docRef -> {
+                        final String path = explorerNodeService.getPath(docRef)
+                                                    .stream()
+                                                    .map(ExplorerNode::getName)
+                                                    .collect(Collectors.joining("/"))
+                                            + docRef.getName();
+
+                        if (ExplorerConstants.isFolder(docRef)) {
+                            builder.addFolder(
+                                    Folder.builder()
+                                            .withName(docRef.getName())
+                                            .withPath(path)
+                                            .withId(docRef.getUuid())
+                                            .withDescription(docRef.toInfoString())
+                                            .build()
+                            );
+                        } else {
+                            builder.addObject(
+                                    OtherObject.builder()
+                                            .withName(docRef.getName())
+                                            .withType(docRef.getType())
+                                            .withId(docRef.getUuid())
+                                            .withDescription(path + " : " + docRef.toInfoString())
+                                            .build()
+
+                            );
+                        }
+                    });
+            return builder.build();
+        });
+    }
+
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
-    public ResourceGeneration exportContent(final DocRefs docRefs) {
-        final MultiObject.Builder<Void> builder = MultiObject.builder();
-        docRefs.getDocRefs().stream()
-                .forEach(docRef -> {
-                    final String path = securityContextProvider.get()
-                                                .asProcessingUserResult(() -> explorerNodeServiceProvider.get().getPath(
-                                                        docRef))
-                                                .stream().map(ExplorerNode::getName).collect(Collectors.joining("/"))
-                                        + docRef.getName();
-
-                    if ("Folder".equals(docRef.getType())) {
-                        builder.addFolder(
-                                Folder.builder()
-                                        .withName(docRef.getName())
-                                        .withPath(path)
-                                        .withId(docRef.getUuid())
-                                        .withDescription(docRef.toInfoString())
-                                        .build()
-                        );
-                    } else {
-                        builder.addObject(
-                                OtherObject.builder()
-                                        .withName(docRef.getName())
-                                        .withType(docRef.getType())
-                                        .withId(docRef.getUuid())
-                                        .withDescription(path + " : " + docRef.toInfoString())
-                                        .build()
-
-                        );
-                    }
-                });
+    public ResourceGeneration exportContent(final ExportContentRequest request) {
+        final MultiObject source = buildExportSource(request);
 
         return eventLoggingServiceProvider.get().loggedWorkBuilder()
                 .withTypeId("ExportConfig")
                 .withDescription("Exporting Configuration")
                 .withDefaultEventAction(ExportEventAction.builder()
-                        .withSource(builder.build())
+                        .withSource(source)
+                        .withData(Data.builder()
+                                .withName("Mode")
+                                .withValue(ExportMode.EXPORT.name())
+                                .build())
                         .build())
                 .withSimpleLoggedResult(() ->
-                        contentServiceProvider.get().exportContent(docRefs))
+                        contentServiceProvider.get().exportContent(request))
+                .getResultAndLog();
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public ExportSummary fetchExportSummary(final ExportContentRequest request) {
+        final MultiObject source = buildExportSource(request);
+
+        return eventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId("FetchExportSummary")
+                .withDescription("Fetching Export Summary")
+                .withDefaultEventAction(ExportEventAction.builder()
+                        .withSource(source)
+                        .withData(Data.builder()
+                                .withName("Mode")
+                                .withValue(ExportMode.DRY_RUN.name())
+                                .build())
+                        .build())
+                .withSimpleLoggedResult(() ->
+                        contentServiceProvider.get().fetchExportSummary(request))
                 .getResultAndLog();
     }
 
@@ -228,6 +265,11 @@ public class ContentResourceImpl implements ContentResource {
                     return ComplexLoggedOutcome.success(result, newSearchEventAction);
                 })
                 .getResultAndLog();
+    }
+
+    @Override
+    public DocRefs fetchSingletons() {
+        return new DocRefs(contentServiceProvider.get().fetchSingletonDocs());
     }
 
     private Query buildRawQuery(final String userInput) {

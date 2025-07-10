@@ -68,7 +68,7 @@ public class DataRetentionPlugin extends MonitoringPlugin<DataRetentionPresenter
         return new IconMenuItem.Builder()
                 .priority(51)
                 .icon(SvgImage.HISTORY)
-                .text("Data Retention")
+                .text("Data Retention Rules")
                 .action(getOpenAction())
                 .command(this::open)
                 .build();

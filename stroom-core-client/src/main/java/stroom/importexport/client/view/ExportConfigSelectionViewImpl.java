@@ -16,7 +16,7 @@
 
 package stroom.importexport.client.view;
 
-import stroom.importexport.client.presenter.ExportConfigPresenter.ExportConfigView;
+import stroom.importexport.client.presenter.ExportConfigSelectionPresenter.ExportConfigSelectionView;
 import stroom.importexport.client.presenter.ExportConfigUiHandlers;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 
@@ -31,9 +31,9 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class ExportConfigViewImpl
+public class ExportConfigSelectionViewImpl
         extends ViewWithUiHandlers<ExportConfigUiHandlers>
-        implements ExportConfigView {
+        implements ExportConfigSelectionView {
 
     private final Widget widget;
     @UiField
@@ -46,7 +46,7 @@ public class ExportConfigViewImpl
     private boolean hasActiveFilter = false;
 
     @Inject
-    public ExportConfigViewImpl(final Binder binder) {
+    public ExportConfigSelectionViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -79,7 +79,7 @@ public class ExportConfigViewImpl
     // --------------------------------------------------------------------------------
 
 
-    public interface Binder extends UiBinder<Widget, ExportConfigViewImpl> {
+    public interface Binder extends UiBinder<Widget, ExportConfigSelectionViewImpl> {
 
     }
 }

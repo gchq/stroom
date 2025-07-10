@@ -122,4 +122,6 @@ public interface Store<D extends Doc>
                  final String createUser,
                  final String updateUser);
     }
+
+    boolean canExport(DocRef docRef);
 }

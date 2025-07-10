@@ -16,12 +16,14 @@
 
 package stroom.core.receive;
 
+import stroom.importexport.api.ImportExportActionHandler;
 import stroom.receive.common.CertificateExtractorImpl;
 import stroom.receive.common.ContentAutoCreationAttrMapFilterFactory;
 import stroom.receive.common.FeedStatusService;
 import stroom.receive.common.ReceiptIdGenerator;
 import stroom.receive.common.RequestHandler;
 import stroom.util.cert.CertificateExtractor;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
@@ -38,6 +40,9 @@ public class ReceiveDataModule extends AbstractModule {
         bind(RequestHandler.class).to(ReceiveDataRequestHandler.class);
         bind(ContentTemplateStore.class).to(ContentTemplateStoreImpl.class);
         bind(ContentTemplateService.class).to(ContentTemplateServiceImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(ContentTemplateStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(ContentTemplateResourceImpl.class);

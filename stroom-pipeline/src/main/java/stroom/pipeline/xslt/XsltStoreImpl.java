@@ -167,6 +167,11 @@ class XsltStoreImpl implements XsltStore {
         return store.getType();
     }
 
+    @Override
+    public boolean canExport(final DocRef docRef) {
+        return store.canExport(docRef);
+    }
+
     ////////////////////////////////////////////////////////////////////////
     // END OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////

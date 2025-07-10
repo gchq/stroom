@@ -26,7 +26,9 @@ import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.gitrepo.api.GitRepoStore;
 import stroom.gitrepo.shared.GitRepoDoc;
+import stroom.importexport.api.ExportMode;
 import stroom.importexport.api.ImportExportSerializer;
+import stroom.importexport.shared.ExportContentRequest;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
@@ -168,6 +170,7 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
 
     /**
      * Basic test - a few elements exported.
+     *
      * @throws IOException If something goes really wrong
      */
     @Test
@@ -240,9 +243,10 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
         importExportSerializer.write(
                 rootNodePath,
                 testDataDir,
-                docRefsToExport,
+                new ExportContentRequest(docRefsToExport, true),
                 docTypesToIgnore,
-                true);
+                true,
+                ExportMode.EXPORT);
 
         final List<String> pathPatterns = List.of(
                 "",
@@ -262,6 +266,7 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
 
     /**
      * Does the same as testExport1 but tries to import again.
+     *
      * @throws IOException If something goes really wrong
      */
     @Test
@@ -335,9 +340,10 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
         importExportSerializer.write(
                 rootNodePath,
                 testDataDir,
-                docRefsToExport,
+                new ExportContentRequest(docRefsToExport, true),
                 docTypesToIgnore,
-                true);
+                true,
+                ExportMode.EXPORT);
 
         final List<String> pathPatterns = List.of(
                 "",

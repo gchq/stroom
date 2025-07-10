@@ -44,4 +44,11 @@ public interface ImportExportActionHandler extends HasDependencies {
     default boolean isSingleton() {
         return false;
     }
+
+    /**
+     * @return True if the current user has permission to export the document represented by
+     * the supplied docRef.
+     */
+    boolean canExport(final DocRef docRef);
+
 }

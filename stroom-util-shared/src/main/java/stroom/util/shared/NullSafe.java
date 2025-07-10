@@ -798,6 +798,15 @@ public class NullSafe {
     }
 
     /**
+     * Returns an unmodifiable copy of the passed set if it is non-null else returns an immutable empty set.
+     */
+    public static <S extends Set<T>, T> Set<T> unmodifialbeCopyOf(final S set) {
+        return set != null
+                ? Set.copyOf(set)
+                : Collections.emptySet();
+    }
+
+    /**
      * Returns a non-null {@link EnumSet} containing the items in set.
      * If set is not itself an {@link EnumSet} then the items will be copied into
      * a new {@link EnumSet}.
@@ -884,6 +893,22 @@ public class NullSafe {
         return item != null
                 ? Collections.singleton(item)
                 : Collections.emptySet();
+    }
+
+    /**
+     * Adds all items in source to destination. Copes with source being null.
+     *
+     * @return True if destination was changed.
+     * @throws NullPointerException if destination is null.
+     */
+    public static <T> boolean addAll(final Collection<T> destination,
+                                     final Collection<T> source) {
+        Objects.requireNonNull(destination);
+        if (source != null) {
+            return destination.addAll(source);
+        } else {
+            return false;
+        }
     }
 
     /**

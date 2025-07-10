@@ -577,6 +577,24 @@ public enum SvgImage {
             "></svg> \n" +
             ""),
 
+    DOCUMENT_CONTENT_TEMPLATES("document/ContentTemplates.svg", "svg-image__document-content-templates", "" +
+            "<!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License -" +
+            " https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><svg xmln" +
+            "s=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\"><path style=\"fill:var(--ico" +
+            "n-colour__blue)\" d=\"m 302.83409,210.6713 c 0,-14.55202 7.69416,-27.76592 16.6428" +
+            "1,-39.30718 10.53767,-13.63206 16.81009,-30.69304 16.81009,-49.17578 0,-44.32511" +
+            "2 -35.96188,-80.286995 -80.287,-80.286995 -44.32511,0 -80.28699,35.961883 -80.28" +
+            "699,80.286995 0,18.48274 6.27242,35.54372 16.81009,49.17578 8.94865,11.54126 16." +
+            "64282,24.75516 16.64282,39.30718 0,25.00605 -20.32264,45.32869 -45.3287,45.32869" +
+            " h -28.2677 c -51.768389,0 -93.668165,41.89978 -93.668165,93.66818 0,17.47914 11" +
+            ".206726,32.36569 26.762332,37.88541 v 42.40157 c 0,22.16256 17.980942,40.1435 40" +
+            ".143503,40.1435 h 294.38564 c 22.16256,0 40.1435,-17.98093 40.1435,-40.1435 v -4" +
+            "2.40157 c 15.55561,-5.51972 26.76233,-20.40627 26.76233,-37.88541 C 470.09865,29" +
+            "7.89977 428.19887,256 376.43049,256 h -28.26772 c -25.00605,0 -45.32868,-20.3226" +
+            "5 -45.32868,-45.3287 z m 86.97757,179.14035 v 26.76234 H 122.18834 v -26.76234 z" +
+            "\"/></svg> \n" +
+            ""),
+
     DOCUMENT_DASHBOARD("document/Dashboard.svg", "svg-image__document-dashboard", "" +
             "<!-- Created with Inkscape (http://www.inkscape.org/) --><svg version=\"1.1\" id=\"" +
             "svg4591\" width=\"512\" height=\"512\" viewBox=\"0 0 512 512\" sodipodi:docname=\"Dashbo" +
@@ -609,6 +627,16 @@ public enum SvgImage {
             "array:none;stroke-opacity:1;paint-order:fill markers stroke\" id=\"rect4655-5-9-2\"" +
             " width=\"155.95563\" height=\"108.24628\" x=\"72.821693\" y=\"331.08734\" transform=\"mat" +
             "rix(1,0,-0.00408154,0.99999167,0,0)\" /></g></svg> \n" +
+            ""),
+
+    DOCUMENT_DATA_RETENTION_RULES("document/DataRetentionRules.svg", "svg-image__document-data-retention-rules", "" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
+            "1792 1792\"><path style=\"fill:currentColor\" d=\"M1024 544v448q0 14-9 23t-23 9h-320" +
+            "q-14 0-23-9t-9-23v-64q0-14 9-23t23-9h224v-352q0-14 9-23t23-9h64q14 0 23 9t9 23zm" +
+            "416 352q0-148-73-273t-198-198-273-73-273 73-198 198-73 273 73 273 198 198 273 73" +
+            " 273-73 198-198 73-273zm224 0q0 209-103 385.5t-279.5 279.5-385.5 103-385.5-103-2" +
+            "79.5-279.5-103-385.5 103-385.5 279.5-279.5 385.5-103 385.5 103 279.5 279.5 103 3" +
+            "85.5z\"/></svg>\n" +
             ""),
 
     DOCUMENT_DICTIONARY("document/Dictionary.svg", "svg-image__document-dictionary", "" +

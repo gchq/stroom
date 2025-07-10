@@ -17,11 +17,16 @@
 package stroom.importexport.impl;
 
 import stroom.docref.DocRef;
+import stroom.docstore.api.SingletonDocumentStore;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.api.ContentService;
-import stroom.importexport.api.ExportSummary;
+import stroom.importexport.api.ExportMode;
+import stroom.importexport.api.ImportExportActionHandler;
+import stroom.importexport.api.ImportExportActionHandlers;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
+import stroom.importexport.shared.ExportContentRequest;
+import stroom.importexport.shared.ExportSummary;
 import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportConfigResponse;
 import stroom.importexport.shared.ImportSettings.ImportMode;
@@ -33,7 +38,6 @@ import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.DocRefs;
 import stroom.util.shared.Message;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourceGeneration;
@@ -64,18 +68,21 @@ class ContentServiceImpl implements ContentService {
     private final DependencyService dependencyService;
     private final SecurityContext securityContext;
     private final Provider<ExportConfig> exportConfigProvider;
+    private final ImportExportActionHandlers importExportActionHandlers;
 
     @Inject
     ContentServiceImpl(final ImportExportService importExportService,
                        final Provider<ExportConfig> exportConfigProvider,
                        final ResourceStore resourceStore,
                        final DependencyService dependencyService,
-                       final SecurityContext securityContext) {
+                       final SecurityContext securityContext,
+                       final ImportExportActionHandlers importExportActionHandlers) {
         this.importExportService = importExportService;
         this.resourceStore = resourceStore;
         this.dependencyService = dependencyService;
         this.securityContext = securityContext;
         this.exportConfigProvider = exportConfigProvider;
+        this.importExportActionHandlers = importExportActionHandlers;
     }
 
     @Override
@@ -130,23 +137,38 @@ class ContentServiceImpl implements ContentService {
 //    }
 
     @Override
-    public ResourceGeneration exportContent(final DocRefs docRefs) {
-        Objects.requireNonNull(docRefs);
+    public ResourceGeneration exportContent(final ExportContentRequest request) {
+        Objects.requireNonNull(request);
+        LOGGER.debug("exportContent() - request: {}", request);
 
         return securityContext.secureResult(AppPermission.EXPORT_CONFIGURATION, () -> {
             final ResourceStore resourceStore = this.resourceStore;
             final ResourceKey resourceKey = resourceStore.createTempFile("StroomConfig.zip");
             final Path tempFile = resourceStore.getTempFile(resourceKey);
-            final ExportSummary exportSummary = importExportService.exportConfig(docRefs.getDocRefs(), tempFile);
+            final ExportSummary exportSummary = importExportService.exportConfig(request, tempFile);
             final List<Message> messageList = exportSummary.getMessages();
-
+            LOGGER.debug("exportContent() - exportSummary: {}", exportSummary);
             return new ResourceGeneration(resourceKey, messageList);
         });
     }
 
     @Override
+    public ExportSummary fetchExportSummary(final ExportContentRequest request) {
+        Objects.requireNonNull(request);
+        LOGGER.debug("fetchExportSummary() - request: {}", request);
+
+        return securityContext.secureResult(AppPermission.EXPORT_CONFIGURATION, () -> {
+            final ExportSummary exportSummary = importExportService.exportConfig(
+                    request, null, ExportMode.DRY_RUN);
+            LOGGER.debug("fetchExportSummary() - exportSummary: {}", exportSummary);
+            return exportSummary;
+        });
+    }
+
+    @Override
     public ResultPage<Dependency> fetchDependencies(final DependencyCriteria criteria) {
-        return securityContext.secureResult(() -> dependencyService.getDependencies(criteria));
+        return securityContext.secureResult(() ->
+                dependencyService.getDependencies(criteria));
     }
 
     @Override
@@ -170,15 +192,41 @@ class ContentServiceImpl implements ContentService {
 
         final ResourceKey tempResourceKey = resourceStore.createTempFile("StroomConfig.zip");
         final Path tempFile = resourceStore.getTempFile(tempResourceKey);
-
-        LOGGER.info("Exporting all config to temp file {}", tempFile);
-        final ExportSummary exportSummary = importExportService.exportConfig(
+        final ExportContentRequest exportContentRequest = new ExportContentRequest(
                 Set.of(ExplorerConstants.SYSTEM_DOC_REF),
+                true);
+        LOGGER.info("Exporting all config to temp file {}, exportContentRequest: {}", tempFile, exportContentRequest);
+        final ExportSummary exportSummary = importExportService.exportConfig(
+                exportContentRequest,
                 tempFile);
 
         logSummary(tempFile, exportSummary);
 
         return tempResourceKey;
+    }
+
+    @Override
+    public Set<DocRef> fetchSingletonDocs() {
+        final Set<DocRef> docRefs = importExportActionHandlers.getHandlers()
+                .values()
+                .stream()
+                .filter(ImportExportActionHandler::isSingleton)
+                .map(handler -> {
+                    if (handler instanceof final SingletonDocumentStore<?> singletonDocumentStore) {
+                        return singletonDocumentStore;
+                    } else {
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .filter(singletonDocumentStore -> {
+                    final DocRef docRef = singletonDocumentStore.getSingletonDocRef();
+                    return singletonDocumentStore.canExport(docRef);
+                })
+                .map(SingletonDocumentStore::getSingletonDocRef)
+                .collect(Collectors.toSet());
+        LOGGER.debug("fetchSingletons() - Returning {}", docRefs);
+        return docRefs;
     }
 
     private void logSummary(final Path tempFile, final ExportSummary exportSummary) {

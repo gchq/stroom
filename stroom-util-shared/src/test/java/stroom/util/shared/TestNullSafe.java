@@ -1615,6 +1615,27 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testUnmodifiableCopyOf() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputAndOutputType(new TypeLiteral<Set<String>>() {
+                })
+                .withTestFunction(testCase ->
+                        NullSafe.unmodifialbeCopyOf(testCase.getInput()))
+                .withAssertions(testOutcome -> {
+                    final Set<String> actual = testOutcome.getActualOutput();
+                    assertThat(actual)
+                            .isEqualTo(testOutcome.getExpectedOutput());
+                    assertThat(actual)
+                            .isUnmodifiable();
+                })
+                .addCase(null, Collections.emptySet())
+                .addCase(Collections.emptySet(), Collections.emptySet())
+                .addCase(Set.of("bar"), Set.of("bar"))
+                .addCase(Set.of("foo", "bar"), Set.of("foo", "bar"))
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testMutableEnumSet() {
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputAndOutputType(new TypeLiteral<Set<TestEnum>>() {
@@ -1728,6 +1749,28 @@ class TestNullSafe {
                 .addCase("foo", Set.of("foo"))
                 .build();
     }
+
+    @TestFactory
+    Stream<DynamicTest> testAddAll() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple2<Set<Integer>, Set<Integer>>>() {
+                })
+                .withWrappedOutputType(new TypeLiteral<Set<Integer>>() {
+                })
+                .withTestFunction(testCase -> {
+                    NullSafe.addAll(testCase.getInput()._1(), testCase.getInput()._2());
+                    return testCase.getInput()._1();
+                })
+                .withSimpleEqualityAssertion()
+                .addThrowsCase(Tuple.of(null, Set.of(1, 2, 3)), NullPointerException.class)
+                .addCase(Tuple.of(new HashSet<>(Set.of(1, 2, 3)), null), Set.of(1, 2, 3))
+                .addCase(Tuple.of(new HashSet<>(Set.of(1, 2, 3)), Set.of()), Set.of(1, 2, 3))
+                .addCase(Tuple.of(new HashSet<>(Set.of(1, 2, 3)), Set.of(3)), Set.of(1, 2, 3))
+                .addCase(Tuple.of(new HashSet<>(Set.of(1, 2, 3)), Set.of(1, 2, 3)), Set.of(1, 2, 3))
+                .addCase(Tuple.of(new HashSet<>(Set.of(1, 2, 3)), Set.of(3, 4, 5)), Set.of(1, 2, 3, 4, 5))
+                .build();
+    }
+
 
     @TestFactory
     Stream<DynamicTest> testMap() {
