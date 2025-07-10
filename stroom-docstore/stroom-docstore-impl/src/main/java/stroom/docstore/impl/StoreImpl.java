@@ -312,7 +312,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     @Override
     public D readDocument(final DocRef docRef) {
         Objects.requireNonNull(docRef);
-        return read(docRef.getUuid());
+        return read(docRef);
     }
 
     @Override

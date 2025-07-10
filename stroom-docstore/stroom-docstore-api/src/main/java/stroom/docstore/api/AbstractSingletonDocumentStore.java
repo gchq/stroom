@@ -201,7 +201,7 @@ public abstract class AbstractSingletonDocumentStore<D extends AbstractSingleton
 
     @Override
     public Set<DocRef> listDocuments() {
-        return Collections.singleton(getSingletonDocRef());
+        return Collections.singleton(getOrCreate().asDocRef());
     }
 
     @Override
