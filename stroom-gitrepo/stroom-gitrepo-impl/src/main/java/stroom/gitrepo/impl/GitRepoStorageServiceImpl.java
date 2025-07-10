@@ -80,7 +80,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
     /**
      * Where to write changes of the GitRepoDoc
      */
-    private final GitRepoStore gitRepoStore;
+    //private final GitRepoStore gitRepoStore;
 
     /**
      * Logger so we can follow what is going on.
@@ -205,8 +205,9 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                         addMessage(messages, Severity.INFO, "Pushed to Git");
 
                         // Store the commit version
-                        gitRepoDoc.setGitRemoteCommitName(gitCommit.getName());
-                        gitRepoStore.writeDocument(gitRepoDoc);
+                        // TODO MWB Store commit hash elsewhere
+                        // gitRepoDoc.setGitRemoteCommitName(gitCommit.getName());
+                        // gitRepoStore.writeDocument(gitRepoDoc);
                     } else {
                         // Jobs don't need to know that this didn't do anything
                         if (calledFromUi) {
@@ -268,19 +269,19 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
     private void gitStatusToMessages(final Status gitStatus,
                                      final List<Message> messages) {
         for (final String filename : gitStatus.getUncommittedChanges()) {
-            messages.add(new Message(Severity.INFO, "Changed: " + filename));
+            addMessage(messages, Severity.INFO, "Changed: " + filename);
         }
         for (final String dirname : gitStatus.getUntrackedFolders()) {
-            messages.add(new Message(Severity.INFO, "New folder: " + dirname));
+            addMessage(messages, Severity.INFO, "New folder: " + dirname);
         }
         for (final String filename : gitStatus.getUntracked()) {
-            messages.add(new Message(Severity.INFO, "New file: " + filename));
+            addMessage(messages, Severity.INFO, "New file: " + filename);
         }
         for (final String filename : gitStatus.getMissing()) {
-            messages.add(new Message(Severity.INFO, "Deleted: " + filename));
+            addMessage(messages, Severity.INFO, "Deleted: " + filename);
         }
         for (final String filename : gitStatus.getModified()) {
-            messages.add(new Message(Severity.INFO, "Modified: " + filename));
+            addMessage(messages, Severity.INFO, "Modified: " + filename);
         }
     }
 
@@ -321,7 +322,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
 
                 // Grab everything from server - it won't be too big
                 this.gitCloneForPull(gitRepoDoc, gitWorkDir.getDirectory());
-                messages.add(new Message(Severity.INFO, "Cloned from Git repository"));
+                addMessage(messages, Severity.INFO, "Cloned from Git repository");
 
                 // ImportSettings.auto() is used in a few places. This consists of
                 // .importMode(ImportMode.IGNORE_CONFIRMATION)
@@ -364,10 +365,10 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                     // ImportExportSerializerImpl adds the System docref to the returned set,
                     // but we don't use that here, so ignore it
                     if (!docRef.equals(ExplorerConstants.SYSTEM_DOC_REF)) {
-                        messages.add(new Message(Severity.INFO, "Imported '" + docRef.getName() + "'"));
+                        addMessage(messages, Severity.INFO, "Imported '" + docRef.getName() + "'");
                     }
                 }
-                messages.add(new Message(Severity.INFO, "Completed Git Pull"));
+                addMessage(messages, Severity.INFO, "Completed Git Pull");
             }
         } else {
             throw new IOException("Git repository URL isn't configured; cannot pull");
@@ -394,9 +395,10 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
 
         LOGGER.error("{}, {}, {}", errorMessage, cause, messages);
         final StringBuilder buf = new StringBuilder(errorMessage);
+
         if (cause != null) {
             buf.append("\n    ");
-            buf.append(cause.getMessage());
+            buf.append(walkExceptions(cause));
         }
         if (!messages.isEmpty()) {
             buf.append("\n\nAdditional information:");
@@ -590,13 +592,15 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                     .call()) {
 
                 // Store the commit we've got
-                gitRepoDoc.setGitRemoteCommitName(this.gitGetCurrentRevCommitName(git));
-                gitRepoStore.writeDocument(gitRepoDoc);
+                // TODO MWB Store commit hash elsewhere
+                //gitRepoDoc.setGitRemoteCommitName(this.gitGetCurrentRevCommitName(git));
+                //gitRepoStore.writeDocument(gitRepoDoc);
 
             } catch (final GitAPIException e) {
                 LOGGER.error("Git error cloning repository '{}': {}", gitRepoDoc.getUrl(), e.getMessage(), e);
                 throw new IOException("Git error cloning repository "
-                                      + gitRepoDoc.getUrl(), e);
+                                      + gitRepoDoc.getUrl() + ":\n"
+                                      + walkExceptions(e), e);
             }
         } else {
             // We want a particular commit so get everything - all commits
@@ -611,17 +615,35 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                         .setName(gitCommit)
                         .call();
                 // Store the commit we've got
-                gitRepoDoc.setGitRemoteCommitName(this.gitGetCurrentRevCommitName(git));
-                gitRepoStore.writeDocument(gitRepoDoc);
+                // TODO MWB Store commit hash elsewhere
+                //gitRepoDoc.setGitRemoteCommitName(this.gitGetCurrentRevCommitName(git));
+                //gitRepoStore.writeDocument(gitRepoDoc);
 
             } catch (final GitAPIException e) {
                 LOGGER.error("Error cloning git commit '{}': {}", gitCommit, e.getMessage(), e);
                 throw new IOException("Git error cloning / checking out commit '"
                                       + gitCommit
-                                      + "': " + e.getMessage(), e);
+                                      + "':\n" + walkExceptions(e), e);
             }
 
         }
+    }
+
+    /**
+     * Generates an error message by walking the causes of an exception.
+     * @param e The root exception to look at.
+     * @return The error messages from all the causes of the exception.
+     */
+    String walkExceptions(final Exception e) {
+        final StringBuilder buf = new StringBuilder(e.getMessage());
+        Throwable cause = e.getCause();
+        while (cause != null) {
+            buf.append(":\n");
+            buf.append(cause.getMessage());
+            cause = cause.getCause();
+        }
+
+        return buf.toString();
     }
 
     /**
@@ -700,7 +722,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                 } catch (final GitAPIException e) {
                     LOGGER.error("Error checking for updates for GitRepo '{}': {}",
                             gitRepoDoc.getName(), e.getMessage(), e);
-                    throw new IOException("Error checking for updates: " + e.getMessage(), e);
+                    throw new IOException("Error checking for updates: " + walkExceptions(e), e);
                 }
             }
         } else {
@@ -733,7 +755,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
         try {
             realPath = parent.toRealPath();
         } catch (final IOException e) {
-            throw new IOException("Parent directory '" + parent + "' does not exist");
+            throw new IOException("Parent directory '" + parent + "' does not exist: ");
         }
 
         final Path subDirPath = realPath.resolve(subDirectory);
