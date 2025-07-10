@@ -101,11 +101,9 @@ public class DocRefListPresenter extends MyPresenterWidget<PagerView> {
         });
 
         dataGrid.addColumn(
-                DataGridUtil.updatableTickBoxColumnBuilder((final DocRef docRef) -> {
-                            return selectedDocRefs.contains(docRef)
-                                    ? TickBoxState.TICK
-                                    : TickBoxState.UNTICK;
-                        })
+                DataGridUtil.updatableTickBoxColumnBuilder((final DocRef docRef) -> selectedDocRefs.contains(docRef)
+                                ? TickBoxState.TICK
+                                : TickBoxState.UNTICK)
                         .centerAligned()
                         .withFieldUpdater((idx, docRef, tickBoxState) -> {
                             switch (tickBoxState) {
