@@ -6,7 +6,6 @@ import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.gitrepo.api.GitRepoStorageService;
-import stroom.gitrepo.api.GitRepoStore;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.importexport.api.ExportSummary;
 import stroom.importexport.api.ImportExportSerializer;
@@ -113,14 +112,12 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                                      final ExplorerNodeService explorerNodeService,
                                      final ImportExportSerializer importExportSerializer,
                                      final Provider<GitRepoConfig> config,
-                                     final PathCreator pathCreator,
-                                     final GitRepoStore gitRepoStore) {
+                                     final PathCreator pathCreator) {
         this.explorerService = explorerService;
         this.explorerNodeService = explorerNodeService;
         this.importExportSerializer = importExportSerializer;
         this.config = config;
         this.pathCreator = pathCreator;
-        this.gitRepoStore = gitRepoStore;
     }
 
     /**
