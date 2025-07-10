@@ -228,7 +228,7 @@ public class ContentStoreContentPackListPresenter
                 200);
 
         // Which 'store' it is from
-        dataGrid.addResizableColumn(
+        dataGrid.addAutoResizableColumn(
                 DataGridUtil.textColumnBuilder(
                         (ContentStoreContentPackWithDynamicState cpws)
                                 -> cpws.getContentPack().getContentStoreMetadata().getOwnerName()
@@ -237,7 +237,7 @@ public class ContentStoreContentPackListPresenter
                 DataGridUtil.headingBuilder("Store")
                         .withToolTip("Name of the Content Store")
                         .build(),
-                300);
+                80);
 
         // End the columns
         dataGrid.addEndColumn(new EndColumn<>());
