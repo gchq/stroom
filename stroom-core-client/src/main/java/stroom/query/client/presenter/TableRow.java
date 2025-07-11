@@ -1,7 +1,9 @@
 package stroom.query.client.presenter;
 
 import stroom.hyperlink.client.Hyperlink;
+import stroom.hyperlink.client.Hyperlink.UrlDecoder;
 import stroom.util.shared.Expander;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -12,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public class TableRow {
 
@@ -19,15 +22,25 @@ public class TableRow {
     private final String groupKey;
     private final Map<String, Cell> cells;
     private final String matchingRule;
+    private final UrlDecoder urlDecoder;
 
     public TableRow(final Expander expander,
                     final String groupKey,
                     final Map<String, Cell> cells,
                     final String matchingRule) {
+        this(expander, groupKey, cells, matchingRule, null);
+    }
+
+    public TableRow(final Expander expander,
+                    final String groupKey,
+                    final Map<String, Cell> cells,
+                    final String matchingRule,
+                    final UrlDecoder urlDecoder) {
         this.expander = expander;
         this.groupKey = groupKey;
         this.cells = cells;
         this.matchingRule = matchingRule;
+        this.urlDecoder = urlDecoder;
     }
 
     public Expander getExpander() {
@@ -74,20 +87,23 @@ public class TableRow {
 
     public String getText(final String fieldId) {
         final Cell cell = cells.get(fieldId);
-        if (cell != null) {
-            final String rawValue = cell.getRawValue();
-            if (rawValue != null) {
-                try {
-                    if (rawValue.startsWith("[")) {
-                        final Hyperlink hyperlink = Hyperlink.create(rawValue);
-                        return hyperlink.getText();
-                    }
-                    return rawValue;
-                } catch (final NumberFormatException e) {
-                    // Ignore.
-                    return null;
-                }
-            } else {
+        return GwtNullSafe.get(
+                cell,
+                Cell::getRawValue,
+                this::convertRawCellValue);
+    }
+
+    /**
+     * Pkg private for testing only
+     */
+    String convertRawCellValue(final String rawValue) {
+        if (rawValue != null) {
+            try {
+                final StringBuilder sb = new StringBuilder();
+                appendValue(rawValue, sb);
+                return sb.toString();
+            } catch (final NumberFormatException e) {
+                // Ignore.
                 return null;
             }
         } else {
@@ -95,47 +111,66 @@ public class TableRow {
         }
     }
 
-    private void appendValue(final String value, final SafeHtmlBuilder sb) {
-        final List<Object> parts = getParts(value);
-        if (parts.size() == 0) {
-            appendText(value, sb);
-
-        } else {
-            parts.forEach(p -> {
-                if (p instanceof Hyperlink) {
-                    final Hyperlink hyperlink = (Hyperlink) p;
-                    if (!hyperlink.getText().trim().isEmpty()) {
-                        sb.appendHtmlConstant("<u link=\"" + hyperlink + "\">");
-                        appendText(hyperlink.getText(), sb);
-                        sb.appendHtmlConstant("</u>");
-                    }
-                } else {
-                    appendText(p.toString(), sb);
+    private void appendValue(final String value, final StringBuilder sb) {
+        appendValue(value, part -> {
+            if (part instanceof final Hyperlink hyperlink) {
+                if (GwtNullSafe.isNonBlankString(hyperlink.getText())) {
+                    sb.append(hyperlink.getText());
                 }
-            });
-        }
+            } else if (part != null) {
+                // A plain string
+                sb.append(part);
+            }
+        });
     }
 
-    private void appendText(final String text, final SafeHtmlBuilder sb) {
-        if (text == null || text.trim().length() == 0) {
+    private void appendValue(final String value, final SafeHtmlBuilder sb) {
+        appendValue(value, part -> {
+            if (part instanceof final Hyperlink hyperlink) {
+                if (GwtNullSafe.isNonBlankString(hyperlink.getText())) {
+                    sb.appendHtmlConstant("<u link=\"" + hyperlink + "\">");
+                    appendText(hyperlink.getText(), sb);
+                    sb.appendHtmlConstant("</u>");
+                }
+            } else {
+                // A plain string
+                appendText(part.toString(), sb);
+            }
+        });
+    }
+
+    private static void appendText(final String text, final SafeHtmlBuilder sb) {
+        if (GwtNullSafe.isBlankString(text)) {
+            // Why append an NBSP if text is empty/null
             sb.append(SafeHtmlUtil.NBSP);
         } else {
             sb.appendEscaped(text);
         }
     }
 
+    private void appendValue(final String value, final Consumer<Object> partConsumer) {
+        final List<Object> parts = getParts(value);
+        if (GwtNullSafe.hasItems(parts)) {
+            parts.forEach(partConsumer);
+        } else {
+            // No parts so just consume the whole thing
+            partConsumer.accept(value);
+        }
+    }
+
     private List<Object> getParts(final String value) {
         final List<Object> parts = new ArrayList<>();
-
         final StringBuilder sb = new StringBuilder();
 
         for (int i = 0; i < value.length(); i++) {
             final char c = value.charAt(i);
 
             if (c == '[') {
-                final Hyperlink hyperlink = Hyperlink.create(value, i);
+                final Hyperlink hyperlink = Hyperlink.create(value, i, urlDecoder);
                 if (hyperlink != null) {
+                    //noinspection SizeReplaceableByIsEmpty // isEmpty() not in GWT yet
                     if (sb.length() > 0) {
+                        // Add the plain text part before this potential hyperlink
                         parts.add(sb.toString());
                         sb.setLength(0);
                     }
@@ -144,12 +179,12 @@ public class TableRow {
                 } else {
                     sb.append(c);
                 }
-
             } else {
                 sb.append(c);
             }
         }
 
+        //noinspection SizeReplaceableByIsEmpty // isEmpty() not in GWT yet
         if (sb.length() > 0) {
             parts.add(sb.toString());
         }
@@ -183,6 +218,10 @@ public class TableRow {
         return Objects.hash(groupKey);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Cell {
 
         private final String rawValue;
@@ -194,11 +233,11 @@ public class TableRow {
             this.styles = styles;
         }
 
-        private String getRawValue() {
+        String getRawValue() {
             return rawValue;
         }
 
-        private String getStyles() {
+        String getStyles() {
             return styles;
         }
 
