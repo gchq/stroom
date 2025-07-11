@@ -26,11 +26,17 @@ import jakarta.inject.Singleton;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectReader;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -647,11 +653,15 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
      * Determines whether updates are available, by looking at the latest
      * commit in the downloaded data from Git and comparing it to the stored
      * value.
+     * @param messages A list of messages to add to. Can be null.
+     *                 If present then a diff will be inserted as a sequence of messages.
      * @param gitWorkDir The directory that is the root of the repo.
      * @return An auto-closeable Git object to use when accessing the repo.
      * @throws IOException if something goes wrong.
      */
-    private boolean gitUpdatesAvailable(final GitRepoDoc gitRepoDoc, final Path gitWorkDir)
+    private boolean gitUpdatesAvailable(final List<String> messages,
+                                        final GitRepoDoc gitRepoDoc,
+                                        final Path gitWorkDir)
             throws IOException, GitAPIException {
 
         this.ensureDirectoryExists(gitWorkDir);
@@ -666,11 +676,17 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                 gitRepoDoc.getUrl(),
                 gitWorkDir);
 
+        // Depth to clone - as little as possible to save bandwidth
+        int gitCloneDepth = 1;
+        if (messages != null) {
+            gitCloneDepth = Integer.MAX_VALUE;
+        }
+
         try (final Git git = Git.cloneRepository()
                 .setURI(gitRepoDoc.getUrl())
                 .setDirectory(gitWorkDir.toFile())
                 .setCredentialsProvider(this.getGitCreds(gitRepoDoc))
-                .setDepth(1)
+                .setDepth(gitCloneDepth)
                 .setBranch(gitRepoDoc.getBranch())
                 .setCloneAllBranches(false)
                 .call()) {
@@ -681,6 +697,13 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                     gitCommitName,
                     Objects.equals(gitRepoDoc.getGitRemoteCommitName(), gitCommitName));
 
+            if (messages != null) {
+                this.generateGitDiff(messages,
+                                     git,
+                                     gitRepoDoc.getGitRemoteCommitName(),
+                                     gitCommitName);
+            }
+
             return !Objects.equals(gitRepoDoc.getGitRemoteCommitName(), gitCommitName);
         }
     }
@@ -688,8 +711,9 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
     /**
      * Returns the current commit name for the currently cloned code
      * - whatever is in the local Git repo on disk.
-     * @param git The Git instance to query.
-     * @return The string that identifies the commit.
+     * @param git The Git instance to query. Must not be null.
+     * @return The string that identifies the commit. Never null.
+     * @throws GitAPIException if something goes wrong.
      */
     private String gitGetCurrentRevCommitName(final Git git) throws GitAPIException {
         return git
@@ -700,13 +724,70 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
     }
 
     /**
+     * Populates the messages with a diff between the two commit hashes.
+     * @param messages The list of messages to add to. Must not be null.
+     * @param git Represents the Git repo. Must not be null.
+     * @param gitRemoteCommitName The hash of the commit we've already got.
+     *                            Might be null.
+     * @param repoCommitName The latest hash available in the remote store.
+     */
+    private void generateGitDiff(final List<String> messages,
+                                 final Git git,
+                                 final String gitRemoteCommitName,
+                                 final String repoCommitName)
+            throws IOException {
+
+        // Git/jgit magic to covert a hash into a tree-ish thing
+        final String HASH_SUFFIX = "^{tree}";
+
+        // Don't show context lines to avoid UI clutter
+        final int NUMBER_OF_CONTEXT_LINES = 0;
+
+        try {
+            try (final ObjectReader objReader = git.getRepository().newObjectReader()) {
+                final Repository repo = git.getRepository();
+
+                // Parser for the old version
+                final CanonicalTreeParser oldTreeIter = new CanonicalTreeParser();
+                final ObjectId oldTree = repo.resolve(gitRemoteCommitName + HASH_SUFFIX);
+                oldTreeIter.reset(objReader, oldTree);
+
+                // Parser for the new version
+                final CanonicalTreeParser newTreeIter = new CanonicalTreeParser();
+                final ObjectId newTree = repo.resolve(repoCommitName + HASH_SUFFIX);
+                newTreeIter.reset(objReader, newTree);
+
+                // Generate diffs
+                final OutputStream diffStream = new ByteArrayOutputStream();
+                git.diff()
+                        .setOldTree(oldTreeIter)
+                        .setNewTree(newTreeIter)
+                        .setSourcePrefix("Current/")
+                        .setDestinationPrefix("Content Pack/")
+                        .setContextLines(NUMBER_OF_CONTEXT_LINES)
+                        .setOutputStream(diffStream)
+                        .call();
+                messages.add(diffStream.toString());
+            }
+        } catch (final GitAPIException e) {
+            LOGGER.error("Error generating a diff: {}", e, e);
+            throw new IOException("Error generating a diff for updates: " + walkExceptions(e), e);
+
+        } catch (final IOException e) {
+            LOGGER.error("Error generating a diff: {}", e, e);
+            throw e;
+        }
+    }
+
+    /**
      * Checks if any updates are available in the Git Repo.
+     * @param messages List of messages; used to return the diff. Can be null.
      * @param gitRepoDoc The thing we want to check for updates. Must not be null.
      * @return true if updates are available, false if not.
      * @throws IOException if something goes wrong.
      */
     @Override
-    public boolean areUpdatesAvailable(final GitRepoDoc gitRepoDoc) throws IOException {
+    public boolean areUpdatesAvailable(final List<String> messages, final GitRepoDoc gitRepoDoc) throws IOException {
         LOGGER.info("Checking if updates are available for '{}'", gitRepoDoc.getUrl());
 
         if (!gitRepoDoc.getUrl().isEmpty()) {
@@ -714,7 +795,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
             try (final AutoDeletingTempDirectory gitWorkDir = new AutoDeletingTempDirectory(localDir, "gitrepo-")) {
 
                 try {
-                    return this.gitUpdatesAvailable(gitRepoDoc, gitWorkDir.getDirectory());
+                    return this.gitUpdatesAvailable(messages, gitRepoDoc, gitWorkDir.getDirectory());
 
                 } catch (final GitAPIException e) {
                     LOGGER.error("Error checking for updates for GitRepo '{}': {}",

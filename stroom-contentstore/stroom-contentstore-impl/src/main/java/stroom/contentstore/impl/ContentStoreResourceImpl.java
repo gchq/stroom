@@ -387,7 +387,7 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
             // Check if updates are available for this doc
             Boolean retval = Boolean.FALSE;
             if (gitRepoDoc != null) {
-                retval = gitRepoStorageService.get().areUpdatesAvailable(gitRepoDoc);
+                retval = gitRepoStorageService.get().areUpdatesAvailable(null, gitRepoDoc);
             }
 
             return new ContentStoreValueResponse<>(

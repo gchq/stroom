@@ -33,6 +33,7 @@ import stroom.util.shared.Message;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -93,7 +94,7 @@ class GitRepoResourceImpl implements GitRepoResource {
                             .exportDoc(gitRepoPushDto.getGitRepoDoc(),
                                        gitRepoPushDto.getCommitMessage(),
                                        true);
-            response = this.createResponse(messages);
+            response = this.createResponse("Success:", messages);
         } catch (final Exception e) {
             LOGGER.error("Error pushing to Git URL '{}': {}",
                     gitRepoPushDto.getGitRepoDoc().getUrl(),
@@ -119,7 +120,7 @@ class GitRepoResourceImpl implements GitRepoResource {
             LOGGER.info("Pulling from Git repo: {}", gitRepoDoc.getUrl());
             final List<Message> messages = gitRepoStorageServiceProvider.get()
                     .importDoc(gitRepoDoc, false);
-            response = this.createResponse(messages);
+            response = this.createResponse("Success: ", messages);
         } catch (final Exception e) {
             response = new GitRepoResponse(false, e.getMessage());
         }
@@ -130,7 +131,7 @@ class GitRepoResourceImpl implements GitRepoResource {
      * Called to determine whether updates are available for a Git repository.
      * @param gitRepoDoc The git repository to check.
      * @return A response with a message in it saying whether updates
-     * could be applied.
+     * could be applied, plus diffs.
      */
     @Override
     public GitRepoResponse areUpdatesAvailable(final GitRepoDoc gitRepoDoc) {
@@ -138,8 +139,9 @@ class GitRepoResourceImpl implements GitRepoResource {
 
         GitRepoResponse response;
         try {
-            if (gitRepoStorageServiceProvider.get().areUpdatesAvailable(gitRepoDoc)) {
-                response = new GitRepoResponse(true, "Updates are available");
+            final List<String> messages = new ArrayList<>();
+            if (gitRepoStorageServiceProvider.get().areUpdatesAvailable(messages, gitRepoDoc)) {
+                response = this.createResponseForUpdates("Updates are available:\n", messages);
             } else {
                 response = new GitRepoResponse(true, "No updates available");
             }
@@ -160,12 +162,15 @@ class GitRepoResourceImpl implements GitRepoResource {
     /**
      * Converts the response from the exportDoc method into something we can
      * send back to the UI and show to the user.
+     * @param message The message to show at the top of list of messages.
      * @param messages The collection of messages for the export process.
      * @return the response for the UI. Never returns null.
      */
-    private GitRepoResponse createResponse(final List<Message> messages) {
+    private GitRepoResponse createResponse(final String message,
+                                           final List<Message> messages) {
         Objects.requireNonNull(messages);
-        final StringBuilder buf = new StringBuilder("Success:\n");
+        final StringBuilder buf = new StringBuilder(message);
+        buf.append("\n");
         for (final Message m : messages) {
             buf.append(m);
             buf.append("\n");
@@ -173,4 +178,25 @@ class GitRepoResourceImpl implements GitRepoResource {
 
         return new GitRepoResponse(true, buf.toString());
     }
+
+    /**
+     * Converts the response from the exportDoc method into something we can
+     * send back to the UI and show to the user.
+     * @param message The message to show at the top of list of messages.
+     * @param messages The collection of messages for the export process.
+     * @return the response for the UI. Never returns null.
+     */
+    private GitRepoResponse createResponseForUpdates(final String message,
+                                                     final List<String> messages) {
+        Objects.requireNonNull(messages);
+        final StringBuilder buf = new StringBuilder(message);
+        buf.append("\n");
+        for (final String s : messages) {
+            buf.append(s);
+            buf.append("\n");
+        }
+
+        return new GitRepoResponse(true, buf.toString());
+    }
+
 }

@@ -43,10 +43,13 @@ public interface GitRepoStorageService {
 
     /**
      * Checks if any updates are available in the Git Repo.
+     * @param messages List to add messages to. Can be null if extra
+     *                 info isn't needed.
      * @param gitRepoDoc The thing we want to check for updates. Must not be null.
      * @return true if updates are available, false if not.
      * @throws IOException if something goes wrong.
      */
-    boolean areUpdatesAvailable(GitRepoDoc gitRepoDoc) throws IOException;
+    boolean areUpdatesAvailable(List<String> messages,
+                                GitRepoDoc gitRepoDoc) throws IOException;
 
 }
