@@ -1,12 +1,18 @@
 package stroom.hyperlink.client;
 
 
+import stroom.test.common.TestUtil;
+
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 class HyperlinkTest {
 
@@ -48,6 +54,7 @@ class HyperlinkTest {
 //        assertThat(mappedLinks).isEqualTo(testLinks);
     }
 
+    @Disabled // test is not doing anything, assume due detect() not being a thing any more
     @Test
     void testInvalidUrls() {
         // Given
@@ -66,5 +73,27 @@ class HyperlinkTest {
 //                .peek(System.out::println)
 //                .count();
 //        assertThat(countNonNull).isEqualTo(0);
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testCreate() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withOutputType(Hyperlink.class)
+                .withSingleArgTestFunction(Hyperlink::create)
+                .withSimpleEqualityAssertion()
+                .addCase("[a](b){c}", new Hyperlink("a", "b", "c", null))
+                .addCase("[a](b)", new Hyperlink("a", "b", null, null))
+                .addCase("[a](b){", null)
+                .addCase("Orange](http://colors/orange)(whats this?){STROOM_TAB}", null)
+                .addCase("[Blue](http://co(wrapped parenth)lors/get?id=blue{STROOM_TAB}", null)
+                .addCase("(Magenta)[http://shades.com/shop/item?id=kinda%20purple]{STROOM_TAB}", null)
+                .addCase("[foo]", null)
+                .addCase("[foo](", null)
+                .addCase("[foo", null)
+                .addCase("", null)
+                .addCase(null, null)
+                .addCase("[a](b) xxx", new Hyperlink("a", "b", "c", null))
+                .build();
     }
 }

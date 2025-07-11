@@ -25,6 +25,8 @@ dependencies {
     testImplementation libs.guice
     testImplementation libs.gwt.dev
     testImplementation libs.junit.jupiter.api
+    testImplementation libs.mockito.core
+    testImplementation libs.mockito.junit.jupiter
     testImplementation libs.slf4j.api
     testImplementation libs.vavr
 

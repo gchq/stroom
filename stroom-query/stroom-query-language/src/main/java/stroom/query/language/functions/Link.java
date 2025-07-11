@@ -49,7 +49,7 @@ import java.util.function.Supplier;
                         }),
                 @FunctionSignature(
                         description = "Creates a stroom syntax hyperlink string using the supplied link text, " +
-                                "URL and type.",
+                                      "URL and type.",
                         args = {
                                 @FunctionArg(
                                         name = "text",
@@ -62,7 +62,8 @@ import java.util.function.Supplier;
                                 @FunctionArg(
                                         name = "type",
                                         description = "The type of the url. To override the title of the tab/dialog " +
-                                                "being opened, append the title to the type, e.g. 'dialog|My Title'.",
+                                                      "being opened, append the title to the type, e.g. " +
+                                                      "'dialog|My Title'.",
                                         argType = ValString.class,
                                         // taken from HyperLinkType
                                         allowedValues = {
@@ -80,6 +81,10 @@ class Link extends AbstractLink {
     protected Generator createGenerator(final Generator[] childGenerators) {
         return new LinkGen(childGenerators);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static final class LinkGen extends AbstractLinkGen {
 
