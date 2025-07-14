@@ -1036,9 +1036,21 @@
 }
 
 .inline-label-icon {
-    display: flex;
-    align-items: center;
-    padding: 5px;
+   display: flex;
+   flex-wrap: nowrap;
+   align-items: center;
+}
+
+.inline-label-icon > .gwt-Label {
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   width: auto !important;
+}
+
+.inline-label-icon > .copyNameIcon {
+   flex-shrink: 0;
+   margin-left: 0.5em;
 }
 
 .globalPropertyEditViewImpl-textArea {
