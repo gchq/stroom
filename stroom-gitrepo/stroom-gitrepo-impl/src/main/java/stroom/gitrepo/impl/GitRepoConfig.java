@@ -1,7 +1,11 @@
 package stroom.gitrepo.impl;
 
+import stroom.config.common.AbstractDbConfig;
+import stroom.config.common.ConnectionConfig;
+import stroom.config.common.ConnectionPoolConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -25,11 +29,15 @@ public class GitRepoConfig extends AbstractConfig implements IsStroomConfig {
      */
     private final String localDir;
 
+    /** Database config */
+    private final GitRepoDbConfig dbConfig;
+
     /**
      * Default constructor. Configuration created with default values.
      */
     public GitRepoConfig() {
         localDir = DEFAULT_LOCAL_DIR;
+        dbConfig = new GitRepoDbConfig();
     }
 
     /**
@@ -38,8 +46,10 @@ public class GitRepoConfig extends AbstractConfig implements IsStroomConfig {
      */
     @SuppressWarnings("unused")
     @JsonCreator
-    public GitRepoConfig(@JsonProperty("localDir") final String localDir) {
+    public GitRepoConfig(@JsonProperty("localDir") final String localDir,
+                         @JsonProperty("db") final GitRepoDbConfig dbConfig) {
         this.localDir = localDir;
+        this.dbConfig = dbConfig;
     }
 
     /**
@@ -63,4 +73,18 @@ public class GitRepoConfig extends AbstractConfig implements IsStroomConfig {
         return "GitRepoConfig { localDir='" + localDir + "'}";
     }
 
+    @BootStrapConfig
+    public static class GitRepoDbConfig extends AbstractDbConfig {
+        public GitRepoDbConfig() {
+            super();
+        }
+
+        @JsonCreator
+        public GitRepoDbConfig(
+                @JsonProperty(PROP_NAME_CONNECTION) final ConnectionConfig connectionConfig,
+                @JsonProperty(PROP_NAME_CONNECTION_POOL) final ConnectionPoolConfig connectionPoolConfig) {
+            super(connectionConfig, connectionPoolConfig);
+        }
+
+    }
 }

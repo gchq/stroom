@@ -298,3 +298,5 @@ include 'stroom-gitrepo:stroom-gitrepo-api'
 
 include 'stroom-contentstore:stroom-contentstore-api'
 include 'stroom-contentstore'
+include 'stroom-gitrepo:stroom-gitrepo-impl-db'
+include 'stroom-gitrepo:stroom-gitrepo-impl-db-jooq'
