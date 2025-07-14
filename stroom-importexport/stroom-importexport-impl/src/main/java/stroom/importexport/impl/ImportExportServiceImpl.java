@@ -54,9 +54,12 @@ public class ImportExportServiceImpl implements ImportExportService {
     public List<ImportState> importConfig(final Path data,
                                           final ImportSettings importSettings,
                                           final List<ImportState> confirmList) {
-        doImport(data, confirmList, importSettings);
-        confirmList.sort(Comparator.comparing(ImportState::getSourcePath));
-        return confirmList;
+        List<ImportState> mutableList = (confirmList == null)
+                ? new java.util.ArrayList<>()
+                : new java.util.ArrayList<>(confirmList);
+        doImport(data, mutableList, importSettings);
+        mutableList.sort(Comparator.comparing(ImportState::getSourcePath));
+        return mutableList;
     }
 
     private void doImport(final Path zipFile,
@@ -66,7 +69,6 @@ public class ImportExportServiceImpl implements ImportExportService {
         try {
             Files.createDirectories(explodeDir);
 
-            // Unzip the zip file.
             ZipUtil.unzip(zipFile, explodeDir);
 
             importExportSerializer.read(explodeDir, confirmList, importSettings);
