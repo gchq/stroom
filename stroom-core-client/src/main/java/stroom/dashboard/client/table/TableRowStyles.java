@@ -4,7 +4,6 @@ import stroom.dashboard.client.table.cf.ConditionalFormattingDynamicStyles;
 import stroom.dashboard.client.table.cf.ConditionalFormattingSwatchUtil;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.v2.ConditionalFormattingRule;
-import stroom.query.api.v2.ConditionalFormattingStyle;
 import stroom.query.api.v2.ConditionalFormattingType;
 import stroom.query.api.v2.TextAttributes;
 import stroom.query.client.presenter.TableRow;
@@ -16,7 +15,6 @@ import com.google.gwt.user.cellview.client.RowStyles;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class TableRowStyles implements RowStyles<TableRow> {
 
@@ -38,15 +36,14 @@ public class TableRowStyles implements RowStyles<TableRow> {
                     ConditionalFormattingType.CUSTOM.equals(rule.getFormattingType())) {
                     classNameBuilder.addClassName(ConditionalFormattingDynamicStyles.create(rule.getCustomStyle()));
                 } else if (ConditionalFormattingType.TEXT.equals(rule.getFormattingType())) {
-                    classNameBuilder.addClassName(ConditionalFormattingSwatchUtil.CF_TEXT);
-                    classNameBuilder.addClassName(rule.getFormattingStyle().getCssClassName());
+                    classNameBuilder.addClassName(ConditionalFormattingSwatchUtil.CF_TEXT)
+                            .addClassName(rule.getFormattingStyle().getCssClassName());
                 } else if (ConditionalFormattingType.BACKGROUND.equals(rule.getFormattingType())) {
                     classNameBuilder.addClassName(rule.getFormattingStyle().getCssClassName());
                 }
 
                 final TextAttributes textAttributes = rule.getTextAttributes();
-                classNameBuilder.addClassName(ConditionalFormattingSwatchUtil
-                        .getTextAttributeClassNames(textAttributes));
+                classNameBuilder.addAll(ConditionalFormattingSwatchUtil.getTextAttributeClassNames(textAttributes));
             }
         }
 

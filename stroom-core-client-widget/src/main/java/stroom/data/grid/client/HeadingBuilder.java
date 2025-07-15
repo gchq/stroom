@@ -4,7 +4,6 @@ import stroom.util.shared.GwtNullSafe;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.cellview.client.SafeHtmlHeader;
@@ -50,7 +49,6 @@ public class HeadingBuilder {
     }
 
     public Header<SafeHtml> build() {
-
         final boolean hasToolTip = !GwtNullSafe.isBlankString(toolTip);
         final boolean hasAlignment = headingAlignment != null
                                      && headingAlignment != HeadingAlignment.LEFT;
@@ -64,38 +62,9 @@ public class HeadingBuilder {
             }
         }
 
-//            if (hasToolTip || hasAlignment) {
         if (hasToolTip) {
-
-            final SafeHtmlBuilder builder = new SafeHtmlBuilder()
-                    .appendHtmlConstant("<div");
-//                if (hasToolTip) {
-            builder.appendHtmlConstant(" title=\"")
-                    .appendEscaped(toolTip)
-                    .appendHtmlConstant("\"");
-//                }
-//                if (hasAlignment) {
-//                    if (HeadingAlignment.CENTER == headingAlignment) {
-//                        builder.appendHtmlConstant(" style=\"text-align: center;\"");
-//                        headingStyle = "center-align";
-//                    } else if (HeadingAlignment.RIGHT == headingAlignment) {
-//                        builder.appendHtmlConstant(" style=\"text-align: right;\"");
-//                        headingStyle = "right-align";
-//                    }
-//                }
-
-            builder.appendHtmlConstant(">")
-                    .append(headingText);
-//                if (GwtNullSafe.isBlankString(headingText)) {
-//                    builder.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
-//                } else {
-//                    builder.appendEscaped(headingText);
-//                }
-
-            final SafeHtml safeHtml = builder
-                    .appendHtmlConstant("</div>")
-                    .toSafeHtml();
-            header = new SafeHtmlHeader(safeHtml);
+            final SafeHtml headingDiv = SafeHtmlUtil.getTemplate().divWithTitle(toolTip, headingText);
+            header = new SafeHtmlHeader(headingDiv);
         } else {
             header = new SafeHtmlHeader(headingText);
         }

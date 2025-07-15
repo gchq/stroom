@@ -162,6 +162,7 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
                                 }
 
                                 // Make summery items bold.
+                                // TODO use SafeHtmlUtil#getTemplate
                                 final SafeHtmlBuilder builder = new SafeHtmlBuilder();
                                 builder.appendHtmlConstant("<div style=\"font-weight:500;\">");
                                 builder.appendEscaped(sb.toString());
