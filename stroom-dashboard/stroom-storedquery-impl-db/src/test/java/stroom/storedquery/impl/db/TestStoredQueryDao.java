@@ -89,7 +89,7 @@ class TestStoredQueryDao {
                 .uuid(UUID.randomUUID().toString())
                 .subjectId("owner")
                 .build();
-        Mockito.when(userRefLookup.getByUuid(Mockito.eq(owner.getUuid()), FindUserContext.RUN_AS))
+        Mockito.when(userRefLookup.getByUuid(Mockito.eq(owner.getUuid()), Mockito.eq(FindUserContext.RUN_AS)))
                 .thenReturn(Optional.of(owner));
 
         storedQueryDao = new StoredQueryDaoImpl(
@@ -213,7 +213,7 @@ class TestStoredQueryDao {
                 .uuid(UUID.randomUUID().toString())
                 .subjectId("owner2")
                 .build();
-        Mockito.when(userRefLookup.getByUuid(Mockito.eq(owner2.getUuid()), FindUserContext.RUN_AS))
+        Mockito.when(userRefLookup.getByUuid(Mockito.eq(owner2.getUuid()), Mockito.eq(FindUserContext.RUN_AS)))
                 .thenReturn(Optional.of(owner2));
 
         // Add in 10 for a different user
@@ -285,7 +285,7 @@ class TestStoredQueryDao {
                 .uuid(UUID.randomUUID().toString())
                 .subjectId("owner2")
                 .build();
-        Mockito.when(userRefLookup.getByUuid(Mockito.eq(owner2.getUuid()), FindUserContext.RUN_AS))
+        Mockito.when(userRefLookup.getByUuid(Mockito.eq(owner2.getUuid()), Mockito.eq(FindUserContext.RUN_AS)))
                 .thenReturn(Optional.of(owner2));
 
         // Add 10 more for owner2 with recent create time

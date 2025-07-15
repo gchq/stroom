@@ -73,8 +73,9 @@ public class FindUserCriteria extends ExpressionCriteria {
             this.context = criteria.context;
         }
 
-        public void context(final FindUserContext context) {
+        public Builder context(final FindUserContext context) {
             this.context = context;
+            return self();
         }
 
         @Override
