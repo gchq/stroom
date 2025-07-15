@@ -49,7 +49,12 @@ public class HashLookupDb {
 
     public ByteBuffer getValue(final Txn<ByteBuffer> readTxn,
                                final ByteBuffer keyByteBuffer) {
-        return dbi.get(readTxn, keyByteBuffer);
+        final ByteBuffer value = dbi.get(readTxn, keyByteBuffer);
+        if (value == null) {
+            final Hash hash = hashFactory.create(keyByteBuffer);
+            throw new IllegalStateException("Unable to find value for hash: " + hash);
+        }
+        return value;
     }
 
     public <R> R get(final Txn<ByteBuffer> readTxn,
