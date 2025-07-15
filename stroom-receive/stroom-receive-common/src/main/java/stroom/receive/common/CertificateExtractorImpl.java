@@ -17,6 +17,7 @@
 package stroom.receive.common;
 
 import stroom.util.cert.CertificateExtractor;
+import stroom.util.cert.DNFormat;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
@@ -27,8 +28,12 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.security.cert.X509Certificate;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.StringTokenizer;
 
 public class CertificateExtractorImpl implements CertificateExtractor {
 
@@ -46,7 +51,7 @@ public class CertificateExtractorImpl implements CertificateExtractor {
     @Override
     public Optional<String> getCN(final HttpServletRequest request) {
         return getDN(request)
-                .map(CertificateExtractor::extractCNFromDN);
+                .flatMap(this::extractCNFromDN);
     }
 
     @Override
@@ -72,6 +77,43 @@ public class CertificateExtractorImpl implements CertificateExtractor {
         final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
         final boolean isRemoteHostTrusted = isRemoteHostTrustedCertProvider(request, receiveDataConfig);
         return extractCertificate(request, receiveDataConfig, isRemoteHostTrusted);
+    }
+
+    /**
+     * Given a DN and {@link DNFormat} pull out the CN. E.g.
+     * "CN=some.server.co.uk, OU=servers, O=some organisation, C=GB" and {@link DNFormat#LDAP} Would
+     * return "some.server.co.uk"
+     *
+     * @return null or the CN name
+     */
+    @Override
+    public Optional<String> extractCNFromDN(final String dn) {
+        final DNFormat dnFormat = Objects.requireNonNullElse(
+                receiveDataConfigProvider.get().getX509CertificateDnFormat(),
+                ReceiveDataConfig.DEFAULT_X509_CERT_DN_FORMAT);
+        LOGGER.debug("extractCNFromDN dnFormat: {}, DN: '{}'", dnFormat, dn);
+
+        if (dn == null) {
+            return Optional.empty();
+        }
+        final StringTokenizer attributes = new StringTokenizer(dn, dnFormat.getDelimiter());
+
+        if (attributes.hasMoreTokens()) {
+            final Map<String, String> map = new HashMap<>();
+            while (attributes.hasMoreTokens()) {
+                final String token = attributes.nextToken();
+                if (token.contains("=")) {
+                    final String[] parts = token.split("=");
+                    if (parts.length == 2) {
+                        map.put(parts[0].trim().toUpperCase(), parts[1].trim());
+                    }
+                }
+            }
+            final String cn = map.get("CN");
+            LOGGER.debug("extractCNFromDN DN: '{}', CN: '{}'", dn, cn);
+            return Optional.ofNullable(cn);
+        }
+        return Optional.empty();
     }
 
     private Optional<String> extractDNFromRequest(final HttpServletRequest request,
@@ -161,8 +203,8 @@ public class CertificateExtractorImpl implements CertificateExtractor {
      */
     private static Optional<X509Certificate> extractCertificate(final Object[] certs) {
         for (final Object cert : certs) {
-            if (cert instanceof X509Certificate) {
-                return Optional.of((X509Certificate) cert);
+            if (cert instanceof final X509Certificate x509Certificate) {
+                return Optional.of(x509Certificate);
             }
         }
         return Optional.empty();
