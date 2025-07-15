@@ -316,7 +316,7 @@ public class SafeHtmlUtil {
         var s = new Option().style;
         s.color = untrustedColour;
         return s.color !== '';
-	}-*/;
+    }-*/;
 
 
     // --------------------------------------------------------------------------------
