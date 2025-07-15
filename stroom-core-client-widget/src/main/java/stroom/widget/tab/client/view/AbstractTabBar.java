@@ -89,6 +89,8 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
 
     @Override
     public void addTab(final TabData tabData) {
+        final int insertIndex = tabs.isEmpty() ? 0 : indexOf(selectedTab) + 1;
+
         if (tabs.isEmpty()) {
             keyboardSelectedTab = tabData;
         }
@@ -99,9 +101,9 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
 
         final AbstractTab tab = createTab(tabData);
         makeInvisible(tab.getElement());
-        add(tab);
+        insert(tab, insertIndex);
         tabWidgetMap.put(tabData, tab);
-        tabs.add(tabData);
+        tabs.add(insertIndex, tabData);
 
         onResize();
         updateTabCount();
@@ -630,32 +632,18 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
 
         final int indexOfSelectedTab = indexOf(selectedTab);
 
-        final List<TabData> tabsNotShown = tabs.stream()
-                .filter(Predicate.not(visibleTabs::contains))
-                .filter(t -> !getTab(t).isHidden())
-                .collect(Collectors.toList());
+        final List<TabData> tabsNotShownToLeft = getTabsNotShown(t -> indexOf(t) < indexOfSelectedTab);
+        final List<TabData> tabsNotShownToRight = getTabsNotShown(t -> indexOf(t) > indexOfSelectedTab);
 
         final List<Item> menuItems = new ArrayList<>();
-        for (final TabData tabNotShown : tabsNotShown) {
-            if (indexOf(tabNotShown) == indexOfSelectedTab + 1) {
-                menuItems.add(new Separator(0));
-            }
 
-            menuItems.add(new IconMenuItem.Builder()
-                    .priority(0)
-                    .icon(tabNotShown.getIcon())
-                    .text(new SafeHtmlBuilder()
-                            .appendHtmlConstant("<b>")
-                            .appendEscaped(tabNotShown.getLabel())
-                            .appendHtmlConstant("</b>")
-                            .toSafeHtml())
-                    .command(() -> fireTabSelection(tabNotShown))
-                    .build());
+        tabsNotShownToLeft.stream().map(this::toIconMenuItem).forEach(menuItems::add);
 
-            if (indexOf(tabNotShown) == indexOfSelectedTab - 1) {
-                menuItems.add(new Separator(0));
-            }
+        if (!tabsNotShownToLeft.isEmpty() && !tabsNotShownToRight.isEmpty()) {
+            menuItems.add(new Separator(0));
         }
+
+        tabsNotShownToRight.stream().map(this::toIconMenuItem).forEach(menuItems::add);
 
         ShowMenuEvent
                 .builder()
@@ -663,6 +651,27 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
                 .popupPosition(popupPosition)
                 .addAutoHidePartner(element)
                 .fire(this);
+    }
+
+    private List<TabData> getTabsNotShown(final Predicate<TabData> predicate) {
+        return tabs.stream()
+                .filter(Predicate.not(visibleTabs::contains))
+                .filter(t -> !getTab(t).isHidden())
+                .filter(predicate == null ? t -> true : predicate)
+                .collect(Collectors.toList());
+    }
+
+    private Item toIconMenuItem(final TabData tabData) {
+        return new IconMenuItem.Builder()
+                .priority(0)
+                .icon(tabData.getIcon())
+                .text(new SafeHtmlBuilder()
+                        .appendHtmlConstant("<b>")
+                        .appendEscaped(tabData.getLabel())
+                        .appendHtmlConstant("</b>")
+                        .toSafeHtml())
+                .command(() -> fireTabSelection(tabData))
+                .build();
     }
 
     protected void fireTabSelection(final TabData tabData) {
