@@ -13,6 +13,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.8.5] - 2025-07-15
+
+* Issue **#5025** : Fix parsing of hyperlinks in dashboard cells.
+
+* Add in validation of the Conditional Formatting custom style colours to ensure the user can only enter valid colours and nothing else.
+
+* Replace incorrect uses of `appendHtmlConstant` with SafeHtmlTemplate.
+
+
 ## [v7.8.4] - 2025-07-03
 
 * Fix primitive value conversion of query field types.
@@ -1378,7 +1387,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.8.4...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.8.5...HEAD
+[v7.8.5]: https://github.com/gchq/stroom/compare/v7.8.4...v7.8.5
 [v7.8.4]: https://github.com/gchq/stroom/compare/v7.8.3...v7.8.4
 [v7.8.3]: https://github.com/gchq/stroom/compare/v7.8.2...v7.8.3
 [v7.8.2]: https://github.com/gchq/stroom/compare/v7.8.1...v7.8.2
