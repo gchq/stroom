@@ -36,23 +36,26 @@ import java.util.List;
 public class FindUserCriteria extends ExpressionCriteria {
 
     @JsonProperty
-    private final boolean activeUsersOnly;
+    private final FindUserContext context;
 
     public FindUserCriteria() {
-        this(PageRequest.unlimited(), Collections.emptyList(), ExpressionOperator.builder().build(), false);
+        this(PageRequest.unlimited(),
+                Collections.emptyList(),
+                ExpressionOperator.builder().build(),
+                FindUserContext.PERMISSIONS);
     }
 
     @JsonCreator
     public FindUserCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                             @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                             @JsonProperty("expression") final ExpressionOperator expression,
-                            @JsonProperty("activeUsersOnly") final boolean activeUsersOnly) {
+                            @JsonProperty("context") final FindUserContext context) {
         super(pageRequest, sortList, expression);
-        this.activeUsersOnly = activeUsersOnly;
+        this.context = context;
     }
 
-    public boolean isActiveUsersOnly() {
-        return activeUsersOnly;
+    public FindUserContext getContext() {
+        return context;
     }
 
     // --------------------------------------------------------------------------------
@@ -60,18 +63,18 @@ public class FindUserCriteria extends ExpressionCriteria {
 
     public static class Builder extends AbstractBuilder<FindUserCriteria, Builder> {
 
-        private boolean activeUsersOnly;
+        private FindUserContext context;
 
         public Builder() {
         }
 
         public Builder(final FindUserCriteria criteria) {
             super(criteria);
-            this.activeUsersOnly = criteria.activeUsersOnly;
+            this.context = criteria.context;
         }
 
-        public void activeUsersOnly(final boolean activeUsersOnly) {
-            this.activeUsersOnly = activeUsersOnly;
+        public void context(final FindUserContext context) {
+            this.context = context;
         }
 
         @Override
@@ -85,7 +88,7 @@ public class FindUserCriteria extends ExpressionCriteria {
                     pageRequest,
                     sortList,
                     expression,
-                    activeUsersOnly);
+                    context);
         }
     }
 }

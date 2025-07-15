@@ -32,23 +32,8 @@ public class TestModule extends AbstractModule {
         install(new MockTaskModule());
         install(new CacheModule());
 
-        bind(UserRefLookup.class).toInstance(new UserRefLookup() {
-            @Override
-            public Optional<UserRef> getByUuid(final String userUuid) {
-                return Optional.of(UserRef.forUserUuid(userUuid));
-            }
-
-            @Override
-            public UserRef decorate(final UserRef userRef) {
-                return userRef;
-            }
-        });
-        bind(StreamFeedProvider.class).toInstance(new StreamFeedProvider() {
-            @Override
-            public String getFeedName(final long id) {
-                return "TEST_FEED_NAME";
-            }
-        });
+        bind(UserRefLookup.class).toInstance((userUuid, context) -> Optional.of(UserRef.forUserUuid(userUuid)));
+        bind(StreamFeedProvider.class).toInstance(id -> "TEST_FEED_NAME");
         bind(Metrics.class).toInstance(new MockMetrics());
     }
 //

@@ -27,6 +27,7 @@ import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.Query;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.FindUserContext;
 import stroom.security.user.api.UserRefLookup;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.storedquery.impl.StoredQueryConfig.StoredQueryDbConfig;
@@ -88,7 +89,7 @@ class TestStoredQueryDao {
                 .uuid(UUID.randomUUID().toString())
                 .subjectId("owner")
                 .build();
-        Mockito.when(userRefLookup.getByUuid(Mockito.eq(owner.getUuid())))
+        Mockito.when(userRefLookup.getByUuid(Mockito.eq(owner.getUuid()), FindUserContext.RUN_AS))
                 .thenReturn(Optional.of(owner));
 
         storedQueryDao = new StoredQueryDaoImpl(
@@ -212,7 +213,7 @@ class TestStoredQueryDao {
                 .uuid(UUID.randomUUID().toString())
                 .subjectId("owner2")
                 .build();
-        Mockito.when(userRefLookup.getByUuid(Mockito.eq(owner2.getUuid())))
+        Mockito.when(userRefLookup.getByUuid(Mockito.eq(owner2.getUuid()), FindUserContext.RUN_AS))
                 .thenReturn(Optional.of(owner2));
 
         // Add in 10 for a different user
@@ -284,7 +285,7 @@ class TestStoredQueryDao {
                 .uuid(UUID.randomUUID().toString())
                 .subjectId("owner2")
                 .build();
-        Mockito.when(userRefLookup.getByUuid(Mockito.eq(owner2.getUuid())))
+        Mockito.when(userRefLookup.getByUuid(Mockito.eq(owner2.getUuid()), FindUserContext.RUN_AS))
                 .thenReturn(Optional.of(owner2));
 
         // Add 10 more for owner2 with recent create time

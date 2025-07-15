@@ -197,7 +197,7 @@ class TestUserDaoImpl {
 
 
     @Test
-    void findRestrictedUserList() {
+    void findAnnotationAssignmentUsers() {
         // Given
         final List<String> userNames = IntStream.range(0, 3)
                 .mapToObj(i -> String.format("SomePerson_%s", UUID.randomUUID()))
@@ -229,15 +229,13 @@ class TestUserDaoImpl {
 
         // Make sure we can only see users.
         final ResultPage<User> visibleUsers = userDao
-                .findRestrictedUserList(users.getFirst().getUuid(), new FindUserCriteria());
+                .findRelatedUsers(users.getFirst().getUuid(), new FindUserCriteria());
 
         assertThat(visibleUsers.size()).isEqualTo(5);
         assertThat(visibleUsers.getValues()).containsAll(users);
         assertThat(visibleUsers.getValues()).contains(group);
         assertThat(visibleUsers.getValues()).contains(otherGroup2);
     }
-
-
 
     @Test
     void getBySubjectId_notFound() {

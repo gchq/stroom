@@ -65,6 +65,7 @@ import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.security.shared.FindUserContext;
 import stroom.security.user.api.UserRefLookup;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -193,10 +194,9 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 AnnotationTagType.STATUS);
         expressionMapper.map(AnnotationDecorationFields.ANNOTATION_ASSIGNED_TO_FIELD,
                 ANNOTATION.ASSIGNED_TO_UUID,
-                uuid ->
-                        userRefLookup.getByUuid(uuid)
-                                .map(UserRef::getUuid)
-                                .orElse(null));
+                uuid -> userRefLookup.getByUuid(uuid, FindUserContext.ANNOTATION_ASSIGNMENT)
+                        .map(UserRef::getUuid)
+                        .orElse(null));
         addTagHandler(expressionMapper, AnnotationDecorationFields.ANNOTATION_LABEL_FIELD,
                 AnnotationTagType.LABEL);
         addTagHandler(expressionMapper, AnnotationDecorationFields.ANNOTATION_COLLECTION_FIELD,
@@ -223,7 +223,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         addTagHandler(expressionMapper, AnnotationFields.STATUS_FIELD,
                 AnnotationTagType.STATUS);
         expressionMapper.map(AnnotationFields.ASSIGNED_TO_FIELD, ANNOTATION.ASSIGNED_TO_UUID, uuid ->
-                userRefLookup.getByUuid(uuid)
+                userRefLookup.getByUuid(uuid, FindUserContext.ANNOTATION_ASSIGNMENT)
                         .map(UserRef::getUuid)
                         .orElse(null));
         addTagHandler(expressionMapper, AnnotationFields.LABEL_FIELD,
@@ -425,10 +425,8 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         if (uuid == null) {
             return null;
         }
-        return userRefLookup.getByUuid(uuid)
-                .orElse(UserRef.builder()
-                        .uuid(uuid)
-                        .build());
+        return userRefLookup.getByUuid(uuid, FindUserContext.ANNOTATION_ASSIGNMENT)
+                .orElse(UserRef.builder().uuid(uuid).build());
     }
 
     private String getComment(final long id) {
@@ -532,6 +530,11 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         final SimpleDuration retentionPeriod = getDefaultRetentionPeriod();
         final Long retainUntilTimeMs = calculateRetainUntilTimeMs(retentionPeriod, nowMs);
 
+        // Check assignment is allowed to the supplied user.
+        final String assignedToUuid = NullSafe
+                .get(request.getAssignTo(), UserRef::getUuid);
+        validateAssignedToUser(assignedToUuid);
+
         Annotation annotation = Annotation.builder()
                 .type(Annotation.TYPE)
                 .uuid(UUID.randomUUID().toString())
@@ -559,26 +562,10 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
             createEntry(annotationId, userUuid, now, AnnotationEntryType.STATUS, statusTag.getName());
         }
 
-        if (annotation.getAssignedTo() != null) {
-            final String assignedToUuid = NullSafe
-                    .get(annotation.getAssignedTo(), UserRef::getUuid);
-//            JooqUtil.context(connectionProvider, context ->
-//                    context
-//                            .update(ANNOTATION)
-//                            .set(ANNOTATION.ASSIGNED_TO_UUID, assignedToUuid)
-//                            .set(ANNOTATION.UPDATE_USER, userName)
-//                            .set(ANNOTATION.UPDATE_TIME_MS, nowMs)
-//                            .where(ANNOTATION.ID.eq(annotationId))
-//                            .execute());
+        if (assignedToUuid != null) {
             // Create history entry.
             createEntry(annotationId, userUuid, now, AnnotationEntryType.ASSIGNED, assignedToUuid);
         }
-
-//        if (NullSafe.isNonBlankString(request.getComment())) {
-//            // Create history entry.
-//            createEntry(annotationId, userUuid, now, AnnotationEntryType.COMMENT,
-//                    request.getComment());
-//        }
 
         if (!NullSafe.isEmptyCollection(request.getLinkedEvents())) {
             request.getLinkedEvents().forEach(eventID ->
@@ -691,6 +678,10 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
             } else if (change instanceof final ChangeAssignedTo changeAssignedTo) {
                 final String assignedToUuid = NullSafe
                         .get(changeAssignedTo, ChangeAssignedTo::getUserRef, UserRef::getUuid);
+
+                // Check assignment is allowed to the supplied user.
+                validateAssignedToUser(assignedToUuid);
+
                 JooqUtil.context(connectionProvider, context ->
                         context
                                 .update(ANNOTATION)
@@ -781,6 +772,17 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
 
         // Now select everything back to provide refreshed details.
         return true;
+    }
+
+    private void validateAssignedToUser(final String assignedToUuid) {
+        // Check assignment is allowed to the supplied user.
+        if (assignedToUuid != null) {
+            final Optional<UserRef> userRef = userRefLookup
+                    .getByUuid(assignedToUuid, FindUserContext.ANNOTATION_ASSIGNMENT);
+            if (userRef.isEmpty()) {
+                throw new RuntimeException("You cannot assign annotation to: " + assignedToUuid);
+            }
+        }
     }
 
     private void removeAllTags(final DSLContext context,
