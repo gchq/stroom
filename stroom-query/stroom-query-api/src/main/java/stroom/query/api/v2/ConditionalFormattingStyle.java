@@ -25,7 +25,8 @@ public enum ConditionalFormattingStyle implements HasDisplayValue {
     DEEP_ORANGE("Deep Orange", "cf-deep-orange"),
     BROWN("Brown", "cf-brown"),
     GREY("Grey", "cf-grey"),
-    BLUE_GREY("Blue Grey", "cf-blue-grey");
+    BLUE_GREY("Blue Grey", "cf-blue-grey"),
+    ;
 
     public static final List<ConditionalFormattingStyle> LIST = new ArrayList<>();
 

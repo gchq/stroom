@@ -6,6 +6,9 @@ import stroom.util.shared.Expander;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.util.client.SafeHtmlUtil;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.safecss.shared.SafeStyles;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -18,6 +21,8 @@ import java.util.function.Consumer;
 
 public class TableRow {
 
+    private static Template template;
+
     private final Expander expander;
     private final String groupKey;
     private final Map<String, Cell> cells;
@@ -29,6 +34,9 @@ public class TableRow {
                     final Map<String, Cell> cells,
                     final String matchingRule) {
         this(expander, groupKey, cells, matchingRule, null);
+        if (template == null) {
+            template = GWT.create(Template.class);
+        }
     }
 
     public TableRow(final Expander expander,
@@ -66,23 +74,12 @@ public class TableRow {
     }
 
     private SafeHtml decorateValue(final Cell cell) {
-        final SafeHtmlBuilder safeHtmlBuilder = new SafeHtmlBuilder();
-
-        final String styleAttrStr = (cell.getStyles() != null && !cell.getStyles().isEmpty())
-                ? (" style=" + cell.getStyles())
-                : "";
-
-        final String titleAttrStr = cell.getRawValue() != null
-                ?
-                " title=\"" + SafeHtmlUtils.htmlEscape(cell.getRawValue()) + "\""
-                : "";
-
-        safeHtmlBuilder.appendHtmlConstant("<div class=\"cell\"" + styleAttrStr + titleAttrStr + ">");
-
-        appendValue(cell.getRawValue(), safeHtmlBuilder);
-
-        safeHtmlBuilder.appendHtmlConstant("</div>");
-        return safeHtmlBuilder.toSafeHtml();
+        final String rawValue = cell.getRawValue();
+        final SafeHtmlBuilder innerBuilder = new SafeHtmlBuilder();
+        appendValue(rawValue, innerBuilder);
+        // Title is the plain text equivalent of the inner
+        final String title = convertRawCellValue(rawValue);
+        return template.cellDiv(cell.getStyles(), title, innerBuilder.toSafeHtml());
     }
 
     public String getText(final String fieldId) {
@@ -124,13 +121,30 @@ public class TableRow {
         });
     }
 
+    private String buildTitle(final Hyperlink hyperlink) {
+        final StringBuilder sb = new StringBuilder()
+                .append("Link to: '")
+                .append(hyperlink.getHref())
+                .append("'");
+        if (GwtNullSafe.isNonBlankString(hyperlink.getType())) {
+            sb.append(" (type: ")
+                    .append(hyperlink.getType())
+                    .append(")");
+        }
+        return sb.toString();
+    }
+
     private void appendValue(final String value, final SafeHtmlBuilder sb) {
         appendValue(value, part -> {
             if (part instanceof final Hyperlink hyperlink) {
                 if (GwtNullSafe.isNonBlankString(hyperlink.getText())) {
-                    sb.appendHtmlConstant("<u link=\"" + hyperlink + "\">");
-                    appendText(hyperlink.getText(), sb);
-                    sb.appendHtmlConstant("</u>");
+                    // Title for the link tells you what it is linking to
+                    final String title = buildTitle(hyperlink);
+                    final SafeHtml displayValueHtml = GwtNullSafe.isNonBlankString(hyperlink.getText())
+                            ? SafeHtmlUtils.fromString(hyperlink.getText())
+                            : SafeHtmlUtil.NBSP;
+                    final SafeHtml linkHtml = template.link(hyperlink.toString(), title, displayValueHtml);
+                    sb.append(linkHtml);
                 }
             } else {
                 // A plain string
@@ -160,35 +174,39 @@ public class TableRow {
 
     private List<Object> getParts(final String value) {
         final List<Object> parts = new ArrayList<>();
-        final StringBuilder sb = new StringBuilder();
-
-        for (int i = 0; i < value.length(); i++) {
-            final char c = value.charAt(i);
-
-            if (c == '[') {
-                final Hyperlink hyperlink = Hyperlink.create(value, i, urlDecoder);
-                if (hyperlink != null) {
-                    //noinspection SizeReplaceableByIsEmpty // isEmpty() not in GWT yet
-                    if (sb.length() > 0) {
-                        // Add the plain text part before this potential hyperlink
-                        parts.add(sb.toString());
-                        sb.setLength(0);
+        if (value.contains("[")) {
+            // Might contain a link, so we need to walk over each char to extract
+            // the parts
+            final StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < value.length(); i++) {
+                final char c = value.charAt(i);
+                if (c == '[') {
+                    // Might be the start of a hyperlink or could just be a square bracket
+                    final Hyperlink hyperlink = Hyperlink.create(value, i, urlDecoder);
+                    if (hyperlink != null) {
+                        //noinspection SizeReplaceableByIsEmpty // isEmpty() not in GWT yet
+                        if (sb.length() > 0) {
+                            // Add the plain text part before this potential hyperlink
+                            parts.add(sb.toString());
+                            sb.setLength(0);
+                        }
+                        parts.add(hyperlink);
+                        i += hyperlink.toString().length() - 1;
+                    } else {
+                        sb.append(c);
                     }
-                    parts.add(hyperlink);
-                    i += hyperlink.toString().length() - 1;
                 } else {
                     sb.append(c);
                 }
-            } else {
-                sb.append(c);
             }
+            //noinspection SizeReplaceableByIsEmpty // isEmpty() not in GWT yet
+            if (sb.length() > 0) {
+                parts.add(sb.toString());
+            }
+        } else {
+            // No link in sight so just return the val as one part
+            parts.add(value);
         }
-
-        //noinspection SizeReplaceableByIsEmpty // isEmpty() not in GWT yet
-        if (sb.length() > 0) {
-            parts.add(sb.toString());
-        }
-
         return parts;
     }
 
@@ -225,10 +243,10 @@ public class TableRow {
     public static class Cell {
 
         private final String rawValue;
-        private final String styles;
+        private final SafeStyles styles;
 
         public Cell(final String rawValue,
-                    final String styles) {
+                    final SafeStyles styles) {
             this.rawValue = rawValue;
             this.styles = styles;
         }
@@ -237,7 +255,7 @@ public class TableRow {
             return rawValue;
         }
 
-        String getStyles() {
+        SafeStyles getStyles() {
             return styles;
         }
 
@@ -245,5 +263,18 @@ public class TableRow {
         public String toString() {
             return rawValue;
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Template extends SafeHtmlTemplates {
+
+        @SafeHtmlTemplates.Template("<u link=\"{0}\" title=\"{1}\">{2}</u>")
+        SafeHtml link(String hyperlink, String title, SafeHtml displayValue);
+
+        @SafeHtmlTemplates.Template("<div class=\"cell\" style=\"{0}\" title=\"{1}\">{2}</div>")
+        SafeHtml cellDiv(SafeStyles styles, String title, SafeHtml inner);
     }
 }
