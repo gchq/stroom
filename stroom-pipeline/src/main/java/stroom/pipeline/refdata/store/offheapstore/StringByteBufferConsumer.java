@@ -24,7 +24,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import jakarta.inject.Inject;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
 import net.sf.saxon.event.ReceiverOptions;
@@ -39,18 +38,18 @@ public class StringByteBufferConsumer implements RefDataValueByteBufferConsumer 
     private static final Logger LOGGER = LoggerFactory.getLogger(StringByteBufferConsumer.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(StringByteBufferConsumer.class);
 
-    private final StringValueSerde stringValueSerde;
+    private final Receiver receiver;
 
-    StringByteBufferConsumer(final StringValueSerde stringValueSerde) {
-        this.stringValueSerde = stringValueSerde;
+    StringByteBufferConsumer(final Receiver receiver) {
+        this.receiver = receiver;
     }
 
     @Override
-    public void consumeBytes(final Receiver receiver, final ByteBuffer byteBuffer) {
+    public void consumeBytes(final ByteBuffer byteBuffer) {
         LOGGER.trace("consumeBytes()");
 
         // we should only be consuming string type values
-        final String str = stringValueSerde.extractValue(byteBuffer);
+        final String str = StringValueSerde.extractValue(byteBuffer);
 
         LAMBDA_LOGGER.trace(() -> LogUtil.message("str {}, byteBuffer {}",
                 str, ByteBufferUtils.byteBufferInfo(byteBuffer)));
@@ -64,19 +63,16 @@ public class StringByteBufferConsumer implements RefDataValueByteBufferConsumer 
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Factory implements RefDataValueByteBufferConsumer.Factory {
-
-        private final StringValueSerde stringValueSerde;
-
-        @Inject
-        public Factory(final StringValueSerde stringValueSerde) {
-            this.stringValueSerde = stringValueSerde;
-        }
 
         @Override
         public RefDataValueByteBufferConsumer create(final Receiver receiver,
                                                      final PipelineConfiguration pipelineConfiguration) {
-            return new StringByteBufferConsumer(stringValueSerde);
+            return new StringByteBufferConsumer(receiver);
         }
     }
 }

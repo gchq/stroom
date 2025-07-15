@@ -47,6 +47,7 @@ import stroom.security.shared.AppPermission;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.TextRange;
 import stroom.util.shared.Version;
 
@@ -220,7 +221,7 @@ public class TextPresenter
         final List<TextRange> highlights = new ArrayList<>();
 
         // See if we are going to add highlights.
-        if (input != null && highlightStrings != null && highlightStrings.size() > 0) {
+        if (input != null && NullSafe.hasItems(highlightStrings)) {
             final char[] inputChars = input.toLowerCase().toCharArray();
             final int inputLength = inputChars.length;
 
@@ -594,12 +595,11 @@ public class TextPresenter
                             .onSuccess(result -> {
                                 // If we are queueing more actions then don't update
                                 // the text.
-                                if (fetchDataQueue.size() == 0) {
+                                if (fetchDataQueue.isEmpty()) {
                                     String data = "The data has been deleted or reprocessed since this index was built";
                                     boolean isHtml = false;
                                     if (result != null) {
-                                        if (result instanceof FetchDataResult) {
-                                            final FetchDataResult fetchDataResult = (FetchDataResult) result;
+                                        if (result instanceof final FetchDataResult fetchDataResult) {
                                             isHtml = fetchDataResult.isHtml();
                                             if (fetchDataResult.hasErrors()) {
                                                 showError(request, fetchDataResult);
@@ -632,8 +632,7 @@ public class TextPresenter
         final TextComponentSettings.Builder builder;
         final ComponentSettings settings = componentConfig.getSettings();
 
-        if (settings instanceof TextComponentSettings) {
-            final TextComponentSettings textComponentSettings = (TextComponentSettings) settings;
+        if (settings instanceof final TextComponentSettings textComponentSettings) {
             builder = textComponentSettings.copy();
 
             final Version version = Version.parse(textComponentSettings.getModelVersion());

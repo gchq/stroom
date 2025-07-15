@@ -41,12 +41,12 @@ public class FastInfosetValue implements RefDataValue {
         this.fastInfosetByteBuffer = fastInfosetByteBuffer;
     }
 
-    private FastInfosetValue(final ByteBuffer fastInfosetByteBuffer,
-                             final long valueHash,
-                             final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
-        this.fastInfosetByteBuffer = fastInfosetByteBuffer;
+    public FastInfosetValue(final ByteBuffer fastInfosetByteBuffer,
+                            final long valueHash,
+                            final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
+        this.fastInfosetByteBuffer = Objects.requireNonNull(fastInfosetByteBuffer);
         this.fastInfosetValueHash = valueHash;
-        this.valueStoreHashAlgorithm = valueStoreHashAlgorithm;
+        this.valueStoreHashAlgorithm = Objects.requireNonNull(valueStoreHashAlgorithm);
     }
 
     public FastInfosetValue(final StagingValue stagingValue) {
@@ -76,14 +76,14 @@ public class FastInfosetValue implements RefDataValue {
     public long getValueHashCode(final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
         // Lazily compute the hash and hold for future use these values can be quite big.
         // This will mostly be used during a load which is single threaded so no need to
-        // avoid a synch at the risk of getting the same hash value twice.
+        // avoid a synchronize block at the risk of getting the same hash value twice.
 
         if (fastInfosetValueHash == null) {
             fastInfosetValueHash = valueStoreHashAlgorithm.hash(fastInfosetByteBuffer);
             this.valueStoreHashAlgorithm = valueStoreHashAlgorithm;
             return fastInfosetValueHash;
         } else if (valueStoreHashAlgorithm != null
-                && !Objects.equals(this.valueStoreHashAlgorithm, valueStoreHashAlgorithm)) {
+                   && !Objects.equals(this.valueStoreHashAlgorithm, valueStoreHashAlgorithm)) {
             // If hash algo doesn't match then compute with the provided one
             return valueStoreHashAlgorithm.hash(fastInfosetByteBuffer);
         } else {
@@ -129,7 +129,7 @@ public class FastInfosetValue implements RefDataValue {
     @Override
     public String toString() {
         return "FastInfosetValue{" +
-                "fastInfosetByteBuffer=" + fastInfosetByteBuffer +
-                '}';
+               "fastInfosetByteBuffer=" + fastInfosetByteBuffer +
+               '}';
     }
 }

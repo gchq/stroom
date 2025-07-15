@@ -12,6 +12,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+* Issue **#5025** : Fix parsing of hyperlinks in dashboard cells.
+
+* Add in validation of the Conditional Formatting custom style colours to ensure the user can only enter valid colours and nothing else.
+
+* Replace incorrect uses of `appendHtmlConstant` with SafeHtmlTemplate.
+
+* Issue **#5012** : Fix errors when trying to use `lookup()` with a Context stream.
+
+* Fix bug in reference data loading when the reference data value is XML that includes an element called `<value>`.
+
+* Fix behaviour in reference data loading of XML values where attributes with no explicit namespace would be given the unnamed namespace of the parent `referenceData` document, i.e. `<ci:data xmlns="reference-data:2" name="name" value="001" />`.
+
 
 ## [v7.9-beta.13] - 2025-06-09
 

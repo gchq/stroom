@@ -25,7 +25,6 @@ import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.SourceLocation;
-import stroom.query.api.v2.Column;
 import stroom.query.client.presenter.TextPresenter.TextView;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.task.client.TaskMonitorFactory;
@@ -147,8 +146,8 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
             getView().setContent(rawPresenter.getView());
 
             final String title = "Unable to display stream ["
-                    + fetchDataResult.getSourceLocation().getIdentifierString()
-                    + "]";
+                                 + fetchDataResult.getSourceLocation().getIdentifierString()
+                                 + "]";
 
             final String errorText = String.join("\n", fetchDataResult.getErrors());
 
@@ -220,10 +219,10 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
                         if (inputChar == '<') {
                             inElementTag = true;
                         } else if (inputChar == '&'
-                                && i + 3 < inputLength
-                                && inputChars[i + 1] == 'l'
-                                && inputChars[i + 2] == 't'
-                                && inputChars[i + 3] == ';') {
+                                   && i + 3 < inputLength
+                                   && inputChars[i + 1] == 'l'
+                                   && inputChars[i + 2] == 't'
+                                   && inputChars[i + 3] == ';') {
                             inEscapedElement = true;
                         } else {
                             // If we aren't in an element or escaped element
@@ -254,11 +253,11 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
                         inElementTag = false;
 
                     } else if (inEscapedElement
-                            && inputChar == '&'
-                            && i + 3 < inputLength
-                            && inputChars[i + 1] == 'g'
-                            && inputChars[i + 2] == 't'
-                            && inputChars[i + 3] == ';') {
+                               && inputChar == '&'
+                               && i + 3 < inputLength
+                               && inputChars[i + 1] == 'g'
+                               && inputChars[i + 2] == 't'
+                               && inputChars[i + 3] == ';') {
                         inEscapedElement = false;
                     }
 
@@ -525,31 +524,31 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
 //        return null;
 //    }
 
-    private Long convertToIndex(final Long no) {
-        if (no != null) {
-            return no - 1;
-        }
-        return null;
-    }
+//    private Long convertToIndex(final Long no) {
+//        if (no != null) {
+//            return no - 1;
+//        }
+//        return null;
+//    }
+//
+//    private Long getLong(final Column column, final TableRow row) {
+//        if (column != null && row != null) {
+//            return getLong(row.getText(column.getId()));
+//        }
+//        return null;
+//    }
 
-    private Long getLong(final Column column, final TableRow row) {
-        if (column != null && row != null) {
-            return getLong(row.getText(column.getId()));
-        }
-        return null;
-    }
-
-    private Long getLong(final String string) {
-        if (string != null) {
-            try {
-                return Long.valueOf(string);
-            } catch (final NumberFormatException e) {
-                // Ignore.
-            }
-        }
-
-        return null;
-    }
+//    private Long getLong(final String string) {
+//        if (string != null) {
+//            try {
+//                return Long.valueOf(string);
+//            } catch (final NumberFormatException e) {
+//                // Ignore.
+//            }
+//        }
+//
+//        return null;
+//    }
 
 //    private String checkPermissions() {
 //        if (!securityContext.hasAppPermission(AppPermissionEnum.VIEW_DATA_PERMISSION)) {
@@ -718,6 +717,10 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
     public void beginStepping() {
 
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface TextView extends View, HasUiHandlers<TextUiHandlers>, TaskMonitorFactory {
 

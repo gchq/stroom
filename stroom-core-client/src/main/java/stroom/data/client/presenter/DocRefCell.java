@@ -18,6 +18,7 @@ import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
@@ -315,6 +316,10 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
     // --------------------------------------------------------------------------------
 
 
+    /**
+     * Use {@link SafeHtmlUtil#getTemplate()} instead
+     */
+    @Deprecated
     interface Template extends SafeHtmlTemplates {
 
         @Template("<div class=\"{0}\">{1}</div>")
@@ -323,6 +328,10 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
         @Template("<div title=\"{0}\">{1}</div>")
         SafeHtml divWithToolTip(String title, SafeHtml content);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder<T> {
 
