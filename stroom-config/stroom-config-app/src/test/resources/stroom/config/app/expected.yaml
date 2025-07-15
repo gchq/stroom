@@ -800,6 +800,7 @@ appConfig:
     - "Test Events"
     - "Test Reference"
     receiptPolicyUuid: null
+    x509CertificateDnFormat: "LDAP"
     x509CertificateDnHeader: "X-SSL-CLIENT-S-DN"
     x509CertificateHeader: "X-SSL-CERT"
   s3:

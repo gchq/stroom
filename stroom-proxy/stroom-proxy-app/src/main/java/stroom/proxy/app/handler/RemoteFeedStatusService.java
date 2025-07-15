@@ -56,6 +56,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     private final Provider<FeedStatusConfig> feedStatusConfigProvider;
     private final JerseyClientFactory jerseyClientFactory;
     private final UserIdentityFactory userIdentityFactory;
+    private final GetFeedStatusRequestAdapter getFeedStatusRequestAdapter;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     @Inject
@@ -67,6 +68,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
         this.feedStatusConfigProvider = feedStatusConfigProvider;
         this.jerseyClientFactory = jerseyClientFactory;
         this.userIdentityFactory = userIdentityFactory;
+        this.getFeedStatusRequestAdapter = getFeedStatusRequestAdapter;
         this.updaters = cacheManager.createLoadingCache(
                 CACHE_NAME,
                 () -> feedStatusConfigProvider.get().getFeedStatusCache(),
@@ -87,7 +89,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
      */
     @Deprecated
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest legacyRequest) {
-        final GetFeedStatusRequestV2 request = GetFeedStatusRequestAdapter.mapLegacyRequest(legacyRequest);
+        final GetFeedStatusRequestV2 request = getFeedStatusRequestAdapter.mapLegacyRequest(legacyRequest);
         return getFeedStatus(request);
     }
 

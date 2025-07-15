@@ -3,6 +3,7 @@ package stroom.receive.common;
 import stroom.data.shared.StreamTypeNames;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.util.cache.CacheConfig;
+import stroom.util.cert.DNFormat;
 import stroom.util.collections.CollectionUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
@@ -37,6 +38,7 @@ public class ReceiveDataConfig
 
     public static final String DEFAULT_X509_CERT_HEADER = "X-SSL-CERT";
     public static final String DEFAULT_X509_CERT_DN_HEADER = "X-SSL-CLIENT-S-DN";
+    public static final DNFormat DEFAULT_X509_CERT_DN_FORMAT = DNFormat.LDAP;
     public static final String PROP_NAME_ALLOWED_CERTIFICATE_PROVIDERS = "allowedCertificateProviders";
     public static final String DEFAULT_OWNER_META_KEY = StandardHeaderArguments.ACCOUNT_ID;
 
@@ -58,6 +60,8 @@ public class ReceiveDataConfig
     private final String x509CertificateHeader;
     @JsonProperty
     private final String x509CertificateDnHeader;
+    @JsonProperty
+    private final DNFormat x509CertificateDnFormat;
     @JsonProperty
     private final Set<String> allowedCertificateProviders;
     @JsonProperty
@@ -82,6 +86,7 @@ public class ReceiveDataConfig
                 .build();
         x509CertificateHeader = DEFAULT_X509_CERT_HEADER;
         x509CertificateDnHeader = DEFAULT_X509_CERT_DN_HEADER;
+        x509CertificateDnFormat = DEFAULT_X509_CERT_DN_FORMAT;
         allowedCertificateProviders = Collections.emptySet();
         feedNameGenerationEnabled = false;
         feedNameTemplate = toTemplate(
@@ -109,6 +114,7 @@ public class ReceiveDataConfig
             @JsonProperty("authenticatedDataFeedKeyCache") final CacheConfig authenticatedDataFeedKeyCache,
             @JsonProperty("x509CertificateHeader") final String x509CertificateHeader,
             @JsonProperty("x509CertificateDnHeader") final String x509CertificateDnHeader,
+            @JsonProperty("x509CertificateDnFormat") final DNFormat x509CertificateDnFormat,
             @JsonProperty(PROP_NAME_ALLOWED_CERTIFICATE_PROVIDERS) final Set<String> allowedCertificateProviders,
             @JsonProperty("feedNameGenerationEnabled") final boolean feedNameGenerationEnabled,
             @JsonProperty("feedNameTemplate") final String feedNameTemplate,
@@ -123,6 +129,7 @@ public class ReceiveDataConfig
         this.authenticatedDataFeedKeyCache = authenticatedDataFeedKeyCache;
         this.x509CertificateHeader = x509CertificateHeader;
         this.x509CertificateDnHeader = x509CertificateDnHeader;
+        this.x509CertificateDnFormat = Objects.requireNonNullElse(x509CertificateDnFormat, DEFAULT_X509_CERT_DN_FORMAT);
         this.allowedCertificateProviders = cleanSet(allowedCertificateProviders);
         this.feedNameGenerationEnabled = feedNameGenerationEnabled;
         this.feedNameTemplate = feedNameTemplate;
@@ -140,6 +147,7 @@ public class ReceiveDataConfig
                 builder.authenticatedDataFeedKeyCache,
                 builder.x509CertificateHeader,
                 builder.x509CertificateDnHeader,
+                builder.x509CertificateDnFormat,
                 builder.allowedCertificateProviders,
                 builder.feedNameGenerationEnabled,
                 builder.feedNameTemplate,
@@ -233,6 +241,12 @@ public class ReceiveDataConfig
             "authentication if a value is set and 'enabledAuthenticationTypes' includes CERTIFICATE.")
     public String getX509CertificateDnHeader() {
         return x509CertificateDnHeader;
+    }
+
+    @JsonPropertyDescription("The format of the Distinguished Name used in the certificate. Valid values are " +
+                             "LDAP and OPEN_SSL, where LDAP is the default.")
+    public DNFormat getX509CertificateDnFormat() {
+        return x509CertificateDnFormat;
     }
 
     @JsonPropertyDescription(
@@ -349,12 +363,14 @@ public class ReceiveDataConfig
         builder.authenticatedDataFeedKeyCache = receiveDataConfig.getAuthenticatedDataFeedKeyCache();
         builder.x509CertificateHeader = receiveDataConfig.getX509CertificateHeader();
         builder.x509CertificateDnHeader = receiveDataConfig.getX509CertificateDnHeader();
+        builder.x509CertificateDnFormat = receiveDataConfig.getX509CertificateDnFormat();
         builder.allowedCertificateProviders = receiveDataConfig.getAllowedCertificateProviders();
         builder.feedNameGenerationEnabled = receiveDataConfig.isFeedNameGenerationEnabled();
         builder.feedNameTemplate = receiveDataConfig.getFeedNameTemplate();
         builder.feedNameGenerationMandatoryHeaders = receiveDataConfig.getFeedNameGenerationMandatoryHeaders();
         return builder;
     }
+
 
     public static Builder builder() {
         return copy(new ReceiveDataConfig());
@@ -379,6 +395,7 @@ public class ReceiveDataConfig
         private CacheConfig authenticatedDataFeedKeyCache;
         private String x509CertificateHeader;
         private String x509CertificateDnHeader;
+        private DNFormat x509CertificateDnFormat;
         private Set<String> allowedCertificateProviders;
         private boolean feedNameGenerationEnabled;
         private String feedNameTemplate;
@@ -445,6 +462,11 @@ public class ReceiveDataConfig
 
         public Builder withX509CertificateDnHeader(final String val) {
             x509CertificateDnHeader = val;
+            return this;
+        }
+
+        public Builder withX509CertificateDnFormat(final DNFormat val) {
+            x509CertificateDnFormat = val;
             return this;
         }
 
