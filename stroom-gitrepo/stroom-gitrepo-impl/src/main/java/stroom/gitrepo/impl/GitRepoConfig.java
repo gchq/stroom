@@ -3,6 +3,7 @@ package stroom.gitrepo.impl;
 import stroom.config.common.AbstractDbConfig;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
+import stroom.config.common.HasDbConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.BootStrapConfig;
@@ -18,7 +19,7 @@ import jakarta.validation.constraints.NotNull;
  * Provides configuration for the GitRepo stuff on the server.
  */
 @JsonPropertyOrder(alphabetic = true)
-public class GitRepoConfig extends AbstractConfig implements IsStroomConfig {
+public class GitRepoConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
     /**
      * Default location where local GitRepos are stored
      */
@@ -29,7 +30,9 @@ public class GitRepoConfig extends AbstractConfig implements IsStroomConfig {
      */
     private final String localDir;
 
-    /** Database config */
+    /**
+     * Database config
+     */
     private final GitRepoDbConfig dbConfig;
 
     /**
@@ -65,6 +68,12 @@ public class GitRepoConfig extends AbstractConfig implements IsStroomConfig {
         return localDir;
     }
 
+    @Override
+    @JsonProperty("db")
+    public GitRepoDbConfig getDbConfig() {
+        return dbConfig;
+    }
+
     /**
      * @return debug info about this object.
      */
@@ -73,6 +82,9 @@ public class GitRepoConfig extends AbstractConfig implements IsStroomConfig {
         return "GitRepoConfig { localDir='" + localDir + "'}";
     }
 
+    /**
+     * DB configuration.
+     */
     @BootStrapConfig
     public static class GitRepoDbConfig extends AbstractDbConfig {
         public GitRepoDbConfig() {

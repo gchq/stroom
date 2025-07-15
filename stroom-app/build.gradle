@@ -116,6 +116,8 @@ dependencies {
     implementation project(':stroom-feed:stroom-feed-impl')
     implementation project(':stroom-gitrepo:stroom-gitrepo-api')
     implementation project(':stroom-gitrepo:stroom-gitrepo-impl')
+    implementation project(':stroom-gitrepo:stroom-gitrepo-impl-db')
+    implementation project(':stroom-gitrepo:stroom-gitrepo-impl-db-jooq')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-importexport:stroom-importexport-impl')
     implementation project(':stroom-index:stroom-index-api')

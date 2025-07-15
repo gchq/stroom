@@ -23,12 +23,8 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 CREATE TABLE IF NOT EXISTS gitrepo (
   id                    int NOT NULL AUTO_INCREMENT,
   version               int NOT NULL,
-  create_time_ms        bigint NOT NULL,
-  create_user           varchar(255) NOT NULL,
-  update_time_ms        bigint NOT NULL,
-  update_user           varchar(255) NOT NULL,
-  user_id               varchar(255) NOT NULL,
-  json                  longtext,
+  git_repo_uuid         varchar(255) NOT NULL,
+  git_commit_hash       varchar(255) NOT NULL,
   PRIMARY KEY           (id)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
