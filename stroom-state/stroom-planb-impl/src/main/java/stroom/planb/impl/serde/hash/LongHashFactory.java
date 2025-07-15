@@ -39,5 +39,10 @@ public class LongHashFactory implements HashFactory {
         public int len() {
             return Long.BYTES;
         }
+
+        @Override
+        public String toString() {
+            return Long.toString(hash);
+        }
     }
 }

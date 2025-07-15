@@ -79,6 +79,7 @@ import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.view.client.Range;
@@ -718,7 +719,7 @@ public class QueryResultTablePresenter
                     stylesBuilder.fontWeight(Style.FontWeight.BOLD);
                 }
 
-                final String style = stylesBuilder.toSafeStyles().asString();
+                final SafeStyles style = stylesBuilder.toSafeStyles();
 
                 final TableRow.Cell cell = new TableRow.Cell(value, style);
                 cellsMap.put(column.getName(), cell);

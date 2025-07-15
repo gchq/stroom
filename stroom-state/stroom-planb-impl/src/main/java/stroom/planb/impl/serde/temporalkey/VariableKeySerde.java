@@ -6,6 +6,7 @@ import stroom.planb.impl.db.HashLookupDb;
 import stroom.planb.impl.db.PlanBEnv;
 import stroom.planb.impl.db.UidLookupDb;
 import stroom.planb.impl.db.UsedLookupsRecorder;
+import stroom.planb.impl.db.UsedLookupsRecorderProxy;
 import stroom.planb.impl.db.VariableUsedLookupsRecorder;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 import stroom.planb.impl.serde.time.TimeSerde;
@@ -182,6 +183,8 @@ public class VariableKeySerde implements TemporalKeySerde {
 
     @Override
     public UsedLookupsRecorder getUsedLookupsRecorder(final PlanBEnv env) {
-        return new VariableUsedLookupsRecorder(env, uidLookupDb, hashLookupDb);
+        return new UsedLookupsRecorderProxy(
+                new VariableUsedLookupsRecorder(env, uidLookupDb, hashLookupDb),
+                this::getPrefix);
     }
 }

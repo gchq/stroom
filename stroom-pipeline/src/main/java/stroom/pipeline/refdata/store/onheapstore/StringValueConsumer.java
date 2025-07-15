@@ -51,10 +51,15 @@ public class StringValueConsumer implements RefDataValueConsumer {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Factory implements RefDataValueConsumer.Factory {
 
         @Override
-        public RefDataValueConsumer create(final Receiver receiver, final PipelineConfiguration pipelineConfiguration) {
+        public RefDataValueConsumer create(final Receiver receiver,
+                                           final PipelineConfiguration pipelineConfiguration) {
             return new StringValueConsumer(receiver);
         }
     }

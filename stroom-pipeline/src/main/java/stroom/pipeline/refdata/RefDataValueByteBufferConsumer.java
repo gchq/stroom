@@ -7,9 +7,14 @@ import java.nio.ByteBuffer;
 
 public interface RefDataValueByteBufferConsumer {
 
-    void consumeBytes(final Receiver receiver, final ByteBuffer byteBuffer);
+    void consumeBytes(final ByteBuffer byteBuffer);
+
+
+    // --------------------------------------------------------------------------------
+
 
     interface Factory {
+
         RefDataValueByteBufferConsumer create(
                 final Receiver receiver,
                 final PipelineConfiguration pipelineConfiguration);
