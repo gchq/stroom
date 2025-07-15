@@ -431,6 +431,7 @@ public class NullSafe {
     public static boolean contains(final String str, final String subStr) {
         return str != null
                && subStr != null
+               && !str.isEmpty()
                && str.contains(subStr);
     }
 

@@ -548,6 +548,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
         private void ensureConsumer() {
             LOGGER.trace("ensureConsumer()");
             if (consumer == null) {
+                LOGGER.trace("ensureConsumer() - Creating consumer");
                 // We have some reference data so build a tiny tree.
                 final Configuration configuration = context.getConfiguration();
 

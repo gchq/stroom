@@ -47,6 +47,7 @@ import stroom.security.shared.AppPermission;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.TextRange;
 import stroom.util.shared.Version;
 
@@ -221,7 +222,7 @@ public class TextPresenter
         final List<TextRange> highlights = new ArrayList<>();
 
         // See if we are going to add highlights.
-        if (input != null && highlightStrings != null && !highlightStrings.isEmpty()) {
+        if (input != null && NullSafe.hasItems(highlightStrings)) {
             final char[] inputChars = input.toLowerCase().toCharArray();
             final int inputLength = inputChars.length;
 
