@@ -12,6 +12,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+## [v7.10-beta.7] - 2025-07-15
+
+* Issue **#5016** : Fix sort state visibility on query table.
+
+* Issue **#5017** : Fix stuck spinner copying embedded query.
+
+* Issue **#4974** : Fix Plan B condense job.
+
+* Issue **#5030** : Add new property `.receive.x509CertificateDnFormat` to stroom and proxy to allow extraction of CNs from DNs in legacy `OPEN_SSL` format. The new property defaults to `LDAP`, which means no change to behaviour if left as is.
+
 * Issue **#5025** : Fix parsing of hyperlinks in dashboard cells.
 
 * Add in validation of the Conditional Formatting custom style colours to ensure the user can only enter valid colours and nothing else.
@@ -1578,7 +1589,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.10-beta.6...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.10-beta.7...HEAD
+[v7.10-beta.7]: https://github.com/gchq/stroom/compare/v7.10-beta.6...v7.10-beta.7
 [v7.10-beta.6]: https://github.com/gchq/stroom/compare/v7.10-beta.5...v7.10-beta.6
 [v7.10-beta.5]: https://github.com/gchq/stroom/compare/v7.10-beta.4...v7.10-beta.5
 [v7.10-beta.4]: https://github.com/gchq/stroom/compare/v7.10-beta.3...v7.10-beta.4
