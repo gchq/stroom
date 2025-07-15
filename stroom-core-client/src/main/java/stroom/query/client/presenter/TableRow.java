@@ -79,7 +79,12 @@ public class TableRow {
         appendValue(rawValue, innerBuilder);
         // Title is the plain text equivalent of the inner
         final String title = convertRawCellValue(rawValue);
-        return template.cellDiv(cell.getStyles(), title, innerBuilder.toSafeHtml());
+        return SafeHtmlUtil.getTemplate()
+                .divWithClassStyleAndTitle(
+                        "cell",
+                        cell.getStyles(),
+                        title,
+                        innerBuilder.toSafeHtml());
     }
 
     public String getText(final String fieldId) {
@@ -273,8 +278,5 @@ public class TableRow {
 
         @SafeHtmlTemplates.Template("<u link=\"{0}\" title=\"{1}\">{2}</u>")
         SafeHtml link(String hyperlink, String title, SafeHtml displayValue);
-
-        @SafeHtmlTemplates.Template("<div class=\"cell\" style=\"{0}\" title=\"{1}\">{2}</div>")
-        SafeHtml cellDiv(SafeStyles styles, String title, SafeHtml inner);
     }
 }

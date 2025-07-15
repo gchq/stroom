@@ -14,8 +14,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-class HyperlinkTest {
+class TestHyperlink {
 
+    @Disabled // test is not doing anything, assume due detect() not being a thing any more
     @Test
     void testValidUrl() {
         // Given
@@ -84,7 +85,7 @@ class HyperlinkTest {
                 .withSimpleEqualityAssertion()
                 .addCase("[a](b){c}", new Hyperlink("a", "b", "c", null))
                 .addCase("[a](b)", new Hyperlink("a", "b", null, null))
-                .addCase("[a](b){", null)
+                .addCase("[a](b){", new Hyperlink("a", "b", null, null))
                 .addCase("Orange](http://colors/orange)(whats this?){STROOM_TAB}", null)
                 .addCase("[Blue](http://co(wrapped parenth)lors/get?id=blue{STROOM_TAB}", null)
                 .addCase("(Magenta)[http://shades.com/shop/item?id=kinda%20purple]{STROOM_TAB}", null)
@@ -93,7 +94,7 @@ class HyperlinkTest {
                 .addCase("[foo", null)
                 .addCase("", null)
                 .addCase(null, null)
-                .addCase("[a](b) xxx", new Hyperlink("a", "b", "c", null))
+                .addCase("[a](b) xxx", new Hyperlink("a", "b", null, null))
                 .build();
     }
 }

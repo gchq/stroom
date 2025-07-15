@@ -336,6 +336,9 @@ public class SafeHtmlUtil {
         @SafeHtmlTemplates.Template("<div class=\"{0}\" title=\"{1}\">{2}</div>")
         SafeHtml divWithClassAndTitle(String className, String title, SafeHtml inner);
 
+        @SafeHtmlTemplates.Template("<div class=\"{0}\" style=\"{1}\" title=\"{2}\">{3}</div>")
+        SafeHtml divWithClassStyleAndTitle(String className, SafeStyles style, String title, SafeHtml inner);
+
         @SafeHtmlTemplates.Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
         SafeHtml divWithClassAndStyle(String className, SafeStyles style, SafeHtml inner);
 
