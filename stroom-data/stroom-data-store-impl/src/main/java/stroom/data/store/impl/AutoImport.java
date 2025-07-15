@@ -19,9 +19,8 @@ package stroom.data.store.impl;
 import stroom.importexport.api.ContentService;
 import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportConfigResponse;
-import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportSettings;
-import stroom.importexport.api.ContentService;
+import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.resource.api.ResourceStore;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.IsServlet;
@@ -108,9 +107,10 @@ public final class AutoImport extends HttpServlet implements IsServlet {
                 StreamUtil.streamToStream(inputStream, outputStream);
             }
 
-            ImportSettings importSettings = new ImportSettings(ImportMode.IGNORE_CONFIRMATION, false, null, false, false, null);
-            ImportConfigRequest importRequest = new ImportConfigRequest(resourceKey, importSettings, List.of());
-            ImportConfigResponse result = contentService.importContent(importRequest);
+            final ImportSettings importSettings = new ImportSettings(ImportMode.IGNORE_CONFIRMATION,
+                    false, null, false, false, null);
+            final ImportConfigRequest importRequest = new ImportConfigRequest(resourceKey, importSettings, List.of());
+            final ImportConfigResponse result = contentService.importContent(importRequest);
 
             if (result.getConfirmList() == null || result.getConfirmList().isEmpty()) {
                 propertyMap.put("status", "success");

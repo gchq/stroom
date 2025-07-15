@@ -54,7 +54,7 @@ public class ImportExportServiceImpl implements ImportExportService {
     public List<ImportState> importConfig(final Path data,
                                           final ImportSettings importSettings,
                                           final List<ImportState> confirmList) {
-        List<ImportState> mutableList = (confirmList == null)
+        final List<ImportState> mutableList = (confirmList == null)
                 ? new java.util.ArrayList<>()
                 : new java.util.ArrayList<>(confirmList);
         doImport(data, mutableList, importSettings);
