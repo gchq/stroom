@@ -43,12 +43,12 @@ public class BuildInfo {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof BuildInfo)) {
+        if (!(o instanceof final BuildInfo buildInfo)) {
             return false;
         }
-        final BuildInfo buildInfo = (BuildInfo) o;
-        return upTime == buildInfo.upTime && buildTime == buildInfo.buildTime && Objects.equals(buildVersion,
-                buildInfo.buildVersion);
+        return upTime == buildInfo.upTime
+               && buildTime == buildInfo.buildTime
+               && Objects.equals(buildVersion, buildInfo.buildVersion);
     }
 
     @Override
@@ -59,9 +59,9 @@ public class BuildInfo {
     @Override
     public String toString() {
         return "BuildInfo{" +
-                "upTime='" + upTime + '\'' +
-                ", buildTime='" + buildTime + '\'' +
-                ", buildVersion='" + buildVersion + '\'' +
-                '}';
+               "upTime='" + upTime + '\'' +
+               ", buildTime='" + buildTime + '\'' +
+               ", buildVersion='" + buildVersion + '\'' +
+               '}';
     }
 }
