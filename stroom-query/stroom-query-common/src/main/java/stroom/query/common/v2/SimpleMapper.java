@@ -1,8 +1,6 @@
 package stroom.query.common.v2;
 
 import stroom.query.api.Column;
-import stroom.query.language.functions.Val;
-import stroom.query.language.functions.ValNull;
 
 import java.util.HashMap;
 import java.util.List;
@@ -98,37 +96,14 @@ public class SimpleMapper implements ItemMapper {
 
     @Override
     public Stream<Item> create(final Item item) {
-        // Fully resolve all values.
-        final Val[] arr = new Val[columnIndexMapping.length];
-        for (int i = 0; i < arr.length; i++) {
-            final int index = columnIndexMapping[i];
-            final Val val;
-            if (index != -1) {
-                val = item.getValue(index);
-            } else {
-                val = ValNull.INSTANCE;
-            }
-            arr[i] = val;
-        }
-        return Stream.of(new SimpleItem(item.getKey(), arr));
+        return Stream.of(new LazyItem(columnIndexMapping, item));
     }
 
-    private static class DirectMapper implements ItemMapper {
-
-        private final int[] columnIndexMapping;
-
-        public DirectMapper(final int[] columnIndexMapping) {
-            this.columnIndexMapping = columnIndexMapping;
-        }
+    private record DirectMapper(int[] columnIndexMapping) implements ItemMapper {
 
         @Override
         public Stream<Item> create(final Item item) {
-            // Fully resolve all values.
-            final Val[] arr = new Val[columnIndexMapping.length];
-            for (int i = 0; i < arr.length; i++) {
-                arr[i] = item.getValue(i);
-            }
-            return Stream.of(new SimpleItem(item.getKey(), arr));
+            return Stream.of(new LazyDirectItem(columnIndexMapping, item));
         }
     }
 }

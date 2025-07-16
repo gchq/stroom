@@ -170,7 +170,7 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
                 final StoredValues copy = storedValues.copy();
                 copy.setPeriod(storedValues.getPeriod());
                 for (final Mutator mutator : mutators) {
-                    mutator.mutate(copy, list.getFirst());
+                    mutator.mutate(copy, annotation);
                 }
 
                 return copy;
