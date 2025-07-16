@@ -203,10 +203,12 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
 
     public void forceNewSearch(final String componentId,
                                final Consumer<Result> resultConsumer) {
-        final boolean exec = exec(componentId, resultConsumer, null);
-        // If no exec happened then let the caller know.
-        if (!exec) {
-            resultConsumer.accept(null);
+        if (currentSearch != null) {
+            final boolean exec = exec(componentId, resultConsumer, null);
+            // If no exec happened then let the caller know.
+            if (!exec) {
+                resultConsumer.accept(null);
+            }
         }
     }
 
