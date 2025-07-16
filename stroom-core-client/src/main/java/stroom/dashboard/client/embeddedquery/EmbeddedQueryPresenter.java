@@ -848,6 +848,11 @@ public class EmbeddedQueryPresenter
         return currentTablePresenter;
     }
 
+    @Override
+    public void onContentTabVisible(final boolean visible) {
+        currentTablePresenter.onContentTabVisible(visible);
+    }
+
     public interface EmbeddedQueryView extends View, RequiresResize {
 
         void setResultView(View view);

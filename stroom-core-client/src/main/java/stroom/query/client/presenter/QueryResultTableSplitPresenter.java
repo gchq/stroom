@@ -197,6 +197,10 @@ public class QueryResultTableSplitPresenter
         tablePresenter.setQuery(query);
     }
 
+    public void onContentTabVisible(final boolean visible) {
+        tablePresenter.onContentTabVisible(visible);
+    }
+
     public interface QueryResultTableSplitView extends View {
 
         void setWidget(Widget widget);

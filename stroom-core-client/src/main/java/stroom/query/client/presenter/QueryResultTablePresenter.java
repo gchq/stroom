@@ -18,6 +18,7 @@ package stroom.query.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.client.AnnotationChangeEvent;
+import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.annotation.shared.AnnotationFields;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
@@ -137,6 +138,9 @@ public class QueryResultTablePresenter
     private final TableRowStyles tableRowStyles;
     private DashboardContext dashboardContext;
     private DocRef currentDataSource;
+
+    private boolean tableIsVisible = true;
+    private boolean annotationChanged;
 
     @Inject
     public QueryResultTablePresenter(final EventBus eventBus,
@@ -318,7 +322,14 @@ public class QueryResultTablePresenter
             }
         }));
 
-        registerHandler(getEventBus().addHandler(AnnotationChangeEvent.getType(), e -> {
+        registerHandler(getEventBus().addHandler(AnnotationChangeEvent.getType(), e ->
+                onAnnotationChange()));
+    }
+
+    private void onAnnotationChange() {
+        annotationChanged = true;
+        if (tableIsVisible) {
+            annotationChanged = false;
             final DocRef dataSource = currentDataSource;
             if (dataSource != null &&
                 AnnotationFields.ANNOTATIONS_PSEUDO_DOC_REF.getType().equals(dataSource.getType())) {
@@ -326,11 +337,12 @@ public class QueryResultTablePresenter
                 forceNewSearch();
             } else if (getCurrentColumns()
                     .stream()
-                    .anyMatch(col -> col.getId().contains("__annotation_"))) {
+                    .anyMatch(col ->
+                            col.getExpression().contains(AnnotationDecorationFields.ANNOTATION_FIELD_PREFIX))) {
                 // If the table contains annotations fields then just refresh to redecorate.
                 refresh();
             }
-        }));
+        }
     }
 
     public void toggleApplyValueFilters() {
@@ -928,6 +940,15 @@ public class QueryResultTablePresenter
                 .onSuccess(result -> currentDataSource = result)
                 .taskMonitorFactory(this)
                 .exec();
+    }
+
+    public void onContentTabVisible(final boolean visible) {
+        tableIsVisible = visible;
+        if (visible) {
+            if (annotationChanged) {
+                onAnnotationChange();
+            }
+        }
     }
 
     public static class QueryTableColumnValuesDataSupplier extends ColumnValuesDataSupplier {

@@ -17,6 +17,7 @@
 
 package stroom.query.client.presenter;
 
+import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
@@ -43,6 +44,7 @@ public class QueryDocPresenter
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
+    private final QueryDocEditPresenter queryDocEditPresenter;
     private final DocumentEditTabProvider<QueryDoc> queryDocDocumentEditTabProvider;
     private Runnable saveInterceptor;
 
@@ -54,6 +56,7 @@ public class QueryDocPresenter
                              final DocumentUserPermissionsTabProvider<QueryDoc>
                                      documentUserPermissionsTabProvider) {
         super(eventBus, view);
+        this.queryDocEditPresenter = queryDocEditPresenter;
 
         queryDocEditPresenter.setTaskMonitorFactory(this);
         queryDocDocumentEditTabProvider = new DocumentEditTabProvider<>(
@@ -79,6 +82,13 @@ public class QueryDocPresenter
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(QUERY);
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e ->
+                queryDocEditPresenter.onContentTabVisible(e.getTabData() == this)));
     }
 
     @Override

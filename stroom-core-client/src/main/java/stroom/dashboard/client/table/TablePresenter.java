@@ -19,6 +19,7 @@ package stroom.dashboard.client.table;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.client.AnnotationChangeEvent;
+import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.annotation.shared.AnnotationFields;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
@@ -178,6 +179,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private ExpressionOperator currentSelectionFilter;
     private final TableRowStyles tableRowStyles;
     private boolean initialised;
+
+    private boolean tableIsVisible = true;
+    private boolean annotationChanged;
 
     @Inject
     public TablePresenter(final EventBus eventBus,
@@ -343,7 +347,14 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         registerHandler(pagerView.getRefreshButton().addClickHandler(event -> setPause(!pause, true)));
 
-        registerHandler(getEventBus().addHandler(AnnotationChangeEvent.getType(), e -> {
+        registerHandler(getEventBus().addHandler(AnnotationChangeEvent.getType(), e ->
+                onAnnotationChange()));
+    }
+
+    private void onAnnotationChange() {
+        annotationChanged = true;
+        if (tableIsVisible) {
+            annotationChanged = false;
             final DocRef dataSource = NullSafe
                     .get(currentSearchModel, SearchModel::getIndexLoader, IndexLoader::getLoadedDataSourceRef);
             if (dataSource != null &&
@@ -353,11 +364,22 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             } else if (columnsManager
                     .getColumns()
                     .stream()
-                    .anyMatch(col -> col.getId().contains("__annotation_"))) {
+                    .anyMatch(col ->
+                            col.getExpression().contains(AnnotationDecorationFields.ANNOTATION_FIELD_PREFIX))) {
                 // If the table contains annotations fields then just refresh to redecorate.
                 refresh();
             }
-        }));
+        }
+    }
+
+    @Override
+    public void onContentTabVisible(final boolean visible) {
+        tableIsVisible = visible;
+        if (visible) {
+            if (annotationChanged) {
+                onAnnotationChange();
+            }
+        }
     }
 
     @Override
