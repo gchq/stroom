@@ -282,7 +282,7 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
                             mapper = FilteredMapper.create(
                                     columns,
                                     tableSettings.applyValueFilters(),
-                                    tableSettings.getValueFilter(),
+                                    tableSettings.getAggregateFilter(),
                                     expressionContext.getDateTimeSettings(),
                                     errorConsumer,
                                     expressionPredicateFactory,
