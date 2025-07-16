@@ -306,46 +306,42 @@ public class DynamicColumnSelectionListModel
             return ParamUtil.create(indexFieldName);
         }
 
-        private static Column convertFieldInfo(final QueryField fieldInfo) {
-            final String indexFieldName = fieldInfo.getFldName();
+        private static Column convertFieldInfo(final QueryField queryField) {
+            final String indexFieldName = queryField.getFldName();
             final Builder columnBuilder = Column.builder();
             columnBuilder.id(UniqueUtil.generateUUID());
             columnBuilder.name(indexFieldName);
             columnBuilder.format(Format.GENERAL);
 
-            final String expression;
+            final FieldType fieldType = queryField.getFldType();
+            if (fieldType != null) {
+                switch (fieldType) {
+                    case DATE:
+                        columnBuilder.format(Format.DATE_TIME);
+                        break;
+                    case INTEGER:
+                    case LONG:
+                    case FLOAT:
+                    case DOUBLE:
+                    case ID:
+                        columnBuilder.format(Format.NUMBER);
+                        break;
+                    default:
+                        columnBuilder.format(Format.GENERAL);
+                        break;
+                }
+            }
 
-            // Annotation decoration fields are special and are turned into links with general formatting.
+            columnBuilder.expression(ParamUtil.create(indexFieldName));
+
+            // Make annotation column names more readable.
             if (indexFieldName.startsWith(AnnotationDecorationFields.ANNOTATION_FIELD_PREFIX)) {
                 String columnName = indexFieldName.substring(
                         AnnotationDecorationFields.ANNOTATION_FIELD_PREFIX.length());
-                columnName = columnName.replaceAll("([A-Z])", " $1").trim();
+                columnName = columnName.replaceAll("([A-Z])", " $1");
+                columnName = columnName.replaceAll("Uuid", "UUID");
+                columnName = "Annotation " + columnName.trim();
                 columnBuilder.name(columnName);
-                expression = buildAnnotationFieldExpression(fieldInfo.getFldType(), indexFieldName);
-                columnBuilder.expression(expression);
-
-            } else {
-                final FieldType fieldType = fieldInfo.getFldType();
-                if (fieldType != null) {
-                    switch (fieldType) {
-                        case DATE:
-                            columnBuilder.format(Format.DATE_TIME);
-                            break;
-                        case INTEGER:
-                        case LONG:
-                        case FLOAT:
-                        case DOUBLE:
-                        case ID:
-                            columnBuilder.format(Format.NUMBER);
-                            break;
-                        default:
-                            columnBuilder.format(Format.GENERAL);
-                            break;
-                    }
-                }
-
-                expression = ParamUtil.create(indexFieldName);
-                columnBuilder.expression(expression);
             }
 
             return columnBuilder.build();

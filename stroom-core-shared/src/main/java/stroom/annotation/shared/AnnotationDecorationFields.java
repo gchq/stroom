@@ -26,7 +26,7 @@ public interface AnnotationDecorationFields {
     String ANNOTATION_DESCRIPTION = ANNOTATION_FIELD_PREFIX + "Description";
 
     QueryField ANNOTATION_ID_FIELD = QueryField.createId(ANNOTATION_ID);
-    QueryField ANNOTATION_UUID_FIELD = QueryField.createId(ANNOTATION_UUID);
+    QueryField ANNOTATION_UUID_FIELD = QueryField.createText(ANNOTATION_UUID);
     QueryField ANNOTATION_CREATED_ON_FIELD = QueryField.createDate(ANNOTATION_CREATED_ON);
     QueryField ANNOTATION_CREATED_BY_FIELD = QueryField.createText(ANNOTATION_CREATED_BY);
     QueryField ANNOTATION_UPDATED_ON_FIELD = QueryField.createDate(ANNOTATION_UPDATED_ON);
