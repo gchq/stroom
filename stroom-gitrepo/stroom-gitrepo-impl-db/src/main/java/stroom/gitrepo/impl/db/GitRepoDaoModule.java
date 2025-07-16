@@ -1,5 +1,7 @@
 package stroom.gitrepo.impl.db;
 
+import stroom.gitrepo.impl.GitRepoDao;
+
 import com.google.inject.AbstractModule;
 
 /**

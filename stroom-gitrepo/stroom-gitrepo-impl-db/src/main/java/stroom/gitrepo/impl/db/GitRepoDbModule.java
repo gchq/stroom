@@ -11,7 +11,7 @@ public class GitRepoDbModule extends AbstractFlyWayDbModule<GitRepoDbConfig, Git
 
     private static final String MODULE = "stroom-gitrepo";
 
-    private static final String FLYWAY_LOCATIONS = "stroom/activity/impl/db/migration";
+    private static final String FLYWAY_LOCATIONS = "stroom/gitrepo/impl/db/migration";
 
     private static final String FLYWAY_TABLE = "gitrepo_schema_history";
 

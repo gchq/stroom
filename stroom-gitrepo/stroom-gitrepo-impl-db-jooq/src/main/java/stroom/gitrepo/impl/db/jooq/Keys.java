@@ -9,8 +9,8 @@ import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
 
-import stroom.gitrepo.impl.db.jooq.tables.Gitrepo;
-import stroom.gitrepo.impl.db.jooq.tables.records.GitrepoRecord;
+import stroom.gitrepo.impl.db.jooq.tables.GitRepo;
+import stroom.gitrepo.impl.db.jooq.tables.records.GitRepoRecord;
 
 
 /**
@@ -24,5 +24,5 @@ public class Keys {
     // UNIQUE and PRIMARY KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final UniqueKey<GitrepoRecord> KEY_GITREPO_PRIMARY = Internal.createUniqueKey(Gitrepo.GITREPO, DSL.name("KEY_gitrepo_PRIMARY"), new TableField[] { Gitrepo.GITREPO.ID }, true);
+    public static final UniqueKey<GitRepoRecord> KEY_GIT_REPO_PRIMARY = Internal.createUniqueKey(GitRepo.GIT_REPO, DSL.name("KEY_git_repo_PRIMARY"), new TableField[] { GitRepo.GIT_REPO.GIT_REPO_UUID }, true);
 }

@@ -11,7 +11,7 @@ import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
-import stroom.gitrepo.impl.db.jooq.tables.Gitrepo;
+import stroom.gitrepo.impl.db.jooq.tables.GitRepo;
 
 
 /**
@@ -28,9 +28,9 @@ public class Stroom extends SchemaImpl {
     public static final Stroom STROOM = new Stroom();
 
     /**
-     * The table <code>stroom.gitrepo</code>.
+     * The table <code>stroom.git_repo</code>.
      */
-    public final Gitrepo GITREPO = Gitrepo.GITREPO;
+    public final GitRepo GIT_REPO = GitRepo.GIT_REPO;
 
     /**
      * No further instances allowed
@@ -48,7 +48,7 @@ public class Stroom extends SchemaImpl {
     @Override
     public final List<Table<?>> getTables() {
         return Arrays.asList(
-            Gitrepo.GITREPO
+            GitRepo.GIT_REPO
         );
     }
 }

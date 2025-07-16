@@ -4,7 +4,7 @@
 package stroom.gitrepo.impl.db.jooq;
 
 
-import stroom.gitrepo.impl.db.jooq.tables.Gitrepo;
+import stroom.gitrepo.impl.db.jooq.tables.GitRepo;
 
 
 /**
@@ -14,7 +14,7 @@ import stroom.gitrepo.impl.db.jooq.tables.Gitrepo;
 public class Tables {
 
     /**
-     * The table <code>stroom.gitrepo</code>.
+     * The table <code>stroom.git_repo</code>.
      */
-    public static final Gitrepo GITREPO = Gitrepo.GITREPO;
+    public static final GitRepo GIT_REPO = GitRepo.GIT_REPO;
 }

@@ -79,7 +79,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
     /*
      * Where to write changes of the GitRepoDoc
      */
-    //private final GitRepoStore gitRepoStore;
+    private final GitRepoDao gitRepoDao;
 
     /**
      * Logger so we can follow what is going on.
@@ -112,12 +112,14 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                                      final ExplorerNodeService explorerNodeService,
                                      final ImportExportSerializer importExportSerializer,
                                      final Provider<GitRepoConfig> config,
-                                     final PathCreator pathCreator) {
+                                     final PathCreator pathCreator,
+                                     final GitRepoDao gitRepoDao) {
         this.explorerService = explorerService;
         this.explorerNodeService = explorerNodeService;
         this.importExportSerializer = importExportSerializer;
         this.config = config;
         this.pathCreator = pathCreator;
+        this.gitRepoDao = gitRepoDao;
     }
 
     /**
@@ -202,9 +204,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                         addMessage(messages, Severity.INFO, "Pushed to Git");
 
                         // Store the commit version
-                        // TODO MWB Store commit hash elsewhere
-                        // gitRepoDoc.setGitRemoteCommitName(gitCommit.getName());
-                        // gitRepoStore.writeDocument(gitRepoDoc);
+                        gitRepoDao.storeHash(gitRepoDoc.getUuid(), gitCommit.getName());
                     } else {
                         // Jobs don't need to know that this didn't do anything
                         if (calledFromUi) {
@@ -589,9 +589,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                     .call()) {
 
                 // Store the commit we've got
-                // TODO MWB Store commit hash elsewhere
-                //gitRepoDoc.setGitRemoteCommitName(this.gitGetCurrentRevCommitName(git));
-                //gitRepoStore.writeDocument(gitRepoDoc);
+                gitRepoDao.storeHash(gitRepoDoc.getUuid(), this.gitGetCurrentRevCommitName(git));
 
             } catch (final GitAPIException e) {
                 LOGGER.error("Git error cloning repository '{}': {}", gitRepoDoc.getUrl(), e.getMessage(), e);
@@ -611,10 +609,9 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                 git.checkout()
                         .setName(gitCommit)
                         .call();
+
                 // Store the commit we've got
-                // TODO MWB Store commit hash elsewhere
-                //gitRepoDoc.setGitRemoteCommitName(this.gitGetCurrentRevCommitName(git));
-                //gitRepoStore.writeDocument(gitRepoDoc);
+                gitRepoDao.storeHash(gitRepoDoc.getUuid(), this.gitGetCurrentRevCommitName(git));
 
             } catch (final GitAPIException e) {
                 LOGGER.error("Error cloning git commit '{}': {}", gitCommit, e.getMessage(), e);
@@ -675,13 +672,15 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                 .setCloneAllBranches(false)
                 .call()) {
 
-            final String gitCommitName = this.gitGetCurrentRevCommitName(git);
-            LOGGER.info("Stroom commit: {}; git commit available: {}; match: {}",
-                    gitRepoDoc.getGitRemoteCommitName(),
-                    gitCommitName,
-                    Objects.equals(gitRepoDoc.getGitRemoteCommitName(), gitCommitName));
+            final String newGitCommitName = this.gitGetCurrentRevCommitName(git);
+            final String oldGitCommitName = gitRepoDao.getHash(gitRepoDoc.getUuid());
 
-            return !Objects.equals(gitRepoDoc.getGitRemoteCommitName(), gitCommitName);
+            LOGGER.info("Stroom commit: {}; git commit available: {}; match: {}",
+                    oldGitCommitName,
+                    newGitCommitName,
+                    Objects.equals(oldGitCommitName, newGitCommitName));
+
+            return !Objects.equals(oldGitCommitName, newGitCommitName);
         }
     }
 

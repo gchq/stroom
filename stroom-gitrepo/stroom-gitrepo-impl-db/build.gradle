@@ -4,6 +4,7 @@ dependencies {
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-db-util')
     implementation project(':stroom-gitrepo:stroom-gitrepo-impl')
+    implementation project(':stroom-gitrepo:stroom-gitrepo-impl-db-jooq')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
