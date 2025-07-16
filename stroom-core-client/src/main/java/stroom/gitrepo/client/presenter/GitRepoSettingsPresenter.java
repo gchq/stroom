@@ -120,7 +120,6 @@ public class GitRepoSettingsPresenter
         view.setPath(doc.getPath());
         view.setCommitToPull(doc.getCommit());
         view.setAutoPush(doc.isAutoPush());
-        //view.setGitRemoteCommitName(doc.getGitRemoteCommitName());
 
         // Credentials - store locally
         gitRepoUsername = doc.getUsername();
@@ -367,8 +366,6 @@ public class GitRepoSettingsPresenter
         String getCommitToPull();
 
         void setCommitToPull(String commit);
-
-        //void setGitRemoteCommitName(String remoteCommitName);
 
         Boolean isAutoPush();
 

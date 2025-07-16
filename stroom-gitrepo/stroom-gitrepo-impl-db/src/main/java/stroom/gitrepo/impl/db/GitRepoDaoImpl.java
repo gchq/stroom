@@ -56,7 +56,8 @@ public class GitRepoDaoImpl implements GitRepoDao {
     /**
      * Returns the Git commit hash for a given GitRepoDoc UUID.
      * @param uuid The UUID of the doc that we want the hash for.
-     * @return The Git commit hash, or null.
+     * @return The Git commit hash, or null if nothing has been stored
+     * for the given UUID.
      */
     @Override
     public String getHash(final String uuid) {
@@ -66,8 +67,14 @@ public class GitRepoDaoImpl implements GitRepoDao {
                 .where(GIT_REPO.GIT_REPO_UUID.eq(uuid))
                 .fetch());
 
-        LOGGER.info("Retrieving Git Repo UUID '{}' -> Git Commit Hash '{}'", uuid, result.toString());
-        return result.toString();
+        final String hash;
+        if (result.isEmpty()) {
+            hash = null;
+        } else {
+            hash = result.getValues(GIT_REPO.GIT_COMMIT_HASH).getFirst();
+        }
+        LOGGER.info("Retrieving Git Repo UUID '{}' -> Git Commit Hash '{}'", uuid, hash);
+        return hash;
     }
 
 }
