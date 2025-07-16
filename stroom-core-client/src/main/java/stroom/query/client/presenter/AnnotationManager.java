@@ -174,10 +174,10 @@ public class AnnotationManager {
                 }
 
                 // Add annotation ids.
-                    final Long annotationId = row.getAnnotationId();
-                    if (annotationId != null && !annotationIdList.contains(annotationId)) {
-                        annotationIdList.add(annotationId);
-                    }
+                final Long annotationId = row.getAnnotationId();
+                if (annotationId != null && !annotationIdList.contains(annotationId)) {
+                    annotationIdList.add(annotationId);
+                }
 
                 // Add annotation id from row data.
                 if (row.getAnnotationId() != null && !annotationIdList.contains(row.getAnnotationId())) {
