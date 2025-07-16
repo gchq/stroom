@@ -1,6 +1,5 @@
 package stroom.query.client.presenter;
 
-import stroom.annotation.shared.AnnotationColumns;
 import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.dashboard.client.main.UniqueUtil;
 import stroom.docref.DocRef;
@@ -30,7 +29,6 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.web.bindery.event.shared.EventBus;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -107,16 +105,11 @@ public class DynamicColumnSelectionListModel
                                                           final ResultPage<QueryField> response) {
         final ResultPage<ColumnSelectionItem> counts = getCounts(filter, pageRequest);
         final ResultPage<ColumnSelectionItem> custom = getCustom(filter, pageRequest);
-        final ResultPage<ColumnSelectionItem> annotationLinks = getAnnotationLinks(filter, pageRequest);
         final ResultPage<ColumnSelectionItem> annotations = getAnnotations(filter, pageRequest);
 
         ResultPage<ColumnSelectionItem> resultPage = null;
         if (NullSafe.isBlankString(parentPath)) {
             final ExactResultPageBuilder<ColumnSelectionItem> builder = new ExactResultPageBuilder<>(pageRequest);
-            add(filter, new ColumnSelectionItem(
-                    null,
-                    "Annotation Links",
-                    !annotationLinks.isEmpty()), builder);
             add(filter, new ColumnSelectionItem(
                     null,
                     "Annotations",
@@ -139,8 +132,8 @@ public class DynamicColumnSelectionListModel
             resultPage = counts;
         } else if ("Custom.".equals(parentPath)) {
             resultPage = custom;
-        } else if ("Annotation Links.".equals(parentPath)) {
-            resultPage = annotationLinks;
+//        } else if ("Annotation Links.".equals(parentPath)) {
+//            resultPage = annotationLinks;
         } else if ("Annotations.".equals(parentPath)) {
             resultPage = annotations;
         } else if ("Data Source.".equals(parentPath)) {
@@ -192,24 +185,6 @@ public class DynamicColumnSelectionListModel
         return builder.build();
     }
 
-    private ResultPage<ColumnSelectionItem> getAnnotationLinks(final String filter,
-                                                               final PageRequest pageRequest) {
-        final ExactResultPageBuilder<ColumnSelectionItem> builder = new ExactResultPageBuilder<>(pageRequest);
-        if (dataSourceRef != null &&
-            dataSourceRef.getType() != null &&
-            clientSecurityContext.hasAppPermission(AppPermission.ANNOTATIONS)) {
-            if ("Index".equals(dataSourceRef.getType()) ||
-                "SolrIndex".equals(dataSourceRef.getType()) ||
-                "ElasticIndex".equals(dataSourceRef.getType())) {
-                AnnotationDecorationFields.DECORATION_FIELDS.forEach(field -> {
-                    final ColumnSelectionItem columnSelectionItem = ColumnSelectionItem.create(field);
-                    add(filter, columnSelectionItem, builder);
-                });
-            }
-        }
-        return builder.build();
-    }
-
     private ResultPage<ColumnSelectionItem> getAnnotations(final String filter,
                                                            final PageRequest pageRequest) {
         final ExactResultPageBuilder<ColumnSelectionItem> builder = new ExactResultPageBuilder<>(pageRequest);
@@ -219,8 +194,8 @@ public class DynamicColumnSelectionListModel
             if ("Index".equals(dataSourceRef.getType()) ||
                 "SolrIndex".equals(dataSourceRef.getType()) ||
                 "ElasticIndex".equals(dataSourceRef.getType())) {
-                AnnotationColumns.COLUMNS.forEach(column -> {
-                    final ColumnSelectionItem columnSelectionItem = ColumnSelectionItem.create(column);
+                AnnotationDecorationFields.DECORATION_FIELDS.forEach(field -> {
+                    final ColumnSelectionItem columnSelectionItem = ColumnSelectionItem.create(field);
                     add(filter, columnSelectionItem, builder);
                 });
             }
@@ -328,24 +303,7 @@ public class DynamicColumnSelectionListModel
 
         private static String buildAnnotationFieldExpression(final FieldType fieldType,
                                                              final String indexFieldName) {
-            String fieldParam = ParamUtil.create(indexFieldName);
-            if (FieldType.DATE.equals(fieldType)) {
-                fieldParam = "formatDate(" + fieldParam + ")";
-            }
-
-            final List<String> params = new ArrayList<>();
-            params.add(fieldParam);
-            addFieldIfPresent(params, "annotation:Id");
-            addFieldIfPresent(params, "StreamId");
-            addFieldIfPresent(params, "EventId");
-
-            final String argsStr = String.join(", ", params);
-            return "annotation(" + argsStr + ")";
-        }
-
-        private static void addFieldIfPresent(final List<String> params,
-                                              final String fieldName) {
-            params.add(ParamUtil.create(fieldName));
+            return ParamUtil.create(indexFieldName);
         }
 
         private static Column convertFieldInfo(final QueryField fieldInfo) {
@@ -359,9 +317,10 @@ public class DynamicColumnSelectionListModel
 
             // Annotation decoration fields are special and are turned into links with general formatting.
             if (indexFieldName.startsWith(AnnotationDecorationFields.ANNOTATION_FIELD_PREFIX)) {
-                // Turn 'annotation:.*' fields into annotation links that make use of either the special
-                // eventId/streamId fields (so event results can link back to annotations) OR
-                // the annotation:Id field so Annotations datasource results can link back.
+                String columnName = indexFieldName.substring(
+                        AnnotationDecorationFields.ANNOTATION_FIELD_PREFIX.length());
+                columnName = columnName.replaceAll("([A-Z])", " $1").trim();
+                columnBuilder.name(columnName);
                 expression = buildAnnotationFieldExpression(fieldInfo.getFldType(), indexFieldName);
                 columnBuilder.expression(expression);
 

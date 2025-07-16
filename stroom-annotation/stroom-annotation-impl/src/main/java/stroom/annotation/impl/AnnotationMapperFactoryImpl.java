@@ -1,22 +1,21 @@
 package stroom.annotation.impl;
 
-import stroom.annotation.impl.AnnotationMapper.Mutator;
 import stroom.annotation.shared.Annotation;
-import stroom.annotation.shared.AnnotationColumns;
+import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.EventId;
-import stroom.query.api.Column;
-import stroom.query.api.ColumnFilter;
+import stroom.index.shared.IndexConstants;
 import stroom.query.api.SpecialColumns;
-import stroom.query.common.v2.AnnotationColumnValueProvider;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.AnnotationMapperFactory;
-import stroom.query.common.v2.ItemMapper;
+import stroom.query.common.v2.StoredValueMapper;
+import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
-import stroom.query.language.functions.ref.ErrorConsumer;
+import stroom.query.language.functions.ref.StoredValues;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 
@@ -24,35 +23,35 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
 
     private static final Map<String, Function<Annotation, Val>> EXTRACTION_FUNCTIONS = Map.ofEntries(
-            createLongFunction(AnnotationColumns.ANNOTATION_ID, Annotation::getId),
-            createStringFunction(AnnotationColumns.ANNOTATION_UUID, Annotation::getUuid),
-            createDateFunction(AnnotationColumns.ANNOTATION_CREATED_ON, Annotation::getCreateTimeMs),
-            createStringFunction(AnnotationColumns.ANNOTATION_CREATED_BY, Annotation::getCreateUser),
-            createDateFunction(AnnotationColumns.ANNOTATION_UPDATED_ON, Annotation::getUpdateTimeMs),
-            createStringFunction(AnnotationColumns.ANNOTATION_UPDATED_BY, Annotation::getUpdateUser),
-            createStringFunction(AnnotationColumns.ANNOTATION_TITLE, Annotation::getName),
-            createStringFunction(AnnotationColumns.ANNOTATION_SUBJECT, Annotation::getSubject),
-            createStringFunction(AnnotationColumns.ANNOTATION_STATUS, annotation ->
+            createLongFunction(AnnotationDecorationFields.ANNOTATION_ID_FIELD, Annotation::getId),
+            createStringFunction(AnnotationDecorationFields.ANNOTATION_UUID_FIELD, Annotation::getUuid),
+            createDateFunction(AnnotationDecorationFields.ANNOTATION_CREATED_ON_FIELD, Annotation::getCreateTimeMs),
+            createStringFunction(AnnotationDecorationFields.ANNOTATION_CREATED_BY_FIELD, Annotation::getCreateUser),
+            createDateFunction(AnnotationDecorationFields.ANNOTATION_UPDATED_ON_FIELD, Annotation::getUpdateTimeMs),
+            createStringFunction(AnnotationDecorationFields.ANNOTATION_UPDATED_BY_FIELD, Annotation::getUpdateUser),
+            createStringFunction(AnnotationDecorationFields.ANNOTATION_TITLE_FIELD, Annotation::getName),
+            createStringFunction(AnnotationDecorationFields.ANNOTATION_SUBJECT_FIELD, Annotation::getSubject),
+            createStringFunction(AnnotationDecorationFields.ANNOTATION_STATUS_FIELD, annotation ->
                     NullSafe.get(annotation, Annotation::getStatus, AnnotationTag::getName)),
-            createStringFunction(AnnotationColumns.ANNOTATION_ASSIGNED_TO, annotation ->
+            createStringFunction(AnnotationDecorationFields.ANNOTATION_ASSIGNED_TO_FIELD, annotation ->
                     NullSafe.get(annotation, Annotation::getAssignedTo, UserRef::getDisplayName)),
-            createStringFunction(AnnotationColumns.ANNOTATION_LABEL, annotation ->
+            createStringFunction(AnnotationDecorationFields.ANNOTATION_LABEL_FIELD, annotation ->
                     NullSafe.get(annotation, Annotation::getLabels, labels -> labels
                             .stream()
                             .map(AnnotationTag::getName)
                             .collect(Collectors.joining(", ")))),
-            createStringFunction(AnnotationColumns.ANNOTATION_COLLECTION, annotation ->
+            createStringFunction(AnnotationDecorationFields.ANNOTATION_COLLECTION_FIELD, annotation ->
                     NullSafe.get(annotation, Annotation::getCollections, collections -> collections
                             .stream()
                             .map(AnnotationTag::getName)
@@ -65,136 +64,122 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
         this.annotationServiceProvider = annotationServiceProvider;
     }
 
-    private static Entry<String, Function<Annotation, Val>> createLongFunction(final Column column,
+    private static Entry<String, Function<Annotation, Val>> createLongFunction(final QueryField field,
                                                                                final Function<Annotation, Long>
                                                                                        mapper) {
-        return Map.entry(column.getId(), annotation -> {
+        return Map.entry(field.getFldName(), annotation -> {
             final Long l = mapper.apply(annotation);
             return NullSafe.getOrElse(l, ValLong::create, ValNull.INSTANCE);
         });
     }
 
-    private static Entry<String, Function<Annotation, Val>> createStringFunction(final Column column,
+    private static Entry<String, Function<Annotation, Val>> createStringFunction(final QueryField field,
                                                                                  final Function<Annotation, String>
                                                                                          mapper) {
-        return Map.entry(column.getId(), annotation -> {
+        return Map.entry(field.getFldName(), annotation -> {
             final String s = mapper.apply(annotation);
             return NullSafe.getOrElse(s, ValString::create, ValNull.INSTANCE);
         });
     }
 
-    private static Entry<String, Function<Annotation, Val>> createDateFunction(final Column column,
+    private static Entry<String, Function<Annotation, Val>> createDateFunction(final QueryField field,
                                                                                final Function<Annotation, Long>
                                                                                        mapper) {
-        return Map.entry(column.getId(), annotation -> {
+        return Map.entry(field.getFldName(), annotation -> {
             final Long l = mapper.apply(annotation);
             return NullSafe.getOrElse(l, ValDate::create, ValNull.INSTANCE);
         });
     }
 
     @Override
-    public ItemMapper createMapper(final List<Column> newColumns,
-                                   final ErrorConsumer errorConsumer,
-                                   final ItemMapper parentMapper) {
-        final int annotationIdIndex = getColumnIndexById(newColumns, SpecialColumns.RESERVED_ID);
-        final int streamIdIndex = getColumnIndexById(newColumns, SpecialColumns.RESERVED_STREAM_ID);
-        final int eventIdIndex = getColumnIndexById(newColumns, SpecialColumns.RESERVED_EVENT_ID);
-        final List<Mutator> mutators = new ArrayList<>();
-        boolean annotationFilter = false;
-        for (int i = 0; i < newColumns.size(); i++) {
-            final int index = i;
-            final Column column = newColumns.get(index);
-            // Try to find a template annotation column.
-            final Column templateColumn = getTemplateColumn(column);
-            if (templateColumn != null) {
-                // If we found a column the create a mutator to add the annotation column value to the result.
-                final Function<Annotation, Val> function = EXTRACTION_FUNCTIONS.get(templateColumn.getId());
-                mutators.add((values, annotation) -> values[index] = function.apply(annotation));
-                // If the column has a filter then we will be doing an inner join.
-                if (!NullSafe.getOrElse(column, Column::getColumnFilter, ColumnFilter::getFilter, "").isEmpty()) {
-                    annotationFilter = true;
-                }
-            }
+    public StoredValueMapper createMapper(final FieldIndex fieldIndex) {
+        final int streamIdIndex = Objects.requireNonNullElse(fieldIndex.getPos(SpecialColumns.RESERVED_STREAM_ID),
+                Objects.requireNonNullElse(fieldIndex.getPos(IndexConstants.STREAM_ID), -1));
+        final int eventIdIndex = Objects.requireNonNullElse(fieldIndex.getPos(SpecialColumns.RESERVED_EVENT_ID),
+                Objects.requireNonNullElse(fieldIndex.getPos(IndexConstants.EVENT_ID), -1));
+
+        if (streamIdIndex == -1 || eventIdIndex == -1) {
+            return AnnotationMapperFactory.NO_OP.createMapper(fieldIndex);
         }
 
-        // Allow an outer join if we don't have a filter on annotations.
-        final boolean outerJoin = !annotationFilter;
-
-        if (annotationIdIndex == -1 || streamIdIndex == -1 || eventIdIndex == -1 || mutators.isEmpty()) {
-            return parentMapper;
-        }
-
-        final AnnotationService annotationService = annotationServiceProvider.get();
-        return new AnnotationMapper(
-                annotationService,
-                parentMapper,
-                annotationIdIndex,
-                streamIdIndex,
-                eventIdIndex,
-                outerJoin,
-                mutators,
-                errorConsumer);
-    }
-
-    @Override
-    public AnnotationColumnValueProvider createValues(final List<Column> columns, final int columnIndex) {
-        final int streamIdIndex = getColumnIndexById(columns, SpecialColumns.RESERVED_STREAM_ID);
-        final int eventIdIndex = getColumnIndexById(columns, SpecialColumns.RESERVED_EVENT_ID);
-        final Column column = columns.get(columnIndex);
-        final Optional<Function<Annotation, Val>> optionalFunction = EXTRACTION_FUNCTIONS.entrySet()
+        final List<Mutator> mutators = EXTRACTION_FUNCTIONS
+                .entrySet()
                 .stream()
-                .filter(entry -> column.getId().endsWith(entry.getKey()))
-                .map(Entry::getValue)
-                .findFirst();
-        if (streamIdIndex == -1 || eventIdIndex == -1 || optionalFunction.isEmpty()) {
-            return item -> Collections.singletonList(item.getValue(columnIndex));
+                .map(entry -> {
+                    final String name = entry.getKey();
+                    final Function<Annotation, Val> function = entry.getValue();
+                    final Integer pos = fieldIndex.getPos(name);
+                    if (pos == null) {
+                        return null;
+                    }
+
+                    return (Mutator) (storedValues, annotation) -> storedValues.set(pos, function.apply(annotation));
+                })
+                .filter(Objects::nonNull)
+                .toList();
+
+        // Don't do any annotation decoration if we were not asked for any annotation fields.
+        if (mutators.isEmpty()) {
+            return AnnotationMapperFactory.NO_OP.createMapper(fieldIndex);
         }
-        final Function<Annotation, Val> function = optionalFunction.get();
+
+        final List<Mutator> allMutators;
+
+        // Add annotation id if needed.
+        final int idIndex = Objects.requireNonNullElse(fieldIndex.getPos(SpecialColumns.RESERVED_ID),
+                Objects.requireNonNullElse(fieldIndex.getPos("Id"), -1));
+        if (idIndex != -1) {
+            final Function<Annotation, Val> function = annotation -> ValLong.create(annotation.getId());
+            allMutators = new ArrayList<>(mutators);
+            allMutators.add((storedValues, annotation) -> storedValues.set(idIndex, function.apply(annotation)));
+        } else {
+            allMutators = mutators;
+        }
+
         final AnnotationService annotationService = annotationServiceProvider.get();
-        return item -> {
-            final Long streamId = NullSafe.get(item.getValue(streamIdIndex), Val::toLong);
-            final Long eventId = NullSafe.get(item.getValue(eventIdIndex), Val::toLong);
-            if (streamId == null || eventId == null) {
-                return Collections.singletonList(item.getValue(columnIndex));
+        return new StoredValueMapperImpl(annotationService, streamIdIndex, eventIdIndex, allMutators);
+    }
+
+    private record StoredValueMapperImpl(AnnotationService annotationService,
+                                         int streamIdIndex,
+                                         int eventIdIndex,
+                                         List<Mutator> mutators) implements StoredValueMapper {
+
+        @Override
+        public Stream<StoredValues> create(final StoredValues storedValues) {
+            final Val streamId = (Val) storedValues.get(streamIdIndex);
+            final Val eventId = (Val) storedValues.get(eventIdIndex);
+            if (streamId == null || !streamId.type().isNumber() || eventId == null || !eventId.type().isNumber()) {
+                return Stream.of(storedValues);
             }
+
             final List<Annotation> list = annotationService
-                    .getAnnotationsForEvents(new EventId(streamId, eventId));
-            return list.stream().map(function).toList();
-        };
-    }
-//
-//    private Optional<Mutator> createMutator(final List<Column> columns,
-//                                            final Column templateColumn) {
-//        final String id = templateColumn.getId();
-//        for (int i = 0; i < columns.size(); i++) {
-//            final Column column = columns.get(i);
-//            if (id.equals(column.getId()) || column.getId().endsWith(id)) {
-//                final int index = i;
-//                final Function<Annotation, Val> function = EXTRACTION_FUNCTIONS.get(templateColumn.getId());
-//                return Optional.of((values, annotation) -> values[index] = function.apply(annotation));
-//            }
-//        }
-//        return Optional.empty();
-//    }
-
-    private Column getTemplateColumn(final Column column) {
-        final String id = column.getId();
-        for (int i = 0; i < AnnotationColumns.COLUMNS.size(); i++) {
-            final Column templateColumn = AnnotationColumns.COLUMNS.get(i);
-            if (id.endsWith(templateColumn.getId())) {
-                return templateColumn;
+                    .getAnnotationsForEvents(new EventId(streamId.toLong(), eventId.toLong()));
+            if (list == null || list.isEmpty()) {
+                return Stream.of(storedValues);
             }
+
+            if (list.size() == 1) {
+                for (final Mutator mutator : mutators) {
+                    mutator.mutate(storedValues, list.getFirst());
+                }
+                return Stream.of(storedValues);
+            }
+
+            return list.stream().map(annotation -> {
+                final StoredValues copy = storedValues.copy();
+                copy.setPeriod(storedValues.getPeriod());
+                for (final Mutator mutator : mutators) {
+                    mutator.mutate(copy, list.getFirst());
+                }
+
+                return copy;
+            });
         }
-        return null;
     }
 
-    private int getColumnIndexById(final List<Column> columns, final String id) {
-        for (int i = 0; i < columns.size(); i++) {
-            final Column column = columns.get(i);
-            if (id.equals(column.getId())) {
-                return i;
-            }
-        }
-        return -1;
+    private interface Mutator {
+
+        void mutate(StoredValues storedValues, Annotation annotation);
     }
 }

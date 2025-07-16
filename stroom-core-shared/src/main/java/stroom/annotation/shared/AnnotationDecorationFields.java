@@ -4,11 +4,7 @@ import stroom.query.api.datasource.QueryField;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
-@Deprecated // Users should no longer use pre decoration
 public interface AnnotationDecorationFields {
 
     String NAMESPACE = "annotation";
@@ -61,6 +57,4 @@ public interface AnnotationDecorationFields {
             ANNOTATION_COMMENT_FIELD,
             ANNOTATION_HISTORY_FIELD,
             ANNOTATION_DESCRIPTION_FIELD);
-    Map<String, QueryField> DECORATION_FIELD_MAP = DECORATION_FIELDS.stream()
-            .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
 }

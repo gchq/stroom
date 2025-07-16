@@ -124,7 +124,8 @@ class TestSearchResultCreation {
                 () -> executorService,
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
                 new ByteBufferFactoryImpl(),
-                new ExpressionPredicateFactory());
+                new ExpressionPredicateFactory(),
+                AnnotationMapperFactory.NO_OP);
     }
 
     @AfterEach
@@ -177,8 +178,7 @@ class TestSearchResultCreation {
                 "node",
                 new ResultStoreSettingsFactory().get(),
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
-                new ExpressionPredicateFactory(),
-                AnnotationMapperFactory.NO_OP);
+                new ExpressionPredicateFactory());
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
@@ -313,8 +313,7 @@ class TestSearchResultCreation {
                 "node",
                 new ResultStoreSettingsFactory().get(),
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
-                new ExpressionPredicateFactory(),
-                AnnotationMapperFactory.NO_OP);
+                new ExpressionPredicateFactory());
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
@@ -395,8 +394,7 @@ class TestSearchResultCreation {
                 "node",
                 new ResultStoreSettingsFactory().get(),
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
-                new ExpressionPredicateFactory(),
-                AnnotationMapperFactory.NO_OP);
+                new ExpressionPredicateFactory());
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
@@ -511,8 +509,7 @@ class TestSearchResultCreation {
                 "node",
                 new ResultStoreSettingsFactory().get(),
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
-                new ExpressionPredicateFactory(),
-                AnnotationMapperFactory.NO_OP);
+                new ExpressionPredicateFactory());
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 

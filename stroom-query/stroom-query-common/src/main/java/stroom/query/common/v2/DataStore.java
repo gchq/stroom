@@ -27,12 +27,12 @@ public interface DataStore extends ValuesConsumer {
      * @return The filtered child items for the parent key.
      */
     void fetch(List<Column> columns,
-                   OffsetRange range,
-                   OpenGroups openGroups,
-                   TimeFilter timeFilter,
-                   ItemMapper mapper,
-                   Consumer<Item> resultConsumer,
-                   Consumer<Long> totalRowCountConsumer);
+               OffsetRange range,
+               OpenGroups openGroups,
+               TimeFilter timeFilter,
+               ItemMapper mapper,
+               Consumer<Item> resultConsumer,
+               Consumer<Long> totalRowCountConsumer);
 
     /**
      * Clear the data store.

@@ -67,8 +67,7 @@ public class ResultStore {
                        final String nodeName,
                        final ResultStoreSettings resultStoreSettings,
                        final MapDataStoreFactory mapDataStoreFactory,
-                       final ExpressionPredicateFactory expressionPredicateFactory,
-                       final AnnotationMapperFactory annotationMapperFactory) {
+                       final ExpressionPredicateFactory expressionPredicateFactory) {
         this.searchRequestSource = searchRequestSource;
         this.coprocessors = coprocessors;
         this.userRef = userRef;
@@ -81,8 +80,7 @@ public class ResultStore {
                 this,
                 coprocessors.getExpressionContext(),
                 mapDataStoreFactory,
-                expressionPredicateFactory,
-                annotationMapperFactory);
+                expressionPredicateFactory);
     }
 
     public Map<String, ResultCreator> makeDefaultResultCreators(final SearchRequest searchRequest) {

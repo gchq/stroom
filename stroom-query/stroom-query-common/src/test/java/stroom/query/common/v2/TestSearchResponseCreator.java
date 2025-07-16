@@ -90,8 +90,7 @@ class TestSearchResponseCreator {
                 mockStore,
                 new ExpressionContextFactory().createContext(searchRequest),
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
-                new ExpressionPredicateFactory(),
-                AnnotationMapperFactory.NO_OP);
+                new ExpressionPredicateFactory());
     }
 
     @Test

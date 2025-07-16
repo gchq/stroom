@@ -54,10 +54,9 @@ import stroom.query.api.datasource.QueryFieldProvider;
 import stroom.query.api.token.Token;
 import stroom.query.api.token.TokenException;
 import stroom.query.api.token.TokenType;
-import stroom.query.common.v2.AnnotationColumnValueProvider;
-import stroom.query.common.v2.AnnotationMapperFactory;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.common.v2.DataStore;
+import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.Key;
@@ -153,7 +152,6 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
     private final ExpressionContextFactory expressionContextFactory;
     private final ResourceStore resourceStore;
     private final ExpressionPredicateFactory expressionPredicateFactory;
-    private final AnnotationMapperFactory annotationMapperFactory;
     private final ValPredicateFactory valPredicateFactory;
     private final QueryNodeResolver queryNodeResolver;
 
@@ -172,7 +170,6 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                      final ExpressionContextFactory expressionContextFactory,
                      final ResourceStore resourceStore,
                      final ExpressionPredicateFactory expressionPredicateFactory,
-                     final AnnotationMapperFactory annotationMapperFactory,
                      final ValPredicateFactory valPredicateFactory,
                      final QueryNodeResolver queryNodeResolver) {
         this.queryStore = queryStore;
@@ -189,7 +186,6 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
         this.expressionContextFactory = expressionContextFactory;
         this.resourceStore = resourceStore;
         this.expressionPredicateFactory = expressionPredicateFactory;
-        this.annotationMapperFactory = annotationMapperFactory;
         this.valPredicateFactory = valPredicateFactory;
         this.queryNodeResolver = queryNodeResolver;
     }
@@ -289,8 +285,7 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                                         target);
                                 final TableResultCreator tableResultCreator =
                                         new TableResultCreator(formatterFactory,
-                                                expressionPredicateFactory,
-                                                annotationMapperFactory) {
+                                                expressionPredicateFactory) {
                                             @Override
                                             public TableResultBuilder createTableResultBuilder() {
                                                 return searchResultWriter;
@@ -364,7 +359,13 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                             .resultStore()
                             .getData(resultRequest.getComponentId());
 
-                    final TimeFilter timeFilter = null;
+                    TimeFilter timeFilter = null;
+                    if (mappedRequest.getQuery() != null && mappedRequest.getQuery().getTimeRange() != null) {
+                        timeFilter = DateExpressionParser.getTimeFilter(
+                                mappedRequest.getQuery().getTimeRange(),
+                                mappedRequest.getDateTimeSettings());
+                    }
+
                     final Predicate<Val> predicate = valPredicateFactory.createValPredicate(
                             request.getColumn(),
                             request.getFilter(),
@@ -379,23 +380,19 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                             .toList()
                             .indexOf(request.getColumn().getId());
                     if (index != -1) {
-                        final AnnotationColumnValueProvider columnValueProvider =
-                                annotationMapperFactory.createValues(dataStore.getColumns(), index);
                         dataStore.fetch(
                                 dataStore.getColumns(),
                                 OffsetRange.UNBOUNDED,
                                 new OpenGroupsImpl(openGroups),
                                 timeFilter,
                                 item -> {
-                                    final List<Val> values = columnValueProvider.getValues(item);
-                                    values.forEach(val -> {
-                                        if (predicate.test(val)) {
-                                            final String string = val.toString();
-                                            if (string != null && dedupe.add(string)) {
-                                                list.add(string);
-                                            }
+                                    final Val val = item.getValue(index);
+                                    if (predicate.test(val)) {
+                                        final String string = val.toString();
+                                        if (string != null && dedupe.add(string)) {
+                                            list.add(string);
                                         }
-                                    });
+                                    }
                                     return Stream.empty();
                                 },
                                 row -> {

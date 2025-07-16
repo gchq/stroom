@@ -50,9 +50,8 @@ import stroom.query.api.SearchRequestSource;
 import stroom.query.api.SearchResponse;
 import stroom.query.api.TableResultBuilder;
 import stroom.query.api.TimeFilter;
-import stroom.query.common.v2.AnnotationColumnValueProvider;
-import stroom.query.common.v2.AnnotationMapperFactory;
 import stroom.query.common.v2.DataStore;
+import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.Key;
 import stroom.query.common.v2.OpenGroupsImpl;
@@ -134,7 +133,6 @@ class DashboardServiceImpl implements DashboardService {
     private final ResultStoreManager searchResponseCreatorManager;
     private final NodeInfo nodeInfo;
     private final ExpressionPredicateFactory expressionPredicateFactory;
-    private final AnnotationMapperFactory annotationMapperFactory;
     private final ValPredicateFactory valPredicateFactory;
     private final QueryNodeResolver queryNodeResolver;
 
@@ -152,7 +150,6 @@ class DashboardServiceImpl implements DashboardService {
                          final ResultStoreManager searchResponseCreatorManager,
                          final NodeInfo nodeInfo,
                          final ExpressionPredicateFactory expressionPredicateFactory,
-                         final AnnotationMapperFactory annotationMapperFactory,
                          final ValPredicateFactory valPredicateFactory,
                          final QueryNodeResolver queryNodeResolver) {
         this.dashboardStore = dashboardStore;
@@ -168,7 +165,6 @@ class DashboardServiceImpl implements DashboardService {
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.nodeInfo = nodeInfo;
         this.expressionPredicateFactory = expressionPredicateFactory;
-        this.annotationMapperFactory = annotationMapperFactory;
         this.valPredicateFactory = valPredicateFactory;
         this.queryNodeResolver = queryNodeResolver;
     }
@@ -334,8 +330,7 @@ class DashboardServiceImpl implements DashboardService {
                                         target);
                                 final TableResultCreator tableResultCreator =
                                         new TableResultCreator(formatterFactory,
-                                                expressionPredicateFactory,
-                                                annotationMapperFactory) {
+                                                expressionPredicateFactory) {
                                             @Override
                                             public TableResultBuilder createTableResultBuilder() {
                                                 return searchResultWriter;
@@ -570,8 +565,6 @@ class DashboardServiceImpl implements DashboardService {
                     request.getPageRequest(),
                     new GenericComparator());
             for (final ResultRequest resultRequest : resultRequests) {
-//                final TableResultRequest tableResultRequest =
-//                        tableRequestMap.get(resultRequest.getComponentId());
                 try {
                     final RequestAndStore requestAndStore = searchResponseCreatorManager
                             .getResultStore(mappedRequest);
@@ -579,7 +572,13 @@ class DashboardServiceImpl implements DashboardService {
                             .resultStore()
                             .getData(resultRequest.getComponentId());
 
-                    final TimeFilter timeFilter = null;
+                    TimeFilter timeFilter = null;
+                    if (mappedRequest.getQuery() != null && mappedRequest.getQuery().getTimeRange() != null) {
+                        timeFilter = DateExpressionParser.getTimeFilter(
+                                mappedRequest.getQuery().getTimeRange(),
+                                mappedRequest.getDateTimeSettings());
+                    }
+
                     final Predicate<Val> predicate = valPredicateFactory.createValPredicate(
                             request.getColumn(),
                             request.getFilter(),
@@ -593,23 +592,19 @@ class DashboardServiceImpl implements DashboardService {
                             .toList()
                             .indexOf(request.getColumn().getId());
                     if (index != -1) {
-                        final AnnotationColumnValueProvider columnValueProvider =
-                                annotationMapperFactory.createValues(dataStore.getColumns(), index);
                         dataStore.fetch(
                                 dataStore.getColumns(),
                                 OffsetRange.UNBOUNDED,
                                 new OpenGroupsImpl(openGroups),
                                 timeFilter,
                                 item -> {
-                                    final List<Val> values = columnValueProvider.getValues(item);
-                                    values.forEach(val -> {
-                                        if (predicate.test(val)) {
-                                            final String string = val.toString();
-                                            if (string != null && dedupe.add(string)) {
-                                                list.add(string);
-                                            }
+                                    final Val val = item.getValue(index);
+                                    if (predicate.test(val)) {
+                                        final String string = val.toString();
+                                        if (string != null && dedupe.add(string)) {
+                                            list.add(string);
                                         }
-                                    });
+                                    }
                                     return Stream.empty();
                                 },
                                 row -> {

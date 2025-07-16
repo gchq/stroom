@@ -55,6 +55,7 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.hyperlink.client.HyperlinkEvent;
+import stroom.index.shared.IndexConstants;
 import stroom.item.client.SelectionPopup;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.processor.shared.ProcessorExpressionUtil;
@@ -861,8 +862,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         if (old) {
             getTableComponentSettings().getColumns().removeIf(column ->
                     !column.isVisible() && (column.getName().equals("Id") ||
-                                            column.getName().equals("StreamId") ||
-                                            column.getName().equals("EventId") ||
+                                            column.getName().equals(IndexConstants.STREAM_ID) ||
+                                            column.getName().equals(IndexConstants.EVENT_ID) ||
                                             column.getName().startsWith("__")));
             setSettings(getTableComponentSettings()
                     .copy()

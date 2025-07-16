@@ -41,7 +41,6 @@ public class TableResultCreator implements ResultCreator {
 
     private final FormatterFactory formatterFactory;
     private final ExpressionPredicateFactory expressionPredicateFactory;
-    private final AnnotationMapperFactory annotationMapperFactory;
 
     private final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
     private final boolean cacheLastResult;
@@ -50,23 +49,19 @@ public class TableResultCreator implements ResultCreator {
     public TableResultCreator() {
         this(new FormatterFactory(null),
                 new ExpressionPredicateFactory(),
-                AnnotationMapperFactory.NO_OP,
                 false);
     }
 
     public TableResultCreator(final FormatterFactory formatterFactory,
-                              final ExpressionPredicateFactory expressionPredicateFactory,
-                              final AnnotationMapperFactory annotationMapperFactory) {
-        this(formatterFactory, expressionPredicateFactory, annotationMapperFactory, false);
+                              final ExpressionPredicateFactory expressionPredicateFactory) {
+        this(formatterFactory, expressionPredicateFactory, false);
     }
 
     public TableResultCreator(final FormatterFactory formatterFactory,
                               final ExpressionPredicateFactory expressionPredicateFactory,
-                              final AnnotationMapperFactory annotationMapperFactory,
                               final boolean cacheLastResult) {
         this.formatterFactory = formatterFactory;
         this.expressionPredicateFactory = expressionPredicateFactory;
-        this.annotationMapperFactory = annotationMapperFactory;
         this.cacheLastResult = cacheLastResult;
     }
 
@@ -100,7 +95,6 @@ public class TableResultCreator implements ResultCreator {
             if (RowValueFilter.matches(columns)) {
                 ItemMapper mapper;
                 mapper = SimpleMapper.create(dataStore.getColumns(), columns);
-                mapper = annotationMapperFactory.createMapper(columns, errorConsumer, mapper);
                 mapper = FilteredMapper.create(
                         columns,
                         tableSettings.applyValueFilters(),

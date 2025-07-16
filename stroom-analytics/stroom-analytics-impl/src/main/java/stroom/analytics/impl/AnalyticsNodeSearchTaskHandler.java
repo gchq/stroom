@@ -34,7 +34,6 @@ import stroom.query.api.TableResultBuilder;
 import stroom.query.api.TableSettings;
 import stroom.query.api.TimeFilter;
 import stroom.query.api.datasource.QueryField;
-import stroom.query.common.v2.AnnotationMapperFactory;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -51,7 +50,6 @@ import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.query.language.functions.ref.ErrorConsumer;
-import stroom.search.extraction.AnnotationsDecoratorFactory;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.search.impl.NodeSearchTask;
 import stroom.search.impl.NodeSearchTaskHandler;
@@ -82,13 +80,11 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnalyticsNodeSearchTaskHandler.class);
 
-    private final AnnotationsDecoratorFactory annotationsDecoratorFactory;
     private final SecurityContext securityContext;
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
     private final AnalyticDataStores analyticDataStores;
     private final ExpressionPredicateFactory expressionPredicateFactory;
-    private final AnnotationMapperFactory annotationMapperFactory;
 
     private final LongAdder hitCount = new LongAdder();
     private final LongAdder extractionCount = new LongAdder();
@@ -96,20 +92,16 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
     private TaskContext parentContext;
 
     @Inject
-    AnalyticsNodeSearchTaskHandler(final AnnotationsDecoratorFactory annotationsDecoratorFactory,
-                                   final SecurityContext securityContext,
+    AnalyticsNodeSearchTaskHandler(final SecurityContext securityContext,
                                    final ExecutorProvider executorProvider,
                                    final TaskContextFactory taskContextFactory,
                                    final AnalyticDataStores analyticDataStores,
-                                   final ExpressionPredicateFactory expressionPredicateFactory,
-                                   final AnnotationMapperFactory annotationMapperFactory) {
-        this.annotationsDecoratorFactory = annotationsDecoratorFactory;
+                                   final ExpressionPredicateFactory expressionPredicateFactory) {
         this.securityContext = securityContext;
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
         this.analyticDataStores = analyticDataStores;
         this.expressionPredicateFactory = expressionPredicateFactory;
-        this.annotationMapperFactory = annotationMapperFactory;
     }
 
     @Override
@@ -143,11 +135,6 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                     .addPrefixExcludeFilter(AnnotationDecorationFields.ANNOTATION_FIELD_PREFIX)
                     .build();
             final ExpressionOperator expression = expressionFilter.copy(query.getExpression());
-
-            // Decorate result with annotations.
-            final ValuesConsumer valuesConsumer =
-                    annotationsDecoratorFactory.create(coprocessors, coprocessors.getFieldIndex(), query);
-
             final List<CompletableFuture<Void>> futures = new ArrayList<>();
             try {
                 final FieldIndex fieldIndex = coprocessors.getFieldIndex();
@@ -172,10 +159,9 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                                             task,
                                             doc,
                                             expression,
-                                            fieldIndex,
                                             taskContext,
                                             hitCount,
-                                            valuesConsumer,
+                                            coprocessors,
                                             coprocessors.getErrorConsumer(),
                                             fieldArray,
                                             expressionMatcher));
@@ -209,9 +195,8 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
     }
 
     private void searchAnalyticDoc(final NodeSearchTask task,
-                                   final AbstractAnalyticRuleDoc doc,
+                                   final AnalyticRuleDoc doc,
                                    final ExpressionOperator expression,
-                                   final FieldIndex fieldIndex,
                                    final TaskContext parentContext,
                                    final LongAdder hitCount,
                                    final ValuesConsumer valuesConsumer,
@@ -252,8 +237,7 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                     final FormatterFactory formatterFactory = new FormatterFactory(searchRequest.getDateTimeSettings());
                     final TableResultCreator resultCreator = new TableResultCreator(
                             formatterFactory,
-                            expressionPredicateFactory,
-                            annotationMapperFactory) {
+                            expressionPredicateFactory) {
                         @Override
                         public TableResultBuilder createTableResultBuilder() {
                             return tableResultConsumer;

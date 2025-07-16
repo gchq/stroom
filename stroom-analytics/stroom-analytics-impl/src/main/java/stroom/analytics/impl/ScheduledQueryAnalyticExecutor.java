@@ -36,7 +36,6 @@ import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.api.SearchRequestSource.SourceType;
 import stroom.query.api.TableSettings;
-import stroom.query.common.v2.AnnotationMapperFactory;
 import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.ConditionalFormattingMapper;
 import stroom.query.common.v2.DataStore;
@@ -95,7 +94,6 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
     private final ExecutionScheduleDao executionScheduleDao;
     private final DuplicateCheckFactory duplicateCheckFactory;
     private final ExpressionPredicateFactory expressionPredicateFactory;
-    private final AnnotationMapperFactory annotationMapperFactory;
     private final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider;
     private final DuplicateCheckDirs duplicateCheckDirs;
 
@@ -117,7 +115,6 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
                                    final DuplicateCheckDirs duplicateCheckDirs,
                                    final Provider<DocRefInfoService> docRefInfoServiceProvider,
                                    final ExpressionPredicateFactory expressionPredicateFactory,
-                                   final AnnotationMapperFactory annotationMapperFactory,
                                    final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider) {
         super(executorProvider,
                 analyticErrorWriterProvider,
@@ -137,7 +134,6 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
         this.executionScheduleDao = executionScheduleDao;
         this.duplicateCheckFactory = duplicateCheckFactory;
         this.expressionPredicateFactory = expressionPredicateFactory;
-        this.annotationMapperFactory = annotationMapperFactory;
         this.analyticUiDefaultConfigProvider = analyticUiDefaultConfigProvider;
         this.duplicateCheckDirs = duplicateCheckDirs;
     }
@@ -283,7 +279,6 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
                         if (RowValueFilter.matches(columns)) {
                             ItemMapper mapper;
                             mapper = SimpleMapper.create(dataStore.getColumns(), columns);
-                            mapper = annotationMapperFactory.createMapper(columns, errorConsumer, mapper);
                             mapper = FilteredMapper.create(
                                     columns,
                                     tableSettings.applyValueFilters(),
