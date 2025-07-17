@@ -50,14 +50,6 @@
                        ui:field="txtGitCommitToPull" />
         </form:FormGroup>
 
-        <!-- The hash of whatever we've pulled -->
-        <form:FormGroup identity="lblGitRemoteCommitName"
-                        label="Currently checked out commit"
-                        helpText="The hash of the Git commit that has been downloaded into Stroom">
-            <g:Label title="The commit that is currently checked out"
-                     ui:field="lblGitRemoteCommitName" />
-        </form:FormGroup>
-
         <!-- Whether to automatically push to Git whenever something changes -->
         <form:FormGroup identity="chkGitAutoPush"
                         label="Automatically push"

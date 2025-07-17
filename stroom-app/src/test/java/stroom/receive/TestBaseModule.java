@@ -15,6 +15,7 @@ import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.mock.MockStroomEventLoggingModule;
 import stroom.explorer.impl.MockExplorerModule;
 import stroom.feed.impl.FeedModule;
+import stroom.gitrepo.mock.MockGitRepoModule;
 import stroom.importexport.impl.ImportExportModule;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.mock.MockMetaModule;
@@ -57,7 +58,7 @@ public class TestBaseModule extends AbstractModule {
         install(new DocStoreModule());
         install(new MockDocRefInfoModule());
         install(new FeedModule());
-        install(new stroom.gitrepo.impl.GitRepoModule());
+        install(new MockGitRepoModule());
         install(new ImportExportModule());
         install(new MemoryPersistenceModule());
         install(new MockClusterLockModule());

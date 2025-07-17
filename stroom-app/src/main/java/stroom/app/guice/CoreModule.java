@@ -1,7 +1,5 @@
 package stroom.app.guice;
 
-import stroom.contentstore.impl.ContentStoreModule;
-
 import com.google.inject.AbstractModule;
 
 public class CoreModule extends AbstractModule {
@@ -15,7 +13,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.annotation.impl.AnnotationModule());
         install(new stroom.annotation.impl.db.AnnotationDaoModule());
         install(new stroom.annotation.pipeline.AnnotationPipelineModule());
-        install(new ContentStoreModule());
+        install(new stroom.contentstore.impl.ContentStoreModule());
         install(new stroom.aws.s3.impl.S3ConfigHandlerModule());
         install(new stroom.aws.s3.impl.S3ConfigModule());
         install(new stroom.cache.impl.CacheModule());
@@ -40,6 +38,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.dashboard.impl.logging.LoggingModule());
         install(new stroom.dashboard.impl.script.ScriptModule());
         install(new stroom.gitrepo.impl.GitRepoModule());
+        install(new stroom.gitrepo.impl.db.GitRepoDaoModule());
         install(new stroom.dashboard.impl.visualisation.VisualisationModule());
         install(new stroom.data.retention.impl.DataRetentionModule());
         install(new stroom.data.store.impl.DataStoreModule());

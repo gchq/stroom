@@ -11,11 +11,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.net.URI;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Provides configuration for the ContentStore stuff on the server.
@@ -24,9 +21,10 @@ import java.util.Objects;
 public class ContentStoreConfig extends AbstractConfig implements IsStroomConfig {
     /**
      * Default location where the ContentStore config is stored.
+     * TODO: Change the location where ContentStore config is stored.
      */
     static final String DEFAULT_URL =
-            "https://raw.githubusercontent.com/stroomworks4092/stroom-appstore/refs/heads/main/stroom-appstore.yml";
+            "https://raw.githubusercontent.com/stroomworks4092/stroom-content/refs/heads/7.10/stroom-contentstore.yml";
 
     /**
      * List of App Store URLS
@@ -80,7 +78,7 @@ public class ContentStoreConfig extends AbstractConfig implements IsStroomConfig
     @SuppressWarnings("unused")
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("The URLs of the Content Stores for Stroom Content")
-    public void setContentStoreUrls(List<String> urls) {
+    public void setContentStoreUrls(final List<String> urls) {
         this.contentStores.clear();
         if (urls != null && !urls.isEmpty()) {
             this.contentStores.addAll(urls);

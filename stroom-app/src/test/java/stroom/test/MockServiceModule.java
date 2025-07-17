@@ -10,7 +10,7 @@ import stroom.docrefinfo.mock.MockDocRefInfoModule;
 import stroom.explorer.impl.MockExplorerModule;
 import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.feed.impl.MockFeedModule;
-import stroom.gitrepo.impl.MockGitRepoModule;
+import stroom.gitrepo.mock.MockGitRepoModule;
 import stroom.importexport.impl.ImportExportModule;
 import stroom.index.mock.MockIndexModule;
 import stroom.meta.mock.MockMetaModule;

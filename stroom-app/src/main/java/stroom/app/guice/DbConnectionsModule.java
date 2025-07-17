@@ -26,6 +26,7 @@ public class DbConnectionsModule extends AbstractModule {
         install(new stroom.data.store.impl.fs.db.FsDataStoreDbModule());
         install(new stroom.docstore.impl.db.DocStoreDBPersistenceDbModule());
         install(new stroom.explorer.impl.db.ExplorerDbModule());
+        install(new stroom.gitrepo.impl.db.GitRepoDbModule());
         install(new stroom.index.impl.db.IndexDbModule());
         install(new stroom.job.impl.db.JobDbModule());
         install(new stroom.meta.impl.db.MetaDbModule());

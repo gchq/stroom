@@ -141,6 +141,7 @@ public class ContentStoreTestSetup {
      * @throws RuntimeException if something goes wrong.
      */
     public void installSampleDataPacks() throws RuntimeException {
+        this.cacheContentStore();
         install(samplePackIds);
     }
 

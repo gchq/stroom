@@ -39,7 +39,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 
 @Singleton
-class GitRepoStoreImpl implements GitRepoStore {
+public class GitRepoStoreImpl implements GitRepoStore {
 
     private final Store<GitRepoDoc> store;
 

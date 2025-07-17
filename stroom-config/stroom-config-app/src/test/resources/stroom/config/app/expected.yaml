@@ -174,7 +174,7 @@ appConfig:
     importDirectory: "content_pack_import"
   contentStore:
     urls:
-    - "https://raw.githubusercontent.com/stroomworks4092/stroom-appstore/refs/heads/main/stroom-appstore.yml"
+    - "https://raw.githubusercontent.com/stroomworks4092/stroom-content/refs/heads/7.10/stroom-contentstore.yml"
   crossModule:
     db:
       connection:
@@ -421,6 +421,22 @@ appConfig:
     feedNamePattern: "^[A-Z0-9_-]{3,}$"
     unknownClassification: "UNKNOWN CLASSIFICATION"
   gitRepo:
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverPassword: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+      connectionPool:
+        cachePrepStmts: false
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        leakDetectionThreshold: "PT0S"
+        maxLifetime: "PT30M"
+        maxPoolSize: 30
+        minimumIdle: 10
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
     localDir: "git_repo"
   haltBootOnConfigValidationFailure: true
   index:

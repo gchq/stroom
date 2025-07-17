@@ -71,9 +71,6 @@ public class GitRepoSettingsViewImpl
     TextBox txtGitCommitToPull;
 
     @UiField
-    Label lblGitRemoteCommitName;
-
-    @UiField
     FormGroup fgGitAutoPush;
 
     @UiField
@@ -91,8 +88,6 @@ public class GitRepoSettingsViewImpl
     @Inject
     public GitRepoSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-
-        // TODO Add validation for the TextBoxes
     }
 
     @Override
@@ -101,12 +96,12 @@ public class GitRepoSettingsViewImpl
     }
 
     @Override
-    public void setContentStoreName(String contentStoreName) {
+    public void setContentStoreName(final String contentStoreName) {
         this.lblContentStore.setText(contentStoreName);
     }
 
     @Override
-    public void setContentPackName(String contentPackName) {
+    public void setContentPackName(final String contentPackName) {
         this.lblContentPack.setText(contentPackName);
     }
 
@@ -146,17 +141,8 @@ public class GitRepoSettingsViewImpl
     }
 
     @Override
-    public void setCommitToPull(String commit) {
+    public void setCommitToPull(final String commit) {
         this.txtGitCommitToPull.setText(commit);
-    }
-
-    @Override
-    public void setGitRemoteCommitName(String commitName) {
-        if (commitName == null || commitName.trim().isEmpty()) {
-            this.lblGitRemoteCommitName.setText("-");
-        } else {
-            this.lblGitRemoteCommitName.setText(commitName);
-        }
     }
 
     @Override
