@@ -695,12 +695,15 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                     oldGitCommitName,
                     newGitCommitName,
                     Objects.equals(oldGitCommitName, newGitCommitName));
-
             if (messages != null) {
-                this.generateGitDiff(messages,
-                        git,
-                        oldGitCommitName,
-                        newGitCommitName);
+                if (oldGitCommitName == null) {
+                    messages.add("Nothing downloaded; remote content available");
+                } else {
+                    this.generateGitDiff(messages,
+                            git,
+                            oldGitCommitName,
+                            newGitCommitName);
+                }
             }
             return !Objects.equals(oldGitCommitName, newGitCommitName);
         }
