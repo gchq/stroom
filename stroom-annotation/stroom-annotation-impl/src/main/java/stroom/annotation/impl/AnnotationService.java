@@ -46,6 +46,9 @@ import stroom.security.api.UserGroupsService;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.SingleDocumentPermissionChangeRequest;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventBus;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.HasUserDependencies;
 import stroom.util.shared.NullSafe;
@@ -79,6 +82,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
     private final Provider<ExpressionPredicateFactory> expressionPredicateFactoryProvider;
     private final Provider<PermissionChangeService> permissionChangeServiceProvider;
     private final Provider<UserGroupsService> userGroupsServiceProvider;
+    private final EntityEventBus entityEventBus;
 
     @Inject
     AnnotationService(final AnnotationDao annotationDao,
@@ -89,7 +93,8 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
                       final Provider<AnnotationConfig> annotationConfigProvider,
                       final Provider<ExpressionPredicateFactory> expressionPredicateFactoryProvider,
                       final Provider<PermissionChangeService> permissionChangeServiceProvider,
-                      final Provider<UserGroupsService> userGroupsServiceProvider) {
+                      final Provider<UserGroupsService> userGroupsServiceProvider,
+                      final EntityEventBus entityEventBus) {
         this.annotationDao = annotationDao;
         this.annotationTagDao = annotationTagDao;
         this.securityContext = securityContext;
@@ -99,6 +104,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         this.expressionPredicateFactoryProvider = expressionPredicateFactoryProvider;
         this.permissionChangeServiceProvider = permissionChangeServiceProvider;
         this.userGroupsServiceProvider = userGroupsServiceProvider;
+        this.entityEventBus = entityEventBus;
     }
 
     public Optional<Annotation> getAnnotationByRef(final DocRef annotationRef) {
@@ -270,13 +276,16 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
 //            }
         });
 
+        fireEntityChangeEvent(annotation.asDocRef());
         return annotation;
     }
 
     public boolean change(final SingleAnnotationChangeRequest request) {
         checkAppPermission();
         checkEditPermission(request.getAnnotationRef());
-        return annotationDao.change(request, getCurrentUser());
+        final boolean result = annotationDao.change(request, getCurrentUser());
+        fireEntityChangeEvent(request.getAnnotationRef());
+        return result;
     }
 
     public Integer batchChange(final MultiAnnotationChangeRequest request) {
@@ -286,6 +295,11 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
                     new SingleAnnotationChangeRequest(ref, request.getChange());
             annotationDao.change(singleAnnotationChangeRequest, getCurrentUser());
         }
+
+        if (!refs.isEmpty()) {
+            fireGenericEntityChangeEvent();
+        }
+
         return refs.size();
     }
 
@@ -342,7 +356,9 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         checkDeletePermission(annotationRef);
 
         documentPermissionServiceProvider.get().removeAllDocumentPermissions(annotationRef);
-        return annotationDao.logicalDelete(annotationRef, securityContext.getUserRef());
+        final Boolean result = annotationDao.logicalDelete(annotationRef, securityContext.getUserRef());
+        fireEntityChangeEvent(annotationRef);
+        return result;
     }
 
 //    public List<String> getStatus(final String filter) {
@@ -391,6 +407,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
 
     public Boolean changeDocumentPermissions(final SingleDocumentPermissionChangeRequest request) {
         permissionChangeServiceProvider.get().changeDocumentPermissions(request);
+        fireGenericEntityChangeEvent();
         return Boolean.TRUE;
     }
 
@@ -402,8 +419,9 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         final StroomDuration physicalDeleteAge = annotationConfigProvider.get().getPhysicalDeleteAge();
         final Instant age = Instant.now().minus(physicalDeleteAge);
         annotationDao.physicallyDelete(age);
-    }
 
+        fireGenericEntityChangeEvent();
+    }
 
     public AnnotationTag createAnnotationTag(final CreateAnnotationTagRequest request) {
         checkAppPermission();
@@ -431,5 +449,19 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
                         new DocRef(AnnotationTag.TYPE, at.getUuid()), DocumentPermission.VIEW))
                 .toList();
         return ResultPage.createUnboundedList(list);
+    }
+
+    private void fireGenericEntityChangeEvent() {
+        EntityEvent.fire(
+                entityEventBus,
+                DocRef.builder().type(Annotation.TYPE).build(),
+                EntityAction.UPDATE);
+    }
+
+    private void fireEntityChangeEvent(final DocRef annotation) {
+        EntityEvent.fire(
+                entityEventBus,
+                annotation,
+                EntityAction.UPDATE);
     }
 }

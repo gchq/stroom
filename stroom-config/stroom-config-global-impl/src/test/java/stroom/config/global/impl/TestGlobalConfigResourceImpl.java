@@ -1,5 +1,6 @@
 package stroom.config.global.impl;
 
+import stroom.annotation.impl.AnnotationState;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.GlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
@@ -405,12 +406,12 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 () -> globalConfigService,
                 () -> nodeService,
                 UiConfig::new,
-                null,
                 () -> nodeInfo,
                 StroomOpenIdConfig::new,
                 ExplorerConfig::new,
                 AuthenticationConfig::new,
                 StroomReceiptPolicyConfig::new,
-                ReceiveDataConfig::new);
+                ReceiveDataConfig::new,
+                AnnotationState::new);
     }
 }
