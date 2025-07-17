@@ -1,9 +1,12 @@
 package stroom.app.guice;
 
+import stroom.app.metrics.StroomAppInfoProvider;
 import stroom.app.uri.UriFactoryModule;
 import stroom.cluster.impl.ClusterModule;
 import stroom.dropwizard.common.FilteredHealthCheckServlet;
 import stroom.dropwizard.common.LogLevelInspector;
+import stroom.dropwizard.common.prometheus.AppInfoProvider;
+import stroom.dropwizard.common.prometheus.PrometheusModule;
 import stroom.lifecycle.impl.LifecycleServiceModule;
 import stroom.meta.statistics.impl.MetaStatisticsModule;
 import stroom.resource.impl.SessionResourceModule;
@@ -29,6 +32,9 @@ public class AppModule extends AbstractModule {
         install(new SQLStatisticSearchModule());
         install(new SessionResourceModule());
         install(new JerseyModule());
+        install(new PrometheusModule());
+
+        bind(AppInfoProvider.class).to(StroomAppInfoProvider.class);
 
         HasSystemInfoBinder.create(binder())
                 .bind(LogLevelInspector.class);
