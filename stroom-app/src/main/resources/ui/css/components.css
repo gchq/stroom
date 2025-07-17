@@ -2493,6 +2493,10 @@ button.main-menu svg {
     vertical-align: middle;
 }
 
+.multiChooser .tickBox {
+    cursor: pointer;
+}
+
 .lozengeOuter {
     padding: 3px 0;
 }
@@ -2503,6 +2507,7 @@ button.main-menu svg {
     border-radius: 10rem;
     display: inline-block;
     border-color: var(--text-color);
+    cursor: pointer;
 }
 
 .stroom-theme-dark .lozenge {

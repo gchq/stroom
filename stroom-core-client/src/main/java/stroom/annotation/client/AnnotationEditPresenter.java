@@ -96,6 +96,10 @@ public class AnnotationEditPresenter
 
     private static final String EMPTY_VALUE = "'  '";
 
+    private static final SafeHtml ELLIPSES = SafeHtmlUtils.fromTrustedString(
+            "<div class=\"setting-block-icon icon-colour__grey svgIcon\">" +
+            SvgImage.ELLIPSES_VERTICAL.getSvg() +
+            "</div>");
     private static final SafeHtml HISTORY_INNER_START = SafeHtmlUtils.fromTrustedString(
             "<div class=\"annotationHistoryInner\">");
     private static final SafeHtml HISTORY_INNER_END = SafeHtmlUtils.fromTrustedString(
@@ -190,7 +194,7 @@ public class AnnotationEditPresenter
                             consumer.accept(values.getValues()),
                     new DefaultErrorHandler(this, null), this);
         });
-        annotationCollectionPresenter.setDisplayValueFunction(at -> SafeHtmlUtils.fromString(at.getName()));
+        annotationCollectionPresenter.setDisplayValueFunction(at -> createSwatch(at.getStyle(), at.getName()));
 
         this.commentPresenter.setDataSupplier((filter, consumer) ->
                 annotationResourceClient.getStandardComments(filter, consumer, this));
@@ -632,6 +636,7 @@ public class AnnotationEditPresenter
             html.appendEscaped("commented");
             html.appendHtmlConstant("&nbsp;");
             html.append(getDurationLabel(entry.getEntryTime(), now));
+            html.append(ELLIPSES);
             html.append(HISTORY_COMMENT_HEADER_END);
             html.append(HISTORY_COMMENT_BODY_START);
             html.appendEscaped(entryUiValue);
@@ -650,6 +655,7 @@ public class AnnotationEditPresenter
             link(html, entryUiValue);
             html.appendHtmlConstant("&nbsp;");
             html.append(getDurationLabel(entry.getEntryTime(), now));
+            html.append(ELLIPSES);
             html.append(HISTORY_ITEM_END);
             added = true;
 
@@ -672,6 +678,7 @@ public class AnnotationEditPresenter
                     }
                     html.appendEscaped(" ");
                     html.append(getDurationLabel(entry.getEntryTime(), now));
+                    html.append(ELLIPSES);
                     html.append(HISTORY_ITEM_END);
                     added = true;
                 }
@@ -692,6 +699,7 @@ public class AnnotationEditPresenter
                     }
                     html.appendHtmlConstant("&nbsp;");
                     html.append(getDurationLabel(entry.getEntryTime(), now));
+                    html.append(ELLIPSES);
                     html.append(HISTORY_ITEM_END);
                     added = true;
                 }
@@ -726,6 +734,7 @@ public class AnnotationEditPresenter
 
                 html.appendHtmlConstant("&nbsp;");
                 html.append(getDurationLabel(entry.getEntryTime(), now));
+                html.append(ELLIPSES);
                 html.append(HISTORY_ITEM_END);
                 added = true;
             }

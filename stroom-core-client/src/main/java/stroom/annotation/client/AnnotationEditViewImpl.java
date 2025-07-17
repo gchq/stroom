@@ -282,6 +282,16 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         }
     }
 
+    @UiHandler("titleBlock")
+    public void onTitleBlock(final ClickEvent e) {
+        titleTextBox.setFocus(true);
+    }
+
+    @UiHandler("subjectBlock")
+    public void onSubjectBlock(final ClickEvent e) {
+        subjectTextBox.setFocus(true);
+    }
+
     @UiHandler("statusBlock")
     public void onStatusBlock(final ClickEvent e) {
         if (getUiHandlers() != null) {
