@@ -6,8 +6,12 @@ import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.shared.ExplorerConstants;
+import stroom.importexport.api.ImportExportActionHandler;
+import stroom.importexport.shared.ImportSettings;
+import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
+import stroom.util.shared.Message;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 
@@ -20,7 +24,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-class FolderExplorerActionHandler implements ExplorerActionHandler {
+class FolderExplorerActionHandler implements ExplorerActionHandler, ImportExportActionHandler {
 
     private static final String FOLDER = ExplorerConstants.FOLDER_TYPE;
 
@@ -136,6 +140,11 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
         return ExplorerConstants.FOLDER_TYPE;
     }
 
+    @Override
+    public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
+        return Set.of();
+    }
+
     ////////////////////////////////////////////////////////////////////////
     // START OF HasDependencies
     ////////////////////////////////////////////////////////////////////////
@@ -174,4 +183,25 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
                 .map(ExplorerTreeNode::getDocRef)
                 .collect(Collectors.toSet());
     }
+
+    ////////////////////////////////////////////////////////////////////////
+    // START OF ImportExportActionHandler
+    ////////////////////////////////////////////////////////////////////////
+    @Override
+    public DocRef importDocument(final DocRef docRef,
+                                 final Map<String, byte[]> dataMap,
+                                 final ImportState importState,
+                                 final ImportSettings importSettings) {
+        // TODO Implement importDocument
+        return null;
+    }
+
+    @Override
+    public Map<String, byte[]> exportDocument(final DocRef docRef,
+                                              final boolean omitAuditFields,
+                                              final List<Message> messageList) {
+        // TODO Implement exportDocument
+        return Map.of();
+    }
+
 }

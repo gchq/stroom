@@ -9,8 +9,6 @@ import stroom.gitrepo.api.GitRepoStorageService;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.importexport.api.ExportSummary;
 import stroom.importexport.api.ImportExportSerializer;
-import stroom.importexport.api.ImportExportSpec;
-import stroom.importexport.api.ImportExportSpec.ImportExportCaller;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
@@ -361,8 +359,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                 final Set<DocRef> docRefs = importExportSerializer.read(
                         pathToImport,
                         importStates,
-                        importSettings,
-                        ImportExportCaller.GITREPO);
+                        importSettings);
 
                 for (final DocRef docRef : docRefs) {
                     // ImportExportSerializerImpl adds the System docref to the returned set,
@@ -520,8 +517,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                 exportDir,
                 docRefs,
                 docTypesToIgnore,
-                true,
-                ImportExportSpec.buildGitRepoSpec());
+                true);
     }
 
     /**

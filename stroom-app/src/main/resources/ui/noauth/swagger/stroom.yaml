@@ -1004,6 +1004,26 @@ paths:
       summary: Find the API keys matching the supplied criteria
       tags:
       - API Key
+  /apikey/v2/verifyApiKey:
+    post:
+      operationId: findApiKeysByCriteria_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyApiKeyRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDesc"
+          description: default response
+      summary: Check if the passed API key is valid
+      tags:
+      - API Key
   /apikey/v2/{id}:
     delete:
       operationId: deleteApiKey_1
@@ -1600,6 +1620,96 @@ paths:
       summary: Get the list of fields for use in the match expression.
       tags:
       - Content Templates
+  /contentstore/checkContentUpgradeAvailable:
+    post:
+      operationId: checkContentUpgradeAvailable
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentStoreContentPack"
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentStoreValueResponseBoolean"
+          description: default response
+      summary: Checks if updated content is available
+      tags:
+      - ContentStoreContentPacks
+  /contentstore/create:
+    post:
+      operationId: createGitRepoFromContentPack
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentStoreCreateGitRepoRequest"
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentStoreResponse"
+          description: default response
+      summary: Creates a GitRepoDoc from a Content Pack
+      tags:
+      - ContentStoreContentPacks
+  /contentstore/exists:
+    post:
+      operationId: GitRepoDocExistsForContentPack
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentStoreContentPack"
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Checks to see if a GitRepoDoc exists for the Content Pack
+      tags:
+      - ContentStoreContentPacks
+  /contentstore/list:
+    post:
+      operationId: listContentStoreContentPacks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PageRequest"
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResultPageContentStoreContentPackWithDynamicState"
+          description: default response
+      summary: Lists Content Store Content Packs
+      tags:
+      - ContentStoreContentPacks
+  /contentstore/upgradeContentPack:
+    post:
+      operationId: upgradeContentPack
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentStoreContentPack"
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentStoreResponse"
+          description: default response
+      summary: Upgrades the content pack and its content
+      tags:
+      - ContentStoreContentPacks
   /dashboard/v1/columnValues:
     post:
       operationId: getColumnValues
@@ -3527,6 +3637,26 @@ paths:
       summary: Updates a data volume group
       tags:
       - Data Volume Groups
+  /gitRepo/v1/areUpdatesAvailable:
+    post:
+      operationId: areUpdatesAvailable
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GitRepoDoc"
+        description: gitRepoDoc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GitRepoResponse"
+          description: default response
+      summary: Check if any content has changed
+      tags:
+      - GitRepos
   /gitRepo/v1/pullFromGit:
     post:
       operationId: pullFromGit
@@ -6287,71 +6417,9 @@ paths:
       summary: Find the result stores matching the supplied criteria for a node
       tags:
       - ResultStore
-  /ruleset/v2/export:
-    post:
-      operationId: exportReceiveDataRules
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/DocRef"
-        description: DocRef
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Base64EncodedDocumentData"
-          description: default response
-      summary: Submit an export request
-      tags:
-      - Rule Set
-  /ruleset/v2/import:
-    post:
-      operationId: importReceiveDataRules
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Base64EncodedDocumentData"
-        description: DocumentData
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DocRef"
-          description: default response
-      summary: Submit an import request
-      tags:
-      - Rule Set
-  /ruleset/v2/list:
-    get:
-      operationId: listReceiveDataRules
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/DocRef"
-                uniqueItems: true
-          description: default response
-      summary: Submit a request for a list of doc refs held by this service
-      tags:
-      - Rule Set
-  /ruleset/v2/{uuid}:
+  /ruleset/v2:
     get:
       operationId: fetchReceiveDataRules
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
       responses:
         default:
           content:
@@ -6359,17 +6427,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/ReceiveDataRules"
           description: default response
-      summary: Fetch a rules doc by its UUID
+      summary: Fetch receipt rules
       tags:
       - Rule Set
     put:
       operationId: updateReceiveDataRules
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
       requestBody:
         content:
           application/json:
@@ -6384,7 +6446,20 @@ paths:
               schema:
                 $ref: "#/components/schemas/ReceiveDataRules"
           description: default response
-      summary: Update a rules doc
+      summary: Update receipt rules
+      tags:
+      - Rule Set
+  /ruleset/v2/fetchHashedRules:
+    get:
+      operationId: fetchHashedReceiveDataRules
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HashedReceiveDataRules"
+          description: default response
+      summary: Fetch hashed receipt rules
       tags:
       - Rule Set
   /s3/v1/download:
@@ -8151,7 +8226,6 @@ components:
           - ADMINISTRATOR
           - ANNOTATIONS
           - MANAGE_CACHE_PERMISSION
-          - MANAGE_CONTENT_TEMPLATES_PERMISSION
           - VIEW_DATA_PERMISSION
           - VIEW_DATA_WITH_PIPELINE_PERMISSION
           - DELETE_DATA_PERMISSION
@@ -8164,6 +8238,8 @@ components:
           - MANAGE_TASKS_PERMISSION
           - DOWNLOAD_SEARCH_RESULTS_PERMISSION
           - MANAGE_API_KEYS
+          - MANAGE_CONTENT_TEMPLATES_PERMISSION
+          - MANAGE_DATA_RECEIPT_RULES_PERMISSION
           - MANAGE_JOBS_PERMISSION
           - MANAGE_PROPERTIES_PERMISSION
           - MANAGE_POLICIES_PERMISSION
@@ -8175,6 +8251,9 @@ components:
           - EXPORT_CONFIGURATION
           - VIEW_SYSTEM_INFO_PERMISSION
           - CHECK_RECEIPT_STATUS
+          - FETCH_HASHED_RECEIPT_POLICY_RULES
+          - VERIFY_API_KEY
+          - STROOM_PROXY
         type:
           type: string
         userRef:
@@ -8745,6 +8824,65 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ApiKey"
+    AppPermissionSet:
+      type: object
+      discriminator:
+        propertyName: type
+      properties:
+        type:
+          type: string
+      required:
+      - type
+    AppPermissionSetImpl:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AppPermissionSet"
+      - type: object
+        properties:
+          appPermissions:
+            type: array
+            items:
+              type: string
+              enum:
+              - ADMINISTRATOR
+              - ANNOTATIONS
+              - MANAGE_CACHE_PERMISSION
+              - VIEW_DATA_PERMISSION
+              - VIEW_DATA_WITH_PIPELINE_PERMISSION
+              - DELETE_DATA_PERMISSION
+              - IMPORT_DATA_PERMISSION
+              - EXPORT_DATA_PERMISSION
+              - MANAGE_USERS_PERMISSION
+              - CHANGE_OWNER_PERMISSION
+              - STEPPING_PERMISSION
+              - MANAGE_PROCESSORS_PERMISSION
+              - MANAGE_TASKS_PERMISSION
+              - DOWNLOAD_SEARCH_RESULTS_PERMISSION
+              - MANAGE_API_KEYS
+              - MANAGE_CONTENT_TEMPLATES_PERMISSION
+              - MANAGE_DATA_RECEIPT_RULES_PERMISSION
+              - MANAGE_JOBS_PERMISSION
+              - MANAGE_PROPERTIES_PERMISSION
+              - MANAGE_POLICIES_PERMISSION
+              - MANAGE_NODES_PERMISSION
+              - MANAGE_INDEX_SHARDS_PERMISSION
+              - MANAGE_VOLUMES_PERMISSION
+              - MANAGE_DB_PERMISSION
+              - IMPORT_CONFIGURATION
+              - EXPORT_CONFIGURATION
+              - VIEW_SYSTEM_INFO_PERMISSION
+              - CHECK_RECEIPT_STATUS
+              - FETCH_HASHED_RECEIPT_POLICY_RULES
+              - VERIFY_API_KEY
+              - STROOM_PROXY
+            uniqueItems: true
+          operator:
+            type: string
+            enum:
+            - ALL_OF
+            - ONE_OF
+            - SINGLE
+            - EMPTY
     AppUserPermissions:
       type: object
       properties:
@@ -8756,7 +8894,6 @@ components:
             - ADMINISTRATOR
             - ANNOTATIONS
             - MANAGE_CACHE_PERMISSION
-            - MANAGE_CONTENT_TEMPLATES_PERMISSION
             - VIEW_DATA_PERMISSION
             - VIEW_DATA_WITH_PIPELINE_PERMISSION
             - DELETE_DATA_PERMISSION
@@ -8769,6 +8906,8 @@ components:
             - MANAGE_TASKS_PERMISSION
             - DOWNLOAD_SEARCH_RESULTS_PERMISSION
             - MANAGE_API_KEYS
+            - MANAGE_CONTENT_TEMPLATES_PERMISSION
+            - MANAGE_DATA_RECEIPT_RULES_PERMISSION
             - MANAGE_JOBS_PERMISSION
             - MANAGE_PROPERTIES_PERMISSION
             - MANAGE_POLICIES_PERMISSION
@@ -8780,6 +8919,9 @@ components:
             - EXPORT_CONFIGURATION
             - VIEW_SYSTEM_INFO_PERMISSION
             - CHECK_RECEIPT_STATUS
+            - FETCH_HASHED_RECEIPT_POLICY_RULES
+            - VERIFY_API_KEY
+            - STROOM_PROXY
           uniqueItems: true
         permissions:
           type: array
@@ -8789,7 +8931,6 @@ components:
             - ADMINISTRATOR
             - ANNOTATIONS
             - MANAGE_CACHE_PERMISSION
-            - MANAGE_CONTENT_TEMPLATES_PERMISSION
             - VIEW_DATA_PERMISSION
             - VIEW_DATA_WITH_PIPELINE_PERMISSION
             - DELETE_DATA_PERMISSION
@@ -8802,6 +8943,8 @@ components:
             - MANAGE_TASKS_PERMISSION
             - DOWNLOAD_SEARCH_RESULTS_PERMISSION
             - MANAGE_API_KEYS
+            - MANAGE_CONTENT_TEMPLATES_PERMISSION
+            - MANAGE_DATA_RECEIPT_RULES_PERMISSION
             - MANAGE_JOBS_PERMISSION
             - MANAGE_PROPERTIES_PERMISSION
             - MANAGE_POLICIES_PERMISSION
@@ -8813,6 +8956,9 @@ components:
             - EXPORT_CONFIGURATION
             - VIEW_SYSTEM_INFO_PERMISSION
             - CHECK_RECEIPT_STATUS
+            - FETCH_HASHED_RECEIPT_POLICY_RULES
+            - VERIFY_API_KEY
+            - STROOM_PROXY
           uniqueItems: true
         userRef:
           $ref: "#/components/schemas/UserRef"
@@ -8827,7 +8973,6 @@ components:
             - ADMINISTRATOR
             - ANNOTATIONS
             - MANAGE_CACHE_PERMISSION
-            - MANAGE_CONTENT_TEMPLATES_PERMISSION
             - VIEW_DATA_PERMISSION
             - VIEW_DATA_WITH_PIPELINE_PERMISSION
             - DELETE_DATA_PERMISSION
@@ -8840,6 +8985,8 @@ components:
             - MANAGE_TASKS_PERMISSION
             - DOWNLOAD_SEARCH_RESULTS_PERMISSION
             - MANAGE_API_KEYS
+            - MANAGE_CONTENT_TEMPLATES_PERMISSION
+            - MANAGE_DATA_RECEIPT_RULES_PERMISSION
             - MANAGE_JOBS_PERMISSION
             - MANAGE_PROPERTIES_PERMISSION
             - MANAGE_POLICIES_PERMISSION
@@ -8851,6 +8998,9 @@ components:
             - EXPORT_CONFIGURATION
             - VIEW_SYSTEM_INFO_PERMISSION
             - CHECK_RECEIPT_STATUS
+            - FETCH_HASHED_RECEIPT_POLICY_RULES
+            - VERIFY_API_KEY
+            - STROOM_PROXY
           uniqueItems: true
         inheritedPermissions:
           type: object
@@ -9082,15 +9232,6 @@ components:
             type: string
           webIdentityTokenFile:
             type: string
-    Base64EncodedDocumentData:
-      type: object
-      properties:
-        dataMap:
-          type: object
-          additionalProperties:
-            type: string
-        docRef:
-          $ref: "#/components/schemas/DocRef"
     BatchScheduleRequest:
       type: object
       properties:
@@ -9606,6 +9747,93 @@ components:
           type: string
         valid:
           type: boolean
+    ContentStoreContentPack:
+      type: object
+      properties:
+        contentStoreMetadata:
+          $ref: "#/components/schemas/ContentStoreMetadata"
+        details:
+          type: string
+        gitBranch:
+          type: string
+        gitCommit:
+          type: string
+        gitNeedsAuth:
+          type: boolean
+        gitPath:
+          type: string
+        gitRepoName:
+          type: string
+        gitUrl:
+          type: string
+        iconSvg:
+          type: string
+        iconUrl:
+          type: string
+        id:
+          type: string
+        licenseName:
+          type: string
+        licenseUrl:
+          type: string
+        stroomPath:
+          type: string
+        uiName:
+          type: string
+    ContentStoreContentPackWithDynamicState:
+      type: object
+      properties:
+        contentPack:
+          $ref: "#/components/schemas/ContentStoreContentPack"
+        installationStatus:
+          type: string
+          enum:
+          - "-"
+          - Installed
+          - Pack upgradable
+          - Content upgradable
+    ContentStoreCreateGitRepoRequest:
+      type: object
+      properties:
+        contentPack:
+          $ref: "#/components/schemas/ContentStoreContentPack"
+        password:
+          type: string
+        username:
+          type: string
+    ContentStoreMetadata:
+      type: object
+      properties:
+        authContact:
+          type: string
+        ownerDescription:
+          type: string
+        ownerId:
+          type: string
+        ownerName:
+          type: string
+        ownerUrl:
+          type: string
+    ContentStoreResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: string
+          enum:
+          - OK
+          - GENERAL_ERR
+          - ALREADY_EXISTS
+    ContentStoreValueResponseBoolean:
+      type: object
+      properties:
+        message:
+          type: string
+        ok:
+          type: boolean
+        value:
+          type: boolean
     ContentTemplate:
       type: object
       properties:
@@ -9764,6 +9992,7 @@ components:
           - SHA2_256
           - BCRYPT
           - ARGON_2
+          - SHA2_512
         name:
           type: string
         owner:
@@ -10366,6 +10595,7 @@ components:
           - CODE
           - COLLAPSE_ALL
           - COLLAPSE_UP
+          - CONTENT_STORE
           - COPY
           - DATABASE
           - DELETE
@@ -10383,6 +10613,7 @@ components:
           - DOCUMENT_FEED
           - DOCUMENT_FOLDER
           - DOCUMENT_GIT_REPO
+          - DOCUMENT_GIT_REPO_FOLDER
           - DOCUMENT_INDEX
           - DOCUMENT_KAFKA_CONFIG
           - DOCUMENT_PIPELINE
@@ -10448,6 +10679,7 @@ components:
           - FUNCTION
           - GENERATE
           - HELP
+          - HELP_OUTLINE
           - HIDE
           - HIDE_MENU
           - HISTORY
@@ -10897,6 +11129,19 @@ components:
               $ref: "#/components/schemas/ComponentSelectionHandler"
           showTable:
             type: boolean
+    EmptyAppPermissionSet:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AppPermissionSet"
+      - type: object
+        properties:
+          operator:
+            type: string
+            enum:
+            - ALL_OF
+            - ONE_OF
+            - SINGLE
+            - EMPTY
     EntityEvent:
       type: object
       properties:
@@ -11351,6 +11596,7 @@ components:
             - WORD_BOUNDARY
             - CONTAINS_CASE_SENSITIVE
             - EQUALS_CASE_SENSITIVE
+            - NOT_EQUALS_CASE_SENSITIVE
             - STARTS_WITH_CASE_SENSITIVE
             - ENDS_WITH_CASE_SENSITIVE
             - MATCHES_REGEX_CASE_SENSITIVE
@@ -11382,6 +11628,19 @@ components:
         maxApiKeyExpiryAgeMs:
           type: integer
           format: int64
+        obfuscatedFields:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        receiptCheckMode:
+          type: string
+          enum:
+          - FEED_STATUS
+          - RECEIPT_POLICY
+          - RECEIVE_ALL
+          - DROP_ALL
+          - REJECT_ALL
         uiConfig:
           $ref: "#/components/schemas/UiConfig"
     FeedDoc:
@@ -12205,6 +12464,7 @@ components:
           - 406 - 110 - Feed is not set to receive data
           - 406 - 111 - Feed is not valid
           - 406 - 112 - Data Feed key and/or accountId is not valid
+          - 406 - 113 - Data has been rejected by the receipt policy rules
           - 406 - 120 - Unexpected data type
           - 406 - 200 - Unknown compression
           - 401 - 300 - Client Certificate Required
@@ -12255,6 +12515,12 @@ components:
           type: boolean
         branch:
           type: string
+        commit:
+          type: string
+        contentStoreContentPackId:
+          type: string
+        contentStoreMetadata:
+          $ref: "#/components/schemas/ContentStoreMetadata"
         createTimeMs:
           type: integer
           format: int64
@@ -12337,6 +12603,7 @@ components:
           - SHA2_256
           - BCRYPT
           - ARGON_2
+          - SHA2_512
         id:
           type: integer
           format: int32
@@ -12352,6 +12619,30 @@ components:
         version:
           type: integer
           format: int32
+    HashedReceiveDataRules:
+      type: object
+      properties:
+        fieldNameToSaltMap:
+          type: object
+          additionalProperties:
+            type: string
+        hashAlgorithm:
+          type: string
+          enum:
+          - SHA3_256
+          - SHA2_256
+          - BCRYPT
+          - ARGON_2
+          - SHA2_512
+        receiveDataRules:
+          $ref: "#/components/schemas/ReceiveDataRules"
+        snapshotTimeEpochMs:
+          type: integer
+          format: int64
+        uuidToFlattenedDictMap:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/DictionaryDoc"
     HistogramKeySchema:
       type: object
       properties:
@@ -12458,6 +12749,8 @@ components:
           - CREATE_CONFIRMATION
           - ACTION_CONFIRMATION
           - IGNORE_CONFIRMATION
+        mockEnvironment:
+          type: boolean
         rootDocRef:
           $ref: "#/components/schemas/DocRef"
         useImportFolders:
@@ -13583,6 +13876,7 @@ components:
           - CODE
           - COLLAPSE_ALL
           - COLLAPSE_UP
+          - CONTENT_STORE
           - COPY
           - DATABASE
           - DELETE
@@ -13600,6 +13894,7 @@ components:
           - DOCUMENT_FEED
           - DOCUMENT_FOLDER
           - DOCUMENT_GIT_REPO
+          - DOCUMENT_GIT_REPO_FOLDER
           - DOCUMENT_INDEX
           - DOCUMENT_KAFKA_CONFIG
           - DOCUMENT_PIPELINE
@@ -13665,6 +13960,7 @@ components:
           - FUNCTION
           - GENERATE
           - HELP
+          - HELP_OUTLINE
           - HIDE
           - HIDE_MENU
           - HISTORY
@@ -14449,6 +14745,12 @@ components:
           - "'=', '!=', 'in', 'in dictionary'"
           - "'is', 'in folder', '=', '!=', 'in', 'in dictionary'"
           - "'=', '!=', 'in', 'in dictionary'"
+          - "'=', '!=', '==', '!==', 'in', 'in dictionary'"
+          - "'==', '!==', 'between', 'in', 'in dictionary'"
+          - "'==', '!==', 'in', 'in dictionary', '=', '!=', 'between', 'contains',\
+            \ 'contains (CS)', '>', '>=', '<', '<=', 'is null', 'is not null', 'matches\
+            \ regex', 'matches regex (CS)', 'starts with', 'starts with (CS)', 'ends\
+            \ with', 'ends with (CS)'"
           - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
           - "'=', '!=', 'in', 'in dictionary', 'matches regex'"
           - "'=', '!=', 'in', 'in dictionary'"
@@ -15124,6 +15426,16 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CompletionItem"
+    ResultPageContentStoreContentPackWithDynamicState:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: "#/components/schemas/PageResponse"
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContentStoreContentPackWithDynamicState"
     ResultPageCustomRollUpMask:
       type: object
       description: A page of results.
@@ -16177,6 +16489,46 @@ components:
           $ref: "#/components/schemas/AbstractDocumentPermissionsChange"
         docRef:
           $ref: "#/components/schemas/DocRef"
+    SingletonAppPermissionSet:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AppPermissionSet"
+      - type: object
+        properties:
+          appPermission:
+            type: string
+            enum:
+            - ADMINISTRATOR
+            - ANNOTATIONS
+            - MANAGE_CACHE_PERMISSION
+            - VIEW_DATA_PERMISSION
+            - VIEW_DATA_WITH_PIPELINE_PERMISSION
+            - DELETE_DATA_PERMISSION
+            - IMPORT_DATA_PERMISSION
+            - EXPORT_DATA_PERMISSION
+            - MANAGE_USERS_PERMISSION
+            - CHANGE_OWNER_PERMISSION
+            - STEPPING_PERMISSION
+            - MANAGE_PROCESSORS_PERMISSION
+            - MANAGE_TASKS_PERMISSION
+            - DOWNLOAD_SEARCH_RESULTS_PERMISSION
+            - MANAGE_API_KEYS
+            - MANAGE_CONTENT_TEMPLATES_PERMISSION
+            - MANAGE_DATA_RECEIPT_RULES_PERMISSION
+            - MANAGE_JOBS_PERMISSION
+            - MANAGE_PROPERTIES_PERMISSION
+            - MANAGE_POLICIES_PERMISSION
+            - MANAGE_NODES_PERMISSION
+            - MANAGE_INDEX_SHARDS_PERMISSION
+            - MANAGE_VOLUMES_PERMISSION
+            - MANAGE_DB_PERMISSION
+            - IMPORT_CONFIGURATION
+            - EXPORT_CONFIGURATION
+            - VIEW_SYSTEM_INFO_PERMISSION
+            - CHECK_RECEIPT_STATUS
+            - FETCH_HASHED_RECEIPT_POLICY_RULES
+            - VERIFY_API_KEY
+            - STROOM_PROXY
     Size:
       type: object
       properties:
@@ -17493,6 +17845,7 @@ components:
           - WORD_BOUNDARY
           - CONTAINS_CASE_SENSITIVE
           - EQUALS_CASE_SENSITIVE
+          - NOT_EQUALS_CASE_SENSITIVE
           - STARTS_WITH_CASE_SENSITIVE
           - ENDS_WITH_CASE_SENSITIVE
           - MATCHES_REGEX_CASE_SENSITIVE
@@ -17556,6 +17909,7 @@ components:
           - SHA2_256
           - BCRYPT
           - ARGON_2
+          - SHA2_512
         defaultMaxResults:
           type: string
         helpSubPathDocumentation:
@@ -17877,6 +18231,13 @@ components:
           - WARN
           - ERROR
           - FATAL
+    VerifyApiKeyRequest:
+      type: object
+      properties:
+        apiKey:
+          type: string
+        requiredAppPermissions:
+          $ref: "#/components/schemas/AppPermissionSet"
     ViewDoc:
       type: object
       properties:

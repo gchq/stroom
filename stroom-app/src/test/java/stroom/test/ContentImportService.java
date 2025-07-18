@@ -4,7 +4,6 @@ import stroom.content.ContentPack;
 import stroom.content.ContentPackCollection;
 import stroom.content.ContentPacks;
 import stroom.importexport.api.ImportExportSerializer;
-import stroom.importexport.api.ImportExportSpec.ImportExportCaller;
 import stroom.importexport.shared.ImportSettings;
 import stroom.test.common.util.test.ContentPackZipDownloader;
 import stroom.test.common.util.test.FileSystemTestUtil;
@@ -71,8 +70,7 @@ public class ContentImportService {
         importExportSerializer.read(
                 subPath,
                 new ArrayList<>(),
-                ImportSettings.auto(),
-                ImportExportCaller.EXPORT);
+                ImportSettings.auto());
     }
 
     public void importFromDefinitionYaml(final Path definitionYaml) {

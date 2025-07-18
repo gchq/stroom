@@ -19,8 +19,6 @@ package stroom.importexport.impl;
 import stroom.docref.DocRef;
 import stroom.importexport.api.ExportSummary;
 import stroom.importexport.api.ImportExportSerializer;
-import stroom.importexport.api.ImportExportSpec;
-import stroom.importexport.api.ImportExportSpec.ImportExportCaller;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.util.io.FileUtil;
@@ -32,6 +30,7 @@ import jakarta.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -74,8 +73,7 @@ public class ImportExportServiceImpl implements ImportExportService {
             importExportSerializer.read(
                     explodeDir,
                     confirmList,
-                    importSettings,
-                    ImportExportCaller.EXPORT);
+                    importSettings);
         } catch (final IOException | RuntimeException e) {
             throw new RuntimeException(e.getMessage(), e);
         } finally {
@@ -95,10 +93,11 @@ public class ImportExportServiceImpl implements ImportExportService {
 
             // Serialize the config in a human readable tree structure.
             final ExportSummary exportSummary = importExportSerializer.write(
+                    null,
                     explodeDir,
                     docRefs,
-                    true,
-                    ImportExportSpec.buildExportSpec());
+                    Collections.emptySet(),
+                    true);
 
             // Now zip the dir.
             ZipUtil.zip(zipFile, explodeDir);

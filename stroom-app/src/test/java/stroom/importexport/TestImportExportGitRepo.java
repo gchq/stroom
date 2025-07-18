@@ -27,8 +27,6 @@ import stroom.feed.shared.FeedDoc;
 import stroom.gitrepo.api.GitRepoStore;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.importexport.api.ImportExportSerializer;
-import stroom.importexport.api.ImportExportSpec;
-import stroom.importexport.api.ImportExportSpec.ImportExportCaller;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
@@ -244,8 +242,7 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 testDataDir,
                 docRefsToExport,
                 docTypesToIgnore,
-                true,
-                ImportExportSpec.buildExportSpec());
+                true);
 
         final List<String> pathPatterns = List.of(
                 "",
@@ -341,8 +338,7 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 testDataDir,
                 docRefsToExport,
                 docTypesToIgnore,
-                true,
-                ImportExportSpec.buildExportSpec());
+                true);
 
         final List<String> pathPatterns = List.of(
                 "",
@@ -379,7 +375,7 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 .useImportNames(true)
                 .rootDocRef(gitRepoNode2.getDocRef())
                 .build();
-        importExportSerializer.read(testDataDir, importStates, importSettings, ImportExportCaller.EXPORT);
+        importExportSerializer.read(testDataDir, importStates, importSettings);
 
         final var folder12 = this.explorerNodeService.getNodesByName(gitRepoNode2, "folder1");
         assertThat(folder12)
