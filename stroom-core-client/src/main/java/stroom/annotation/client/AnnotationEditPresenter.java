@@ -587,9 +587,9 @@ public class AnnotationEditPresenter
     }
 
     private void editComment(final long id) {
-        final FetchAnnotationEntryRequest fetchAnnotationEntryRequest =
+        final FetchAnnotationEntryRequest request =
                 new FetchAnnotationEntryRequest(annotationRef, id);
-        annotationResourceClient.fetchAnnotationEntry(fetchAnnotationEntryRequest, result -> {
+        annotationResourceClient.fetchAnnotationEntry(request, result -> {
             final CommentEditPresenter commentEditPresenter = commentEditPresenterProvider.get();
             commentEditPresenter.setText(result.getEntryValue().asPersistedValue());
             final PopupSize popupSize = PopupSize.resizable(600, 600);
@@ -600,25 +600,35 @@ public class AnnotationEditPresenter
                     .onShow(e -> commentEditPresenter.focus())
                     .onHideRequest(e -> {
                         if (e.isOk()) {
-                            final ChangeAnnotationEntryRequest changeAnnotationEntryRequest =
-                                    new ChangeAnnotationEntryRequest(annotationRef,
-                                            id,
-                                            commentEditPresenter.getText());
-                            annotationResourceClient.changeAnnotationEntry(changeAnnotationEntryRequest, res -> {
-                                        try {
-                                            updateHistory();
-                                        } finally {
-                                            e.hide();
-                                        }
-                                    }, error -> new DefaultErrorHandler(this, e::reset),
-                                    this);
-
+                            changeComment(id, commentEditPresenter.getText(), e);
                         } else {
                             e.hide();
                         }
                     })
                     .fire();
         }, this);
+    }
+
+    private void changeComment(final long id,
+                               final String text,
+                               final HidePopupRequestEvent e) {
+        final ChangeAnnotationEntryRequest request = new ChangeAnnotationEntryRequest(
+                annotationRef,
+                id,
+                text);
+        annotationResourceClient.changeAnnotationEntry(
+                request,
+                res -> afterChangeComment(e),
+                error -> new DefaultErrorHandler(this, e::reset),
+                this);
+    }
+
+    private void afterChangeComment(final HidePopupRequestEvent e) {
+        try {
+            updateHistory();
+        } finally {
+            e.hide();
+        }
     }
 
     private void deleteEntry(final long id) {
