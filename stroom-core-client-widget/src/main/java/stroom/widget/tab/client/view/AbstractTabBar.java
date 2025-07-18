@@ -113,7 +113,10 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
     public void removeTab(final TabData tabData) {
         final Widget tab = tabWidgetMap.get(tabData);
         if (tab != null) {
-            final int index = Math.max(0, tabs.indexOf(tabData) - 1);
+            final int minVisibleTab = indexOf(visibleTabs.get(0));
+            final int maxVisibleTab = indexOf(visibleTabs.get(visibleTabs.size() - 1));
+            final int tabsSize = tabs.size() - 1;
+            final int tabIndex = tabs.indexOf(tabData);
 
             makeInvisible(tab.getElement());
             remove(tab);
@@ -121,9 +124,28 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
             tabs.remove(tabData);
 
             if (!tabs.isEmpty()) {
-                keyboardSelectedTab = tabs.get(index);
-                fireTabSelection(tabs.get(index));
-                onResize();
+                if (tabData == selectedTab) {
+                    // select tab on the left of the removed tab
+                    final int nextSelected = Math.max(0, tabIndex - 1);
+                    keyboardSelectedTab = tabs.get(nextSelected);
+                    fireTabSelection(tabs.get(nextSelected));
+                }
+
+                visibleTabs.clear();
+
+                if (maxVisibleTab < tabsSize) {
+                    // keep current lhs tab if there are non-visible tabs to the right
+                    onResize(minVisibleTab);
+                } else if (minVisibleTab > 0) {
+                    // or move left one tab if there are non-visible tabs to the left
+                    onResize(minVisibleTab - 1);
+                }  else if (maxVisibleTab == tabsSize) {
+                    // or keep lhs tab if there are no non-visible tabs to show
+                    onResize(minVisibleTab);
+                } else {
+                    // otherwise calculate out the new visible tabs
+                    onResize();
+                }
             } else {
                 selectTab(null);
             }
@@ -131,19 +153,34 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
         }
     }
 
-    protected void moveTab(final TabData tabData, final int toIndex, final int currentStartIndex) {
+    @Override
+    public void moveTab(final TabData tabData, final int tabPos) {
         final Widget tabWidget = tabWidgetMap.get(tabData);
         if (tabWidget != null) {
+            final int minVisibleTab = indexOf(visibleTabs.get(0));
+            final int maxVisibleTab = indexOf(visibleTabs.get(visibleTabs.size() - 1));
+
+            final boolean tabPosVisible = tabPos >= minVisibleTab && tabPos <= maxVisibleTab;
+            // clear out visible tabs so we display the moved tab in the correct place
+            if (!tabPosVisible) {
+                visibleTabs.clear();
+            }
+
+            final int startIndex = tabPosVisible ? minVisibleTab : -1;
+
             remove(tabWidget);
             tabWidgetMap.remove(tabData);
             tabs.remove(tabData);
 
             final AbstractTab tab = createTab(tabData);
-            insert(tab, toIndex);
+            insert(tab, tabPos);
             tabWidgetMap.put(tabData, tab);
-            tabs.add(toIndex, tabData);
+            tabs.add(tabPos, tabData);
 
-            onResize(currentStartIndex);
+            onResize(startIndex);
+
+            keyboardSelectTab(tabData);
+            fireTabSelection(tabData);
         }
     }
 
@@ -214,7 +251,7 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
         onResize(-1);
     }
 
-    private void onResize(final int currentStartIndex) {
+    private void onResize(final int startIndex) {
 //        GWT.log("onResize");
         overflowTabCount = 0;
 
@@ -223,17 +260,18 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
 
             Set<TabData> displayableTabs = new HashSet<>();
 
-            if (currentStartIndex != -1 || visibleTabs.contains(selectedTab)) {
-                // retain the current start index if requested, or we are already showing the selected tab
-                final int startIndex = currentStartIndex == -1 ? indexOf(visibleTabs.get(0)) : currentStartIndex;
-                displayableTabs = getDisplayableTabs(startIndex);
+            if (startIndex != -1 || visibleTabs.contains(selectedTab)) {
+                // use the given start index or the current one if we are already showing the selected tab
+                final int newStartIndex = startIndex == -1 ? indexOf(visibleTabs.get(0)) : startIndex;
+                displayableTabs = getDisplayableTabs(newStartIndex);
+
             } else {
                 // otherwise loop through from the start and find which tabs to show
                 // if the selected tab is over halfway through then show it on the rhs
                 final int indexOfSelectedTab = indexOf(selectedTab);
-                final int startIndex = indexOfSelectedTab < tabs.size() / 2 ? indexOfSelectedTab : 0;
+                final int newStartIndex = indexOfSelectedTab < tabs.size() / 2 ? indexOfSelectedTab : 0;
 
-                for (int i = startIndex; i < tabs.size(); i++) {
+                for (int i = newStartIndex; i < tabs.size(); i++) {
                     displayableTabs = getDisplayableTabs(i);
                     if (displayableTabs.contains(selectedTab)) {
                         break;
@@ -244,9 +282,6 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
             final int tabCount = tabs.stream().map(this::getTab).filter(Predicate.not(AbstractTab::isHidden))
                     .collect(Collectors.toSet()).size();
             overflowTabCount = tabCount - displayableTabs.size();
-
-            // Clear all visible tabs.
-            visibleTabs.clear();
 
             // Remove any separators that might be present.
             removeSeparators();
@@ -265,6 +300,9 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
         Element tabIndexElement = null;
 
         final int tabGap = getTabGap();
+
+        // Clear all visible tabs.
+        visibleTabs.clear();
 
         // Loop through the tabs in display order and make them visible
         int x = 0;
@@ -527,7 +565,7 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
                 final TabData targetTabData = getTargetTabData(target);
                 if (targetTabData != null) {
                     ShowTabMenuEvent.fire(this,
-                            targetTabData,
+                            targetTabData, tabs,
                             new PopupPosition(event.getClientX(), event.getClientY()));
                 }
             }

@@ -16,33 +16,23 @@
 
 package stroom.widget.tab.client.event;
 
-import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
-import java.util.List;
-
-public class ShowTabMenuEvent extends GwtEvent<ShowTabMenuEvent.Handler> {
+public class RequestCloseTabsEvent extends GwtEvent<RequestCloseTabsEvent.Handler> {
 
     private static Type<Handler> TYPE;
-    private final TabData tabData;
-    private final List<TabData> tabList;
-    private final PopupPosition popupPosition;
+    private final TabData[] tabList;
 
-    private ShowTabMenuEvent(final TabData tabData, final List<TabData> tabList,
-                             final PopupPosition popupPosition) {
-        this.tabData = tabData;
+    private RequestCloseTabsEvent(final TabData[] tabList) {
         this.tabList = tabList;
-        this.popupPosition = popupPosition;
     }
 
-    public static void fire(final HasHandlers handlers,
-                            final TabData tabData, final List<TabData> tabList,
-                            final PopupPosition popupPosition) {
-        handlers.fireEvent(new ShowTabMenuEvent(tabData,  tabList, popupPosition));
+    public static void fire(final HasHandlers handlers, final TabData[] tabList) {
+        handlers.fireEvent(new RequestCloseTabsEvent(tabList));
     }
 
     public static Type<Handler> getType() {
@@ -52,6 +42,10 @@ public class ShowTabMenuEvent extends GwtEvent<ShowTabMenuEvent.Handler> {
         return TYPE;
     }
 
+    public TabData[] getTabList() {
+        return tabList;
+    }
+
     @Override
     public Type<Handler> getAssociatedType() {
         return getType();
@@ -59,23 +53,11 @@ public class ShowTabMenuEvent extends GwtEvent<ShowTabMenuEvent.Handler> {
 
     @Override
     protected void dispatch(final Handler handler) {
-        handler.onShow(this);
-    }
-
-    public TabData getTabData() {
-        return tabData;
-    }
-
-    public List<TabData> getTabList() {
-        return tabList;
-    }
-
-    public PopupPosition getPopupPosition() {
-        return popupPosition;
+        handler.onCloseTabs(this);
     }
 
     public interface Handler extends EventHandler {
 
-        void onShow(ShowTabMenuEvent event);
+        void onCloseTabs(RequestCloseTabsEvent event);
     }
 }

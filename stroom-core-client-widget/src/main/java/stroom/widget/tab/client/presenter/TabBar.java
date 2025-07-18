@@ -35,6 +35,8 @@ public interface TabBar extends
 
     void removeTab(TabData tab);
 
+    void moveTab(TabData tabData, int tabPos);
+
     void clear();
 
     void selectTab(TabData tab);

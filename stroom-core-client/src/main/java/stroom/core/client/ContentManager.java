@@ -17,6 +17,7 @@
 package stroom.core.client;
 
 import stroom.content.client.event.CloseContentTabEvent;
+import stroom.content.client.event.MoveContentTabEvent;
 import stroom.content.client.event.OpenContentTabEvent;
 import stroom.core.client.event.CloseContentEvent;
 import stroom.core.client.event.CloseContentEvent.Callback;
@@ -27,6 +28,8 @@ import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseOtherTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseSavedTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
+import stroom.widget.tab.client.event.RequestCloseTabsEvent;
+import stroom.widget.tab.client.event.RequestMoveTabEvent;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.gwt.core.client.GWT;
@@ -65,6 +68,12 @@ public class ContentManager implements HasHandlers {
                     .toArray(TabData[]::new);
             closeAll(DirtyMode.CONFIRM_DIRTY, false, arr);
         });
+
+        eventBus.addHandler(RequestCloseTabsEvent.getType(),
+                event -> closeAll(DirtyMode.CONFIRM_DIRTY, false, event.getTabList()));
+
+        eventBus.addHandler(RequestMoveTabEvent.getType(),
+                event -> moveTab(event.getTabData(), event.getTabPos()));
 
         eventBus.addHandler(
                 RequestCloseAllTabsEvent.getType(),
@@ -126,6 +135,10 @@ public class ContentManager implements HasHandlers {
         } else {
             GWT.log("No close handler for " + tabData.getType() + " - " + tabData.getLabel());
         }
+    }
+
+    public void moveTab(final TabData tabData, final int tabPos) {
+        MoveContentTabEvent.fire(this, tabData, tabPos);
     }
 
     public void forceClose(final TabData tabData) {

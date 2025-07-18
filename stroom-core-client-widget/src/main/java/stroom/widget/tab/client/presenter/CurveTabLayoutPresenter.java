@@ -97,6 +97,15 @@ public abstract class CurveTabLayoutPresenter<P extends Proxy<?>> extends MyPres
         }
     }
 
+    public void moveTab(final TabData tabData, final int tabPos) {
+        final Layer layer = tabContentMap.get(tabData);
+        if (layer != null) {
+            getView().getTabBar().moveTab(tabData, tabPos);
+            getView().getTabBar().selectTab(tabData);
+            getView().getLayerContainer().show(layer);
+        }
+    }
+
     public void refresh(final TabData tabData) {
         getView().getTabBar().refresh();
     }

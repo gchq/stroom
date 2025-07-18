@@ -15,7 +15,7 @@ import java.util.List;
 public abstract class DraggableTabBar extends AbstractTabBar {
 
     private DraggedTab draggedTab;
-    private int currentStartIndex = -1;
+    private int currentStartIndex;
 
     public DraggableTabBar() {
         addDomHandler(this::onDragOver, DragOverEvent.getType());
@@ -54,11 +54,8 @@ public abstract class DraggableTabBar extends AbstractTabBar {
             final int newDragIndex = getDragIndex(dragPos);
 
             if (newDragIndex != -1 && newDragIndex != draggedTab.getIndex()) {
-                moveTab(draggedTab.getTabData(), currentStartIndex + newDragIndex, currentStartIndex);
                 draggedTab.setIndex(newDragIndex);
-
-                keyboardSelectTab(draggedTab.getTabData());
-                fireTabSelection(draggedTab.getTabData());
+                moveTab(draggedTab.getTabData(), currentStartIndex + newDragIndex);
             }
         }
     }
@@ -66,7 +63,6 @@ public abstract class DraggableTabBar extends AbstractTabBar {
     private void onDrop(final DropEvent event) {
         event.preventDefault();
 
-        currentStartIndex = -1;
         if (draggedTab != null) {
             draggedTab = null;
         }
