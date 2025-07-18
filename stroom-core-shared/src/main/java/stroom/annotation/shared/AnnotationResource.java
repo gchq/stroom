@@ -150,4 +150,28 @@ public interface AnnotationResource extends RestResource, DirectRestService {
             operationId = "findAnnotationTags")
     ResultPage<AnnotationTag> findAnnotationTags(
             @Parameter(description = "request", required = true) ExpressionCriteria request);
+
+    @POST
+    @Path("fetchAnnotationEntry")
+    @Operation(
+            summary = "Fetch an annotation entry",
+            operationId = "fetchAnnotationEntry")
+    AnnotationEntry fetchAnnotationEntry(
+            @Parameter(description = "request", required = true) FetchAnnotationEntryRequest request);
+
+    @POST
+    @Path("changeAnnotationEntry")
+    @Operation(
+            summary = "Change an annotation entry",
+            operationId = "changeAnnotationEntry")
+    Boolean changeAnnotationEntry(
+            @Parameter(description = "request", required = true) ChangeAnnotationEntryRequest request);
+
+    @POST
+    @Path("deleteAnnotationEntry")
+    @Operation(
+            summary = "Delete an annotation entry",
+            operationId = "deleteAnnotationEntry")
+    Boolean deleteAnnotationEntry(
+            @Parameter(description = "request", required = true) DeleteAnnotationEntryRequest request);
 }

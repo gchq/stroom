@@ -21,9 +21,12 @@ import stroom.annotation.shared.AnnotationCreator;
 import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.AnnotationFields;
 import stroom.annotation.shared.AnnotationTag;
+import stroom.annotation.shared.ChangeAnnotationEntryRequest;
 import stroom.annotation.shared.CreateAnnotationRequest;
 import stroom.annotation.shared.CreateAnnotationTagRequest;
+import stroom.annotation.shared.DeleteAnnotationEntryRequest;
 import stroom.annotation.shared.EventId;
+import stroom.annotation.shared.FetchAnnotationEntryRequest;
 import stroom.annotation.shared.MultiAnnotationChangeRequest;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.docref.DocRef;
@@ -449,6 +452,34 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
                         new DocRef(AnnotationTag.TYPE, at.getUuid()), DocumentPermission.VIEW))
                 .toList();
         return ResultPage.createUnboundedList(list);
+    }
+
+    public AnnotationEntry fetchAnnotationEntry(final FetchAnnotationEntryRequest request) {
+        checkAppPermission();
+        checkViewPermission(request.getAnnotationRef());
+        return annotationDao.fetchAnnotationEntry(
+                request.getAnnotationRef(),
+                securityContext.getUserRef(),
+                request.getAnnotationEntryId());
+    }
+
+    public Boolean changeAnnotationEntry(final ChangeAnnotationEntryRequest request) {
+        checkAppPermission();
+        checkEditPermission(request.getAnnotationRef());
+        return annotationDao.changeAnnotationEntry(
+                request.getAnnotationRef(),
+                securityContext.getUserRef(),
+                request.getAnnotationEntryId(),
+                request.getData());
+    }
+
+    public Boolean deleteAnnotationEntry(final DeleteAnnotationEntryRequest request) {
+        checkAppPermission();
+        checkDeletePermission(request.getAnnotationRef());
+        return annotationDao.logicalDeleteEntry(
+                request.getAnnotationRef(),
+                securityContext.getUserRef(),
+                request.getAnnotationEntryId());
     }
 
     private void fireGenericEntityChangeEvent() {

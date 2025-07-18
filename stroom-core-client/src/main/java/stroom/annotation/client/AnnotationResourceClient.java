@@ -4,9 +4,12 @@ import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.AnnotationTag;
+import stroom.annotation.shared.ChangeAnnotationEntryRequest;
 import stroom.annotation.shared.CreateAnnotationRequest;
 import stroom.annotation.shared.CreateAnnotationTagRequest;
+import stroom.annotation.shared.DeleteAnnotationEntryRequest;
 import stroom.annotation.shared.EventId;
+import stroom.annotation.shared.FetchAnnotationEntryRequest;
 import stroom.annotation.shared.MultiAnnotationChangeRequest;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.dispatch.client.DefaultErrorHandler;
@@ -211,6 +214,42 @@ public class AnnotationResourceClient extends AbstractRestClient {
                 .method(res -> res.findAnnotationTags(request))
                 .onSuccess(consumer)
                 .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    public void fetchAnnotationEntry(final FetchAnnotationEntryRequest request,
+                                     final Consumer<AnnotationEntry> consumer,
+                                     final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(ANNOTATION_RESOURCE)
+                .method(res -> res.fetchAnnotationEntry(request))
+                .onSuccess(consumer)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    public void changeAnnotationEntry(final ChangeAnnotationEntryRequest request,
+                                      final Consumer<Boolean> consumer,
+                                      final RestErrorHandler errorHandler,
+                                      final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(ANNOTATION_RESOURCE)
+                .method(res -> res.changeAnnotationEntry(request))
+                .onSuccess(consumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    public void deleteAnnotationEntry(final DeleteAnnotationEntryRequest request,
+                                      final Consumer<Boolean> consumer,
+                                      final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(ANNOTATION_RESOURCE)
+                .method(res -> res.deleteAnnotationEntry(request))
+                .onSuccess(consumer)
+                .onFailure(new DefaultErrorHandler(this, () -> consumer.accept(false)))
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }

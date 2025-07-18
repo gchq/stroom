@@ -4,10 +4,10 @@
 package stroom.annotation.impl.db.jooq.tables.records;
 
 
-import stroom.annotation.impl.db.jooq.tables.AnnotationEntry;
-
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
+
+import stroom.annotation.impl.db.jooq.tables.AnnotationEntry;
 
 
 /**
@@ -105,15 +105,15 @@ public class AnnotationEntryRecord extends UpdatableRecordImpl<AnnotationEntryRe
     /**
      * Setter for <code>stroom.annotation_entry.deleted</code>.
      */
-    public void setDeleted(Byte value) {
+    public void setDeleted(Boolean value) {
         set(6, value);
     }
 
     /**
      * Getter for <code>stroom.annotation_entry.deleted</code>.
      */
-    public Byte getDeleted() {
-        return (Byte) get(6);
+    public Boolean getDeleted() {
+        return (Boolean) get(6);
     }
 
     // -------------------------------------------------------------------------
@@ -139,7 +139,7 @@ public class AnnotationEntryRecord extends UpdatableRecordImpl<AnnotationEntryRe
     /**
      * Create a detached, initialised AnnotationEntryRecord
      */
-    public AnnotationEntryRecord(Long id, Long fkAnnotationId, String data, String entryUserUuid, Long entryTimeMs, Byte typeId, Byte deleted) {
+    public AnnotationEntryRecord(Long id, Long fkAnnotationId, String data, String entryUserUuid, Long entryTimeMs, Byte typeId, Boolean deleted) {
         super(AnnotationEntry.ANNOTATION_ENTRY);
 
         setId(id);

@@ -18,6 +18,7 @@ package stroom.annotation.impl.db;
 
 import stroom.annotation.impl.AnnotationConfig;
 import stroom.annotation.impl.AnnotationDao;
+import stroom.annotation.impl.db.jooq.tables.records.AnnotationEntryRecord;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationRecord;
 import stroom.annotation.shared.AbstractAnnotationChange;
 import stroom.annotation.shared.AddTag;
@@ -382,6 +383,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                         .from(ANNOTATION_ENTRY)
                         .join(ANNOTATION).on(ANNOTATION_ENTRY.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
                         .where(ANNOTATION.UUID.eq(annotationRef.getUuid()))
+                        .and(ANNOTATION_ENTRY.DELETED.isFalse())
                         .orderBy(ANNOTATION_ENTRY.ENTRY_TIME_MS)
                         .fetch())
                 .map(this::mapToAnnotationEntry);
@@ -1238,5 +1240,78 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
     public void clear() {
         JooqUtil.context(connectionProvider, context -> context.deleteFrom(ANNOTATION_ENTRY).execute());
         JooqUtil.context(connectionProvider, context -> context.deleteFrom(ANNOTATION).execute());
+    }
+
+    @Override
+    public AnnotationEntry fetchAnnotationEntry(final DocRef annotationRef,
+                                                final UserRef currentUser,
+                                                final long entryId) {
+        final Optional<Long> optionalId = getId(annotationRef);
+        final long annotationId = optionalId.orElseThrow(() ->
+                new RuntimeException("Unable to fetch entry for unknown annotation"));
+        return JooqUtil.contextResult(connectionProvider, context ->
+                context.selectFrom(ANNOTATION_ENTRY)
+                        .where(ANNOTATION_ENTRY.FK_ANNOTATION_ID.eq(annotationId))
+                        .and(ANNOTATION_ENTRY.ID.eq(entryId))
+                        .fetchOptional()
+                        .map(this::mapToAnnotationEntry)
+                        .orElseThrow(() -> new RuntimeException("Unable to find entry")));
+    }
+
+    @Override
+    public boolean changeAnnotationEntry(final DocRef annotationRef,
+                                         final UserRef currentUser,
+                                         final long entryId,
+                                         final String data) {
+        final Optional<Long> optionalId = getId(annotationRef);
+        final long annotationId = optionalId.orElseThrow(() ->
+                new RuntimeException("Unable to change entry for unknown annotation"));
+
+        // Get the entry first.
+        return JooqUtil.transactionResult(connectionProvider, context -> {
+            final Optional<AnnotationEntryRecord> optional = context.selectFrom(ANNOTATION_ENTRY)
+                    .where(ANNOTATION_ENTRY.FK_ANNOTATION_ID.eq(annotationId))
+                    .and(ANNOTATION_ENTRY.ID.eq(entryId))
+                    .fetchOptional();
+
+            final AnnotationEntryRecord record = optional
+                    .orElseThrow(() -> new RuntimeException("Unable to change missing entry for annotation"));
+
+            // Logically delete the old record.
+            logicalDeleteEntry(context, annotationId, entryId);
+
+            // Insert a new entry for the change at the same time as the old record.
+            return context.insertInto(ANNOTATION_ENTRY,
+                            ANNOTATION_ENTRY.ENTRY_TIME_MS,
+                            ANNOTATION_ENTRY.ENTRY_USER_UUID,
+                            ANNOTATION_ENTRY.FK_ANNOTATION_ID,
+                            ANNOTATION_ENTRY.TYPE_ID,
+                            ANNOTATION_ENTRY.DATA)
+                           .values(record.get(ANNOTATION_ENTRY.ENTRY_TIME_MS),
+                                   currentUser.getUuid(),
+                                   annotationId,
+                                   record.get(ANNOTATION_ENTRY.TYPE_ID),
+                                   data)
+                           .execute() != 0;
+        });
+    }
+
+    @Override
+    public boolean logicalDeleteEntry(final DocRef annotationRef, final UserRef currentUser, final long entryId) {
+        final Optional<Long> optionalId = getId(annotationRef);
+        final long annotationId = optionalId.orElseThrow(() ->
+                new RuntimeException("Unable to delete entry for unknown annotation"));
+        return JooqUtil.contextResult(connectionProvider, context ->
+                logicalDeleteEntry(context, annotationId, entryId));
+    }
+
+    private boolean logicalDeleteEntry(final DSLContext context,
+                                       final long annotationId,
+                                       final long entryId) {
+        return context.update(ANNOTATION_ENTRY)
+                       .set(ANNOTATION_ENTRY.DELETED, true)
+                       .where(ANNOTATION_ENTRY.FK_ANNOTATION_ID.eq(annotationId))
+                       .and(ANNOTATION_ENTRY.ID.eq(entryId))
+                       .execute() != 0;
     }
 }

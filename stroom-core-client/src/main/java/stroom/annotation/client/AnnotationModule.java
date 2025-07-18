@@ -23,6 +23,7 @@ import stroom.annotation.client.AnnotationTagEditPresenter.AnnotationTagEditView
 import stroom.annotation.client.ChangeAssignedToPresenter.ChangeAssignedToView;
 import stroom.annotation.client.ChangeStatusPresenter.ChangeStatusView;
 import stroom.annotation.client.ChooserPresenter.ChooserView;
+import stroom.annotation.client.CommentEditPresenter.CommentEditView;
 import stroom.annotation.client.DurationPresenter.DurationView;
 import stroom.annotation.client.LinkedEventPresenter.LinkedEventView;
 import stroom.core.client.gin.PluginModule;
@@ -50,6 +51,7 @@ public class AnnotationModule extends PluginModule {
                 ChangeAssignedToView.class,
                 ChangeAssignedToViewImpl.class);
         bindPresenterWidget(DurationPresenter.class, DurationView.class, DurationViewImpl.class);
+        bindPresenterWidget(CommentEditPresenter.class, CommentEditView.class, CommentEditViewImpl.class);
 
         bindSharedView(ChooserView.class, ChooserViewImpl.class);
         bind(ChooserPresenter.class);

@@ -70,4 +70,10 @@ public interface AnnotationDao {
      * @param age Anything older than this age will be deleted.
      */
     void physicallyDelete(Instant age);
+
+    AnnotationEntry fetchAnnotationEntry(DocRef annotationRef, UserRef currentUser, long entryId);
+
+    boolean changeAnnotationEntry(DocRef annotationRef, UserRef currentUser, long entryId, String data);
+
+    boolean logicalDeleteEntry(DocRef annotationRef, UserRef currentUser, long entryId);
 }

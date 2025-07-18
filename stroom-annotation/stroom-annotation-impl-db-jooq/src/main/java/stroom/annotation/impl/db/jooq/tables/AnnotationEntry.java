@@ -4,10 +4,9 @@
 package stroom.annotation.impl.db.jooq.tables;
 
 
-import stroom.annotation.impl.db.jooq.Keys;
-import stroom.annotation.impl.db.jooq.Stroom;
-import stroom.annotation.impl.db.jooq.tables.Annotation.AnnotationPath;
-import stroom.annotation.impl.db.jooq.tables.records.AnnotationEntryRecord;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 import org.jooq.Condition;
 import org.jooq.Field;
@@ -31,9 +30,10 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import stroom.annotation.impl.db.jooq.Keys;
+import stroom.annotation.impl.db.jooq.Stroom;
+import stroom.annotation.impl.db.jooq.tables.Annotation.AnnotationPath;
+import stroom.annotation.impl.db.jooq.tables.records.AnnotationEntryRecord;
 
 
 /**
@@ -90,7 +90,7 @@ public class AnnotationEntry extends TableImpl<AnnotationEntryRecord> {
     /**
      * The column <code>stroom.annotation_entry.deleted</code>.
      */
-    public final TableField<AnnotationEntryRecord, Byte> DELETED = createField(DSL.name("deleted"), SQLDataType.TINYINT.nullable(false).defaultValue(DSL.inline("0", SQLDataType.TINYINT)), this, "");
+    public final TableField<AnnotationEntryRecord, Boolean> DELETED = createField(DSL.name("deleted"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.inline("0", SQLDataType.BOOLEAN)), this, "");
 
     private AnnotationEntry(Name alias, Table<AnnotationEntryRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
