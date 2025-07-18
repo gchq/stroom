@@ -139,6 +139,10 @@ public class ImportConfigConfirmViewImpl extends ViewImpl implements ImportConfi
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Binder extends UiBinder<Widget, ImportConfigConfirmViewImpl> {
 
     }

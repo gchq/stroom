@@ -916,14 +916,15 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
     }
 
     private String createPath(final String parent, final String child) {
-        if (parent == null || parent.isEmpty()) {
+        if (NullSafe.isEmptyString(parent)) {
             return child;
         }
-        return parent + "/" + child;
+        return (parent + "/" + child)
+                .replace("//", "/");
     }
 
     private String getParentPath(final List<ExplorerNode> parents) {
-        if (parents != null && !parents.isEmpty()) {
+        if (NullSafe.hasItems(parents)) {
             String parentPath = parents.stream()
                     .map(ExplorerNode::getName)
                     .collect(Collectors.joining("/"));

@@ -158,6 +158,10 @@ public class ImportState {
         return docRef.toString();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public enum State implements HasDisplayValue {
         NEW("New"),
         UPDATE("Update"),

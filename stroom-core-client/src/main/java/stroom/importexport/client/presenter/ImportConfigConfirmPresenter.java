@@ -26,6 +26,8 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.shared.ExplorerConstants;
@@ -35,10 +37,13 @@ import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
+import stroom.importexport.shared.ImportState.State;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
+import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Message;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.Severity;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -52,8 +57,6 @@ import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.TableBuilder;
 import stroom.widget.util.client.TableCell;
 
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.Widget;
@@ -158,7 +161,9 @@ public class ImportConfigConfirmPresenter extends
 
     @Override
     protected void revealInParent() {
-        final PopupSize popupSize = PopupSize.resizable(800, 800, 380, 480);
+        final PopupSize popupSize = PopupSize.resizable(
+                1000, 800,
+                380, 480);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
@@ -250,39 +255,55 @@ public class ImportConfigConfirmPresenter extends
         addSelectedColumn();
         addInfoColumn();
         addActionColumn();
+        addIconColumn();
         addTypeColumn();
         addSourcePathColumn();
         addDestPathColumn();
         dataGrid.addEndColumn(new EndColumn<>());
     }
 
+    private void addIconColumn() {
+        dataGrid.addColumn(
+                DataGridUtil.svgPresetColumnBuilder(false, this::getDocTypeIcon)
+                        .centerAligned()
+                        .build(),
+                DataGridUtil.headingBuilder("")
+                        .withToolTip("Document type")
+                        .build(),
+                ColumnSizeConstants.ICON_COL);
+    }
+
     private void addSelectedColumn() {
 
-        // Select Column
-        final Column<ImportState, TickBoxState> column = new Column<ImportState, TickBoxState>(
-                TickBoxCell.create(false, false)) {
-            @Override
-            public TickBoxState getValue(final ImportState object) {
-                final Severity severity = object.getSeverity();
-                if (severity != null && severity.greaterThanOrEqual(Severity.ERROR)) {
-                    return null;
-                }
+        final Header<TickBoxState> tickBoxHeader = buildTickBoxHeader();
+        dataGrid.addColumn(
+                DataGridUtil.updatableTickBoxColumnBuilder((final ImportState importState) -> {
+                            final Severity severity = importState.getSeverity();
+                            if (severity != null && severity.greaterThanOrEqual(Severity.ERROR)) {
+                                return null;
+                            }
+                            return TickBoxState.fromBoolean(importState.isAction());
+                        })
+                        .centerAligned()
+                        .withFieldUpdater((idx, importState, tickBoxState) -> {
+                            importState.setAction(tickBoxState.toBoolean());
+                        })
+                        .build(),
+                tickBoxHeader,
+                ColumnSizeConstants.CHECKBOX_COL);
+    }
 
-                return TickBoxState.fromBoolean(object.isAction());
-            }
-        };
-        final Header<TickBoxState> header = new Header<TickBoxState>(
+    private Header<TickBoxState> buildTickBoxHeader() {
+        //noinspection Convert2Diamond // Cos GWT
+        final Header<TickBoxState> tickBoxHeader = new Header<TickBoxState>(
                 TickBoxCell.create(false, false)) {
             @Override
             public TickBoxState getValue() {
                 return getHeaderState();
             }
         };
-        dataGrid.addColumn(column, header, ColumnSizeConstants.CHECKBOX_COL);
 
-        // Add Handlers
-        column.setFieldUpdater((index, row, value) -> row.setAction(value.toBoolean()));
-        header.setUpdater(value -> {
+        tickBoxHeader.setUpdater(value -> {
             if (confirmList != null) {
                 if (value.equals(TickBoxState.UNTICK)) {
                     for (final ImportState item : confirmList) {
@@ -299,12 +320,12 @@ public class ImportConfigConfirmPresenter extends
                 dataGrid.setRowCount(confirmList.size());
             }
         });
+        return tickBoxHeader;
     }
 
     private TickBoxState getHeaderState() {
-        TickBoxState state = TickBoxState.UNTICK;
-
-        if (confirmList != null && confirmList.size() > 0) {
+        final TickBoxState state;
+        if (NullSafe.hasItems(confirmList)) {
             boolean allAction = true;
             boolean allNotAction = true;
 
@@ -323,27 +344,21 @@ public class ImportConfigConfirmPresenter extends
             } else {
                 state = TickBoxState.HALF_TICK;
             }
+        } else {
+            state = TickBoxState.UNTICK;
         }
         return state;
-
     }
 
     private Preset createInfoColSvgPreset(final Severity severity) {
-
         final String title = "Click to see " + severity.getSummaryValue()
                 .toLowerCase();
 
-        final Preset svgPreset;
-        switch (severity) {
-            case INFO:
-                svgPreset = SvgPresets.INFO;
-                break;
-            case WARNING:
-                svgPreset = SvgPresets.ALERT;
-                break;
-            default:
-                svgPreset = SvgPresets.ERROR;
-        }
+        final Preset svgPreset = switch (severity) {
+            case INFO -> SvgPresets.INFO;
+            case WARNING -> SvgPresets.ALERT;
+            default -> SvgPresets.ERROR;
+        };
         return svgPreset.title(title);
     }
 
@@ -352,7 +367,7 @@ public class ImportConfigConfirmPresenter extends
         final InfoColumn<ImportState> infoColumn = new InfoColumn<ImportState>() {
             @Override
             public Preset getValue(final ImportState object) {
-                if (object.getMessageList().size() > 0 || object.getUpdatedFieldList().size() > 0) {
+                if (!object.getMessageList().isEmpty() || !object.getUpdatedFieldList().isEmpty()) {
                     final Severity severity = object.getSeverity();
                     return createInfoColSvgPreset(severity);
                 } else {
@@ -363,7 +378,7 @@ public class ImportConfigConfirmPresenter extends
             @Override
             protected void showInfo(final ImportState action, final PopupPosition popupPosition) {
                 final HtmlBuilder htmlBuilder = new HtmlBuilder();
-                if (action.getMessageList().size() > 0) {
+                if (!action.getMessageList().isEmpty()) {
 
                     final TableBuilder tb = new TableBuilder();
                     tb.row(TableCell.header("Messages", 2));
@@ -373,8 +388,8 @@ public class ImportConfigConfirmPresenter extends
                     htmlBuilder.div(tb::write, Attribute.className("infoTable"));
                 }
 
-                if (action.getUpdatedFieldList().size() > 0) {
-                    if (action.getMessageList().size() > 0) {
+                if (!action.getUpdatedFieldList().isEmpty()) {
+                    if (!action.getMessageList().isEmpty()) {
                         htmlBuilder.br();
                     }
 
@@ -390,50 +405,40 @@ public class ImportConfigConfirmPresenter extends
     }
 
     private void addActionColumn() {
-        final Column<ImportState, String> column = new Column<ImportState, String>(
-                new TextCell()) {
-            @Override
-            public String getValue(final ImportState action) {
-                if (action.getState() != null) {
-                    return action.getState().getDisplayValue();
-                }
-                return "Error";
-            }
-        };
-        dataGrid.addResizableColumn(column, "Action", 50);
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder((ImportState importState) ->
+                                NullSafe.getOrElse(importState,
+                                        ImportState::getState,
+                                        State::getDisplayValue,
+                                        "Error"))
+                        .build(),
+                "Action",
+                50);
     }
 
     private void addTypeColumn() {
-        final Column<ImportState, String> column = new Column<ImportState, String>(
-                new TextCell()) {
-            @Override
-            public String getValue(final ImportState action) {
-                return action.getDocRef().getType();
-            }
-        };
-        dataGrid.addResizableColumn(column, "Type", 100);
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder((ImportState importState) ->
+                                importState.getDocRef().getType())
+                        .build(),
+                "Type",
+                200);
     }
 
     private void addSourcePathColumn() {
-        final Column<ImportState, String> column = new Column<ImportState, String>(
-                new TextCell()) {
-            @Override
-            public String getValue(final ImportState action) {
-                return action.getSourcePath();
-            }
-        };
-        dataGrid.addResizableColumn(column, "Source Path", 300);
+        dataGrid.addResizableColumn(
+                DataGridUtil.textWithTooltipColumnBuilder(ImportState::getSourcePath)
+                        .build(),
+                "Source Path",
+                320);
     }
 
     private void addDestPathColumn() {
-        final Column<ImportState, String> column = new Column<ImportState, String>(
-                new TextCell()) {
-            @Override
-            public String getValue(final ImportState action) {
-                return action.getDestPath();
-            }
-        };
-        dataGrid.addResizableColumn(column, "Destination Path", 300);
+        dataGrid.addResizableColumn(
+                DataGridUtil.textWithTooltipColumnBuilder(ImportState::getDestPath)
+                        .build(),
+                "Destination Path",
+                320);
     }
 
     public void abortImport(final HidePopupRequestEvent e) {
@@ -490,11 +495,27 @@ public class ImportConfigConfirmPresenter extends
                 .exec();
     }
 
+    private Preset getDocTypeIcon(final ImportState importState) {
+        final DocRef docRef = NullSafe.get(importState, ImportState::getDocRef);
+        if (docRef != null) {
+            final DocumentType documentType = DocumentTypeRegistry.get(docRef.getType());
+            return NullSafe.get(
+                    documentType,
+                    dt -> new Preset(dt.getIcon(), dt.getDisplayType(), true));
+        } else {
+            return null;
+        }
+    }
+
     private void clearCaches() {
         // TODO : Add cache clearing functionality.
         // ClearScriptCacheEvent.fire(this);
         // ClearFunctionCacheEvent.fire(this);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface ImportConfigConfirmView extends View, Focus {
 
@@ -520,6 +541,10 @@ public class ImportConfigConfirmPresenter extends
 
         Widget getDataGridViewWidget();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     @ProxyCodeSplit
     public interface ImportConfirmProxy extends Proxy<ImportConfigConfirmPresenter> {
