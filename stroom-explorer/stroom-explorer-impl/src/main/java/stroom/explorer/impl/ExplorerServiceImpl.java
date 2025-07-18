@@ -350,10 +350,15 @@ class ExplorerServiceImpl
                     return openItemsImpl.getOpenItemSet()
                             .stream()
                             .filter(Objects::nonNull)
-                            .map(explorerNodeKey -> treeModel.getNode(explorerNodeKey.getUuid()))
-                            .map(node -> node.getDocRef().getType() + " "
-                                         + node.getName()
-                                         + " (" + node.getUuid() + ")")
+                            .map(explorerNodeKey -> {
+                                final ExplorerNode node = treeModel.getNode(explorerNodeKey.getUuid());
+                                return NullSafe.getOrElseGet(
+                                        node,
+                                        n -> n.getDocRef().getType()
+                                             + " " + n.getName()
+                                             + " (" + n.getUuid() + ")",
+                                        () -> "NO NODE FOUND FOR KEY: " + explorerNodeKey);
+                            })
                             .collect(Collectors.joining("\n"));
                 } catch (final Exception e) {
                     LOGGER.trace(e::getMessage, e);

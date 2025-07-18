@@ -69,6 +69,7 @@ public class ExplorerTreeModel {
 
     private List<ExplorerNode> currentRootNodes;
     private boolean selectParentIfNotFound = false;
+    private boolean isSettingOfInitialSelectionState = true;
 
     ExplorerTreeModel(final AbstractExplorerTree explorerTree,
                       final RestFactory restFactory,
@@ -122,6 +123,10 @@ public class ExplorerTreeModel {
         this.forceSelection = forceSelection;
     }
 
+    public void setSettingOfInitialSelectionState(final boolean enabled) {
+        this.isSettingOfInitialSelectionState = enabled;
+    }
+
     public void setEnsureVisible(final Set<ExplorerNode> ensureVisible) {
         this.ensureVisible = null;
         if (NullSafe.hasItems(ensureVisible)) {
@@ -161,7 +166,7 @@ public class ExplorerTreeModel {
         fetchData();
     }
 
-    private void refresh(final boolean fetch) {
+    public void refresh(final boolean fetch) {
         if (fetch) {
             // Fetch data from the server to update the tree.
             fetchData();
@@ -187,6 +192,11 @@ public class ExplorerTreeModel {
                 fetching = true;
                 Scheduler.get().scheduleDeferred(() -> {
                     final FetchExplorerNodesRequest criteria = currentCriteria;
+//                    GwtLogUtil.log(
+//                            ExplorerTreeModel.class,
+//                            "fetchData() - filter: '{}', openItems: {}",
+//                            criteria.getFilter().getNameFilter(),
+//                            criteria.getOpenItems());
 //                    GWT.log("fetchData - filter: " + explorerTreeFilter.getNameFilter()
 //                            + " openItems: " + openItems.getOpenItems().size()
 //                            + " minDepth: " + minDepth
@@ -206,9 +216,12 @@ public class ExplorerTreeModel {
 
     private void handleFetchResult(final FetchExplorerNodesRequest criteria,
                                    final FetchExplorerNodeResult result) {
-//        GWT.log("handleFetchResult - filter: " + result.getQualifiedFilterInput()
-//                + " openItems: " + NullSafe.size(result.getOpenedItems())
-//                + " tempOpenedItems: " + NullSafe.size(result.getTemporaryOpenedItems()));
+//        GwtLogUtil.log(ExplorerTreeModel.class,
+//                "handleFetchResult() - filter: {}, openItems: {}, tempOpenedItems: {}, forceSelection: {}",
+//                result.getQualifiedFilterInput(),
+//                NullSafe.size(result.getOpenedItems()),
+//                NullSafe.size(result.getTemporaryOpenedItems()),
+//                forceSelection);
 
         fetching = false;
         // Check if the filter settings have changed
@@ -280,7 +293,7 @@ public class ExplorerTreeModel {
                     nextSelection = rows.get(index);
                 }
             }
-            if (nextSelection != null) {
+            if (nextSelection != null && isSettingOfInitialSelectionState) {
 //                GWT.log("nextSelection: " + nextSelection);
                 explorerTree.setInitialSelectedItem(nextSelection);
             }

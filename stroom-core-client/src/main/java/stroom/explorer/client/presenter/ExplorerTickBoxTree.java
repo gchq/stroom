@@ -37,6 +37,7 @@ public class ExplorerTickBoxTree extends AbstractExplorerTree {
     public ExplorerTickBoxTree(final RestFactory restFactory,
                                final TaskMonitorFactory taskMonitorFactory) {
         super(restFactory, taskMonitorFactory, false, true);
+        super.setSettingOfInitialSelectionState(false);
     }
 
     @Override
@@ -54,8 +55,10 @@ public class ExplorerTickBoxTree extends AbstractExplorerTree {
 
     @Override
     void onData(final FetchExplorerNodeResult result) {
-        rootNodes = result.getRootNodes();
-        tickBoxSelectionModel.setRoots(result.getRootNodes());
+//        GwtLogUtil.log(ExplorerTickBoxTree.class, "onData()");
+        final List<ExplorerNode> rootNodes = result.getRootNodes();
+        this.rootNodes = rootNodes;
+        this.tickBoxSelectionModel.setRoots(rootNodes);
         super.onData(result);
     }
 
@@ -67,22 +70,32 @@ public class ExplorerTickBoxTree extends AbstractExplorerTree {
     @Override
     void doSelect(final ExplorerNode row, final SelectionType selectionType) {
         super.doSelect(row, selectionType);
+//        GwtLogUtil.log(
+//                ExplorerTickBoxTree.class,
+//                "doSelect() - row: {}, selectionType: {}",
+//                row, selectionType);
         toggleSelection(row);
-        refresh();
+//        setSelected(row, true);
+        refresh(false);
     }
 
     @Override
     void selectAll() {
+//        GwtLogUtil.log(ExplorerTickBoxTree.class, "selectAll()");
         if (rootNodes != null && rootNodes.size() == 1) {
             final ExplorerNode rootNode = rootNodes.get(0);
             toggleSelection(rootNode);
-            refresh();
+            refresh(false);
         }
     }
 
     public void setSelected(final ExplorerNode explorerNode, final boolean selected) {
+//        GwtLogUtil.log(
+//                ExplorerTickBoxTree.class,
+//                "setSelected() - explorerNode: {}, selected: {}",
+//                explorerNode, selected);
         tickBoxSelectionModel.setSelected(explorerNode, selected);
-        refresh();
+        refresh(false);
     }
 
     public Set<ExplorerNode> getSelectedSet() {
@@ -90,8 +103,10 @@ public class ExplorerTickBoxTree extends AbstractExplorerTree {
     }
 
     private void toggleSelection(final ExplorerNode selection) {
+//        GwtLogUtil.log(ExplorerTickBoxTree.class, "toggleSelection() - selection: {}", selection);
         if (selection != null) {
-            tickBoxSelectionModel.setSelected(selection,
+            tickBoxSelectionModel.setSelected(
+                    selection,
                     tickBoxSelectionModel.getState(selection) != TickBoxState.TICK);
         }
     }

@@ -52,7 +52,7 @@ public class ExportConfigSelectionPresenter
     private final TypeFilterPresenter typeFilterPresenter;
     private final DocumentTypeCache documentTypeCache;
 
-    private final InlineSvgToggleButton filter;
+    private final InlineSvgToggleButton typeFilterBtn;
     private boolean hasActiveFilter = false;
 
     @Inject
@@ -68,15 +68,10 @@ public class ExportConfigSelectionPresenter
         this.typeFilterPresenter = typeFilterPresenter;
         this.documentTypeCache = documentTypeCache;
 
-        filter = new InlineSvgToggleButton();
-        filter.setState(hasActiveFilter);
-        filter.setSvg(SvgImage.FILTER);
-        filter.getElement().addClassName("navigation-header-button filter");
-        filter.setTitle("Filter Types");
-        filter.setEnabled(true);
+        typeFilterBtn = buildTypeFilterButton();
 
         final FlowPanel buttons = getView().getButtonContainer();
-        buttons.add(filter);
+        buttons.add(typeFilterBtn);
 
         view.setTreeView(treePresenter.getView());
         view.setUiHandlers(this);
@@ -87,13 +82,32 @@ public class ExportConfigSelectionPresenter
                 ExplorerConstants.FAVOURITES_TYPE);
     }
 
+    private InlineSvgToggleButton buildTypeFilterButton() {
+        final InlineSvgToggleButton typeFilterBtn;
+        typeFilterBtn = new InlineSvgToggleButton();
+        typeFilterBtn.setState(false);
+        typeFilterBtn.setSvg(SvgImage.FILTER);
+        typeFilterBtn.getElement().addClassName("navigation-header-button filter");
+        typeFilterBtn.setTitle("Filter Types");
+        typeFilterBtn.setEnabled(true);
+        return typeFilterBtn;
+    }
+
     @Override
     protected void onBind() {
         registerHandler(typeFilterPresenter.addDataSelectionHandler(event -> treePresenter.setIncludedTypeSet(
                 typeFilterPresenter.getIncludedTypes().orElse(null))));
 
-        registerHandler(filter.addClickHandler((e) ->
-                showTypeFilter(filter.getElement())));
+        registerHandler(typeFilterBtn.addClickHandler((e) ->
+                showTypeFilter(typeFilterBtn.getElement())));
+
+        registerHandler(treePresenter.addDataSelectionHandler(dataSelectionEvent -> {
+//            GwtLogUtil.log(
+//                    ExportConfigSelectionPresenter.class,
+//                    "onDataSelection - selectedItem: {}, getSelectedSet: {}",
+//                    dataSelectionEvent.getSelectedItem(),
+//                    treePresenter.getSelectedSet());
+        }));
     }
 
     void onExportEvent(final ExportConfigEvent event) {
@@ -128,13 +142,13 @@ public class ExportConfigSelectionPresenter
     public void showTypeFilter(final Element target) {
         // Override the default behaviour of the toggle button as we only want
         // it to be ON if a filter has been set, not just when clicked
-        filter.setState(hasActiveFilter);
+        typeFilterBtn.setState(hasActiveFilter);
         typeFilterPresenter.show(target, this::setFilterState);
     }
 
     private void setFilterState(final boolean hasActiveFilter) {
         this.hasActiveFilter = hasActiveFilter;
-        filter.setState(hasActiveFilter);
+        typeFilterBtn.setState(hasActiveFilter);
     }
 
 //    @ProxyEvent

@@ -16,6 +16,9 @@
 
 package stroom.widget.util.client;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class SelectionType {
 
     private final boolean doubleSelect;
@@ -62,5 +65,29 @@ public class SelectionType {
 
     public boolean isRightClick() {
         return rightClick;
+    }
+
+    @Override
+    public String toString() {
+        final List<String> strings = new ArrayList<>();
+        if (doubleSelect) {
+            strings.add("doubleSelect");
+        }
+        if (allowMultiSelect) {
+            strings.add("allowMultiSelect");
+        }
+        if (controlPressed) {
+            strings.add("controlPressed");
+        }
+        if (shiftPressed) {
+            strings.add("shiftPressed");
+        }
+        if (rightClick) {
+            strings.add("rightClick");
+        }
+        if (isMultiSelect()) {
+            strings.add("multiSelect");
+        }
+        return "SelectionType{" + String.join(", " + strings) + "}";
     }
 }

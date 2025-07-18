@@ -23,6 +23,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.NodeFlag;
 import stroom.security.shared.DocumentPermission;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.Widget;
@@ -34,7 +35,8 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.Set;
 
-public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreePresenter.EntityCheckTreeView>
+public class EntityCheckTreePresenter
+        extends MyPresenterWidget<EntityCheckTreePresenter.EntityCheckTreeView>
         implements HasDataSelectionHandlers<Set<ExplorerNode>>, Focus {
 
     private final ExplorerTickBoxTree explorerTree;
@@ -68,8 +70,20 @@ public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreeP
     }
 
     public void changeNameFilter(final String name) {
+//        GwtLogUtil.log(EntityCheckTreePresenter.class,
+//                "changeNameFilter() - name: '{}'", name);
+        if (NullSafe.isEmptyString(name)) {
+//            // Clearing the filter so make sure any items selected are fully open
+//            NullSafe.forEach(explorerTree.getTickBoxSelectionModel().getOpenItems(), openItem -> {
+//                GwtLogUtil.log(EntityCheckTreePresenter.class,
+//                        "changeNameFilter() - Opening node: {}", openItem);
+//                explorerTree.getTreeModel().setItemOpen(openItem, true);
+//            });
+            explorerTree.getTreeModel().setEnsureVisible(explorerTree.getSelectedSet());
+        }
+        // Name filter timer will do the refresh
         explorerTree.getTreeModel().changeNameFilter(name);
-        refresh();
+//        refresh();
     }
 
     public void setTags(final String... tags) {

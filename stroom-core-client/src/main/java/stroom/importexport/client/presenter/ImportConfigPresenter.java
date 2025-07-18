@@ -146,12 +146,20 @@ public class ImportConfigPresenter
         show();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface ImportConfigView extends View, Focus {
 
         FormPanel getForm();
 
         String getFilename();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     @ProxyCodeSplit
     public interface ImportProxy extends Proxy<ImportConfigPresenter> {

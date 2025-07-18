@@ -18,6 +18,7 @@ package stroom.explorer.client.presenter;
 
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.user.cellview.client.HasSelection;
 import com.google.gwt.view.client.SelectionModel.AbstractSelectionModel;
@@ -28,8 +29,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerNode> implements HasSelection<ExplorerNode> {
+public class TickBoxSelectionModel
+        extends AbstractSelectionModel<ExplorerNode>
+        implements HasSelection<ExplorerNode> {
 
     // Ensure one value per key
     private final HashMap<ExplorerNode, TickBoxState> stateMap = new HashMap<>();
@@ -37,6 +41,7 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerNode> 
 
     private final Map<ExplorerNode, ExplorerNode> parents = new HashMap<>();
     private final Map<ExplorerNode, Set<ExplorerNode>> descendants = new HashMap<>();
+    private final Map<ExplorerNode, Set<ExplorerNode>> ancestors = new HashMap<>();
 
     public TickBoxSelectionModel() {
         super(null);
@@ -122,7 +127,7 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerNode> 
             boolean allTicked = true;
             boolean allUnticked = true;
             final List<ExplorerNode> children = parent.getChildren();
-            if (children != null && children.size() > 0) {
+            if (NullSafe.hasItems(children)) {
                 for (final ExplorerNode child : children) {
                     final TickBoxState childState = getState(child);
                     switch (childState) {
@@ -157,7 +162,7 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerNode> 
 
     private void selectChildren(final ExplorerNode item) {
         final List<ExplorerNode> children = item.getChildren();
-        if (children != null && children.size() > 0) {
+        if (NullSafe.hasItems(children)) {
             for (final ExplorerNode child : children) {
                 modifyState(child, TickBoxState.TICK);
                 addDescendants(getParent(child), child);
@@ -168,6 +173,8 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerNode> 
     private void modifyState(final ExplorerNode item, final TickBoxState state) {
         final TickBoxState currentState = getState(item);
         if (currentState != state) {
+//            GwtLogUtil.log(TickBoxSelectionModel.class, "modifyState() - item: {}, state: {} => {}",
+//                    item, currentState, state);
             stateChanges.add(item);
             if (state == null || state == TickBoxState.UNTICK) {
                 stateMap.remove(item);
@@ -194,15 +201,44 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerNode> 
 
         // Once the tree structure changes ensure we auto select descendants of selected ancestors.
         final Set<ExplorerNode> selectedSet = getSelectedSet();
-        stateMap.clear();
+
+//        GwtLogUtil.log(TickBoxSelectionModel.class,
+//                "setRoots() - \n  selectedSet: {}, \n  stateMap\n{}",
+//                selectedSet,
+//                stateMap.entrySet()
+//                        .stream()
+//                        .sorted(Comparator.comparing(entry ->
+//                                entry.getKey().getName()))
+//                        .map(entry -> "  " + entry.getKey().getName() + " - " + entry.getValue())
+//                        .collect(Collectors.joining("\n")));
+//        stateMap.clear();
 
         if (roots != null) {
-            addChildren(null, roots);
-            selectChildren(null, roots, false, selectedSet);
+            addChildren(null, new HashSet<>(), roots);
+
+//            GwtLogUtil.log(TickBoxSelectionModel.class,
+//                    "setRoots() - ancestors of selectedSet:\n{}",
+//                    ancestors.entrySet()
+//                            .stream()
+//                            .filter(entry -> selectedSet.contains(entry.getKey()))
+//                            .sorted(Comparator.comparing(entry ->
+//                                    entry.getKey().getName()))
+//                            .map(entry -> "  " + entry.getKey().getName()
+//                                          + " => "
+//                                          + String.join(", ", entry.getValue().toString()))
+//                            .collect(Collectors.joining("\n")));
+
+            final Set<ExplorerNode> ancestorsOfSelectedSet = selectedSet.stream()
+                    .flatMap(selectedNode ->
+                            NullSafe.stream(ancestors.get(selectedNode)))
+                    .collect(Collectors.toSet());
+
+            selectChildren(null, roots, false, selectedSet, ancestorsOfSelectedSet);
         }
     }
 
     private void addChildren(final ExplorerNode parent,
+                             final Set<ExplorerNode> ancestors,
                              final List<ExplorerNode> children) {
         if (children == null) {
             return;
@@ -210,22 +246,43 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerNode> 
 
         for (final ExplorerNode child : children) {
             parents.put(child, parent);
-            addChildren(child, child.getChildren());
+            final Set<ExplorerNode> ancestorsOfChild = new HashSet<>(ancestors);
+            ancestorsOfChild.add(parent);
+            this.ancestors.computeIfAbsent(child, k -> new HashSet<>())
+                    .addAll(ancestorsOfChild);
+            addChildren(child, ancestorsOfChild, child.getChildren());
         }
     }
 
     private void selectChildren(final ExplorerNode parent,
                                 final List<ExplorerNode> children,
                                 final boolean select,
-                                final Set<ExplorerNode> selectedSet) {
+                                final Set<ExplorerNode> selectedSet,
+                                final Set<ExplorerNode> ancestorsOfSelectedSet) {
         if (children == null) {
             return;
         }
 
         for (final ExplorerNode child : children) {
-            final boolean selectChildren = select || selectedSet.contains(parent) || selectedSet.contains(child);
+            final boolean selectChildren = select
+                                           || selectedSet.contains(parent)
+                                           || selectedSet.contains(child);
+//                                           || ancestorsOfSelectedSet.contains(child);
             setSelected(child, selectChildren);
-            selectChildren(child, child.getChildren(), selectChildren, selectedSet);
+            selectChildren(child, child.getChildren(), selectChildren, selectedSet, ancestorsOfSelectedSet);
         }
     }
+
+//    public Set<ExplorerNode> getOpenItems() {
+//        return getSelectedSet()
+//                .stream()
+//                .flatMap(selectedNode -> {
+//                    if (selectedNode.hasNodeFlag(NodeFlag.FOLDER)) {
+//                        return Stream.of(selectedNode);
+//                    } else {
+//                        return NullSafe.stream(ancestors.get(selectedNode));
+//                    }
+//                })
+//                .collect(Collectors.toSet());
+//    }
 }

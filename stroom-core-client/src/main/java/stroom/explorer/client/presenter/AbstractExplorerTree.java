@@ -84,6 +84,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
 
         cellTable = new MyCellTable<>(Integer.MAX_VALUE);
         cellTable.getElement().setClassName("explorerTree");
+        //noinspection Convert2Diamond
         cellTable.addColumn(new Column<ExplorerNode, ExplorerNode>(explorerCell) {
             @Override
             public ExplorerNode getValue(final ExplorerNode object) {
@@ -155,6 +156,10 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
         refresh();
     }
 
+    public void setSettingOfInitialSelectionState(final boolean enabled) {
+        treeModel.setSettingOfInitialSelectionState(enabled);
+    }
+
     public void changeNameFilter(final String name) {
         treeModel.changeNameFilter(name);
     }
@@ -168,6 +173,10 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
 
     public void refresh() {
         treeModel.refresh();
+    }
+
+    public void refresh(final boolean fetch) {
+        treeModel.refresh(fetch);
     }
 
     private int getItemIndex(final ExplorerNode item) {
@@ -223,8 +232,8 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
                     multiSelectStart = null;
                     selection.clear();
                 } else if (selectionType.isAllowMultiSelect() &&
-                        selectionType.isShiftPressed() &&
-                        multiSelectStart != null) {
+                           selectionType.isShiftPressed() &&
+                           multiSelectStart != null) {
                     // If control isn't pressed as well as shift then we are selecting a new range so clear.
                     if (!selectionType.isControlPressed()) {
                         selection.clear();

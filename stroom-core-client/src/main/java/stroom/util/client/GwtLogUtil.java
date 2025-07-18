@@ -3,6 +3,10 @@ package stroom.util.client;
 import stroom.util.shared.NullSafe;
 
 import com.google.gwt.core.shared.GWT;
+import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
+
+import java.util.Date;
 
 
 public class GwtLogUtil {
@@ -16,8 +20,8 @@ public class GwtLogUtil {
     private GwtLogUtil() {
     }
 
-    public static void log(final String template, final Object... args) {
-        GWT_LOGGER.log(template, args);
+    public static void log(final Class<?> clazz, final String template, final Object... args) {
+        GWT_LOGGER.log(clazz, template, args);
     }
 
 
@@ -26,7 +30,9 @@ public class GwtLogUtil {
 
     private interface GwtLogger {
 
-        void log(final String template, Object... args);
+        void log(final Class<?> clazz,
+                 final String template,
+                 final Object... args);
     }
 
 
@@ -36,7 +42,7 @@ public class GwtLogUtil {
     private static class NoOpGwtLogger implements GwtLogger {
 
         @Override
-        public void log(final String template, final Object... args) {
+        public void log(final Class<?> clazz, final String template, final Object... args) {
             // no-op
         }
     }
@@ -48,11 +54,17 @@ public class GwtLogUtil {
     private static class GwtLoggerImpl implements GwtLogger {
 
         @Override
-        public void log(final String template, final Object... args) {
+        public void log(final Class<?> clazz,
+                        final String template,
+                        final Object... args) {
+
+            final String dateTimeStr = DateTimeFormat.getFormat(PredefinedFormat.ISO_8601)
+                    .format(new Date());
+            final String prefix = dateTimeStr + " " + clazz.getSimpleName();
             if (NullSafe.isEmptyArray(args)
                 || template == null
                 || !template.contains("{}")) {
-                GWT.log(template);
+                GWT.log(prefix + " - " + template);
             } else {
                 String msg = template;
                 Throwable throwable = null;
@@ -64,7 +76,7 @@ public class GwtLogUtil {
                         msg = msg.replaceFirst("\\{}", NullSafe.toString(arg));
                     }
                 }
-                GWT.log(msg, throwable);
+                GWT.log(prefix + " - " + msg, throwable);
             }
         }
     }

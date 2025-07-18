@@ -49,6 +49,10 @@ public class ImportConfigEvent extends GwtEvent<ImportConfigEvent.Handler> {
         handler.onImport(this);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Handler extends EventHandler {
 
         void onImport(ImportConfigEvent event);
