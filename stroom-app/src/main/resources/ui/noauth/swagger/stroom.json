@@ -789,6 +789,36 @@
         "tags" : [ "Annotations" ]
       }
     },
+    "/annotation/v1/changeAnnotationEntry" : {
+      "post" : {
+        "operationId" : "changeAnnotationEntry",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ChangeAnnotationEntryRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Change an annotation entry",
+        "tags" : [ "Annotations" ]
+      }
+    },
     "/annotation/v1/changeDocumentPermissions" : {
       "post" : {
         "operationId" : "changeDocumentPermissions",
@@ -907,6 +937,36 @@
         "tags" : [ "Annotations" ]
       }
     },
+    "/annotation/v1/deleteAnnotationEntry" : {
+      "post" : {
+        "operationId" : "deleteAnnotationEntry",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DeleteAnnotationEntryRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Delete an annotation entry",
+        "tags" : [ "Annotations" ]
+      }
+    },
     "/annotation/v1/deleteAnnotationTag" : {
       "delete" : {
         "operationId" : "deleteAnnotationTag",
@@ -932,6 +992,36 @@
           }
         },
         "summary" : "Delete an annotation tag",
+        "tags" : [ "Annotations" ]
+      }
+    },
+    "/annotation/v1/fetchAnnotationEntry" : {
+      "post" : {
+        "operationId" : "fetchAnnotationEntry",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FetchAnnotationEntryRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AnnotationEntry"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch an annotation entry",
         "tags" : [ "Annotations" ]
       }
     },
@@ -12471,6 +12561,9 @@
       "AnnotationEntry" : {
         "type" : "object",
         "properties" : {
+          "deleted" : {
+            "type" : "boolean"
+          },
           "entryTime" : {
             "type" : "integer",
             "format" : "int64"
@@ -12488,6 +12581,16 @@
           "id" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "previousValue" : {
+            "$ref" : "#/components/schemas/EntryValue"
+          },
+          "updateTime" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "updateUser" : {
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
       },
@@ -13117,6 +13220,21 @@
             "items" : {
               "$ref" : "#/components/schemas/CacheIdentity"
             }
+          }
+        }
+      },
+      "ChangeAnnotationEntryRequest" : {
+        "type" : "object",
+        "properties" : {
+          "annotationEntryId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "annotationRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "data" : {
+            "type" : "string"
           }
         }
       },
@@ -14428,6 +14546,18 @@
           }
         }
       },
+      "DeleteAnnotationEntryRequest" : {
+        "type" : "object",
+        "properties" : {
+          "annotationEntryId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "annotationRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          }
+        }
+      },
       "DeleteDuplicateCheckRequest" : {
         "type" : "object",
         "properties" : {
@@ -15732,6 +15862,10 @@
           "externalIdentityProvider" : {
             "type" : "boolean"
           },
+          "lastAnnotationChangeTime" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
           "maxApiKeyExpiryAgeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -15821,6 +15955,18 @@
           },
           "volumeGroup" : {
             "type" : "string"
+          }
+        }
+      },
+      "FetchAnnotationEntryRequest" : {
+        "type" : "object",
+        "properties" : {
+          "annotationEntryId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "annotationRef" : {
+            "$ref" : "#/components/schemas/DocRef"
           }
         }
       },

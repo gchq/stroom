@@ -12,7 +12,7 @@ import jakarta.inject.Singleton;
         action = {EntityAction.UPDATE})
 public class AnnotationState implements EntityEvent.Handler {
 
-    private long lastChangeTime = System.currentTimeMillis();
+    private long lastChangeTime;
 
     public long getLastChangeTime() {
         return lastChangeTime;
