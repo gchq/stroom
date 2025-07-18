@@ -116,6 +116,48 @@ public class AnnotationEntryRecord extends UpdatableRecordImpl<AnnotationEntryRe
         return (Boolean) get(6);
     }
 
+    /**
+     * Setter for <code>stroom.annotation_entry.parent_id</code>.
+     */
+    public void setParentId(Long value) {
+        set(7, value);
+    }
+
+    /**
+     * Getter for <code>stroom.annotation_entry.parent_id</code>.
+     */
+    public Long getParentId() {
+        return (Long) get(7);
+    }
+
+    /**
+     * Setter for <code>stroom.annotation_entry.update_time_ms</code>.
+     */
+    public void setUpdateTimeMs(Long value) {
+        set(8, value);
+    }
+
+    /**
+     * Getter for <code>stroom.annotation_entry.update_time_ms</code>.
+     */
+    public Long getUpdateTimeMs() {
+        return (Long) get(8);
+    }
+
+    /**
+     * Setter for <code>stroom.annotation_entry.update_user_uuid</code>.
+     */
+    public void setUpdateUserUuid(String value) {
+        set(9, value);
+    }
+
+    /**
+     * Getter for <code>stroom.annotation_entry.update_user_uuid</code>.
+     */
+    public String getUpdateUserUuid() {
+        return (String) get(9);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -139,7 +181,7 @@ public class AnnotationEntryRecord extends UpdatableRecordImpl<AnnotationEntryRe
     /**
      * Create a detached, initialised AnnotationEntryRecord
      */
-    public AnnotationEntryRecord(Long id, Long fkAnnotationId, String data, String entryUserUuid, Long entryTimeMs, Byte typeId, Boolean deleted) {
+    public AnnotationEntryRecord(Long id, Long fkAnnotationId, String data, String entryUserUuid, Long entryTimeMs, Byte typeId, Boolean deleted, Long parentId, Long updateTimeMs, String updateUserUuid) {
         super(AnnotationEntry.ANNOTATION_ENTRY);
 
         setId(id);
@@ -149,6 +191,9 @@ public class AnnotationEntryRecord extends UpdatableRecordImpl<AnnotationEntryRe
         setEntryTimeMs(entryTimeMs);
         setTypeId(typeId);
         setDeleted(deleted);
+        setParentId(parentId);
+        setUpdateTimeMs(updateTimeMs);
+        setUpdateUserUuid(updateUserUuid);
         resetChangedOnNotNull();
     }
 }

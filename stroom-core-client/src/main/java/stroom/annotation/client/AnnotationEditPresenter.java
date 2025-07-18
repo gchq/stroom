@@ -92,9 +92,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -158,6 +156,9 @@ public class AnnotationEditPresenter
     private List<AnnotationTag> currentLabels;
     private List<AnnotationTag> currentCollections;
     private SimpleDuration currentRetentionPeriod;
+
+    private String currentTitle;
+    private String currentSubject;
 
     @Inject
     public AnnotationEditPresenter(final EventBus eventBus,
@@ -282,13 +283,12 @@ public class AnnotationEditPresenter
     }
 
     private void changeTitle(final String selected) {
-        if (hasChanged(getEntity().getName(), selected)) {
-            if (getEntity() != null) {
-                final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(
-                        annotationRef,
-                        new ChangeTitle(selected));
-                change(request);
-            }
+        if (hasChanged(currentTitle, selected)) {
+            currentTitle = selected;
+            final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(
+                    annotationRef,
+                    new ChangeTitle(selected));
+            change(request);
 
             getEntity().setName(selected);
             RefreshContentTabEvent.fire(this, parent);
@@ -296,11 +296,13 @@ public class AnnotationEditPresenter
     }
 
     private void setTitle(final String title) {
+        currentTitle = title;
         getView().setTitle(title);
     }
 
     private void changeSubject(final String selected) {
-        if (hasChanged(getEntity().getSubject(), selected)) {
+        if (hasChanged(currentSubject, selected)) {
+            currentSubject = selected;
             final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(
                     annotationRef,
                     new ChangeSubject(selected));
@@ -309,6 +311,7 @@ public class AnnotationEditPresenter
     }
 
     private void setSubject(final String subject) {
+        currentSubject = subject;
         getView().setSubject(subject);
     }
 
@@ -473,7 +476,6 @@ public class AnnotationEditPresenter
     private void updateHistory(final List<AnnotationEntry> entries) {
         if (entries != null) {
             final Date now = new Date();
-            final Map<AnnotationEntryType, EntryValue> currentValues = new HashMap<>();
 
             final SafeHtmlBuilder html = new SafeHtmlBuilder();
             final StringBuilder text = new StringBuilder();
@@ -481,10 +483,8 @@ public class AnnotationEditPresenter
             SafeHtml line = SafeHtmlUtils.EMPTY_SAFE_HTML;
             boolean first = true;
             for (final AnnotationEntry entry : entries) {
-                final EntryValue currentValue = currentValues.get(entry.getEntryType());
-
-                addEntryText(text, entry, currentValue);
-                final boolean added = addEntryHtml(html, entry, currentValue, now, line);
+                addEntryText(text, entry);
+                final boolean added = addEntryHtml(html, entry, now, line);
 
                 if (added && first) {
                     // If we actually added some content then make sure we add a line marker before any subsequent
@@ -492,9 +492,6 @@ public class AnnotationEditPresenter
                     first = false;
                     line = HISTORY_LINE;
                 }
-
-                // Remember the previous value.
-                currentValues.put(entry.getEntryType(), entry.getEntryValue());
             }
 
             html.append(HISTORY_INNER_END);
@@ -600,7 +597,7 @@ public class AnnotationEditPresenter
                     .popupType(PopupType.OK_CANCEL_DIALOG)
                     .popupSize(popupSize)
                     .caption("Edit Comment")
-                    .onShow(e -> getView().focus())
+                    .onShow(e -> commentEditPresenter.focus())
                     .onHideRequest(e -> {
                         if (e.isOk()) {
                             final ChangeAnnotationEntryRequest changeAnnotationEntryRequest =
@@ -634,8 +631,7 @@ public class AnnotationEditPresenter
     }
 
     private void addEntryText(final StringBuilder text,
-                              final AnnotationEntry entry,
-                              final EntryValue currentValue) {
+                              final AnnotationEntry entry) {
         final String entryUiValue = NullSafe.get(entry.getEntryValue(), EntryValue::asUiValue);
 
         if (AnnotationEntryType.COMMENT.equals(entry.getEntryType())) {
@@ -656,17 +652,17 @@ public class AnnotationEditPresenter
             text.append("\n");
 
         } else if (AnnotationEntryType.ASSIGNED.equals(entry.getEntryType())) {
-            if (currentValue != null) {
+            if (entry.getPreviousValue() != null) {
                 text.append(dateTimeFormatter.format(entry.getEntryTime()));
                 text.append(", ");
                 text.append(getUserName(entry.getEntryUser()));
                 text.append(",");
-                if (areSameUser(entry.getEntryUser(), currentValue)) {
+                if (areSameUser(entry.getEntryUser(), entry.getPreviousValue())) {
                     text.append(" removed their assignment");
                 } else {
                     text.append(" unassigned ");
-                    GWT.log("currentValue: " + currentValue);
-                    quote(text, currentValue.asUiValue());
+                    GWT.log("currentValue: " + entry.getPreviousValue());
+                    quote(text, entry.getPreviousValue().asUiValue());
                 }
                 text.append("\n");
             }
@@ -691,16 +687,16 @@ public class AnnotationEditPresenter
             text.append(getUserName(entry.getEntryUser()));
             text.append(",");
 
-            if (currentValue != null) {
+            if (entry.getPreviousValue() != null) {
                 text.append(" changed the ");
             } else {
                 text.append(" set the ");
             }
             text.append(entry.getEntryType().getActionText());
 
-            if (currentValue != null) {
+            if (entry.getPreviousValue() != null) {
                 text.append(" from ");
-                quote(text, currentValue.asUiValue());
+                quote(text, entry.getPreviousValue().asUiValue());
                 text.append(" to ");
                 quote(text, entryUiValue);
             } else {
@@ -734,7 +730,6 @@ public class AnnotationEditPresenter
 
     private boolean addEntryHtml(final SafeHtmlBuilder html,
                                  final AnnotationEntry entry,
-                                 final EntryValue currentValue,
                                  final Date now,
                                  final SafeHtml line) {
         boolean added = false;
@@ -750,6 +745,19 @@ public class AnnotationEditPresenter
             html.appendEscaped("commented");
             html.appendHtmlConstant("&nbsp;");
             html.append(getDurationLabel(entry.getEntryTime(), now));
+
+            if (!Objects.equals(entry.getEntryUser(), entry.getUpdateUser()) ||
+                !Objects.equals(entry.getEntryTime(), entry.getUpdateTime())) {
+                html.appendHtmlConstant("&nbsp;");
+                html.appendEscaped(" - ");
+                html.appendHtmlConstant("&nbsp;");
+                bold(html, getUserName(entry.getUpdateUser()));
+                html.appendHtmlConstant("&nbsp;");
+                html.appendEscaped("edited");
+                html.appendHtmlConstant("&nbsp;");
+                html.append(getDurationLabel(entry.getUpdateTime(), now));
+            }
+
             html.append(ELLIPSES);
             html.append(HISTORY_COMMENT_HEADER_END);
             html.append(HISTORY_COMMENT_BODY_START);
@@ -777,20 +785,20 @@ public class AnnotationEditPresenter
         } else {
             // Remember initial values but don't show them unless they change.
             if (AnnotationEntryType.ASSIGNED.equals(entry.getEntryType())) {
-                if (currentValue != null) {
+                if (entry.getPreviousValue() != null) {
                     html.append(line);
                     html.append(HISTORY_ITEM_START);
                     addEntryId(html, entry);
                     addIcon(html, entry.getEntryType());
                     bold(html, getUserName(entry.getEntryUser()));
-                    if (areSameUser(entry.getEntryUser(), currentValue)) {
+                    if (areSameUser(entry.getEntryUser(), entry.getPreviousValue())) {
                         html.appendHtmlConstant("&nbsp;");
                         html.appendEscaped("removed their assignment");
                     } else {
                         html.appendHtmlConstant("&nbsp;");
                         html.appendEscaped("unassigned");
                         html.appendHtmlConstant("&nbsp;");
-                        bold(html, getValueString(currentValue.asUiValue()));
+                        bold(html, getValueString(entry.getPreviousValue().asUiValue()));
                     }
                     html.appendEscaped(" ");
                     html.append(getDurationLabel(entry.getEntryTime(), now));
@@ -827,7 +835,7 @@ public class AnnotationEditPresenter
                 addEntryId(html, entry);
                 addIcon(html, entry.getEntryType());
                 bold(html, getUserName(entry.getEntryUser()));
-                if (currentValue != null) {
+                if (entry.getPreviousValue() != null) {
                     html.appendHtmlConstant("&nbsp;");
                     html.appendEscaped("changed the");
                     html.appendHtmlConstant("&nbsp;");
@@ -839,8 +847,8 @@ public class AnnotationEditPresenter
                 html.appendEscaped(entry.getEntryType().getDisplayValue().toLowerCase());
                 html.appendHtmlConstant("&nbsp;");
 
-                if (currentValue != null) {
-                    del(html, getValueString(currentValue.asUiValue()));
+                if (entry.getPreviousValue() != null) {
+                    del(html, getValueString(entry.getPreviousValue().asUiValue()));
                     html.appendHtmlConstant("&nbsp;");
                     html.appendEscaped("to");
                     html.appendHtmlConstant("&nbsp;");

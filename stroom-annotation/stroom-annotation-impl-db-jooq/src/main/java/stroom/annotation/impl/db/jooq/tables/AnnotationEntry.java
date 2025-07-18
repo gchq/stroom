@@ -92,6 +92,21 @@ public class AnnotationEntry extends TableImpl<AnnotationEntryRecord> {
      */
     public final TableField<AnnotationEntryRecord, Boolean> DELETED = createField(DSL.name("deleted"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.inline("0", SQLDataType.BOOLEAN)), this, "");
 
+    /**
+     * The column <code>stroom.annotation_entry.parent_id</code>.
+     */
+    public final TableField<AnnotationEntryRecord, Long> PARENT_ID = createField(DSL.name("parent_id"), SQLDataType.BIGINT, this, "");
+
+    /**
+     * The column <code>stroom.annotation_entry.update_time_ms</code>.
+     */
+    public final TableField<AnnotationEntryRecord, Long> UPDATE_TIME_MS = createField(DSL.name("update_time_ms"), SQLDataType.BIGINT.nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.annotation_entry.update_user_uuid</code>.
+     */
+    public final TableField<AnnotationEntryRecord, String> UPDATE_USER_UUID = createField(DSL.name("update_user_uuid"), SQLDataType.VARCHAR(255).nullable(false), this, "");
+
     private AnnotationEntry(Name alias, Table<AnnotationEntryRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

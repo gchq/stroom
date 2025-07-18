@@ -91,6 +91,7 @@ import org.jooq.impl.DSL;
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -374,19 +375,36 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
 
     @Override
     public List<AnnotationEntry> getAnnotationEntries(final DocRef annotationRef) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
-                        .select(ANNOTATION_ENTRY.ID,
-                                ANNOTATION_ENTRY.ENTRY_TIME_MS,
-                                ANNOTATION_ENTRY.ENTRY_USER_UUID,
-                                ANNOTATION_ENTRY.TYPE_ID,
-                                ANNOTATION_ENTRY.DATA)
-                        .from(ANNOTATION_ENTRY)
-                        .join(ANNOTATION).on(ANNOTATION_ENTRY.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
-                        .where(ANNOTATION.UUID.eq(annotationRef.getUuid()))
-                        .and(ANNOTATION_ENTRY.DELETED.isFalse())
-                        .orderBy(ANNOTATION_ENTRY.ENTRY_TIME_MS)
-                        .fetch())
-                .map(this::mapToAnnotationEntry);
+        final List<AnnotationEntry> entries =
+                JooqUtil.contextResult(connectionProvider, context -> context
+                                .select(ANNOTATION_ENTRY.ID,
+                                        ANNOTATION_ENTRY.ENTRY_TIME_MS,
+                                        ANNOTATION_ENTRY.ENTRY_USER_UUID,
+                                        ANNOTATION_ENTRY.UPDATE_TIME_MS,
+                                        ANNOTATION_ENTRY.UPDATE_USER_UUID,
+                                        ANNOTATION_ENTRY.TYPE_ID,
+                                        ANNOTATION_ENTRY.DATA,
+                                        ANNOTATION_ENTRY.DELETED)
+                                .from(ANNOTATION_ENTRY)
+                                .join(ANNOTATION).on(ANNOTATION_ENTRY.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
+                                .where(ANNOTATION.UUID.eq(annotationRef.getUuid()))
+                                .orderBy(ANNOTATION_ENTRY.ID)
+                                .fetch())
+                        .map(this::mapToAnnotationEntry);
+
+        final Map<AnnotationEntryType, EntryValue> currentValues = new HashMap<>();
+        return entries
+                .stream()
+                .peek(entry -> {
+                    // Get the previous value.
+                    final EntryValue currentValue = currentValues.get(entry.getEntryType());
+                    // Set the previous value.
+                    entry.setPreviousValue(currentValue);
+                    // Remember the previous value.
+                    currentValues.put(entry.getEntryType(), entry.getEntryValue());
+                })
+                .filter(entry -> !entry.isDeleted())
+                .toList();
     }
 
     @Override
@@ -407,6 +425,9 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         entry.setId(record.get(ANNOTATION_ENTRY.ID));
         entry.setEntryTime(record.get(ANNOTATION_ENTRY.ENTRY_TIME_MS));
         entry.setEntryUser(getUserRef(record.get(ANNOTATION_ENTRY.ENTRY_USER_UUID)));
+        entry.setUpdateTime(record.get(ANNOTATION_ENTRY.UPDATE_TIME_MS));
+        entry.setUpdateUser(getUserRef(record.get(ANNOTATION_ENTRY.UPDATE_USER_UUID)));
+        entry.setDeleted(record.get(ANNOTATION_ENTRY.DELETED));
 
         final byte typeId = record.get(ANNOTATION_ENTRY.TYPE_ID);
         final AnnotationEntryType type = AnnotationEntryType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(typeId);
@@ -853,10 +874,14 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         return context.insertInto(ANNOTATION_ENTRY,
                         ANNOTATION_ENTRY.ENTRY_TIME_MS,
                         ANNOTATION_ENTRY.ENTRY_USER_UUID,
+                        ANNOTATION_ENTRY.UPDATE_TIME_MS,
+                        ANNOTATION_ENTRY.UPDATE_USER_UUID,
                         ANNOTATION_ENTRY.FK_ANNOTATION_ID,
                         ANNOTATION_ENTRY.TYPE_ID,
                         ANNOTATION_ENTRY.DATA)
                 .values(now.toEpochMilli(),
+                        userUuid,
+                        now.toEpochMilli(),
                         userUuid,
                         annotationId,
                         type.getPrimitiveValue(),
@@ -1073,7 +1098,8 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                                         .where(ANNOTATION_ENTRY.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
                                         .and(ANNOTATION_ENTRY.TYPE_ID
                                                 .eq(AnnotationEntryType.COMMENT.getPrimitiveValue()))
-                                        .orderBy(ANNOTATION_ENTRY.ENTRY_TIME_MS.desc())
+                                        .and(ANNOTATION_ENTRY.DELETED.isFalse())
+                                        .orderBy(ANNOTATION_ENTRY.ID.desc())
                                         .limit(1)));
             }
 
@@ -1277,21 +1303,36 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
             final AnnotationEntryRecord record = optional
                     .orElseThrow(() -> new RuntimeException("Unable to change missing entry for annotation"));
 
-            // Logically delete the old record.
-            logicalDeleteEntry(context, annotationId, entryId);
+            final long now = System.currentTimeMillis();
 
-            // Insert a new entry for the change at the same time as the old record.
-            return context.insertInto(ANNOTATION_ENTRY,
+            // Add an entry for the previous version.
+            context.insertInto(ANNOTATION_ENTRY,
                             ANNOTATION_ENTRY.ENTRY_TIME_MS,
                             ANNOTATION_ENTRY.ENTRY_USER_UUID,
+                            ANNOTATION_ENTRY.UPDATE_TIME_MS,
+                            ANNOTATION_ENTRY.UPDATE_USER_UUID,
+                            ANNOTATION_ENTRY.PARENT_ID,
                             ANNOTATION_ENTRY.FK_ANNOTATION_ID,
                             ANNOTATION_ENTRY.TYPE_ID,
-                            ANNOTATION_ENTRY.DATA)
-                           .values(record.get(ANNOTATION_ENTRY.ENTRY_TIME_MS),
-                                   currentUser.getUuid(),
-                                   annotationId,
-                                   record.get(ANNOTATION_ENTRY.TYPE_ID),
-                                   data)
+                            ANNOTATION_ENTRY.DATA,
+                            ANNOTATION_ENTRY.DELETED)
+                    .values(record.get(ANNOTATION_ENTRY.ENTRY_TIME_MS),
+                            record.get(ANNOTATION_ENTRY.ENTRY_USER_UUID),
+                            now,
+                            currentUser.getUuid(),
+                            entryId,
+                            annotationId,
+                            record.get(ANNOTATION_ENTRY.TYPE_ID),
+                            record.get(ANNOTATION_ENTRY.DATA),
+                            true)
+                    .execute();
+
+            // Update the existing entry for the change.
+            return context.update(ANNOTATION_ENTRY)
+                           .set(ANNOTATION_ENTRY.UPDATE_TIME_MS, now)
+                           .set(ANNOTATION_ENTRY.UPDATE_USER_UUID, currentUser.getUuid())
+                           .set(ANNOTATION_ENTRY.DATA, data)
+                           .where(ANNOTATION_ENTRY.ID.eq(entryId))
                            .execute() != 0;
         });
     }
@@ -1301,17 +1342,15 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         final Optional<Long> optionalId = getId(annotationRef);
         final long annotationId = optionalId.orElseThrow(() ->
                 new RuntimeException("Unable to delete entry for unknown annotation"));
+        final long now = System.currentTimeMillis();
         return JooqUtil.contextResult(connectionProvider, context ->
-                logicalDeleteEntry(context, annotationId, entryId));
-    }
-
-    private boolean logicalDeleteEntry(final DSLContext context,
-                                       final long annotationId,
-                                       final long entryId) {
-        return context.update(ANNOTATION_ENTRY)
-                       .set(ANNOTATION_ENTRY.DELETED, true)
-                       .where(ANNOTATION_ENTRY.FK_ANNOTATION_ID.eq(annotationId))
-                       .and(ANNOTATION_ENTRY.ID.eq(entryId))
-                       .execute() != 0;
+                context
+                        .update(ANNOTATION_ENTRY)
+                        .set(ANNOTATION_ENTRY.UPDATE_TIME_MS, now)
+                        .set(ANNOTATION_ENTRY.UPDATE_USER_UUID, currentUser.getUuid())
+                        .set(ANNOTATION_ENTRY.DELETED, true)
+                        .where(ANNOTATION_ENTRY.FK_ANNOTATION_ID.eq(annotationId))
+                        .and(ANNOTATION_ENTRY.ID.eq(entryId))
+                        .execute() != 0);
     }
 }
