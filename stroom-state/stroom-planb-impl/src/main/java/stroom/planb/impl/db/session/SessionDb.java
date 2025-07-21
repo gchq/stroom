@@ -59,6 +59,7 @@ import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValNull;
+import stroom.query.language.functions.Values;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.io.FileUtil;
 import stroom.util.json.JsonUtil;
@@ -325,11 +326,11 @@ public class SessionDb extends AbstractDb<Session, Session> {
 
         final Integer startIndex = fieldIndex.getPos(SessionFields.START);
         final Integer endIndex = fieldIndex.getPos(SessionFields.END);
-        final ValueFunctionFactories<Val[]> valueFunctionFactories =
+        final ValueFunctionFactories<Values> valueFunctionFactories =
                 PlanBSearchHelper.createValueFunctionFactories(fieldIndex);
-        final Optional<Predicate<Val[]>> optionalPredicate = expressionPredicateFactory
+        final Optional<Predicate<Values>> optionalPredicate = expressionPredicateFactory
                 .createOptional(criteria.getExpression(), valueFunctionFactories, dateTimeSettings);
-        final Predicate<Val[]> predicate = optionalPredicate.orElse(vals -> true);
+        final Predicate<Values> predicate = optionalPredicate.orElse(vals -> true);
 
         env.read(readTxn -> {
             final ValuesExtractor valuesExtractor = createValuesExtractor(fieldIndex,
@@ -342,7 +343,7 @@ public class SessionDb extends AbstractDb<Session, Session> {
                 final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
                 while (iterator.hasNext() && !Thread.currentThread().isInterrupted()) {
                     final KeyVal<ByteBuffer> kv = iterator.next();
-                    final Val[] vals = valuesExtractor.apply(readTxn, kv);
+                    final Values vals = valuesExtractor.apply(readTxn, kv);
                     if (predicate.test(vals)) {
 
                         final Session session = keySerde.read(readTxn, kv.key());
@@ -363,7 +364,7 @@ public class SessionDb extends AbstractDb<Session, Session> {
                             // Insert new session.
                             if (lastSession != null) {
                                 consumer.accept(extendSession(
-                                        lastSession.vals,
+                                        lastSession.vals.toArray(),
                                         startIndex,
                                         lastSession.sessionStart,
                                         endIndex,
@@ -382,7 +383,7 @@ public class SessionDb extends AbstractDb<Session, Session> {
 
             if (lastSession != null) {
                 consumer.accept(extendSession(
-                        lastSession.vals,
+                        lastSession.vals.toArray(),
                         startIndex,
                         lastSession.sessionStart,
                         endIndex,
@@ -579,7 +580,7 @@ public class SessionDb extends AbstractDb<Session, Session> {
     private record CurrentSession(KeyPrefix prefix,
                                   Instant sessionStart,
                                   Instant sessionEnd,
-                                  Val[] vals) {
+                                  Values vals) {
 
     }
 
@@ -602,7 +603,7 @@ public class SessionDb extends AbstractDb<Session, Session> {
             for (int i = 0; i < fields.length; i++) {
                 values[i] = converters[i].convert(lazyKV);
             }
-            return values;
+            return Values.of(values);
         };
     }
 

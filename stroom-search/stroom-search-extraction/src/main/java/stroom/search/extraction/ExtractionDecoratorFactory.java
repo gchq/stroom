@@ -20,7 +20,6 @@ public class ExtractionDecoratorFactory {
     private final TaskContextFactory taskContextFactory;
     private final PipelineScopeRunnable pipelineScopeRunnable;
     private final SecurityContext securityContext;
-    private final AnnotationsDecoratorFactory receiverDecoratorFactory;
     private final MetaService metaService;
     private final PipelineStore pipelineStore;
     private final PipelineDataCache pipelineDataCache;
@@ -35,7 +34,6 @@ public class ExtractionDecoratorFactory {
                                final TaskContextFactory taskContextFactory,
                                final PipelineScopeRunnable pipelineScopeRunnable,
                                final SecurityContext securityContext,
-                               final AnnotationsDecoratorFactory receiverDecoratorFactory,
                                final MetaService metaService,
                                final PipelineStore pipelineStore,
                                final PipelineDataCache pipelineDataCache,
@@ -48,7 +46,6 @@ public class ExtractionDecoratorFactory {
         this.taskContextFactory = taskContextFactory;
         this.pipelineScopeRunnable = pipelineScopeRunnable;
         this.securityContext = securityContext;
-        this.receiverDecoratorFactory = receiverDecoratorFactory;
         this.metaService = metaService;
         this.pipelineStore = pipelineStore;
         this.pipelineDataCache = pipelineDataCache;
@@ -65,7 +62,6 @@ public class ExtractionDecoratorFactory {
                 taskContextFactory,
                 pipelineScopeRunnable,
                 securityContext,
-                receiverDecoratorFactory,
                 metaService,
                 pipelineStore,
                 pipelineDataCache,

@@ -1,6 +1,5 @@
 package stroom.annotation.shared;
 
-import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
@@ -15,10 +14,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Objects;
 
-@Description("\n" +
-             "{{% todo %}}\n" +
-             "To be completed.\n" +
-             "{{% /todo %}}\n")
 @JsonInclude(Include.NON_NULL)
 public class Annotation extends Doc {
 

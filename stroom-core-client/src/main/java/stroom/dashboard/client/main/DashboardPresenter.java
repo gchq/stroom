@@ -1183,6 +1183,10 @@ public class DashboardPresenter
         return docRef;
     }
 
+    public void onContentTabVisible(final boolean visible) {
+        components.getComponents().forEach(component -> component.onContentTabVisible(visible));
+    }
+
 
     // --------------------------------------------------------------------------------
 

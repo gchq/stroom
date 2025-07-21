@@ -56,6 +56,7 @@ import stroom.query.api.token.TokenException;
 import stroom.query.api.token.TokenType;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.common.v2.DataStore;
+import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.OpenGroups;
@@ -124,6 +125,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @AutoLogged
 class QueryServiceImpl implements QueryService, QueryFieldProvider {
@@ -282,7 +284,8 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                                         sampleGenerator,
                                         target);
                                 final TableResultCreator tableResultCreator =
-                                        new TableResultCreator(formatterFactory, expressionPredicateFactory) {
+                                        new TableResultCreator(formatterFactory,
+                                                expressionPredicateFactory) {
                                             @Override
                                             public TableResultBuilder createTableResultBuilder() {
                                                 return searchResultWriter;
@@ -356,7 +359,13 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                             .resultStore()
                             .getData(resultRequest.getComponentId());
 
-                    final TimeFilter timeFilter = null;
+                    TimeFilter timeFilter = null;
+                    if (mappedRequest.getQuery() != null && mappedRequest.getQuery().getTimeRange() != null) {
+                        timeFilter = DateExpressionParser.getTimeFilter(
+                                mappedRequest.getQuery().getTimeRange(),
+                                mappedRequest.getDateTimeSettings());
+                    }
+
                     final Predicate<Val> predicate = valPredicateFactory.createValPredicate(
                             request.getColumn(),
                             request.getFilter(),
@@ -385,7 +394,7 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                                             list.add(string);
                                         }
                                     }
-                                    return null;
+                                    return Stream.empty();
                                 },
                                 row -> {
 

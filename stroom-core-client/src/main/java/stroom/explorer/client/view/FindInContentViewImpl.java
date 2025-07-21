@@ -69,6 +69,8 @@ public class FindInContentViewImpl
         toggleRegex.setSvg(SvgImage.REGEX);
         toggleRegex.setTitle("Regex");
         toggleRegex.setEnabled(true);
+
+        spinner.setVisible(false);
     }
 
     @Override

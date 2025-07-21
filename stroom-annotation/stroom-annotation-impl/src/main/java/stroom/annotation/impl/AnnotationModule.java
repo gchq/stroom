@@ -21,9 +21,10 @@ import stroom.annotation.shared.AnnotationCreator;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.query.api.datasource.DataSourceProvider;
-import stroom.search.extraction.AnnotationsDecoratorFactory;
+import stroom.query.common.v2.AnnotationMapperFactory;
 import stroom.searchable.api.Searchable;
 import stroom.util.RunnableWrapper;
+import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.HasUserDependencies;
@@ -37,8 +38,7 @@ public class AnnotationModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(AnnotationCreator.class).to(AnnotationService.class);
-
-        bind(AnnotationsDecoratorFactory.class).to(AnnotationReceiverDecoratorFactory.class);
+        bind(AnnotationMapperFactory.class).to(AnnotationMapperFactoryImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(AnnotationResourceImpl.class);
@@ -51,6 +51,8 @@ public class AnnotationModule extends AbstractModule {
                 .addBinding(AnnotationService.class);
         GuiceUtil.buildMultiBinder(binder(), Searchable.class)
                 .addBinding(AnnotationService.class);
+        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
+                .addBinding(AnnotationState.class);
 
         GuiceUtil.buildMapBinder(binder(), String.class, HasUserDependencies.class)
                 .addBinding(AnnotationService.class.getName(), AnnotationService.class);

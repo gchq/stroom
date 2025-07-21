@@ -39,6 +39,7 @@ import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
+import stroom.query.language.functions.Values;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.io.FileUtil;
 import stroom.util.json.JsonUtil;
@@ -300,7 +301,7 @@ public class RangeStateDb extends AbstractDb<Key, Val> {
             for (int i = 0; i < fields.length; i++) {
                 values[i] = converters[i].convert(lazyKV);
             }
-            return values;
+            return Values.of(values);
         };
     }
 

@@ -66,6 +66,7 @@ class QueryResourceImpl implements QueryResource {
     private final Provider<QueryService> queryServiceProvider;
     private final Provider<DataSources> dataSourcesProvider;
     private final Provider<Structures> structuresProvider;
+    private final Provider<AnnotationFields> annotationFieldsProvider;
     private final Provider<Fields> fieldsProvider;
     private final Provider<Functions> functionsProvider;
     private final Provider<Visualisations> visualisationProvider;
@@ -77,6 +78,7 @@ class QueryResourceImpl implements QueryResource {
                       final Provider<QueryService> dashboardServiceProvider,
                       final Provider<DataSources> dataSourcesProvider,
                       final Provider<Structures> structuresProvider,
+                      final Provider<AnnotationFields> annotationFieldsProvider,
                       final Provider<Fields> fieldsProvider,
                       final Provider<Functions> functionsProvider,
                       final Provider<Visualisations> visualisationProvider,
@@ -86,6 +88,7 @@ class QueryResourceImpl implements QueryResource {
         this.queryServiceProvider = dashboardServiceProvider;
         this.dataSourcesProvider = dataSourcesProvider;
         this.structuresProvider = structuresProvider;
+        this.annotationFieldsProvider = annotationFieldsProvider;
         this.fieldsProvider = fieldsProvider;
         this.functionsProvider = functionsProvider;
         this.visualisationProvider = visualisationProvider;
@@ -219,6 +222,10 @@ class QueryResourceImpl implements QueryResource {
         }
         request.setPageRequest(pageRequest);
         if (request.isTypeIncluded(QueryHelpType.FIELD)) {
+            annotationFieldsProvider.get().addRows(request, resultPageBuilder);
+            pageRequest = reducePageRequest(pageRequest, resultPageBuilder.size());
+        }
+        if (request.isTypeIncluded(QueryHelpType.FIELD)) {
             fieldsProvider.get().addRows(request, resultPageBuilder);
             pageRequest = reducePageRequest(pageRequest, resultPageBuilder.size());
         }
@@ -271,9 +278,15 @@ class QueryResourceImpl implements QueryResource {
                     applicableStructureItems);
         }
         if (isTypeIncluded(request, contextualHelpTypes, QueryHelpType.FIELD)) {
-            fieldsProvider.get().addCompletions(request, reduceMaxCompletions(maxCompletions, list), list, null);
+            annotationFieldsProvider.get()
+                    .addCompletions(request, reduceMaxCompletions(maxCompletions, list), list, null);
+            fieldsProvider.get()
+                    .addCompletions(request, reduceMaxCompletions(maxCompletions, list), list, null);
         } else if (isTypeIncluded(request, contextualHelpTypes, QueryHelpType.QUERYABLE_FIELD)) {
-            fieldsProvider.get().addCompletions(request, reduceMaxCompletions(maxCompletions, list), list, true);
+            annotationFieldsProvider.get()
+                    .addCompletions(request, reduceMaxCompletions(maxCompletions, list), list, true);
+            fieldsProvider.get()
+                    .addCompletions(request, reduceMaxCompletions(maxCompletions, list), list, true);
         }
         if (isTypeIncluded(request, contextualHelpTypes, QueryHelpType.FUNCTION)) {
             functionsProvider.get().addCompletions(request, reduceMaxCompletions(maxCompletions, list), list);
@@ -305,6 +318,7 @@ class QueryResourceImpl implements QueryResource {
         Optional<QueryHelpDetail> result = Optional.empty();
         result = result.or(() -> dataSourcesProvider.get().fetchDetail(row));
         result = result.or(() -> structuresProvider.get().fetchDetail(row));
+        result = result.or(() -> annotationFieldsProvider.get().fetchDetail(row));
         result = result.or(() -> fieldsProvider.get().fetchDetail(row));
         result = result.or(() -> functionsProvider.get().fetchDetail(row));
         result = result.or(() -> visualisationProvider.get().fetchDetail(row));

@@ -460,6 +460,9 @@ public class QueryEditPresenter
         }
     }
 
+    public void onContentTabVisible(final boolean visible) {
+        queryResultPresenter.onContentTabVisible(visible);
+    }
 
     // --------------------------------------------------------------------------------
 

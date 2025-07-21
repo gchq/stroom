@@ -14,17 +14,17 @@ public class Key {
     private final long timeMs;
     private final List<KeyPart> keyParts;
 
-    public Key(final long timeMs,
-               final List<KeyPart> keyParts) {
+    Key(final long timeMs,
+        final List<KeyPart> keyParts) {
         this.timeMs = timeMs;
         this.keyParts = keyParts;
     }
 
-    public long getTimeMs() {
+    long getTimeMs() {
         return timeMs;
     }
 
-    public List<KeyPart> getKeyParts() {
+    List<KeyPart> getKeyParts() {
         return keyParts;
     }
 
@@ -44,7 +44,7 @@ public class Key {
     }
 
     Key getParent() {
-        if (keyParts.size() > 0) {
+        if (!keyParts.isEmpty()) {
             return new Key(timeMs, keyParts.subList(0, keyParts.size() - 1));
         }
         return null;
@@ -64,8 +64,8 @@ public class Key {
     }
 
     private KeyPart getLast() {
-        if (keyParts.size() > 0) {
-            return keyParts.get(keyParts.size() - 1);
+        if (!keyParts.isEmpty()) {
+            return keyParts.getLast();
         }
         return null;
     }
@@ -80,7 +80,7 @@ public class Key {
         }
         final Key key = (Key) o;
         return Objects.equals(timeMs, key.timeMs) &&
-                Objects.equals(keyParts, key.keyParts);
+               Objects.equals(keyParts, key.keyParts);
     }
 
     @Override
@@ -90,7 +90,7 @@ public class Key {
 
     @Override
     public String toString() {
-        if (keyParts.size() == 0) {
+        if (keyParts.isEmpty()) {
             return "root";
         }
 

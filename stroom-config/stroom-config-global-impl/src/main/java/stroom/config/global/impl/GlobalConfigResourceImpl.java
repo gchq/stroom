@@ -1,6 +1,6 @@
 package stroom.config.global.impl;
 
-import stroom.config.common.UriFactory;
+import stroom.annotation.impl.AnnotationState;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigPropertyValidationException;
 import stroom.config.global.shared.GlobalConfigCriteria;
@@ -58,38 +58,38 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     private final Provider<GlobalConfigService> globalConfigServiceProvider;
     private final Provider<NodeService> nodeServiceProvider;
     private final Provider<UiConfig> uiConfig;
-    private final Provider<UriFactory> uriFactory;
     private final Provider<NodeInfo> nodeInfoProvider;
     private final Provider<OpenIdConfiguration> openIdConfigProvider;
     private final Provider<ExplorerConfig> explorerConfigProvider;
     private final Provider<AuthenticationConfig> authenticationConfigProvider;
     private final Provider<StroomReceiptPolicyConfig> stroomReceiptPolicyConfigProvider;
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
+    private final Provider<AnnotationState> annotationStateProvider;
 
     @Inject
     GlobalConfigResourceImpl(final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
                              final Provider<GlobalConfigService> globalConfigServiceProvider,
                              final Provider<NodeService> nodeServiceProvider,
                              final Provider<UiConfig> uiConfig,
-                             final Provider<UriFactory> uriFactory,
                              final Provider<NodeInfo> nodeInfoProvider,
                              final Provider<OpenIdConfiguration> openIdConfigProvider,
                              final Provider<ExplorerConfig> explorerConfigProvider,
                              final Provider<AuthenticationConfig> authenticationConfigProvider,
                              final Provider<StroomReceiptPolicyConfig> stroomReceiptPolicyConfigProvider,
-                             final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
+                             final Provider<ReceiveDataConfig> receiveDataConfigProvider,
+                             final Provider<AnnotationState> annotationStateProvider) {
 
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
         this.globalConfigServiceProvider = Objects.requireNonNull(globalConfigServiceProvider);
         this.nodeServiceProvider = Objects.requireNonNull(nodeServiceProvider);
         this.uiConfig = uiConfig;
-        this.uriFactory = uriFactory;
         this.nodeInfoProvider = nodeInfoProvider;
         this.openIdConfigProvider = openIdConfigProvider;
         this.explorerConfigProvider = explorerConfigProvider;
         this.authenticationConfigProvider = authenticationConfigProvider;
         this.stroomReceiptPolicyConfigProvider = stroomReceiptPolicyConfigProvider;
         this.receiveDataConfigProvider = receiveDataConfigProvider;
+        this.annotationStateProvider = annotationStateProvider;
     }
 
 
@@ -299,7 +299,8 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                 explorerConfigProvider.get().getDependencyWarningsEnabled(),
                 authenticationConfigProvider.get().getMaxApiKeyExpiryAge().toMillis(),
                 stroomReceiptPolicyConfigProvider.get().getObfuscatedFields(),
-                receiveDataConfigProvider.get().getReceiptCheckMode());
+                receiveDataConfigProvider.get().getReceiptCheckMode(),
+                annotationStateProvider.get().getLastChangeTime());
     }
 
     private Query buildRawQuery(final String userInput) {

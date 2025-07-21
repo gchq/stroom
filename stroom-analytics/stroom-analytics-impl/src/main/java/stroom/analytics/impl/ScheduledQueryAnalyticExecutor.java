@@ -32,24 +32,26 @@ import stroom.query.api.OffsetRange;
 import stroom.query.api.ParamUtil;
 import stroom.query.api.Query;
 import stroom.query.api.ResultRequest;
-import stroom.query.api.Row;
 import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.api.SearchRequestSource.SourceType;
 import stroom.query.api.TableSettings;
 import stroom.query.common.v2.CompiledColumns;
+import stroom.query.common.v2.ConditionalFormattingMapper;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.ErrorConsumerImpl;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory;
-import stroom.query.common.v2.FilteredRowCreator;
+import stroom.query.common.v2.FilteredMapper;
+import stroom.query.common.v2.Item;
 import stroom.query.common.v2.ItemMapper;
-import stroom.query.common.v2.KeyFactory;
 import stroom.query.common.v2.OpenGroups;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
 import stroom.query.common.v2.RowValueFilter;
+import stroom.query.common.v2.SimpleMapper;
 import stroom.query.common.v2.ValFilter;
+import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.ExpressionContext;
@@ -219,26 +221,29 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
                     detectionConsumerProxy.setValFilter(valFilter);
                     detectionConsumerProxy.setDetectionsConsumerProvider(detectionConsumerProvider);
 
+                    final ColumnFormatter fieldFormatter =
+                            new ColumnFormatter(new FormatterFactory(expressionContext.getDateTimeSettings()));
+
                     try (final DuplicateCheck duplicateCheck =
                             duplicateCheckFactory.create(analytic, compiledColumns)) {
                         detectionConsumerProxy.start();
-                        final Consumer<Row> itemConsumer = row -> {
-                            if (duplicateCheck.check(row)) {
+                        final Consumer<Item> itemConsumer = item -> {
+                            if (duplicateCheck.check(item)) {
                                 Long streamId = null;
                                 Long eventId = null;
                                 final List<DetectionValue> values = new ArrayList<>();
                                 for (int i = 0; i < dataStore.getColumns().size(); i++) {
-                                    if (i < row.getValues().size()) {
-                                        final String columnName = dataStore.getColumns().get(i).getName();
-                                        final String value = row.getValues().get(i);
-                                        if (value != null) {
-                                            if (IndexConstants.STREAM_ID.equals(columnName)) {
-                                                streamId = DetectionConsumerProxy.getSafeLong(value);
-                                            } else if (IndexConstants.EVENT_ID.equals(columnName)) {
-                                                eventId = DetectionConsumerProxy.getSafeLong(value);
-                                            }
-                                            values.add(new DetectionValue(columnName, value));
+                                    final Column column = dataStore.getColumns().get(i);
+                                    final String columnName = column.getName();
+                                    final Val val = item.getValue(i);
+                                    if (val != null) {
+                                        if (IndexConstants.STREAM_ID.equals(columnName)) {
+                                            streamId = DetectionConsumerProxy.getSafeLong(val);
+                                        } else if (IndexConstants.EVENT_ID.equals(columnName)) {
+                                            eventId = DetectionConsumerProxy.getSafeLong(val);
                                         }
+                                        final String fieldValStr = fieldFormatter.format(column, val);
+                                        values.add(new DetectionValue(columnName, fieldValStr));
                                     }
                                 }
 
@@ -271,29 +276,31 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
 
                         };
 
-                        final KeyFactory keyFactory = dataStore.getKeyFactory();
-                        final FormatterFactory formatterFactory =
-                                new FormatterFactory(sampleRequest.getDateTimeSettings());
-
                         if (RowValueFilter.matches(columns)) {
-                            // Create the row creator.
-                            final ItemMapper<Row> rowCreator = FilteredRowCreator.create(
-                                    dataStore.getColumns(),
+                            ItemMapper mapper;
+                            mapper = SimpleMapper.create(dataStore.getColumns(), columns);
+                            mapper = FilteredMapper.create(
                                     columns,
-                                    false,
-                                    formatterFactory,
-                                    keyFactory,
+                                    tableSettings.applyValueFilters(),
                                     tableSettings.getAggregateFilter(),
                                     expressionContext.getDateTimeSettings(),
                                     errorConsumer,
-                                    expressionPredicateFactory);
+                                    expressionPredicateFactory,
+                                    mapper);
+                            mapper = ConditionalFormattingMapper.create(
+                                    columns,
+                                    tableSettings.getConditionalFormattingRules(),
+                                    expressionContext.getDateTimeSettings(),
+                                    expressionPredicateFactory,
+                                    errorConsumer,
+                                    mapper);
 
                             dataStore.fetch(
                                     columns,
                                     OffsetRange.UNBOUNDED,
                                     OpenGroups.NONE,
                                     resultRequest.getTimeFilter(),
-                                    rowCreator,
+                                    mapper,
                                     itemConsumer,
                                     countConsumer);
                         }

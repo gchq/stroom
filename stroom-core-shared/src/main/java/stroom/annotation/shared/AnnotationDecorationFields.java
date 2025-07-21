@@ -4,9 +4,6 @@ import stroom.query.api.datasource.QueryField;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public interface AnnotationDecorationFields {
 
@@ -29,7 +26,7 @@ public interface AnnotationDecorationFields {
     String ANNOTATION_DESCRIPTION = ANNOTATION_FIELD_PREFIX + "Description";
 
     QueryField ANNOTATION_ID_FIELD = QueryField.createId(ANNOTATION_ID);
-    QueryField ANNOTATION_UUID_FIELD = QueryField.createId(ANNOTATION_UUID);
+    QueryField ANNOTATION_UUID_FIELD = QueryField.createText(ANNOTATION_UUID);
     QueryField ANNOTATION_CREATED_ON_FIELD = QueryField.createDate(ANNOTATION_CREATED_ON);
     QueryField ANNOTATION_CREATED_BY_FIELD = QueryField.createText(ANNOTATION_CREATED_BY);
     QueryField ANNOTATION_UPDATED_ON_FIELD = QueryField.createDate(ANNOTATION_UPDATED_ON);
@@ -60,6 +57,4 @@ public interface AnnotationDecorationFields {
             ANNOTATION_COMMENT_FIELD,
             ANNOTATION_HISTORY_FIELD,
             ANNOTATION_DESCRIPTION_FIELD);
-    Map<String, QueryField> DECORATION_FIELD_MAP = DECORATION_FIELDS.stream()
-            .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
 }

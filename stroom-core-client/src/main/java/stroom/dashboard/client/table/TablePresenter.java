@@ -18,6 +18,9 @@
 package stroom.dashboard.client.table;
 
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.annotation.client.AnnotationChangeEvent;
+import stroom.annotation.shared.AnnotationDecorationFields;
+import stroom.annotation.shared.AnnotationFields;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
@@ -53,6 +56,7 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.hyperlink.client.HyperlinkEvent;
+import stroom.index.shared.IndexConstants;
 import stroom.item.client.SelectionPopup;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.processor.shared.ProcessorExpressionUtil;
@@ -81,11 +85,13 @@ import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.client.DataSourceClient;
+import stroom.query.client.presenter.AnnotationManager;
 import stroom.query.client.presenter.ColumnHeader;
 import stroom.query.client.presenter.DynamicColumnSelectionListModel;
 import stroom.query.client.presenter.DynamicColumnSelectionListModel.ColumnSelectionItem;
 import stroom.query.client.presenter.TableComponentSelection;
 import stroom.query.client.presenter.TableRow;
+import stroom.query.client.presenter.TableRowCell;
 import stroom.query.client.presenter.TimeZones;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
@@ -107,9 +113,7 @@ import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
-import stroom.widget.util.client.SafeHtmlUtil;
 
-import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
@@ -117,7 +121,6 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -182,6 +185,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final TableRowStyles tableRowStyles;
     private boolean initialised;
     private int maxDepth;
+
+    private boolean tableIsVisible = true;
+    private boolean annotationChanged;
 
     @Inject
     public TablePresenter(final EventBus eventBus,
@@ -248,8 +254,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         // Annotate
         annotateButton = pagerView.addButton(SvgPresets.ANNOTATE);
-        annotateButton.setVisible(securityContext
-                .hasAppPermission(AppPermission.ANNOTATIONS));
+        annotateButton.setVisible(annotationManager.isEnabled());
 
         columnsManager = new ColumnsManager(
                 this,
@@ -294,8 +299,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         });
 
         pagerView.getRefreshButton().setAllowPause(true);
-
-        annotationManager.setDataSourceSupplier(() -> getTableComponentSettings().getDataSourceRef());
         annotationManager.setColumnSupplier(() -> getTableComponentSettings().getColumns());
     }
 
@@ -312,12 +315,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         super.onBind();
         registerHandler(selectionModel.addSelectionHandler(event -> {
             getDashboardContext().fireComponentChangeEvent(this);
-
             if (event.getSelectionType().isDoubleSelect()) {
-                final List<Long> annotationIdList = annotationManager.getAnnotationIdList(
+                final Set<Long> annotationIdList = annotationManager.getAnnotationIds(
                         selectionModel.getSelectedItems());
                 if (annotationIdList.size() == 1) {
-                    annotationManager.editAnnotation(annotationIdList.get(0));
+                    annotationManager.editAnnotation(annotationIdList.iterator().next());
                 }
             }
         }));
@@ -385,6 +387,40 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }));
 
         registerHandler(pagerView.getRefreshButton().addClickHandler(event -> setPause(!pause, true)));
+
+        registerHandler(getEventBus().addHandler(AnnotationChangeEvent.getType(), e ->
+                onAnnotationChange()));
+    }
+
+    private void onAnnotationChange() {
+        annotationChanged = true;
+        if (tableIsVisible) {
+            annotationChanged = false;
+            final DocRef dataSource = NullSafe
+                    .get(currentSearchModel, SearchModel::getIndexLoader, IndexLoader::getLoadedDataSourceRef);
+            if (dataSource != null &&
+                AnnotationFields.ANNOTATIONS_PSEUDO_DOC_REF.getType().equals(dataSource.getType())) {
+                // If this is an annotations data source then force a new search.
+                forceNewSearch();
+            } else if (columnsManager
+                    .getColumns()
+                    .stream()
+                    .anyMatch(col ->
+                            col.getExpression().contains(AnnotationDecorationFields.ANNOTATION_FIELD_PREFIX))) {
+                // If the table contains annotations fields then just refresh to redecorate.
+                refresh();
+            }
+        }
+    }
+
+    @Override
+    public void onContentTabVisible(final boolean visible) {
+        tableIsVisible = visible;
+        if (visible) {
+            if (annotationChanged) {
+                onAnnotationChange();
+            }
+        }
     }
 
     @Override
@@ -649,24 +685,19 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .orElse(Type.GENERAL);
 
         try {
-            switch (colType) {
-                case NUMBER:
-                    return QueryField.createLong(column.getName());
-
-                case DATE_TIME:
-                    return QueryField.createDate(column.getName());
-
-                default:
+            return switch (colType) {
+                case NUMBER -> QueryField.createLong(column.getName());
+                case DATE_TIME -> QueryField.createDate(column.getName());
+                default ->
                     // CONTAINS only supported for legacy content, not for use in UI
-                    return QueryField
-                            .builder()
-                            .fldName(column.getName())
-                            .fldType(FieldType.TEXT)
-                            .conditionSet(ConditionSet.BASIC_TEXT)
-                            .queryable(true)
-                            .build();
-
-            }
+                        QueryField
+                                .builder()
+                                .fldName(column.getName())
+                                .fldType(FieldType.TEXT)
+                                .conditionSet(ConditionSet.BASIC_TEXT)
+                                .queryable(true)
+                                .build();
+            };
         } catch (final Exception e) {
             GWT.log(e.getMessage());
             throw new RuntimeException(e);
@@ -719,6 +750,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             processed.add(new TableRow(
                     expander,
                     row.getGroupKey(),
+                    row.getAnnotationId(),
                     cellsMap,
                     row.getMatchingRule(),
                     row.getDepth()));
@@ -760,18 +792,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void addColumn(final Column column) {
-        final com.google.gwt.user.cellview.client.Column<TableRow, SafeHtml> col =
-                new com.google.gwt.user.cellview.client.Column<TableRow, SafeHtml>(new SafeHtmlCell()) {
-                    @Override
-                    public SafeHtml getValue(final TableRow row) {
-                        if (row == null) {
-                            return SafeHtmlUtil.NBSP;
-                        }
-
-                        return row.getValue(column.getId());
-                    }
-                };
-
+        final com.google.gwt.user.cellview.client.Column<TableRow, TableRow> col =
+                new com.google.gwt.user.cellview.client.IdentityColumn<TableRow>(
+                        new TableRowCell(annotationManager, column));
         final ColumnHeader columnHeader = new ColumnHeader(column, columnsManager);
         dataGrid.addResizableColumn(col, columnHeader, column.getWidth());
         existingColumns.add(col);
@@ -911,8 +934,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         if (old) {
             getTableComponentSettings().getColumns().removeIf(column ->
                     !column.isVisible() && (column.getName().equals("Id") ||
-                                            column.getName().equals("StreamId") ||
-                                            column.getName().equals("EventId") ||
+                                            column.getName().equals(IndexConstants.STREAM_ID) ||
+                                            column.getName().equals(IndexConstants.EVENT_ID) ||
                                             column.getName().startsWith("__")));
             setSettings(getTableComponentSettings()
                     .copy()
@@ -1210,6 +1233,23 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         dataGrid.setFocused(focused);
     }
 
+    void forceNewSearch() {
+        if (currentSearchModel != null) {
+            pagerView.getRefreshButton().setRefreshing(true);
+            currentSearchModel.forceNewSearch(getComponentConfig().getId(), result -> {
+                try {
+                    if (result != null) {
+                        setDataInternal(result);
+                    }
+                } catch (final Exception e) {
+                    GWT.log(e.getMessage());
+                } finally {
+                    pagerView.getRefreshButton().setRefreshing(currentSearchModel.isSearching());
+                }
+            });
+        }
+    }
+
     void refresh(final Runnable afterRefresh) {
         if (currentSearchModel != null) {
             pagerView.getRefreshButton().setRefreshing(true);
@@ -1222,8 +1262,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     GWT.log(e.getMessage());
                 } finally {
                     afterRefresh.run();
+                    pagerView.getRefreshButton().setRefreshing(currentSearchModel.isSearching());
                 }
-                pagerView.getRefreshButton().setRefreshing(currentSearchModel.isSearching());
             });
         }
     }

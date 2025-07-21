@@ -1,8 +1,8 @@
 package stroom.hyperlink.client;
 
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.NullSafe;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.URL;
 
 import java.util.Objects;
@@ -14,33 +14,19 @@ import java.util.Objects;
  */
 public class Hyperlink {
 
-    public static final UrlDecoder DEFAULT_URL_DECODER = URL::decodeQueryString;
-
     private final String text;
     private final String href;
     private final String type;
     private final SvgImage icon;
-    // This is here so that we can use Hyperlink in Junits. URL::decodeQueryString is GWT client-side
-    // code so won't work in tests
-    private final UrlDecoder urlDecoder;
 
     public Hyperlink(final String text,
                      final String href,
                      final String type,
                      final SvgImage icon) {
-        this(text, href, type, icon, DEFAULT_URL_DECODER);
-    }
-
-    public Hyperlink(final String text,
-                     final String href,
-                     final String type,
-                     final SvgImage icon,
-                     final UrlDecoder urlDecoder) {
         this.text = text;
         this.href = href;
         this.type = type;
         this.icon = icon;
-        this.urlDecoder = NullSafe.requireNonNullElse(urlDecoder, DEFAULT_URL_DECODER);
     }
 
     /**
@@ -49,7 +35,7 @@ public class Hyperlink {
      * for any reason.
      */
     public static Hyperlink create(final String value) {
-        return create(value, 0, DEFAULT_URL_DECODER);
+        return create(value, 0);
     }
 
     /**
@@ -58,7 +44,7 @@ public class Hyperlink {
      * @return The parsed {@link Hyperlink} or null if value could not be parsed
      * for any reason.
      */
-    public static Hyperlink create(final String value, final int pos, final UrlDecoder urlDecoder) {
+    public static Hyperlink create(final String value, final int pos) {
         Hyperlink hyperlink = null;
 
         try {
@@ -74,7 +60,6 @@ public class Hyperlink {
                             .text(text)
                             .href(href)
                             .type(type)
-                            .urlDecoder(urlDecoder)
                             .build();
                 }
             }
@@ -150,7 +135,10 @@ public class Hyperlink {
         if (string == null) {
             return null;
         }
-        return urlDecoder.decode(string);
+        if (GWT.isClient()) {
+            return URL.decode(string);
+        }
+        return string;
     }
 
     @Override
@@ -211,7 +199,6 @@ public class Hyperlink {
         private String href;
         private String type;
         private SvgImage icon;
-        private UrlDecoder urlDecoder;
 
         private Builder() {
         }
@@ -221,7 +208,6 @@ public class Hyperlink {
             this.href = hyperlink.href;
             this.type = hyperlink.type;
             this.icon = hyperlink.icon;
-            this.urlDecoder = hyperlink.urlDecoder;
         }
 
         public Builder text(final String text) {
@@ -244,39 +230,12 @@ public class Hyperlink {
             return this;
         }
 
-        public Builder urlDecoder(final UrlDecoder urlDecoder) {
-            this.urlDecoder = urlDecoder;
-            return this;
-        }
-
         public Hyperlink build() {
             return new Hyperlink(
                     text,
                     href,
                     type,
-                    icon,
-                    urlDecoder);
-        }
-    }
-
-
-    /**
-     * See {@link URL#decodeQueryString(String)}
-     */
-    @FunctionalInterface
-    public interface UrlDecoder {
-
-        String decode(final String str);
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private static class MalformedLinkException extends Exception {
-
-        public MalformedLinkException(final String message) {
-            super(message);
+                    icon);
         }
     }
 }

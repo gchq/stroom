@@ -28,6 +28,7 @@ import stroom.query.api.TableSettings;
 import stroom.query.api.TimeFilter;
 import stroom.query.common.v2.AbstractResultStoreConfig;
 import stroom.query.common.v2.AnalyticResultStoreConfig;
+import stroom.query.common.v2.AnnotationMapperFactory;
 import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.ErrorConsumerImpl;
@@ -82,11 +83,12 @@ public class AnalyticDataStores implements HasResultStoreInfo {
     private final Provider<Executor> executorProvider;
     private final ExpressionContextFactory expressionContextFactory;
     private final Path analyticResultStoreDir;
-    private final Map<AbstractAnalyticRuleDoc, AnalyticDataStore> dataStoreCache;
+    private final Map<AnalyticRuleDoc, AnalyticDataStore> dataStoreCache;
     private final NodeInfo nodeInfo;
     private final SecurityContext securityContext;
     private final ByteBufferFactory bufferFactory;
     private final ExpressionPredicateFactory expressionPredicateFactory;
+    private final AnnotationMapperFactory annotationMapperFactory;
     private final AnalyticRuleStore analyticRuleStore;
 
     @Inject
@@ -100,7 +102,8 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                               final NodeInfo nodeInfo,
                               final SecurityContext securityContext,
                               final ByteBufferFactory bufferFactory,
-                              final ExpressionPredicateFactory expressionPredicateFactory) {
+                              final ExpressionPredicateFactory expressionPredicateFactory,
+                              final AnnotationMapperFactory annotationMapperFactory) {
         this.lmdbEnvDirFactory = lmdbEnvDirFactory;
         this.analyticRuleStore = analyticRuleStore;
         this.analyticStoreConfigProvider = analyticStoreConfigProvider;
@@ -111,6 +114,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         this.securityContext = securityContext;
         this.bufferFactory = bufferFactory;
         this.expressionPredicateFactory = expressionPredicateFactory;
+        this.annotationMapperFactory = annotationMapperFactory;
 
         this.analyticResultStoreDir = getLocalDir(analyticStoreConfigProvider.get(), pathCreator);
 
@@ -130,12 +134,12 @@ public class AnalyticDataStores implements HasResultStoreInfo {
 
     public void deleteOldStores() {
         // Get a set of cached docs and used dirs before we find out what the current rule docs are.
-        final Set<AbstractAnalyticRuleDoc> cachedDocs = new HashSet<>(dataStoreCache.keySet());
+        final Set<AnalyticRuleDoc> cachedDocs = new HashSet<>(dataStoreCache.keySet());
         final Set<String> actualDirs = getFileSystemAnalyticStoreDirs();
 
         // Remove old cached stuff.
         final List<AnalyticRuleDoc> currentRules = loadAll();
-        for (final AbstractAnalyticRuleDoc cachedDoc : cachedDocs) {
+        for (final AnalyticRuleDoc cachedDoc : cachedDocs) {
             if (!currentRules.contains(cachedDoc)) {
                 dataStoreCache.remove(cachedDoc);
             }
@@ -190,7 +194,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         return expectedDirs;
     }
 
-    public AnalyticDataStore get(final AbstractAnalyticRuleDoc analyticRuleDoc) {
+    public AnalyticDataStore get(final AnalyticRuleDoc analyticRuleDoc) {
         return dataStoreCache.computeIfAbsent(analyticRuleDoc, k -> {
             final SearchRequest searchRequest = analyticRuleSearchRequestHelper.create(k);
             final DocRef dataSource = searchRequest.getQuery().getDataSource();
@@ -203,7 +207,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         });
     }
 
-    public Optional<AnalyticDataStore> getIfExists(final AbstractAnalyticRuleDoc analyticRuleDoc) {
+    public Optional<AnalyticDataStore> getIfExists(final AnalyticRuleDoc analyticRuleDoc) {
         AnalyticDataStore analyticDataStore = dataStoreCache.get(analyticRuleDoc);
         if (analyticDataStore == null) {
             final SearchRequest searchRequest = analyticRuleSearchRequestHelper.create(analyticRuleDoc);
@@ -296,7 +300,8 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 executorProvider,
                 errorConsumer,
                 bufferFactory,
-                expressionPredicateFactory);
+                expressionPredicateFactory,
+                annotationMapperFactory);
     }
 
     @Override
@@ -423,7 +428,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 .uuid(request.getAnalyticDocUuid())
                 .build();
         try {
-            final AbstractAnalyticRuleDoc doc = analyticRuleStore.readDocument(docRef);
+            final AnalyticRuleDoc doc = analyticRuleStore.readDocument(docRef);
             final Optional<AnalyticDataStore> optionalAnalyticDataStore = getIfExists(doc);
             if (optionalAnalyticDataStore.isPresent()) {
                 final AnalyticDataStore analyticDataStore = optionalAnalyticDataStore.get();

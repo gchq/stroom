@@ -234,7 +234,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
             final Column<R, ?> column = getColumn(colIndex);
             final com.google.gwt.cell.client.Cell<?> cell = column.getCell();
 
-            //checking if the cell has its own context meun
+            // Checking if the cell has its own context menu
             if (cell instanceof HasContextMenus) {
                 final R rowValue = getVisibleItem(rowIndex);
                 final Object cellValue = column.getValue(rowValue);

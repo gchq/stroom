@@ -59,7 +59,8 @@ jooq {
                                 name = 'BOOLEAN'
                                 includeExpression = '' +
                                         '.*\\.annotation\\.deleted|' +
-                                        '.*\\.annotation_tag\\.deleted|'
+                                        '.*\\.annotation_tag\\.deleted|' +
+                                        '.*\\.annotation_entry\\.deleted|'
                                 // see https://github.com/jOOQ/jOOQ/issues/9405
                                 includeTypes = '(?i:tinyint)(\\(1\\))?'
                             }

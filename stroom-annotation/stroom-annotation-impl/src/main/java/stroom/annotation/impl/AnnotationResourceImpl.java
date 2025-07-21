@@ -20,9 +20,12 @@ import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.AnnotationTag;
+import stroom.annotation.shared.ChangeAnnotationEntryRequest;
 import stroom.annotation.shared.CreateAnnotationRequest;
 import stroom.annotation.shared.CreateAnnotationTagRequest;
+import stroom.annotation.shared.DeleteAnnotationEntryRequest;
 import stroom.annotation.shared.EventId;
+import stroom.annotation.shared.FetchAnnotationEntryRequest;
 import stroom.annotation.shared.MultiAnnotationChangeRequest;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.docref.DocRef;
@@ -233,8 +236,18 @@ class AnnotationResourceImpl implements AnnotationResource {
         return annotationService.get().findAnnotationTags(request);
     }
 
-//    @Override
-//    public List<AnnotationTag> getAnnotationTags(final String filter) {
-//        return annotationService.get().getAnnotationGroups(filter);
-//    }
+    @Override
+    public AnnotationEntry fetchAnnotationEntry(final FetchAnnotationEntryRequest request) {
+        return annotationService.get().fetchAnnotationEntry(request);
+    }
+
+    @Override
+    public Boolean changeAnnotationEntry(final ChangeAnnotationEntryRequest request) {
+        return annotationService.get().changeAnnotationEntry(request);
+    }
+
+    @Override
+    public Boolean deleteAnnotationEntry(final DeleteAnnotationEntryRequest request) {
+        return annotationService.get().deleteAnnotationEntry(request);
+    }
 }

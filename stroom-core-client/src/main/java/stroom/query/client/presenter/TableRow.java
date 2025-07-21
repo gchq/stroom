@@ -1,7 +1,6 @@
 package stroom.query.client.presenter;
 
 import stroom.hyperlink.client.Hyperlink;
-import stroom.hyperlink.client.Hyperlink.UrlDecoder;
 import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.SafeHtmlUtil;
@@ -25,34 +24,23 @@ public class TableRow {
 
     private final Expander expander;
     private final String groupKey;
+    private final Long annotationId;
     private final Map<String, Cell> cells;
     private final String matchingRule;
     private final int depth;
-    private final UrlDecoder urlDecoder;
 
     public TableRow(final Expander expander,
                     final String groupKey,
+                    final Long annotationId,
                     final Map<String, Cell> cells,
                     final String matchingRule,
                     final int depth) {
-        this(expander, groupKey, cells, matchingRule, depth, null);
-        if (template == null) {
-            template = GWT.create(Template.class);
-        }
-    }
-
-    public TableRow(final Expander expander,
-                    final String groupKey,
-                    final Map<String, Cell> cells,
-                    final String matchingRule,
-                    final int depth,
-                    final UrlDecoder urlDecoder) {
         this.expander = expander;
         this.groupKey = groupKey;
+        this.annotationId = annotationId;
         this.cells = cells;
         this.matchingRule = matchingRule;
         this.depth = depth;
-        this.urlDecoder = urlDecoder;
     }
 
     public Expander getExpander() {
@@ -61,6 +49,10 @@ public class TableRow {
 
     public String getGroupKey() {
         return groupKey;
+    }
+
+    public Long getAnnotationId() {
+        return annotationId;
     }
 
     public SafeHtml getValue(final String fieldId) {
@@ -156,6 +148,9 @@ public class TableRow {
                     final SafeHtml displayValueHtml = NullSafe.isNonBlankString(hyperlink.getText())
                             ? SafeHtmlUtils.fromString(hyperlink.getText())
                             : SafeHtmlUtil.NBSP;
+                    if (template == null) {
+                        template = GWT.create(Template.class);
+                    }
                     final SafeHtml linkHtml = template.link(hyperlink.toString(), title, displayValueHtml);
                     sb.append(linkHtml);
                 }
@@ -195,7 +190,7 @@ public class TableRow {
                 final char c = value.charAt(i);
                 if (c == '[') {
                     // Might be the start of a hyperlink or could just be a square bracket
-                    final Hyperlink hyperlink = Hyperlink.create(value, i, urlDecoder);
+                    final Hyperlink hyperlink = Hyperlink.create(value, i);
                     if (hyperlink != null) {
                         //noinspection SizeReplaceableByIsEmpty // isEmpty() not in GWT yet
                         if (sb.length() > 0) {
@@ -228,6 +223,7 @@ public class TableRow {
         return "TableRow{" +
                "expander=" + expander +
                ", groupKey='" + groupKey + '\'' +
+               ", annotationId='" + annotationId + '\'' +
                ", cells=" + cells +
                '}';
     }
@@ -241,12 +237,13 @@ public class TableRow {
             return false;
         }
         final TableRow tableRow = (TableRow) o;
-        return Objects.equals(groupKey, tableRow.groupKey);
+        return Objects.equals(groupKey, tableRow.groupKey) &&
+               Objects.equals(annotationId, tableRow.annotationId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(groupKey);
+        return Objects.hash(groupKey, annotationId);
     }
 
 
