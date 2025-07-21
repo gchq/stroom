@@ -40,6 +40,7 @@ import stroom.document.client.event.OpenDocumentEvent;
 import stroom.query.api.ColumnRef;
 import stroom.query.api.DestroyReason;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.api.GroupSelection;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.ParamUtil;
 import stroom.query.api.QLVisResult;
@@ -145,8 +146,8 @@ public class EmbeddedQueryPresenter
             }
 
             @Override
-            public Set<String> getOpenGroups() {
-                return NullSafe.get(currentTablePresenter, QueryResultTablePresenter::getOpenGroups);
+            public GroupSelection getGroupSelection() {
+                return NullSafe.get(currentTablePresenter, QueryResultTablePresenter::getGroupSelection);
             }
 
             @Override
@@ -230,8 +231,8 @@ public class EmbeddedQueryPresenter
             }
 
             @Override
-            public Set<String> getOpenGroups() {
-                return NullSafe.get(currentVisPresenter, QueryResultVisPresenter::getOpenGroups);
+            public GroupSelection getGroupSelection() {
+                return NullSafe.get(currentVisPresenter, QueryResultVisPresenter::getGroupSelection);
             }
 
             @Override

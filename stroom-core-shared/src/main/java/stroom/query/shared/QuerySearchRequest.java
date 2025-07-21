@@ -16,6 +16,7 @@
 
 package stroom.query.shared;
 
+import stroom.query.api.GroupSelection;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.QueryKey;
 import stroom.query.api.SearchRequest;
@@ -28,7 +29,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -67,8 +67,14 @@ public class QuerySearchRequest {
     private final boolean storeHistory;
     @JsonProperty
     private final OffsetRange requestedRange;
+    /**
+     * @deprecated Use {@link GroupSelection#openGroups} instead.
+     */
     @JsonProperty
+    @Deprecated
     private final Set<String> openGroups;
+    @JsonProperty
+    private final GroupSelection groupSelection;
     @JsonProperty
     private final QueryTablePreferences queryTablePreferences;
 
@@ -83,6 +89,7 @@ public class QuerySearchRequest {
             @JsonProperty("storeHistory") final boolean storeHistory,
             @JsonProperty("requestedRange") final OffsetRange requestedRange,
             @JsonProperty("openGroups") final Set<String> openGroups,
+            @JsonProperty("groupSelection") final GroupSelection groupSelection,
             @JsonProperty("queryTablePreferences") final QueryTablePreferences queryTablePreferences) {
         this.searchRequestSource = searchRequestSource;
         this.queryKey = queryKey;
@@ -93,6 +100,8 @@ public class QuerySearchRequest {
         this.storeHistory = storeHistory;
         this.requestedRange = requestedRange;
         this.openGroups = openGroups;
+        this.groupSelection = groupSelection == null ?
+                GroupSelection.builder().openGroups(openGroups).build() : groupSelection;
         this.queryTablePreferences = queryTablePreferences;
     }
 
@@ -128,12 +137,8 @@ public class QuerySearchRequest {
         return requestedRange;
     }
 
-    public Set<String> getOpenGroups() {
-        return openGroups;
-    }
-
-    public boolean isGroupOpen(final String group) {
-        return openGroups != null && openGroups.contains(group);
+    public GroupSelection getGroupSelection() {
+        return groupSelection;
     }
 
     public QueryTablePreferences getQueryTablePreferences() {
@@ -158,6 +163,7 @@ public class QuerySearchRequest {
                 Objects.equals(queryContext, that.queryContext) &&
                 Objects.equals(requestedRange, that.requestedRange) &&
                 Objects.equals(openGroups, that.openGroups) &&
+                Objects.equals(groupSelection, that.groupSelection) &&
                 Objects.equals(queryTablePreferences, that.queryTablePreferences);
     }
 
@@ -173,6 +179,7 @@ public class QuerySearchRequest {
                 storeHistory,
                 requestedRange,
                 openGroups,
+                groupSelection,
                 queryTablePreferences);
     }
 
@@ -188,6 +195,7 @@ public class QuerySearchRequest {
                 ", storeHistory=" + storeHistory +
                 ", requestedRange=" + requestedRange +
                 ", openGroups=" + openGroups +
+                ", groupSelection=" + groupSelection +
                 ", queryTablePreferences=" + queryTablePreferences +
                 '}';
     }
@@ -214,6 +222,7 @@ public class QuerySearchRequest {
         private boolean storeHistory;
         private OffsetRange requestedRange = OffsetRange.ZERO_100;
         private Set<String> openGroups;
+        private GroupSelection groupSelection;
         private QueryTablePreferences queryTablePreferences;
 
         private Builder() {
@@ -227,6 +236,7 @@ public class QuerySearchRequest {
             this.incremental = request.incremental;
             this.timeout = request.timeout;
             this.storeHistory = request.storeHistory;
+            this.groupSelection = request.groupSelection;
             this.queryTablePreferences = request.queryTablePreferences;
         }
 
@@ -280,17 +290,8 @@ public class QuerySearchRequest {
             return this;
         }
 
-        public Builder openGroup(final String group, final boolean open) {
-            if (openGroups == null) {
-                openGroups = new HashSet<>();
-            }
-
-            if (open) {
-                openGroups.add(group);
-            } else {
-                openGroups.remove(group);
-            }
-
+        public Builder groupSelection(final GroupSelection groupSelection) {
+            this.groupSelection = groupSelection;
             return this;
         }
 
@@ -310,6 +311,7 @@ public class QuerySearchRequest {
                     storeHistory,
                     requestedRange,
                     openGroups,
+                    groupSelection,
                     queryTablePreferences);
         }
     }

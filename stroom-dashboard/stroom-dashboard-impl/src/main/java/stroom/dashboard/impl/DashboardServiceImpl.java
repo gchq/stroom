@@ -52,7 +52,7 @@ import stroom.query.api.TableResultBuilder;
 import stroom.query.api.TimeFilter;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.ExpressionPredicateFactory;
-import stroom.query.common.v2.Key;
+import stroom.query.common.v2.OpenGroups;
 import stroom.query.common.v2.OpenGroupsImpl;
 import stroom.query.common.v2.ResultCreator;
 import stroom.query.common.v2.ResultStoreManager;
@@ -578,7 +578,8 @@ class DashboardServiceImpl implements DashboardService {
                             request.getFilter(),
                             request.getSearchRequest().getDateTimeSettings());
 
-                    final Set<Key> openGroups = dataStore.getKeyFactory().decodeSet(resultRequest.getOpenGroups());
+                    final OpenGroups openGroups = OpenGroupsImpl.fromGroupSelection(
+                            resultRequest.getGroupSelection(), dataStore.getKeyFactory());
 
                     final int index = dataStore
                             .getColumns()
@@ -590,7 +591,7 @@ class DashboardServiceImpl implements DashboardService {
                         dataStore.fetch(
                                 dataStore.getColumns(),
                                 OffsetRange.UNBOUNDED,
-                                new OpenGroupsImpl(openGroups),
+                                openGroups,
                                 timeFilter,
                                 item -> {
                                     final Val val = item.getValue(index);
