@@ -195,6 +195,11 @@ public class PlanBDocStoreImpl implements PlanBDocStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
+    public boolean exists(final DocRef docRef) {
+        return store.exists(docRef);
+    }
+
+    @Override
     public PlanBDoc readDocument(final DocRef docRef) {
         return store.readDocument(docRef);
     }

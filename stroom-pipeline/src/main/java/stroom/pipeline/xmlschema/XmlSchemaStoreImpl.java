@@ -123,6 +123,11 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
+    public boolean exists(final DocRef docRef) {
+        return store.exists(docRef);
+    }
+
+    @Override
     public XmlSchemaDoc readDocument(final DocRef docRef) {
         return store.readDocument(docRef);
     }

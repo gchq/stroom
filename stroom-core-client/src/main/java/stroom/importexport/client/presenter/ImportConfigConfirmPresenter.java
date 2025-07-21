@@ -71,6 +71,7 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class ImportConfigConfirmPresenter extends
         MyPresenter<ImportConfigConfirmPresenter.ImportConfigConfirmView,
@@ -79,6 +80,19 @@ public class ImportConfigConfirmPresenter extends
 
     private static final ContentResource CONTENT_RESOURCE =
             com.google.gwt.core.client.GWT.create(ContentResource.class);
+    private static final String NOT_APPLICABLE_VALUE = "N/A";
+    private static final String ERROR_VALUE = "Error";
+    private static final String NEW_STATE_HELP = "This is a new document that doesn't exist in Stroom.";
+    private static final String UPDATE_STATE_HELP = "This is an update to a document that already exists in Stroom.";
+    private static final String EQUAL_STATE_HELP = "This document already exists in Stroom but is unchanged.";
+    private static final String IGNORE_STATE_HELP = "This document will be ignored during import.";
+    public static final String ACTION_HEADING_TOOLTIP = "The action/state of this document. One of:" +
+                                                        "\n'New' - " + NEW_STATE_HELP +
+                                                        "\n'Update' - " + UPDATE_STATE_HELP +
+                                                        "\n'Equal' - " + EQUAL_STATE_HELP +
+                                                        "\n'Ignore' - " + IGNORE_STATE_HELP +
+                                                        "\n'Error' - " + UPDATE_STATE_HELP;
+    private static final String ERROR_STATE_HELP = "This document cannot be imported due to an error.";
 
     private final TooltipPresenter tooltipPresenter;
     private final ImportConfigConfirmView view;
@@ -406,39 +420,94 @@ public class ImportConfigConfirmPresenter extends
 
     private void addActionColumn() {
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder((ImportState importState) ->
-                                NullSafe.getOrElse(importState,
-                                        ImportState::getState,
-                                        State::getDisplayValue,
-                                        "Error"))
+                DataGridUtil.textWithTooltipColumnBuilder(
+                                (ImportState importState) ->
+                                        NullSafe.getOrElse(importState,
+                                                ImportState::getState,
+                                                State::getDisplayValue,
+                                                ERROR_VALUE),
+                                this::getActionTooltip)
                         .build(),
-                "Action",
-                50);
+                DataGridUtil.headingBuilder("Action")
+                        .withToolTip(ACTION_HEADING_TOOLTIP)
+                        .build(),
+                60);
+    }
+
+    private String getActionTooltip(final String cellValue) {
+        if (cellValue == null) {
+            return null;
+        } else if (ERROR_VALUE.equals(cellValue)) {
+            return ERROR_STATE_HELP;
+        } else {
+            final State state = State.fromDisplayValue(cellValue);
+            if (state == null) {
+                return null;
+            } else {
+                return state.getDisplayValue() + " - " + switch (state) {
+                    case NEW -> NEW_STATE_HELP;
+                    case UPDATE -> UPDATE_STATE_HELP;
+                    case EQUAL -> EQUAL_STATE_HELP;
+                    case IGNORE -> IGNORE_STATE_HELP;
+                };
+            }
+        }
     }
 
     private void addTypeColumn() {
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder((ImportState importState) ->
+                DataGridUtil.textWithTooltipColumnBuilder((ImportState importState) ->
                                 importState.getDocRef().getType())
                         .build(),
-                "Type",
+                DataGridUtil.headingBuilder("Type")
+                        .withToolTip("The document type.")
+                        .build(),
                 200);
     }
 
     private void addSourcePathColumn() {
         dataGrid.addResizableColumn(
-                DataGridUtil.textWithTooltipColumnBuilder(ImportState::getSourcePath)
+                DataGridUtil.textWithTooltipColumnBuilder(
+                                (ImportState importState) ->
+                                        getPath(importState, ImportState::getSourcePath),
+                                this::getPathTooltip)
                         .build(),
-                "Source Path",
+                DataGridUtil.headingBuilder("Source Path")
+                        .withToolTip("The path of the document within the import ZIP file.")
+                        .build(),
                 320);
     }
 
     private void addDestPathColumn() {
         dataGrid.addResizableColumn(
-                DataGridUtil.textWithTooltipColumnBuilder(ImportState::getDestPath)
+                DataGridUtil.textWithTooltipColumnBuilder(
+                                (ImportState importState) ->
+                                        getPath(importState, ImportState::getDestPath),
+                                this::getPathTooltip)
                         .build(),
-                "Destination Path",
+                DataGridUtil.headingBuilder("Destination Path")
+                        .withToolTip("The path in the explorer tree that the document will be imported to.")
+                        .build(),
                 320);
+    }
+
+    private String getPath(final ImportState importState,
+                           final Function<ImportState, String> pathGetter) {
+        if (importState != null) {
+            if (importState.isSingletonDoc()) {
+                return NOT_APPLICABLE_VALUE;
+            } else {
+                return pathGetter.apply(importState);
+            }
+        } else {
+            return null;
+        }
+    }
+
+    private String getPathTooltip(final String cellValue) {
+        return NOT_APPLICABLE_VALUE.equals(cellValue)
+                ? "Paths are not applicable for this type as the document is not visible in the explorer tree."
+                : cellValue;
     }
 
     public void abortImport(final HidePopupRequestEvent e) {

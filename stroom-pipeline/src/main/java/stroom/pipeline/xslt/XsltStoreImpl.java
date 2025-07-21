@@ -117,6 +117,11 @@ class XsltStoreImpl implements XsltStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
+    public boolean exists(final DocRef docRef) {
+        return store.exists(docRef);
+    }
+
+    @Override
     public XsltDoc readDocument(final DocRef docRef) {
         return store.readDocument(docRef);
     }

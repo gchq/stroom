@@ -102,6 +102,12 @@ public class DocumentationStoreImpl implements DocumentationStore {
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
 
+
+    @Override
+    public boolean exists(final DocRef docRef) {
+        return store.exists(docRef);
+    }
+
     @Override
     public DocumentationDoc readDocument(final DocRef docRef) {
         return store.readDocument(docRef);

@@ -71,7 +71,7 @@ public class ContentTemplateStoreImpl
     }
 
     @Override
-    protected AppPermissionSet getRequiredAppPermissions() {
+    public AppPermissionSet getRequiredAppPermissions() {
         return REQUIRED_PERMISSIONS;
     }
 

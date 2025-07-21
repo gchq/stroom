@@ -73,7 +73,7 @@ public abstract class AbstractSingletonDocumentStore<D extends AbstractSingleton
     /**
      * The app perms required to access this document
      */
-    protected abstract AppPermissionSet getRequiredAppPermissions();
+    public abstract AppPermissionSet getRequiredAppPermissions();
 
     /**
      * The name of the lock to use when creating the singleton document
@@ -153,11 +153,17 @@ public abstract class AbstractSingletonDocumentStore<D extends AbstractSingleton
     private <T> T getWithPermCheck(final Supplier<T> supplier) {
         Objects.requireNonNull(supplier);
         return securityContext.secureResult(requiredPermissions, () -> {
-            // Doc perms are needed to read a document but the user will never have any as this
+            // Doc perms are needed to read/update a document but the user will never have any as this
             // is a singleton, so once we have checked they have the app perm(s) needed, we just
             // run as proc user
             return securityContext.asProcessingUserResult(supplier);
         });
+    }
+
+    @Override
+    public boolean exists(final DocRef docRef) {
+        return getWithPermCheck(() ->
+                store.exists(docRef));
     }
 
     @Override

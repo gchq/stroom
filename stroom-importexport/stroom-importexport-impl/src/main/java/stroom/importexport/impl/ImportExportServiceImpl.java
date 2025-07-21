@@ -24,6 +24,7 @@ import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.util.io.FileUtil;
 import stroom.util.io.TempDirProvider;
+import stroom.util.shared.CompareUtil;
 import stroom.util.zip.ZipUtil;
 
 import jakarta.inject.Inject;
@@ -31,7 +32,6 @@ import jakarta.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -56,7 +56,7 @@ public class ImportExportServiceImpl implements ImportExportService {
                                           final ImportSettings importSettings,
                                           final List<ImportState> confirmList) {
         doImport(zipFile, confirmList, importSettings);
-        confirmList.sort(Comparator.comparing(ImportState::getSourcePath));
+        confirmList.sort(CompareUtil.getNullSafeComparator(ImportState::getSourcePath));
         return confirmList;
     }
 

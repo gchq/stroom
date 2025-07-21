@@ -218,6 +218,11 @@ public class StateDocStoreImpl implements StateDocStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
+    public boolean exists(final DocRef docRef) {
+        return store.exists(docRef);
+    }
+
+    @Override
     public StateDoc readDocument(final DocRef docRef) {
         return store.readDocument(docRef);
     }

@@ -97,6 +97,11 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
+    public boolean exists(final DocRef docRef) {
+        return store.exists(docRef);
+    }
+
+    @Override
     public ElasticIndexDoc readDocument(final DocRef docRef) {
         final ElasticIndexDoc doc = store.readDocument(docRef);
         doc.setFields(elasticIndexService.getFields(doc));

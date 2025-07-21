@@ -26,6 +26,8 @@ import java.util.Objects;
 
 public interface DocumentActionHandler<D extends Document> {
 
+    boolean exists(DocRef docRef);
+
     D readDocument(DocRef docRef);
 
     D writeDocument(D document);

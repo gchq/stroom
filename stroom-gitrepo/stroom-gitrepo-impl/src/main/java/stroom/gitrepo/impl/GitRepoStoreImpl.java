@@ -125,6 +125,12 @@ class GitRepoStoreImpl implements GitRepoStore {
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
 
+
+    @Override
+    public boolean exists(final DocRef docRef) {
+        return store.exists(docRef);
+    }
+
     @Override
     public GitRepoDoc readDocument(final DocRef docRef) {
         return store.readDocument(docRef);

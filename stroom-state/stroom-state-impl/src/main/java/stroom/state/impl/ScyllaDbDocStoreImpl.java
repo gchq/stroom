@@ -103,6 +103,11 @@ public class ScyllaDbDocStoreImpl implements ScyllaDbDocStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
+    public boolean exists(final DocRef docRef) {
+        return store.exists(docRef);
+    }
+
+    @Override
     public ScyllaDbDoc readDocument(final DocRef docRef) {
         return store.readDocument(docRef);
     }

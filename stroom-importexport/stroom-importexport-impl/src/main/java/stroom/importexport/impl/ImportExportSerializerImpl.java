@@ -18,6 +18,7 @@
 package stroom.importexport.impl;
 
 import stroom.docref.DocRef;
+import stroom.docstore.api.SingletonDocumentStore;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
@@ -36,6 +37,7 @@ import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.State;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.AppPermissionSet;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.logging.LogUtil;
@@ -229,6 +231,16 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                             confirmMap,
                             importSettings);
 
+                } else if (importExportActionHandler instanceof final SingletonDocumentStore<?> singletonStore) {
+                    imported = importSingletonDoc(
+                            importExportActionHandler,
+                            singletonStore,
+                            nodeFile,
+                            docRef,
+                            dataMap,
+                            importState,
+                            confirmMap,
+                            importSettings);
                 } else {
                     imported = importExplorerDoc(
                             importExportActionHandler,
@@ -250,6 +262,77 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         }
 
         return imported;
+    }
+
+    private DocRef importSingletonDoc(final ImportExportActionHandler importExportActionHandler,
+                                      final SingletonDocumentStore<?> singletonDocumentStore,
+                                      final Path nodeFile,
+                                      final DocRef docRef,
+                                      final Map<String, byte[]> dataMap,
+                                      final ImportState importState,
+                                      final Map<DocRef, ImportState> confirmMap,
+                                      final ImportSettings importSettings) {
+        final DocRef singletonDocRef = singletonDocumentStore.getSingletonDocRef();
+        if (!Objects.equals(docRef, singletonDocRef)) {
+            throw new RuntimeException(LogUtil.message(
+                    "Document being imported {} does not match the singleton docRef {}",
+                    docRef, singletonDocRef));
+        }
+        final AppPermissionSet requiredAppPermissions = singletonDocumentStore.getRequiredAppPermissions();
+
+        if (!securityContext.hasAppPermissions(requiredAppPermissions)) {
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have permission to import '" + docRef);
+        }
+
+        // This will also null out the source and dest paths
+        importState.setSingletonDoc(true);
+
+        if (singletonDocumentStore.exists(docRef)) {
+            importState.setState(State.UPDATE);
+        } else {
+            importState.setState(State.NEW);
+        }
+
+        try {
+            // Import the item via the appropriate handler.
+            if (ImportMode.CREATE_CONFIRMATION.equals(importSettings.getImportMode()) ||
+                ImportMode.IGNORE_CONFIRMATION.equals(importSettings.getImportMode()) ||
+                importState.isAction()) {
+
+                final DocRef imported = importExportActionHandler.importDocument(
+                        docRef,
+                        dataMap,
+                        importState,
+                        importSettings);
+
+                if (imported == null) {
+                    throw new RuntimeException("Import failed - no DocRef returned");
+                }
+
+                // Add explorer node afterwards on successful import as they won't be controlled by
+                // doc service.
+                if (ImportSettings.ok(importSettings, importState)) {
+                    importExportDocumentEventLog.importDocument(
+                            docRef.getType(),
+                            imported.getUuid(),
+                            docRef.getName(),
+                            null);
+                }
+            } else {
+                // We can't import this item so remove it from the map.
+                confirmMap.remove(docRef);
+            }
+        } catch (final RuntimeException e) {
+            importState.addMessage(Severity.ERROR, e.getMessage());
+            LOGGER.error("Error importing file {}", nodeFile.toAbsolutePath(), e);
+            importExportDocumentEventLog.importDocument(docRef.getType(),
+                    docRef.getUuid(),
+                    docRef.getName(),
+                    e);
+            throw e;
+        }
+        return docRef;
     }
 
     private DocRef importNonExplorerDoc(final ImportExportActionHandler importExportActionHandler,
@@ -866,7 +949,10 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         if (bytes.length < LINE_END_CHAR_BYTES.length) {
             return false;
         } else {
-            final byte[] lastChar = Arrays.copyOfRange(bytes, bytes.length - LINE_END_CHAR_BYTES.length, bytes.length);
+            final byte[] lastChar = Arrays.copyOfRange(
+                    bytes,
+                    bytes.length - LINE_END_CHAR_BYTES.length,
+                    bytes.length);
             return !Arrays.equals(LINE_END_CHAR_BYTES, lastChar);
         }
     }

@@ -20,6 +20,7 @@ package stroom.docstore.api;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.AbstractSingletonDoc;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.security.shared.AppPermissionSet;
 
 /**
  * A document store for a document type that can only ever have zero or one document.
@@ -48,4 +49,6 @@ public interface SingletonDocumentStore<D extends AbstractSingletonDoc>
     default boolean isSingleton() {
         return true;
     }
+
+    AppPermissionSet getRequiredAppPermissions();
 }

@@ -117,6 +117,11 @@ class StroomStatsStoreStoreImpl implements StroomStatsStoreStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
+    public boolean exists(final DocRef docRef) {
+        return store.exists(docRef);
+    }
+
+    @Override
     public StroomStatsStoreDoc readDocument(final DocRef docRef) {
         return store.readDocument(docRef);
     }

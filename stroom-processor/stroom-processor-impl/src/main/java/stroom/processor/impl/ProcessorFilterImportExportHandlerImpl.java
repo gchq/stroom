@@ -142,7 +142,6 @@ public class ProcessorFilterImportExportHandlerImpl
             // Ignore filters that already exist as we really don't want to mess with them.
             LOGGER.warn("Not importing processor filter because it already exists");
             importState.setState(State.IGNORE);
-
         } else {
             importState.setState(State.NEW);
             final ProcessorFilter processorFilter;
@@ -263,6 +262,12 @@ public class ProcessorFilterImportExportHandlerImpl
                 .stream()
                 .map(ProcessorFilter::asDocRef)
                 .collect(Collectors.toSet());
+    }
+
+    @Override
+    public boolean exists(final DocRef docRef) {
+        return processorFilterService.fetchByUuid(docRef.getUuid())
+                .isPresent();
     }
 
     @Override

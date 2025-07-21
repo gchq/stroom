@@ -232,6 +232,11 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
+    public boolean exists(final DocRef docRef) {
+        return store.exists(docRef);
+    }
+
+    @Override
     public AnalyticRuleDoc readDocument(final DocRef docRef) {
         return store.readDocument(docRef);
     }

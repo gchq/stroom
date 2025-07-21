@@ -334,10 +334,13 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     // START OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////
 
-
     @Override
     public boolean exists(final DocRef docRef) {
         Objects.requireNonNull(docRef);
+        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
+            throwPermissionException(
+                    "You are not authorised to view " + toDocRefDisplayString(docRef));
+        }
         return persistence.exists(docRef);
     }
 

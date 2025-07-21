@@ -93,6 +93,11 @@ public class StatisticStoreStoreImpl implements StatisticStoreStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
+    public boolean exists(final DocRef docRef) {
+        return store.exists(docRef);
+    }
+
+    @Override
     public StatisticStoreDoc readDocument(final DocRef docRef) {
         final StatisticStoreDoc statisticStoreDoc = store.readDocument(docRef);
         if (statisticStoreDoc != null && statisticStoreDoc.getConfig() != null) {

@@ -192,6 +192,11 @@ class TestDocRefInfoCache {
         }
 
         @Override
+        public boolean exists(final DocRef docRef) {
+            return false;
+        }
+
+        @Override
         public Document readDocument(final DocRef docRef) {
             return null;
         }

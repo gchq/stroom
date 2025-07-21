@@ -140,6 +140,11 @@ class S3ConfigStoreImpl implements S3ConfigStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
+    public boolean exists(final DocRef docRef) {
+        return store.exists(docRef);
+    }
+
+    @Override
     public S3ConfigDoc readDocument(final DocRef docRef) {
         return store.readDocument(docRef);
     }

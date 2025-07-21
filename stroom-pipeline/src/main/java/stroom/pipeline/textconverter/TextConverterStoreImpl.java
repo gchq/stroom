@@ -117,6 +117,11 @@ class TextConverterStoreImpl implements TextConverterStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
+    public boolean exists(final DocRef docRef) {
+        return store.exists(docRef);
+    }
+
+    @Override
     public TextConverterDoc readDocument(final DocRef docRef) {
         return store.readDocument(docRef);
     }

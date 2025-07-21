@@ -151,9 +151,13 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
+    public boolean exists(final DocRef docRef) {
+        return store.exists(docRef);
+    }
+
+    @Override
     public DictionaryDoc readDocument(final DocRef docRef) {
-        final DictionaryDoc dictionaryDoc = store.readDocument(docRef);
-        return dictionaryDoc;
+        return store.readDocument(docRef);
     }
 
     @Override

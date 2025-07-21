@@ -150,6 +150,11 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
+    public boolean exists(final DocRef docRef) {
+        return store.exists(docRef);
+    }
+
+    @Override
     public SolrIndexDoc readDocument(final DocRef docRef) {
         return store.readDocument(docRef);
     }

@@ -141,6 +141,11 @@ public class IndexStoreImpl implements IndexStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
+    public boolean exists(final DocRef docRef) {
+        return store.exists(docRef);
+    }
+
+    @Override
     public LuceneIndexDoc readDocument(final DocRef docRef) {
         return store.readDocument(docRef);
     }

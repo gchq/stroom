@@ -124,6 +124,11 @@ class VisualisationStoreImpl implements VisualisationStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
+    public boolean exists(final DocRef docRef) {
+        return store.exists(docRef);
+    }
+
+    @Override
     public VisualisationDoc readDocument(final DocRef docRef) {
         return store.readDocument(docRef);
     }

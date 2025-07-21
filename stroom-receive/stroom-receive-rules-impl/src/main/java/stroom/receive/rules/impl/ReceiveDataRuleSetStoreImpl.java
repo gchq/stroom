@@ -67,7 +67,7 @@ public class ReceiveDataRuleSetStoreImpl
     }
 
     @Override
-    protected AppPermissionSet getRequiredAppPermissions() {
+    public AppPermissionSet getRequiredAppPermissions() {
         return REQUIRED_PERMISSIONS;
     }
 
