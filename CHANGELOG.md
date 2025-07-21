@@ -13,6 +13,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#4959** : Remove terms with field `Status` from re-process filter expressions.
+
+* Issue **#4943** : Fix annotation creation to set provided assigned and status.
+
+* Issue **#5016** : Fix sort state visibility on query table.
+
+* Issue **#5034** : Fix query field help refresh.
+
+
 ## [v7.10-beta.7] - 2025-07-15
 
 * Issue **#5016** : Fix sort state visibility on query table.
