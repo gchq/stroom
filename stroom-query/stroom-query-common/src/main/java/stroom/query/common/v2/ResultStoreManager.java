@@ -523,48 +523,50 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
      * Evicts any expired result stores.
      */
     public void evictExpiredElements() {
-        taskContextFactory.current().info(() -> "Evicting expired search responses");
-        final Instant now = Instant.now();
-        resultStoreMap.forEach((queryKey, resultStore) -> {
-            try {
-                final ResultStoreSettings settings = resultStore.getResultStoreSettings();
-                final Instant createTime = resultStore.getCreationTime();
-                final Instant accessTime = resultStore.getLastAccessTime();
-                final UserRef userRef = resultStore.getUserRef();
+        securityContext.asProcessingUser(() -> {
+            taskContextFactory.current().info(() -> "Evicting expired search responses");
+            final Instant now = Instant.now();
+            resultStoreMap.forEach((queryKey, resultStore) -> {
+                try {
+                    final ResultStoreSettings settings = resultStore.getResultStoreSettings();
+                    final Instant createTime = resultStore.getCreationTime();
+                    final Instant accessTime = resultStore.getLastAccessTime();
+                    final UserRef userRef = resultStore.getUserRef();
 
-                if (settings.getStoreLifespan().getTimeToLive() != null &&
-                    now.isAfter(createTime.plus(settings.getStoreLifespan().getTimeToLive()))) {
-                    LOGGER.debug("Destroying resultStore for queryKey {} for user {} that is beyond the store TTL",
-                            queryKey, resultStore);
-                    destroyAndRemove(queryKey, resultStore);
-                } else if (settings.getStoreLifespan().getTimeToIdle() != null &&
-                           now.isAfter(accessTime.plus(settings.getStoreLifespan().getTimeToIdle()))) {
-                    LOGGER.debug("Destroying resultStore for queryKey {} for user {} that is beyond the store TTI",
-                            queryKey, resultStore);
-                    destroyAndRemove(queryKey, resultStore);
-                } else if (settings.getSearchProcessLifespan().getTimeToLive() != null &&
-                           now.isAfter(createTime.plus(settings.getSearchProcessLifespan().getTimeToLive()))) {
-                    LOGGER.debug("Terminating resultStore for queryKey {} for user {} that is beyond the " +
-                                 "search process TTL", queryKey, resultStore);
-                    resultStore.terminate();
-                } else if (settings.getSearchProcessLifespan().getTimeToIdle() != null &&
-                           now.isAfter(accessTime.plus(settings.getSearchProcessLifespan().getTimeToIdle()))) {
-                    LOGGER.debug("Terminating resultStore for queryKey {} for user {} that is beyond the " +
-                                 "search process TTI", queryKey, resultStore);
-                    resultStore.terminate();
-                } else {
-                    final String ownerUuid = NullSafe.get(userRef, UserRef::getUuid);
-                    final Optional<UserRef> optUserRef = userRefLookup.getByUuid(ownerUuid);
-                    if (optUserRef.isEmpty()) {
-                        // User has been deleted so destroy the store
-                        LOGGER.debug("Destroying resultStore for queryKey {} for deleted user {}",
+                    if (settings.getStoreLifespan().getTimeToLive() != null &&
+                        now.isAfter(createTime.plus(settings.getStoreLifespan().getTimeToLive()))) {
+                        LOGGER.debug("Destroying resultStore for queryKey {} for user {} that is beyond the store TTL",
                                 queryKey, resultStore);
                         destroyAndRemove(queryKey, resultStore);
+                    } else if (settings.getStoreLifespan().getTimeToIdle() != null &&
+                               now.isAfter(accessTime.plus(settings.getStoreLifespan().getTimeToIdle()))) {
+                        LOGGER.debug("Destroying resultStore for queryKey {} for user {} that is beyond the store TTI",
+                                queryKey, resultStore);
+                        destroyAndRemove(queryKey, resultStore);
+                    } else if (settings.getSearchProcessLifespan().getTimeToLive() != null &&
+                               now.isAfter(createTime.plus(settings.getSearchProcessLifespan().getTimeToLive()))) {
+                        LOGGER.debug("Terminating resultStore for queryKey {} for user {} that is beyond the " +
+                                     "search process TTL", queryKey, resultStore);
+                        resultStore.terminate();
+                    } else if (settings.getSearchProcessLifespan().getTimeToIdle() != null &&
+                               now.isAfter(accessTime.plus(settings.getSearchProcessLifespan().getTimeToIdle()))) {
+                        LOGGER.debug("Terminating resultStore for queryKey {} for user {} that is beyond the " +
+                                     "search process TTI", queryKey, resultStore);
+                        resultStore.terminate();
+                    } else {
+                        final String ownerUuid = NullSafe.get(userRef, UserRef::getUuid);
+                        final Optional<UserRef> optUserRef = userRefLookup.getByUuid(ownerUuid);
+                        if (optUserRef.isEmpty()) {
+                            // User has been deleted so destroy the store
+                            LOGGER.debug("Destroying resultStore for queryKey {} for deleted user {}",
+                                    queryKey, resultStore);
+                            destroyAndRemove(queryKey, resultStore);
+                        }
                     }
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e::getMessage, e);
                 }
-            } catch (final RuntimeException e) {
-                LOGGER.error(e::getMessage, e);
-            }
+            });
         });
     }
 
