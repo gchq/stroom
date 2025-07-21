@@ -63,9 +63,9 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.button.client.Button;
+import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
-import stroom.widget.menu.client.presenter.SimpleMenuItem;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -565,15 +565,17 @@ public class AnnotationEditPresenter
                                    final AnnotationEntryType entryType) {
         final List<Item> menuItems = new ArrayList<>();
         if (AnnotationEntryType.COMMENT.equals(entryType)) {
-            final SimpleMenuItem editItem = new SimpleMenuItem.Builder()
+            final IconMenuItem editItem = new IconMenuItem.Builder()
                     .text("Edit Entry")
+                    .icon(SvgImage.EDIT)
                     .command(() -> editComment(id))
                     .build();
             menuItems.add(editItem);
         }
 
-        final SimpleMenuItem deleteItem = new SimpleMenuItem.Builder()
+        final IconMenuItem deleteItem = new IconMenuItem.Builder()
                 .text("Delete Entry")
+                .icon(SvgImage.DELETE)
                 .command(() -> deleteEntry(id))
                 .build();
         menuItems.add(deleteItem);

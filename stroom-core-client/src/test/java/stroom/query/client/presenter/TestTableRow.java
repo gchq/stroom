@@ -19,6 +19,7 @@ class TestTableRow {
                 null,
                 null,
                 null,
+                null,
                 mockUrlDecoder);
 
         return TestUtil.buildDynamicTestStream()
