@@ -9569,6 +9569,10 @@ components:
     CreateAnnotationRequest:
       type: object
       properties:
+        assignTo:
+          $ref: "#/components/schemas/UserRef"
+        comment:
+          type: string
         linkedEvents:
           type: array
           items:
