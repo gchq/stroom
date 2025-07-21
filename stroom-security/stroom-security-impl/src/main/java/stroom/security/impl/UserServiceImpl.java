@@ -26,6 +26,7 @@ import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventBus;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
+import stroom.security.shared.FindUserContext;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.FindUserDependenciesCriteria;
 import stroom.security.shared.User;
@@ -188,14 +189,29 @@ class UserServiceImpl implements UserService, ContentPackUserService {
             if (securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
                 return userDao.find(criteria);
             } else {
-                return userDao.findRestrictedUserList(securityContext.getUserRef().getUuid(), criteria);
+                final String currentUserUuid = NullSafe
+                        .get(securityContext, SecurityContext::getUserRef, UserRef::getUuid);
+                return userDao.findRelatedUsers(currentUserUuid, criteria);
             }
         });
     }
 
     @Override
-    public UserRef getUserByUuid(final String uuid) {
-        return userCache.getByUuid(uuid).map(User::asRef).orElse(null);
+    public UserRef getUserByUuid(final String uuid, final FindUserContext context) {
+        if (uuid == null) {
+            return null;
+        }
+
+        final String currentUserUuid = NullSafe.get(securityContext, SecurityContext::getUserRef, UserRef::getUuid);
+        final Optional<User> optional = securityContext.secureResult(() -> {
+            if (securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION) ||
+                uuid.equals(currentUserUuid)) {
+                return userCache.getByUuid(uuid);
+            } else {
+                return userDao.getByUuid(uuid, currentUserUuid, context);
+            }
+        });
+        return optional.map(User::asRef).orElse(null);
     }
 
     @Override

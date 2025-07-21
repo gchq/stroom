@@ -36,15 +36,14 @@ public class TableRowStyles implements RowStyles<TableRow> {
                     ConditionalFormattingType.CUSTOM.equals(rule.getFormattingType())) {
                     classNameBuilder.addClassName(ConditionalFormattingDynamicStyles.create(rule.getCustomStyle()));
                 } else if (ConditionalFormattingType.TEXT.equals(rule.getFormattingType())) {
-                    classNameBuilder.addClassName(ConditionalFormattingSwatchUtil.CF_TEXT);
-                    classNameBuilder.addClassName(rule.getFormattingStyle().getCssClassName());
+                    classNameBuilder.addClassName(ConditionalFormattingSwatchUtil.CF_TEXT)
+                            .addClassName(rule.getFormattingStyle().getCssClassName());
                 } else if (ConditionalFormattingType.BACKGROUND.equals(rule.getFormattingType())) {
                     classNameBuilder.addClassName(rule.getFormattingStyle().getCssClassName());
                 }
 
                 final TextAttributes textAttributes = rule.getTextAttributes();
-                classNameBuilder.addClassName(ConditionalFormattingSwatchUtil
-                        .getTextAttributeClassNames(textAttributes));
+                classNameBuilder.addAll(ConditionalFormattingSwatchUtil.getTextAttributeClassNames(textAttributes));
             }
         }
 

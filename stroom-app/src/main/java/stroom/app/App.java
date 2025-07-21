@@ -164,10 +164,13 @@ public class App extends Application<Config> {
                 "index.html",
                 "ui"));
 
+        // Admin servlet for Prometheus to scrape (pull) metrics
+//        bootstrap.addBundle(new PrometheusBundle());
+
         addCliCommands(bootstrap);
 
         // If we want to use jakarta.validation on our rest resources with our own custom validation annotations
-        // then we need to set the ValidatorFactory. As our main Guice Injector is not available yet we need to
+        // then we need to set the ValidatorFactory. As our main Guice Injector is not available, yet we need to
         // create one just for the REST validation
         bootstrap.setValidatorFactory(validationOnlyInjector.getInstance(ValidatorFactory.class));
     }

@@ -49,6 +49,7 @@ import stroom.query.language.functions.ValString;
 import stroom.util.io.ByteSize;
 import stroom.util.io.FileUtil;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
@@ -303,6 +304,48 @@ class TestTemporalStateDb {
             db.condense(Instant.parse("2000-01-10T00:00:00.000Z").plusMillis(1));
             db.deleteOldData(Instant.MIN, true);
             assertThat(db.count()).isEqualTo(182);
+        }
+    }
+
+    @Test
+    void testCondense3(@TempDir final Path rootDir) throws IOException {
+        final Path dbPath = rootDir.resolve("db");
+        Files.createDirectory(dbPath);
+
+        final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
+        try (final TemporalStateDb db = TemporalStateDb.create(dbPath, BYTE_BUFFERS, DOC, false)) {
+            final String prefix = StringUtils.repeat('T', 400);
+            for (int i = 0; i < 10000; i++) {
+                insertData(db, refTime, KeyPrefix.create(prefix + i), "test", 100, 60 * 60 * 24);
+                insertData(db, refTime, KeyPrefix.create(prefix + i), "test2", 10, -60 * 60 * 24);
+
+            }
+
+            db.condense(Instant.now());
+            db.deleteOldData(Instant.now(), true);
+            db.condense(Instant.now());
+        }
+    }
+
+    @Test
+    void testCondense4(@TempDir final Path rootDir) throws IOException {
+        final Path dbPath = rootDir.resolve("db");
+        Files.createDirectory(dbPath);
+
+        final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
+        try (final TemporalStateDb db = TemporalStateDb.create(dbPath, BYTE_BUFFERS, DOC, false)) {
+
+            for (int i = 0; i < 10000; i++) {
+                final String prefix = StringUtils.repeat('T', i);
+                insertData(db, refTime, KeyPrefix.create(prefix + i), "test", 100, 60 * 60 * 24);
+                insertData(db, refTime, KeyPrefix.create(prefix + i), "test2", 100, -60 * 60 * 24);
+            }
+
+            for (int i = 0; i < 100; i++) {
+                final Instant effectiveTime = refTime.plusSeconds(i * 60 * 60 * 24);
+                db.deleteOldData(effectiveTime, true);
+                db.condense(Instant.now());
+            }
         }
     }
 

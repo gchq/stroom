@@ -7690,8 +7690,8 @@ paths:
         content:
           application/json:
             schema:
-              type: string
-        description: uuid
+              $ref: "#/components/schemas/GetUserRequest"
+        description: request
         required: true
       responses:
         default:
@@ -12142,8 +12142,12 @@ components:
     FindUserCriteria:
       type: object
       properties:
-        activeUsersOnly:
-          type: boolean
+        context:
+          type: string
+          enum:
+          - RUN_AS
+          - ANNOTATION_ASSIGNMENT
+          - PERMISSIONS
         expression:
           $ref: "#/components/schemas/ExpressionOperator"
         pageRequest:
@@ -12407,6 +12411,28 @@ components:
           format: int64
         scheduleRestriction:
           $ref: "#/components/schemas/ScheduleRestriction"
+    GetUserRequest:
+      type: object
+      properties:
+        context:
+          type: string
+          enum:
+          - RUN_AS
+          - ANNOTATION_ASSIGNMENT
+          - PERMISSIONS
+        expression:
+          $ref: "#/components/schemas/ExpressionOperator"
+        pageRequest:
+          $ref: "#/components/schemas/PageRequest"
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: "#/components/schemas/CriteriaFieldSort"
+        uuid:
+          type: string
     GitRepoDoc:
       type: object
       properties:

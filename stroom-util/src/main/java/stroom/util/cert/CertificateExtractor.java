@@ -7,10 +7,7 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.security.cert.X509Certificate;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
-import java.util.StringTokenizer;
 
 /**
  * For extracting certificates and/or DNs from {@link HttpServletRequest}s.
@@ -26,32 +23,12 @@ public interface CertificateExtractor {
     Optional<X509Certificate> extractCertificate(ServletRequest request);
 
     /**
-     * Given a DN pull out the CN. E.g.
-     * "CN=some.server.co.uk, OU=servers, O=some organisation, C=GB" Would
+     * Given a DN and {@link DNFormat} pull out the CN. E.g.
+     * "CN=some.server.co.uk, OU=servers, O=some organisation, C=GB" and {@link DNFormat#LDAP} Would
      * return "some.server.co.uk"
      *
-     * @return null or the CN name
+     * @return The CN name or an empty {@link Optional}
      */
-    static String extractCNFromDN(final String dn) {
-        LOGGER.debug(() -> "extractCNFromDN DN = " + dn);
+    Optional<String> extractCNFromDN(final String dn);
 
-        if (dn == null) {
-            return null;
-        }
-        final StringTokenizer attributes = new StringTokenizer(dn, ",");
-        final Map<String, String> map = new HashMap<>();
-        while (attributes.hasMoreTokens()) {
-            final String token = attributes.nextToken();
-            if (token.contains("=")) {
-                final String[] parts = token.split("=");
-                if (parts.length == 2) {
-                    map.put(parts[0].trim().toUpperCase(), parts[1].trim());
-                }
-            }
-        }
-        final String cn = map.get("CN");
-        LOGGER.debug(() -> "extractCNFromDN CN = " + cn);
-
-        return cn;
-    }
 }

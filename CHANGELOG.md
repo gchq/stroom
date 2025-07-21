@@ -13,6 +13,48 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#5027** : Allow users to choose run as user for processing.
+
+* Issue **#4959** : Remove terms with field `Status` from re-process filter expressions.
+
+* Issue **#4943** : Fix annotation creation to set provided assigned and status.
+
+* Issue **#5016** : Fix sort state visibility on query table.
+
+* Issue **#5034** : Fix query field help refresh.
+
+* Issue **#5016** : Fix sort state visibility on query table.
+
+* Issue **#5017** : Fix stuck spinner copying embedded query.
+
+* Issue **#4974** : Fix Plan B condense job.
+
+* Issue **#5030** : Add new property `.receive.x509CertificateDnFormat` to stroom and proxy to allow extraction of CNs from DNs in legacy `OPEN_SSL` format. The new property defaults to `LDAP`, which means no change to behaviour if left as is.
+
+* Issue **#5025** : Fix parsing of hyperlinks in dashboard cells.
+
+* Add in validation of the Conditional Formatting custom style colours to ensure the user can only enter valid colours and nothing else.
+
+* Replace incorrect uses of `appendHtmlConstant` with SafeHtmlTemplate.
+
+* Issue **#5012** : Fix errors when trying to use `lookup()` with a Context stream.
+
+* Fix bug in reference data loading when the reference data value is XML that includes an element called `<value>`.
+
+* Fix behaviour in reference data loading of XML values where attributes with no explicit namespace would be given the unnamed namespace of the parent `referenceData` document, i.e. `<ci:data xmlns="reference-data:2" name="name" value="001" />`.
+
+
+## [v7.11-beta.2] - 2025-07-04
+
+* Issue **#3874** : Add copy context menu to tables.
+
+* Issue **#5016** : Fix sort state visibility on query table.
+
+* Issue **#5017** : Fix stuck spinner copying embedded query.
+
+* Fix NPE when proxy tries to fetch the receipt rules from downstream.
+
+
 ## [v7.11-beta.1] - 2025-07-02
 
 * Add the Receive Data Rules screen to the Administration menu which requires the `Manage Data Receipt Rules` app permission. Add the following new config properties to the `receive` branch: `obfuscatedFields`, `obfuscationHashAlgorithm`, `receiptCheckMode` and `receiptRulesInitialFields`. Remove the property `receiptPolicyUuid`. Add the proxy config property `contentSync.receiveDataRulesUrl`.
@@ -1575,7 +1617,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.1...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.2...HEAD
+[v7.11-beta.2]: https://github.com/gchq/stroom/compare/v7.11-beta.1...v7.11-beta.2
 [v7.11-beta.1]: https://github.com/gchq/stroom/compare/v7.10-beta.6...v7.11-beta.1
 [v7.10-beta.6]: https://github.com/gchq/stroom/compare/v7.10-beta.5...v7.10-beta.6
 [v7.10-beta.5]: https://github.com/gchq/stroom/compare/v7.10-beta.4...v7.10-beta.5

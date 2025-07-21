@@ -66,7 +66,7 @@ public class ExternalServiceUserFactory implements ServiceUserFactory {
         // Use instance equality check as there should only ever be one ServiceUserIdentity
         // in this JVM
         final boolean isServiceUserIdentity = userIdentity instanceof ServiceUserIdentity
-                && userIdentity == serviceUserIdentity;
+                                              && userIdentity == serviceUserIdentity;
         LOGGER.debug("isServiceUserIdentity: {}, userIdentity: {}, serviceUserIdentity: {}",
                 isServiceUserIdentity, userIdentity, serviceUserIdentity);
         return isServiceUserIdentity;
@@ -86,9 +86,8 @@ public class ExternalServiceUserFactory implements ServiceUserFactory {
         return jwtContextFactory.getJwtContext(tokenResponse.getAccessToken())
                 .map(jwtContext ->
                         new FetchTokenResult(tokenResponse, jwtContext.getJwtClaims()))
-                .orElseThrow(() -> {
-                    throw new RuntimeException("Unable to extract JWT claims for service user");
-                });
+                .orElseThrow(() ->
+                        new RuntimeException("Unable to extract JWT claims for service user"));
     }
 
     private ObjectMapper createObjectMapper() {

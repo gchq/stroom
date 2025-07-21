@@ -23,15 +23,19 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
+/**
+ * {@link org.xml.sax.ContentHandler} for processing reference data values that are XML.
+ * Because the value needs to be treated as an XML fragment we ignore the start/end document
+ * events.
+ */
 public class FastInfosetContentHandler extends ReceivingContentHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FastInfosetContentHandler.class);
 
     @Override
     public void startDocument() throws SAXException {
-        LOGGER.trace("startDocument()");
-        // We are dealing in fragments so need to swallow these
-//        super.startDocument();
+        LOGGER.trace("startDocument() - Ignored");
+        // We are dealing in fragments so need to swallow these and not pass them on
     }
 
     @Override
@@ -62,7 +66,7 @@ public class FastInfosetContentHandler extends ReceivingContentHandler {
 
     @Override
     public void endDocument() throws SAXException {
-        LOGGER.trace("endDocument()");
-        // We are dealing in fragments so need to swallow these
+        LOGGER.trace("endDocument() - Ignored");
+        // We are dealing in fragments so need to swallow these and not pass them on
     }
 }

@@ -4,6 +4,7 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.UserService;
 import stroom.security.shared.FindUserCriteria;
+import stroom.security.shared.GetUserRequest;
 import stroom.security.shared.User;
 import stroom.security.shared.UserFields;
 import stroom.security.shared.UserRefResource;
@@ -45,7 +46,7 @@ public class UserRefResourceImpl implements UserRefResource {
 
     @AutoLogged(OperationType.UNLOGGED)
     @Override
-    public UserRef getUserByUuid(final String uuid) {
-        return userServiceProvider.get().getUserByUuid(uuid);
+    public UserRef getUserByUuid(final GetUserRequest request) {
+        return userServiceProvider.get().getUserByUuid(request.getUuid(), request.getContext());
     }
 }

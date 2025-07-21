@@ -1,10 +1,17 @@
 package stroom.receive.common;
 
+import stroom.test.common.TestUtil;
 import stroom.util.cert.CertificateExtractor;
+import stroom.util.cert.DNFormat;
 
+import com.google.inject.TypeLiteral;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -14,6 +21,7 @@ import java.security.Principal;
 import java.security.cert.X509Certificate;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -122,4 +130,50 @@ class TestCertificateExtractorImpl {
                 .hasValue(myDn);
     }
 
+    @TestFactory
+    Stream<DynamicTest> testExtractCNFromDN() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple2<String, DNFormat>>() {
+                })
+                .withOutputType(String.class)
+                .withTestFunction(testCase -> {
+                    final CertificateExtractor certificateExtractor = new CertificateExtractorImpl(() ->
+                            ReceiveDataConfig.builder()
+                                    .withX509CertificateDnFormat(testCase.getInput()._2)
+                                    .build());
+
+                    return certificateExtractor.extractCNFromDN(testCase.getInput()._1)
+                            .orElse(null);
+                })
+                .withSimpleEqualityAssertion()
+                .addNamedCase(
+                        "testSpaceInCN",
+                        Tuple.of("CN=John Smith (johnsmith), OU=ouCode1, OU=ouCode2, O=oValue, C=GB", DNFormat.LDAP),
+                        "John Smith (johnsmith)")
+                .addNamedCase(
+                        "testExtractCNLDAPFormatWithOverlappingDelimiter",
+                        Tuple.of("CN=John Smith //(johnsmith), OU=ouCode1, OU=ouCode2, O=oValue, C=GB", DNFormat.LDAP),
+                        "John Smith //(johnsmith)")
+                .addNamedCase(
+                        "testExtractCNOpenSSLOnelineFormat",
+                        Tuple.of("/C=UK/L=Test Locality/O=Test Organization/CN=Log Sender", DNFormat.OPEN_SSL),
+                        "Log Sender")
+                .addNamedCase(
+                        "testExtractCNOpenSSLOnelineFormatWithOverlappingDelimiter",
+                        Tuple.of("/C=UK/L=Test ,Locality/O=Test Organization/CN=Log Sender", DNFormat.OPEN_SSL),
+                        "Log Sender")
+                .addNamedCase(
+                        "testExtractCNFromNullDN",
+                        Tuple.of(null, DNFormat.LDAP),
+                        null)
+                .addNamedCase(
+                        "testExtractCNFromMalformedDN",
+                        Tuple.of("CNJohn Doe,OU=Users,O=Example", DNFormat.LDAP),
+                        null)
+                .addNamedCase(
+                        "testExtractCNWithExtraSpacesAndMixedCase",
+                        Tuple.of(" cn = Jane Smith , ou = Users , o = Example ", DNFormat.LDAP),
+                        "Jane Smith")
+                .build();
+    }
 }

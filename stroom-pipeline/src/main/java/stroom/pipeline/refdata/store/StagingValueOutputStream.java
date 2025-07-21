@@ -114,6 +114,10 @@ public class StagingValueOutputStream
         }
     }
 
+    public ValueStoreHashAlgorithm getValueStoreHashAlgorithm() {
+        return valueStoreHashAlgorithm;
+    }
+
     /**
      * Only call this after you have finished writing to the output stream.
      */

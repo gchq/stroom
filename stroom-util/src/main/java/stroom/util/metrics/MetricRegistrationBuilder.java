@@ -39,13 +39,19 @@ public class MetricRegistrationBuilder {
     /**
      * Adds a name part. Each part will have unsuitable characters stripped and be separated
      * by a '.' character. Name parts will be appended onto the fully qualified class name.
+     * <p>
+     * Either use a pre-canned name part from {@link Metrics} or supply your own.
+     * </p>
+     * <p>
+     * Name parts should be lower camel case. The first name part will be preceded by
+     * the fully qualified class name of the class supplied to this builder.
+     * </p>
      */
     public MetricRegistrationBuilder addNamePart(final String namePart) {
-        if (nameParts == null) {
-            nameParts = new ArrayList<>();
-        }
-
         if (NullSafe.isNonBlankString(namePart)) {
+            if (nameParts == null) {
+                nameParts = new ArrayList<>();
+            }
             nameParts.add(namePart);
         }
         return this;
@@ -54,13 +60,19 @@ public class MetricRegistrationBuilder {
     /**
      * Sets the name parts. Each part will have unsuitable characters stripped and be separated
      * by a '.' character. Name parts will be appended onto the fully qualified class name.
+     * <p>
+     * Either use a pre-canned name part from {@link Metrics} or supply your own.
+     * </p>
+     * <p>
+     * Name parts should be lower camel case. The first name part will be preceded by
+     * the fully qualified class name of the class supplied to this builder.
+     * </p>
      */
     public MetricRegistrationBuilder withNameParts(final List<String> nameParts) {
-        if (this.nameParts == null) {
-            this.nameParts = new ArrayList<>();
-        }
-
         if (NullSafe.hasItems(nameParts)) {
+            if (this.nameParts == null) {
+                this.nameParts = new ArrayList<>();
+            }
             this.nameParts.addAll(nameParts);
         }
         return this;

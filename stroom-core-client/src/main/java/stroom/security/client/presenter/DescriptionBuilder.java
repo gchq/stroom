@@ -41,9 +41,14 @@ public class DescriptionBuilder {
             classNameBuilder.addClassName("delimiter");
         }
 
-        sb.appendHtmlConstant("<span" + classNameBuilder.buildClassAttribute() + ">");
-        sb.append(text);
-        sb.appendHtmlConstant("</span>");
+        if (classNameBuilder.isEmpty()) {
+            // Pointless span but not sure if any css is relying on it, so leaving it in for now
+            sb.appendHtmlConstant("<span>")
+                    .append(text)
+                    .appendHtmlConstant("</span");
+        } else {
+            sb.append(SafeHtmlUtil.getTemplate().spanWithClass(classNameBuilder.build(), text));
+        }
         written = true;
     }
 

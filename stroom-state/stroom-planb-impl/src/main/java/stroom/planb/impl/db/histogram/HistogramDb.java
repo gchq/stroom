@@ -361,7 +361,25 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
 
     @Override
     public long deleteOldData(final Instant deleteBefore, final boolean useStateTime) {
-        return env.readAndWrite((readTxn, writer) -> {
+        return env.write(writer -> {
+            final long count = deleteOldData(writer, deleteBefore, useStateTime);
+
+            // Delete unused lookup keys.
+            if (!Thread.currentThread().isInterrupted()) {
+                env.read(readTxn -> {
+                    keyRecorder.deleteUnused(readTxn, writer);
+                    return null;
+                });
+            }
+
+            return count;
+        });
+    }
+
+    private long deleteOldData(final LmdbWriter writer,
+                               final Instant deleteBefore,
+                               final boolean useStateTime) {
+        return env.read(readTxn -> {
             long changeCount = 0;
             try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
                 final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
@@ -379,18 +397,15 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
                     if (time.isBefore(deleteBefore)) {
                         // If this is data we no longer want to retain then delete it.
                         dbi.delete(writer.getWriteTxn(), kv.key());
-                        writer.tryCommit();
                         changeCount++;
                     } else {
                         // Record used lookup keys.
                         keyRecorder.recordUsed(writer, kv.key());
                     }
+                    writer.tryCommit();
                 }
             }
-
-            // Delete unused lookup keys.
-            keyRecorder.deleteUnused(readTxn, writer);
-
+            writer.commit();
             return changeCount;
         });
     }

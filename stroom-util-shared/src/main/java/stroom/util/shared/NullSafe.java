@@ -26,6 +26,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -456,6 +457,7 @@ public class NullSafe {
     public static boolean contains(final String str, final String subStr) {
         return str != null
                && subStr != null
+               && !str.isEmpty()
                && str.contains(subStr);
     }
 
@@ -657,6 +659,18 @@ public class NullSafe {
             return Stream.empty();
         } else {
             return Arrays.stream(items);
+        }
+    }
+
+    /**
+     * Returns a {@link Stream<Entry<K,V>>} of entries is non-null
+     * else returns an empty {@link Stream<Entry<K,V>>}
+     */
+    public static <K, V> Stream<Entry<K, V>> streamEntries(final Map<K, V> map) {
+        if (map == null || map.isEmpty()) {
+            return Stream.empty();
+        } else {
+            return map.entrySet().stream();
         }
     }
 

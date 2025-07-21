@@ -72,12 +72,21 @@ public class UidLookupDb {
 
     public ByteBuffer getValue(final Txn<ByteBuffer> readTxn,
                                final ByteBuffer keyByteBuffer) {
-        return uidToKeyDbi.get(readTxn, keyByteBuffer);
+        final ByteBuffer value = uidToKeyDbi.get(readTxn, keyByteBuffer);
+        if (value == null) {
+            final long uid = byteBufferToUid(keyByteBuffer);
+            throw new IllegalStateException("Unable to find value for UID: " + uid);
+        }
+        return value;
     }
 
     public ByteBuffer getValue(final Txn<ByteBuffer> readTxn,
                                final long uid) {
-        return uidToByteBuffer(uid, byteBuffer -> uidToKeyDbi.get(readTxn, byteBuffer));
+        final ByteBuffer value = uidToByteBuffer(uid, byteBuffer -> uidToKeyDbi.get(readTxn, byteBuffer));
+        if (value == null) {
+            throw new IllegalStateException("Unable to find value for UID: " + uid);
+        }
+        return value;
     }
 
     public <R> R uidToByteBuffer(final long uid, final Function<ByteBuffer, R> function) {
@@ -87,6 +96,11 @@ public class UidLookupDb {
             byteBuffer.flip();
             return function.apply(byteBuffer);
         });
+    }
+
+    private long byteBufferToUid(final ByteBuffer byteBuffer) {
+        final UnsignedBytes unsignedBytes = UnsignedBytesInstances.ofLength(byteBuffer.remaining());
+        return unsignedBytes.get(byteBuffer);
     }
 
     public <R> R get(final Txn<ByteBuffer> readTxn,

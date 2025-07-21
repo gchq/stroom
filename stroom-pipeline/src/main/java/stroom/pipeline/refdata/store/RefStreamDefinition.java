@@ -75,7 +75,7 @@ public class RefStreamDefinition {
         this.pipelineVersion = pipelineVersion;
         this.streamId = streamId;
         this.partIndex = partIndex;
-        // pre compute the hash
+        // pre-compute the hash
         this.hashCode = Objects.hash(pipelineDocRef, pipelineVersion, streamId, partIndex);
     }
 
@@ -109,21 +109,21 @@ public class RefStreamDefinition {
     @Override
     public String toString() {
         return "RefStreamDefinition{" +
-                "streamId=" + streamId +
-                ", partIdx=" + partIndex +
-                ", pipeline=" + pipelineDocRef +
-                ", pipelineVersion='" + pipelineVersion + '\'' +
-                '}';
+               "streamId=" + streamId +
+               ", partIdx=" + partIndex +
+               ", pipeline=" + pipelineDocRef +
+               ", pipelineVersion='" + pipelineVersion + '\'' +
+               '}';
     }
 
     public String asUiFriendlyString() {
         // make partIndex one based
         return "reference stream: " + streamId +
-                ":" + (partIndex + 1) +
-                " pipeline: " +
-                (pipelineDocRef.getName() != null
-                        ? pipelineDocRef.getName()
-                        : pipelineDocRef.getUuid());
+               ":" + (partIndex + 1) +
+               " pipeline: " +
+               (pipelineDocRef.getName() != null
+                       ? pipelineDocRef.getName()
+                       : pipelineDocRef.getUuid());
     }
 
     @Override
@@ -136,9 +136,9 @@ public class RefStreamDefinition {
         }
         final RefStreamDefinition that = (RefStreamDefinition) o;
         return Objects.equals(pipelineVersion, that.pipelineVersion) &&
-                streamId == that.streamId &&
-                partIndex == that.partIndex &&
-                Objects.equals(pipelineDocRef, that.pipelineDocRef);
+               streamId == that.streamId &&
+               partIndex == that.partIndex &&
+               Objects.equals(pipelineDocRef, that.pipelineDocRef);
     }
 
     @Override
