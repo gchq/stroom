@@ -35,7 +35,6 @@ import stroom.dashboard.client.table.TableExpandButton;
 import stroom.dashboard.client.table.TableRowStyles;
 import stroom.dashboard.client.table.cf.RulesPresenter;
 import stroom.dashboard.shared.ColumnValues;
-import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MessagePanel;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
@@ -174,13 +173,10 @@ public class QueryResultTablePresenter
         this.dataGrid = new MyDataGrid<>(this);
         dataGrid.addStyleName("TablePresenter");
         dataGrid.setRowStyles(tableRowStyles);
-        selectionModel = new MultiSelectionModelImpl<>();
-        final DataGridSelectionEventManager<TableRow> selectionEventManager = new DataGridSelectionEventManager<>(
-                dataGrid,
-                selectionModel,
-                false);
-        dataGrid.setSelectionModel(selectionModel, selectionEventManager);
+        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        pagerView.setDataWidget(dataGrid);
 
+        tableView.setTableView(pagerView);
 
         columnsManager = new QueryTableColumnsManager(
                 this,
@@ -190,10 +186,6 @@ public class QueryResultTablePresenter
                 columnValuesFilterPresenter);
         dataGrid.setHeadingListener(columnsManager);
         columnsManager.setColumnsStartIndex(1);
-
-
-        pagerView.setDataWidget(dataGrid);
-        tableView.setTableView(pagerView);
 
         // Expander column.
         expanderColumn = new com.google.gwt.user.cellview.client.Column<TableRow, Expander>(new ExpanderCell()) {
