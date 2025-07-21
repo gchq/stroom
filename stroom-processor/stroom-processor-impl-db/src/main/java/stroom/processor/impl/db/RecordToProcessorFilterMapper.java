@@ -1,6 +1,7 @@
 package stroom.processor.impl.db;
 
 import stroom.processor.shared.ProcessorFilter;
+import stroom.security.shared.FindUserContext;
 import stroom.security.user.api.UserRefLookup;
 
 import jakarta.inject.Provider;
@@ -41,7 +42,7 @@ class RecordToProcessorFilterMapper implements Function<Record, ProcessorFilter>
         processorFilter.setMaxMetaCreateTimeMs(record.get(PROCESSOR_FILTER.MAX_META_CREATE_TIME_MS));
         processorFilter.setRunAsUser(userRefLookupProvider
                 .get()
-                .getByUuid(record.get(PROCESSOR_FILTER.RUN_AS_USER_UUID))
+                .getByUuid(record.get(PROCESSOR_FILTER.RUN_AS_USER_UUID), FindUserContext.RUN_AS)
                 .orElse(null));
         return processorFilter;
     }

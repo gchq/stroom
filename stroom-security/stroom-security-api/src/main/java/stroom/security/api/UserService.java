@@ -17,6 +17,7 @@
 
 package stroom.security.api;
 
+import stroom.security.shared.FindUserContext;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.FindUserDependenciesCriteria;
 import stroom.security.shared.User;
@@ -58,7 +59,7 @@ public interface UserService {
 
     ResultPage<User> find(FindUserCriteria criteria);
 
-    UserRef getUserByUuid(String uuid);
+    UserRef getUserByUuid(String uuid, FindUserContext context);
 
     ResultPage<User> findUsersInGroup(String groupUuid, FindUserCriteria criteria);
 

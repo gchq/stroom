@@ -35,5 +35,5 @@ public interface UserRefResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Resolve a user ref by UUID",
             operationId = "getUserByUuid")
-    UserRef getUserByUuid(@Parameter(description = "uuid", required = true) String uuid);
+    UserRef getUserByUuid(@Parameter(description = "request", required = true) GetUserRequest request);
 }
