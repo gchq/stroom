@@ -13,6 +13,16 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11-beta.3] - 2025-07-21
+
+* Issue **#4735** : Add expand/collapse to result tables.
+
+* Issue **#5013** : Allow annotation status update without requery.
+
+* Issue **#5022** : Fix weird spinner behaviour.
+
+* Issue **#259** : Maximise dashboard panes.
+
 * Issue **#5027** : Allow users to choose run as user for processing.
 
 * Issue **#4959** : Remove terms with field `Status` from re-process filter expressions.
@@ -1617,7 +1627,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.2...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.3...HEAD
+[v7.11-beta.3]: https://github.com/gchq/stroom/compare/v7.11-beta.2...v7.11-beta.3
 [v7.11-beta.2]: https://github.com/gchq/stroom/compare/v7.11-beta.1...v7.11-beta.2
 [v7.11-beta.1]: https://github.com/gchq/stroom/compare/v7.10-beta.6...v7.11-beta.1
 [v7.10-beta.6]: https://github.com/gchq/stroom/compare/v7.10-beta.5...v7.10-beta.6
