@@ -12,6 +12,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+## [v7.9.0] - 2025-07-21
+
+* Issue **#4959** : Remove terms with field `Status` from re-process filter expressions.
+
+* Issue **#4943** : Fix annotation creation to set provided assigned and status.
+
+* Issue **#5016** : Fix sort state visibility on query table.
+
+* Issue **#5034** : Fix query field help refresh.
+
 * Issue **#5025** : Fix parsing of hyperlinks in dashboard cells.
 
 * Add in validation of the Conditional Formatting custom style colours to ensure the user can only enter valid colours and nothing else.
@@ -1485,7 +1496,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.9-beta.13...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.9.0...HEAD
+[v7.9.0]: https://github.com/gchq/stroom/compare/v7.9-beta.13...v7.9.0
 [v7.9-beta.13]: https://github.com/gchq/stroom/compare/v7.9-beta.12...v7.9-beta.13
 [v7.9-beta.12]: https://github.com/gchq/stroom/compare/v7.9-beta.11...v7.9-beta.12
 [v7.9-beta.11]: https://github.com/gchq/stroom/compare/v7.9-beta.10...v7.9-beta.11
