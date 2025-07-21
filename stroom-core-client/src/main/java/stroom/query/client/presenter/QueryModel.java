@@ -21,6 +21,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.api.DestroyReason;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.api.GroupSelection;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.Param;
 import stroom.query.api.QueryKey;
@@ -239,7 +240,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                 .copy()
                 .queryKey(queryKey)
                 .storeHistory(false)
-                .openGroups(resultComponent.getOpenGroups())
+                .groupSelection(resultComponent.getGroupSelection())
                 .requestedRange(resultComponent.getRequestedRange())
                 .queryTablePreferences(queryTablePreferencesSupplier.get())
                 .build();
@@ -296,8 +297,8 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
         final QuerySearchRequest search = currentSearch;
         if (search != null && polling) {
             final ResultComponent tablePresenter = resultComponents.get(TABLE_COMPONENT_ID);
-            final Set<String> openGroups = NullSafe
-                    .getOrElse(tablePresenter, ResultComponent::getOpenGroups, Collections.emptySet());
+            final GroupSelection groupSelection = NullSafe
+                    .getOrElse(tablePresenter, ResultComponent::getGroupSelection, new GroupSelection());
             final OffsetRange requestedRange = NullSafe
                     .getOrElse(tablePresenter, ResultComponent::getRequestedRange, OffsetRange.UNBOUNDED);
 
@@ -305,7 +306,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                     .copy()
                     .queryKey(queryKey)
                     .storeHistory(storeHistory)
-                    .openGroups(openGroups)
+                    .groupSelection(groupSelection)
                     .requestedRange(requestedRange)
                     .queryTablePreferences(queryTablePreferencesSupplier.get())
                     .build();

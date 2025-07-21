@@ -24,6 +24,7 @@ import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.ExpressionUtil;
+import stroom.query.api.GroupSelection;
 import stroom.query.api.HoppingWindow;
 import stroom.query.api.IncludeExcludeFilter;
 import stroom.query.api.ParamUtil;
@@ -898,7 +899,8 @@ public class SearchRequestFactory {
                     null,
                     null,
                     ResultStyle.TABLE,
-                    Fetch.ALL);
+                    Fetch.ALL,
+                    new GroupSelection());
             resultRequests.add(tableResultRequest);
 
             if (visTableSettings != null) {
@@ -911,7 +913,8 @@ public class SearchRequestFactory {
                         null,
                         null,
                         ResultStyle.QL_VIS,
-                        Fetch.ALL);
+                        Fetch.ALL,
+                        new GroupSelection());
                 resultRequests.add(qlVisResultRequest);
             }
         }

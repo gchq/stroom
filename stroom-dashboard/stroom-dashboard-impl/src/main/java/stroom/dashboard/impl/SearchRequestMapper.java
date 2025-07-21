@@ -31,6 +31,7 @@ import stroom.docref.DocRef;
 import stroom.query.api.Column;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.Format;
+import stroom.query.api.GroupSelection;
 import stroom.query.api.Param;
 import stroom.query.api.ParamUtil;
 import stroom.query.api.Query;
@@ -56,6 +57,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 
 public class SearchRequestMapper {
 
@@ -140,13 +142,17 @@ public class SearchRequestMapper {
         final List<ResultRequest> resultRequests = new ArrayList<>(searchRequest.getComponentResultRequests().size());
         for (final ComponentResultRequest componentResultRequest : searchRequest.getComponentResultRequests()) {
             if (componentResultRequest instanceof final TableResultRequest tableResultRequest) {
+
+                final GroupSelection groupSelection = Optional.ofNullable(tableResultRequest.getGroupSelection())
+                        .orElse(GroupSelection.builder().openGroups(tableResultRequest.getOpenGroups()).build());
+
                 final ResultRequest copy = ResultRequest.builder()
                         .componentId(tableResultRequest.getComponentId())
                         .addMappings(tableResultRequest.getTableSettings())
                         .requestedRange(tableResultRequest.getRequestedRange())
                         .resultStyle(ResultStyle.TABLE)
                         .fetch(tableResultRequest.getFetch())
-                        .openGroups(tableResultRequest.getOpenGroups())
+                        .groupSelection(groupSelection)
                         .build();
                 resultRequests.add(copy);
 

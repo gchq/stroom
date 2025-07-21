@@ -1,7 +1,6 @@
 package stroom.query.client.presenter;
 
 import stroom.hyperlink.client.Hyperlink;
-import stroom.hyperlink.client.Hyperlink.UrlDecoder;
 import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.SafeHtmlUtil;
@@ -28,31 +27,20 @@ public class TableRow {
     private final Long annotationId;
     private final Map<String, Cell> cells;
     private final String matchingRule;
-    private final UrlDecoder urlDecoder;
-
-    public TableRow(final Expander expander,
-                    final String groupKey,
-                    final Long annotationId,
-                    final Map<String, Cell> cells,
-                    final String matchingRule) {
-        this(expander, groupKey, annotationId, cells, matchingRule, null);
-        if (template == null) {
-            template = GWT.create(Template.class);
-        }
-    }
+    private final int depth;
 
     public TableRow(final Expander expander,
                     final String groupKey,
                     final Long annotationId,
                     final Map<String, Cell> cells,
                     final String matchingRule,
-                    final UrlDecoder urlDecoder) {
+                    final int depth) {
         this.expander = expander;
         this.groupKey = groupKey;
         this.annotationId = annotationId;
         this.cells = cells;
         this.matchingRule = matchingRule;
-        this.urlDecoder = urlDecoder;
+        this.depth = depth;
     }
 
     public Expander getExpander() {
@@ -75,6 +63,10 @@ public class TableRow {
         } else {
             return SafeHtmlUtil.NBSP;
         }
+    }
+
+    public int getDepth() {
+        return depth;
     }
 
     public String getMatchingRule() {
@@ -156,6 +148,9 @@ public class TableRow {
                     final SafeHtml displayValueHtml = NullSafe.isNonBlankString(hyperlink.getText())
                             ? SafeHtmlUtils.fromString(hyperlink.getText())
                             : SafeHtmlUtil.NBSP;
+                    if (template == null) {
+                        template = GWT.create(Template.class);
+                    }
                     final SafeHtml linkHtml = template.link(hyperlink.toString(), title, displayValueHtml);
                     sb.append(linkHtml);
                 }
@@ -195,7 +190,7 @@ public class TableRow {
                 final char c = value.charAt(i);
                 if (c == '[') {
                     // Might be the start of a hyperlink or could just be a square bracket
-                    final Hyperlink hyperlink = Hyperlink.create(value, i, urlDecoder);
+                    final Hyperlink hyperlink = Hyperlink.create(value, i);
                     if (hyperlink != null) {
                         //noinspection SizeReplaceableByIsEmpty // isEmpty() not in GWT yet
                         if (sb.length() > 0) {

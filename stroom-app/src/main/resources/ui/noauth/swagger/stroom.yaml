@@ -10581,7 +10581,9 @@ components:
           - LOCKED
           - LOGO
           - LOGOUT
+          - MAXIMISE
           - MENU
+          - MINIMISE
           - MONITORING
           - MOVE
           - NODES
@@ -12420,17 +12422,6 @@ components:
           - RUN_AS
           - ANNOTATION_ASSIGNMENT
           - PERMISSIONS
-        expression:
-          $ref: "#/components/schemas/ExpressionOperator"
-        pageRequest:
-          $ref: "#/components/schemas/PageRequest"
-        sort:
-          type: string
-          writeOnly: true
-        sortList:
-          type: array
-          items:
-            $ref: "#/components/schemas/CriteriaFieldSort"
         uuid:
           type: string
     GitRepoDoc:
@@ -12496,6 +12487,24 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CriteriaFieldSort"
+    GroupSelection:
+      type: object
+      description: Contains a set of group keys of parent rows we want to show (or
+        not show) children for
+      properties:
+        closedGroups:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        expandedDepth:
+          type: integer
+          format: int32
+        openGroups:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
     HashedApiKey:
       type: object
       properties:
@@ -13889,7 +13898,9 @@ components:
           - LOCKED
           - LOGO
           - LOGOUT
+          - MAXIMISE
           - MENU
+          - MINIMISE
           - MONITORING
           - MOVE
           - NODES
@@ -14868,6 +14879,8 @@ components:
     QuerySearchRequest:
       type: object
       properties:
+        groupSelection:
+          $ref: "#/components/schemas/GroupSelection"
         incremental:
           type: boolean
         openGroups:
@@ -15636,6 +15649,8 @@ components:
           - NONE
           - CHANGES
           - ALL
+        groupSelection:
+          $ref: "#/components/schemas/GroupSelection"
         mappings:
           type: array
           items:
@@ -17396,6 +17411,8 @@ components:
       - $ref: "#/components/schemas/ComponentResultRequest"
       - type: object
         properties:
+          groupSelection:
+            $ref: "#/components/schemas/GroupSelection"
           openGroups:
             type: array
             items:

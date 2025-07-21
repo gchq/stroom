@@ -1,6 +1,5 @@
 package stroom.query.client.presenter;
 
-import stroom.hyperlink.client.Hyperlink.UrlDecoder;
 import stroom.test.common.TestUtil;
 
 import org.junit.jupiter.api.DynamicTest;
@@ -12,15 +11,12 @@ class TestTableRow {
 
     @TestFactory
     Stream<DynamicTest> testGetText() {
-        // Use a mock UrlDecoder to stop it using URL::decodeQueryString which is GWT client-side
-        // code
-        final UrlDecoder mockUrlDecoder = str -> str;
         final TableRow tableRow = new TableRow(null,
                 null,
                 null,
                 null,
                 null,
-                mockUrlDecoder);
+                0);
 
         return TestUtil.buildDynamicTestStream()
                 .withInputAndOutputType(String.class)
