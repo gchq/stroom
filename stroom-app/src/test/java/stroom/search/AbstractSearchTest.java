@@ -97,7 +97,8 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
                     null,
                     null,
                     ResultRequest.ResultStyle.TABLE,
-                    Fetch.CHANGES);
+                    Fetch.CHANGES,
+                    null);
             resultRequests.add(tableResultRequest);
         }
 

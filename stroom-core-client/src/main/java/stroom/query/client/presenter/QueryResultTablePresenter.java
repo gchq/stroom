@@ -28,6 +28,8 @@ import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.DownloadPresenter;
 import stroom.dashboard.client.table.FormatPresenter;
 import stroom.dashboard.client.table.HasComponentSelection;
+import stroom.dashboard.client.table.TableCollapseButton;
+import stroom.dashboard.client.table.TableExpandButton;
 import stroom.dashboard.client.table.TableRowStyles;
 import stroom.dashboard.client.table.cf.RulesPresenter;
 import stroom.dashboard.shared.ColumnValues;
@@ -47,6 +49,7 @@ import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnRef;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.api.GroupSelection;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.QueryKey;
 import stroom.query.api.Result;
@@ -93,7 +96,6 @@ import com.gwtplatform.mvp.client.View;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -122,7 +124,10 @@ public class QueryResultTablePresenter
     private boolean pause;
 
     private OffsetRange requestedRange = OffsetRange.ZERO_100;
-    private Set<String> openGroups = null;
+    private GroupSelection groupSelection = new GroupSelection();
+
+    private final TableExpandButton expandButton;
+    private final TableCollapseButton collapseButton;
 
     private final ButtonView downloadButton;
     private final DownloadPresenter downloadPresenter;
@@ -140,6 +145,7 @@ public class QueryResultTablePresenter
     private final TableRowStyles tableRowStyles;
     private DashboardContext dashboardContext;
     private DocRef currentDataSource;
+    private int maxDepth;
 
     @Inject
     public QueryResultTablePresenter(final EventBus eventBus,
@@ -197,12 +203,18 @@ public class QueryResultTablePresenter
                 return row.getExpander();
             }
         };
-        expanderColumn.setFieldUpdater((index, result, value) -> {
-            toggleOpenGroup(result.getGroupKey());
+        expanderColumn.setFieldUpdater((index, row, value) -> {
+            toggle(row);
             refresh();
         });
 
         pagerView.getRefreshButton().setAllowPause(true);
+
+        expandButton = TableExpandButton.create();
+        pagerView.addButton(expandButton);
+
+        collapseButton = TableCollapseButton.create();
+        pagerView.addButton(collapseButton);
 
         // Download
         downloadButton = pagerView.addButton(SvgPresets.DOWNLOAD);
@@ -231,24 +243,12 @@ public class QueryResultTablePresenter
         this.dashboardContext = dashboardContext;
     }
 
-    private void toggleOpenGroup(final String group) {
-        openGroup(group, !isGroupOpen(group));
-    }
-
-    private void openGroup(final String group, final boolean open) {
-        if (openGroups == null) {
-            openGroups = new HashSet<>();
-        }
-
-        if (open) {
-            openGroups.add(group);
+    private void toggle(final TableRow row) {
+        if (groupSelection.isGroupOpen(row.getGroupKey(), row.getDepth())) {
+            groupSelection.close(row.getGroupKey());
         } else {
-            openGroups.remove(group);
+            groupSelection.open(row.getGroupKey());
         }
-    }
-
-    private boolean isGroupOpen(final String group) {
-        return openGroups != null && openGroups.contains(group);
     }
 
 //    public void setRequestedRange(final OffsetRange requestedRange) {
@@ -256,8 +256,8 @@ public class QueryResultTablePresenter
 //    }
 
     @Override
-    public Set<String> getOpenGroups() {
-        return openGroups;
+    public GroupSelection getGroupSelection() {
+        return groupSelection;
     }
 
     @Override
@@ -286,6 +286,16 @@ public class QueryResultTablePresenter
 //        }));
 
         registerHandler(pagerView.getRefreshButton().addClickHandler(event -> setPause(!pause, true)));
+
+        registerHandler(expandButton.addClickHandler(event -> {
+            groupSelection = expandButton.expand(groupSelection, maxDepth);
+            refresh();
+        }));
+
+        registerHandler(collapseButton.addClickHandler(event -> {
+            groupSelection = collapseButton.collapse(groupSelection);
+            refresh();
+        }));
 
         registerHandler(downloadButton.addClickHandler(event -> {
             if (currentSearchModel != null) {
@@ -680,22 +690,7 @@ public class QueryResultTablePresenter
     private List<TableRow> processData(final List<Column> columns, final List<Row> values) {
         // See if any fields have more than 1 level. If they do then we will add
         // an expander column.
-        int maxGroup = -1;
-        final boolean showDetail = false; //getTableSettings().showDetail();
-        for (final Column column : columns) {
-            if (column.getGroup() != null) {
-                maxGroup = Math.max(maxGroup, column.getGroup());
-            }
-        }
-
-        int maxDepth = -1;
-        if (maxGroup > 0 && showDetail) {
-            maxDepth = maxGroup + 1;
-        } else if (maxGroup > 0) {
-            maxDepth = maxGroup;
-        } else if (maxGroup == 0 && showDetail) {
-            maxDepth = 1;
-        }
+        maxDepth = getMaxDepth(columns);
 
         final List<TableRow> processed = new ArrayList<>(values.size());
         for (final Row row : values) {
@@ -729,7 +724,7 @@ public class QueryResultTablePresenter
             // Create an expander for the row.
             Expander expander = null;
             if (row.getDepth() < maxDepth) {
-                final boolean open = isGroupOpen(row.getGroupKey());
+                final boolean open = groupSelection.isGroupOpen(row.getGroupKey(), row.getDepth());
                 expander = new Expander(row.getDepth(), open, false);
             } else if (row.getDepth() > 0) {
                 expander = new Expander(row.getDepth(), false, true);
@@ -739,14 +734,33 @@ public class QueryResultTablePresenter
                     expander,
                     row.getGroupKey(),
                     cellsMap,
-                    row.getMatchingRule()));
+                    row.getMatchingRule(),
+                    row.getDepth()));
         }
 
         // Set the expander column width.
         expanderColumnWidth = ExpanderCell.getColumnWidth(maxDepth);
         dataGrid.setColumnWidth(expanderColumn, expanderColumnWidth, Unit.PX);
 
+        expandButton.update(groupSelection, maxDepth);
+        collapseButton.update(groupSelection, maxDepth);
+
         return processed;
+    }
+
+    private int getMaxDepth(final List<Column> columns) {
+        int maxGroup = -1;
+        for (final Column column : columns) {
+            if (column.getGroup() != null) {
+                maxGroup = Math.max(maxGroup, column.getGroup());
+            }
+        }
+
+        int maxDepth = -1;
+        if (maxGroup > 0) {
+            maxDepth = maxGroup;
+        }
+        return maxDepth;
     }
 
     public HandlerRegistration addRefreshRequestHandler(final RefreshRequestEvent.Handler handler) {

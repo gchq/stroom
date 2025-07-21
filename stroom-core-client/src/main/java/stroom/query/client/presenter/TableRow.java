@@ -27,13 +27,15 @@ public class TableRow {
     private final String groupKey;
     private final Map<String, Cell> cells;
     private final String matchingRule;
+    private final int depth;
     private final UrlDecoder urlDecoder;
 
     public TableRow(final Expander expander,
                     final String groupKey,
                     final Map<String, Cell> cells,
-                    final String matchingRule) {
-        this(expander, groupKey, cells, matchingRule, null);
+                    final String matchingRule,
+                    final int depth) {
+        this(expander, groupKey, cells, matchingRule, depth, null);
         if (template == null) {
             template = GWT.create(Template.class);
         }
@@ -43,11 +45,13 @@ public class TableRow {
                     final String groupKey,
                     final Map<String, Cell> cells,
                     final String matchingRule,
+                    final int depth,
                     final UrlDecoder urlDecoder) {
         this.expander = expander;
         this.groupKey = groupKey;
         this.cells = cells;
         this.matchingRule = matchingRule;
+        this.depth = depth;
         this.urlDecoder = urlDecoder;
     }
 
@@ -67,6 +71,10 @@ public class TableRow {
         } else {
             return SafeHtmlUtil.NBSP;
         }
+    }
+
+    public int getDepth() {
+        return depth;
     }
 
     public String getMatchingRule() {

@@ -78,7 +78,7 @@ public class Hyperlink {
                             .build();
                 }
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             // Can't parse the link for some reason, so just swallow the error
             // as the value may not be intended as a link, e.g. could just be '[foo]'
             // If it was meant to be a link then hopefully the user will realise something

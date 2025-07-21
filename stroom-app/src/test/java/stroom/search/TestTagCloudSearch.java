@@ -112,7 +112,8 @@ class TestTagCloudSearch extends AbstractSearchTest {
                 null,
                 null,
                 ResultRequest.ResultStyle.TABLE,
-                Fetch.CHANGES);
+                Fetch.CHANGES,
+                null);
 
         final List<ResultRequest> resultRequests = Collections.singletonList(tableResultRequest);
 
