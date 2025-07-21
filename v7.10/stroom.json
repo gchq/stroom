@@ -11180,11 +11180,11 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "type" : "string"
+                "$ref" : "#/components/schemas/GetUserRequest"
               }
             }
           },
-          "description" : "uuid",
+          "description" : "request",
           "required" : true
         },
         "responses" : {
@@ -16624,8 +16624,9 @@
       "FindUserCriteria" : {
         "type" : "object",
         "properties" : {
-          "activeUsersOnly" : {
-            "type" : "boolean"
+          "context" : {
+            "type" : "string",
+            "enum" : [ "RUN_AS", "ANNOTATION_ASSIGNMENT", "PERMISSIONS" ]
           },
           "expression" : {
             "$ref" : "#/components/schemas/ExpressionOperator"
@@ -16952,6 +16953,18 @@
           },
           "scheduleRestriction" : {
             "$ref" : "#/components/schemas/ScheduleRestriction"
+          }
+        }
+      },
+      "GetUserRequest" : {
+        "type" : "object",
+        "properties" : {
+          "context" : {
+            "type" : "string",
+            "enum" : [ "RUN_AS", "ANNOTATION_ASSIGNMENT", "PERMISSIONS" ]
+          },
+          "uuid" : {
+            "type" : "string"
           }
         }
       },
