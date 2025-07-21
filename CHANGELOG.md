@@ -13,6 +13,10 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.10-beta.8] - 2025-07-21
+
+* Issue **#5027** : Allow users to choose run as user for processing.
+
 * Issue **#4959** : Remove terms with field `Status` from re-process filter expressions.
 
 * Issue **#4943** : Fix annotation creation to set provided assigned and status.
@@ -1598,7 +1602,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.10-beta.7...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.10-beta.8...HEAD
+[v7.10-beta.8]: https://github.com/gchq/stroom/compare/v7.10-beta.7...v7.10-beta.8
 [v7.10-beta.7]: https://github.com/gchq/stroom/compare/v7.10-beta.6...v7.10-beta.7
 [v7.10-beta.6]: https://github.com/gchq/stroom/compare/v7.10-beta.5...v7.10-beta.6
 [v7.10-beta.5]: https://github.com/gchq/stroom/compare/v7.10-beta.4...v7.10-beta.5
