@@ -6,7 +6,6 @@ import stroom.proxy.feed.remote.FeedStatus;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusRequestV2;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
-import stroom.receive.common.FeedStatusResourceV2;
 import stroom.receive.common.FeedStatusService;
 import stroom.receive.common.GetFeedStatusRequestAdapter;
 import stroom.receive.common.ReceiveDataConfig;
@@ -40,13 +39,12 @@ public class RemoteFeedStatusService implements FeedStatusService, Managed {
             AppPermission.CHECK_RECEIPT_STATUS);
 
     private static final String CACHE_NAME = "Remote Feed Status Response Cache";
-    private static final String GET_FEED_STATUS_PATH_PART = FeedStatusResourceV2.GET_FEED_STATUS_PATH_PART;
 
     private final LoadingStroomCache<GetFeedStatusRequestV2, FeedStatusUpdater> updaters;
-    private final Provider<FeedStatusConfig> feedStatusConfigProvider;
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
     private final Provider<CommonSecurityContext> securityContextProvider;
     private final RemoteFeedStatusClient remoteFeedStatusClient;
+    private final GetFeedStatusRequestAdapter getFeedStatusRequestAdapter;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     @Inject
@@ -54,11 +52,12 @@ public class RemoteFeedStatusService implements FeedStatusService, Managed {
                             final CacheManager cacheManager,
                             final Provider<ReceiveDataConfig> receiveDataConfigProvider,
                             final Provider<CommonSecurityContext> securityContextProvider,
-                            final RemoteFeedStatusClient remoteFeedStatusClient) {
-        this.feedStatusConfigProvider = feedStatusConfigProvider;
+                            final RemoteFeedStatusClient remoteFeedStatusClient,
+                            final GetFeedStatusRequestAdapter getFeedStatusRequestAdapter) {
         this.receiveDataConfigProvider = receiveDataConfigProvider;
         this.securityContextProvider = securityContextProvider;
         this.remoteFeedStatusClient = remoteFeedStatusClient;
+        this.getFeedStatusRequestAdapter = getFeedStatusRequestAdapter;
         this.updaters = cacheManager.createLoadingCache(
                 CACHE_NAME,
                 () -> feedStatusConfigProvider.get().getFeedStatusCache(),
@@ -80,7 +79,7 @@ public class RemoteFeedStatusService implements FeedStatusService, Managed {
     @Deprecated
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest legacyRequest) {
         return securityContextProvider.get().secureResult(REQUIRED_PERM_SET, () -> {
-            final GetFeedStatusRequestV2 request = GetFeedStatusRequestAdapter.mapLegacyRequest(legacyRequest);
+            final GetFeedStatusRequestV2 request = getFeedStatusRequestAdapter.mapLegacyRequest(legacyRequest);
             return getFeedStatus(request);
         });
     }

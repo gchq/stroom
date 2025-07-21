@@ -54,6 +54,7 @@ import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.ClassNameBuilder;
 import stroom.security.client.presenter.UserRefPopupPresenter;
+import stroom.security.shared.FindUserContext;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
@@ -166,7 +167,7 @@ public class AnnotationEditPresenter
         this.retentionDurationProvider = retentionDurationProvider;
 
         getView().setUiHandlers(this);
-        assignedToPresenter.showActiveUsersOnly(true);
+        assignedToPresenter.setContext(FindUserContext.ANNOTATION_ASSIGNMENT);
 
         this.annotationStatusPresenter.setDataSupplier((filter, consumer) -> {
             final ExpressionCriteria criteria = createCriteria(AnnotationTagType.STATUS, filter);
@@ -198,7 +199,6 @@ public class AnnotationEditPresenter
         // See if we are able to get standard comments.
         annotationResourceClient.getStandardComments(null, values ->
                 getView().setHasCommentValues(values != null && !values.isEmpty()), this);
-        assignedToPresenter.showActiveUsersOnly(true);
     }
 
     public static SafeHtml createSwatch(final ConditionalFormattingStyle formattingStyle,

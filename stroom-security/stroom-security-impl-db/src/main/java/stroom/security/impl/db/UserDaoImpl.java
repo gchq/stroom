@@ -6,6 +6,7 @@ import stroom.db.util.JooqUtil;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionUtil;
 import stroom.security.impl.UserDao;
+import stroom.security.shared.FindUserContext;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.security.shared.UserFields;
@@ -191,18 +192,35 @@ public class UserDaoImpl implements UserDao {
         return JooqUtil.contextResult(securityDbConnProvider, context -> getByUuid(context, uuid));
     }
 
+    @Override
+    public Optional<User> getByUuid(final String uuid, final String currentUserUuid, final FindUserContext context) {
+        return JooqUtil.contextResult(securityDbConnProvider, ctx -> {
+            Condition condition = STROOM_USER.UUID.eq(uuid);
+            condition = addRelatedUserCondition(condition, currentUserUuid, context);
+            final Optional<User> optUser = get(ctx, condition);
+            LOGGER.debug("getByUuid - uuid: {}, returning: {}", uuid, optUser);
+            return optUser;
+        });
+    }
+
     /**
      * Get user or group by their UUID.
      */
-    public Optional<User> getByUuid(final DSLContext context, final String uuid) {
-        final Optional<User> optUser = context
-                .select()
-                .from(STROOM_USER)
-                .where(STROOM_USER.UUID.eq(uuid))
-                .fetchOptional()
-                .map(RECORD_TO_USER_MAPPER);
+    public Optional<User> getByUuid(final DSLContext context,
+                                    final String uuid) {
+        final Optional<User> optUser = get(context, STROOM_USER.UUID.eq(uuid));
         LOGGER.debug("getByUuid - uuid: {}, returning: {}", uuid, optUser);
         return optUser;
+    }
+
+    private Optional<User> get(final DSLContext context,
+                               final Condition condition) {
+        return context
+                .select()
+                .from(STROOM_USER)
+                .where(condition)
+                .fetchOptional()
+                .map(RECORD_TO_USER_MAPPER);
     }
 
     @Override
@@ -277,7 +295,8 @@ public class UserDaoImpl implements UserDao {
         final List<String> fields = ExpressionUtil.fields(criteria.getExpression());
 
         Condition condition = expressionMapper.apply(criteria.getExpression());
-        if (criteria.isActiveUsersOnly()) {
+        if (FindUserContext.ANNOTATION_ASSIGNMENT.equals(criteria.getContext()) ||
+            FindUserContext.RUN_AS.equals(criteria.getContext())) {
             condition = condition.and(STROOM_USER.ENABLED.isTrue());
         }
 
@@ -300,35 +319,55 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public ResultPage<User> findRestrictedUserList(final String userUuid, final FindUserCriteria criteria) {
-        final Condition condition = expressionMapper.apply(criteria.getExpression())
-                .and(STROOM_USER.ENABLED.isTrue());
-        LOGGER.debug("findRestrictedUserList - condition: {}", condition);
+    public ResultPage<User> findRelatedUsers(final String currentUserUuid, final FindUserCriteria criteria) {
+        final List<String> fields = ExpressionUtil.fields(criteria.getExpression());
+
+        Condition condition = expressionMapper.apply(criteria.getExpression());
+        condition = addRelatedUserCondition(condition, currentUserUuid, criteria.getContext());
+
         final Collection<OrderField<?>> orderFields = createOrderFields(criteria);
         final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
         final int offset = JooqUtil.getOffset(criteria.getPageRequest());
-        final var select1 = DSL
-                .selectDistinct(STROOM_USER_GROUP.GROUP_UUID)
-                .from(STROOM_USER_GROUP)
-                .where(STROOM_USER_GROUP.USER_UUID.eq(userUuid));
-        final var select2 = DSL
-                .selectDistinct(STROOM_USER_GROUP.USER_UUID)
-                .from(STROOM_USER_GROUP)
-                .where(STROOM_USER_GROUP.GROUP_UUID.in(select1));
-        final List<User> list;
-        list = JooqUtil.contextResult(securityDbConnProvider, context -> context
-                        .select()
-                        .from(STROOM_USER)
-                        .where(condition)
-                        .and(STROOM_USER.UUID.in(select1).or(STROOM_USER.UUID.in(select2)))
-                        .orderBy(orderFields)
-                        .offset(offset)
-                        .limit(limit)
-                        .fetch())
-                .stream()
-                .map(RECORD_TO_USER_MAPPER)
-                .toList();
+
+        LOGGER.debug("findRelatedUsers - criteria: {}, fields: {}, condition: {}, limit: {}, offset: {}",
+                criteria, fields, condition, limit, offset);
+
+        final List<User> list = getMatchingUsersOrGroups(condition, orderFields, offset, limit);
         return ResultPage.createCriterialBasedList(list, criteria);
+    }
+
+    private Condition addRelatedUserCondition(final Condition condition,
+                                              final String currentUserUuid,
+                                              final FindUserContext context) {
+        if (FindUserContext.ANNOTATION_ASSIGNMENT.equals(context)) {
+            // Get immediate parent groups for the supplied user.
+            final var selectParentGroupUuids = DSL
+                    .selectDistinct(STROOM_USER_GROUP.GROUP_UUID)
+                    .from(STROOM_USER_GROUP)
+                    .where(STROOM_USER_GROUP.USER_UUID.eq(currentUserUuid));
+            // Get siblings users for all parent groups (this will obviously include the supplied user).
+            final var selectSiblingUsers = DSL
+                    .selectDistinct(STROOM_USER_GROUP.USER_UUID)
+                    .from(STROOM_USER_GROUP)
+                    .where(STROOM_USER_GROUP.GROUP_UUID.in(selectParentGroupUuids));
+            return condition
+                    .and(STROOM_USER.ENABLED.isTrue())
+                    .and(STROOM_USER.UUID.in(selectParentGroupUuids).or(STROOM_USER.UUID.in(selectSiblingUsers)));
+
+        } else if (FindUserContext.RUN_AS.equals(context)) {
+            // Get immediate parent groups for the supplied user.
+            final var selectParentGroupUuids = DSL
+                    .selectDistinct(STROOM_USER_GROUP.GROUP_UUID)
+                    .from(STROOM_USER_GROUP)
+                    .where(STROOM_USER_GROUP.USER_UUID.eq(currentUserUuid));
+            return condition
+                    .and(STROOM_USER.ENABLED.isTrue())
+                    .and(STROOM_USER.UUID.in(selectParentGroupUuids).or(STROOM_USER.UUID.eq(currentUserUuid)));
+        }
+
+        return condition
+                .and(STROOM_USER.ENABLED.isTrue())
+                .and(STROOM_USER.UUID.eq(currentUserUuid));
     }
 
     private List<User> getMatchingUsersOrGroups(final Condition condition,

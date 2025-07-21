@@ -46,6 +46,8 @@ import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
+import stroom.security.shared.FindUserContext;
+import stroom.security.user.api.UserRefLookup;
 import stroom.util.AuditUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -84,6 +86,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
     private final MetaService metaService;
     private final SecurityContext securityContext;
     private final DocRefInfoService docRefInfoService;
+    private final UserRefLookup userRefLookup;
 
     @Inject
     ProcessorFilterServiceImpl(final ProcessorService processorService,
@@ -91,13 +94,15 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                                final ProcessorTaskDao processorTaskDao,
                                final MetaService metaService,
                                final SecurityContext securityContext,
-                               final DocRefInfoService docRefInfoService) {
+                               final DocRefInfoService docRefInfoService,
+                               final UserRefLookup userRefLookup) {
         this.processorService = processorService;
         this.processorFilterDao = processorFilterDao;
         this.processorTaskDao = processorTaskDao;
         this.metaService = metaService;
         this.securityContext = securityContext;
         this.docRefInfoService = docRefInfoService;
+        this.userRefLookup = userRefLookup;
     }
 
     @Override
@@ -200,13 +205,17 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
             // By default the creator of the filter becomes the run as user for the filter
             // (see stroom.processor.impl.ProcessorTaskCreatorImpl.createNewTasks)
             processorFilter.setRunAsUser(currentUser);
-        } else if (!Objects.equals(processorFilter.getRunAsUser(), currentUser) &&
-                   !securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
-            throw new PermissionException(securityContext.getUserRef(),
-                    "You do not have permission to set the run as user to '" +
-                    processorFilter.getRunAsUser().toDisplayString() +
-                    "'. You can only run a filter as " +
-                    "yourself unless you have manage users permission");
+        } else {
+            checkRunAs(processorFilter.getRunAsUser());
+        }
+    }
+
+    private void checkRunAs(final UserRef runAsUser) {
+        if (userRefLookup.getByUuid(runAsUser.getUuid(), FindUserContext.RUN_AS).isEmpty()) {
+            throw new PermissionException(
+                    runAsUser,
+                    "You do not have permission to view the Pipeline Filters that are configured to run-as user "
+                    + runAsUser.toInfoString());
         }
     }
 
@@ -615,13 +624,8 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
     public List<UserDependency> getUserDependencies(final UserRef userRef) {
         Objects.requireNonNull(userRef);
 
-        if (!securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)
-            && !securityContext.isCurrentUser(userRef)) {
-            throw new PermissionException(
-                    userRef,
-                    "You do not have permission to view the Pipeline Filters that are configured to run-as user "
-                    + userRef.toInfoString());
-        }
+        // Check we are allowed to see this processor filter.
+        checkRunAs(userRef);
 
         return NullSafe.stream(processorFilterDao.fetchByRunAsUser(userRef.getUuid()))
                 .map(processorFilter -> {

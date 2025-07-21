@@ -1,6 +1,7 @@
 package stroom.storedquery.impl.db;
 
 import stroom.dashboard.shared.StoredQuery;
+import stroom.security.shared.FindUserContext;
 import stroom.security.user.api.UserRefLookup;
 
 import jakarta.inject.Provider;
@@ -36,7 +37,9 @@ class RecordToStoredQueryMapper implements Function<Record, StoredQuery> {
         query.setQuery(queryJsonSerialiser.deserialise(record.get(QUERY.DATA)));
         query.setFavourite(record.get(QUERY.FAVOURITE));
         query.setUuid(record.get(QUERY.UUID));
-        query.setOwner(userRefLookupProvider.get().getByUuid(record.get(QUERY.OWNER_UUID)).orElse(null));
+        query.setOwner(userRefLookupProvider.get()
+                .getByUuid(record.get(QUERY.OWNER_UUID), FindUserContext.RUN_AS)
+                .orElse(null));
         return query;
     }
 }
