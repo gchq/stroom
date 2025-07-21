@@ -50,7 +50,9 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -74,7 +76,8 @@ public class FlexLayout extends Composite {
     private final Map<LayoutConfig, TabLayout> layoutToWidgetMap = new HashMap<>();
     private final Element designSurfaceElement;
     private Components components;
-    private LayoutConfig layoutConfig;
+    private final LayoutConfigContainer layoutConfigContainer = new LayoutConfigContainer();
+    private boolean maximised;
     private LayoutConstraints layoutConstraints;
     private stroom.dashboard.shared.Size preferredSize;
     private double offset;
@@ -189,7 +192,7 @@ public class FlexLayout extends Composite {
                     moveSplit(x, y);
 
                 } else if (selection != null) {
-                    if (!draggingTab) {
+                    if (!maximised && !draggingTab) {
                         // See if the use wants to start dragging this tab.
                         if ((Math.abs(startPos[0] - event.getClientX()) > DRAG_ZONE)
                                 || (Math.abs(startPos[1] - event.getClientY()) > DRAG_ZONE)) {
@@ -377,9 +380,10 @@ public class FlexLayout extends Composite {
                             tabLayout.selectTab(index);
                             tabLayout.getTabLayoutConfig().setSelected(index);
 
-                            // Let the handler know the layout is dirty.
-                            changeHandler.onDirty();
-
+                            if (!maximised) {
+                                // Let the handler know the layout is dirty.
+                                changeHandler.onDirty();
+                            }
                         } else if (tabManager != null) {
                             final TabConfig tabConfig = mouseTarget
                                     .tabLayout
@@ -578,7 +582,7 @@ public class FlexLayout extends Composite {
             final PositionAndSize positionAndSize = positionAndSizeMap.get(targetTabLayoutConfig);
             positionAndSizeMap.put(splitLayoutConfig, positionAndSize.copy());
 
-            layoutConfig = splitLayoutConfig;
+            layoutConfigContainer.set(splitLayoutConfig);
             parent = splitLayoutConfig;
         }
 
@@ -725,7 +729,7 @@ public class FlexLayout extends Composite {
                             newSplitLayoutConfig.add(tabLayoutConfig);
                         }
 
-                        layoutConfig = newSplitLayoutConfig;
+                        layoutConfigContainer.set(newSplitLayoutConfig);
 
                     } else if (parentSplitLayoutConfig.getDimension() != dim) {
                         // If the parent split dimension is still not what we want then insert a new split layout to
@@ -846,7 +850,7 @@ public class FlexLayout extends Composite {
             }
 
             if (parent == null) {
-                layoutConfig = null;
+                layoutConfigContainer.set(null);
             }
         }
     }
@@ -874,7 +878,7 @@ public class FlexLayout extends Composite {
 
         // If this is a canvas resize split then treat it differently.
         if (splitInfo.getIndex() == -1) {
-            min = containerPos + getMinRequired(this.layoutConfig, dim);
+            min = containerPos + getMinRequired(layoutConfigContainer.get(), dim);
             max = containerPos + designSurfaceSize.get(dim);
         } else {
             final double parentMin = containerPos + positionAndSize.getPos(dim);
@@ -1358,7 +1362,7 @@ public class FlexLayout extends Composite {
     }
 
     public LayoutConfig getLayoutConfig() {
-        return layoutConfig;
+        return layoutConfigContainer.get();
     }
 
     public void setDesignMode(final boolean designMode) {
@@ -1388,7 +1392,7 @@ public class FlexLayout extends Composite {
     public void configure(final LayoutConfig layoutConfig,
                           final LayoutConstraints layoutConstraints,
                           final stroom.dashboard.shared.Size preferredSize) {
-        this.layoutConfig = layoutConfig;
+        layoutConfigContainer.set(layoutConfig);
         this.preferredSize = preferredSize;
         setLayoutConstraints(layoutConstraints);
     }
@@ -1422,7 +1426,7 @@ public class FlexLayout extends Composite {
             }
         }
         // Recalculate widgets and splitters.
-        recalculate(layoutConfig, 0, 0, outerSize.getWidth(), outerSize.getHeight());
+        recalculate(layoutConfigContainer.get(), 0, 0, outerSize.getWidth(), outerSize.getHeight());
     }
 
     public void refresh() {
@@ -1436,9 +1440,9 @@ public class FlexLayout extends Composite {
     }
 
     public void doRefresh() {
-        if (layoutConfig != null) {
-            double minWidth = getMinRequired(layoutConfig, Dimension.X);
-            double minHeight = getMinRequired(layoutConfig, Dimension.Y);
+        if (layoutConfigContainer.get() != null) {
+            double minWidth = getMinRequired(layoutConfigContainer.get(), Dimension.X);
+            double minHeight = getMinRequired(layoutConfigContainer.get(), Dimension.Y);
 
             final double visibleWidth = Math.floor(ElementUtil.getSubPixelClientWidth(scrollPanel.getElement()));
             final double visibleHeight = Math.floor(ElementUtil.getSubPixelClientHeight(scrollPanel.getElement()));
@@ -1451,7 +1455,7 @@ public class FlexLayout extends Composite {
                 if (preferredSize.getWidth() > 0) {
                     minWidth = Math.max(preferredSize.getWidth(), minWidth);
                 } else {
-                    minWidth = getMaxRequired(layoutConfig, Dimension.X);
+                    minWidth = getMaxRequired(layoutConfigContainer.get(), Dimension.X);
                 }
                 preferredSize.setWidth((int) minWidth);
             }
@@ -1459,7 +1463,7 @@ public class FlexLayout extends Composite {
                 if (preferredSize.getHeight() > 0) {
                     minHeight = Math.max(preferredSize.getHeight(), minHeight);
                 } else {
-                    minHeight = getMaxRequired(layoutConfig, Dimension.Y);
+                    minHeight = getMaxRequired(layoutConfigContainer.get(), Dimension.Y);
                 }
                 preferredSize.setHeight((int) minHeight);
             }
@@ -1834,6 +1838,43 @@ public class FlexLayout extends Composite {
         return y;
     }
 
+    public void maximiseTabs(final TabConfig selectedTab) {
+        if (!maximised) {
+            maximised = true;
+
+            final TabLayoutConfig tabLayoutConfig = new TabLayoutConfig();
+            components.getComponents().stream()
+                    .sorted(Comparator.comparing((Component c) -> c.getComponentConfig().getName())
+                            .thenComparing(c -> c.getComponentConfig().getId()))
+                    .map(Component::getTabConfig)
+                    .filter(TabConfig::visible)
+                    .forEach(tabLayoutConfig::add);
+
+            final int selected = selectedTab == null ? 0 : tabLayoutConfig.getTabs().indexOf(selectedTab);
+            tabLayoutConfig.setSelected(selected);
+
+            layoutConfigContainer.set(tabLayoutConfig);
+
+            clear();
+            refresh();
+        }
+    }
+
+    public void restoreTabs() {
+        if (maximised) {
+            maximised = false;
+
+            layoutConfigContainer.restore();
+
+            clear();
+            refresh();
+        }
+    }
+
+    public boolean isMaximised() {
+        return maximised;
+    }
+
     public void closeTab(final TabConfig tabConfig) {
         final TabLayoutConfig tabLayoutConfig = tabConfig.getParent();
         tabLayoutConfig.remove(tabConfig);
@@ -1860,6 +1901,27 @@ public class FlexLayout extends Composite {
         TOP,
         BOTTOM,
         CENTER
+    }
+
+    private static class LayoutConfigContainer {
+
+        private final LinkedList<LayoutConfig> layoutConfigList = new LinkedList<>();
+        private LayoutConfig currentLayoutConfig = null;
+
+        public LayoutConfig get() {
+            return currentLayoutConfig;
+        }
+
+        public void restore() {
+            currentLayoutConfig = layoutConfigList.removeLast();
+        }
+
+        public void set(final LayoutConfig layoutConfig) {
+            if (currentLayoutConfig != layoutConfig) {
+                layoutConfigList.add(currentLayoutConfig);
+                currentLayoutConfig = layoutConfig;
+            }
+        }
     }
 
     private static class MouseTarget {
