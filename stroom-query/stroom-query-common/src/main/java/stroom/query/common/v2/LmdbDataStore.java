@@ -231,7 +231,7 @@ public class LmdbDataStore implements DataStore {
         currentDbStateFactory = new CurrentDbStateFactory(sourceType, fieldIndex, dataStoreSettings);
 
         // Create a mapper to add annotation data.
-        storedValueMapper = annotationMapperFactory.createMapper(fieldIndex);
+        storedValueMapper = annotationMapperFactory.createMapper(valueReferenceIndex);
 
         // Start transfer loop.
         executorProvider.get().execute(this::transfer);

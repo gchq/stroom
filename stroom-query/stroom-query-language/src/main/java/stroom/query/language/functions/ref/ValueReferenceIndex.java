@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class ValueReferenceIndex {
 
@@ -50,6 +51,18 @@ public class ValueReferenceIndex {
         return add(new ValReference(list.size(), name));
     }
 
+    public Integer getFieldValIndex(final String name) {
+        for (int index = 0; index < list.size(); index++) {
+            final ValueReference<?> valueReference = list.get(index);
+            if (valueReference instanceof FieldValReference) {
+                if (Objects.equals(valueReference.toString(), name)) {
+                    return index;
+                }
+            }
+        }
+        return null;
+    }
+
     private <T extends ValueReference<?>> T add(final T valueReference) {
         list.add(valueReference);
         return valueReference;
@@ -68,15 +81,15 @@ public class ValueReferenceIndex {
             return storedValues;
         } catch (final RuntimeException e) {
             final String sb = "Error reading value:\n" +
-                    e.getClass().getSimpleName() +
-                    "\n" +
-                    e.getMessage() +
-                    "\n" +
-                    "Byte Buffer:\n" +
-                    reader.toString() +
-                    "\n" +
-                    "Value Reference Index:\n" +
-                    this;
+                              e.getClass().getSimpleName() +
+                              "\n" +
+                              e.getMessage() +
+                              "\n" +
+                              "Byte Buffer:\n" +
+                              reader.toString() +
+                              "\n" +
+                              "Value Reference Index:\n" +
+                              this;
             LOGGER.error(sb, e);
 
             throw e;
@@ -90,12 +103,12 @@ public class ValueReferenceIndex {
             }
         } catch (final RuntimeException e) {
             final String sb = "Error writing value:\n" +
-                    e.getClass().getSimpleName() +
-                    "\n" +
-                    e.getMessage() +
-                    "\n" +
-                    "Value Reference Index:\n" +
-                    this;
+                              e.getClass().getSimpleName() +
+                              "\n" +
+                              e.getMessage() +
+                              "\n" +
+                              "Value Reference Index:\n" +
+                              this;
             LOGGER.error(sb, e);
 
             throw e;

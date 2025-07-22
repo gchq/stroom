@@ -9,13 +9,13 @@ import stroom.query.api.SpecialColumns;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.AnnotationMapperFactory;
 import stroom.query.common.v2.StoredValueMapper;
-import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ref.StoredValues;
+import stroom.query.language.functions.ref.ValueReferenceIndex;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 
@@ -92,14 +92,14 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
     }
 
     @Override
-    public StoredValueMapper createMapper(final FieldIndex fieldIndex) {
-        final int streamIdIndex = Objects.requireNonNullElse(fieldIndex.getPos(SpecialColumns.RESERVED_STREAM_ID),
-                Objects.requireNonNullElse(fieldIndex.getPos(IndexConstants.STREAM_ID), -1));
-        final int eventIdIndex = Objects.requireNonNullElse(fieldIndex.getPos(SpecialColumns.RESERVED_EVENT_ID),
-                Objects.requireNonNullElse(fieldIndex.getPos(IndexConstants.EVENT_ID), -1));
+    public StoredValueMapper createMapper(final ValueReferenceIndex valueReferenceIndex) {
+        final int streamIdIndex = getFieldValIndex(valueReferenceIndex,
+                SpecialColumns.RESERVED_STREAM_ID, IndexConstants.STREAM_ID);
+        final int eventIdIndex = getFieldValIndex(valueReferenceIndex,
+                SpecialColumns.RESERVED_EVENT_ID, IndexConstants.EVENT_ID);
 
         if (streamIdIndex == -1 || eventIdIndex == -1) {
-            return AnnotationMapperFactory.NO_OP.createMapper(fieldIndex);
+            return AnnotationMapperFactory.NO_OP.createMapper(valueReferenceIndex);
         }
 
         final List<Mutator> mutators = EXTRACTION_FUNCTIONS
@@ -108,11 +108,10 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
                 .map(entry -> {
                     final String name = entry.getKey();
                     final Function<Annotation, Val> function = entry.getValue();
-                    final Integer pos = fieldIndex.getPos(name);
+                    final Integer pos = valueReferenceIndex.getFieldValIndex(name);
                     if (pos == null) {
                         return null;
                     }
-
                     return (Mutator) (storedValues, annotation) -> storedValues.set(pos, function.apply(annotation));
                 })
                 .filter(Objects::nonNull)
@@ -120,14 +119,13 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
 
         // Don't do any annotation decoration if we were not asked for any annotation fields.
         if (mutators.isEmpty()) {
-            return AnnotationMapperFactory.NO_OP.createMapper(fieldIndex);
+            return AnnotationMapperFactory.NO_OP.createMapper(valueReferenceIndex);
         }
 
         final List<Mutator> allMutators;
 
         // Add annotation id if needed.
-        final int idIndex = Objects.requireNonNullElse(fieldIndex.getPos(SpecialColumns.RESERVED_ID),
-                Objects.requireNonNullElse(fieldIndex.getPos("Id"), -1));
+        final int idIndex = getFieldValIndex(valueReferenceIndex, SpecialColumns.RESERVED_ID, "Id");
         if (idIndex != -1) {
             final Function<Annotation, Val> function = annotation -> ValLong.create(annotation.getId());
             allMutators = new ArrayList<>(mutators);
@@ -138,6 +136,15 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
 
         final AnnotationService annotationService = annotationServiceProvider.get();
         return new StoredValueMapperImpl(annotationService, streamIdIndex, eventIdIndex, allMutators);
+    }
+
+    private int getFieldValIndex(final ValueReferenceIndex valueReferenceIndex,
+                                 final String primaryName,
+                                 final String secondaryName) {
+        return Objects.requireNonNullElse(
+                valueReferenceIndex.getFieldValIndex(primaryName),
+                Objects.requireNonNullElse(
+                        valueReferenceIndex.getFieldValIndex(secondaryName), -1));
     }
 
     private record StoredValueMapperImpl(AnnotationService annotationService,
