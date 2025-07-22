@@ -330,21 +330,26 @@ public class QueryResultTablePresenter
     }
 
     private void onAnnotationChange() {
-        annotationChanged = true;
-        if (tableIsVisible) {
-            annotationChanged = false;
-            final DocRef dataSource = currentDataSource;
-            if (dataSource != null &&
-                AnnotationFields.ANNOTATIONS_PSEUDO_DOC_REF.getType().equals(dataSource.getType())) {
-                // If this is an annotations data source then force a new search.
-                forceNewSearch();
-            } else if (getCurrentColumns()
-                    .stream()
-                    .anyMatch(col ->
-                            col.getExpression().contains(AnnotationDecorationFields.ANNOTATION_FIELD_PREFIX))) {
-                // If the table contains annotations fields then just refresh to redecorate.
-                refresh();
+        try {
+            annotationChanged = true;
+            if (tableIsVisible) {
+                annotationChanged = false;
+                final DocRef dataSource = currentDataSource;
+                if (dataSource != null &&
+                    AnnotationFields.ANNOTATIONS_PSEUDO_DOC_REF.getType().equals(dataSource.getType())) {
+                    // If this is an annotations data source then force a new search.
+                    forceNewSearch();
+                } else if (getCurrentColumns()
+                        .stream()
+                        .anyMatch(col ->
+                                NullSafe.getOrElse(col, Column::getExpression, "")
+                                        .contains(AnnotationDecorationFields.ANNOTATION_FIELD_PREFIX))) {
+                    // If the table contains annotations fields then just refresh to redecorate.
+                    refresh();
+                }
             }
+        } catch (final RuntimeException e) {
+            GWT.log(e.getMessage());
         }
     }
 

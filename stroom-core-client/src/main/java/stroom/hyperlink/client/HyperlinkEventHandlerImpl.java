@@ -162,7 +162,15 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                 initialAssignTo = UserRef.builder().uuid(assignedTo).build();
             }
 
-            CreateAnnotationEvent.fire(this, title, subject, status, initialAssignTo, comment, linkedEvents);
+            CreateAnnotationEvent.fire(
+                    this,
+                    title,
+                    subject,
+                    status,
+                    initialAssignTo,
+                    comment,
+                    null,
+                    linkedEvents);
         }
     }
 

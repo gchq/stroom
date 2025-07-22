@@ -1,6 +1,7 @@
 package stroom.annotation.client;
 
 import stroom.annotation.shared.EventId;
+import stroom.annotation.shared.AnnotationTable;
 import stroom.util.shared.UserRef;
 
 import com.google.gwt.event.shared.EventHandler;
@@ -18,6 +19,7 @@ public class CreateAnnotationEvent extends GwtEvent<CreateAnnotationEvent.Handle
     private final String status;
     private final UserRef assignTo;
     private final String comment;
+    private final AnnotationTable table;
     private final List<EventId> linkedEvents;
 
     public CreateAnnotationEvent(final String title,
@@ -25,18 +27,21 @@ public class CreateAnnotationEvent extends GwtEvent<CreateAnnotationEvent.Handle
                                  final String status,
                                  final UserRef assignTo,
                                  final String comment,
+                                 final AnnotationTable table,
                                  final List<EventId> linkedEvents) {
         this.title = title;
         this.subject = subject;
         this.status = status;
         this.assignTo = assignTo;
         this.comment = comment;
+        this.table = table;
         this.linkedEvents = linkedEvents;
     }
 
     public static void fire(final HasHandlers source) {
         source.fireEvent(new CreateAnnotationEvent(
                 "New Annotation",
+                null,
                 null,
                 null,
                 null,
@@ -50,6 +55,7 @@ public class CreateAnnotationEvent extends GwtEvent<CreateAnnotationEvent.Handle
                             final String status,
                             final UserRef assignTo,
                             final String comment,
+                            final AnnotationTable table,
                             final List<EventId> linkedEvents) {
         source.fireEvent(new CreateAnnotationEvent(
                 title,
@@ -57,6 +63,7 @@ public class CreateAnnotationEvent extends GwtEvent<CreateAnnotationEvent.Handle
                 status,
                 assignTo,
                 comment,
+                table,
                 linkedEvents));
     }
 
@@ -95,6 +102,10 @@ public class CreateAnnotationEvent extends GwtEvent<CreateAnnotationEvent.Handle
 
     public String getComment() {
         return comment;
+    }
+
+    public AnnotationTable getTable() {
+        return table;
     }
 
     public List<EventId> getLinkedEvents() {

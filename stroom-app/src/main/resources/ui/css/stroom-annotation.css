@@ -346,3 +346,24 @@
 .setting-block label{
     cursor: pointer;
 }
+
+.annotationTable {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+}
+.annotationTable tr:nth-child(even) {
+    background-color: var(--row__background-color--even);
+}
+.annotationTable tr:nth-child(odd) {
+    background-color: var(--row__background-color--odd);
+}
+.annotationTable th,
+.annotationTable td {
+    padding: var(--row__padding--vertical) var(--row__padding--horizontal) 0 var(--row__padding--horizontal);
+    white-space: nowrap;
+}
+.annotationTable th {
+    font-weight: 500;
+}

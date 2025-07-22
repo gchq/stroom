@@ -40,6 +40,7 @@ import stroom.annotation.shared.EntryValue;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.LinkEvents;
 import stroom.annotation.shared.RemoveTag;
+import stroom.annotation.shared.AnnotationTable;
 import stroom.annotation.shared.SetTag;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.annotation.shared.StringEntryValue;
@@ -68,6 +69,7 @@ import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.security.shared.FindUserContext;
 import stroom.security.user.api.UserRefLookup;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
@@ -428,9 +430,11 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         EntryValue entryValue = null;
         final String data = record.get(ANNOTATION_ENTRY.DATA);
         if (data != null) {
-            entryValue = AnnotationEntryType.ASSIGNED.equals(type)
-                    ? UserRefEntryValue.of(getUserRef(data))
-                    : StringEntryValue.of(data);
+            entryValue = switch (type) {
+                case AnnotationEntryType.ASSIGNED -> UserRefEntryValue.of(getUserRef(data));
+                case AnnotationEntryType.ADD_TABLE_DATA -> JsonUtil.readValue(data, AnnotationTable.class);
+                default -> StringEntryValue.of(data);
+            };
         }
 
         return AnnotationEntry.builder()
@@ -594,6 +598,15 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         if (!NullSafe.isEmptyCollection(request.getLinkedEvents())) {
             request.getLinkedEvents().forEach(eventID ->
                     createEventLink(userUuid, now, annotationId, eventID));
+        }
+
+        if (request.getTable() != null) {
+            createEntry(
+                    annotationId,
+                    userUuid,
+                    now,
+                    AnnotationEntryType.ADD_TABLE_DATA,
+                    JsonUtil.writeValueAsString(request.getTable()));
         }
 
         // Now select everything back to provide refreshed details.
@@ -859,10 +872,10 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                              final String userUuid,
                              final Instant now,
                              final AnnotationEntryType type,
-                             final String fieldValue) {
+                             final String entryData) {
         // Create entry.
         final int count = JooqUtil.contextResult(connectionProvider, context ->
-                createEntry(context, annotationId, userUuid, now, type, fieldValue));
+                createEntry(context, annotationId, userUuid, now, type, entryData));
         if (count != 1) {
             throw new RuntimeException("Unable to create annotation entry");
         }
@@ -873,7 +886,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                             final String userUuid,
                             final Instant now,
                             final AnnotationEntryType type,
-                            final String fieldValue) {
+                            final String entryData) {
         return context.insertInto(ANNOTATION_ENTRY,
                         ANNOTATION_ENTRY.ENTRY_TIME_MS,
                         ANNOTATION_ENTRY.ENTRY_USER_UUID,
@@ -888,7 +901,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                         userUuid,
                         annotationId,
                         type.getPrimitiveValue(),
-                        fieldValue)
+                        entryData)
                 .execute();
     }
 

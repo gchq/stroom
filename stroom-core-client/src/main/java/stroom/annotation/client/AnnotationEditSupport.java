@@ -50,6 +50,7 @@ public class AnnotationEditSupport implements HasHandlers {
                     e.getStatus(),
                     e.getAssignTo(),
                     e.getComment(),
+                    e.getTable(),
                     e.getLinkedEvents());
             annotationResourceClient.createAnnotation(request, annotation ->
                     show(presenter, annotation), new DefaultTaskMonitorFactory(this));

@@ -32,11 +32,6 @@ public final class StringEntryValue implements EntryValue {
     }
 
     @Override
-    public String asPersistedValue() {
-        return value;
-    }
-
-    @Override
     public String toString() {
         return value;
     }

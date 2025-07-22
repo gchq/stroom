@@ -14,7 +14,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-@SuppressWarnings("PatternVariableCanBeUsed") // Cos GWT :-(
 public class ExpressionUtil {
 
     private ExpressionUtil() {
@@ -100,8 +99,7 @@ public class ExpressionUtil {
         if (expressionOperator != null) {
             for (final ExpressionItem child : NullSafe.list(expressionOperator.getChildren())) {
                 if (child != null && child.enabled()) {
-                    if (child instanceof ExpressionOperator) {
-                        final ExpressionOperator childOperator = (ExpressionOperator) child;
+                    if (child instanceof final ExpressionOperator childOperator) {
                         if (hasTerms(childOperator)) {
                             return true;
                         }
@@ -164,8 +162,7 @@ public class ExpressionUtil {
         if (ExpressionItem.isEnabled(expressionOperator) && expressionOperator.hasChildren()) {
             for (final ExpressionItem item : expressionOperator.getChildren()) {
                 if (item.enabled()) {
-                    if (item instanceof ExpressionTerm) {
-                        final ExpressionTerm expressionTerm = (ExpressionTerm) item;
+                    if (item instanceof final ExpressionTerm expressionTerm) {
                         if (fieldNames == null || fieldNames.stream()
                                 .anyMatch(fieldName ->
                                         fieldName.equals(expressionTerm.getField()) &&
@@ -297,12 +294,10 @@ public class ExpressionUtil {
                 .op(operator.getOp());
         if (operator.getChildren() != null) {
             for (final ExpressionItem child : operator.getChildren()) {
-                if (child instanceof ExpressionOperator) {
-                    final ExpressionOperator childOperator = (ExpressionOperator) child;
+                if (child instanceof final ExpressionOperator childOperator) {
                     builder.addOperator(replaceExpressionParameters(childOperator, paramValues, keepUnmatched));
 
-                } else if (child instanceof ExpressionTerm) {
-                    final ExpressionTerm term = (ExpressionTerm) child;
+                } else if (child instanceof final ExpressionTerm term) {
                     final String value = term.getValue();
                     final String replaced = ParamUtil.replaceParameters(value, paramValues, keepUnmatched);
                     builder.addTerm(ExpressionTerm.builder()
@@ -341,8 +336,7 @@ public class ExpressionUtil {
                 continueWalking = itemVisitor.visit(expressionItem);
             }
             if (continueWalking) {
-                if (expressionItem instanceof ExpressionOperator) {
-                    final ExpressionOperator expressionOperator = (ExpressionOperator) expressionItem;
+                if (expressionItem instanceof final ExpressionOperator expressionOperator) {
                     final List<ExpressionItem> children = expressionOperator.getChildren();
                     if (children != null && !children.isEmpty()) {
                         for (final ExpressionItem child : children) {
@@ -384,8 +378,7 @@ public class ExpressionUtil {
             return null;
         }
 
-        if (item instanceof ExpressionOperator) {
-            final ExpressionOperator operator = (ExpressionOperator) item;
+        if (item instanceof final ExpressionOperator operator) {
 
             // Remove empty children.
             final List<ExpressionItem> children = operator.getChildren();
@@ -397,8 +390,7 @@ public class ExpressionUtil {
             for (final ExpressionItem child : children) {
                 final ExpressionItem simplifiedChild = simplifyExpressionItem(child);
                 if (simplifiedChild != null) {
-                    if (simplifiedChild instanceof ExpressionOperator) {
-                        final ExpressionOperator childOperator = (ExpressionOperator) simplifiedChild;
+                    if (simplifiedChild instanceof final ExpressionOperator childOperator) {
                         if (childOperator.getChildren() != null && !childOperator.getChildren().isEmpty()) {
                             if (childOperator.getChildren().size() == 1) {
                                 if (!Op.NOT.equals(operator.op()) && !Op.NOT.equals(childOperator.op())) {
