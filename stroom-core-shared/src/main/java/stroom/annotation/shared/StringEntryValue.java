@@ -38,9 +38,7 @@ public final class StringEntryValue implements EntryValue {
 
     @Override
     public String toString() {
-        return "StringEntryValue{" +
-                "value='" + value + '\'' +
-                '}';
+        return value;
     }
 
     @Override

@@ -395,13 +395,14 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         final Map<AnnotationEntryType, EntryValue> currentValues = new HashMap<>();
         return entries
                 .stream()
-                .peek(entry -> {
+                .map(entry -> {
                     // Get the previous value.
                     final EntryValue currentValue = currentValues.get(entry.getEntryType());
-                    // Set the previous value.
-                    entry.setPreviousValue(currentValue);
                     // Remember the previous value.
                     currentValues.put(entry.getEntryType(), entry.getEntryValue());
+
+                    // Set the previous value.
+                    return entry.copy().previousValue(currentValue).build();
                 })
                 .filter(entry -> !entry.isDeleted())
                 .toList();
@@ -421,27 +422,27 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
     }
 
     private AnnotationEntry mapToAnnotationEntry(final Record record) {
-        final AnnotationEntry entry = new AnnotationEntry();
-        entry.setId(record.get(ANNOTATION_ENTRY.ID));
-        entry.setEntryTime(record.get(ANNOTATION_ENTRY.ENTRY_TIME_MS));
-        entry.setEntryUser(getUserRef(record.get(ANNOTATION_ENTRY.ENTRY_USER_UUID)));
-        entry.setUpdateTime(record.get(ANNOTATION_ENTRY.UPDATE_TIME_MS));
-        entry.setUpdateUser(getUserRef(record.get(ANNOTATION_ENTRY.UPDATE_USER_UUID)));
-        entry.setDeleted(record.get(ANNOTATION_ENTRY.DELETED));
-
         final byte typeId = record.get(ANNOTATION_ENTRY.TYPE_ID);
         final AnnotationEntryType type = AnnotationEntryType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(typeId);
-        entry.setEntryType(type);
+
+        EntryValue entryValue = null;
         final String data = record.get(ANNOTATION_ENTRY.DATA);
         if (data != null) {
-            final EntryValue entryValue = AnnotationEntryType.ASSIGNED.equals(type)
+            entryValue = AnnotationEntryType.ASSIGNED.equals(type)
                     ? UserRefEntryValue.of(getUserRef(data))
                     : StringEntryValue.of(data);
-            entry.setEntryValue(entryValue);
-        } else {
-            entry.setEntryValue(null);
         }
-        return entry;
+
+        return AnnotationEntry.builder()
+                .id(record.get(ANNOTATION_ENTRY.ID))
+                .entryType(type)
+                .entryTime(record.get(ANNOTATION_ENTRY.ENTRY_TIME_MS))
+                .entryUser(getUserRef(record.get(ANNOTATION_ENTRY.ENTRY_USER_UUID)))
+                .updateTime(record.get(ANNOTATION_ENTRY.UPDATE_TIME_MS))
+                .updateUser(getUserRef(record.get(ANNOTATION_ENTRY.UPDATE_USER_UUID)))
+                .deleted(record.get(ANNOTATION_ENTRY.DELETED))
+                .entryValue(entryValue)
+                .build();
     }
 
     private UserRef getUserRef(final String uuid) {
