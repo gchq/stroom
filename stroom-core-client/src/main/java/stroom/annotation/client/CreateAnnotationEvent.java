@@ -1,7 +1,7 @@
 package stroom.annotation.client;
 
-import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.AnnotationTable;
+import stroom.annotation.shared.EventId;
 import stroom.util.shared.UserRef;
 
 import com.google.gwt.event.shared.EventHandler;
