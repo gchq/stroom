@@ -110,7 +110,7 @@ public class ExcelTarget implements SearchResultWriter.Target {
     public void endTable() {
         if (workbook != null && sheet != null) {
             // Auto-size tracked columns
-            for (final var columnIndex : sheet.getTrackedColumnsForAutoSizing()) {
+            for (final Integer columnIndex : sheet.getTrackedColumnsForAutoSizing()) {
                 sheet.autoSizeColumn(columnIndex);
             }
         }
@@ -334,7 +334,7 @@ public class ExcelTarget implements SearchResultWriter.Target {
             }
 
             // Auto-size tracked columns
-            for (final var columnIndex : sheet.getTrackedColumnsForAutoSizing()) {
+            for (final Integer columnIndex : sheet.getTrackedColumnsForAutoSizing()) {
                 sheet.autoSizeColumn(columnIndex);
             }
         }

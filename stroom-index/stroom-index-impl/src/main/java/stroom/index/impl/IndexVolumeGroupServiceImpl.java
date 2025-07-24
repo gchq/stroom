@@ -119,7 +119,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
     public IndexVolumeGroup create() {
         ensureDefaultVolumes();
         final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
-        final var newName = NextNameGenerator.getNextName(indexVolumeGroupDao.getNames(), "New group");
+        final String newName = NextNameGenerator.getNextName(indexVolumeGroupDao.getNames(), "New group");
         indexVolumeGroup.setName(newName);
         AuditUtil.stamp(securityContext, indexVolumeGroup);
         final IndexVolumeGroup result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
@@ -156,7 +156,8 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
         securityContext.secure(AppPermission.MANAGE_VOLUMES_PERMISSION,
                 () -> {
                     //TODO Transaction?
-                    final var indexVolumesInGroup = indexVolumeDao.getAll().stream()
+                    final List<IndexVolume> indexVolumesInGroup = indexVolumeDao.getAll()
+                            .stream()
                             .filter(indexVolume ->
                                     indexVolume.getIndexVolumeGroupId().equals(id))
                             .toList();
@@ -230,12 +231,12 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
                                 }
                             } else {
                                 LOGGER.warn(() -> "Unable to create default index volume group. " +
-                                        "Properties defaultVolumeGroupPaths defaultVolumeGroupNodes " +
-                                        "and defaultVolumeGroupLimit must all be defined.");
+                                                  "Properties defaultVolumeGroupPaths defaultVolumeGroupNodes " +
+                                                  "and defaultVolumeGroupLimit must all be defined.");
                             }
                         } else {
                             LOGGER.warn(() -> "Unable to create default index " +
-                                    "Property defaultVolumeGroupName must be defined.");
+                                              "Property defaultVolumeGroupName must be defined.");
                         }
                     } else {
                         LOGGER.info(() -> "Creation of default index group is currently disabled");
@@ -265,7 +266,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
                     (long) (totalBytes * volumeConfigProvider.get().getDefaultIndexVolumeFilesystemUtilisation()));
         } catch (final IOException e) {
             LOGGER.warn(() -> LogUtil.message("Unable to determine the total space on the filesystem for path: {}." +
-                            " Please manually set limit for index volume. {}",
+                                              " Please manually set limit for index volume. {}",
                     FileUtil.getCanonicalPath(Path.of(path)), e.getMessage()));
             return OptionalLong.empty();
         }

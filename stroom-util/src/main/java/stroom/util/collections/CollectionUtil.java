@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.SequencedMap;
 import java.util.Set;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
@@ -245,7 +246,7 @@ public class CollectionUtil {
 
     public static class LinkedHashMapBuilder<K, V> {
 
-        private LinkedHashMap<K, V> map = null;
+        private SequencedMap<K, V> map = null;
 
         private LinkedHashMapBuilder() {
         }
@@ -262,7 +263,7 @@ public class CollectionUtil {
             return this;
         }
 
-        public LinkedHashMap<K, V> build() {
+        public SequencedMap<K, V> build() {
             return map;
         }
     }

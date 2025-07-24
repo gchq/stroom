@@ -75,7 +75,7 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
     private final VolumeGroupNameProvider volumeGroupNameProvider;
     private final String typeName;
     private final AttributeMap globalAttributeMap;
-    private final HashSet<Meta> streamSet;
+    private final Set<Meta> streamSet;
     private final StroomZipEntries stroomZipEntries;
     private final Map<String, Target> targetMap = new HashMap<>();
     private final ByteArrayOutputStream tempByteArrayOutputStream = new ByteArrayOutputStream();
@@ -126,7 +126,7 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
 
         // If the base name changes then reset and we will treat this as a new layer.
         final boolean requiresNewLayer = layer.hasType(stroomZipFileType) || (lastBaseName != null &&
-                !lastBaseName.equals(baseName));
+                                                                              !lastBaseName.equals(baseName));
         if (requiresNewLayer) {
             reset();
             if (singleEntry) {

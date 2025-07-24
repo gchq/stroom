@@ -99,16 +99,10 @@ public class ExternalIdpConfigurationProvider
         } else {
             // Hit the config endpoint to check the IDP is accessible.
             // Even if we already have the config from it, if we can't see the IDP we have problems.
+            resultBuilder.withDetail("url", configurationEndpoint);
             try {
-                resultBuilder.withDetail("configUri", configurationEndpoint);
-                final OpenIdConfigurationResponse response = fetchOpenIdConfigurationResponse(
-                        configurationEndpoint, abstractOpenIdConfig);
-                if (response != null) {
-                    resultBuilder.healthy();
-                } else {
-                    resultBuilder.unhealthy()
-                            .withMessage("Null response");
-                }
+                fetchOpenIdConfigurationResponse(configurationEndpoint, abstractOpenIdConfig);
+                resultBuilder.healthy();
             } catch (final Exception e) {
                 resultBuilder.unhealthy(e)
                         .withMessage("Error fetching Open ID Connect configuration from " +

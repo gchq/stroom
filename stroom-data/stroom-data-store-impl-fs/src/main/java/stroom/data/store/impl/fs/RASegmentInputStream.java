@@ -29,6 +29,7 @@ import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 import java.util.Iterator;
+import java.util.NavigableSet;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -41,6 +42,7 @@ import java.util.TreeSet;
  * window).
  */
 public class RASegmentInputStream extends SegmentInputStream {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(RASegmentInputStream.class);
     private static final int INT8 = 8;
     private final byte[] eightBytes = new byte[INT8];
@@ -587,11 +589,11 @@ public class RASegmentInputStream extends SegmentInputStream {
         }
     }
 
-    public void setIncluded(final TreeSet<Long> included) {
+    public void setIncluded(final NavigableSet<Long> included) {
         this.included = included;
     }
 
-    public void setExcluded(final TreeSet<Long> excluded) {
+    public void setExcluded(final NavigableSet<Long> excluded) {
         this.excluded = excluded;
     }
 
@@ -681,7 +683,7 @@ public class RASegmentInputStream extends SegmentInputStream {
                 // Skip back over any empty segments
                 long prevMidPointBytePos;
                 while ((midPointSegment > 0)
-                        && (prevMidPointBytePos = byteOffset(midPointSegment - 1)) == midPointBytePos) {
+                       && (prevMidPointBytePos = byteOffset(midPointSegment - 1)) == midPointBytePos) {
                     midPointSegment--;
                     midPointBytePos = prevMidPointBytePos;
                 }
@@ -689,7 +691,7 @@ public class RASegmentInputStream extends SegmentInputStream {
                 // Skip forward over any empty segments
                 long nextMidPointBytePos;
                 while ((midPointSegment + 1 < totalSegmentCount)
-                        && (nextMidPointBytePos = byteOffset(midPointSegment + 1, false)) == midPointBytePos) {
+                       && (nextMidPointBytePos = byteOffset(midPointSegment + 1, false)) == midPointBytePos) {
                     midPointSegment++;
                     midPointBytePos = nextMidPointBytePos;
                 }
@@ -718,6 +720,7 @@ public class RASegmentInputStream extends SegmentInputStream {
     }
 
     private static class ByteRange {
+
         private final long start;
         private final long end;
 

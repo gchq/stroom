@@ -2,6 +2,7 @@ package stroom.util;
 
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheck.Result;
@@ -20,9 +21,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -92,10 +93,11 @@ public class HealthCheckUtils {
     public static void maskPasswords(final Map<String, Object> map) {
         map.forEach((key, value) -> {
             if (value instanceof String) {
-                if (key.toLowerCase().contains("password")) {
+                final String lowerKey = key.toLowerCase();
+                if (lowerKey.contains("password")) {
                     LOGGER.debug("Masking entry with key {}", key);
                     map.put(key, "****");
-                } else if (key.toLowerCase().contains("apikey") || key.toLowerCase().contains("token")) {
+                } else if (lowerKey.contains("apikey") || lowerKey.contains("token")) {
                     LOGGER.debug("Masking entry with key {}", key);
                     final String oldValue = (String) value;
                     if (oldValue.length() <= 8) {
@@ -109,8 +111,8 @@ public class HealthCheckUtils {
                 }
             } else if (value instanceof Map) {
                 maskPasswords((Map<String, Object>) value);
-            } else if (value instanceof List) {
-                for (final Object item : (List<Object>) value) {
+            } else if (value instanceof Collection<?>) {
+                for (final Object item : (Collection<Object>) value) {
                     if (item instanceof Map) {
                         maskPasswords((Map<String, Object>) item);
                     }
@@ -135,7 +137,16 @@ public class HealthCheckUtils {
      * with the response code, reasonPhrase and expectedStatus added as detail.
      */
     public static ResultBuilder fromResponse(final Response response) {
-        return fromResponse(response, Status.OK);
+        return fromResponse(response, Status.OK, null);
+    }
+
+    /**
+     * Create a {@link HealthCheck} {@link ResultBuilder} from a {@link Response}.
+     * If the response status is {@link Status#OK} then it will be healthy, else unhealthy
+     * with the response code, reasonPhrase and expectedStatus added as detail.
+     */
+    public static ResultBuilder fromResponse(final Response response, final String url) {
+        return fromResponse(response, Status.OK, url);
     }
 
     /**
@@ -143,11 +154,14 @@ public class HealthCheckUtils {
      * If the response status matches expectedStatus then it will be healthy, else unhealthy
      * with the response code, reasonPhrase and expectedStatus added as detail.
      */
-    public static ResultBuilder fromResponse(final Response response, final Status expectedStatus) {
+    public static ResultBuilder fromResponse(final Response response, final Status expectedStatus, final String url) {
         final HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
         try {
             Objects.requireNonNull(response);
             Objects.requireNonNull(expectedStatus);
+            if (NullSafe.isNonBlankString(url)) {
+                resultBuilder.withDetail("url", url);
+            }
             final int statusCode = response.getStatus();
             if (expectedStatus.getStatusCode() == statusCode) {
                 resultBuilder.healthy();

@@ -394,7 +394,7 @@ public class IndexShardPresenter
     }
 
     private Set<Long> getResultStreamIdSet() {
-        final HashSet<Long> rtn = new HashSet<>();
+        final Set<Long> rtn = new HashSet<>();
         if (resultList != null) {
             for (final IndexShard e : resultList.getValues()) {
                 rtn.add(e.getId());

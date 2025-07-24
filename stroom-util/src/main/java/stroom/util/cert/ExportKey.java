@@ -30,6 +30,7 @@ import java.security.NoSuchProviderException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Utility to export a private key and certificate from a key store.
@@ -42,7 +43,7 @@ public class ExportKey {
     public static void main(final String[] args)
             throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException,
             NoSuchProviderException, UnrecoverableKeyException {
-        final HashMap<String, String> argsMap = new HashMap<>();
+        final Map<String, String> argsMap = new HashMap<>();
         for (int i = 0; i < args.length; i++) {
             final String[] split = args[i].split("=");
             if (split.length > 1) {

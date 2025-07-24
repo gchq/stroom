@@ -93,9 +93,7 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
         try {
             saved = genericDao.update(fsVolumeGroup);
         } catch (final DataAccessException e) {
-            if (e.getCause() != null
-                && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
-                final var sqlEx = (SQLIntegrityConstraintViolationException) e.getCause();
+            if (e.getCause() instanceof final SQLIntegrityConstraintViolationException sqlEx) {
                 if (sqlEx.getErrorCode() == 1062
                     && sqlEx.getMessage().contains("Duplicate entry")
                     && sqlEx.getMessage().contains("key")
@@ -174,7 +172,7 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
 
     @Override
     public void delete(final String name) {
-        final var fsVolumeGroupToDelete = get(name);
+        final FsVolumeGroup fsVolumeGroupToDelete = get(name);
         genericDao.delete(fsVolumeGroupToDelete.getId());
     }
 

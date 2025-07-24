@@ -1,6 +1,7 @@
 package stroom.util;
 
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class NextNameGenerator {
@@ -25,13 +26,13 @@ public class NextNameGenerator {
      * @return A new, incremented name.
      */
     public static String getNextName(final List<String> names, final String newNamePrefix, final String regex) {
-        final var pattern = Pattern.compile(String.format("%s %s", newNamePrefix, regex));
-        final var nextName = names.stream()
+        final Pattern pattern = Pattern.compile(String.format("%s %s", newNamePrefix, regex));
+        final String nextName = names.stream()
                 // We only care about names in the new name format
                 .filter(name -> pattern.matcher(name).find())
                 // We only care about the increments, so let's extract those
                 .map(name -> {
-                    final var matcher = pattern.matcher(name);
+                    final Matcher matcher = pattern.matcher(name);
                     matcher.find();
                     return Integer.parseInt(matcher.group(1));
                 })

@@ -95,11 +95,14 @@ public class ReceiveDataRuleSetClient extends AbstractDownstreamClient implement
         } else {
             try {
                 try (final Response response = getResponse(SyncInvoker::get)) {
-                    return HealthCheckUtils.fromResponse(response)
+                    return HealthCheckUtils.fromResponse(response, getFullUrl())
                             .build();
                 }
             } catch (final Throwable e) {
-                return Result.unhealthy(e);
+                return Result.builder()
+                        .withDetail("url", getFullUrl())
+                        .unhealthy(e)
+                        .build();
             }
         }
     }

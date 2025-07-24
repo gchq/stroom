@@ -136,7 +136,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
     private Set<DocRef> processDir(final Path dir,
                                    final Map<DocRef, ImportState> confirmMap,
                                    final ImportSettings importSettings) {
-        final HashSet<DocRef> result = new HashSet<>();
+        final Set<DocRef> result = new HashSet<>();
 
         try {
             Files.walkFileTree(dir,
@@ -325,17 +325,18 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
     /**
      * Imports something that appears in the Explorer Tree.
+     *
      * @param importExportActionHandler Handler for the type of DocRef
-     * @param nodeFile Path to the import file on disk
-     * @param docRef DocRef created from the .node data on disk
-     * @param tags List of tags extracted from .node data on disk
-     * @param path Path to the item in the Explorer Tree, from the .node data
-     *             on disk
-     * @param dataMap Map of disk file extension to disk file contents
-     * @param importState State of the import for docRef
-     * @param confirmMap Accessed to remove docRef from the map if the docRef
-     *                   cannot be imported.
-     * @param importSettings Key settings for the import; notably the RootDocRef.
+     * @param nodeFile                  Path to the import file on disk
+     * @param docRef                    DocRef created from the .node data on disk
+     * @param tags                      List of tags extracted from .node data on disk
+     * @param path                      Path to the item in the Explorer Tree, from the .node data
+     *                                  on disk
+     * @param dataMap                   Map of disk file extension to disk file contents
+     * @param importState               State of the import for docRef
+     * @param confirmMap                Accessed to remove docRef from the map if the docRef
+     *                                  cannot be imported.
+     * @param importSettings            Key settings for the import; notably the RootDocRef.
      * @return The DocRef of the imported document.
      */
     private DocRef importExplorerDoc(final ImportExportActionHandler importExportActionHandler,
@@ -364,7 +365,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         if (docExists) {
             // This is a pre-existing item so make sure we are allowed to update it.
             if (!securityContext.hasDocumentPermission(docRef,
-                                                       DocumentPermission.EDIT)) {
+                    DocumentPermission.EDIT)) {
                 throw new PermissionException(securityContext.getUserRef(),
                         "You do not have permission to update '" + docRef + "'");
             }
@@ -394,8 +395,8 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
             // Create parent folders for the new node.
             final ExplorerNode parent = explorerNodeService.getRoot();
             parentNode = getOrCreateParentFolder(parent,
-                                                 importPath,
-                                                 ImportSettings.ok(importSettings, importState));
+                    importPath,
+                    ImportSettings.ok(importSettings, importState));
 
             // Check permissions on the parent folder.
             folderRef = new DocRef(parentNode.getType(), parentNode.getUuid(), parentNode.getName());
@@ -476,7 +477,8 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
      * Returns the path in the Explorer Tree.
      * It will return either 'path' (the first parameter), or the path resolved
      * to the 'importSettings' Root DocRef if that exists.
-     * @param path The path to the item, deduced from the import data.
+     *
+     * @param path             The path to the item, deduced from the import data.
      * @param importRootDocRef The setting from ImportSettings the holds the
      *                         optional RootDocRef - i.e. where the stuff on
      *                         disk should be imported to. Will be null if
@@ -525,6 +527,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
     /**
      * Method for exporting; specific to GitRepo exports. Also called by write()
      * above for other exports.
+     *
      * @param rootNodePath     Path to root node of the export. If null then
      *                         performs the same as the other write() method.
      *                         Otherwise removes these path elements from the start of
@@ -629,8 +632,9 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
     /**
      * Called recursively to add things to the set of Docs to export.
-     * @param docRef The root docref
-     * @param expandedDocRefs The output of the function
+     *
+     * @param docRef           The root docref
+     * @param expandedDocRefs  The output of the function
      * @param docTypesToIgnore Any types of doc to ignore and not recurse below.
      */
     private void addDescendants(final DocRef docRef,
@@ -676,6 +680,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
     /**
      * Prunes the node path for GitRepo exports. Removes everything in the rootPath
      * from the nodePath if the rootPath matches the start of the nodePath.
+     *
      * @param rootPath Can be null, in which case this function just returns nodePath.
      *                 Otherwise, the list of items to prune from the start of nodePath.
      * @param nodePath The node path to prune.

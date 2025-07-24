@@ -126,7 +126,6 @@ import static stroom.meta.impl.db.jooq.tables.MetaProcessor.META_PROCESSOR;
 import static stroom.meta.impl.db.jooq.tables.MetaType.META_TYPE;
 import static stroom.meta.impl.db.jooq.tables.MetaVal.META_VAL;
 
-@SuppressWarnings("checkstyle:FileLength")
 @Singleton
 public class MetaDaoImpl implements MetaDao {
 

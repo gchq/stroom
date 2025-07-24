@@ -98,13 +98,15 @@ public class ProxyApiKeyCheckClient extends AbstractDownstreamClient implements 
             try {
                 try (final Response response = getResponse(builder ->
                         builder.post(Entity.json(HEALTH_CHECK_REQUEST)))) {
-
-                    return HealthCheckUtils.fromResponse(response, Status.NO_CONTENT)
+                    return HealthCheckUtils.fromResponse(response, Status.NO_CONTENT, getFullUrl())
                             .build();
                 }
             } catch (final Throwable e) {
                 LOGGER.error("API Key check unhealthy: {}", LogUtil.exceptionMessage(e));
-                return Result.unhealthy(e);
+                return Result.builder()
+                        .withDetail("url", getFullUrl())
+                        .unhealthy(e)
+                        .build();
             }
         }
     }

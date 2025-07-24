@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -369,7 +370,7 @@ class TestIndexShardIO extends StroomUnitTest {
 
         Long lastSize = null;
 
-        final HashSet<Integer> flushSet = new HashSet<>();
+        final Set<Integer> flushSet = new HashSet<>();
 
         for (int i = 1; i <= 100; i++) {
             writer.addDocument(buildDocument(i));

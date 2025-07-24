@@ -10,9 +10,9 @@ import net.sf.saxon.tree.tiny.TinyBuilder;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map.Entry;
+import java.util.SequencedSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -36,7 +36,7 @@ public abstract class StroomExtensionMetaFunctionCall extends StroomExtensionFun
         contentHandler.startDocument();
         startElement(contentHandler, elementName);
 
-        final HashSet<Entry<String, String>> sortedMeta = meta.stream()
+        final SequencedSet<Entry<String, String>> sortedMeta = meta.stream()
                 .sorted(Entry.comparingByKey())
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 

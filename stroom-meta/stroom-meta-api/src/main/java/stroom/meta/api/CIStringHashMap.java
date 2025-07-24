@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
  */
 class CIStringHashMap implements Map<String, String> {
 
-    private final HashMap<CIString, String> map;
+    private final Map<CIString, String> map;
 
     public CIStringHashMap() {
         map = new HashMap<>();

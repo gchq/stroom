@@ -53,6 +53,7 @@ import org.xml.sax.SAXException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NavigableMap;
 import java.util.TreeMap;
 
 /**
@@ -89,7 +90,7 @@ class IndexingFilter extends AbstractXMLFilter {
     private DocRef indexRef;
     private LuceneIndexDoc index;
     private final TimePartitionFactory timePartitionFactory = new TimePartitionFactory();
-    private final TreeMap<Long, TimePartition> timePartitionTreeMap = new TreeMap<>();
+    private final NavigableMap<Long, TimePartition> timePartitionTreeMap = new TreeMap<>();
     private final Map<Partition, IndexShardKey> indexShardKeyMap = new HashMap<>();
     private IndexDocument document;
 
@@ -203,7 +204,7 @@ class IndexingFilter extends AbstractXMLFilter {
             currentEventTime = null;
 
             if (errorReceiverProxy.getErrorReceiver() != null
-                    && errorReceiverProxy.getErrorReceiver() instanceof ErrorStatistics) {
+                && errorReceiverProxy.getErrorReceiver() instanceof ErrorStatistics) {
                 ((ErrorStatistics) errorReceiverProxy.getErrorReceiver()).checkRecord(-1);
             }
         }
@@ -220,8 +221,8 @@ class IndexingFilter extends AbstractXMLFilter {
                 if (currentEventTime != null) {
                     final Entry<Long, TimePartition> entry = timePartitionTreeMap.floorEntry(currentEventTime);
                     if (entry != null &&
-                            entry.getValue().getPartitionFromTime() <= currentEventTime &&
-                            entry.getValue().getPartitionToTime() > currentEventTime) {
+                        entry.getValue().getPartitionFromTime() <= currentEventTime &&
+                        entry.getValue().getPartitionToTime() > currentEventTime) {
                         partition = entry.getValue();
 
                     } else {
@@ -248,8 +249,8 @@ class IndexingFilter extends AbstractXMLFilter {
             final Val val = convertValue(indexField, value);
             if (val != null) {
                 if (currentEventTime == null &&
-                        FieldType.DATE.equals(indexField.getFldType()) &&
-                        indexField.getFldName().equals(index.getTimeField())) {
+                    FieldType.DATE.equals(indexField.getFldType()) &&
+                    indexField.getFldName().equals(index.getTimeField())) {
                     try {
                         // Set the current event time if this is a recognised event time field.
                         currentEventTime = val.toLong();

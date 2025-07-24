@@ -76,8 +76,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.Executor;
 
@@ -410,10 +412,11 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
         return result;
     }
 
-    private static TreeMap<String, FieldMapping> getFlattenedFieldMappings(final ElasticIndexDoc elasticIndex,
-                                                                           final ElasticsearchClient elasticClient) {
+    private static NavigableMap<String, FieldMapping> getFlattenedFieldMappings(
+            final ElasticIndexDoc elasticIndex,
+            final ElasticsearchClient elasticClient) {
         // Flatten the mappings, which are keyed by index, into a de-duplicated list
-        final TreeMap<String, FieldMapping> mappings = new TreeMap<>((o1, o2) -> {
+        final NavigableMap<String, FieldMapping> mappings = new TreeMap<>((o1, o2) -> {
             if (Objects.equals(o1, o2)) {
                 return 0;
             }
@@ -437,7 +440,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
             // Build a list of all multi fields (i.e. those defined only in the field mapping).
             // These are excluded from the fields the user can pick via the Stroom UI, as they are not part
             // of the returned `_source` field.
-            final HashSet<String> multiFieldMappings = new HashSet<>();
+            final Set<String> multiFieldMappings = new HashSet<>();
             allMappings.values().forEach(indexMappings -> indexMappings.mappings().forEach((fieldName, mapping) -> {
                 final Property source = mapping.mapping().get(fieldName);
                 if (source != null && source._get() instanceof PropertyBase) {

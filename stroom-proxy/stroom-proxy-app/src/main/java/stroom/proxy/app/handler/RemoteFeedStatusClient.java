@@ -98,7 +98,7 @@ public class RemoteFeedStatusClient extends AbstractDownstreamClient implements 
                     "DUMMY_FEED", null, null);
             try {
                 try (final Response response = getResponse(builder -> builder.post(Entity.json(request)))) {
-                    return HealthCheckUtils.fromResponse(response)
+                    return HealthCheckUtils.fromResponse(response, getFullUrl())
                             .build();
                 }
             } catch (final Throwable e) {

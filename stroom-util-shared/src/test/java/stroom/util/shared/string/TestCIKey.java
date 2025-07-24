@@ -585,7 +585,7 @@ public class TestCIKey {
 
     @Test
     void testMapOf_nullKey() {
-        final HashMap<String, String> map = new HashMap<>();
+        final Map<String, String> map = new HashMap<>();
         map.put(null, "bar");
         final Map<CIKey, String> ciMap = CIKey.mapOf(map);
         assertThat(ciMap.get(null))
@@ -594,7 +594,7 @@ public class TestCIKey {
 
     @Test
     void testMapOf_nullValue() {
-        final HashMap<String, String> map = new HashMap<>();
+        final Map<String, String> map = new HashMap<>();
         map.put("foo", null);
         Assertions.assertThatThrownBy(
                         () -> {
