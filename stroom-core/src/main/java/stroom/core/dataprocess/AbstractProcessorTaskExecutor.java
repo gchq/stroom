@@ -86,6 +86,7 @@ import stroom.util.io.PreviewInputStream;
 import stroom.util.io.WrappedOutputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
@@ -116,6 +117,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
     private static final Pattern XML_DECL_PATTERN = Pattern.compile(
             "<\\?\\s*xml[^>]*>",
             Pattern.CASE_INSENSITIVE);
+    private static final ElementId ELEMENT_ID = new ElementId("PipelineStreamProcessor");
 
     private final PipelineFactory pipelineFactory;
     private final Store streamStore;
@@ -517,9 +519,9 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
         if (errorReceiverProxy != null && !(e instanceof LoggedException)) {
             try {
                 if (e.getMessage() != null) {
-                    errorReceiverProxy.log(severity, null, "PipelineStreamProcessor", e.getMessage(), e);
+                    errorReceiverProxy.log(severity, null, ELEMENT_ID, e.getMessage(), e);
                 } else {
-                    errorReceiverProxy.log(severity, null, "PipelineStreamProcessor", e.toString(), e);
+                    errorReceiverProxy.log(severity, null, ELEMENT_ID, e.toString(), e);
                 }
             } catch (final RuntimeException e2) {
                 // Ignore exception as we generated it.

@@ -45,7 +45,7 @@ public class NewElementPresenter extends MyPresenterWidget<NewElementPresenter.N
     protected void onBind() {
         super.onBind();
 
-        registerHandler(getView().getIdBox().addKeyDownHandler(event -> {
+        registerHandler(getView().getNameBox().addKeyDownHandler(event -> {
             if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
                 if (handler != null) {
                     HidePopupRequestEvent.builder(this).fire();
@@ -56,16 +56,18 @@ public class NewElementPresenter extends MyPresenterWidget<NewElementPresenter.N
 
     public void show(final PipelineElementType elementType,
                      final HidePopupRequestEvent.Handler handler,
-                     final String suggestedId) {
+                     final String name,
+                     final String caption) {
         this.elementType = elementType;
         this.handler = handler;
-        getView().getId().setText(suggestedId);
-
+        getView().getName().setText(name != null
+                ? name
+                : "");
         final PopupSize popupSize = PopupSize.resizableX();
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
-                .caption("Create Element")
+                .caption(caption)
                 .onShow(e -> getView().focus())
                 .onHideRequest(handler)
                 .fire();
@@ -75,18 +77,14 @@ public class NewElementPresenter extends MyPresenterWidget<NewElementPresenter.N
         return elementType;
     }
 
-    public String getElementId() {
-        return getView().getId().getText();
+    public String getElementName() {
+        return getView().getName().getText();
     }
-
-
-    // --------------------------------------------------------------------------------
-
 
     public interface NewElementView extends View, Focus {
 
-        HasText getId();
+        HasText getName();
 
-        HasKeyDownHandlers getIdBox();
+        HasKeyDownHandlers getNameBox();
     }
 }

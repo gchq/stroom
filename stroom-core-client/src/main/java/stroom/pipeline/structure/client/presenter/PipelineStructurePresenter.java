@@ -70,6 +70,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 
 public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineStructureView, PipelineDoc>
         implements PipelineStructureUiHandlers {
@@ -296,6 +297,36 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         }
     }
 
+    private void onRenameElement() {
+        final PipelineElement selected = pipelineTreePresenter.getSelectionModel().getSelectedObject();
+        if (selected != null) {
+            final HidePopupRequestEvent.Handler handler = e -> {
+                if (e.isOk()) {
+                    final String newName = newElementPresenter.getElementName();
+                    if (newName != null && !newName.trim().isEmpty()) {
+                        try {
+                            final PipelineElement renamedElement =
+                                    pipelineModel.renameElement(selected, newName.trim());
+                            pipelineTreePresenter.getSelectionModel().setSelected(renamedElement, true);
+                            setDirty(true);
+                        } catch (final RuntimeException ex) {
+                            AlertEvent.fireError(this, ex.getMessage(), null);
+                        }
+                    }
+                }
+                e.hide();
+            };
+            newElementPresenter.show(
+                    pipelineModel.getElementType(selected),
+                    handler,
+                    selected.getName() != null
+                            ? selected.getName()
+                            : selected.getId().toString(),
+                    "Rename Element"
+            );
+        }
+    }
+
     private List<Item> addPipelineActionsToMenu() {
         final PipelineElement selected = pipelineTreePresenter.getSelectionModel().getSelectedObject();
 
@@ -321,6 +352,13 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                 .text("Remove")
                 .enabled(selected != null)
                 .command(() -> onRemove(null))
+                .build());
+        menuItems.add(new IconMenuItem.Builder()
+                .priority(3)
+                .icon(SvgImage.EDIT)
+                .text("Rename")
+                .enabled(selected != null)
+                .command(this::onRenameElement)
                 .build());
 
         return menuItems;
@@ -406,7 +444,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                     final Item item = new IconMenuItem.Builder()
                             .priority(pos++)
                             .icon(icon)
-                            .text(element.getId())
+                            .text(element.getDisplayName())
                             .command(new RestorePipelineElementCommand(element))
                             .build();
                     items.add(item);
@@ -648,11 +686,12 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
             if (selectedElement != null && elementType != null) {
                 final HidePopupRequestEvent.Handler handler = e -> {
                     if (e.isOk()) {
-                        final String id = newElementPresenter.getElementId();
+                        final String id = UUID.randomUUID().toString();
+                        final String name = newElementPresenter.getElementName();
                         final PipelineElementType elementType = newElementPresenter.getElementInfo();
                         try {
-                            final PipelineElement newElement = pipelineModel.addElement(selectedElement,
-                                    elementType, id);
+                            final PipelineElement newElement = pipelineModel.addElement(
+                                    selectedElement, elementType, id, name);
                             pipelineTreePresenter.getSelectionModel().setSelected(newElement, true);
                             setDirty(true);
                         } catch (final RuntimeException ex) {
@@ -678,7 +717,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                     } while (existingIds.contains(suggestedId));
                 }
 
-                newElementPresenter.show(elementType, handler, suggestedId);
+                newElementPresenter.show(elementType, handler, suggestedId, "Create Element");
             }
         }
     }

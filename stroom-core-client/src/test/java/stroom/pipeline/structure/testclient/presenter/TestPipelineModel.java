@@ -523,7 +523,7 @@ class TestPipelineModel {
 
         final PipelineElement xsltFilter2 = pipelineModel.addElement(idEnrichmentFilter,
                 createType("XSLTFilter", Category.FILTER),
-                "xsltFilter2");
+                "xsltFilter2", "xsltFilter2");
         pipelineModel.moveElement(xsltFilter2, xsltFilter);
 
         pipelineModel.build();

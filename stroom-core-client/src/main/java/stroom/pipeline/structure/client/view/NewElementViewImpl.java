@@ -31,7 +31,7 @@ public class NewElementViewImpl extends ViewImpl implements NewElementView {
 
     private final Widget widget;
     @UiField
-    TextBox id;
+    TextBox name;
 
     @Inject
     public NewElementViewImpl(final Binder binder) {
@@ -45,17 +45,17 @@ public class NewElementViewImpl extends ViewImpl implements NewElementView {
 
     @Override
     public void focus() {
-        id.setFocus(true);
+        name.setFocus(true);
     }
 
     @Override
-    public HasKeyDownHandlers getIdBox() {
-        return id;
+    public HasKeyDownHandlers getNameBox() {
+        return name;
     }
 
     @Override
-    public HasText getId() {
-        return id;
+    public HasText getName() {
+        return name;
     }
 
     public interface Binder extends UiBinder<Widget, NewElementViewImpl> {

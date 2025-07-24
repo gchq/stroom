@@ -21,7 +21,6 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.pipeline.shared.data.PipelineElements;
 import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.Test;
@@ -43,7 +42,7 @@ class TestPipelineSerialisation {
     @Test
     void testElements() {
         final PipelineData pipelineData = new PipelineDataBuilder()
-                .addElement(new PipelineElement("test1", ELEM_TYPE.getType()))
+                .addElement(new PipelineElement("test1", ELEM_TYPE.getType(), "test1Name"))
                 .build();
         final String string = JsonUtil.writeValueAsString(pipelineData);
         assertThat(string.trim()).isEqualTo("""
@@ -51,7 +50,8 @@ class TestPipelineSerialisation {
                   "elements" : {
                     "add" : [ {
                       "id" : "test1",
-                      "type" : "TestElement"
+                      "type" : "TestElement",
+                      "name" : "test1Name"
                     } ]
                   }
                 }""");

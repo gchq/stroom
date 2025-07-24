@@ -5,7 +5,7 @@
         xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="newElementId" label="Id">
-            <g:TextBox ui:field="id" addStyleNames="w-100"/>
+            <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

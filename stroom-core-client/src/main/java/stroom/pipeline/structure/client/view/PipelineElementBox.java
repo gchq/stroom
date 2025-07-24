@@ -57,8 +57,9 @@ public class PipelineElementBox extends Box<PipelineElement> {
     }
 
     private final PipelineModel pipelineModel;
-    private final PipelineElement pipelineElement;
+    private PipelineElement pipelineElement;
     private final Widget filterIcon;
+    private final Label label;
 
     public PipelineElementBox(final PipelineModel pipelineModel,
                               final PipelineElement pipelineElement,
@@ -70,7 +71,8 @@ public class PipelineElementBox extends Box<PipelineElement> {
         final FlowPanel background = new FlowPanel();
         background.setStyleName(BASE_CLASS + "-background");
 
-        final Label label = new Label(pipelineElement.getId(), false);
+        final String labelText = pipelineElement.getDisplayName();
+        label = new Label(labelText, false);
         label.addStyleName(BASE_CLASS + "-label");
 
         if (icon != null) {
@@ -174,7 +176,9 @@ public class PipelineElementBox extends Box<PipelineElement> {
         return null;
     }
 
-    public void refresh() {
+    public void refresh(final PipelineElement pipelineElement) {
+        this.pipelineElement = pipelineElement;
+        label.setText(pipelineElement.getDisplayName());
         updateFilterState();
     }
 

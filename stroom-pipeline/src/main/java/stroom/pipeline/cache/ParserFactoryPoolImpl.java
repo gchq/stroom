@@ -30,6 +30,7 @@ import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.io.StreamUtil;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Severity;
 import stroom.util.xml.ParserConfig;
 
@@ -49,7 +50,7 @@ class ParserFactoryPoolImpl
         implements ParserFactoryPool, EntityEvent.Handler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ParserFactoryPool.class);
-    private static final String ELEMENT_ID = ParserFactoryPool.class.getSimpleName();
+    private static final ElementId ELEMENT_ID = new ElementId(ParserFactoryPool.class.getSimpleName());
 
     private final DSChooser dsChooser;
 

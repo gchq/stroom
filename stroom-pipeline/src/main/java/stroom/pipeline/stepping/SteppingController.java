@@ -261,7 +261,7 @@ public class SteppingController {
         final LoggingErrorReceiver errorReceiver = getErrorReceiver();
         for (final ElementMonitor monitor : monitors) {
             final ElementData elementData = monitor.getElementData(errorReceiver, textRange);
-            stepData.getElementMap().put(monitor.getElementId(), elementData);
+            stepData.getElementMap().put(monitor.getElementId().getId(), elementData);
         }
 
         return stepData;

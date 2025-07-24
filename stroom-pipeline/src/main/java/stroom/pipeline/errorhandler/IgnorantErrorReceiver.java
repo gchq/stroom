@@ -16,6 +16,7 @@
 
 package stroom.pipeline.errorhandler;
 
+import stroom.util.shared.ElementId;
 import stroom.util.shared.ErrorType;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
@@ -25,7 +26,7 @@ import stroom.util.shared.Severity;
  */
 public class IgnorantErrorReceiver implements ErrorReceiver {
     @Override
-    public void log(final Severity severity, final Location location, final String elementId, final String message,
+    public void log(final Severity severity, final Location location, final ElementId elementId, final String message,
                     final ErrorType errorType, final Throwable e) {
         // Do nothing.
     }

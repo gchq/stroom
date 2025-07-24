@@ -187,7 +187,7 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
                 cellRenderer.getBoxes().forEach(pipelineElementBox -> {
                     if (pipelineElementBox != null) {
                         pipelineElementBox.setSeverity(
-                                elementIdToSeveritiesMap.get(pipelineElementBox.getItem().getId()));
+                                elementIdToSeveritiesMap.get(pipelineElementBox.getItem().getElementId().getId()));
                     }
                 });
             }

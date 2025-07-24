@@ -17,6 +17,7 @@
 package stroom.pipeline.errorhandler;
 
 import stroom.pipeline.LocationFactory;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
@@ -32,11 +33,12 @@ public class ErrorListenerAdaptor implements ErrorListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ErrorListenerAdaptor.class);
 
-    private final String elementId;
+    private final ElementId elementId;
     private final LocationFactory locationFactory;
     private final ErrorReceiver errorReceiver;
 
-    public ErrorListenerAdaptor(final String elementId, final LocationFactory locationFactory,
+    public ErrorListenerAdaptor(final ElementId elementId,
+                                final LocationFactory locationFactory,
                                 final ErrorReceiver errorReceiver) {
         this.elementId = elementId;
         this.locationFactory = locationFactory;
@@ -72,8 +74,7 @@ public class ErrorListenerAdaptor implements ErrorListener {
         // If the source locator was null then try and find a location from a
         // parent exception.
         while (location == null && exception.getException() != null
-                && exception.getException() instanceof SAXParseException) {
-            final SAXParseException parent = (SAXParseException) exception.getException();
+               && exception.getException() instanceof final SAXParseException parent) {
             if (parent.getLineNumber() != -1 || parent.getColumnNumber() != -1) {
                 location = locationFactory.create(parent.getLineNumber(), parent.getColumnNumber());
             }

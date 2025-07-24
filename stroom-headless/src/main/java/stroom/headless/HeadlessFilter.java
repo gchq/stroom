@@ -22,6 +22,7 @@ import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.xml.event.simple.StartElement;
 import stroom.pipeline.xml.event.simple.StartPrefixMapping;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
@@ -226,7 +227,7 @@ public class HeadlessFilter extends AbstractXMLFilter implements ErrorWriter {
     }
 
     @Override
-    public void log(final Severity severity, final Location location, final String elementId, final String message) {
+    public void log(final Severity severity, final Location location, final ElementId elementId, final String message) {
         final StoredError error = new StoredError(severity, location, elementId, message);
         if (errors.size() < 100) {
             errors.add(error);
@@ -245,7 +246,7 @@ public class HeadlessFilter extends AbstractXMLFilter implements ErrorWriter {
                         atts.addAttribute(BLANK, LOCATION, LOCATION, STRING, error.getLocation().toString());
                     }
                     if (error.getElementId() != null) {
-                        atts.addAttribute(BLANK, ELEMENT_ID, ELEMENT_ID, STRING, error.getElementId());
+                        atts.addAttribute(BLANK, ELEMENT_ID, ELEMENT_ID, STRING, error.getElementId().toString());
                     }
 
                     String message = error.getMessage();

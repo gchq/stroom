@@ -16,8 +16,10 @@
 
 package stroom.pipeline.factory;
 
-public interface HasElementId {
-    String getElementId();
+import stroom.util.shared.ElementId;
 
-    void setElementId(String elementId);
+public interface HasElementId {
+    ElementId getElementId();
+
+    void setElementId(ElementId elementId);
 }

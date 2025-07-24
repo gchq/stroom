@@ -16,6 +16,9 @@
 
 package stroom.pipeline.shared.data;
 
+import stroom.util.shared.ElementId;
+import stroom.util.shared.NullSafe;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -26,19 +29,32 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-@JsonPropertyOrder({"id", "type"})
+@JsonPropertyOrder({"id", "type", "name"})
 public class PipelineElement implements Comparable<PipelineElement> {
 
     @JsonProperty
-    private final String id;
+    private String id;
     @JsonProperty
-    private final String type;
+    private String type;
+    @JsonProperty
+    private String name;
+
+    public PipelineElement(final String id,
+                           final String type) {
+        this(id, type, null);
+    }
 
     @JsonCreator
-    public PipelineElement(@JsonProperty("id") final String id,
-                           @JsonProperty("type") final String type) {
+    public PipelineElement(
+            @JsonProperty("id") final String id,
+            @JsonProperty("type") final String type,
+            @JsonProperty("name") final String name) {
         this.id = id;
         this.type = type;
+        this.name = name;
+    }
+
+    public PipelineElement() {
     }
 
     public String getId() {
@@ -47,6 +63,10 @@ public class PipelineElement implements Comparable<PipelineElement> {
 
     public String getType() {
         return type;
+    }
+
+    public String getName() {
+        return name;
     }
 
     @Override
@@ -82,24 +102,31 @@ public class PipelineElement implements Comparable<PipelineElement> {
      * <pre>{@code CombinedParser 'myCombinedParser'}</pre>
      */
     @JsonIgnore
+    public String getFullName() {
+        return type + " '" + getDisplayName() + "'";
+    }
+
+    /**
+     * E.g.
+     * <pre>{@code 'myCombinedParser'}</pre>
+     */
+    @JsonIgnore
     public String getDisplayName() {
-        return type + " '" + id + "'";
+        return !NullSafe.isBlankString(name)
+                ? name
+                : id;
+    }
+
+    @JsonIgnore
+    public ElementId getElementId() {
+        return new ElementId(id, name);
     }
 
     public static class Builder {
 
         private String id;
         private String type;
-
-        public Builder() {
-        }
-
-        public Builder(final PipelineElement element) {
-            if (element != null) {
-                this.id = element.id;
-                this.type = element.type;
-            }
-        }
+        private String name;
 
         public Builder id(final String id) {
             this.id = id;
@@ -111,8 +138,13 @@ public class PipelineElement implements Comparable<PipelineElement> {
             return this;
         }
 
+        public Builder name(final String name) {
+            this.name = name;
+            return this;
+        }
+
         public PipelineElement build() {
-            return new PipelineElement(id, type);
+            return new PipelineElement(id, type, name);
         }
     }
 }
