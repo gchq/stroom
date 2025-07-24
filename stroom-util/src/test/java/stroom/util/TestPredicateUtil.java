@@ -101,8 +101,8 @@ class TestPredicateUtil {
                 .withInputTypes(String.class, String.class)
                 .withOutputType(Boolean.class)
                 .withTestFunction(testCase -> {
-                    final var str = testCase.getInput()._1;
-                    final var subStr = testCase.getInput()._2;
+                    final String str = testCase.getInput()._1;
+                    final String subStr = testCase.getInput()._2;
                     final Predicate<String> predicate = PredicateUtil.caseSensitiveContainsPredicate(subStr);
                     return predicate.test(str);
                 })
@@ -122,8 +122,8 @@ class TestPredicateUtil {
                 .withInputTypes(String.class, String.class)
                 .withOutputType(Boolean.class)
                 .withTestFunction(testCase -> {
-                    final var str = testCase.getInput()._1;
-                    final var subStr = testCase.getInput()._2;
+                    final String str = testCase.getInput()._1;
+                    final String subStr = testCase.getInput()._2;
                     final Predicate<String> predicate = PredicateUtil.caseInsensitiveContainsPredicate(subStr);
                     return predicate.test(str);
                 })

@@ -70,10 +70,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -639,26 +639,28 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
     @Override
     public SystemInfoResult getSystemInfo() {
         final VolumeMap volumeMap = getCurrentVolumeMap();
-
-        // Need to wrap with optional as Map.ofEntries does not support null values.
-        final var volInfoMap = volumeMap.getGroupNameToVolumesMap()
+        final Map<VolGroupNode, List<Map<String, Object>>> volInfoMap = volumeMap.getGroupNameToVolumesMap()
                 .entrySet()
                 .stream()
                 .collect(Collectors.toMap(
                         Entry::getKey,
                         entry -> entry.getValue()
                                 .stream()
-                                .map(vol -> Map.ofEntries(
-                                        new SimpleEntry<>("path", Optional.ofNullable(vol.getPath())),
-                                        new SimpleEntry<>("limit", Optional.ofNullable(vol.getBytesLimit())),
-                                        new SimpleEntry<>("state", Optional.ofNullable(vol.getState())),
-                                        new SimpleEntry<>("free", Optional.ofNullable(vol.getBytesFree())),
-                                        new SimpleEntry<>("total", Optional.ofNullable(vol.getBytesTotal())),
-                                        new SimpleEntry<>("used", Optional.ofNullable(vol.getBytesUsed())),
-                                        new SimpleEntry<>("dbStateUpdateTime", Optional.ofNullable(NullSafe.get(
-                                                vol,
-                                                IndexVolume::getUpdateTimeMs,
-                                                DateUtil::createNormalDateTimeString)))))
+                                .map(vol -> {
+                                    // Use HashMap so we can cope with null values
+                                    final Map<String, Object> map = new HashMap<>();
+                                    map.put("path", vol.getPath());
+                                    map.put("limit", vol.getBytesLimit());
+                                    map.put("state", vol.getState());
+                                    map.put("free", vol.getBytesFree());
+                                    map.put("total", vol.getBytesTotal());
+                                    map.put("used", vol.getBytesUsed());
+                                    map.put("dbStateUpdateTime", NullSafe.get(
+                                            vol,
+                                            IndexVolume::getUpdateTimeMs,
+                                            DateUtil::createNormalDateTimeString));
+                                    return map;
+                                })
                                 .collect(Collectors.toList())));
 
         return SystemInfoResult.builder(this)

@@ -428,7 +428,7 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
             if (obj == null || obj.getClass() != this.getClass()) {
                 return false;
             }
-            final var that = (AttributeMapHasher) obj;
+            final AttributeMapHasher that = (AttributeMapHasher) obj;
             return Objects.equals(this.hashFunction, that.hashFunction) &&
                    Objects.equals(this.fieldNameToSaltMap, that.fieldNameToSaltMap);
         }

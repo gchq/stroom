@@ -26,4 +26,7 @@
 
     <!-- Legacy code so best left alone -->
     <suppress files="[\\/]stroom[\\/]legacy[\\/]" checks=".*"/>
+
+    <!-- Suppress var warnings for DaoImpl classes as use with jooq is justified -->
+<!--    <suppress files="[\\/]stroom[\\/].*[\\/]impl[\\/]db[\\/].*DaoImpl.java" checks="IllegalType"/>-->
 </suppressions>

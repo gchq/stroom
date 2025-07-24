@@ -259,7 +259,7 @@ class TestAttributeMap {
                 .withInputTypes(AttributeMap.class, String.class)
                 .withOutputType(String.class)
                 .withTestFunction(testCase -> {
-                    final var attrMap = testCase.getInput()._1;
+                    final AttributeMap attrMap = testCase.getInput()._1;
                     return attrMap.get(testCase.getInput()._2);
                 })
                 .withSimpleEqualityAssertion()
@@ -287,7 +287,7 @@ class TestAttributeMap {
                 .withInputTypes(AttributeMap.class, String.class)
                 .withOutputType(boolean.class)
                 .withTestFunction(testCase -> {
-                    final var attrMap = testCase.getInput()._1;
+                    final AttributeMap attrMap = testCase.getInput()._1;
                     return attrMap.containsKey(testCase.getInput()._2);
                 })
                 .withSimpleEqualityAssertion()
@@ -317,7 +317,7 @@ class TestAttributeMap {
                 .withInputTypes(AttributeMap.class, String.class)
                 .withOutputType(boolean.class)
                 .withTestFunction(testCase -> {
-                    final var attrMap = testCase.getInput()._1;
+                    final AttributeMap attrMap = testCase.getInput()._1;
                     return attrMap.containsValue(testCase.getInput()._2);
                 })
                 .withSimpleEqualityAssertion()

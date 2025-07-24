@@ -642,7 +642,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                                 final Set<String> docTypesToIgnore) {
 
         final List<ExplorerNode> children = explorerNodeService.getChildren(docRef);
-        for (final var child : children) {
+        for (final ExplorerNode child : children) {
             if (ExplorerConstants.isFolder(child)) {
                 if (!docTypesToIgnore.contains(child.getType())) {
                     this.addDocRef(child.getDocRef(), expandedDocRefs);

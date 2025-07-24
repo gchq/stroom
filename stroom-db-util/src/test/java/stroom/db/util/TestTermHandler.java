@@ -203,8 +203,8 @@ class TestTermHandler {
                 .withInputTypes(ExpressionTerm.class, boolean.class)
                 .withOutputType(Condition.class)
                 .withTestFunction(testCase -> {
-                    final var term = testCase.getInput()._1;
-                    final var useValues = testCase.getInput()._2;
+                    final ExpressionTerm term = testCase.getInput()._1;
+                    final Boolean useValues = testCase.getInput()._2;
                     final TermHandler<String> termHandler = getDocRefTermHandler(useValues);
                     return termHandler.apply(term);
                 })

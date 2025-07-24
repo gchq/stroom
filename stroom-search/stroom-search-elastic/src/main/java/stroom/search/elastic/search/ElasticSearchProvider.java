@@ -443,8 +443,8 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
             final Set<String> multiFieldMappings = new HashSet<>();
             allMappings.values().forEach(indexMappings -> indexMappings.mappings().forEach((fieldName, mapping) -> {
                 final Property source = mapping.mapping().get(fieldName);
-                if (source != null && source._get() instanceof PropertyBase) {
-                    final var multiFields = ((PropertyBase) source._get()).fields();
+                if (source != null && source._get() instanceof final PropertyBase propertyBase) {
+                    final Map<String, Property> multiFields = propertyBase.fields();
 
                     if (!multiFields.isEmpty()) {
                         multiFields.forEach((multiFieldName, multiFieldMapping) -> {

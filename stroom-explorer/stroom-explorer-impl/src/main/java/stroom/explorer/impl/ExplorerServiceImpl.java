@@ -1062,10 +1062,11 @@ class ExplorerServiceImpl
         remappings.values().forEach(newExplorerNode -> {
             final ExplorerActionHandler handler = explorerActionHandlers.getHandler(newExplorerNode.getType());
             if (handler != null) {
-                final Map<DocRef, DocRef> docRefRemappings = new HashMap<>();
-                for (final var remapping : remappings.entrySet()) {
-                    docRefRemappings.put(remapping.getKey().getDocRef(), remapping.getValue().getDocRef());
-                }
+                final Map<DocRef, DocRef> docRefRemappings = remappings.entrySet()
+                        .stream()
+                        .collect(Collectors.toMap(
+                                entry -> entry.getKey().getDocRef(),
+                                entry -> entry.getValue().getDocRef()));
                 handler.remapDependencies(newExplorerNode.getDocRef(), docRefRemappings);
             }
         });

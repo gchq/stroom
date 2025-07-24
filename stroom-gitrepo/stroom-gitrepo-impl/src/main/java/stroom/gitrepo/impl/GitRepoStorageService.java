@@ -119,9 +119,9 @@ public class GitRepoStorageService {
      * @param gitRepoDoc    The document that we're pushing the button on.
      *                      Must not be null.
      * @param commitMessage The Git commit message. Must not be null.
-     * @param calledFromUi True if the method is being called from the UI over
-     *                     REST, false if being called from a Job.
-     *                     Affects how some errors are handled.
+     * @param calledFromUi  True if the method is being called from the UI over
+     *                      REST, false if being called from a Job.
+     *                      Affects how some errors are handled.
      * @return The export summary. Might return if the export hasn't yet taken
      * place.
      * @throws IOException if something goes wrong
@@ -221,19 +221,19 @@ public class GitRepoStorageService {
      */
     private void gitStatusToMessages(final Status gitStatus,
                                      final List<Message> messages) {
-        for (final var filename : gitStatus.getUncommittedChanges()) {
+        for (final String filename : gitStatus.getUncommittedChanges()) {
             messages.add(new Message(Severity.INFO, "Changed: " + filename));
         }
-        for (final var dirname : gitStatus.getUntrackedFolders()) {
+        for (final String dirname : gitStatus.getUntrackedFolders()) {
             messages.add(new Message(Severity.INFO, "New folder: " + dirname));
         }
-        for (final var filename : gitStatus.getUntracked()) {
+        for (final String filename : gitStatus.getUntracked()) {
             messages.add(new Message(Severity.INFO, "New file: " + filename));
         }
-        for (final var filename : gitStatus.getMissing()) {
+        for (final String filename : gitStatus.getMissing()) {
             messages.add(new Message(Severity.INFO, "Deleted: " + filename));
         }
-        for (final var filename : gitStatus.getModified()) {
+        for (final String filename : gitStatus.getModified()) {
             messages.add(new Message(Severity.INFO, "Modified: " + filename));
         }
     }
@@ -293,7 +293,7 @@ public class GitRepoStorageService {
             }
 
             final Set<DocRef> docRefs = importExportSerializer.read(pathToImport, importStates, importSettings);
-            for (final var docRef : docRefs) {
+            for (final DocRef docRef : docRefs) {
                 // ImportExportSerializerImpl adds the System docref to the returned set,
                 // but we don't use that here, so ignore it
                 if (!docRef.equals(ExplorerConstants.SYSTEM_DOC_REF)) {
@@ -326,14 +326,14 @@ public class GitRepoStorageService {
             throws IOException {
 
         LOGGER.error("{}, {}, {}", errorMessage, cause, messages);
-        final var buf = new StringBuilder(errorMessage);
+        final StringBuilder buf = new StringBuilder(errorMessage);
         if (cause != null) {
             buf.append("\n    ");
             buf.append(cause.getMessage());
         }
         if (!messages.isEmpty()) {
             buf.append("\n\nAdditional information:");
-            for (final var m : messages) {
+            for (final Message m : messages) {
                 buf.append("\n    ");
                 buf.append(m);
             }
@@ -508,7 +508,8 @@ public class GitRepoStorageService {
         this.ensureDirectoryExists(gitWorkDir);
         this.deleteFileTree(gitWorkDir, false);
 
-        try (final Git git = Git.cloneRepository()
+        //noinspection EmptyTryBlock
+        try (final Git ignored = Git.cloneRepository()
                 .setURI(gitRepoDoc.getUrl())
                 .setDirectory(gitWorkDir.toFile())
                 .setCredentialsProvider(this.getGitCreds(gitRepoDoc))

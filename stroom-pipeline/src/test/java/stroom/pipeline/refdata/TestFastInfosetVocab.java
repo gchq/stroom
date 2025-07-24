@@ -9,8 +9,6 @@ import com.sun.xml.fastinfoset.sax.SAXDocumentSerializer;
 import com.sun.xml.fastinfoset.tools.VocabularyGenerator;
 import com.sun.xml.fastinfoset.vocab.ParserVocabulary;
 import com.sun.xml.fastinfoset.vocab.SerializerVocabulary;
-import io.vavr.Tuple;
-import io.vavr.Tuple3;
 import org.junit.jupiter.api.Test;
 import org.jvnet.fastinfoset.FastInfosetException;
 import org.jvnet.fastinfoset.Vocabulary;
@@ -108,34 +106,34 @@ public class TestFastInfosetVocab {
         deser(fastInfosetBytes1a, (ParserVocabulary) null);
 
 //        final Vocabulary vocabulary1 = buildVocab(XML_1, null);
-        final var vocabs1 = buildVocab(
+        final Vocabs vocabs1 = buildVocab(
                 XML_1,
                 null,
                 null);
         dumpVocabs(vocabs1);
-        final Vocabulary vocabulary1 = vocabs1._1;
+        final Vocabulary vocabulary1 = vocabs1.vocabulary();
 
         LOGGER.info("Serialise XML1 with vocab1");
-        final byte[] fastInfosetBytes1b = ser(XML_1, vocabs1._2);
+        final byte[] fastInfosetBytes1b = ser(XML_1, vocabs1.serializerVocabulary());
 
         LOGGER.info("Serialise XML2 with vocab1");
-        final byte[] fastInfosetBytes2a = ser(XML_2, vocabs1._2);
+        final byte[] fastInfosetBytes2a = ser(XML_2, vocabs1.serializerVocabulary());
 
         LOGGER.info(LogUtil.inSeparatorLine("Deser 2a1"));
-        deser(fastInfosetBytes2a, vocabs1._3);
+        deser(fastInfosetBytes2a, vocabs1.parserVocabulary());
 
-        final var vocabs2 = buildVocab(XML_2, vocabs1._2, vocabs1._3);
+        final Vocabs vocabs2 = buildVocab(XML_2, vocabs1.serializerVocabulary(), vocabs1.parserVocabulary());
         dumpVocabs(vocabs2);
-        final Vocabulary vocabulary2 = vocabs2._1;
+        final Vocabulary vocabulary2 = vocabs2.vocabulary();
 
         LOGGER.info("Serialise XML2 with vocab2");
-        final byte[] fastInfosetBytes2b = ser(XML_2, vocabs2._2);
+        final byte[] fastInfosetBytes2b = ser(XML_2, vocabs2.serializerVocabulary());
 
         LOGGER.info(LogUtil.inSeparatorLine("Deser 2a2"));
-        deser(fastInfosetBytes2a, vocabs2._3);
+        deser(fastInfosetBytes2a, vocabs2.parserVocabulary());
 
         LOGGER.info(LogUtil.inSeparatorLine("Deser 2b2"));
-        deser(fastInfosetBytes2b, vocabs2._3);
+        deser(fastInfosetBytes2b, vocabs2.parserVocabulary());
 
 //        inputStream.reset();
 //        byteArrayOutputStream.reset();
@@ -152,15 +150,15 @@ public class TestFastInfosetVocab {
 //        LOGGER.info("deser:\n{}", deser(fastInfosetBytes, vocabulary));
     }
 
-    private void dumpVocabs(final Tuple3<Vocabulary, SerializerVocabulary, ParserVocabulary> vocabs) {
+    private void dumpVocabs(final Vocabs vocabs) {
         LOGGER.info("""
 
                         vocabulary:           {}
                         serializerVocabulary: {}
                         parserVocabulary:     {}""",
-                vocabs._1.characterContentChunks.size(),
-                vocabs._2.characterContentChunk.size(),
-                vocabs._3.characterContentChunk.getSize());
+                vocabs.vocabulary().characterContentChunks.size(),
+                vocabs.serializerVocabulary().characterContentChunk.size(),
+                vocabs.parserVocabulary().characterContentChunk.getSize());
     }
 
     private Vocabulary buildVocab(final String xml, final Vocabulary vocabulary)
@@ -188,7 +186,7 @@ public class TestFastInfosetVocab {
         return vocabularyGenerator.getVocabulary();
     }
 
-    private Tuple3<Vocabulary, SerializerVocabulary, ParserVocabulary> buildVocab(
+    private Vocabs buildVocab(
             final String xml,
             final SerializerVocabulary serializerVocabulary,
             final ParserVocabulary parserVocabulary)
@@ -217,7 +215,7 @@ public class TestFastInfosetVocab {
         LOGGER.info(LogUtil.inSeparatorLine("Generating vocab"));
         saxParser.parse(inputStream, vocabularyGenerator);
 
-        return Tuple.of(vocabularyGenerator.getVocabulary(), serializerVocabularyLocal, parserVocabularyLocal);
+        return new Vocabs(vocabularyGenerator.getVocabulary(), serializerVocabularyLocal, parserVocabularyLocal);
     }
 
     private byte[] ser(final String xml, final SerializerVocabulary serializerVocabulary)
@@ -466,4 +464,13 @@ public class TestFastInfosetVocab {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
+    private record Vocabs(Vocabulary vocabulary,
+                          SerializerVocabulary serializerVocabulary,
+                          ParserVocabulary parserVocabulary) {
+
+    }
 }

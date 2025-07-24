@@ -80,8 +80,8 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
     }
 
     private Suggestions querySuggestions(final FetchSuggestionsRequest request,
-                                          final ElasticIndexDoc elasticIndex,
-                                          final ElasticsearchClient elasticClient) {
+                                         final ElasticIndexDoc elasticIndex,
+                                         final ElasticsearchClient elasticClient) {
         final QueryField field = request.getField();
         final String query = request.getText();
 
@@ -93,7 +93,7 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
                 // Only generate suggestions for text and keyword fields
                 return Suggestions.EMPTY;
             }
-            final var searchRequest = SearchRequest.of(s -> s
+            final SearchRequest searchRequest = SearchRequest.of(s -> s
                     .index(elasticIndex.getIndexName())
                     .suggest(suggest -> suggest
                             .suggesters("suggest", FieldSuggester.of(suggester -> suggester
@@ -116,7 +116,7 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
                     .toList());
         } catch (final IOException | RuntimeException e) {
             LOGGER.error(() -> "Failed to retrieve search suggestions for field: " + field.getFldName() +
-                    ". " + e.getMessage(), e);
+                               ". " + e.getMessage(), e);
             return Suggestions.EMPTY;
         }
     }
