@@ -9609,8 +9609,6 @@ components:
     ContentTemplate:
       type: object
       properties:
-        copyElementDependencies:
-          type: boolean
         description:
           type: string
         enabled:
@@ -9704,10 +9702,6 @@ components:
     CreateAnnotationRequest:
       type: object
       properties:
-        assignTo:
-          $ref: "#/components/schemas/UserRef"
-        comment:
-          type: string
         linkedEvents:
           type: array
           items:
