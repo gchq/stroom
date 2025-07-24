@@ -377,13 +377,4 @@ public class FormGroup extends Composite implements HasWidgets {
             return false;
         }
     }
-
-    private native void copyToClipboard(String text) /*-{
-    var textarea = $doc.createElement("textarea");
-    textarea.value = text;
-    $doc.body.appendChild(textarea);
-    textarea.select();
-    $doc.execCommand("copy");
-    $doc.body.removeChild(textarea);
-}-*/;
 }
