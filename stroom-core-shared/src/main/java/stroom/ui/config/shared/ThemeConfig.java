@@ -32,16 +32,24 @@ public class ThemeConfig extends AbstractConfig implements IsStroomConfig {
             "will be given a default grey colour.")
     private final String labelColours;
 
+    @JsonProperty
+    @JsonPropertyDescription("The highlight colour of the selected tab on the main tab bar. Should be a valid " +
+                             "HTML colour code or name.")
+    private final String selectedTabColour;
+
     public ThemeConfig() {
         pageBorder = null;
         labelColours = "TEST1=#FF0000,TEST2=#FF9900";
+        selectedTabColour = null;
     }
 
     @JsonCreator
     public ThemeConfig(@JsonProperty("pageBorder") final String pageBorder,
-                       @JsonProperty("labelColours") final String labelColours) {
+                       @JsonProperty("labelColours") final String labelColours,
+                       @JsonProperty("selectedTabColour") final String selectedTabColour) {
         this.pageBorder = pageBorder;
         this.labelColours = labelColours;
+        this.selectedTabColour = selectedTabColour;
     }
 
 
@@ -53,12 +61,17 @@ public class ThemeConfig extends AbstractConfig implements IsStroomConfig {
         return labelColours;
     }
 
+    public String getSelectedTabColour() {
+        return selectedTabColour;
+    }
+
     @Override
     public String toString() {
         return "ThemeConfig{" +
-                "pageBorder='" + pageBorder + '\'' +
-                ", labelColours='" + labelColours + '\'' +
-                '}';
+               "pageBorder='" + pageBorder + '\'' +
+               ", labelColours='" + labelColours + '\'' +
+               ", menuColour='" + selectedTabColour + '\'' +
+               '}';
     }
 
     @Override
@@ -71,11 +84,12 @@ public class ThemeConfig extends AbstractConfig implements IsStroomConfig {
         }
         final ThemeConfig that = (ThemeConfig) o;
         return Objects.equals(pageBorder, that.pageBorder) &&
-                Objects.equals(labelColours, that.labelColours);
+                Objects.equals(labelColours, that.labelColours) &&
+               Objects.equals(selectedTabColour, that.selectedTabColour);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(pageBorder, labelColours);
+        return Objects.hash(pageBorder, labelColours, selectedTabColour);
     }
 }

@@ -22,12 +22,15 @@ import stroom.main.client.presenter.MainUiHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.SafeHtmlUtil;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
@@ -188,6 +191,16 @@ public class MainViewImpl extends ViewWithUiHandlers<MainUiHandlers> implements 
     public void setBorderStyle(final String style) {
         if (style != null && style.length() > 0) {
             root.getElement().setPropertyString("style", style);
+        }
+    }
+
+    @Override
+    public void setSelectedTabColour(final String colour) {
+        if (colour != null && !colour.isBlank()) {
+            final Element style = DOM.createElement("style");
+            style.setInnerSafeHtml(SafeHtmlUtil.getSafeHtmlFromTrustedString(
+                    ".curveTab-selected {border-bottom: solid 3px " + colour + ";}"));
+            root.getElement().appendChild(style);
         }
     }
 
