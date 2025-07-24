@@ -54,12 +54,9 @@ public class ImportExportServiceImpl implements ImportExportService {
     public List<ImportState> importConfig(final Path data,
                                           final ImportSettings importSettings,
                                           final List<ImportState> confirmList) {
-        final List<ImportState> mutableList = (confirmList == null)
-                ? new java.util.ArrayList<>()
-                : new java.util.ArrayList<>(confirmList);
-        doImport(data, mutableList, importSettings);
-        mutableList.sort(Comparator.comparing(ImportState::getSourcePath));
-        return mutableList;
+        doImport(data, confirmList, importSettings);
+        confirmList.sort(Comparator.comparing(ImportState::getSourcePath));
+        return confirmList;
     }
 
     private void doImport(final Path zipFile,
