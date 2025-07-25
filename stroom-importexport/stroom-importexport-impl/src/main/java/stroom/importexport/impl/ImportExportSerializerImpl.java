@@ -780,7 +780,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
                 // Ensure the parent directory exists.
                 if (!Files.isDirectory(parentDir)) {
-                    // Don't output the full path here are we don't want users to see the full file system path.
+                    // Don't output the full path here as we don't want users to see the full file system path.
                     localMessageList.add(new Message(Severity.FATAL_ERROR,
                             "Unable to create directory for folder: " + parentDir.getFileName()));
 

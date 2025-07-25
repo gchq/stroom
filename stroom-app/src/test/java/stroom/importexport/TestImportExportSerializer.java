@@ -345,4 +345,44 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         // If the comparison was ok then delete the output.
         FileUtil.deleteDir(outDir);
     }
+
+    @Test
+    void testV2() throws IOException {
+        final Path inDir = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve("samples/feeds-and-translations-internal-v2");
+        final Path outDir = StroomCoreServerTestFileUtil.getTestOutputDir().resolve("samples/feeds-and-translations-internal-v2");
+
+        FileUtil.deleteDir(outDir);
+        Files.createDirectories(outDir);
+
+        // Read input.
+        final Set<DocRef> exported =
+                importExportSerializer.read(
+                        inDir,
+                        null,
+                        ImportSettings.auto());
+
+        // Write to output.
+        final ExportSummary exportSummary = importExportSerializer.write(
+                null,
+                outDir,
+                exported,
+                Collections.emptySet(),
+                true);
+
+        final List<Message> messageList = exportSummary.getMessages();
+        messageList.forEach(message -> {
+            if (message.getSeverity().equals(Severity.ERROR)) {
+                LOGGER.error("Export error: {}", message.getMessage());
+            } else {
+                LOGGER.warn("Export warning: {}", message.getMessage());
+            }
+        });
+
+        // Compare input and output directory.
+        ComparisonHelper.compareDirs(inDir, outDir);
+
+        // If the comparison was ok then delete the output.
+        FileUtil.deleteDir(outDir);
+    }
+
 }
