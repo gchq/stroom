@@ -1,12 +1,15 @@
 package stroom.proxy.app.handler;
 
+import stroom.proxy.app.DownstreamHostConfig;
 import stroom.proxy.repo.LogStream;
 import stroom.proxy.repo.ProxyServices;
 import stroom.security.api.UserIdentityFactory;
+import stroom.util.http.HttpClientConfiguration;
 import stroom.util.http.HttpClientFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.metrics.Metrics;
 import stroom.util.shared.BuildInfo;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -30,6 +33,7 @@ public class HttpSenderFactory {
     private final HttpClientFactory httpClientFactory;
     private final ProxyServices proxyServices;
     private final Metrics metrics;
+    private final DownstreamHostConfig downstreamHostConfig;
 
     @Inject
     public HttpSenderFactory(final LogStream logStream,
@@ -37,7 +41,8 @@ public class HttpSenderFactory {
                              final UserIdentityFactory userIdentityFactory,
                              final HttpClientFactory httpClientFactory,
                              final Metrics metrics,
-                             final ProxyServices proxyServices) {
+                             final ProxyServices proxyServices,
+                             final DownstreamHostConfig downstreamHostConfig) {
         this.logStream = logStream;
         this.userIdentityFactory = userIdentityFactory;
         this.httpClientFactory = httpClientFactory;
@@ -47,34 +52,34 @@ public class HttpSenderFactory {
         // Construct something like
         // stroom-proxy/v6.0-beta.46 java/1.8.0_181
         defaultUserAgent = LogUtil.message(USER_AGENT_FORMAT,
-                buildInfoProvider.get().getBuildVersion(), System.getProperty("java.version"));
+                buildInfoProvider.get().getBuildVersion(),
+                System.getProperty("java.version"));
+        this.downstreamHostConfig = downstreamHostConfig;
     }
 
-    public HttpSender create(final ForwardHttpPostConfig config) {
-        final String userAgentString;
-        if (config.getHttpClient() != null &&
-            config.getHttpClient().getUserAgent() != null) {
-            userAgentString = config.getHttpClient().getUserAgent();
-        } else {
-            userAgentString = defaultUserAgent;
-        }
+    public HttpSender create(final ForwardHttpPostConfig forwardHttpPostConfig) {
 
-        LOGGER.info("Initialising \"" +
-                    config.getName() +
-                    "\" ForwardHttpPostHandlers with user agent string [" +
-                    userAgentString +
-                    "]");
+        final String userAgentString = NullSafe.getOrElse(
+                forwardHttpPostConfig.getHttpClient(),
+                HttpClientConfiguration::getUserAgent,
+                defaultUserAgent);
+
+        LOGGER.info("Initialising HTTP Forwarder '{}', user agent string: [{}], url: '{}'",
+                forwardHttpPostConfig.getName(),
+                userAgentString,
+                forwardHttpPostConfig.createForwardUrl(downstreamHostConfig));
 
         String name = "HttpSender";
-        if (config.getName() != null) {
-            name += "-" + config.getName();
+        if (forwardHttpPostConfig.getName() != null) {
+            name += "-" + forwardHttpPostConfig.getName();
         }
         name += "-" + UUID.randomUUID();
 
-        final HttpClient httpClient = httpClientFactory.get(name, config.getHttpClient());
+        final HttpClient httpClient = httpClientFactory.get(name, forwardHttpPostConfig.getHttpClient());
         return new HttpSender(
                 logStream,
-                config,
+                downstreamHostConfig,
+                forwardHttpPostConfig,
                 userAgentString,
                 userIdentityFactory,
                 httpClient,

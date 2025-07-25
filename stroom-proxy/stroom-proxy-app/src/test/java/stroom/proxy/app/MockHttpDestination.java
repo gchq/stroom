@@ -482,6 +482,7 @@ public class MockHttpDestination {
                 .build();
     }
 
+
     public static String getLivenessCheckUrl() {
         return "http://localhost:"
                + MockHttpDestination.DEFAULT_STROOM_PORT
@@ -500,7 +501,7 @@ public class MockHttpDestination {
 //                null);
     }
 
-    static DownstreamHostConfig createDownstreamHostConfig() {
+    public static DownstreamHostConfig createDownstreamHostConfig() {
         return DownstreamHostConfig.builder()
                 .withEnabled(true)
                 .withScheme("http")

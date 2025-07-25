@@ -4,7 +4,6 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.receive.rules.shared.ReceiptCheckMode;
 import stroom.receive.rules.shared.ReceiveAction;
-import stroom.security.shared.HashAlgorithm;
 import stroom.util.cache.CacheConfig;
 import stroom.util.cert.DNFormat;
 import stroom.util.collections.CollectionUtil;
@@ -29,7 +28,6 @@ import jakarta.validation.constraints.NotNull;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -67,51 +65,11 @@ public class ReceiveDataConfig
                     StandardHeaderArguments.FORMAT,
                     StandardHeaderArguments.SCHEMA));
 
-//    public static final Set<String> DEFAULT_OBFUSCATED_FIELDS =
-//            CollectionUtil.asUnmodifiabledConsistentOrderSet(List.of(
-//                    StandardHeaderArguments.FEED));
-
-    // Use sha2-512 to make hash clashes very unlikely.
-//    public static final HashAlgorithm DEFAULT_HASH_ALGORITHM = HashAlgorithm.SHA2_512;
-
     public static final Set<String> DEFAULT_META_TYPES = CollectionUtil.asUnmodifiabledConsistentOrderSet(
             StreamTypeNames.ALL_HARD_CODED_STREAM_TYPE_NAMES);
 
     public static final Set<AuthenticationType> DEFAULT_AUTH_TYPES = Collections.unmodifiableSet(
             EnumSet.of(AuthenticationType.CERTIFICATE));
-
-//    public static final Map<String, String> DEFAULT_INITIAL_RECEIPT_RULE_FIELDS =
-//            CollectionUtil.linkedHashMapBuilder(String.class, String.class)
-//                    .add(StandardHeaderArguments.ACCOUNT_ID, FieldType.TEXT.getTypeName())
-//                    .add(StandardHeaderArguments.COMPONENT, FieldType.TEXT.getTypeName())
-//                    .add(StandardHeaderArguments.COMPRESSION, FieldType.TEXT.getTypeName())
-//                    .add(StandardHeaderArguments.CONTENT_LENGTH, FieldType.TEXT.getTypeName())
-//                    .add(StandardHeaderArguments.CONTEXT_ENCODING, FieldType.TEXT.getTypeName())
-//                    .add(StandardHeaderArguments.CONTEXT_FORMAT, FieldType.TEXT.getTypeName())
-//                    .add(StandardHeaderArguments.EFFECTIVE_TIME, FieldType.DATE.getTypeName())
-//                    .add(StandardHeaderArguments.ENCODING, FieldType.TEXT.getTypeName())
-//                    .add(StandardHeaderArguments.ENVIRONMENT, FieldType.TEXT.getTypeName())
-//                    .add(StandardHeaderArguments.FEED, FieldType.TEXT.getTypeName())
-//                    .add(StandardHeaderArguments.FORMAT, FieldType.TEXT.getTypeName())
-//                    .add(StandardHeaderArguments.RECEIPT_ID, FieldType.TEXT.getTypeName())
-//                    .add(StandardHeaderArguments.RECEIPT_ID_PATH, FieldType.TEXT.getTypeName())
-//                    .add(StandardHeaderArguments.RECEIVED_PATH, FieldType.TEXT.getTypeName())
-//                    .add(StandardHeaderArguments.RECEIVED_TIME, FieldType.DATE.getTypeName())
-//                    .add(StandardHeaderArguments.RECEIVED_TIME_HISTORY, FieldType.TEXT.getTypeName())
-//                    .add(StandardHeaderArguments.REMOTE_CERT_EXPIRY, FieldType.DATE.getTypeName())
-//                    .add(StandardHeaderArguments.REMOTE_DN, FieldType.TEXT.getTypeName())
-//                    // Both of these could be one of fqdn/ipv4/ipv6, so TEXT it is
-//                    .add(StandardHeaderArguments.REMOTE_HOST, FieldType.TEXT.getTypeName())
-//                    .add(StandardHeaderArguments.REMOTE_ADDRESS, FieldType.TEXT.getTypeName())
-//                    .add(StandardHeaderArguments.SCHEMA, FieldType.TEXT.getTypeName())
-//                    .add(StandardHeaderArguments.SCHEMA_VERSION, FieldType.TEXT.getTypeName())
-//                    .add(StandardHeaderArguments.SYSTEM, FieldType.TEXT.getTypeName())
-//                    .add(StandardHeaderArguments.TYPE, FieldType.TEXT.getTypeName())
-//                    .add(StandardHeaderArguments.UPLOAD_USERNAME, FieldType.TEXT.getTypeName())
-//                    .add(StandardHeaderArguments.UPLOAD_USER_ID, FieldType.TEXT.getTypeName())
-//                    .add(StandardHeaderArguments.USER_AGENT, FieldType.TEXT.getTypeName())
-//                    .add(StandardHeaderArguments.X_FORWARDED_FOR, FieldType.TEXT.getTypeName())
-//                    .build();
 
     public static final ReceiptCheckMode DEFAULT_RECEIPT_CHECK_MODE = ReceiptCheckMode.getDefault();
     // If we can't hit the downstream then we have to let everything in
@@ -143,13 +101,6 @@ public class ReceiveDataConfig
     private final String feedNameTemplate;
     @JsonProperty
     private final Set<String> feedNameGenerationMandatoryHeaders;
-    //    @JsonProperty
-//    private final Set<String> obfuscatedFields;
-//    @JsonProperty
-//    private final HashAlgorithm obfuscationHashAlgorithm;
-//    // fieldName => fieldTypeName (any case)
-//    @JsonProperty
-//    private final Map<String, String> receiptRulesInitialFields;
     @JsonProperty
     private final ReceiptCheckMode receiptCheckMode;
     @JsonProperty
@@ -170,9 +121,6 @@ public class ReceiveDataConfig
         feedNameGenerationEnabled = DEFAULT_FEED_NAME_GENERATION_ENABLED;
         feedNameTemplate = DEFAULT_FEED_NAME_TEMPLATE;
         feedNameGenerationMandatoryHeaders = DEFAULT_FEED_NAME_MANDATORY_HEADERS;
-//        obfuscatedFields = DEFAULT_OBFUSCATED_FIELDS;
-//        obfuscationHashAlgorithm = DEFAULT_HASH_ALGORITHM;
-//        receiptRulesInitialFields = DEFAULT_INITIAL_RECEIPT_RULE_FIELDS;
         receiptCheckMode = DEFAULT_RECEIPT_CHECK_MODE;
         fallbackReceiveAction = DEFAULT_FALLBACK_RECEIVE_ACTION;
     }
@@ -193,9 +141,6 @@ public class ReceiveDataConfig
             @JsonProperty("feedNameGenerationEnabled") final Boolean feedNameGenerationEnabled,
             @JsonProperty("feedNameTemplate") final String feedNameTemplate,
             @JsonProperty("feedNameGenerationMandatoryHeaders") final Set<String> feedNameGenerationMandatoryHeaders,
-//            @JsonProperty("obfuscatedFields") final Set<String> obfuscatedFields,
-//            @JsonProperty("obfuscationHashAlgorithm") final HashAlgorithm obfuscationHashAlgorithm,
-//            @JsonProperty("receiptRulesInitialFields") final Map<String, String> receiptRulesInitialFields,
             @JsonProperty("receiptCheckMode") final ReceiptCheckMode receiptCheckMode,
             @JsonProperty("fallbackReceiveAction") final ReceiveAction fallbackReceiveAction) {
 
@@ -222,13 +167,6 @@ public class ReceiveDataConfig
                 feedNameGenerationMandatoryHeaders,
                 ReceiveDataConfig::cleanSet,
                 DEFAULT_FEED_NAME_MANDATORY_HEADERS);
-//        this.obfuscatedFields = NullSafe.getOrElse(
-//                obfuscatedFields,
-//                ReceiveDataConfig::cleanSet,
-//                DEFAULT_OBFUSCATED_FIELDS);
-//        this.obfuscationHashAlgorithm = Objects.requireNonNullElse(obfuscationHashAlgorithm, DEFAULT_HASH_ALGORITHM);
-//        this.receiptRulesInitialFields = Objects.requireNonNullElse(
-//                receiptRulesInitialFields, DEFAULT_INITIAL_RECEIPT_RULE_FIELDS);
         this.receiptCheckMode = Objects.requireNonNullElse(receiptCheckMode, DEFAULT_RECEIPT_CHECK_MODE);
         this.fallbackReceiveAction = Objects.requireNonNullElse(fallbackReceiveAction, DEFAULT_FALLBACK_RECEIVE_ACTION);
     }
@@ -248,9 +186,6 @@ public class ReceiveDataConfig
                 builder.feedNameGenerationEnabled,
                 builder.feedNameTemplate,
                 builder.feedNameGenerationMandatoryHeaders,
-//                builder.obfuscatedFields,
-//                builder.obfuscationHashAlgorithm,
-//                builder.receiptRulesInitialFields,
                 builder.receiptCheckMode,
                 builder.fallbackReceiveAction);
     }
@@ -377,25 +312,6 @@ public class ReceiveDataConfig
         return feedNameGenerationMandatoryHeaders;
     }
 
-//    @JsonPropertyDescription("The set of field names used in receipt data policy that need to be obfuscated " +
-//                             "(using a hash function) when transferred to stroom-proxy.")
-//    public Set<String> getObfuscatedFields() {
-//        return obfuscatedFields;
-//    }
-//
-//    @JsonPropertyDescription("The hash algorithm to use for obfuscating fields defined in obfuscatedFields. " +
-//                             "Possible values are SHA3_256, SHA2_256, BCRYPT, ARGON_2.")
-//    public HashAlgorithm getObfuscationHashAlgorithm() {
-//        return obfuscationHashAlgorithm;
-//    }
-//
-//    @JsonPropertyDescription("A map of field name to field type to use as the initial set of fields in the " +
-//                             "Data Receipt Rules screen. Case-insensitive. Valid field types are " +
-//                             "(Id|Boolean|Integer|Long|Float|Double|Date|Text|IpV4Address).")
-//    public Map<String, String> getReceiptRulesInitialFields() {
-//        return receiptRulesInitialFields;
-//    }
-
     @JsonPropertyDescription("Controls how or whether data is checked on receipt. Valid values " +
                              "(FEED_STATUS|RECEIPT_POLICY|RECEIVE_ALL|REJECT_ALL|DROP_ALL).")
     public ReceiptCheckMode getReceiptCheckMode() {
@@ -418,25 +334,6 @@ public class ReceiveDataConfig
                || !enabledAuthenticationTypes.isEmpty();
     }
 
-//    @SuppressWarnings("unused")
-//    @JsonIgnore
-//    @ValidationMethod(message = "receiptRulesInitialFields must contain non-null & non-blank keys/values. " +
-//                                "Field types must also be valid.")
-//    public boolean isReceiptRulesInitialFieldsValid() {
-//        if (receiptRulesInitialFields != null) {
-//            return receiptRulesInitialFields.entrySet()
-//                    .stream()
-//                    .allMatch(entry -> {
-//                        final String typeName = entry.getValue();
-//                        return NullSafe.isNonBlankString(entry.getKey())
-//                               && NullSafe.isNonBlankString(typeName)
-//                               && FieldType.fromTypeName(typeName) != null;
-//                    });
-//        } else {
-//            return true;
-//        }
-//    }
-
     private static String toTemplate(final String... parts) {
         return NullSafe.stream(parts)
                 .map(part -> "${" + part.toLowerCase() + "}")
@@ -458,9 +355,6 @@ public class ReceiveDataConfig
                ", feedNameGenerationEnabled=" + feedNameGenerationEnabled +
                ", feedNameTemplate='" + feedNameTemplate + '\'' +
                ", feedNameGenerationMandatoryHeaders=" + feedNameGenerationMandatoryHeaders +
-//               ", obfuscatedFields=" + obfuscatedFields +
-//               ", obfuscationHashAlgorithm=" + obfuscationHashAlgorithm +
-//               ", receiptRulesInitialFields=" + receiptRulesInitialFields +
                ", receiptCheckMode=" + receiptCheckMode +
                '}';
     }
@@ -486,9 +380,6 @@ public class ReceiveDataConfig
                && Objects.equals(allowedCertificateProviders, that.allowedCertificateProviders)
                && Objects.equals(feedNameTemplate, that.feedNameTemplate)
                && Objects.equals(feedNameGenerationMandatoryHeaders, that.feedNameGenerationMandatoryHeaders)
-//               && Objects.equals(obfuscatedFields, that.obfuscatedFields)
-//               && obfuscationHashAlgorithm == that.obfuscationHashAlgorithm
-//               && Objects.equals(receiptRulesInitialFields, that.receiptRulesInitialFields)
                && receiptCheckMode == that.receiptCheckMode;
     }
 
@@ -507,9 +398,6 @@ public class ReceiveDataConfig
                 feedNameGenerationEnabled,
                 feedNameTemplate,
                 feedNameGenerationMandatoryHeaders,
-//                obfuscatedFields,
-//                obfuscationHashAlgorithm,
-//                receiptRulesInitialFields,
                 receiptCheckMode);
     }
 
@@ -527,9 +415,6 @@ public class ReceiveDataConfig
         builder.feedNameGenerationEnabled = receiveDataConfig.isFeedNameGenerationEnabled();
         builder.feedNameTemplate = receiveDataConfig.getFeedNameTemplate();
         builder.feedNameGenerationMandatoryHeaders = receiveDataConfig.getFeedNameGenerationMandatoryHeaders();
-//        builder.obfuscatedFields = receiveDataConfig.getObfuscatedFields();
-//        builder.obfuscationHashAlgorithm = receiveDataConfig.getObfuscationHashAlgorithm();
-//        builder.receiptRulesInitialFields = receiveDataConfig.getReceiptRulesInitialFields();
         builder.receiptCheckMode = receiveDataConfig.getReceiptCheckMode();
         builder.fallbackReceiveAction = receiveDataConfig.fallbackReceiveAction;
         return builder;
@@ -571,9 +456,6 @@ public class ReceiveDataConfig
         private boolean feedNameGenerationEnabled;
         private String feedNameTemplate;
         private Set<String> feedNameGenerationMandatoryHeaders;
-        private Set<String> obfuscatedFields;
-        private HashAlgorithm obfuscationHashAlgorithm;
-        private Map<String, String> receiptRulesInitialFields;
         private ReceiptCheckMode receiptCheckMode;
         private ReceiveAction fallbackReceiveAction;
 
@@ -658,21 +540,6 @@ public class ReceiveDataConfig
 
         public Builder withFeedNameGenerationMandatoryHeaders(final Set<String> feedNameGenerationMandatoryHeaders) {
             this.feedNameGenerationMandatoryHeaders = NullSafe.mutableSet(feedNameGenerationMandatoryHeaders);
-            return this;
-        }
-
-        public Builder withObfuscatedFields(final Set<String> obfuscatedFields) {
-            this.obfuscatedFields = NullSafe.mutableSet(obfuscatedFields);
-            return this;
-        }
-
-        public Builder withObfuscationHashAlgorithm(final HashAlgorithm obfuscationHashAlgorithm) {
-            this.obfuscationHashAlgorithm = obfuscationHashAlgorithm;
-            return this;
-        }
-
-        public Builder withReceiptRulesInitialFields(final Map<String, String> receiptRulesInitialFields) {
-            this.receiptRulesInitialFields = receiptRulesInitialFields;
             return this;
         }
 
