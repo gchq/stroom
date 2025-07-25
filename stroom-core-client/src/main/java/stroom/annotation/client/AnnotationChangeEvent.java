@@ -5,6 +5,7 @@ import stroom.docref.DocRef;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.user.client.Timer;
 
 public class AnnotationChangeEvent extends GwtEvent<AnnotationChangeEvent.Handler> {
 
@@ -18,6 +19,19 @@ public class AnnotationChangeEvent extends GwtEvent<AnnotationChangeEvent.Handle
 
     public static void fire(final HasHandlers source, final DocRef annotationRef) {
         source.fireEvent(new AnnotationChangeEvent(annotationRef));
+    }
+
+    /**
+     * Let the UI know the annotation has changed but not until we have shown the annotation
+     * (hence deferred by timer).
+     */
+    public static void fireDeferred(final HasHandlers source, final DocRef annotationRef) {
+        new Timer() {
+            @Override
+            public void run() {
+                source.fireEvent(new AnnotationChangeEvent(annotationRef));
+            }
+        }.schedule(1000);
     }
 
     public static Type<Handler> getType() {

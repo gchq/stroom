@@ -73,8 +73,10 @@ public class AnnotationPresenter
             annotationResourceClient.change(
                     new SingleAnnotationChangeRequest(getDocRef(),
                             new ChangeDescription(markdownEditPresenter.getText())),
-                    annotationDetail -> {
-                        // Ignore.
+                    success -> {
+                        if (success) {
+                            AnnotationChangeEvent.fire(this, getDocRef());
+                        }
                     }, this);
             saveButton.setEnabled(false);
         }));

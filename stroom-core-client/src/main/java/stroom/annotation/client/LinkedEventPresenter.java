@@ -93,7 +93,12 @@ public class LinkedEventPresenter
             if (eventId != null) {
                 dirty = true;
                 annotationResourceClient.change(new SingleAnnotationChangeRequest(annotationRef, new LinkEvents(
-                        Collections.singletonList(eventId))), success -> parent.updateHistory(), this);
+                        Collections.singletonList(eventId))), success -> {
+                    if (success) {
+                        AnnotationChangeEvent.fire(this, annotationRef);
+                        parent.updateHistory();
+                    }
+                }, this);
             }
         })));
 
@@ -111,7 +116,12 @@ public class LinkedEventPresenter
                 }
 
                 annotationResourceClient.change(new SingleAnnotationChangeRequest(annotationRef, new UnlinkEvents(
-                        Collections.singletonList(selected))), success -> parent.updateHistory(), this);
+                        Collections.singletonList(selected))), success -> {
+                    if (success) {
+                        AnnotationChangeEvent.fire(this, annotationRef);
+                        parent.updateHistory();
+                    }
+                }, this);
             }
         }));
     }

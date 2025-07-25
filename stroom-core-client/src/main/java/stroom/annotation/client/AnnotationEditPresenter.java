@@ -438,6 +438,7 @@ public class AnnotationEditPresenter
     private void change(final SingleAnnotationChangeRequest request) {
         change(request, success -> {
             if (success) {
+                AnnotationChangeEvent.fire(this, annotationRef);
                 updateHistory();
             }
         });
@@ -1152,6 +1153,7 @@ public class AnnotationEditPresenter
             if (ok) {
                 annotationResourceClient.delete(annotationRef, result -> {
                     if (result) {
+                        AnnotationChangeEvent.fire(this, null);
                         CloseContentTabEvent.fire(this, parent);
                     }
                 }, this);

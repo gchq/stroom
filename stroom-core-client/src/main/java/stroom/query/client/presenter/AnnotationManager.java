@@ -364,7 +364,10 @@ public class AnnotationManager implements HasHandlers {
                         new AddAnnotationTable(table));
                 annotationResourceClient.change(request2, result2 -> {
                     EditAnnotationEvent.fire(this, annotation.getId());
-                    AnnotationChangeEvent.fire(this, annotation.asDocRef());
+
+                    // Let the UI know the annotation has changed but not until we have shown the annotation
+                    // (hence deferred by timer).
+                    AnnotationChangeEvent.fireDeferred(AnnotationManager.this, annotation.asDocRef());
                 }, taskMonitorFactory);
             }, taskMonitorFactory);
         });

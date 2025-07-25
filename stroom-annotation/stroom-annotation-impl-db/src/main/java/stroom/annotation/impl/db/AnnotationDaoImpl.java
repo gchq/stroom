@@ -369,6 +369,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                     .create(fieldProvider, request.getFilter());
             optionalExpressionOperator.ifPresent(expressionOperator ->
                     conditions.add(expressionMapper.apply(expressionOperator)));
+            conditions.add(ANNOTATION.DELETED.isFalse());
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
             return ResultPage.empty();
