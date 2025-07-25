@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
@@ -78,6 +79,16 @@ public class AttributeMap extends CIStringHashMap {
         } else {
             return super.put(key, value);
         }
+    }
+
+    /**
+     * Puts a random UUID using the specified key, but only if the key doesn't
+     * already exist.
+     *
+     * @return The value associated with key, whether existing or computed.
+     */
+    public String putRandomUuidIfAbsent(final String key) {
+        return super.computeIfAbsent(key, k -> UUID.randomUUID().toString());
     }
 
     /**

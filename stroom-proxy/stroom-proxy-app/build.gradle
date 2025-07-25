@@ -72,6 +72,7 @@ dependencies {
     implementation libs.kryo
     implementation libs.slf4j.api
     implementation libs.swagger.annotations
+    implementation libs.vavr
 
     runtimeOnly libs.jakarta.el
 

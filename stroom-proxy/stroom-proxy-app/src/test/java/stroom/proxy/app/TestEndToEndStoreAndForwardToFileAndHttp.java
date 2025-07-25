@@ -37,6 +37,7 @@ public class TestEndToEndStoreAndForwardToFileAndHttp extends AbstractEndToEndTe
                         .aggregationFrequency(StroomDuration.ofSeconds(5))
                         .maxItemsPerAggregate(3)
                         .build())
+                .downstreamHostConfig(MockHttpDestination.createDownstreamHostConfig())
                 .addForwardFileDestination(MockFileDestination.createForwardFileConfig()) // forward to file and http
                 .addForwardHttpDestination(MockHttpDestination.createForwardHttpPostConfig(false))
                 .feedStatusConfig(MockHttpDestination.createFeedStatusConfig())
@@ -53,6 +54,7 @@ public class TestEndToEndStoreAndForwardToFileAndHttp extends AbstractEndToEndTe
 
         mockHttpDestination.setupStroomStubs(mappingBuilder ->
                 mappingBuilder.willReturn(WireMock.ok()));
+        mockHttpDestination.setupLivenessEndpoint(true);
         // now the stubs are set up wait for proxy to be ready as proxy needs the
         // stubs to be available to be healthy
         waitForHealthyProxyApp(Duration.ofSeconds(30));

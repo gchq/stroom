@@ -1,5 +1,7 @@
 package stroom.proxy.app.handler;
 
+import stroom.proxy.app.DownstreamHostConfig;
+import stroom.util.io.PathCreator;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
@@ -152,10 +154,12 @@ public final class ForwardFileConfig
 
     @JsonIgnore
     @Override
-    public String getDestinationDescription() {
+    public String getDestinationDescription(final DownstreamHostConfig ignored,
+                                            final PathCreator pathCreator) {
+        final String appPath = pathCreator.toAppPath(path).toString();
         return subPathTemplate.hasPathTemplate()
-                ? path + "/" + subPathTemplate.getPathTemplate()
-                : path;
+                ? appPath + "/" + subPathTemplate.getPathTemplate()
+                : appPath;
     }
 
     @JsonIgnore

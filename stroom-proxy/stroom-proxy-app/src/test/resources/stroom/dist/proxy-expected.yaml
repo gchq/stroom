@@ -82,6 +82,7 @@ proxyConfig:
       userAgent: null
       validateAfterInactivityPeriod: "PT0S"
     instant: false
+    livenessCheckEnabled: true
     livenessCheckUrl: null
     name: null
     queue:

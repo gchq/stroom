@@ -3,9 +3,9 @@ package stroom.proxy.app.handler;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.app.DownstreamHostConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.NullSafe;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -22,15 +22,18 @@ public class ForwardHttpPostDestination implements ForwardDestination {
     private final CleanupDirQueue cleanupDirQueue;
     private final ForwardHttpPostConfig forwardHttpPostConfig;
     private final String destinationName;
+    private final DownstreamHostConfig downstreamHostConfig;
 
     public ForwardHttpPostDestination(final String destinationName,
                                       final StreamDestination destination,
                                       final CleanupDirQueue cleanupDirQueue,
-                                      final ForwardHttpPostConfig forwardHttpPostConfig) {
+                                      final ForwardHttpPostConfig forwardHttpPostConfig,
+                                      final DownstreamHostConfig downstreamHostConfig) {
         this.destination = destination;
         this.cleanupDirQueue = cleanupDirQueue;
         this.destinationName = destinationName;
         this.forwardHttpPostConfig = forwardHttpPostConfig;
+        this.downstreamHostConfig = downstreamHostConfig;
     }
 
     @Override
@@ -58,7 +61,7 @@ public class ForwardHttpPostDestination implements ForwardDestination {
 
     @Override
     public boolean hasLivenessCheck() {
-        return NullSafe.isNonBlankString(forwardHttpPostConfig.getLivenessCheckUrl());
+        return destination.hasLivenessCheck();
     }
 
     @Override
@@ -79,8 +82,11 @@ public class ForwardHttpPostDestination implements ForwardDestination {
 
     @Override
     public String getDestinationDescription() {
-        return forwardHttpPostConfig.getForwardUrl()
-               + " (instant=" + forwardHttpPostConfig.isInstant() + ")";
+        return getForwardUrl() + " (instant=" + forwardHttpPostConfig.isInstant() + ")";
+    }
+
+    private String getForwardUrl() {
+        return forwardHttpPostConfig.createForwardUrl(downstreamHostConfig);
     }
 
     @Override

@@ -166,16 +166,10 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
 
         final ForwarderConfig forwarderConfig = instantForwarders.getFirst();
         receiverFactory = switch (forwarderConfig) {
-            case final ForwardHttpPostConfig forwardHttpPostConfig -> {
-                LOGGER.info("Creating instant HTTP POST forward destination to {}",
-                        forwardHttpPostConfig.getForwardUrl());
-                yield instantForwardHttpPostProvider.get().get(forwardHttpPostConfig);
-            }
-            case final ForwardFileConfig forwardFileConfig -> {
-                LOGGER.info("Creating instant file forward destination to {}",
-                        forwardFileConfig.getPath());
-                yield instantForwardFileProvider.get().get(forwardFileConfig);
-            }
+            case final ForwardHttpPostConfig forwardHttpPostConfig -> instantForwardHttpPostProvider.get()
+                    .get(forwardHttpPostConfig);
+            case final ForwardFileConfig forwardFileConfig -> instantForwardFileProvider.get()
+                    .get(forwardFileConfig);
         };
     }
 

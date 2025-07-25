@@ -155,16 +155,17 @@ proxyConfig:
     # the installed software as it has a different lifecycle.
     home: "{{ proxyHome }}"
 
+  # This is the downstream (in datafeed flow terms) stroom/stroom-proxy used for
+  # feed status checks, supplying data receipt rules and verifying API keys.
   downstreamHost:
-    scheme: "http"
-    port: 8080
+    scheme: "{{ 'http' | envVar('DOWNSTREAM_HOST_SCHEME') }}"
+    port: "{{ 8080 | envVar('DOWNSTREAM_HOST_PORT') }}"
+{% if distribution == "docker" %}
+    hostname: "{{ 'stroom' | envVar('DOWNSTREAM_HOST_HOSTNAME') }}"
+{% elif distribution == "zip" %}
     hostname: "localhost"
-    apiKey: ""
-
-# If you want to use a receipt policy then the RuleSet must exist
-# in Stroom and have the UUID as specified below in receiptPolicyUuid
-#  receiptPolicy:
-#    receiptPolicyUuid: ""
+{% endif %}
+    apiKey: "{{ '' | envVar('DOWNSTREAM_API_KEY') }}"
 
   # If we are storing data in a proxy repository we can aggregate it before forwarding.
   aggregator:
@@ -177,7 +178,6 @@ proxyConfig:
   forwardHttpDestinations:
     - enabled: {{ true | envVar('FORWARDING_ENABLED') }}
       name: "downstream"
-      forwardUrl: "{{ 'https://nginx/stroom/datafeed' | envVar('FORWARD_URL') }}"
       httpClient:
         tls:
             keyStorePath: "certs/client.jks"
@@ -200,17 +200,10 @@ proxyConfig:
       - "remotedn"
       - "remotecertexpiry"
 
-  contentDir: "{{ 'content' | envVar('CONTENT_DIR') }}"
-  #  contentSync:
-  #    contentSyncEnabled: {{ false | envVar('CONTENT_SYNC_ENABLED') }}
-  #    upstreamUrl:
-  #      ReceiveDataRuleSet: "{{ 'http://stroom:8080/api/ruleset/v1' | envVar('UPSTREAM_RULE_URL') }}"
-  #      Dictionary: "{{ 'http://stroom:8080/api/dictionary/v1' | envVar('UPSTREAM_DICTIONARY_URL') }}"
-  #    syncFrequency: 30000
-  #    apiKey: ""
-
-  feedStatus:
-    url: "{{ 'http://stroom:8080/api/feedStatus/v2' | envVar('FEED_STATUS_URL') }}"
+  # (FEED_STATUS|RECEIPT_POLICY|RECEIVE_ALL|DROP_ALL|REJECT_ALL)
+  receive:
+    receiptCheckMode: "{{ 'FEED_STATUS' | envVar('RECEIPT_CHECK_MODE') }}"
+    fallbackReceiveAction: "{{ '' | envVar('FALLBACK_RECEIVE_ACTION') }}"
 
   {% if distribution == "docker" %}
   security:

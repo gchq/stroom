@@ -4,6 +4,7 @@ import stroom.util.config.annotations.ReadOnly;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.NotInjectableConfig;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -76,7 +77,7 @@ public abstract class UriConfig extends AbstractConfig implements IsStroomConfig
     @JsonProperty(PROP_NAME_PATH_PREFIX)
     @Pattern(regexp = "/[^/]+")
     @JsonPropertyDescription(
-            "Any prefix to be added to the beginning of paths for this UIR. " +
+            "Any prefix to be added to the beginning of paths for this URI. " +
             "This may be needed if there is some form of gateway in front of Stroom that requires different paths.")
     public String getPathPrefix() {
         return pathPrefix;
@@ -84,23 +85,26 @@ public abstract class UriConfig extends AbstractConfig implements IsStroomConfig
 
     public String asUri() {
         final StringBuilder sb = new StringBuilder();
-        if (scheme != null) {
-            sb.append(scheme).append("://");
+        if (NullSafe.isNonBlankString(scheme)) {
+            sb.append(scheme.trim())
+                    .append("://");
         }
 
-        if (hostname != null) {
-            sb.append(hostname);
+        if (NullSafe.isNonBlankString(hostname)) {
+            sb.append(hostname.trim());
         }
 
         if (port != null) {
-            sb.append(":").append(port);
+            sb.append(":")
+                    .append(port);
         }
 
-        if (pathPrefix != null && !pathPrefix.isBlank() && !pathPrefix.equals("/")) {
-            if (!pathPrefix.startsWith("/")) {
+        final String trimmedPathPrefix = NullSafe.trim(pathPrefix);
+        if (!trimmedPathPrefix.isEmpty() && !trimmedPathPrefix.equals("/")) {
+            if (!trimmedPathPrefix.startsWith("/")) {
                 sb.append("/");
             }
-            sb.append(pathPrefix);
+            sb.append(trimmedPathPrefix);
         }
 
         return sb.toString();
@@ -116,10 +120,9 @@ public abstract class UriConfig extends AbstractConfig implements IsStroomConfig
         if (this == o) {
             return true;
         }
-        if (!(o instanceof UriConfig)) {
+        if (!(o instanceof final UriConfig uriConfig)) {
             return false;
         }
-        final UriConfig uriConfig = (UriConfig) o;
         return Objects.equals(scheme, uriConfig.scheme) &&
                Objects.equals(hostname, uriConfig.hostname) &&
                Objects.equals(port, uriConfig.port) &&
@@ -130,4 +133,6 @@ public abstract class UriConfig extends AbstractConfig implements IsStroomConfig
     public int hashCode() {
         return Objects.hash(scheme, hostname, port, pathPrefix);
     }
+
+
 }

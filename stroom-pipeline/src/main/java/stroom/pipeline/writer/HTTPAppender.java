@@ -364,7 +364,7 @@ public class HTTPAppender extends AbstractAppender {
                 attributeMapToLines(streamMetaAttributeMap, "  "),
                 httpHeadersStreamMetaDataAllowList, httpHeadersStreamMetaDataDenyList));
 
-        streamMetaAttributeMap.computeIfAbsent(StandardHeaderArguments.GUID, k -> UUID.randomUUID().toString());
+        streamMetaAttributeMap.putRandomUuidIfAbsent(StandardHeaderArguments.GUID);
         final AttributeMap clonedAttributeMap = AttributeMapUtil.cloneAllowable(streamMetaAttributeMap);
         final AttributeMap effectiveAttributeMap;
 

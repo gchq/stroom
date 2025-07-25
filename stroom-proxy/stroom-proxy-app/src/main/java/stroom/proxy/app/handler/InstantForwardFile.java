@@ -65,6 +65,8 @@ public class InstantForwardFile {
     }
 
     public ReceiverFactory get(final ForwardFileConfig forwardFileConfig) {
+        LOGGER.info("Creating instant file forward destination to {}",
+                forwardFileConfig.getPath());
         final InstantForwardFileReceiver instantForwardFileReceiver = new InstantForwardFileReceiver(
                 receivingDirProvider,
                 forwardFileDestinationFactory.create(forwardFileConfig),

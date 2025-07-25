@@ -1,6 +1,7 @@
 package stroom.proxy.app.handler;
 
 import stroom.proxy.app.DataDirProvider;
+import stroom.proxy.app.DownstreamHostConfig;
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.repo.ProxyServices;
 import stroom.proxy.repo.store.FileStores;
@@ -27,6 +28,7 @@ public class ForwardHttpPostDestinationFactoryImpl implements ForwardHttpPostDes
     private final SimplePathCreator simplePathCreator;
     private final HttpSenderFactory httpSenderFactory;
     private final FileStores fileStores;
+    private final DownstreamHostConfig downstreamHostConfig;
 
     @Inject
     public ForwardHttpPostDestinationFactoryImpl(final CleanupDirQueue cleanupDirQueue,
@@ -36,7 +38,8 @@ public class ForwardHttpPostDestinationFactoryImpl implements ForwardHttpPostDes
                                                  final DataDirProvider dataDirProvider,
                                                  final SimplePathCreator simplePathCreator,
                                                  final HttpSenderFactory httpSenderFactory,
-                                                 final FileStores fileStores) {
+                                                 final FileStores fileStores,
+                                                 final DownstreamHostConfig downstreamHostConfig) {
         this.cleanupDirQueue = cleanupDirQueue;
         this.proxyServices = proxyServices;
         this.dirQueueFactory = dirQueueFactory;
@@ -45,6 +48,7 @@ public class ForwardHttpPostDestinationFactoryImpl implements ForwardHttpPostDes
         this.simplePathCreator = simplePathCreator;
         this.httpSenderFactory = httpSenderFactory;
         this.fileStores = fileStores;
+        this.downstreamHostConfig = downstreamHostConfig;
     }
 
     @Override
@@ -55,15 +59,18 @@ public class ForwardHttpPostDestinationFactoryImpl implements ForwardHttpPostDes
                 name,
                 streamDestination,
                 cleanupDirQueue,
-                forwardHttpPostConfig);
+                forwardHttpPostConfig,
+                downstreamHostConfig);
 
         final ForwardDestination destination = getWrappedForwardDestination(
                 forwardHttpPostConfig, forwardHttpDestination);
 
+        final String fullUrl = forwardHttpPostConfig.createForwardUrl(downstreamHostConfig);
+
         LOGGER.info("Created {} '{}' with url '{}'",
                 destination.getClass().getSimpleName(),
                 name,
-                forwardHttpPostConfig.getForwardUrl());
+                fullUrl);
 
         return destination;
     }

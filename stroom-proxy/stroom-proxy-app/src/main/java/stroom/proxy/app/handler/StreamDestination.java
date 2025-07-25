@@ -10,4 +10,6 @@ public interface StreamDestination {
               InputStream inputStream) throws ForwardException;
 
     boolean performLivenessCheck() throws Exception;
+
+    boolean hasLivenessCheck();
 }

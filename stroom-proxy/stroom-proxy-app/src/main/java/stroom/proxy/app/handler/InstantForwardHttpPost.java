@@ -3,6 +3,8 @@ package stroom.proxy.app.handler;
 import stroom.meta.api.AttributeMap;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.AttributeMapFilterFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
 
@@ -11,6 +13,8 @@ import java.io.UncheckedIOException;
 import java.time.Instant;
 
 public class InstantForwardHttpPost {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(InstantForwardHttpPost.class);
 
     private final AttributeMapFilterFactory attributeMapFilterFactory;
     private final HttpSenderFactory httpSenderFactory;

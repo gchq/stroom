@@ -56,9 +56,13 @@ public class ProxyReceiptPolicyConfig extends AbstractConfig implements IsProxyC
     }
 
     @JsonProperty("receiveDataRulesUrl")
-    @JsonPropertyDescription("The base url for the remote stroom/proxy that will provide the rules." +
-                             "If the remote is a proxy, it must also be configured to use receipt policy rules " +
-                             "so that it can obtain them from another stroom/proxy downstream to it.")
+    @JsonPropertyDescription(
+            "The full url for the remote stroom/proxy that will provide the receipt policy rules. " +
+            "If the remote is a proxy, it must also be configured to use receipt policy rules " +
+            "so that it can obtain them from another stroom/proxy downstream to it. " +
+            "If not set the downstreamHost configuration will be combined with the default API " +
+            "path. Only set this property if you wish to use a non-default path " +
+            "or you want to use a different host/port/scheme to that defined in downstreamHost.")
     public String getReceiveDataRulesUrl() {
         return receiveDataRulesUrl;
     }
