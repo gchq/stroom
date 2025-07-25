@@ -27,6 +27,7 @@ import stroom.annotation.shared.CreateAnnotationTagRequest;
 import stroom.annotation.shared.DeleteAnnotationEntryRequest;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.FetchAnnotationEntryRequest;
+import stroom.annotation.shared.FindAnnotationRequest;
 import stroom.annotation.shared.MultiAnnotationChangeRequest;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.docref.DocRef;
@@ -108,6 +109,20 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         this.permissionChangeServiceProvider = permissionChangeServiceProvider;
         this.userGroupsServiceProvider = userGroupsServiceProvider;
         this.entityEventBus = entityEventBus;
+    }
+
+    public ResultPage<Annotation> findAnnotations(final FindAnnotationRequest request) {
+        checkAppPermission();
+
+        final DocumentPermission permission;
+        if (DocumentPermission.EDIT.equals(request.getRequiredPermission())) {
+            permission = DocumentPermission.EDIT;
+        } else {
+            permission = DocumentPermission.VIEW;
+        }
+
+        return annotationDao.findAnnotations(request, annotation ->
+                securityContext.hasDocumentPermission(annotation.asDocRef(), permission));
     }
 
     public Optional<Annotation> getAnnotationByRef(final DocRef annotationRef) {

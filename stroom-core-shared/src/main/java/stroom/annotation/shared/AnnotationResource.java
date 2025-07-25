@@ -45,19 +45,27 @@ import java.util.List;
 @Consumes(MediaType.APPLICATION_JSON)
 public interface AnnotationResource extends RestResource, DirectRestService {
 
+    @POST
+    @Path("findAnnotations")
+    @Operation(
+            summary = "Finds annotations",
+            operationId = "findAnnotations")
+    ResultPage<Annotation> findAnnotations(@Parameter(description = "request", required = true)
+                                           FindAnnotationRequest request);
+
     @GET
     @Operation(
             summary = "Gets an annotation by id",
             operationId = "getAnnotationById")
     Annotation getAnnotationById(@QueryParam("annotationId") Long annotationId);
 
-    @POST
-    @Path("getAnnotationByRef")
-    @Operation(
-            summary = "Gets an annotation by ref",
-            operationId = "getAnnotationByRef")
-    Annotation getAnnotationByRef(@Parameter(description = "annotationRef", required = true)
-                                  DocRef annotationRef);
+//    @POST
+//    @Path("getAnnotationByRef")
+//    @Operation(
+//            summary = "Gets an annotation by ref",
+//            operationId = "getAnnotationByRef")
+//    Annotation getAnnotationByRef(@Parameter(description = "annotationRef", required = true)
+//                                  DocRef annotationRef);
 
     @POST
     @Path("getAnnotationEntries")

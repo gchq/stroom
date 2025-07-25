@@ -168,6 +168,7 @@ public class QueryResultTablePresenter
         this.downloadPresenter = downloadPresenter;
         this.annotationManager = annotationManager;
         tableRowStyles = new TableRowStyles(userPreferencesManager);
+        annotationManager.setTaskMonitorFactory(this);
 
         this.pagerView = pagerView;
         this.dataGrid = new MyDataGrid<>(this);

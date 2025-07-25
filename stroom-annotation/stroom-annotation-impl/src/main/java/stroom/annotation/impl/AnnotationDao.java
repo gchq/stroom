@@ -20,11 +20,13 @@ import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.CreateAnnotationRequest;
 import stroom.annotation.shared.EventId;
+import stroom.annotation.shared.FindAnnotationRequest;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 
 import java.time.Instant;
@@ -33,6 +35,8 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 public interface AnnotationDao {
+
+    ResultPage<Annotation> findAnnotations(FindAnnotationRequest request, Predicate<Annotation> vierwPredicate);
 
     List<DocRef> idListToDocRefs(List<Long> idList);
 

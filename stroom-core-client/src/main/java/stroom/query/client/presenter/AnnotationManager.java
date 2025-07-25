@@ -16,18 +16,25 @@
 
 package stroom.query.client.presenter;
 
+import stroom.annotation.client.AnnotationChangeEvent;
+import stroom.annotation.client.AnnotationResourceClient;
 import stroom.annotation.client.ChangeAssignedToPresenter;
 import stroom.annotation.client.ChangeStatusPresenter;
 import stroom.annotation.client.CreateAnnotationEvent;
 import stroom.annotation.client.EditAnnotationEvent;
+import stroom.annotation.client.ShowFindAnnotationEvent;
+import stroom.annotation.shared.AddAnnotationTable;
 import stroom.annotation.shared.AnnotationTable;
 import stroom.annotation.shared.EventId;
+import stroom.annotation.shared.LinkEvents;
+import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.index.shared.IndexConstants;
 import stroom.query.api.Column;
 import stroom.query.api.SpecialColumns;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.Console;
 import stroom.util.shared.UserRef;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -39,6 +46,9 @@ import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,10 +60,12 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-public class AnnotationManager {
+public class AnnotationManager implements HasHandlers {
 
+    private final EventBus eventBus;
     private final Provider<ChangeStatusPresenter> changeStatusPresenterProvider;
     private final Provider<ChangeAssignedToPresenter> changeAssignedToPresenterProvider;
+    private final AnnotationResourceClient annotationResourceClient;
     private final boolean enabled;
 
     private ChangeStatusPresenter changeStatusPresenter;
@@ -62,14 +74,23 @@ public class AnnotationManager {
     private List<TableRow> selectedItems;
 
     private Supplier<List<Column>> columnSupplier;
+    private TaskMonitorFactory taskMonitorFactory;
 
     @Inject
-    public AnnotationManager(final Provider<ChangeStatusPresenter> changeStatusPresenterProvider,
+    public AnnotationManager(final EventBus eventBus,
+                             final Provider<ChangeStatusPresenter> changeStatusPresenterProvider,
                              final Provider<ChangeAssignedToPresenter> changeAssignedToPresenterProvider,
+                             final AnnotationResourceClient annotationResourceClient,
                              final ClientSecurityContext securityContext) {
+        this.eventBus = eventBus;
         this.changeStatusPresenterProvider = changeStatusPresenterProvider;
         this.changeAssignedToPresenterProvider = changeAssignedToPresenterProvider;
+        this.annotationResourceClient = annotationResourceClient;
         enabled = securityContext.hasAppPermission(AppPermission.ANNOTATIONS);
+    }
+
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        this.taskMonitorFactory = taskMonitorFactory;
     }
 
     public boolean isEnabled() {
@@ -109,7 +130,7 @@ public class AnnotationManager {
                     .builder()
                     .items(menuItems)
                     .popupPosition(popupPosition)
-                    .fire(getChangeStatusPresenter());
+                    .fire(this);
         }
     }
 
@@ -123,6 +144,7 @@ public class AnnotationManager {
 
             // Create menu item.
             menuItems.add(createCreateMenu(table, eventIdList));
+            menuItems.add(createAddMenu(table, eventIdList));
 
             if (annotationIdList.size() == 1) {
                 // Edit menu item.
@@ -267,9 +289,19 @@ public class AnnotationManager {
                 .build();
     }
 
+    private Item createAddMenu(final AnnotationTable table,
+                               final List<EventId> eventIdList) {
+        return new IconMenuItem.Builder()
+                .priority(1)
+                .icon(SvgImage.EDIT)
+                .text("Add To Annotation")
+                .command(() -> addToAnnotation(table, eventIdList))
+                .build();
+    }
+
     private Item createEditMenu(final Long annotationId) {
         return new IconMenuItem.Builder()
-                .priority(0)
+                .priority(2)
                 .icon(SvgImage.EDIT)
                 .text("Edit Annotation")
                 .command(() -> editAnnotation(annotationId))
@@ -278,7 +310,7 @@ public class AnnotationManager {
 
     private Item createStatusMenu(final List<Long> annotationIdList) {
         return new IconMenuItem.Builder()
-                .priority(1)
+                .priority(3)
                 .icon(SvgImage.EDIT)
                 .text("Change Status")
                 .command(() -> changeStatus(annotationIdList))
@@ -287,7 +319,7 @@ public class AnnotationManager {
 
     private Item createAssignMenu(final List<Long> annotationIdList) {
         return new IconMenuItem.Builder()
-                .priority(2)
+                .priority(5)
                 .icon(SvgImage.EDIT)
                 .text("Change Assigned To")
                 .command(() -> changeAssignedTo(annotationIdList))
@@ -312,7 +344,7 @@ public class AnnotationManager {
         }
 
         CreateAnnotationEvent.fire(
-                getChangeStatusPresenter(),
+                this,
                 title,
                 subject,
                 status,
@@ -322,9 +354,50 @@ public class AnnotationManager {
                 eventIdList);
     }
 
+    private void addToAnnotation(final AnnotationTable table,
+                                 final List<EventId> eventIdList) {
+        ShowFindAnnotationEvent.fire(this, annotation -> {
+            final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(annotation.asDocRef(),
+                    new LinkEvents(eventIdList));
+            annotationResourceClient.change(request, result -> {
+                final SingleAnnotationChangeRequest request2 = new SingleAnnotationChangeRequest(annotation.asDocRef(),
+                        new AddAnnotationTable(table));
+                annotationResourceClient.change(request2, result2 -> {
+                    EditAnnotationEvent.fire(this, annotation.getId());
+                    AnnotationChangeEvent.fire(this, annotation.asDocRef());
+                }, taskMonitorFactory);
+            }, taskMonitorFactory);
+        });
+
+//        String title = getValue(selectedItems, "title");
+//        final String subject = getValue(selectedItems, "subject");
+//        final String status = getValue(selectedItems, "status");
+//        final String assignedTo = getValue(selectedItems, "assignedTo");
+//        final String comment = getValue(selectedItems, "comment");
+//
+//        title = title == null
+//                ? "New Annotation"
+//                : title;
+//
+//        UserRef initialAssignTo = null;
+//        if (assignedTo != null) {
+//            initialAssignTo = UserRef.builder().uuid(assignedTo).build();
+//        }
+//
+//        CreateAnnotationEvent.fire(
+//                getChangeStatusPresenter(),
+//                title,
+//                subject,
+//                status,
+//                initialAssignTo,
+//                comment,
+//                table,
+//                eventIdList);
+    }
+
     public void editAnnotation(final long annotationId) {
         if (enabled) {
-            EditAnnotationEvent.fire(getChangeStatusPresenter(), annotationId);
+            EditAnnotationEvent.fire(this, annotationId);
         }
     }
 
@@ -338,5 +411,10 @@ public class AnnotationManager {
         if (enabled) {
             getChangeAssignedToPresenter().show(annotationIdList);
         }
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> event) {
+        eventBus.fireEvent(event);
     }
 }

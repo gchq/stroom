@@ -222,6 +222,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         tableRowStyles = new TableRowStyles(userPreferencesManager);
 
         columnSelectionListModel.setTaskMonitorFactory(this);
+        annotationManager.setTaskMonitorFactory(this);
 
         dataGrid = new MyDataGrid<>(this);
         dataGrid.addStyleName("TablePresenter");

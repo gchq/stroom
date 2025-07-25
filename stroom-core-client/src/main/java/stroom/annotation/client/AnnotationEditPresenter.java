@@ -52,12 +52,10 @@ import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.hyperlink.client.HyperlinkType;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.query.api.ConditionalFormattingStyle;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.presenter.ClassNameBuilder;
 import stroom.security.client.presenter.UserRefPopupPresenter;
 import stroom.security.shared.FindUserContext;
 import stroom.svg.shared.SvgImage;
@@ -86,7 +84,6 @@ import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.user.datepicker.client.CalendarUtil;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -102,8 +99,6 @@ import java.util.function.Consumer;
 public class AnnotationEditPresenter
         extends DocumentEditPresenter<AnnotationEditView, Annotation>
         implements AnnotationEditUiHandlers {
-
-    public static final String LOZENGE = "lozenge";
 
     private static final String EMPTY_VALUE = "'  '";
     private static final String ENTRY_ID_ATTRIBUTE = "entryId";
@@ -136,10 +131,6 @@ public class AnnotationEditPresenter
     private static final SafeHtml HISTORY_ITEM_END = SafeHtmlUtils.fromTrustedString(
             "</div>");
 
-    private static final long ONE_SECOND = 1000;
-    private static final long ONE_MINUTE = ONE_SECOND * 60;
-    private static final long ONE_HOUR = ONE_MINUTE * 60;
-
     private final AnnotationResourceClient annotationResourceClient;
     private final ChooserPresenter<AnnotationTag> annotationStatusPresenter;
     private final UserRefPopupPresenter assignedToPresenter;
@@ -149,6 +140,7 @@ public class AnnotationEditPresenter
     private final ClientSecurityContext clientSecurityContext;
     private final DateTimeFormatter dateTimeFormatter;
     private final DurationPresenter retentionDurationProvider;
+    private final DurationLabel durationLabel;
     private final Provider<CommentEditPresenter> commentEditPresenterProvider;
 
     private DocRef annotationRef;
@@ -175,6 +167,7 @@ public class AnnotationEditPresenter
                                    final ClientSecurityContext clientSecurityContext,
                                    final DateTimeFormatter dateTimeFormatter,
                                    final DurationPresenter retentionDurationProvider,
+                                   final DurationLabel durationLabel,
                                    final Provider<CommentEditPresenter> commentEditPresenterProvider) {
         super(eventBus, view);
         this.annotationResourceClient = annotationResourceClient;
@@ -186,6 +179,7 @@ public class AnnotationEditPresenter
         this.clientSecurityContext = clientSecurityContext;
         this.dateTimeFormatter = dateTimeFormatter;
         this.retentionDurationProvider = retentionDurationProvider;
+        this.durationLabel = durationLabel;
         this.commentEditPresenterProvider = commentEditPresenterProvider;
 
         getView().setUiHandlers(this);
@@ -205,7 +199,7 @@ public class AnnotationEditPresenter
                             consumer.accept(values.getValues()),
                     new DefaultErrorHandler(this, null), this);
         });
-        annotationLabelPresenter.setDisplayValueFunction(at -> createSwatch(at.getStyle(), at.getName()));
+        annotationLabelPresenter.setDisplayValueFunction(Lozenge::create);
 
         this.annotationCollectionPresenter.setDataSupplier((filter, consumer) -> {
             final ExpressionCriteria criteria = createCriteria(AnnotationTagType.COLLECTION, filter);
@@ -213,7 +207,7 @@ public class AnnotationEditPresenter
                             consumer.accept(values.getValues()),
                     new DefaultErrorHandler(this, null), this);
         });
-        annotationCollectionPresenter.setDisplayValueFunction(at -> createSwatch(at.getStyle(), at.getName()));
+        annotationCollectionPresenter.setDisplayValueFunction(Lozenge::create);
 
         this.commentPresenter.setDataSupplier((filter, consumer) ->
                 annotationResourceClient.getStandardComments(filter, consumer, this));
@@ -221,24 +215,6 @@ public class AnnotationEditPresenter
         // See if we are able to get standard comments.
         annotationResourceClient.getStandardComments(null, values ->
                 getView().setHasCommentValues(values != null && !values.isEmpty()), this);
-    }
-
-    public static SafeHtml createSwatch(final ConditionalFormattingStyle formattingStyle,
-                                        final String name) {
-        final ClassNameBuilder classNameBuilder = new ClassNameBuilder();
-        classNameBuilder.addClassName(LOZENGE);
-        if (formattingStyle != null) {
-            classNameBuilder.addClassName(formattingStyle.getCssClassName());
-        }
-
-        final SafeHtmlBuilder sb = new SafeHtmlBuilder();
-        sb.appendHtmlConstant("<div");
-        sb.appendHtmlConstant(classNameBuilder.buildClassAttribute());
-        sb.appendHtmlConstant(">");
-        sb.appendEscaped(name);
-        sb.appendHtmlConstant("</div>");
-
-        return sb.toSafeHtml();
     }
 
     private ExpressionCriteria createCriteria(final AnnotationTagType annotationTagType,
@@ -671,6 +647,7 @@ public class AnnotationEditPresenter
                 text.append(getUserName(entry.getEntryUser()));
                 text.append(", ");
                 text.append(entry.getEntryType().getActionText());
+                text.append(" ");
                 quote(text, entryUiValue);
                 text.append("\n");
             }
@@ -679,11 +656,13 @@ public class AnnotationEditPresenter
                     text.append(dateTimeFormatter.format(entry.getEntryTime()));
                     text.append(", ");
                     text.append(getUserName(entry.getEntryUser()));
-                    text.append(", ");
-                    text.append(entry.getEntryType().getActionText());
-                    text.append("\n");
+                    text.append(", added ");
+                    text.append(table.getValues().size());
+                    text.append(table.getValues().size() == 1
+                            ? " row:\n"
+                            : " rows:\n");
                     table.append(text);
-                    text.append("\n");
+                    text.append("\n\n");
                 }
             }
             case ASSIGNED -> {
@@ -784,7 +763,7 @@ public class AnnotationEditPresenter
                 html.appendHtmlConstant("&nbsp;");
                 html.appendEscaped("commented");
                 html.appendHtmlConstant("&nbsp;");
-                html.append(getDurationLabel(entry.getEntryTime(), now));
+                html.append(durationLabel.getDurationLabel(entry.getEntryTime(), now));
 
                 if (!Objects.equals(entry.getEntryUser(), entry.getUpdateUser()) ||
                     !Objects.equals(entry.getEntryTime(), entry.getUpdateTime())) {
@@ -795,7 +774,7 @@ public class AnnotationEditPresenter
                     html.appendHtmlConstant("&nbsp;");
                     html.appendEscaped("edited");
                     html.appendHtmlConstant("&nbsp;");
-                    html.append(getDurationLabel(entry.getUpdateTime(), now));
+                    html.append(durationLabel.getDurationLabel(entry.getUpdateTime(), now));
                 }
 
                 html.append(ELLIPSES);
@@ -823,7 +802,7 @@ public class AnnotationEditPresenter
                 html.appendHtmlConstant("&nbsp;");
                 link(html, entryUiValue);
                 html.appendHtmlConstant("&nbsp;");
-                html.append(getDurationLabel(entry.getEntryTime(), now));
+                html.append(durationLabel.getDurationLabel(entry.getEntryTime(), now));
                 html.append(ELLIPSES);
                 html.append(HISTORY_ITEM_END);
                 added = true;
@@ -842,7 +821,7 @@ public class AnnotationEditPresenter
                             ? "added " + values.size() + " row"
                             : "added " + values.size() + " rows");
                     html.appendHtmlConstant("&nbsp;");
-                    html.append(getDurationLabel(entry.getEntryTime(), now));
+                    html.append(durationLabel.getDurationLabel(entry.getEntryTime(), now));
 
                     html.append(ELLIPSES);
                     html.append(HISTORY_COMMENT_HEADER_END);
@@ -889,7 +868,7 @@ public class AnnotationEditPresenter
                         bold(html, getValueString(entry.getPreviousValue().asUiValue()));
                     }
                     html.appendEscaped(" ");
-                    html.append(getDurationLabel(entry.getEntryTime(), now));
+                    html.append(durationLabel.getDurationLabel(entry.getEntryTime(), now));
                     html.append(ELLIPSES);
                     html.append(HISTORY_ITEM_END);
                     added = true;
@@ -911,7 +890,7 @@ public class AnnotationEditPresenter
                         bold(html, getValueString(entryUiValue));
                     }
                     html.appendHtmlConstant("&nbsp;");
-                    html.append(getDurationLabel(entry.getEntryTime(), now));
+                    html.append(durationLabel.getDurationLabel(entry.getEntryTime(), now));
                     html.append(ELLIPSES);
                     html.append(HISTORY_ITEM_END);
                     added = true;
@@ -947,7 +926,7 @@ public class AnnotationEditPresenter
                 }
 
                 html.appendHtmlConstant("&nbsp;");
-                html.append(getDurationLabel(entry.getEntryTime(), now));
+                html.append(durationLabel.getDurationLabel(entry.getEntryTime(), now));
                 html.append(ELLIPSES);
                 html.append(HISTORY_ITEM_END);
                 added = true;
@@ -1070,62 +1049,6 @@ public class AnnotationEditPresenter
     @Override
     protected Annotation onWrite(final Annotation document) {
         return null;
-    }
-
-    private SafeHtml getDurationLabel(final long time, final Date now) {
-        final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-        builder.appendHtmlConstant(
-                "<span class=\"annotationDurationLabel\" title=\"" + dateTimeFormatter.format(time) + "\">");
-        builder.appendEscaped(getDuration(time, now));
-        builder.appendHtmlConstant("</span>");
-        return builder.toSafeHtml();
-    }
-
-    private String getDuration(final long time, final Date now) {
-        final Date start = new Date(time);
-        final int days = CalendarUtil.getDaysBetween(start, now);
-        if (days == 1) {
-            return "yesterday";
-        } else if (days > 365) {
-            final int years = days / 365;
-            if (years == 1) {
-                return "a year ago";
-            } else {
-                return years + "years ago";
-            }
-        } else if (days > 1) {
-            return days + " days ago";
-        }
-
-        final long diff = now.getTime() - time;
-        if (diff > ONE_HOUR) {
-            final int hours = (int) (diff / ONE_HOUR);
-            if (hours == 1) {
-                return "an hour ago";
-            } else if (hours > 1) {
-                return hours + " hours ago";
-            }
-        }
-
-        if (diff > ONE_MINUTE) {
-            final int minutes = (int) (diff / ONE_MINUTE);
-            if (minutes == 1) {
-                return "a minute ago";
-            } else if (minutes > 1) {
-                return minutes + " minutes ago";
-            }
-        }
-
-        if (diff > ONE_SECOND) {
-            final int seconds = (int) (diff / ONE_SECOND);
-            if (seconds == 1) {
-                return "a second ago";
-            } else if (seconds > 1) {
-                return seconds + " seconds ago";
-            }
-        }
-
-        return "just now";
     }
 
     @Override

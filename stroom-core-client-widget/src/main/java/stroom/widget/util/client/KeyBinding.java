@@ -81,6 +81,7 @@ public class KeyBinding {
 
         // Binds for Going To a single instance screen. Sort these by 2nd key
         addGotoKeySequence(Action.GOTO_APP_PERMS, KeyCodes.KEY_A);
+        addGotoKeySequence(Action.GOTO_ANNOTATIONS, KeyCodes.KEY_B);
         addGotoKeySequence(Action.GOTO_CACHES, KeyCodes.KEY_C);
         addGotoKeySequence(Action.GOTO_DEPENDENCIES, KeyCodes.KEY_D);
         addGotoKeySequence(Action.GOTO_EXPLORER_TREE, KeyCodes.KEY_E);
@@ -517,11 +518,12 @@ public class KeyBinding {
         SETTINGS,
 
         // GOTO key sequences
+        GOTO_ANNOTATIONS,
         GOTO_PROPERTIES,
         GOTO_API_KEYS,
         GOTO_CACHES,
         GOTO_DATA_RETENTION,
-        GOTO_CONTENT_TEMPALTES,
+        GOTO_CONTENT_TEMPLATES,
         GOTO_DEPENDENCIES,
         GOTO_JOBS,
         GOTO_NODES,

@@ -121,13 +121,11 @@ public class QuickFilter extends FlowPanel
 
         if (!Objects.equals(text, lastInput)) {
             lastInput = text;
-            if (handlerManager != null) {
-                // Add in a slight delay to give the user a chance to type a few chars before we fire off
-                // a rest call. This helps to reduce the logging too
-                if (!filterRefreshTimer.isRunning()) {
-                    filterRefreshTimer.schedule(DEBOUNCE_DELAY_MS);
-                }
-            }
+
+            // Add in a slight delay to give the user a chance to type a few chars before we fire off
+            // a rest call. This helps to reduce the logging too
+            filterRefreshTimer.cancel();
+            filterRefreshTimer.schedule(DEBOUNCE_DELAY_MS);
         }
     }
 

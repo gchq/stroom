@@ -26,7 +26,8 @@ import stroom.analytics.client.gin.AnalyticsGinjector;
 import stroom.analytics.client.gin.AnalyticsModule;
 import stroom.analytics.client.gin.ReportGinjector;
 import stroom.analytics.client.gin.ReportModule;
-import stroom.annotation.client.AnnotationModule;
+import stroom.annotation.client.gin.AnnotationGinjector;
+import stroom.annotation.client.gin.AnnotationModule;
 import stroom.aws.s3.client.gin.S3ConfigGinjector;
 import stroom.aws.s3.client.gin.S3ConfigModule;
 import stroom.cache.client.gin.CacheGinjector;
@@ -176,6 +177,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
 public interface AppGinjectorUser extends
         AboutGinjector,
         AlertGinjector,
+        AnnotationGinjector,
         CacheGinjector,
         ContentTemplateGinjector,
         DashboardGinjector,

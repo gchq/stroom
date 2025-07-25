@@ -21,13 +21,14 @@ import stroom.annotation.shared.AnnotationTag;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.Button;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -164,13 +165,11 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
             this.labels.setText("None");
             this.labels.getElement().getStyle().setOpacity(0.5);
         } else {
-            final SafeHtmlBuilder sb = new SafeHtmlBuilder();
+            final HtmlBuilder htmlBuilder = new HtmlBuilder();
             for (final AnnotationTag annotationTag : labels) {
-                sb.appendHtmlConstant("<div class=\"lozengeOuter\">");
-                sb.append(AnnotationEditPresenter.createSwatch(annotationTag.getStyle(), annotationTag.getName()));
-                sb.appendHtmlConstant("</div>");
+                htmlBuilder.div(div -> Lozenge.append(div, annotationTag), Attribute.className("lozengeOuter"));
             }
-            this.labels.setHTML(sb.toSafeHtml());
+            this.labels.setHTML(htmlBuilder.toSafeHtml());
             this.labels.getElement().getStyle().setOpacity(1);
         }
     }
@@ -181,13 +180,11 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
             this.collections.setText("None");
             this.collections.getElement().getStyle().setOpacity(0.5);
         } else {
-            final SafeHtmlBuilder sb = new SafeHtmlBuilder();
+            final HtmlBuilder htmlBuilder = new HtmlBuilder();
             for (final AnnotationTag annotationTag : collections) {
-                sb.appendHtmlConstant("<div class=\"lozengeOuter\">");
-                sb.append(AnnotationEditPresenter.createSwatch(annotationTag.getStyle(), annotationTag.getName()));
-                sb.appendHtmlConstant("</div>");
+                htmlBuilder.div(div -> Lozenge.append(div, annotationTag), Attribute.className("lozengeOuter"));
             }
-            this.collections.setHTML(sb.toSafeHtml());
+            this.collections.setHTML(htmlBuilder.toSafeHtml());
             this.collections.getElement().getStyle().setOpacity(1);
         }
     }
