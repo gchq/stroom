@@ -170,7 +170,8 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                     initialAssignTo,
                     comment,
                     null,
-                    linkedEvents);
+                    linkedEvents,
+                    null);
         }
     }
 

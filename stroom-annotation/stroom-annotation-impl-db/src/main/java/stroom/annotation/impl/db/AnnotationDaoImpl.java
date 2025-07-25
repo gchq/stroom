@@ -41,11 +41,13 @@ import stroom.annotation.shared.CreateAnnotationRequest;
 import stroom.annotation.shared.EntryValue;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.FindAnnotationRequest;
+import stroom.annotation.shared.LinkAnnotations;
 import stroom.annotation.shared.LinkEvents;
 import stroom.annotation.shared.RemoveTag;
 import stroom.annotation.shared.SetTag;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.annotation.shared.StringEntryValue;
+import stroom.annotation.shared.UnlinkAnnotations;
 import stroom.annotation.shared.UnlinkEvents;
 import stroom.annotation.shared.UserRefEntryValue;
 import stroom.db.util.ExpressionMapper;
@@ -117,6 +119,7 @@ import java.util.stream.Collectors;
 import static stroom.annotation.impl.db.jooq.tables.Annotation.ANNOTATION;
 import static stroom.annotation.impl.db.jooq.tables.AnnotationDataLink.ANNOTATION_DATA_LINK;
 import static stroom.annotation.impl.db.jooq.tables.AnnotationEntry.ANNOTATION_ENTRY;
+import static stroom.annotation.impl.db.jooq.tables.AnnotationLink.ANNOTATION_LINK;
 import static stroom.annotation.impl.db.jooq.tables.AnnotationTag.ANNOTATION_TAG;
 import static stroom.annotation.impl.db.jooq.tables.AnnotationTagLink.ANNOTATION_TAG_LINK;
 
@@ -845,6 +848,16 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                         removeEventLink(userUuid, now, annotationId, eventId);
                     }
                 }
+                case final LinkAnnotations linkAnnotations -> {
+                    for (final Long dstId : linkAnnotations.getAnnotations()) {
+                        createAnnotationLink(userUuid, now, annotationId, dstId);
+                    }
+                }
+                case final UnlinkAnnotations unlinkAnnotations -> {
+                    for (final Long dstId : unlinkAnnotations.getAnnotations()) {
+                        removeAnnotationLink(userUuid, now, annotationId, dstId);
+                    }
+                }
                 case final AddAnnotationTable addAnnotationTable -> createEntry(
                         annotationId,
                         userUuid,
@@ -857,7 +870,6 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
             throw e;
         }
 
-        // Now select everything back to provide refreshed details.
         return true;
     }
 
@@ -1030,7 +1042,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
             }
 
             // Record this link.
-            createEntry(annotationId, userUuid, now, AnnotationEntryType.LINK, eventId.toString());
+            createEntry(annotationId, userUuid, now, AnnotationEntryType.LINK_EVENT, eventId.toString());
 
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
@@ -1055,7 +1067,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
             }
 
             // Record this link.
-            createEntry(annotationId, userUuid, now, AnnotationEntryType.UNLINK, eventId.toString());
+            createEntry(annotationId, userUuid, now, AnnotationEntryType.UNLINK_EVENT, eventId.toString());
 
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
@@ -1079,6 +1091,79 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 .map(r -> new EventId(r.get(ANNOTATION_DATA_LINK.STREAM_ID),
                         r.get(ANNOTATION_DATA_LINK.EVENT_ID)));
     }
+
+
+    private void createAnnotationLink(final String userUuid,
+                                      final Instant now,
+                                      final long srcId,
+                                      final long dstId) {
+        try {
+            // Create annotation link.
+            try {
+                // Don't allow self reference.
+                if (srcId != dstId) {
+                    JooqUtil.onDuplicateKeyIgnore(() -> {
+                        final int count = JooqUtil.contextResult(connectionProvider, context -> context
+                                .insertInto(ANNOTATION_LINK,
+                                        ANNOTATION_LINK.FK_ANNOTATION_SRC_ID,
+                                        ANNOTATION_LINK.FK_ANNOTATION_DST_ID)
+                                .values(srcId, dstId)
+                                .execute());
+                        if (count > 0) {
+                            // Record this link.
+                            createEntry(srcId, userUuid, now, AnnotationEntryType.LINK_ANNOTATION,
+                                    String.valueOf(dstId));
+                        }
+                    });
+                }
+            } catch (final Exception e) {
+                throw new RuntimeException("Unable to create annotation link", e);
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+        }
+    }
+
+    private void removeAnnotationLink(final String userUuid,
+                                      final Instant now,
+                                      final long srcId,
+                                      final long dstId) {
+        try {
+            // Remove event link.
+            final int count = JooqUtil.contextResult(connectionProvider, context -> context
+                    .deleteFrom(ANNOTATION_LINK)
+                    .where(ANNOTATION_LINK.FK_ANNOTATION_SRC_ID.eq(srcId))
+                    .and(ANNOTATION_LINK.FK_ANNOTATION_DST_ID.eq(dstId))
+                    .execute());
+
+            if (count != 1) {
+                throw new RuntimeException("Unable to remove annotation link");
+            }
+
+            // Record this link removal.
+            createEntry(srcId, userUuid, now, AnnotationEntryType.UNLINK_ANNOTATION, String.valueOf(dstId));
+
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+        }
+    }
+
+    @Override
+    public List<Long> getLinkedAnnotations(final DocRef annotationRef) {
+        final Optional<Long> optionalId = getId(annotationRef);
+        return optionalId.map(this::getLinkedAnnotations).orElse(Collections.emptyList());
+
+    }
+
+    private List<Long> getLinkedAnnotations(final long annotationId) {
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .select(ANNOTATION_LINK.FK_ANNOTATION_DST_ID)
+                .from(ANNOTATION_LINK)
+                .where(ANNOTATION_LINK.FK_ANNOTATION_SRC_ID.eq(annotationId))
+                .orderBy(ANNOTATION_LINK.FK_ANNOTATION_DST_ID)
+                .fetch(ANNOTATION_LINK.FK_ANNOTATION_DST_ID));
+    }
+
 
     @Override
     public void search(final ExpressionCriteria criteria,

@@ -51,7 +51,8 @@ public class AnnotationEditSupport implements HasHandlers {
                     e.getAssignTo(),
                     e.getComment(),
                     e.getTable(),
-                    e.getLinkedEvents());
+                    e.getLinkedEvents(),
+                    e.getLinkedAnnotations());
             annotationResourceClient.createAnnotation(request, annotation -> {
                 show(presenter, annotation);
                 AnnotationChangeEvent.fireDeferred(this, annotation.asDocRef());

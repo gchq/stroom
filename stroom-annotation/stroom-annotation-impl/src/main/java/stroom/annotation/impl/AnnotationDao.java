@@ -54,6 +54,8 @@ public interface AnnotationDao {
 
     List<EventId> getLinkedEvents(DocRef annotationRef);
 
+    List<Long> getLinkedAnnotations(DocRef annotationRef);
+
     void search(ExpressionCriteria criteria,
                 FieldIndex fieldIndex,
                 ValuesConsumer consumer,

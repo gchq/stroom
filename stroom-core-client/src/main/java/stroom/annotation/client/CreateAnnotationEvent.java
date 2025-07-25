@@ -21,6 +21,7 @@ public class CreateAnnotationEvent extends GwtEvent<CreateAnnotationEvent.Handle
     private final String comment;
     private final AnnotationTable table;
     private final List<EventId> linkedEvents;
+    private final List<Long> linkedAnnotations;
 
     public CreateAnnotationEvent(final String title,
                                  final String subject,
@@ -28,7 +29,8 @@ public class CreateAnnotationEvent extends GwtEvent<CreateAnnotationEvent.Handle
                                  final UserRef assignTo,
                                  final String comment,
                                  final AnnotationTable table,
-                                 final List<EventId> linkedEvents) {
+                                 final List<EventId> linkedEvents,
+                                 final List<Long> linkedAnnotations) {
         this.title = title;
         this.subject = subject;
         this.status = status;
@@ -36,11 +38,13 @@ public class CreateAnnotationEvent extends GwtEvent<CreateAnnotationEvent.Handle
         this.comment = comment;
         this.table = table;
         this.linkedEvents = linkedEvents;
+        this.linkedAnnotations = linkedAnnotations;
     }
 
     public static void fire(final HasHandlers source) {
         source.fireEvent(new CreateAnnotationEvent(
                 "New Annotation",
+                null,
                 null,
                 null,
                 null,
@@ -56,7 +60,8 @@ public class CreateAnnotationEvent extends GwtEvent<CreateAnnotationEvent.Handle
                             final UserRef assignTo,
                             final String comment,
                             final AnnotationTable table,
-                            final List<EventId> linkedEvents) {
+                            final List<EventId> linkedEvents,
+                            final List<Long> linkedAnnotations) {
         source.fireEvent(new CreateAnnotationEvent(
                 title,
                 subject,
@@ -64,7 +69,8 @@ public class CreateAnnotationEvent extends GwtEvent<CreateAnnotationEvent.Handle
                 assignTo,
                 comment,
                 table,
-                linkedEvents));
+                linkedEvents,
+                linkedAnnotations));
     }
 
     public static Type<Handler> getType() {
@@ -110,6 +116,10 @@ public class CreateAnnotationEvent extends GwtEvent<CreateAnnotationEvent.Handle
 
     public List<EventId> getLinkedEvents() {
         return linkedEvents;
+    }
+
+    public List<Long> getLinkedAnnotations() {
+        return linkedAnnotations;
     }
 
     public interface Handler extends EventHandler {

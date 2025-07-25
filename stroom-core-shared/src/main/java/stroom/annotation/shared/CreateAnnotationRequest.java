@@ -27,6 +27,8 @@ public class CreateAnnotationRequest {
     private final AnnotationTable table;
     @JsonProperty
     private final List<EventId> linkedEvents;
+    @JsonProperty
+    private final List<Long> linkedAnnotations;
 
     @JsonCreator
     public CreateAnnotationRequest(@JsonProperty("title") final String title,
@@ -35,7 +37,8 @@ public class CreateAnnotationRequest {
                                    @JsonProperty("assignTo") final UserRef assignTo,
                                    @JsonProperty("comment") final String comment,
                                    @JsonProperty("table") final AnnotationTable table,
-                                   @JsonProperty("linkedEvents") final List<EventId> linkedEvents) {
+                                   @JsonProperty("linkedEvents") final List<EventId> linkedEvents,
+                                   @JsonProperty("linkedAnnotations") final List<Long> linkedAnnotations) {
         this.title = title;
         this.subject = subject;
         this.status = status;
@@ -43,6 +46,7 @@ public class CreateAnnotationRequest {
         this.comment = comment;
         this.table = table;
         this.linkedEvents = linkedEvents;
+        this.linkedAnnotations = linkedAnnotations;
     }
 
     public String getTitle() {
@@ -73,6 +77,10 @@ public class CreateAnnotationRequest {
         return linkedEvents;
     }
 
+    public List<Long> getLinkedAnnotations() {
+        return linkedAnnotations;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -88,12 +96,13 @@ public class CreateAnnotationRequest {
                Objects.equals(assignTo, that.assignTo) &&
                Objects.equals(comment, that.comment) &&
                Objects.equals(table, that.table) &&
-               Objects.equals(linkedEvents, that.linkedEvents);
+               Objects.equals(linkedEvents, that.linkedEvents) &&
+               Objects.equals(linkedAnnotations, that.linkedAnnotations);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(title, subject, status, assignTo, comment, table, linkedEvents);
+        return Objects.hash(title, subject, status, assignTo, comment, table, linkedEvents, linkedAnnotations);
     }
 
     @Override
@@ -106,6 +115,7 @@ public class CreateAnnotationRequest {
                ", comment='" + comment + '\'' +
                ", table=" + table +
                ", linkedEvents=" + linkedEvents +
+               ", linkedAnnotations=" + linkedAnnotations +
                '}';
     }
 
@@ -126,6 +136,7 @@ public class CreateAnnotationRequest {
         private String comment;
         private AnnotationTable table;
         private List<EventId> linkedEvents;
+        private List<Long> linkedAnnotations;
 
         public Builder() {
         }
@@ -138,6 +149,7 @@ public class CreateAnnotationRequest {
             this.comment = request.comment;
             this.table = request.table;
             this.linkedEvents = request.linkedEvents;
+            this.linkedAnnotations = request.linkedAnnotations;
         }
 
         public Builder title(final String title) {
@@ -175,12 +187,25 @@ public class CreateAnnotationRequest {
             return self();
         }
 
+        public Builder linkedAnnotations(final List<Long> linkedAnnotations) {
+            this.linkedAnnotations = linkedAnnotations;
+            return self();
+        }
+
         protected Builder self() {
             return this;
         }
 
         public CreateAnnotationRequest build() {
-            return new CreateAnnotationRequest(title, subject, status, assignTo, comment, table, linkedEvents);
+            return new CreateAnnotationRequest(
+                    title,
+                    subject,
+                    status,
+                    assignTo,
+                    comment,
+                    table,
+                    linkedEvents,
+                    linkedAnnotations);
         }
     }
 }

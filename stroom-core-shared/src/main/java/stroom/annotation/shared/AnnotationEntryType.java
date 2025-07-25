@@ -10,8 +10,8 @@ public enum AnnotationEntryType implements HasDisplayValue, HasPrimitiveValue {
     STATUS("Status", "status", 2),
     ASSIGNED("Assigned", "assigned", 3),
     COMMENT("Comment", "commented", 4),
-    LINK("Link", "linked", 5),
-    UNLINK("Unlink", "unlinked", 6),
+    LINK_EVENT("Link Event", "linked event", 5),
+    UNLINK_EVENT("Unlink Event", "unlinked event", 6),
     RETENTION_PERIOD("Retention Period", "retention period", 7),
     DESCRIPTION("Description", "description", 8),
     ADD_TO_COLLECTION("Add To Collection", "added to collection", 9),
@@ -19,6 +19,8 @@ public enum AnnotationEntryType implements HasDisplayValue, HasPrimitiveValue {
     ADD_LABEL("Add Label", "added label", 11),
     REMOVE_LABEL("Remove Label", "removed label", 12),
     ADD_TABLE_DATA("Add Rows", "added rows", 13),
+    LINK_ANNOTATION("Link Annotation", "linked annotation", 14),
+    UNLINK_ANNOTATION("Unlink Annotation", "unlinked annotation", 15),
     DELETE("Delete", "deleted", 99);
 
     public static final PrimitiveValueConverter<AnnotationEntryType> PRIMITIVE_VALUE_CONVERTER =

@@ -24,8 +24,10 @@ import stroom.annotation.client.CreateAnnotationEvent;
 import stroom.annotation.client.EditAnnotationEvent;
 import stroom.annotation.client.ShowFindAnnotationEvent;
 import stroom.annotation.shared.AddAnnotationTable;
+import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationTable;
 import stroom.annotation.shared.EventId;
+import stroom.annotation.shared.LinkAnnotations;
 import stroom.annotation.shared.LinkEvents;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.index.shared.IndexConstants;
@@ -36,6 +38,7 @@ import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.Console;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -143,8 +146,8 @@ public class AnnotationManager implements HasHandlers {
             final AnnotationTable table = addRowData(selectedItems, eventIdList, annotationIdList);
 
             // Create menu item.
-            menuItems.add(createCreateMenu(table, eventIdList));
-            menuItems.add(createAddMenu(table, eventIdList));
+            menuItems.add(createCreateMenu(table, eventIdList, annotationIdList));
+            menuItems.add(createAddMenu(table, eventIdList, annotationIdList));
 
             if (annotationIdList.size() == 1) {
                 // Edit menu item.
@@ -280,22 +283,24 @@ public class AnnotationManager implements HasHandlers {
     }
 
     private Item createCreateMenu(final AnnotationTable table,
-                                  final List<EventId> eventIdList) {
+                                  final List<EventId> eventIdList,
+                                  final List<Long> annotationIdList) {
         return new IconMenuItem.Builder()
                 .priority(0)
                 .icon(SvgImage.EDIT)
                 .text("Create Annotation")
-                .command(() -> createAnnotation(table, eventIdList))
+                .command(() -> createAnnotation(table, eventIdList, annotationIdList))
                 .build();
     }
 
     private Item createAddMenu(final AnnotationTable table,
-                               final List<EventId> eventIdList) {
+                               final List<EventId> eventIdList,
+                               final List<Long> annotationIdList) {
         return new IconMenuItem.Builder()
                 .priority(1)
                 .icon(SvgImage.EDIT)
                 .text("Add To Annotation")
-                .command(() -> addToAnnotation(table, eventIdList))
+                .command(() -> addToAnnotation(table, eventIdList, annotationIdList))
                 .build();
     }
 
@@ -327,7 +332,8 @@ public class AnnotationManager implements HasHandlers {
     }
 
     private void createAnnotation(final AnnotationTable table,
-                                  final List<EventId> eventIdList) {
+                                  final List<EventId> eventIdList,
+                                  final List<Long> annotationIdList) {
         String title = getValue(selectedItems, "title");
         final String subject = getValue(selectedItems, "subject");
         final String status = getValue(selectedItems, "status");
@@ -351,51 +357,62 @@ public class AnnotationManager implements HasHandlers {
                 initialAssignTo,
                 comment,
                 table,
-                eventIdList);
+                eventIdList,
+                annotationIdList);
     }
 
     private void addToAnnotation(final AnnotationTable table,
-                                 final List<EventId> eventIdList) {
+                                 final List<EventId> eventIdList,
+                                 final List<Long> annotationIdList) {
         ShowFindAnnotationEvent.fire(this, annotation -> {
+            linkEvents(annotation, eventIdList, () -> {
+                linkAnnotations(annotation, annotationIdList, () -> {
+                    addTable(annotation, table, () -> {
+                        EditAnnotationEvent.fire(this, annotation.getId());
+
+                        // Let the UI know the annotation has changed but not until we have shown the annotation
+                        // (hence deferred by timer).
+                        AnnotationChangeEvent.fireDeferred(AnnotationManager.this, annotation.asDocRef());
+                    });
+                });
+            });
+        });
+    }
+
+    private void linkEvents(final Annotation annotation,
+                            final List<EventId> eventIdList,
+                            final Runnable runnable) {
+        if (NullSafe.isEmptyCollection(eventIdList)) {
+            runnable.run();
+        } else {
             final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(annotation.asDocRef(),
                     new LinkEvents(eventIdList));
-            annotationResourceClient.change(request, result -> {
-                final SingleAnnotationChangeRequest request2 = new SingleAnnotationChangeRequest(annotation.asDocRef(),
-                        new AddAnnotationTable(table));
-                annotationResourceClient.change(request2, result2 -> {
-                    EditAnnotationEvent.fire(this, annotation.getId());
+            annotationResourceClient.change(request, r -> runnable.run(), taskMonitorFactory);
+        }
+    }
 
-                    // Let the UI know the annotation has changed but not until we have shown the annotation
-                    // (hence deferred by timer).
-                    AnnotationChangeEvent.fireDeferred(AnnotationManager.this, annotation.asDocRef());
-                }, taskMonitorFactory);
-            }, taskMonitorFactory);
-        });
+    private void linkAnnotations(final Annotation annotation,
+                                 final List<Long> annotationIdList,
+                                 final Runnable runnable) {
+        if (NullSafe.isEmptyCollection(annotationIdList)) {
+            runnable.run();
+        } else {
+            final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(annotation.asDocRef(),
+                    new LinkAnnotations(annotationIdList));
+            annotationResourceClient.change(request, r -> runnable.run(), taskMonitorFactory);
+        }
+    }
 
-//        String title = getValue(selectedItems, "title");
-//        final String subject = getValue(selectedItems, "subject");
-//        final String status = getValue(selectedItems, "status");
-//        final String assignedTo = getValue(selectedItems, "assignedTo");
-//        final String comment = getValue(selectedItems, "comment");
-//
-//        title = title == null
-//                ? "New Annotation"
-//                : title;
-//
-//        UserRef initialAssignTo = null;
-//        if (assignedTo != null) {
-//            initialAssignTo = UserRef.builder().uuid(assignedTo).build();
-//        }
-//
-//        CreateAnnotationEvent.fire(
-//                getChangeStatusPresenter(),
-//                title,
-//                subject,
-//                status,
-//                initialAssignTo,
-//                comment,
-//                table,
-//                eventIdList);
+    private void addTable(final Annotation annotation,
+                          final AnnotationTable table,
+                          final Runnable runnable) {
+        if (table == null) {
+            runnable.run();
+        } else {
+            final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(annotation.asDocRef(),
+                    new AddAnnotationTable(table));
+            annotationResourceClient.change(request, r -> runnable.run(), taskMonitorFactory);
+        }
     }
 
     public void editAnnotation(final long annotationId) {

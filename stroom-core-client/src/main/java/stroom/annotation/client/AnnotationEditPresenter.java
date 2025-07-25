@@ -44,13 +44,14 @@ import stroom.annotation.shared.StringEntryValue;
 import stroom.annotation.shared.UserRefEntryValue;
 import stroom.content.client.event.CloseContentTabEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
+import stroom.data.client.presenter.ShowDataEvent;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
-import stroom.hyperlink.client.HyperlinkType;
+import stroom.pipeline.shared.SourceLocation;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
@@ -482,10 +483,21 @@ public class AnnotationEditPresenter
                 final Element target = e.getNativeEvent().getEventTarget().cast();
                 if (target.hasTagName("u")) {
                     final String link = target.getAttribute("link");
-                    if (link != null) {
+                    if (NullSafe.isNonBlankString(link)) {
                         final Hyperlink hyperlink = Hyperlink.create(link);
                         if (hyperlink != null) {
                             HyperlinkEvent.fire(this, hyperlink, this);
+                        }
+                    } else {
+                        final String eventIdString = target.getAttribute("eventId");
+                        if (NullSafe.isNonBlankString(eventIdString)) {
+                            final EventId eventId = EventId.parse(eventIdString);
+                            ShowDataEvent.fire(this, SourceLocation.fromEventId(eventId));
+                        } else {
+                            final String annotationIdString = target.getAttribute("annotationId");
+                            if (NullSafe.isNonBlankString(annotationIdString)) {
+                                EditAnnotationEvent.fire(this, Long.parseLong(annotationIdString));
+                            }
                         }
                     }
                 } else {
@@ -636,8 +648,10 @@ public class AnnotationEditPresenter
                 quote(text, entryUiValue);
                 text.append("\n");
             }
-            case LINK,
-                 UNLINK,
+            case LINK_EVENT,
+                 UNLINK_EVENT,
+                 LINK_ANNOTATION,
+                 UNLINK_ANNOTATION,
                  ADD_TO_COLLECTION,
                  REMOVE_FROM_COLLECTION,
                  ADD_LABEL,
@@ -786,8 +800,10 @@ public class AnnotationEditPresenter
                 html.append(HISTORY_COMMENT_BORDER_END);
                 added = true;
             }
-            case LINK,
-                 UNLINK,
+            case LINK_EVENT,
+                 UNLINK_EVENT,
+                 LINK_ANNOTATION,
+                 UNLINK_ANNOTATION,
                  ADD_TO_COLLECTION,
                  REMOVE_FROM_COLLECTION,
                  ADD_LABEL,
@@ -801,7 +817,7 @@ public class AnnotationEditPresenter
                 html.appendHtmlConstant("&nbsp;");
                 html.appendEscaped(entry.getEntryType().getActionText());
                 html.appendHtmlConstant("&nbsp;");
-                link(html, entryUiValue);
+                link(html, entry.getEntryType(), entryUiValue);
                 html.appendHtmlConstant("&nbsp;");
                 html.append(durationLabel.getDurationLabel(entry.getEntryTime(), now));
                 html.append(ELLIPSES);
@@ -944,8 +960,8 @@ public class AnnotationEditPresenter
             case STATUS -> SvgImage.EXCLAMATION;
             case ASSIGNED -> SvgImage.USER;
             case COMMENT -> SvgImage.EDIT;
-            case LINK -> SvgImage.LINK;
-            case UNLINK -> SvgImage.UNLINK;
+            case LINK_EVENT -> SvgImage.LINK;
+            case UNLINK_EVENT -> SvgImage.UNLINK;
             case RETENTION_PERIOD -> SvgImage.CALENDAR;
             case DESCRIPTION -> SvgImage.EDIT;
             case ADD_TO_COLLECTION -> SvgImage.TABLE_NESTED;
@@ -953,6 +969,8 @@ public class AnnotationEditPresenter
             case ADD_LABEL -> SvgImage.TAGS;
             case REMOVE_LABEL -> SvgImage.TAGS;
             case ADD_TABLE_DATA -> SvgImage.TABLE;
+            case LINK_ANNOTATION -> SvgImage.LINK;
+            case UNLINK_ANNOTATION -> SvgImage.UNLINK;
             case DELETE -> SvgImage.CLEAR;
         };
         html.appendHtmlConstant(image.getSvg());
@@ -995,18 +1013,20 @@ public class AnnotationEditPresenter
         builder.appendHtmlConstant("</ins>");
     }
 
-    private void link(final SafeHtmlBuilder builder, final String value) {
-        final EventId eventId = EventId.parse(value);
-        if (eventId != null) {
-            // Create a data link.
-            final Hyperlink hyperlink = Hyperlink.builder()
-                    .text(value)
-                    .href("?id=" + eventId.getStreamId() + "&partNo=1&recordNo=" + eventId.getEventId())
-                    .type(HyperlinkType.DATA.name().toLowerCase())
-                    .build();
-            if (!hyperlink.getText().trim().isEmpty()) {
-                builder.appendHtmlConstant("<b><u link=\"" + hyperlink + "\">" + value + "</u></b>");
+    private void link(final SafeHtmlBuilder builder,
+                      final AnnotationEntryType entryType,
+                      final String value) {
+        if (AnnotationEntryType.LINK_EVENT.equals(entryType) ||
+            AnnotationEntryType.UNLINK_EVENT.equals(entryType)) {
+            final EventId eventId = EventId.parse(value);
+            if (eventId != null) {
+                builder.appendHtmlConstant("<b><u eventId=\"" + eventId + "\">" + eventId + "</u></b>");
+            } else {
+                bold(builder, value);
             }
+        } else if (AnnotationEntryType.LINK_ANNOTATION.equals(entryType) ||
+                   AnnotationEntryType.UNLINK_ANNOTATION.equals(entryType)) {
+            builder.appendHtmlConstant("<b><u annotationId=\"" + value + "\">" + value + "</u></b>");
         } else {
             bold(builder, value);
         }
