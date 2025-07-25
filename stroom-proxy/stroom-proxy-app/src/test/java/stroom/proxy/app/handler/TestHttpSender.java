@@ -16,7 +16,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import org.apache.commons.io.IOUtils;
 import org.apache.hc.client5.http.classic.HttpClient;
@@ -41,7 +40,6 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.Map;
 
 @ResourceLock(TestResourceLocks.STROOM_APP_PORT_8080)
@@ -84,8 +82,6 @@ class TestHttpSender {
         final DownstreamHostConfig downstreamHostConfig = MockHttpDestination.createDownstreamHostConfig();
         final StroomStatusCode stroomStatusCode = StroomStatusCode.OK;
         final String receiptId = "my-receipt-id";
-        Mockito.when(mockUserIdentityFactory.getServiceUserAuthHeaders())
-                .thenReturn(Collections.emptyMap());
         Mockito.when(mockHttpResponse.getCode())
                 .thenReturn(stroomStatusCode.getHttpCode());
 //        Mockito.when(mockHeader.getValue()).thenReturn(String.valueOf(stroomStatusCode.getCode()));
@@ -124,7 +120,7 @@ class TestHttpSender {
 
         final HttpSender httpSender = new HttpSender(
                 mockLogStream,
-                new DownstreamHostConfig(),
+                downstreamHostConfig,
                 config,
                 "my-user-agent",
                 mockUserIdentityFactory,
@@ -141,7 +137,7 @@ class TestHttpSender {
                 .log(Mockito.any(Logger.class),
                         Mockito.any(AttributeMap.class),
                         Mockito.eq(EventType.SEND),
-                        Mockito.eq(config.getForwardUrl()),
+                        Mockito.eq(config.createForwardUrl(downstreamHostConfig)),
                         Mockito.eq(stroomStatusCode),
                         Mockito.eq(receiptId),
                         Mockito.anyLong(),
@@ -160,8 +156,6 @@ class TestHttpSender {
         final DownstreamHostConfig downstreamHostConfig = MockHttpDestination.createDownstreamHostConfig();
         final StroomStatusCode stroomStatusCode = StroomStatusCode.OK;
         final String receiptId = "my-receipt-id";
-        Mockito.when(mockUserIdentityFactory.getServiceUserAuthHeaders())
-                .thenReturn(Collections.emptyMap());
         Mockito.when(mockHttpResponse.getCode())
                 .thenReturn(stroomStatusCode.getHttpCode());
 //        Mockito.when(mockHeader.getValue()).thenReturn(String.valueOf(stroomStatusCode.getCode()));
@@ -200,7 +194,7 @@ class TestHttpSender {
 
         final HttpSender httpSender = new HttpSender(
                 mockLogStream,
-                new DownstreamHostConfig(),
+                downstreamHostConfig,
                 config,
                 "my-user-agent",
                 mockUserIdentityFactory,
@@ -217,7 +211,7 @@ class TestHttpSender {
                 .log(Mockito.any(Logger.class),
                         Mockito.any(AttributeMap.class),
                         Mockito.eq(EventType.SEND),
-                        Mockito.eq(config.getForwardUrl()),
+                        Mockito.eq(config.createForwardUrl(downstreamHostConfig)),
                         Mockito.eq(stroomStatusCode),
                         Mockito.eq(receiptId),
                         Mockito.anyLong(),
@@ -230,8 +224,6 @@ class TestHttpSender {
         final DownstreamHostConfig downstreamHostConfig = MockHttpDestination.createDownstreamHostConfig();
         final StroomStatusCode stroomStatusCode = StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA;
         final String receiptId = "my-receipt-id";
-        Mockito.when(mockUserIdentityFactory.getServiceUserAuthHeaders())
-                .thenReturn(Collections.emptyMap());
         Mockito.when(mockHttpResponse.getCode())
                 .thenReturn(stroomStatusCode.getHttpCode());
 //        Mockito.when(mockHeader.getValue()).thenReturn(String.valueOf(stroomStatusCode.getCode()));
@@ -272,7 +264,7 @@ class TestHttpSender {
 
         final HttpSender httpSender = new HttpSender(
                 mockLogStream,
-                new DownstreamHostConfig(),
+                downstreamHostConfig,
                 config,
                 "my-user-agent",
                 mockUserIdentityFactory,
@@ -296,7 +288,7 @@ class TestHttpSender {
                 .log(Mockito.any(Logger.class),
                         Mockito.any(AttributeMap.class),
                         Mockito.eq(EventType.ERROR),
-                        Mockito.eq(config.getForwardUrl()),
+                        Mockito.eq(config.createForwardUrl(downstreamHostConfig)),
                         Mockito.eq(stroomStatusCode),
                         Mockito.eq(receiptId),
                         Mockito.anyLong(),
@@ -309,8 +301,6 @@ class TestHttpSender {
         final DownstreamHostConfig downstreamHostConfig = MockHttpDestination.createDownstreamHostConfig();
         final StroomStatusCode stroomStatusCode = StroomStatusCode.UNKNOWN_ERROR;
         final String receiptId = "my-receipt-id";
-        Mockito.when(mockUserIdentityFactory.getServiceUserAuthHeaders())
-                .thenReturn(Collections.emptyMap());
         Mockito.when(mockHttpResponse.getCode())
                 .thenReturn(stroomStatusCode.getHttpCode());
         Mockito.doAnswer(
@@ -346,7 +336,7 @@ class TestHttpSender {
 
         final HttpSender httpSender = new HttpSender(
                 mockLogStream,
-                new DownstreamHostConfig(),
+                downstreamHostConfig,
                 config,
                 "my-user-agent",
                 mockUserIdentityFactory,
@@ -370,7 +360,7 @@ class TestHttpSender {
                 .log(Mockito.any(Logger.class),
                         Mockito.any(AttributeMap.class),
                         Mockito.eq(EventType.ERROR),
-                        Mockito.eq(config.getForwardUrl()),
+                        Mockito.eq(config.createForwardUrl(downstreamHostConfig)),
                         Mockito.eq(stroomStatusCode),
                         Mockito.eq(receiptId),
                         Mockito.anyLong(),
@@ -380,10 +370,9 @@ class TestHttpSender {
     @Test
     void testHttpClientError() throws IOException, ProtocolException {
         final ForwardHttpPostConfig config = MockHttpDestination.createForwardHttpPostConfig(false);
+        final DownstreamHostConfig downstreamHostConfig = MockHttpDestination.createDownstreamHostConfig();
         final StroomStatusCode stroomStatusCode = StroomStatusCode.UNKNOWN_ERROR;
         final String errorMsg = "ERROR in HttpClient";
-        Mockito.when(mockUserIdentityFactory.getServiceUserAuthHeaders())
-                .thenReturn(Collections.emptyMap());
         Mockito.doAnswer(
                         invocation -> {
                             throw new RuntimeException(errorMsg);
@@ -394,7 +383,7 @@ class TestHttpSender {
 
         final HttpSender httpSender = new HttpSender(
                 mockLogStream,
-                new DownstreamHostConfig(),
+                downstreamHostConfig,
                 config,
                 "my-user-agent",
                 mockUserIdentityFactory,
@@ -418,7 +407,7 @@ class TestHttpSender {
                 .log(Mockito.any(Logger.class),
                         Mockito.any(AttributeMap.class),
                         Mockito.eq(EventType.ERROR),
-                        Mockito.eq(config.getForwardUrl()),
+                        Mockito.eq(config.createForwardUrl(downstreamHostConfig)),
                         Mockito.eq(stroomStatusCode),
                         Mockito.eq(null),
                         Mockito.anyLong(),
@@ -431,11 +420,11 @@ class TestHttpSender {
         final ForwardHttpPostConfig config = MockHttpDestination.createForwardHttpPostConfig(false)
                 .copy()
                 .livenessCheckUrl(null)
+                .livenessCheckEnabled(false)
                 .build();
         final DownstreamHostConfig downstreamHostConfig = MockHttpDestination.createDownstreamHostConfig();
 
-        mockHttpDestination.setupLivenessEndpoint(mappingBuilder ->
-                mappingBuilder.willReturn(WireMock.ok()));
+        mockHttpDestination.setupLivenessEndpoint(true);
 
         final HttpClient httpClient = buildRealHttpClient();
 
@@ -456,18 +445,18 @@ class TestHttpSender {
     void testLiveness_wiremock_live() {
         final ForwardHttpPostConfig config = MockHttpDestination.createForwardHttpPostConfig(false)
                 .copy()
-                .livenessCheckUrl(MockHttpDestination.getLivenessCheckUrl())
+//                .livenessCheckUrl(MockHttpDestination.getLivenessCheckUrl())
+                .livenessCheckEnabled(true)
                 .build();
         final DownstreamHostConfig downstreamHostConfig = MockHttpDestination.createDownstreamHostConfig();
 
-        mockHttpDestination.setupLivenessEndpoint(mappingBuilder ->
-                mappingBuilder.willReturn(WireMock.ok()));
+        mockHttpDestination.setupLivenessEndpoint(true);
 
         final HttpClient httpClient = buildRealHttpClient();
 
         final HttpSender httpSender = new HttpSender(
                 mockLogStream,
-                new DownstreamHostConfig(),
+                downstreamHostConfig,
                 config,
                 "my-user-agent",
                 mockUserIdentityFactory,
@@ -482,12 +471,12 @@ class TestHttpSender {
     void testLiveness_wiremock_notLive() {
         final ForwardHttpPostConfig config = MockHttpDestination.createForwardHttpPostConfig(false)
                 .copy()
-                .livenessCheckUrl(MockHttpDestination.getLivenessCheckUrl())
+//                .livenessCheckUrl(MockHttpDestination.getLivenessCheckUrl())
+                .livenessCheckEnabled(true)
                 .build();
         final DownstreamHostConfig downstreamHostConfig = MockHttpDestination.createDownstreamHostConfig();
 
-        mockHttpDestination.setupLivenessEndpoint(mappingBuilder ->
-                mappingBuilder.willReturn(WireMock.notFound()));
+        mockHttpDestination.setupLivenessEndpoint(false);
 
         final HttpClient httpClient = buildRealHttpClient();
 

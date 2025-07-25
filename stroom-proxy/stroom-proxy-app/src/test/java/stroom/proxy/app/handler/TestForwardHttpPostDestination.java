@@ -143,6 +143,9 @@ class TestForwardHttpPostDestination {
                 forwardHttpPostConfig,
                 downstreamHostConfig);
 
+        Mockito.when(mockStreamDestination.hasLivenessCheck())
+                .thenReturn(true);
+
         Assertions.assertThat(forwardHttpPostDestination.hasLivenessCheck())
                 .isTrue();
 
@@ -164,6 +167,9 @@ class TestForwardHttpPostDestination {
                 cleanupDirQueue,
                 forwardHttpPostConfig,
                 downstreamHostConfig);
+
+        Mockito.when(mockStreamDestination.hasLivenessCheck())
+                .thenReturn(true);
 
         Assertions.assertThat(forwardHttpPostDestination.hasLivenessCheck())
                 .isTrue();

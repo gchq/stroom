@@ -128,6 +128,7 @@ public class HttpSender implements StreamDestination {
     @Override
     public boolean performLivenessCheck() throws Exception {
         final String url = livenessCheckUrl;
+        LOGGER.debug("performLivenessCheck() - url: '{}'", url);
 
         if (NullSafe.isNonBlankString(url)) {
             final HttpGet httpGet = new HttpGet(url);
@@ -137,7 +138,7 @@ public class HttpSender implements StreamDestination {
             try {
                 final int responseCode = httpClient.execute(httpGet, response -> {
                     final int code = response.getCode();
-                    LOGGER.debug("Liveness check, code: {}, response: '{}'", code, response);
+                    LOGGER.debug("performLivenessCheck() - code: {}, response: '{}'", code, response);
                     consumeAndCloseResponseContent(response);
                     return code;
                 });
