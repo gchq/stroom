@@ -32,6 +32,8 @@ public class NewElementViewImpl extends ViewImpl implements NewElementView {
     private final Widget widget;
     @UiField
     TextBox name;
+    @UiField
+    TextBox description;
 
     @Inject
     public NewElementViewImpl(final Binder binder) {
@@ -56,6 +58,16 @@ public class NewElementViewImpl extends ViewImpl implements NewElementView {
     @Override
     public HasText getName() {
         return name;
+    }
+
+    @Override
+    public HasText getDescription() {
+        return description;
+    }
+
+    @Override
+    public HasKeyDownHandlers getDescriptionBox() {
+        return description;
     }
 
     public interface Binder extends UiBinder<Widget, NewElementViewImpl> {

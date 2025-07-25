@@ -29,7 +29,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-@JsonPropertyOrder({"id", "type", "name"})
+@JsonPropertyOrder({"id", "type", "name", "description"})
 public class PipelineElement implements Comparable<PipelineElement> {
 
     @JsonProperty
@@ -38,20 +38,24 @@ public class PipelineElement implements Comparable<PipelineElement> {
     private String type;
     @JsonProperty
     private String name;
+    @JsonProperty
+    private String description;
 
     public PipelineElement(final String id,
                            final String type) {
-        this(id, type, null);
+        this(id, type, null, "Pipeline Element");
     }
 
     @JsonCreator
     public PipelineElement(
             @JsonProperty("id") final String id,
             @JsonProperty("type") final String type,
-            @JsonProperty("name") final String name) {
+            @JsonProperty("name") final String name,
+            @JsonProperty("description") final String description) {
         this.id = id;
         this.type = type;
         this.name = name;
+        this.description = description;
     }
 
     public PipelineElement() {
@@ -67,6 +71,10 @@ public class PipelineElement implements Comparable<PipelineElement> {
 
     public String getName() {
         return name;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     @Override
@@ -127,6 +135,7 @@ public class PipelineElement implements Comparable<PipelineElement> {
         private String id;
         private String type;
         private String name;
+        private String description;
 
         public Builder id(final String id) {
             this.id = id;
@@ -143,8 +152,13 @@ public class PipelineElement implements Comparable<PipelineElement> {
             return this;
         }
 
+        public Builder description(final String description) {
+            this.description = description;
+            return this;
+        }
+
         public PipelineElement build() {
-            return new PipelineElement(id, type, name);
+            return new PipelineElement(id, type, name, description);
         }
     }
 }

@@ -688,10 +688,11 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                     if (e.isOk()) {
                         final String id = UUID.randomUUID().toString();
                         final String name = newElementPresenter.getElementName();
+                        final String description = newElementPresenter.getElementDescription();
                         final PipelineElementType elementType = newElementPresenter.getElementInfo();
                         try {
                             final PipelineElement newElement = pipelineModel.addElement(
-                                    selectedElement, elementType, id, name);
+                                    selectedElement, elementType, id, name, description);
                             pipelineTreePresenter.getSelectionModel().setSelected(newElement, true);
                             setDirty(true);
                         } catch (final RuntimeException ex) {

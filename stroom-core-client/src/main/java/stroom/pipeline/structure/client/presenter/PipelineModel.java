@@ -149,7 +149,8 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
         final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineLayer.getPipelineData());
 
         builder.getElements().getAddList().remove(element);
-        final PipelineElement renamedElement = new PipelineElement(element.getId(), element.getType(), newName);
+        final PipelineElement renamedElement = new PipelineElement(element.getId(), element.getType(),
+                newName, element.getDescription());
         builder.addElement(renamedElement);
 
         pipelineLayer = new PipelineLayer(pipelineLayer.getSourcePipeline(), builder.build());
@@ -336,7 +337,8 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     public PipelineElement addElement(final PipelineElement parent,
                                       final PipelineElementType elementType,
                                       final String id,
-                                      final String name) throws PipelineModelException {
+                                      final String name,
+                                      final String description) throws PipelineModelException {
         final PipelineElement element;
 
         if (id == null || id.isEmpty()) {
@@ -351,7 +353,7 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
             }
 
             PipelineData pipelineData = pipelineLayer.getPipelineData();
-            element = PipelineDataUtil.createElement(id, elementType.getType(), name);
+            element = PipelineDataUtil.createElement(id, elementType.getType(), name, description);
             if (pipelineData.getRemovedElements().contains(element)) {
                 throw new PipelineModelException("Attempt to add an element with an id that matches a hidden " +
                                                  "element. Restore the existing element if required or change " +

@@ -81,10 +81,18 @@ public class NewElementPresenter extends MyPresenterWidget<NewElementPresenter.N
         return getView().getName().getText();
     }
 
+    public String getElementDescription() {
+        return getView().getDescription().getText();
+    }
+
     public interface NewElementView extends View, Focus {
 
         HasText getName();
 
         HasKeyDownHandlers getNameBox();
+
+        HasText getDescription();
+
+        HasKeyDownHandlers getDescriptionBox();
     }
 }

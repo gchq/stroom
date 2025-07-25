@@ -22,8 +22,11 @@ import java.util.Collections;
 
 public class PipelineDataUtil {
 
-    public static PipelineElement createElement(final String id, final String type, final String name) {
-        return new PipelineElement(id, type, name);
+    public static PipelineElement createElement(final String id,
+                                                final String type,
+                                                final String name,
+                                                final String description) {
+        return new PipelineElement(id, type, name, description);
     }
 
 //    public static PipelineProperty createProperty(final String element, final String name, final BaseEntity entity) {
