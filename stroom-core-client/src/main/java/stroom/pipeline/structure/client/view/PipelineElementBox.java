@@ -75,6 +75,10 @@ public class PipelineElementBox extends Box<PipelineElement> {
         label = new Label(labelText, false);
         label.addStyleName(BASE_CLASS + "-label");
 
+        label.getElement().setAttribute("title", pipelineElement.getDescription() != null
+                ? pipelineElement.getDescription()
+                : "");
+
         if (icon != null) {
             final SimplePanel image = new SimplePanel();
             SvgImageUtil.setSvgAsInnerHtml(
@@ -178,7 +182,12 @@ public class PipelineElementBox extends Box<PipelineElement> {
 
     public void refresh(final PipelineElement pipelineElement) {
         this.pipelineElement = pipelineElement;
-        label.setText(pipelineElement.getDisplayName());
+        label.setText(pipelineElement.getName() != null
+                ? pipelineElement.getName()
+                : pipelineElement.getId());
+        label.getElement().setAttribute("title", pipelineElement.getDescription() != null
+                ? pipelineElement.getDescription()
+                : "");
         updateFilterState();
     }
 
