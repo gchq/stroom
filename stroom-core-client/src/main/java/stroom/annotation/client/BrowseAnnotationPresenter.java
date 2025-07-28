@@ -28,7 +28,7 @@ public class BrowseAnnotationPresenter
         this.findResultListPresenter = findResultListPresenter;
         // To browse, users only need view permission.
         findResultListPresenter.setPermission(DocumentPermission.VIEW);
-        getView().setDialogMode(false);
+        view.setDialogMode(false);
         view.setResultView(findResultListPresenter.getView());
         view.setUiHandlers(this);
         findResultListPresenter.setFindResultListHandler(this);
@@ -67,7 +67,7 @@ public class BrowseAnnotationPresenter
 
     @Override
     public SvgImage getIcon() {
-        return SvgImage.EDIT;
+        return SvgImage.EYE;
     }
 
     @Override

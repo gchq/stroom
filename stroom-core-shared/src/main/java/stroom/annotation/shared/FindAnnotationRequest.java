@@ -19,15 +19,23 @@ public class FindAnnotationRequest extends BaseCriteria {
     private final String filter;
     @JsonProperty
     private final DocumentPermission requiredPermission;
+    @JsonProperty
+    private final Long sourceId;
+    @JsonProperty
+    private final Long destinationId;
 
     @JsonCreator
     public FindAnnotationRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                  @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                  @JsonProperty("filter") final String filter,
-                                 @JsonProperty("requiredPermission") final DocumentPermission requiredPermission) {
+                                 @JsonProperty("requiredPermission") final DocumentPermission requiredPermission,
+                                 @JsonProperty("sourceId") final Long sourceId,
+                                 @JsonProperty("destinationId") final Long destinationId) {
         super(pageRequest, sortList);
         this.filter = filter;
         this.requiredPermission = requiredPermission;
+        this.sourceId = sourceId;
+        this.destinationId = destinationId;
     }
 
     public String getFilter() {
@@ -36,5 +44,13 @@ public class FindAnnotationRequest extends BaseCriteria {
 
     public DocumentPermission getRequiredPermission() {
         return requiredPermission;
+    }
+
+    public Long getSourceId() {
+        return sourceId;
+    }
+
+    public Long getDestinationId() {
+        return destinationId;
     }
 }

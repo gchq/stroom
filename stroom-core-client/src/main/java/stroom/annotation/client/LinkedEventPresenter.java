@@ -70,8 +70,10 @@ public class LinkedEventPresenter
         this.addEventLinkPresenter = addEventLinkPresenter;
 
         addEventButton = pagerView.addButton(SvgPresets.ADD);
-        addEventButton.setTitle("Add Event");
+        addEventButton.setTitle("Add Event Link");
+        addEventButton.setEnabled(false);
         removeEventButton = pagerView.addButton(SvgPresets.DELETE);
+        removeEventButton.setTitle("Remove Event Link");
         removeEventButton.setEnabled(false);
 
         view.setEventListView(pagerView);
@@ -131,6 +133,7 @@ public class LinkedEventPresenter
         this.annotationRef = docRef;
         dirty = false;
         annotationResourceClient.getLinkedEvents(docRef, this::setData, this);
+        enableButtons();
     }
 
     @Override
@@ -173,8 +176,7 @@ public class LinkedEventPresenter
         } else {
             dataPresenter.clear();
         }
-
-        removeEventButton.setEnabled(selected != null);
+        enableButtons();
     }
 
     public boolean isDirty() {
@@ -183,6 +185,11 @@ public class LinkedEventPresenter
 
     public void setParent(final AnnotationPresenter parent) {
         this.parent = parent;
+    }
+
+    private void enableButtons() {
+        addEventButton.setEnabled(!isReadOnly());
+        removeEventButton.setEnabled(!isReadOnly() && selectionModel.getSelected() != null);
     }
 
     public interface LinkedEventView extends View {

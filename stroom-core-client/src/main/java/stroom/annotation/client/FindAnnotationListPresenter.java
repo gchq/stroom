@@ -11,9 +11,11 @@ import stroom.explorer.client.presenter.SelectionEventManager;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.Event;
@@ -32,6 +34,8 @@ public class FindAnnotationListPresenter extends MyPresenterWidget<PagerView> {
     private final MultiSelectionModelImpl<Annotation> selectionModel;
 
     private DocumentPermission permission = DocumentPermission.EDIT;
+    private Long sourceId;
+    private Long destinationId;
     private String lastFilter;
     private String filter;
     private boolean initialised;
@@ -90,7 +94,9 @@ public class FindAnnotationListPresenter extends MyPresenterWidget<PagerView> {
                         pageRequest,
                         null,
                         filter,
-                        permission);
+                        permission,
+                        sourceId,
+                        destinationId);
                 resourceClient.findAnnotations(request, resultPage -> {
                     if (resultPage.getPageStart() != cellTable.getPageStart()) {
                         cellTable.setPageStart(resultPage.getPageStart());
@@ -159,5 +165,17 @@ public class FindAnnotationListPresenter extends MyPresenterWidget<PagerView> {
 
     public void setPermission(final DocumentPermission permission) {
         this.permission = permission;
+    }
+
+    public void setSourceId(final Long sourceId) {
+        this.sourceId = sourceId;
+    }
+
+    public void setDestinationId(final Long destinationId) {
+        this.destinationId = destinationId;
+    }
+
+    public HandlerRegistration addSelectionHandler(final MultiSelectEvent.Handler handler) {
+        return selectionModel.addSelectionHandler(handler);
     }
 }

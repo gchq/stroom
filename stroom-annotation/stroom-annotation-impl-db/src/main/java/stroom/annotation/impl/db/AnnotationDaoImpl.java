@@ -378,14 +378,27 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
             return ResultPage.empty();
         }
 
-        final List<Annotation> list = JooqUtil.contextResult(connectionProvider, context -> context
-                        .select()
-                        .from(ANNOTATION)
-                        .where(conditions)
-                        .fetch()
-                        .stream()
-                        .map(this::mapToAnnotation)
-                        .filter(viewPredicate))
+        final List<Annotation> list = JooqUtil.contextResult(connectionProvider, context -> {
+                    var select = context
+                            .select()
+                            .from(ANNOTATION);
+                    if (request.getSourceId() != null) {
+                        select = select
+                                .join(ANNOTATION_LINK)
+                                .on(ANNOTATION_LINK.FK_ANNOTATION_DST_ID.eq(ANNOTATION.ID));
+                        conditions.add(ANNOTATION_LINK.FK_ANNOTATION_SRC_ID.eq(request.getSourceId()));
+                    } else if (request.getDestinationId() != null) {
+                        select = select
+                                .join(ANNOTATION_LINK)
+                                .on(ANNOTATION_LINK.FK_ANNOTATION_SRC_ID.eq(ANNOTATION.ID));
+                        conditions.add(ANNOTATION_LINK.FK_ANNOTATION_DST_ID.eq(request.getDestinationId()));
+                    }
+                    return select.where(conditions)
+                            .fetch()
+                            .stream()
+                            .map(this::mapToAnnotation)
+                            .filter(viewPredicate);
+                })
                 .toList();
         return ResultPage.createPageLimitedList(list, request.getPageRequest());
     }
