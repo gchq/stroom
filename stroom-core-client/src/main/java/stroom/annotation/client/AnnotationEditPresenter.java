@@ -72,13 +72,15 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
@@ -109,28 +111,17 @@ public class AnnotationEditPresenter
             "<div class=\"setting-block-icon icon-colour__grey svgIcon\">" +
             SvgImage.ELLIPSES_VERTICAL.getSvg() +
             "</div>");
-    private static final SafeHtml HISTORY_INNER_START = SafeHtmlUtils.fromTrustedString(
-            "<div class=\"annotationHistoryInner\">");
-    private static final SafeHtml HISTORY_INNER_END = SafeHtmlUtils.fromTrustedString(
-            "</div>");
     private static final SafeHtml HISTORY_LINE = SafeHtmlUtils.fromTrustedString(
             "<div class=\"annotationHistoryLine\"></div>");
-    private static final SafeHtml HISTORY_COMMENT_BORDER_START = SafeHtmlUtils.fromTrustedString(
-            "<div class=\"annotationHistoryCommentBorder\">");
-    private static final SafeHtml HISTORY_COMMENT_BORDER_END = SafeHtmlUtils.fromTrustedString(
-            "</div>");
-    private static final SafeHtml HISTORY_COMMENT_HEADER_START = SafeHtmlUtils.fromTrustedString(
-            "<div class=\"annotationHistoryCommentHeader\"");
-    private static final SafeHtml HISTORY_COMMENT_HEADER_END = SafeHtmlUtils.fromTrustedString(
-            "</div>");
-    private static final SafeHtml HISTORY_COMMENT_BODY_START = SafeHtmlUtils.fromTrustedString(
-            "<div class=\"annotationHistoryCommentBody\">");
-    private static final SafeHtml HISTORY_COMMENT_BODY_END = SafeHtmlUtils.fromTrustedString(
-            "</div>");
-    private static final SafeHtml HISTORY_ITEM_START = SafeHtmlUtils.fromTrustedString(
-            "<div class=\"annotationHistoryItem\"");
-    private static final SafeHtml HISTORY_ITEM_END = SafeHtmlUtils.fromTrustedString(
-            "</div>");
+
+
+    private static final Attribute HISTORY_INNER = Attribute.className("annotationHistoryInner");
+    private static final Attribute HISTORY_COMMENT_BORDER = Attribute.className("annotationHistoryCommentBorder");
+    private static final Attribute HISTORY_COMMENT_HEADER = Attribute.className("annotationHistoryCommentHeader");
+    private static final Attribute HISTORY_COMMENT_BODY = Attribute.className("annotationHistoryCommentBody");
+    private static final Attribute HISTORY_ITEM = Attribute.className("annotationHistoryItem");
+    private static final Attribute ANNOTATION_TABLE = Attribute.className("annotationTable");
+    private static final Attribute ANNOTATION_LINK = Attribute.className("annotationLink");
 
     private final AnnotationResourceClient annotationResourceClient;
     private final ChooserPresenter<AnnotationTag> annotationStatusPresenter;
@@ -457,24 +448,24 @@ public class AnnotationEditPresenter
         if (entries != null) {
             final Date now = new Date();
 
-            final SafeHtmlBuilder html = new SafeHtmlBuilder();
+            final HtmlBuilder html = new HtmlBuilder();
             final StringBuilder text = new StringBuilder();
-            html.append(HISTORY_INNER_START);
-            SafeHtml line = SafeHtmlUtils.EMPTY_SAFE_HTML;
-            boolean first = true;
-            for (final AnnotationEntry entry : entries) {
-                addEntryText(text, entry);
-                final boolean added = addEntryHtml(html, entry, now, line);
 
-                if (added && first) {
-                    // If we actually added some content then make sure we add a line marker before any subsequent
-                    // content.
-                    first = false;
-                    line = HISTORY_LINE;
+            html.div(inner -> {
+                SafeHtml line = SafeHtmlUtils.EMPTY_SAFE_HTML;
+                boolean first = true;
+                for (final AnnotationEntry entry : entries) {
+                    addEntryText(text, entry);
+                    final boolean added = addEntryHtml(inner, entry, now, line);
+
+                    if (added && first) {
+                        // If we actually added some content then make sure we add a line marker before any subsequent
+                        // content.
+                        first = false;
+                        line = HISTORY_LINE;
+                    }
                 }
-            }
-
-            html.append(HISTORY_INNER_END);
+            }, HISTORY_INNER);
 
             final HTML panel = new HTML(html.toSafeHtml());
             panel.setStyleName("dock-max annotationHistoryOuter");
@@ -747,21 +738,18 @@ public class AnnotationEditPresenter
         return userRef.toDisplayString();
     }
 
-    private void addEntryId(final SafeHtmlBuilder html,
-                            final AnnotationEntry entry) {
-        html.append(SafeHtmlUtils.fromTrustedString(" " +
-                                                    ENTRY_ID_ATTRIBUTE +
-                                                    "=\"" +
-                                                    entry.getId() +
-                                                    "\"" +
-                                                    " " +
-                                                    ENTRY_TYPE_ATTRIBUTE +
-                                                    "=\"" + entry.getEntryType().getPrimitiveValue() +
-                                                    "\"" +
-                                                    ">"));
+    private Attribute[] getEntryIdAttributes(final Attribute className,
+                                             final AnnotationEntry entry) {
+        return new Attribute[]{
+                className,
+                new Attribute(SafeHtmlUtil.from(ENTRY_ID_ATTRIBUTE),
+                        SafeHtmlUtil.from(entry.getId())),
+                new Attribute(SafeHtmlUtil.from(ENTRY_TYPE_ATTRIBUTE),
+                        SafeHtmlUtil.from(entry.getEntryType().getPrimitiveValue()))
+        };
     }
 
-    private boolean addEntryHtml(final SafeHtmlBuilder html,
+    private boolean addEntryHtml(final HtmlBuilder html,
                                  final AnnotationEntry entry,
                                  final Date now,
                                  final SafeHtml line) {
@@ -771,33 +759,32 @@ public class AnnotationEditPresenter
         switch (entry.getEntryType()) {
             case COMMENT -> {
                 html.append(line);
-                html.append(HISTORY_COMMENT_BORDER_START);
-                html.append(HISTORY_COMMENT_HEADER_START);
-                addEntryId(html, entry);
-                bold(html, getUserName(entry.getEntryUser()));
-                html.appendHtmlConstant("&nbsp;");
-                html.appendEscaped("commented");
-                html.appendHtmlConstant("&nbsp;");
-                html.append(durationLabel.getDurationLabel(entry.getEntryTime(), now));
+                html.div(border -> {
+                    border.div(header -> {
 
-                if (!Objects.equals(entry.getEntryUser(), entry.getUpdateUser()) ||
-                    !Objects.equals(entry.getEntryTime(), entry.getUpdateTime())) {
-                    html.appendHtmlConstant("&nbsp;");
-                    html.appendEscaped(" - ");
-                    html.appendHtmlConstant("&nbsp;");
-                    bold(html, getUserName(entry.getUpdateUser()));
-                    html.appendHtmlConstant("&nbsp;");
-                    html.appendEscaped("edited");
-                    html.appendHtmlConstant("&nbsp;");
-                    html.append(durationLabel.getDurationLabel(entry.getUpdateTime(), now));
-                }
+                        header.b(getUserName(entry.getEntryUser()));
+                        header.append(HtmlBuilder.NB_SPACE);
+                        header.appendTrustedString("commented");
+                        header.append(HtmlBuilder.NB_SPACE);
+                        durationLabel.append(header, entry.getEntryTime(), now);
 
-                html.append(ELLIPSES);
-                html.append(HISTORY_COMMENT_HEADER_END);
-                html.append(HISTORY_COMMENT_BODY_START);
-                html.appendEscaped(entryUiValue);
-                html.append(HISTORY_COMMENT_BODY_END);
-                html.append(HISTORY_COMMENT_BORDER_END);
+                        if (!Objects.equals(entry.getEntryUser(), entry.getUpdateUser()) ||
+                            !Objects.equals(entry.getEntryTime(), entry.getUpdateTime())) {
+                            header.append(HtmlBuilder.NB_SPACE);
+                            header.appendTrustedString(" - ");
+                            header.append(HtmlBuilder.NB_SPACE);
+                            header.b(getUserName(entry.getUpdateUser()));
+                            header.append(HtmlBuilder.NB_SPACE);
+                            header.appendTrustedString("edited");
+                            header.append(HtmlBuilder.NB_SPACE);
+                            durationLabel.append(header, entry.getUpdateTime(), now);
+                        }
+
+                        header.append(ELLIPSES);
+
+                    }, getEntryIdAttributes(HISTORY_COMMENT_HEADER, entry));
+                    border.div(body -> decorateComment(body, entryUiValue), HISTORY_COMMENT_BODY);
+                }, HISTORY_COMMENT_BORDER);
                 added = true;
             }
             case LINK_EVENT,
@@ -810,18 +797,18 @@ public class AnnotationEditPresenter
                  REMOVE_LABEL,
                  DELETE -> {
                 html.append(line);
-                html.append(HISTORY_ITEM_START);
-                addEntryId(html, entry);
-                addIcon(html, entry.getEntryType());
-                bold(html, getUserName(entry.getEntryUser()));
-                html.appendHtmlConstant("&nbsp;");
-                html.appendEscaped(entry.getEntryType().getActionText());
-                html.appendHtmlConstant("&nbsp;");
-                link(html, entry.getEntryType(), entryUiValue);
-                html.appendHtmlConstant("&nbsp;");
-                html.append(durationLabel.getDurationLabel(entry.getEntryTime(), now));
-                html.append(ELLIPSES);
-                html.append(HISTORY_ITEM_END);
+                html.div(item -> {
+                    addIcon(item, entry.getEntryType());
+                    item.b(getUserName(entry.getEntryUser()));
+                    item.nbsp();
+                    item.append(entry.getEntryType().getActionText());
+                    item.nbsp();
+                    link(html, entry.getEntryType(), entryUiValue);
+                    item.nbsp();
+                    durationLabel.append(item, entry.getEntryTime(), now);
+                    item.append(ELLIPSES);
+                }, getEntryIdAttributes(HISTORY_ITEM, entry));
+
                 added = true;
             }
             case ADD_TABLE_DATA -> {
@@ -829,130 +816,222 @@ public class AnnotationEditPresenter
                     final List<List<String>> values = NullSafe.list(table.getValues());
 
                     html.append(line);
-                    html.append(HISTORY_COMMENT_BORDER_START);
-                    html.append(HISTORY_COMMENT_HEADER_START);
-                    addEntryId(html, entry);
-                    bold(html, getUserName(entry.getEntryUser()));
-                    html.appendHtmlConstant("&nbsp;");
-                    html.appendEscaped(values.size() == 1
-                            ? "added " + values.size() + " row"
-                            : "added " + values.size() + " rows");
-                    html.appendHtmlConstant("&nbsp;");
-                    html.append(durationLabel.getDurationLabel(entry.getEntryTime(), now));
+                    html.div(border -> {
+                        border.div(header -> {
 
-                    html.append(ELLIPSES);
-                    html.append(HISTORY_COMMENT_HEADER_END);
-                    html.append(HISTORY_COMMENT_BODY_START);
+                            header.b(getUserName(entry.getEntryUser()));
+                            header.nbsp();
+                            header.append(values.size() == 1
+                                    ? "added " + values.size() + " row"
+                                    : "added " + values.size() + " rows");
+                            header.nbsp();
+                            durationLabel.append(header, entry.getEntryTime(), now);
+                            header.append(ELLIPSES);
 
-                    html.appendHtmlConstant("<table class=\"annotationTable\">");
-                    html.appendHtmlConstant("<tr>");
-                    for (final String col : NullSafe.list(table.getColumns())) {
-                        html.appendHtmlConstant("<th>");
-                        html.appendEscaped(col);
-                        html.appendHtmlConstant("</th>");
-                    }
-                    html.appendHtmlConstant("</tr>");
-                    for (final List<String> row : values) {
-                        html.appendHtmlConstant("<tr>");
-                        for (final String val : NullSafe.list(row)) {
-                            html.appendHtmlConstant("<td>");
-                            html.appendEscaped(val);
-                            html.appendHtmlConstant("</td>");
-                        }
-                        html.appendHtmlConstant("</tr>");
-                    }
-                    html.appendHtmlConstant("</table>");
+                        }, getEntryIdAttributes(HISTORY_COMMENT_HEADER, entry));
 
-                    html.append(HISTORY_COMMENT_BODY_END);
-                    html.append(HISTORY_COMMENT_BORDER_END);
+                        border.div(body -> {
+                            body.table(tb -> {
+                                // Add table header
+                                tb.tr(tr -> {
+                                    for (final String col : NullSafe.list(table.getColumns())) {
+                                        tr.th(col);
+                                    }
+                                });
+
+                                // Add table body
+                                for (final List<String> row : values) {
+                                    tb.tr(tr -> {
+                                        for (final String val : NullSafe.list(row)) {
+                                            tr.td(val);
+                                        }
+                                    });
+                                }
+                            }, ANNOTATION_TABLE);
+                        }, HISTORY_COMMENT_BODY);
+                    }, HISTORY_COMMENT_BORDER);
+
                     added = true;
                 }
             }
             case ASSIGNED -> {
                 if (entry.getPreviousValue() != null) {
                     html.append(line);
-                    html.append(HISTORY_ITEM_START);
-                    addEntryId(html, entry);
-                    addIcon(html, entry.getEntryType());
-                    bold(html, getUserName(entry.getEntryUser()));
-                    if (areSameUser(entry.getEntryUser(), entry.getPreviousValue())) {
-                        html.appendHtmlConstant("&nbsp;");
-                        html.appendEscaped("removed their assignment");
-                    } else {
-                        html.appendHtmlConstant("&nbsp;");
-                        html.appendEscaped("unassigned");
-                        html.appendHtmlConstant("&nbsp;");
-                        bold(html, getValueString(entry.getPreviousValue().asUiValue()));
-                    }
-                    html.appendEscaped(" ");
-                    html.append(durationLabel.getDurationLabel(entry.getEntryTime(), now));
-                    html.append(ELLIPSES);
-                    html.append(HISTORY_ITEM_END);
+                    html.div(item -> {
+                        addIcon(item, entry.getEntryType());
+                        item.b(getUserName(entry.getEntryUser()));
+                        if (areSameUser(entry.getEntryUser(), entry.getPreviousValue())) {
+                            item.nbsp();
+                            item.appendTrustedString("removed their assignment");
+                        } else {
+                            item.nbsp();
+                            item.appendTrustedString("unassigned");
+                            item.nbsp();
+                            item.b(getValueString(entry.getPreviousValue().asUiValue()));
+                        }
+                        item.nbsp();
+                        durationLabel.append(item, entry.getEntryTime(), now);
+                        item.append(ELLIPSES);
+                    }, getEntryIdAttributes(HISTORY_ITEM, entry));
                     added = true;
                 }
 
                 if (entryUiValue != null && !entryUiValue.trim().isEmpty()) {
                     html.append(line);
-                    html.append(HISTORY_ITEM_START);
-                    addEntryId(html, entry);
-                    addIcon(html, entry.getEntryType());
-                    bold(html, getUserName(entry.getEntryUser()));
-                    if (areSameUser(entry.getEntryUser(), entry.getEntryValue())) {
-                        html.appendHtmlConstant("&nbsp;");
-                        html.appendEscaped("self-assigned this");
-                    } else {
-                        html.appendHtmlConstant("&nbsp;");
-                        html.appendEscaped("assigned");
-                        html.appendHtmlConstant("&nbsp;");
-                        bold(html, getValueString(entryUiValue));
-                    }
-                    html.appendHtmlConstant("&nbsp;");
-                    html.append(durationLabel.getDurationLabel(entry.getEntryTime(), now));
-                    html.append(ELLIPSES);
-                    html.append(HISTORY_ITEM_END);
+                    html.div(item -> {
+                        addIcon(html, entry.getEntryType());
+                        item.b(getUserName(entry.getEntryUser()));
+                        if (areSameUser(entry.getEntryUser(), entry.getEntryValue())) {
+                            item.nbsp();
+                            item.appendTrustedString("self-assigned this");
+                        } else {
+                            item.nbsp();
+                            item.appendTrustedString("assigned");
+                            item.nbsp();
+                            item.b(getValueString(entryUiValue));
+                        }
+                        item.nbsp();
+                        durationLabel.append(item, entry.getEntryTime(), now);
+                        item.append(ELLIPSES);
+                    }, getEntryIdAttributes(HISTORY_ITEM, entry));
                     added = true;
                 }
             }
             default -> {
                 html.append(line);
-                html.append(HISTORY_ITEM_START);
-                addEntryId(html, entry);
-                addIcon(html, entry.getEntryType());
-                bold(html, getUserName(entry.getEntryUser()));
-                if (entry.getPreviousValue() != null) {
-                    html.appendHtmlConstant("&nbsp;");
-                    html.appendEscaped("changed the");
-                    html.appendHtmlConstant("&nbsp;");
-                } else {
-                    html.appendHtmlConstant("&nbsp;");
-                    html.appendEscaped("set the");
-                    html.appendHtmlConstant("&nbsp;");
-                }
-                html.appendEscaped(entry.getEntryType().getDisplayValue().toLowerCase());
-                html.appendHtmlConstant("&nbsp;");
+                html.div(item -> {
+                    addIcon(html, entry.getEntryType());
+                    item.b(getUserName(entry.getEntryUser()));
+                    if (entry.getPreviousValue() != null) {
+                        item.nbsp();
+                        item.appendTrustedString("changed the");
+                        item.nbsp();
+                    } else {
+                        item.nbsp();
+                        item.appendTrustedString("set the");
+                        item.nbsp();
+                    }
+                    item.append(entry.getEntryType().getDisplayValue().toLowerCase());
+                    item.nbsp();
 
-                if (entry.getPreviousValue() != null) {
-                    del(html, getValueString(entry.getPreviousValue().asUiValue()));
-                    html.appendHtmlConstant("&nbsp;");
-                    html.appendEscaped("to");
-                    html.appendHtmlConstant("&nbsp;");
-                    ins(html, getValueString(entryUiValue));
+                    if (entry.getPreviousValue() != null) {
+                        item.del(getValueString(entry.getPreviousValue().asUiValue()));
+                        item.nbsp();
+                        item.appendTrustedString("to");
+                        item.nbsp();
+                        item.ins(getValueString(entryUiValue));
 
-                } else {
-                    html.appendEscaped(getValueString(entryUiValue));
-                }
+                    } else {
+                        item.append(getValueString(entryUiValue));
+                    }
 
-                html.appendHtmlConstant("&nbsp;");
-                html.append(durationLabel.getDurationLabel(entry.getEntryTime(), now));
-                html.append(ELLIPSES);
-                html.append(HISTORY_ITEM_END);
+                    item.nbsp();
+                    durationLabel.append(item, entry.getEntryTime(), now);
+                    item.append(ELLIPSES);
+                }, getEntryIdAttributes(HISTORY_ITEM, entry));
                 added = true;
             }
         }
         return added;
     }
 
-    private void addIcon(final SafeHtmlBuilder html,
+    static void decorateComment(final HtmlBuilder html, final String comment) {
+        final StringBuilder sb = new StringBuilder();
+        final char[] chars = comment.toCharArray();
+
+        boolean start = true;
+        for (int i = 0; i < chars.length; i++) {
+            final char c = chars[i];
+            if (start && c == '#') {
+                // We may have an annotation ref.
+
+                // Get the string.
+                final String idString = getNumberString(chars, i + 1);
+                if (idString != null) {
+                    // Append current buffer.
+                    if (sb.length() > 0) {
+                        html.append(sb.toString());
+                        sb.setLength(0);
+                    }
+
+                    // Append the link.
+                    link(html, AnnotationEntryType.LINK_ANNOTATION, idString);
+
+                    // Jump to next index.
+                    i += idString.length();
+                } else {
+                    sb.append(c);
+                }
+
+            } else if (start && Character.isDigit(c)) {
+                // We may have an event id.
+                boolean isEventId = false;
+
+                int pos = i;
+                final String streamIdString = getNumberString(chars, pos);
+                if (streamIdString != null) {
+                    pos += streamIdString.length();
+                    if (chars.length > pos && chars[pos] == ':') {
+                        pos++;
+                        final String eventIdString = getNumberString(chars, pos);
+                        if (eventIdString != null) {
+                            pos += eventIdString.length();
+
+                            // Append current buffer.
+                            if (sb.length() > 0) {
+                                html.append(sb.toString());
+                                sb.setLength(0);
+                            }
+
+                            // Append the link.
+                            link(html, AnnotationEntryType.LINK_EVENT, streamIdString + ":" + eventIdString);
+
+                            // Jump to next index.
+                            i = pos - 1;
+                            isEventId = true;
+                        }
+                    }
+                }
+
+                if (!isEventId) {
+                    sb.append(c);
+                }
+
+            } else {
+                start = Character.isWhitespace(c);
+                sb.append(c);
+            }
+        }
+        // Add remaining content.
+        html.append(sb.toString());
+    }
+
+    private static String getNumberString(final char[] chars, final int start) {
+        // Try to get a number.
+        int len = 0;
+        for (int i = start; i < chars.length; i++) {
+            final char c = chars[i];
+            if (Character.isDigit(c)) {
+                len++;
+            } else {
+                break;
+            }
+        }
+        if (len > 0) {
+            try {
+                // Get the string.
+                final String idString = new String(chars, start, len);
+                // Make sure it is a valid number.
+                Long.parseLong(idString);
+                return idString;
+            } catch (final RuntimeException e) {
+                // Ignore.
+            }
+        }
+        return null;
+    }
+
+    private void addIcon(final HtmlBuilder html,
                          final AnnotationEntryType annotationEntryType) {
         final SvgImage image = switch (annotationEntryType) {
             case TITLE -> SvgImage.EDIT;
@@ -973,7 +1052,7 @@ public class AnnotationEditPresenter
             case UNLINK_ANNOTATION -> SvgImage.UNLINK;
             case DELETE -> SvgImage.CLEAR;
         };
-        html.appendHtmlConstant(image.getSvg());
+        html.appendTrustedString(image.getSvg());
     }
 
     private boolean areSameUser(final UserRef entryUser, final EntryValue entryValue) {
@@ -995,40 +1074,26 @@ public class AnnotationEditPresenter
         return success;
     }-*/;
 
-    private void bold(final SafeHtmlBuilder builder, final String value) {
-        builder.appendHtmlConstant("<b>");
-        builder.appendEscaped(value);
-        builder.appendHtmlConstant("</b>");
-    }
-
-    private void del(final SafeHtmlBuilder builder, final String value) {
-        builder.appendHtmlConstant("<del>");
-        builder.appendEscaped(value);
-        builder.appendHtmlConstant("</del>");
-    }
-
-    private void ins(final SafeHtmlBuilder builder, final String value) {
-        builder.appendHtmlConstant("<ins>");
-        builder.appendEscaped(value);
-        builder.appendHtmlConstant("</ins>");
-    }
-
-    private void link(final SafeHtmlBuilder builder,
-                      final AnnotationEntryType entryType,
-                      final String value) {
+    private static void link(final HtmlBuilder builder,
+                             final AnnotationEntryType entryType,
+                             final String value) {
         if (AnnotationEntryType.LINK_EVENT.equals(entryType) ||
             AnnotationEntryType.UNLINK_EVENT.equals(entryType)) {
             final EventId eventId = EventId.parse(value);
             if (eventId != null) {
-                builder.appendHtmlConstant("<b><u eventId=\"" + eventId + "\">" + eventId + "</u></b>");
+                builder.u(u -> u.append(eventId.toString()),
+                        ANNOTATION_LINK, new Attribute("eventId", eventId.toString()));
             } else {
-                bold(builder, value);
+                builder.b(value);
             }
         } else if (AnnotationEntryType.LINK_ANNOTATION.equals(entryType) ||
                    AnnotationEntryType.UNLINK_ANNOTATION.equals(entryType)) {
-            builder.appendHtmlConstant("<b><u annotationId=\"" + value + "\">" + value + "</u></b>");
+            builder.u(u -> {
+                u.append("#");
+                u.append(value);
+            }, ANNOTATION_LINK, new Attribute("annotationId", value));
         } else {
-            bold(builder, value);
+            builder.b(value);
         }
     }
 

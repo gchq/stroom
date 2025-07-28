@@ -246,7 +246,7 @@ public class DocumentUserPermissionsPresenter
                                             Attribute.title(docType.getDisplayType()),
                                             Attribute.className(
                                                     "svg-icon svgCell-icon " + icon.getClassName()))
-                                    .italic(docType.getDisplayType())
+                                    .i(docType.getDisplayType())
                                     .append(" from: ")
                                     .append(pathStr);
 
@@ -284,7 +284,7 @@ public class DocumentUserPermissionsPresenter
                                     Attribute.title(docType.getDisplayType()),
                                     Attribute.className(
                                             "svg-icon svgCell-icon " + icon.getClassName()))
-                            .italic(docType.getDisplayType());
+                            .i(docType.getDisplayType());
                 }
                 return htmlBuilder.toSafeHtml();
             } else {

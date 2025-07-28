@@ -294,6 +294,12 @@
     align-self: flex-end;
 }
 
+.annotationLink {
+    text-decoration: underline;
+    font-weight: 600;
+    cursor: pointer;
+}
+
 .annotationDelete {
     display: flex;
     flex-direction: row-reverse;
