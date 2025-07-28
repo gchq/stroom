@@ -47,7 +47,7 @@ public class QuickFilter extends FlowPanel
 
     private static final int DEBOUNCE_DELAY_MS = 400;
     private static final SafeHtml DEFAULT_POPUP_TEXT = new HtmlBuilder()
-            .b("Quick Filter")
+            .bold("Quick Filter")
             .br()
             .append("Field values containing the characters input will be included.")
             .br()

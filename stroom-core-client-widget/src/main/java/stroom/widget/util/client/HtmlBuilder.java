@@ -56,11 +56,11 @@ public class HtmlBuilder {
     // START ELEMENTS
     // -----------------------------------------------
 
-    public HtmlBuilder b(final Consumer<HtmlBuilder> content, final Attribute... attributes) {
+    public HtmlBuilder bold(final Consumer<HtmlBuilder> content, final Attribute... attributes) {
         return elem(content, ELEMENT_B, attributes);
     }
 
-    public HtmlBuilder b(final String textContent, final Attribute... attributes) {
+    public HtmlBuilder bold(final String textContent, final Attribute... attributes) {
         return elem(textContent, ELEMENT_B, attributes);
     }
 
@@ -100,11 +100,11 @@ public class HtmlBuilder {
         return elem(textContent, ELEMENT_INS, attributes);
     }
 
-    public HtmlBuilder i(final Consumer<HtmlBuilder> content, final Attribute... attributes) {
+    public HtmlBuilder italic(final Consumer<HtmlBuilder> content, final Attribute... attributes) {
         return elem(content, ELEMENT_I, attributes);
     }
 
-    public HtmlBuilder i(final String textContent, final Attribute... attributes) {
+    public HtmlBuilder italic(final String textContent, final Attribute... attributes) {
         return elem(textContent, ELEMENT_I, attributes);
     }
 
@@ -148,7 +148,7 @@ public class HtmlBuilder {
         return elem(content, ELEMENT_TR, attributes);
     }
 
-    public HtmlBuilder u(final Consumer<HtmlBuilder> content, final Attribute... attributes) {
+    public HtmlBuilder underline(final Consumer<HtmlBuilder> content, final Attribute... attributes) {
         return elem(content, ELEMENT_U, attributes);
     }
 

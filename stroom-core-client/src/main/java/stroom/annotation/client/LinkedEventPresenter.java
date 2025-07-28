@@ -86,6 +86,23 @@ public class LinkedEventPresenter
                 ColumnSizeConstants.MEDIUM_COL);
     }
 
+    private void linkEvent(final EventId eventId) {
+        annotationResourceClient.change(new SingleAnnotationChangeRequest(annotationRef,
+                new LinkEvents(Collections.singletonList(eventId))), this::onChange, this);
+    }
+
+    private void unlinkEvent(final EventId eventId) {
+        annotationResourceClient.change(new SingleAnnotationChangeRequest(annotationRef,
+                new UnlinkEvents(Collections.singletonList(eventId))), this::onChange, this);
+    }
+
+    private void onChange(final Boolean success) {
+        if (success != null && success) {
+            AnnotationChangeEvent.fire(this, annotationRef);
+            parent.updateHistory();
+        }
+    }
+
     @Override
     protected void onBind() {
         super.onBind();
@@ -94,13 +111,7 @@ public class LinkedEventPresenter
         registerHandler(addEventButton.addClickHandler(e -> addEventLinkPresenter.show(eventId -> {
             if (eventId != null) {
                 dirty = true;
-                annotationResourceClient.change(new SingleAnnotationChangeRequest(annotationRef, new LinkEvents(
-                        Collections.singletonList(eventId))), success -> {
-                    if (success) {
-                        AnnotationChangeEvent.fire(this, annotationRef);
-                        parent.updateHistory();
-                    }
-                }, this);
+                linkEvent(eventId);
             }
         })));
 
@@ -117,13 +128,7 @@ public class LinkedEventPresenter
                     nextSelection = currentData.get(index);
                 }
 
-                annotationResourceClient.change(new SingleAnnotationChangeRequest(annotationRef, new UnlinkEvents(
-                        Collections.singletonList(selected))), success -> {
-                    if (success) {
-                        AnnotationChangeEvent.fire(this, annotationRef);
-                        parent.updateHistory();
-                    }
-                }, this);
+                unlinkEvent(selected);
             }
         }));
     }

@@ -762,7 +762,7 @@ public class AnnotationEditPresenter
                 html.div(border -> {
                     border.div(header -> {
 
-                        header.b(getUserName(entry.getEntryUser()));
+                        header.bold(getUserName(entry.getEntryUser()));
                         header.append(HtmlBuilder.NB_SPACE);
                         header.appendTrustedString("commented");
                         header.append(HtmlBuilder.NB_SPACE);
@@ -773,7 +773,7 @@ public class AnnotationEditPresenter
                             header.append(HtmlBuilder.NB_SPACE);
                             header.appendTrustedString(" - ");
                             header.append(HtmlBuilder.NB_SPACE);
-                            header.b(getUserName(entry.getUpdateUser()));
+                            header.bold(getUserName(entry.getUpdateUser()));
                             header.append(HtmlBuilder.NB_SPACE);
                             header.appendTrustedString("edited");
                             header.append(HtmlBuilder.NB_SPACE);
@@ -799,7 +799,7 @@ public class AnnotationEditPresenter
                 html.append(line);
                 html.div(item -> {
                     addIcon(item, entry.getEntryType());
-                    item.b(getUserName(entry.getEntryUser()));
+                    item.bold(getUserName(entry.getEntryUser()));
                     item.nbsp();
                     item.append(entry.getEntryType().getActionText());
                     item.nbsp();
@@ -819,7 +819,7 @@ public class AnnotationEditPresenter
                     html.div(border -> {
                         border.div(header -> {
 
-                            header.b(getUserName(entry.getEntryUser()));
+                            header.bold(getUserName(entry.getEntryUser()));
                             header.nbsp();
                             header.append(values.size() == 1
                                     ? "added " + values.size() + " row"
@@ -859,7 +859,7 @@ public class AnnotationEditPresenter
                     html.append(line);
                     html.div(item -> {
                         addIcon(item, entry.getEntryType());
-                        item.b(getUserName(entry.getEntryUser()));
+                        item.bold(getUserName(entry.getEntryUser()));
                         if (areSameUser(entry.getEntryUser(), entry.getPreviousValue())) {
                             item.nbsp();
                             item.appendTrustedString("removed their assignment");
@@ -867,7 +867,7 @@ public class AnnotationEditPresenter
                             item.nbsp();
                             item.appendTrustedString("unassigned");
                             item.nbsp();
-                            item.b(getValueString(entry.getPreviousValue().asUiValue()));
+                            item.bold(getValueString(entry.getPreviousValue().asUiValue()));
                         }
                         item.nbsp();
                         durationLabel.append(item, entry.getEntryTime(), now);
@@ -880,7 +880,7 @@ public class AnnotationEditPresenter
                     html.append(line);
                     html.div(item -> {
                         addIcon(html, entry.getEntryType());
-                        item.b(getUserName(entry.getEntryUser()));
+                        item.bold(getUserName(entry.getEntryUser()));
                         if (areSameUser(entry.getEntryUser(), entry.getEntryValue())) {
                             item.nbsp();
                             item.appendTrustedString("self-assigned this");
@@ -888,7 +888,7 @@ public class AnnotationEditPresenter
                             item.nbsp();
                             item.appendTrustedString("assigned");
                             item.nbsp();
-                            item.b(getValueString(entryUiValue));
+                            item.bold(getValueString(entryUiValue));
                         }
                         item.nbsp();
                         durationLabel.append(item, entry.getEntryTime(), now);
@@ -901,7 +901,7 @@ public class AnnotationEditPresenter
                 html.append(line);
                 html.div(item -> {
                     addIcon(html, entry.getEntryType());
-                    item.b(getUserName(entry.getEntryUser()));
+                    item.bold(getUserName(entry.getEntryUser()));
                     if (entry.getPreviousValue() != null) {
                         item.nbsp();
                         item.appendTrustedString("changed the");
@@ -1081,19 +1081,19 @@ public class AnnotationEditPresenter
             AnnotationEntryType.UNLINK_EVENT.equals(entryType)) {
             final EventId eventId = EventId.parse(value);
             if (eventId != null) {
-                builder.u(u -> u.append(eventId.toString()),
+                builder.underline(u -> u.append(eventId.toString()),
                         ANNOTATION_LINK, new Attribute("eventId", eventId.toString()));
             } else {
-                builder.b(value);
+                builder.bold(value);
             }
         } else if (AnnotationEntryType.LINK_ANNOTATION.equals(entryType) ||
                    AnnotationEntryType.UNLINK_ANNOTATION.equals(entryType)) {
-            builder.u(u -> {
+            builder.underline(u -> {
                 u.append("#");
                 u.append(value);
             }, ANNOTATION_LINK, new Attribute("annotationId", value));
         } else {
-            builder.b(value);
+            builder.bold(value);
         }
     }
 

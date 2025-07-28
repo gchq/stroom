@@ -89,7 +89,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                         .append("Lists all users and user groups. User groups can be added and deleted."))
                 .para(paraBuilder -> paraBuilder
                         .append("To add/delete/disable users, open the ")
-                        .i("Users")
+                        .italic("Users")
                         .append(" screen."))
                 .toSafeHtml());
         this.userList.setName("userList");
@@ -247,13 +247,13 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                 .para("Lists user groups that " + lowerUserDesc + " is a direct member of.")
                 .para(paraBuilder -> paraBuilder
                         .append("Use the '")
-                        .b("+")
+                        .bold("+")
                         .append("' icon to add ")
                         .append(lowerUserDesc)
                         .append(" to another group."))
                 .para(paraBuilder -> paraBuilder
                         .append("Use the '")
-                        .b("-")
+                        .bold("-")
                         .append("' icon to remove ")
                         .append(lowerUserDesc)
                         .append(" from the selected parent group."))
@@ -281,13 +281,13 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                     .para("Lists users and user groups that are direct members of " + identityDesc + ".")
                     .para(paraBuilder -> paraBuilder
                             .append("Use the '")
-                            .b("+")
+                            .bold("+")
                             .append("' icon to add a new user or group as a member of ")
                             .append(identityDesc)
                             .append("."))
                     .para(paraBuilder -> paraBuilder
                             .append("Use the '")
-                            .b("-")
+                            .bold("-")
                             .append("' icon to remove the selected member from ")
                             .append(identityDesc)
                             .append("."))

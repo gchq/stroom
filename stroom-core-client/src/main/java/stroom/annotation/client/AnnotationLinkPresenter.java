@@ -81,32 +81,37 @@ public class AnnotationLinkPresenter
     protected void onBind() {
         super.onBind();
 
-        registerHandler(add.addClickHandler(e -> {
-            ShowFindAnnotationEvent.fire(this, annotation -> {
-                final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(annotationRef,
-                        new LinkAnnotations(Collections.singletonList(annotation.getId())));
-                annotationResourceClient.change(request, result -> {
-                    parent.updateHistory();
-                    listPresenter.refresh();
-                }, this);
-            });
-        }));
+        registerHandler(add.addClickHandler(e -> ShowFindAnnotationEvent.fire(this, this::link)));
         registerHandler(remove.addClickHandler(e -> {
             final Annotation annotation = listPresenter.getSelected();
             if (annotation != null) {
                 ConfirmEvent.fire(this, "Are you sure you want to remove this reference?", ok -> {
                     if (ok) {
-                        final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(annotationRef,
-                                new UnlinkAnnotations(Collections.singletonList(annotation.getId())));
-                        annotationResourceClient.change(request, result -> {
-                            parent.updateHistory();
-                            listPresenter.refresh();
-                        }, this);
+                        unlink(annotation);
                     }
                 });
             }
         }));
         registerHandler(listPresenter.addSelectionHandler(e -> enableButtons()));
+    }
+
+    private void link(final Annotation annotation) {
+        final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(annotationRef,
+                new LinkAnnotations(Collections.singletonList(annotation.getId())));
+        annotationResourceClient.change(request, this::onChange, this);
+    }
+
+    private void unlink(final Annotation annotation) {
+        final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(annotationRef,
+                new UnlinkAnnotations(Collections.singletonList(annotation.getId())));
+        annotationResourceClient.change(request, this::onChange, this);
+    }
+
+    private void onChange(final Boolean success) {
+        if (success != null && success) {
+            parent.updateHistory();
+            listPresenter.refresh();
+        }
     }
 
     @Override

@@ -115,6 +115,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static stroom.annotation.impl.db.jooq.tables.Annotation.ANNOTATION;
 import static stroom.annotation.impl.db.jooq.tables.AnnotationDataLink.ANNOTATION_DATA_LINK;
@@ -378,30 +379,35 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
             return ResultPage.empty();
         }
 
-        final List<Annotation> list = JooqUtil.contextResult(connectionProvider, context -> {
-                    var select = context
-                            .select()
-                            .from(ANNOTATION);
-                    if (request.getSourceId() != null) {
-                        select = select
-                                .join(ANNOTATION_LINK)
-                                .on(ANNOTATION_LINK.FK_ANNOTATION_DST_ID.eq(ANNOTATION.ID));
-                        conditions.add(ANNOTATION_LINK.FK_ANNOTATION_SRC_ID.eq(request.getSourceId()));
-                    } else if (request.getDestinationId() != null) {
-                        select = select
-                                .join(ANNOTATION_LINK)
-                                .on(ANNOTATION_LINK.FK_ANNOTATION_SRC_ID.eq(ANNOTATION.ID));
-                        conditions.add(ANNOTATION_LINK.FK_ANNOTATION_DST_ID.eq(request.getDestinationId()));
-                    }
-                    return select
-                            .where(conditions)
-                            .fetch()
-                            .stream()
-                            .map(this::mapToAnnotation)
-                            .filter(viewPredicate);
-                })
-                .toList();
+        final List<Annotation> list = JooqUtil.contextResult(connectionProvider, context ->
+                findAnnotations(context, conditions, request, viewPredicate).toList());
         return ResultPage.createPageLimitedList(list, request.getPageRequest());
+    }
+
+    private Stream<Annotation> findAnnotations(final DSLContext context,
+                                               final List<Condition> conditions,
+                                               final FindAnnotationRequest request,
+                                               final Predicate<Annotation> viewPredicate) {
+        var select = context
+                .select()
+                .from(ANNOTATION);
+        if (request.getSourceId() != null) {
+            select = select
+                    .join(ANNOTATION_LINK)
+                    .on(ANNOTATION_LINK.FK_ANNOTATION_DST_ID.eq(ANNOTATION.ID));
+            conditions.add(ANNOTATION_LINK.FK_ANNOTATION_SRC_ID.eq(request.getSourceId()));
+        } else if (request.getDestinationId() != null) {
+            select = select
+                    .join(ANNOTATION_LINK)
+                    .on(ANNOTATION_LINK.FK_ANNOTATION_SRC_ID.eq(ANNOTATION.ID));
+            conditions.add(ANNOTATION_LINK.FK_ANNOTATION_DST_ID.eq(request.getDestinationId()));
+        }
+        return select
+                .where(conditions)
+                .fetch()
+                .stream()
+                .map(this::mapToAnnotation)
+                .filter(viewPredicate);
     }
 
     @Override

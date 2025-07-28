@@ -148,7 +148,7 @@ public class QuickFilterTooltipUtil {
                         : "";
                 final SafeHtml value = new HtmlBuilder()
                         .code(hb -> hb.append(fieldDefinition.getFilterQualifier()))
-                        .i(suffix)
+                        .italic(suffix)
                         .toSafeHtml();
                 tb.row(SafeHtmlUtil.from(fieldDefinition.getDisplayName()), value);
             });
