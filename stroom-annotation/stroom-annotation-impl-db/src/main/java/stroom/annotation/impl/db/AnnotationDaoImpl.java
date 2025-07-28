@@ -393,7 +393,8 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                                 .on(ANNOTATION_LINK.FK_ANNOTATION_SRC_ID.eq(ANNOTATION.ID));
                         conditions.add(ANNOTATION_LINK.FK_ANNOTATION_DST_ID.eq(request.getDestinationId()));
                     }
-                    return select.where(conditions)
+                    return select
+                            .where(conditions)
                             .fetch()
                             .stream()
                             .map(this::mapToAnnotation)
