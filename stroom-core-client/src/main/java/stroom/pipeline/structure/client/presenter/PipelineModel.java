@@ -160,6 +160,22 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
         return renamedElement;
     }
 
+    public PipelineElement changeElementDescription(
+        final PipelineElement element,
+        final String newDescription) throws PipelineModelException {
+        final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineLayer.getPipelineData());
+        builder.getElements().getAddList().remove(element);
+        final PipelineElement updatedElement = new PipelineElement(element.getId(), element.getType(),
+                element.getName(), newDescription);
+
+        builder.addElement(updatedElement);
+        pipelineLayer = new PipelineLayer(pipelineLayer.getSourcePipeline(), builder.build());
+        buildCombinedData();
+        refresh();
+
+        return updatedElement;
+    }
+
     private void buildCombinedData() throws PipelineModelException {
         // Merge pipeline data together.
         final List<PipelineLayer> combined;

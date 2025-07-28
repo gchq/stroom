@@ -303,10 +303,14 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
             final HidePopupRequestEvent.Handler handler = e -> {
                 if (e.isOk()) {
                     final String newName = newElementPresenter.getElementName();
+                    final String newDescription = newElementPresenter.getElementDescription();
                     if (newName != null && !newName.trim().isEmpty()) {
                         try {
                             final PipelineElement renamedElement =
                                     pipelineModel.renameElement(selected, newName.trim());
+                            if (newDescription != null) {
+                                pipelineModel.changeElementDescription(renamedElement, newDescription);
+                            }
                             pipelineTreePresenter.getSelectionModel().setSelected(renamedElement, true);
                             setDirty(true);
                         } catch (final RuntimeException ex) {
@@ -322,7 +326,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                     selected.getName() != null
                             ? selected.getName()
                             : selected.getId().toString(),
-                    "Rename Element"
+                    "Edit Element"
             );
         }
     }
@@ -356,7 +360,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         menuItems.add(new IconMenuItem.Builder()
                 .priority(3)
                 .icon(SvgImage.EDIT)
-                .text("Rename")
+                .text("Edit")
                 .enabled(selected != null)
                 .command(this::onRenameElement)
                 .build());
