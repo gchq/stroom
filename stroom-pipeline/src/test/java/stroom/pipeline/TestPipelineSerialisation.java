@@ -52,7 +52,6 @@ class TestPipelineSerialisation {
                       "id" : "test1",
                       "type" : "TestElement",
                       "name" : "test1Name"
-                      "description" : null
                     } ]
                   }
                 }""");
