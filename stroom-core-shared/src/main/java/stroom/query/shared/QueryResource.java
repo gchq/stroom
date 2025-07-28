@@ -29,14 +29,18 @@ import stroom.util.shared.ResultPage;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.List;
@@ -135,6 +139,15 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
             @Parameter(description = "request", required = true) final QuerySearchRequest request) {
         return search(null, request);
     }
+
+    @GET
+    @Path("/csv/search")
+    @Operation(
+            summary = "Perform a csv query",
+            operationId = "queryCsv")
+    @Produces(MediaType.TEXT_PLAIN)
+    String csvSearch(@NotNull @QueryParam("query") final String query, @QueryParam("offset") final int offset,
+                       @DefaultValue("100") @QueryParam("length") final int length);
 
     @GET
     @Path("/fetchTimeZones")
