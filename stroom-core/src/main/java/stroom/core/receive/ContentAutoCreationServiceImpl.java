@@ -35,6 +35,7 @@ import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.receive.common.ReceiveDataConfig;
+import stroom.receive.common.UnauthenticatedUserIdentity;
 import stroom.receive.content.shared.ContentTemplate;
 import stroom.receive.content.shared.ContentTemplates;
 import stroom.security.api.AppPermissionService;
@@ -199,16 +200,18 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         LOGGER.debug("tryCreateFeed - feedName: {}, userRef: {}, attributeMap: {}",
                 feedName, userDesc, attributeMap);
 
-        // Content gets created as the configured user
-        final UserRef runAsUserRef = getRunAsUser();
+        return getMatchingTemplate(attributeMap)
+                .flatMap(contentTemplate -> {
+                    // Content gets created as the configured user
+                    final UserRef runAsUserRef = getRunAsUser();
 
-        final Optional<FeedDoc> optFeedDoc = securityContext.asUserResult(runAsUserRef, () ->
-                ensureFeed(feedName, userDesc, attributeMap));
+                    final Optional<FeedDoc> optFeedDoc = securityContext.asUserResult(runAsUserRef, () ->
+                            ensureFeed(feedName, userDesc, attributeMap, contentTemplate));
 
-        LOGGER.debug("feedName: '{}', userDesc: '{}', optFeedDoc: {}",
-                feedName, userDesc, optFeedDoc);
-
-        return optFeedDoc;
+                    LOGGER.debug("feedName: '{}', userDesc: '{}', optFeedDoc: {}",
+                            feedName, userDesc, optFeedDoc);
+                    return optFeedDoc;
+                });
     }
 
     private UserRef getRunAsUser() {
@@ -232,7 +235,8 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
 
     private Optional<FeedDoc> ensureFeed(final String feedName,
                                          final UserDesc userDesc,
-                                         final AttributeMap attributeMap) {
+                                         final AttributeMap attributeMap,
+                                         final ContentTemplate contentTemplate) {
 
         // We will only come in here if the caller thought the feed needed creating
         // so the lock won't impact normal running once the feed is set up.
@@ -246,7 +250,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
             final List<DocRef> feeds = feedStore.findByName(feedName);
             if (feeds.isEmpty()) {
                 try {
-                    docRef = createFeedAndContent(feedName, userDesc, attributeMap);
+                    docRef = createFeedAndContent(feedName, userDesc, attributeMap, contentTemplate);
                 } catch (final EntityServiceException e) {
                     // It's possible that another thread/node has created the feed
                     if (NullSafe.containsIgnoringCase(e.getMessage(), "exists")) {
@@ -270,7 +274,8 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
 
     private DocRef createFeedAndContent(final String feedName,
                                         final UserDesc userDesc,
-                                        final AttributeMap attributeMap) {
+                                        final AttributeMap attributeMap,
+                                        final ContentTemplate contentTemplate) {
 
         final String destinationPath = cachedDestinationPathTemplator.getValue()
                 .apply(attributeMap);
@@ -281,15 +286,22 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         final DocRef destFolderRef = destFolder.getDocRef();
         final UserRef userRef;
 
+        // Get/create the user if possible
         if (userDesc != null) {
-            LOGGER.info("Ensuing user with userRef: '{}' exists", userDesc);
-            final User user = userService.getOrCreateUser(userDesc);
-            userRef = user.asRef();
+            if (UnauthenticatedUserIdentity.getInstance().getSubjectId().equals(userDesc.getSubjectId())) {
+                LOGGER.debug("Unauthenticated user {}", userDesc);
+                userRef = null;
+            } else {
+                LOGGER.info("Ensuing user with userRef: '{}' exists", userDesc);
+                final User user = userService.getOrCreateUser(userDesc);
+                userRef = user.asRef();
+            }
         } else {
             LOGGER.info("No user details, won't ensure Stroom user or add any users to groups.");
             userRef = null;
         }
 
+        // Set up the group
         final String groupName = cachedGroupTemplator.getValue().apply(attributeMap);
         LOGGER.info("Auto-creating user group '{}'", groupName);
         final User group = userService.getOrCreateUserGroup(groupName);
@@ -299,6 +311,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
             userService.addUserToGroup(userRef, group.asRef());
         }
 
+        // Set up the additional group
         Optional<User> optAdditionalGroup = Optional.empty();
         final String additionalGroupName = cachedAdditionalGroupTemplator.getValue()
                 .apply(attributeMap);
@@ -313,8 +326,8 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
             optAdditionalGroup = Optional.of(additionalGroup);
         }
 
+        // Creates the explorer node for the Feed and the FeedDoc itself
         LOGGER.info("Auto-creating feed {} in path '{}'", feedName, docPath);
-        // Creates the node and the doc
         final DocRef feedDocRef = explorerService.create(
                 FeedDoc.TYPE,
                 feedName,
@@ -336,7 +349,8 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
             setUpdateDocPerms(additionalGroup, feedDocRef, DocumentPermission.EDIT);
         });
 
-        createTemplatedContent(attributeMap, feedDocRef, destFolder);
+        // Create any templated content
+        createTemplatedContent(attributeMap, feedDocRef, destFolder, contentTemplate);
 
         LOGGER.debug("feedDoc after configuration: {}", feedDoc);
 
@@ -469,7 +483,8 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                 }
             }
         }
-        LOGGER.debug("matchingTemplate: {}", matchingTemplate);
+        LOGGER.debug("getMatchingTemplate() - matchingTemplate: {}, attributeMap: {}",
+                matchingTemplate, activeTemplates);
         return Optional.ofNullable(matchingTemplate);
     }
 
@@ -482,43 +497,38 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
 
     private void createTemplatedContent(final AttributeMap attributeMap,
                                         final DocRef feedDocRef,
-                                        final ExplorerNode destFolder) {
+                                        final ExplorerNode destFolder,
+                                        final ContentTemplate contentTemplate) {
 
-        getMatchingTemplate(attributeMap)
-                .ifPresentOrElse(contentTemplate -> {
-                    LOGGER.debug("createTemplatedContent() - Matched template {}, attributeMap: {}",
-                            contentTemplate, attributeMap);
-                    final DocRef pipelineDocRef = Objects.requireNonNull(contentTemplate.getPipeline());
-                    final PipelineDoc pipelineDoc;
-                    try {
-                        pipelineDoc = pipelineService.fetch(pipelineDocRef.getUuid());
-                    } catch (final Exception e) {
-                        throw new RuntimeException(LogUtil.message(
-                                "Unable to fetch the pipeline {} configured in content template {} '{}'.",
-                                pipelineDocRef,
-                                contentTemplate.getTemplateNumber(),
-                                contentTemplate.getName()), e);
-                    }
+        LOGGER.debug("createTemplatedContent() - Matched template {}, attributeMap: {}",
+                contentTemplate, attributeMap);
+        final DocRef pipelineDocRef = Objects.requireNonNull(contentTemplate.getPipeline());
+        final PipelineDoc pipelineDoc;
+        try {
+            pipelineDoc = pipelineService.fetch(pipelineDocRef.getUuid());
+        } catch (final Exception e) {
+            throw new RuntimeException(LogUtil.message(
+                    "Unable to fetch the pipeline {} configured in content template {} '{}'.",
+                    pipelineDocRef,
+                    contentTemplate.getTemplateNumber(),
+                    contentTemplate.getName()), e);
+        }
 
-                    switch (contentTemplate.getTemplateType()) {
+        switch (contentTemplate.getTemplateType()) {
 
-                        case PROCESSOR_FILTER -> createProcessorFilter(
-                                attributeMap.get(StandardHeaderArguments.TYPE),
-                                contentTemplate.getPipeline(),
-                                feedDocRef,
-                                contentTemplate);
+            case PROCESSOR_FILTER -> createProcessorFilter(
+                    attributeMap.get(StandardHeaderArguments.TYPE),
+                    contentTemplate.getPipeline(),
+                    feedDocRef,
+                    contentTemplate);
 
-                        case INHERIT_PIPELINE -> createPipelineFromParent(
-                                pipelineDoc,
-                                attributeMap.get(StandardHeaderArguments.TYPE),
-                                feedDocRef,
-                                destFolder,
-                                contentTemplate);
-                    }
-                }, () -> {
-                    LOGGER.debug("createTemplatedContent() - No matching template for attributeMap: {}",
-                            attributeMap);
-                });
+            case INHERIT_PIPELINE -> createPipelineFromParent(
+                    pipelineDoc,
+                    attributeMap.get(StandardHeaderArguments.TYPE),
+                    feedDocRef,
+                    destFolder,
+                    contentTemplate);
+        }
     }
 
     private void createProcessorFilter(final String streamType,
