@@ -116,7 +116,7 @@ class TestInnerProcessEndToEnd {
                       final Consumer<ReceiverFactory> sender) {
         try {
             final Path root = Files.createTempDirectory("stroom-proxy");
-            LOGGER.info("root: {}", root);
+            LOGGER.debug("root: {}", root);
             ProxyLifecycle proxyLifecycle = null;
             try {
                 FileUtil.deleteContents(root);
@@ -192,7 +192,7 @@ class TestInnerProcessEndToEnd {
                 final long maxId = DirUtil.getMaxDirId(storeDir);
 
                 final Snapshot snapshot = DirectorySnapshot.of(storeDir);
-                LOGGER.info("snapshot:\n{}", snapshot);
+                LOGGER.debug("snapshot:\n{}", snapshot);
 
                 // Cope with final rolling output (hence +1).
                 assertThat(maxId).isGreaterThanOrEqualTo(expectedOutputStreamCount);

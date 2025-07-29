@@ -155,7 +155,7 @@ public class Servlets {
         final HealthCheckRegistry healthCheckRegistry = environment.healthChecks();
         final String name = servlet.getClass().getName();
 
-        if (servlet instanceof HasHealthCheck) {
+        if (servlet instanceof final HasHealthCheck hasHealthCheck) {
             LOGGER.info("Adding health check for servlet {}", name);
             // object has a getHealth method so build a HealthCheck that wraps it and
             // adds in the servlet path information
@@ -164,36 +164,33 @@ public class Servlets {
                 protected HealthCheck.Result check() {
                     // Decorate the existing health check results with the full path spec
                     // as the servlet doesn't know its own full path
-                    HealthCheck.Result result = ((HasHealthCheck) servlet).getHealth();
-
                     final HealthCheck.ResultBuilder builder = Result.builder();
-                    if (result.isHealthy()) {
-                        builder
-                                .healthy()
-                                .withMessage(result.getMessage())
-                                .withDetail(SERVLET_PATH_KEY, fullPathSpec)
-                                .build();
-                    } else {
-                        builder
-                                .unhealthy(result.getError())
-                                .withMessage(result.getMessage())
-                                .withDetail(SERVLET_PATH_KEY, fullPathSpec)
-                                .build();
-                    }
-                    builder
-                            .withMessage(result.getMessage())
-                            .withDetail(SERVLET_PATH_KEY, fullPathSpec);
-
-                    if (result.getDetails() != null) {
-                        if (result.getDetails().containsKey(SERVLET_PATH_KEY)) {
-                            LOGGER.warn("Overriding health check detail for {} {} in servlet {}",
-                                    SERVLET_PATH_KEY,
-                                    result.getDetails().get(SERVLET_PATH_KEY),
-                                    name);
+                    Result result = null;
+                    try {
+                        result = hasHealthCheck.getHealth();
+                        if (result.isHealthy()) {
+                            builder.healthy();
+                        } else {
+                            builder.unhealthy(result.getError());
                         }
-                        result.getDetails().forEach(builder::withDetail);
+                        builder.withMessage(result.getMessage());
+                        if (result.getDetails() != null) {
+                            if (result.getDetails().containsKey(SERVLET_PATH_KEY)) {
+                                LOGGER.warn("Overriding health check detail for {} {} in servlet {}",
+                                        SERVLET_PATH_KEY,
+                                        result.getDetails().get(SERVLET_PATH_KEY),
+                                        name);
+                            }
+                            result.getDetails()
+                                    .forEach(builder::withDetail);
+                        }
+                    } catch (final Exception e) {
+                        builder.unhealthy(e);
+                        LOGGER.error("Error getting health for servlet {}: {}",
+                                servlet.getClass().getSimpleName(), LogUtil.exceptionMessage(e), e);
                     }
 
+                    builder.withDetail(SERVLET_PATH_KEY, fullPathSpec);
                     result = builder.build();
 
                     return result;

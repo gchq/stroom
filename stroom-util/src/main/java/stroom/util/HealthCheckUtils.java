@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -85,6 +86,26 @@ public class HealthCheckUtils {
             map = Collections.emptyMap();
         }
         return map;
+    }
+
+    public static ResultBuilder addCurrentTime(final ResultBuilder builder,
+                                               final String key) {
+        return Objects.requireNonNull(builder)
+                .withDetail(key, Instant.now().toString());
+    }
+
+    public static ResultBuilder addTime(final ResultBuilder builder,
+                                        final String key,
+                                        final long epochMs) {
+        return Objects.requireNonNull(builder)
+                .withDetail(key, Instant.ofEpochMilli(epochMs).toString());
+    }
+
+    public static ResultBuilder addTime(final ResultBuilder builder,
+                                        final String key,
+                                        final Instant instant) {
+        return Objects.requireNonNull(builder)
+                .withDetail(key, NullSafe.get(instant, Instant::toString));
     }
 
     /**
@@ -154,8 +175,21 @@ public class HealthCheckUtils {
      * If the response status matches expectedStatus then it will be healthy, else unhealthy
      * with the response code, reasonPhrase and expectedStatus added as detail.
      */
-    public static ResultBuilder fromResponse(final Response response, final Status expectedStatus, final String url) {
-        final HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
+    public static ResultBuilder fromResponse(final Response response,
+                                             final Status expectedStatus,
+                                             final String url) {
+        return fromResponse(HealthCheck.Result.builder(), response, expectedStatus, url);
+    }
+
+    /**
+     * Create a {@link HealthCheck} {@link ResultBuilder} from a {@link Response}.
+     * If the response status matches expectedStatus then it will be healthy, else unhealthy
+     * with the response code, reasonPhrase and expectedStatus added as detail.
+     */
+    public static ResultBuilder fromResponse(final HealthCheck.ResultBuilder resultBuilder,
+                                             final Response response,
+                                             final Status expectedStatus,
+                                             final String url) {
         try {
             Objects.requireNonNull(response);
             Objects.requireNonNull(expectedStatus);
