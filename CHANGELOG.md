@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+* Allow clientSecret to be null/empty for mTLS auth.
+
 
 ## [v7.11-beta.4] - 2025-07-29
 

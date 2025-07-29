@@ -285,8 +285,7 @@ public abstract class AbstractOpenIdConfig
         return clientId;
     }
 
-    // TODO Not sure we can add NotNull to this as it has no default and if useInternal is true
-    //  it doesn't need a value
+    // May be null for mTLS auth
     @Override
     @JsonProperty(PROP_NAME_CLIENT_SECRET)
     @JsonPropertyDescription("The client secret used in OpenId authentication.")
