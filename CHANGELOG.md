@@ -22,6 +22,10 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 ## [v7.11-beta.3] - 2025-07-21
 
+* Issue **#5028** : Add build info metrics `buildVersion`, `buildDate` and `upTime`.
+
+* Add admin port servlets for Prometheus to scrape metrics from stroom and proxy. Servlet is available as `http://host:<admin port>/(stroom|proxy)Admin/prometheusMetrics`.
+
 * Issue **#4735** : Add expand/collapse to result tables.
 
 * Issue **#5013** : Allow annotation status update without requery.
