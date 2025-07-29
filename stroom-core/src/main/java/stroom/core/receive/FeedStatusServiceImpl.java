@@ -112,7 +112,7 @@ class FeedStatusServiceImpl implements FeedStatusService {
                                 LOGGER.debug("Content auto-creation disabled");
                             }
                         } else {
-                            LOGGER.debug("Can't auto-create");
+                            LOGGER.debug("Feed {} exists with status {}", feedName, feedStatus);
                         }
                         LOGGER.debug("feedName: {}, userDesc: {}, feedStatus: {}, ",
                                 feedName, userDesc, feedStatus);

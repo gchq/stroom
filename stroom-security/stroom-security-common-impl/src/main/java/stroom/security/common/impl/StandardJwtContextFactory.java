@@ -455,6 +455,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                     ? defaultOpenIdCredentials.getOauth2ClientId()
                     : openIdConfiguration.getClientId();
             builder.setExpectedAudience(clientId);
+            builder.setExpectedAudience(false, clientId);
         } else {
             builder.setSkipDefaultAudienceValidation();
         }
