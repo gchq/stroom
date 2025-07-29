@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11-beta.4] - 2025-07-29
+
+* Change the proxy config properties `forwardUrl`, `livenessCheckUrl`, `apiKeyVerificationUrl` and `feedStatusUrl` to be empty by default and to allow them to be populated with either just a path or a full URL. `downstreamHost` config will be used to provide the host details if these properties are empty or only contain a path. Added the property `livenessCheckEnabled` to `forwardHttpDestinations` to control whether the forward destination liveness is checked (defaults to true).
+
+
 ## [v7.11-beta.3] - 2025-07-21
 
 * Issue **#4735** : Add expand/collapse to result tables.
@@ -1627,7 +1632,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.3...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.4...HEAD
+[v7.11-beta.4]: https://github.com/gchq/stroom/compare/v7.11-beta.3...v7.11-beta.4
 [v7.11-beta.3]: https://github.com/gchq/stroom/compare/v7.11-beta.2...v7.11-beta.3
 [v7.11-beta.2]: https://github.com/gchq/stroom/compare/v7.11-beta.1...v7.11-beta.2
 [v7.11-beta.1]: https://github.com/gchq/stroom/compare/v7.10-beta.6...v7.11-beta.1
