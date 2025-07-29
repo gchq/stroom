@@ -178,6 +178,7 @@ proxyConfig:
   forwardHttpDestinations:
     - enabled: {{ true | envVar('FORWARDING_ENABLED') }}
       name: "downstream"
+      forwardUrl: "{{ '' | envVar('FORWARD_URL') }}"
       httpClient:
         tls:
             keyStorePath: "certs/client.jks"
