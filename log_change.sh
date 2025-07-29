@@ -418,6 +418,22 @@ write_change_entry() {
     echo "# * Issue **namespace/other-repo#456** : Fix bug with an associated GitHub issue in another repository"
     echo "#"
     echo "# * Fix bug with no associated GitHub issue."
+    echo
+    echo
+    echo "# --------------------------------------------------------------------------------"
+    echo "# The following is random text to make this file unique for git's change detection"
+    # shellcheck disable=SC2034
+    for ignored in {1..30}; do
+      # Print 80 random chars to std out
+      echo -n "# "
+      tr -dc A-Za-z0-9 </dev/urandom \
+        | head -c 80 \
+        || true
+      # Add the line break
+      echo
+    done
+    echo "# --------------------------------------------------------------------------------"
+    echo
     echo '```'
   )"
 
@@ -427,6 +443,7 @@ write_change_entry() {
   info "${DGREY}------------------------------------------------------------------------${NC}"
 
   echo -e "${all_content}" > "${change_file}"
+
 
   if [[ -z "${change_text}" ]]; then
     open_file_in_editor "${change_file}" "${git_issue}"
@@ -573,6 +590,7 @@ list_unreleased_changes() {
 
   # git_issue_str may be '*' so we must not quote it else the
   # globbing won't work
+  # shellcheck disable=SC2231
   for file in "${unreleased_dir}/"*__${git_issue_str}.md; do
     if [[ -f "${file}" ]]; then
       local filename
