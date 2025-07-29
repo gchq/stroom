@@ -26,6 +26,8 @@ import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.query.language.functions.ref.StoredValues;
+import stroom.query.language.functions.ref.ValueReferenceIndex;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 
@@ -33,6 +35,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public interface AnnotationDao {
 
@@ -44,7 +47,18 @@ public interface AnnotationDao {
 
     Optional<Annotation> getAnnotationByDocRef(DocRef annotationRef);
 
-    List<Annotation> getAnnotationsForEvents(EventId eventId);
+    RecordMappers createDecorationMappers(ValueReferenceIndex valueReferenceIndex);
+
+    Stream<StoredValues> decorate(EventId eventId,
+                                  StoredValues storedValues,
+                                  RecordMappers recordMappers,
+                                  Predicate<String> uuidPredicate);
+
+    @Deprecated
+    List<Annotation> getAnnotationsForEventId(EventId eventId);
+
+    @Deprecated
+    boolean hasEventId(EventId eventId);
 
     Annotation createAnnotation(CreateAnnotationRequest request, UserRef currentUser);
 
@@ -54,6 +68,7 @@ public interface AnnotationDao {
 
     List<EventId> getLinkedEvents(DocRef annotationRef);
 
+    @Deprecated
     List<Long> getLinkedAnnotations(DocRef annotationRef);
 
     void search(ExpressionCriteria criteria,
@@ -82,4 +97,8 @@ public interface AnnotationDao {
     boolean changeAnnotationEntry(DocRef annotationRef, UserRef currentUser, long entryId, String data);
 
     boolean logicalDeleteEntry(DocRef annotationRef, UserRef currentUser, long entryId);
+
+    interface RecordMappers {
+
+    }
 }

@@ -18,6 +18,7 @@ package stroom.annotation.impl.db;
 
 import stroom.annotation.impl.AnnotationConfig;
 import stroom.annotation.impl.AnnotationDao;
+import stroom.annotation.impl.db.jooq.tables.AnnotationTagLink;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationEntryRecord;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationRecord;
 import stroom.annotation.shared.AbstractAnnotationChange;
@@ -63,6 +64,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.StreamFeedProvider;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionUtil;
+import stroom.query.api.SpecialColumns;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.FieldProviderImpl;
@@ -75,6 +77,8 @@ import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.query.language.functions.ref.StoredValues;
+import stroom.query.language.functions.ref.ValueReferenceIndex;
 import stroom.security.shared.FindUserContext;
 import stroom.security.user.api.UserRefLookup;
 import stroom.util.json.JsonUtil;
@@ -108,6 +112,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -142,15 +147,104 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
     private static final stroom.annotation.impl.db.jooq.tables.AnnotationEntry HISTORY =
             ANNOTATION_ENTRY.as("history");
 
+    private static final String DELIMITER = "|";
+    private static final AnnotationTagLink STATUS_LINK = ANNOTATION_TAG_LINK.as("status_link");
+    private static final AnnotationTagLink LABEL_LINK = ANNOTATION_TAG_LINK.as("label_link");
+    private static final AnnotationTagLink COLLECTION_LINK = ANNOTATION_TAG_LINK.as("collection_link");
+
+
+    private static final Field<String> STATUS_DECORATION_FIELD = DSL
+            .select(DSL.groupConcatDistinct(STATUS.NAME)
+                    .orderBy(STATUS.NAME)
+                    .separator(DELIMITER))
+            .from(STATUS_LINK)
+            .join(STATUS)
+            .on(STATUS_LINK.FK_ANNOTATION_TAG_ID.eq(STATUS.ID)
+                    .and(STATUS.TYPE_ID.eq(AnnotationTagType.STATUS.getPrimitiveValue()))
+                    .and(STATUS.DELETED.isFalse()))
+            .where(STATUS_LINK.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
+            .groupBy(STATUS_LINK.FK_ANNOTATION_ID)
+            .asField("status");
+
+
+    private static final Field<String> LABEL_DECORATION_FIELD = DSL
+            .select(DSL.groupConcatDistinct(LABEL.NAME)
+                    .orderBy(LABEL.NAME)
+                    .separator(DELIMITER))
+            .from(LABEL_LINK)
+            .join(LABEL)
+            .on(LABEL_LINK.FK_ANNOTATION_TAG_ID.eq(LABEL.ID)
+                    .and(LABEL.TYPE_ID.eq(AnnotationTagType.LABEL.getPrimitiveValue()))
+                    .and(LABEL.DELETED.isFalse()))
+            .where(LABEL_LINK.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
+            .groupBy(LABEL_LINK.FK_ANNOTATION_ID)
+            .asField("labels");
+
+    private static final Field<String> COLLECTION_DECORATION_FIELD = DSL
+            .select(DSL.groupConcatDistinct(COLLECTION.NAME)
+                    .orderBy(COLLECTION.NAME)
+                    .separator(DELIMITER))
+            .from(COLLECTION_LINK)
+            .join(COLLECTION)
+            .on(COLLECTION_LINK.FK_ANNOTATION_TAG_ID.eq(COLLECTION.ID)
+                    .and(COLLECTION.TYPE_ID.eq(AnnotationTagType.COLLECTION.getPrimitiveValue()))
+                    .and(COLLECTION.DELETED.isFalse()))
+            .where(COLLECTION_LINK.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
+            .groupBy(COLLECTION_LINK.FK_ANNOTATION_ID)
+            .asField("collections");
+
+    private static final Field<String> COMMENT_DECORATION_FIELD = DSL
+            .select(COMMENT.DATA)
+            .from(COMMENT)
+            .where(COMMENT.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
+            .and(COMMENT.TYPE_ID
+                    .eq(AnnotationEntryType.COMMENT.getPrimitiveValue()))
+            .and(COMMENT.DELETED.isFalse())
+            .orderBy(COMMENT.ID.desc())
+            .limit(1)
+            .asField("comment");
+
+    private static final Field<String> HISTORY_DECORATION_FIELD = DSL
+            .select(DSL.groupConcatDistinct(HISTORY.DATA)
+                    .orderBy(HISTORY.ID)
+                    .separator(DELIMITER))
+            .from(HISTORY)
+            .where(HISTORY.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
+            .and(HISTORY.TYPE_ID
+                    .eq(AnnotationEntryType.COMMENT.getPrimitiveValue()))
+            .and(HISTORY.DELETED.isFalse())
+            .groupBy(HISTORY.FK_ANNOTATION_ID)
+            .asField("history");
+
+    private static final Map<QueryField, RecordMapper> FIELD_MAP = Map.ofEntries(
+            createLongFunction(AnnotationDecorationFields.ANNOTATION_ID_FIELD, ANNOTATION.ID),
+            createStringFunction(AnnotationDecorationFields.ANNOTATION_UUID_FIELD, ANNOTATION.UUID),
+            createDateFunction(AnnotationDecorationFields.ANNOTATION_CREATED_ON_FIELD, ANNOTATION.CREATE_TIME_MS),
+            createStringFunction(AnnotationDecorationFields.ANNOTATION_CREATED_BY_FIELD, ANNOTATION.CREATE_USER),
+            createDateFunction(AnnotationDecorationFields.ANNOTATION_UPDATED_ON_FIELD, ANNOTATION.UPDATE_TIME_MS),
+            createStringFunction(AnnotationDecorationFields.ANNOTATION_UPDATED_BY_FIELD, ANNOTATION.UPDATE_USER),
+            createStringFunction(AnnotationDecorationFields.ANNOTATION_TITLE_FIELD, ANNOTATION.TITLE),
+            createStringFunction(AnnotationDecorationFields.ANNOTATION_SUBJECT_FIELD, ANNOTATION.SUBJECT),
+            createStringFunction(AnnotationDecorationFields.ANNOTATION_STATUS_FIELD, STATUS_DECORATION_FIELD),
+            createStringFunction(AnnotationDecorationFields.ANNOTATION_ASSIGNED_TO_FIELD, ANNOTATION.ASSIGNED_TO_UUID),
+            createStringFunction(AnnotationDecorationFields.ANNOTATION_LABEL_FIELD, LABEL_DECORATION_FIELD),
+            createStringFunction(AnnotationDecorationFields.ANNOTATION_COLLECTION_FIELD, COLLECTION_DECORATION_FIELD),
+            createStringFunction(AnnotationDecorationFields.ANNOTATION_COMMENT_FIELD, COMMENT_DECORATION_FIELD),
+            createStringFunction(AnnotationDecorationFields.ANNOTATION_HISTORY_FIELD, HISTORY_DECORATION_FIELD),
+            createStringFunction(AnnotationDecorationFields.ANNOTATION_DESCRIPTION_FIELD, ANNOTATION.DESCRIPTION));
+
     private static final Field<String> STATUS_FIELD =
-            DSL.groupConcatDistinct(STATUS.NAME).orderBy(STATUS.NAME.asc()).separator("|");
+            DSL.groupConcatDistinct(STATUS.NAME).orderBy(STATUS.NAME.asc()).separator(DELIMITER);
     private static final Field<String> LABEL_FIELD =
-            DSL.groupConcatDistinct(LABEL.NAME).orderBy(LABEL.NAME.asc()).separator("|");
+            DSL.groupConcatDistinct(LABEL.NAME).orderBy(LABEL.NAME.asc()).separator(DELIMITER);
     private static final Field<String> COLLECTION_FIELD =
-            DSL.groupConcatDistinct(COLLECTION.NAME).orderBy(COLLECTION.NAME.asc()).separator("|");
+            DSL.groupConcatDistinct(COLLECTION.NAME).orderBy(COLLECTION.NAME.asc()).separator(DELIMITER);
     private static final Field<String> COMMENT_FIELD = COMMENT.DATA;
     private static final Field<String> HISTORY_FIELD =
-            DSL.groupConcatDistinct(HISTORY.DATA).orderBy(HISTORY.ENTRY_TIME_MS.asc()).separator("|");
+            DSL.groupConcatDistinct(HISTORY.DATA).orderBy(HISTORY.ENTRY_TIME_MS.asc()).separator(DELIMITER);
+
+    private static final RecordMappersImpl NO_MAPPING = new RecordMappersImpl(
+            Collections.emptyList(), Collections.emptyMap());
 
     private final AnnotationDbConnProvider connectionProvider;
     private final ExpressionMapper expressionMapper;
@@ -477,17 +571,144 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 .toList();
     }
 
+    @Deprecated
     @Override
-    public List<Annotation> getAnnotationsForEvents(final EventId eventId) {
+    public List<Annotation> getAnnotationsForEventId(final EventId eventId) {
         return JooqUtil.contextResult(connectionProvider, context -> context
-                        .select()
+                        .select(ANNOTATION.ID,
+                                ANNOTATION.VERSION,
+                                ANNOTATION.CREATE_TIME_MS,
+                                ANNOTATION.CREATE_USER,
+                                ANNOTATION.UPDATE_TIME_MS,
+                                ANNOTATION.UPDATE_USER,
+                                ANNOTATION.TITLE,
+                                ANNOTATION.SUBJECT,
+                                ANNOTATION.ASSIGNED_TO_UUID,
+                                ANNOTATION.UUID,
+                                ANNOTATION.DELETED,
+                                ANNOTATION.DESCRIPTION,
+                                ANNOTATION.RETENTION_TIME,
+                                ANNOTATION.RETENTION_UNIT,
+                                ANNOTATION.RETAIN_UNTIL_MS,
+                                ANNOTATION.PARENT_ID)
                         .from(ANNOTATION)
-                        .join(ANNOTATION_DATA_LINK).on(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
-                        .where(ANNOTATION_DATA_LINK.STREAM_ID.eq(eventId.getStreamId())
-                                .and(ANNOTATION_DATA_LINK.EVENT_ID.eq(eventId.getEventId())))
-                        .and(ANNOTATION.DELETED.isFalse())
+                        .where(ANNOTATION.ID.in(context
+                                .selectDistinct(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID)
+                                .from(ANNOTATION_DATA_LINK)
+                                .where(ANNOTATION_DATA_LINK.STREAM_ID.eq(eventId.getStreamId())
+                                        .and(ANNOTATION_DATA_LINK.EVENT_ID.eq(eventId.getEventId())))))
+//                        .and(ANNOTATION.DELETED.isFalse())
                         .fetch())
                 .map(this::mapToAnnotation);
+    }
+
+    private int getFieldValIndex(final ValueReferenceIndex valueReferenceIndex,
+                                 final String primaryName,
+                                 final String secondaryName) {
+        return Objects.requireNonNullElse(
+                valueReferenceIndex.getFieldValIndex(primaryName),
+                Objects.requireNonNullElse(
+                        valueReferenceIndex.getFieldValIndex(secondaryName), -1));
+    }
+
+    @Override
+    public RecordMappers createDecorationMappers(final ValueReferenceIndex valueReferenceIndex) {
+
+        final Map<Integer, RecordMapper> recordMappers = new HashMap<>();
+        final List<Field<?>> fields = new ArrayList<>();
+        FIELD_MAP.forEach((queryField, value) -> {
+            final Integer pos = valueReferenceIndex.getFieldValIndex(queryField.getFldName());
+            if (pos != null) {
+                recordMappers.put(pos, value);
+                fields.add(value.getField());
+            }
+        });
+
+        // Don't do any annotation decoration if we were not asked for any annotation fields.
+        if (recordMappers.isEmpty()) {
+            return NO_MAPPING;
+        }
+
+        // Add annotation id if needed.
+        final int idIndex = getFieldValIndex(valueReferenceIndex, SpecialColumns.RESERVED_ID, "Id");
+        if (idIndex != -1) {
+            final RecordMapper recordMapper = FIELD_MAP.get(AnnotationDecorationFields.ANNOTATION_ID_FIELD);
+            recordMappers.put(idIndex, recordMapper);
+            if (!fields.contains(recordMapper.getField())) {
+                fields.add(recordMapper.getField());
+            }
+        }
+
+        // If we have some fields then make sure we have the UUID, so we can filter annotations by permissions.
+        if (!fields.isEmpty() && !fields.contains(ANNOTATION.UUID)) {
+            fields.add(ANNOTATION.UUID);
+        }
+
+        return new RecordMappersImpl(fields, recordMappers);
+    }
+
+    private static class RecordMappersImpl implements RecordMappers {
+
+        private final List<Field<?>> fields;
+        private final Map<Integer, RecordMapper> recordMappers;
+
+        public RecordMappersImpl(final List<Field<?>> fields,
+                                 final Map<Integer, RecordMapper> recordMappers) {
+            this.fields = fields;
+            this.recordMappers = recordMappers;
+        }
+
+        StoredValues apply(final Record record,
+                           final StoredValues storedValues) {
+            recordMappers.forEach((key, value) -> storedValues.set(key, value.apply(record)));
+            return storedValues;
+        }
+    }
+
+    @Override
+    public Stream<StoredValues> decorate(final EventId eventId,
+                                         final StoredValues storedValues,
+                                         final RecordMappers recordMappers,
+                                         final Predicate<String> uuidPredicate) {
+        final RecordMappersImpl impl = (RecordMappersImpl) recordMappers;
+        if (NullSafe.isEmptyCollection(impl.fields)) {
+            return Stream.of(storedValues);
+        }
+
+        final Result<Record> list = JooqUtil.contextResult(connectionProvider, context -> context
+                .select(impl.fields)
+                .from(ANNOTATION)
+                .join(ANNOTATION_DATA_LINK)
+                .on(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(ANNOTATION.ID)
+                        .and(ANNOTATION_DATA_LINK.STREAM_ID.eq(eventId.getStreamId())
+                                .and(ANNOTATION_DATA_LINK.EVENT_ID.eq(eventId.getEventId()))))
+                .where(ANNOTATION.DELETED.isFalse())
+                .fetch());
+        final List<Record> records = list
+                .stream()
+                .filter(r -> uuidPredicate.test(r.get(ANNOTATION.UUID)))
+                .toList();
+        if (records.isEmpty()) {
+            return Stream.of(storedValues);
+        } else if (records.size() == 1) {
+            return records.stream().map(r -> impl.apply(r, storedValues));
+        }
+        return records.stream().map(r -> {
+            final StoredValues copy = storedValues.copy();
+            copy.setPeriod(storedValues.getPeriod());
+            return impl.apply(r, copy);
+        });
+    }
+
+    @Override
+    public boolean hasEventId(final EventId eventId) {
+        return JooqUtil.contextResult(connectionProvider, context ->
+                context.fetchExists(context
+                        .selectOne()
+                        .from(ANNOTATION_DATA_LINK)
+                        .where(ANNOTATION_DATA_LINK.STREAM_ID.eq(eventId.getStreamId())
+                                .and(ANNOTATION_DATA_LINK.EVENT_ID.eq(eventId.getEventId())))
+                        .limit(1)));
     }
 
     private AnnotationEntry mapToAnnotationEntry(final Record record) {
@@ -524,29 +745,6 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 .orElse(UserRef.builder().uuid(uuid).build());
     }
 
-    private String getComment(final long id) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
-                        .select(ANNOTATION_ENTRY.DATA)
-                        .from(ANNOTATION_ENTRY)
-                        .where(ANNOTATION_ENTRY.FK_ANNOTATION_ID.eq(id))
-                        .and(ANNOTATION_ENTRY.TYPE_ID.eq(AnnotationEntryType.COMMENT.getPrimitiveValue()))
-                        .orderBy(ANNOTATION_ENTRY.ID.desc())
-                        .limit(1)
-                        .fetchOptional(ANNOTATION_ENTRY.DATA))
-                .orElse(null);
-    }
-
-    private String getHistory(final long id) {
-        final List<String> allComments = JooqUtil.contextResult(connectionProvider, context -> context
-                .select(ANNOTATION_ENTRY.DATA)
-                .from(ANNOTATION_ENTRY)
-                .where(ANNOTATION_ENTRY.FK_ANNOTATION_ID.eq(id))
-                .and(ANNOTATION_ENTRY.TYPE_ID.eq(AnnotationEntryType.COMMENT.getPrimitiveValue()))
-                .orderBy(ANNOTATION_ENTRY.ID)
-                .fetch(ANNOTATION_ENTRY.DATA));
-        return String.join("|", allComments);
-    }
-
     private Annotation mapToAnnotation(final Record record) {
         final long id = record.get(ANNOTATION.ID);
 
@@ -568,9 +766,6 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         final List<AnnotationTag> labels = tags.get(AnnotationTagType.LABEL);
         final List<AnnotationTag> collections = tags.get(AnnotationTagType.COLLECTION);
 
-        final String comment = getComment(id);
-        final String history = getHistory(id);
-
         return Annotation.builder()
                 .type(Annotation.TYPE)
                 .uuid(record.get(ANNOTATION.UUID))
@@ -586,8 +781,6 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 .assignedTo(getUserRef(record.get(ANNOTATION.ASSIGNED_TO_UUID)))
                 .labels(labels)
                 .collections(collections)
-                .comment(comment)
-                .history(history)
                 .description(record.get(ANNOTATION.DESCRIPTION))
                 .retentionPeriod(mapToSimpleDuration(record))
                 .build();
@@ -1523,5 +1716,96 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                         .where(ANNOTATION_ENTRY.FK_ANNOTATION_ID.eq(annotationId))
                         .and(ANNOTATION_ENTRY.ID.eq(entryId))
                         .execute() != 0);
+    }
+
+    private static Entry<QueryField, RecordMapper> createLongFunction(final QueryField queryField,
+                                                                      final Field<Long> field) {
+        return Map.entry(queryField, new LongRecordMapper(queryField, field));
+    }
+
+    private static Entry<QueryField, RecordMapper> createStringFunction(final QueryField queryField,
+                                                                        final Field<String> field) {
+        return Map.entry(queryField, new StringRecordMapper(queryField, field));
+    }
+
+    private static Entry<QueryField, RecordMapper> createDateFunction(final QueryField queryField,
+                                                                      final Field<Long> field) {
+        return Map.entry(queryField, new DateRecordMapper(queryField, field));
+    }
+
+    private interface RecordMapper extends Function<Record, Val> {
+
+        Field<?> getField();
+
+        QueryField getQueryField();
+    }
+
+    private static abstract class AbstractRecordMapper<T> implements RecordMapper {
+
+        final QueryField queryField;
+        final Field<T> field;
+
+        public AbstractRecordMapper(final QueryField queryField,
+                                    final Field<T> field) {
+            this.queryField = queryField;
+            this.field = field;
+        }
+
+        @Override
+        public Field<?> getField() {
+            return field;
+        }
+
+        @Override
+        public QueryField getQueryField() {
+            return queryField;
+        }
+
+        @Override
+        public String toString() {
+            return queryField.toString();
+        }
+    }
+
+    private static class StringRecordMapper extends AbstractRecordMapper<String> {
+
+        public StringRecordMapper(final QueryField queryField,
+                                  final Field<String> field) {
+            super(queryField, field);
+        }
+
+        @Override
+        public Val apply(final Record record) {
+            final String s = record.get(field);
+            return NullSafe.getOrElse(s, ValString::create, ValNull.INSTANCE);
+        }
+    }
+
+    private static class LongRecordMapper extends AbstractRecordMapper<Long> {
+
+        public LongRecordMapper(final QueryField queryField,
+                                final Field<Long> field) {
+            super(queryField, field);
+        }
+
+        @Override
+        public Val apply(final Record record) {
+            final Long l = record.get(field);
+            return NullSafe.getOrElse(l, ValLong::create, ValNull.INSTANCE);
+        }
+    }
+
+    private static class DateRecordMapper extends AbstractRecordMapper<Long> {
+
+        public DateRecordMapper(final QueryField queryField,
+                                final Field<Long> field) {
+            super(queryField, field);
+        }
+
+        @Override
+        public Val apply(final Record record) {
+            final Long l = record.get(field);
+            return NullSafe.getOrElse(l, ValDate::create, ValNull.INSTANCE);
+        }
     }
 }

@@ -33,10 +33,6 @@ public class Annotation extends Doc {
     @JsonProperty
     private final List<AnnotationTag> collections;
     @JsonProperty
-    private final String comment;
-    @JsonProperty
-    private final String history;
-    @JsonProperty
     private final String description;
     @JsonProperty
     private final SimpleDuration retentionPeriod;
@@ -58,8 +54,6 @@ public class Annotation extends Doc {
                       @JsonProperty("assignedTo") final UserRef assignedTo,
                       @JsonProperty("labels") final List<AnnotationTag> labels,
                       @JsonProperty("collections") final List<AnnotationTag> collections,
-                      @JsonProperty("comment") final String comment,
-                      @JsonProperty("history") final String history,
                       @JsonProperty("description") final String description,
                       @JsonProperty("retentionPeriod") final SimpleDuration retentionPeriod,
                       @JsonProperty("retainUntilTimeMs") final Long retainUntilTimeMs) {
@@ -70,8 +64,6 @@ public class Annotation extends Doc {
         this.assignedTo = assignedTo;
         this.labels = labels;
         this.collections = collections;
-        this.comment = comment;
-        this.history = history;
         this.description = description;
         this.retentionPeriod = retentionPeriod;
         this.retainUntilTimeMs = retainUntilTimeMs;
@@ -99,14 +91,6 @@ public class Annotation extends Doc {
 
     public List<AnnotationTag> getCollections() {
         return collections;
-    }
-
-    public String getComment() {
-        return comment;
-    }
-
-    public String getHistory() {
-        return history;
     }
 
     public String getDescription() {
@@ -157,8 +141,6 @@ public class Annotation extends Doc {
         private UserRef assignedTo;
         private List<AnnotationTag> labels;
         private List<AnnotationTag> collections;
-        private String comment;
-        private String history;
         private String description;
         private SimpleDuration retentionPeriod;
         private Long retainUntilTimeMs;
@@ -174,8 +156,6 @@ public class Annotation extends Doc {
             this.assignedTo = doc.assignedTo;
             this.labels = doc.labels;
             this.collections = doc.collections;
-            this.comment = doc.comment;
-            this.history = doc.history;
             this.description = doc.description;
             this.retentionPeriod = doc.retentionPeriod;
             this.retainUntilTimeMs = doc.retainUntilTimeMs;
@@ -208,16 +188,6 @@ public class Annotation extends Doc {
 
         public Builder collections(final List<AnnotationTag> collections) {
             this.collections = collections;
-            return self();
-        }
-
-        public Builder comment(final String comment) {
-            this.comment = comment;
-            return self();
-        }
-
-        public Builder history(final String history) {
-            this.history = history;
             return self();
         }
 
@@ -258,8 +228,6 @@ public class Annotation extends Doc {
                     assignedTo,
                     labels,
                     collections,
-                    comment,
-                    history,
                     description,
                     retentionPeriod,
                     retainUntilTimeMs);

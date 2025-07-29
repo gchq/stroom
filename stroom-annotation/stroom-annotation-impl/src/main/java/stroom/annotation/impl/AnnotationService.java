@@ -16,6 +16,7 @@
 
 package stroom.annotation.impl;
 
+import stroom.annotation.impl.AnnotationDao.RecordMappers;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationCreator;
 import stroom.annotation.shared.AnnotationEntry;
@@ -42,6 +43,8 @@ import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ParamKeys;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.query.language.functions.ref.StoredValues;
+import stroom.query.language.functions.ref.ValueReferenceIndex;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.DocumentPermissionService;
@@ -72,6 +75,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 public class AnnotationService implements Searchable, AnnotationCreator, HasUserDependencies {
 
@@ -143,14 +147,25 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
                 securityContext.hasDocumentPermission(annotation.asDocRef(), DocumentPermission.VIEW));
     }
 
-    public List<Annotation> getAnnotationsForEvents(final EventId eventId) {
-        final List<Annotation> list = annotationDao.getAnnotationsForEvents(eventId);
-        return list
-                .stream()
-                .filter(annotation ->
-                        securityContext.hasDocumentPermission(annotation.asDocRef(), DocumentPermission.VIEW))
-                .toList();
+    RecordMappers createDecorationMappers(final ValueReferenceIndex valueReferenceIndex) {
+        return annotationDao.createDecorationMappers(valueReferenceIndex);
     }
+
+    Stream<StoredValues> decorate(final EventId eventId,
+                                  final StoredValues storedValues,
+                                  final RecordMappers recordMappers) {
+        return annotationDao.decorate(eventId, storedValues, recordMappers, uuid ->
+                securityContext.hasDocumentPermission(new DocRef(Annotation.TYPE, uuid), DocumentPermission.VIEW));
+    }
+
+//    public List<Annotation> getAnnotationsForEventId(final EventId eventId) {
+//        final List<Annotation> list = annotationDao.getAnnotationsForEventId(eventId);
+//        return list
+//                .stream()
+//                .filter(annotation ->
+//                        securityContext.hasDocumentPermission(annotation.asDocRef(), DocumentPermission.VIEW))
+//                .toList();
+//    }
 
     @Override
     public String getDataSourceType() {
