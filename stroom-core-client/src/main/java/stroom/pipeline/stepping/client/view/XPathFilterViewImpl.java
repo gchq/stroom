@@ -110,7 +110,7 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
     private void changeVisibility(final MatchType matchType) {
         final boolean visible = matchType == MatchType.CONTAINS ||
                 matchType == MatchType.EQUALS ||
-                matchType == MatchType.NOT_EQUALS;
+                matchType == MatchType.NOT_EQUALS || matchType == MatchType.NOT_CONTAINS;
         valueContainer.setVisible(visible);
         ignoreCaseContainer.setVisible(visible);
     }

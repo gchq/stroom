@@ -267,6 +267,18 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
                     }
                 }
             }
+            case NOT_CONTAINS -> {
+                for (final Object object : objects) {
+                    if (!contains(object, xPathFilter.getValue(), xPathFilter.isIgnoreCase())) {
+                        return true;
+                    }
+                }
+            }
+            case NOT_EXISTS -> {
+                if (objects.isEmpty()) {
+                    return true;
+                }
+            }
         }
         return false;
     }

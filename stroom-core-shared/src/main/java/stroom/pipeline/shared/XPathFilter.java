@@ -132,11 +132,13 @@ public class XPathFilter {
 
 
     public enum MatchType implements HasDisplayValue {
-        EXISTS("exists", false),
-        CONTAINS("contains", true),
-        EQUALS("equals", true),
-        NOT_EQUALS("not equals", true),
-        UNIQUE("unique values", false);
+        EXISTS("Exists", false),
+        CONTAINS("Contains", true),
+        EQUALS("Equals", true),
+        NOT_EQUALS("Not equals", true),
+        NOT_CONTAINS("Does not contain", true),
+        NOT_EXISTS("Does not exist", false),
+        UNIQUE("Unique values", false);
 
         private final String displayValue;
         private final boolean needsValue;
