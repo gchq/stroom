@@ -31,7 +31,7 @@ import java.util.Objects;
 /**
  * Object describing the response to a {@link SearchRequest searchRequest} which may or may not contains results
  */
-@JsonPropertyOrder({"key", "highlights", "results", "errors", "complete"})
+@JsonPropertyOrder({"key", "highlights", "results", "errors", "complete", "errorMessages"})
 @JsonInclude(Include.NON_NULL)
 @Schema(description = "The response to a search request, that may or may not contain results. The results " +
         "may only be a partial set if an iterative screech was requested")
@@ -55,6 +55,9 @@ public final class SearchResponse {
     @JsonProperty
     private final List<String> errors;
 
+    @JsonProperty
+    private final List<ErrorMessage> errorMessages;
+
     @JsonPropertyDescription("True if the query has returned all known results")
     @JsonProperty
     private final Boolean complete;
@@ -72,7 +75,8 @@ public final class SearchResponse {
                           @JsonProperty("highlights") final List<String> highlights,
                           @JsonProperty("results") final List<Result> results,
                           @JsonProperty("errors") final List<String> errors,
-                          @JsonProperty("complete") final Boolean complete) {
+                          @JsonProperty("complete") final Boolean complete,
+                          @JsonProperty("errorMessages") final List<ErrorMessage> errorMessages) {
         this.key = key;
         this.highlights = highlights;
         this.results = results;
@@ -80,6 +84,7 @@ public final class SearchResponse {
                 ? null
                 : errors;
         this.complete = complete;
+        this.errorMessages = errorMessages;
     }
 
     public QueryKey getKey() {
@@ -106,6 +111,10 @@ public final class SearchResponse {
      */
     public List<String> getErrors() {
         return errors;
+    }
+
+    public List<ErrorMessage> getErrorMessages() {
+        return errorMessages;
     }
 
     /**
@@ -186,6 +195,7 @@ public final class SearchResponse {
         List<String> highlights = new ArrayList<>();
         List<Result> results = new ArrayList<>();
         List<String> errors = new ArrayList<>();
+        List<ErrorMessage> errorMessages = new ArrayList<>();
 
         Builder() {
         }
@@ -196,6 +206,7 @@ public final class SearchResponse {
             highlights = searchResponse.highlights;
             results = searchResponse.results;
             errors = searchResponse.errors;
+            errorMessages = searchResponse.errorMessages;
         }
 
         /**
@@ -231,13 +242,18 @@ public final class SearchResponse {
             return self();
         }
 
+        public T_CHILD_CLASS errorMessages(final List<ErrorMessage> errorMessages) {
+            this.errorMessages = errorMessages;
+            return self();
+        }
+
         /**
          * Builds the {@link SearchResponse searchResponse} object
          *
          * @return A populated {@link SearchResponse searchResponse} object
          */
         public SearchResponse build() {
-            return new SearchResponse(queryKey, highlights, results, errors, complete);
+            return new SearchResponse(queryKey, highlights, results, errors, complete, errorMessages);
         }
 
         protected abstract T_CHILD_CLASS self();

@@ -16,6 +16,7 @@
 
 package stroom.query.common.v2;
 
+import stroom.query.api.ErrorMessage;
 import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.api.SearchResponse;
@@ -24,6 +25,7 @@ import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.Severity;
 import stroom.util.shared.UserRef;
 
 import com.esotericsoftware.kryo.KryoException;
@@ -186,26 +188,27 @@ public class ResultStore {
         errorConsumer.add(error);
     }
 
-    public List<String> getErrors() {
+    public List<ErrorMessage> getErrors() {
         if (errors.isEmpty() && !coprocessors.getErrorConsumer().hasErrors()) {
             return Collections.emptyList();
         }
 
-        final List<String> err = new ArrayList<>();
+        final List<ErrorMessage> err = new ArrayList<>();
         for (final Entry<String, ErrorConsumer> entry : errors.entrySet()) {
             final String nodeName = entry.getKey();
             final ErrorConsumer errorConsumer = entry.getValue();
-            final List<String> errors = errorConsumer.getErrors();
+            final List<ErrorMessage> errors = errorConsumer.getErrorMessages();
 
             if (!errors.isEmpty()) {
-                err.add("Node: " + nodeName);
-                for (final String error : errors) {
-                    err.add("\t" + error);
+                //TODO: Is this ok????
+                err.add(new ErrorMessage(Severity.INFO, "Node: " + nodeName));
+                for (final ErrorMessage error : errors) {
+                    err.add(new ErrorMessage(error.getSeverity(), "\t" + error.getMessage()));
                 }
             }
         }
         // Add any errors from the coprocessors
-        err.addAll(coprocessors.getErrorConsumer().getErrors());
+        err.addAll(coprocessors.getErrorConsumer().getErrorMessages());
 
         return err;
     }

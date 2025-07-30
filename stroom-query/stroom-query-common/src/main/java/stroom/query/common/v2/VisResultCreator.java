@@ -1,11 +1,13 @@
 package stroom.query.common.v2;
 
+import stroom.query.api.ErrorMessage;
 import stroom.query.api.FlatResult;
 import stroom.query.api.Result;
 import stroom.query.api.ResultRequest;
 import stroom.query.api.VisResult;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.Severity;
 import stroom.util.string.ExceptionStringUtil;
 
 import java.util.Collections;
@@ -32,14 +34,15 @@ public class VisResultCreator implements ResultCreator {
 
     private VisResult mapVisResult(final FlatResult result) {
         String json = null;
-        List<String> errors = result.getErrors();
+        List<ErrorMessage> errorMessages = result.getErrorMessages();
         try {
             json = new VisJson().createJson(result);
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
-            errors = Collections.singletonList(ExceptionStringUtil.getMessage(e));
+            errorMessages = Collections.singletonList(
+                    new ErrorMessage(Severity.ERROR, ExceptionStringUtil.getMessage(e)));
         }
 
-        return new VisResult(result.getComponentId(), json, result.getSize(), errors);
+        return new VisResult(result.getComponentId(), json, result.getSize(), null, errorMessages);
     }
 }

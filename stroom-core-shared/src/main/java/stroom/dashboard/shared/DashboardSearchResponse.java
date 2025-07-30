@@ -18,6 +18,7 @@ package stroom.dashboard.shared;
 
 import stroom.query.api.QueryKey;
 import stroom.query.api.Result;
+import stroom.util.shared.Severity;
 import stroom.util.shared.TokenError;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -27,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -58,6 +60,10 @@ public class DashboardSearchResponse {
      */
     @JsonProperty
     private final List<String> errors;
+
+    @JsonProperty
+    private final Map<Severity, List<String>> errorMessages;
+
     @JsonProperty
     private final TokenError tokenError;
 
@@ -78,7 +84,8 @@ public class DashboardSearchResponse {
                                    @JsonProperty("errors") final List<String> errors,
                                    @JsonProperty("tokenError") final TokenError tokenError,
                                    @JsonProperty("complete") final boolean complete,
-                                   @JsonProperty("results") final List<Result> results) {
+                                   @JsonProperty("results") final List<Result> results,
+                                   @JsonProperty("errorMessages") final Map<Severity, List<String>> errorMessages) {
         this.node = node;
         this.queryKey = queryKey;
         this.highlights = highlights;
@@ -86,6 +93,7 @@ public class DashboardSearchResponse {
         this.tokenError = tokenError;
         this.complete = complete;
         this.results = results;
+        this.errorMessages = errorMessages;
     }
 
     public String getNode() {
@@ -101,7 +109,12 @@ public class DashboardSearchResponse {
     }
 
     public List<String> getErrors() {
-        return errors;
+        return errorMessages == null ? List.of() :
+                errorMessages.getOrDefault(Severity.ERROR, List.of());
+    }
+
+    public Map<Severity, List<String>> getErrorMessages() {
+        return errorMessages;
     }
 
     public TokenError getTokenError() {
@@ -130,12 +143,13 @@ public class DashboardSearchResponse {
                 Objects.equals(highlights, that.highlights) &&
                 Objects.equals(errors, that.errors) &&
                 Objects.equals(tokenError, that.tokenError) &&
-                Objects.equals(results, that.results);
+                Objects.equals(results, that.results) &&
+                Objects.equals(errorMessages, that.errorMessages);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(queryKey, highlights, errors, tokenError, complete, results);
+        return Objects.hash(queryKey, highlights, errors, tokenError, complete, results, errorMessages);
     }
 
     @Override
@@ -147,6 +161,7 @@ public class DashboardSearchResponse {
                 ", tokenError=" + tokenError +
                 ", complete=" + complete +
                 ", results=" + results +
+                ", errorMessages=" + errorMessages +
                 '}';
     }
 }

@@ -17,12 +17,18 @@
 package stroom.dashboard.impl;
 
 import stroom.dashboard.shared.DashboardSearchResponse;
+import stroom.query.api.ErrorMessage;
 import stroom.query.api.Result;
 import stroom.query.api.SearchResponse;
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.Severity;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class SearchResponseMapper {
 
@@ -49,12 +55,12 @@ public class SearchResponseMapper {
 //            }
 //        }
 
-        List<String> errors = searchResponse.getErrors();
-        if (errors != null) {
+        List<ErrorMessage> errorMessages = searchResponse.getErrorMessages();
+        if (errorMessages != null) {
             // Remove timeout message as this is expected to occur for non-incremental dashboard searches.
-            errors = errors
+            errorMessages = errorMessages
                     .stream()
-                    .filter(error -> !error.startsWith(SearchResponse.TIMEOUT_MESSAGE))
+                    .filter(error -> !error.getMessage().startsWith(SearchResponse.TIMEOUT_MESSAGE))
                     .toList();
         }
 
@@ -62,10 +68,17 @@ public class SearchResponseMapper {
                 node,
                 searchResponse.getKey(),
                 highlights,
-                errors,
+                null,
                 null,
                 searchResponse.complete(),
-                results);
+                results,
+                toMap(errorMessages));
+    }
+
+    private Map<Severity, List<String>> toMap(final List<ErrorMessage> errorMessages) {
+        return NullSafe.stream(errorMessages)
+                .collect(Collectors.groupingBy(ErrorMessage::getSeverity, HashMap::new,
+                        Collectors.mapping(ErrorMessage::getMessage, Collectors.toList())));
     }
 
 //    private Result mapResult(final Result result) {

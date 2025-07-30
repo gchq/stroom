@@ -1,10 +1,13 @@
 package stroom.query.api;
 
+import stroom.util.shared.Severity;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -16,7 +19,8 @@ class FlatResultBuilderTest {
     void doesBuild() {
         // Given
         final String componentId = "someComponentId";
-        final List<String> errors = Collections.singletonList("something went wrong");
+        final List<ErrorMessage> errorMessages = Collections.singletonList(
+                new ErrorMessage(Severity.ERROR, "something went wrong"));
 
         final int numberFields = 3;
         final int numberResultSets = 10;
@@ -25,7 +29,7 @@ class FlatResultBuilderTest {
         final FlatResultBuilder flatResultBuilder = FlatResult
                 .builder()
                 .componentId(componentId)
-                .errors(errors);
+                .errorMessages(errorMessages);
         final List<Column> columns = new ArrayList<>();
         IntStream.range(0, numberFields).forEach(x ->
                 columns
@@ -48,7 +52,7 @@ class FlatResultBuilderTest {
 
         // Then
         assertThat(flatResult.getComponentId()).isEqualTo(componentId);
-        assertThat(flatResult.getErrors()).isEqualTo(errors);
+        assertThat(flatResult.getErrorMessages()).isEqualTo(errorMessages);
         assertThat(flatResult.getSize()).isEqualTo(Long.valueOf(numberResultSets));
 
         final long fieldsCount = flatResult.getStructure().stream()

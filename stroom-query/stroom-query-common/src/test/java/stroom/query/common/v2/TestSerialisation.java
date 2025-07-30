@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.query.api.Column;
 import stroom.query.api.DateTimeFormatSettings;
 import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ErrorMessage;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.FlatResult;
@@ -41,6 +42,7 @@ import stroom.query.api.UserTimeZone;
 import stroom.query.test.util.ConsoleColour;
 import stroom.util.io.StreamUtil;
 import stroom.util.json.JsonUtil;
+import stroom.util.shared.Severity;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -281,13 +283,15 @@ class TestSerialisation {
                 rows,
                 new OffsetRange(1, 2),
                 1L,
-                Collections.singletonList("tableResultError"));
+                Collections.singletonList("tableResultError"),
+                Collections.singletonList(new ErrorMessage(Severity.ERROR, "tableResultError")));
         return new SearchResponse(
                 new QueryKey("test_uuid"),
                 List.of("highlight1", "highlight2"),
                 List.of(tableResult, getVisResult1()),
                 Collections.singletonList("some error"),
-                false);
+                false,
+                Collections.singletonList(new ErrorMessage(Severity.ERROR, "some error")));
     }
 
     private FlatResult getVisResult1() {
@@ -328,7 +332,8 @@ class TestSerialisation {
         data.add(Arrays.asList("test7", 2.33, 74, "this7"));
 
         return new FlatResult("vis-1234", structure, data, 200L,
-                Collections.singletonList("visResultError"));
+                Collections.singletonList("visResultError"),
+                Collections.singletonList(new ErrorMessage(Severity.ERROR, "visResultError")));
     }
 
 //    private VisResult getVisResult2() {

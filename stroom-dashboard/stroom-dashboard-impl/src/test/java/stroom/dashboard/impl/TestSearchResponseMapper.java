@@ -19,6 +19,7 @@ package stroom.dashboard.impl;
 
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.query.api.Column;
+import stroom.query.api.ErrorMessage;
 import stroom.query.api.FlatResult;
 import stroom.query.api.Format;
 import stroom.query.api.OffsetRange;
@@ -26,6 +27,7 @@ import stroom.query.api.QueryKey;
 import stroom.query.api.Row;
 import stroom.query.api.SearchResponse;
 import stroom.query.api.TableResult;
+import stroom.util.shared.Severity;
 
 import org.junit.jupiter.api.Test;
 
@@ -61,13 +63,15 @@ class TestSearchResponseMapper {
                 rows,
                 new OffsetRange(1, 2),
                 1L,
-                Collections.singletonList("tableResultError"));
+                Collections.singletonList("tableResultError"),
+                Collections.singletonList(new ErrorMessage(Severity.ERROR, "tableResultError")));
         return new SearchResponse(
                 new QueryKey(UUID.randomUUID().toString()),
                 List.of("highlight1", "highlight2"),
                 List.of(tableResult, getVisResult1()),
                 Collections.singletonList("some error"),
-                false);
+                false,
+                Collections.singletonList(new ErrorMessage(Severity.ERROR, "some error")));
     }
 
     private FlatResult getVisResult1() {
@@ -88,7 +92,8 @@ class TestSearchResponseMapper {
         data.add(Arrays.asList("test7", 2.33, 74, "this7"));
 
         return new FlatResult("vis-1234", structure, data, 200L,
-                Collections.singletonList("visResultError"));
+                Collections.singletonList("visResultError"),
+                Collections.singletonList(new ErrorMessage(Severity.ERROR, "visResultError")));
     }
 
 //    private VisResult getVisResult2() {

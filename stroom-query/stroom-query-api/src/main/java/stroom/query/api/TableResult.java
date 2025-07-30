@@ -30,7 +30,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-@JsonPropertyOrder({"componentId", "fields", "rows", "resultRange", "totalResults", "error"})
+@JsonPropertyOrder({"componentId", "fields", "rows", "resultRange", "totalResults", "error", "errorMessages"})
 @JsonInclude(Include.NON_NULL)
 @Schema(description = "Object for describing a set of results in a table form that supports grouped data")
 public final class TableResult extends Result {
@@ -57,8 +57,9 @@ public final class TableResult extends Result {
                        @JsonProperty("rows") final List<Row> rows,
                        @JsonProperty("resultRange") final OffsetRange resultRange,
                        @JsonProperty("totalResults") final Long totalResults,
-                       @JsonProperty("errors") final List<String> errors) {
-        super(componentId, errors);
+                       @JsonProperty("errors") final List<String> errors,
+                       @JsonProperty("errorMessages") final List<ErrorMessage> errorMessages) {
+        super(componentId, errors, errorMessages);
         this.fields = fields;
         this.rows = rows;
         this.resultRange = resultRange;
@@ -139,10 +140,12 @@ public final class TableResult extends Result {
         private List<String> errors;
         private OffsetRange resultRange;
         private Long totalResults;
+        private List<ErrorMessage> errorMessages;
 
         private TableResultBuilderImpl() {
             rows = new ArrayList<>();
             errors = Collections.emptyList();
+            errorMessages = Collections.emptyList();
         }
 
         private TableResultBuilderImpl(final TableResult tableResult) {
@@ -152,6 +155,7 @@ public final class TableResult extends Result {
             errors = tableResult.getErrors();
             resultRange = tableResult.resultRange;
             totalResults = tableResult.totalResults;
+            errorMessages = tableResult.getErrorMessages();
         }
 
         public TableResultBuilderImpl componentId(final String componentId) {
@@ -178,6 +182,12 @@ public final class TableResult extends Result {
         }
 
         @Override
+        public TableResultBuilder errorMessages(final List<ErrorMessage> errorMessages) {
+            this.errorMessages = errorMessages;
+            return this;
+        }
+
+        @Override
         public TableResultBuilder resultRange(final OffsetRange resultRange) {
             this.resultRange = resultRange;
             return this;
@@ -195,7 +205,7 @@ public final class TableResult extends Result {
             if (totalResults == null && rows != null) {
                 totalResults = (long) rows.size();
             }
-            return new TableResult(componentId, columns, rows, resultRange, totalResults, errors);
+            return new TableResult(componentId, columns, rows, resultRange, totalResults, errors, errorMessages);
         }
     }
 }

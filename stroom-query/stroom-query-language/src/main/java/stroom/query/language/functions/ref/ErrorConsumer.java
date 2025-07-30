@@ -1,27 +1,22 @@
 package stroom.query.language.functions.ref;
 
+import stroom.query.api.ErrorMessage;
+import stroom.util.shared.Severity;
+
 import java.util.List;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 public interface ErrorConsumer {
+
+    void add(final Severity severity, final Supplier<String> message);
 
     void add(final Supplier<String> message);
 
     void add(final Throwable exception);
 
-    List<String> getErrors();
+    List<ErrorMessage> getErrorMessages();
 
-    default Stream<String> stream() {
-        final List<String> errors = getErrors();
-        if (errors == null || errors.size() == 0) {
-            return Stream.empty();
-        } else {
-            return errors.stream();
-        }
-    }
-
-    List<String> drain();
+    List<ErrorMessage> drain();
 
     void clear();
 

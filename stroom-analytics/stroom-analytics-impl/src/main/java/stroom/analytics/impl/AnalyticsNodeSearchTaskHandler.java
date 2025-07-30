@@ -23,6 +23,7 @@ import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.query.api.Column;
+import stroom.query.api.ErrorMessage;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.Query;
@@ -312,6 +313,14 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
         public TableResultConsumer errors(final List<String> errors) {
             for (final String error : errors) {
                 LOGGER.error(error);
+            }
+            return this;
+        }
+
+        @Override
+        public TableResultBuilder errorMessages(final List<ErrorMessage> errorMessages) {
+            for (final ErrorMessage errorMessage : errorMessages) {
+                LOGGER.error(errorMessage.toString());
             }
             return this;
         }

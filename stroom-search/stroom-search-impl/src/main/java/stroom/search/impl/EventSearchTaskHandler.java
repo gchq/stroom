@@ -17,6 +17,7 @@
 package stroom.search.impl;
 
 import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ErrorMessage;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.api.Query;
 import stroom.query.common.v2.CoprocessorsFactory;
@@ -125,7 +126,9 @@ public class EventSearchTaskHandler {
                     if (eventCoprocessor.getErrorConsumer().hasErrors()) {
                         final String errors = String.join("\n", eventCoprocessor
                                 .getErrorConsumer()
-                                .getErrors());
+                                .getErrorMessages().stream()
+                                .map(ErrorMessage::getMessage)
+                                .toList());
                         LOGGER.debug(errors);
                         throwable = new RuntimeException(errors);
                     }

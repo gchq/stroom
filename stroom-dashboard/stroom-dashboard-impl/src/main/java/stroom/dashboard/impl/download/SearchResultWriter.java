@@ -18,6 +18,7 @@ package stroom.dashboard.impl.download;
 
 import stroom.dashboard.impl.SampleGenerator;
 import stroom.query.api.Column;
+import stroom.query.api.ErrorMessage;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.Row;
 import stroom.query.api.TableResult;
@@ -94,6 +95,11 @@ public class SearchResultWriter implements TableResultBuilder {
 
     @Override
     public TableResultBuilder errors(final List<String> errors) {
+        return this;
+    }
+
+    @Override
+    public TableResultBuilder errorMessages(final List<ErrorMessage> errorMessages) {
         return this;
     }
 

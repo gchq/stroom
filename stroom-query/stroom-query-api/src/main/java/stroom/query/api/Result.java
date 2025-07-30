@@ -55,11 +55,16 @@ public abstract sealed class Result permits TableResult, FlatResult, VisResult, 
     @JsonProperty
     private final List<String> errors;
 
+    @JsonProperty
+    private final List<ErrorMessage> errorMessages;
+
     @JsonCreator
     public Result(@JsonProperty("componentId") final String componentId,
-                  @JsonProperty("errors") final List<String> errors) {
+                  @JsonProperty("errors") final List<String> errors,
+                  @JsonProperty("errorMessages") final List<ErrorMessage> errorMessages) {
         this.componentId = componentId;
         this.errors = errors;
+        this.errorMessages = errorMessages;
     }
 
     public String getComponentId() {
@@ -68,6 +73,10 @@ public abstract sealed class Result permits TableResult, FlatResult, VisResult, 
 
     public List<String> getErrors() {
         return errors;
+    }
+
+    public List<ErrorMessage> getErrorMessages() {
+        return errorMessages;
     }
 
     @Override
@@ -80,12 +89,13 @@ public abstract sealed class Result permits TableResult, FlatResult, VisResult, 
         }
         final Result result = (Result) o;
         return Objects.equals(componentId, result.componentId) &&
-               Objects.equals(errors, result.errors);
+               Objects.equals(errors, result.errors) &&
+               Objects.equals(errorMessages, result.errorMessages);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(componentId, errors);
+        return Objects.hash(componentId, errors, errorMessages);
     }
 
     @Override
@@ -93,6 +103,7 @@ public abstract sealed class Result permits TableResult, FlatResult, VisResult, 
         return "Result{" +
                "componentId='" + componentId + '\'' +
                ", errors='" + errors + '\'' +
+               ", errorMessages=" + errorMessages +
                '}';
     }
 }

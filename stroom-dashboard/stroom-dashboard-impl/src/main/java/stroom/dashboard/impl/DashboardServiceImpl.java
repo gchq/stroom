@@ -479,6 +479,7 @@ class DashboardServiceImpl implements DashboardService {
                         Collections.singletonList(ExceptionStringUtil.getMessage(e)),
                         null,
                         true,
+                        null,
                         null);
             } finally {
                 // Log here so we don't log twice if there is an error

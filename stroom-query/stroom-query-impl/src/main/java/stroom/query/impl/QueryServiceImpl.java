@@ -94,6 +94,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.Severity;
 import stroom.util.string.ExceptionStringUtil;
 import stroom.util.string.StringUtil;
 
@@ -671,7 +672,9 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                         Collections.singletonList(ExceptionStringUtil.getMessage(e)),
                         TokenExceptionUtil.toTokenError(e),
                         true,
-                        null);
+                        null,
+                        Collections.singletonMap(Severity.ERROR,
+                                Collections.singletonList(ExceptionStringUtil.getMessage(e))));
 
             } catch (final RuntimeException e) {
                 exception = e;
@@ -684,7 +687,9 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                         Collections.singletonList(ExceptionStringUtil.getMessage(e)),
                         null,
                         true,
-                        null);
+                        null,
+                        Collections.singletonMap(Severity.ERROR,
+                                Collections.singletonList(ExceptionStringUtil.getMessage(e))));
             } finally {
                 if (queryKey == null) {
                     searchEventLog.search(

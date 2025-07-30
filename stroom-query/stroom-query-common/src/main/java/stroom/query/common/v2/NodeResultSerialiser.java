@@ -1,13 +1,18 @@
 package stroom.query.common.v2;
 
+import stroom.query.api.ErrorMessage;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.Severity;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 public class NodeResultSerialiser {
 
@@ -23,11 +28,16 @@ public class NodeResultSerialiser {
         // Read payloads for each coprocessor.
         coprocessors.readPayloads(input);
 
+        final Pattern pattern = getErrorMessagePattern();
+
         // Read all errors.
         final int length = input.readInt();
         for (int i = 0; i < length; i++) {
             final String error = input.readString();
-            errorConsumer.add(() -> error);
+            final Matcher matcher = pattern.matcher(error);
+            final Severity severity = Severity.valueOf(matcher.group(0));
+            final String message = matcher.group(1);
+            errorConsumer.add(severity, () -> message);
         }
 
         return complete;
@@ -36,7 +46,7 @@ public class NodeResultSerialiser {
     public static void write(final Output output,
                              final boolean complete,
                              final Coprocessors coprocessors,
-                             final List<String> errorsSnapshot) {
+                             final List<ErrorMessage> errorsSnapshot) {
         // Write completion status.
         output.writeBoolean(complete);
 
@@ -46,13 +56,18 @@ public class NodeResultSerialiser {
         // Drain all current errors to a list.
         if (errorsSnapshot != null) {
             output.writeInt(errorsSnapshot.size());
-            for (final String error : errorsSnapshot) {
-                LOGGER.debug(() -> error);
-                output.writeString(error);
+            for (final ErrorMessage error : errorsSnapshot) {
+                LOGGER.debug(error::toString);
+                output.writeString(error.getSeverity() + ":" + error.getMessage());
             }
         } else {
             output.writeInt(0);
         }
+    }
+
+    private static Pattern getErrorMessagePattern() {
+        final List<String> severityValues = Stream.of(Severity.values()).map(Severity::toString).toList();
+        return Pattern.compile("^(" + String.join("|", severityValues) + "):(.*)$");
     }
 
     public static void writeEmptyResponse(final Output output,

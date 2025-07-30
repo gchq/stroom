@@ -1,5 +1,6 @@
 package stroom.search.impl;
 
+import stroom.query.api.ErrorMessage;
 import stroom.query.api.Query;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.CoprocessorsImpl;
@@ -11,6 +12,7 @@ import stroom.task.api.TaskManager;
 import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.Severity;
 import stroom.util.string.ExceptionStringUtil;
 
 import com.esotericsoftware.kryo.KryoException;
@@ -143,13 +145,15 @@ public class RemoteSearchService {
                     }
 
                 } else {
-                    remoteSearchResultFactory.setInitialisationError(Collections.singletonList(
-                            "No coprocessors were created"));
+                    remoteSearchResultFactory.setInitialisationError(
+                            Collections.singletonList(new ErrorMessage(Severity.ERROR,
+                                    "No coprocessors were created")));
                 }
 
             } catch (final RuntimeException e) {
-                remoteSearchResultFactory.setInitialisationError(Collections.singletonList(
-                        ExceptionStringUtil.getMessage(e)));
+                remoteSearchResultFactory.setInitialisationError(
+                        Collections.singletonList(new ErrorMessage(Severity.ERROR,
+                                ExceptionStringUtil.getMessage(e))));
             }
         });
 

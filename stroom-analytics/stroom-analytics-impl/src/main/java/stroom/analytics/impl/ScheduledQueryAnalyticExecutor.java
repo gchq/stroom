@@ -28,6 +28,7 @@ import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.DestroyReason;
+import stroom.query.api.ErrorMessage;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.ParamUtil;
 import stroom.query.api.Query;
@@ -306,16 +307,16 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
                         }
 
                     } finally {
-                        final List<String> errors = errorConsumer.getErrors();
-                        if (errors != null) {
-                            for (final String error : errors) {
+                        final List<ErrorMessage> errorMessages = errorConsumer.getErrorMessages();
+                        if (errorMessages != null) {
+                            for (final ErrorMessage errorMessage : errorMessages) {
                                 if (executionResult.status() == null) {
-                                    executionResult = new ExecutionResult("Error", error);
+                                    executionResult = new ExecutionResult("Error", errorMessage.getMessage());
                                 }
 
                                 errorReceiverProxyProvider.get()
                                         .getErrorReceiver()
-                                        .log(Severity.ERROR, null, null, error, null);
+                                        .log(errorMessage.getSeverity(), null, null, errorMessage.getMessage(), null);
                             }
                         }
 

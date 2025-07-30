@@ -1,6 +1,9 @@
 package stroom.query.api;
 
+import stroom.util.shared.Severity;
+
 import java.util.List;
+import java.util.Map;
 
 public interface FlatResultBuilder {
 
@@ -27,6 +30,8 @@ public interface FlatResultBuilder {
      * @return The {@link FlatResultBuilder}, enabling method chaining
      */
     FlatResultBuilder errors(List<String> errors);
+
+    FlatResultBuilder errorMessages(final List<ErrorMessage> errorMessages);
 
     /**
      * Fix the reported size of the result set.

@@ -1,9 +1,11 @@
 package stroom.query.common.v2;
 
+import stroom.query.api.ErrorMessage;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.concurrent.InterruptionUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.Severity;
 import stroom.util.string.ExceptionStringUtil;
 
 import java.util.ArrayList;
@@ -20,7 +22,7 @@ public class ErrorConsumerImpl implements ErrorConsumer {
 
     private static final int MAX_ERROR_COUNT = 100;
 
-    private final Set<String> errors = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final Set<ErrorMessage> errorMessages = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final AtomicInteger errorCount = new AtomicInteger();
 
     public ErrorConsumerImpl() {
@@ -29,6 +31,11 @@ public class ErrorConsumerImpl implements ErrorConsumer {
 
     @Override
     public void add(final Supplier<String> message) {
+        add(Severity.ERROR, message);
+    }
+
+    @Override
+    public void add(final Severity severity, final Supplier<String> message) {
         if (LOGGER.isTraceEnabled()) {
             try {
                 throw new RuntimeException(message.get());
@@ -39,43 +46,36 @@ public class ErrorConsumerImpl implements ErrorConsumer {
 
         final int count = errorCount.incrementAndGet();
         if (count <= MAX_ERROR_COUNT) {
-            errors.add(message.get());
+            errorMessages.add(new ErrorMessage(severity, message.get()));
         }
     }
 
     @Override
     public void add(final Throwable exception) {
-        if (LOGGER.isTraceEnabled()) {
-            LOGGER.trace(exception::getMessage, exception);
-        }
-
         if (!InterruptionUtil.isInterruption(exception)) {
-            final int count = errorCount.incrementAndGet();
-            if (count <= MAX_ERROR_COUNT) {
-                errors.add(ExceptionStringUtil.getMessage(exception));
-            }
+            add(() -> ExceptionStringUtil.getMessage(exception));
         }
     }
 
     @Override
     public void clear() {
-        errors.clear();
+        errorMessages.clear();
         errorCount.set(0);
     }
 
     @Override
-    public List<String> getErrors() {
-        if (!errors.isEmpty()) {
-            return new ArrayList<>(errors);
+    public List<ErrorMessage> getErrorMessages() {
+        if (!errorMessages.isEmpty()) {
+            return new ArrayList<>(errorMessages);
         } else {
             return Collections.emptyList();
         }
     }
 
     @Override
-    public List<String> drain() {
-        final List<String> copy = getErrors();
-        copy.forEach(errors::remove);
+    public List<ErrorMessage> drain() {
+        final List<ErrorMessage> copy = getErrorMessages();
+        copy.forEach(errorMessages::remove);
         return copy;
     }
 
