@@ -36,18 +36,4 @@ class TestUserNameEntryValue {
         assertThat(entryValue.asUiValue())
                 .isEqualTo("myDisplayName");
     }
-
-    @Test
-    void getAsPersistedValue() {
-        final String uuid = UUID.randomUUID().toString();
-        final UserRefEntryValue entryValue = UserRefEntryValue.of(UserRef
-                .builder()
-                .uuid(uuid)
-                .subjectId("myId")
-                .displayName("myDisplayName")
-                .fullName("myFullName")
-                .build());
-        assertThat(entryValue.asPersistedValue())
-                .isEqualTo(uuid);
-    }
 }

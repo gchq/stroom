@@ -19,7 +19,6 @@ package stroom.annotation.client;
 import stroom.annotation.client.CommentEditPresenter.CommentEditView;
 import stroom.editor.client.presenter.EditorPresenter;
 
-import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;

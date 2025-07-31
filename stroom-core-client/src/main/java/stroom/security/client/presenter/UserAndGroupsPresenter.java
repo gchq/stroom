@@ -89,7 +89,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                         .append("Lists all users and user groups. User groups can be added and deleted."))
                 .para(paraBuilder -> paraBuilder
                         .append("To add/delete/disable users, open the ")
-                        .italic(italicBuilder -> italicBuilder.append("Users"))
+                        .italic("Users")
                         .append(" screen."))
                 .toSafeHtml());
         this.userList.setName("userList");

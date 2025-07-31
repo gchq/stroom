@@ -18,6 +18,7 @@ package stroom.annotation.impl;
 
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationCreator;
+import stroom.annotation.shared.AnnotationEntry;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.query.api.datasource.DataSourceProvider;
@@ -45,7 +46,8 @@ public class AnnotationModule extends AbstractModule {
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())
-                .bind(Annotation.class, AnnotationEventInfoProvider.class);
+                .bind(Annotation.class, AnnotationEventInfoProvider.class)
+                .bind(AnnotationEntry.class, AnnotationEventInfoProvider.class);
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
                 .addBinding(AnnotationService.class);

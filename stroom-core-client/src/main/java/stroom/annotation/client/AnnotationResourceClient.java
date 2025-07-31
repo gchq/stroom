@@ -10,6 +10,7 @@ import stroom.annotation.shared.CreateAnnotationTagRequest;
 import stroom.annotation.shared.DeleteAnnotationEntryRequest;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.FetchAnnotationEntryRequest;
+import stroom.annotation.shared.FindAnnotationRequest;
 import stroom.annotation.shared.MultiAnnotationChangeRequest;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.dispatch.client.DefaultErrorHandler;
@@ -39,16 +40,29 @@ public class AnnotationResourceClient extends AbstractRestClient {
         super(eventBus, restFactory);
     }
 
-    public void getAnnotationByRef(final DocRef annotationRef,
-                                   final Consumer<Annotation> consumer,
-                                   final TaskMonitorFactory taskMonitorFactory) {
+    public void findAnnotations(final FindAnnotationRequest request,
+                                final Consumer<ResultPage<Annotation>> consumer,
+                                final RestErrorHandler errorHandler,
+                                final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(ANNOTATION_RESOURCE)
-                .method(res -> res.getAnnotationByRef(annotationRef))
+                .method(res -> res.findAnnotations(request))
                 .onSuccess(consumer)
+                .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
+
+//    public void getAnnotationByRef(final DocRef annotationRef,
+//                                   final Consumer<Annotation> consumer,
+//                                   final TaskMonitorFactory taskMonitorFactory) {
+//        restFactory
+//                .create(ANNOTATION_RESOURCE)
+//                .method(res -> res.getAnnotationByRef(annotationRef))
+//                .onSuccess(consumer)
+//                .taskMonitorFactory(taskMonitorFactory)
+//                .exec();
+//    }
 
     public void getAnnotationById(final long annotationId,
                                   final Consumer<Annotation> consumer,
@@ -89,10 +103,7 @@ public class AnnotationResourceClient extends AbstractRestClient {
         restFactory
                 .create(ANNOTATION_RESOURCE)
                 .method(res -> res.createAnnotation(request))
-                .onSuccess(response -> {
-                    AnnotationChangeEvent.fire(this, response.asDocRef());
-                    consumer.accept(response);
-                })
+                .onSuccess(consumer)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
@@ -103,10 +114,7 @@ public class AnnotationResourceClient extends AbstractRestClient {
         restFactory
                 .create(ANNOTATION_RESOURCE)
                 .method(res -> res.change(request))
-                .onSuccess(response -> {
-                    AnnotationChangeEvent.fire(this, null);
-                    consumer.accept(response);
-                })
+                .onSuccess(consumer)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
@@ -118,10 +126,7 @@ public class AnnotationResourceClient extends AbstractRestClient {
         restFactory
                 .create(ANNOTATION_RESOURCE)
                 .method(res -> res.batchChange(request))
-                .onSuccess(response -> {
-                    AnnotationChangeEvent.fire(this, null);
-                    consumer.accept(response);
-                })
+                .onSuccess(consumer)
                 .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
@@ -144,10 +149,7 @@ public class AnnotationResourceClient extends AbstractRestClient {
         restFactory
                 .create(ANNOTATION_RESOURCE)
                 .method(res -> res.changeDocumentPermissions(request))
-                .onSuccess(response -> {
-                    AnnotationChangeEvent.fire(this, null);
-                    consumer.accept(response);
-                })
+                .onSuccess(consumer)
                 .onFailure(new DefaultErrorHandler(this, () -> consumer.accept(false)))
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
@@ -159,10 +161,7 @@ public class AnnotationResourceClient extends AbstractRestClient {
         restFactory
                 .create(ANNOTATION_RESOURCE)
                 .method(res -> res.deleteAnnotation(annotationRef))
-                .onSuccess(response -> {
-                    AnnotationChangeEvent.fire(this, null);
-                    consumer.accept(response);
-                })
+                .onSuccess(consumer)
                 .onFailure(new DefaultErrorHandler(this, () -> consumer.accept(false)))
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();

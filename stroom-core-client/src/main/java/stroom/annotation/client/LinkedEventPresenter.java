@@ -70,8 +70,10 @@ public class LinkedEventPresenter
         this.addEventLinkPresenter = addEventLinkPresenter;
 
         addEventButton = pagerView.addButton(SvgPresets.ADD);
-        addEventButton.setTitle("Add Event");
+        addEventButton.setTitle("Add Event Link");
+        addEventButton.setEnabled(false);
         removeEventButton = pagerView.addButton(SvgPresets.DELETE);
+        removeEventButton.setTitle("Remove Event Link");
         removeEventButton.setEnabled(false);
 
         view.setEventListView(pagerView);
@@ -84,6 +86,23 @@ public class LinkedEventPresenter
                 ColumnSizeConstants.MEDIUM_COL);
     }
 
+    private void linkEvent(final EventId eventId) {
+        annotationResourceClient.change(new SingleAnnotationChangeRequest(annotationRef,
+                new LinkEvents(Collections.singletonList(eventId))), this::onChange, this);
+    }
+
+    private void unlinkEvent(final EventId eventId) {
+        annotationResourceClient.change(new SingleAnnotationChangeRequest(annotationRef,
+                new UnlinkEvents(Collections.singletonList(eventId))), this::onChange, this);
+    }
+
+    private void onChange(final Boolean success) {
+        if (success != null && success) {
+            AnnotationChangeEvent.fire(this, annotationRef);
+            parent.updateHistory();
+        }
+    }
+
     @Override
     protected void onBind() {
         super.onBind();
@@ -92,8 +111,7 @@ public class LinkedEventPresenter
         registerHandler(addEventButton.addClickHandler(e -> addEventLinkPresenter.show(eventId -> {
             if (eventId != null) {
                 dirty = true;
-                annotationResourceClient.change(new SingleAnnotationChangeRequest(annotationRef, new LinkEvents(
-                        Collections.singletonList(eventId))), success -> parent.updateHistory(), this);
+                linkEvent(eventId);
             }
         })));
 
@@ -110,8 +128,7 @@ public class LinkedEventPresenter
                     nextSelection = currentData.get(index);
                 }
 
-                annotationResourceClient.change(new SingleAnnotationChangeRequest(annotationRef, new UnlinkEvents(
-                        Collections.singletonList(selected))), success -> parent.updateHistory(), this);
+                unlinkEvent(selected);
             }
         }));
     }
@@ -121,6 +138,7 @@ public class LinkedEventPresenter
         this.annotationRef = docRef;
         dirty = false;
         annotationResourceClient.getLinkedEvents(docRef, this::setData, this);
+        enableButtons();
     }
 
     @Override
@@ -163,8 +181,7 @@ public class LinkedEventPresenter
         } else {
             dataPresenter.clear();
         }
-
-        removeEventButton.setEnabled(selected != null);
+        enableButtons();
     }
 
     public boolean isDirty() {
@@ -173,6 +190,11 @@ public class LinkedEventPresenter
 
     public void setParent(final AnnotationPresenter parent) {
         this.parent = parent;
+    }
+
+    private void enableButtons() {
+        addEventButton.setEnabled(!isReadOnly());
+        removeEventButton.setEnabled(!isReadOnly() && selectionModel.getSelected() != null);
     }
 
     public interface LinkedEventView extends View {

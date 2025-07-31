@@ -271,9 +271,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         // track the currently selected doc.
         registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e -> {
             selectedDoc = null;
-            if (e.getTabData() instanceof DocumentTabData) {
-                @SuppressWarnings("PatternVariableCanBeUsed") // cos GWT
-                final DocumentTabData documentTabData = (DocumentTabData) e.getTabData();
+            if (e.getTabData() instanceof final DocumentTabData documentTabData) {
                 selectedDoc = documentTabData.getDocRef();
             }
             locate.setEnabled(selectedDoc != null);

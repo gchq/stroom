@@ -16,18 +16,29 @@
 
 package stroom.query.client.presenter;
 
+import stroom.annotation.client.AnnotationChangeEvent;
+import stroom.annotation.client.AnnotationResourceClient;
 import stroom.annotation.client.ChangeAssignedToPresenter;
 import stroom.annotation.client.ChangeStatusPresenter;
 import stroom.annotation.client.CreateAnnotationEvent;
 import stroom.annotation.client.EditAnnotationEvent;
+import stroom.annotation.client.ShowFindAnnotationEvent;
+import stroom.annotation.shared.AddAnnotationTable;
+import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.AnnotationTable;
 import stroom.annotation.shared.EventId;
+import stroom.annotation.shared.LinkAnnotations;
+import stroom.annotation.shared.LinkEvents;
+import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.index.shared.IndexConstants;
 import stroom.query.api.Column;
 import stroom.query.api.SpecialColumns;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.Console;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -38,6 +49,9 @@ import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,10 +63,12 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-public class AnnotationManager {
+public class AnnotationManager implements HasHandlers {
 
+    private final EventBus eventBus;
     private final Provider<ChangeStatusPresenter> changeStatusPresenterProvider;
     private final Provider<ChangeAssignedToPresenter> changeAssignedToPresenterProvider;
+    private final AnnotationResourceClient annotationResourceClient;
     private final boolean enabled;
 
     private ChangeStatusPresenter changeStatusPresenter;
@@ -61,14 +77,23 @@ public class AnnotationManager {
     private List<TableRow> selectedItems;
 
     private Supplier<List<Column>> columnSupplier;
+    private TaskMonitorFactory taskMonitorFactory;
 
     @Inject
-    public AnnotationManager(final Provider<ChangeStatusPresenter> changeStatusPresenterProvider,
+    public AnnotationManager(final EventBus eventBus,
+                             final Provider<ChangeStatusPresenter> changeStatusPresenterProvider,
                              final Provider<ChangeAssignedToPresenter> changeAssignedToPresenterProvider,
+                             final AnnotationResourceClient annotationResourceClient,
                              final ClientSecurityContext securityContext) {
+        this.eventBus = eventBus;
         this.changeStatusPresenterProvider = changeStatusPresenterProvider;
         this.changeAssignedToPresenterProvider = changeAssignedToPresenterProvider;
+        this.annotationResourceClient = annotationResourceClient;
         enabled = securityContext.hasAppPermission(AppPermission.ANNOTATIONS);
+    }
+
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        this.taskMonitorFactory = taskMonitorFactory;
     }
 
     public boolean isEnabled() {
@@ -108,7 +133,7 @@ public class AnnotationManager {
                     .builder()
                     .items(menuItems)
                     .popupPosition(popupPosition)
-                    .fire(getChangeStatusPresenter());
+                    .fire(this);
         }
     }
 
@@ -118,10 +143,11 @@ public class AnnotationManager {
         if (enabled) {
             final List<EventId> eventIdList = new ArrayList<>();
             final List<Long> annotationIdList = new ArrayList<>();
-            addRowData(selectedItems, eventIdList, annotationIdList);
+            final AnnotationTable table = addRowData(selectedItems, eventIdList, annotationIdList);
 
             // Create menu item.
-            menuItems.add(createCreateMenu(eventIdList));
+            menuItems.add(createCreateMenu(table, eventIdList, annotationIdList));
+            menuItems.add(createAddMenu(table, eventIdList, annotationIdList));
 
             if (annotationIdList.size() == 1) {
                 // Edit menu item.
@@ -139,9 +165,9 @@ public class AnnotationManager {
         return menuItems;
     }
 
-    public void addRowData(final List<TableRow> selectedItems,
-                           final List<EventId> eventIdList,
-                           final List<Long> annotationIdList) {
+    public AnnotationTable addRowData(final List<TableRow> selectedItems,
+                                      final List<EventId> eventIdList,
+                                      final List<Long> annotationIdList) {
         if (enabled && selectedItems != null && !selectedItems.isEmpty()) {
             String streamIdFieldId = getFieldId(IndexConstants.STREAM_ID);
             if (streamIdFieldId == null) {
@@ -153,7 +179,24 @@ public class AnnotationManager {
             }
             final String eventIdListFieldId = getFieldId("EventIdList");
 
+            final List<Column> columnList = columnSupplier.get();
+            final List<String> columnNames = columnList
+                    .stream()
+                    .filter(Column::isVisible)
+                    .filter(col -> !col.isSpecial())
+                    .map(Column::getName)
+                    .collect(Collectors.toList());
+            final List<List<String>> values = new ArrayList<>(selectedItems.size());
+
             for (final TableRow row : selectedItems) {
+                final List<String> rowValues = columnList
+                        .stream()
+                        .filter(Column::isVisible)
+                        .filter(col -> !col.isSpecial())
+                        .map(col -> row.getText(col.getId()))
+                        .collect(Collectors.toList());
+                values.add(rowValues);
+
                 // Add stream and event id fields.
                 if (streamIdFieldId != null && eventIdFieldId != null) {
                     try {
@@ -184,7 +227,11 @@ public class AnnotationManager {
                     annotationIdList.add(row.getAnnotationId());
                 }
             }
+
+            return new AnnotationTable(columnNames, values);
         }
+
+        return null;
     }
 
     private String getFieldId(final String fieldName) {
@@ -235,18 +282,31 @@ public class AnnotationManager {
         return null;
     }
 
-    private Item createCreateMenu(final List<EventId> eventIdList) {
+    private Item createCreateMenu(final AnnotationTable table,
+                                  final List<EventId> eventIdList,
+                                  final List<Long> annotationIdList) {
         return new IconMenuItem.Builder()
                 .priority(0)
                 .icon(SvgImage.EDIT)
                 .text("Create Annotation")
-                .command(() -> createAnnotation(eventIdList))
+                .command(() -> createAnnotation(table, eventIdList, annotationIdList))
+                .build();
+    }
+
+    private Item createAddMenu(final AnnotationTable table,
+                               final List<EventId> eventIdList,
+                               final List<Long> annotationIdList) {
+        return new IconMenuItem.Builder()
+                .priority(1)
+                .icon(SvgImage.EDIT)
+                .text("Add To Annotation")
+                .command(() -> addToAnnotation(table, eventIdList, annotationIdList))
                 .build();
     }
 
     private Item createEditMenu(final Long annotationId) {
         return new IconMenuItem.Builder()
-                .priority(0)
+                .priority(2)
                 .icon(SvgImage.EDIT)
                 .text("Edit Annotation")
                 .command(() -> editAnnotation(annotationId))
@@ -255,7 +315,7 @@ public class AnnotationManager {
 
     private Item createStatusMenu(final List<Long> annotationIdList) {
         return new IconMenuItem.Builder()
-                .priority(1)
+                .priority(3)
                 .icon(SvgImage.EDIT)
                 .text("Change Status")
                 .command(() -> changeStatus(annotationIdList))
@@ -264,14 +324,16 @@ public class AnnotationManager {
 
     private Item createAssignMenu(final List<Long> annotationIdList) {
         return new IconMenuItem.Builder()
-                .priority(2)
+                .priority(5)
                 .icon(SvgImage.EDIT)
                 .text("Change Assigned To")
                 .command(() -> changeAssignedTo(annotationIdList))
                 .build();
     }
 
-    private void createAnnotation(final List<EventId> eventIdList) {
+    private void createAnnotation(final AnnotationTable table,
+                                  final List<EventId> eventIdList,
+                                  final List<Long> annotationIdList) {
         String title = getValue(selectedItems, "title");
         final String subject = getValue(selectedItems, "subject");
         final String status = getValue(selectedItems, "status");
@@ -288,18 +350,74 @@ public class AnnotationManager {
         }
 
         CreateAnnotationEvent.fire(
-                getChangeStatusPresenter(),
+                this,
                 title,
                 subject,
                 status,
                 initialAssignTo,
                 comment,
-                eventIdList);
+                table,
+                eventIdList,
+                annotationIdList);
+    }
+
+    private void addToAnnotation(final AnnotationTable table,
+                                 final List<EventId> eventIdList,
+                                 final List<Long> annotationIdList) {
+        ShowFindAnnotationEvent.fire(this, annotation -> {
+            linkEvents(annotation, eventIdList, () -> {
+                linkAnnotations(annotation, annotationIdList, () -> {
+                    addTable(annotation, table, () -> {
+                        EditAnnotationEvent.fire(this, annotation.getId());
+
+                        // Let the UI know the annotation has changed but not until we have shown the annotation
+                        // (hence deferred by timer).
+                        AnnotationChangeEvent.fireDeferred(AnnotationManager.this, annotation.asDocRef());
+                    });
+                });
+            });
+        });
+    }
+
+    private void linkEvents(final Annotation annotation,
+                            final List<EventId> eventIdList,
+                            final Runnable runnable) {
+        if (NullSafe.isEmptyCollection(eventIdList)) {
+            runnable.run();
+        } else {
+            final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(annotation.asDocRef(),
+                    new LinkEvents(eventIdList));
+            annotationResourceClient.change(request, r -> runnable.run(), taskMonitorFactory);
+        }
+    }
+
+    private void linkAnnotations(final Annotation annotation,
+                                 final List<Long> annotationIdList,
+                                 final Runnable runnable) {
+        if (NullSafe.isEmptyCollection(annotationIdList)) {
+            runnable.run();
+        } else {
+            final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(annotation.asDocRef(),
+                    new LinkAnnotations(annotationIdList));
+            annotationResourceClient.change(request, r -> runnable.run(), taskMonitorFactory);
+        }
+    }
+
+    private void addTable(final Annotation annotation,
+                          final AnnotationTable table,
+                          final Runnable runnable) {
+        if (table == null) {
+            runnable.run();
+        } else {
+            final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(annotation.asDocRef(),
+                    new AddAnnotationTable(table));
+            annotationResourceClient.change(request, r -> runnable.run(), taskMonitorFactory);
+        }
     }
 
     public void editAnnotation(final long annotationId) {
         if (enabled) {
-            EditAnnotationEvent.fire(getChangeStatusPresenter(), annotationId);
+            EditAnnotationEvent.fire(this, annotationId);
         }
     }
 
@@ -313,5 +431,10 @@ public class AnnotationManager {
         if (enabled) {
             getChangeAssignedToPresenter().show(annotationIdList);
         }
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> event) {
+        eventBus.fireEvent(event);
     }
 }

@@ -21,7 +21,7 @@ import stroom.about.client.gin.AboutModule;
 import stroom.activity.client.ActivityModule;
 import stroom.alert.client.gin.AlertGinjector;
 import stroom.alert.client.gin.AlertModule;
-import stroom.annotation.client.AnnotationModule;
+import stroom.annotation.client.gin.AnnotationModule;
 import stroom.core.client.presenter.CorePresenter;
 import stroom.core.client.presenter.FullScreenPresenter;
 import stroom.dashboard.client.embeddedquery.gin.EmbeddedQueryGinjector;

@@ -14,24 +14,54 @@
  * limitations under the License.
  */
 
-package stroom.annotation.client;
+package stroom.annotation.client.gin;
 
+import stroom.annotation.client.AddEventLinkPresenter;
 import stroom.annotation.client.AddEventLinkPresenter.AddEventLinkView;
+import stroom.annotation.client.AddEventLinkViewImpl;
+import stroom.annotation.client.AnnotationBrowsePlugin;
+import stroom.annotation.client.AnnotationCollectionPlugin;
+import stroom.annotation.client.AnnotationCreatePlugin;
+import stroom.annotation.client.AnnotationEditPresenter;
 import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
+import stroom.annotation.client.AnnotationEditSupport;
+import stroom.annotation.client.AnnotationEditViewImpl;
+import stroom.annotation.client.AnnotationLabelPlugin;
+import stroom.annotation.client.AnnotationStatusPlugin;
+import stroom.annotation.client.AnnotationTagCreatePresenter;
 import stroom.annotation.client.AnnotationTagCreatePresenter.AnnotationTagCreateView;
+import stroom.annotation.client.AnnotationTagCreateViewImpl;
+import stroom.annotation.client.AnnotationTagEditPresenter;
 import stroom.annotation.client.AnnotationTagEditPresenter.AnnotationTagEditView;
+import stroom.annotation.client.AnnotationTagEditViewImpl;
+import stroom.annotation.client.ChangeAssignedToPresenter;
 import stroom.annotation.client.ChangeAssignedToPresenter.ChangeAssignedToView;
+import stroom.annotation.client.ChangeAssignedToViewImpl;
+import stroom.annotation.client.ChangeStatusPresenter;
 import stroom.annotation.client.ChangeStatusPresenter.ChangeStatusView;
+import stroom.annotation.client.ChangeStatusViewImpl;
+import stroom.annotation.client.ChooserPresenter;
 import stroom.annotation.client.ChooserPresenter.ChooserView;
+import stroom.annotation.client.ChooserViewImpl;
+import stroom.annotation.client.CommentEditPresenter;
 import stroom.annotation.client.CommentEditPresenter.CommentEditView;
+import stroom.annotation.client.CommentEditViewImpl;
+import stroom.annotation.client.DurationPresenter;
 import stroom.annotation.client.DurationPresenter.DurationView;
+import stroom.annotation.client.DurationViewImpl;
+import stroom.annotation.client.FindAnnotationPresenter;
+import stroom.annotation.client.FindAnnotationPresenter.FindAnnotationProxy;
+import stroom.annotation.client.LinkedEventPresenter;
 import stroom.annotation.client.LinkedEventPresenter.LinkedEventView;
+import stroom.annotation.client.LinkedEventViewImpl;
+import stroom.annotation.client.MultiChooserPresenter;
 import stroom.core.client.gin.PluginModule;
 
 public class AnnotationModule extends PluginModule {
 
     @Override
     protected void configure() {
+        bindPlugin(AnnotationBrowsePlugin.class);
         bindPlugin(AnnotationCreatePlugin.class);
         bindPlugin(AnnotationStatusPlugin.class);
         bindPlugin(AnnotationLabelPlugin.class);
@@ -56,5 +86,9 @@ public class AnnotationModule extends PluginModule {
         bindSharedView(ChooserView.class, ChooserViewImpl.class);
         bind(ChooserPresenter.class);
         bind(MultiChooserPresenter.class);
+
+        bindPresenter(
+                FindAnnotationPresenter.class,
+                FindAnnotationProxy.class);
     }
 }

@@ -7,7 +7,6 @@ import stroom.widget.popup.client.event.HidePopupRequestEvent;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -19,7 +18,6 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
         extends MyPresenter<FindView, T_PROXY>
         implements FindUiHandlers, FindDocResultListHandler<FindResult> {
 
-    private final NameFilterTimer timer = new NameFilterTimer();
     private final FindDocResultListPresenter findResultListPresenter;
 
     public AbstractFindPresenter(final EventBus eventBus,
@@ -50,9 +48,9 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
 
     @Override
     public void changeQuickFilter(final String name) {
-        timer.setName(name);
-        timer.cancel();
-        timer.schedule(400);
+        if (findResultListPresenter.getExplorerTreeFilterBuilder().setNameFilter(name)) {
+            refresh();
+        }
     }
 
     @Override
@@ -80,24 +78,10 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
         return findResultListPresenter;
     }
 
-    private class NameFilterTimer extends Timer {
-
-        private String name;
-
-        @Override
-        public void run() {
-            if (findResultListPresenter.getExplorerTreeFilterBuilder().setNameFilter(name)) {
-                refresh();
-            }
-        }
-
-        public void setName(final String name) {
-            this.name = name;
-        }
-    }
-
     public interface FindView extends View, Focus, HasUiHandlers<FindUiHandlers> {
 
         void setResultView(View view);
+
+        void setDialogMode(boolean dialog);
     }
 }

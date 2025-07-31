@@ -80,6 +80,9 @@ public class ChangeAssignedToPresenter
                         annotationResourceClient.batchChange(request,
                                 values -> {
                                     GWT.log("Updated " + values + " annotations");
+                                    if (values > 0) {
+                                        AnnotationChangeEvent.fire(this, null);
+                                    }
                                     e.hide();
                                 },
                                 RestErrorHandler.forPopup(this, e),

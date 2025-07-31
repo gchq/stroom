@@ -294,6 +294,12 @@
     align-self: flex-end;
 }
 
+.annotationLink {
+    text-decoration: underline;
+    font-weight: 600;
+    cursor: pointer;
+}
+
 .annotationDelete {
     display: flex;
     flex-direction: row-reverse;
@@ -346,3 +352,59 @@
 .setting-block label{
     cursor: pointer;
 }
+
+.annotationTable {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+}
+.annotationTable tr:nth-child(even) {
+    background-color: var(--row__background-color--even);
+}
+.annotationTable tr:nth-child(odd) {
+    background-color: var(--row__background-color--odd);
+}
+.annotationTable th,
+.annotationTable td {
+    padding: var(--row__padding--vertical) var(--row__padding--horizontal) 0 var(--row__padding--horizontal);
+    white-space: nowrap;
+}
+.annotationTable th {
+    font-weight: 500;
+}
+
+.findAnnotationCell {
+}
+
+.findAnnotationCell-row {
+	display: flex;
+	flex-direction: column;
+}
+
+.findAnnotationCell-main {
+    display: flex;
+    gap: .4rem;
+    padding: .2rem;
+    align-items: center;
+}
+
+.findAnnotationCell-icon {
+    display: flex;
+    flex-grow: 0;
+    min-width: 18px;
+    min-height: 18px;
+}
+
+.findAnnotationCell-sub {
+    display: flex;
+    gap: 5px;
+    padding: .1rem;
+    opacity: 0.8;
+}
+
+.findAnnotationCell-sub div,
+.findAnnotationCell-sub span {
+    font-size: var(--font-size-11);
+}
+

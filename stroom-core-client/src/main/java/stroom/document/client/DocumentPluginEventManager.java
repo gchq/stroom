@@ -1657,9 +1657,7 @@ public class DocumentPluginEventManager extends Plugin {
     }
 
     private boolean isDirty(final TabData tabData) {
-        if (tabData instanceof HasSave) {
-            @SuppressWarnings("PatternVariableCanBeUsed") // cos GWT
-            final HasSave hasSave = (HasSave) tabData;
+        if (tabData instanceof final HasSave hasSave) {
             return hasSave.isDirty();
         }
 

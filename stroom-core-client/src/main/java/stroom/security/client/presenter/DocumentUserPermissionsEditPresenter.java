@@ -18,6 +18,7 @@ package stroom.security.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.annotation.client.AnnotationChangeEvent;
 import stroom.annotation.client.AnnotationResourceClient;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationTag;
@@ -125,7 +126,10 @@ public class DocumentUserPermissionsEditPresenter
             AnnotationTag.TYPE.equals(relatedDoc.getType())) {
             final SingleDocumentPermissionChangeRequest request =
                     new SingleDocumentPermissionChangeRequest(relatedDoc, change);
-            annotationResourceClient.changeDocumentPermissions(request, response -> {
+            annotationResourceClient.changeDocumentPermissions(request, success -> {
+                if (success) {
+                    AnnotationChangeEvent.fire(this, null);
+                }
                 onClose.run();
                 event.hide();
             }, this);
