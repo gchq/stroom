@@ -23,12 +23,15 @@ import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeService;
+import stroom.query.api.OffsetRange;
+import stroom.query.api.TableResult;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.shared.CompletionItem;
 import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.CompletionsRequest.TextType;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryColumnValuesRequest;
+import stroom.query.shared.QueryContext;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryHelpDetail;
 import stroom.query.shared.QueryHelpRequest;
@@ -38,6 +41,7 @@ import stroom.query.shared.QueryResource;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.rest.RestUtil;
 import stroom.util.resultpage.ResultPageBuilder;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.PageRequest;
@@ -193,6 +197,31 @@ class QueryResourceImpl implements QueryResource {
                             builder -> builder.post(Entity.json(request)));
         } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public String csvSearch(final String query, final int offset, final int length) {
+        RestUtil.requireNonNull(query, "query not supplied");
+        try {
+            final QuerySearchRequest request = QuerySearchRequest.builder()
+                    .requestedRange(OffsetRange.builder().offset(offset).length(length).build())
+                    .queryContext(QueryContext.builder().build())
+                    .query(query)
+                    .build();
+            final DashboardSearchResponse response = search(null, request);
+
+            final TableResult tableResult = (TableResult) response.getResults().get(0);
+
+            if (tableResult.getColumns().isEmpty() || tableResult.getRows().isEmpty()) {
+                return null;
+            }
+
+            return new TableResultCsvWriter(tableResult).toCsv();
+        } catch (final Exception e) {
+            LOGGER.debug(e::getMessage, e);
             throw e;
         }
     }
