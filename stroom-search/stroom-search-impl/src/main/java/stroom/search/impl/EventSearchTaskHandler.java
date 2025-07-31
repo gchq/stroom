@@ -17,7 +17,6 @@
 package stroom.search.impl;
 
 import stroom.query.api.DateTimeSettings;
-import stroom.query.api.ErrorMessage;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.api.Query;
 import stroom.query.common.v2.CoprocessorsFactory;
@@ -32,6 +31,7 @@ import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ErrorMessage;
 
 import jakarta.inject.Inject;
 

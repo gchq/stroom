@@ -1,6 +1,5 @@
 package stroom.search.impl;
 
-import stroom.query.api.ErrorMessage;
 import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.NodeResultSerialiser;
 import stroom.security.api.SecurityContext;
@@ -8,6 +7,7 @@ import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ErrorMessage;
 
 import com.esotericsoftware.kryo.io.Output;
 

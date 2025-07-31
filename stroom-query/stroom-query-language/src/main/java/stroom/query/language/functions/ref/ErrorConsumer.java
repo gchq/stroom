@@ -1,6 +1,6 @@
 package stroom.query.language.functions.ref;
 
-import stroom.query.api.ErrorMessage;
+import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.Severity;
 
 import java.util.List;

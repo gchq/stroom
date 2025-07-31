@@ -1,12 +1,12 @@
 package stroom.query.common.v2;
 
-import stroom.query.api.ErrorMessage;
 import stroom.query.api.FlatResult;
 import stroom.query.api.Result;
 import stroom.query.api.ResultRequest;
 import stroom.query.api.VisResult;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.Severity;
 import stroom.util.string.ExceptionStringUtil;
 

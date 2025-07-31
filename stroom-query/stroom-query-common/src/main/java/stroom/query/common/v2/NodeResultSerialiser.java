@@ -1,9 +1,9 @@
 package stroom.query.common.v2;
 
-import stroom.query.api.ErrorMessage;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.Severity;
 
 import com.esotericsoftware.kryo.io.Input;

@@ -1,6 +1,4 @@
-package stroom.query.api;
-
-import stroom.util.shared.Severity;
+package stroom.util.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

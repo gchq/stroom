@@ -56,7 +56,9 @@ import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.HasTaskMonitorFactory;
+import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.Severity;
 import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.InlineSvgButton;
@@ -93,6 +95,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class DashboardPresenter
         extends DocumentEditPresenter<DashboardView, DashboardDoc>
@@ -615,8 +618,8 @@ public class DashboardPresenter
         return combinedMode;
     }
 
-    private List<String> getCombinedErrors() {
-        final List<String> errors = new ArrayList<>();
+    private List<ErrorMessage> getCombinedErrors() {
+        final List<ErrorMessage> errors = new ArrayList<>();
         final List<Queryable> queryableComponents = getQueryableComponents();
         for (final Queryable queryable : queryableComponents) {
             if (queryable.getCurrentErrors() != null) {
@@ -1165,7 +1168,7 @@ public class DashboardPresenter
     }
 
     @Override
-    public void onError(final List<String> errors) {
+    public void onError(final List<ErrorMessage> errors) {
         queryToolbarPresenter.onError(getCombinedErrors());
     }
 

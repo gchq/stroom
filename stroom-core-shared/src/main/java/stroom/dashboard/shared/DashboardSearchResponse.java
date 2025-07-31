@@ -18,7 +18,7 @@ package stroom.dashboard.shared;
 
 import stroom.query.api.QueryKey;
 import stroom.query.api.Result;
-import stroom.util.shared.Severity;
+import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.TokenError;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -27,12 +27,12 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-@JsonPropertyOrder({"queryKey", "highlights", "errors", "tokenError", "complete", "results"})
+@JsonPropertyOrder({"queryKey", "highlights", "errors", "tokenError", "complete", "results", "errorMessages"})
 @JsonInclude(Include.NON_NULL)
 public class DashboardSearchResponse {
 
@@ -62,7 +62,7 @@ public class DashboardSearchResponse {
     private final List<String> errors;
 
     @JsonProperty
-    private final Map<Severity, List<String>> errorMessages;
+    private final List<ErrorMessage> errorMessages;
 
     @JsonProperty
     private final TokenError tokenError;
@@ -85,7 +85,7 @@ public class DashboardSearchResponse {
                                    @JsonProperty("tokenError") final TokenError tokenError,
                                    @JsonProperty("complete") final boolean complete,
                                    @JsonProperty("results") final List<Result> results,
-                                   @JsonProperty("errorMessages") final Map<Severity, List<String>> errorMessages) {
+                                   @JsonProperty("errorMessages") final List<ErrorMessage> errorMessages) {
         this.node = node;
         this.queryKey = queryKey;
         this.highlights = highlights;
@@ -109,12 +109,11 @@ public class DashboardSearchResponse {
     }
 
     public List<String> getErrors() {
-        return errorMessages == null ? List.of() :
-                errorMessages.getOrDefault(Severity.ERROR, List.of());
+        return errors == null ? Collections.emptyList() : errors;
     }
 
-    public Map<Severity, List<String>> getErrorMessages() {
-        return errorMessages;
+    public List<ErrorMessage> getErrorMessages() {
+        return errorMessages == null ? Collections.emptyList() : errorMessages;
     }
 
     public TokenError getTokenError() {

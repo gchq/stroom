@@ -81,10 +81,12 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.Severity;
 import stroom.util.string.ExceptionStringUtil;
 
 import jakarta.inject.Inject;
@@ -480,7 +482,7 @@ class DashboardServiceImpl implements DashboardService {
                         null,
                         true,
                         null,
-                        null);
+                        Collections.singletonList(new ErrorMessage(Severity.ERROR, ExceptionStringUtil.getMessage(e))));
             } finally {
                 // Log here so we don't log twice if there is an error
                 if (queryKey == null) {

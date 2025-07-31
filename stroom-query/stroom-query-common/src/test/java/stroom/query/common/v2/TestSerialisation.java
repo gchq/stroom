@@ -20,7 +20,6 @@ import stroom.docref.DocRef;
 import stroom.query.api.Column;
 import stroom.query.api.DateTimeFormatSettings;
 import stroom.query.api.DateTimeSettings;
-import stroom.query.api.ErrorMessage;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.FlatResult;
@@ -42,6 +41,7 @@ import stroom.query.api.UserTimeZone;
 import stroom.query.test.util.ConsoleColour;
 import stroom.util.io.StreamUtil;
 import stroom.util.json.JsonUtil;
+import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.Severity;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;

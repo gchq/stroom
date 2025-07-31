@@ -19,7 +19,6 @@ package stroom.dashboard.impl;
 
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.query.api.Column;
-import stroom.query.api.ErrorMessage;
 import stroom.query.api.FlatResult;
 import stroom.query.api.Format;
 import stroom.query.api.OffsetRange;
@@ -27,6 +26,7 @@ import stroom.query.api.QueryKey;
 import stroom.query.api.Row;
 import stroom.query.api.SearchResponse;
 import stroom.query.api.TableResult;
+import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.Severity;
 
 import org.junit.jupiter.api.Test;

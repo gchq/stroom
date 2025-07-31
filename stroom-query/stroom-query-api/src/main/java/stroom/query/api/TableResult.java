@@ -16,6 +16,8 @@
 
 package stroom.query.api;
 
+import stroom.util.shared.ErrorMessage;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;

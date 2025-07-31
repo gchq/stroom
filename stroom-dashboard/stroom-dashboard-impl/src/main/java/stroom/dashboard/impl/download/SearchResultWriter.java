@@ -18,11 +18,11 @@ package stroom.dashboard.impl.download;
 
 import stroom.dashboard.impl.SampleGenerator;
 import stroom.query.api.Column;
-import stroom.query.api.ErrorMessage;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.Row;
 import stroom.query.api.TableResult;
 import stroom.query.api.TableResultBuilder;
+import stroom.util.shared.ErrorMessage;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;

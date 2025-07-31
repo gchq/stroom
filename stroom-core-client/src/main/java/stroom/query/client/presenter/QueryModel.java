@@ -36,7 +36,9 @@ import stroom.query.shared.QueryTablePreferences;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.Severity;
 import stroom.util.shared.TokenError;
 
 import com.google.gwt.core.client.GWT;
@@ -266,7 +268,8 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                 .onFailure(throwable -> {
                     try {
                         if (queryKey.equals(currentQueryKey)) {
-                            setErrors(Collections.singletonList(throwable.toString()));
+                            setErrors(Collections.singletonList(
+                                    new ErrorMessage(Severity.ERROR, throwable.toString())));
                         }
                     } catch (final RuntimeException e) {
                         GWT.log(e.getMessage());
@@ -339,7 +342,8 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
 
                         try {
                             if (search == currentSearch) {
-                                setErrors(Collections.singletonList(throwable.toString()));
+                                setErrors(Collections.singletonList(
+                                        new ErrorMessage(Severity.ERROR, throwable.toString())));
                                 polling = false;
                             }
                         } catch (final RuntimeException e) {
@@ -380,7 +384,8 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
             resultComponents.values().forEach(ResultComponent::endSearch);
         }
 
-        setErrors(response.getErrors());
+        setErrors(response.getErrorMessages());
+
         if (response.getTokenError() != null) {
             setTokenErrors(response.getTokenError());
         }
@@ -394,7 +399,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
         }
     }
 
-    private void setErrors(final List<String> errors) {
+    private void setErrors(final List<ErrorMessage> errors) {
         errorListeners.forEach(listener -> listener.onError(errors));
     }
 

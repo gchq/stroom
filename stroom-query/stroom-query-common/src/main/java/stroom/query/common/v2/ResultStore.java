@@ -16,7 +16,6 @@
 
 package stroom.query.common.v2;
 
-import stroom.query.api.ErrorMessage;
 import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.api.SearchResponse;
@@ -25,6 +24,7 @@ import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.Severity;
 import stroom.util.shared.UserRef;
 
@@ -201,7 +201,7 @@ public class ResultStore {
 
             if (!errors.isEmpty()) {
                 //TODO: Is this ok????
-                err.add(new ErrorMessage(Severity.INFO, "Node: " + nodeName));
+                err.add(new ErrorMessage(Severity.ERROR, "Node: " + nodeName));
                 for (final ErrorMessage error : errors) {
                     err.add(new ErrorMessage(error.getSeverity(), "\t" + error.getMessage()));
                 }

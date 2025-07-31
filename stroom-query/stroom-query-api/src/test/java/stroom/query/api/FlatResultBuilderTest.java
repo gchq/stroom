@@ -1,5 +1,6 @@
 package stroom.query.api;
 
+import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.Severity;
 
 import org.junit.jupiter.api.Test;
@@ -7,7 +8,6 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 

@@ -90,6 +90,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
@@ -673,8 +674,7 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                         TokenExceptionUtil.toTokenError(e),
                         true,
                         null,
-                        Collections.singletonMap(Severity.ERROR,
-                                Collections.singletonList(ExceptionStringUtil.getMessage(e))));
+                        Collections.singletonList(new ErrorMessage(Severity.ERROR, ExceptionStringUtil.getMessage(e))));
 
             } catch (final RuntimeException e) {
                 exception = e;
@@ -688,8 +688,7 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                         null,
                         true,
                         null,
-                        Collections.singletonMap(Severity.ERROR,
-                                Collections.singletonList(ExceptionStringUtil.getMessage(e))));
+                        Collections.singletonList(new ErrorMessage(Severity.ERROR, ExceptionStringUtil.getMessage(e))));
             } finally {
                 if (queryKey == null) {
                     searchEventLog.search(

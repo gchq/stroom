@@ -23,7 +23,6 @@ import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.query.api.Column;
-import stroom.query.api.ErrorMessage;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.Query;
@@ -63,6 +62,7 @@ import stroom.task.api.TaskTerminatedException;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ErrorMessage;
 
 import jakarta.inject.Inject;
 

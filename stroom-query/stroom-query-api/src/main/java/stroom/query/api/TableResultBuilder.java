@@ -1,5 +1,7 @@
 package stroom.query.api;
 
+import stroom.util.shared.ErrorMessage;
+
 import java.util.List;
 
 public interface TableResultBuilder {

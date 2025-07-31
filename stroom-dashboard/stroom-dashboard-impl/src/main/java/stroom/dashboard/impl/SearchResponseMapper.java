@@ -17,18 +17,13 @@
 package stroom.dashboard.impl;
 
 import stroom.dashboard.shared.DashboardSearchResponse;
-import stroom.query.api.ErrorMessage;
 import stroom.query.api.Result;
 import stroom.query.api.SearchResponse;
-import stroom.util.shared.NullSafe;
-import stroom.util.shared.Severity;
+import stroom.util.shared.ErrorMessage;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class SearchResponseMapper {
 
@@ -72,13 +67,7 @@ public class SearchResponseMapper {
                 null,
                 searchResponse.complete(),
                 results,
-                toMap(errorMessages));
-    }
-
-    private Map<Severity, List<String>> toMap(final List<ErrorMessage> errorMessages) {
-        return NullSafe.stream(errorMessages)
-                .collect(Collectors.groupingBy(ErrorMessage::getSeverity, HashMap::new,
-                        Collectors.mapping(ErrorMessage::getMessage, Collectors.toList())));
+                errorMessages);
     }
 
 //    private Result mapResult(final Result result) {

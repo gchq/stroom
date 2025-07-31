@@ -1,9 +1,8 @@
 package stroom.query.api;
 
-import stroom.util.shared.Severity;
+import stroom.util.shared.ErrorMessage;
 
 import java.util.List;
-import java.util.Map;
 
 public interface FlatResultBuilder {
 
