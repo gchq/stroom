@@ -25,6 +25,8 @@ import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.safecss.shared.SafeStylesUtils;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -186,8 +188,16 @@ public class MainViewImpl extends ViewWithUiHandlers<MainUiHandlers> implements 
 
     @Override
     public void setBorderStyle(final String style) {
-        if (style != null && style.length() > 0) {
+        if (style != null && !style.isEmpty()) {
             root.getElement().setPropertyString("style", style);
+        }
+    }
+
+    @Override
+    public void setSelectedTabColour(final String colour) {
+        if (colour != null && !colour.isBlank()) {
+            DynamicStyles.put(SafeHtmlUtils.fromTrustedString(".curveTab-selected"),
+                    SafeStylesUtils.fromTrustedNameAndValue("border-bottom-color", colour));
         }
     }
 
@@ -195,7 +205,7 @@ public class MainViewImpl extends ViewWithUiHandlers<MainUiHandlers> implements 
     public void setBanner(final String text) {
         if (!Objects.equals(currentBanner, text)) {
             currentBanner = text;
-            if (text == null || text.trim().length() == 0) {
+            if (text == null || text.trim().isEmpty()) {
                 main.getElement().getStyle().setTop(0, Unit.PX);
                 banner.setVisible(false);
                 banner.getElement().setInnerText("");
