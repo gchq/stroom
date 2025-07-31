@@ -288,7 +288,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
 
         // Get/create the user if possible
         if (userDesc != null) {
-            if (UnauthenticatedUserIdentity.getInstance().getSubjectId().equals(userDesc.getSubjectId())) {
+            if (UnauthenticatedUserIdentity.getInstance().subjectId().equals(userDesc.getSubjectId())) {
                 LOGGER.debug("Unauthenticated user {}", userDesc);
                 userRef = null;
             } else {
