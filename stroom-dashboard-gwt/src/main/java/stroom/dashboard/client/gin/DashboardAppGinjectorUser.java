@@ -21,6 +21,7 @@ import stroom.about.client.gin.AboutModule;
 import stroom.activity.client.ActivityModule;
 import stroom.alert.client.gin.AlertGinjector;
 import stroom.alert.client.gin.AlertModule;
+import stroom.annotation.client.gin.AnnotationGinjector;
 import stroom.annotation.client.gin.AnnotationModule;
 import stroom.core.client.presenter.CorePresenter;
 import stroom.core.client.presenter.FullScreenPresenter;
@@ -74,7 +75,8 @@ public interface DashboardAppGinjectorUser extends
         UserPreferencesGinjector,
         VisGinjector,
         EmbeddedQueryGinjector,
-        ChangePasswordGinjector {
+        ChangePasswordGinjector,
+        AnnotationGinjector {
 
     // Default implementation of standard resources
     EventBus getEventBus();
