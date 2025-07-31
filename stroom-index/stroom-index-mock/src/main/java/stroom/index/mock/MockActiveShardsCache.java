@@ -1,8 +1,8 @@
 package stroom.index.mock;
 
 import stroom.docref.DocRef;
+import stroom.index.impl.ActiveShards;
 import stroom.index.impl.ActiveShardsCache;
-import stroom.index.impl.ActiveShardsCacheImpl.ActiveShards;
 import stroom.index.impl.IndexShardCreator;
 import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexShardWriterCache;
