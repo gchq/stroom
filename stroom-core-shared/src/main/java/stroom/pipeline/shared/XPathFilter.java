@@ -36,6 +36,8 @@ public class XPathFilter {
     @JsonProperty
     private MatchType matchType;
     @JsonProperty
+    private SearchType searchType;
+    @JsonProperty
     private String value;
     @JsonProperty
     private Boolean ignoreCase;
@@ -50,12 +52,14 @@ public class XPathFilter {
                        @JsonProperty("matchType") final MatchType matchType,
                        @JsonProperty("value") final String value,
                        @JsonProperty("ignoreCase") final Boolean ignoreCase,
-                       @JsonProperty("uniqueValues") final Map<String, Rec> uniqueValues) {
+                       @JsonProperty("uniqueValues") final Map<String, Rec> uniqueValues,
+                       @JsonProperty("searchType") final SearchType searchType) {
         this.path = path;
         this.matchType = matchType;
         this.value = value;
         this.ignoreCase = ignoreCase;
         this.uniqueValues = uniqueValues;
+        this.searchType = searchType;
     }
 
     public String getPath() {
@@ -72,6 +76,14 @@ public class XPathFilter {
 
     public void setMatchType(final MatchType matchType) {
         this.matchType = matchType;
+    }
+
+    public SearchType getSearchType() {
+        return searchType;
+    }
+
+    public void setSearchType(final SearchType searchType) {
+        this.searchType = searchType;
     }
 
     public String getValue() {
@@ -156,5 +168,24 @@ public class XPathFilter {
         public boolean isNeedsValue() {
             return needsValue;
         }
+    }
+
+    public enum SearchType implements HasDisplayValue {
+        ALL("All text"),
+        WITHIN("Within Tags"),
+        WITHIN_AND_ATTRIBUTES("Within Tags and Attributes"),
+        XPATH("Search with XPath");
+
+        private final String displayValue;
+
+        SearchType(final String displayValue) {
+            this.displayValue = displayValue;
+        }
+
+        @Override
+        public String getDisplayValue() {
+            return displayValue;
+        }
+
     }
 }

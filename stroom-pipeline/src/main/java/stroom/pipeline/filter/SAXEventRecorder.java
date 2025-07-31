@@ -283,6 +283,8 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
         return false;
     }
 
+
+
     /**
      * @return value as a string, trimmed and, if ignoreCase is true, converted to lower case
      */
@@ -449,6 +451,22 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
             xPathEvaluator.getStaticContext().setDefaultElementNamespace(defaultNamespaceURI);
             xPathEvaluator.getStaticContext().setNamespaceContext(namespaceContext);
             xPathExpression = xPathEvaluator.compile(path);
+        }
+
+        private String buildPath(final XPathFilter xPathFilter) {
+            String basePath = xPathFilter.getPath();
+            XPathFilter.SearchType searchType = xPathFilter.getSearchType();
+
+            if (searchType == null) {
+                searchType = XPathFilter.SearchType.ALL;
+            }
+
+            return switch (searchType) {
+                case ALL -> basePath + "//text() | " + basePath + "//@*";
+                case WITHIN -> basePath + "//text()";
+                case WITHIN_AND_ATTRIBUTES -> basePath + "//text() | " + basePath + "//@*";
+                case XPATH -> basePath;
+            };
         }
 
         public XPathFilter getXPathFilter() {

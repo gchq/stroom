@@ -18,6 +18,7 @@ package stroom.pipeline.stepping.client.view;
 
 import stroom.item.client.SelectionBox;
 import stroom.pipeline.shared.XPathFilter.MatchType;
+import stroom.pipeline.shared.XPathFilter.SearchType;
 import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter.XPathFilterView;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
@@ -43,6 +44,8 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
     @UiField
     SelectionBox<MatchType> matchType;
     @UiField
+    SelectionBox<SearchType> searchType;
+    @UiField
     TextBox value;
     @UiField
     CustomCheckBox ignoreCase;
@@ -52,6 +55,9 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
         widget = binder.createAndBindUi(this);
         matchType.addItems(MatchType.values());
         matchType.setValue(MatchType.EQUALS);
+
+        searchType.addItems(SearchType.values());
+        searchType.setValue(SearchType.ALL);
 
 //        matchType.addValueChangeHandler(event -> changeVisibility(event.getValue()));
     }
@@ -85,6 +91,16 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
     public void setMatchType(final MatchType matchType) {
         this.matchType.setValue(matchType);
         changeVisibility(matchType);
+    }
+
+    @Override
+    public SearchType getSearchType() {
+        return searchType.getValue();
+    }
+
+    @Override
+    public void setSearchType(final SearchType searchType) {
+        this.searchType.setValue(searchType);
     }
 
     @Override
