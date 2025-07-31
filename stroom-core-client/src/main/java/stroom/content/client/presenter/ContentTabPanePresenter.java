@@ -19,6 +19,8 @@ package stroom.content.client.presenter;
 import stroom.content.client.event.CloseContentTabEvent;
 import stroom.content.client.event.CloseContentTabEvent.CloseContentTabHandler;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
+import stroom.content.client.event.MoveContentTabEvent;
+import stroom.content.client.event.MoveContentTabEvent.MoveContentTabHandler;
 import stroom.content.client.event.OpenContentTabEvent;
 import stroom.content.client.event.OpenContentTabEvent.OpenContentTabHandler;
 import stroom.content.client.event.RefreshContentTabEvent;
@@ -58,7 +60,8 @@ public class ContentTabPanePresenter
         CloseContentTabHandler,
         SelectContentTabHandler,
         RefreshContentTabHandler,
-        CurveTabLayoutUiHandlers {
+        CurveTabLayoutUiHandlers,
+        MoveContentTabHandler {
 
     private final List<TabData> historyList = new ArrayList<>();
     private final RecentItems recentItems;
@@ -193,6 +196,12 @@ public class ContentTabPanePresenter
     @Override
     public void onRefresh(final RefreshContentTabEvent event) {
         refresh(event.getTabData());
+    }
+
+    @ProxyEvent
+    @Override
+    public void onMove(final MoveContentTabEvent event) {
+        moveTab(event.getTabData(), event.getTabPos());
     }
 
     @Override

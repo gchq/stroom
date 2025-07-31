@@ -16,33 +16,25 @@
 
 package stroom.widget.tab.client.event;
 
-import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
-import java.util.List;
-
-public class ShowTabMenuEvent extends GwtEvent<ShowTabMenuEvent.Handler> {
+public class RequestMoveTabEvent extends GwtEvent<RequestMoveTabEvent.Handler> {
 
     private static Type<Handler> TYPE;
     private final TabData tabData;
-    private final List<TabData> tabList;
-    private final PopupPosition popupPosition;
+    private final int tabPos;
 
-    private ShowTabMenuEvent(final TabData tabData, final List<TabData> tabList,
-                             final PopupPosition popupPosition) {
+    private RequestMoveTabEvent(final TabData tabData, final int tabPos) {
         this.tabData = tabData;
-        this.tabList = tabList;
-        this.popupPosition = popupPosition;
+        this.tabPos = tabPos;
     }
 
-    public static void fire(final HasHandlers handlers,
-                            final TabData tabData, final List<TabData> tabList,
-                            final PopupPosition popupPosition) {
-        handlers.fireEvent(new ShowTabMenuEvent(tabData,  tabList, popupPosition));
+    public static void fire(final HasHandlers handlers, final TabData tabData, final int tabPos) {
+        handlers.fireEvent(new RequestMoveTabEvent(tabData, tabPos));
     }
 
     public static Type<Handler> getType() {
@@ -52,6 +44,14 @@ public class ShowTabMenuEvent extends GwtEvent<ShowTabMenuEvent.Handler> {
         return TYPE;
     }
 
+    public TabData getTabData() {
+        return tabData;
+    }
+
+    public int getTabPos() {
+        return tabPos;
+    }
+
     @Override
     public Type<Handler> getAssociatedType() {
         return getType();
@@ -59,23 +59,11 @@ public class ShowTabMenuEvent extends GwtEvent<ShowTabMenuEvent.Handler> {
 
     @Override
     protected void dispatch(final Handler handler) {
-        handler.onShow(this);
-    }
-
-    public TabData getTabData() {
-        return tabData;
-    }
-
-    public List<TabData> getTabList() {
-        return tabList;
-    }
-
-    public PopupPosition getPopupPosition() {
-        return popupPosition;
+        handler.onMoveTabs(this);
     }
 
     public interface Handler extends EventHandler {
 
-        void onShow(ShowTabMenuEvent event);
+        void onMoveTabs(RequestMoveTabEvent event);
     }
 }
