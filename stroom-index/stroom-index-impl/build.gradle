@@ -46,6 +46,7 @@ dependencies {
 
     testImplementation project(':stroom-index:stroom-index-mock')
     testImplementation project(':stroom-test-common')
+    testImplementation project(':stroom-node:stroom-node-mock')
 
     testImplementation libs.vavr
 
