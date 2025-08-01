@@ -1,51 +1,58 @@
 package stroom.query.language.functions;
 
 import stroom.query.language.functions.ref.StoredValues;
-import stroom.query.language.functions.ref.ValueReferenceIndex;
 
-import java.util.Arrays;
 import java.util.function.Supplier;
 
-public class Between extends AbstractFunction {
+@FunctionDef(
+        name = InRange.NAME,
+        commonCategory = FunctionCategory.LOGIC,
+        commonReturnType = ValBoolean.class,
+        signatures = @FunctionSignature(
+                description = "Returns true if the value is between lower and upper (inclusive). " +
+                              "All parameters must be either numbers or ISO date strings.",
+                args = {
+                        @FunctionArg(name = "value", argType = Val.class, description = "The value to test."),
+                        @FunctionArg(name = "lower", argType = Val.class, description = "The lower bound."),
+                        @FunctionArg(name = "upper", argType = Val.class, description = "The upper bound.")
+                }
+        )
+)
+public class InRange extends AbstractFunction {
 
-    public Between() {
-        super("between", 3, 3);
+    static final String NAME = "inRange";
+
+    public InRange() {
+        super(NAME, 3, 3);
     }
 
-    public Between(final String name) {
+    public InRange(final String name) {
         super(name, 3, 3);
     }
 
     @Override
-    public void addValueReferences(ValueReferenceIndex valueReferenceIndex) {
-        valueReferenceIndex.addValue("value");
-        valueReferenceIndex.addValue("lower");
-        valueReferenceIndex.addValue("upper");
-    }
-
-    @Override
     public Generator createGenerator() {
-        return new Generator() {
+        final Param valueParam = params[0];
+        final Param lowerParam = params[1];
+        final Param upperParam = params[2];
 
+        return new Generator() {
             @Override
             public void set(final Val[] values, final StoredValues storedValues) {
-//                if (values != null && storedValues != null && values.length == 3) {
-//                    storedValues.set(0, values[0]);
-//                    storedValues.set(1, values[1]);
-//                    storedValues.set(2, values[2]);
-//                }
+                // No-op
             }
 
             @Override
             public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
-                final Param[] params = Between.this.params;
-                if (params == null || params.length != 3) {
-                    return ValErr.create("Between function requires exactly 3 parameters");
-                }
-
-                final Val value = params[0] instanceof Val ? (Val) params[0] : Val.create(params[0]);
-                final Val lower = params[1] instanceof Val ? (Val) params[1] : Val.create(params[1]);
-                final Val upper = params[2] instanceof Val ? (Val) params[2] : Val.create(params[2]);
+                final Val value = valueParam instanceof Function
+                        ? ((Function) valueParam).createGenerator().eval(storedValues, childDataSupplier)
+                        : (Val) valueParam;
+                final Val lower = lowerParam instanceof Function
+                        ? ((Function) lowerParam).createGenerator().eval(storedValues, childDataSupplier)
+                        : (Val) lowerParam;
+                final Val upper = upperParam instanceof Function
+                        ? ((Function) upperParam).createGenerator().eval(storedValues, childDataSupplier)
+                        : (Val) upperParam;
 
                 if (value == null || lower == null || upper == null
                     || value == ValNull.INSTANCE
@@ -74,8 +81,8 @@ public class Between extends AbstractFunction {
                         final double u = upper.toDouble();
                         return ValBoolean.create(l <= v && v <= u);
                     } catch (Exception e) {
-                        return ValErr
-                                .create("Parameters must be all numeric or all ISO date strings for between function");
+                        return ValErr.create(
+                                "Parameters must be all numeric or all ISO date strings for between function");
                     }
                 }
 
@@ -84,10 +91,12 @@ public class Between extends AbstractFunction {
 
             @Override
             public void merge(final StoredValues existingValues, final StoredValues newValues) {
+                // No-op
             }
         };
     }
 
+    @Override
     public boolean hasAggregate() {
         return false;
     }
