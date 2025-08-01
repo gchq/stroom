@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-@JsonPropertyOrder({"componentId", "structure", "values", "size", "error", "errorMessages"})
+@JsonPropertyOrder({"componentId", "structure", "values", "size", "errors", "errorMessages"})
 @JsonInclude(Include.NON_NULL)
 @Schema(description = "A result structure used primarily for visualisation data")
 public final class FlatResult extends Result {
@@ -117,20 +117,17 @@ public final class FlatResult extends Result {
         private String componentId;
         private List<Column> structure = Collections.emptyList();
         private final List<List<Object>> values;
-        private List<String> errors;
         private Long totalResults;
         private List<ErrorMessage> errorMessages;
 
         private FlatResultBuilderImpl() {
             values = new ArrayList<>();
-            errors = Collections.emptyList();
         }
 
         private FlatResultBuilderImpl(final FlatResult flatResult) {
             componentId = flatResult.getComponentId();
             structure = flatResult.structure;
             values = new ArrayList<>(flatResult.values);
-            errors = flatResult.getErrors();
             errorMessages = flatResult.getErrorMessages();
         }
 
@@ -163,12 +160,6 @@ public final class FlatResult extends Result {
         }
 
         @Override
-        public FlatResultBuilder errors(final List<String> errors) {
-            this.errors = errors;
-            return this;
-        }
-
-        @Override
         public FlatResultBuilder errorMessages(final List<ErrorMessage> errorMessages) {
             this.errorMessages = errorMessages;
             return this;
@@ -189,9 +180,11 @@ public final class FlatResult extends Result {
         @Override
         public FlatResult build() {
             if (null != totalResults) {
-                return new FlatResult(componentId, structure, values, totalResults, errors, errorMessages);
+                return new FlatResult(componentId, structure, values, totalResults,
+                        Collections.emptyList(), errorMessages);
             } else {
-                return new FlatResult(componentId, structure, values, (long) values.size(), errors, errorMessages);
+                return new FlatResult(componentId, structure, values, (long) values.size(),
+                        Collections.emptyList(), errorMessages);
             }
         }
     }

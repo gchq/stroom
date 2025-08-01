@@ -56,11 +56,14 @@ public class DashboardSearchResponse {
     private final Set<String> highlights;
 
     /**
-     * Any errors that have been generated during searching.
+     * @deprecated Use {@link DashboardSearchResponse#errorMessages} instead.
      */
     @JsonProperty
     private final List<String> errors;
 
+    /**
+     * Any errors that have been generated during searching.
+     */
     @JsonProperty
     private final List<ErrorMessage> errorMessages;
 
@@ -156,7 +159,6 @@ public class DashboardSearchResponse {
         return "DashboardSearchResponse{" +
                 "queryKey=" + queryKey +
                 ", highlights=" + highlights +
-                ", errors=" + errors +
                 ", tokenError=" + tokenError +
                 ", complete=" + complete +
                 ", results=" + results +

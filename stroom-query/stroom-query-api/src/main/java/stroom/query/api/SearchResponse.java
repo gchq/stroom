@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -53,10 +54,15 @@ public final class SearchResponse {
     @JsonProperty
     private final List<Result> results;
 
+    /**
+     * @deprecated Use {@link SearchResponse#errorMessages} instead.
+     */
     @JsonPropertyDescription("A list of errors that occurred in running the query")
     @JsonProperty
+    @Deprecated
     private final List<String> errors;
 
+    @JsonPropertyDescription("A list of error messages that occurred in running the query")
     @JsonProperty
     private final List<ErrorMessage> errorMessages;
 
@@ -65,12 +71,13 @@ public final class SearchResponse {
     private final Boolean complete;
 
     /**
-     * @param queryKey   The key of the query associated with this response.
+     * @param key   The key of the query associated with this response.
      * @param highlights A list of strings to highlight in the UI that should correlate with the search query.
      * @param results    A list of {@link Result result} objects that each correspond to a
      *                   {@link ResultRequest resultRequest} in the {@link SearchRequest searchRequest}
-     * @param errors     Any errors that have been generated during searching.
+     * @param errors     @deprecated Any errors that have been generated during searching.
      * @param complete   Complete means that the search has finished and there are no more results to come.
+     * @param errorMessages  Any error messages that have been generated during searching.
      */
     @JsonCreator
     public SearchResponse(@JsonProperty("key") final QueryKey key,
@@ -159,7 +166,7 @@ public final class SearchResponse {
         return "SearchResponse{" +
                 "highlights=" + highlights +
                 ", results=" + results +
-                ", errors=" + errors +
+                ", errorsMessages=" + errorMessages +
                 ", complete=" + complete +
                 '}';
     }
@@ -196,7 +203,6 @@ public final class SearchResponse {
         // Optional parameters
         List<String> highlights = new ArrayList<>();
         List<Result> results = new ArrayList<>();
-        List<String> errors = new ArrayList<>();
         List<ErrorMessage> errorMessages = new ArrayList<>();
 
         Builder() {
@@ -207,14 +213,9 @@ public final class SearchResponse {
             complete = searchResponse.complete;
             highlights = searchResponse.highlights;
             results = searchResponse.results;
-            errors = searchResponse.errors;
             errorMessages = searchResponse.errorMessages;
         }
 
-        /**
-         * @param value are the results considered complete
-         * @return The {@link Builder}, enabling method chaining
-         */
         public final T_CHILD_CLASS queryKey(final QueryKey queryKey) {
             this.queryKey = queryKey;
             return self();
@@ -239,11 +240,6 @@ public final class SearchResponse {
             return self();
         }
 
-        public T_CHILD_CLASS errors(final List<String> errors) {
-            this.errors = errors;
-            return self();
-        }
-
         public T_CHILD_CLASS errorMessages(final List<ErrorMessage> errorMessages) {
             this.errorMessages = errorMessages;
             return self();
@@ -255,7 +251,7 @@ public final class SearchResponse {
          * @return A populated {@link SearchResponse searchResponse} object
          */
         public SearchResponse build() {
-            return new SearchResponse(queryKey, highlights, results, errors, complete, errorMessages);
+            return new SearchResponse(queryKey, highlights, results, Collections.emptyList(), complete, errorMessages);
         }
 
         protected abstract T_CHILD_CLASS self();

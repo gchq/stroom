@@ -407,7 +407,7 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
                 request.getKey().toString(),
                 searchResponse.getResults(),
                 searchResponse.complete(),
-                searchResponse.getErrors(),
+                searchResponse.getErrorMessages(),
                 resultInfo);
     }
 

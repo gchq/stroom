@@ -174,7 +174,7 @@ class TestSearchResponseCreator {
                 actualDuration,
                 TOLERANCE);
 
-        assertThat(searchResponse.getErrors()).isNullOrEmpty();
+        assertThat(searchResponse.getErrorMessages()).isNullOrEmpty();
     }
 
     @Test

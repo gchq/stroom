@@ -200,7 +200,6 @@ public class ResultStore {
             final List<ErrorMessage> errors = errorConsumer.getErrorMessages();
 
             if (!errors.isEmpty()) {
-                //TODO: Is this ok????
                 err.add(new ErrorMessage(Severity.ERROR, "Node: " + nodeName));
                 for (final ErrorMessage error : errors) {
                     err.add(new ErrorMessage(error.getSeverity(), "\t" + error.getMessage()));

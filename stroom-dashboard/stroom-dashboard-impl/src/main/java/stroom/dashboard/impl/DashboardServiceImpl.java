@@ -478,7 +478,7 @@ class DashboardServiceImpl implements DashboardService {
                         nodeInfo.getThisNodeName(),
                         queryKey,
                         null,
-                        Collections.singletonList(ExceptionStringUtil.getMessage(e)),
+                        null,
                         null,
                         true,
                         null,

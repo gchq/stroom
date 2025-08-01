@@ -667,7 +667,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 downloadButton.setEnabled(true);
 
                 // Show errors if there are any.
-                messagePanel.showMessage(tableResult.getErrors());
+                messagePanel.showMessage(tableResult.getErrorMessages());
 
             } else {
                 // Disable download of current results.
@@ -694,15 +694,15 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             return switch (colType) {
                 case NUMBER -> QueryField.createLong(column.getName());
                 case DATE_TIME -> QueryField.createDate(column.getName());
-                default ->
-                    // CONTAINS only supported for legacy content, not for use in UI
-                        QueryField
-                                .builder()
-                                .fldName(column.getName())
-                                .fldType(FieldType.TEXT)
-                                .conditionSet(ConditionSet.BASIC_TEXT)
-                                .queryable(true)
-                                .build();
+                // CONTAINS only supported for legacy content, not for use in UI
+                default -> QueryField
+                        // CONTAINS only supported for legacy content, not for use in UI
+                        .builder()
+                        .fldName(column.getName())
+                        .fldType(FieldType.TEXT)
+                        .conditionSet(ConditionSet.BASIC_TEXT)
+                        .queryable(true)
+                        .build();
             };
         } catch (final Exception e) {
             GWT.log(e.getMessage());

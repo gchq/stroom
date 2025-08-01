@@ -12,8 +12,6 @@ public interface TableResultBuilder {
 
     TableResultBuilder addRow(Row row);
 
-    TableResultBuilder errors(List<String> errors);
-
     TableResultBuilder errorMessages(List<ErrorMessage> errorMessages);
 
     TableResultBuilder resultRange(OffsetRange resultRange);

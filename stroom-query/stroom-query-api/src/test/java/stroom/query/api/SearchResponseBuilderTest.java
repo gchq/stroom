@@ -2,6 +2,8 @@ package stroom.query.api;
 
 import stroom.query.api.SearchResponse.FlatResultBuilder;
 import stroom.query.api.SearchResponse.TableResultBuilder;
+import stroom.util.shared.ErrorMessage;
+import stroom.util.shared.Severity;
 
 import org.junit.jupiter.api.Test;
 
@@ -13,8 +15,8 @@ class SearchResponseBuilderTest {
     @Test
     void doesBuildFlat() {
         // Given
-        final String error0 = "something went wrong 0";
-        final String error1 = "something went wrong 1";
+        final ErrorMessage error0 = new ErrorMessage(Severity.ERROR, "something went wrong 0");
+        final ErrorMessage error1 = new ErrorMessage(Severity.ERROR, "something went wrong 1");
         final String highlight0 = "SOMETHING";
         final String flatResultComponentId0 = "flatResult0";
         final String flatResultComponentId1 = "flatResult1";
@@ -23,7 +25,7 @@ class SearchResponseBuilderTest {
         // When
         final SearchResponse searchResponse = new FlatResultBuilder()
                 .complete(true)
-                .errors(List.of(error0, error1))
+                .errorMessages(List.of(error0, error1))
                 .highlights(List.of(highlight0))
                 .results(List.of(
                         FlatResult.builder()
@@ -38,10 +40,10 @@ class SearchResponseBuilderTest {
                 .build();
 
         // Then
-        assertThat(searchResponse.getErrors()).hasSize(2);
+        assertThat(searchResponse.getErrorMessages()).hasSize(2);
         assertThat(searchResponse.getComplete()).isTrue();
-        assertThat(searchResponse.getErrors().contains(error0)).isTrue();
-        assertThat(searchResponse.getErrors().contains(error1)).isTrue();
+        assertThat(searchResponse.getErrorMessages().contains(error0)).isTrue();
+        assertThat(searchResponse.getErrorMessages().contains(error1)).isTrue();
         assertThat(searchResponse.getHighlights()).hasSize(1);
         assertThat(searchResponse.getHighlights().get(0)).isEqualTo(highlight0);
         final long resultCount = searchResponse.getResults().stream()
@@ -56,8 +58,8 @@ class SearchResponseBuilderTest {
     @Test
     void doesBuildTable() {
         // Given
-        final String error0 = "something went wrong 0";
-        final String error1 = "something went wrong 1";
+        final ErrorMessage error0 = new ErrorMessage(Severity.ERROR, "something went wrong 0");
+        final ErrorMessage error1 = new ErrorMessage(Severity.ERROR, "something went wrong 1");
         final String highlight0 = "SOMETHING";
         final String flatResultComponentId0 = "tableResult0";
         final String flatResultComponentId1 = "tableResult1";
@@ -66,7 +68,7 @@ class SearchResponseBuilderTest {
         // When
         final SearchResponse searchResponse = new TableResultBuilder()
                 .complete(true)
-                .errors(List.of(error0, error1))
+                .errorMessages(List.of(error0, error1))
                 .highlights(List.of(highlight0))
                 .results(List.of(
                         TableResult.builder()
@@ -81,10 +83,10 @@ class SearchResponseBuilderTest {
                 .build();
 
         // Then
-        assertThat(searchResponse.getErrors()).hasSize(2);
+        assertThat(searchResponse.getErrorMessages()).hasSize(2);
         assertThat(searchResponse.getComplete()).isTrue();
-        assertThat(searchResponse.getErrors().contains(error0)).isTrue();
-        assertThat(searchResponse.getErrors().contains(error1)).isTrue();
+        assertThat(searchResponse.getErrorMessages().contains(error0)).isTrue();
+        assertThat(searchResponse.getErrorMessages().contains(error1)).isTrue();
         assertThat(searchResponse.getHighlights()).hasSize(1);
         assertThat(searchResponse.getHighlights().get(0)).isEqualTo(highlight0);
         final long resultCount = searchResponse.getResults().stream()

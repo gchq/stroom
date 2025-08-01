@@ -32,7 +32,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-@JsonPropertyOrder({"componentId", "fields", "rows", "resultRange", "totalResults", "error", "errorMessages"})
+@JsonPropertyOrder({"componentId", "fields", "rows", "resultRange", "totalResults", "errors", "errorMessages"})
 @JsonInclude(Include.NON_NULL)
 @Schema(description = "Object for describing a set of results in a table form that supports grouped data")
 public final class TableResult extends Result {
@@ -139,14 +139,12 @@ public final class TableResult extends Result {
         private String componentId;
         private List<Column> columns;
         private final List<Row> rows;
-        private List<String> errors;
         private OffsetRange resultRange;
         private Long totalResults;
         private List<ErrorMessage> errorMessages;
 
         private TableResultBuilderImpl() {
             rows = new ArrayList<>();
-            errors = Collections.emptyList();
             errorMessages = Collections.emptyList();
         }
 
@@ -154,7 +152,6 @@ public final class TableResult extends Result {
             componentId = tableResult.getComponentId();
             columns = tableResult.fields;
             rows = new ArrayList<>(tableResult.rows);
-            errors = tableResult.getErrors();
             resultRange = tableResult.resultRange;
             totalResults = tableResult.totalResults;
             errorMessages = tableResult.getErrorMessages();
@@ -174,12 +171,6 @@ public final class TableResult extends Result {
         @Override
         public TableResultBuilder addRow(final Row row) {
             this.rows.add(row);
-            return this;
-        }
-
-        @Override
-        public TableResultBuilder errors(final List<String> errors) {
-            this.errors = errors;
             return this;
         }
 
@@ -207,7 +198,8 @@ public final class TableResult extends Result {
             if (totalResults == null && rows != null) {
                 totalResults = (long) rows.size();
             }
-            return new TableResult(componentId, columns, rows, resultRange, totalResults, errors, errorMessages);
+            return new TableResult(componentId, columns, rows, resultRange, totalResults,
+                    Collections.emptyList(), errorMessages);
         }
     }
 }

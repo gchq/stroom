@@ -52,11 +52,14 @@ public abstract sealed class Result permits TableResult, FlatResult, VisResult, 
     @JsonProperty
     private final String componentId;
 
-    @Schema(description = "If an error has occurred producing this result set then this will have details " +
-                          "of the error")
+    /**
+     * @deprecated Use {@link Result#errorMessages} instead.
+     */
     @JsonProperty
     private final List<String> errors;
 
+    @Schema(description = "If an error has occurred producing this result set then this will have the details " +
+                          "of the error")
     @JsonProperty
     private final List<ErrorMessage> errorMessages;
 
@@ -104,7 +107,6 @@ public abstract sealed class Result permits TableResult, FlatResult, VisResult, 
     public String toString() {
         return "Result{" +
                "componentId='" + componentId + '\'' +
-               ", errors='" + errors + '\'' +
                ", errorMessages=" + errorMessages +
                '}';
     }

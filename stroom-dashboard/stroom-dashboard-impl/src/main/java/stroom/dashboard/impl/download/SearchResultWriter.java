@@ -94,11 +94,6 @@ public class SearchResultWriter implements TableResultBuilder {
     }
 
     @Override
-    public TableResultBuilder errors(final List<String> errors) {
-        return this;
-    }
-
-    @Override
     public TableResultBuilder errorMessages(final List<ErrorMessage> errorMessages) {
         return this;
     }

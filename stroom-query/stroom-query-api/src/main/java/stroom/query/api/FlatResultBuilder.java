@@ -22,20 +22,12 @@ public interface FlatResultBuilder {
      */
     FlatResultBuilder addValues(List<Object> values);
 
-    /**
-     * Add an error to the result.
-     *
-     * @param error The Error to add.
-     * @return The {@link FlatResultBuilder}, enabling method chaining
-     */
-    FlatResultBuilder errors(List<String> errors);
-
     FlatResultBuilder errorMessages(final List<ErrorMessage> errorMessages);
 
     /**
      * Fix the reported size of the result set.
      *
-     * @param value The size to use
+     * @param totalResults The size to use
      * @return The {@link FlatResultBuilder}, enabling method chaining
      */
     FlatResultBuilder totalResults(Long totalResults);

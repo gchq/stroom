@@ -14,11 +14,11 @@ public class ErrorMessages {
     private final List<ErrorMessage> errorMessages;
 
     public ErrorMessages(final List<ErrorMessage> errorMessages) {
-        this.errorMessages = errorMessages;
+        this.errorMessages = errorMessages == null ? Collections.emptyList() : errorMessages;
     }
 
     public List<ErrorMessage> getErrorMessages() {
-        return errorMessages == null ? Collections.emptyList() : errorMessages;
+        return errorMessages;
     }
 
     public Severity getHighestSeverity() {
@@ -35,7 +35,7 @@ public class ErrorMessages {
     }
 
     public boolean isEmpty() {
-        return getErrorMessages().isEmpty();
+        return errorMessages.isEmpty();
     }
 
     public List<String> get(final Severity...severities) {
@@ -47,7 +47,7 @@ public class ErrorMessages {
     }
 
     private Map<Severity, List<String>> asMap() {
-        return NullSafe.stream(errorMessages)
+        return errorMessages.stream()
                 .collect(Collectors.groupingBy(ErrorMessage::getSeverity, HashMap::new,
                         Collectors.mapping(ErrorMessage::getMessage, Collectors.toList())));
     }
