@@ -10,6 +10,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasWidgets;
@@ -345,6 +346,13 @@ public class FormGroup extends Composite implements HasWidgets {
             labelPanel.add(formLabel);
         }
 
+        if (helpButton.hasHelpContent()) {
+            labelPanel.add(helpButton);
+        }
+
+        if (NullSafe.isNonBlankString(formLabel.getLabel())) {
+            labelPanel.add(formLabel);
+        }
         if (helpButton.hasHelpContent()) {
             labelPanel.add(helpButton);
         }
