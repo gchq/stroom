@@ -6,6 +6,7 @@ import stroom.pipeline.factory.TakesReader;
 import stroom.pipeline.factory.Target;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ElementId;
 import stroom.util.string.ByteArrayBuilder;
 
 import com.google.common.io.CharStreams;
@@ -156,9 +157,9 @@ class TestInvalidXMLCharFilterReaderElement {
         invalidXMLCharFilterReader.setXmlVersion(new Xml10Chars().getXmlVersion());
         invalidXMLCharFilterReader.setWarnOnReplacement(logWarnings);
 
-        invalidXMLCharFilterReader.setElementId(invalidXMLCharFilterReader.getClass().getSimpleName());
+        invalidXMLCharFilterReader.setElementId(new ElementId(invalidXMLCharFilterReader.getClass().getSimpleName()));
         final TestTarget testTarget = new TestTarget();
-        testTarget.setElementId(testTarget.getClass().getSimpleName());
+        testTarget.setElementId(new ElementId(testTarget.getClass().getSimpleName()));
         invalidXMLCharFilterReader.setTarget(testTarget);
 
         invalidXMLCharFilterReader.createProcessors();

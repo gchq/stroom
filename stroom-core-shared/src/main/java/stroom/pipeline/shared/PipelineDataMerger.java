@@ -27,8 +27,6 @@ import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.util.shared.NullSafe;
 
-import jakarta.validation.constraints.Null;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;

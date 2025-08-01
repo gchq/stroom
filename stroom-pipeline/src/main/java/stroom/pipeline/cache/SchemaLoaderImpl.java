@@ -26,6 +26,7 @@ import stroom.pipeline.xmlschema.XmlSchemaCache;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -42,7 +43,7 @@ public class SchemaLoaderImpl implements SchemaLoader {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SchemaLoaderImpl.class);
 
-    private static final String ELEMENT_ID = SchemaLoader.class.getSimpleName();
+    private static final ElementId ELEMENT_ID = new ElementId(SchemaLoader.class.getSimpleName());
 
     private final XmlSchemaCache xmlSchemaCache;
 
