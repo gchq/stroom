@@ -8,7 +8,7 @@
         <form:FormGroup identity="globalPropertyEditName"  label="Name">
             <g:FlowPanel addStyleNames="inline-label-icon">
                 <g:Label ui:field="name" addStyleNames="globalProperties stroom-control-label"/>
-                <g:HTML ui:field="copyNameIcon" addStyleNames="copyNameIcon" title="Copy"/>
+                <b:InlineSvgButton ui:field="copyNameButton" title="Copy" addStyleNames="svgIcon copyNameIcon"/>
             </g:FlowPanel>
         </form:FormGroup>
         <form:FormGroup identity="globalPropertyEditDescription" label="Description">

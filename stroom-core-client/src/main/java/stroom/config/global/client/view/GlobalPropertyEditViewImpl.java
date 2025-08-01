@@ -23,13 +23,13 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.client.ClipboardUtil;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PasswordTextBox;
@@ -47,7 +47,7 @@ public final class GlobalPropertyEditViewImpl
     @UiField
     Label name;
     @UiField
-    HTML copyNameIcon;
+    InlineSvgButton copyNameButton;
     @UiField
     TextArea description;
     @UiField
@@ -116,13 +116,7 @@ public final class GlobalPropertyEditViewImpl
             }
         });
 
-        final SafeHtml copyIcon = SafeHtmlUtils.fromTrustedString(
-                SvgImage.COPY.getSvg().replace("<svg", "<svg width='16' height='16'")
-        );
-        copyNameIcon.setHTML(copyIcon.asString());
-        copyNameIcon.addClickHandler(event -> {
-            ClipboardUtil.copy(name.getText());
-        });
+        copyNameButton.setSvg(SvgImage.COPY);
     }
 
     @Override
@@ -235,6 +229,11 @@ public final class GlobalPropertyEditViewImpl
     @Override
     public ButtonView addDataTypeHelpIcon(final Preset preset) {
         return dataTypeButtonPanel.addButton(preset);
+    }
+
+    @UiHandler("copyNameButton")
+    public void onCopyNameButton(final ClickEvent event) {
+        ClipboardUtil.copy(name.getText());
     }
 
     public interface Binder extends UiBinder<Widget, GlobalPropertyEditViewImpl> {
