@@ -1,59 +1,34 @@
 package stroom.query.language.functions;
 
-import org.junit.jupiter.api.Test;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.stream.Stream;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+class TestHostAddress extends AbstractFunctionTest<HostAddress> {
 
-class TestHostAddress {
-
-    @Test
-    void testOf_localhost() {
-        final HostAddress hostAddress = HostAddress.of("localhost");
-        assertThat(hostAddress.getHostAddress()).isEqualTo("127.0.0.1");
-        assertThat(hostAddress.getHostName()).isNotNull().isNotBlank();
+    @Override
+    Class<HostAddress> getFunctionType() {
+        return HostAddress.class;
     }
 
-    @Test
-    void testOf_ipAddress() {
-        final HostAddress hostAddress = HostAddress.of("127.0.0.1");
-        assertThat(hostAddress.getHostAddress()).isEqualTo("127.0.0.1");
-        assertThat(hostAddress.getHostName()).isNotNull().isNotBlank();
+    @Override
+    Stream<TestCase> getTestCases() {
+        return Stream.of(
+                TestCase.of("localhost", "127.0.0.1", "localhost"),
+                TestCase.of("ip address", "127.0.0.1", "127.0.0.1"),
+                TestCase.of("public domain", resolveHostAddress("github.com"), "github.com"),
+                TestCase.of("public ip", "8.8.8.8", "8.8.8.8"),
+                TestCase.of("unknown host",
+                        ValErr.create("a.b.c.d.invalid.host: Name or service not known"),
+                        ValString.create("a.b.c.d.invalid.host"))
+        );
     }
 
-    @Test
-    void testOf_publicDomains() {
-        final HostAddress byName = HostAddress.of("github.com");
-        assertThat(byName.getHostAddress()).isNotNull().isNotBlank();
-        assertThat(byName.getHostName()).isNotNull().isNotBlank();
-
-        final HostAddress byIp = HostAddress.of("8.8.8.8");
-        assertThat(byIp.getHostAddress()).isEqualTo("8.8.8.8");
-        assertThat(byIp.getHostName()).isNotNull().isNotBlank();
-    }
-
-    @Test
-    void testOf_unknownHost() {
-        assertThatThrownBy(() -> HostAddress.of("a.b.c.d.invalid.host"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Unknown host");
-    }
-
-    @Test
-    void testEqualsAndHashCode() {
-        final HostAddress hostAddress1 = HostAddress.of("localhost");
-        final HostAddress hostAddress2 = HostAddress.of("127.0.0.1");
-        final HostAddress hostAddress3 = HostAddress.of("8.8.8.8");
-
-        assertThat(hostAddress1)
-                .isEqualTo(hostAddress2)
-                .hasSameHashCodeAs(hostAddress2);
-        assertThat(hostAddress1).isNotEqualTo(hostAddress3);
-    }
-
-    @Test
-    void testToString() {
-        final HostAddress hostAddress = HostAddress.of("localhost");
-        assertThat(hostAddress.toString()).contains("127.0.0.1");
+    private static String resolveHostAddress(String host) {
+        try {
+            return InetAddress.getByName(host).getHostAddress();
+        } catch (UnknownHostException e) {
+            return "";
+        }
     }
 }

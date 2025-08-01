@@ -1,48 +1,24 @@
 package stroom.query.language.functions;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import java.util.stream.Stream;
 
-class TestHostName {
+class TestHostName extends AbstractFunctionTest<HostName> {
 
-    @Test
-    void testOf() {
-        final String name = "my-host";
-        final HostName hostName = HostName.of(name);
-        assertThat(hostName.get()).isEqualTo(name);
+    @Override
+    Class<HostName> getFunctionType() {
+        return HostName.class;
     }
 
-    @Test
-    void testOf_publicDomain() {
-        final String name = "github.com";
-        final HostName hostName = HostName.of(name);
-        assertThat(hostName.get()).isEqualTo(name);
-    }
-
-    @Test
-    void testOf_null() {
-        assertThatThrownBy(() -> HostName.of(null))
-                .isInstanceOf(NullPointerException.class);
-    }
-
-    @Test
-    void testEqualsAndHashCode() {
-        final HostName hostName1 = HostName.of("host1");
-        final HostName hostName2 = HostName.of("host1");
-        final HostName hostName3 = HostName.of("host2");
-
-        assertThat(hostName1)
-                .isEqualTo(hostName2)
-                .hasSameHashCodeAs(hostName2);
-        assertThat(hostName1).isNotEqualTo(hostName3);
-    }
-
-    @Test
-    void testToString() {
-        final String name = "my-host.domain.com";
-        final HostName hostName = HostName.of(name);
-        assertThat(hostName.toString()).isEqualTo(name);
+    @Override
+    Stream<TestCase> getTestCases() {
+        return Stream.of(
+                TestCase.of("localhost", "localhost", "localhost"),
+                TestCase.of("public domain", "google.com", "google.com"),
+                TestCase.of("ip address", "dns.google", "8.8.8.8"),
+                TestCase.of("unknown host", ValErr.create("a.b.c.d.invalid.host"),
+                        ValString.create("a.b.c.d.invalid.host"))
+        );
     }
 }
