@@ -310,7 +310,7 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
         }
 
         @Override
-        public TableResultBuilder errorMessages(final List<ErrorMessage> errorMessages) {
+        public TableResultConsumer errorMessages(final List<ErrorMessage> errorMessages) {
             for (final ErrorMessage errorMessage : errorMessages) {
                 LOGGER.error(errorMessage.toString());
             }
