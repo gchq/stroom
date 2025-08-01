@@ -2,7 +2,8 @@
   "elements" : {
     "add" : [ {
       "id" : "Source",
-      "type" : "Source"
+      "type" : "Source",
+      "description" : "Pipeline Element"
     }, {
       "id" : "combinedParser",
       "type" : "CombinedParser"

@@ -51,6 +51,7 @@ import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.util.shared.DataRange;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
@@ -109,7 +110,7 @@ public class SteppingPresenter
     private final PipelineElementTypesFactory pipelineElementTypesFactory;
     private final RestFactory restFactory;
     // elementId => ElementPresenter
-    private final Map<String, ElementPresenter> elementPresenterMap = new HashMap<>();
+    private final Map<ElementId, ElementPresenter> elementPresenterMap = new HashMap<>();
     private PipelineModel pipelineModel;
     private final ButtonView saveButton;
     private final InlineSvgButton terminateButton;
@@ -361,7 +362,7 @@ public class SteppingPresenter
             updateToggleConsoleBtn(null);
             return sourcePresenter;
         } else {
-            final String elementId = element.getId();
+            final ElementId elementId = element.getElementId();
             ElementPresenter elementPresenter = elementPresenterMap.get(elementId);
             if (elementPresenter == null) {
                 final DirtyHandler dirtyEditorHandler = event -> {
@@ -401,11 +402,11 @@ public class SteppingPresenter
     }
 
     private void refreshEditor(final ElementPresenter elementPresenter,
-                               final String elementId) {
+                               final ElementId elementId) {
         elementPresenter.load(result -> {
             final SharedStepData stepData = getEffectiveStepData();
             if (stepData != null) {
-                final SharedElementData elementData = stepData.getElementData(elementId);
+                final SharedElementData elementData = stepData.getElementData(elementId.getId());
                 if (elementData != null) {
                     final Indicators indicators = elementData.getIndicators();
 
@@ -429,17 +430,17 @@ public class SteppingPresenter
     }
 
     private void clearIndicators(final ElementPresenter elementPresenter,
-                                 final String elementId) {
+                                 final ElementId elementId) {
         elementPresenter.clearAllIndicators();
         updateToggleConsoleBtnVisibility(null, elementId);
     }
 
-    private void updateToggleConsoleBtn(final String elementId) {
+    private void updateToggleConsoleBtn(final ElementId elementId) {
         final SharedStepData stepData = getEffectiveStepData();
 
         // Only update the code indicators if we have a current result.
         if (stepData != null) {
-            final SharedElementData elementData = stepData.getElementData(elementId);
+            final SharedElementData elementData = stepData.getElementData(elementId.getId());
             if (elementData != null) {
                 final Indicators indicators = elementData.getIndicators();
                 updateToggleConsoleBtnVisibility(indicators, elementId);
@@ -451,7 +452,7 @@ public class SteppingPresenter
         }
     }
 
-    private void updateToggleConsoleBtnVisibility(final Indicators indicators, final String elementId) {
+    private void updateToggleConsoleBtnVisibility(final Indicators indicators, final ElementId elementId) {
         final Severity maxSeverity = NullSafe.get(indicators, Indicators::getMaxSeverity);
         final boolean isButtonVisible = maxSeverity != null;
 
@@ -588,7 +589,7 @@ public class SteppingPresenter
 
     public void save() {
         // Tell all editors to save.
-        for (final Entry<String, ElementPresenter> entry : elementPresenterMap.entrySet()) {
+        for (final Entry<ElementId, ElementPresenter> entry : elementPresenterMap.entrySet()) {
             entry.getValue().save();
         }
         DirtyEvent.fire(this, false);
@@ -767,14 +768,14 @@ public class SteppingPresenter
             updateElementSeverities();
 
             // Tell all editors that a refresh is required.
-            for (final Entry<String, ElementPresenter> entry : elementPresenterMap.entrySet()) {
+            for (final Entry<ElementId, ElementPresenter> entry : elementPresenterMap.entrySet()) {
                 entry.getValue().setRefreshRequired(true);
             }
 
             // Refresh the currently selected editor.
             final PipelineElement selectedElement = getSelectedPipeElement();
             if (selectedElement != null) {
-                final String elementId = selectedElement.getId();
+                final ElementId elementId = selectedElement.getElementId();
                 final ElementPresenter elementPresenter = elementPresenterMap.get(elementId);
                 if (elementPresenter != null) {
                     refreshEditor(elementPresenter, elementId);
@@ -880,7 +881,7 @@ public class SteppingPresenter
     private void setLogPaneVisibility(final boolean isVisible) {
         final PipelineElement selectedElement = getSelectedPipeElement();
         if (selectedElement != null) {
-            final String elementId = selectedElement.getId();
+            final ElementId elementId = selectedElement.getElementId();
             final ElementPresenter elementPresenter = elementPresenterMap.get(elementId);
             if (elementPresenter != null) {
                 elementPresenter.setLogPaneVisibility(isVisible);

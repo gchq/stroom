@@ -130,7 +130,7 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
                             if (marker instanceof StoredError) {
                                 final StoredError storedError = (StoredError) marker;
                                 if (storedError.getElementId() != null) {
-                                    return SafeHtmlUtils.fromString(storedError.getElementId());
+                                    return SafeHtmlUtils.fromString(storedError.getElementId().toString());
                                 }
 
                             } else if (marker instanceof Summary) {

@@ -10989,6 +10989,13 @@ components:
           type: string
         ok:
           type: boolean
+    ElementId:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
     EmbeddedQueryComponentSettings:
       type: object
       allOf:
@@ -13762,6 +13769,8 @@ components:
       type: object
       properties:
         id:
+          type: string
+        name:
           type: string
         type:
           type: string
@@ -16975,7 +16984,7 @@ components:
       type: object
       properties:
         elementId:
-          type: string
+          $ref: "#/components/schemas/ElementId"
         errorType:
           type: string
           enum:

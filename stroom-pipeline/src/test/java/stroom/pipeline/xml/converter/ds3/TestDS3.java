@@ -36,6 +36,7 @@ import stroom.util.io.StreamUtil;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
 import stroom.util.shared.DefaultLocation;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.Location;
 import stroom.util.shared.TextRange;
@@ -421,7 +422,7 @@ class TestDS3 extends StroomUnitTest {
         final LoggingContentHandler contentHandler = new LoggingContentHandler(ds3Parser);
 
         ds3Parser.setContentHandler(contentHandler);
-        ds3Parser.setErrorHandler(new ErrorHandlerAdaptor("DS3Parser", locationFactory, errorReceiver));
+        ds3Parser.setErrorHandler(new ErrorHandlerAdaptor(new ElementId("DS3Parser"), locationFactory, errorReceiver));
         ds3Parser.parse(new InputSource(new StringReader(inputStr)));
 
         LOGGER.info("Expecting source ranges:\n{}",
@@ -547,7 +548,7 @@ class TestDS3 extends StroomUnitTest {
                 if (zipInput) {
                     final StreamLocationFactory locationFactory = new StreamLocationFactory();
                     reader.setErrorHandler(
-                            new ErrorHandlerAdaptor("DS3Parser", locationFactory, errorReceiver));
+                            new ErrorHandlerAdaptor(new ElementId("DS3Parser"), locationFactory, errorReceiver));
 
                     try (final ZipArchiveInputStream zipInputStream =
                             new ZipArchiveInputStream(Files.newInputStream(input))) {
@@ -572,7 +573,7 @@ class TestDS3 extends StroomUnitTest {
                 } else {
                     final DefaultLocationFactory locationFactory = new DefaultLocationFactory();
                     reader.setErrorHandler(new ErrorHandlerAdaptor(
-                            "DS3Parser",
+                            new ElementId("DS3Parser"),
                             locationFactory,
                             errorReceiver));
 
@@ -592,7 +593,7 @@ class TestDS3 extends StroomUnitTest {
             if (!errorReceiver.isAllOk()) {
                 final Writer errWriter = Files.newBufferedWriter(errtmp);
 
-                for (final Entry<String, Indicators> entry : errorReceiver.getIndicatorsMap().entrySet()) {
+                for (final Entry<ElementId, Indicators> entry : errorReceiver.getIndicatorsMap().entrySet()) {
                     final Indicators indicators = entry.getValue();
                     errWriter.write(indicators.toString());
                 }
@@ -638,7 +639,7 @@ class TestDS3 extends StroomUnitTest {
 
         final LocationFactory locationFactory = new DefaultLocationFactory();
         factory.configure(Files.newBufferedReader(config),
-                new ErrorHandlerAdaptor("DS3ParserFactory", locationFactory, errorReceiver));
+                new ErrorHandlerAdaptor(new ElementId("DS3Parser"), locationFactory, errorReceiver));
 
         if (!errorReceiver.isAllOk()) {
             if (!expectingErrors) {
@@ -652,7 +653,7 @@ class TestDS3 extends StroomUnitTest {
                 .isTrue();
 
         final XMLReader reader = factory.getParser();
-        reader.setErrorHandler(new ErrorHandlerAdaptor("DS3Parser", locationFactory, errorReceiver));
+        reader.setErrorHandler(new ErrorHandlerAdaptor(new ElementId("DS3Parser"), locationFactory, errorReceiver));
         return reader;
     }
 

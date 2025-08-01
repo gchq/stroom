@@ -55,6 +55,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.NullSafe;
 
@@ -109,11 +110,11 @@ class SteppingRequestHandler {
     private final Set<String> generalErrors = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private boolean isSegmentedData;
     // elementId => Indicators
-    private Map<String, Indicators> startProcessIndicatorMap = Collections.emptyMap();
+    private Map<ElementId, Indicators> startProcessIndicatorMap = Collections.emptyMap();
     private PipelineStepRequest request;
     private SteppingResult result;
-    private CountDownLatch countDownLatch = new CountDownLatch(1);
-    private Instant createTime;
+    private final CountDownLatch countDownLatch = new CountDownLatch(1);
+    private final Instant createTime;
     private Instant lastRequestTime;
 
     @Inject
@@ -210,7 +211,9 @@ class SteppingRequestHandler {
         lastRequestTime = Instant.now();
 
         try {
-            countDownLatch.await(request.getTimeout(), TimeUnit.MILLISECONDS);
+            if (!countDownLatch.await(request.getTimeout(), TimeUnit.MILLISECONDS)) {
+                LOGGER.debug("Timeout");
+            }
         } catch (final InterruptedException e) {
             // Continue to interrupt this thread.
             Thread.currentThread().interrupt();
@@ -277,7 +280,7 @@ class SteppingRequestHandler {
             final Map<String, ElementData> elementIdToDataMap = NullSafe.map(stepData.getElementMap());
 
             startProcessIndicatorMap.forEach((elementId, startProcessingIndicators) -> {
-                final ElementData elementData = elementIdToDataMap.get(elementId);
+                final ElementData elementData = elementIdToDataMap.get(elementId.getId());
                 Objects.requireNonNull(elementData, () -> "No elementData for elementId " + elementId);
 
                 final Indicators combinedIndicators = Indicators.combine(
@@ -463,7 +466,7 @@ class SteppingRequestHandler {
         // the source data from. Put the results into an array for use
         // during this request.
         if (filteredMetaIdList == null) {
-            List<Long> filteredList = Collections.emptyList();
+            final List<Long> filteredList;
 
 //            if (criteria.getSelectedIdSet() == null
 //            || Boolean.TRUE.equals(criteria.getSelectedIdSet().getMatchAll())) {
@@ -702,7 +705,7 @@ class SteppingRequestHandler {
             if (pipeline == null
                 || controller.getRecordDetector() == null
                 || controller.getMonitors() == null
-                || controller.getMonitors().size() == 0) {
+                || controller.getMonitors().isEmpty()) {
                 throw ProcessException.create(
                         "You cannot step with this pipeline as it does not contain required elements.");
             }
@@ -711,8 +714,7 @@ class SteppingRequestHandler {
     }
 
     private String createStreamInfo(final String feedName, final Meta meta) {
-        return "" +
-               "id=" +
+        return "id=" +
                meta.getId() +
                ", feed=" +
                feedName +
@@ -723,14 +725,14 @@ class SteppingRequestHandler {
     private void error(final Exception e) {
         LOGGER.debug(e.getMessage(), e);
 
-        if (e.getMessage() == null || e.getMessage().trim().length() == 0) {
+        if (e.getMessage() == null || e.getMessage().trim().isEmpty()) {
             generalErrors.add(e.toString());
         } else {
             generalErrors.add(e.getMessage());
         }
     }
 
-    private Map<String, Indicators> getErrorReceiverIndicatorsMap() {
+    private Map<ElementId, Indicators> getErrorReceiverIndicatorsMap() {
         final ErrorReceiver errorReceiver = errorReceiverProxy.getErrorReceiver();
         if (errorReceiver instanceof final LoggingErrorReceiver loggingErrorReceiver2) {
             return new ConcurrentHashMap<>(NullSafe.map(loggingErrorReceiver2.getIndicatorsMap()));

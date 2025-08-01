@@ -65,7 +65,9 @@ import stroom.util.io.DiffUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Indicators;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
@@ -143,7 +145,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     private void assertNoExceptions(final List<Exception> exceptions) {
-        if (exceptions.size() > 0) {
+        if (!exceptions.isEmpty()) {
             final StringBuilder sb = new StringBuilder("Test failed with ")
                     .append(exceptions.size())
                     .append(" exceptions:");
@@ -213,13 +215,13 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         assertThat(pipelines)
                 .hasSize(1);
 
-        final DocRef pipelineRef = pipelines.get(0);
+        final DocRef pipelineRef = pipelines.getFirst();
 
         final List<DocRef> feedRefs = feedStore.findByName(pipelineRef.getName());
 
         FeedDoc feed = null;
-        if (feedRefs.size() > 0) {
-            feed = feedStore.readDocument(feedRefs.get(0));
+        if (!feedRefs.isEmpty()) {
+            feed = feedStore.readDocument(feedRefs.getFirst());
         }
         final FeedDoc feedDoc = feed;
 
@@ -289,12 +291,12 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             final FindMetaCriteria findMetaCriteria =
                     new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(pipelineRef.getName()));
             final ResultPage<Meta> metaResultPage = metaService.find(findMetaCriteria);
-            if (metaResultPage.size() == 0) {
+            if (metaResultPage.isEmpty()) {
                 final List<DocRef> feedRefs = feedStore.findByName(pipelineRef.getName());
 
                 FeedDoc feed = null;
-                if (feedRefs.size() > 0) {
-                    feed = feedStore.readDocument(feedRefs.get(0));
+                if (!feedRefs.isEmpty()) {
+                    feed = feedStore.readDocument(feedRefs.getFirst());
                 }
                 final FeedDoc feedDoc = feed;
 
@@ -363,13 +365,14 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                       final String stem,
                       final boolean compareOutput,
                       final List<Exception> exceptions) throws IOException {
-        LOGGER.info("Testing:" +
-                        "\n--------------------------------------------------------------------------------" +
-                        "\ninput:  {}" +
-                        "\nfeed:   {}" +
-                        "\noutput: {}" +
-                        "\nstem:   {}" +
-                        "\n--------------------------------------------------------------------------------",
+        LOGGER.info("""
+                        Testing:
+                        --------------------------------------------------------------------------------
+                        input:  {}
+                        feed:   {}
+                        output: {}
+                        stem:   {}
+                        --------------------------------------------------------------------------------""",
                 inputFile.toAbsolutePath(),
                 feed.getName(),
                 outputDir.toAbsolutePath(),
@@ -538,7 +541,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         ProcessorTaskList processorTasks = processorTaskTestHelper.assignTasks(100);
         List<ProcessorTask> list = processorTasks.getList();
         final List<ProcessorTask> dataProcessorTasks = new ArrayList<>(list.size());
-        while (list.size() > 0) {
+        while (!list.isEmpty()) {
             dataProcessorTasks.addAll(list);
             processorTasks = processorTaskTestHelper.assignTasks(100);
             list = processorTasks.getList();
@@ -554,13 +557,13 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 //        final Optional<FeedDoc> feeds = feedDocCache.get(feedName);
 //        assertThat(feeds.isPresent()).as("No feeds found").isTrue();
         final List<DocRef> pipelines = pipelineStore.findByName(feedName);
-        assertThat(pipelines != null && pipelines.size() > 0)
+        assertThat(pipelines != null && !pipelines.isEmpty())
                 .as("No pipelines found")
                 .isTrue();
         assertThat(pipelines.size()).as("Expected 1 pipeline")
                 .isEqualTo(1);
 
-        final DocRef pipelineRef = pipelines.get(0);
+        final DocRef pipelineRef = pipelines.getFirst();
 //        final FeedDoc feed = feeds.get();
 
         LOGGER.info("Testing: {}, {}, {}",
@@ -622,7 +625,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         for (final String elementId : stepData.getElementMap().keySet()) {
             final SharedElementData elementData = stepData.getElementData(elementId);
             assertThat(elementData.getIndicators() != null
-                    && elementData.getIndicators().getMaxSeverity() != null).as(
+                       && elementData.getIndicators().getMaxSeverity() != null).as(
                     "Translation stepping has indicators.").isFalse();
 //            assertThat(elementData.getCodeIndicators() != null
 //                    && elementData.getCodeIndicators().getMaxSeverity() != null).as(
@@ -656,7 +659,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             requestBuilder.stepType(direction);
             final SteppingResult stepResponse = steppingService.step(requestBuilder.build());
 
-            if (stepResponse.getGeneralErrors() != null && stepResponse.getGeneralErrors().size() > 0) {
+            if (stepResponse.getGeneralErrors() != null && !stepResponse.getGeneralErrors().isEmpty()) {
                 throw new RuntimeException(stepResponse.getGeneralErrors().iterator().next());
             }
 
@@ -713,11 +716,11 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
                         final SharedElementData newElementData = new SharedElementData(
                                 input, output, indicators, elementData.isFormatInput(), elementData.isFormatOutput());
-                        SharedStepData newStepData = newResponse.getStepData();
-                        if (newStepData == null) {
-                            newStepData = new SharedStepData(stepResponse.getStepData().getSourceLocation(),
-                                    new HashMap<>());
-                        }
+                        final SharedStepData newStepData = NullSafe.getOrElseGet(
+                                newResponse,
+                                SteppingResult::getStepData,
+                                () -> new SharedStepData(stepResponse.getStepData().getSourceLocation(),
+                                        new HashMap<>()));
                         newStepData.getElementMap().put(elementId, newElementData);
                         newResponse = new SteppingResult(
                                 null,
@@ -750,11 +753,11 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
     private long getLatestStreamId() {
         final List<Meta> list = metaService.find(new FindMetaCriteria()).getValues();
-        if (list == null || list.size() == 0) {
+        if (list == null || list.isEmpty()) {
             return 0;
         }
         list.sort(Comparator.comparing(Meta::getId));
-        final Meta latest = list.get(list.size() - 1);
+        final Meta latest = list.getLast();
         return latest.getId();
     }
 
@@ -774,7 +777,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                 LOGGER.error("Differences exist between the expected and actual output");
                 LOGGER.info("\nvimdiff {} {}", expectedFile, actualFile);
                 LOGGER.info("If you are satisfied the actual output is correct then copy " +
-                        "the actual over the expected and re-run.");
+                            "the actual over the expected and re-run.");
                 throw new RuntimeException(LogUtil.message("Files are not the same:\n{}\n{}",
                         FileUtil.getCanonicalPath(actualFile),
                         FileUtil.getCanonicalPath(expectedFile)));

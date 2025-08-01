@@ -15223,6 +15223,17 @@
           }
         }
       },
+      "ElementId" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        }
+      },
       "EmbeddedQueryComponentSettings" : {
         "type" : "object",
         "allOf" : [ {
@@ -18816,6 +18827,9 @@
         "type" : "object",
         "properties" : {
           "id" : {
+            "type" : "string"
+          },
+          "name" : {
             "type" : "string"
           },
           "type" : {
@@ -22715,7 +22729,7 @@
         "type" : "object",
         "properties" : {
           "elementId" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/ElementId"
           },
           "errorType" : {
             "type" : "string",

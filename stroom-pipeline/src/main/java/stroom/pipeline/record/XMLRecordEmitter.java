@@ -27,6 +27,7 @@ import stroom.pipeline.xml.event.simple.StartElement;
 import stroom.pipeline.xml.event.simple.StartPrefixMapping;
 import stroom.util.io.ByteSlice;
 import stroom.util.io.StreamUtil;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Severity;
 import stroom.util.xml.TransformerFactoryFactory;
 import stroom.util.xml.XMLUtil;
@@ -60,7 +61,7 @@ public class XMLRecordEmitter extends XMLFilterAdaptor implements HasElementId {
     private final List<DestinationProvider> appenders;
     private final List<StartPrefixMapping> prefixList = new ArrayList<>();
     private LocationFactory locationFactory;
-    private String id;
+    private ElementId id;
 
     private ContentHandler handler;
     private int depth;
@@ -286,12 +287,12 @@ public class XMLRecordEmitter extends XMLFilterAdaptor implements HasElementId {
     }
 
     @Override
-    public String getElementId() {
+    public ElementId getElementId() {
         return id;
     }
 
     @Override
-    public void setElementId(final String id) {
+    public void setElementId(final ElementId id) {
         this.id = id;
     }
 
