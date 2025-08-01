@@ -462,10 +462,9 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
             }
 
             return switch (searchType) {
-                case ALL -> basePath + "//text() | " + basePath + "//@*";
-                case WITHIN -> basePath + "//text()";
-                case WITHIN_AND_ATTRIBUTES -> basePath + "//text() | " + basePath + "//@*";
-                case XPATH -> basePath;
+                case ALL -> "//*";
+                case WITHIN -> "//text()";
+                case XPATH -> (basePath == null || basePath.isBlank()) ? "." : basePath;
             };
         }
 
