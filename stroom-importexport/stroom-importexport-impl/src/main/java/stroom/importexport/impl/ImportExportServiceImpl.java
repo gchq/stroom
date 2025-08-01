@@ -66,7 +66,6 @@ public class ImportExportServiceImpl implements ImportExportService {
         try {
             Files.createDirectories(explodeDir);
 
-            // Unzip the zip file.
             ZipUtil.unzip(zipFile, explodeDir);
 
             importExportSerializer.read(explodeDir, confirmList, importSettings);
