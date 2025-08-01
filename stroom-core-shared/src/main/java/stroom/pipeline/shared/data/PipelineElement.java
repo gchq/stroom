@@ -43,7 +43,7 @@ public class PipelineElement implements Comparable<PipelineElement> {
 
     public PipelineElement(final String id,
                            final String type) {
-        this(id, type, null, "Pipeline Element");
+        this(id, type, null, null);
     }
 
     @JsonCreator
