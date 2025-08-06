@@ -33,6 +33,7 @@ import stroom.query.api.ResultRequest;
 import stroom.query.api.ResultRequest.Fetch;
 import stroom.query.api.ResultRequest.ResultStyle;
 import stroom.query.api.SearchRequest;
+import stroom.query.api.SearchRequestSource;
 import stroom.query.api.Sort;
 import stroom.query.api.Sort.SortDirection;
 import stroom.query.api.SpecialColumns;
@@ -203,7 +204,8 @@ public class SearchRequestFactory {
                 final List<TokenType> consumedTokens = new ArrayList<>();
 
                 // Create result requests.
-                final List<ResultRequest> resultRequests = addTableSettings(childTokens, consumedTokens, queryBuilder);
+                final List<ResultRequest> resultRequests = addTableSettings(
+                        in.getSearchRequestSource(), childTokens, consumedTokens, queryBuilder);
 
                 // Try to make a query.
                 Query query = queryBuilder.build();
@@ -738,9 +740,10 @@ public class SearchRequestFactory {
             return out;
         }
 
-        private List<ResultRequest> addTableSettings(final List<AbstractToken> tokens,
-                                      final List<TokenType> consumedTokens,
-                                      final Query.Builder queryBuilder) {
+        private List<ResultRequest> addTableSettings(final SearchRequestSource searchRequestSource,
+                                                     final List<AbstractToken> tokens,
+                                                     final List<TokenType> consumedTokens,
+                                                     final Query.Builder queryBuilder) {
             final List<ResultRequest> resultRequests = new ArrayList<>();
 
             final Map<String, Sort> sortMap = new HashMap<>();
@@ -893,8 +896,13 @@ public class SearchRequestFactory {
                     .extractValues(true)
                     .build();
 
+            final String componentId = searchRequestSource == null || searchRequestSource.getComponentId() == null ?
+                    TABLE_COMPONENT_ID : searchRequestSource.getComponentId();
+            final String componentName = searchRequestSource == null ? null : searchRequestSource.getComponentName();
+
             final ResultRequest tableResultRequest = ResultRequest.builder()
-                    .componentId(TABLE_COMPONENT_ID)
+                    .componentId(componentId)
+                    .componentName(componentName)
                     .mappings(Collections.singletonList(tableSettings))
                     .resultStyle(ResultStyle.TABLE)
                     .fetch(Fetch.ALL)

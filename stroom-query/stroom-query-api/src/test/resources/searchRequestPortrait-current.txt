@@ -894,6 +894,7 @@ class stroom.query.api.SearchRequestSource - public final void java.lang.Object.
 class stroom.query.api.SearchRequestSource - public final void java.lang.Object.wait(long) throws java.lang.InterruptedException
 class stroom.query.api.SearchRequestSource - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
 class stroom.query.api.SearchRequestSource - public java.lang.String stroom.query.api.SearchRequestSource.getComponentId()
+class stroom.query.api.SearchRequestSource - public java.lang.String stroom.query.api.SearchRequestSource.getComponentName()
 class stroom.query.api.SearchRequestSource - public java.lang.String stroom.query.api.SearchRequestSource.toString()
 class stroom.query.api.SearchRequestSource - public native int java.lang.Object.hashCode()
 class stroom.query.api.SearchRequestSource - public static stroom.query.api.SearchRequestSource stroom.query.api.SearchRequestSource.createBasic()
@@ -912,6 +913,7 @@ class stroom.query.api.SearchRequestSource$Builder - public java.lang.String jav
 class stroom.query.api.SearchRequestSource$Builder - public native int java.lang.Object.hashCode()
 class stroom.query.api.SearchRequestSource$Builder - public stroom.query.api.SearchRequestSource stroom.query.api.SearchRequestSource$Builder.build()
 class stroom.query.api.SearchRequestSource$Builder - public stroom.query.api.SearchRequestSource$Builder stroom.query.api.SearchRequestSource$Builder.componentId(java.lang.String)
+class stroom.query.api.SearchRequestSource$Builder - public stroom.query.api.SearchRequestSource$Builder stroom.query.api.SearchRequestSource$Builder.componentName(java.lang.String)
 class stroom.query.api.SearchRequestSource$Builder - public stroom.query.api.SearchRequestSource$Builder stroom.query.api.SearchRequestSource$Builder.ownerDocRef(stroom.docref.DocRef)
 class stroom.query.api.SearchRequestSource$Builder - public stroom.query.api.SearchRequestSource$Builder stroom.query.api.SearchRequestSource$Builder.sourceType(stroom.query.api.SearchRequestSource$SourceType)
 class stroom.query.api.SearchRequestSource$SourceType - public boolean stroom.query.api.SearchRequestSource$SourceType.isRequireEventIdValue()

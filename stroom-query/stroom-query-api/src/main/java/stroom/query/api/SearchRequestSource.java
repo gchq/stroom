@@ -19,15 +19,19 @@ public class SearchRequestSource {
     private final DocRef ownerDocRef;
     @JsonProperty
     private final String componentId;
+    @JsonProperty
+    private final String componentName;
 
     @JsonCreator
     public SearchRequestSource(
             @JsonProperty("sourceType") final SourceType sourceType,
             @JsonProperty("ownerDocRef") final DocRef ownerDocRef,
-            @JsonProperty("componentId") final String componentId) {
+            @JsonProperty("componentId") final String componentId,
+            @JsonProperty("componentName") final String componentName) {
         this.sourceType = sourceType;
         this.ownerDocRef = ownerDocRef;
         this.componentId = componentId;
+        this.componentName = componentName;
     }
 
     public static SearchRequestSource createBasic() {
@@ -46,12 +50,17 @@ public class SearchRequestSource {
         return componentId;
     }
 
+    public String getComponentName() {
+        return componentName;
+    }
+
     @Override
     public String toString() {
         return "SearchRequestSource{" +
                 "sourceType=" + sourceType +
                 ", ownerDocRef='" + ownerDocRef + '\'' +
                 ", componentId='" + componentId + '\'' +
+                ", componentName='" + componentName  + '\'' +
                 '}';
     }
 
@@ -68,6 +77,7 @@ public class SearchRequestSource {
         private SourceType sourceType;
         private DocRef ownerDocRef;
         private String componentId;
+        private String componentName;
 
         private Builder() {
         }
@@ -76,6 +86,7 @@ public class SearchRequestSource {
             this.sourceType = searchRequestSource.sourceType;
             this.ownerDocRef = searchRequestSource.ownerDocRef;
             this.componentId = searchRequestSource.componentId;
+            this.componentName = searchRequestSource.componentName;
         }
 
         public Builder sourceType(final SourceType sourceType) {
@@ -93,11 +104,17 @@ public class SearchRequestSource {
             return this;
         }
 
+        public Builder componentName(final String componentName) {
+            this.componentName = componentName;
+            return this;
+        }
+
         public SearchRequestSource build() {
             return new SearchRequestSource(
                     sourceType,
                     ownerDocRef,
-                    componentId);
+                    componentId,
+                    componentName);
         }
     }
 

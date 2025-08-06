@@ -320,7 +320,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                         list.add(new ResultStoreInfo(
                                 new SearchRequestSource(SourceType.TABLE_BUILDER_ANALYTIC,
                                         docRef,
-                                        null),
+                                        null, null),
                                 searchRequest.getKey(),
                                 null,
                                 analyticRuleDoc.getCreateTimeMs(),
