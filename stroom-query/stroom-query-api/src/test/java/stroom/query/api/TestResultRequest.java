@@ -35,7 +35,7 @@ class TestResultRequest {
     void testConstructorOpenGroups(final Set<String> openGroups, final GroupSelection groupSelection,
                                    final Set<String> expected) {
 
-        final ResultRequest request = new ResultRequest("1", List.of(), OffsetRange.UNBOUNDED,
+        final ResultRequest request = new ResultRequest("1", "name", List.of(), OffsetRange.UNBOUNDED,
                 new TimeFilter(12, 1), openGroups, ResultStyle.TABLE, Fetch.ALL, groupSelection);
 
         assertThat(request.getGroupSelection()).isNotNull();

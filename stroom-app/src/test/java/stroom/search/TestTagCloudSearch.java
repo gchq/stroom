@@ -106,7 +106,7 @@ class TestTagCloudSearch extends AbstractSearchTest {
                 "2016-01-02T00:00:00.000Z");
         final Query query = Query.builder().dataSource(indexRef).expression(expression.build()).build();
 
-        final ResultRequest tableResultRequest = new ResultRequest(componentId,
+        final ResultRequest tableResultRequest = new ResultRequest(componentId, "name",
                 Collections.singletonList(tableSettings),
                 null,
                 null,

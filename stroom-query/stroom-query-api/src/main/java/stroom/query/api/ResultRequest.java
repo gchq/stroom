@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-@JsonPropertyOrder({"componentId", "mappings", "requestedRange", "openGroups", "resultStyle", "fetch",
+@JsonPropertyOrder({"componentId", "componentName", "mappings", "requestedRange", "openGroups", "resultStyle", "fetch",
         "groupSelection"})
 @JsonInclude(Include.NON_NULL)
 @Schema(description = "A definition for how to return the raw results of the query in the SearchResponse, " +
@@ -41,6 +41,9 @@ public final class ResultRequest {
     @Schema(description = "The ID of the component that will receive the results corresponding to this ResultRequest")
     @JsonProperty
     private final String componentId;
+
+    @JsonProperty
+    private final String componentName;
 
     @Schema
     @JsonProperty
@@ -78,6 +81,7 @@ public final class ResultRequest {
 
     @JsonCreator
     public ResultRequest(@JsonProperty("componentId") final String componentId,
+                         @JsonProperty("componentName") final String componentName,
                          @JsonProperty("mappings") final List<TableSettings> mappings,
                          @JsonProperty("requestedRange") final OffsetRange requestedRange,
                          @JsonProperty("timeFilter") final TimeFilter timeFilter,
@@ -86,6 +90,7 @@ public final class ResultRequest {
                          @JsonProperty("fetch") final Fetch fetch,
                          @JsonProperty("groupSelection") final GroupSelection groupSelection) {
         this.componentId = componentId;
+        this.componentName = componentName;
         this.mappings = mappings;
         this.requestedRange = requestedRange;
         this.timeFilter = timeFilter;
@@ -102,6 +107,10 @@ public final class ResultRequest {
 
     public String getComponentId() {
         return componentId;
+    }
+
+    public String getComponentName() {
+        return componentName;
     }
 
     public List<TableSettings> getMappings() {
@@ -212,6 +221,7 @@ public final class ResultRequest {
     public static final class Builder {
 
         private String componentId;
+        private String componentName;
         private List<TableSettings> mappings;
         private OffsetRange requestedRange;
         private TimeFilter timeFilter;
@@ -225,6 +235,7 @@ public final class ResultRequest {
 
         private Builder(final ResultRequest resultRequest) {
             componentId = resultRequest.componentId;
+            componentName = resultRequest.componentName;
             mappings = resultRequest.mappings;
             requestedRange = resultRequest.requestedRange;
             timeFilter = resultRequest.timeFilter;
@@ -240,6 +251,11 @@ public final class ResultRequest {
          */
         public Builder componentId(final String value) {
             this.componentId = value;
+            return this;
+        }
+
+        public Builder componentName(final String value) {
+            this.componentName = value;
             return this;
         }
 
@@ -322,7 +338,7 @@ public final class ResultRequest {
         }
 
         public ResultRequest build() {
-            return new ResultRequest(componentId, mappings, requestedRange, timeFilter,
+            return new ResultRequest(componentId, componentName, mappings, requestedRange, timeFilter,
                     openGroups, resultStyle, fetch, groupSelection);
         }
     }

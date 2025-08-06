@@ -148,6 +148,7 @@ public class SearchRequestMapper {
 
                 final ResultRequest copy = ResultRequest.builder()
                         .componentId(tableResultRequest.getComponentId())
+                        .componentName(tableResultRequest.getTableName())
                         .addMappings(tableResultRequest.getTableSettings())
                         .requestedRange(tableResultRequest.getRequestedRange())
                         .resultStyle(ResultStyle.TABLE)

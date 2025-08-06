@@ -780,6 +780,7 @@ class stroom.query.api.ResultRequest - public final void java.lang.Object.wait(l
 class stroom.query.api.ResultRequest - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
 class stroom.query.api.ResultRequest - public int stroom.query.api.ResultRequest.hashCode()
 class stroom.query.api.ResultRequest - public java.lang.String stroom.query.api.ResultRequest.getComponentId()
+class stroom.query.api.ResultRequest - public java.lang.String stroom.query.api.ResultRequest.getComponentName()
 class stroom.query.api.ResultRequest - public java.lang.String stroom.query.api.ResultRequest.toString()
 class stroom.query.api.ResultRequest - public java.util.List<stroom.query.api.TableSettings> stroom.query.api.ResultRequest.getMappings()
 class stroom.query.api.ResultRequest - public java.util.Set<java.lang.String> stroom.query.api.ResultRequest.getOpenGroups()
@@ -803,6 +804,7 @@ class stroom.query.api.ResultRequest$Builder - public stroom.query.api.ResultReq
 class stroom.query.api.ResultRequest$Builder - public stroom.query.api.ResultRequest$Builder stroom.query.api.ResultRequest$Builder.addMappings(stroom.query.api.TableSettings...)
 class stroom.query.api.ResultRequest$Builder - public stroom.query.api.ResultRequest$Builder stroom.query.api.ResultRequest$Builder.addOpenGroups(java.lang.String...)
 class stroom.query.api.ResultRequest$Builder - public stroom.query.api.ResultRequest$Builder stroom.query.api.ResultRequest$Builder.componentId(java.lang.String)
+class stroom.query.api.ResultRequest$Builder - public stroom.query.api.ResultRequest$Builder stroom.query.api.ResultRequest$Builder.componentName(java.lang.String)
 class stroom.query.api.ResultRequest$Builder - public stroom.query.api.ResultRequest$Builder stroom.query.api.ResultRequest$Builder.fetch(stroom.query.api.ResultRequest$Fetch)
 class stroom.query.api.ResultRequest$Builder - public stroom.query.api.ResultRequest$Builder stroom.query.api.ResultRequest$Builder.groupSelection(stroom.query.api.GroupSelection)
 class stroom.query.api.ResultRequest$Builder - public stroom.query.api.ResultRequest$Builder stroom.query.api.ResultRequest$Builder.mappings(java.util.List<stroom.query.api.TableSettings>)
