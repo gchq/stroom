@@ -32,6 +32,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
+import java.util.List;
+
 public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
 
     private final Widget widget;
@@ -41,6 +43,12 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
     FormGroup ignoreCaseContainer;
     @UiField
     TextBox xPath;
+    @UiField
+    FormGroup xPathContainer;
+    @UiField
+    FormGroup tagContainer;
+    @UiField
+    SelectionBox<String> tagSelection;
     @UiField
     SelectionBox<MatchType> matchType;
     @UiField
@@ -57,7 +65,10 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
         matchType.setValue(MatchType.EQUALS);
 
         searchType.addItems(SearchType.values());
-        searchType.setValue(SearchType.ALL);
+        searchType.setValue(SearchType.XPATH);
+
+        tagContainer.setVisible(false);
+        xPathContainer.setVisible(false);
 
 //        matchType.addValueChangeHandler(event -> changeVisibility(event.getValue()));
     }
@@ -74,12 +85,25 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
 
     @Override
     public String getXPath() {
-        return xPath.getText();
+        SearchType selected = searchType.getValue();
+        switch (selected) {
+            case XPATH:
+                return xPath.getText();
+            case ALL:
+                return "//*";
+            default:
+                return "";
+        }
     }
 
     @Override
     public void setXPath(final String xPath) {
         this.xPath.setText(xPath);
+    }
+
+    public void setAvailableTags(List<String> tags) {
+        tagSelection.clear();
+        tagSelection.addItems(tags);
     }
 
     @Override
@@ -139,4 +163,21 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
     public interface Binder extends UiBinder<Widget, XPathFilterViewImpl> {
 
     }
+
+    @UiHandler("searchType")
+    public void onSearchTypeChange(final ValueChangeEvent<SearchType> e) {
+        SearchType selected = e.getValue();
+        switch (selected) {
+            case ALL:
+                xPathContainer.setVisible(false);
+                tagContainer.setVisible(false);
+                break;
+            case XPATH:
+                xPathContainer.setVisible(true);
+                tagContainer.setVisible(false);
+                xPath.setText("//");
+                break;
+        }
+    }
+
 }

@@ -172,7 +172,6 @@ public class XPathFilter {
 
     public enum SearchType implements HasDisplayValue {
         ALL("All text"),
-        WITHIN("Within Tags"),
         XPATH("Search with XPath");
 
         private final String displayValue;

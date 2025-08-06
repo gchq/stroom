@@ -5,11 +5,11 @@
              xmlns:v="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="XPathFilterViewImpl max form">
-        <form:FormGroup identity="xPathFilterPath" label="XPath">
-            <g:TextBox ui:field="xPath" addStyleNames="w-100"/>
-        </form:FormGroup>
         <form:FormGroup identity="searchLocation" label="Search type">
             <l:SelectionBox ui:field="searchType"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="xPathContainer" identity="xPathFilterPath" label="XPath">
+            <g:TextBox ui:field="xPath" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="xPathFilterCondition" label="Condition">
             <l:SelectionBox ui:field="matchType"/>
