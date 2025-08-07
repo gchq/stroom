@@ -46,10 +46,6 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
     @UiField
     FormGroup xPathContainer;
     @UiField
-    FormGroup tagContainer;
-    @UiField
-    SelectionBox<String> tagSelection;
-    @UiField
     SelectionBox<MatchType> matchType;
     @UiField
     SelectionBox<SearchType> searchType;
@@ -67,7 +63,6 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
         searchType.addItems(SearchType.values());
         searchType.setValue(SearchType.XPATH);
 
-        tagContainer.setVisible(false);
         xPathContainer.setVisible(false);
 
 //        matchType.addValueChangeHandler(event -> changeVisibility(event.getValue()));
@@ -85,7 +80,7 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
 
     @Override
     public String getXPath() {
-        SearchType selected = searchType.getValue();
+        final SearchType selected = searchType.getValue();
         switch (selected) {
             case XPATH:
                 return xPath.getText();
@@ -99,11 +94,6 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
     @Override
     public void setXPath(final String xPath) {
         this.xPath.setText(xPath);
-    }
-
-    public void setAvailableTags(List<String> tags) {
-        tagSelection.clear();
-        tagSelection.addItems(tags);
     }
 
     @Override
@@ -166,15 +156,13 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
 
     @UiHandler("searchType")
     public void onSearchTypeChange(final ValueChangeEvent<SearchType> e) {
-        SearchType selected = e.getValue();
+        final SearchType selected = e.getValue();
         switch (selected) {
             case ALL:
                 xPathContainer.setVisible(false);
-                tagContainer.setVisible(false);
                 break;
             case XPATH:
                 xPathContainer.setVisible(true);
-                tagContainer.setVisible(false);
                 xPath.setText("//");
                 break;
         }

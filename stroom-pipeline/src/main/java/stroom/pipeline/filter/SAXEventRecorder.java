@@ -454,7 +454,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
         }
 
         private String buildPath(final XPathFilter xPathFilter) {
-            String basePath = xPathFilter.getPath();
+            final String basePath = xPathFilter.getPath();
             XPathFilter.SearchType searchType = xPathFilter.getSearchType();
 
             if (searchType == null) {
@@ -463,7 +463,6 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
 
             return switch (searchType) {
                 case ALL -> "//*";
-                case WITHIN -> "//text()";
                 case XPATH -> (basePath == null || basePath.isBlank()) ? "." : basePath;
             };
         }
