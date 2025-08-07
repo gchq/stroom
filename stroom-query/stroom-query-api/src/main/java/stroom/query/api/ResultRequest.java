@@ -35,7 +35,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @JsonPropertyOrder({"componentId", "searchRequestSource", "mappings", "requestedRange", "openGroups", "resultStyle",
-        "fetch", "groupSelection"})
+        "fetch", "groupSelection", "tableName"})
 @JsonInclude(Include.NON_NULL)
 @Schema(description = "A definition for how to return the raw results of the query in the SearchResponse, " +
                       "e.g. sorted, grouped, limited, etc.")
