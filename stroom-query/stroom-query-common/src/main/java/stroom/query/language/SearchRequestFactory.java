@@ -896,13 +896,9 @@ public class SearchRequestFactory {
                     .extractValues(true)
                     .build();
 
-            final String componentId = searchRequestSource == null || searchRequestSource.getComponentId() == null ?
-                    TABLE_COMPONENT_ID : searchRequestSource.getComponentId();
-            final String componentName = searchRequestSource == null ? null : searchRequestSource.getComponentName();
-
             final ResultRequest tableResultRequest = ResultRequest.builder()
-                    .componentId(componentId)
-                    .componentName(componentName)
+                    .componentId(TABLE_COMPONENT_ID)
+                    .searchRequestSource(searchRequestSource)
                     .mappings(Collections.singletonList(tableSettings))
                     .resultStyle(ResultStyle.TABLE)
                     .fetch(Fetch.ALL)

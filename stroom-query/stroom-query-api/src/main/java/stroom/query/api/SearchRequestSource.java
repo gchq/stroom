@@ -9,6 +9,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
 public class SearchRequestSource {
@@ -62,6 +64,23 @@ public class SearchRequestSource {
                 ", componentId='" + componentId + '\'' +
                 ", componentName='" + componentName  + '\'' +
                 '}';
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final SearchRequestSource that = (SearchRequestSource) o;
+        return sourceType == that.sourceType &&
+               Objects.equals(ownerDocRef, that.ownerDocRef) &&
+               Objects.equals(componentId, that.componentId) &&
+               Objects.equals(componentName, that.componentName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(sourceType, ownerDocRef, componentId, componentName);
     }
 
     public static Builder builder() {

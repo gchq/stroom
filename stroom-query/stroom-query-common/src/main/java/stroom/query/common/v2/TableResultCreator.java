@@ -21,6 +21,8 @@ import stroom.query.api.OffsetRange;
 import stroom.query.api.Result;
 import stroom.query.api.ResultRequest;
 import stroom.query.api.ResultRequest.Fetch;
+import stroom.query.api.SearchRequestSource;
+import stroom.query.api.SearchRequestSource.SourceType;
 import stroom.query.api.TableResult;
 import stroom.query.api.TableResultBuilder;
 import stroom.query.api.TableSettings;
@@ -102,8 +104,10 @@ public class TableResultCreator implements ResultCreator {
                         errorConsumer,
                         expressionPredicateFactory,
                         mapper);
-                mapper = ConditionalFormattingMapper.create(resultRequest.getComponentId(),
-                        resultRequest.getComponentName(),
+
+
+                mapper = ConditionalFormattingMapper.create(resultRequest.getSourceComponentId(),
+                        resultRequest.getSourceComponentName(),
                         columns,
                         tableSettings.getConditionalFormattingRules(),
                         dataStore.getDateTimeSettings(),
