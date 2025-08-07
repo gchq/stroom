@@ -852,7 +852,9 @@ public class EmbeddedQueryPresenter
 
     @Override
     public void onContentTabVisible(final boolean visible) {
-        currentTablePresenter.onContentTabVisible(visible);
+        if (currentTablePresenter != null) {
+            currentTablePresenter.onContentTabVisible(visible);
+        }
     }
 
     public interface EmbeddedQueryView extends View, RequiresResize {
