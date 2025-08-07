@@ -62,6 +62,7 @@ public final class SvgPresets {
     public static final Preset PROCESS = disabled(SvgImage.PROCESS, "Process");
     public static final Preset PROPERTIES = enabled(SvgImage.PROPERTIES, "Properties");
     public static final Preset REMOVE = disabled(SvgImage.REMOVE, "Remove");
+    public static final Preset RERUN = enabled((SvgImage.RERUN), "Rerun");
     public static final Preset RUN = enabled(SvgImage.PLAY, "Run");
     public static final Preset SAVE = disabled(SvgImage.SAVE, "Save");
     public static final Preset SAVE_AS = disabled(SvgImage.SAVEAS, "Save As");
