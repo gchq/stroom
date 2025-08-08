@@ -1,0 +1,12 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:d="urn:import:stroom.widget.customdatebox.client">
+    <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="temporalOrderingTolerance"
+                        label="Temporal Ordering Tolerance">
+            <d:DurationPicker ui:field="temporalOrderingTolerance"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

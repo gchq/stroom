@@ -1,26 +1,38 @@
 package stroom.planb.impl.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import java.util.Arrays;
 import java.util.Objects;
 
+@JsonPropertyOrder({"traceId", "parentSpanId", "spanId"})
+@JsonInclude(Include.NON_NULL)
 public class TraceKey {
 
     /**
      * A valid trace identifier is a 16-byte array with at least one non-zero byte.
      */
+    @JsonProperty
     private final byte[] traceId;
     /**
      * A valid span identifier is an 8-byte array with at least one non-zero byte.
      */
+    @JsonProperty
     private final byte[] parentSpanId;
     /**
      * A valid span identifier is an 8-byte array with at least one non-zero byte.
      */
+    @JsonProperty
     private final byte[] spanId;
 
-    public TraceKey(final byte[] traceId,
-                    final byte[] parentSpanId,
-                    final byte[] spanId) {
+    @JsonCreator
+    public TraceKey(@JsonProperty("traceId") final byte[] traceId,
+                    @JsonProperty("parentSpanId") final byte[] parentSpanId,
+                    @JsonProperty("spanId") final byte[] spanId) {
         this.traceId = traceId;
         this.parentSpanId = parentSpanId;
         this.spanId = spanId;

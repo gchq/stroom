@@ -177,6 +177,11 @@ public class DocumentTypeRegistry {
             "XSLT",
             "XSL Translation",
             SvgImage.DOCUMENT_XSLT);
+    public static final DocumentType PATHWAYS_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            "Pathways",
+            "Pathways",
+            SvgImage.DOCUMENT_PATHWAYS);
 
 
     public static final DocumentType DUAL_DOCUMENT_TYPE = new DocumentType(
@@ -266,6 +271,7 @@ public class DocumentTypeRegistry {
         put(VISUALISATION_DOCUMENT_TYPE);
         put(XML_SCHEMA_DOCUMENT_TYPE);
         put(XSLT_DOCUMENT_TYPE);
+        put(PATHWAYS_DOCUMENT_TYPE);
 
         // Searchables
         put(DUAL_DOCUMENT_TYPE);

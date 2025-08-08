@@ -74,6 +74,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.meta.impl.db.MetaDaoModule());
         install(new stroom.node.impl.NodeModule());
         install(new stroom.node.impl.db.NodeDaoModule());
+        install(new stroom.pathways.impl.PathwaysModule());
         install(new stroom.pipeline.PipelineModule());
         install(new stroom.pipeline.cache.PipelineCacheModule());
         install(new stroom.pipeline.factory.CommonPipelineElementModule());

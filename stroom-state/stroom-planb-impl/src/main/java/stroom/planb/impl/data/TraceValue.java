@@ -1,25 +1,39 @@
 package stroom.planb.impl.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 
+@JsonPropertyOrder({"name", "startTime", "endTime", "attributes", "events", "insertTime"})
+@JsonInclude(Include.NON_NULL)
 public class TraceValue {
-//"flags": 768, "name": "/workspace/b9ba234b-97f6-4c39-8db9-93b0ce5f9b67_payload-0_gate-0/command", "kind": 2, "start_time_unix_nano": 1749517172921563334, "end_time_unix_nano": 1749517172928684229, "attributes": {"http.method": "PUT", "http.target": "/workspace/b9ba234b-97f6-4c39-8db9-93b0ce5f9b67_payload-0_gate-0/command", "http.host": "ip-10-1-18-200.eu-west-2.compute.internal:8080", "coral.operation": "PerformCommand", "coral.service": "DeepContentInspectionServiceWorker", "coral.namespace": "com.a2z.dcis.worker", "http.status_code": 200}, "status": {}, "resource": {"service.name": "DCIS-Worker-beta-high-Export", "service.version": "1.0"}, "trace_id_hex": "68478374704d0959e80769ee6e38a15e", "span_id_hex": "35a0708554289fb6", "parent_span_id_hex": "14b7c95a94016fc1", "scope_span_name": "DeepContentInspectionService"}
 
+    @JsonProperty
     private final String name;
+    @JsonProperty
     private final Instant startTime;
+    @JsonProperty
     private final Instant endTime;
+    @JsonProperty
     private final List<TraceAttribute> attributes;
+    @JsonProperty
     private final List<TraceEvent> events;
+    @JsonProperty
     private final Instant insertTime;
 
-    public TraceValue(final String name,
-                      final Instant startTime,
-                      final Instant endTime,
-                      final List<TraceAttribute> attributes,
-                      final List<TraceEvent> events,
-                      final Instant insertTime) {
+    @JsonCreator
+    public TraceValue(@JsonProperty("name") final String name,
+                      @JsonProperty("startTime") final Instant startTime,
+                      @JsonProperty("endTime") final Instant endTime,
+                      @JsonProperty("attributes") final List<TraceAttribute> attributes,
+                      @JsonProperty("events") final List<TraceEvent> events,
+                      @JsonProperty("insertTime") final Instant insertTime) {
         this.name = name;
         this.startTime = startTime;
         this.endTime = endTime;
