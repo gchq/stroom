@@ -155,16 +155,20 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
 
     private void execRule(final T doc,
                           final TaskContext parentTaskContext) {
-        // Load schedules for the rule.
         final DocRef docRef = doc.asDocRef();
-        final ExecutionScheduleRequest request = ExecutionScheduleRequest
-                .builder()
-                .ownerDocRef(docRef)
-                .enabled(true)
-                .nodeName(nodeInfo.getThisNodeName())
-                .build();
 
-        final ResultPage<ExecutionSchedule> executionSchedules = executionScheduleDao.fetchExecutionSchedule(request);
+        // Load schedules for the rule. Do this as the processing user as permission is required to load associated
+        // users.
+        final ResultPage<ExecutionSchedule> executionSchedules = securityContext.asProcessingUserResult(() -> {
+            final ExecutionScheduleRequest request = ExecutionScheduleRequest
+                    .builder()
+                    .ownerDocRef(docRef)
+                    .enabled(true)
+                    .nodeName(nodeInfo.getThisNodeName())
+                    .build();
+            return executionScheduleDao.fetchExecutionSchedule(request);
+        });
+
         final WorkQueue workQueue = new WorkQueue(executorProvider.get(), 1, 1);
         for (final ExecutionSchedule executionSchedule : executionSchedules.getValues()) {
             final Runnable runnable = () -> {
