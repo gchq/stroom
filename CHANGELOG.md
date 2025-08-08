@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.10-beta.10] - 2025-08-08
+
+* Issue **#5046** : Stop feeds being auto-created when there is no content template match.
+
+* Issue **#5062** : Fix permissions issue loading scheduled executors.
+
+
 ## [v7.10-beta.9] - 2025-07-22
 
 * Allow clientSecret to be null/empty for mTLS auth.
@@ -1607,7 +1614,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.10-beta.9...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.10-beta.10...HEAD
+[v7.10-beta.10]: https://github.com/gchq/stroom/compare/v7.10-beta.9...v7.10-beta.10
 [v7.10-beta.9]: https://github.com/gchq/stroom/compare/v7.10-beta.8...v7.10-beta.9
 [v7.10-beta.8]: https://github.com/gchq/stroom/compare/v7.10-beta.7...v7.10-beta.8
 [v7.10-beta.7]: https://github.com/gchq/stroom/compare/v7.10-beta.6...v7.10-beta.7
