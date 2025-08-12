@@ -45,7 +45,7 @@ public class PathwaysPresenter extends DocumentEditTabPresenter<LinkTabPanelView
     public PathwaysPresenter(final EventBus eventBus,
                              final LinkTabPanelView view,
                              final Provider<PathwaysSettingsPresenter> pathwaysSettingsPresenterProvider,
-                             final Provider<PathwayListPresenter> pathwaysListPresenterProvider,
+                             final Provider<PathwaysSplitPresenter> pathwaysSplitPresenterProvider,
                              final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
                              final DocumentUserPermissionsTabProvider<PathwaysDoc> documentUserPermissionsTabProvider,
                              final ClientSecurityContext securityContext) {
@@ -53,7 +53,7 @@ public class PathwaysPresenter extends DocumentEditTabPresenter<LinkTabPanelView
 
         TabData selectFirst = PATHWAYS;
 
-        addTab(PATHWAYS, new DocumentEditTabProvider<PathwaysDoc>(pathwaysListPresenterProvider::get));
+        addTab(PATHWAYS, new DocumentEditTabProvider<PathwaysDoc>(pathwaysSplitPresenterProvider::get));
         addTab(SETTINGS, new DocumentEditTabProvider<PathwaysDoc>(pathwaysSettingsPresenterProvider::get));
         addTab(DOCUMENTATION, new MarkdownTabProvider<PathwaysDoc>(eventBus, markdownEditPresenterProvider) {
             @Override

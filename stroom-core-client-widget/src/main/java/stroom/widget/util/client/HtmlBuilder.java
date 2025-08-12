@@ -156,15 +156,15 @@ public class HtmlBuilder {
     // END ELEMENTS
     // -----------------------------------------------
 
-    private HtmlBuilder elem(final String textContent,
-                             final SafeHtml elementName,
-                             final Attribute... attributes) {
+    public HtmlBuilder elem(final String textContent,
+                            final SafeHtml elementName,
+                            final Attribute... attributes) {
         return elem(htmlBuilder -> htmlBuilder.append(textContent), elementName, attributes);
     }
 
-    private HtmlBuilder elem(final Consumer<HtmlBuilder> content,
-                             final SafeHtml elementName,
-                             final Attribute... attributes) {
+    public HtmlBuilder elem(final Consumer<HtmlBuilder> content,
+                            final SafeHtml elementName,
+                            final Attribute... attributes) {
         openElement(elementName, attributes);
         // Allow for empty elements
         if (content != null) {

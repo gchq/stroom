@@ -32,10 +32,10 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.pathways.shared.AddPathway;
 import stroom.pathways.shared.DeletePathway;
+import stroom.pathways.shared.FindPathwayCriteria;
 import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.PathwaysResource;
 import stroom.pathways.shared.UpdatePathway;
-import stroom.pathways.shared.FindPathwayCriteria;
 import stroom.pathways.shared.pathway.Pathway;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
@@ -137,6 +137,10 @@ public class PathwayListPresenter
         registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
+    public MultiSelectionModelImpl<Pathway> getSelectionModel() {
+        return selectionModel;
+    }
+
     @Override
     public void onFilterChange(final String text) {
         filter = text;
@@ -173,11 +177,11 @@ public class PathwayListPresenter
 
     private void addNameColumn() {
         final Column<Pathway, String> column = DataGridUtil.textColumnBuilder(Pathway::getName)
-                .withSorting("Name")
+                .withSorting("Root")
                 .build();
         dataGrid.addResizableColumn(column,
-                "Name",
-                150);
+                "Root",
+                500);
         dataGrid.sort(column);
     }
 

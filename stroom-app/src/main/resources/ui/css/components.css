@@ -2592,3 +2592,40 @@ button.main-menu svg {
     padding-bottom: 0.3em;
 }
 
+.pathway {
+    position: relative;
+    padding: 5px;
+}
+
+.pathway-bezier {
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.pathway-bezier svg {
+
+}
+
+.pathway-bezier svg path {
+    stroke: white;
+    fill: transparent;
+}
+
+.pathway-node {
+    display: flex;
+    gap: 5px;
+    white-space: nowrap;
+    height: 22px;
+}
+
+.pathway-level {
+    padding-left: 20px;
+}
+
+.pathway-target {
+}
+
+.pathway-targetName {
+    opacity: 0;
+}

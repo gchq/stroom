@@ -5043,6 +5043,72 @@ public enum SvgImage {
             "-10,21 l 17,457 c 0,6.6667 3.33333,12.1667 10,16.5 6.66667,4.3333 14.66667,6.5 2" +
             "4,6.5 l 185,0 c 9.33333,0 17.1667,-2.1667 23.5,-6.5 6.3333,-4.3333 9.8333,-9.833" +
             "3 10.5,-16.5 z\"/></svg> \n" +
+            ""),
+
+    XSDBROWSER_XSD_CHOICE("xsdbrowser/xsdChoice.svg", "svg-image__xsdbrowser-xsd-choice", "" +
+            "<svg width=\"1792\" height=\"1792\" viewBox=\"0 0 1792 1792\" version=\"1.1\" id=\"svg1\" " +
+            "sodipodi:docname=\"xsdChoice.svg\" inkscape:version=\"1.4.2 (ebf0e940d0, 2025-05-08" +
+            ")\" xmlns:inkscape=\"http://www.inkscape.org/namespaces/inkscape\" xmlns:sodipodi=\"" +
+            "http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd\" xmlns=\"http://www.w3.org/200" +
+            "0/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\"><defs id=\"defs1\" /><sodipodi:named" +
+            "view id=\"namedview1\" pagecolor=\"var(--icon-colour__white)\" bordercolor=\"var(--ic" +
+            "on-colour__black)\" borderopacity=\"0.25\" inkscape:showpageshadow=\"2\" inkscape:pag" +
+            "eopacity=\"0.0\" inkscape:pagecheckerboard=\"0\" inkscape:deskcolor=\"#d1d1d1\" inksca" +
+            "pe:lockguides=\"true\" inkscape:zoom=\"0.65066964\" inkscape:cx=\"895.23156\" inkscape" +
+            ":cy=\"896\" inkscape:window-width=\"2304\" inkscape:window-height=\"1412\" inkscape:wi" +
+            "ndow-x=\"0\" inkscape:window-y=\"0\" inkscape:window-maximized=\"1\" inkscape:current-" +
+            "layer=\"svg1\" /><circle style=\"fill:none;stroke:var(--icon-colour__black);stroke-" +
+            "width:113.596;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;s" +
+            "troke-dashoffset:2;paint-order:stroke markers fill\" id=\"path2\" cx=\"1498.8962\" cy" +
+            "=\"289.04169\" r=\"165.00735\" /><circle style=\"fill:none;stroke:var(--icon-colour__" +
+            "black);stroke-width:113.596;stroke-linecap:round;stroke-linejoin:round;stroke-da" +
+            "sharray:none;stroke-dashoffset:2;paint-order:stroke markers fill\" id=\"path2-5\" c" +
+            "x=\"1498.8962\" cy=\"1505.6594\" r=\"165.00735\" /><circle style=\"fill:none;stroke:var" +
+            "(--icon-colour__black);stroke-width:113.596;stroke-linecap:round;stroke-linejoin" +
+            ":round;stroke-dasharray:none;stroke-dashoffset:2;paint-order:stroke markers fill" +
+            "\" id=\"path2-2\" cx=\"1498.8962\" cy=\"897.35059\" r=\"165.00735\" /><path style=\"fill:n" +
+            "one;stroke:var(--icon-colour__black);stroke-width:113.596;stroke-linecap:round;s" +
+            "troke-linejoin:round;stroke-dasharray:none;stroke-dashoffset:2;paint-order:strok" +
+            "e markers fill\" d=\"M 1333.8889,897.35059 H 107.58148 L 110.65523,896\" id=\"path3\"" +
+            " /><path style=\"fill:none;stroke:var(--icon-colour__black);stroke-width:113.596;" +
+            "stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-dashoffs" +
+            "et:2;paint-order:stroke markers fill\" d=\"m 720.73519,897.35059 189.05192,610.547" +
+            "81 v 0 l 424.10179,-2.239\" id=\"path4\" /><path style=\"fill:none;stroke:var(--icon" +
+            "-colour__black);stroke-width:113.596;stroke-linecap:round;stroke-linejoin:round;" +
+            "stroke-dasharray:none;stroke-dashoffset:2;paint-order:stroke markers fill\" d=\"M " +
+            "720.73519,897.35055 909.78711,286.80273 v 0 l 424.10179,2.239\" id=\"path4-7\" /></" +
+            "svg> \n" +
+            ""),
+
+    XSDBROWSER_XSD_SEQUENCE("xsdbrowser/xsdSequence.svg", "svg-image__xsdbrowser-xsd-sequence", "" +
+            "<svg width=\"1792\" height=\"1792\" viewBox=\"0 0 1792 1792\" version=\"1.1\" id=\"svg1\" " +
+            "sodipodi:docname=\"xsdSequence.svg\" inkscape:version=\"1.4.2 (ebf0e940d0, 2025-05-" +
+            "08)\" xmlns:inkscape=\"http://www.inkscape.org/namespaces/inkscape\" xmlns:sodipodi" +
+            "=\"http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd\" xmlns=\"http://www.w3.org/2" +
+            "000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\"><defs id=\"defs1\" /><sodipodi:nam" +
+            "edview id=\"namedview1\" pagecolor=\"var(--icon-colour__white)\" bordercolor=\"var(--" +
+            "icon-colour__black)\" borderopacity=\"0.25\" inkscape:showpageshadow=\"2\" inkscape:p" +
+            "ageopacity=\"0.0\" inkscape:pagecheckerboard=\"0\" inkscape:deskcolor=\"#d1d1d1\" inks" +
+            "cape:lockguides=\"true\" inkscape:zoom=\"0.65066964\" inkscape:cx=\"895.23156\" inksca" +
+            "pe:cy=\"896\" inkscape:window-width=\"2304\" inkscape:window-height=\"1412\" inkscape:" +
+            "window-x=\"0\" inkscape:window-y=\"0\" inkscape:window-maximized=\"1\" inkscape:curren" +
+            "t-layer=\"svg1\" /><circle style=\"fill:none;stroke:var(--icon-colour__black);strok" +
+            "e-width:113.596;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none" +
+            ";stroke-dashoffset:2;paint-order:stroke markers fill\" id=\"path2\" cx=\"897.35059\" " +
+            "cy=\"-1498.8962\" r=\"165.00735\" transform=\"rotate(90)\" /><circle style=\"fill:none;" +
+            "stroke:var(--icon-colour__black);stroke-width:113.596;stroke-linecap:round;strok" +
+            "e-linejoin:round;stroke-dasharray:none;stroke-dashoffset:2;paint-order:stroke ma" +
+            "rkers fill\" id=\"path2-5\" cx=\"897.35059\" cy=\"-282.27856\" r=\"165.00735\" transform=" +
+            "\"rotate(90)\" /><circle style=\"fill:none;stroke:var(--icon-colour__black);stroke-" +
+            "width:113.596;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;s" +
+            "troke-dashoffset:2;paint-order:stroke markers fill\" id=\"path2-2\" cx=\"897.35059\" " +
+            "cy=\"-890.5874\" r=\"165.00735\" transform=\"rotate(90)\" /><path style=\"fill:none;str" +
+            "oke:var(--icon-colour__black);stroke-width:113.596;stroke-linecap:round;stroke-l" +
+            "inejoin:round;stroke-dasharray:none;stroke-dashoffset:2;paint-order:stroke marke" +
+            "rs fill\" d=\"M 447.28592,897.35059 H 725.58005\" id=\"path4\" /><path style=\"fill:no" +
+            "ne;stroke:var(--icon-colour__black);stroke-width:113.596;stroke-linecap:round;st" +
+            "roke-linejoin:round;stroke-dasharray:none;stroke-dashoffset:2;paint-order:stroke" +
+            " markers fill\" d=\"m 1055.5948,897.35059 h 278.2941\" id=\"path5\" /></svg> \n" +
             "");
 
     public static final String BASE_CLASS_NAME = "svg-image";

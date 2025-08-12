@@ -4,11 +4,14 @@ import stroom.core.client.gin.PluginModule;
 import stroom.pathways.client.PathwaysPlugin;
 import stroom.pathways.client.presenter.PathwayEditPresenter;
 import stroom.pathways.client.presenter.PathwayEditPresenter.PathwayEditView;
-import stroom.pathways.client.view.PathwayEditViewImpl;
 import stroom.pathways.client.presenter.PathwaysPresenter;
 import stroom.pathways.client.presenter.PathwaysSettingsPresenter;
 import stroom.pathways.client.presenter.PathwaysSettingsPresenter.PathwaysSettingsView;
+import stroom.pathways.client.presenter.PathwaysSplitPresenter;
+import stroom.pathways.client.presenter.PathwaysSplitPresenter.PathwaysSplitView;
+import stroom.pathways.client.view.PathwayEditViewImpl;
 import stroom.pathways.client.view.PathwaysSettingsViewImpl;
+import stroom.pathways.client.view.PathwaysSplitViewImpl;
 
 public class PathwaysModule extends PluginModule {
 
@@ -22,5 +25,8 @@ public class PathwaysModule extends PluginModule {
         bindPresenterWidget(PathwayEditPresenter.class,
                 PathwayEditView.class,
                 PathwayEditViewImpl.class);
+        bindPresenterWidget(PathwaysSplitPresenter.class,
+                PathwaysSplitView.class,
+                PathwaysSplitViewImpl.class);
     }
 }
