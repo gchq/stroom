@@ -54,15 +54,6 @@ public class PathwaysSplitPresenter extends DocumentEditPresenter<PathwaysSplitV
 
                     append(div, selected.getRoot());
 
-
-
-
-//        <svg width="190" height="160" xmlns="http://www.w3.org/2000/svg">
-//  <path
-//                d="M 10 80 C 40 10, 65 10, 95 80 S 150 150, 180 80"
-//        stroke="black"
-//        fill="transparent" />
-//</svg>
                 }
             }, Attribute.className("pathway xsdBrowser"));
             getView().setDetails(hb.toSafeHtml());
@@ -71,17 +62,6 @@ public class PathwaysSplitPresenter extends DocumentEditPresenter<PathwaysSplitV
 
     private void append(final HtmlBuilder hb,
                         final PathNode node) {
-        final SvgImage svg;
-        if (node.getTargets() != null && node.getTargets().size() > 1) {
-            svg = SvgImage.XSDBROWSER_XSD_CHOICE;
-        } else {
-            svg = SvgImage.XSDBROWSER_XSD_SEQUENCE;
-        }
-
-        // horizontal line xsdBrowser-xsdTree03
-        // T xsdBrowser-xsdTree06
-        // end corner xsdBrowser-xsdTree09
-
         hb.div(d -> {
             d.div(icon ->
                             icon.appendTrustedString(SvgImage.XSDBROWSER_XSD_SEQUENCE.getSvg()),
@@ -103,26 +83,6 @@ public class PathwaysSplitPresenter extends DocumentEditPresenter<PathwaysSplitV
                             Attribute.className("pathway-nodeName pathway-targetName"));
                 }, Attribute.className("pathway-node pathway-target"));
 
-//
-//                d.div(node -> {
-//                    icon.appendTrustedString(svg.getSvg());
-//                }, Attribute.className("pathway-nodeIcon svgIcon " + svg.getClassName()));
-//
-//
-//                d.div(icon -> {
-//                    icon.appendTrustedString(svg.getSvg());
-//                }, Attribute.className("pathway-nodeIcon svgIcon " + svg.getClassName()));
-//
-//
-////                if (node.getTargets().size() > 1) {
-////                    d.div(icon -> {
-////                    }, Attribute.className("xsdBrowser-xsdChoice"));
-////                } else {
-////                    d.div(icon -> {
-////                    }, Attribute.className("xsdBrowser-xsdSequence"));
-////                }
-//
-//                d.div(target.getPathKey().toString(), Attribute.className("pathway-targetName"));
                 target.getNodes().forEach(pathNode ->
                         parentLevel.div(childLevel ->
                                 append(childLevel, pathNode), Attribute.className("pathway-level")));
