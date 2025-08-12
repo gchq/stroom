@@ -227,7 +227,8 @@ public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
             throw new ValidationException("A pathway must have a name");
         }
 
-        return new Pathway(name, pathway.getPathKey(), pathway.getRoot());
+        final NanoTime now = NanoTime.ofMillis(System.currentTimeMillis());
+        return pathway.copy().name(name).updateTime(now).build();
     }
 
     public void show(final String caption, final HidePopupRequestEvent.Handler handler) {

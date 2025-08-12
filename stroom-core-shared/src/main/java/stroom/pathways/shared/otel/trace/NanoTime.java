@@ -75,6 +75,10 @@ public class NanoTime implements Comparable<NanoTime> {
         return nanos;
     }
 
+    public long toEpochMillis() {
+        return (seconds * 1000) + (nanos / 1000000);
+    }
+
     public NanoTime add(final NanoTime nanoTime) {
         if (nanoTime.equals(ZERO)) {
             return this;

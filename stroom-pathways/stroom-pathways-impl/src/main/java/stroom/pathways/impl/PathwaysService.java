@@ -33,6 +33,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -78,7 +79,16 @@ public class PathwaysService {
             LOGGER.info("\n" + node.toString());
         }
 
-        roots.forEach((key, value) -> pathways.add(new Pathway(key.toString(), key, value)));
+        final Instant now = Instant.now();
+        final NanoTime nanoTime = new NanoTime(now.getEpochSecond(), now.getNano());
+        roots.forEach((key, value) -> pathways.add(
+                Pathway.builder()
+                        .name(key.toString())
+                        .createTime(nanoTime)
+                        .lastUsedTime(nanoTime)
+                        .pathKey(key)
+                        .root(value)
+                        .build()));
     }
 
     private void loadData(final Path path,

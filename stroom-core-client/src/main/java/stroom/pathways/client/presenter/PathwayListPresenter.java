@@ -19,6 +19,7 @@ package stroom.pathways.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
@@ -36,7 +37,9 @@ import stroom.pathways.shared.FindPathwayCriteria;
 import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.PathwaysResource;
 import stroom.pathways.shared.UpdatePathway;
+import stroom.pathways.shared.otel.trace.NanoTime;
 import stroom.pathways.shared.pathway.Pathway;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ResultPage;
@@ -54,6 +57,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class PathwayListPresenter
         extends DocumentEditPresenter<QuickFilterPageView, PathwaysDoc>
@@ -61,6 +65,7 @@ public class PathwayListPresenter
 
     private static final PathwaysResource PATHWAYS_RESOURCE = GWT.create(PathwaysResource.class);
 
+    private final DateTimeFormatter dateTimeFormatter;
     private final PagerView pagerView;
     private final RestFactory restFactory;
     private final MyDataGrid<Pathway> dataGrid;
@@ -80,10 +85,12 @@ public class PathwayListPresenter
                                 final QuickFilterPageView view,
                                 final PagerView pagerView,
                                 final RestFactory restFactory,
+                                final DateTimeFormatter dateTimeFormatter,
                                 final PathwayEditPresenter pathwayEditPresenter) {
         super(eventBus, view);
         this.pagerView = pagerView;
         this.restFactory = restFactory;
+        this.dateTimeFormatter = dateTimeFormatter;
         view.setDataView(pagerView);
         view.setUiHandlers(this);
 
@@ -172,6 +179,9 @@ public class PathwayListPresenter
 
     private void addColumns() {
         addNameColumn();
+        addCreateTimeColumn();
+        addUpdateTimeColumn();
+        addLastUsedColumn();
         dataGrid.addEndColumn(new EndColumn<>());
     }
 
@@ -185,8 +195,36 @@ public class PathwayListPresenter
 //        dataGrid.sort(column);
     }
 
+    private void addCreateTimeColumn() {
+        addTimeColumn("Create Time", Pathway::getCreateTime);
+    }
+
+    private void addUpdateTimeColumn() {
+        addTimeColumn("Update Time", Pathway::getUpdateTime);
+    }
+
+    private void addLastUsedColumn() {
+        addTimeColumn("Last Used", Pathway::getLastUsedTime);
+    }
+
+    private void addTimeColumn(final String name, final Function<Pathway, NanoTime> function) {
+        final Column<Pathway, String> column = DataGridUtil.textColumnBuilder((Function<Pathway, String>) pathway -> {
+                    final NanoTime nanoTime = function.apply(pathway);
+                    return nanoTime == null
+                            ? ""
+                            : dateTimeFormatter.format(nanoTime.toEpochMillis());
+                })
+                .withSorting(name)
+                .build();
+        dataGrid.addResizableColumn(column,
+                name,
+                ColumnSizeConstants.DATE_COL);
+//        dataGrid.sort(column);
+    }
+
     private void onAdd() {
-        pathwayEditPresenter.read(new Pathway("", null, null));
+        final NanoTime now = NanoTime.ofMillis(System.currentTimeMillis());
+        pathwayEditPresenter.read(Pathway.builder().name("").createTime(now).build());
         pathwayEditPresenter.show("New Pathway", e -> {
             if (e.isOk()) {
                 final Pathway pathway = pathwayEditPresenter.write();

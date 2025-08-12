@@ -25,7 +25,7 @@
             </g:north>
             <g:center>
 
-                <form:FormGroup identity="pathwayMatchingTraces" label="Spans">
+                <form:FormGroup identity="pathwayMatchingTraces" label="Common Span Details">
                     <g:HTML ui:field="spans" styleName="max form-control-background form-control-border"/>
                 </form:FormGroup>
 
