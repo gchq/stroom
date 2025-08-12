@@ -133,18 +133,16 @@ public class TestSpanLoad {
                       final NodeMutator nodeMutator,
                       final Map<String, Map<PathKey, PathNodeList>> map) {
         final List<Span> children = trace.getChildren(parentSpan);
-        if (!children.isEmpty()) {
-            final PathNodeList targets = nodeMutator.update(children, parentNode, map);
+        final PathNodeList targets = nodeMutator.update(children, parentNode, map);
 
-            for (int i = 0; i < targets.getNodes().size(); i++) {
-                // Add additional span info if wanted.
-                final PathNode target = targets.getNodes().get(i);
-                final Span span = children.get(i);
-                target.addSpan(span);
+        for (int i = 0; i < targets.getNodes().size(); i++) {
+            // Add additional span info if wanted.
+            final PathNode target = targets.getNodes().get(i);
+            final Span span = children.get(i);
+            target.addSpan(span);
 
-                // Follow the path deeper.
-                walk(trace, span, target, nodeMutator, map);
-            }
+            // Follow the path deeper.
+            walk(trace, span, target, nodeMutator, map);
         }
     }
 

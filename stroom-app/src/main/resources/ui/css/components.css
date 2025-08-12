@@ -2612,6 +2612,10 @@ button.main-menu svg {
     fill: transparent;
 }
 
+.pathway-terminal {
+    color: red;
+}
+
 .pathway-node {
     display: flex;
     gap: 5px;

@@ -55,7 +55,7 @@ public class PathwaysSplitPresenter extends DocumentEditPresenter<PathwaysSplitV
                     append(div, selected.getRoot());
 
                 }
-            }, Attribute.className("pathway xsdBrowser"));
+            }, Attribute.className("pathway"));
             getView().setDetails(hb.toSafeHtml());
         }));
     }
@@ -64,21 +64,29 @@ public class PathwaysSplitPresenter extends DocumentEditPresenter<PathwaysSplitV
                         final PathNode node) {
         hb.div(d -> {
             d.div(icon ->
-                            icon.appendTrustedString(SvgImage.XSDBROWSER_XSD_SEQUENCE.getSvg()),
+                            icon.appendTrustedString(SvgImage.PATHWAYS_NODE.getSvg()),
                     Attribute.className("pathway-nodeIcon svgIcon " +
-                                        SvgImage.XSDBROWSER_XSD_SEQUENCE.getClassName()));
+                                        SvgImage.PATHWAYS_NODE.getClassName()));
             d.div(n -> n.append(node.getName()),
                     Attribute.className("pathway-nodeName"));
         }, Attribute.className("pathway-node"));
 
-
         NullSafe.list(node.getTargets()).forEach(target -> {
             hb.div(parentLevel -> {
+
+                final String choiceCss;
+                if (target.getNodes().isEmpty()) {
+                    choiceCss = "pathway-nodeIcon svgIcon " +
+                                SvgImage.PATHWAYS_CHOICE.getClassName() +
+                                " pathway-terminal";
+                } else {
+                    choiceCss = "pathway-nodeIcon svgIcon " +
+                                SvgImage.PATHWAYS_CHOICE.getClassName();
+                }
+
                 parentLevel.div(d -> {
-                    d.div(icon ->
-                                    icon.appendTrustedString(SvgImage.XSDBROWSER_XSD_CHOICE.getSvg()),
-                            Attribute.className("pathway-nodeIcon svgIcon " +
-                                                SvgImage.XSDBROWSER_XSD_CHOICE.getClassName()));
+                    d.div(icon -> icon.appendTrustedString(SvgImage.PATHWAYS_CHOICE.getSvg()),
+                            Attribute.className(choiceCss));
                     d.div(n -> n.append(target.getPathKey().toString()),
                             Attribute.className("pathway-nodeName pathway-targetName"));
                 }, Attribute.className("pathway-node pathway-target"));
@@ -115,7 +123,6 @@ public class PathwaysSplitPresenter extends DocumentEditPresenter<PathwaysSplitV
                 appendBezier(hb, child, depth + 2, count);
 
 
-
                 final int startX2 = ((depth + 1) * indent) - 7;
                 final int startY2 = (end * rowHeight);
                 final int endX2 = ((depth + 1) * indent) + 3;
@@ -124,10 +131,6 @@ public class PathwaysSplitPresenter extends DocumentEditPresenter<PathwaysSplitV
                 Bezier.curve(hb, new Point(startX2, startY2), new Point(endX2, endY2));
             });
         });
-
-
-
-
 
 
 //        int rowHeight = 22;

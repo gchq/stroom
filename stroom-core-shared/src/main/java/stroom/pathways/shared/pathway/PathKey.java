@@ -10,8 +10,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 )
 @JsonSubTypes({
         @JsonSubTypes.Type(value = NamePathKey.class, name = "name"),
-        @JsonSubTypes.Type(value = NamesPathKey.class, name = "names")
+        @JsonSubTypes.Type(value = NamesPathKey.class, name = "names"),
+        @JsonSubTypes.Type(value = TerminalPathKey.class, name = "terminal")
 })
-public sealed interface PathKey permits NamePathKey, NamesPathKey {
+public sealed interface PathKey permits NamePathKey, NamesPathKey, TerminalPathKey {
 
 }
