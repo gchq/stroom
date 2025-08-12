@@ -18,8 +18,10 @@ package stroom.pathways.client.view;
 
 import stroom.pathways.client.presenter.PathwayEditPresenter.PathwayEditView;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -31,6 +33,12 @@ public class PathwayEditViewImpl extends ViewImpl implements PathwayEditView {
 
     @UiField
     TextBox name;
+    @UiField
+    HTML details;
+    @UiField
+    HTML constraints;
+    @UiField
+    HTML spans;
 
     @Inject
     public PathwayEditViewImpl(final Binder binder) {
@@ -55,6 +63,26 @@ public class PathwayEditViewImpl extends ViewImpl implements PathwayEditView {
     @Override
     public void setName(final String fieldName) {
         name.setText(fieldName);
+    }
+
+    @Override
+    public void setDetails(final SafeHtml html) {
+        details.setHTML(html);
+    }
+
+    @Override
+    public void setConstraints(final SafeHtml html) {
+        constraints.setHTML(html);
+    }
+
+    @Override
+    public void setSpans(final SafeHtml html) {
+        spans.setHTML(html);
+    }
+
+    @Override
+    public HTML getDetails() {
+        return details;
     }
 
     public interface Binder extends UiBinder<Widget, PathwayEditViewImpl> {

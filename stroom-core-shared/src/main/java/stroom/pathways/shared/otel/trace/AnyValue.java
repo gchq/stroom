@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Locale;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
@@ -17,7 +18,7 @@ public class AnyValue {
     private final Boolean boolValue;
 
     @JsonProperty("intValue")
-    private final String intValue;
+    private final Integer intValue;
 
     @JsonProperty("doubleValue")
     private final Double doubleValue;
@@ -34,7 +35,7 @@ public class AnyValue {
     @JsonCreator
     public AnyValue(@JsonProperty("stringValue") final String stringValue,
                     @JsonProperty("boolValue") final Boolean boolValue,
-                    @JsonProperty("intValue") final String intValue,
+                    @JsonProperty("intValue") final Integer intValue,
                     @JsonProperty("doubleValue") final Double doubleValue,
                     @JsonProperty("arrayValue") final ArrayValue arrayValue,
                     @JsonProperty("kvlistValue") final KeyValueList kvlistValue,
@@ -56,7 +57,7 @@ public class AnyValue {
         return boolValue;
     }
 
-    public String getIntValue() {
+    public Integer getIntValue() {
         return intValue;
     }
 
@@ -101,14 +102,28 @@ public class AnyValue {
 
     @Override
     public String toString() {
-        return "AnyValue{" +
-               "stringValue='" + stringValue + '\'' +
-               ", boolValue=" + boolValue +
-               ", intValue='" + intValue + '\'' +
-               ", doubleValue=" + doubleValue +
-               ", arrayValue=" + arrayValue +
-               ", kvlistValue=" + kvlistValue +
-               ", bytesValue='" + bytesValue + '\'' +
-               '}';
+        if (stringValue != null) {
+            return "\"" + stringValue + "\"";
+        }
+        if (boolValue != null) {
+            return boolValue.toString().toLowerCase(Locale.ROOT);
+        }
+        if (intValue != null) {
+            return Integer.toString(intValue);
+        }
+        if (doubleValue != null) {
+            return Double.toString(doubleValue);
+        }
+        if (arrayValue != null) {
+            return arrayValue.toString();
+        }
+        if (kvlistValue != null) {
+            return kvlistValue.toString();
+        }
+        if (bytesValue != null) {
+            return bytesValue;
+        }
+
+        return "";
     }
 }

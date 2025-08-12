@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -42,8 +43,9 @@ public class KeyValueList {
 
     @Override
     public String toString() {
-        return "KeyValueList{" +
-               "values=" + values +
-               '}';
+        if (values == null) {
+            return null;
+        }
+        return Arrays.toString(values.toArray(new KeyValue[0]));
     }
 }

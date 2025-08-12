@@ -59,6 +59,11 @@ public class PathwaysSplitViewImpl
         return widget;
     }
 
+    @Override
+    public HTML getDetails() {
+        return details;
+    }
+
     public interface Binder extends UiBinder<Widget, PathwaysSplitViewImpl> {
 
     }

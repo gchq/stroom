@@ -67,6 +67,14 @@ public class NanoTime implements Comparable<NanoTime> {
         return new NanoTime(0, Integer.parseInt(time));
     }
 
+    public long getSeconds() {
+        return seconds;
+    }
+
+    public int getNanos() {
+        return nanos;
+    }
+
     public NanoTime add(final NanoTime nanoTime) {
         if (nanoTime.equals(ZERO)) {
             return this;
