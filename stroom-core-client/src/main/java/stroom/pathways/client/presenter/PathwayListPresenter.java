@@ -182,7 +182,7 @@ public class PathwayListPresenter
         dataGrid.addResizableColumn(column,
                 "Root",
                 500);
-        dataGrid.sort(column);
+//        dataGrid.sort(column);
     }
 
     private void onAdd() {

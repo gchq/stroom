@@ -24,6 +24,13 @@ public class PathwaysSplitPresenter extends DocumentEditPresenter<PathwaysSplitV
 
     private final PathwayListPresenter pathwayListPresenter;
 
+    private final static int ROW_HEIGHT = 22;
+    private final static int INDENT = 20;
+    private final static int START_X_OFFSET = -7;
+    private final static int START_Y_OFFSET = 0;
+    private final static int END_X_OFFSET = 3;
+    private final static int END_Y_OFFSET = -9;
+
     @Inject
     public PathwaysSplitPresenter(final EventBus eventBus,
                                   final PathwaysSplitView view,
@@ -43,17 +50,21 @@ public class PathwaysSplitPresenter extends DocumentEditPresenter<PathwaysSplitV
                 if (selected != null) {
 
                     // Draw bezier curves.
-                    div.div(d -> {
-                        d.elem(svg -> {
-                                    appendBezier(svg, selected.getRoot(), 1, new AtomicInteger());
-                                }, SafeHtmlUtil.from("svg"),
-                                new Attribute("width", "400"),
-                                new Attribute("height", "500"),
-                                new Attribute("xmlns", "http://www.w3.org/2000/svg"));
-                    }, Attribute.className("pathway-bezier"));
+                    final HtmlBuilder svgBuilder = new HtmlBuilder();
+                    final HtmlBuilder nodeBuilder = new HtmlBuilder();
+                    nodeBuilder.div(rootNodesElement ->
+                            svgBuilder.elem(rootSvgElement -> append(rootNodesElement,
+                                            selected.getRoot(),
+                                            rootSvgElement,
+                                            1,
+                                            new AtomicInteger()),
+                                    SafeHtmlUtil.from("svg"),
+                                    new Attribute("width", "400"),
+                                    new Attribute("height", "500"),
+                                    new Attribute("xmlns", "http://www.w3.org/2000/svg")));
 
-                    append(div, selected.getRoot());
-
+                    div.div(d -> d.append(svgBuilder.toSafeHtml()), Attribute.className("pathway-curves"));
+                    div.div(d -> d.append(nodeBuilder.toSafeHtml()), Attribute.className("pathway-nodes"));
                 }
             }, Attribute.className("pathway"));
             getView().setDetails(hb.toSafeHtml());
@@ -61,7 +72,10 @@ public class PathwaysSplitPresenter extends DocumentEditPresenter<PathwaysSplitV
     }
 
     private void append(final HtmlBuilder hb,
-                        final PathNode node) {
+                        final PathNode node,
+                        final HtmlBuilder svg,
+                        final int depth,
+                        final AtomicInteger count) {
         hb.div(d -> {
             d.div(icon ->
                             icon.appendTrustedString(SvgImage.PATHWAYS_NODE.getSvg()),
@@ -71,7 +85,14 @@ public class PathwaysSplitPresenter extends DocumentEditPresenter<PathwaysSplitV
                     Attribute.className("pathway-nodeName"));
         }, Attribute.className("pathway-node"));
 
+        final int parentRowNum = count.incrementAndGet();
+
         NullSafe.list(node.getTargets()).forEach(target -> {
+            // Add bezier curve to target set.
+            final int targetRowNum = count.incrementAndGet();
+            appendBezier(svg, depth, parentRowNum, targetRowNum);
+
+            // Add target set.
             hb.div(parentLevel -> {
 
                 final String choiceCss;
@@ -91,74 +112,32 @@ public class PathwaysSplitPresenter extends DocumentEditPresenter<PathwaysSplitV
                             Attribute.className("pathway-nodeName pathway-targetName"));
                 }, Attribute.className("pathway-node pathway-target"));
 
-                target.getNodes().forEach(pathNode ->
-                        parentLevel.div(childLevel ->
-                                append(childLevel, pathNode), Attribute.className("pathway-level")));
+                target.getNodes().forEach(pathNode -> {
+
+                    // Add bezier curve to this node.
+                    final int nodeDepth = depth + 1;
+                    final int nodeRowNum = (count.get() + 1);
+                    appendBezier(svg, nodeDepth, targetRowNum, nodeRowNum);
+
+                    // Add node div.
+                    parentLevel.div(childLevel -> {
+                        append(childLevel, pathNode, svg, nodeDepth + 1, count);
+                    }, Attribute.className("pathway-level"));
+                });
 
             }, Attribute.className("pathway-level"));
         });
     }
 
-    private void appendBezier(final HtmlBuilder hb,
-                              final PathNode node,
+    private void appendBezier(final HtmlBuilder svg,
                               final int depth,
-                              final AtomicInteger count) {
-        final int rowHeight = 22;
-        final int indent = 20;
-
-        final int start = count.incrementAndGet();
-
-        NullSafe.list(node.getTargets()).forEach(target -> {
-            final int end = count.incrementAndGet();
-            final int startX = (depth * indent) - 7;
-            final int startY = (start * rowHeight);
-            final int endX = (depth * indent) + 3;
-            final int endY = (end * rowHeight) - 9;
-
-            Bezier.curve(hb, new Point(startX, startY), new Point(endX, endY));
-
-            target.getNodes().forEach(child -> {
-                final int posBefore = (count.get() + 1);
-
-                appendBezier(hb, child, depth + 2, count);
-
-
-                final int startX2 = ((depth + 1) * indent) - 7;
-                final int startY2 = (end * rowHeight);
-                final int endX2 = ((depth + 1) * indent) + 3;
-                final int endY2 = (posBefore * rowHeight) - 9;
-
-                Bezier.curve(hb, new Point(startX2, startY2), new Point(endX2, endY2));
-            });
-        });
-
-
-//        int rowHeight = 22;
-//        int indent = 22;
-//        int startX = depth * indent;
-//        int startY = (start * rowHeight) - 11;
-////        int midX = (depth * indent) + (indent / 2);
-////        int midY = (((count.get() - start) * rowHeight) / 2) + startY;
-//        int endX = (depth * indent) + indent;
-//        int endY = (((count.get() - start) * rowHeight)) + startY;
-//
-//        Bezier.quadratic(hb, new Point(startX, startY), new Point(endX, endY));
-
-
-//        hb.elem(path -> {
-//                }, SafeHtmlUtil.from("path"),
-//                new Attribute("d",
-//                        "M " + startX + " " + startY +
-//                        " Q " + (startX + 30) + " " + startY +
-//                        ", " + midX + " " + midY +
-//                        " T " + endX + " " + endY));
-
-//        <svg width="190" height="160" xmlns="http://www.w3.org/2000/svg">
-//  <path
-//                d="M 10 80 C 40 10, 65 10, 95 80 S 150 150, 180 80"
-//        stroke="black"
-//        fill="transparent" />
-//</svg>
+                              final int startRow,
+                              final int endRow) {
+        final int startX = (depth * INDENT) + START_X_OFFSET;
+        final int startY = (startRow * ROW_HEIGHT) + START_Y_OFFSET;
+        final int endX = (depth * INDENT) + END_X_OFFSET;
+        final int endY = (endRow * ROW_HEIGHT) + END_Y_OFFSET;
+        Bezier.curve(svg, new Point(startX, startY), new Point(endX, endY));
     }
 
     @Override

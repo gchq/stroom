@@ -2597,17 +2597,24 @@ button.main-menu svg {
     padding: 5px;
 }
 
-.pathway-bezier {
+.pathway-curves {
     position: absolute;
     left: 0;
     top: 0;
 }
 
-.pathway-bezier svg {
+.pathway-nodes {
+    position: absolute;
+    left: 0;
+    top: 0;
+    padding: 5px;
+}
+
+.pathway-curves svg {
 
 }
 
-.pathway-bezier svg path {
+.pathway-curves svg path {
     stroke: white;
     fill: transparent;
 }
