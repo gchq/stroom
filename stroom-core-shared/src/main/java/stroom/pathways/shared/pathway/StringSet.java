@@ -23,6 +23,10 @@ public final class StringSet implements Constraint {
         return set;
     }
 
+    public boolean validate(final String value) {
+        return getSet().contains(value);
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

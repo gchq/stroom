@@ -14,4 +14,8 @@ public final class IntegerSet extends AbstractSet<Integer> implements Constraint
     public IntegerSet(@JsonProperty("set") final Set<Integer> set) {
         super(set);
     }
+
+    public boolean validate(final Integer value) {
+        return getSet().contains(value);
+    }
 }

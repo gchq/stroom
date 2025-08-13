@@ -14,4 +14,8 @@ public final class BooleanSet extends AbstractSet<Boolean> implements Constraint
     public BooleanSet(@JsonProperty("set") final Set<Boolean> set) {
         super(set);
     }
+
+    public boolean validate(final Boolean value) {
+        return getSet().contains(value);
+    }
 }
