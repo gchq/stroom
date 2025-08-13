@@ -2626,6 +2626,10 @@ button.main-menu svg {
     color: red;
 }
 
+.pathway-row {
+
+}
+
 .pathway-node {
     display: flex;
     gap: 5px;
@@ -2646,11 +2650,10 @@ button.main-menu svg {
     box-shadow: var(--row__box-shadow--selected--focussed);
 }
 
-.pathway-level {
-    padding-left: 20px;
-}
-
 .pathway-target {
+    display: flex;
+    gap: 20px;
+    padding-left: 20px;
 }
 
 .pathway-targetName {

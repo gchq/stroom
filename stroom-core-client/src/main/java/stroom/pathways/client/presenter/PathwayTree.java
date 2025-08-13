@@ -16,10 +16,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class PathwayTree {
 
     private final static int ROW_HEIGHT = 22;
-    private final static int INDENT = 20;
-    private final static int START_X_OFFSET = -7;
+    private final static int INDENT = 56;
+    private final static int START_X_OFFSET = 13;
     private final static int START_Y_OFFSET = 0;
-    private final static int END_X_OFFSET = 3;
+    private final static int END_X_OFFSET = 23;
     private final static int END_Y_OFFSET = -9;
 
     public SafeHtml build(final Pathway selected) {
@@ -37,7 +37,7 @@ public class PathwayTree {
                 append(nodeBuilder,
                         selected.getRoot(),
                         svgBuilder,
-                        1,
+                        0,
                         count,
                         width,
                         height);
@@ -58,61 +58,97 @@ public class PathwayTree {
     private void append(final HtmlBuilder hb,
                         final PathNode node,
                         final HtmlBuilder svg,
-                        final int depth,
+                        final int nodeDepth,
                         final AtomicInteger count,
                         final AtomicInteger width,
                         final AtomicInteger height) {
         hb.div(d -> {
-            d.div(icon ->
-                            icon.appendTrustedString(SvgImage.PATHWAYS_NODE.getSvg()),
-                    Attribute.className("pathway-nodeIcon svgIcon " +
-                                        SvgImage.PATHWAYS_NODE.getClassName()));
-            d.div(n -> n.append(node.getName()),
-                    Attribute.className("pathway-nodeName"), new Attribute("uuid", node.getUuid()));
-        }, Attribute.className("pathway-node"));
+            // Render node icon and text.
+            d.div(nodeDiv -> {
+                nodeDiv.div(icon ->
+                                icon.appendTrustedString(SvgImage.PATHWAYS_NODE.getSvg()),
+                        Attribute.className("pathway-nodeIcon svgIcon " +
+                                            SvgImage.PATHWAYS_NODE.getClassName()));
+                nodeDiv.div(n -> n.append(node.getName()),
+                        Attribute.className("pathway-nodeName"), new Attribute("uuid", node.getUuid()));
+            }, Attribute.className("pathway-node"));
 
-        final int parentRowNum = count.incrementAndGet();
+            // Add child node targets.
+            final int parentRowNum = count.incrementAndGet();
 
-        NullSafe.list(node.getTargets()).forEach(target -> {
-            // Add bezier curve to target set.
-            final int targetRowNum = count.incrementAndGet();
-            appendBezier(svg, depth, parentRowNum, targetRowNum, width, height);
+            NullSafe.list(node.getTargets()).forEach(target -> {
+                if (!target.getNodes().isEmpty()) {
+                    // Add bezier curve to target set.
+                    final int targetRowNum = count.get() + 1;
+                    appendBezier(svg, nodeDepth, parentRowNum, targetRowNum, width, height);
 
-            // Add target set.
-            hb.div(parentLevel -> {
+                    // Add target set.
+                    final String choiceCss;
+                    if (target.getNodes().isEmpty()) {
+                        choiceCss = "pathway-nodeIcon svgIcon " +
+                                    SvgImage.PATHWAYS_CHOICE.getClassName() +
+                                    " pathway-terminal";
+                    } else {
+                        choiceCss = "pathway-nodeIcon svgIcon " +
+                                    SvgImage.PATHWAYS_CHOICE.getClassName();
+                    }
 
-                final String choiceCss;
-                if (target.getNodes().isEmpty()) {
-                    choiceCss = "pathway-nodeIcon svgIcon " +
-                                SvgImage.PATHWAYS_CHOICE.getClassName() +
-                                " pathway-terminal";
-                } else {
-                    choiceCss = "pathway-nodeIcon svgIcon " +
-                                SvgImage.PATHWAYS_CHOICE.getClassName();
+                    d.div(targetDiv -> {
+                        targetDiv.div(icon -> icon.appendTrustedString(SvgImage.PATHWAYS_CHOICE.getSvg()),
+                                Attribute.className(choiceCss));
+
+                        final int choiceRowNum = count.get();
+
+                        targetDiv.div(targetsDiv -> {
+                            target.getNodes().forEach(pathNode -> {
+                                // Add bezier curve to this node.
+//                                final int nodeDepth = depth + 1;
+                                final int nodeRowNum = (count.get() + 1);
+//                                    appendBezier(svg, nodeDepth, targetRowNum, nodeRowNum, width, height);
+
+
+
+
+
+
+                                final int startX = (nodeDepth * INDENT) + 43;
+                                final int startY = (choiceRowNum * ROW_HEIGHT) + 13;
+                                final int endX = (nodeDepth * INDENT) + 60;
+                                final int endY = (count.get() * ROW_HEIGHT) + 13;
+                                Bezier.quadratic(svg, new Point(startX, startY), new Point(endX, endY));
+
+
+
+
+                                if (endX > width.get()) {
+                                    width.set(endX);
+                                }
+                                if (endY > height.get()) {
+                                    height.set(endY);
+                                }
+
+
+
+
+
+
+
+
+
+                                // Add node div.
+                                append(targetsDiv, pathNode, svg, nodeDepth + 1, count, width, height);
+                            });
+                        }, Attribute.className("pathway-targets"));
+
+
+                    }, Attribute.className("pathway-target"));
                 }
+            });
 
-                parentLevel.div(d -> {
-                    d.div(icon -> icon.appendTrustedString(SvgImage.PATHWAYS_CHOICE.getSvg()),
-                            Attribute.className(choiceCss));
-                    d.div(n -> n.append(target.getPathKey().toString()),
-                            Attribute.className("pathway-nodeName pathway-targetName"));
-                }, Attribute.className("pathway-node pathway-target"));
 
-                target.getNodes().forEach(pathNode -> {
+        }, Attribute.className("pathway-row"));
 
-                    // Add bezier curve to this node.
-                    final int nodeDepth = depth + 1;
-                    final int nodeRowNum = (count.get() + 1);
-                    appendBezier(svg, nodeDepth, targetRowNum, nodeRowNum, width, height);
 
-                    // Add node div.
-                    parentLevel.div(childLevel -> {
-                        append(childLevel, pathNode, svg, nodeDepth + 1, count, width, height);
-                    }, Attribute.className("pathway-level"));
-                });
-
-            }, Attribute.className("pathway-level"));
-        });
     }
 
     private void appendBezier(final HtmlBuilder svg,

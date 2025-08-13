@@ -8,11 +8,10 @@ import stroom.widget.util.client.SafeHtmlUtil;
 public class Bezier {
 
     public static void quadratic(final HtmlBuilder hb, final Point start, final Point end) {
-        final Point controlPoint = new Point(end.getX(), start.getY());
         final Point midPoint = new Point(
                 ((end.getX() - start.getX()) / 2) + start.getX(),
                 ((end.getY() - start.getY()) / 2) + start.getY());
-
+        final Point controlPoint = new Point(midPoint.getX(), start.getY());
 
         hb.elem(path -> {
                 }, SafeHtmlUtil.from("path"),
