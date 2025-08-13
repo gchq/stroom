@@ -1,6 +1,7 @@
 package stroom.pathways.shared.pathway;
 
 import stroom.pathways.shared.otel.trace.Span;
+import stroom.util.shared.AbstractBuilder;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -26,13 +27,16 @@ public class PathNode {
     private final List<PathNodeList> targets;
     @JsonProperty
     private final List<Span> spans;
+    @JsonProperty
+    private final Constraints constraints;
 
     @JsonCreator
     public PathNode(@JsonProperty("uuid") final String uuid,
                     @JsonProperty("name") final String name,
                     @JsonProperty("path") final List<String> path,
                     @JsonProperty("targets") final List<PathNodeList> targets,
-                    @JsonProperty("spans") final List<Span> spans) {
+                    @JsonProperty("spans") final List<Span> spans,
+                    @JsonProperty("constraints") final Constraints constraints) {
         this.uuid = uuid;
         this.name = name;
         this.path = path;
@@ -42,6 +46,7 @@ public class PathNode {
         this.spans = spans == null
                 ? new ArrayList<>()
                 : new ArrayList<>(spans);
+        this.constraints = constraints;
     }
 
     public PathNode(final String name,
@@ -51,6 +56,7 @@ public class PathNode {
         this.path = path;
         this.targets = new ArrayList<>();
         this.spans = new ArrayList<>();
+        this.constraints = null;
     }
 
     public PathNode(final String name) {
@@ -59,10 +65,7 @@ public class PathNode {
         this.path = Collections.singletonList(name);
         this.targets = new ArrayList<>();
         this.spans = new ArrayList<>();
-    }
-
-    public void addSpan(final Span span) {
-        spans.add(span);
+        this.constraints = null;
     }
 
     public String getUuid() {
@@ -83,6 +86,10 @@ public class PathNode {
 
     public List<Span> getSpans() {
         return spans;
+    }
+
+    public Constraints getConstraints() {
+        return constraints;
     }
 
     @Override
@@ -115,5 +122,80 @@ public class PathNode {
             depth++;
         }
         return sb.toString();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder extends AbstractBuilder<PathNode, Builder> {
+
+        private String uuid;
+        private String name;
+        private List<String> path;
+        private List<PathNodeList> targets;
+        private List<Span> spans;
+        private Constraints constraints;
+
+        public Builder() {
+        }
+
+        public Builder(final PathNode pathNode) {
+            this.uuid = pathNode.uuid;
+            this.name = pathNode.name;
+            this.path = pathNode.path;
+            this.targets = pathNode.targets;
+            this.spans = pathNode.spans;
+            this.constraints = pathNode.constraints;
+        }
+
+        public Builder uuid(final String uuid) {
+            this.uuid = uuid;
+            return self();
+        }
+
+        public Builder name(final String name) {
+            this.name = name;
+            return self();
+        }
+
+        public Builder path(final List<String> path) {
+            this.path = path;
+            return self();
+        }
+
+        public Builder targets(final List<PathNodeList> targets) {
+            this.targets = targets;
+            return self();
+        }
+
+        public Builder spans(final List<Span> spans) {
+            this.spans = spans;
+            return self();
+        }
+
+        public Builder constraints(final Constraints constraints) {
+            this.constraints = constraints;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public PathNode build() {
+            return new PathNode(
+                    uuid,
+                    name,
+                    path,
+                    targets,
+                    spans,
+                    constraints);
+        }
     }
 }

@@ -12,7 +12,6 @@ import stroom.pathways.shared.otel.trace.Span;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.pathway.PathKey;
 import stroom.pathways.shared.pathway.PathNode;
-import stroom.pathways.shared.pathway.PathNodeList;
 import stroom.pathways.shared.pathway.Pathway;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -36,7 +35,6 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -113,37 +111,12 @@ public class PathwaysService {
     private Map<PathKey, PathNode> buildPathways(final Collection<Trace> traces) {
         final Comparator<Span> spanComparator = new CloseSpanComparator(NanoTime.ofMillis(10));
         final PathKeyFactory pathKeyFactory = new PathKeyFactoryImpl();
-        final NodeMutator nodeMutator = new NodeMutatorImpl(spanComparator, pathKeyFactory);
+        final TraceProcessor traceProcessor = new NodeMutatorImpl(spanComparator, pathKeyFactory);
         final Map<PathKey, PathNode> roots = new HashMap<>();
-        final Map<PathKey, Map<String, Map<PathKey, PathNodeList>>> maps = new HashMap<>();
         for (final Trace trace : traces) {
-            final Span root = trace.getRoot();
-            final PathKey pathKey = pathKeyFactory.create(Collections.singletonList(root));
-            final PathNode node = roots.computeIfAbsent(pathKey, k -> new PathNode(root.getName()));
-            final Map<String, Map<PathKey, PathNodeList>> map = maps.computeIfAbsent(pathKey, k -> new HashMap<>());
-            node.addSpan(root);
-            walk(trace, root, node, nodeMutator, map);
+            traceProcessor.process(trace, roots);
         }
         return roots;
-    }
-
-    private void walk(final Trace trace,
-                      final Span parentSpan,
-                      final PathNode parentNode,
-                      final NodeMutator nodeMutator,
-                      final Map<String, Map<PathKey, PathNodeList>> map) {
-        final List<Span> children = trace.getChildren(parentSpan);
-        final PathNodeList targets = nodeMutator.update(children, parentNode, map);
-
-        for (int i = 0; i < targets.getNodes().size(); i++) {
-            // Add additional span info if wanted.
-            final PathNode target = targets.getNodes().get(i);
-            final Span span = children.get(i);
-            target.addSpan(span);
-
-            // Follow the path deeper.
-            walk(trace, span, target, nodeMutator, map);
-        }
     }
 
     public ResultPage<Pathway> findPathways(final FindPathwayCriteria criteria) {

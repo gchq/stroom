@@ -20,6 +20,8 @@ import stroom.pathways.client.presenter.PathwayEditPresenter.PathwayEditView;
 import stroom.pathways.shared.otel.trace.KeyValue;
 import stroom.pathways.shared.otel.trace.NanoTime;
 import stroom.pathways.shared.otel.trace.Span;
+import stroom.pathways.shared.pathway.Constraint;
+import stroom.pathways.shared.pathway.Constraints;
 import stroom.pathways.shared.pathway.PathNode;
 import stroom.pathways.shared.pathway.Pathway;
 import stroom.util.shared.NullSafe;
@@ -42,6 +44,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import javax.validation.ValidationException;
 
@@ -103,8 +106,9 @@ public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
                         div.append(getSpanHtml(commonSpan));
                     });
 
+                    getView().setConstraints(HtmlBuilder.builder().div(d -> d.append(getConstraintsHtml(pathNode)),
+                            Attribute.className("pathway-constraints")).toSafeHtml());
 
-//                    getView().setConstraints(getDurationsHtml(min, max, sum, count));
                     getView().setSpans(HtmlBuilder.builder().div(d -> d.append(spanDetails.toSafeHtml()),
                             Attribute.className("pathway-spans")).toSafeHtml());
 
@@ -120,8 +124,33 @@ public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
         }));
     }
 
-    private SafeHtml getSpanHtml(final Span span) {
+    private SafeHtml getConstraintsHtml(final PathNode pathNode) {
+        final HtmlBuilder hb = new HtmlBuilder();
 
+        final Constraints constraints = pathNode.getConstraints();
+        if (constraints != null) {
+            if (constraints.getDuration() != null) {
+                append(hb, "Duration", constraints.getDuration().toString());
+            }
+            if (constraints.getFlags() != null) {
+                append(hb, "Flag", constraints.getFlags().toString());
+            }
+            if (constraints.getKind() != null) {
+                append(hb, "Kind", constraints.getKind().toString());
+            }
+            if (!NullSafe.isEmptyMap(constraints.getAttributes())) {
+                append(hb, "Attributes", "");
+                hb.div(div -> {
+                    for (final Entry<String, Constraint> entry : constraints.getAttributes().entrySet()) {
+                        append(div, entry.getKey(), entry.getValue().toString());
+                    }
+                }, Attribute.className("pathway-attributes"));
+            }
+        }
+        return hb.toSafeHtml();
+    }
+
+    private SafeHtml getSpanHtml(final Span span) {
         final HtmlBuilder hb = new HtmlBuilder();
         if (span.getTraceId() != null) {
             append(hb, "Trace Id", span.getTraceId());
