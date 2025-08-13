@@ -50,6 +50,6 @@ public abstract class AbstractRange<T> {
 
     @Override
     public String toString() {
-        return min + " : " + max;
+        return min + " -> " + max;
     }
 }
