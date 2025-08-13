@@ -35,6 +35,7 @@ import stroom.widget.util.client.HtmlBuilder.Attribute;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.inject.Inject;
@@ -43,9 +44,12 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.validation.ValidationException;
 
 public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
@@ -138,13 +142,24 @@ public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
             if (constraints.getKind() != null) {
                 append(hb, "Kind", constraints.getKind().toString());
             }
-            if (!NullSafe.isEmptyMap(constraints.getAttributes())) {
-                append(hb, "Attributes", "");
-                hb.div(div -> {
-                    for (final Entry<String, Constraint> entry : constraints.getAttributes().entrySet()) {
-                        append(div, entry.getKey(), entry.getValue().toString());
-                    }
-                }, Attribute.className("pathway-attributes"));
+            append(hb, "Attributes", "");
+
+            final Map<String, Constraint> requiredAttributes = NullSafe.map(constraints.getRequiredAttributes());
+            final Map<String, Constraint> optionalAttributes = NullSafe.map(constraints.getOptionalAttributes());
+            final Set<String> keys = new HashSet<>(requiredAttributes.keySet());
+            keys.addAll(optionalAttributes.keySet());
+            final List<String> sortedKeys = keys.stream().sorted().collect(Collectors.toList());
+            for (final String key : sortedKeys) {
+                final Constraint required = requiredAttributes.get(key);
+                if (required != null) {
+                    hb.div(div ->
+                            append(div, key, required.toString()), Attribute.className("pathway-attributes"));
+                }
+                final Constraint optional = optionalAttributes.get(key);
+                if (optional != null) {
+                    hb.div(div ->
+                            append(div, key, optional.toString()), Attribute.className("pathway-attributes-optional"));
+                }
             }
         }
         return hb.toSafeHtml();
@@ -235,6 +250,12 @@ public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
 
     public void read(final Pathway pathway) {
         this.pathway = pathway;
+        this.selected = null;
+
+        getView().setDetails(SafeHtmlUtils.EMPTY_SAFE_HTML);
+        getView().setConstraints(SafeHtmlUtils.EMPTY_SAFE_HTML);
+        getView().setSpans(SafeHtmlUtils.EMPTY_SAFE_HTML);
+
         getView().setName(pathway.getName());
         getView().setDetails(new PathwayTree().build(pathway));
 

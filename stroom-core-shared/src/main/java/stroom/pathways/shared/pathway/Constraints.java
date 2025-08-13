@@ -22,17 +22,21 @@ public class Constraints {
     @JsonProperty
     private final Set<SpanKind> kind;
     @JsonProperty
-    private final Map<String, Constraint> attributes;
+    private final Map<String, Constraint> requiredAttributes;
+    @JsonProperty
+    private final Map<String, Constraint> optionalAttributes;
 
     @JsonCreator
     public Constraints(@JsonProperty("duration") final NanoTimeRange duration,
                        @JsonProperty("flags") final Constraint flags,
                        @JsonProperty("kind") final Set<SpanKind> kind,
-                       @JsonProperty("attributes") final Map<String, Constraint> attributes) {
+                       @JsonProperty("requiredAttributes") final Map<String, Constraint> requiredAttributes,
+                       @JsonProperty("optionalAttributes") final Map<String, Constraint> optionalAttributes) {
         this.duration = duration;
         this.flags = flags;
         this.kind = kind;
-        this.attributes = attributes;
+        this.requiredAttributes = requiredAttributes;
+        this.optionalAttributes = optionalAttributes;
     }
 
     public NanoTimeRange getDuration() {
@@ -47,8 +51,12 @@ public class Constraints {
         return kind;
     }
 
-    public Map<String, Constraint> getAttributes() {
-        return attributes;
+    public Map<String, Constraint> getRequiredAttributes() {
+        return requiredAttributes;
+    }
+
+    public Map<String, Constraint> getOptionalAttributes() {
+        return optionalAttributes;
     }
 
     @Override
@@ -63,22 +71,13 @@ public class Constraints {
         return Objects.equals(duration, that.duration) &&
                Objects.equals(flags, that.flags) &&
                Objects.equals(kind, that.kind) &&
-               Objects.equals(attributes, that.attributes);
+               Objects.equals(requiredAttributes, that.requiredAttributes) &&
+               Objects.equals(optionalAttributes, that.optionalAttributes);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(duration, flags, kind, attributes);
-    }
-
-    @Override
-    public String toString() {
-        return "Constraints{" +
-               "duration=" + duration +
-               ", flags=" + flags +
-               ", kind=" + kind +
-               ", attributes=" + attributes +
-               '}';
+        return Objects.hash(duration, flags, kind, requiredAttributes, optionalAttributes);
     }
 
     public Builder copy() {
@@ -94,7 +93,8 @@ public class Constraints {
         private NanoTimeRange duration;
         private Constraint flags;
         private Set<SpanKind> kind;
-        private Map<String, Constraint> attributes;
+        private Map<String, Constraint> requiredAttributes;
+        private Map<String, Constraint> optionalAttributes;
 
         public Builder() {
         }
@@ -103,7 +103,8 @@ public class Constraints {
             this.duration = constraints.duration;
             this.flags = constraints.flags;
             this.kind = constraints.kind;
-            this.attributes = constraints.attributes;
+            this.requiredAttributes = constraints.requiredAttributes;
+            this.optionalAttributes = constraints.optionalAttributes;
         }
 
         public Builder duration(final NanoTimeRange duration) {
@@ -121,8 +122,13 @@ public class Constraints {
             return self();
         }
 
-        public Builder attributes(final Map<String, Constraint> attributes) {
-            this.attributes = attributes;
+        public Builder requiredAttributes(final Map<String, Constraint> requiredAttributes) {
+            this.requiredAttributes = requiredAttributes;
+            return self();
+        }
+
+        public Builder optionalAttributes(final Map<String, Constraint> optionalAttributes) {
+            this.optionalAttributes = optionalAttributes;
             return self();
         }
 
@@ -136,7 +142,8 @@ public class Constraints {
                     duration,
                     flags,
                     kind,
-                    attributes);
+                    requiredAttributes,
+                    optionalAttributes);
         }
     }
 }

@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class NodeMutatorImpl implements TraceProcessor {
 
@@ -155,15 +156,50 @@ public class NodeMutatorImpl implements TraceProcessor {
         builder.kind(set);
 
         // Create attribute sets.
-        final Map<String, Constraint> attributes;
-        if (constraints.getAttributes() != null) {
-            attributes = new HashMap<>(constraints.getAttributes());
+        if (constraints.getRequiredAttributes() == null) {
+            final Map<String, Constraint> requiredAttributes = new HashMap<>();
+            if (!NullSafe.isEmptyCollection(span.getAttributes())) {
+                span.getAttributes().forEach(kv -> addAttribute(requiredAttributes, kv));
+            }
+            builder.requiredAttributes(requiredAttributes);
         } else {
-            attributes = new HashMap<>();
-        }
-        if (!NullSafe.isEmptyCollection(span.getAttributes())) {
-            span.getAttributes().forEach(kv -> addAttribute(attributes, kv));
-            builder.attributes(attributes);
+            final Map<String, Constraint> requiredAttributes = constraints.getRequiredAttributes();
+            final Map<String, Constraint> optionalAttributes;
+            if (constraints.getOptionalAttributes() == null) {
+                optionalAttributes = new HashMap<>();
+            } else {
+                optionalAttributes = new HashMap<>(constraints.getOptionalAttributes());
+            }
+
+            if (!NullSafe.isEmptyCollection(span.getAttributes())) {
+                // Move required to optional if this span doesn't have them.
+                final Set<String> newAttributeKeys = span
+                        .getAttributes()
+                        .stream()
+                        .map(KeyValue::getKey)
+                        .collect(Collectors.toSet());
+                final Set<String> currentRequiredKeys = new HashSet<>(requiredAttributes.keySet());
+                currentRequiredKeys.forEach(requiredKey -> {
+                    if (!newAttributeKeys.contains(requiredKey)) {
+                        // Move required key to optional.
+                        final Constraint constraint = requiredAttributes.remove(requiredKey);
+                        optionalAttributes.put(requiredKey, constraint);
+                    }
+                });
+
+                // Now we moved attributes that don't exist add ones that do exist.
+                span.getAttributes().forEach(kv -> {
+                    // If we don't already have the attribute then this is an optional one.
+                    if (requiredAttributes.containsKey(kv.getKey())) {
+                        addAttribute(requiredAttributes, kv);
+                    } else {
+                        addAttribute(optionalAttributes, kv);
+                    }
+                });
+            }
+
+            builder.requiredAttributes(requiredAttributes);
+            builder.optionalAttributes(optionalAttributes);
         }
 
         pathNodeBuilder.constraints(builder.build());
