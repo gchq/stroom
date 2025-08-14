@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+* Issue **#5065** : Make public key URI configurable.
+
+* Issue **#5046** : Stop feeds being auto-created when there is no content template match.
+
+* Issue **#5062** : Fix permissions issue loading scheduled executors.
+
 * Allow clientSecret to be null/empty for mTLS auth.
 
 
