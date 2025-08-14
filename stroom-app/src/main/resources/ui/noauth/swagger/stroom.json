@@ -16963,22 +16963,6 @@
             "type" : "string",
             "enum" : [ "RUN_AS", "ANNOTATION_ASSIGNMENT", "PERMISSIONS" ]
           },
-          "expression" : {
-            "$ref" : "#/components/schemas/ExpressionOperator"
-          },
-          "pageRequest" : {
-            "$ref" : "#/components/schemas/PageRequest"
-          },
-          "sort" : {
-            "type" : "string",
-            "writeOnly" : true
-          },
-          "sortList" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/CriteriaFieldSort"
-            }
-          },
           "uuid" : {
             "type" : "string"
           }
