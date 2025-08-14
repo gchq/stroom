@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.9.1] - 2025-08-14
+
+* Issue **#5065** : Make public key URI configurable.
+
+
 ## [v7.9.0] - 2025-07-21
 
 * Issue **#4959** : Remove terms with field `Status` from re-process filter expressions.
@@ -1496,7 +1501,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.9.0...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.9.1...HEAD
+[v7.9.1]: https://github.com/gchq/stroom/compare/v7.9.0...v7.9.1
 [v7.9.0]: https://github.com/gchq/stroom/compare/v7.9-beta.13...v7.9.0
 [v7.9-beta.13]: https://github.com/gchq/stroom/compare/v7.9-beta.12...v7.9-beta.13
 [v7.9-beta.12]: https://github.com/gchq/stroom/compare/v7.9-beta.11...v7.9-beta.12
