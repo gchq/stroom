@@ -59,7 +59,8 @@ public class PathwaysService {
         final Map<String, Trace> traceMap = new HashMap<>();
         for (int i = 1; i <= 17; i++) {
             final Path path = Paths.get(
-                    "/home/stroomdev66/work/stroom-master-temp2/stroom-pathways/stroom-pathways-impl/src/test/resources/" + StringIdUtil.idToString(
+                    "/home/stroomdev66/work/stroom-master-temp2/" +
+                    "stroom-pathways/stroom-pathways-impl/src/test/resources/" + StringIdUtil.idToString(
                             i) + ".dat");
             loadData(path, traceMap);
         }

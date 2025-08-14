@@ -80,7 +80,7 @@ public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
                     NanoTime min = NanoTime.ofSeconds(Long.MAX_VALUE);
                     NanoTime max = NanoTime.ZERO;
                     NanoTime sum = NanoTime.ZERO;
-                    int count = pathNode.getSpans().size();
+                    final int count = pathNode.getSpans().size();
 
                     final HtmlBuilder spanDetails = new HtmlBuilder();
                     final CommonSpanBuilder commonSpanBuilder = new CommonSpanBuilder();

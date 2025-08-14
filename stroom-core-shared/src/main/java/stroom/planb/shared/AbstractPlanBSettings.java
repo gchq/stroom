@@ -58,7 +58,7 @@ public abstract sealed class AbstractPlanBSettings permits
         SessionSettings,
         HistogramSettings,
         MetricSettings,
-        TraceSettings{
+        TraceSettings {
 
     // 10 GiB
     public static final Long DEFAULT_MAX_STORE_SIZE = 10737418240L;

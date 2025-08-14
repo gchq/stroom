@@ -15,12 +15,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class PathwayTree {
 
-    private final static int ROW_HEIGHT = 22;
-    private final static int INDENT = 56;
-    private final static int START_X_OFFSET = 13;
-    private final static int START_Y_OFFSET = 0;
-    private final static int END_X_OFFSET = 23;
-    private final static int END_Y_OFFSET = -9;
+    private static final int ROW_HEIGHT = 22;
+    private static final int INDENT = 56;
+    private static final int START_X_OFFSET = 13;
+    private static final int START_Y_OFFSET = 0;
+    private static final int END_X_OFFSET = 23;
+    private static final int END_Y_OFFSET = -9;
 
     public SafeHtml build(final Pathway selected) {
         final HtmlBuilder hb = new HtmlBuilder();
@@ -107,17 +107,11 @@ public class PathwayTree {
 //                                    appendBezier(svg, nodeDepth, targetRowNum, nodeRowNum, width, height);
 
 
-
-
-
-
                                 final int startX = (nodeDepth * INDENT) + 43;
                                 final int startY = (choiceRowNum * ROW_HEIGHT) + 13;
                                 final int endX = (nodeDepth * INDENT) + 60;
                                 final int endY = (count.get() * ROW_HEIGHT) + 13;
                                 Bezier.quadratic(svg, new Point(startX, startY), new Point(endX, endY));
-
-
 
 
                                 if (endX > width.get()) {
@@ -126,13 +120,6 @@ public class PathwayTree {
                                 if (endY > height.get()) {
                                     height.set(endY);
                                 }
-
-
-
-
-
-
-
 
 
                                 // Add node div.

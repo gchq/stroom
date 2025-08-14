@@ -1,4 +1,4 @@
-package stroom.pathways.shared.otel.trace;// Root export request class - the top-level container
+package stroom.pathways.shared.otel.trace;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

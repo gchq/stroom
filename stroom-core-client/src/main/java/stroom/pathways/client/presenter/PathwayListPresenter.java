@@ -208,12 +208,14 @@ public class PathwayListPresenter
     }
 
     private void addTimeColumn(final String name, final Function<Pathway, NanoTime> function) {
-        final Column<Pathway, String> column = DataGridUtil.textColumnBuilder((Function<Pathway, String>) pathway -> {
-                    final NanoTime nanoTime = function.apply(pathway);
-                    return nanoTime == null
-                            ? ""
-                            : dateTimeFormatter.format(nanoTime.toEpochMillis());
-                })
+        final Function<Pathway, String> valueExtractor = pathway -> {
+            final NanoTime nanoTime = function.apply(pathway);
+            return nanoTime == null
+                    ? ""
+                    : dateTimeFormatter.format(nanoTime.toEpochMillis());
+        };
+        final Column<Pathway, String> column = DataGridUtil
+                .textColumnBuilder(valueExtractor)
                 .withSorting(name)
                 .build();
         dataGrid.addResizableColumn(column,

@@ -13,8 +13,7 @@ public class Bezier {
                 ((end.getY() - start.getY()) / 2) + start.getY());
         final Point controlPoint = new Point(midPoint.getX(), start.getY());
 
-        hb.elem(path -> {
-                }, SafeHtmlUtil.from("path"),
+        hb.elem(SafeHtmlUtil.from("path"),
                 new Attribute("d",
                         "M " + start.getX() + " " + start.getY() +
                         " Q " + controlPoint.getX() + " " + controlPoint.getY() +
@@ -23,13 +22,11 @@ public class Bezier {
     }
 
     public static void curve(final HtmlBuilder hb, final Point start, final Point end) {
-        hb.elem(path -> {
-                }, SafeHtmlUtil.from("path"),
+        hb.elem(SafeHtmlUtil.from("path"),
                 new Attribute("d",
                         "M " + start.getX() + " " + start.getY() +
                         " C " + start.getX() + " " + end.getY() +
                         ", " + start.getX() + " " + end.getY() +
                         ", " + end.getX() + " " + end.getY()));
     }
-
 }

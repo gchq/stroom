@@ -174,6 +174,13 @@ public class HtmlBuilder {
         return this;
     }
 
+    public HtmlBuilder elem(final SafeHtml elementName,
+                            final Attribute... attributes) {
+        openElement(elementName, attributes);
+        closeElement(elementName);
+        return this;
+    }
+
     private HtmlBuilder openElement(final SafeHtml elementName, final Attribute... attributes) {
         sb.append(ARROW_LEFT);
         sb.append(elementName);

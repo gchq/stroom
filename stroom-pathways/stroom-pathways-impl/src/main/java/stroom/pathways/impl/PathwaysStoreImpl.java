@@ -153,53 +153,53 @@ public class PathwaysStoreImpl implements PathwaysStore {
                                  final Map<String, byte[]> dataMap,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
-
-        Map<String, byte[]> effectiveDataMap = dataMap;
-        try {
-            boolean altered = false;
-            final PathwaysDoc doc = serialiser.read(dataMap);
-
-            // TODO : Leaving here as we will want to copy pathways once they are in the DB.
-//            // If the imported feed's vol grp doesn't exist in this env use our default
-//            // or null it out
-//            final String volumeGroup = doc.getVolumeGroupName();
-//            if (volumeGroup != null) {
-//                final IndexVolumeGroupService fsVolumeGroupService = indexVolumeGroupServiceProvider.get();
-//                final List<String> allVolumeGroups = fsVolumeGroupService.getNames();
-//                if (!allVolumeGroups.contains(volumeGroup)) {
-//                    LOGGER.debug("Volume group '{}' in imported index {} is not a valid volume group",
-//                            volumeGroup, docRef);
-//                    fsVolumeGroupService.getDefaultVolumeGroup()
-//                            .ifPresentOrElse(
-//                                    doc::setVolumeGroupName,
-//                                    () -> doc.setVolumeGroupName(null));
-//                    altered = true;
-//                }
-//            }
 //
-//            // Transfer fields to the database.
-//            if (NullSafe.hasItems(doc.getFields())) {
-//                // Make sure we transfer all fields to the DB and remove them from the doc.
-//                final List<IndexField> fields = doc
-//                        .getFields()
-//                        .stream()
-//                        .map(field -> (IndexField) field)
-//                        .toList();
-//                indexFieldServiceProvider.get().addFields(doc.asDocRef(), fields);
-//                doc.setFields(null);
-//                altered = true;
-//            }
+//        Map<String, byte[]> effectiveDataMap = dataMap;
+//        try {
+////            boolean altered = false;
+//            final PathwaysDoc doc = serialiser.read(dataMap);
+//
+//            // TODO : Leaving here as we will want to copy pathways once they are in the DB.
+////            // If the imported feed's vol grp doesn't exist in this env use our default
+////            // or null it out
+////            final String volumeGroup = doc.getVolumeGroupName();
+////            if (volumeGroup != null) {
+////                final IndexVolumeGroupService fsVolumeGroupService = indexVolumeGroupServiceProvider.get();
+////                final List<String> allVolumeGroups = fsVolumeGroupService.getNames();
+////                if (!allVolumeGroups.contains(volumeGroup)) {
+////                    LOGGER.debug("Volume group '{}' in imported index {} is not a valid volume group",
+////                            volumeGroup, docRef);
+////                    fsVolumeGroupService.getDefaultVolumeGroup()
+////                            .ifPresentOrElse(
+////                                    doc::setVolumeGroupName,
+////                                    () -> doc.setVolumeGroupName(null));
+////                    altered = true;
+////                }
+////            }
+////
+////            // Transfer fields to the database.
+////            if (NullSafe.hasItems(doc.getFields())) {
+////                // Make sure we transfer all fields to the DB and remove them from the doc.
+////                final List<IndexField> fields = doc
+////                        .getFields()
+////                        .stream()
+////                        .map(field -> (IndexField) field)
+////                        .toList();
+////                indexFieldServiceProvider.get().addFields(doc.asDocRef(), fields);
+////                doc.setFields(null);
+////                altered = true;
+////            }
+//
+////            if (altered) {
+////                effectiveDataMap = serialiser.write(doc);
+////            }
+//
+//        } catch (final IOException e) {
+//            throw new RuntimeException(LogUtil.message("Error de-serialising feed {}: {}",
+//                    docRef, e.getMessage()), e);
+//        }
 
-            if (altered) {
-                effectiveDataMap = serialiser.write(doc);
-            }
-
-        } catch (final IOException e) {
-            throw new RuntimeException(LogUtil.message("Error de-serialising feed {}: {}",
-                    docRef, e.getMessage()), e);
-        }
-
-        return store.importDocument(docRef, effectiveDataMap, importState, importSettings);
+        return store.importDocument(docRef, dataMap, importState, importSettings);
     }
 
     @Override
