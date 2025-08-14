@@ -13,6 +13,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.10-beta.11] - 2025-08-14
+
 * Issue **#5065** : Make public key URI configurable.
 
 
@@ -1617,7 +1619,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.10-beta.10...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.10-beta.11...HEAD
+[v7.10-beta.11]: https://github.com/gchq/stroom/compare/v7.10-beta.10...v7.10-beta.11
 [v7.10-beta.10]: https://github.com/gchq/stroom/compare/v7.10-beta.9...v7.10-beta.10
 [v7.10-beta.9]: https://github.com/gchq/stroom/compare/v7.10-beta.8...v7.10-beta.9
 [v7.10-beta.8]: https://github.com/gchq/stroom/compare/v7.10-beta.7...v7.10-beta.8
