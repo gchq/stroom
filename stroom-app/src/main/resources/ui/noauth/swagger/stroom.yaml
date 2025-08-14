@@ -9318,6 +9318,11 @@ components:
           format: int32
         text:
           type: string
+        textType:
+          type: string
+          enum:
+          - STROOM_QUERY_LANGUAGE
+          - EXPRESSION
     ComponentConfig:
       type: object
       properties:
@@ -9564,6 +9569,10 @@ components:
     CreateAnnotationRequest:
       type: object
       properties:
+        assignTo:
+          $ref: "#/components/schemas/UserRef"
+        comment:
+          type: string
         linkedEvents:
           type: array
           items:
@@ -10345,6 +10354,7 @@ components:
           - PIPELINE_INDEX
           - PIPELINE_JSON
           - PIPELINE_KAFKA
+          - PIPELINE_MERGE
           - PIPELINE_RECORD_COUNT
           - PIPELINE_RECORD_OUTPUT
           - PIPELINE_REFERENCE_DATA
@@ -13367,6 +13377,7 @@ components:
           - PIPELINE_INDEX
           - PIPELINE_JSON
           - PIPELINE_KAFKA
+          - PIPELINE_MERGE
           - PIPELINE_RECORD_COUNT
           - PIPELINE_RECORD_OUTPUT
           - PIPELINE_REFERENCE_DATA
