@@ -92,6 +92,8 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     static final String AMZN_OIDC_SIGNER_SPLIT_CHAR = ":";
     static final Pattern AMZN_REGION_PATTERN = Pattern.compile("^[a-z0-9-]+$");
 
+    static final String DEFAULT_PUBLIC_KEY_URI_PATTERN = "https://public-keys.auth.elb.{}.amazonaws.com/{}";
+
     private static final String AUTHORIZATION_HEADER = HttpHeaders.AUTHORIZATION;
 
     private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
@@ -462,7 +464,14 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     }
 
     private PublicKey getAwsPublicKey(final JwsParts jwsParts) {
-        final String uri = getAwsPublicKeyUri(jwsParts, openIdConfigurationProvider.get().getExpectedSignerPrefixes());
+        String publicKeyUriPattern = openIdConfigurationProvider.get().getPublicKeyUriPattern();
+        if (NullSafe.isBlankString(publicKeyUriPattern)) {
+            publicKeyUriPattern = DEFAULT_PUBLIC_KEY_URI_PATTERN;
+        }
+        final String uri = getAwsPublicKeyUri(
+                jwsParts,
+                openIdConfigurationProvider.get().getExpectedSignerPrefixes(),
+                publicKeyUriPattern);
 
         // Lazy initialise the cache and its timer in case we never deal with aws keys
         if (awsPublicKeyCache == null) {
@@ -478,7 +487,8 @@ public class StandardJwtContextFactory implements JwtContextFactory {
 
     // pkg private for testing
     static String getAwsPublicKeyUri(final JwsParts jwsParts,
-                                     final Set<String> expectedSignerPrefixes) {
+                                     final Set<String> expectedSignerPrefixes,
+                                     final String publicKeyUriPattern) {
 
         final Map<String, String> headerValues = jwsParts.getHeaderValues(
                 SIGNER_HEADER_KEY,
@@ -519,10 +529,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                         OpenId.KEY_ID, jwsParts.header)));
 
         final String awsRegion = extractAwsRegionFromSigner(signer);
-
-        // TODO: 24/02/2023 Ought to come from config
-        return LogUtil.message("https://public-keys.auth.elb.{}.amazonaws.com/{}",
-                awsRegion, keyId);
+        return LogUtil.message(publicKeyUriPattern, awsRegion, keyId);
     }
 
     private static String extractAwsRegionFromSigner(final String signer) {

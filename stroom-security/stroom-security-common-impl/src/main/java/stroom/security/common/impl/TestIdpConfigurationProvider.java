@@ -130,6 +130,11 @@ public class TestIdpConfigurationProvider implements IdpConfigurationProvider {
         throw new UnsupportedOperationException("Not supported for this implementation");
     }
 
+    @Override
+    public String getPublicKeyUriPattern() {
+        throw new UnsupportedOperationException("Not supported for this implementation");
+    }
+
     private void showWarning() {
         // Show a warning every 5mins or so to remind people it is totally insecure
         final Instant now = Instant.now();
@@ -137,8 +142,8 @@ public class TestIdpConfigurationProvider implements IdpConfigurationProvider {
             synchronized (this) {
                 if (now.isAfter(nextWarningTime)) {
                     LOGGER.warn("Using default and publicly available Open ID authentication credentials. " +
-                            "This is totally insecure! Set property " + AbstractOpenIdConfig.PROP_NAME_IDP_TYPE +
-                            " to " + IdpType.EXTERNAL_IDP + "/" + IdpType.INTERNAL_IDP + ".");
+                                "This is totally insecure! Set property " + AbstractOpenIdConfig.PROP_NAME_IDP_TYPE +
+                                " to " + IdpType.EXTERNAL_IDP + "/" + IdpType.INTERNAL_IDP + ".");
                     nextWarningTime = Instant.now().plus(TIME_BETWEEN_WARNINGS);
                 }
             }

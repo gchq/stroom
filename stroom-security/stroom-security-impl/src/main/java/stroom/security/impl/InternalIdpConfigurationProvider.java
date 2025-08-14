@@ -153,4 +153,9 @@ public class InternalIdpConfigurationProvider implements IdpConfigurationProvide
     public Set<String> getExpectedSignerPrefixes() {
         return localOpenIdConfigProvider.get().getExpectedSignerPrefixes();
     }
+
+    @Override
+    public String getPublicKeyUriPattern() {
+        return localOpenIdConfigProvider.get().getPublicKeyUriPattern();
+    }
 }

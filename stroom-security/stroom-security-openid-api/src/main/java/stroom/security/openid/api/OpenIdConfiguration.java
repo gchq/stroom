@@ -106,4 +106,9 @@ public interface OpenIdConfiguration {
      * @see AbstractOpenIdConfig#getExpectedSignerPrefixes()
      */
     Set<String> getExpectedSignerPrefixes();
+
+    /**
+     * @see AbstractOpenIdConfig#getPublicKeyUriPattern()
+     */
+    String getPublicKeyUriPattern();
 }
