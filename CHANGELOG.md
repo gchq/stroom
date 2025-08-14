@@ -13,6 +13,9 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#5065** : Make public key URI configurable.
+
+
 ## [v7.10-beta.10] - 2025-08-08
 
 * Issue **#5046** : Stop feeds being auto-created when there is no content template match.

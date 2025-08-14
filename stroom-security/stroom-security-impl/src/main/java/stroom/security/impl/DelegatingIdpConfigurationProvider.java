@@ -148,4 +148,9 @@ public class DelegatingIdpConfigurationProvider implements IdpConfigurationProvi
     public Set<String> getExpectedSignerPrefixes() {
         return delegate.getExpectedSignerPrefixes();
     }
+
+    @Override
+    public String getPublicKeyUriPattern() {
+        return delegate.getPublicKeyUriPattern();
+    }
 }
