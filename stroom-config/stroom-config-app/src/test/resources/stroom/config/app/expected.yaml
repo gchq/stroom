@@ -896,6 +896,7 @@ appConfig:
         logoutEndpoint: null
         logoutRedirectParamName: "post_logout_redirect_uri"
         openIdConfigurationEndpoint: null
+        publicKeyUriPattern: "https://public-keys.auth.elb.{}.amazonaws.com/{}"
         requestScopes:
         - "openid"
         - "email"
