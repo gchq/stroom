@@ -718,24 +718,24 @@ paths:
       summary: Finds annotation tags matching request
       tags:
       - Annotations
-  /annotation/v1/getAnnotationByRef:
+  /annotation/v1/findAnnotations:
     post:
-      operationId: getAnnotationByRef
+      operationId: findAnnotations
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/DocRef"
-        description: annotationRef
+              $ref: "#/components/schemas/FindAnnotationRequest"
+        description: request
         required: true
       responses:
         default:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Annotation"
+                $ref: "#/components/schemas/ResultPageAnnotation"
           description: default response
-      summary: Gets an annotation by ref
+      summary: Finds annotations
       tags:
       - Annotations
   /annotation/v1/getAnnotationEntries:
@@ -5636,6 +5636,35 @@ paths:
         easily
       tags:
       - Queries
+  /query/v1/csv/search:
+    get:
+      operationId: queryCsv
+      parameters:
+      - in: query
+        name: query
+        schema:
+          type: string
+      - in: query
+        name: offset
+        schema:
+          type: integer
+          format: int32
+      - in: query
+        name: length
+        schema:
+          type: integer
+          format: int32
+          default: 100
+      responses:
+        default:
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: default response
+      summary: Perform a csv query
+      tags:
+      - Queries
   /query/v1/downloadSearchResults:
     post:
       operationId: downloadQuerySearchResultsLocal
@@ -8403,6 +8432,14 @@ components:
         properties:
           sourceDocRef:
             $ref: "#/components/schemas/DocRef"
+    AddAnnotationTable:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractAnnotationChange"
+      - type: object
+        properties:
+          table:
+            $ref: "#/components/schemas/AnnotationTable"
     AddAppPermission:
       type: object
       allOf:
@@ -8678,14 +8715,17 @@ components:
           - STATUS
           - ASSIGNED
           - COMMENT
-          - LINK
-          - UNLINK
+          - LINK_EVENT
+          - UNLINK_EVENT
           - RETENTION_PERIOD
           - DESCRIPTION
           - ADD_TO_COLLECTION
           - REMOVE_FROM_COLLECTION
           - ADD_LABEL
           - REMOVE_LABEL
+          - ADD_TABLE_DATA
+          - LINK_ANNOTATION
+          - UNLINK_ANNOTATION
           - DELETE
         entryUser:
           $ref: "#/components/schemas/UserRef"
@@ -8701,6 +8741,22 @@ components:
           format: int64
         updateUser:
           $ref: "#/components/schemas/UserRef"
+    AnnotationTable:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/EntryValue"
+      - type: object
+        properties:
+          columns:
+            type: array
+            items:
+              type: string
+          values:
+            type: array
+            items:
+              type: array
+              items:
+                type: string
     AnnotationTag:
       type: object
       properties:
@@ -9818,6 +9874,11 @@ components:
           $ref: "#/components/schemas/UserRef"
         comment:
           type: string
+        linkedAnnotations:
+          type: array
+          items:
+            type: integer
+            format: int64
         linkedEvents:
           type: array
           items:
@@ -9826,6 +9887,8 @@ components:
           type: string
         subject:
           type: string
+        table:
+          $ref: "#/components/schemas/AnnotationTable"
         title:
           type: string
     CreateAnnotationTagRequest:
@@ -10989,6 +11052,13 @@ components:
           type: string
         ok:
           type: boolean
+    ElementId:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
     EmbeddedQueryComponentSettings:
       type: object
       allOf:
@@ -11846,6 +11916,34 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CriteriaFieldSort"
+    FindAnnotationRequest:
+      type: object
+      properties:
+        destinationId:
+          type: integer
+          format: int64
+        filter:
+          type: string
+        pageRequest:
+          $ref: "#/components/schemas/PageRequest"
+        requiredPermission:
+          type: string
+          enum:
+          - OWNER
+          - DELETE
+          - EDIT
+          - VIEW
+          - USE
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: "#/components/schemas/CriteriaFieldSort"
+        sourceId:
+          type: integer
+          format: int64
     FindApiKeyCriteria:
       type: object
       properties:
@@ -13112,6 +13210,17 @@ components:
         streamCount:
           type: integer
           format: int64
+    LinkAnnotations:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractAnnotationChange"
+      - type: object
+        properties:
+          annotations:
+            type: array
+            items:
+              type: integer
+              format: int64
     LinkEvents:
       type: object
       allOf:
@@ -13761,7 +13870,11 @@ components:
     PipelineElement:
       type: object
       properties:
+        description:
+          type: string
         id:
+          type: string
+        name:
           type: string
         type:
           type: string
@@ -15324,6 +15437,16 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AnalyticDataShard"
+    ResultPageAnnotation:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: "#/components/schemas/PageResponse"
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/Annotation"
     ResultPageAnnotationTag:
       type: object
       description: A page of results.
@@ -16975,7 +17098,7 @@ components:
       type: object
       properties:
         elementId:
-          type: string
+          $ref: "#/components/schemas/ElementId"
         errorType:
           type: string
           enum:
@@ -17732,6 +17855,8 @@ components:
           type: string
         pageBorder:
           type: string
+        selectedTabColour:
+          type: string
     TimeFilter:
       type: object
       description: If the data includes time in the key then you can apply a time
@@ -17886,6 +18011,17 @@ components:
           $ref: "#/components/schemas/ThemeConfig"
         welcomeHtml:
           type: string
+    UnlinkAnnotations:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractAnnotationChange"
+      - type: object
+        properties:
+          annotations:
+            type: array
+            items:
+              type: integer
+              format: int64
     UnlinkEvents:
       type: object
       allOf:
