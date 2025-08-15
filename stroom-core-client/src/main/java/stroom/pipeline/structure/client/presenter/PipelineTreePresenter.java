@@ -159,9 +159,9 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
     }
 
     /**
-     * @return All the element IDs currently in the pipeline
+     * @return All the element names currently in the pipeline
      */
-    public Set<String> getIds() {
+    public Set<String> getNames() {
         final List<PipelineElement> pipelineElements = NullSafe.get(
                 pipelineModel,
                 PipelineModel::getPipelineLayer,
@@ -169,7 +169,7 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
                 PipelineData::getAddedElements);
 
         return NullSafe.stream(pipelineElements)
-                .map(PipelineElement::getId)
+                .map(PipelineElement::getDisplayName)
                 .collect(Collectors.toSet());
     }
 

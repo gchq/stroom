@@ -12,6 +12,45 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+## [v7.11-beta.5] - 2025-08-14
+
+* Issue **#2279** : Drag and drop tabs.
+
+* Issue **#2584** : Close all tabs to right/left.
+
+* Issue **#5013** : Add row data to annotations.
+
+* Issue **#3049** : Check for full/inactive/closed index volumes.
+
+* Issue **#4070** : Show column information on hover tip.
+
+* Issue **#3815** : Add selected tab colour property.
+
+* Issue **#4790** : Add copy option for property names.
+
+* Issue **#4121** : Add rename option for pipeline elements.
+
+* Issue **#2823** : Add `autoImport` servlet to simplify importing content.
+
+* Issue **#5013** : Add data to existing annotations.
+
+* Issue **#5013** : Add links to other annotations and allow comments to make refereces to events and other annotations.
+
+* Issue **#2374** : Add pipeline element descriptions.
+
+* Issue **#2374** : Add description is now editable for pipeline elements.
+
+* Issue **#4048** : Add query csv API.
+
+* Issue **#5064** : Fix ref data store discovery.
+
+* Issue **#5065** : Make public key URI configurable.
+
+* Issue **#5046** : Stop feeds being auto-created when there is no content template match.
+
+* Issue **#5062** : Fix permissions issue loading scheduled executors.
+
 * Allow clientSecret to be null/empty for mTLS auth.
 
 
@@ -1638,7 +1677,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.4...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.5...HEAD
+[v7.11-beta.5]: https://github.com/gchq/stroom/compare/v7.11-beta.4...v7.11-beta.5
 [v7.11-beta.4]: https://github.com/gchq/stroom/compare/v7.11-beta.3...v7.11-beta.4
 [v7.11-beta.3]: https://github.com/gchq/stroom/compare/v7.11-beta.2...v7.11-beta.3
 [v7.11-beta.2]: https://github.com/gchq/stroom/compare/v7.11-beta.1...v7.11-beta.2

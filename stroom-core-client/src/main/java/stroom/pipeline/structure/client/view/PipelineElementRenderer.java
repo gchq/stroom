@@ -92,7 +92,7 @@ public final class PipelineElementRenderer
                     pipelineElement.getId(),
                     k -> pipelineElementBoxFactory.create(pipelineModel, pipelineElement));
             // Refresh any styling on the box based on the PipelineElement state
-            pipelineElementBox.refresh();
+            pipelineElementBox.refresh(pipelineElement);
             return pipelineElementBox;
         }
     }

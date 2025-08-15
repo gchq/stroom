@@ -41,8 +41,8 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
             @JsonProperty("validIssuers") final Set<String> validIssuers,
             @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim,
             @JsonProperty("userDisplayNameClaim") final String userDisplayNameClaim,
-            @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes) {
-
+            @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes,
+            @JsonProperty("publicKeyUriPattern") final String publicKeyUriPattern) {
         super(identityProviderType,
                 openIdConfigurationEndpoint,
                 issuer,
@@ -60,7 +60,8 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
                 validIssuers,
                 uniqueIdentityClaim,
                 userDisplayNameClaim,
-                expectedSignerPrefixes);
+                expectedSignerPrefixes,
+                publicKeyUriPattern);
     }
 
     @JsonIgnore
@@ -110,6 +111,7 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
                 getValidIssuers(),
                 getUniqueIdentityClaim(),
                 getUserDisplayNameClaim(),
-                getExpectedSignerPrefixes());
+                getExpectedSignerPrefixes(),
+                getPublicKeyUriPattern());
     }
 }

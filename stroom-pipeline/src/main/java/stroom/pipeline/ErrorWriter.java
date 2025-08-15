@@ -16,9 +16,10 @@
 
 package stroom.pipeline;
 
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
 public interface ErrorWriter {
-    void log(Severity severity, Location location, String elementId, String message);
+    void log(Severity severity, Location location, ElementId elementId, String message);
 }

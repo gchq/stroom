@@ -137,6 +137,8 @@ public abstract class AbstractOpenIdConfig
 
     private final Set<String> expectedSignerPrefixes;
 
+    private final String publicKeyUriPattern;
+
     public AbstractOpenIdConfig() {
         identityProviderType = getDefaultIdpType();
         openIdConfigurationEndpoint = null;
@@ -156,6 +158,7 @@ public abstract class AbstractOpenIdConfig
         uniqueIdentityClaim = DEFAULT_CLAIM_SUBJECT;
         userDisplayNameClaim = DEFAULT_CLAIM_PREFERRED_USERNAME;
         expectedSignerPrefixes = Collections.emptySet();
+        publicKeyUriPattern = "https://public-keys.auth.elb.{}.amazonaws.com/{}";
     }
 
     @JsonIgnore
@@ -180,7 +183,8 @@ public abstract class AbstractOpenIdConfig
             @JsonProperty("validIssuers") final Set<String> validIssuers,
             @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim,
             @JsonProperty("userDisplayNameClaim") final String userDisplayNameClaim,
-            @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes) {
+            @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes,
+            @JsonProperty("publicKeyUriPattern") final String publicKeyUriPattern) {
 
         this.identityProviderType = Objects.requireNonNullElseGet(identityProviderType, this::getDefaultIdpType);
         this.openIdConfigurationEndpoint = openIdConfigurationEndpoint;
@@ -202,6 +206,7 @@ public abstract class AbstractOpenIdConfig
         this.uniqueIdentityClaim = uniqueIdentityClaim;
         this.userDisplayNameClaim = userDisplayNameClaim;
         this.expectedSignerPrefixes = NullSafe.set(expectedSignerPrefixes);
+        this.publicKeyUriPattern = publicKeyUriPattern;
     }
 
     /**
@@ -376,6 +381,14 @@ public abstract class AbstractOpenIdConfig
                              "latest/application/listener-authenticate-users.html#user-claims-encoding")
     public Set<String> getExpectedSignerPrefixes() {
         return expectedSignerPrefixes;
+    }
+
+
+    @Override
+    @JsonProperty
+    @JsonPropertyDescription("If using AWS as an IdP what pattern should be used to construct the public key URI")
+    public String getPublicKeyUriPattern() {
+        return publicKeyUriPattern;
     }
 
     @JsonIgnore

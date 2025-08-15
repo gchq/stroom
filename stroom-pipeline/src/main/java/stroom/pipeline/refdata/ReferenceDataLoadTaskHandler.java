@@ -50,6 +50,7 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
@@ -137,7 +138,8 @@ class ReferenceDataLoadTaskHandler {
                 // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission
                 // on can be read.
                 securityContext.useAsRead(() -> {
-                    errorReceiver = new ErrorReceiverIdDecorator(getClass().getSimpleName(), storedErrorReceiver);
+                    errorReceiver = new ErrorReceiverIdDecorator(
+                            new ElementId(getClass().getSimpleName()), storedErrorReceiver);
                     errorReceiverProxy.setErrorReceiver(errorReceiver);
 
                     LOGGER.debug("Loading reference data: {}", refStreamDefinition);
@@ -366,7 +368,7 @@ class ReferenceDataLoadTaskHandler {
             if (msg == null && e != null) {
                 msg = e.toString();
             }
-            errorReceiver.log(severity, null, getClass().getSimpleName(), msg, e);
+            errorReceiver.log(severity, null, new ElementId(getClass().getSimpleName()), msg, e);
         }
     }
 }

@@ -49,7 +49,7 @@ class TestStandardJwtContextFactory {
                             null,
                             null);
 
-                    return StandardJwtContextFactory.getAwsPublicKeyUri(jwsParts, expectedSignerPrefixes);
+                    return getAwsPublicKeyUri(jwsParts, expectedSignerPrefixes);
                 })
                 .withSimpleEqualityAssertion()
 
@@ -80,6 +80,13 @@ class TestStandardJwtContextFactory {
                 .build();
     }
 
+    private String getAwsPublicKeyUri(final JwsParts jwsParts, final Set<String> expectedSignerPrefixes) {
+        return StandardJwtContextFactory.getAwsPublicKeyUri(
+                jwsParts,
+                expectedSignerPrefixes,
+                StandardJwtContextFactory.DEFAULT_PUBLIC_KEY_URI_PATTERN);
+    }
+
     @Test
     void getAwsPublicKeyUriFromSigner_blankSigner() {
         final String signer2 = "arn:aws:elasticloadbalancing:region-y:1234:loadbalancer/app/MyApp/5678";
@@ -100,7 +107,7 @@ class TestStandardJwtContextFactory {
 
         Assertions.assertThatThrownBy(
                         () -> {
-                            StandardJwtContextFactory.getAwsPublicKeyUri(jwsParts, Set.of(signer2));
+                            getAwsPublicKeyUri(jwsParts, Set.of(signer2));
                         })
                 .hasMessageContaining("does not match")
                 .hasMessageContaining(AbstractOpenIdConfig.PROP_NAME_EXPECTED_SIGNER_PREFIXES)
@@ -128,7 +135,7 @@ class TestStandardJwtContextFactory {
 
         Assertions.assertThatThrownBy(
                         () -> {
-                            StandardJwtContextFactory.getAwsPublicKeyUri(jwsParts, Set.of(signer2));
+                            getAwsPublicKeyUri(jwsParts, Set.of(signer2));
                         })
                 .hasMessageContaining("does not match")
                 .hasMessageContaining(AbstractOpenIdConfig.PROP_NAME_EXPECTED_SIGNER_PREFIXES)
@@ -156,7 +163,7 @@ class TestStandardJwtContextFactory {
 
         Assertions.assertThatThrownBy(
                         () -> {
-                            StandardJwtContextFactory.getAwsPublicKeyUri(jwsParts, Set.of(signer1, signer2));
+                            getAwsPublicKeyUri(jwsParts, Set.of(signer1, signer2));
                         })
                 .hasMessageContaining("AWS region")
                 .hasMessageContaining("does not match pattern")
@@ -183,7 +190,7 @@ class TestStandardJwtContextFactory {
 
         Assertions.assertThatThrownBy(
                         () -> {
-                            StandardJwtContextFactory.getAwsPublicKeyUri(jwsParts, Set.of(signer1));
+                            getAwsPublicKeyUri(jwsParts, Set.of(signer1));
                         })
                 .hasMessageContaining("AWS region")
                 .hasMessageContaining("does not match pattern")
@@ -210,7 +217,7 @@ class TestStandardJwtContextFactory {
 
         Assertions.assertThatThrownBy(
                         () -> {
-                            StandardJwtContextFactory.getAwsPublicKeyUri(jwsParts, null);
+                            getAwsPublicKeyUri(jwsParts, null);
                         })
                 .hasMessageContaining("does not match")
                 .hasMessageContaining(AbstractOpenIdConfig.PROP_NAME_EXPECTED_SIGNER_PREFIXES)
@@ -236,7 +243,7 @@ class TestStandardJwtContextFactory {
 
         Assertions.assertThatThrownBy(
                         () -> {
-                            StandardJwtContextFactory.getAwsPublicKeyUri(jwsParts, Set.of(signer));
+                            getAwsPublicKeyUri(jwsParts, Set.of(signer));
                         })
                 .hasMessageContaining("Missing")
                 .hasMessageContaining(StandardJwtContextFactory.SIGNER_HEADER_KEY)
@@ -262,7 +269,7 @@ class TestStandardJwtContextFactory {
 
         Assertions.assertThatThrownBy(
                         () -> {
-                            StandardJwtContextFactory.getAwsPublicKeyUri(jwsParts, Set.of(signer));
+                            getAwsPublicKeyUri(jwsParts, Set.of(signer));
                         })
                 .hasMessageContaining("Missing")
                 .hasMessageContaining(OpenId.KEY_ID)

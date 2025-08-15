@@ -21,6 +21,7 @@ import stroom.pipeline.factory.Element;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.writer.XMLWriter;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
@@ -28,20 +29,20 @@ import stroom.util.shared.TextRange;
 
 public class ElementMonitor {
 
-    private final String elementId;
+    private final ElementId elementId;
     private final PipelineElementType elementType;
     private final Element element;
     private Recorder inputRecorder;
     private Recorder outputRecorder;
     private SteppingFilter steppingFilter;
 
-    public ElementMonitor(final String elementId, final PipelineElementType elementType, final Element element) {
+    public ElementMonitor(final ElementId elementId, final PipelineElementType elementType, final Element element) {
         this.elementId = elementId;
         this.elementType = elementType;
         this.element = element;
     }
 
-    public String getElementId() {
+    public ElementId getElementId() {
         return elementId;
     }
 
@@ -132,6 +133,6 @@ public class ElementMonitor {
 
     @Override
     public String toString() {
-        return elementId;
+        return elementId.toString();
     }
 }

@@ -51,6 +51,7 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.io.IgnoreCloseInputStream;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -61,6 +62,8 @@ import java.util.List;
 
 
 class HeadlessTranslationTaskHandler {
+
+    private static final ElementId ELEMENT_ID = new ElementId("PipelineStreamProcessor");
 
     private final PipelineFactory pipelineFactory;
     private final FeedProperties feedProperties;
@@ -240,9 +243,9 @@ class HeadlessTranslationTaskHandler {
         if (errorReceiverProxy != null && !(ex instanceof LoggedException)) {
             try {
                 if (ex.getMessage() != null) {
-                    errorReceiverProxy.log(Severity.FATAL_ERROR, null, "PipelineStreamProcessor", ex.getMessage(), ex);
+                    errorReceiverProxy.log(Severity.FATAL_ERROR, null, ELEMENT_ID, ex.getMessage(), ex);
                 } else {
-                    errorReceiverProxy.log(Severity.FATAL_ERROR, null, "PipelineStreamProcessor", ex.toString(), ex);
+                    errorReceiverProxy.log(Severity.FATAL_ERROR, null, ELEMENT_ID, ex.toString(), ex);
                 }
             } catch (final RuntimeException e) {
                 // Ignore exception as we generated it.
