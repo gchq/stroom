@@ -1,0 +1,9 @@
+{
+  "type" : "Feed",
+  "uuid" : "a72b5157-7168-481c-94d0-945ae91d93c9",
+  "name" : "PATHWAY_INFO",
+  "version" : "5220a712-1cc8-41f8-9bc8-21ad26a52f37",
+  "reference" : false,
+  "streamType" : "Raw Events",
+  "status" : "RECEIVE"
+}
