@@ -19,8 +19,11 @@ package stroom.pathways.client.presenter;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.feed.shared.FeedDoc;
 import stroom.pathways.client.presenter.PathwaysSettingsPresenter.PathwaysSettingsView;
 import stroom.pathways.shared.PathwaysDoc;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.time.SimpleDuration;
 
 import com.google.inject.Inject;
@@ -31,11 +34,25 @@ import com.gwtplatform.mvp.client.View;
 public class PathwaysSettingsPresenter extends DocumentEditPresenter<PathwaysSettingsView, PathwaysDoc>
         implements PathwaysSettingsUiHandlers {
 
+    private final DocSelectionBoxPresenter feedPresenter;
+
     @Inject
     public PathwaysSettingsPresenter(final EventBus eventBus,
-                                     final PathwaysSettingsView view) {
+                                     final PathwaysSettingsView view,
+                                     final DocSelectionBoxPresenter feedPresenter) {
         super(eventBus, view);
+        this.feedPresenter = feedPresenter;
         view.setUiHandlers(this);
+
+        feedPresenter.setIncludedTypes(FeedDoc.TYPE);
+        feedPresenter.setRequiredPermissions(DocumentPermission.VIEW);
+        view.setInfoFeedView(feedPresenter.getView());
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(feedPresenter.addDataSelectionHandler(e -> setDirty(true)));
     }
 
     @Override
@@ -46,11 +63,21 @@ public class PathwaysSettingsPresenter extends DocumentEditPresenter<PathwaysSet
     @Override
     protected void onRead(final DocRef docRef, final PathwaysDoc doc, final boolean readOnly) {
         getView().setTemporalOrderingTolerance(doc.getTemporalOrderingTolerance());
+        getView().setAllowPathwayCreation(doc.isAllowPathwayCreation());
+        getView().setAllowPathwayMutation(doc.isAllowPathwayMutation());
+        getView().setAllowConstraintCreation(doc.isAllowConstraintCreation());
+        getView().setAllowConstraintMutation(doc.isAllowConstraintMutation());
+        feedPresenter.setSelectedEntityReference(doc.getInfoFeed(), true);
     }
 
     @Override
     protected PathwaysDoc onWrite(final PathwaysDoc doc) {
         doc.setTemporalOrderingTolerance(getView().getTemporalOrderingTolerance());
+        doc.setAllowPathwayCreation(getView().isAllowPathwayCreation());
+        doc.setAllowPathwayMutation(getView().isAllowPathwayMutation());
+        doc.setAllowConstraintCreation(getView().isAllowConstraintCreation());
+        doc.setAllowConstraintMutation(getView().isAllowConstraintMutation());
+        doc.setInfoFeed(feedPresenter.getSelectedEntityReference());
         return doc;
     }
 
@@ -60,5 +87,23 @@ public class PathwaysSettingsPresenter extends DocumentEditPresenter<PathwaysSet
         SimpleDuration getTemporalOrderingTolerance();
 
         void setTemporalOrderingTolerance(SimpleDuration temporalOrderingTolerance);
+
+        boolean isAllowPathwayCreation();
+
+        void setAllowPathwayCreation(boolean allowPathwayCreation);
+
+        boolean isAllowPathwayMutation();
+
+        void setAllowPathwayMutation(boolean allowPathwayMutation);
+
+        boolean isAllowConstraintCreation();
+
+        void setAllowConstraintCreation(boolean allowConstraintCreation);
+
+        boolean isAllowConstraintMutation();
+
+        void setAllowConstraintMutation(boolean allowConstraintMutation);
+
+        void setInfoFeedView(View view);
     }
 }

@@ -44,4 +44,8 @@ public abstract class AbstractSet<T> {
     public String toString() {
         return set.toString();
     }
+
+    public boolean validate(final T value) {
+        return set.contains(value);
+    }
 }

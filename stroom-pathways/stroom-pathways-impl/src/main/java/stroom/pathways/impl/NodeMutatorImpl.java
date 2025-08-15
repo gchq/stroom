@@ -4,23 +4,23 @@ import stroom.pathways.shared.otel.trace.AnyValue;
 import stroom.pathways.shared.otel.trace.KeyValue;
 import stroom.pathways.shared.otel.trace.NanoTime;
 import stroom.pathways.shared.otel.trace.Span;
-import stroom.pathways.shared.otel.trace.SpanKind;
 import stroom.pathways.shared.otel.trace.Trace;
-import stroom.pathways.shared.pathway.BooleanSet;
+import stroom.pathways.shared.pathway.AnyBoolean;
+import stroom.pathways.shared.pathway.AnyTypeValue;
 import stroom.pathways.shared.pathway.BooleanValue;
 import stroom.pathways.shared.pathway.Constraint;
-import stroom.pathways.shared.pathway.Constraints;
+import stroom.pathways.shared.pathway.ConstraintValue;
 import stroom.pathways.shared.pathway.IntegerRange;
 import stroom.pathways.shared.pathway.IntegerSet;
 import stroom.pathways.shared.pathway.IntegerValue;
 import stroom.pathways.shared.pathway.NanoTimeRange;
+import stroom.pathways.shared.pathway.NanoTimeValue;
 import stroom.pathways.shared.pathway.PathKey;
 import stroom.pathways.shared.pathway.PathNode;
 import stroom.pathways.shared.pathway.PathNodeList;
-import stroom.pathways.shared.pathway.StringPattern;
+import stroom.pathways.shared.pathway.Regex;
 import stroom.pathways.shared.pathway.StringSet;
 import stroom.pathways.shared.pathway.StringValue;
-import stroom.pathways.shared.pathway.VariableTypeValue;
 import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class NodeMutatorImpl implements TraceProcessor {
@@ -122,180 +123,232 @@ public class NodeMutatorImpl implements TraceProcessor {
         pathNodeBuilder.spans(spans);
 
         // TODO : Expand min/max/average execution times.
-        final Constraints.Builder builder;
+        final Map<String, Constraint> constraints;
+        final boolean optional;
         if (pathNode.getConstraints() != null) {
-            builder = pathNode.getConstraints().copy();
+            constraints = pathNode.getConstraints();
+            // We already have some constraints so make any new constraints optional.
+            optional = true;
         } else {
-            builder = Constraints.builder();
+            constraints = new HashMap<>();
+            // These are new constraints so all initial ones will be set to be required.
+            optional = false;
         }
-        final Constraints constraints = builder.build();
 
         // Set or expand duration range.
         final NanoTime startTime = NanoTime.fromString(span.getStartTimeUnixNano());
         final NanoTime endTime = NanoTime.fromString(span.getEndTimeUnixNano());
         final NanoTime duration = endTime.subtract(startTime);
-        if (constraints.getDuration() == null) {
-            builder.duration(new NanoTimeRange(duration, duration));
-        } else if (constraints.getDuration().getMin().isGreaterThan(duration)) {
-            builder.duration(new NanoTimeRange(duration, constraints.getDuration().getMax()));
-        } else if (constraints.getDuration().getMax().isLessThan(duration)) {
-            builder.duration(new NanoTimeRange(constraints.getDuration().getMin(), duration));
-        }
+
+        setOrExpand(constraints, "duration", duration, false);
 
         // Set or expand flags.
-        builder.flags(createIntConstraint(constraints.getFlags(), span.getFlags()));
+        setOrExpand(constraints, "flags", span.getFlags(), false);
 
-        // Set or expand kinds.
-        final Set<SpanKind> set;
-        if (constraints.getKind() != null) {
-            set = new HashSet<>(constraints.getKind());
-        } else {
-            set = new HashSet<>();
-        }
-        set.add(span.getKind());
-        builder.kind(set);
+        // Set or expand kind.
+        setOrExpand(constraints, "kind", span.getKind().name(), false);
 
         // Create attribute sets.
-        if (constraints.getRequiredAttributes() == null) {
-            final Map<String, Constraint> requiredAttributes = new HashMap<>();
-            if (!NullSafe.isEmptyCollection(span.getAttributes())) {
-                span.getAttributes().forEach(kv -> addAttribute(requiredAttributes, kv));
-            }
-            builder.requiredAttributes(requiredAttributes);
-        } else {
-            final Map<String, Constraint> requiredAttributes = constraints.getRequiredAttributes();
-            final Map<String, Constraint> optionalAttributes;
-            if (constraints.getOptionalAttributes() == null) {
-                optionalAttributes = new HashMap<>();
+        final Map<String, KeyValue> attributes = span
+                .getAttributes()
+                .stream()
+                .collect(Collectors.toMap(kv -> "attribute." + kv.getKey(), Function.identity()));
+
+        // Make required constraints optional if they don't exist in this set.
+        final Map<String, Constraint> newConstraints = new HashMap<>(constraints.size());
+        constraints.forEach((key, value) -> {
+            if (!attributes.containsKey(key) && !value.isOptional() && key.startsWith("attribute.")) {
+                newConstraints.put(key, new Constraint(value.getName(), value.getValue(), true));
             } else {
-                optionalAttributes = new HashMap<>(constraints.getOptionalAttributes());
+                newConstraints.put(key, value);
             }
+        });
 
-            if (!NullSafe.isEmptyCollection(span.getAttributes())) {
-                // Move required to optional if this span doesn't have them.
-                final Set<String> newAttributeKeys = span
-                        .getAttributes()
-                        .stream()
-                        .map(KeyValue::getKey)
-                        .collect(Collectors.toSet());
-                final Set<String> currentRequiredKeys = new HashSet<>(requiredAttributes.keySet());
-                currentRequiredKeys.forEach(requiredKey -> {
-                    if (!newAttributeKeys.contains(requiredKey)) {
-                        // Move required key to optional.
-                        final Constraint constraint = requiredAttributes.remove(requiredKey);
-                        optionalAttributes.put(requiredKey, constraint);
-                    }
-                });
+        // Set or expand attributes.
+        attributes.forEach((key, value) -> setOrExpand(newConstraints, key, value.getValue(), optional));
 
-                // Now we moved attributes that don't exist add ones that do exist.
-                span.getAttributes().forEach(kv -> {
-                    // If we don't already have the attribute then this is an optional one.
-                    if (requiredAttributes.containsKey(kv.getKey())) {
-                        addAttribute(requiredAttributes, kv);
-                    } else {
-                        addAttribute(optionalAttributes, kv);
-                    }
-                });
-            }
-
-            builder.requiredAttributes(requiredAttributes);
-            builder.optionalAttributes(optionalAttributes);
-        }
-
-        pathNodeBuilder.constraints(builder.build());
+        pathNodeBuilder.constraints(newConstraints);
         return pathNodeBuilder;
     }
 
-    private Constraint createIntConstraint(final Constraint current,
-                                           final int value) {
-        if (current == null) {
-            return new IntegerValue(value);
-        } else if (current instanceof final IntegerValue intValue) {
-            if (!Objects.equals(intValue.getValue(), value)) {
-                return new IntegerSet(Set.of(intValue.getValue(), value));
+    private void setOrExpand(final Map<String, Constraint> constraints,
+                             final String name,
+                             final Object value,
+                             final boolean optional) {
+        final Constraint constraint = constraints.get(name);
+        if (value instanceof final Integer integer) {
+            constraints.put(name, new Constraint(name,
+                    createIntConstraint(getConstraintValue(constraint), integer),
+                    NullSafe.getOrElse(constraint, Constraint::isOptional, optional)));
+        } else if (value instanceof final Boolean bool) {
+            constraints.put(name, new Constraint(name,
+                    createBooleanConstraint(getConstraintValue(constraint), bool),
+                    NullSafe.getOrElse(constraint, Constraint::isOptional, optional)));
+        } else if (value instanceof final String string) {
+            constraints.put(name, new Constraint(name,
+                    createStringConstraint(getConstraintValue(constraint), string),
+                    NullSafe.getOrElse(constraint, Constraint::isOptional, optional)));
+        } else if (value instanceof final NanoTime nanoTime) {
+            constraints.put(name, new Constraint(name,
+                    createNanoTimeConstraint(getConstraintValue(constraint), nanoTime),
+                    NullSafe.getOrElse(constraint, Constraint::isOptional, optional)));
+        } else if (value instanceof final AnyValue anyValue) {
+            // Unwrap.
+            if (anyValue.getStringValue() != null) {
+                setOrExpand(constraints, name, anyValue.getStringValue(), optional);
+            } else if (anyValue.getBoolValue() != null) {
+                setOrExpand(constraints, name, anyValue.getBoolValue(), optional);
+            } else if (anyValue.getIntValue() != null) {
+                setOrExpand(constraints, name, anyValue.getIntValue(), optional);
             }
-        } else if (current instanceof final IntegerSet intSet) {
-            final Set<Integer> set = new HashSet<>(intSet.getSet());
-            set.add(value);
 
-            if (set.size() > MAX_SET_SIZE) {
-                // Convert to range.
-                int min = value;
-                int max = value;
-                for (final int num : intSet.getSet()) {
-                    min = Math.min(min, num);
-                    max = Math.max(max, num);
+            // TODO : Add constraints for other attribute types.
+        }
+    }
+
+    private ConstraintValue getConstraintValue(final Constraint constraint) {
+        if (constraint == null) {
+            return null;
+        }
+        return constraint.getValue();
+    }
+
+    private ConstraintValue createNanoTimeConstraint(final ConstraintValue current,
+                                                     final NanoTime value) {
+        if (current == null) {
+            return new NanoTimeValue(value);
+        } else if (current instanceof final NanoTimeValue nanoTimeValue) {
+            if (!Objects.equals(nanoTimeValue.getValue(), value)) {
+//                return new IntegerSet(Set.of(nanoTimeValue.getValue(), value));
+
+
+                if (nanoTimeValue.getValue().isGreaterThan(value)) {
+                    return new NanoTimeRange(value, nanoTimeValue.getValue());
+                } else if (nanoTimeValue.getValue().isLessThan(value)) {
+                    return new NanoTimeRange(nanoTimeValue.getValue(), value);
                 }
-                return new IntegerRange(min, max);
-            } else {
-                return new IntegerSet(set);
             }
-        } else if (current instanceof final IntegerRange intRange) {
-            if (intRange.getMin() > value) {
-                return new IntegerRange(value, intRange.getMax());
-            } else if (intRange.getMax() < value) {
-                return new IntegerRange(intRange.getMin(), value);
+//        } else if (current instanceof final IntegerSet intSet) {
+//            final Set<Integer> set = new HashSet<>(intSet.getSet());
+//            set.add(value);
+//
+//            if (set.size() > MAX_SET_SIZE) {
+//                // Convert to range.
+//                int min = value;
+//                int max = value;
+//                for (final int num : intSet.getSet()) {
+//                    min = Math.min(min, num);
+//                    max = Math.max(max, num);
+//                }
+//                return new IntegerRange(min, max);
+//            } else {
+//                return new IntegerSet(set);
+//            }
+        } else if (current instanceof final NanoTimeRange timeRange) {
+            if (timeRange.getMin().isGreaterThan(value)) {
+                return new NanoTimeRange(value, timeRange.getMax());
+            } else if (timeRange.getMax().isLessThan(value)) {
+                return new NanoTimeRange(timeRange.getMin(), value);
             }
         } else {
-            return new VariableTypeValue();
+            return new AnyTypeValue();
         }
         return current;
     }
 
-    private Constraint createBooleanConstraint(final Constraint current,
-                                               final boolean value) {
-        if (current == null) {
-            return new BooleanValue(value);
-        } else if (current instanceof final BooleanValue booleanValue) {
-            if (!Objects.equals(booleanValue.getValue(), value)) {
-                return new BooleanSet(Set.of(booleanValue.getValue(), value));
+    private ConstraintValue createIntConstraint(final ConstraintValue current,
+                                                final int value) {
+        switch (current) {
+            case null -> {
+                return new IntegerValue(value);
             }
-        } else {
-            return new VariableTypeValue();
+            case final IntegerValue intValue -> {
+                if (!Objects.equals(intValue.getValue(), value)) {
+                    return new IntegerSet(Set.of(intValue.getValue(), value));
+                }
+            }
+            case final IntegerSet intSet -> {
+                final Set<Integer> set = new HashSet<>(intSet.getSet());
+                set.add(value);
+
+                if (set.size() > MAX_SET_SIZE) {
+                    // Convert to range.
+                    int min = value;
+                    int max = value;
+                    for (final int num : intSet.getSet()) {
+                        min = Math.min(min, num);
+                        max = Math.max(max, num);
+                    }
+                    return new IntegerRange(min, max);
+                } else {
+                    return new IntegerSet(set);
+                }
+            }
+            case final IntegerRange intRange -> {
+                if (intRange.getMin() > value) {
+                    return new IntegerRange(value, intRange.getMax());
+                } else if (intRange.getMax() < value) {
+                    return new IntegerRange(intRange.getMin(), value);
+                }
+            }
+            default -> {
+                return new AnyTypeValue();
+            }
         }
         return current;
     }
 
-    private Constraint createStringConstraint(final Constraint current,
-                                              final String value) {
-        if (current == null) {
-            return new StringValue(value);
-        } else if (current instanceof final StringValue stringValue) {
-            if (!Objects.equals(stringValue.getValue(), value)) {
-                return new StringSet(Set.of(stringValue.getValue(), value));
+    private ConstraintValue createBooleanConstraint(final ConstraintValue current,
+                                                    final boolean value) {
+        switch (current) {
+            case null -> {
+                return new BooleanValue(value);
             }
-        } else if (current instanceof final StringSet stringSet) {
-            final Set<String> set = new HashSet<>(stringSet.getSet());
-            set.add(value);
+            case final BooleanValue booleanValue -> {
+                if (!Objects.equals(booleanValue.getValue(), value)) {
+                    return new AnyBoolean();
+                }
+            }
+            case final AnyBoolean booleanValue -> {
+                // Do nothing.
+            }
+            default -> {
+                return new AnyTypeValue();
+            }
+        }
+        return current;
+    }
 
-            if (set.size() > MAX_SET_SIZE) {
-                // Convert to pattern.
+    private ConstraintValue createStringConstraint(final ConstraintValue current,
+                                                   final String value) {
+        switch (current) {
+            case null -> {
+                return new StringValue(value);
+            }
+            case final StringValue stringValue -> {
+                if (!Objects.equals(stringValue.getValue(), value)) {
+                    return new StringSet(Set.of(stringValue.getValue(), value));
+                }
+            }
+            case final StringSet stringSet -> {
+                final Set<String> set = new HashSet<>(stringSet.getSet());
+                set.add(value);
+
+                if (set.size() > MAX_SET_SIZE) {
+                    // Convert to pattern.
+                    // TODO : Create some sort of pattern expansion if possible.
+                    return new Regex(".*");
+                } else {
+                    return new StringSet(set);
+                }
+            }
+            case final Regex stringPattern -> {
                 // TODO : Create some sort of pattern expansion if possible.
-                return new StringPattern(".*");
-            } else {
-                return new StringSet(set);
             }
-        } else if (current instanceof final StringPattern stringPattern) {
-            // TODO : Create some sort of pattern expansion if possible.
-        } else {
-            return new VariableTypeValue();
+            default -> {
+                return new AnyTypeValue();
+            }
         }
         return current;
-    }
-
-    private void addAttribute(final Map<String, Constraint> attributes,
-                              final KeyValue keyValue) {
-        final Constraint current = attributes.get(keyValue.getKey());
-        final AnyValue value = keyValue.getValue();
-
-        if (value.getStringValue() != null) {
-            attributes.put(keyValue.getKey(), createStringConstraint(current, value.getStringValue()));
-        } else if (value.getBoolValue() != null) {
-            attributes.put(keyValue.getKey(), createBooleanConstraint(current, value.getBoolValue()));
-        } else if (value.getIntValue() != null) {
-            attributes.put(keyValue.getKey(), createIntConstraint(current, value.getIntValue()));
-        }
-        // TODO : Add constraints for other attribute types.
-
     }
 }

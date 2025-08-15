@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <g:MySplitLayoutPanel styleName="max default-min-sizes">
         <g:south size="400">
-            <g:HTML ui:field="details" styleName="max"/>
+            <g:SimplePanel ui:field="tree" styleName="max"/>
         </g:south>
         <g:center>
             <g:SimplePanel ui:field="dataGrid" styleName="max"/>

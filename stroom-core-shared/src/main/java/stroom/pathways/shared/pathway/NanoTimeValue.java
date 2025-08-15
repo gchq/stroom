@@ -1,26 +1,22 @@
 package stroom.pathways.shared.pathway;
 
+import stroom.pathways.shared.otel.trace.NanoTime;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Objects;
-
 @JsonInclude(Include.NON_NULL)
-public final class BooleanValue extends AbstractValue<Boolean> implements ConstraintValue {
+public final class NanoTimeValue extends AbstractValue<NanoTime> implements ConstraintValue {
 
     @JsonCreator
-    public BooleanValue(@JsonProperty("value") final boolean value) {
+    public NanoTimeValue(@JsonProperty("value") final NanoTime value) {
         super(value);
-    }
-
-    public boolean validate(final Boolean value) {
-        return Objects.equals(this.getValue(), value);
     }
 
     @Override
     public ConstraintValueType valueType() {
-        return ConstraintValueType.BOOLEAN;
+        return ConstraintValueType.DURATION_VALUE;
     }
 }

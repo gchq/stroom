@@ -8,10 +8,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
-public final class DoubleSet extends AbstractSet<Double> implements Constraint {
+public final class DoubleSet extends AbstractSet<Double> implements ConstraintValue {
 
     @JsonCreator
     public DoubleSet(@JsonProperty("set") final Set<Double> set) {
         super(set);
+    }
+
+    @Override
+    public ConstraintValueType valueType() {
+        return ConstraintValueType.DOUBLE_SET;
     }
 }

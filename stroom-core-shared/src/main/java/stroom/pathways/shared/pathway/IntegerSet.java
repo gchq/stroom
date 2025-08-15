@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
-public final class IntegerSet extends AbstractSet<Integer> implements Constraint {
+public final class IntegerSet extends AbstractSet<Integer> implements ConstraintValue {
 
     @JsonCreator
     public IntegerSet(@JsonProperty("set") final Set<Integer> set) {
@@ -17,5 +17,10 @@ public final class IntegerSet extends AbstractSet<Integer> implements Constraint
 
     public boolean validate(final Integer value) {
         return getSet().contains(value);
+    }
+
+    @Override
+    public ConstraintValueType valueType() {
+        return ConstraintValueType.INTEGER_SET;
     }
 }

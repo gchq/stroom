@@ -51,8 +51,8 @@ public class NanoTime implements Comparable<NanoTime> {
         return new NanoTime(microseconds / 1000000, (int) ((microseconds % 1000000) * 1000));
     }
 
-    public static NanoTime ofNanos(final int nanos) {
-        return new NanoTime(nanos / NANOS_IN_SECOND, nanos % NANOS_IN_SECOND);
+    public static NanoTime ofNanos(final long nanos) {
+        return new NanoTime(nanos / NANOS_IN_SECOND, (int) (nanos % NANOS_IN_SECOND));
     }
 
     public static NanoTime fromString(final String time) {

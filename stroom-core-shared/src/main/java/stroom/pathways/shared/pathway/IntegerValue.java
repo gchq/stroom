@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public final class IntegerValue extends AbstractValue<Integer> implements Constraint {
+public final class IntegerValue extends AbstractValue<Integer> implements ConstraintValue {
 
     @JsonCreator
     public IntegerValue(@JsonProperty("value") final int value) {
@@ -17,5 +17,10 @@ public final class IntegerValue extends AbstractValue<Integer> implements Constr
 
     public boolean validate(final Integer value) {
         return Objects.equals(this.getValue(), value);
+    }
+
+    @Override
+    public ConstraintValueType valueType() {
+        return ConstraintValueType.INTEGER;
     }
 }

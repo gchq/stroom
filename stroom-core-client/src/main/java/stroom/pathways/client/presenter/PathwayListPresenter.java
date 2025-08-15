@@ -167,9 +167,9 @@ public class PathwayListPresenter
         }
 
         if (readOnly) {
-            newButton.setTitle("New pathway disabled as index is read only");
-            editButton.setTitle("Edit pathway disabled as index is read only");
-            removeButton.setTitle("Remove pathway disabled as index is read only");
+            newButton.setTitle("New pathway disabled as read only");
+            editButton.setTitle("Edit pathway disabled as read only");
+            removeButton.setTitle("Remove pathway disabled as read only");
         } else {
             newButton.setTitle("New Pathway");
             editButton.setTitle("Edit Pathway");
@@ -226,7 +226,7 @@ public class PathwayListPresenter
 
     private void onAdd() {
         final NanoTime now = NanoTime.ofMillis(System.currentTimeMillis());
-        pathwayEditPresenter.read(Pathway.builder().name("").createTime(now).build());
+        pathwayEditPresenter.read(Pathway.builder().name("").createTime(now).build(), readOnly);
         pathwayEditPresenter.show("New Pathway", e -> {
             if (e.isOk()) {
                 final Pathway pathway = pathwayEditPresenter.write();
@@ -251,7 +251,7 @@ public class PathwayListPresenter
     private void onEdit() {
         final Pathway existingPathway = selectionModel.getSelected();
         if (existingPathway != null) {
-            pathwayEditPresenter.read(existingPathway);
+            pathwayEditPresenter.read(existingPathway, readOnly);
             pathwayEditPresenter.show("Edit Pathway", e -> {
                 if (e.isOk()) {
                     try {

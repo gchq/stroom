@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -28,7 +29,7 @@ public class PathNode {
     @JsonProperty
     private final List<Span> spans;
     @JsonProperty
-    private final Constraints constraints;
+    private final Map<String, Constraint> constraints;
 
     @JsonCreator
     public PathNode(@JsonProperty("uuid") final String uuid,
@@ -36,7 +37,7 @@ public class PathNode {
                     @JsonProperty("path") final List<String> path,
                     @JsonProperty("targets") final List<PathNodeList> targets,
                     @JsonProperty("spans") final List<Span> spans,
-                    @JsonProperty("constraints") final Constraints constraints) {
+                    @JsonProperty("constraints") final Map<String, Constraint> constraints) {
         this.uuid = uuid;
         this.name = name;
         this.path = path;
@@ -88,7 +89,7 @@ public class PathNode {
         return spans;
     }
 
-    public Constraints getConstraints() {
+    public Map<String, Constraint> getConstraints() {
         return constraints;
     }
 
@@ -139,7 +140,7 @@ public class PathNode {
         private List<String> path;
         private List<PathNodeList> targets;
         private List<Span> spans;
-        private Constraints constraints;
+        private Map<String, Constraint> constraints;
 
         public Builder() {
         }
@@ -178,7 +179,7 @@ public class PathNode {
             return self();
         }
 
-        public Builder constraints(final Constraints constraints) {
+        public Builder constraints(final Map<String, Constraint> constraints) {
             this.constraints = constraints;
             return self();
         }

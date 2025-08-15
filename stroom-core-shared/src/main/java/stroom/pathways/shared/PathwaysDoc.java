@@ -22,6 +22,7 @@ import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.pathways.shared.pathway.Pathway;
 import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.time.TimeUnit;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -55,9 +56,19 @@ public class PathwaysDoc extends Doc {
     private SimpleDuration temporalOrderingTolerance;
     @JsonProperty
     private List<Pathway> pathways;
+    @JsonProperty
+    private boolean allowPathwayCreation = true;
+    @JsonProperty
+    private boolean allowPathwayMutation = true;
+    @JsonProperty
+    private boolean allowConstraintCreation = true;
+    @JsonProperty
+    private boolean allowConstraintMutation = true;
+    @JsonProperty
+    private DocRef infoFeed;
 
     public PathwaysDoc() {
-
+        temporalOrderingTolerance = new SimpleDuration(0, TimeUnit.NANOSECONDS);
     }
 
     @JsonCreator
@@ -71,11 +82,21 @@ public class PathwaysDoc extends Doc {
                        @JsonProperty("updateUser") final String updateUser,
                        @JsonProperty("description") final String description,
                        @JsonProperty("temporalOrderingTolerance") final SimpleDuration temporalOrderingTolerance,
-                       @JsonProperty("pathways") final List<Pathway> pathways) {
+                       @JsonProperty("pathways") final List<Pathway> pathways,
+                       @JsonProperty("allowPathwayCreation") final boolean allowPathwayCreation,
+                       @JsonProperty("allowPathwayMutation") final boolean allowPathwayMutation,
+                       @JsonProperty("allowConstraintCreation") final boolean allowConstraintCreation,
+                       @JsonProperty("allowConstraintMutation") final boolean allowConstraintMutation,
+                       @JsonProperty("infoFeed") final DocRef infoFeed) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.temporalOrderingTolerance = temporalOrderingTolerance;
         this.pathways = pathways;
+        this.allowPathwayCreation = allowPathwayCreation;
+        this.allowPathwayMutation = allowPathwayMutation;
+        this.allowConstraintCreation = allowConstraintCreation;
+        this.allowConstraintMutation = allowConstraintMutation;
+        this.infoFeed = infoFeed;
     }
 
     /**
@@ -118,6 +139,46 @@ public class PathwaysDoc extends Doc {
         this.pathways = pathways;
     }
 
+    public boolean isAllowPathwayCreation() {
+        return allowPathwayCreation;
+    }
+
+    public void setAllowPathwayCreation(final boolean allowPathwayCreation) {
+        this.allowPathwayCreation = allowPathwayCreation;
+    }
+
+    public boolean isAllowPathwayMutation() {
+        return allowPathwayMutation;
+    }
+
+    public void setAllowPathwayMutation(final boolean allowPathwayMutation) {
+        this.allowPathwayMutation = allowPathwayMutation;
+    }
+
+    public boolean isAllowConstraintCreation() {
+        return allowConstraintCreation;
+    }
+
+    public void setAllowConstraintCreation(final boolean allowConstraintCreation) {
+        this.allowConstraintCreation = allowConstraintCreation;
+    }
+
+    public boolean isAllowConstraintMutation() {
+        return allowConstraintMutation;
+    }
+
+    public void setAllowConstraintMutation(final boolean allowConstraintMutation) {
+        this.allowConstraintMutation = allowConstraintMutation;
+    }
+
+    public DocRef getInfoFeed() {
+        return infoFeed;
+    }
+
+    public void setInfoFeed(final DocRef infoFeed) {
+        this.infoFeed = infoFeed;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -130,13 +191,40 @@ public class PathwaysDoc extends Doc {
             return false;
         }
         final PathwaysDoc that = (PathwaysDoc) o;
-        return Objects.equals(description, that.description) &&
+        return allowPathwayCreation == that.allowPathwayCreation &&
+               allowPathwayMutation == that.allowPathwayMutation &&
+               allowConstraintCreation == that.allowConstraintCreation &&
+               allowConstraintMutation == that.allowConstraintMutation &&
+               Objects.equals(description, that.description) &&
                Objects.equals(temporalOrderingTolerance, that.temporalOrderingTolerance) &&
-               Objects.equals(pathways, that.pathways);
+               Objects.equals(pathways, that.pathways) &&
+               Objects.equals(infoFeed, that.infoFeed);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), description, temporalOrderingTolerance, pathways);
+        return Objects.hash(super.hashCode(),
+                description,
+                temporalOrderingTolerance,
+                pathways,
+                allowPathwayCreation,
+                allowPathwayMutation,
+                allowConstraintCreation,
+                allowConstraintMutation,
+                infoFeed);
+    }
+
+    @Override
+    public String toString() {
+        return "PathwaysDoc{" +
+               "description='" + description + '\'' +
+               ", temporalOrderingTolerance=" + temporalOrderingTolerance +
+               ", pathways=" + pathways +
+               ", allowPathwayCreation=" + allowPathwayCreation +
+               ", allowPathwayMutation=" + allowPathwayMutation +
+               ", allowConstraintCreation=" + allowConstraintCreation +
+               ", allowConstraintMutation=" + allowConstraintMutation +
+               ", infoFeed=" + infoFeed +
+               '}';
     }
 }

@@ -20,14 +20,18 @@ import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.pathways.client.presenter.PathwaysSettingsPresenter.PathwaysSettingsView;
 import stroom.pathways.client.presenter.PathwaysSettingsUiHandlers;
 import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.time.TimeUnit;
 import stroom.widget.customdatebox.client.DurationPicker;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class PathwaysSettingsViewImpl
@@ -38,10 +42,22 @@ public class PathwaysSettingsViewImpl
 
     @UiField
     DurationPicker temporalOrderingTolerance;
+    @UiField
+    CustomCheckBox allowPathwayCreation;
+    @UiField
+    CustomCheckBox allowPathwayMutation;
+    @UiField
+    CustomCheckBox allowConstraintCreation;
+    @UiField
+    CustomCheckBox allowConstraintMutation;
+    @UiField
+    SimplePanel infoFeed;
 
     @Inject
     public PathwaysSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        temporalOrderingTolerance.smallTimeMode();
+        temporalOrderingTolerance.setValue(new SimpleDuration(0, TimeUnit.NANOSECONDS));
     }
 
     @Override
@@ -56,7 +72,56 @@ public class PathwaysSettingsViewImpl
 
     @Override
     public void setTemporalOrderingTolerance(final SimpleDuration temporalOrderingTolerance) {
-        this.temporalOrderingTolerance.setValue(temporalOrderingTolerance);
+        if (temporalOrderingTolerance == null) {
+            this.temporalOrderingTolerance.setValue(new SimpleDuration(0, TimeUnit.NANOSECONDS));
+        } else {
+            this.temporalOrderingTolerance.setValue(temporalOrderingTolerance);
+        }
+    }
+
+    @Override
+    public boolean isAllowPathwayCreation() {
+        return allowPathwayCreation.getValue();
+    }
+
+    @Override
+    public void setAllowPathwayCreation(final boolean allowPathwayCreation) {
+        this.allowPathwayCreation.setValue(allowPathwayCreation);
+    }
+
+    @Override
+    public boolean isAllowPathwayMutation() {
+        return allowPathwayMutation.getValue();
+    }
+
+    @Override
+    public void setAllowPathwayMutation(final boolean allowPathwayMutation) {
+        this.allowPathwayMutation.setValue(allowPathwayMutation);
+    }
+
+    @Override
+    public boolean isAllowConstraintCreation() {
+        return allowConstraintCreation.getValue();
+    }
+
+    @Override
+    public void setAllowConstraintCreation(final boolean allowConstraintCreation) {
+        this.allowConstraintCreation.setValue(allowConstraintCreation);
+    }
+
+    @Override
+    public boolean isAllowConstraintMutation() {
+        return allowConstraintMutation.getValue();
+    }
+
+    @Override
+    public void setAllowConstraintMutation(final boolean allowConstraintMutation) {
+        this.allowConstraintMutation.setValue(allowConstraintMutation);
+    }
+
+    @Override
+    public void setInfoFeedView(final View view) {
+        this.infoFeed.setWidget(view.asWidget());
     }
 
     @Override
@@ -66,6 +131,26 @@ public class PathwaysSettingsViewImpl
 
     @UiHandler("temporalOrderingTolerance")
     public void onTemporalOrderingTolerance(final ValueChangeEvent<SimpleDuration> e) {
+        fireChange();
+    }
+
+    @UiHandler("allowPathwayCreation")
+    public void onAllowPathwayCreation(final ValueChangeEvent<Boolean> e) {
+        fireChange();
+    }
+
+    @UiHandler("allowPathwayMutation")
+    public void onAllowPathwayMutation(final ValueChangeEvent<Boolean> e) {
+        fireChange();
+    }
+
+    @UiHandler("allowConstraintCreation")
+    public void onAllowConstraintCreation(final ValueChangeEvent<Boolean> e) {
+        fireChange();
+    }
+
+    @UiHandler("allowConstraintMutation")
+    public void onAllowConstraintMutation(final ValueChangeEvent<Boolean> e) {
         fireChange();
     }
 

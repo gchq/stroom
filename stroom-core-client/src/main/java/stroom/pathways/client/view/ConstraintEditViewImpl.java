@@ -16,33 +16,35 @@
 
 package stroom.pathways.client.view;
 
-import stroom.pathways.client.presenter.PathwayEditPresenter.PathwayEditView;
+import stroom.item.client.SelectionBox;
+import stroom.pathways.client.presenter.ConstraintEditPresenter.ConstraintEditView;
+import stroom.pathways.shared.pathway.ConstraintValueType;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-public class PathwayEditViewImpl extends ViewImpl implements PathwayEditView {
+public class ConstraintEditViewImpl extends ViewImpl implements ConstraintEditView {
 
     private final Widget widget;
 
     @UiField
     TextBox name;
     @UiField
-    SimplePanel tree;
+    SelectionBox<ConstraintValueType> type;
     @UiField
-    SimplePanel constraints;
+    TextBox value;
+    @UiField
+    CustomCheckBox optional;
 
     @Inject
-    public PathwayEditViewImpl(final Binder binder) {
+    public ConstraintEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        type.addItems(ConstraintValueType.values());
     }
 
     @Override
@@ -66,16 +68,36 @@ public class PathwayEditViewImpl extends ViewImpl implements PathwayEditView {
     }
 
     @Override
-    public void setTree(final View view) {
-        tree.setWidget(view.asWidget());
+    public ConstraintValueType getType() {
+        return type.getValue();
     }
 
     @Override
-    public void setConstraints(final View view) {
-        constraints.setWidget(view.asWidget());
+    public void setType(final ConstraintValueType type) {
+        this.type.setValue(type);
     }
 
-    public interface Binder extends UiBinder<Widget, PathwayEditViewImpl> {
+    @Override
+    public String getValue() {
+        return value.getValue();
+    }
+
+    @Override
+    public void setValue(final String value) {
+        this.value.setValue(value);
+    }
+
+    @Override
+    public boolean isOptional() {
+        return optional.getValue();
+    }
+
+    @Override
+    public void setOptional(final boolean optional) {
+        this.optional.setValue(optional);
+    }
+
+    public interface Binder extends UiBinder<Widget, ConstraintEditViewImpl> {
 
     }
 }

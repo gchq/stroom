@@ -35,7 +35,7 @@ public class PathwaysSplitViewImpl
     @UiField
     SimplePanel dataGrid;
     @UiField
-    HTML details;
+    SimplePanel tree;
 
     private final Widget widget;
 
@@ -50,18 +50,13 @@ public class PathwaysSplitViewImpl
     }
 
     @Override
-    public void setDetails(final SafeHtml html) {
-        details.setHTML(html);
+    public void setTree(final View view) {
+        tree.setWidget(view.asWidget());
     }
 
     @Override
     public Widget asWidget() {
         return widget;
-    }
-
-    @Override
-    public HTML getDetails() {
-        return details;
     }
 
     public interface Binder extends UiBinder<Widget, PathwaysSplitViewImpl> {

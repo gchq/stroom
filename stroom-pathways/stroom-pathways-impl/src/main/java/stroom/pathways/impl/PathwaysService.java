@@ -33,12 +33,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Singleton
 public class PathwaysService {
@@ -48,7 +48,7 @@ public class PathwaysService {
     private static final ObjectMapper MAPPER = createMapper(true);
 
 
-    private final List<Pathway> pathways = new ArrayList<>();
+    private final Map<String, Pathway> pathways = new HashMap<>();
 
     @Inject
     public PathwaysService() {
@@ -80,7 +80,8 @@ public class PathwaysService {
 
         final Instant now = Instant.now();
         final NanoTime nanoTime = new NanoTime(now.getEpochSecond(), now.getNano());
-        roots.forEach((key, value) -> pathways.add(
+        roots.forEach((key, value) -> pathways.put(
+                key.toString(),
                 Pathway.builder()
                         .name(key.toString())
                         .createTime(nanoTime)
@@ -121,19 +122,26 @@ public class PathwaysService {
     }
 
     public ResultPage<Pathway> findPathways(final FindPathwayCriteria criteria) {
-        return ResultPage.createPageLimitedList(pathways, criteria.getPageRequest());
+        final List<Pathway> list = pathways
+                .values()
+                .stream()
+                .sorted(Comparator.comparing(Pathway::getName))
+                .collect(Collectors.toList());
+        return ResultPage.createPageLimitedList(list, criteria.getPageRequest());
     }
 
     public Boolean addPathway(final AddPathway addPathway) {
-        return false;
+        pathways.put(addPathway.getPathway().getName(), addPathway.getPathway());
+        return true;
     }
 
     public Boolean updatePathway(final UpdatePathway updatePathway) {
-        return false;
+        pathways.put(updatePathway.getName(), updatePathway.getPathway());
+        return true;
     }
 
     public Boolean deletePathway(final DeletePathway deletePathway) {
-        return false;
+        return pathways.remove(deletePathway.getName()) != null;
     }
 
     private static ObjectMapper createMapper(final boolean indent) {

@@ -16,10 +16,25 @@
 
 package stroom.pathways.client.presenter;
 
-import stroom.pathways.client.presenter.PathwayEditPresenter.PathwayEditView;
+import stroom.pathways.client.presenter.ConstraintEditPresenter.ConstraintEditView;
 import stroom.pathways.shared.otel.trace.NanoTime;
-import stroom.pathways.shared.pathway.PathNode;
-import stroom.pathways.shared.pathway.Pathway;
+import stroom.pathways.shared.pathway.AnyBoolean;
+import stroom.pathways.shared.pathway.AnyTypeValue;
+import stroom.pathways.shared.pathway.BooleanValue;
+import stroom.pathways.shared.pathway.Constraint;
+import stroom.pathways.shared.pathway.Constraint.Builder;
+import stroom.pathways.shared.pathway.ConstraintValueType;
+import stroom.pathways.shared.pathway.DoubleRange;
+import stroom.pathways.shared.pathway.DoubleSet;
+import stroom.pathways.shared.pathway.DoubleValue;
+import stroom.pathways.shared.pathway.IntegerRange;
+import stroom.pathways.shared.pathway.IntegerSet;
+import stroom.pathways.shared.pathway.IntegerValue;
+import stroom.pathways.shared.pathway.NanoTimeRange;
+import stroom.pathways.shared.pathway.NanoTimeValue;
+import stroom.pathways.shared.pathway.Regex;
+import stroom.pathways.shared.pathway.StringSet;
+import stroom.pathways.shared.pathway.StringValue;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -31,35 +46,25 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.validation.ValidationException;
 
-public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
+public class ConstraintEditPresenter extends MyPresenterWidget<ConstraintEditView> {
 
-    private Pathway pathway;
-    private final PathwayTreePresenter pathwayTreePresenter;
-    private final ConstraintListPresenter constraintListPresenter;
-    private boolean readOnly = true;
+    private Constraint constraint;
+//    private Element selected;
+//    private final Map<String, PathNode> nodeMap = new HashMap<>();
 
     @Inject
-    public PathwayEditPresenter(final EventBus eventBus,
-                                final PathwayEditView view,
-                                final PathwayTreePresenter pathwayTreePresenter,
-                                final ConstraintListPresenter constraintListPresenter) {
+    public ConstraintEditPresenter(final EventBus eventBus, final ConstraintEditView view) {
         super(eventBus, view);
-        this.pathwayTreePresenter = pathwayTreePresenter;
-        this.constraintListPresenter = constraintListPresenter;
-        view.setTree(pathwayTreePresenter.getView());
-        view.setConstraints(constraintListPresenter.getView());
     }
 
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(pathwayTreePresenter.getSelectionModel().addSelectionChangeHandler(e -> {
-            final PathNode selected = pathwayTreePresenter.getSelectionModel().getSelectedObject();
-            constraintListPresenter.setData(selected, readOnly);
-        }));
-
 //        registerHandler(getView().getDetails().addClickHandler(e -> {
 //            final Element target = e.getNativeEvent().getEventTarget().cast();
 //            if (target != null) {
@@ -104,33 +109,28 @@ public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
 //                        div.append(getSpanHtml(commonSpan));
 //                    });
 //
-////                    getView().setConstraints(HtmlBuilder.builder().div(d -> d.append(getConstraintsHtml(pathNode)),
-////                            Attribute.className("pathway-constraints")).toSafeHtml());
+//                    getView().setConstraints(HtmlBuilder.builder().div(d -> d.append(getConstraintsHtml(pathNode)),
+//                            Attribute.className("constraint-constraints")).toSafeHtml());
 //
-//                    constraintListPresenter.setData(getConstraintList(pathNode), readOnly);
-//
-//
-////                    getView().setSpans(HtmlBuilder.builder().div(d -> d.append(spanDetails.toSafeHtml()),
-////                            Attribute.className("pathway-spans")).toSafeHtml());
+//                    getView().setSpans(HtmlBuilder.builder().div(d -> d.append(spanDetails.toSafeHtml()),
+//                            Attribute.className("constraint-spans")).toSafeHtml());
 //
 //                    if (!Objects.equals(selected, node)) {
 //                        if (selected != null) {
-//                            selected.removeClassName("pathway-nodeName--selected");
+//                            selected.removeClassName("constraint-nodeName--selected");
 //                        }
 //                        selected = node;
-//                        selected.addClassName("pathway-nodeName--selected");
+//                        selected.addClassName("constraint-nodeName--selected");
 //                    }
 //                }
 //            }
 //        }));
     }
-
-
 //
 //    private SafeHtml getConstraintsHtml(final PathNode pathNode) {
 //        final HtmlBuilder hb = new HtmlBuilder();
 //
-//        final Constraints constraints = pathNode.getConstraints();
+//        final Map<String, Constraint> constraints = pathNode.getConstraints();
 //        if (constraints != null) {
 //            if (constraints.getDuration() != null) {
 //                append(hb, "Duration", constraints.getDuration().toString());
@@ -152,12 +152,12 @@ public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
 //                final ConstraintValue required = requiredAttributes.get(key);
 //                if (required != null) {
 //                    hb.div(div ->
-//                            append(div, key, required.toString()), Attribute.className("pathway-attributes"));
+//                            append(div, key, required.toString()), Attribute.className("constraint-attributes"));
 //                }
 //                final ConstraintValue optional = optionalAttributes.get(key);
 //                if (optional != null) {
 //                    hb.div(div ->
-//                            append(div, key, optional.toString()), Attribute.className("pathway-attributes-optional"));
+//                            append(div, key, optional.toString()), Attribute.className("constraint-attributes-optional"));
 //                }
 //            }
 //        }
@@ -197,7 +197,7 @@ public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
 //                for (final KeyValue keyValue : span.getAttributes()) {
 //                    append(div, keyValue.getKey(), keyValue.getValue().toString());
 //                }
-//            }, Attribute.className("pathway-attributes"));
+//            }, Attribute.className("constraint-attributes"));
 //        }
 //        if (span.getDroppedAttributesCount() != -1) {
 //            append(hb, "Dropped Attributes Count", String.valueOf(span.getDroppedAttributesCount()));
@@ -221,7 +221,7 @@ public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
 //                if (span.getStatus().getMessage() != null) {
 //                    append(div, "Message", span.getStatus().getMessage());
 //                }
-//            }, Attribute.className("pathway-attributes"));
+//            }, Attribute.className("constraint-attributes"));
 //        }
 //
 //        return hb.toSafeHtml();
@@ -229,11 +229,11 @@ public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
 //
 //    private void append(final HtmlBuilder hb, final String key, final String value) {
 //        hb.div(div -> {
-//            div.div(k -> k.append(key + ":"), Attribute.className("pathway-attributeKey"));
-//            div.div(v -> v.append(value), Attribute.className("pathway-attributeValue"));
-//        }, Attribute.className("pathway-attribute"));
+//            div.div(k -> k.append(key + ":"), Attribute.className("constraint-attributeKey"));
+//            div.div(v -> v.append(value), Attribute.className("constraint-attributeValue"));
+//        }, Attribute.className("constraint-attribute"));
 //    }
-
+//
 //    private SafeHtml getDurationsHtml(final NanoTime min,
 //                                      final NanoTime max,
 //                                      final NanoTime sum,
@@ -247,21 +247,83 @@ public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
 //        return hb.toSafeHtml();
 //    }
 
-    public void read(final Pathway pathway, final boolean readOnly) {
-        this.readOnly = readOnly;
-        this.pathway = pathway;
+    public void read(final Constraint constraint) {
+        this.constraint = constraint;
+        getView().setName(constraint.getName());
+        getView().setType(constraint.getValue().valueType());
+
+        switch (constraint.getValue().valueType()) {
+            case ANY -> {
+                getView().setValue("");
+            }
+            case DURATION_VALUE -> {
+                final NanoTime nanoTime = ((NanoTimeValue) constraint.getValue()).getValue();
+                getView().setValue(String.valueOf(nanoTime.getNanos() + (nanoTime.getSeconds() * 1000000000)));
+            }
+            case DURATION_RANGE -> {
+                final NanoTimeRange nanoTimeRange = ((NanoTimeRange) constraint.getValue());
+                getView().setValue((nanoTimeRange.getMin().getNanos() +
+                                    (nanoTimeRange.getMin().getSeconds() * 1000000000)) +
+                                   "," +
+                                   (nanoTimeRange.getMax().getNanos() +
+                                    (nanoTimeRange.getMax().getSeconds() * 1000000000)));
+            }
+            case STRING -> {
+                getView().setValue(constraint.getValue().toString());
+            }
+            case STRING_SET -> {
+                final StringSet stringValue = (StringSet) constraint.getValue();
+                getView().setValue(stringValue.getSet().stream().collect(Collectors.joining(",")));
+            }
+            case REGEX -> {
+                getView().setValue(constraint.getValue().toString());
+            }
+            case BOOLEAN -> {
+                getView().setValue(constraint.getValue().toString());
+            }
+            case ANY_BOOLEAN -> {
+                getView().setValue("");
+            }
+            case INTEGER -> {
+                getView().setValue(constraint.getValue().toString());
+            }
+            case INTEGER_SET -> {
+                final IntegerSet set = (IntegerSet) constraint.getValue();
+                getView().setValue(set.getSet().stream().map(String::valueOf)
+                        .collect(Collectors.joining(",")));
+            }
+            case INTEGER_RANGE -> {
+                final IntegerRange range = (IntegerRange) constraint.getValue();
+                getView().setValue(range.getMin() + "," + range.getMax());
+
+                getView().setValue(constraint.getValue().toString());
+            }
+            case DOUBLE -> {
+                getView().setValue(constraint.getValue().toString());
+            }
+            case DOUBLE_SET -> {
+                final DoubleSet set = (DoubleSet) constraint.getValue();
+                getView().setValue(set.getSet().stream().map(String::valueOf)
+                        .collect(Collectors.joining(",")));
+            }
+            case DOUBLE_RANGE -> {
+                final DoubleRange range = (DoubleRange) constraint.getValue();
+                getView().setValue(range.getMin() + "," + range.getMax());
+            }
+        }
+
+        getView().setOptional(constraint.isOptional());
+
 //        this.selected = null;
-//
+
 //        getView().setDetails(SafeHtmlUtils.EMPTY_SAFE_HTML);
-        pathwayTreePresenter.read(pathway, readOnly);
-        constraintListPresenter.setData(null, readOnly);
 //        getView().setConstraints(SafeHtmlUtils.EMPTY_SAFE_HTML);
 //        getView().setSpans(SafeHtmlUtils.EMPTY_SAFE_HTML);
-
-        getView().setName(pathway.getName());
-//        getView().setDetails(new PathwayTreePresenter().build(pathway));
 //
-//        addNode(pathway.getRoot());
+//        getView().setName(constraint.getName());
+//        getView().setDetails(new ConstraintTree().build(constraint));
+//
+//        addNode(constraint.getRoot());
     }
 
 //    private void addNode(final PathNode node) {
@@ -271,20 +333,92 @@ public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
 //        });
 //    }
 
-    public Pathway write() {
+    public Constraint write() {
         String name = getView().getName();
         name = name.trim();
 
         if (name.isEmpty()) {
-            throw new ValidationException("A pathway must have a name");
+            throw new ValidationException("A constraint must have a name");
         }
 
-        final NanoTime now = NanoTime.ofMillis(System.currentTimeMillis());
-        return pathway.copy().name(name).updateTime(now).build();
+        final Builder builder = constraint.copy();
+        builder.name(name);
+
+        final String value = getView().getValue();
+        final ConstraintValueType type = getView().getType();
+        switch (type) {
+            case ANY -> {
+                builder.value(new AnyTypeValue());
+            }
+            case DURATION_VALUE -> {
+                final long l = Long.parseLong(value);
+                builder.value(new NanoTimeValue(NanoTime.ofNanos(l)));
+            }
+            case DURATION_RANGE -> {
+                final List<Long> list = Arrays
+                        .stream(value.split(","))
+                        .map(Long::parseLong)
+                        .collect(Collectors.toList());
+                builder.value(new NanoTimeRange(NanoTime.ofNanos(list.get(0)), NanoTime.ofNanos(list.get(1))));
+            }
+            case STRING -> {
+                builder.value(new StringValue(value));
+            }
+            case STRING_SET -> {
+                builder.value(new StringSet(Arrays
+                        .stream(value.split(","))
+                        .collect(Collectors.toSet())));
+            }
+            case REGEX -> {
+                builder.value(new Regex(value));
+            }
+            case BOOLEAN -> {
+                builder.value(new BooleanValue(Boolean.parseBoolean(value)));
+            }
+            case ANY_BOOLEAN -> {
+                builder.value(new AnyBoolean());
+            }
+            case INTEGER -> {
+                builder.value(new IntegerValue(Integer.parseInt(value)));
+            }
+            case INTEGER_SET -> {
+                builder.value(new IntegerSet(Arrays
+                        .stream(value.split(","))
+                        .map(Integer::parseInt)
+                        .collect(Collectors.toSet())));
+            }
+            case INTEGER_RANGE -> {
+                final List<Integer> list = Arrays
+                        .stream(value.split(","))
+                        .map(Integer::parseInt)
+                        .collect(Collectors.toList());
+                builder.value(new IntegerRange(list.get(0), list.get(1)));
+            }
+            case DOUBLE -> {
+                builder.value(new DoubleValue(Double.parseDouble(value)));
+            }
+            case DOUBLE_SET -> {
+                builder.value(new DoubleSet(Arrays
+                        .stream(value.split(","))
+                        .map(Double::parseDouble)
+                        .collect(Collectors.toSet())));
+            }
+            case DOUBLE_RANGE -> {
+                final List<Double> list = Arrays
+                        .stream(value.split(","))
+                        .map(Double::parseDouble)
+                        .collect(Collectors.toList());
+                builder.value(new DoubleRange(list.get(0), list.get(1)));
+            }
+        }
+
+        builder.optional(getView().isOptional());
+
+        return builder.build();
     }
 
     public void show(final String caption, final HidePopupRequestEvent.Handler handler) {
-        final PopupSize popupSize = PopupSize.resizable(1024, 800);
+        final PopupSize popupSize = PopupSize.resizable(800, 400);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
@@ -294,14 +428,22 @@ public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
                 .fire();
     }
 
-    public interface PathwayEditView extends View, Focus {
+    public interface ConstraintEditView extends View, Focus {
 
         String getName();
 
-        void setName(final String name);
+        void setName(String name);
 
-        void setTree(View view);
+        ConstraintValueType getType();
 
-        void setConstraints(View view);
+        void setType(ConstraintValueType type);
+
+        String getValue();
+
+        void setValue(String value);
+
+        boolean isOptional();
+
+        void setOptional(boolean optional);
     }
 }

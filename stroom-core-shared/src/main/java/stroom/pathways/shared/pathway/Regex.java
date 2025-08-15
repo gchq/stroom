@@ -6,10 +6,14 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
-public final class StringPattern extends AbstractValue<String> implements Constraint {
+public final class Regex extends AbstractValue<String> implements ConstraintValue {
 
     @JsonCreator
-    public StringPattern(@JsonProperty("value") final String value) {
+    public Regex(@JsonProperty("value") final String value) {
         super(value);
+    }
+
+    public ConstraintValueType valueType() {
+        return ConstraintValueType.REGEX;
     }
 }

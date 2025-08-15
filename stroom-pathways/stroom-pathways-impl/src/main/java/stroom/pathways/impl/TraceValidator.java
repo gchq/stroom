@@ -5,17 +5,18 @@ import stroom.pathways.shared.otel.trace.KeyValue;
 import stroom.pathways.shared.otel.trace.NanoTime;
 import stroom.pathways.shared.otel.trace.Span;
 import stroom.pathways.shared.otel.trace.Trace;
-import stroom.pathways.shared.pathway.BooleanSet;
+import stroom.pathways.shared.pathway.AnyBoolean;
 import stroom.pathways.shared.pathway.BooleanValue;
 import stroom.pathways.shared.pathway.Constraint;
-import stroom.pathways.shared.pathway.Constraints;
+import stroom.pathways.shared.pathway.ConstraintValue;
 import stroom.pathways.shared.pathway.IntegerRange;
 import stroom.pathways.shared.pathway.IntegerSet;
 import stroom.pathways.shared.pathway.IntegerValue;
+import stroom.pathways.shared.pathway.NanoTimeRange;
 import stroom.pathways.shared.pathway.PathKey;
 import stroom.pathways.shared.pathway.PathNode;
 import stroom.pathways.shared.pathway.PathNodeList;
-import stroom.pathways.shared.pathway.StringPattern;
+import stroom.pathways.shared.pathway.Regex;
 import stroom.pathways.shared.pathway.StringSet;
 import stroom.pathways.shared.pathway.StringValue;
 
@@ -85,30 +86,26 @@ public class TraceValidator implements TraceProcessor {
     private void checkConstraints(final PathNode pathNode, final Span span) {
         final PathNode.Builder pathNodeBuilder = pathNode.copy();
 
-        final Constraints constraints = pathNode.getConstraints();
+        final Map<String, Constraint> constraints = pathNode.getConstraints();
         if (constraints != null) {
 
             // Set or expand duration range.
-            if (constraints.getDuration() != null) {
+            final Constraint durationConstraint = constraints.get("duration");
+            if (durationConstraint != null) {
                 final NanoTime startTime = NanoTime.fromString(span.getStartTimeUnixNano());
                 final NanoTime endTime = NanoTime.fromString(span.getEndTimeUnixNano());
                 final NanoTime duration = endTime.subtract(startTime);
-
-                if (constraints.getDuration().getMin().isGreaterThan(duration)) {
-                    throw new RuntimeException("Duration less than expected");
-                } else if (constraints.getDuration().getMax().isLessThan(duration)) {
-                    throw new RuntimeException("Duration greater than expected");
-                }
+                validateNanoTime("Duration", durationConstraint.getValue(), duration);
             }
 
-            if (constraints.getFlags() != null) {
-                validateInteger("Flags", constraints.getFlags(), span.getFlags());
+            final Constraint flagsConstraint = constraints.get("flags");
+            if (flagsConstraint != null) {
+                validateInteger("Flags", flagsConstraint.getValue(), span.getFlags());
             }
 
-            if (constraints.getKind() != null) {
-                if (!constraints.getKind().contains(span.getKind())) {
-                    throw new RuntimeException("Unexpected kind: " + span.getKind());
-                }
+            final Constraint kindConstraint = constraints.get("kind");
+            if (kindConstraint != null) {
+                validateStringConstraint("Kind", kindConstraint.getValue(), span.getKind().name());
             }
 
             // Create attribute sets.
@@ -116,30 +113,35 @@ public class TraceValidator implements TraceProcessor {
                     .getAttributes()
                     .stream()
                     .collect(Collectors.toMap(KeyValue::getKey, Function.identity()));
-            if (constraints.getRequiredAttributes() != null) {
-                // Check required attributes all exist.
-                constraints.getRequiredAttributes().forEach((k, v) -> {
-                    if (!attributes.containsKey(k)) {
-                        throw new RuntimeException("Missing required attribute: " + k);
-                    }
-                });
 
-                attributes.values().forEach(value -> {
-                    final Constraint constraint = constraints.getRequiredAttributes().get(value.getKey());
-                    validateAttribute(constraint, value);
-                });
-            } else if (constraints.getOptionalAttributes() != null) {
-                attributes.values().forEach(value -> {
-                    final Constraint constraint = constraints.getOptionalAttributes().get(value.getKey());
-                    if (constraint != null) {
-                        validateAttribute(constraint, value);
+            constraints.forEach((k, v) -> {
+                if (k.startsWith("attribute.")) {
+                    final String attributeName = k.substring("attribute.".length());
+                    final KeyValue keyValue = attributes.get(attributeName);
+                    if (keyValue == null) {
+                        // Check required attributes all exist.
+                        if (!v.isOptional()) {
+                            throw new RuntimeException("Missing required attribute: " + attributeName);
+                        }
+                    } else {
+                        validateAttribute(v.getValue(), keyValue);
                     }
-                });
+                }
+            });
+        }
+    }
+
+    private void validateNanoTime(final String key, final ConstraintValue constraint, final NanoTime value) {
+        if (constraint instanceof final NanoTimeRange nanoTimeRange) {
+            if (nanoTimeRange.getMin().isGreaterThan(value)) {
+                throw new RuntimeException(key + " less than expected");
+            } else if (nanoTimeRange.getMax().isLessThan(value)) {
+                throw new RuntimeException(key + " greater than expected");
             }
         }
     }
 
-    private void validateInteger(final String key, final Constraint constraint, final int value) {
+    private void validateInteger(final String key, final ConstraintValue constraint, final int value) {
         if (constraint instanceof final IntegerValue integerValue) {
             if (!integerValue.validate(value)) {
                 throw new RuntimeException(key + " not equal");
@@ -158,13 +160,13 @@ public class TraceValidator implements TraceProcessor {
     }
 
     private void validateBooleanConstraint(final String key,
-                                           final Constraint constraint,
+                                           final ConstraintValue constraint,
                                            final boolean value) {
         if (constraint instanceof final BooleanValue booleanValue) {
             if (!booleanValue.validate(value)) {
                 throw new RuntimeException(key + " not equal");
             }
-        } else if (constraint instanceof final BooleanSet booleanSet) {
+        } else if (constraint instanceof final AnyBoolean booleanSet) {
             if (!booleanSet.validate(value)) {
                 throw new RuntimeException(key + " not equal");
             }
@@ -172,7 +174,7 @@ public class TraceValidator implements TraceProcessor {
     }
 
     private void validateStringConstraint(final String key,
-                                          final Constraint constraint,
+                                          final ConstraintValue constraint,
                                           final String value) {
         if (constraint instanceof final StringValue stringValue) {
             if (!stringValue.validate(value)) {
@@ -182,7 +184,7 @@ public class TraceValidator implements TraceProcessor {
             if (!stringSet.validate(value)) {
                 throw new RuntimeException(key + " not equal");
             }
-        } else if (constraint instanceof final StringPattern stringPattern) {
+        } else if (constraint instanceof final Regex stringPattern) {
             // TODO : Cache
             final Pattern pattern = Pattern.compile(stringPattern.getValue());
             if (!pattern.matcher(value).find()) {
@@ -191,7 +193,7 @@ public class TraceValidator implements TraceProcessor {
         }
     }
 
-    private void validateAttribute(final Constraint constraint,
+    private void validateAttribute(final ConstraintValue constraint,
                                    final KeyValue keyValue) {
         final AnyValue value = keyValue.getValue();
 

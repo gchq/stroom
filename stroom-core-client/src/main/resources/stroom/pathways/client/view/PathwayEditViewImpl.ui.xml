@@ -7,30 +7,15 @@
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
         <g:MySplitLayoutPanel styleName="dock-max">
-            <g:north size="400">
-
-                <g:MySplitLayoutPanel styleName="">
-                    <g:west size="400">
-                        <form:FormGroup identity="pathwayDetails" label="Paths">
-                            <g:HTML ui:field="details" styleName="max form-control-background form-control-border"/>
-                        </form:FormGroup>
-                    </g:west>
-                    <g:center>
-                        <form:FormGroup identity="pathwayConstraints" label="Constraints">
-                            <g:HTML ui:field="constraints" styleName="max form-control-background form-control-border"/>
-                        </form:FormGroup>
-                    </g:center>
-                </g:MySplitLayoutPanel>
-
-            </g:north>
-            <g:center>
-
-                <form:FormGroup identity="pathwayMatchingTraces" label="Common Span Details">
-                    <g:HTML ui:field="spans" styleName="max form-control-background form-control-border"/>
+            <g:west size="400">
+                <form:FormGroup identity="pathwayDetails" label="Paths">
+                    <g:SimplePanel ui:field="tree" styleName="max form-control-background form-control-border"/>
                 </form:FormGroup>
-
-
-
+            </g:west>
+            <g:center>
+                <form:FormGroup identity="pathwayConstraints" label="Constraints">
+                    <g:SimplePanel ui:field="constraints" styleName="max form-control-background form-control-border"/>
+                </form:FormGroup>
             </g:center>
         </g:MySplitLayoutPanel>
     </g:FlowPanel>
