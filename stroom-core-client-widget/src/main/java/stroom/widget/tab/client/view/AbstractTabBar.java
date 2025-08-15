@@ -32,7 +32,6 @@ import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.Rect;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -89,7 +88,12 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
 
     @Override
     public void addTab(final TabData tabData) {
-        final int insertIndex = tabs.isEmpty() ? 0 : indexOf(selectedTab) + 1;
+        final int insertIndex;
+        if (selectedTab == null || tabs.isEmpty()) {
+            insertIndex = tabs.size();
+        } else {
+            insertIndex = indexOf(selectedTab) + 1;
+        }
 
         if (tabs.isEmpty()) {
             keyboardSelectedTab = tabData;
@@ -139,7 +143,7 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
                 } else if (minVisibleTab > 0) {
                     // or move left one tab if there are non-visible tabs to the left
                     onResize(minVisibleTab - 1);
-                }  else if (maxVisibleTab == tabsSize) {
+                } else if (maxVisibleTab == tabsSize) {
                     // or keep lhs tab if there are no non-visible tabs to show
                     onResize(minVisibleTab);
                 } else {
@@ -166,7 +170,9 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
                 visibleTabs.clear();
             }
 
-            final int startIndex = tabPosVisible ? minVisibleTab : -1;
+            final int startIndex = tabPosVisible
+                    ? minVisibleTab
+                    : -1;
 
             remove(tabWidget);
             tabWidgetMap.remove(tabData);
@@ -262,14 +268,18 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
 
             if (startIndex != -1 || visibleTabs.contains(selectedTab)) {
                 // use the given start index or the current one if we are already showing the selected tab
-                final int newStartIndex = startIndex == -1 ? indexOf(visibleTabs.get(0)) : startIndex;
+                final int newStartIndex = startIndex == -1
+                        ? indexOf(visibleTabs.get(0))
+                        : startIndex;
                 displayableTabs = getDisplayableTabs(newStartIndex);
 
             } else {
                 // otherwise loop through from the start and find which tabs to show
                 // if the selected tab is over halfway through then show it on the rhs
                 final int indexOfSelectedTab = indexOf(selectedTab);
-                final int newStartIndex = indexOfSelectedTab < tabs.size() / 2 ? indexOfSelectedTab : 0;
+                final int newStartIndex = indexOfSelectedTab < tabs.size() / 2
+                        ? indexOfSelectedTab
+                        : 0;
 
                 for (int i = newStartIndex; i < tabs.size(); i++) {
                     displayableTabs = getDisplayableTabs(i);
@@ -695,7 +705,9 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
         return tabs.stream()
                 .filter(Predicate.not(visibleTabs::contains))
                 .filter(t -> !getTab(t).isHidden())
-                .filter(predicate == null ? t -> true : predicate)
+                .filter(predicate == null
+                        ? t -> true
+                        : predicate)
                 .collect(Collectors.toList());
     }
 
