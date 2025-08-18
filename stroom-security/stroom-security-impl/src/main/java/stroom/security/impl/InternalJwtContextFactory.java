@@ -186,6 +186,10 @@ class InternalJwtContextFactory implements JwtContextFactory {
         } else {
             builder.setSkipDefaultAudienceValidation();
         }
+        LOGGER.debug("validIssuers: {}, allowedAudiences: {}, audienceClaimRequired: {}",
+                validIssuers,
+                allowedAudiences,
+                openIdConfiguration.isAudienceClaimRequired());
         return builder.build();
     }
 

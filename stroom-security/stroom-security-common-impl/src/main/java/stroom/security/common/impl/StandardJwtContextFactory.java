@@ -441,8 +441,6 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                 ? new String[]{defaultOpenIdCredentials.getOauth2Issuer()}
                 : getValidIssuers();
 
-        LOGGER.debug("Expecting issuers: {}", (Object) validIssuers);
-
         final JwtConsumerBuilder builder = new JwtConsumerBuilder()
                 .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account
                 //                                   for clock skew
@@ -464,6 +462,11 @@ public class StandardJwtContextFactory implements JwtContextFactory {
         } else {
             builder.setSkipDefaultAudienceValidation();
         }
+        LOGGER.debug("validIssuers: {}, allowedAudiences: {}, audienceClaimRequired: {}, useTestCreds: {}",
+                validIssuers,
+                allowedAudiences,
+                openIdConfiguration.isAudienceClaimRequired(),
+                useTestCreds);
         return builder.build();
     }
 
