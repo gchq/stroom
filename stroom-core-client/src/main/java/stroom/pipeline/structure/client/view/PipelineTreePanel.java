@@ -53,6 +53,7 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
     private TreeLayout<PipelineElement> treeLayout;
     private PipelineElementRenderer cellRenderer;
     private DefaultTreeForTreeLayout<PipelineElement> tree;
+    private SelectionModel<PipelineElement> selectionModel;
 
     public PipelineTreePanel() {
         panel = new FlowPanel();
@@ -95,6 +96,7 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
 
     @Override
     public void setSelectionModel(final SelectionModel<PipelineElement> selectionModel) {
+        this.selectionModel = selectionModel;
         if (renderer != null) {
             cellRenderer.setSelectionModel(selectionModel);
         }
@@ -117,6 +119,7 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
 
             final PipelineElementBoxFactory pipelineElementBoxFactory = new PipelineElementBoxFactory(pipelineModel);
             cellRenderer = new PipelineElementRenderer(boxPanel, pipelineElementBoxFactory);
+            cellRenderer.setSelectionModel(selectionModel);
             final ConnectorRenderer<PipelineElement> connectorRenderer = new ArrowConnectorRenderer<>(
                     arrowContext);
 
