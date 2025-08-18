@@ -45,44 +45,18 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
 
     private static final double HORIZONTAL_SEPARATION = 20;
     private static final double VERTICAL_SEPARATION = 10;
-    private final LayeredCanvas canvas;
-    private final FlowPanel boxPanel;
+    private final FlowPanel panel;
+    private LayeredCanvas canvas;
+    private FlowPanel boxPanel;
     private final PendingOperation pendingOperation = new PendingOperation();
     private TreeRenderer2<PipelineElement> renderer;
     private TreeLayout<PipelineElement> treeLayout;
     private PipelineElementRenderer cellRenderer;
     private DefaultTreeForTreeLayout<PipelineElement> tree;
 
-    public PipelineTreePanel(final PipelineElementBoxFactory pipelineElementBoxFactory) {
-        final FlowPanel panel = new FlowPanel();
+    public PipelineTreePanel() {
+        panel = new FlowPanel();
         panel.setStyleName("treePanel-panel");
-        boxPanel = new FlowPanel();
-        boxPanel.setStyleName("treePanel-boxPanel");
-
-        // setup the tree layout configuration.
-        canvas = LayeredCanvas.createIfSupported();
-        if (canvas != null) {
-            final Context2d arrowContext = canvas.getLayer(TreeRenderer.ARROW_LAYER).getContext2d();
-
-            cellRenderer = new PipelineElementRenderer(boxPanel, pipelineElementBoxFactory);
-            final ConnectorRenderer<PipelineElement> connectorRenderer = new ArrowConnectorRenderer<>(
-                    arrowContext);
-
-            // setup the tree layout configuration
-            final DefaultConfiguration<PipelineElement> layoutConfig = new DefaultConfiguration<>(
-                    HORIZONTAL_SEPARATION, VERTICAL_SEPARATION, Location.Left, AlignmentInLevel.TowardsRoot);
-            final NodeExtentProvider<PipelineElement> extentProvider = cellRenderer;
-
-            treeLayout = new AbegoTreeLayout<>(extentProvider, layoutConfig);
-
-            renderer = new TreeRenderer2<>(canvas, cellRenderer, connectorRenderer);
-            renderer.setTreeLayout(treeLayout);
-
-            canvas.setStyleName("treePanel-canvas");
-            panel.add(canvas);
-        }
-
-        panel.add(boxPanel);
         initWidget(panel);
     }
 
@@ -128,8 +102,39 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
 
     public void setPipelineModel(final PipelineModel pipelineModel) {
         if (renderer != null) {
-            cellRenderer.setPipelineModel(pipelineModel);
+            throw new RuntimeException("Renderer already exists");
+        } else if (pipelineModel == null) {
+            throw new NullPointerException("Null model");
         }
+
+        boxPanel = new FlowPanel();
+        boxPanel.setStyleName("treePanel-boxPanel");
+
+        // setup the tree layout configuration.
+        canvas = LayeredCanvas.createIfSupported();
+        if (canvas != null) {
+            final Context2d arrowContext = canvas.getLayer(TreeRenderer.ARROW_LAYER).getContext2d();
+
+            final PipelineElementBoxFactory pipelineElementBoxFactory = new PipelineElementBoxFactory(pipelineModel);
+            cellRenderer = new PipelineElementRenderer(boxPanel, pipelineElementBoxFactory);
+            final ConnectorRenderer<PipelineElement> connectorRenderer = new ArrowConnectorRenderer<>(
+                    arrowContext);
+
+            // Setup the tree layout configuration
+            final DefaultConfiguration<PipelineElement> layoutConfig = new DefaultConfiguration<>(
+                    HORIZONTAL_SEPARATION, VERTICAL_SEPARATION, Location.Left, AlignmentInLevel.TowardsRoot);
+            final NodeExtentProvider<PipelineElement> extentProvider = cellRenderer;
+
+            treeLayout = new AbegoTreeLayout<>(extentProvider, layoutConfig);
+
+            renderer = new TreeRenderer2<>(canvas, cellRenderer, connectorRenderer);
+            renderer.setTreeLayout(treeLayout);
+
+            canvas.setStyleName("treePanel-canvas");
+            panel.add(canvas);
+        }
+
+        panel.add(boxPanel);
     }
 
     @Override
@@ -139,23 +144,22 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
 
     @Override
     public void refresh(final RefreshCallback callback) {
-        boxPanel.clear();
         if (renderer != null) {
+            boxPanel.clear();
             cellRenderer.clear();
             renderer.draw();
-        }
+            pendingOperation.scheduleOperation(() -> {
+                boxPanel.clear();
+                if (renderer != null) {
+                    cellRenderer.clear();
+                    renderer.draw();
 
-        pendingOperation.scheduleOperation(() -> {
-            boxPanel.clear();
-            if (renderer != null) {
-                cellRenderer.clear();
-                renderer.draw();
-
-                if (callback != null) {
-                    callback.onRefresh();
+                    if (callback != null) {
+                        callback.onRefresh();
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     @Override
@@ -172,11 +176,14 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
     }
 
     public int getTreeHeight() {
+        if (renderer == null) {
+            return 0;
+        }
         return canvas.getOffsetHeight();
     }
 
     public void setSeverities(final Map<String, Severity> elementIdToSeveritiesMap) {
-        if (cellRenderer != null) {
+        if (renderer != null) {
             if (elementIdToSeveritiesMap == null || elementIdToSeveritiesMap.isEmpty()) {
                 cellRenderer.getBoxes().forEach(pipelineElementBox -> {
                     if (pipelineElementBox != null) {
@@ -192,6 +199,5 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
                 });
             }
         }
-
     }
 }

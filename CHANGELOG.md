@@ -35,7 +35,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#5013** : Add data to existing annotations.
 
-* Issue **#5013** : Add links to other annotations and allow comments to make refereces to events and other annotations.
+* Issue **#5013** : Add links to other annotations and allow comments to make references to events and other annotations.
 
 * Issue **#2374** : Add pipeline element descriptions.
 
