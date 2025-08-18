@@ -363,7 +363,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
         // Write to output.
         final ExportSummary exportSummary = importExportSerializer.write(
-                null,
+                List.of(ExplorerConstants.SYSTEM_NODE),
                 outDir,
                 exported,
                 Collections.emptySet(),
