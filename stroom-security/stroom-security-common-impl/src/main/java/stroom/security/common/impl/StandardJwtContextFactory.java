@@ -362,8 +362,12 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                         ? "<ERROR userDisplayNameClaim not configured>"
                         : JwtUtil.getClaimValue(jwtContext, userDisplayNameClaim).orElse(null);
 
-                LOGGER.debug(() -> LogUtil.message("Verified token - {}: '{}', {}: '{}'",
-                        uniqueIdentityClaim, uniqueId, userDisplayNameClaim, displayName));
+                LOGGER.debug(() -> LogUtil.message("Verified token - {}: '{}', {}: '{}', aud: '{}'",
+                        uniqueIdentityClaim,
+                        uniqueId,
+                        userDisplayNameClaim,
+                        displayName,
+                        JwtUtil.getClaimValue(jwtContext, OpenId.AUD)));
             }
 
             // TODO : @66 Check against blacklist to see if token has been revoked. Blacklist
@@ -437,8 +441,6 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                 ? new String[]{defaultOpenIdCredentials.getOauth2Issuer()}
                 : getValidIssuers();
 
-        LOGGER.debug("Expecting issuers: {}", (Object) validIssuers);
-
         final JwtConsumerBuilder builder = new JwtConsumerBuilder()
                 .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account
                 //                                   for clock skew
@@ -451,16 +453,20 @@ public class StandardJwtContextFactory implements JwtContextFactory {
 //                                AlgorithmIdentifiers.RSA_USING_SHA256))
                 .setExpectedIssuers(true, validIssuers);
 
-        if (openIdConfiguration.isValidateAudience()) {
-            // aud does not appear in access tokens by default it seems so make the check optional
-            final String clientId = useTestCreds
-                    ? defaultOpenIdCredentials.getOauth2ClientId()
-                    : openIdConfiguration.getClientId();
-            builder.setExpectedAudience(clientId);
-            builder.setExpectedAudience(false, clientId);
+        final Set<String> allowedAudiences = openIdConfiguration.getAllowedAudiences();
+        if (NullSafe.hasItems(allowedAudiences)) {
+            // The IDP may not supply the aud claim
+            builder.setExpectedAudience(
+                    openIdConfiguration.isAudienceClaimRequired(),
+                    allowedAudiences.toArray(String[]::new));
         } else {
             builder.setSkipDefaultAudienceValidation();
         }
+        LOGGER.debug("validIssuers: {}, allowedAudiences: {}, audienceClaimRequired: {}, useTestCreds: {}",
+                validIssuers,
+                allowedAudiences,
+                openIdConfiguration.isAudienceClaimRequired(),
+                useTestCreds);
         return builder.build();
     }
 

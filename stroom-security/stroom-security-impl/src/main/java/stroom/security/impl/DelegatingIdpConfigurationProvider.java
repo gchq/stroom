@@ -120,8 +120,13 @@ public class DelegatingIdpConfigurationProvider implements IdpConfigurationProvi
     }
 
     @Override
-    public boolean isValidateAudience() {
-        return delegate.isValidateAudience();
+    public Set<String> getAllowedAudiences() {
+        return delegate.getAllowedAudiences();
+    }
+
+    @Override
+    public boolean isAudienceClaimRequired() {
+        return delegate.isAudienceClaimRequired();
     }
 
     @Override

@@ -341,8 +341,13 @@ public class ExternalIdpConfigurationProvider
     }
 
     @Override
-    public boolean isValidateAudience() {
-        return localOpenIdConfigProvider.get().isValidateAudience();
+    public Set<String> getAllowedAudiences() {
+        return localOpenIdConfigProvider.get().getAllowedAudiences();
+    }
+
+    @Override
+    public boolean isAudienceClaimRequired() {
+        return localOpenIdConfigProvider.get().isAudienceClaimRequired();
     }
 
     @Override

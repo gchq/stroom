@@ -20,6 +20,7 @@ import java.util.List;
 
 public class OpenId {
 
+    public static final String AUD = "aud";
     public static final String AUTH_USER = "authuser";
     public static final String CLIENT_ID = "client_id";
     public static final String CLIENT_SECRET = "client_secret";

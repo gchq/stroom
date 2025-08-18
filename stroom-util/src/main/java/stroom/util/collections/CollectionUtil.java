@@ -72,7 +72,11 @@ public class CollectionUtil {
     }
 
     /**
-     * Removes null items, applies formatter on each item, then removes any empty items.
+     * Removes null items then applies formatter on each item, then removes any items that are
+     * an empty String.
+     *
+     * @return An unmodifiable Set of the cleaned items which may be empty if all items
+     * have been removed.
      */
     public static Set<String> cleanItems(final Set<String> items,
                                          final Function<String, String> formatter) {
@@ -89,5 +93,4 @@ public class CollectionUtil {
                     .collect(Collectors.toUnmodifiableSet());
         }
     }
-
 }
