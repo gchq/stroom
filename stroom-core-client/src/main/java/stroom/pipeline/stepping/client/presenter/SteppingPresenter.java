@@ -440,7 +440,7 @@ public class SteppingPresenter
 
         // Only update the code indicators if we have a current result.
         if (stepData != null) {
-            final SharedElementData elementData = stepData.getElementData(elementId.getId());
+            final SharedElementData elementData = NullSafe.get(elementId, ElementId::getId, stepData::getElementData);
             if (elementData != null) {
                 final Indicators indicators = elementData.getIndicators();
                 updateToggleConsoleBtnVisibility(indicators, elementId);
