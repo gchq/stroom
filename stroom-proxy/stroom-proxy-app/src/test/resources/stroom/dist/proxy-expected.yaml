@@ -151,6 +151,8 @@ proxyConfig:
     authentication:
       authenticationRequired: true
       openId:
+        allowedAudiences: []
+        audienceClaimRequired: false
         authEndpoint: null
         clientCredentialsScopes:
         - "openid"
@@ -172,7 +174,6 @@ proxyConfig:
         uniqueIdentityClaim: "sub"
         userDisplayNameClaim: "preferred_username"
         validIssuers: []
-        validateAudience: true
   sqsConnectors:
   - awsProfileName: null
     awsRegionName: null

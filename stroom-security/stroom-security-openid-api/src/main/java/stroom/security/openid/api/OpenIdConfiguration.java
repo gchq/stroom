@@ -78,9 +78,14 @@ public interface OpenIdConfiguration {
     List<String> getClientCredentialsScopes();
 
     /**
-     * @see AbstractOpenIdConfig#isValidateAudience()
+     * @see AbstractOpenIdConfig#isAudienceClaimRequired()
      */
-    boolean isValidateAudience();
+    boolean isAudienceClaimRequired();
+
+    /**
+     * @see AbstractOpenIdConfig#getAllowedAudiences()
+     */
+    Set<String> getAllowedAudiences();
 
     /**
      * @see AbstractOpenIdConfig#getValidIssuers()

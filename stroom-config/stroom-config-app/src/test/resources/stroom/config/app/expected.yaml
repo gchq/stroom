@@ -869,6 +869,8 @@ appConfig:
         statisticsMode: "INTERNAL"
       maxApiKeyExpiryAge: "P365D"
       openId:
+        allowedAudiences: []
+        audienceClaimRequired: false
         authEndpoint: null
         clientCredentialsScopes:
         - "openid"
@@ -890,7 +892,6 @@ appConfig:
         uniqueIdentityClaim: "sub"
         userDisplayNameClaim: "preferred_username"
         validIssuers: []
-        validateAudience: true
       preventLogin: false
     authorisation:
       appPermissionIdCache:

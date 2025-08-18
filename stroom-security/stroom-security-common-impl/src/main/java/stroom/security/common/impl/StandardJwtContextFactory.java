@@ -451,13 +451,12 @@ public class StandardJwtContextFactory implements JwtContextFactory {
 //                                AlgorithmIdentifiers.RSA_USING_SHA256))
                 .setExpectedIssuers(true, validIssuers);
 
-        if (openIdConfiguration.isValidateAudience()) {
-            // aud does not appear in access tokens by default it seems so make the check optional
-            final String clientId = useTestCreds
-                    ? defaultOpenIdCredentials.getOauth2ClientId()
-                    : openIdConfiguration.getClientId();
-            builder.setExpectedAudience(clientId);
-            builder.setExpectedAudience(false, clientId);
+        final Set<String> allowedAudiences = openIdConfiguration.getAllowedAudiences();
+        if (NullSafe.hasItems(allowedAudiences)) {
+            // The IDP may not supply the aud claim
+            builder.setExpectedAudience(
+                    openIdConfiguration.isAudienceClaimRequired(),
+                    allowedAudiences.toArray(String[]::new));
         } else {
             builder.setSkipDefaultAudienceValidation();
         }
