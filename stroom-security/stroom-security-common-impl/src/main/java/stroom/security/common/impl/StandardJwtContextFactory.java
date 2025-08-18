@@ -362,8 +362,12 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                         ? "<ERROR userDisplayNameClaim not configured>"
                         : JwtUtil.getClaimValue(jwtContext, userDisplayNameClaim).orElse(null);
 
-                LOGGER.debug(() -> LogUtil.message("Verified token - {}: '{}', {}: '{}'",
-                        uniqueIdentityClaim, uniqueId, userDisplayNameClaim, displayName));
+                LOGGER.debug(() -> LogUtil.message("Verified token - {}: '{}', {}: '{}', aud: '{}'",
+                        uniqueIdentityClaim,
+                        uniqueId,
+                        userDisplayNameClaim,
+                        displayName,
+                        JwtUtil.getClaimValue(jwtContext, OpenId.AUD)));
             }
 
             // TODO : @66 Check against blacklist to see if token has been revoked. Blacklist
