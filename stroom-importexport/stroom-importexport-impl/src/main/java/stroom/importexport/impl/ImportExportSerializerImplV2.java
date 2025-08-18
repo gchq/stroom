@@ -687,7 +687,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
      * @param importSettings Key settings for the import; notably the RootDocRef.
      * @return The DocRef of the imported document.
      */
-    private DocRef importExplorerDoc(final ImportExportActionHandler importExportActionHandler,
+    private DocRef importExplorerDoc(@Nullable final ImportExportActionHandler importExportActionHandler,
                                      final Path nodeFile,
                                      final Deque<DocRef> importDocRefPath,
                                      final DocRef nodeFileDocRef,
@@ -770,12 +770,9 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
             // Import the item via the appropriate handler.
             LOGGER.info("DocRef '{}': ImportMode: {}", destName, importSettings.getImportMode());
 
-            if (nodeFileDocRef.getType().equals(ExplorerConstants.FOLDER_TYPE)) {
-                // Import Folder
-            } else if (importExportActionHandler != null && (
-                    ImportMode.CREATE_CONFIRMATION.equals(importSettings.getImportMode()) ||
-                    ImportMode.IGNORE_CONFIRMATION.equals(importSettings.getImportMode()) ||
-                    importState.isAction())) {
+            if (ImportMode.CREATE_CONFIRMATION.equals(importSettings.getImportMode()) ||
+                ImportMode.IGNORE_CONFIRMATION.equals(importSettings.getImportMode()) ||
+                importState.isAction()) {
 
                 final DocRef destDocRef = DocRef.builder()
                         .name(destName)
@@ -783,70 +780,76 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                         .uuid(nodeFileDocRef.getUuid())
                         .build();
 
-                LOGGER.info("Importing '{}'", destDocRef);
-                final DocRef importedDocRef = importExportActionHandler.importDocument(
-                        destDocRef,
-                        dataMap,
-                        importState,
-                        importSettings);
+                // Handler will be null for Folders
+                if (ExplorerConstants.isFolder(nodeFileDocRef)) {
+                    // TODO Create the folder if necessary, after checking permissions
+                } else {
+                    if (importExportActionHandler == null) {
+                        throw new IOException("Cannot import '" + destName
+                        + "' of type '" + nodeFileDocRef.getType()
+                        + "' as its handler is null");
+                    }
+                    // TODO do the import
+                }
+                if (importExportActionHandler != null) {
+                    LOGGER.info("Importing '{}'", destDocRef);
+                    final DocRef importedDocRef = importExportActionHandler.importDocument(
+                            destDocRef,
+                            dataMap,
+                            importState,
+                            importSettings);
 
-                if (importedDocRef == null) {
-                    throw new IOException("Import failed - no DocRef returned");
+                    if (importedDocRef == null) {
+                        throw new IOException("Import failed - no DocRef returned");
+                    }
                 }
 
-                // Don't do this in a test environment
-                if (importSettings.isMockEnvironment()) {
-                    LOGGER.info("In mock environment - not creating nodes");
-                } else {
-                    LOGGER.info("Not mocked; creating nodes");
+                // Add explorer node afterwards on successful import as they won't be controlled by
+                // doc service.
+                if (ImportSettings.ok(importSettings, importState)) {
+                    LOGGER.info("ImportSettings.ok()");
+                    final ExplorerNode explorerNode = ExplorerNode
+                            .builder()
+                            .docRef(destDocRef)
+                            .build();
 
-                    // Add explorer node afterwards on successful import as they won't be controlled by
-                    // doc service.
-                    if (ImportSettings.ok(importSettings, importState)) {
-                        LOGGER.info("ImportSettings.ok()");
-                        final ExplorerNode explorerNode = ExplorerNode
-                                .builder()
-                                .docRef(destDocRef)
-                                .build();
-
-                        // Create, rename and/or move explorer node.
-                        if (!docExists) {
-                            // docRef didn't exist so create the Node
-                            LOGGER.info("DocRef doesn't exist so creating '{}' within '{}'", importedDocRef.getName(), parentDocRef.getName());
-                            explorerNodeService.createNode(
-                                    importedDocRef,
-                                    parentDocRef,
-                                    PermissionInheritance.DESTINATION);
-                            explorerService.rebuildTree();
-                        } else {
-                            LOGGER.info("DocRef '{}' already exists", importedDocRef.getName());
-                            // The docRef already exists
-                            if (importSettings.isUseImportNames()) {
-                                // TODO - already under this name?
-                                LOGGER.info("Renaming '{}' to '{}'", importedDocRef.getName(), nodeFileDocRef.getName());
-                                explorerService.rename(explorerNode, nodeFileDocRef.getName());
-                            }
-                            if (moving) {
-                                LOGGER.info("Moving to '{}'", parentDocRef.getName());
-                                final Optional<ExplorerNode> destinationFolder =
-                                        explorerNodeService.getNode(parentDocRef);
-                                if (destinationFolder.isEmpty()) {
-                                    throw new IOException("The destination node for the docRef '"
-                                    + parentDocRef.getName() + "' does not exist.");
-                                }
-                                explorerService.move(
-                                        Collections.singletonList(explorerNode),
-                                        destinationFolder.get(),
-                                        PermissionInheritance.DESTINATION);
-                            }
+                    // Create, rename and/or move explorer node.
+                    if (!docExists) {
+                        // docRef didn't exist so create the Node
+                        LOGGER.info("DocRef doesn't exist so creating '{}' within '{}'", importedDocRef.getName(), parentDocRef.getName());
+                        explorerNodeService.createNode(
+                                importedDocRef,
+                                parentDocRef,
+                                PermissionInheritance.DESTINATION);
+                        explorerService.rebuildTree();
+                    } else {
+                        LOGGER.info("DocRef '{}' already exists", importedDocRef.getName());
+                        // The docRef already exists
+                        if (importSettings.isUseImportNames()) {
+                            // TODO - already under this name?
+                            LOGGER.info("Renaming '{}' to '{}'", importedDocRef.getName(), nodeFileDocRef.getName());
+                            explorerService.rename(explorerNode, nodeFileDocRef.getName());
                         }
-
-                        importExportDocumentEventLog.importDocument(
-                                nodeFileDocRef.getType(),
-                                importedDocRef.getUuid(),
-                                nodeFileDocRef.getName(),
-                                null);
+                        if (moving) {
+                            LOGGER.info("Moving to '{}'", parentDocRef.getName());
+                            final Optional<ExplorerNode> destinationFolder =
+                                    explorerNodeService.getNode(parentDocRef);
+                            if (destinationFolder.isEmpty()) {
+                                throw new IOException("The destination node for the docRef '"
+                                + parentDocRef.getName() + "' does not exist.");
+                            }
+                            explorerService.move(
+                                    Collections.singletonList(explorerNode),
+                                    destinationFolder.get(),
+                                    PermissionInheritance.DESTINATION);
+                        }
                     }
+
+                    importExportDocumentEventLog.importDocument(
+                            nodeFileDocRef.getType(),
+                            importedDocRef.getUuid(),
+                            nodeFileDocRef.getName(),
+                            null);
                 }
             } else {
                 // We can't import this item so remove it from the map.
