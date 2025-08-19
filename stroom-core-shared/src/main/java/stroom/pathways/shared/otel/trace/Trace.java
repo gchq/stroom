@@ -4,18 +4,18 @@ import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class Trace {
 
     private final String traceId;
-    private final Map<String, Span> spanIdMap = new HashMap<>();
-    private final Map<String, List<Span>> parentSpanIdMap = new HashMap<>();
+    private final Map<String, List<Span>> parentSpanIdMap;
 
-    public Trace(final String traceId) {
+    public Trace(final String traceId,
+                 final Map<String, List<Span>> parentSpanIdMap) {
         this.traceId = traceId;
+        this.parentSpanIdMap = parentSpanIdMap;
     }
 
     public String getTraceId() {
@@ -38,13 +38,6 @@ public class Trace {
 
     public List<Span> getChildren(final Span span) {
         return NullSafe.list(parentSpanIdMap.get(span.getSpanId()));
-    }
-
-    public void addSpan(final Span span) {
-        spanIdMap.put(span.getSpanId(), span);
-        parentSpanIdMap.computeIfAbsent(
-                        NullSafe.getOrElse(span, Span::getParentSpanId, ""), k -> new ArrayList<>())
-                .add(span);
     }
 
     @Override

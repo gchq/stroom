@@ -8,7 +8,6 @@ import stroom.pathways.shared.otel.trace.Span;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.pathway.PathKey;
 import stroom.pathways.shared.pathway.PathNode;
-import stroom.pathways.shared.pathway.PathNodeList;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
@@ -42,19 +41,19 @@ public class TestSpanLoad {
     void testLoadStandard() {
 
         // Read in sample data and create a map of traces.
-        final Map<String, Trace> traceMap = new HashMap<>();
+        final TracesStore tracesStore = new TracesStore();
         for (int i = 1; i <= 13; i++) {
             final Path path = Paths.get("src/test/resources/" + StringIdUtil.idToString(i) + ".dat");
-            loadData(path, traceMap);
+            loadData(path, tracesStore);
         }
 
         // Output the tree for each trace.
-        for (final Trace trace : traceMap.values()) {
+        for (final Trace trace : tracesStore.getTraces()) {
             LOGGER.info("\n" + trace.toString());
         }
 
         // Construct known paths for all traces.
-        final Map<PathKey, PathNode> roots = buildPathways(traceMap.values());
+        final Map<PathKey, PathNode> roots = buildPathways(tracesStore.getTraces());
 
         // Output found pathways.
         for (final PathNode node : roots.values()) {
@@ -62,14 +61,14 @@ public class TestSpanLoad {
         }
 
         // Validate traces against known paths.
-        validate(traceMap.values(), roots, new HashMap<>());
+        validate(tracesStore.getTraces(), roots);
 
         // Introduce an invalid pathway.
         for (int i = 14; i <= 17; i++) {
             final Path path = Paths.get("src/test/resources/" + StringIdUtil.idToString(i) + ".dat");
-            loadData(path, traceMap);
+            loadData(path, tracesStore);
         }
-        assertThrows(RuntimeException.class, () -> validate(traceMap.values(), roots, new HashMap<>()));
+        assertThrows(RuntimeException.class, () -> validate(tracesStore.getTraces(), roots));
     }
 
     private Map<PathKey, PathNode> buildPathways(final Collection<Trace> traces) {
@@ -84,8 +83,7 @@ public class TestSpanLoad {
     }
 
     private void validate(final Collection<Trace> traces,
-                          final Map<PathKey, PathNode> roots,
-                          final Map<String, Map<PathKey, PathNodeList>> map) {
+                          final Map<PathKey, PathNode> roots) {
         final Comparator<Span> spanComparator = new CloseSpanComparator(NanoTime.ofMillis(10));
         final PathKeyFactory pathKeyFactory = new PathKeyFactoryImpl();
         final TraceProcessor traceProcessor = new TraceValidator(spanComparator, pathKeyFactory);
@@ -95,7 +93,7 @@ public class TestSpanLoad {
     }
 
     private void loadData(final Path path,
-                          final Map<String, Trace> traceMap) {
+                          final TracesStore tracesStore) {
         try (final BufferedReader lineReader = Files.newBufferedReader(path)) {
             final String line = lineReader.readLine();
             final ExportTraceServiceRequest exportRequest =
@@ -103,11 +101,10 @@ public class TestSpanLoad {
             for (final ResourceSpans resourceSpans : NullSafe.list(exportRequest.getResourceSpans())) {
                 for (final ScopeSpans scopeSpans : NullSafe.list(resourceSpans.getScopeSpans())) {
                     for (final Span span : NullSafe.list(scopeSpans.getSpans())) {
-                        traceMap.computeIfAbsent(span.getTraceId(), Trace::new).addSpan(span);
+                        tracesStore.addSpan(span);
                     }
                 }
             }
-
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
