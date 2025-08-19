@@ -32,10 +32,6 @@
     color: red;
 }
 
-.pathway-row {
-
-}
-
 .pathway-node {
     display: flex;
     gap: 4px;

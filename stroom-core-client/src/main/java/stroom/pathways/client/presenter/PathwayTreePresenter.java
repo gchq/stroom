@@ -34,11 +34,7 @@ public class PathwayTreePresenter
         extends MyPresenterWidget<PathwayTreeView> {
 
     private static final int ROW_HEIGHT = 22;
-    private static final int INDENT = 20;//56;
-    private static final int START_X_OFFSET = 13;
-    private static final int START_Y_OFFSET = 0;
-    private static final int END_X_OFFSET = 23;
-    private static final int END_Y_OFFSET = -9;
+    private static final int INDENT = 20;
 
     private final ButtonView newButton;
     private final ButtonView editButton;
@@ -76,8 +72,6 @@ public class PathwayTreePresenter
                         NullSafe.isNonBlankString(element.getAttribute("uuid")), 3);
                 if (node != null) {
                     final String uuid = node.getAttribute("uuid");
-//                    AlertEvent.fireInfo(this, uuid, null);
-
                     if (!Objects.equals(selected, node)) {
                         if (selected != null) {
                             selected.removeClassName("pathway-nodeName--selected");
@@ -140,154 +134,86 @@ public class PathwayTreePresenter
     }
 
     private void append(final HtmlBuilder hb,
-                       final PathNode node,
-                       final HtmlBuilder svg,
-                       final int nodeDepth,
-                       final AtomicInteger rowNum,
-                       final AtomicInteger width,
-                       final AtomicInteger height) {
-        hb.div(d -> {
-            final int sourceRowNum = rowNum.incrementAndGet();
+                        final PathNode node,
+                        final HtmlBuilder svg,
+                        final int nodeDepth,
+                        final AtomicInteger rowNum,
+                        final AtomicInteger width,
+                        final AtomicInteger height) {
+        final int sourceRowNum = rowNum.incrementAndGet();
 
-            // Render node icon and text.
-            d.div(nodeDiv -> {
-                nodeDiv.div(icon ->
-                                icon.appendTrustedString(SvgImage.PATHWAYS_NODE.getSvg()),
-                        Attribute.className("pathway-nodeIcon svgIcon " +
-                                            SvgImage.PATHWAYS_NODE.getClassName()));
-                nodeDiv.div(n -> n.append(node.getName()),
-                        Attribute.className("pathway-nodeName"), new Attribute("uuid", node.getUuid()));
-            }, Attribute.className("pathway-node"));
+        // Render node icon and text.
+        hb.div(nodeDiv -> {
+            nodeDiv.div(icon ->
+                            icon.appendTrustedString(SvgImage.PATHWAYS_NODE.getSvg()),
+                    Attribute.className("pathway-nodeIcon svgIcon " +
+                                        SvgImage.PATHWAYS_NODE.getClassName()));
+            nodeDiv.div(n -> n.append(node.getName()),
+                    Attribute.className("pathway-nodeName"), new Attribute("uuid", node.getUuid()));
+        }, Attribute.className("pathway-node"));
 
-            // Add child node targets.
-//            final int parentRowNum = count.incrementAndGet();
-            final List<PathNodeList> targets = NullSafe.list(node.getTargets());
-            if (targets.size() > 1) {
+        // Add child node targets.
+        final List<PathNodeList> targets = NullSafe.list(node.getTargets());
+        if (targets.size() > 1) {
+            // Add bezier curve to target set.
+            appendBezier(svg, nodeDepth, sourceRowNum, rowNum.get(), width, height);
+
+            // Add target set.
+            final String choiceCss = "pathway-nodeIcon svgIcon " +
+                                     SvgImage.PATHWAYS_CHOICE.getClassName();
+
+            hb.div(targetsOuterDiv -> {
+                targetsOuterDiv.div(icon -> icon.appendTrustedString(SvgImage.PATHWAYS_CHOICE.getSvg()),
+                        Attribute.className(choiceCss));
+
+                targetsOuterDiv.div(inner -> {
+                    targets.forEach(target -> {
+
+                        // Add quadratic curve to this node.
+                        appendQuadratic(svg, nodeDepth + 2, sourceRowNum, rowNum.get(), width, height);
+
+                        addTargets(inner, target, svg, nodeDepth + 3, rowNum, width, height);
+                    });
+                }, Attribute.className("pathway-targets-inner"));
+
+
+            }, Attribute.className("pathway-targets-outer"));
+
+        } else if (!targets.isEmpty()) {
+            final PathNodeList target = targets.get(0);
+            if (!target.getNodes().isEmpty()) {
                 // Add bezier curve to target set.
                 appendBezier(svg, nodeDepth, sourceRowNum, rowNum.get(), width, height);
 
-                // Add target set.
-                final String choiceCss = "pathway-nodeIcon svgIcon " +
-                                         SvgImage.PATHWAYS_CHOICE.getClassName();
-
-                d.div(targetsOuterDiv -> {
-                    targetsOuterDiv.div(icon -> icon.appendTrustedString(SvgImage.PATHWAYS_CHOICE.getSvg()),
-                            Attribute.className(choiceCss));
-
-                    targetsOuterDiv.div(inner -> {
-                        targets.forEach(target -> {
-
-//                            final AtomicInteger rowNum = new AtomicInteger(parentRowNum);
-                            // Add bezier curve to target set.
-//                final int targetRowNum =
-//                rowNum.getAndIncrement();
-
-
-                            final int startX = ((nodeDepth + 2) * INDENT) - 2;
-                            final int startY = (sourceRowNum * ROW_HEIGHT) + 8;
-                            final int endX = ((nodeDepth + 2) * INDENT) + 18;
-                            final int endY = (rowNum.get() * ROW_HEIGHT) + 8;
-                            Bezier.quadratic(svg, new Point(startX, startY), new Point(endX, endY));
-                            if (endX > width.get()) {
-                                width.set(endX);
-                            }
-                            if (endY > height.get()) {
-                                height.set(endY);
-                            }
-
-                            addTargets(inner, target, svg, nodeDepth + 3, rowNum, width, height);
-                        });
-                    }, Attribute.className("pathway-targets-inner"));
-
-
-                }, Attribute.className("pathway-targets-outer"));
-
-            } else if (!targets.isEmpty()) {
-                final PathNodeList target = targets.get(0);
-                if (!target.getNodes().isEmpty()) {
-                    // Add bezier curve to target set.
-                    appendBezier(svg, nodeDepth, sourceRowNum, rowNum.get(), width, height);
-
-                    addTargets(d, target, svg, nodeDepth + 1, rowNum, width, height);
-                }
+                addTargets(hb, target, svg, nodeDepth + 1, rowNum, width, height);
             }
-
-        }, Attribute.className("pathway-row"));
+        }
     }
 
     private void addTargets(final HtmlBuilder hb,
-                           final PathNodeList target,
-                           final HtmlBuilder svg,
-                           final int nodeDepth,
-                           final AtomicInteger rowNum,
-                           final AtomicInteger width,
-                           final AtomicInteger height) {
+                            final PathNodeList target,
+                            final HtmlBuilder svg,
+                            final int nodeDepth,
+                            final AtomicInteger rowNum,
+                            final AtomicInteger width,
+                            final AtomicInteger height) {
         if (!target.getNodes().isEmpty()) {
-            // Add bezier curve to target set.
-//                final int targetRowNum = rowNum.getAndIncrement();
-
-
-//                final int startX = (nodeDepth * INDENT);
-//                final int startY = (parentRowNum * ROW_HEIGHT) + 8;
-//                final int endX = (nodeDepth * INDENT) + 18;
-//                final int endY = (rowNum.get() * ROW_HEIGHT) + 8;
-//                Bezier.quadratic(svg, new Point(startX, startY), new Point(endX, endY));
-//
-
-//                appendBezier(svg, nodeDepth, parentRowNum - 1, targetRowNum - 1, width, height);
-
             final int sourceRowNum = rowNum.get();
 
             // Add target set.
             final String choiceCss = "pathway-nodeIcon svgIcon " +
                                      SvgImage.PATHWAYS_SEQUENCE.getClassName();
 
-//                hb.div(outer -> {
-
             hb.div(targetDiv -> {
                 targetDiv.div(icon -> icon.appendTrustedString(SvgImage.PATHWAYS_SEQUENCE.getSvg()),
                         Attribute.className(choiceCss));
-
-//                    final int choiceRowNum = count.get();
 
                 targetDiv.div(o -> {
 
                     o.div(targetsDiv -> {
                         target.getNodes().forEach(pathNode -> {
-                             // Add bezier curve to this node.
-
-                            final int startX = ((nodeDepth + 1) * INDENT) - 2;
-                            final int startY = (sourceRowNum * ROW_HEIGHT) + 8;
-                            final int endX = ((nodeDepth + 1) * INDENT) + 18;
-                            final int endY = (rowNum.get() * ROW_HEIGHT) + 8;
-                            Bezier.quadratic(svg, new Point(startX, startY), new Point(endX, endY));
-                            if (endX > width.get()) {
-                                width.set(endX);
-                            }
-                            if (endY > height.get()) {
-                                height.set(endY);
-                            }
-
-
-//                                final int nodeDepth = depth + 1;
-//                            final int nodeRowNum = (count.get() + 1);
-//                                    appendBezier(svg, nodeDepth, targetRowNum, nodeRowNum, width, height);
-
-
-//                            final int startX = (nodeDepth * INDENT) + 43;
-//                            final int startY = (parentRowNum * ROW_HEIGHT) + 13;
-//                            final int endX = (nodeDepth * INDENT) + 60;
-//                            final int endY = (parentRowNum * ROW_HEIGHT) + 13;
-//                            Bezier.quadratic(svg, new Point(startX, startY), new Point(endX, endY));
-
-
-//                                if (endX > width.get()) {
-//                                    width.set(endX);
-//                                }
-//                                if (endY > height.get()) {
-//                                    height.set(endY);
-//                                }
-
+                            // Add quadratic curve to this node.
+                            appendQuadratic(svg, nodeDepth + 1, sourceRowNum, rowNum.get(), width, height);
 
                             // Add node div.
                             append(targetsDiv,
@@ -303,7 +229,6 @@ public class PathwayTreePresenter
 
 
             }, Attribute.className("pathway-target"));
-//                }, Attribute.className("pathway-targets-outer"));
         }
     }
 
@@ -313,12 +238,31 @@ public class PathwayTreePresenter
                               final int endRow,
                               final AtomicInteger width,
                               final AtomicInteger height) {
-        final int startX = (depth * INDENT) + 8;// + START_X_OFFSET;
-        final int startY = (startRow * ROW_HEIGHT) - 4;// + START_Y_OFFSET;
-        final int endX = (depth * INDENT) + 18;//END_X_OFFSET;
-        final int endY = (endRow * ROW_HEIGHT) + 8;// + END_Y_OFFSET;
+        final int startX = (depth * INDENT) + 8;
+        final int startY = (startRow * ROW_HEIGHT) - 4;
+        final int endX = (depth * INDENT) + 18;
+        final int endY = (endRow * ROW_HEIGHT) + 8;
         Bezier.curve(svg, new Point(startX, startY), new Point(endX, endY));
 
+        if (endX > width.get()) {
+            width.set(endX);
+        }
+        if (endY > height.get()) {
+            height.set(endY);
+        }
+    }
+
+    private void appendQuadratic(final HtmlBuilder svg,
+                                 final int depth,
+                                 final int startRow,
+                                 final int endRow,
+                                 final AtomicInteger width,
+                                 final AtomicInteger height) {
+        final int startX = (depth * INDENT) - 2;
+        final int startY = (startRow * ROW_HEIGHT) + 8;
+        final int endX = (depth * INDENT) + 18;
+        final int endY = (endRow * ROW_HEIGHT) + 8;
+        Bezier.quadratic(svg, new Point(startX, startY), new Point(endX, endY));
         if (endX > width.get()) {
             width.set(endX);
         }
