@@ -16,6 +16,7 @@ import stroom.util.authentication.Refreshable;
 import stroom.util.authentication.Refreshable.RefreshMode;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.exception.ThrowingFunction;
+import stroom.util.io.SimplePathCreator;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -36,6 +37,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 @Singleton
 public abstract class AbstractUserIdentityFactory implements UserIdentityFactory {
@@ -48,6 +50,7 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
     private final CertificateExtractor certificateExtractor;
     private final ServiceUserFactory serviceUserFactory;
     private final JerseyClientFactory jerseyClientFactory;
+    private final SimplePathCreator simplePathCreator;
 
     // A service account/user for communicating with other apps in the same OIDC realm,
     // e.g. proxy => stroom. Created lazily.
@@ -65,6 +68,7 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                                        final CertificateExtractor certificateExtractor,
                                        final ServiceUserFactory serviceUserFactory,
                                        final JerseyClientFactory jerseyClientFactory,
+                                       final SimplePathCreator simplePathCreator,
                                        final RefreshManager refreshManager) {
         this.jwtContextFactory = jwtContextFactory;
         this.openIdConfigProvider = openIdConfigProvider;
@@ -72,6 +76,7 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
         this.certificateExtractor = certificateExtractor;
         this.serviceUserFactory = serviceUserFactory;
         this.jerseyClientFactory = jerseyClientFactory;
+        this.simplePathCreator = simplePathCreator;
         this.refreshManager = refreshManager;
         this.objectMapper = createObjectMapper();
         // Bake this in as a restart is required for this prop
@@ -400,6 +405,36 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
 
     protected void removeTokenFromRefreshManager(final Refreshable refreshable) {
         NullSafe.consume(refreshable, refreshManager::remove);
+    }
+
+    protected Optional<String> getUserFullName(final OpenIdConfiguration openIdConfiguration,
+                                               final JwtClaims jwtClaims) {
+        Objects.requireNonNull(openIdConfiguration);
+        Objects.requireNonNull(jwtClaims);
+        final String fullNameClaimTemplate = openIdConfiguration.getFullNameClaimTemplate();
+        if (NullSafe.isNonBlankString(fullNameClaimTemplate)) {
+            String fullName = fullNameClaimTemplate;
+            final Set<String> claimsInTemplate = NullSafe.asSet(simplePathCreator.findVars(fullNameClaimTemplate));
+            // e.g. "${firstName} ${lastName}" => "john Doe"
+            // If the claim in the template is not in the claims then just replace with empty string
+            for (final String claim : claimsInTemplate) {
+                fullName = simplePathCreator.replace(
+                        fullName,
+                        claim,
+                        () -> {
+                            if (NullSafe.isNonBlankString(claim)) {
+                                return JwtUtil.getClaimValue(jwtClaims, claim)
+                                        .filter(NullSafe::isNonBlankString)
+                                        .orElse("");
+                            } else {
+                                return "";
+                            }
+                        });
+            }
+            return Optional.ofNullable(fullName);
+        } else {
+            return Optional.empty();
+        }
     }
 
     private FetchTokenResult refreshTokens(final TokenResponse existingTokenResponse) {

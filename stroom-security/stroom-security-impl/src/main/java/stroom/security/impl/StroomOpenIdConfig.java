@@ -42,6 +42,7 @@ public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroom
             @JsonProperty("validIssuers") final Set<String> validIssuers,
             @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim,
             @JsonProperty("userDisplayNameClaim") final String userDisplayNameClaim,
+            @JsonProperty("fullNameClaimTemplate") final String fullNameClaimTemplate,
             @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes,
             @JsonProperty("publicKeyUriPattern") final String publicKeyUriPattern) {
         super(identityProviderType,
@@ -62,6 +63,7 @@ public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroom
                 validIssuers,
                 uniqueIdentityClaim,
                 userDisplayNameClaim,
+                fullNameClaimTemplate,
                 expectedSignerPrefixes,
                 publicKeyUriPattern);
     }
@@ -103,6 +105,7 @@ public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroom
                 getValidIssuers(),
                 getUniqueIdentityClaim(),
                 getUserDisplayNameClaim(),
+                getFullNameClaimTemplate(),
                 getExpectedSignerPrefixes(),
                 getPublicKeyUriPattern());
     }

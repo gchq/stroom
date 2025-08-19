@@ -145,6 +145,11 @@ public class DelegatingIdpConfigurationProvider implements IdpConfigurationProvi
     }
 
     @Override
+    public String getFullNameClaimTemplate() {
+        return delegate.getFullNameClaimTemplate();
+    }
+
+    @Override
     public String getLogoutRedirectParamName() {
         return delegate.getLogoutRedirectParamName();
     }

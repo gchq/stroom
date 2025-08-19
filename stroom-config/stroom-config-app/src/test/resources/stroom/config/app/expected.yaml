@@ -878,6 +878,7 @@ appConfig:
         clientSecret: null
         expectedSignerPrefixes: []
         formTokenRequest: true
+        fullNameClaimTemplate: "${name}"
         identityProviderType: "INTERNAL_IDP"
         issuer: null
         jwksUri: null

@@ -195,7 +195,7 @@ public class SimplePathCreator implements PathCreator {
 
     @Override
     public String replace(final String path,
-                          final String type,
+                          final String var,
                           final LongSupplier replacementSupplier,
                           final int pad) {
 
@@ -208,15 +208,15 @@ public class SimplePathCreator implements PathCreator {
             }
             return value;
         };
-        return replace(path, type, stringReplacementSupplier);
+        return replace(path, var, stringReplacementSupplier);
     }
 
     @Override
-    public String replace(final String path,
-                          final String type,
+    public String replace(final String str,
+                          final String var,
                           final Supplier<String> replacementSupplier) {
-        String newPath = path;
-        final String param = "${" + type + "}";
+        String newPath = str;
+        final String param = "${" + var + "}";
         int start = newPath.indexOf(param);
         while (start != -1) {
             final int end = start + param.length();

@@ -367,7 +367,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                         uniqueId,
                         userDisplayNameClaim,
                         displayName,
-                        JwtUtil.getClaimValue(jwtContext, OpenId.AUD)));
+                        JwtUtil.getClaimValue(jwtContext, OpenId.CLAIM__AUDIENCE)));
             }
 
             // TODO : @66 Check against blacklist to see if token has been revoked. Blacklist
