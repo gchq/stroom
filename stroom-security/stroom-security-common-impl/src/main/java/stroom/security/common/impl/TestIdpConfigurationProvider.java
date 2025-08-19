@@ -102,6 +102,11 @@ public class TestIdpConfigurationProvider implements IdpConfigurationProvider {
     }
 
     @Override
+    public String getFullNameClaimTemplate() {
+        throw new UnsupportedOperationException("Not supported for this implementation");
+    }
+
+    @Override
     public String getLogoutRedirectParamName() {
         throw new UnsupportedOperationException("Not supported for this implementation");
     }

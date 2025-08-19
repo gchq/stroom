@@ -366,6 +366,11 @@ public class ExternalIdpConfigurationProvider
     }
 
     @Override
+    public String getFullNameClaimTemplate() {
+        return localOpenIdConfigProvider.get().getFullNameClaimTemplate();
+    }
+
+    @Override
     public String getLogoutRedirectParamName() {
         return localOpenIdConfigProvider.get().getLogoutRedirectParamName();
     }

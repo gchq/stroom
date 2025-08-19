@@ -103,6 +103,11 @@ public interface OpenIdConfiguration {
     String getUserDisplayNameClaim();
 
     /**
+     * @see AbstractOpenIdConfig#getFullNameClaimTemplate()
+     */
+    String getFullNameClaimTemplate();
+
+    /**
      * @see AbstractOpenIdConfig#getLogoutRedirectParamName()
      */
     String getLogoutRedirectParamName();

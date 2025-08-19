@@ -2,6 +2,7 @@ package stroom.security.openid.api;
 
 import stroom.util.collections.CollectionUtil;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.validation.AllMatchPattern;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -29,6 +30,7 @@ public abstract class AbstractOpenIdConfig
     public static final String PROP_NAME_IDP_TYPE = "identityProviderType";
     public static final String PROP_NAME_EXPECTED_SIGNER_PREFIXES = "expectedSignerPrefixes";
     public static final boolean DEFAULT_AUDIENCE_CLAIM_REQUIRED = false;
+    public static final String DEFAULT_FULL_NAME_CLAIM_TEMPLATE = "${name}";
 
     private final IdpType identityProviderType;
 
@@ -137,6 +139,8 @@ public abstract class AbstractOpenIdConfig
      */
     private final String userDisplayNameClaim;
 
+    private final String fullNameClaimTemplate;
+
     private final Set<String> expectedSignerPrefixes;
 
     private final String publicKeyUriPattern;
@@ -160,6 +164,7 @@ public abstract class AbstractOpenIdConfig
         validIssuers = Collections.emptySet();
         uniqueIdentityClaim = OpenId.CLAIM__SUBJECT;
         userDisplayNameClaim = OpenId.CLAIM__PREFERRED_USERNAME;
+        fullNameClaimTemplate = DEFAULT_FULL_NAME_CLAIM_TEMPLATE;
         expectedSignerPrefixes = Collections.emptySet();
         publicKeyUriPattern = "https://public-keys.auth.elb.{}.amazonaws.com/{}";
     }
@@ -187,6 +192,7 @@ public abstract class AbstractOpenIdConfig
             @JsonProperty("validIssuers") final Set<String> validIssuers,
             @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim,
             @JsonProperty("userDisplayNameClaim") final String userDisplayNameClaim,
+            @JsonProperty("fullNameClaimTemplate") final String fullNameClaimTemplate,
             @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes,
             @JsonProperty("publicKeyUriPattern") final String publicKeyUriPattern) {
 
@@ -208,6 +214,8 @@ public abstract class AbstractOpenIdConfig
         this.validIssuers = Objects.requireNonNullElseGet(validIssuers, Collections::emptySet);
         this.uniqueIdentityClaim = uniqueIdentityClaim;
         this.userDisplayNameClaim = userDisplayNameClaim;
+        this.fullNameClaimTemplate = NullSafe.nonBlankStringElse(
+                fullNameClaimTemplate, DEFAULT_FULL_NAME_CLAIM_TEMPLATE);
         this.expectedSignerPrefixes = expectedSignerPrefixes;
         this.publicKeyUriPattern = publicKeyUriPattern;
     }
@@ -375,6 +383,14 @@ public abstract class AbstractOpenIdConfig
         return userDisplayNameClaim;
     }
 
+    @Override
+    @JsonProperty
+    @JsonPropertyDescription("A template to build the user's full name using claim values as variables in the " +
+                             "template. E.g '${firstName} ${lastName}' or '${name}'.")
+    public String getFullNameClaimTemplate() {
+        return fullNameClaimTemplate;
+    }
+
     // A fairly basic pattern to ensure we get enough of an ARN, i.e.
     // arn:aws:elasticloadbalancing:region-code:account-id:
     // I.e. limit signers down to at least any ELB in an account
@@ -432,6 +448,8 @@ public abstract class AbstractOpenIdConfig
                ", allowedAudiences=" + allowedAudiences +
                ", audienceClaimRequired=" + audienceClaimRequired +
                ", uniqueIdentityClaim=" + uniqueIdentityClaim +
+               ", userDisplayNameClaim=" + userDisplayNameClaim +
+               ", fullNameClaimTemplate=" + fullNameClaimTemplate +
                ", expectedSignerPrefixes=" + expectedSignerPrefixes +
                '}';
     }
@@ -460,12 +478,15 @@ public abstract class AbstractOpenIdConfig
                Objects.equals(requestScopes, that.requestScopes) &&
                Objects.equals(allowedAudiences, that.allowedAudiences) &&
                Objects.equals(uniqueIdentityClaim, that.uniqueIdentityClaim) &&
+               Objects.equals(userDisplayNameClaim, that.userDisplayNameClaim) &&
+               Objects.equals(fullNameClaimTemplate, that.fullNameClaimTemplate) &&
                Objects.equals(expectedSignerPrefixes, that.expectedSignerPrefixes);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(identityProviderType,
+        return Objects.hash(
+                identityProviderType,
                 openIdConfigurationEndpoint,
                 issuer,
                 authEndpoint,
@@ -480,6 +501,8 @@ public abstract class AbstractOpenIdConfig
                 allowedAudiences,
                 audienceClaimRequired,
                 uniqueIdentityClaim,
+                userDisplayNameClaim,
+                fullNameClaimTemplate,
                 expectedSignerPrefixes);
     }
 }

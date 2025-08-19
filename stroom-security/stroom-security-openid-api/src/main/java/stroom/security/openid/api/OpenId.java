@@ -20,7 +20,6 @@ import java.util.List;
 
 public class OpenId {
 
-    public static final String AUD = "aud";
     public static final String AUTH_USER = "authuser";
     public static final String CLIENT_ID = "client_id";
     public static final String CLIENT_SECRET = "client_secret";
@@ -52,6 +51,10 @@ public class OpenId {
     public static final List<String> DEFAULT_CLIENT_CREDENTIALS_SCOPES = List.of(
             OpenId.SCOPE__OPENID);
 
+    /**
+     * A claim holding a set of audience values.
+     */
+    public static final String CLAIM__AUDIENCE = "aud";
     /**
      * Subject - Identifier for the End-User at the Issuer.
      * <p>

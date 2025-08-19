@@ -160,6 +160,7 @@ proxyConfig:
         clientSecret: null
         expectedSignerPrefixes: []
         formTokenRequest: true
+        fullNameClaimTemplate: "${name}"
         identityProviderType: "NO_IDP"
         issuer: null
         jwksUri: null
