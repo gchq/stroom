@@ -2,7 +2,6 @@ package stroom.security.common.impl;
 
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
-import stroom.util.exception.ThrowingFunction;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -87,6 +86,7 @@ public final class JwtUtil {
         Objects.requireNonNull(openIdConfiguration);
         Objects.requireNonNull(jwtClaims);
         final String uniqueIdentityClaim = openIdConfiguration.getUniqueIdentityClaim();
+        // Trim so that the value is consistent with the users created in our DB
         final String id = JwtUtil.getClaimValue(jwtClaims, uniqueIdentityClaim)
                 .orElseThrow(() -> new RuntimeException(LogUtil.message(
                         "Expecting claims to contain configured uniqueIdentityClaim '{}' " +
@@ -108,7 +108,9 @@ public final class JwtUtil {
         Objects.requireNonNull(openIdConfiguration);
         Objects.requireNonNull(jwtClaims);
         final String userDisplayNameClaim = openIdConfiguration.getUserDisplayNameClaim();
-        final Optional<String> userDisplayName = JwtUtil.getClaimValue(jwtClaims, userDisplayNameClaim);
+        // Trim so that the value is consistent with the users created in our DB
+        final Optional<String> userDisplayName = JwtUtil.getClaimValue(jwtClaims, userDisplayNameClaim)
+                .map(String::trim);
 
         LOGGER.debug("userDisplayNameClaim: {}, userDisplayName: {}", userDisplayNameClaim, userDisplayName);
 
@@ -171,25 +173,31 @@ public final class JwtUtil {
         return subject;
     }
 
+    /**
+     * Get the trimmed value corresponding to claim
+     */
     public static Optional<String> getClaimValue(final JwtContext jwtContext, final String claim) {
-        try {
-            return NullSafe.getAsOptional(
-                    jwtContext,
-                    JwtContext::getJwtClaims,
-                    ThrowingFunction.unchecked(jwtClaims ->
-                            jwtClaims.getClaimValue(claim, String.class)));
-        } catch (final Exception e) {
-            LOGGER.debug(() -> LogUtil.message("Error getting claim {}: {}", claim, e.getMessage()), e);
-            return Optional.empty();
-        }
+        return Optional.ofNullable(jwtContext)
+                .map(JwtContext::getJwtClaims)
+                .flatMap(jwtClaims ->
+                        getClaimValue(jwtClaims, claim));
     }
 
+    /**
+     * Get the trimmed value corresponding to claim
+     */
     public static Optional<String> getClaimValue(final JwtClaims jwtClaims, final String claim) {
+        Objects.requireNonNull(claim);
         try {
-            return NullSafe.getAsOptional(
-                    jwtClaims,
-                    ThrowingFunction.unchecked(jwtClaims2 ->
-                            jwtClaims2.getClaimValue(claim, String.class)));
+            if (jwtClaims != null) {
+                final String value = jwtClaims.getClaimValue(claim, String.class);
+                final String trimmed = NullSafe.trim(value);
+                return !trimmed.isEmpty()
+                        ? Optional.of(trimmed)
+                        : Optional.empty();
+            } else {
+                return Optional.empty();
+            }
         } catch (final Exception e) {
             LOGGER.debug(() -> LogUtil.message("Error getting claim {}: {}", claim, e.getMessage()), e);
             return Optional.empty();

@@ -424,7 +424,7 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                         () -> {
                             if (NullSafe.isNonBlankString(claim)) {
                                 return JwtUtil.getClaimValue(jwtClaims, claim)
-                                        .filter(NullSafe::isNonBlankString)
+                                        .map(NullSafe::trim)
                                         .orElse("");
                             } else {
                                 return "";

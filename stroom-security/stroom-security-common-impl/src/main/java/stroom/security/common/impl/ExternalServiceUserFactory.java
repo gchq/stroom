@@ -48,7 +48,8 @@ public class ExternalServiceUserFactory implements ServiceUserFactory {
         final OpenIdConfiguration openIdConfiguration = openIdConfigProvider.get();
         final UserIdentity serviceUserIdentity = new ServiceUserIdentity(
                 JwtUtil.getUniqueIdentity(openIdConfiguration, jwtClaims),
-                JwtUtil.getUserDisplayName(openIdConfiguration, jwtClaims).orElse(null),
+                JwtUtil.getUserDisplayName(openIdConfiguration, jwtClaims)
+                        .orElse(null),
                 updatableToken);
 
         // Associate the token with the user it is for
@@ -66,7 +67,7 @@ public class ExternalServiceUserFactory implements ServiceUserFactory {
         // Use instance equality check as there should only ever be one ServiceUserIdentity
         // in this JVM
         final boolean isServiceUserIdentity = userIdentity instanceof ServiceUserIdentity
-                && userIdentity == serviceUserIdentity;
+                                              && userIdentity == serviceUserIdentity;
         LOGGER.debug("isServiceUserIdentity: {}, userIdentity: {}, serviceUserIdentity: {}",
                 isServiceUserIdentity, userIdentity, serviceUserIdentity);
         return isServiceUserIdentity;
