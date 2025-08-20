@@ -426,12 +426,14 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
         final Templator fullNameTemplator = cachedFullNameTemplate.getValue();
         if (!fullNameTemplator.isBlank()) {
             // If the claim in the template is not in the claims then just replace with empty string
-            final String fullName = fullNameTemplator.buildGenerator()
+            final String fullName = NullSafe.trim(fullNameTemplator.buildGenerator()
                     .addCommonReplacements(aClaim -> JwtUtil.getClaimValue(jwtClaims, aClaim)
-                            .filter(NullSafe::isNonBlankString)
+                            .map(NullSafe::trim)
                             .orElse(""))
-                    .generate();
-            return Optional.ofNullable(fullName);
+                    .generate());
+            return fullName.isEmpty()
+                    ? Optional.empty()
+                    : Optional.of(fullName);
         } else {
             return Optional.empty();
         }
