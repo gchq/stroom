@@ -616,16 +616,17 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
      * @param importSettings Key settings for the import; notably the RootDocRef.
      * @return The DocRef of the imported document.
      */
-    private DocRef importExplorerDoc(@Nullable final ImportExportActionHandler importExportActionHandler,
-                                     final Path nodeFile,
-                                     final Deque<DocRef> importDocRefPath,
-                                     final DocRef nodeFileDocRef,
-                                     final Set<String> tags,
-                                     final Map<String, byte[]> dataMap,
-                                     final ImportState importState,
-                                     final Map<DocRef, ImportState> confirmMap,
-                                     final ImportSettings importSettings)
-        throws IOException {
+    private @Nullable DocRef
+    importExplorerDoc(@Nullable final ImportExportActionHandler importExportActionHandler,
+                      final Path nodeFile,
+                      final Deque<DocRef> importDocRefPath,
+                      final DocRef nodeFileDocRef,
+                      final Set<String> tags,
+                      final Map<String, byte[]> dataMap,
+                      final ImportState importState,
+                      final Map<DocRef, ImportState> confirmMap,
+                      final ImportSettings importSettings)
+            throws IOException {
 
         LOGGER.info("{}Importing explorer doc with node file '{}'", indent(importDocRefPath), nodeFileDocRef);
 
@@ -673,9 +674,13 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                 LOGGER.info("{}Importing the docRef", indent(importDocRefPath));
 
                 if (nodeFileDocRefState.isNodeFileExactlyFolderType()) {
-                    importedDocRef = this.importFolder(nodeFileDocRefState, tags, importDocRefPath);
-                } else {
+                    if (ImportSettings.ok(importSettings, importState)) {
+                        importedDocRef = this.importFolder(nodeFileDocRefState, tags, importDocRefPath);
+                    } else {
+                        importedDocRef = null;
+                    }
 
+                } else {
                     // Check system state is sane
                     if (importExportActionHandler == null) {
                         throw new IOException("Cannot import '" + nodeFileDocRefState.getNodeFileDocRef().getName()
@@ -770,6 +775,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                 // We can't import this item so remove it from the map.
                 LOGGER.info("{}Cannot import item '{}'", indent(importDocRefPath), nodeFileDocRef.getName());
                 confirmMap.remove(nodeFileDocRef);
+                importedDocRef = null;
             }
         } catch (final Exception e) {
             importState.addMessage(Severity.ERROR, e.getMessage());
@@ -782,7 +788,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
         }
 
         // TODO What is supposed to be returned here? Should be docRef of thing imported.
-        return nodeFileDocRef;
+        return importedDocRef;
     }
 
     /**
@@ -799,7 +805,6 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                                 final Deque<DocRef> stack) throws IOException {
 
         // TODO check permissions
-        // TODO do we need 'if (ImportSettings.ok(importSettings, importState)) {' ?
         // TODO importState stuff
 
         final DocRef retDocRef;
