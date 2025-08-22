@@ -1,0 +1,9 @@
+{
+  "type" : "Feed",
+  "uuid" : "03ee992c-6ee6-491f-92b1-76e0f6e8e7ab",
+  "name" : "OTEL_METRICS",
+  "version" : "91820bed-bd8e-457f-80b8-856637ac484e",
+  "reference" : false,
+  "streamType" : "Raw Events",
+  "status" : "RECEIVE"
+}

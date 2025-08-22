@@ -1,5 +1,6 @@
 package stroom.pathways.impl;
 
+import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.otel.trace.AnyValue;
 import stroom.pathways.shared.otel.trace.KeyValue;
 import stroom.pathways.shared.otel.trace.NanoTime;
@@ -19,6 +20,7 @@ import stroom.pathways.shared.pathway.PathNodeList;
 import stroom.pathways.shared.pathway.Regex;
 import stroom.pathways.shared.pathway.StringSet;
 import stroom.pathways.shared.pathway.StringValue;
+import stroom.util.shared.Severity;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -42,20 +45,28 @@ public class TraceValidator implements TraceProcessor {
     }
 
     @Override
-    public void process(final Trace trace, final Map<PathKey, PathNode> roots) {
+    public void process(final Trace trace,
+                        final Map<PathKey, PathNode> roots,
+                        final MessageReceiver messageReceiver,
+                        final PathwaysDoc pathwaysDoc) {
         final Map<PathKey, Map<String, Map<PathKey, PathNodeList>>> maps = new HashMap<>();
         final Span root = trace.getRoot();
         final PathKey pathKey = pathKeyFactory.create(Collections.singletonList(root));
-        final PathNode node = roots.computeIfAbsent(pathKey, k -> new PathNode(root.getName()));
-        final Map<String, Map<PathKey, PathNodeList>> map = maps.computeIfAbsent(pathKey, k -> new HashMap<>());
-        walk(trace, root, node, map);
+        final PathNode node = roots.get(pathKey);
+        if (node == null) {
+            messageReceiver.log(Severity.ERROR, () -> "Invalid path: " + pathKey);
+        } else {
+            final Map<String, Map<PathKey, PathNodeList>> map = maps.computeIfAbsent(pathKey, k -> new HashMap<>());
+            walk(trace, root, node, map, messageReceiver);
+        }
     }
 
     private void walk(final Trace trace,
                       final Span parentSpan,
                       final PathNode parentNode,
-                      final Map<String, Map<PathKey, PathNodeList>> map) {
-        checkConstraints(parentNode, parentSpan);
+                      final Map<String, Map<PathKey, PathNodeList>> map,
+                      final MessageReceiver messageReceiver) {
+        checkConstraints(parentNode, parentSpan, messageReceiver);
 
         final List<Span> childSpans = trace.getChildren(parentSpan);
         final List<Span> sortedSpans = new ArrayList<>(childSpans);
@@ -71,19 +82,21 @@ public class TraceValidator implements TraceProcessor {
 
         final PathNodeList childNodes = innerMap.get(pathKey);
         if (childNodes == null) {
-            throw new RuntimeException("Invalid path: " + parentNode + " " + pathKey);
-        }
+            messageReceiver.log(Severity.ERROR, () -> "Invalid path: " + parentNode + " " + pathKey);
+        } else {
 
-        // Follow the path deeper.
-        for (int i = 0; i < childNodes.getNodes().size(); i++) {
-            final PathNode target = childNodes.getNodes().get(i);
-            final Span span = sortedSpans.get(i);
-            walk(trace, span, target, map);
+            // Follow the path deeper.
+            for (int i = 0; i < childNodes.getNodes().size(); i++) {
+                final PathNode target = childNodes.getNodes().get(i);
+                final Span span = sortedSpans.get(i);
+                walk(trace, span, target, map, messageReceiver);
+            }
         }
     }
 
-
-    private void checkConstraints(final PathNode pathNode, final Span span) {
+    private void checkConstraints(final PathNode pathNode,
+                                  final Span span,
+                                  final MessageReceiver messageReceiver) {
         final PathNode.Builder pathNodeBuilder = pathNode.copy();
 
         final Map<String, Constraint> constraints = pathNode.getConstraints();
@@ -95,17 +108,26 @@ public class TraceValidator implements TraceProcessor {
                 final NanoTime startTime = NanoTime.fromString(span.getStartTimeUnixNano());
                 final NanoTime endTime = NanoTime.fromString(span.getEndTimeUnixNano());
                 final NanoTime duration = endTime.subtract(startTime);
-                validateNanoTime("Duration", durationConstraint.getValue(), duration);
+                validateNanoTime(() -> pathNode.getPath() + " Duration",
+                        durationConstraint.getValue(),
+                        duration,
+                        messageReceiver);
             }
 
             final Constraint flagsConstraint = constraints.get("flags");
             if (flagsConstraint != null) {
-                validateInteger("Flags", flagsConstraint.getValue(), span.getFlags());
+                validateInteger(() -> pathNode.getPath() + " Flags",
+                        flagsConstraint.getValue(),
+                        span.getFlags(),
+                        messageReceiver);
             }
 
             final Constraint kindConstraint = constraints.get("kind");
             if (kindConstraint != null) {
-                validateStringConstraint("Kind", kindConstraint.getValue(), span.getKind().name());
+                validateStringConstraint(() -> pathNode.getPath() + " Kind",
+                        kindConstraint.getValue(),
+                        span.getKind().name(),
+                        messageReceiver);
             }
 
             // Create attribute sets.
@@ -121,88 +143,103 @@ public class TraceValidator implements TraceProcessor {
                     if (keyValue == null) {
                         // Check required attributes all exist.
                         if (!v.isOptional()) {
-                            throw new RuntimeException("Missing required attribute: " + attributeName);
+                            messageReceiver.log(Severity.ERROR, () -> "Missing required attribute: " +
+                                                                      pathNode.getPath() + " " +
+                                                                      attributeName);
                         }
                     } else {
-                        validateAttribute(v.getValue(), keyValue);
+                        validateAttribute(() -> pathNode.getPath() + " " + attributeName,
+                                v.getValue(),
+                                keyValue,
+                                messageReceiver);
                     }
                 }
             });
         }
     }
 
-    private void validateNanoTime(final String key, final ConstraintValue constraint, final NanoTime value) {
+    private void validateNanoTime(final Supplier<String> location,
+                                  final ConstraintValue constraint,
+                                  final NanoTime value,
+                                  final MessageReceiver messageReceiver) {
         if (constraint instanceof final NanoTimeRange nanoTimeRange) {
             if (nanoTimeRange.getMin().isGreaterThan(value)) {
-                throw new RuntimeException(key + " less than expected");
+                messageReceiver.log(Severity.ERROR, () -> location.get() + " '" + value + "' less than expected");
             } else if (nanoTimeRange.getMax().isLessThan(value)) {
-                throw new RuntimeException(key + " greater than expected");
+                messageReceiver.log(Severity.ERROR, () -> location.get() + " '" + value + "' greater than expected");
             }
         }
     }
 
-    private void validateInteger(final String key, final ConstraintValue constraint, final int value) {
+    private void validateInteger(final Supplier<String> location,
+                                 final ConstraintValue constraint,
+                                 final int value,
+                                 final MessageReceiver messageReceiver) {
         if (constraint instanceof final IntegerValue integerValue) {
             if (!integerValue.validate(value)) {
-                throw new RuntimeException(key + " not equal");
+                messageReceiver.log(Severity.ERROR, () -> location.get() + " '" + value + "' not equal");
             }
         } else if (constraint instanceof final IntegerSet integerSet) {
             if (!integerSet.validate(value)) {
-                throw new RuntimeException(key + " not equal");
+                messageReceiver.log(Severity.ERROR, () -> location.get() + " '" + value + "' not equal");
             }
         } else if (constraint instanceof final IntegerRange integerRange) {
             if (integerRange.getMin() > value) {
-                throw new RuntimeException(key + " less than expected");
+                messageReceiver.log(Severity.ERROR, () -> location.get() + " '" + value + "' less than expected");
             } else if (integerRange.getMax() < value) {
-                throw new RuntimeException(key + " greater than expected");
+                messageReceiver.log(Severity.ERROR, () -> location.get() + " '" + value + "' greater than expected");
             }
         }
     }
 
-    private void validateBooleanConstraint(final String key,
+    private void validateBooleanConstraint(final Supplier<String> location,
                                            final ConstraintValue constraint,
-                                           final boolean value) {
+                                           final boolean value,
+                                           final MessageReceiver messageReceiver) {
         if (constraint instanceof final BooleanValue booleanValue) {
             if (!booleanValue.validate(value)) {
-                throw new RuntimeException(key + " not equal");
+                messageReceiver.log(Severity.ERROR, () -> location.get() + " '" + value + "' not equal");
             }
         } else if (constraint instanceof final AnyBoolean booleanSet) {
             if (!booleanSet.validate(value)) {
-                throw new RuntimeException(key + " not equal");
+                messageReceiver.log(Severity.ERROR, () -> location.get() + " '" + value + "' not equal");
             }
         }
     }
 
-    private void validateStringConstraint(final String key,
+    private void validateStringConstraint(final Supplier<String> location,
                                           final ConstraintValue constraint,
-                                          final String value) {
+                                          final String value,
+                                          final MessageReceiver messageReceiver) {
         if (constraint instanceof final StringValue stringValue) {
             if (!stringValue.validate(value)) {
-                throw new RuntimeException(key + " not equal");
+                messageReceiver.log(Severity.ERROR, () -> location.get() + " '" + value + "' not equal");
             }
         } else if (constraint instanceof final StringSet stringSet) {
             if (!stringSet.validate(value)) {
-                throw new RuntimeException(key + " not equal");
+                messageReceiver.log(Severity.ERROR, () -> location.get() + " '" + value + "' not equal");
             }
         } else if (constraint instanceof final Regex stringPattern) {
             // TODO : Cache
             final Pattern pattern = Pattern.compile(stringPattern.getValue());
             if (!pattern.matcher(value).find()) {
-                throw new RuntimeException(key + " not equal");
+                messageReceiver.log(Severity.ERROR, () -> location.get() + " '" + value + "' not equal");
             }
         }
     }
 
-    private void validateAttribute(final ConstraintValue constraint,
-                                   final KeyValue keyValue) {
+    private void validateAttribute(final Supplier<String> location,
+                                   final ConstraintValue constraint,
+                                   final KeyValue keyValue,
+                                   final MessageReceiver messageReceiver) {
         final AnyValue value = keyValue.getValue();
 
         if (value.getStringValue() != null) {
-            validateStringConstraint(keyValue.getKey(), constraint, value.getStringValue());
+            validateStringConstraint(location, constraint, value.getStringValue(), messageReceiver);
         } else if (value.getBoolValue() != null) {
-            validateBooleanConstraint(keyValue.getKey(), constraint, value.getBoolValue());
+            validateBooleanConstraint(location, constraint, value.getBoolValue(), messageReceiver);
         } else if (value.getIntValue() != null) {
-            validateInteger(keyValue.getKey(), constraint, value.getIntValue());
+            validateInteger(location, constraint, value.getIntValue(), messageReceiver);
         }
         // TODO : Add validation for other attribute types.
 

@@ -3,6 +3,7 @@ ext.moduleName = 'stroom.pathways.impl'
 dependencies {
 //implementation project(':stroom-cluster:stroom-cluster-lock-api')
     implementation project(':stroom-core-shared')
+    implementation project(':stroom-data:stroom-data-store-api')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
@@ -10,6 +11,7 @@ dependencies {
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-job:stroom-job-api')
+    implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-state:stroom-planb-impl')
     implementation project(':stroom-util')

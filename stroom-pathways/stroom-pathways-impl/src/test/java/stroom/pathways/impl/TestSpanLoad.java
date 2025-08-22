@@ -1,5 +1,7 @@
 package stroom.pathways.impl;
 
+import stroom.docref.DocRef;
+import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.otel.trace.ExportTraceServiceRequest;
 import stroom.pathways.shared.otel.trace.NanoTime;
 import stroom.pathways.shared.otel.trace.ResourceSpans;
@@ -30,15 +32,19 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestSpanLoad {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestSpanLoad.class);
     private static final ObjectMapper MAPPER = createMapper(true);
 
+    private static final DocRef DOC_REF = DocRef.builder().type(PathwaysDoc.TYPE).uuid("test").build();
+    private static final PathwaysDoc PATHWAYS_DOC = new PathwaysDoc();
+
     @Test
     void testLoadStandard() {
+
 
         // Read in sample data and create a map of traces.
         final TracesStore tracesStore = new TracesStore();
@@ -48,12 +54,20 @@ public class TestSpanLoad {
         }
 
         // Output the tree for each trace.
-        for (final Trace trace : tracesStore.getTraces()) {
+        for (final Trace trace : tracesStore.getTraces(DOC_REF)) {
             LOGGER.info("\n" + trace.toString());
         }
 
+        final StringBuilder messages = new StringBuilder();
+        final MessageReceiver messageReceiver = (severity, message) -> {
+            messages.append(severity.getDisplayValue());
+            messages.append(": ");
+            messages.append(message.get());
+            messages.append("\n");
+        };
+
         // Construct known paths for all traces.
-        final Map<PathKey, PathNode> roots = buildPathways(tracesStore.getTraces());
+        final Map<PathKey, PathNode> roots = buildPathways(tracesStore.getTraces(DOC_REF), messageReceiver);
 
         // Output found pathways.
         for (final PathNode node : roots.values()) {
@@ -61,34 +75,37 @@ public class TestSpanLoad {
         }
 
         // Validate traces against known paths.
-        validate(tracesStore.getTraces(), roots);
+        validate(tracesStore.getTraces(DOC_REF), roots, messageReceiver);
 
         // Introduce an invalid pathway.
         for (int i = 14; i <= 17; i++) {
             final Path path = Paths.get("src/test/resources/" + StringIdUtil.idToString(i) + ".dat");
             loadData(path, tracesStore);
         }
-        assertThrows(RuntimeException.class, () -> validate(tracesStore.getTraces(), roots));
+        validate(tracesStore.getTraces(DOC_REF), roots, messageReceiver);
+        assertThat(messages.toString()).contains("ERROR: [GET /people] thread.id '125' not equal");
     }
 
-    private Map<PathKey, PathNode> buildPathways(final Collection<Trace> traces) {
+    private Map<PathKey, PathNode> buildPathways(final Collection<Trace> traces,
+                                                 final MessageReceiver messageReceiver) {
         final Comparator<Span> spanComparator = new CloseSpanComparator(NanoTime.ofMillis(10));
         final PathKeyFactory pathKeyFactory = new PathKeyFactoryImpl();
         final TraceProcessor traceProcessor = new NodeMutatorImpl(spanComparator, pathKeyFactory);
         final Map<PathKey, PathNode> roots = new HashMap<>();
         for (final Trace trace : traces) {
-            traceProcessor.process(trace, roots);
+            traceProcessor.process(trace, roots, messageReceiver, PATHWAYS_DOC);
         }
         return roots;
     }
 
     private void validate(final Collection<Trace> traces,
-                          final Map<PathKey, PathNode> roots) {
+                          final Map<PathKey, PathNode> roots,
+                          final MessageReceiver messageReceiver) {
         final Comparator<Span> spanComparator = new CloseSpanComparator(NanoTime.ofMillis(10));
         final PathKeyFactory pathKeyFactory = new PathKeyFactoryImpl();
         final TraceProcessor traceProcessor = new TraceValidator(spanComparator, pathKeyFactory);
         for (final Trace trace : traces) {
-            traceProcessor.process(trace, roots);
+            traceProcessor.process(trace, roots, messageReceiver, PATHWAYS_DOC);
         }
     }
 
@@ -101,7 +118,7 @@ public class TestSpanLoad {
             for (final ResourceSpans resourceSpans : NullSafe.list(exportRequest.getResourceSpans())) {
                 for (final ScopeSpans scopeSpans : NullSafe.list(resourceSpans.getScopeSpans())) {
                     for (final Span span : NullSafe.list(scopeSpans.getSpans())) {
-                        tracesStore.addSpan(span);
+                        tracesStore.addSpan(DOC_REF, span);
                     }
                 }
             }

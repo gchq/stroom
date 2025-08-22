@@ -115,7 +115,7 @@ class PathwaysFilter extends AbstractXMLFilter {
         if ("span".equals(localName)) {
             try {
                 final Span span = JsonUtil.readValue(sb.toString(), Span.class);
-                tracesStore.addSpan(span);
+                tracesStore.addSpan(docRef, span);
             } catch (final RuntimeException e) {
                 log(Severity.ERROR, e.getMessage(), e);
             }

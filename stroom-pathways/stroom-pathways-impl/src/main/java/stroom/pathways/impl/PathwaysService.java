@@ -1,17 +1,11 @@
 package stroom.pathways.impl;
 
+import stroom.docref.DocRef;
 import stroom.pathways.shared.AddPathway;
 import stroom.pathways.shared.DeletePathway;
 import stroom.pathways.shared.FindPathwayCriteria;
 import stroom.pathways.shared.UpdatePathway;
-import stroom.pathways.shared.otel.trace.NanoTime;
-import stroom.pathways.shared.otel.trace.Span;
-import stroom.pathways.shared.otel.trace.Trace;
-import stroom.pathways.shared.pathway.PathKey;
-import stroom.pathways.shared.pathway.PathNode;
 import stroom.pathways.shared.pathway.Pathway;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -21,32 +15,29 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import java.time.Instant;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 @Singleton
 public class PathwaysService {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PathwaysService.class);
+//    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PathwaysService.class);
+//
+//    private static final ObjectMapper MAPPER = createMapper(true);
 
-    private static final ObjectMapper MAPPER = createMapper(true);
 
-
+    private final PathwaysStore pathwaysStore;
     private final TracesStore tracesStore;
-    private final Map<String, Pathway> pathways = new ConcurrentHashMap<>();
-    private final Map<PathKey, PathNode> roots = new ConcurrentHashMap<>();
-    private final Set<Trace> addedTraces = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final MessageReceiverFactory messageReceiverFactory;
+    private final Map<DocRef, Pathways> pathwaysMap = new ConcurrentHashMap<>();
 
     @Inject
-    public PathwaysService(final TracesStore tracesStore) {
+    public PathwaysService(final PathwaysStore pathwaysStore,
+                           final TracesStore tracesStore,
+                           final MessageReceiverFactory messageReceiverFactory) {
+        this.pathwaysStore = pathwaysStore;
         this.tracesStore = tracesStore;
+        this.messageReceiverFactory = messageReceiverFactory;
 
 //        // FIXME: TEMPORARY - Construct test pathways
 //
@@ -64,44 +55,47 @@ public class PathwaysService {
 //        addTraces(traceMap.values());
     }
 
-    public void addTraces(final Collection<Trace> traces) {
-        // Output the tree for each trace.
-        for (final Trace trace : traces) {
-            if (addedTraces.add(trace)) {
-                LOGGER.info("\n" + trace.toString());
-
-                // Construct known paths for all traces.
-                buildPathways(trace);
-
-                // Output found pathways.
-                for (final PathNode node : roots.values()) {
-                    LOGGER.info("\n" + node.toString());
-                }
-
-                final Instant now = Instant.now();
-                final NanoTime nanoTime = new NanoTime(now.getEpochSecond(), now.getNano());
-                roots.forEach((key, value) -> pathways.compute(
-                        key.toString(),
-                        (k, v) -> {
-                            if (v == null) {
-                                return Pathway.builder()
-                                        .name(key.toString())
-                                        .createTime(nanoTime)
-                                        .lastUsedTime(nanoTime)
-                                        .pathKey(key)
-                                        .root(value)
-                                        .build();
-                            } else {
-                                return v
-                                        .copy()
-                                        .updateTime(nanoTime)
-                                        .root(value)
-                                        .build();
-                            }
-                        }));
-            }
-        }
-    }
+//    public void addTraces(final Collection<Trace> traces) {
+//        messageReceiverFactory.create("PATHWAY_INFO", messageReceiver -> {
+//
+//            // Output the tree for each trace.
+//            for (final Trace trace : traces) {
+//                if (addedTraces.add(trace)) {
+//                    LOGGER.info("\n" + trace.toString());
+//
+//                    // Construct known paths for all traces.
+//                    buildPathways(trace, messageReceiver);
+//
+//                    // Output found pathways.
+//                    for (final PathNode node : roots.values()) {
+//                        LOGGER.info("\n" + node.toString());
+//                    }
+//
+//                    final Instant now = Instant.now();
+//                    final NanoTime nanoTime = new NanoTime(now.getEpochSecond(), now.getNano());
+//                    roots.forEach((key, value) -> pathways.compute(
+//                            key.toString(),
+//                            (k, v) -> {
+//                                if (v == null) {
+//                                    return Pathway.builder()
+//                                            .name(key.toString())
+//                                            .createTime(nanoTime)
+//                                            .lastUsedTime(nanoTime)
+//                                            .pathKey(key)
+//                                            .root(value)
+//                                            .build();
+//                                } else {
+//                                    return v
+//                                            .copy()
+//                                            .updateTime(nanoTime)
+//                                            .root(value)
+//                                            .build();
+//                                }
+//                            }));
+//                }
+//            }
+//        });
+//    }
 
 //    private void loadData(final Path path,
 //                          final Map<String, Trace> traceMap) {
@@ -122,38 +116,37 @@ public class PathwaysService {
 //        }
 //    }
 
-    private void buildPathways(final Trace trace) {
-        final Comparator<Span> spanComparator = new CloseSpanComparator(NanoTime.ofMillis(10));
-        final PathKeyFactory pathKeyFactory = new PathKeyFactoryImpl();
-        final TraceProcessor traceProcessor = new NodeMutatorImpl(spanComparator, pathKeyFactory);
-        traceProcessor.process(trace, roots);
-    }
+//    private void buildPathways(final Trace trace,
+//                               final MessageReceiver messageReceiver) {
+//        final Comparator<Span> spanComparator = new CloseSpanComparator(NanoTime.ofMillis(10));
+//        final PathKeyFactory pathKeyFactory = new PathKeyFactoryImpl();
+//        final TraceProcessor traceProcessor = new NodeMutatorImpl(spanComparator, pathKeyFactory);
+//        traceProcessor.process(trace, roots, messageReceiver);
+//    }
 
     public ResultPage<Pathway> findPathways(final FindPathwayCriteria criteria) {
-        // Update traces to build pathways.
-        // TODO : Do this with a background process.
-        addTraces(tracesStore.getTraces());
+        final Pathways pathways = getPathways(criteria.getDataSourceRef());
+        return pathways.findPathways(criteria);
+    }
 
-        final List<Pathway> list = pathways
-                .values()
-                .stream()
-                .sorted(Comparator.comparing(Pathway::getName))
-                .collect(Collectors.toList());
-        return ResultPage.createPageLimitedList(list, criteria.getPageRequest());
+    private Pathways getPathways(final DocRef docRef) {
+        return pathwaysMap.computeIfAbsent(docRef, k ->
+                new Pathways(k, pathwaysStore, tracesStore, messageReceiverFactory));
     }
 
     public Boolean addPathway(final AddPathway addPathway) {
-        pathways.put(addPathway.getPathway().getName(), addPathway.getPathway());
-        return true;
+        final Pathways pathways = getPathways(addPathway.getDocRef());
+        return pathways.addPathway(addPathway.getPathway());
     }
 
     public Boolean updatePathway(final UpdatePathway updatePathway) {
-        pathways.put(updatePathway.getName(), updatePathway.getPathway());
-        return true;
+        final Pathways pathways = getPathways(updatePathway.getDocRef());
+        return pathways.updatePathway(updatePathway.getName(), updatePathway.getPathway());
     }
 
     public Boolean deletePathway(final DeletePathway deletePathway) {
-        return pathways.remove(deletePathway.getName()) != null;
+        final Pathways pathways = getPathways(deletePathway.getDocRef());
+        return pathways.deletePathway(deletePathway.getName());
     }
 
     private static ObjectMapper createMapper(final boolean indent) {
