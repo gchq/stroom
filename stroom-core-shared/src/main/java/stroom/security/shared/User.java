@@ -169,7 +169,7 @@ public class User implements HasAuditInfo, HasIntegerId, HasUserRef {
      * See {@link User#getSubjectId()}
      */
     public void setSubjectId(final String subjectId) {
-        this.subjectId = subjectId;
+        this.subjectId = NullSafe.get(subjectId, String::trim);
     }
 
     /**
@@ -187,7 +187,7 @@ public class User implements HasAuditInfo, HasIntegerId, HasUserRef {
      * See {@link User#getDisplayName()}
      */
     public void setDisplayName(final String displayName) {
-        this.displayName = displayName;
+        this.displayName = NullSafe.get(displayName, String::trim);
     }
 
     /**
@@ -208,7 +208,7 @@ public class User implements HasAuditInfo, HasIntegerId, HasUserRef {
      * See {@link User#getFullName()}
      */
     public void setFullName(final String fullName) {
-        this.fullName = fullName;
+        this.fullName = NullSafe.get(fullName, String::trim);
     }
 
     /**
