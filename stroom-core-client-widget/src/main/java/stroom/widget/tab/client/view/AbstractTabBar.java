@@ -403,7 +403,7 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
             }
         }
 
-        GWT.log(startIndex + " " + displayableTabs.stream().map(TabData::getLabel).collect(Collectors.toList()));
+//        GWT.log(startIndex + " " + displayableTabs.stream().map(TabData::getLabel).collect(Collectors.toList()));
         return displayableTabs;
     }
 
