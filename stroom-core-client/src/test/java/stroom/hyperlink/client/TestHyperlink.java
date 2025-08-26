@@ -83,9 +83,10 @@ class TestHyperlink {
                 .withOutputType(Hyperlink.class)
                 .withSingleArgTestFunction(Hyperlink::create)
                 .withSimpleEqualityAssertion()
-                .addCase("[a](b){c}", new Hyperlink("a", "b", "c", null))
-                .addCase("[a](b)", new Hyperlink("a", "b", null, null))
-                .addCase("[a](b){", new Hyperlink("a", "b", null, null))
+                .addCase("[aaaa](bbbb){cccc}<dddd>", new Hyperlink("aaaa", "bbbb", "cccc", null, "dddd"))
+                .addCase("[a](b){c}", new Hyperlink("a", "b", "c", null, null))
+                .addCase("[a](b)", new Hyperlink("a", "b", null, null, null))
+                .addCase("[a](b){", new Hyperlink("a", "b", null, null, null))
                 .addCase("Orange](http://colors/orange)(whats this?){STROOM_TAB}", null)
                 .addCase("[Blue](http://co(wrapped parenth)lors/get?id=blue{STROOM_TAB}", null)
                 .addCase("(Magenta)[http://shades.com/shop/item?id=kinda%20purple]{STROOM_TAB}", null)
@@ -94,7 +95,8 @@ class TestHyperlink {
                 .addCase("[foo", null)
                 .addCase("", null)
                 .addCase(null, null)
-                .addCase("[a](b) xxx", new Hyperlink("a", "b", null, null))
+                .addCase("[a](b) xxx", new Hyperlink("a", "b", null, null, null))
+                .addCase("[aaaaa](bbbbb)<zzzzz>", new Hyperlink("aaaaa", "bbbbb", null, null, "zzzzz"))
                 .build();
     }
 }

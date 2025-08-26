@@ -111,6 +111,11 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
 
     @Override
     public void removeTab(final TabData tabData) {
+        removeTab(tabData, true);
+    }
+
+    @Override
+    public void removeTab(final TabData tabData, final boolean resize) {
         final Widget tab = tabWidgetMap.get(tabData);
         if (tab != null) {
             final int minVisibleTab = indexOf(visibleTabs.get(0));
@@ -123,33 +128,37 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
             tabWidgetMap.remove(tabData);
             tabs.remove(tabData);
 
-            if (!tabs.isEmpty()) {
-                if (tabData == selectedTab) {
-                    // select tab on the left of the removed tab
-                    final int nextSelected = Math.max(0, tabIndex - 1);
-                    keyboardSelectedTab = tabs.get(nextSelected);
-                    fireTabSelection(tabs.get(nextSelected));
-                }
+            if (resize) {
+                if (!tabs.isEmpty()) {
+                    if (tabData == selectedTab) {
+                        // select tab on the left of the removed tab
+                        final int nextSelected = Math.max(0, tabIndex - 1);
+                        keyboardSelectedTab = tabs.get(nextSelected);
+                        fireTabSelection(tabs.get(nextSelected));
+                    }
 
-                visibleTabs.clear();
+                    visibleTabs.clear();
 
-                if (maxVisibleTab < tabsSize) {
-                    // keep current lhs tab if there are non-visible tabs to the right
-                    onResize(minVisibleTab);
-                } else if (minVisibleTab > 0) {
-                    // or move left one tab if there are non-visible tabs to the left
-                    onResize(minVisibleTab - 1);
-                }  else if (maxVisibleTab == tabsSize) {
-                    // or keep lhs tab if there are no non-visible tabs to show
-                    onResize(minVisibleTab);
+                    if (maxVisibleTab < tabsSize) {
+                        // keep current lhs tab if there are non-visible tabs to the right
+                        onResize(minVisibleTab);
+                    } else if (minVisibleTab > 0) {
+                        // or move left one tab if there are non-visible tabs to the left
+                        onResize(minVisibleTab - 1);
+                    } else if (maxVisibleTab == tabsSize) {
+                        // or keep lhs tab if there are no non-visible tabs to show
+                        onResize(minVisibleTab);
+                    } else {
+                        // otherwise calculate out the new visible tabs
+                        onResize();
+                    }
                 } else {
-                    // otherwise calculate out the new visible tabs
-                    onResize();
+                    selectTab(null);
                 }
+                updateTabCount();
             } else {
-                selectTab(null);
+                selectedTab = null;
             }
-            updateTabCount();
         }
     }
 
@@ -273,7 +282,7 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
 
                 for (int i = newStartIndex; i < tabs.size(); i++) {
                     displayableTabs = getDisplayableTabs(i);
-                    if (displayableTabs.contains(selectedTab)) {
+                    if (selectedTab == null || displayableTabs.contains(selectedTab)) {
                         break;
                     }
                 }
