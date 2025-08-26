@@ -3,6 +3,7 @@ package stroom.security.shared;
 
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasIntegerId;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.string.CaseType;
 
@@ -77,17 +78,18 @@ public class User implements HasAuditInfo, HasIntegerId, HasUserRef {
                 @JsonProperty("displayName") final String displayName,
                 @JsonProperty("fullName") final String fullName,
                 @JsonProperty("enabled") final boolean enabled) {
+        // Ensure we always have trimmed user identity values
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
         this.createUser = createUser;
         this.updateTimeMs = updateTimeMs;
         this.updateUser = updateUser;
-        this.subjectId = subjectId;
+        this.subjectId = NullSafe.get(subjectId, String::trim);
         this.uuid = uuid;
         this.group = group;
-        this.displayName = displayName;
-        this.fullName = fullName;
+        this.displayName = NullSafe.get(displayName, String::trim);
+        this.fullName = NullSafe.get(fullName, String::trim);
         this.enabled = enabled;
     }
 
