@@ -95,8 +95,8 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
             if (hyperlinkType != null) {
                 switch (hyperlinkType) {
                     case DASHBOARD: {
-                        final String target = hyperlink.getTarget();
-                        if ("self".equals(target)) {
+                        final HyperlinkTargetType target = hyperlink.getTargetType();
+                        if (HyperlinkTargetType.SELF.equals(target)) {
                             CloseSelectedDocumentEvent.fire(this,
                                     () -> ShowDashboardEvent.fire(this, event.getContext(), href),
                                     false);

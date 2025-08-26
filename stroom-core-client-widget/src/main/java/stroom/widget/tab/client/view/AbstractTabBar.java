@@ -128,11 +128,12 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
             tabWidgetMap.remove(tabData);
             tabs.remove(tabData);
 
+            final int nextSelected = Math.max(0, tabIndex - 1);
+
             if (resize) {
                 if (!tabs.isEmpty()) {
                     if (tabData == selectedTab) {
                         // select tab on the left of the removed tab
-                        final int nextSelected = Math.max(0, tabIndex - 1);
                         keyboardSelectedTab = tabs.get(nextSelected);
                         fireTabSelection(tabs.get(nextSelected));
                     }
@@ -157,7 +158,7 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
                 }
                 updateTabCount();
             } else {
-                selectedTab = null;
+                selectedTab = tabs.get(nextSelected);
             }
         }
     }
@@ -402,6 +403,7 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
             }
         }
 
+        GWT.log(startIndex + " " + displayableTabs.stream().map(TabData::getLabel).collect(Collectors.toList()));
         return displayableTabs;
     }
 

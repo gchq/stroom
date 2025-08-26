@@ -141,6 +141,13 @@ public class Hyperlink {
         return icon;
     }
 
+    public HyperlinkTargetType getTargetType() {
+        try {
+            return HyperlinkTargetType.valueOf(target.toUpperCase());
+        } catch (final RuntimeException ignored) {
+            return null;
+        }
+    }
 
 
     private static String decode(final String string) {
