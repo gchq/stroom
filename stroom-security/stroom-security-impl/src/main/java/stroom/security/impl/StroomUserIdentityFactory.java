@@ -208,6 +208,8 @@ public class StroomUserIdentityFactory
         final String fullName = getUserFullName(openIdConfigProvider.get(), jwtClaims)
                 .orElse(null);
 
+        LOGGER.debug("subjectId: '{}', displayName: '{}', fullName: '{}'", subjectId, displayName, fullName);
+
         final Predicate<User> hasUserInfoChangedPredicate = aUser ->
                 !Objects.equals(displayName, aUser.getDisplayName())
                 || !Objects.equals(fullName, aUser.getFullName());

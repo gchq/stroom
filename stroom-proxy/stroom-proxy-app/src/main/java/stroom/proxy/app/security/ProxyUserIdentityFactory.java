@@ -12,6 +12,8 @@ import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.jersey.JerseyClientFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -25,6 +27,8 @@ import java.util.Optional;
 
 @Singleton
 public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxyUserIdentityFactory.class);
 
     private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
 
@@ -62,6 +66,9 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
                 .orElse(null);
         final String fullName = getUserFullName(openIdConfiguration, jwtClaims)
                 .orElse(null);
+
+        LOGGER.debug("uniqueIdentity: '{}', displayName: '{}', fullName: '{}', claims: {}",
+                uniqueIdentity, displayName, fullName, jwtClaims);
 
         return Optional.of(new ProxyClientUserIdentity(
                 uniqueIdentity, displayName, fullName, jwtContext));
