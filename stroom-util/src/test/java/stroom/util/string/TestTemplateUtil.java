@@ -43,12 +43,12 @@ class TestTemplateUtil {
                             String::toUpperCase,
                             String::toLowerCase);
                     final String output1 = templator.buildGenerator()
-                            .addCommonReplacements(map::get)
+                            .addCommonReplacementFunction(map::get)
                             .generate();
 
                     // Check re-use
                     final GeneratorBuilder generatorBuilder2 = templator.buildGenerator();
-                    map.forEach(generatorBuilder2::addStaticReplacement);
+                    map.forEach(generatorBuilder2::addReplacement);
 
                     final String output2 = generatorBuilder2.generate();
                     assertThat(output2)
@@ -56,7 +56,7 @@ class TestTemplateUtil {
 
                     final GeneratorBuilder generatorBuilder3 = templator.buildGenerator();
                     map.forEach((var, value) ->
-                            generatorBuilder2.addLazyReplacement(var, aVar -> value));
+                            generatorBuilder3.addLazyReplacement(var, () -> value));
                     final String output3 = generatorBuilder3.generate();
                     assertThat(output3)
                             .isEqualTo(output1);
@@ -82,17 +82,17 @@ class TestTemplateUtil {
     @Test
     void testFunctionReUse() {
         final AtomicInteger counter = new AtomicInteger(1);
-        final Templator templator = TemplateUtil.parseTemplate("The count is ${count} and ${count}");
+        final Templator templator = TemplateUtil.parseTemplate("The count is ${count} then ${count} then ${count}");
         assertThat(templator.getVarsInTemplate())
                 .containsExactlyInAnyOrder("count");
         // The replacement provider func should only be called once to get the replacement,
         // then the replacement reused.
         final String output = templator.buildGenerator()
-                .addLazyReplacement("count", aVar ->
+                .addLazyReplacement("count", () ->
                         String.valueOf(counter.getAndIncrement()))
                 .generate();
         assertThat(output)
-                .isEqualTo("The count is 1 and 1");
+                .isEqualTo("The count is 1 then 1 then 1");
     }
 
     @Test
@@ -117,7 +117,7 @@ class TestTemplateUtil {
 
         final Templator templator = TemplateUtil.parseTemplate("${food}, ${drink} and ${animal}");
         final String output = templator.buildGenerator()
-                .addCommonReplacements(replacements::get)
+                .addCommonReplacementFunction(replacements::get)
                 .generate();
         assertThat(output)
                 .isEqualTo(",  and cow");
@@ -130,5 +130,59 @@ class TestTemplateUtil {
         final String output = templator.generateWith(null);
         assertThat(output)
                 .isEqualTo(",  and ");
+    }
+
+    @Test
+    void testTemplatorReUse1() {
+        final Templator templator = TemplateUtil.parseTemplate("${food}, ${drink} and ${animal}");
+
+        final String output1 = templator.buildGenerator()
+                .addReplacements(Map.of(
+                        "food", "cheese",
+                        "drink", "milk",
+                        "animal", "toad"))
+                .generate();
+
+        final String output2 = templator.buildGenerator()
+                .addReplacements(Map.of(
+                        "food", "scampi fries",
+                        "drink", "beer",
+                        "animal", "worm"))
+                .generate();
+
+        assertThat(output1)
+                .isEqualTo("cheese, milk and toad");
+        assertThat(output2)
+                .isEqualTo("scampi fries, beer and worm");
+    }
+
+    @Test
+    void testTemplatorReUse2() {
+        final Templator templator = TemplateUtil.parseTemplate("${food}, ${drink} and some more ${food}");
+
+        final AtomicInteger counter1 = new AtomicInteger(100);
+        final Map<String, String> map1 = Map.of(
+                "food", "cheese",
+                "drink", "milk",
+                "animal", "toad");
+        final String output1 = templator.buildGenerator()
+                .addCommonReplacementFunction(key ->
+                        map1.get(key) + "_" + counter1.incrementAndGet())
+                .generate();
+
+        final AtomicInteger counter2 = new AtomicInteger(200);
+        final Map<String, String> map2 = Map.of(
+                "food", "scampi_fries",
+                "drink", "beer",
+                "animal", "worm");
+        final String output2 = templator.buildGenerator()
+                .addCommonReplacementFunction(key ->
+                        map2.get(key) + "_" + counter2.incrementAndGet())
+                .generate();
+
+        assertThat(output1)
+                .isEqualTo("cheese_101, milk_102 and some more cheese_101");
+        assertThat(output2)
+                .isEqualTo("scampi_fries_201, beer_202 and some more scampi_fries_201");
     }
 }
