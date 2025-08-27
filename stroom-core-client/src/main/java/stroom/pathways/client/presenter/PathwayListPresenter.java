@@ -226,7 +226,7 @@ public class PathwayListPresenter
 
     private void onAdd() {
         final NanoTime now = NanoTime.ofMillis(System.currentTimeMillis());
-        pathwayEditPresenter.read(Pathway.builder().name("").createTime(now).build(), readOnly);
+        pathwayEditPresenter.read(docRef, Pathway.builder().name("").createTime(now).build(), readOnly);
         pathwayEditPresenter.show("New Pathway", e -> {
             if (e.isOk()) {
                 final Pathway pathway = pathwayEditPresenter.write();
@@ -251,7 +251,7 @@ public class PathwayListPresenter
     private void onEdit() {
         final Pathway existingPathway = selectionModel.getSelected();
         if (existingPathway != null) {
-            pathwayEditPresenter.read(existingPathway, readOnly);
+            pathwayEditPresenter.read(docRef, existingPathway, readOnly);
             pathwayEditPresenter.show("Edit Pathway", e -> {
                 if (e.isOk()) {
                     try {

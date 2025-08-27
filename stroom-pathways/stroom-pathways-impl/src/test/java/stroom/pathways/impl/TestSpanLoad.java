@@ -3,7 +3,7 @@ package stroom.pathways.impl;
 import stroom.docref.DocRef;
 import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.otel.trace.ExportTraceServiceRequest;
-import stroom.pathways.shared.otel.trace.NanoTime;
+import stroom.pathways.shared.otel.trace.NanoDuration;
 import stroom.pathways.shared.otel.trace.ResourceSpans;
 import stroom.pathways.shared.otel.trace.ScopeSpans;
 import stroom.pathways.shared.otel.trace.Span;
@@ -47,7 +47,7 @@ public class TestSpanLoad {
 
 
         // Read in sample data and create a map of traces.
-        final TracesStore tracesStore = new TracesStore();
+        final TracesStore tracesStore = new TracesStore(null);
         for (int i = 1; i <= 13; i++) {
             final Path path = Paths.get("src/test/resources/" + StringIdUtil.idToString(i) + ".dat");
             loadData(path, tracesStore);
@@ -88,7 +88,7 @@ public class TestSpanLoad {
 
     private Map<PathKey, PathNode> buildPathways(final Collection<Trace> traces,
                                                  final MessageReceiver messageReceiver) {
-        final Comparator<Span> spanComparator = new CloseSpanComparator(NanoTime.ofMillis(10));
+        final Comparator<Span> spanComparator = new CloseSpanComparator(NanoDuration.ofMillis(10));
         final PathKeyFactory pathKeyFactory = new PathKeyFactoryImpl();
         final TraceProcessor traceProcessor = new NodeMutatorImpl(spanComparator, pathKeyFactory);
         final Map<PathKey, PathNode> roots = new HashMap<>();
@@ -101,7 +101,7 @@ public class TestSpanLoad {
     private void validate(final Collection<Trace> traces,
                           final Map<PathKey, PathNode> roots,
                           final MessageReceiver messageReceiver) {
-        final Comparator<Span> spanComparator = new CloseSpanComparator(NanoTime.ofMillis(10));
+        final Comparator<Span> spanComparator = new CloseSpanComparator(NanoDuration.ofMillis(10));
         final PathKeyFactory pathKeyFactory = new PathKeyFactoryImpl();
         final TraceProcessor traceProcessor = new TraceValidator(spanComparator, pathKeyFactory);
         for (final Trace trace : traces) {

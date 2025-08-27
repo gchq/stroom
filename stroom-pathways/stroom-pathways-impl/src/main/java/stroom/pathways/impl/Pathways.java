@@ -141,7 +141,7 @@ public class Pathways {
     private void buildPathways(final Trace trace,
                                final PathwaysDoc doc,
                                final MessageReceiver messageReceiver) {
-        final Comparator<Span> spanComparator = new CloseSpanComparator(NanoTime.ofMillis(10));
+        final Comparator<Span> spanComparator = new CloseSpanComparator(doc.getTemporalOrderingTolerance());
         final PathKeyFactory pathKeyFactory = new PathKeyFactoryImpl();
         final TraceProcessor traceProcessor = new NodeMutatorImpl(spanComparator, pathKeyFactory);
         traceProcessor.process(trace, roots, messageReceiver, doc);

@@ -25,7 +25,7 @@ public class PathNode {
     @JsonProperty
     private final List<String> path;
     @JsonProperty
-    private final List<PathNodeList> targets;
+    private final List<PathNodeSequence> targets;
     @JsonProperty
     private final List<Span> spans;
     @JsonProperty
@@ -35,7 +35,7 @@ public class PathNode {
     public PathNode(@JsonProperty("uuid") final String uuid,
                     @JsonProperty("name") final String name,
                     @JsonProperty("path") final List<String> path,
-                    @JsonProperty("targets") final List<PathNodeList> targets,
+                    @JsonProperty("targets") final List<PathNodeSequence> targets,
                     @JsonProperty("spans") final List<Span> spans,
                     @JsonProperty("constraints") final Map<String, Constraint> constraints) {
         this.uuid = uuid;
@@ -81,7 +81,7 @@ public class PathNode {
         return path;
     }
 
-    public List<PathNodeList> getTargets() {
+    public List<PathNodeSequence> getTargets() {
         return targets;
     }
 
@@ -138,7 +138,7 @@ public class PathNode {
         private String uuid;
         private String name;
         private List<String> path;
-        private List<PathNodeList> targets;
+        private List<PathNodeSequence> targets;
         private List<Span> spans;
         private Map<String, Constraint> constraints;
 
@@ -169,7 +169,7 @@ public class PathNode {
             return self();
         }
 
-        public Builder targets(final List<PathNodeList> targets) {
+        public Builder targets(final List<PathNodeSequence> targets) {
             this.targets = targets;
             return self();
         }

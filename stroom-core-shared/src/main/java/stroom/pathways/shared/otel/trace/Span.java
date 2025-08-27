@@ -59,6 +59,10 @@ public class Span {
     @JsonProperty("status")
     private final SpanStatus status;
 
+    private NanoTime start;
+    private NanoTime end;
+    private NanoDuration duration;
+
     @JsonCreator
     public Span(@JsonProperty("traceId") final String traceId,
                 @JsonProperty("spanId") final String spanId,
@@ -156,6 +160,27 @@ public class Span {
 
     public SpanStatus getStatus() {
         return status;
+    }
+
+    public NanoTime start() {
+        if (start == null) {
+            start = NanoTime.fromString(startTimeUnixNano);
+        }
+        return start;
+    }
+
+    public NanoTime end() {
+        if (end == null) {
+            end = NanoTime.fromString(endTimeUnixNano);
+        }
+        return end;
+    }
+
+    public NanoDuration duration() {
+        if (duration == null) {
+            duration = end().diff(start());
+        }
+        return duration;
     }
 
     @Override

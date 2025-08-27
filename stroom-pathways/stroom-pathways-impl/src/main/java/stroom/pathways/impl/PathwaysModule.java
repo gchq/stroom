@@ -56,7 +56,8 @@ public class PathwaysModule extends AbstractModule {
                 .addBinding(PathwaysStoreImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bind(PathwaysResourceImpl.class);
+                .bind(PathwaysResourceImpl.class)
+                .bind(TracesResourceImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(PathwaysDoc.TYPE, PathwaysStoreImpl.class);

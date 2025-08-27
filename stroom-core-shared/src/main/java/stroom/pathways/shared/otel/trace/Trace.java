@@ -2,18 +2,27 @@ package stroom.pathways.shared.otel.trace;
 
 import stroom.util.shared.NullSafe;
 
-import java.util.ArrayList;
-import java.util.Comparator;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+@JsonInclude(Include.NON_NULL)
 public class Trace {
 
+    @JsonProperty
     private final String traceId;
+    @JsonProperty
     private final Map<String, List<Span>> parentSpanIdMap;
 
-    public Trace(final String traceId,
-                 final Map<String, List<Span>> parentSpanIdMap) {
+    @JsonCreator
+    public Trace(@JsonProperty("traceId") final String traceId,
+                 @JsonProperty("parentSpanIdMap") final Map<String, List<Span>> parentSpanIdMap) {
         this.traceId = traceId;
         this.parentSpanIdMap = parentSpanIdMap;
     }
@@ -22,7 +31,11 @@ public class Trace {
         return traceId;
     }
 
-    public Span getRoot() {
+    public Map<String, List<Span>> getParentSpanIdMap() {
+        return parentSpanIdMap;
+    }
+
+    public Span root() {
         final List<Span> roots = parentSpanIdMap.get("");
         if (roots != null) {
             if (roots.size() == 1) {
@@ -36,8 +49,46 @@ public class Trace {
         throw new RuntimeException("No root found");
     }
 
-    public List<Span> getChildren(final Span span) {
+    public List<Span> children(final Span span) {
         return NullSafe.list(parentSpanIdMap.get(span.getSpanId()));
+    }
+
+    public int services() {
+        final Set<String> set = parentSpanIdMap
+                .values()
+                .stream()
+                .flatMap(List::stream)
+                .map(Span::getName)
+                .collect(Collectors.toSet());
+        return set.size();
+    }
+
+    public int depth() {
+        final Span root = root();
+        int depth = 1;
+        depth = Math.max(depth, depth(root) + 1);
+        return depth;
+    }
+
+    private int depth(final Span span) {
+        int depth = 0;
+        final List<Span> children = parentSpanIdMap.get(span.getSpanId());
+        if (children == null || children.isEmpty()) {
+            return 0;
+        }
+        depth = 1;
+        for (final Span child : children) {
+            depth = Math.max(depth, depth(child) + 1);
+        }
+        return depth;
+    }
+
+    public int totalSpans() {
+        return parentSpanIdMap
+                .values()
+                .stream()
+                .mapToInt(List::size)
+                .sum();
     }
 
     @Override
@@ -48,9 +99,7 @@ public class Trace {
     }
 
     private void appendChild(final StringBuilder sb, final String parentId, final int depth) {
-        final List<Span> children = new ArrayList<>(NullSafe.list(parentSpanIdMap.get(parentId)));
-        children.sort(Comparator.comparing(span -> NanoTime.fromString(span.getStartTimeUnixNano())));
-
+        final List<Span> children = NullSafe.list(parentSpanIdMap.get(parentId));
         for (final Span span : children) {
             final NanoTime startTime = NanoTime.fromString(span.getStartTimeUnixNano());
             final NanoTime endTime = NanoTime.fromString(span.getEndTimeUnixNano());

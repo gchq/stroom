@@ -16,7 +16,7 @@ import stroom.pathways.shared.pathway.IntegerValue;
 import stroom.pathways.shared.pathway.NanoTimeRange;
 import stroom.pathways.shared.pathway.PathKey;
 import stroom.pathways.shared.pathway.PathNode;
-import stroom.pathways.shared.pathway.PathNodeList;
+import stroom.pathways.shared.pathway.PathNodeSequence;
 import stroom.pathways.shared.pathway.Regex;
 import stroom.pathways.shared.pathway.StringSet;
 import stroom.pathways.shared.pathway.StringValue;
@@ -49,14 +49,14 @@ public class TraceValidator implements TraceProcessor {
                         final Map<PathKey, PathNode> roots,
                         final MessageReceiver messageReceiver,
                         final PathwaysDoc pathwaysDoc) {
-        final Map<PathKey, Map<String, Map<PathKey, PathNodeList>>> maps = new HashMap<>();
-        final Span root = trace.getRoot();
+        final Map<PathKey, Map<String, Map<PathKey, PathNodeSequence>>> maps = new HashMap<>();
+        final Span root = trace.root();
         final PathKey pathKey = pathKeyFactory.create(Collections.singletonList(root));
         final PathNode node = roots.get(pathKey);
         if (node == null) {
             messageReceiver.log(Severity.ERROR, () -> "Invalid path: " + pathKey);
         } else {
-            final Map<String, Map<PathKey, PathNodeList>> map = maps.computeIfAbsent(pathKey, k -> new HashMap<>());
+            final Map<String, Map<PathKey, PathNodeSequence>> map = maps.computeIfAbsent(pathKey, k -> new HashMap<>());
             walk(trace, root, node, map, messageReceiver);
         }
     }
@@ -64,23 +64,23 @@ public class TraceValidator implements TraceProcessor {
     private void walk(final Trace trace,
                       final Span parentSpan,
                       final PathNode parentNode,
-                      final Map<String, Map<PathKey, PathNodeList>> map,
+                      final Map<String, Map<PathKey, PathNodeSequence>> map,
                       final MessageReceiver messageReceiver) {
         checkConstraints(parentNode, parentSpan, messageReceiver);
 
-        final List<Span> childSpans = trace.getChildren(parentSpan);
+        final List<Span> childSpans = trace.children(parentSpan);
         final List<Span> sortedSpans = new ArrayList<>(childSpans);
         sortedSpans.sort(spanComparator);
         final PathKey pathKey = pathKeyFactory.create(sortedSpans);
 
         // Load inner map.
-        final Map<PathKey, PathNodeList> innerMap = map.computeIfAbsent(parentNode.getUuid(), k ->
+        final Map<PathKey, PathNodeSequence> innerMap = map.computeIfAbsent(parentNode.getUuid(), k ->
                 parentNode
                         .getTargets()
                         .stream()
-                        .collect(Collectors.toMap(PathNodeList::getPathKey, Function.identity())));
+                        .collect(Collectors.toMap(PathNodeSequence::getPathKey, Function.identity())));
 
-        final PathNodeList childNodes = innerMap.get(pathKey);
+        final PathNodeSequence childNodes = innerMap.get(pathKey);
         if (childNodes == null) {
             messageReceiver.log(Severity.ERROR, () -> "Invalid path: " + parentNode + " " + pathKey);
         } else {

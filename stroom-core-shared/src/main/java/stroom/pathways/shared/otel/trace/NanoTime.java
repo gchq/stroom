@@ -75,7 +75,19 @@ public class NanoTime implements Comparable<NanoTime> {
         return nanos;
     }
 
+    public long toEpochNanos() {
+        if (seconds > 9223372036L) {
+            throw new RuntimeException("NanoTime too large to convert to nanos");
+        }
+
+        return (seconds * NANOS_IN_SECOND) + nanos;
+    }
+
     public long toEpochMillis() {
+        if (seconds > 9223372036854775L) {
+            throw new RuntimeException("NanoTime too large to convert to millis");
+        }
+
         return (seconds * 1000) + (nanos / 1000000);
     }
 
@@ -104,6 +116,20 @@ public class NanoTime implements Comparable<NanoTime> {
         }
         return new NanoTime(seconds - nanoTime.seconds, nanos - nanoTime.nanos);
     }
+
+//    public NanoTime multiplyBy(final double multiplier) {
+//        final long seconds = (long) (this.seconds * multiplier);
+//        final long nanos = (long) (this.nanos * multiplier);
+//        return new NanoTime(seconds + nanos / NANOS_IN_SECOND, (int) (nanos % NANOS_IN_SECOND));
+//    }
+//
+//    public NanoTime divideBy(final double divisor) {
+//        final double seconds = this.seconds / divisor;
+//        final double nanos = this.nanos / divisor;
+//        return new NanoTime(
+//                (long) (seconds),
+//                (int) (nanos + ((seconds % 1) * NANOS_IN_SECOND)));
+//    }
 
     @JsonIgnore
     public boolean isLessThan(final NanoTime nanoTime) {
@@ -135,13 +161,13 @@ public class NanoTime implements Comparable<NanoTime> {
         return isGreaterThan(nanoTime);
     }
 
-    public NanoTime diff(final NanoTime nanoTime) {
+    public NanoDuration diff(final NanoTime nanoTime) {
         if (equals(nanoTime)) {
-            return ZERO;
+            return NanoDuration.ZERO;
         } else if (isLessThan(nanoTime)) {
-            return nanoTime.subtract(this);
+            return NanoDuration.ofNanos(nanoTime.subtract(this).toEpochNanos());
         }
-        return subtract(nanoTime);
+        return NanoDuration.ofNanos(subtract(nanoTime).toEpochNanos());
     }
 
     @Override

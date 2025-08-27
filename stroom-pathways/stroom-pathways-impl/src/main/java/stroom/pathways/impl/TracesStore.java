@@ -1,14 +1,19 @@
 package stroom.pathways.impl;
 
 import stroom.docref.DocRef;
+import stroom.pathways.shared.FindTraceCriteria;
+import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.otel.trace.Span;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -20,6 +25,13 @@ public class TracesStore {
 
     private final Map<DocRef, Traces> tracesMap = new ConcurrentHashMap<>();
 
+    private final PathwaysStore pathwaysStore;
+
+    @Inject
+    public TracesStore(final PathwaysStore pathwaysStore) {
+        this.pathwaysStore = pathwaysStore;
+    }
+
     public void addSpan(final DocRef docRef, final Span span) {
         tracesMap.computeIfAbsent(docRef, k -> new Traces()).addSpan(span);
     }
@@ -30,6 +42,27 @@ public class TracesStore {
             return Collections.emptyList();
         }
         return traces.getTraces();
+    }
+
+    public ResultPage<Trace> findTraces(final FindTraceCriteria criteria) {
+        final PathwaysDoc pathwaysDoc = pathwaysStore.readDocument(criteria.getDataSourceRef());
+        if (pathwaysDoc == null) {
+            return ResultPage.empty();
+        }
+        final Comparator<Span> spanComparator = new CloseSpanComparator(pathwaysDoc.getTemporalOrderingTolerance());
+        final PathKeyFactory pathKeyFactory = new PathKeyFactoryImpl();
+        final Collection<Trace> traces = getTraces(criteria.getDataSourceRef());
+        if (criteria.getPathway() != null) {
+            final TracePredicate tracePredicate = new TracePredicate(
+                    spanComparator,
+                    pathKeyFactory,
+                    Map.of(criteria.getPathway().getPathKey(), criteria.getPathway().getRoot()));
+            final List<Trace> filtered = traces.stream().filter(tracePredicate).toList();
+            return ResultPage.createPageLimitedList(filtered, criteria.getPageRequest());
+
+        } else {
+            return ResultPage.createPageLimitedList(traces.stream().toList(), criteria.getPageRequest());
+        }
     }
 
     private static class Traces {
@@ -67,7 +100,12 @@ public class TracesStore {
                     .stream()
                     .collect(Collectors.toMap(
                             Entry::getKey,
-                            entry -> entry.getValue().values().stream().toList()));
+                            entry -> entry
+                                    .getValue()
+                                    .values()
+                                    .stream()
+                                    .sorted(Comparator.comparing(Span::start))
+                                    .toList()));
             return new Trace(traceId, parentSpanIdMap);
         }
     }

@@ -120,6 +120,10 @@ public class HtmlBuilder {
         return elem(textContent, ELEMENT_P, attributes);
     }
 
+    public HtmlBuilder span(final String textContent, final Attribute... attributes) {
+        return elem(textContent, ELEMENT_SPAN, attributes);
+    }
+
     public HtmlBuilder span(final Consumer<HtmlBuilder> content, final Attribute... attributes) {
         return elem(content, ELEMENT_SPAN, attributes);
     }
@@ -315,6 +319,10 @@ public class HtmlBuilder {
 
         public static Attribute title(final String name) {
             return new Attribute("title", name);
+        }
+
+        public static Attribute id(final String name) {
+            return new Attribute("id", name);
         }
     }
 }

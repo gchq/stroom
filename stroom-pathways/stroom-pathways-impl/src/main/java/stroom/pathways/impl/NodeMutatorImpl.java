@@ -18,7 +18,7 @@ import stroom.pathways.shared.pathway.NanoTimeRange;
 import stroom.pathways.shared.pathway.NanoTimeValue;
 import stroom.pathways.shared.pathway.PathKey;
 import stroom.pathways.shared.pathway.PathNode;
-import stroom.pathways.shared.pathway.PathNodeList;
+import stroom.pathways.shared.pathway.PathNodeSequence;
 import stroom.pathways.shared.pathway.Regex;
 import stroom.pathways.shared.pathway.StringSet;
 import stroom.pathways.shared.pathway.StringValue;
@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -57,8 +58,8 @@ public class NodeMutatorImpl implements TraceProcessor {
                         final Map<PathKey, PathNode> roots,
                         final MessageReceiver messageReceiver,
                         final PathwaysDoc pathwaysDoc) {
-        final Map<PathKey, Map<String, Map<PathKey, PathNodeList>>> maps = new HashMap<>();
-        final Span root = trace.getRoot();
+        final Map<PathKey, Map<String, Map<PathKey, PathNodeSequence>>> maps = new HashMap<>();
+        final Span root = trace.root();
         final PathKey pathKey = pathKeyFactory.create(Collections.singletonList(root));
 
         PathNode node = roots.get(pathKey);
@@ -69,7 +70,7 @@ public class NodeMutatorImpl implements TraceProcessor {
                 messageReceiver.log(Severity.INFO, () -> "Adding new root path: " + root.getName());
                 return new PathNode(root.getName());
             });
-            final Map<String, Map<PathKey, PathNodeList>> map = maps.computeIfAbsent(pathKey, k -> new HashMap<>());
+            final Map<String, Map<PathKey, PathNodeSequence>> map = maps.computeIfAbsent(pathKey, k -> new HashMap<>());
             final PathNode pathNode = walk(trace, root, node, map, messageReceiver, pathwaysDoc);
             roots.put(pathKey, pathNode);
         }
@@ -78,25 +79,25 @@ public class NodeMutatorImpl implements TraceProcessor {
     private PathNode walk(final Trace trace,
                           final Span parentSpan,
                           final PathNode parentNode,
-                          final Map<String, Map<PathKey, PathNodeList>> map,
+                          final Map<String, Map<PathKey, PathNodeSequence>> map,
                           final MessageReceiver messageReceiver,
                           final PathwaysDoc pathwaysDoc) {
         final PathNode.Builder pathNodeBuilder = addConstraints(parentNode, parentSpan, messageReceiver, pathwaysDoc);
 
-        final List<Span> childSpans = trace.getChildren(parentSpan);
+        final List<Span> childSpans = trace.children(parentSpan);
         final List<Span> sortedSpans = new ArrayList<>(childSpans);
         sortedSpans.sort(spanComparator);
         final PathKey pathKey = pathKeyFactory.create(sortedSpans);
 
         // Load inner map.
-        final Map<PathKey, PathNodeList> innerMap = map.computeIfAbsent(parentNode.getUuid(), k -> {
-            final Map<PathKey, PathNodeList> subMap = new HashMap<>();
+        final Map<PathKey, PathNodeSequence> innerMap = map.computeIfAbsent(parentNode.getUuid(), k -> {
+            final Map<PathKey, PathNodeSequence> subMap = new HashMap<>();
             parentNode.getTargets().forEach(target -> subMap.put(target.getPathKey(), target));
             return subMap;
         });
 
         // Get current path node list.
-        final PathNodeList pathNodeList = innerMap.get(pathKey);
+        final PathNodeSequence pathNodeList = innerMap.get(pathKey);
         if (pathNodeList == null && !pathwaysDoc.isAllowPathwayMutation()) {
             messageReceiver.log(Severity.ERROR, () -> "Invalid path: " + parentNode + " " + pathKey);
 
@@ -122,7 +123,7 @@ public class NodeMutatorImpl implements TraceProcessor {
             }
 
             // Update the path node list.
-            innerMap.put(pathKey, new PathNodeList(pathKey, childNodes));
+            innerMap.put(pathKey, new PathNodeSequence(UUID.randomUUID().toString(), pathKey, childNodes));
 
             // Update the targets for this node.
             pathNodeBuilder.targets(new ArrayList<>(innerMap.values()));

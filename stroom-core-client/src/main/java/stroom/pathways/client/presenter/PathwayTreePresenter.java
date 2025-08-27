@@ -1,14 +1,16 @@
 package stroom.pathways.client.presenter;
 
+import stroom.docref.DocRef;
 import stroom.pathways.client.presenter.PathwayTreePresenter.PathwayTreeView;
 import stroom.pathways.shared.pathway.PathNode;
-import stroom.pathways.shared.pathway.PathNodeList;
+import stroom.pathways.shared.pathway.PathNodeSequence;
 import stroom.pathways.shared.pathway.Pathway;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.htree.client.treelayout.Point;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
@@ -24,6 +26,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,10 +42,12 @@ public class PathwayTreePresenter
     private final ButtonView newButton;
     private final ButtonView editButton;
     private final ButtonView removeButton;
+    private final InlineSvgButton viewTracesButton;
 
     private final HTML html;
     private final MySingleSelectionModel<PathNode> selectionModel = new MySingleSelectionModel<PathNode>();
 
+    private DocRef pathwaysDocRef;
     private Pathway pathway;
     private Element selected;
     private boolean readOnly = true;
@@ -55,6 +60,11 @@ public class PathwayTreePresenter
         newButton = view.addButton(SvgPresets.NEW_ITEM);
         editButton = view.addButton(SvgPresets.EDIT);
         removeButton = view.addButton(SvgPresets.DELETE);
+
+        viewTracesButton = new InlineSvgButton();
+        viewTracesButton.setSvg(SvgImage.EYE);
+        viewTracesButton.setTitle("View Matching Traces");
+        view.addButton(viewTracesButton);
         enableButtons();
 
         html = new HTML();
@@ -84,11 +94,65 @@ public class PathwayTreePresenter
                 }
             }
         }));
+        registerHandler(viewTracesButton.addClickHandler(e -> {
+            final Map<String, String> parentMap = new HashMap<>();
+            final Map<String, PathNodeSequence> pathNodeSequenceMap = new HashMap<>();
+            final Map<String, PathNode> pathNodeMap = new HashMap<>();
+            addToMap(pathway.getRoot(), parentMap, pathNodeSequenceMap, pathNodeMap);
+
+            PathNode pathNode = selectionModel.getSelectedObject();
+            PathNode root = pathNode;
+            while (pathNode != null) {
+                // Get parent sequence.
+                final String parentSequenceUuid = parentMap.get(pathNode.getUuid());
+                if (parentSequenceUuid != null) {
+                    final PathNodeSequence pathNodeSequence = pathNodeSequenceMap.get(parentSequenceUuid);
+                    // Get parent node.
+                    final String parentNodeUuid = parentMap.get(pathNodeSequence.getUuid());
+                    pathNode = pathNodeMap.get(parentNodeUuid);
+
+                    root = pathNode.copy().targets(Collections.singletonList(pathNodeSequence)).build();
+                } else {
+                    pathNode = null;
+                }
+            }
+
+            final Pathway pathway;
+            if (root != null) {
+                pathway = this.pathway.copy().root(root).build();
+            } else {
+                pathway = this.pathway;
+            }
+
+            ShowTracesEvent.fire(
+                    this,
+                    pathwaysDocRef,
+                    null,
+                    pathway);
+        }));
     }
 
-    public void read(final Pathway pathway, final boolean readOnly) {
-        this.readOnly = readOnly;
+    private void addToMap(final PathNode pathNode,
+                          final Map<String, String> parentMap,
+                          final Map<String, PathNodeSequence> pathNodeSequenceMap,
+                          final Map<String, PathNode> pathNodeMap) {
+        pathNodeMap.put(pathNode.getUuid(), pathNode);
+        NullSafe.list(pathNode.getTargets()).forEach(target -> {
+            pathNodeSequenceMap.put(target.getUuid(), target);
+            parentMap.put(target.getUuid(), pathNode.getUuid());
+            NullSafe.list(target.getNodes()).forEach(node -> {
+                parentMap.put(node.getUuid(), target.getUuid());
+                addToMap(node, parentMap, pathNodeSequenceMap, pathNodeMap);
+            });
+        });
+    }
+
+    public void read(final DocRef pathwaysDocRef,
+                     final Pathway pathway,
+                     final boolean readOnly) {
+        this.pathwaysDocRef = pathwaysDocRef;
         this.pathway = pathway;
+        this.readOnly = readOnly;
         this.selected = null;
 
         nodeMap.clear();
@@ -153,7 +217,7 @@ public class PathwayTreePresenter
         }, Attribute.className("pathway-node"));
 
         // Add child node targets.
-        final List<PathNodeList> targets = NullSafe.list(node.getTargets());
+        final List<PathNodeSequence> targets = NullSafe.list(node.getTargets());
         if (targets.size() > 1) {
             // Add bezier curve to target set.
             appendBezier(svg, nodeDepth, sourceRowNum, rowNum.get(), width, height);
@@ -180,7 +244,7 @@ public class PathwayTreePresenter
             }, Attribute.className("pathway-targets-outer"));
 
         } else if (!targets.isEmpty()) {
-            final PathNodeList target = targets.get(0);
+            final PathNodeSequence target = targets.get(0);
             if (!target.getNodes().isEmpty()) {
                 // Add bezier curve to target set.
                 appendBezier(svg, nodeDepth, sourceRowNum, rowNum.get(), width, height);
@@ -191,7 +255,7 @@ public class PathwayTreePresenter
     }
 
     private void addTargets(final HtmlBuilder hb,
-                            final PathNodeList target,
+                            final PathNodeSequence target,
                             final HtmlBuilder svg,
                             final int nodeDepth,
                             final AtomicInteger rowNum,
@@ -273,8 +337,8 @@ public class PathwayTreePresenter
 
     private void enableButtons() {
         newButton.setEnabled(!readOnly);
+        final PathNode pathNode = selectionModel.getSelectedObject();
         if (!readOnly) {
-            final PathNode pathNode = selectionModel.getSelectedObject();
             final boolean enabled = pathNode != null;
             editButton.setEnabled(enabled);
             removeButton.setEnabled(enabled);
@@ -282,6 +346,7 @@ public class PathwayTreePresenter
             editButton.setEnabled(false);
             removeButton.setEnabled(false);
         }
+        viewTracesButton.setEnabled(pathNode != null);
 
         if (readOnly) {
             newButton.setTitle("New path disabled as read only");
