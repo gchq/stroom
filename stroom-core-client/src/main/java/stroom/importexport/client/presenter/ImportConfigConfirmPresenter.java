@@ -467,7 +467,7 @@ public class ImportConfigConfirmPresenter extends
                 return action.getDocRef().getType();
             }
         };
-        dataGrid.addResizableColumn(column, "Type", 100);
+        dataGrid.addResizableColumn(column, "Type", 150);
     }
 
     private void addSourcePathColumn() {
@@ -478,7 +478,7 @@ public class ImportConfigConfirmPresenter extends
                 return action.getSourcePath();
             }
         };
-        dataGrid.addResizableColumn(column, "Source Path", 300);
+        dataGrid.addResizableColumn(column, "Source Path", 450);
     }
 
     private void addDestPathColumn() {
@@ -489,7 +489,7 @@ public class ImportConfigConfirmPresenter extends
                 return action.getDestPath();
             }
         };
-        dataGrid.addResizableColumn(column, "Destination Path", 300);
+        dataGrid.addResizableColumn(column, "Destination Path", 450);
     }
 
     public void abortImport(final HidePopupRequestEvent e) {
