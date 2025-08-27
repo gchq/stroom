@@ -112,6 +112,11 @@ public class ContentResourceImpl implements ContentResource {
         }
     }
 
+    @Override
+    public void abortImport(final ResourceKey resourceKey) {
+        contentServiceProvider.get().abortImport(resourceKey);
+    }
+
     private ImportEventAction buildImportEventAction(final ImportConfigRequest importConfigRequest) {
         final List<ImportState> confirmList = importConfigRequest.getConfirmList();
 

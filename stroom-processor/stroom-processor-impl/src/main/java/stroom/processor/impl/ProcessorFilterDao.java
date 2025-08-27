@@ -29,6 +29,8 @@ public interface ProcessorFilterDao extends HasIntCrud<ProcessorFilter> {
      */
     int logicallyDeleteOldProcessorFilters(Instant deleteThreshold);
 
+    ProcessorFilter restoreProcessorFilter(final ProcessorFilter processorFilter, final boolean resetTracker);
+
     /**
      * Physically delete old processor filters that are logically deleted with an update time older than the threshold.
      *

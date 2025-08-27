@@ -50,6 +50,8 @@ public class ImportState {
     private final List<String> updatedFieldList;
     @JsonProperty
     private State state;
+    @JsonProperty
+    private DocRef ownerDocRef;
 
     @JsonCreator
     public ImportState(@JsonProperty("docRef") final DocRef docRef,
@@ -58,7 +60,8 @@ public class ImportState {
                        @JsonProperty("action") final boolean action,
                        @JsonProperty("messageList") final List<Message> messageList,
                        @JsonProperty("updatedFieldList") final List<String> updatedFieldList,
-                       @JsonProperty("state") final State state) {
+                       @JsonProperty("state") final State state,
+                       @JsonProperty("ownerDocRef") final DocRef ownerDocRef) {
         this.docRef = docRef;
         this.sourcePath = sourcePath;
         this.destPath = destPath;
@@ -66,6 +69,7 @@ public class ImportState {
         this.messageList = messageList;
         this.updatedFieldList = updatedFieldList;
         this.state = state;
+        this.ownerDocRef = ownerDocRef;
     }
 
     public ImportState(final DocRef docRef, final String sourcePath) {
@@ -95,6 +99,25 @@ public class ImportState {
         this.destPath = destPath;
     }
 
+    /**
+     * @return The owner document, if this is a non-explorer document that belongs to another document,
+     * e.g. a processor filter belongs to a Pipeline.
+     */
+    public DocRef getOwnerDocRef() {
+        return ownerDocRef;
+    }
+
+    /**
+     * @param ownerDocRef The owner document, if this is a non-explorer document that belongs to another document,
+     *                    e.g. a processor filter belongs to a Pipeline.
+     */
+    public void setOwnerDocRef(final DocRef ownerDocRef) {
+        this.ownerDocRef = ownerDocRef;
+    }
+
+    /**
+     * @return True if this item has been selected for import by the user.
+     */
     public boolean isAction() {
         return action;
     }
@@ -158,11 +181,16 @@ public class ImportState {
         return docRef.toString();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public enum State implements HasDisplayValue {
         NEW("New"),
         UPDATE("Update"),
         EQUAL("Equal"),
-        IGNORE("Ignore");
+        IGNORE("Ignore"),
+        ;
 
         private final String displayValue;
 

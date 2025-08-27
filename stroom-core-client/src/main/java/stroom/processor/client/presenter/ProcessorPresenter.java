@@ -429,23 +429,22 @@ public class ProcessorPresenter
                     .filter(s -> s instanceof ProcessorFilterRow)
                     .map(s -> (ProcessorFilterRow) s)
                     .collect(Collectors.toList());
-            if (rows.size() > 0) {
+            if (!rows.isEmpty()) {
                 String message = "Are you sure you want to delete the selected filter?";
                 if (rows.size() > 1) {
                     message = "Are you sure you want to delete the selected filters?";
                 }
                 ConfirmEvent.fire(this, message, result -> {
                     if (result) {
-                        final CountDownAndRun countDownAndRun = new CountDownAndRun(rows.size(), () ->
-                                processorListPresenter.refresh());
+                        final CountDownAndRun countDownAndRun = new CountDownAndRun(
+                                rows.size(), processorListPresenter::refresh);
                         for (final ProcessorFilterRow row : rows) {
                             restFactory
                                     .create(PROCESSOR_FILTER_RESOURCE)
                                     .method(res -> res.delete(row.getProcessorFilter().getId()))
                                     .onSuccess(res ->
                                             countDownAndRun.countdown())
-                                    .onFailure(new DefaultErrorHandler(this, () ->
-                                            countDownAndRun.countdown()))
+                                    .onFailure(new DefaultErrorHandler(this, countDownAndRun::countdown))
                                     .taskMonitorFactory(this)
                                     .exec();
                         }

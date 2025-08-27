@@ -78,7 +78,8 @@ public class ReceiveDataRuleSetResourceImpl implements ReceiveDataRuleSetResourc
     @AutoLogged(value = OperationType.IMPORT, verb = "Importing data for ruleset")
     public DocRef importDocument(final Base64EncodedDocumentData encodedDocumentData) {
         final DocumentData documentData = DocumentData.fromBase64EncodedDocumentData(encodedDocumentData);
-        final ImportState importState = new ImportState(documentData.getDocRef(),
+        final ImportState importState = new ImportState(
+                documentData.getDocRef(),
                 documentData.getDocRef().getName());
         return ruleSetServiceProvider.get().importDocument(
                 documentData.getDocRef(),

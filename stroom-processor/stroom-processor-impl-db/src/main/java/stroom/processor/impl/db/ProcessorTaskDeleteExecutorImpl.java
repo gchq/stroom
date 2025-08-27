@@ -152,6 +152,7 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
                 "Physically deleted {} old processor filters with state of DELETED");
 
         // Physically delete old processors.
+        // Not sure what the point of this is as we never logically delete processors.
         taskContext.info(() -> "Physically deleting old processors with state of DELETED");
         runWithCountAndTimeLogging(() -> processorDao.physicalDeleteOldProcessors(deleteThreshold),
                 totalCount,

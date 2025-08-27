@@ -35,10 +35,12 @@ import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
+import stroom.importexport.shared.ImportState.State;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Message;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.Severity;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -67,7 +69,10 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class ImportConfigConfirmPresenter extends
         MyPresenter<ImportConfigConfirmPresenter.ImportConfigConfirmView,
@@ -158,7 +163,9 @@ public class ImportConfigConfirmPresenter extends
 
     @Override
     protected void revealInParent() {
-        final PopupSize popupSize = PopupSize.resizable(800, 800, 380, 480);
+        final PopupSize popupSize = PopupSize.resizable(
+                1200, 800,
+                380, 480);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
@@ -226,23 +233,72 @@ public class ImportConfigConfirmPresenter extends
                 AlertEvent.fireWarn(
                         ImportConfigConfirmPresenter.this,
                         "No items are selected for import", e::reset);
-            } else if (warnings) {
-                ConfirmEvent.fireWarn(ImportConfigConfirmPresenter.this,
-                        "There are warnings in the items selected.  Are you sure you want to import?.",
-                        result -> {
-                            if (result) {
-                                importData(e);
-                            } else {
-                                // Re-enable popup buttons.
-                                e.reset();
-                            }
-                        });
-
             } else {
-                importData(e);
+                final String ownedDocumentsMsg = checkOwnedDocuments();
+                if (NullSafe.isNonEmptyString(ownedDocumentsMsg)) {
+                    AlertEvent.fireWarn(ImportConfigConfirmPresenter.this, ownedDocumentsMsg, e::reset);
+                } else if (warnings) {
+                    ConfirmEvent.fireWarn(ImportConfigConfirmPresenter.this,
+                            "There are warnings in the items selected.  Are you sure you want to import?.",
+                            result -> {
+                                if (result) {
+                                    importData(e);
+                                } else {
+                                    // Re-enable popup buttons.
+                                    e.reset();
+                                }
+                            });
+                } else {
+                    importData(e);
+                }
             }
         } else {
             abortImport(e);
+        }
+    }
+
+    private String checkOwnedDocuments() {
+        //noinspection SimplifyStreamApiCallChains // Cos GWT
+        final List<ImportState> selectedAndOwned = NullSafe.stream(confirmList)
+                .filter(ImportState::isAction)
+                .filter(importState -> importState.getState() != State.IGNORE)
+                .filter(importState -> importState.getOwnerDocRef() != null)
+                .collect(Collectors.toList());
+
+        if (!selectedAndOwned.isEmpty()) {
+            final Map<DocRef, ImportState> selectedDocRefToStateMap = NullSafe.stream(confirmList)
+                    .collect(Collectors.toMap(ImportState::getDocRef, Function.identity()));
+
+            for (final ImportState importState : selectedAndOwned) {
+                final DocRef ownerDocRef = importState.getOwnerDocRef();
+                final ImportState ownerImportState = selectedDocRefToStateMap.get(ownerDocRef);
+
+                final DocRef ownedDocRef = importState.getDocRef();
+                if (ownerImportState == null
+                    || (!ownerImportState.isAction()
+                        && (ownerImportState.getState() == State.NEW || ownerImportState.getState() == State.IGNORE))) {
+                    return "You have selected " + docRefToString(ownedDocRef)
+                           + " without selecting its parent document " + docRefToString(ownerDocRef)
+                           + ". You must also select its parent.";
+                } else if (ownerImportState.getSeverity().greaterThanOrEqual(Severity.ERROR)) {
+                    return "You have selected " + docRefToString(ownedDocRef)
+                           + " but its parent document " + docRefToString(ownerDocRef)
+                           + " cannot be imported due to an error. You cannot import this document.";
+                }
+            }
+        }
+        return null;
+    }
+
+    private String docRefToString(final DocRef docRef) {
+        if (docRef == null) {
+            return "";
+        } else {
+            if (docRef.getName() != null) {
+                return docRef.getType() + " '" + docRef.getName() + "' (" + docRef.getUuid() + ")";
+            } else {
+                return docRef.getType() + " " + docRef.getUuid();
+            }
         }
     }
 
@@ -445,13 +501,16 @@ public class ImportConfigConfirmPresenter extends
 
         restFactory
                 .create(CONTENT_RESOURCE)
-                .method(res -> res.importContent(new ImportConfigRequest(resourceKey,
-                        importSettingsBuilder.build(),
-                        new ArrayList<>())))
-                .onSuccess(result2 -> AlertEvent.fireWarn(ImportConfigConfirmPresenter.this,
+                .method(res -> {
+                    res.abortImport(resourceKey);
+                    return null;
+                })
+                .onSuccess(ignored -> AlertEvent.fireWarn(
+                        ImportConfigConfirmPresenter.this,
                         "Import Aborted",
                         e::hide))
-                .onFailure(caught -> AlertEvent.fireError(ImportConfigConfirmPresenter.this,
+                .onFailure(caught -> AlertEvent.fireError(
+                        ImportConfigConfirmPresenter.this,
                         caught.getMessage(),
                         e::hide))
                 .taskMonitorFactory(this)
