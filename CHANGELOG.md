@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.10-beta.14] - 2025-08-27
+
+* Issue **#5077** : Fix bug in user full name templating where it is always re-using the first value, i.e. setting every user to have the full name of the first user to log in.
+
+
 ## [v7.10-beta.13] - 2025-08-26
 
 * Issue **#5047** : Replace the property `stroom.security.authentication.openid.validateAudience` with `stroom.security.authentication.openid.allowedAudiences` (defaults to empty) and `stroom.security.authentication.openid.audienceClaimRequired` (defaults to false). If the IDP is known to provide the `aud` claim (often populated with the `clientId`) then set `allowedAudiences` to contain that value and set `audienceClaimRequired` to `true`.
@@ -1635,7 +1640,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.10-beta.13...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.10-beta.14...HEAD
+[v7.10-beta.14]: https://github.com/gchq/stroom/compare/v7.10-beta.13...v7.10-beta.14
 [v7.10-beta.13]: https://github.com/gchq/stroom/compare/v7.10-beta.12...v7.10-beta.13
 [v7.10-beta.12]: https://github.com/gchq/stroom/compare/v7.10-beta.11...v7.10-beta.12
 [v7.10-beta.11]: https://github.com/gchq/stroom/compare/v7.10-beta.10...v7.10-beta.11
