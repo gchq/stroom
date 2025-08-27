@@ -547,8 +547,8 @@ public class StandardJwtContextFactory implements JwtContextFactory {
         final String awsRegion = NullSafe.string(extractAwsRegionFromSigner(signer));
 
         final String publicKeyUri = publicKeyUriTemplator.buildGenerator()
-                .addStaticReplacement(AWS_REGION_TEMPLATE_VARIABLE, awsRegion)
-                .addStaticReplacement(KEY_ID_TEMPLATE_VARIABLE, keyId)
+                .addReplacement(AWS_REGION_TEMPLATE_VARIABLE, awsRegion)
+                .addReplacement(KEY_ID_TEMPLATE_VARIABLE, keyId)
                 .generate();
 
         LOGGER.debug("publicKeyUriTemplator: '{}', awsRegion: '{}', keyId: '{}', publicKeyUri: '{}'",
