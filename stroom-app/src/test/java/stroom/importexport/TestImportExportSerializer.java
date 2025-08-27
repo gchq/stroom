@@ -27,6 +27,7 @@ import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.api.ExportSummary;
 import stroom.importexport.api.ImportExportSerializer;
+import stroom.importexport.api.ImportExportVersion;
 import stroom.importexport.impl.ImportExportFileNameUtil;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
@@ -126,7 +127,8 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
                 testDataDir,
                 buildFindFolderCriteria(),
                 Collections.emptySet(),
-                true);
+                true,
+                ImportExportVersion.V1);
 
         List<ImportState> list = new ArrayList<>();
         importExportSerializer.read(
@@ -241,7 +243,8 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
                 testDataDir,
                 forExport,
                 Collections.emptySet(),
-                true);
+                true,
+                ImportExportVersion.V1);
 
 
         importExportSerializer.read(
@@ -283,7 +286,8 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
                 testDataDir,
                 buildFindFolderCriteria(),
                 Collections.emptySet(),
-                true);
+                true,
+                ImportExportVersion.V1);
 
         final String fileNamePrefix = ImportExportFileNameUtil.createFilePrefix(childPipelineNode.getDocRef());
         final String fileName = fileNamePrefix + ".meta";
@@ -328,7 +332,8 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
                 outDir,
                 exported,
                 Collections.emptySet(),
-                true);
+                true,
+                ImportExportVersion.V1);
 
         final List<Message> messageList = exportSummary.getMessages();
         messageList.forEach(message -> {
@@ -361,13 +366,14 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
                         null,
                         ImportSettings.auto());
 
-        // Write to output.
+        // Write to output in V2 format
         final ExportSummary exportSummary = importExportSerializer.write(
                 List.of(ExplorerConstants.SYSTEM_NODE),
                 outDir,
                 exported,
                 Collections.emptySet(),
-                true);
+                true,
+                ImportExportVersion.V2);
 
         final List<Message> messageList = exportSummary.getMessages();
         messageList.forEach(message -> {

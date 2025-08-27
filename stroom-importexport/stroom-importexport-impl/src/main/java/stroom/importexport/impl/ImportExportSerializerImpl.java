@@ -27,6 +27,7 @@ import stroom.importexport.api.ExportSummary;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.api.ImportExportDocumentEventLog;
 import stroom.importexport.api.ImportExportSerializer;
+import stroom.importexport.api.ImportExportVersion;
 import stroom.importexport.api.NonExplorerDocRefProvider;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportSettings.ImportMode;
@@ -532,7 +533,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
     }
 
     /**
-     * Method for exporting.
+     * Method for exporting using the latest version of export format.
      * @param rootNodePath     Path to root node of the export. The method
      *                         removes these path elements from the start of
      *                         the exported path. Normally this should be the path to the
@@ -551,6 +552,40 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                                final Set<DocRef> docRefs,
                                final Set<String> docTypesToIgnore,
                                final boolean omitAuditFields) {
+        return this.write(rootNodePath,
+                dir,
+                docRefs,
+                docTypesToIgnore,
+                omitAuditFields,
+                ImportExportVersion.V1);
+    }
+
+    /**
+     * Method for exporting.
+     * @param rootNodePath     Path to root node of the export. The method
+     *                         removes these path elements from the start of
+     *                         the exported path. Normally this should be the path to the
+     *                         GitRepo node, including that node.
+     * @param dir              Where to serialize the DocRef items to on disk.
+     * @param docRefs          Set of the DocRefs to serialize.
+     * @param docTypesToIgnore Set of the Doc types that shouldn't be exported, nor
+     *                         their children. Must not be null. Used to prevent
+     *                         exports of GitRepo objects.
+     * @param omitAuditFields  Do not export audit fields.
+     * @return The summary of the export.
+     */
+    @Override
+    public ExportSummary write(final List<ExplorerNode> rootNodePath,
+                               final Path dir,
+                               final Set<DocRef> docRefs,
+                               final Set<String> docTypesToIgnore,
+                               final boolean omitAuditFields,
+                               final ImportExportVersion version) {
+
+        if (version != ImportExportVersion.V1) {
+            throw new RuntimeException("Invalid version for export: "
+                                       + version);
+        }
 
         Objects.requireNonNull(docTypesToIgnore);
 

@@ -22,6 +22,7 @@ import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.api.ImportExportSerializer;
+import stroom.importexport.api.ImportExportVersion;
 import stroom.importexport.shared.ImportSettings;
 import stroom.statistics.impl.hbase.entity.StroomStatsStoreStore;
 import stroom.statistics.impl.hbase.shared.StatisticField;
@@ -85,7 +86,8 @@ class TestStroomStatsStoreImportExportSerializer extends AbstractCoreIntegration
                 testDataDir,
                 Set.of(statNode.getDocRef()),
                 Collections.emptySet(),
-                true);
+                true,
+                ImportExportVersion.V1);
 
         assertThat(FileUtil.count(testDataDir)).isEqualTo(3);
 

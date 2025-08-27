@@ -284,6 +284,18 @@ class NodeFileDocRefStateV2 {
     }*/
 
     /**
+     * @return The docRef to use as the imported docRef when importing
+     * a Folder into Stroom.
+     */
+    public DocRef getImportedFolderDocRef() {
+        if (existingDocRef != null) {
+            return existingDocRef;
+        } else {
+            return nodeFileDocRef;
+        }
+    }
+
+    /**
      * @return true if the ExplorerNode already exists.
      */
     public boolean nodeAlreadyExists() {
@@ -340,6 +352,14 @@ class NodeFileDocRefStateV2 {
      */
     public String getDestPathForImportState() {
         return pathAsString;
+    }
+
+    public String getProcessorFilterSourcePath() {
+        return "foo";
+    }
+
+    public String getProcessorFilterDestPath() {
+        return "bar";
     }
 
     /**
