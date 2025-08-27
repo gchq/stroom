@@ -31,6 +31,8 @@ public abstract class AbstractOpenIdConfig
     public static final String PROP_NAME_EXPECTED_SIGNER_PREFIXES = "expectedSignerPrefixes";
     public static final boolean DEFAULT_AUDIENCE_CLAIM_REQUIRED = false;
     public static final String DEFAULT_FULL_NAME_CLAIM_TEMPLATE = "${name}";
+    public static final String DEFAULT_AWS_PUBLIC_KEY_URI_TEMPLATE =
+            "https://public-keys.auth.elb.${awsRegion}.amazonaws.com/${keyId}";
 
     private final IdpType identityProviderType;
 
@@ -166,7 +168,7 @@ public abstract class AbstractOpenIdConfig
         userDisplayNameClaim = OpenId.CLAIM__PREFERRED_USERNAME;
         fullNameClaimTemplate = DEFAULT_FULL_NAME_CLAIM_TEMPLATE;
         expectedSignerPrefixes = Collections.emptySet();
-        publicKeyUriPattern = "https://public-keys.auth.elb.{}.amazonaws.com/{}";
+        publicKeyUriPattern = DEFAULT_AWS_PUBLIC_KEY_URI_TEMPLATE;
     }
 
     @JsonIgnore
@@ -413,10 +415,11 @@ public abstract class AbstractOpenIdConfig
         return expectedSignerPrefixes;
     }
 
-
     @Override
     @JsonProperty
-    @JsonPropertyDescription("If using AWS as an IdP what pattern should be used to construct the public key URI")
+    @JsonPropertyDescription("If the token is signed by AWS then use this pattern to form the URI to obtain the " +
+                             "public key from. The pattern supports the variables '${awsRegion}' and '${keyId}'. " +
+                             "Multiple instances of a variable are also supported.")
     public String getPublicKeyUriPattern() {
         return publicKeyUriPattern;
     }

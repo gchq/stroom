@@ -6,6 +6,7 @@ import stroom.security.api.ServiceUserFactory;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
 import stroom.security.api.exception.AuthenticationException;
+import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
@@ -15,6 +16,7 @@ import stroom.util.authentication.HasRefreshable;
 import stroom.util.authentication.Refreshable;
 import stroom.util.authentication.Refreshable.RefreshMode;
 import stroom.util.cert.CertificateExtractor;
+import stroom.util.concurrent.CachedValue;
 import stroom.util.exception.ThrowingFunction;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.jersey.JerseyClientFactory;
@@ -22,6 +24,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.string.TemplateUtil;
+import stroom.util.string.TemplateUtil.Templator;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,7 +41,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
 @Singleton
 public abstract class AbstractUserIdentityFactory implements UserIdentityFactory {
@@ -51,6 +54,7 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
     private final ServiceUserFactory serviceUserFactory;
     private final JerseyClientFactory jerseyClientFactory;
     private final SimplePathCreator simplePathCreator;
+    private final CachedValue<Templator, String> cachedFullNameTemplate;
 
     // A service account/user for communicating with other apps in the same OIDC realm,
     // e.g. proxy => stroom. Created lazily.
@@ -81,6 +85,13 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
         this.objectMapper = createObjectMapper();
         // Bake this in as a restart is required for this prop
         this.idpType = openIdConfigProvider.get().getIdentityProviderType();
+        this.cachedFullNameTemplate = CachedValue.builder()
+                .withMaxCheckIntervalMinutes(1)
+                .withStateSupplier(() ->
+                        NullSafe.nonBlankStringElse(openIdConfigProvider.get().getFullNameClaimTemplate(),
+                                AbstractOpenIdConfig.DEFAULT_FULL_NAME_CLAIM_TEMPLATE))
+                .withValueFunction(TemplateUtil::parseTemplate)
+                .build();
     }
 
     /**
@@ -411,27 +422,18 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                                                final JwtClaims jwtClaims) {
         Objects.requireNonNull(openIdConfiguration);
         Objects.requireNonNull(jwtClaims);
-        final String fullNameClaimTemplate = openIdConfiguration.getFullNameClaimTemplate();
-        if (NullSafe.isNonBlankString(fullNameClaimTemplate)) {
-            String fullName = fullNameClaimTemplate;
-            final Set<String> claimsInTemplate = NullSafe.asSet(simplePathCreator.findVars(fullNameClaimTemplate));
-            // e.g. "${firstName} ${lastName}" => "john Doe"
+        // e.g. "${firstName} ${lastName}" => "john Doe"
+        final Templator fullNameTemplator = cachedFullNameTemplate.getValue();
+        if (!fullNameTemplator.isBlank()) {
             // If the claim in the template is not in the claims then just replace with empty string
-            for (final String claim : claimsInTemplate) {
-                fullName = simplePathCreator.replace(
-                        fullName,
-                        claim,
-                        () -> {
-                            if (NullSafe.isNonBlankString(claim)) {
-                                return JwtUtil.getClaimValue(jwtClaims, claim)
-                                        .filter(NullSafe::isNonBlankString)
-                                        .orElse("");
-                            } else {
-                                return "";
-                            }
-                        });
-            }
-            return Optional.ofNullable(fullName);
+            final String fullName = NullSafe.trim(fullNameTemplator.buildGenerator()
+                    .addCommonReplacementFunction(aClaim -> JwtUtil.getClaimValue(jwtClaims, aClaim)
+                            .map(NullSafe::trim)
+                            .orElse(""))
+                    .generate());
+            return fullName.isEmpty()
+                    ? Optional.empty()
+                    : Optional.of(fullName);
         } else {
             return Optional.empty();
         }

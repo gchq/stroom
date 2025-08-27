@@ -124,8 +124,8 @@ public class StroomUserIdentityFactory
                                                     final HttpServletRequest request) {
 
         final String headerKey = UserIdentityFactory.RUN_AS_USER_HEADER;
-        final String runAsUserUuid = request.getHeader(headerKey);
-        if (!NullSafe.isBlankString(runAsUserUuid)) {
+        final String runAsUserUuid = NullSafe.trim(request.getHeader(headerKey));
+        if (!runAsUserUuid.isEmpty()) {
             // Request is proxying for a user, so it needs to be the processing user that
             // sent the request. Getting the proc user, even though we don't do anything with it will
             // ensure it is authenticated.
@@ -207,6 +207,8 @@ public class StroomUserIdentityFactory
 
         final String fullName = getUserFullName(openIdConfigProvider.get(), jwtClaims)
                 .orElse(null);
+
+        LOGGER.debug("subjectId: '{}', displayName: '{}', fullName: '{}'", subjectId, displayName, fullName);
 
         final Predicate<User> hasUserInfoChangedPredicate = aUser ->
                 !Objects.equals(displayName, aUser.getDisplayName())

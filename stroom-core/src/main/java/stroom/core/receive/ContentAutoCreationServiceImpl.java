@@ -265,8 +265,8 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                                         final AttributeMap attributeMap,
                                         final ContentTemplate contentTemplate) {
 
-        final String destinationPath = cachedDestinationPathTemplator.getValue()
-                .apply(attributeMap);
+        final Templator templator = cachedDestinationPathTemplator.getValue();
+        final String destinationPath = templator.generateWith(attributeMap);
         final DocPath docPath = DocPath.fromPathString(destinationPath);
 
         LOGGER.info("Ensuring path '{}' exists", docPath);
@@ -290,7 +290,8 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         }
 
         // Set up the group
-        final String groupName = cachedGroupTemplator.getValue().apply(attributeMap);
+        final Templator groupTemplator = cachedGroupTemplator.getValue();
+        final String groupName = groupTemplator.generateWith(attributeMap);
         LOGGER.info("Auto-creating user group '{}'", groupName);
         final User group = userService.getOrCreateUserGroup(groupName);
         addAppPerms(group);
@@ -301,8 +302,8 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
 
         // Set up the additional group
         Optional<User> optAdditionalGroup = Optional.empty();
-        final String additionalGroupName = cachedAdditionalGroupTemplator.getValue()
-                .apply(attributeMap);
+        final Templator additionalGroupTemplator = cachedAdditionalGroupTemplator.getValue();
+        final String additionalGroupName = additionalGroupTemplator.generateWith(attributeMap);
         if (NullSafe.isNonBlankString(additionalGroupName)) {
             LOGGER.info("Auto-creating user group '{}'", additionalGroupName);
             final User additionalGroup = userService.getOrCreateUserGroup(additionalGroupName);
