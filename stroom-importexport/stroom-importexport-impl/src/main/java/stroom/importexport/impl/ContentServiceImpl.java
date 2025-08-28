@@ -33,6 +33,7 @@ import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.DocRefs;
 import stroom.util.shared.Message;
 import stroom.util.shared.PermissionException;
@@ -111,6 +112,18 @@ class ContentServiceImpl implements ContentService {
                 throw rex;
             }
         });
+    }
+
+    @Override
+    public void abortImport(final ResourceKey resourceKey) {
+        if (resourceKey != null) {
+            try {
+                resourceStore.deleteTempFile(resourceKey);
+            } catch (final Exception e) {
+                // Just log and swallow as it is only a temp file
+                LOGGER.error("Unable to delete resourceKey {}: {}", resourceKey, LogUtil.exceptionMessage(e), e);
+            }
+        }
     }
 
 //    @Override

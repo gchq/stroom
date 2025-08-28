@@ -25,14 +25,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-
 public enum Severity implements HasDisplayValue {
     // In case anyone is using the default enum ordinal compare, these must be defined
     // in ascending order of severity and so must the IDs
     INFO(1, "INFO", "Information"),
     WARNING(2, "WARN", "Warnings"),
     ERROR(3, "ERROR", "Errors"),
-    FATAL_ERROR(4, "FATAL", "Fatal Errors");
+    FATAL_ERROR(4, "FATAL", "Fatal Errors"),
+    ;
 
     /**
      * Comparator for comparing severities with nulls first then lowest to highest severity
