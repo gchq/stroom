@@ -371,6 +371,7 @@ public class TraceOverviewWidget extends Composite {
     private void appendServiceOperations(final HtmlBuilder hb) {
 
         hb.div(div -> {
+//            appendSectionHeader(div);
             appendSectionHeader(div);
             appendOperationList(div);
 
@@ -403,17 +404,41 @@ public class TraceOverviewWidget extends Composite {
                         Attribute.className("operation-name indent-" + depth));
             }, Attribute.className("operation-content"));
             div.div(c -> {
+                final NanoDuration windowSize = windowEnd.subtract(windowStart);
+                 NanoDuration offsetStart = span.start().diff(extents.min);
+                 NanoDuration offsetEnd = span.end().diff(extents.min);
+                 offsetStart = offsetStart.subtract(windowStart);
+                 offsetEnd = offsetEnd.subtract(windowStart);
 
-                final double leftPct = span.start().diff(extents.min).getNanos() * extents.increments;
-                final double widthPct = span.duration().getNanos() * extents.increments;
+                if (offsetStart.isLessThan(NanoDuration.ZERO)) {
+                    offsetStart = NanoDuration.ZERO;
+                }
+                if (offsetEnd.isLessThan(NanoDuration.ZERO)) {
+                    offsetEnd = NanoDuration.ZERO;
+                } else if (offsetEnd.isGreaterThan(windowSize)) {
+                    offsetEnd = windowSize;
+                }
 
+//                GWT.log("name=" + span.getName() + ", offsetstart = " + offsetStart + ", offsetend = " + offsetEnd);
 
-                c.div("",
-                        Attribute.className("span-bar span-http"),
-                        Attribute.style("left: " + leftPct + "%; width: " + widthPct + "%;"));
-                c.span(span.duration().toString(),
-                        Attribute.className("duration"),
-                        Attribute.style("left: " + (leftPct + widthPct) + "%;"));
+                final NanoDuration duration = offsetEnd.subtract(offsetStart);
+                if (duration.isGreaterThan(NanoDuration.ZERO)) {
+                    final double increment = 100D / windowSize.getNanos();
+
+//                    final NanoDuration start = offsetStart.subtract(windowStart);
+                    double leftPct = offsetStart.getNanos() * increment;
+                    double widthPct = offsetEnd.subtract(offsetStart).getNanos() * increment;
+
+                    leftPct = Math.max(Math.min(leftPct, 100), 0);
+                    widthPct = Math.max(Math.min(widthPct, 100), 0);
+
+                    c.div("",
+                            Attribute.className("span-bar span-http"),
+                            Attribute.style("left: " + leftPct + "%; width: " + widthPct + "%;"));
+                    c.span(span.duration().toString(),
+                            Attribute.className("duration"),
+                            Attribute.style("left: " + (leftPct + widthPct) + "%;"));
+                }
             }, Attribute.className("waterfall-container"));
 
         }, Attribute.className("operation-item"), Attribute.id("operationList"));
