@@ -6,6 +6,7 @@ import stroom.security.api.ServiceUserFactory;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
 import stroom.security.api.exception.AuthenticationException;
+import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
@@ -15,12 +16,16 @@ import stroom.util.authentication.HasRefreshable;
 import stroom.util.authentication.Refreshable;
 import stroom.util.authentication.Refreshable.RefreshMode;
 import stroom.util.cert.CertificateExtractor;
+import stroom.util.concurrent.CachedValue;
 import stroom.util.exception.ThrowingFunction;
+import stroom.util.io.SimplePathCreator;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.string.TemplateUtil;
+import stroom.util.string.TemplateUtil.Templator;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -48,6 +53,8 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
     private final CertificateExtractor certificateExtractor;
     private final ServiceUserFactory serviceUserFactory;
     private final JerseyClientFactory jerseyClientFactory;
+    private final SimplePathCreator simplePathCreator;
+    private final CachedValue<Templator, String> cachedFullNameTemplate;
 
     // A service account/user for communicating with other apps in the same OIDC realm,
     // e.g. proxy => stroom. Created lazily.
@@ -65,6 +72,7 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                                        final CertificateExtractor certificateExtractor,
                                        final ServiceUserFactory serviceUserFactory,
                                        final JerseyClientFactory jerseyClientFactory,
+                                       final SimplePathCreator simplePathCreator,
                                        final RefreshManager refreshManager) {
         this.jwtContextFactory = jwtContextFactory;
         this.openIdConfigProvider = openIdConfigProvider;
@@ -72,10 +80,18 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
         this.certificateExtractor = certificateExtractor;
         this.serviceUserFactory = serviceUserFactory;
         this.jerseyClientFactory = jerseyClientFactory;
+        this.simplePathCreator = simplePathCreator;
         this.refreshManager = refreshManager;
         this.objectMapper = createObjectMapper();
         // Bake this in as a restart is required for this prop
         this.idpType = openIdConfigProvider.get().getIdentityProviderType();
+        this.cachedFullNameTemplate = CachedValue.builder()
+                .withMaxCheckIntervalMinutes(1)
+                .withStateSupplier(() ->
+                        NullSafe.nonBlankStringElse(openIdConfigProvider.get().getFullNameClaimTemplate(),
+                                AbstractOpenIdConfig.DEFAULT_FULL_NAME_CLAIM_TEMPLATE))
+                .withValueFunction(template -> TemplateUtil.parseTemplate(template))
+                .build();
     }
 
     /**
@@ -400,6 +416,27 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
 
     protected void removeTokenFromRefreshManager(final Refreshable refreshable) {
         NullSafe.consume(refreshable, refreshManager::remove);
+    }
+
+    protected Optional<String> getUserFullName(final OpenIdConfiguration openIdConfiguration,
+                                               final JwtClaims jwtClaims) {
+        Objects.requireNonNull(openIdConfiguration);
+        Objects.requireNonNull(jwtClaims);
+        // e.g. "${firstName} ${lastName}" => "john Doe"
+        final Templator fullNameTemplator = cachedFullNameTemplate.getValue();
+        if (!fullNameTemplator.isBlank()) {
+            // If the claim in the template is not in the claims then just replace with empty string
+            final String fullName = NullSafe.trim(fullNameTemplator.buildGenerator()
+                    .addCommonReplacementFunction(aClaim -> JwtUtil.getClaimValue(jwtClaims, aClaim)
+                            .map(NullSafe::trim)
+                            .orElse(""))
+                    .generate());
+            return fullName.isEmpty()
+                    ? Optional.empty()
+                    : Optional.of(fullName);
+        } else {
+            return Optional.empty();
+        }
     }
 
     private FetchTokenResult refreshTokens(final TokenResponse existingTokenResponse) {

@@ -12,6 +12,7 @@ import jakarta.inject.Singleton;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -74,7 +75,13 @@ public class TestIdpConfigurationProvider implements IdpConfigurationProvider {
     }
 
     @Override
-    public boolean isValidateAudience() {
+    public Set<String> getAllowedAudiences() {
+        showWarning();
+        return Collections.emptySet();
+    }
+
+    @Override
+    public boolean isAudienceClaimRequired() {
         showWarning();
         return false;
     }
@@ -91,6 +98,11 @@ public class TestIdpConfigurationProvider implements IdpConfigurationProvider {
 
     @Override
     public String getUserDisplayNameClaim() {
+        throw new UnsupportedOperationException("Not supported for this implementation");
+    }
+
+    @Override
+    public String getFullNameClaimTemplate() {
         throw new UnsupportedOperationException("Not supported for this implementation");
     }
 

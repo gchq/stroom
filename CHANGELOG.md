@@ -13,6 +13,21 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#5042** : Allow the import of processor filters when the existing processor filter is in a logically deleted state. Add validation to the import confirm dialog to ensure the parent doc is selected when a processor filter is selected.
+
+* Change DocRef Info Cache to evict entries on document creation to stop stroom saying that a document doesn't exist after import.
+
+* Issue **#5077** : Fix bug in user full name templating where it is always re-using the first value, i.e. setting every user to have the full name of the first user to log in.
+
+* Issue **#5047** : Replace the property `stroom.security.authentication.openid.validateAudience` with `stroom.security.authentication.openid.allowedAudiences` (defaults to empty) and `stroom.security.authentication.openid.audienceClaimRequired` (defaults to false). If the IDP is known to provide the `aud` claim (often populated with the `clientId`) then set `allowedAudiences` to contain that value and set `audienceClaimRequired` to `true`.
+
+* Issue **#5068** : Add the config prop `stroom.security.authentication.openId.fullNameClaimTemplate` to allow the user's full name to be formed from a template containing a mixture of static text and claim variables, e.g. `${firstName} ${lastName}`. Unknown variables are replaced with an empty string. Default is `${name}`.
+
+* Issue **#5066** : Change template syntax of `openid.publicKeyUriPattern` prop from positional variables (`{}`) to named variables (`${awsRegion}`). Default value has changed to `https://public-keys.auth.elb.${awsRegion}.amazonaws.com/${keyId}`. If this prop has been explicitly set, its value will need to be changed to named variables.
+
+* Issue **#5073** : Trim the unique identity, display name and full name values for a user to ensure no leading/trailing spaces are stored. Includes DB migration `V07_10_00_005__trim_user_identities.sql` that trims existing values in the `name`, `display_name` and `full_name` columns of the `stroom_user` table.
+
+
 ## [v7.11-beta.5] - 2025-08-14
 
 * Issue **#2279** : Drag and drop tabs.

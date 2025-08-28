@@ -35,6 +35,8 @@ import stroom.importexport.shared.ImportState.State;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.io.AbstractFileVisitor;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Message;
@@ -43,8 +45,6 @@ import stroom.util.shared.PermissionException;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -73,7 +73,7 @@ import java.util.stream.Collectors;
 
 class ImportExportSerializerImpl implements ImportExportSerializer {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ImportExportSerializerImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ImportExportSerializerImpl.class);
 
     public static final String FOLDER = ExplorerConstants.FOLDER_TYPE;
 
@@ -279,12 +279,24 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         final String nameSuffix = " - (" + docRefName + ")";
         importState.setSourcePath(createPath(path, ownerDocument.getName()) + nameSuffix);
         importState.setDestPath(createPath(destPath, destName) + nameSuffix);
+        importState.setOwnerDocRef(ownerDocument);
+
 
         try {
+//            // Make sure the owner doc is also ticked
+//            final ImportState ownerImportState = confirmMap.get(ownerDocument);
+//            if (ImportMode.ACTION_CONFIRMATION.equals(importSettings.getImportMode())) {
+//                if (ownerImportState == null || !ownerImportState.isAction()) {
+//                    throw new RuntimeException(LogUtil.message("You cannot import {} without also importing {}",
+//                            docRef, ownerDocument));
+//                }
+//            }
+
             // Import the item via the appropriate handler.
-            if (ImportMode.CREATE_CONFIRMATION.equals(importSettings.getImportMode()) ||
-                ImportMode.IGNORE_CONFIRMATION.equals(importSettings.getImportMode()) ||
-                importState.isAction()) {
+            if (canImport(importSettings, importState)) {
+                LOGGER.debug(() -> LogUtil.message(
+                        "importNonExplorerDoc() - Importing {}, mode: {}, isAction: {} importState: {}",
+                        docRef, importSettings.getImportMode(), importState.isAction(), importState.getState()));
 
                 final DocRef imported = importExportActionHandler.importDocument(
                         docRef,
@@ -306,6 +318,9 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                             null);
                 }
             } else {
+                LOGGER.debug(() -> LogUtil.message(
+                        "importNonExplorerDoc() - Skipping {}, mode: {}, isAction: {} importState: {}",
+                        docRef, importSettings.getImportMode(), importState.isAction(), importState.getState()));
                 // We can't import this item so remove it from the map.
                 confirmMap.remove(docRef);
             }
@@ -408,10 +423,16 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
         try {
             // Import the item via the appropriate handler.
-            if (importExportActionHandler != null && (
-                    ImportMode.CREATE_CONFIRMATION.equals(importSettings.getImportMode()) ||
-                    ImportMode.IGNORE_CONFIRMATION.equals(importSettings.getImportMode()) ||
-                    importState.isAction())) {
+            if (importExportActionHandler == null) {
+                LOGGER.debug(() -> LogUtil.message(
+                        "importExplorerDoc() - No importExportActionHandler for {}", docRef));
+                // We can't import this item so remove it from the map.
+                confirmMap.remove(docRef);
+            } else if (canImport(importSettings, importState)) {
+
+                LOGGER.debug(() -> LogUtil.message(
+                        "importExplorerDoc() - Importing {}, mode: {}, isAction: {} importState: {}",
+                        docRef, importSettings.getImportMode(), importState.isAction(), importState.getState()));
 
                 final DocRef imported = importExportActionHandler.importDocument(
                         docRef,
@@ -457,6 +478,9 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                             null);
                 }
             } else {
+                LOGGER.debug(() -> LogUtil.message(
+                        "importExplorerDoc() - Skipping {}, mode: {}, isAction: {} importState: {}",
+                        docRef, importSettings.getImportMode(), importState.isAction(), importState.getState()));
                 // We can't import this item so remove it from the map.
                 confirmMap.remove(docRef);
             }
@@ -471,6 +495,17 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         }
 
         return docRef;
+    }
+
+    private boolean canImport(final ImportSettings importSettings, final ImportState importState) {
+        final ImportMode mode = importSettings.getImportMode();
+        final boolean canImport = ImportMode.CREATE_CONFIRMATION.equals(mode)
+                                  || ImportMode.IGNORE_CONFIRMATION.equals(mode)
+                                  || (importState.isAction() && importState.getState() != State.IGNORE);
+        LOGGER.debug(() -> LogUtil.message(
+                "canImport() - mode: {}, isAction: {} importState: {}, canImport: {}",
+                mode, importState.isAction(), importState.getState(), canImport));
+        return canImport;
     }
 
     /**

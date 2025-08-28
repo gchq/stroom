@@ -33,6 +33,8 @@ public interface ContentService {
 
     ImportConfigResponse importContent(ImportConfigRequest request);
 
+    void abortImport(ResourceKey resourceKey);
+
     ResourceGeneration exportContent(DocRefs docRefs);
 
     ResultPage<Dependency> fetchDependencies(DependencyCriteria criteria);

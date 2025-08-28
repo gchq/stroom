@@ -4,7 +4,7 @@ def fatJarName = 'stroom-proxy-app-all.jar'
 def releaseBuildDir = "${projectDir}/build/release"
 def configDefaultsFile = "${releaseBuildDir}/config/config-defaults.yml"
 def configSchemaFile = "${releaseBuildDir}/config/config-schema.yml"
-def sendToStroomScriptVersion = 'send-to-stroom-v3.2.2-1'
+def sendToStroomScriptVersion = 'send-to-stroom-v3.4.0'
 
 apply plugin: 'application'
 apply plugin: 'com.gradleup.shadow'

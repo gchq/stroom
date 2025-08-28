@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class QueryData implements Serializable {
@@ -106,6 +107,29 @@ public class QueryData implements Serializable {
     public Builder copy() {
         return new Builder(this);
     }
+
+    @Override
+    public boolean equals(final Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (object == null || getClass() != object.getClass()) {
+            return false;
+        }
+        final QueryData queryData = (QueryData) object;
+        return Objects.equals(dataSource, queryData.dataSource) && Objects.equals(expression,
+                queryData.expression) && Objects.equals(params, queryData.params) && Objects.equals(
+                timeRange,
+                queryData.timeRange) && Objects.equals(limits, queryData.limits);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(dataSource, expression, params, timeRange, limits);
+    }
+
+    // --------------------------------------------------------------------------------
+
 
     public static final class Builder {
 

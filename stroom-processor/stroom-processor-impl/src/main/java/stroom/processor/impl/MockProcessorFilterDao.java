@@ -60,6 +60,12 @@ public class MockProcessorFilterDao implements ProcessorFilterDao, Clearable {
     }
 
     @Override
+    public ProcessorFilter restoreProcessorFilter(final ProcessorFilter processorFilter, final boolean resetTracker) {
+        processorFilter.setDeleted(false);
+        return processorFilter;
+    }
+
+    @Override
     public Set<String> physicalDeleteOldProcessorFilters(final Instant deleteThreshold) {
         return Collections.emptySet();
     }

@@ -174,7 +174,11 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
 
     @Override
     public void onChange(final EntityEvent event) {
-        if (event != null && !EntityAction.CREATE.equals(event.getAction())) {
+        if (event != null) {
+            // Need to handle all types as we are caching an optional, e.g.
+            // If you do a delete then an empty is loaded into the cache,
+            // then the same doc is created again, then we need the empty to
+            // be evicted.
             LOGGER.debug("Invalidating entry for {}", event);
             cache.invalidate(event.getDocRef());
         }
