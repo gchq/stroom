@@ -13,7 +13,6 @@ import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.Rect;
 import stroom.widget.util.client.SafeHtmlUtil;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -31,7 +30,6 @@ public class TraceOverviewWidget extends Composite {
     private Trace trace;
 
 
-    private final DefaultResources resources;
     private Extents extents;
     private Glass glass;
     private boolean resizingStart;
@@ -42,7 +40,6 @@ public class TraceOverviewWidget extends Composite {
     private NanoDuration windowEnd = NanoDuration.ZERO;
 
     public TraceOverviewWidget(final DefaultResources resources) {
-        this.resources = resources;
         initWidget(panel);
         glass = new Glass(resources.dataGridStyle().resizeGlass());
 
@@ -225,25 +222,40 @@ public class TraceOverviewWidget extends Composite {
 
     private void appendTimelineHeader(final HtmlBuilder hb) {
         hb.div(div -> {
-            final double totalNanos = extents.totalDuration.getNanos();
-            final int totalMarkers = 4;
-            final double timeIncrements = totalNanos / totalMarkers;
-            final double positionIncrements = 100D / totalMarkers;
+            final long duration = extents.totalDuration.getNanos();
 
-//            // Add first marker.
-//            div.span(s -> s.append(NanoTime.ZERO.toString()), Attribute.style("left: 0;"));
+            // Quantise into 10 chunks.
+            final long quantised = duration / 10;
+
+            // Get the logarithm base 10
+            final double log10 = Math.log10(quantised);
+
+            // Round to nearest integer to get the exponent
+            final int exponent = (int) Math.ceil(log10);
+
+            // Return 10 raised to that power
+            // Ensure each big chunk is at least 100ns.
+            final long bigChunk = (long) Math.max(100, Math.pow(10, exponent));
+
+            final double pctInc = duration == 0
+                    ? 100D
+                    : (100D / duration) * bigChunk;
 
             // Add markers in between.
             double pct = 0;
-            for (int i = 0; i <= totalMarkers; i++) {
-                final int count = i;
-                div.span(s -> s.append(NanoTime.ofNanos((long) (timeIncrements * count)).toString()),
+            long time = 0;
+            while (pct < 100) {
+                final long t = time;
+                div.span(s -> s.append(NanoTime.ofNanos(t).toString()),
                         Attribute.style("left: " + pct + "%;"));
-                pct += positionIncrements;
+                pct += pctInc;
+                time += bigChunk;
             }
 
-//            // Add last marker.
-//            div.span(s -> s.append(extents.totalDuration.toString()), Attribute.style("right: 0;"));
+            // Add last marker if we think there is room.
+            if (pct - pctInc < 90) {
+                div.span(s -> s.append(extents.totalDuration.toString()), Attribute.style("left: 100%;"));
+            }
 
             div.append(SafeHtmlUtil.NBSP);
 
@@ -258,13 +270,14 @@ public class TraceOverviewWidget extends Composite {
     }
 
     private void appendTimelineBar(final HtmlBuilder hb) {
+        final String style = computeGridStyle(0, extents.totalDuration.getNanos());
         hb.div(div -> {
                     final AtomicInteger row = new AtomicInteger();
                     appendSpan(div, trace.root(), row);
                 },
                 Attribute.className("timeline-bar"),
                 Attribute.id("timelineBar"),
-                Attribute.style("height: 40px;"));
+                Attribute.style("height: 40px;" + style));
     }
 
     private void appendSpan(final HtmlBuilder hb,
@@ -379,9 +392,12 @@ public class TraceOverviewWidget extends Composite {
     }
 
     private void appendGridLines(final HtmlBuilder hb) {
-        final long start = windowStart.getNanos();
-        final long duration = windowEnd.subtract(windowStart).getNanos();
+        final String style = computeGridStyle(windowStart.getNanos(), windowEnd.subtract(windowStart).getNanos());
+        hb.div("", Attribute.className("grid-lines"), Attribute.style(style));
+    }
 
+    private String computeGridStyle(final long start,
+                                    final long duration) {
         // Quantise into 10 chunks.
         final long quantised = duration / 10;
 
@@ -396,7 +412,9 @@ public class TraceOverviewWidget extends Composite {
         final long bigChunk = (long) Math.max(100, Math.pow(10, exponent));
         final long smallChunk = bigChunk / 10;
 
-        final double inc = duration == 0 ? 0D : 100D / duration;
+        final double inc = duration == 0
+                ? 0D
+                : 100D / duration;
         final double bigPreChunk = start % bigChunk;
         final double smallPreChunk = start % smallChunk;
 
@@ -409,28 +427,24 @@ public class TraceOverviewWidget extends Composite {
         final double bigOffsetPct = (bigAbsolute / (duration - bigChunk)) * 100D;
         final double smallOffsetPct = (smallAbsolute / (duration - smallChunk)) * 100D;
 
-        GWT.log("bigChunk=" + bigChunk +
-                ", smallChunk=" + smallChunk +
-                ", bigPreChunk=" + bigPreChunk +
-                ", smallPreChunk=" + smallPreChunk +
-                ", duration=" + duration +
-                ", bigWidthPct=" + bigWidthPct +
-                ", smallWidthPct=" + smallWidthPct);
+//        GWT.log("bigChunk=" + bigChunk +
+//                ", smallChunk=" + smallChunk +
+//                ", bigPreChunk=" + bigPreChunk +
+//                ", smallPreChunk=" + smallPreChunk +
+//                ", duration=" + duration +
+//                ", bigWidthPct=" + bigWidthPct +
+//                ", smallWidthPct=" + smallWidthPct);
 
-        final StringBuilder style = new StringBuilder();
-        style.append("background-size:");
-        style.append(bigWidthPct);
-        style.append("% 100%, ");
-        style.append(smallWidthPct);
-        style.append("% 100%;");
-
-        style.append("background-position:");
-        style.append(bigOffsetPct);
-        style.append("% 0, ");
-        style.append(smallOffsetPct);
-        style.append("% 0;");
-
-        hb.div("", Attribute.className("grid-lines"), Attribute.style(style.toString()));
+        return "background-size:" +
+               bigWidthPct +
+               "% 100%, " +
+               smallWidthPct +
+               "% 100%;" +
+               "background-position:" +
+               bigOffsetPct +
+               "% 0, " +
+               smallOffsetPct +
+               "% 0;";
     }
 
 
