@@ -266,18 +266,17 @@
     position: relative;
 }
 
-.service-operations::before {
-    content: '';
+.grid-lines {
     position: absolute;
     top: 0;
     left: 400px;
     right: 50px;
     bottom: 0;
-    background-image: linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
-    background-size: 10% 100%, 2% 100%;
+    background-image:
+       linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),
+       linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%;
     background-position: 0 0, 0 0;
-    pointer-events: none;
 }
 
 .section-header {

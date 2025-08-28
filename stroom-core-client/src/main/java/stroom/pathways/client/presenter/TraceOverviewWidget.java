@@ -371,12 +371,68 @@ public class TraceOverviewWidget extends Composite {
     private void appendServiceOperations(final HtmlBuilder hb) {
 
         hb.div(div -> {
-//            appendSectionHeader(div);
+            appendGridLines(div);
             appendSectionHeader(div);
             appendOperationList(div);
 
         }, Attribute.className("service-operations"));
     }
+
+    private void appendGridLines(final HtmlBuilder hb) {
+        final long start = windowStart.getNanos();
+        final long duration = windowEnd.subtract(windowStart).getNanos();
+
+        // Quantise into 10 chunks.
+        final long quantised = duration / 10;
+
+        // Get the logarithm base 10
+        final double log10 = Math.log10(quantised);
+
+        // Round to nearest integer to get the exponent
+        final int exponent = (int) Math.ceil(log10);
+
+        // Return 10 raised to that power
+        // Ensure each big chunk is at least 100ns so small chunks are no smaller than 10ns.
+        final long bigChunk = (long) Math.max(100, Math.pow(10, exponent));
+        final long smallChunk = bigChunk / 10;
+
+        final double inc = duration == 0 ? 0D : 100D / duration;
+        final double bigPreChunk = start % bigChunk;
+        final double smallPreChunk = start % smallChunk;
+
+        final double bigWidthPct = bigChunk * inc;
+        final double smallWidthPct = smallChunk * inc;
+
+        final double bigAbsolute = -bigPreChunk;
+        final double smallAbsolute = -smallPreChunk;
+
+        final double bigOffsetPct = (bigAbsolute / (duration - bigChunk)) * 100D;
+        final double smallOffsetPct = (smallAbsolute / (duration - smallChunk)) * 100D;
+
+        GWT.log("bigChunk=" + bigChunk +
+                ", smallChunk=" + smallChunk +
+                ", bigPreChunk=" + bigPreChunk +
+                ", smallPreChunk=" + smallPreChunk +
+                ", duration=" + duration +
+                ", bigWidthPct=" + bigWidthPct +
+                ", smallWidthPct=" + smallWidthPct);
+
+        final StringBuilder style = new StringBuilder();
+        style.append("background-size:");
+        style.append(bigWidthPct);
+        style.append("% 100%, ");
+        style.append(smallWidthPct);
+        style.append("% 100%;");
+
+        style.append("background-position:");
+        style.append(bigOffsetPct);
+        style.append("% 0, ");
+        style.append(smallOffsetPct);
+        style.append("% 0;");
+
+        hb.div("", Attribute.className("grid-lines"), Attribute.style(style.toString()));
+    }
+
 
     private void appendSectionHeader(final HtmlBuilder hb) {
         hb.div(div -> div.append(SafeHtmlUtils.fromTrustedString("Service &amp; Operation")),
@@ -405,10 +461,10 @@ public class TraceOverviewWidget extends Composite {
             }, Attribute.className("operation-content"));
             div.div(c -> {
                 final NanoDuration windowSize = windowEnd.subtract(windowStart);
-                 NanoDuration offsetStart = span.start().diff(extents.min);
-                 NanoDuration offsetEnd = span.end().diff(extents.min);
-                 offsetStart = offsetStart.subtract(windowStart);
-                 offsetEnd = offsetEnd.subtract(windowStart);
+                NanoDuration offsetStart = span.start().diff(extents.min);
+                NanoDuration offsetEnd = span.end().diff(extents.min);
+                offsetStart = offsetStart.subtract(windowStart);
+                offsetEnd = offsetEnd.subtract(windowStart);
 
                 if (offsetStart.isLessThan(NanoDuration.ZERO)) {
                     offsetStart = NanoDuration.ZERO;
