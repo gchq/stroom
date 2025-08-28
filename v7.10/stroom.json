@@ -2172,6 +2172,32 @@
         "tags" : [ "Global Config" ]
       }
     },
+    "/content/v1/abortImport" : {
+      "post" : {
+        "operationId" : "abortImport",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ResourceKey"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : { }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Abort Import",
+        "tags" : [ "Content" ]
+      }
+    },
     "/content/v1/export" : {
       "post" : {
         "operationId" : "exportContent",
@@ -17256,6 +17282,9 @@
             "items" : {
               "$ref" : "#/components/schemas/Message"
             }
+          },
+          "ownerDocRef" : {
+            "$ref" : "#/components/schemas/DocRef"
           },
           "sourcePath" : {
             "type" : "string"
