@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.10.0] - 2025-08-28
+
+* Issue **#5042** : Allow the import of processor filters when the existing processor filter is in a logically deleted state. Add validation to the import confirm dialog to ensure the parent doc is selected when a processor filter is selected.
+
+* Change DocRef Info Cache to evict entries on document creation to stop stroom saying that a document doesn't exist after import.
+
+
 ## [v7.10-beta.14] - 2025-08-27
 
 * Issue **#5077** : Fix bug in user full name templating where it is always re-using the first value, i.e. setting every user to have the full name of the first user to log in.
@@ -1640,7 +1647,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.10-beta.14...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.0...HEAD
+[v7.10.0]: https://github.com/gchq/stroom/compare/v7.10-beta.14...v7.10.0
 [v7.10-beta.14]: https://github.com/gchq/stroom/compare/v7.10-beta.13...v7.10-beta.14
 [v7.10-beta.13]: https://github.com/gchq/stroom/compare/v7.10-beta.12...v7.10-beta.13
 [v7.10-beta.12]: https://github.com/gchq/stroom/compare/v7.10-beta.11...v7.10-beta.12
