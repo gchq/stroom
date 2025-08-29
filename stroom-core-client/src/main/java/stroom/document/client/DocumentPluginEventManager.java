@@ -31,6 +31,7 @@ import stroom.docref.HasDisplayValue;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.docstore.shared.DocumentTypeRegistry;
+import stroom.document.client.event.CloseSelectedDocumentEvent;
 import stroom.document.client.event.CopyDocumentEvent;
 import stroom.document.client.event.CreateDocumentEvent;
 import stroom.document.client.event.DeleteDocumentEvent;
@@ -341,6 +342,11 @@ public class DocumentPluginEventManager extends Plugin {
                         event.isFullScreen(),
                         event.getSelectedTab().orElse(null),
                         explorerListener)));
+
+        registerHandler(getEventBus().addHandler(CloseSelectedDocumentEvent.getType(), event -> {
+            RequestCloseTabEvent.fire(DocumentPluginEventManager.this, selectedTab, event.runOnClose(),
+                    event.resizeTabBar());
+        }));
 
         // 8.2. Handle entity copy events.
         registerHandler(getEventBus().addHandler(CopyDocumentEvent.getType(), event -> copy(

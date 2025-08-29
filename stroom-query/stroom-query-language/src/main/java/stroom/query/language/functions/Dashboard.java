@@ -52,13 +52,35 @@ import java.util.function.Supplier;
                                         name = "params",
                                         argType = ValString.class,
                                         description = "A String of space separated parameters to pass into the " +
-                                                "dashboard, e.g. 'userId=user1 building=hq'")})})
+                                                      "dashboard, e.g. 'userId=user1 building=hq'"),
+                        }),
+                @FunctionSignature(
+                        args = {
+                                @FunctionArg(
+                                        name = "text",
+                                        argType = ValString.class,
+                                        description = "The text that the hyperlink will display."),
+                                @FunctionArg(
+                                        name = "uuid",
+                                        argType = ValString.class,
+                                        description = "The UUID for the dashboard to link to."),
+                                @FunctionArg(
+                                        name = "params",
+                                        argType = ValString.class,
+                                        description = "A String of space separated parameters to pass into the " +
+                                                "dashboard, e.g. 'userId=user1 building=hq'"),
+                                @FunctionArg(
+                                        name = "target",
+                                        argType = ValString.class,
+                                        description = "A String defining where the link will open by default " +
+                                                      "('self' or 'tab')")
+                        })})
 class Dashboard extends AbstractLink {
 
     static final String NAME = "dashboard";
 
     public Dashboard(final String name) {
-        super(name, 2, 3);
+        super(name, 2, 4);
     }
 
     @Override
@@ -79,18 +101,24 @@ class Dashboard extends AbstractLink {
             if (childGenerators.length == 2) {
                 final Val text = childGenerators[0].eval(storedValues, childDataSupplier);
                 final Val uuid = childGenerators[1].eval(storedValues, childDataSupplier);
-                link = makeDashboardLink(text, uuid, ValNull.INSTANCE);
+                link = makeDashboardLink(text, uuid, ValNull.INSTANCE, ValNull.INSTANCE);
             } else if (childGenerators.length == 3) {
                 final Val text = childGenerators[0].eval(storedValues, childDataSupplier);
                 final Val uuid = childGenerators[1].eval(storedValues, childDataSupplier);
                 final Val params = childGenerators[2].eval(storedValues, childDataSupplier);
-                link = makeDashboardLink(text, uuid, params);
+                link = makeDashboardLink(text, uuid, params, ValNull.INSTANCE);
+            } else if (childGenerators.length == 4) {
+                final Val text = childGenerators[0].eval(storedValues, childDataSupplier);
+                final Val uuid = childGenerators[1].eval(storedValues, childDataSupplier);
+                final Val params = childGenerators[2].eval(storedValues, childDataSupplier);
+                final Val target = childGenerators[3].eval(storedValues, childDataSupplier);
+                link = makeDashboardLink(text, uuid, params, target);
             }
 
             return link;
         }
 
-        private Val makeDashboardLink(final Val text, final Val uuid, final Val params) {
+        private Val makeDashboardLink(final Val text, final Val uuid, final Val params, final Val target) {
             if (text.type().isError()) {
                 return text;
             }
@@ -109,7 +137,8 @@ class Dashboard extends AbstractLink {
                 url.append(getEscapedString(params));
             }
 
-            return makeLink(getEscapedString(text), EncodingUtil.encodeUrl(url.toString()), "dashboard");
+            return makeLink(getEscapedString(text), EncodingUtil.encodeUrl(url.toString()), "dashboard",
+                    target.toString());
         }
     }
 }

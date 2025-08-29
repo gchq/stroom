@@ -9,6 +9,7 @@ import stroom.core.client.event.CloseContentEvent;
 import stroom.data.client.presenter.DataViewType;
 import stroom.data.client.presenter.DisplayMode;
 import stroom.data.client.presenter.ShowDataEvent;
+import stroom.document.client.event.CloseSelectedDocumentEvent;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFramePresenter;
 import stroom.pipeline.shared.SourceLocation;
@@ -94,7 +95,14 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
             if (hyperlinkType != null) {
                 switch (hyperlinkType) {
                     case DASHBOARD: {
-                        ShowDashboardEvent.fire(this, event.getContext(), href);
+                        final HyperlinkTargetType target = hyperlink.getTargetType();
+                        if (HyperlinkTargetType.SELF.equals(target)) {
+                            CloseSelectedDocumentEvent.fire(this,
+                                    () -> ShowDashboardEvent.fire(this, event.getContext(), href),
+                                    false);
+                        } else {
+                            ShowDashboardEvent.fire(this, event.getContext(), href);
+                        }
                         break;
                     }
                     case TAB: {

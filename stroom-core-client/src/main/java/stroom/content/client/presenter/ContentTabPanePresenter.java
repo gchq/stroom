@@ -168,7 +168,7 @@ public class ContentTabPanePresenter
     @ProxyEvent
     @Override
     public void onClose(final CloseContentTabEvent event) {
-        remove(event.getTabData());
+        remove(event.getTabData(), event.resizeTabBar());
 
         for (int i = historyList.size() - 1; i >= 0; i--) {
             final TabData tabData = historyList.get(i);

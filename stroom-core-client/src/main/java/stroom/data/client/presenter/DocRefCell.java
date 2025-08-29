@@ -128,16 +128,6 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                     .build());
             menuItems.add(createCopyAsMenuItem(docRef, priority++));
 
-        } else {
-            final String text = cellTextFunction.apply(value).asString();
-            if (NullSafe.isNonBlankString(text)) {
-                menuItems.add(new IconMenuItem.Builder()
-                        .priority(1)
-                        .icon(SvgImage.COPY)
-                        .text("Copy")
-                        .command(() -> ClipboardUtil.copy(text))
-                        .build());
-            }
         }
         return menuItems.isEmpty()
                 ? null

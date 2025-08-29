@@ -18,15 +18,18 @@ public class Hyperlink {
     private final String href;
     private final String type;
     private final SvgImage icon;
+    private final String target;
 
     public Hyperlink(final String text,
                      final String href,
                      final String type,
-                     final SvgImage icon) {
+                     final SvgImage icon,
+                     final String target) {
         this.text = text;
         this.href = href;
         this.type = type;
         this.icon = icon;
+        this.target = target;
     }
 
     /**
@@ -56,10 +59,15 @@ public class Hyperlink {
                 if (href != null) {
                     index = index + href.length() + 2;
                     final String type = nextToken(value, index, '{', '}');
+                    if (type != null) {
+                        index = index + type.length() + 2;
+                    }
+                    final String target = nextToken(value, index, '<', '>');
                     hyperlink = new Builder()
                             .text(text)
-                            .href(href)
+                            .href(decode(href))
                             .type(type)
+                            .target(target)
                             .build();
                 }
             }
@@ -113,30 +121,53 @@ public class Hyperlink {
 
     public String getText() {
         // Why are we decoding the plain text part?
-        return decode(text);
+        return text;
 //        return text;
     }
 
     public String getHref() {
-        return decode(href);
+        return href;
     }
 
     public String getType() {
-        // Why are we decoding the type part?
-        return decode(type);
+        return type;
+    }
+
+    public String getTarget() {
+        return target;
     }
 
     public SvgImage getIcon() {
         return icon;
     }
 
-    private String decode(final String string) {
+    public HyperlinkTargetType getTargetType() {
+        try {
+            return HyperlinkTargetType.valueOf(target.toUpperCase());
+        } catch (final RuntimeException ignored) {
+            return null;
+        }
+    }
+
+
+    private static String decode(final String string) {
         // Hyperlink values are URLEncoded within the link dashboard function, so they need to be decoded when used.
         if (string == null) {
             return null;
         }
         if (GWT.isClient()) {
-            return URL.decode(string);
+            return URL.decodeQueryString(string);
+        }
+        return string;
+    }
+
+    private static String encode(final String string) {
+        // Hyperlink values are URLEncoded within the link dashboard function, so they need to be decoded when used.
+        if (string == null) {
+            return null;
+        }
+        if (GWT.isClient()) {
+            return URL.encodeQueryString(string);
         }
         return string;
     }
@@ -152,12 +183,13 @@ public class Hyperlink {
         final Hyperlink hyperlink = (Hyperlink) o;
         return Objects.equals(text, hyperlink.text) &&
                Objects.equals(href, hyperlink.href) &&
-               Objects.equals(type, hyperlink.type);
+               Objects.equals(type, hyperlink.type) &&
+               Objects.equals(target, hyperlink.target);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(text, href, type);
+        return Objects.hash(text, href, type, target);
     }
 
     @Override
@@ -170,13 +202,18 @@ public class Hyperlink {
         }
         if (href != null) {
             sb.append("(");
-            sb.append(href);
+            sb.append(encode(href));
             sb.append(")");
         }
         if (type != null) {
             sb.append("{");
             sb.append(type);
             sb.append("}");
+        }
+        if (target != null) {
+            sb.append("<");
+            sb.append(target);
+            sb.append(">");
         }
         return sb.toString();
     }
@@ -199,6 +236,7 @@ public class Hyperlink {
         private String href;
         private String type;
         private SvgImage icon;
+        private String target;
 
         private Builder() {
         }
@@ -208,6 +246,7 @@ public class Hyperlink {
             this.href = hyperlink.href;
             this.type = hyperlink.type;
             this.icon = hyperlink.icon;
+            this.target = hyperlink.target;
         }
 
         public Builder text(final String text) {
@@ -230,12 +269,18 @@ public class Hyperlink {
             return this;
         }
 
+        public Builder target(final String target) {
+            this.target = target;
+            return this;
+        }
+
         public Hyperlink build() {
             return new Hyperlink(
                     text,
                     href,
                     type,
-                    icon);
+                    icon,
+                    target);
         }
     }
 }
