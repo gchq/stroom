@@ -56,7 +56,7 @@ public class ContentManager implements HasHandlers {
             final DirtyMode dirtyMode = event.isForce()
                     ? DirtyMode.FORCE
                     : DirtyMode.CONFIRM_DIRTY;
-            close(dirtyMode, false, tabData);
+            close(dirtyMode, false, tabData, event.resizeTabBar(), event.runOnClose());
         });
 
         eventBus.addHandler(RequestCloseOtherTabsEvent.getType(), event -> {
@@ -109,18 +109,24 @@ public class ContentManager implements HasHandlers {
         // If there are tabs then iterate around them trying
         // to close each one.
         for (final TabData tabData : arr) {
-            close(dirtyMode, logoffAfterClose, tabData);
+            close(dirtyMode, logoffAfterClose, tabData, true, null);
         }
     }
 
     private void close(final DirtyMode dirtyMode,
                        final boolean logoffAfterClose,
-                       final TabData tabData) {
+                       final TabData tabData,
+                       final boolean resizeTabBar,
+                       final Runnable onClose) {
         final CloseContentEvent.Handler closeHandler = handlerMap.get(tabData);
         if (closeHandler != null) {
             final Callback callback = ok -> {
                 if (ok) {
-                    forceClose(tabData);
+                    forceClose(tabData, resizeTabBar);
+
+                    if (onClose != null) {
+                        onClose.run();
+                    }
 
                     // Logoff if there are no more open tabs and we have been
                     // asked
@@ -141,8 +147,8 @@ public class ContentManager implements HasHandlers {
         MoveContentTabEvent.fire(this, tabData, tabPos);
     }
 
-    public void forceClose(final TabData tabData) {
-        CloseContentTabEvent.fire(ContentManager.this, tabData);
+    public void forceClose(final TabData tabData, final boolean resizeTabBar) {
+        CloseContentTabEvent.fire(ContentManager.this, tabData, resizeTabBar);
         handlerMap.remove(tabData);
     }
 
