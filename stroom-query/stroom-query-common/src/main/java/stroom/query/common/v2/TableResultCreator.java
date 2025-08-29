@@ -102,7 +102,9 @@ public class TableResultCreator implements ResultCreator {
                         errorConsumer,
                         expressionPredicateFactory,
                         mapper);
-                mapper = ConditionalFormattingMapper.create(
+
+                mapper = ConditionalFormattingMapper.create(resultRequest.getSourceComponentId(),
+                        resultRequest.getSourceComponentName(),
                         columns,
                         tableSettings.getConditionalFormattingRules(),
                         dataStore.getDateTimeSettings(),

@@ -575,7 +575,7 @@ public class EmbeddedQueryPresenter
 
             // Start search.
             final DashboardContext dashboardContext = getDashboardContext();
-            queryModel.startNewSearch(
+            queryModel.startNewSearch(getComponentConfig().getId(), getComponentConfig().getName(),
                     replaced,
                     dashboardContext.getParams(),
                     dashboardContext.getResolvedTimeRange(),
@@ -851,7 +851,9 @@ public class EmbeddedQueryPresenter
 
     @Override
     public void onContentTabVisible(final boolean visible) {
-        currentTablePresenter.onContentTabVisible(visible);
+        if (currentTablePresenter != null) {
+            currentTablePresenter.onContentTabVisible(visible);
+        }
     }
 
     public interface EmbeddedQueryView extends View, RequiresResize {

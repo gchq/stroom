@@ -1010,6 +1010,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         tableResultRequest = tableResultRequest
                 .copy()
                 .componentId(componentConfig.getId())
+                .tableName(componentConfig.getName())
                 .build();
 
         final ComponentSettings settings = componentConfig.getSettings();

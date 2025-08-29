@@ -287,7 +287,9 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
                                     errorConsumer,
                                     expressionPredicateFactory,
                                     mapper);
-                            mapper = ConditionalFormattingMapper.create(
+
+                            mapper = ConditionalFormattingMapper.create(resultRequest.getSourceComponentId(),
+                                    resultRequest.getSourceComponentName(),
                                     columns,
                                     tableSettings.getConditionalFormattingRules(),
                                     expressionContext.getDateTimeSettings(),
