@@ -66,6 +66,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.time.SimpleDuration;
@@ -824,9 +825,9 @@ public class TableBuilderAnalyticExecutor {
         }
 
         @Override
-        public TableResultConsumer errors(final List<String> errors) {
-            for (final String error : errors) {
-                LOGGER.error(error);
+        public TableResultConsumer errorMessages(final List<ErrorMessage> errorMessages) {
+            for (final ErrorMessage errorMessage : errorMessages) {
+                LOGGER.error(errorMessage.toString());
             }
             return this;
         }

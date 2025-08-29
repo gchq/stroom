@@ -656,7 +656,7 @@ public class QueryResultTablePresenter
                 downloadButton.setEnabled(true);
 
                 // Show errors if there are any.
-                messagePanel.showMessage(tableResult.getErrors());
+                messagePanel.showMessage(tableResult.getErrorMessages());
 
             } else {
                 // Disable download of current results.

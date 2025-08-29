@@ -31,6 +31,7 @@ import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ErrorMessage;
 
 import jakarta.inject.Inject;
 
@@ -125,7 +126,9 @@ public class EventSearchTaskHandler {
                     if (eventCoprocessor.getErrorConsumer().hasErrors()) {
                         final String errors = String.join("\n", eventCoprocessor
                                 .getErrorConsumer()
-                                .getErrors());
+                                .getErrorMessages().stream()
+                                .map(ErrorMessage::getMessage)
+                                .toList());
                         LOGGER.debug(errors);
                         throwable = new RuntimeException(errors);
                     }

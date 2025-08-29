@@ -60,6 +60,7 @@ import stroom.query.client.presenter.SearchStateListener;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 
@@ -110,7 +111,7 @@ public class EmbeddedQueryPresenter
     private QueryResultVisPresenter currentVisPresenter;
     private final List<HandlerRegistration> tableHandlerRegistrations = new ArrayList<>();
 
-    private List<String> currentErrors;
+    private List<ErrorMessage> currentErrors;
     private boolean initialised;
     private Timer autoRefreshTimer;
     private ExpressionOperator currentSelectionQuery;
@@ -738,13 +739,13 @@ public class EmbeddedQueryPresenter
     }
 
     @Override
-    public void onError(final List<String> errors) {
+    public void onError(final List<ErrorMessage> errors) {
         currentErrors = errors;
 //        setWarningsVisible(currentErrors != null && !currentErrors.isEmpty());
     }
 
     @Override
-    public List<String> getCurrentErrors() {
+    public List<ErrorMessage> getCurrentErrors() {
         return currentErrors;
     }
 

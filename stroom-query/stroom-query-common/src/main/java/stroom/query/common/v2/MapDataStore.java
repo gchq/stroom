@@ -31,6 +31,7 @@ import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.Severity;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -597,7 +598,7 @@ public class MapDataStore implements DataStore {
         }
 
         private void logTruncation() {
-            dataStore.errorConsumer.add(() ->
+            dataStore.errorConsumer.add(Severity.WARNING, () ->
                     "Truncating data for vis '" +
                     dataStore.componentId +
                     "' to " +
