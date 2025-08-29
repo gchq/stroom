@@ -176,9 +176,10 @@ public class LmdbDataStore implements DataStore {
         valueReferenceIndex = compiledColumns.getValueReferenceIndex();
         compiledDepths = new CompiledDepths(this.compiledColumnArray, tableSettings.showDetail());
         compiledSorters = new CompiledSorters<>(compiledDepths, columns);
-        writerFactory = new DataWriterFactory(
-                errorConsumer,
-                resultStoreConfig.getMaxStringFieldLength());
+        final int maxStringFieldLength = tableSettings.overrideMaxStringFieldLength() &&
+                                         tableSettings.getMaxStringFieldLength() != null ?
+                tableSettings.getMaxStringFieldLength() : resultStoreConfig.getMaxStringFieldLength();
+        writerFactory = new DataWriterFactory(errorConsumer, maxStringFieldLength);
         keyFactoryConfig = new KeyFactoryConfigImpl(sourceType, this.compiledColumnArray, compiledDepths);
         keyFactory = KeyFactoryFactory.create(keyFactoryConfig, compiledDepths);
         final ValHasher valHasher = new ValHasher(writerFactory);
