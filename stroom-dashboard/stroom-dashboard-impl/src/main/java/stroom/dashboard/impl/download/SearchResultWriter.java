@@ -22,6 +22,7 @@ import stroom.query.api.OffsetRange;
 import stroom.query.api.Row;
 import stroom.query.api.TableResult;
 import stroom.query.api.TableResultBuilder;
+import stroom.util.shared.ErrorMessage;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -93,7 +94,7 @@ public class SearchResultWriter implements TableResultBuilder {
     }
 
     @Override
-    public TableResultBuilder errors(final List<String> errors) {
+    public TableResultBuilder errorMessages(final List<ErrorMessage> errorMessages) {
         return this;
     }
 

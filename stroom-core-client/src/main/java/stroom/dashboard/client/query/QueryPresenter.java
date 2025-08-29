@@ -17,6 +17,7 @@
 package stroom.dashboard.client.query;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.FireAlertEventFunction;
 import stroom.core.client.LocationManager;
 import stroom.core.client.event.WindowCloseEvent;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
@@ -66,8 +67,12 @@ import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.util.shared.ErrorMessage;
+import stroom.util.shared.ErrorMessages;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.Severity;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -119,8 +124,8 @@ public class QueryPresenter
     private final ButtonView historyButton;
     private final ButtonView favouriteButton;
     private final ButtonView downloadQueryButton;
-    private final ButtonView warningsButton;
-    private List<String> currentErrors;
+    private final InlineSvgButton errorsButton;
+    private ErrorMessages currentErrors;
     private ButtonView processButton;
     private boolean initialised;
     private Timer autoRefreshTimer;
@@ -196,8 +201,9 @@ public class QueryPresenter
             processButton = view.addButtonLeft(SvgPresets.PROCESS.enabled(true));
         }
 
-        warningsButton = view.addButtonRight(SvgPresets.ALERT.title("Show Warnings"));
-        setWarningsVisible(false);
+        errorsButton = new InlineSvgButton();
+        view.addButtonRight(errorsButton);
+        setErrorsVisible(false);
 
         searchModel = new SearchModel(
                 eventBus,
@@ -269,9 +275,9 @@ public class QueryPresenter
                 }
             }));
         }
-        registerHandler(warningsButton.addClickHandler(event -> {
+        registerHandler(errorsButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
-                showWarnings();
+                showErrors();
             }
         }));
         registerHandler(indexLoader.addChangeDataHandler(event ->
@@ -354,14 +360,30 @@ public class QueryPresenter
     }
 
     @Override
-    public void onError(final List<String> errors) {
-        currentErrors = errors;
-        setWarningsVisible(currentErrors != null && !currentErrors.isEmpty());
+    public void onError(final List<ErrorMessage> errors) {
+        currentErrors = new ErrorMessages(errors);
+        setErrorsVisible(!currentErrors.isEmpty());
+        if (!currentErrors.isEmpty()) {
+            setErrorSeverity(currentErrors.getHighestSeverity());
+        }
+    }
+
+    private void setErrorSeverity(final Severity severity) {
+        if (Severity.FATAL_ERROR.equals(severity) || Severity.ERROR.equals(severity)) {
+            errorsButton.setSvg(SvgImage.ERROR);
+            errorsButton.setTitle("Show Errors");
+        } else if (Severity.WARNING.equals(severity)) {
+            errorsButton.setSvg(SvgImage.ALERT);
+            errorsButton.setTitle("Show Warning");
+        } else if (Severity.INFO.equals(severity)) {
+            errorsButton.setSvg(SvgImage.INFO);
+            errorsButton.setTitle("Show Messages");
+        }
     }
 
     @Override
-    public List<String> getCurrentErrors() {
-        return currentErrors;
+    public List<ErrorMessage> getCurrentErrors() {
+        return currentErrors.getErrorMessages();
     }
 
     private void setButtonsEnabled() {
@@ -531,15 +553,31 @@ public class QueryPresenter
                 .exec();
     }
 
-    private void showWarnings() {
-        if (currentErrors != null && !currentErrors.isEmpty()) {
-            final String msg = currentErrors.size() == 1
-                    ? ("The following warning was created while running this search:")
-                    : ("The following " + currentErrors.size()
-                       + " warnings have been created while running this search:");
-            final String errors = String.join("\n", currentErrors);
-            AlertEvent.fireWarn(this, msg, errors, null);
+    private void showErrors() {
+        if (!currentErrors.isEmpty()) {
+            if (currentErrors.containsAny(Severity.FATAL_ERROR, Severity.ERROR)) {
+                fireAlertEvent(AlertEvent::fireError, "error", Severity.FATAL_ERROR, Severity.ERROR);
+            } else if (currentErrors.containsAny(Severity.WARNING)) {
+                fireAlertEvent(AlertEvent::fireWarn, "warning", Severity.WARNING);
+            } else if (currentErrors.containsAny(Severity.INFO)) {
+                fireAlertEvent(AlertEvent::fireInfo, "message", Severity.INFO);
+            }
         }
+    }
+
+    private void fireAlertEvent(final FireAlertEventFunction fireAlertEventFunction,
+                           final String messageType, final Severity...severity) {
+        final List<String> messages = currentErrors.get(severity);
+        final String msg = getMessage(messageType, messages.size());
+        final String errorMessages = String.join("\n", messages);
+        fireAlertEventFunction.apply(this, msg, errorMessages, null);
+    }
+
+    private String getMessage(final String messageType, final int numberOfMessages) {
+        return numberOfMessages == 1
+                ? ("The following " + messageType + " was created while running this search:")
+                : ("The following " + numberOfMessages
+                   + " " + messageType + "s have been created while running this search:");
     }
 
     @Override
@@ -591,7 +629,7 @@ public class QueryPresenter
             currentErrors = null;
             expressionPresenter.clearSelection();
 
-            setWarningsVisible(false);
+            setErrorsVisible(false);
 
             // Write expression.
             final ExpressionOperator root = expressionPresenter.write();
@@ -623,7 +661,7 @@ public class QueryPresenter
             currentErrors = null;
             expressionPresenter.clearSelection();
 
-            setWarningsVisible(false);
+            setErrorsVisible(false);
 
             // Write expression.
             ExpressionOperator root = expressionPresenter.write();
@@ -894,10 +932,8 @@ public class QueryPresenter
         }
     }
 
-    private void setWarningsVisible(final boolean show) {
-        warningsButton.asWidget().getElement().getStyle().setOpacity(show
-                ? 1
-                : 0);
+    private void setErrorsVisible(final boolean show) {
+        errorsButton.asWidget().getElement().getStyle().setOpacity(show ? 1 : 0);
     }
 
     @Override
@@ -919,6 +955,8 @@ public class QueryPresenter
         ButtonView addButtonLeft(Preset preset);
 
         ButtonView addButtonRight(Preset preset);
+
+        void addButtonRight(final ButtonView button);
 
         void setExpressionView(View view);
 

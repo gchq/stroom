@@ -18,11 +18,15 @@
 package stroom.query.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.FireAlertEventFunction;
 import stroom.query.api.ParamValues;
 import stroom.query.api.TimeRange;
 import stroom.query.client.presenter.QueryToolbarPresenter.QueryToolbarView;
 import stroom.query.client.view.QueryButtons;
 import stroom.query.client.view.TimeRanges;
+import stroom.util.shared.ErrorMessage;
+import stroom.util.shared.ErrorMessages;
+import stroom.util.shared.Severity;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -41,34 +45,53 @@ public class QueryToolbarPresenter
         SearchStateListener,
         SearchErrorListener {
 
-    private List<String> currentWarnings;
+    private ErrorMessages currentErrors;
     private TimeRange currentTimeRange = TimeRanges.ALL_TIME;
 
     @Inject
     public QueryToolbarPresenter(final EventBus eventBus,
                                  final QueryToolbarView view) {
         super(eventBus, view);
-        getView().setWarningsVisible(false);
+        getView().setErrorsVisible(false);
         view.setUiHandlers(this);
         view.getQueryButtons().setUiHandlers(this);
     }
 
     @Override
-    public void onError(final List<String> errors) {
-        currentWarnings = errors;
-        getView().setWarningsVisible(currentWarnings != null && !currentWarnings.isEmpty());
+    public void onError(final List<ErrorMessage> errors) {
+        currentErrors = new ErrorMessages(errors);
+        getView().setErrorsVisible(!currentErrors.isEmpty());
+        if (!currentErrors.isEmpty()) {
+            getView().setErrorSeverity(currentErrors.getHighestSeverity());
+        }
     }
 
     @Override
-    public void showWarnings() {
-        if (currentWarnings != null && !currentWarnings.isEmpty()) {
-            final String msg = currentWarnings.size() == 1
-                    ? ("The following warning was created while running this search:")
-                    : ("The following " + currentWarnings.size()
-                       + " warnings have been created while running this search:");
-            final String errors = String.join("\n", currentWarnings);
-            AlertEvent.fireWarn(this, msg, errors, null);
+    public void showErrors() {
+        if (!currentErrors.isEmpty()) {
+            if (currentErrors.containsAny(Severity.FATAL_ERROR, Severity.ERROR)) {
+                fireAlertEvent(AlertEvent::fireError, "error", Severity.FATAL_ERROR, Severity.ERROR);
+            } else if (currentErrors.containsAny(Severity.WARNING)) {
+                fireAlertEvent(AlertEvent::fireWarn, "warning", Severity.WARNING);
+            } else if (currentErrors.containsAny(Severity.INFO)) {
+                fireAlertEvent(AlertEvent::fireInfo, "message", Severity.INFO);
+            }
         }
+    }
+
+    private void fireAlertEvent(final FireAlertEventFunction fireAlertEventFunction,
+                                final String messageType, final Severity...severity) {
+        final List<String> messages = currentErrors.get(severity);
+        final String msg = getMessage(messageType, messages.size());
+        final String errorMessages = String.join("\n", messages);
+        fireAlertEventFunction.apply(this, msg, errorMessages, null);
+    }
+
+    private String getMessage(final String messageType, final int numberOfMessages) {
+        return numberOfMessages == 1
+                ? ("The following " + messageType + " was created while running this search:")
+                : ("The following " + numberOfMessages
+                   + " " + messageType + "s have been created while running this search:");
     }
 
     @Override
@@ -126,7 +149,9 @@ public class QueryToolbarPresenter
 
     public interface QueryToolbarView extends View, HasUiHandlers<QueryToolbarUiHandlers> {
 
-        void setWarningsVisible(boolean show);
+        void setErrorsVisible(boolean show);
+
+        void setErrorSeverity(Severity severity);
 
         QueryButtons getQueryButtons();
 

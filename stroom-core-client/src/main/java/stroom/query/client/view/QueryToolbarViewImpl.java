@@ -22,6 +22,7 @@ import stroom.query.api.TimeRange;
 import stroom.query.client.presenter.QueryToolbarPresenter.QueryToolbarView;
 import stroom.query.client.presenter.QueryToolbarUiHandlers;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.Severity;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.util.client.MouseUtil;
 
@@ -41,7 +42,7 @@ public class QueryToolbarViewImpl
     private final Widget widget;
 
     @UiField
-    InlineSvgButton warnings;
+    InlineSvgButton errors;
     @UiField
     QueryButtons queryButtons;
     @UiField
@@ -52,7 +53,7 @@ public class QueryToolbarViewImpl
                                 final UserPreferencesManager userPreferencesManager) {
         widget = binder.createAndBindUi(this);
         timeRangeSelector.setUtc(userPreferencesManager.isUtc());
-        warnings.setSvg(SvgImage.ALERT);
+        errors.setSvg(SvgImage.ERROR);
     }
 
     @Override
@@ -71,10 +72,22 @@ public class QueryToolbarViewImpl
     }
 
     @Override
-    public void setWarningsVisible(final boolean show) {
-        warnings.getElement().getStyle().setOpacity(show
-                ? 1
-                : 0);
+    public void setErrorsVisible(final boolean show) {
+        errors.getElement().getStyle().setOpacity(show ? 1 : 0);
+    }
+
+    @Override
+    public void setErrorSeverity(final Severity severity) {
+        if (Severity.FATAL_ERROR.equals(severity) || Severity.ERROR.equals(severity)) {
+            errors.setSvg(SvgImage.ERROR);
+            errors.setTitle("Show Errors");
+        } else if (Severity.WARNING.equals(severity)) {
+            errors.setSvg(SvgImage.ALERT);
+            errors.setTitle("Show Warning");
+        } else if (Severity.INFO.equals(severity)) {
+            errors.setSvg(SvgImage.INFO);
+            errors.setTitle("Show Messages");
+        }
     }
 
     @Override
@@ -82,10 +95,10 @@ public class QueryToolbarViewImpl
         return queryButtons;
     }
 
-    @UiHandler("warnings")
-    public void onWarnings(final ClickEvent event) {
+    @UiHandler("errors")
+    public void onErrors(final ClickEvent event) {
         if (getUiHandlers() != null && MouseUtil.isPrimary(event)) {
-            getUiHandlers().showWarnings();
+            getUiHandlers().showErrors();
         }
     }
 

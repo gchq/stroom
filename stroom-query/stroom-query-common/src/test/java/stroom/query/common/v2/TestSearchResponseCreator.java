@@ -80,8 +80,8 @@ class TestSearchResponseCreator {
                 actualDuration,
                 TOLERANCE);
 
-        assertThat(searchResponse.getErrors()).hasSize(1);
-        assertThat(searchResponse.getErrors().getFirst()).containsIgnoringCase("timed out");
+        assertThat(searchResponse.getErrorMessages()).hasSize(1);
+        assertThat(searchResponse.getErrorMessages().getFirst().getMessage()).containsIgnoringCase("timed out");
     }
 
     private SearchResponseCreator createSearchResponseCreator(final SearchRequest searchRequest) {
@@ -174,7 +174,7 @@ class TestSearchResponseCreator {
                 actualDuration,
                 TOLERANCE);
 
-        assertThat(searchResponse.getErrors()).isNullOrEmpty();
+        assertThat(searchResponse.getErrorMessages()).isNullOrEmpty();
     }
 
     @Test

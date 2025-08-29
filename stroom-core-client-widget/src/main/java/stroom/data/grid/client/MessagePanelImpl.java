@@ -1,5 +1,6 @@
 package stroom.data.grid.client;
 
+import stroom.util.shared.ErrorMessage;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -20,11 +21,11 @@ public class MessagePanelImpl extends SimplePanel implements MessagePanel {
     }
 
     @Override
-    public void showMessage(final List<String> errors) {
+    public void showMessage(final List<ErrorMessage> errors) {
         if (errors != null && errors.size() > 0) {
             final SafeHtmlBuilder sb = new SafeHtmlBuilder();
-            for (final String error : errors) {
-                final String[] lines = error.split("\n");
+            for (final ErrorMessage error : errors) {
+                final String[] lines = error.getMessage().split("\n");
                 for (final String line : lines) {
                     sb.appendEscaped(line);
                     sb.appendHtmlConstant("<br />");

@@ -1,5 +1,8 @@
 package stroom.query.api;
 
+import stroom.util.shared.ErrorMessage;
+import stroom.util.shared.Severity;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -13,7 +16,8 @@ class TableResultBuilderTest {
     @Test
     void doesBuild() {
         // Given
-        final List<String> error = Collections.singletonList("Something went wrong");
+        final List<ErrorMessage> error = Collections.singletonList(
+                new ErrorMessage(Severity.ERROR, "Something went wrong"));
         final String componentId = "someTabularComponentId";
 
         final Long offset = 30L;
@@ -25,7 +29,7 @@ class TableResultBuilderTest {
         final TableResultBuilder builder = TableResult
                 .builder()
                 .componentId(componentId)
-                .errors(error)
+                .errorMessages(error)
                 .resultRange(OffsetRange
                         .builder()
                         .offset(offset)
@@ -40,7 +44,7 @@ class TableResultBuilderTest {
 
         // Then
         assertThat(tableResult.getComponentId()).isEqualTo(componentId);
-        assertThat(tableResult.getErrors()).isEqualTo(error);
+        assertThat(tableResult.getErrorMessages()).isEqualTo(error);
         assertThat(tableResult.getResultRange().getOffset()).isEqualTo(offset);
         assertThat(tableResult.getResultRange().getLength()).isEqualTo(length);
 

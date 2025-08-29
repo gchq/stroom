@@ -29,6 +29,8 @@ import stroom.entity.client.presenter.HasToolbar;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.QueryResultTablePresenter;
 import stroom.query.client.presenter.QueryToolbarPresenter;
+import stroom.util.shared.ErrorMessage;
+import stroom.util.shared.Severity;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
@@ -109,7 +111,8 @@ public class AnalyticDataShardsPresenter
                         queryToolbarPresenter.onSearching(false);
                     })
                     .onFailure(t -> {
-                        queryToolbarPresenter.onError(Collections.singletonList(t.getMessage()));
+                        queryToolbarPresenter.onError(
+                                Collections.singletonList(new ErrorMessage(Severity.ERROR, t.getMessage())));
                         queryToolbarPresenter.onSearching(false);
                     })
                     .taskMonitorFactory(this)

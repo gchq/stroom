@@ -138,7 +138,7 @@ public class TableResultCreator implements ResultCreator {
         }
 
         resultBuilder.componentId(resultRequest.getComponentId());
-        resultBuilder.errors(errorConsumer.getErrors());
+        resultBuilder.errorMessages(errorConsumer.getErrorMessages());
         resultBuilder.resultRange(new OffsetRange(offset, pageLength.get()));
         TableResult result = resultBuilder.build();
 

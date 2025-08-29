@@ -317,7 +317,7 @@ public class FlatResultCreator implements ResultCreator {
 
         resultBuilder
                 .componentId(resultRequest.getComponentId())
-                .errors(errorConsumer.getErrors());
+                .errorMessages(errorConsumer.getErrorMessages());
         FlatResult result = resultBuilder.build();
 
         if (cacheLastResult) {
