@@ -28,6 +28,13 @@ public class StoredValues {
     }
 
     @Override
+    public String toString() {
+        return "StoredValues{" +
+               "values=" + Arrays.toString(this.values) +
+               '}';
+    }
+
+    @Override
     public boolean equals(final Object o) {
         if (this == o) {
             return true;
