@@ -84,7 +84,7 @@ public class ScheduledProcessHistoryListPresenter
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);
         view.setDataWidget(dataGrid);
 
-        replayButton = view.addButton(SvgPresets.UNDO);
+        replayButton = view.addButton(SvgPresets.RERUN);
 
         addColumns();
         enableButtons();
