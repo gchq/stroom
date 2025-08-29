@@ -17,17 +17,15 @@ import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItem;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
-import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.SvgImageUtil;
+import stroom.widget.util.client.Templates;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.ValueUpdater;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -57,8 +55,6 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
     private final Function<T_ROW, DocRef> docRefFunction;
     private final Function<T_ROW, String> cssClassFunction;
 
-    private static volatile Template template;
-
     /**
      * @param showIcon         Set to true to show the type icon next to the text
      * @param cellTextFunction Function to provide the cell 'text' in HTML form.
@@ -78,10 +74,6 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
         this.cellTextFunction = cellTextFunction;
         this.docRefFunction = docRefFunction;
         this.cssClassFunction = cssClassFunction;
-
-        if (template == null) {
-            template = GWT.create(Template.class);
-        }
     }
 
     @Override
@@ -188,7 +180,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
             if (additionalClasses != null) {
                 cssClasses += " " + additionalClasses;
             }
-            final SafeHtml textDiv = template.div(cssClasses, cellHtmlText);
+            final SafeHtml textDiv = Templates.div(cssClasses, cellHtmlText);
 
             final String containerClasses = String.join(
                     " ",
@@ -220,7 +212,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                         ICON_CLASS_NAME,
                         COPY_CLASS_NAME,
                         HOVER_ICON_CLASS_NAME);
-                sb.append(template.divWithToolTip(
+                sb.append(Templates.divWithTitle(
                         "Copy name '" + docRef.getName() + "' to clipboard",
                         copy));
 
@@ -230,7 +222,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                             ICON_CLASS_NAME,
                             OPEN_CLASS_NAME,
                             HOVER_ICON_CLASS_NAME);
-                    sb.append(template.divWithToolTip(
+                    sb.append(Templates.divWithTitle(
                             "Open " + docRef.getType() + " " + docRef.getName() + " in new tab",
                             open));
                 }
@@ -296,24 +288,6 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                 .command(() -> ClipboardUtil.copy(docUrl))
                 .build();
     }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    /**
-     * Use {@link SafeHtmlUtil#getTemplate()} instead
-     */
-    @Deprecated
-    interface Template extends SafeHtmlTemplates {
-
-        @Template("<div class=\"{0}\">{1}</div>")
-        SafeHtml div(String cssClass, SafeHtml content);
-
-        @Template("<div title=\"{0}\">{1}</div>")
-        SafeHtml divWithToolTip(String title, SafeHtml content);
-    }
-
 
     // --------------------------------------------------------------------------------
 

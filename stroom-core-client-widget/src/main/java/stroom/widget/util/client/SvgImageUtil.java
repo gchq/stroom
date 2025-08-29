@@ -4,17 +4,13 @@ import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.UIObject;
 
 import java.util.Objects;
 
 public class SvgImageUtil {
-
-    private static final Template TEMPLATE = GWT.create(Template.class);
 
     private SvgImageUtil() {
     }
@@ -38,15 +34,14 @@ public class SvgImageUtil {
                                      + NullSafe.join(" ", classNames);
         final SafeHtml svgHtml = SafeHtmlUtil.getSafeHtmlFromSafeConstant(svgImage.getSvg());
 
-        final SafeHtml safeHtml = NullSafe.isBlankString(title)
-                ? TEMPLATE.icon(allClassNames, svgHtml)
-                : TEMPLATE.icon(allClassNames, title, svgHtml);
-//        GWT.log("safeHtml: " + safeHtml.asString());
-        return safeHtml;
+        //        GWT.log("safeHtml: " + safeHtml.asString());
+        return NullSafe.isBlankString(title)
+                ? Templates.div(allClassNames, svgHtml)
+                : Templates.div(allClassNames, title, svgHtml);
     }
 
     public static SafeHtml emptySvg(final String... classNames) {
-        return TEMPLATE.emptySvg(NullSafe.join(" ", classNames));
+        return Templates.emptySvg(NullSafe.join(" ", classNames));
     }
 
     public static void setSvgAsInnerHtml(final Element element,
@@ -94,21 +89,5 @@ public class SvgImageUtil {
             final SafeHtml safeHtml = toSafeHtml(title, svgImage, classNames);
             element.setInnerSafeHtml(safeHtml);
         }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    interface Template extends SafeHtmlTemplates {
-
-        @Template("<div class=\"{0}\"><svg></svg></div>")
-        SafeHtml emptySvg(String className);
-
-        @Template("<div class=\"{0}\">{1}</div>")
-        SafeHtml icon(String className, SafeHtml icon);
-
-        @Template("<div class=\"{0}\" title=\"{1}\">{2}</div>")
-        SafeHtml icon(String className, String title, SafeHtml icon);
     }
 }

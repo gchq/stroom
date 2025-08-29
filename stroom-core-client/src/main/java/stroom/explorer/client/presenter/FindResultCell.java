@@ -22,26 +22,12 @@ import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.explorer.shared.FindResult;
 import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.SvgImageUtil;
+import stroom.widget.util.client.Templates;
 
 import com.google.gwt.cell.client.AbstractCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 public class FindResultCell extends AbstractCell<FindResult> {
-
-    private static Template template;
-
-    public FindResultCell() {
-        if (template == null) {
-            synchronized (FindResult.class) {
-                if (template == null) {
-                    template = GWT.create(Template.class);
-                }
-            }
-        }
-    }
 
     @Override
     public void render(final Context context, final FindResult value, final SafeHtmlBuilder sb) {
@@ -63,40 +49,27 @@ public class FindResultCell extends AbstractCell<FindResult> {
 
             // Add name
             final String name = docRef.getName();
-            main.append(template.divWithTitle(getCellClassName() + "-name",
+            main.append(Templates.div(getCellClassName() + "-name",
                     value.getPath() + " / " + name,
                     SafeHtmlUtil.from(name)));
 
-            row.append(template.div(getCellClassName() + "-main", main.toSafeHtml()));
+            row.append(Templates.div(getCellClassName() + "-main", main.toSafeHtml()));
 
             // Add path
-            sub.append(template.div(getCellClassName() + "-path",
+            sub.append(Templates.div(getCellClassName() + "-path",
                     SafeHtmlUtil.from(value.getPath())));
 
             // Add uuid
-            sub.append(template.div(getCellClassName() + "-uuid",
+            sub.append(Templates.div(getCellClassName() + "-uuid",
                     SafeHtmlUtil.from(docRef.getUuid())));
 
-            row.append(template.div(getCellClassName() + "-sub", sub.toSafeHtml()));
+            row.append(Templates.div(getCellClassName() + "-sub", sub.toSafeHtml()));
 
-            sb.append(template.div(getCellClassName() + "-row", row.toSafeHtml()));
+            sb.append(Templates.div(getCellClassName() + "-row", row.toSafeHtml()));
         }
     }
 
     private String getCellClassName() {
         return "findCell";
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    public interface Template extends SafeHtmlTemplates {
-
-        @Template("<div class=\"{0}\">{1}</div>")
-        SafeHtml div(String className, SafeHtml content);
-
-        @Template("<div class=\"{0}\" title=\"{1}\">{2}</div>")
-        SafeHtml divWithTitle(String className, String title, SafeHtml content);
     }
 }

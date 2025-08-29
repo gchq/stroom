@@ -10,13 +10,12 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.SvgImageUtil;
+import stroom.widget.util.client.Templates;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -30,12 +29,7 @@ public class CopyTextUtil {
     public static final String COPY_CLASS_NAME = "docRefLinkCopy";
     private static final String HOVER_ICON_CONTAINER_CLASS_NAME = "hoverIconContainer";
     private static final String HOVER_ICON_CLASS_NAME = "hoverIcon";
-    private static final Template TEMPLATE;
     private static final int TRUNCATE_THRESHOLD = 30;
-
-    static {
-        TEMPLATE = GWT.create(Template.class);
-    }
 
     public static SafeHtml render(final String value) {
         final SafeHtmlBuilder sb = new SafeHtmlBuilder();
@@ -58,7 +52,7 @@ public class CopyTextUtil {
         if (value == null) {
             sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else {
-            final SafeHtml textSafeHtml = TEMPLATE
+            final SafeHtml textSafeHtml = Templates
                     .div("docRefLinkText", safeHtml);
 
             final String containerClasses = String.join(
@@ -78,7 +72,7 @@ public class CopyTextUtil {
                 final String truncatedStr = str.length() > TRUNCATE_THRESHOLD
                         ? (str.substring(0, TRUNCATE_THRESHOLD) + "...")
                         : str;
-                sb.append(TEMPLATE.divWithToolTip(
+                sb.append(Templates.divWithTitle(
                         "Copy value '" + truncatedStr + "' to clipboard",
                         copy));
             });
@@ -119,17 +113,6 @@ public class CopyTextUtil {
     }
 
     public static SafeHtml div(final String className, final SafeHtml content) {
-        return TEMPLATE.div(className, content);
-    }
-
-    // --------------------------------------------------------------------------------
-
-    interface Template extends SafeHtmlTemplates {
-
-        @Template("<div class=\"{0}\">{1}</div>")
-        SafeHtml div(String className, SafeHtml content);
-
-        @Template("<div title=\"{0}\">{1}</div>")
-        SafeHtml divWithToolTip(String title, SafeHtml content);
+        return Templates.div(className, content);
     }
 }

@@ -24,29 +24,15 @@ import stroom.explorer.shared.FindResultWithPermissions;
 import stroom.security.shared.DocumentUserPermissions;
 import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.SvgImageUtil;
+import stroom.widget.util.client.Templates;
 
 import com.google.gwt.cell.client.AbstractCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class FindResultWithPermissionsCell extends AbstractCell<FindResultWithPermissions> {
-
-    private static Template template;
-
-    public FindResultWithPermissionsCell() {
-        if (template == null) {
-            synchronized (FindResultWithPermissions.class) {
-                if (template == null) {
-                    template = GWT.create(Template.class);
-                }
-            }
-        }
-    }
 
     @Override
     public void render(final Context context, final FindResultWithPermissions v, final SafeHtmlBuilder sb) {
@@ -70,42 +56,42 @@ public class FindResultWithPermissionsCell extends AbstractCell<FindResultWithPe
                 }
 
                 // Add name
-                main.append(template.div(getCellClassName() + "-name",
+                main.append(Templates.div(getCellClassName() + "-name",
                         SafeHtmlUtil.from(docRef.getName())));
 
                 if (permissions != null) {
                     if (permissions.getPermission() != null) {
                         // Add permission
-                        main.append(template.div(getCellClassName() + "-permission",
+                        main.append(Templates.div(getCellClassName() + "-permission",
                                 SafeHtmlUtil.from(permissions.getPermission().getDisplayValue())));
                     }
                     if (permissions.getInheritedPermission() != null) {
                         // Add inherited permission
-                        main.append(template.div(getCellClassName() + "-inherited-permission",
+                        main.append(Templates.div(getCellClassName() + "-inherited-permission",
                                 SafeHtmlUtil.from("(" +
-                                        permissions.getInheritedPermission().getDisplayValue() +
-                                        ")")));
+                                                  permissions.getInheritedPermission().getDisplayValue() +
+                                                  ")")));
                     }
                 }
 
-                row.append(template.div(getCellClassName() + "-main", main.toSafeHtml()));
+                row.append(Templates.div(getCellClassName() + "-main", main.toSafeHtml()));
 
                 // Add path
-                sub.append(template.div(getCellClassName() + "-path",
+                sub.append(Templates.div(getCellClassName() + "-path",
                         SafeHtmlUtil.from(value.getPath())));
 
                 // Add uuid
-                sub.append(template.div(getCellClassName() + "-uuid",
+                sub.append(Templates.div(getCellClassName() + "-uuid",
                         SafeHtmlUtil.from(docRef.getUuid())));
 
-                row.append(template.div(getCellClassName() + "-sub", sub.toSafeHtml()));
+                row.append(Templates.div(getCellClassName() + "-sub", sub.toSafeHtml()));
 
                 if (permissions != null) {
                     addCreatePerms(row, permissions.getDocumentCreatePermissions());
                     addCreatePerms(row, permissions.getInheritedDocumentCreatePermissions());
                 }
 
-                sb.append(template.div(getCellClassName() + "-row", row.toSafeHtml()));
+                sb.append(Templates.div(getCellClassName() + "-row", row.toSafeHtml()));
             }
         }
     }
@@ -113,20 +99,14 @@ public class FindResultWithPermissionsCell extends AbstractCell<FindResultWithPe
     private void addCreatePerms(final SafeHtmlBuilder row, final Set<String> set) {
         if (set != null && set.size() > 0) {
             final SafeHtmlBuilder sb = new SafeHtmlBuilder();
-            sb.append(template.div(getCellClassName() + "-path",
+            sb.append(Templates.div(getCellClassName() + "-path",
                     SafeHtmlUtil.from(set.stream()
                             .collect(Collectors.joining(", ")))));
-            row.append(template.div(getCellClassName() + "-sub", sb.toSafeHtml()));
+            row.append(Templates.div(getCellClassName() + "-sub", sb.toSafeHtml()));
         }
     }
 
     private String getCellClassName() {
         return "findCell";
-    }
-
-    public interface Template extends SafeHtmlTemplates {
-
-        @Template("<div class=\"{0}\">{1}</div>")
-        SafeHtml div(String className, SafeHtml content);
     }
 }

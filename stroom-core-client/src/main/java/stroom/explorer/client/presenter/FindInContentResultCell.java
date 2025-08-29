@@ -22,26 +22,12 @@ import stroom.explorer.shared.DocContentMatch;
 import stroom.explorer.shared.FindInContentResult;
 import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.SvgImageUtil;
+import stroom.widget.util.client.Templates;
 
 import com.google.gwt.cell.client.AbstractCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 public class FindInContentResultCell extends AbstractCell<FindInContentResult> {
-
-    private static Template template;
-
-    public FindInContentResultCell() {
-        if (template == null) {
-            synchronized (FindInContentResult.class) {
-                if (template == null) {
-                    template = GWT.create(Template.class);
-                }
-            }
-        }
-    }
 
     @Override
     public void render(final Context context, final FindInContentResult value, final SafeHtmlBuilder sb) {
@@ -77,11 +63,11 @@ public class FindInContentResultCell extends AbstractCell<FindInContentResult> {
             final String sampleAfter = sample.substring(Math.min(end, sample.length()))
                     .replaceAll("\n", " ");
             final SafeHtmlBuilder sampleHtml = new SafeHtmlBuilder();
-            sampleHtml.append(template.div(getCellClassName() + "-sample-before",
+            sampleHtml.append(Templates.div(getCellClassName() + "-sample-before",
                     SafeHtmlUtil.from(sampleBefore)));
-            sampleHtml.append(template.div(getCellClassName() + "-highlight",
+            sampleHtml.append(Templates.div(getCellClassName() + "-highlight",
                     SafeHtmlUtil.from(highlight)));
-            sampleHtml.append(template.div(getCellClassName() + "-sample-after",
+            sampleHtml.append(Templates.div(getCellClassName() + "-sample-after",
                     SafeHtmlUtil.from(sampleAfter)));
 
             String sampleClass = getCellClassName() + "-sample";
@@ -89,48 +75,35 @@ public class FindInContentResultCell extends AbstractCell<FindInContentResult> {
             if (!match.isSampleAtStartOfLine()) {
                 sampleClass = sampleClass + " " + getCellClassName() + "-sample-truncated";
             }
-            main.append(template.divWithTitle(
+            main.append(Templates.div(
                     sampleClass,
                     value.getDocContentMatch().getSample(),
                     sampleHtml.toSafeHtml()));
 
             // Add name
             final String name = match.getDocRef().getName();
-            main.append(template.divWithTitle(
+            main.append(Templates.div(
                     getCellClassName() + "-name",
                     value.getPath() + " / " + name,
                     SafeHtmlUtil.from(name)));
 
-            row.append(template.div(getCellClassName() + "-main", main.toSafeHtml()));
+            row.append(Templates.div(getCellClassName() + "-main", main.toSafeHtml()));
 
             // Add path
-            sub.append(template.div(getCellClassName() + "-path",
+            sub.append(Templates.div(getCellClassName() + "-path",
                     SafeHtmlUtil.from(value.getPath())));
 
             // Add uuid
-            sub.append(template.div(getCellClassName() + "-uuid",
+            sub.append(Templates.div(getCellClassName() + "-uuid",
                     SafeHtmlUtil.from(match.getDocRef().getUuid())));
 
-            row.append(template.div(getCellClassName() + "-sub", sub.toSafeHtml()));
+            row.append(Templates.div(getCellClassName() + "-sub", sub.toSafeHtml()));
 
-            sb.append(template.div(getCellClassName() + "-row", row.toSafeHtml()));
+            sb.append(Templates.div(getCellClassName() + "-row", row.toSafeHtml()));
         }
     }
 
     private String getCellClassName() {
         return "findCell";
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    public interface Template extends SafeHtmlTemplates {
-
-        @Template("<div class=\"{0}\">{1}</div>")
-        SafeHtml div(String className, SafeHtml content);
-
-        @Template("<div class=\"{0}\" title=\"{1}\">{2}</div>")
-        SafeHtml divWithTitle(String className, String title, SafeHtml content);
     }
 }

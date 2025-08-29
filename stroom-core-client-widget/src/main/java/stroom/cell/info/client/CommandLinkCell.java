@@ -6,13 +6,12 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.SvgImageUtil;
+import stroom.widget.util.client.Templates;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.ValueUpdater;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -25,16 +24,9 @@ public class CommandLinkCell extends AbstractCell<CommandLink> implements EventC
 
     private static final String ICON_CLASS_NAME = "svgIcon";
     private static final String OPEN_CLASS_NAME = "commandLinkOpen";
-//    private static final String OPEN_CLASS_NAME = "docRefLinkOpen";
-
-    private static Template template;
 
     public CommandLinkCell() {
         super(MOUSEDOWN);
-
-        if (template == null) {
-            template = GWT.create(Template.class);
-        }
     }
 
     @Override
@@ -84,40 +76,21 @@ public class CommandLinkCell extends AbstractCell<CommandLink> implements EventC
         } else if (value.hasCommand()) {
             final String text = value.getText();
 
-            final SafeHtml textSafeHtml = template
+            final SafeHtml textSafeHtml = Templates
                     .div("commandLinkText", SafeHtmlUtils.fromString(text));
 
             sb.appendHtmlConstant("<div class=\"commandLinkContainer\">");
             sb.append(textSafeHtml);
 
             final SafeHtml open = SvgImageUtil.toSafeHtml(SvgImage.OPEN, ICON_CLASS_NAME, OPEN_CLASS_NAME);
-            sb.append(template.divWithToolTip(
+            sb.append(Templates.divWithTitle(
                     value.getTooltip(),
                     open));
 
             sb.appendHtmlConstant("</div>");
 
         } else {
-            sb.append(template.text(value.getText()));
+            sb.appendEscaped(value.getText());
         }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    interface Template extends SafeHtmlTemplates {
-
-//        @Template("<div class=\"CommandLinkCell\" title=\"{1}\">{0}</div>")
-//        SafeHtml link(String text, String tooltip);
-
-        @Template("{0}")
-        SafeHtml text(String text);
-
-        @Template("<div class=\"{0}\">{1}</div>")
-        SafeHtml div(String cssClass, SafeHtml content);
-
-        @Template("<div title=\"{0}\">{1}</div>")
-        SafeHtml divWithToolTip(String title, SafeHtml content);
     }
 }
