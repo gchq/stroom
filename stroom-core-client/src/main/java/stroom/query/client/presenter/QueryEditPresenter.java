@@ -395,7 +395,7 @@ public class QueryEditPresenter
         queryModel.reset(DestroyReason.NO_LONGER_NEEDED);
 
         // Start search.
-        queryModel.startNewSearch(
+        queryModel.startNewSearch(null, null,
                 editorPresenter.getText(),
                 null, //getDashboardContext().getCombinedParams(),
                 queryToolbarPresenter.getTimeRange(),

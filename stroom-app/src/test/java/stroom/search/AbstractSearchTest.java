@@ -91,13 +91,14 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
         for (final String componentId : componentIds) {
             final TableSettings tableSettings = tableSettingsCreator.apply(extractValues);
 
-            final ResultRequest tableResultRequest = new ResultRequest(componentId,
+            final ResultRequest tableResultRequest = new ResultRequest(componentId, null,
                     Collections.singletonList(tableSettings),
                     null,
                     null,
                     null,
                     ResultRequest.ResultStyle.TABLE,
                     Fetch.CHANGES,
+                    null,
                     null);
             resultRequests.add(tableResultRequest);
         }

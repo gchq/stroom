@@ -63,6 +63,7 @@ import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.inject.Inject;
@@ -575,7 +576,7 @@ public class EmbeddedQueryPresenter
 
             // Start search.
             final DashboardContext dashboardContext = getDashboardContext();
-            queryModel.startNewSearch(
+            queryModel.startNewSearch(getComponentConfig().getId(), getComponentConfig().getName(),
                     replaced,
                     dashboardContext.getParams(),
                     dashboardContext.getResolvedTimeRange(),
@@ -851,7 +852,9 @@ public class EmbeddedQueryPresenter
 
     @Override
     public void onContentTabVisible(final boolean visible) {
-        currentTablePresenter.onContentTabVisible(visible);
+        if (currentTablePresenter != null) {
+            currentTablePresenter.onContentTabVisible(visible);
+        }
     }
 
     public interface EmbeddedQueryView extends View, RequiresResize {

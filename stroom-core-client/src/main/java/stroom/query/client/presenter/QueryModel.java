@@ -16,6 +16,7 @@
 
 package stroom.query.client.presenter;
 
+import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -147,7 +148,8 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
     /**
      * Begin executing a new search using the supplied query expression.
      */
-    public void startNewSearch(final String query,
+    public void startNewSearch(final String componentId, final String componentName,
+                               final String query,
                                final List<Param> params,
                                final TimeRange timeRange,
                                final boolean incremental,
@@ -173,6 +175,8 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                 .searchRequestSource(
                         SearchRequestSource
                                 .builder()
+                                .componentId(componentId)
+                                .componentName(componentName)
                                 .sourceType(sourceType)
                                 .ownerDocRef(queryDocRef)
                                 .build())

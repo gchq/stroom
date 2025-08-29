@@ -16,7 +16,10 @@
 
 package stroom.query.api;
 
+import stroom.query.api.SearchRequestSource.SourceType;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -31,8 +34,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-@JsonPropertyOrder({"componentId", "mappings", "requestedRange", "openGroups", "resultStyle", "fetch",
-        "groupSelection"})
+@JsonPropertyOrder({"componentId", "searchRequestSource", "mappings", "requestedRange", "openGroups", "resultStyle",
+        "fetch", "groupSelection", "tableName"})
 @JsonInclude(Include.NON_NULL)
 @Schema(description = "A definition for how to return the raw results of the query in the SearchResponse, " +
                       "e.g. sorted, grouped, limited, etc.")
@@ -41,6 +44,12 @@ public final class ResultRequest {
     @Schema(description = "The ID of the component that will receive the results corresponding to this ResultRequest")
     @JsonProperty
     private final String componentId;
+
+    @JsonProperty
+    private final SearchRequestSource searchRequestSource;
+
+    @JsonProperty
+    private final String tableName;
 
     @Schema
     @JsonProperty
@@ -78,14 +87,17 @@ public final class ResultRequest {
 
     @JsonCreator
     public ResultRequest(@JsonProperty("componentId") final String componentId,
+                         @JsonProperty("searchRequestSource") final SearchRequestSource searchRequestSource,
                          @JsonProperty("mappings") final List<TableSettings> mappings,
                          @JsonProperty("requestedRange") final OffsetRange requestedRange,
                          @JsonProperty("timeFilter") final TimeFilter timeFilter,
                          @JsonProperty("openGroups") final Set<String> openGroups,
                          @JsonProperty("resultStyle") final ResultStyle resultStyle,
                          @JsonProperty("fetch") final Fetch fetch,
-                         @JsonProperty("groupSelection") final GroupSelection groupSelection) {
+                         @JsonProperty("groupSelection") final GroupSelection groupSelection,
+                         @JsonProperty("tableName") final String tableName) {
         this.componentId = componentId;
+        this.searchRequestSource = searchRequestSource;
         this.mappings = mappings;
         this.requestedRange = requestedRange;
         this.timeFilter = timeFilter;
@@ -94,6 +106,7 @@ public final class ResultRequest {
         this.fetch = fetch;
         this.groupSelection = groupSelection == null ?
                 GroupSelection.builder().openGroups(openGroups).build() : groupSelection;
+        this.tableName = tableName;
     }
 
     public static Builder builder() {
@@ -102,6 +115,10 @@ public final class ResultRequest {
 
     public String getComponentId() {
         return componentId;
+    }
+
+    public SearchRequestSource getSearchRequestSource() {
+        return searchRequestSource;
     }
 
     public List<TableSettings> getMappings() {
@@ -128,6 +145,10 @@ public final class ResultRequest {
         return groupSelection;
     }
 
+    public String getTableName() {
+        return tableName;
+    }
+
     /**
      * The fetch type determines if the request actually wants data returned or if it only wants data if the data has
      * changed since the last request was made.
@@ -136,6 +157,30 @@ public final class ResultRequest {
      */
     public Fetch getFetch() {
         return fetch;
+    }
+
+    @JsonIgnore
+    public String getSourceComponentId() {
+        if (searchRequestSource != null) {
+            if (SourceType.DASHBOARD_UI.equals(searchRequestSource.getSourceType())) {
+                return componentId;
+            }
+            return searchRequestSource.getComponentId();
+        }
+
+        return null;
+    }
+
+    @JsonIgnore
+    public String getSourceComponentName() {
+        if (searchRequestSource != null) {
+            if (SourceType.DASHBOARD_UI.equals(searchRequestSource.getSourceType())) {
+                return tableName;
+            }
+            return searchRequestSource.getComponentName();
+        }
+
+        return null;
     }
 
     @Override
@@ -148,25 +193,28 @@ public final class ResultRequest {
         }
         final ResultRequest that = (ResultRequest) o;
         return Objects.equals(componentId, that.componentId) &&
+               Objects.equals(searchRequestSource, that.searchRequestSource) &&
                Objects.equals(mappings, that.mappings) &&
                Objects.equals(requestedRange, that.requestedRange) &&
                Objects.equals(timeFilter, that.timeFilter) &&
                Objects.equals(openGroups, that.openGroups) &&
                resultStyle == that.resultStyle &&
                fetch == that.fetch &&
-               Objects.equals(groupSelection, that.groupSelection);
+               Objects.equals(groupSelection, that.groupSelection) &&
+               Objects.equals(tableName, that.tableName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(componentId, mappings, requestedRange, timeFilter, openGroups, resultStyle, fetch,
-                groupSelection);
+        return Objects.hash(componentId, searchRequestSource, mappings, requestedRange, timeFilter, openGroups,
+                resultStyle, fetch, groupSelection, tableName);
     }
 
     @Override
     public String toString() {
         return "ResultRequest{" +
                "componentId='" + componentId + '\'' +
+               ", searchRequestSource=" + searchRequestSource +
                ", mappings=" + mappings +
                ", requestedRange=" + requestedRange +
                ", timeFilter=" + timeFilter +
@@ -174,6 +222,7 @@ public final class ResultRequest {
                ", resultStyle=" + resultStyle +
                ", fetch=" + fetch +
                ", groupSelection=" + groupSelection +
+               ", tableName=" + tableName +
                '}';
     }
 
@@ -212,6 +261,7 @@ public final class ResultRequest {
     public static final class Builder {
 
         private String componentId;
+        private SearchRequestSource searchRequestSource;
         private List<TableSettings> mappings;
         private OffsetRange requestedRange;
         private TimeFilter timeFilter;
@@ -219,12 +269,14 @@ public final class ResultRequest {
         private ResultRequest.ResultStyle resultStyle;
         private ResultRequest.Fetch fetch;
         private GroupSelection groupSelection;
+        private String tableName;
 
         private Builder() {
         }
 
         private Builder(final ResultRequest resultRequest) {
             componentId = resultRequest.componentId;
+            searchRequestSource = resultRequest.searchRequestSource;
             mappings = resultRequest.mappings;
             requestedRange = resultRequest.requestedRange;
             timeFilter = resultRequest.timeFilter;
@@ -232,6 +284,7 @@ public final class ResultRequest {
             resultStyle = resultRequest.resultStyle;
             fetch = resultRequest.fetch;
             groupSelection = resultRequest.groupSelection;
+            tableName = resultRequest.tableName;
         }
 
         /**
@@ -240,6 +293,11 @@ public final class ResultRequest {
          */
         public Builder componentId(final String value) {
             this.componentId = value;
+            return this;
+        }
+
+        public Builder searchRequestSource(final SearchRequestSource value) {
+            this.searchRequestSource = value;
             return this;
         }
 
@@ -264,6 +322,11 @@ public final class ResultRequest {
 
         public Builder groupSelection(final GroupSelection groupSelection) {
             this.groupSelection = groupSelection;
+            return this;
+        }
+
+        public Builder tableName(final String tableName) {
+            this.tableName = tableName;
             return this;
         }
 
@@ -322,8 +385,8 @@ public final class ResultRequest {
         }
 
         public ResultRequest build() {
-            return new ResultRequest(componentId, mappings, requestedRange, timeFilter,
-                    openGroups, resultStyle, fetch, groupSelection);
+            return new ResultRequest(componentId, searchRequestSource, mappings, requestedRange, timeFilter,
+                    openGroups, resultStyle, fetch, groupSelection, tableName);
         }
     }
 }
