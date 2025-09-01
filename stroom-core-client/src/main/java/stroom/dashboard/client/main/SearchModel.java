@@ -144,7 +144,7 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
     /**
      * Begin executing a new search using the supplied query expression.
      */
-    public void startNewSearch(final String message, final ExpressionOperator expression,
+    public void startNewSearch(final ExpressionOperator expression,
                                final List<Param> params,
                                final TimeRange timeRange,
                                final boolean incremental,

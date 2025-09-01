@@ -639,7 +639,7 @@ public class QueryPresenter
             decorated = dashboardContext.replaceExpression(decorated, true);
 
             // Start search.
-            searchModel.startNewSearch("run",
+            searchModel.startNewSearch(
                     decorated,
                     dashboardContext.getParams(),
                     dashboardContext.getResolvedTimeRange(),
@@ -669,7 +669,7 @@ public class QueryPresenter
             root = dashboardContext.replaceExpression(root, true);
 
             // Start search.
-            searchModel.startNewSearch("resume",
+            searchModel.startNewSearch(
                     root,
                     dashboardContext.getParams(),
                     dashboardContext.getResolvedTimeRange(),
