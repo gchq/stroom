@@ -730,13 +730,13 @@ tasks.register('dependenciesPng') {
 //dependsOn clearContentPackDownloadDir
 //}
 
-// Accept the T&Cs for publishing build scans
-if (hasProperty('buildScan')) {
-    buildScan {
-        termsOfServiceUrl = 'https://gradle.com/terms-of-service'
-        termsOfServiceAgree = 'yes'
-    }
-}
+//// Accept the T&Cs for publishing build scans
+//if (hasProperty('buildScan')) {
+//    buildScan {
+//        termsOfServiceUrl = 'https://gradle.com/terms-of-service'
+//        termsOfServiceAgree = 'yes'
+//    }
+//}
 
 //import com.vanniktech.dependency.graph.generator.DependencyGraphGeneratorPlugin
 //import com.vanniktech.dependency.graph.generator.DependencyGraphGeneratorExtension.Generator
