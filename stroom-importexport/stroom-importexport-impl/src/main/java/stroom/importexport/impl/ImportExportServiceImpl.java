@@ -19,6 +19,7 @@ package stroom.importexport.impl;
 import stroom.docref.DocRef;
 import stroom.importexport.api.ExportSummary;
 import stroom.importexport.api.ImportExportSerializer;
+import stroom.importexport.api.ImportExportVersion;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.util.io.FileUtil;

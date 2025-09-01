@@ -277,7 +277,11 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
         // Path down to the parent of the thing we're importing
         final Deque<DocRef> docRefPath = new ArrayDeque<>();
-        docRefPath.addLast(ExplorerConstants.SYSTEM_DOC_REF);
+        if (importSettings.getRootDocRef() != null) {
+            docRefPath.addLast(importSettings.getRootDocRef());
+        } else {
+            docRefPath.addLast(ExplorerConstants.SYSTEM_DOC_REF);
+        }
 
         // Recursively read in the structure on disk
         recursiveRead(dir,
@@ -890,18 +894,11 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
     private void searchForNodesToExport(final ExportInfo exportInfo,
                                         final Deque<ExplorerNode> pathToCurrentNode,
                                         final ExplorerNode currentNode) throws IOException {
-
-        final List<ExplorerNode> children = explorerNodeService.getChildren(currentNode.getDocRef());
-        for (final ExplorerNode child : children) {
-            if (exportInfo.shouldExportDocRef(child.getDocRef())) {
-                LOGGER.info("{} Node '{}' must be exported!", "=".repeat(pathToCurrentNode.size()), child.getName());
-                try {
-                    pathToCurrentNode.addLast(child);
-                    exportEverything(exportInfo, pathToCurrentNode, child);
-                } finally {
-                    pathToCurrentNode.removeLast();
-                }
-            } else {
+        if (exportInfo.shouldExportDocRef(currentNode.getDocRef())) {
+            exportEverything(exportInfo, pathToCurrentNode, currentNode);
+        } else {
+            final List<ExplorerNode> children = explorerNodeService.getChildren(currentNode.getDocRef());
+            for (final ExplorerNode child : children) {
                 if (ExplorerConstants.isFolder(child)) {
                     try {
                         // Recurse
@@ -939,15 +936,15 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
             LOGGER.debug("Exception checking document for View permission during export: {}", e.getMessage(), e);
         }
 
-        if (!exportInfo.shouldIgnoreType(currentNode.getType())) {
-            // Export this node and path to it
-            if (hasPermission) {
-                exportCurrentNode(exportInfo, pathToCurrentNode);
-            }
+        // Export this node and path to it
+        if (hasPermission) {
+            exportCurrentNode(exportInfo, pathToCurrentNode);
+        }
 
-            // Recurse children and export them too
-            final List<ExplorerNode> children = explorerNodeService.getChildren(currentNode.getDocRef());
-            for (final ExplorerNode child : children) {
+        // Recurse children and export them too
+        final List<ExplorerNode> children = explorerNodeService.getChildren(currentNode.getDocRef());
+        for (final ExplorerNode child : children) {
+            if (!exportInfo.shouldIgnoreType(child.getType())) {
                 try {
                     // Recurse
                     pathToCurrentNode.addLast(child);

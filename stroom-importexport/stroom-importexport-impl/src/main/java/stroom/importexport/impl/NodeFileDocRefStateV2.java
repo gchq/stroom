@@ -43,12 +43,6 @@ class NodeFileDocRefStateV2 {
     /** The destination parent node; either import or existing */
     private final ExplorerNode destParentNode;
 
-    /** Stack of docRefs representing the tree above nodeFileDocRef */
-    //private final Deque<DocRef> nodeFileParentPath;
-
-    /** Whether we need to replace the UUID in the current item? */
-    private final boolean replaceUuid;
-
     /** Whether this DocRef needs renaming */
     private final boolean rename;
 
@@ -104,13 +98,6 @@ class NodeFileDocRefStateV2 {
                                       + existingNode.getName() + "' cannot be found");
             }
 
-            // Do we need to replace the UUID of the DocRef?
-            if (!this.nodeFileDocRef.getUuid().equals(existingDocRef.getUuid())) {
-                this.replaceUuid = true;
-            } else {
-                this.replaceUuid = false;
-            }
-
             // Do we need to rename the ExplorerNode and DocRef?
             if (useImportNames && !existingDocRef.getName().equals(this.nodeFileDocRef.getName())) {
                 this.rename = true;
@@ -130,7 +117,6 @@ class NodeFileDocRefStateV2 {
             this.existingNode = null;
             this.existingDocRef = null;
             this.existingParentNode = null;
-            this.replaceUuid = false;
             this.rename = false;
             this.moving = false;
         }
@@ -310,15 +296,6 @@ class NodeFileDocRefStateV2 {
     }
 
     /**
-     * Shortcut method to return the name of the DocRef specified in the
-     * .node file.
-     * @return The name of the node file doc ref.
-     */
-    public String getNodeFileDocRefName() {
-        return nodeFileDocRef.getName();
-    }
-
-    /**
      * @return the ExplorerNode representing the parent DocRef.
      */
     public ExplorerNode getDestParentNode() {
@@ -330,47 +307,16 @@ class NodeFileDocRefStateV2 {
      * the import structure.
      */
     public DocRef getImportParentDocRef() {
+        // TODO
         return importParentDocRef;
-    }
-
-    /**
-     * @return The node path, if the ExplorerNode already exists, or null otherwise.
-     */
-    public @Nullable ExplorerNode getExistingNode() {
-        return existingNode;
-    }
-
-    /**
-     * @return The existing DocRef, if it exists, or null otherwise.
-     */
-    public @Nullable DocRef getExistingDocRef() {
-        return existingDocRef;
     }
 
     /**
      * Returns the path to give to ImportState.
      */
     public String getDestPathForImportState() {
+        // TODO
         return pathAsString;
-    }
-
-    public String getProcessorFilterSourcePath() {
-        return "foo";
-    }
-
-    public String getProcessorFilterDestPath() {
-        return "bar";
-    }
-
-    /**
-     * Whether we need to replace the UUID we've got recorded for the current
-     * DocRef with the existing UUID. This will happen when we import a V2 Folder
-     * into something created with a V1 import. The Folder UUID was created
-     * randomly in V1 import so won't match the UUID in the V2 import.
-     * @return true if the UUID must be replaced, false if it is ok.
-     */
-    public boolean isReplaceUuid() {
-        return replaceUuid;
     }
 
     /**
