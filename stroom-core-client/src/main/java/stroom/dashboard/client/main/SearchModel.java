@@ -144,7 +144,7 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
     /**
      * Begin executing a new search using the supplied query expression.
      */
-    public void startNewSearch(final ExpressionOperator expression,
+    public void startNewSearch(final String message, final ExpressionOperator expression,
                                final List<Param> params,
                                final TimeRange timeRange,
                                final boolean incremental,
@@ -157,14 +157,14 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
         // Destroy the previous search and ready all components for a new search to begin.
         reset(DestroyReason.NO_LONGER_NEEDED);
 
-        // If we are resuming then set the node and query key.
-        currentNode = resumeNode;
-        currentQueryKey = resumeQueryKey;
-
         final Map<String, ComponentSettings> resultComponentMap = createComponentSettingsMap();
         if (resultComponentMap != null) {
             final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
             if (dataSourceRef != null && expression != null) {
+                // If we are resuming then set the node and query key.
+                currentNode = resumeNode;
+                currentQueryKey = resumeQueryKey;
+
                 // Copy the expression.
                 final ExpressionOperator currentExpression = ExpressionUtil.copyOperator(expression);
                 currentSearch = Search

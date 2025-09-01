@@ -38,9 +38,11 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.Layer;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class ContentManager implements HasHandlers {
 
@@ -155,8 +157,16 @@ public class ContentManager implements HasHandlers {
     public void open(final CloseContentEvent.Handler closeHandler,
                      final TabData tabData,
                      final Layer layer) {
+        open(closeHandler, tabData, layer, null, null);
+    }
+
+    public void open(final CloseContentEvent.Handler closeHandler,
+                     final TabData tabData,
+                     final Layer layer,
+                     final MyPresenterWidget<?> presenter,
+                     final Consumer<MyPresenterWidget<?>> callbackOnOpen) {
         handlerMap.put(tabData, closeHandler);
-        OpenContentTabEvent.fire(this, tabData, layer);
+        OpenContentTabEvent.fire(this, tabData, layer, presenter, callbackOnOpen);
     }
 
     @Override
