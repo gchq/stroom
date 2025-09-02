@@ -26,6 +26,7 @@ import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.gitrepo.api.GitRepoStore;
 import stroom.gitrepo.shared.GitRepoDoc;
+import stroom.importexport.api.ExportSummary;
 import stroom.importexport.api.ImportExportSerializer;
 import stroom.importexport.api.ImportExportVersion;
 import stroom.importexport.shared.ImportSettings;
@@ -50,7 +51,6 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -136,14 +136,14 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
 
         @Nonnull
         @Override
-        public FileVisitResult preVisitDirectory(final Path dir, @Nonnull final BasicFileAttributes attrs) {
+        public FileVisitResult preVisitDirectory(@Nonnull final Path dir, @Nonnull final BasicFileAttributes attrs) {
             checkPath(dir);
             return FileVisitResult.CONTINUE;
         }
 
         @Nonnull
         @Override
-        public FileVisitResult visitFile(final Path file, @Nonnull final BasicFileAttributes attrs) {
+        public FileVisitResult visitFile(@Nonnull final Path file, @Nonnull final BasicFileAttributes attrs) {
             checkPath(file);
             return FileVisitResult.CONTINUE;
         }
@@ -248,7 +248,7 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
         final Set<String> docTypesToIgnore = Set.of(GitRepoDoc.TYPE);
 
         // Run the export to disk
-        importExportSerializer.write(
+        final ExportSummary exportSummary = importExportSerializer.write(
                 rootNodePath,
                 testDataDir,
                 docRefsToExport,
@@ -256,6 +256,16 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 true,
                 ImportExportVersion.V2);
 
+        LOGGER.info("Export summary: {}", exportSummary.toString());
+        assertThat(exportSummary.getSuccessCountsByType().get("Folder"))
+                .as("Folders exported")
+                .isEqualTo(2);
+        assertThat(exportSummary.getSuccessCountsByType().get("Pipeline"))
+                .as("Pipelines exported")
+                .isEqualTo(1);
+        assertThat(exportSummary.getSuccessCountsByType().get("Feed"))
+                .as("Feeds exported")
+                .isEqualTo(1);
         final List<String> pathPatterns = List.of(
                 "",
                 "folder1\\.Folder\\.[-a-f0-9]*$",
@@ -362,13 +372,15 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
         final Set<String> docTypesToIgnore = Set.of(GitRepoDoc.TYPE);
 
         // Run the export to disk
-        importExportSerializer.write(
+        final ExportSummary exportSummary = importExportSerializer.write(
                 rootNodePath,
                 testDataDir,
                 docRefsToExport,
                 docTypesToIgnore,
                 true,
                 ImportExportVersion.V2);
+
+        LOGGER.info("Export summary = {}", exportSummary);
 
         final List<String> pathPatterns = List.of(
                 "",
@@ -382,9 +394,9 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 "folder2\\.Folder\\.[-a-f0-9]*/Pipeline\\.Pipeline\\.[-a-f0-9]*.node",
                 "folder2\\.Folder\\.[-a-f0-9]*/Pipeline\\.Pipeline\\.[-a-f0-9]*.json");
 
-        //this.testGitFilesOnDisk("testExport2",
-        //        testDataDir,
-        //        pathPatterns);
+        this.testGitFilesOnDisk("testExport2",
+                testDataDir,
+                pathPatterns);
 
         // Remove all entries from the database
         commonTestControl.clear();
@@ -406,13 +418,16 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 .useImportNames(true)
                 .rootDocRef(gitRepoNode2.getDocRef())
                 .build();
-        importExportSerializer.read(testDataDir, importStates, importSettings);
-
+        final Set<DocRef> importedDocRefs = importExportSerializer.read(testDataDir, importStates, importSettings);
+        LOGGER.info("Imported docrefs = {}", importedDocRefs);
+        LOGGER.info("Imported states = {}", importStates);
+        final List<String> importedNames = importedDocRefs.stream().map(DocRef::getName).toList();
+        assertThat(importedNames)
+                .contains("System", "FEED", "Pipeline");
+        assertThat(importStates)
+                .isEmpty();
         System.err.println("Structure following import: ");
         dumpNodeStructure(explorerNodeService.getRoot(), 0);
-
-        // TODO
-        //this.explorerService.rebuildTree();
 
         final var folder12 = this.explorerNodeService.getNodesByName(gitRepoNode2, "folder1");
         assertThat(folder12)

@@ -1,0 +1,5 @@
+name=mycore
+path=/Indexes/Solr Index/mycore
+type=SolrIndex
+uuid=861c682d-a794-4e64-9963-4f4562fd1b54
+version=V2

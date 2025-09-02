@@ -93,9 +93,6 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
     /** Delimiter for paths in .node files */
     private static final String PATH_DELIMITER = "/";
 
-    /** Name of the .git directory - generally ignore this on import */
-    private static final Path GIT_REPO_DIR = Path.of(".git");
-
     /** Version 1 implementation */
     private final ImportExportSerializer importExportSerializerV1;
 
@@ -426,14 +423,14 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
      * @param nodeFile          The Path to the nodeFile to import
      * @param confirmMap        Stuff to tell the user
      * @param importSettings    Stuff the user has told us
-     * @param docRefPath        Stack of DocRefs above this thing that we're trying
+     * @param importDocRefPath  Stack of DocRefs above this thing that we're trying
      *                          to import.
      * @return                  Reference of the imported doc.
      */
     private @Nullable DocRef readNodeFile(final Path nodeFile,
                                           final Map<DocRef, ImportState> confirmMap,
                                           final ImportSettings importSettings,
-                                          final Deque<DocRef> docRefPath)
+                                          final Deque<DocRef> importDocRefPath)
             throws IOException {
 
         DocRef imported = null;
@@ -456,17 +453,17 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
         }
 
         // Create a doc ref for temporary use.
-        final DocRef nodeFileDocRef = new DocRef(type, uuid, name);
-        LOGGER.info("{}Read node file: {}", indent(docRefPath), nodeFileDocRef);
+        final DocRef importDocRef = new DocRef(type, uuid, name);
+        LOGGER.info("{}Read node file: {}", indent(importDocRefPath), importDocRef);
 
         // Create or get the import state.
         final ImportState importState = confirmMap.computeIfAbsent(
-                nodeFileDocRef,
-                k -> new ImportState(nodeFileDocRef, resolvePath(docRefPath, nodeFileDocRef.getName())));
+                importDocRef,
+                k -> new ImportState(importDocRef, resolvePath(importDocRefPath, importDocRef.getName())));
 
         // Get other associated data.
         final Map<String, byte[]> dataMap = new HashMap<>();
-        final String filePrefix = ImportExportFileNameUtil.createFilePrefix(nodeFileDocRef);
+        final String filePrefix = ImportExportFileNameUtil.createFilePrefix(importDocRef);
         final Path dir = nodeFile.getParent();
         try (final DirectoryStream<Path> stream = Files.newDirectoryStream(dir, filePrefix + GLOB_STAR)) {
             for (final Path file : stream) {
@@ -480,7 +477,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                         throw new IOException("Cannot get key from filename '" + fileName + "'");
                     } else {
                         final String key = fileName.substring(filePrefix.length() + 1);
-                        LOGGER.info("{}Found path with key '{}'", indent(docRefPath), key);
+                        LOGGER.info("{}Found path with key '{}'", indent(importDocRefPath), key);
                         final byte[] bytes = Files.readAllBytes(file);
                         dataMap.put(key, bytes);
                     }
@@ -492,24 +489,24 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
             // Find the appropriate handler
             final ImportExportActionHandler importExportActionHandler = importExportActionHandlers.getHandler(type);
             if (importExportActionHandler instanceof NonExplorerDocRefProvider) {
-                LOGGER.error("{}Importing non-explorer doc for node file {}", indent(docRefPath), nodeFile);
+                LOGGER.error("{}Importing non-explorer doc for node file {}", indent(importDocRefPath), nodeFile);
                 imported = importNonExplorerDoc(
                         importExportActionHandler,
                         nodeFile,
-                        nodeFileDocRef,
-                        docRefPath,
+                        importDocRef,
+                        importDocRefPath,
                         dataMap,
                         importState,
                         confirmMap,
                         importSettings);
 
             } else {
-                LOGGER.info("{}Importing explorer doc for node file {}", indent(docRefPath), nodeFile);
+                LOGGER.info("{}Importing explorer doc for node file {}", indent(importDocRefPath), nodeFile);
                 imported = importExplorerDoc(
                         importExportActionHandler,
                         nodeFile,
-                        docRefPath,
-                        nodeFileDocRef,
+                        importDocRefPath,
+                        importDocRef,
                         tags,
                         dataMap,
                         importState,
@@ -527,7 +524,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
     private DocRef importNonExplorerDoc(final ImportExportActionHandler importExportActionHandler,
                                         final Path nodeFile,
-                                        final DocRef nodeFileDocRef,
+                                        final DocRef importDocRef,
                                         final Deque<DocRef> importDocRefPath,
                                         final Map<String, byte[]> dataMap,
                                         final ImportState importState,
@@ -539,9 +536,9 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                 (NonExplorerDocRefProvider) importExportActionHandler;
 
         // Might return null but unlikely - seems it would only be due to code error
-        final DocRef ownerDocument = nonExplorerDocRefProvider.getOwnerDocument(nodeFileDocRef, dataMap);
+        final DocRef ownerDocument = nonExplorerDocRefProvider.getOwnerDocument(importDocRef, dataMap);
         if (ownerDocument == null) {
-            throw new IOException("Owner Document for '" + nodeFileDocRef.getName() + "' could not be found");
+            throw new IOException("Owner Document for '" + importDocRef.getName() + "' could not be found");
         }
 
         // Calculate the source and destination paths
@@ -561,7 +558,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
                 // Do the actual import of the ProcessorFilter
                 final DocRef importedDocRef = importExportActionHandler.importDocument(
-                        nodeFileDocRef,
+                        importDocRef,
                         dataMap,
                         importState,
                         importSettings);
@@ -573,27 +570,27 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                 if (ImportSettings.ok(importSettings, importState)) {
                     // Report the import
                     importExportDocumentEventLog.importDocument(
-                            nodeFileDocRef.getType(),
+                            importDocRef.getType(),
                             importedDocRef.getUuid(),
-                            nodeFileDocRef.getName(),
+                            importDocRef.getName(),
                             null);
                 }
             } else {
                 // We can't import this item so remove it from the map.
-                confirmMap.remove(nodeFileDocRef);
+                confirmMap.remove(importDocRef);
             }
         } catch (final RuntimeException e) {
             importState.addMessage(Severity.ERROR, e.getMessage());
             LOGGER.error("Error importing file {}", nodeFile.toAbsolutePath(), e);
             importExportDocumentEventLog.importDocument(
-                    nodeFileDocRef.getType(),
-                    nodeFileDocRef.getUuid(),
-                    nodeFileDocRef.getName(),
+                    importDocRef.getType(),
+                    importDocRef.getUuid(),
+                    importDocRef.getName(),
                     e);
             throw e;
         }
 
-        return nodeFileDocRef;
+        return importDocRef;
     }
 
     /**
@@ -602,7 +599,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
      * @param nodeFile Path to the import file on disk
      * @param importDocRefPath The path-like list of DocRefs from root to the parent
      *                         of the thing we're importing.
-     * @param nodeFileDocRef DocRef created from the .node data on disk
+     * @param importDocRef DocRef created from the .node data on disk
      * @param tags List of tags extracted from .node data on disk
      * @param dataMap Map of disk file extension to disk file contents
      * @param importState State of the import for docRef
@@ -615,7 +612,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
             @Nullable final ImportExportActionHandler importExportActionHandler,
             final Path nodeFile,
             final Deque<DocRef> importDocRefPath,
-            final DocRef nodeFileDocRef,
+            final DocRef importDocRef,
             final Set<String> tags,
             final Map<String, byte[]> dataMap,
             final ImportState importState,
@@ -623,23 +620,23 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
             final ImportSettings importSettings)
             throws IOException {
 
-        LOGGER.info("{}Importing explorer doc with node file '{}'", indent(importDocRefPath), nodeFileDocRef);
+        LOGGER.info("{}Importing explorer doc with node file '{}'", indent(importDocRefPath), importDocRef);
 
-        final NodeFileDocRefStateV2 nodeFileDocRefState = new NodeFileDocRefStateV2(
+        final ImportDocRefState importDocRefState = new ImportDocRefState(
                 explorerNodeService,
                 importDocRefPath,
-                nodeFileDocRef,
+                importDocRef,
                 importSettings.isUseImportFolders(),
                 importSettings.isUseImportNames());
 
-        if (nodeFileDocRefState.nodeAlreadyExists()) {
+        if (importDocRefState.nodeAlreadyExists()) {
             LOGGER.info("{}Document exists", indent(importDocRefPath));
 
             // This is a pre-existing item so make sure we are allowed to update it.
-            if (!securityContext.hasDocumentPermission(nodeFileDocRef,
+            if (!securityContext.hasDocumentPermission(importDocRef,
                     DocumentPermission.EDIT)) {
                 throw new PermissionException(securityContext.getUserRef(),
-                        "You do not have permission to update '" + nodeFileDocRef + "'");
+                        "You do not have permission to update '" + importDocRef + "'");
             }
 
             importState.setState(State.UPDATE);
@@ -650,7 +647,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
         }
 
         // Record where this was put so the user can be told
-        importState.setDestPath(nodeFileDocRefState.getDestPathForImportState());
+        importState.setDestPath(importDocRefState.getDestPathForImportState());
 
         // The docRef of whatever we managed to import/modify/verify
         DocRef importedDocRef = null;
@@ -659,7 +656,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
             // Import the item via the appropriate handler.
             LOGGER.info("{}DocRef '{}' has ImportMode: {}",
                     indent(importDocRefPath),
-                    nodeFileDocRefState.getNodeFileDocRef().getName(),
+                    importDocRefState.getImportDocRef().getName(),
                     importSettings.getImportMode());
 
             if (ImportMode.CREATE_CONFIRMATION.equals(importSettings.getImportMode()) ||
@@ -668,13 +665,13 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
                 LOGGER.info("{}Importing '{}'",
                         indent(importDocRefPath),
-                        nodeFileDocRefState.getNodeFileDocRef().getName());
+                        importDocRefState.getImportDocRef().getName());
 
                 // Only do this bit for things that aren't folders
-                if (!nodeFileDocRefState.isNodeFileExactlyFolderType()) {
+                if (!importDocRefState.isNodeFileExactlyFolderType()) {
                     if (importExportActionHandler == null) {
-                        throw new IOException("Cannot import '" + nodeFileDocRefState.getNodeFileDocRef().getName()
-                                              + "' of type '" + nodeFileDocRefState.getNodeFileDocRef().getType()
+                        throw new IOException("Cannot import '" + importDocRefState.getImportDocRef().getName()
+                                              + "' of type '" + importDocRefState.getImportDocRef().getType()
                                               + "' as its handler is cannot be found");
                     }
 
@@ -692,7 +689,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                     // This implementation can never return null.
                     // There may be other implementations.
                     importedDocRef = importExportActionHandler.importDocument(
-                            nodeFileDocRefState.getNodeFileDocRef(),
+                            importDocRefState.getImportDocRef(),
                             dataMap,
                             importState,
                             importSettings);
@@ -701,8 +698,8 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                         throw new IOException("Import failed - no DocRef returned");
                     }
                 } else {
-                    // If it is a Folder then get the initial importedDocRef from nodeFileDocRefState
-                    importedDocRef = nodeFileDocRefState.getImportedFolderDocRef();
+                    // If it is a Folder then get the initial importedDocRef from importDocRefState
+                    importedDocRef = importDocRefState.getImportedFolderDocRef();
                 }
 
                 // Add explorer node
@@ -716,15 +713,15 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                             .build();
 
                     // Create, rename and/or move explorer node.
-                    if (!nodeFileDocRefState.nodeAlreadyExists()) {
+                    if (!importDocRefState.nodeAlreadyExists()) {
                         // Node doesn't exist
                         LOGGER.info("{}DocRef doesn't exist so creating '{}' within '{}'",
                                 indent(importDocRefPath),
                                 importedDocRef.getName(),
-                                nodeFileDocRefState.getImportParentDocRef().getName());
+                                importDocRefState.getImportParentDocRef().getName());
                         explorerNodeService.createNode(
                                 importedDocRef,
-                                nodeFileDocRefState.getImportParentDocRef(),
+                                importDocRefState.getImportParentDocRef(),
                                 PermissionInheritance.DESTINATION,
                                 tags);
                         explorerService.rebuildTree();
@@ -742,16 +739,19 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                             LOGGER.info("{}Renaming '{}' to '{}'",
                                     indent(importDocRefPath),
                                     explorerNode.getName(),
-                                    nodeFileDocRef.getName());
-                            explorerService.rename(explorerNode, nodeFileDocRef.getName());
+                                    importDocRef.getName());
+                            explorerService.rename(explorerNode, importDocRef.getName());
                         }
-                        if (nodeFileDocRefState.isMoving()) {
+                        if (importDocRefState.isMoving()) {
+                            if (importDocRefState.getDestParentNode() == null) {
+                                throw new IOException("Destination node for move is null");
+                            }
                             LOGGER.info("{}Moving to '{}'",
                                     indent(importDocRefPath),
-                                    nodeFileDocRefState.getDestParentNode().getName());
+                                    importDocRefState.getDestParentNode().getName());
                             explorerService.move(
                                     Collections.singletonList(explorerNode),
-                                    nodeFileDocRefState.getDestParentNode(),
+                                    importDocRefState.getDestParentNode(),
                                     PermissionInheritance.DESTINATION);
                         }
                     }
@@ -766,8 +766,8 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
             } else {
                 // We can't import this item so remove it from the map.
-                LOGGER.info("{}Cannot import item '{}'", indent(importDocRefPath), nodeFileDocRef.getName());
-                confirmMap.remove(nodeFileDocRef);
+                LOGGER.info("{}Cannot import item '{}'", indent(importDocRefPath), importDocRef.getName());
+                confirmMap.remove(importDocRef);
             }
         } catch (final Exception e) {
             importState.addMessage(Severity.ERROR, e.getMessage());
@@ -775,7 +775,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
             // Log the best docref we've got
             final DocRef docRefToLog =
-                    importedDocRef != null ? importedDocRef : nodeFileDocRefState.getNodeFileDocRef();
+                    importedDocRef != null ? importedDocRef : importDocRefState.getImportDocRef();
 
             importExportDocumentEventLog.importDocument(docRefToLog.getType(),
                     docRefToLog.getUuid(),
@@ -986,7 +986,6 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                     if (!exportInfo.alreadyExported(currentNode)) {
                         LOGGER.info("Creating path to '{}'", pathToIter);
                         final Path nodePathOnDisk = foldersToNodeToDiskPath(exportInfo, pathToIter);
-                        //final Path nodeParentPathOnDisk = getNodeParentPathOnDisk(exportInfo, pathToIter);
                         final File nodeFileOnDisk = nodePathOnDisk.toFile();
                         if (!nodeFileOnDisk.exists()) {
                             if (!nodeFileOnDisk.mkdirs()) {
@@ -1104,7 +1103,10 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
         final Properties nodeProps = new Properties();
         nodeProps.setProperty(UUID_KEY, currentDocRef.getUuid());
         nodeProps.setProperty(TYPE_KEY, currentDocRef.getType());
-        nodeProps.setProperty(NAME_KEY, currentDocRef.getName());
+        if (currentDocRef.getName() != null) {
+            // Name can be null for a Processor Filter
+            nodeProps.setProperty(NAME_KEY, currentDocRef.getName());
+        }
         nodeProps.setProperty(VERSION_KEY, ImportExportVersion.V2.name());
 
         final String tagStr = NullSafe.get(tags, explorerService::nodeTagsToString);

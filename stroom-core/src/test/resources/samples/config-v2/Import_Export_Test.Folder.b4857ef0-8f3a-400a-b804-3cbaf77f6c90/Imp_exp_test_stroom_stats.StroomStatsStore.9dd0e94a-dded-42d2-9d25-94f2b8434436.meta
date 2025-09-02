@@ -1,0 +1,27 @@
+{
+  "type" : "StroomStatsStore",
+  "uuid" : "9dd0e94a-dded-42d2-9d25-94f2b8434436",
+  "name" : "Imp_exp_test_stroom_stats",
+  "version" : "9f1e053b-b986-4e46-b32b-751906223500",
+  "description" : "My Description",
+  "statisticType" : "COUNT",
+  "rollUpType" : "CUSTOM",
+  "precision" : "HOUR",
+  "enabled" : true,
+  "config" : {
+    "fields" : [ {
+      "fieldName" : "One"
+    }, {
+      "fieldName" : "Three"
+    }, {
+      "fieldName" : "Two"
+    } ],
+    "customRollUpMasks" : [ {
+      "rolledUpTagPosition" : [ 0, 1 ]
+    }, {
+      "rolledUpTagPosition" : [ 1, 2 ]
+    }, {
+      "rolledUpTagPosition" : [ 1 ]
+    } ]
+  }
+}

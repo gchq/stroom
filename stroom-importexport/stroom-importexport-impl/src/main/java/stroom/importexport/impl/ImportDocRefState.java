@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Deque;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -23,12 +24,12 @@ import java.util.Optional;
  * Used in the V2 Import/Export code.
  */
 @NullMarked
-class NodeFileDocRefStateV2 {
+class ImportDocRefState {
 
-    /** DocRef defined by contents of .node file */
-    private final DocRef nodeFileDocRef;
+    /** DocRef defined by contents of .node file in the import structure on disk */
+    private final DocRef importDocRef;
 
-    /** DocRef that represents the parent of the nodeFileDocRef in the import structure */
+    /** DocRef that represents the parent of the importDocRef in the import structure on disk */
     private final DocRef importParentDocRef;
 
     /** DocRef that represents the existing item, or null if there isn't one */
@@ -50,39 +51,43 @@ class NodeFileDocRefStateV2 {
     private final boolean moving;
 
     /** Path to return for ImportState records */
-    private final String pathAsString;
+    private final String destPathForImportStateAsString;
 
     /** Logger */
     private static final Logger LOGGER =
-            LoggerFactory.getLogger(NodeFileDocRefStateV2.class);
+            LoggerFactory.getLogger(ImportDocRefState.class);
 
     /**
      * Constructor.
      * @param explorerNodeService Where to get the node data from.
      * @param importParentPath    The stack holding the ancestor docRefs for
      *                            this node file.
-     * @param nodeFileDocRef      The docRef that we want node state for, from the .node file.
+     * @param importDocRef      The docRef that we want node state for, from the .node file.
      * @param useImportFolders    From ImportSettings. Use the folders specified in the
      *                            import data structure rather than any existing folders.
      * @param useImportNames      From ImportSettings. Use the item name specified in the
      *                            import data strcture rather than any existing name.
      */
-    public NodeFileDocRefStateV2(final ExplorerNodeService explorerNodeService,
-                                 final Deque<DocRef> importParentPath,
-                                 final DocRef nodeFileDocRef,
-                                 final boolean useImportFolders,
-                                 final boolean useImportNames)
+    public ImportDocRefState(final ExplorerNodeService explorerNodeService,
+                             final Deque<DocRef> importParentPath,
+                             final DocRef importDocRef,
+                             final boolean useImportFolders,
+                             final boolean useImportNames)
             throws IOException {
 
-        this.nodeFileDocRef = nodeFileDocRef;
+        this.importDocRef = importDocRef;
         this.importParentDocRef = getParentDocRef(importParentPath);
+
+        // For telling users where things end up
+        String destPath = resolveToString(importParentPath);
+        String destName = importDocRef.getName();
 
         // Look for an existing ExplorerNode
         final Optional<ExplorerNode> optExistingNode =
-                findExistingNode(explorerNodeService, this.importParentDocRef, this.nodeFileDocRef);
+                findExistingNode(explorerNodeService, this.importParentDocRef, this.importDocRef);
         LOGGER.info("Looking at {}/{}; already-exists={}",
                 importParentDocRef.getName(),
-                nodeFileDocRef.getName(),
+                importDocRef.getName(),
                 optExistingNode.isPresent());
 
         // If we did find an ExplorerNode then use the DocRef of that node instead of the
@@ -102,20 +107,21 @@ class NodeFileDocRefStateV2 {
             }
 
             // Do we need to rename the ExplorerNode and DocRef?
-            if (useImportNames && !existingDocRef.getName().equals(this.nodeFileDocRef.getName())) {
+            if (useImportNames && !existingDocRef.getName().equals(this.importDocRef.getName())) {
                 this.rename = true;
+                destName = existingDocRef.getName();
             } else {
                 this.rename = false;
             }
 
             // Do we need to move the ExplorerNode?
-
             if (useImportFolders && !this.importParentDocRef.equals(existingParentDocRef)) {
                 this.moving = true;
-                this.destParentNode = getDestParentNode(explorerNodeService,
-                        useImportFolders,
+                this.destParentNode = getDestParentNode(
+                        explorerNodeService,
                         importParentDocRef,
                         existingParentNode);
+                destPath = resolveToString(explorerNodeService.getPath(existingParentNode.getDocRef()));
             } else {
                 this.moving = false;
                 this.destParentNode = null;
@@ -130,19 +136,16 @@ class NodeFileDocRefStateV2 {
             this.moving = false;
         }
 
+        // Record where this file is going to end up
+        this.destPathForImportStateAsString = destPath + '/' + destName;
 
-        LOGGER.info("Import paths: {}/{}", importParentPath, nodeFileDocRef);
-
-        // TODO Store the path as String
-        this.pathAsString = "TODO";
+        LOGGER.info("Import paths: {}/{}", importParentPath, importDocRef);
     }
 
     /**
      * Returns the parent node. This might be the parent from the import
      * data structure or the parent of any existing node.
      * @param explorerNodeService How to talk to the DB
-     * @param useImportFolders    User settings - use folders from import
-     *                            rather than existing folders
      * @param importParentDocRef  Parent doc ref defined in the import.
      * @param existingParentNode  Existing node, if any
      * @return                    Node for the parent of the node we're trying to
@@ -150,13 +153,12 @@ class NodeFileDocRefStateV2 {
      * @throws IOException        If the parent node doesn't exist.
      */
     private static ExplorerNode getDestParentNode(final ExplorerNodeService explorerNodeService,
-                                                  final boolean useImportFolders,
                                                   final DocRef importParentDocRef,
                                                   final @Nullable ExplorerNode existingParentNode)
             throws IOException {
 
         final ExplorerNode destParentNode;
-        if (existingParentNode == null || useImportFolders) {
+        if (existingParentNode == null) {
             final Optional<ExplorerNode> optParentNode = explorerNodeService.getNode(importParentDocRef);
             if (optParentNode.isEmpty()) {
                 throw new IOException("Cannot find node for import parent '"
@@ -240,52 +242,46 @@ class NodeFileDocRefStateV2 {
         return optExistingNode;
     }
 
-    /*
-     * Utility to convert explorer node path to docRef path
-     *//*
-    private static Deque<DocRef> nodePathToDocRefPath(final List<ExplorerNode> nodePath) {
-        final Deque<DocRef> docRefPath = new ArrayDeque<>(nodePath.size());
-        for (final ExplorerNode node : nodePath) {
-            docRefPath.add(node.getDocRef());
-        }
-
-        return docRefPath;
-    }*/
-
-    /*
-     * Resolves the path and name to a String path separated with
-     * / delimiters.
-     * @param docRefPath The path to resolve against
-     * @param destName The destination name
-     * @return A path in the form /A/B/C/D/name
-     *//*
-    private static String resolveToString(final Deque<DocRef> docRefPath,
-                                          final String destName) {
+    /**
+     * Utility function to convert a stack of DocRefs to a
+     * String path.
+     * @param docRefPath The path to convert
+     * @return The string representing the path.
+     */
+    private static String resolveToString(final Deque<DocRef> docRefPath) {
 
         // Convert docRefPath to String
         final StringBuilder buf = new StringBuilder();
-        for (final DocRef docRef : docRefPath) {
+        for (final DocRef dr : docRefPath) {
             buf.append('/');
-            buf.append(docRef.getName());
+            buf.append(dr.getName());
         }
 
-        // Add in the destName
-        buf.append('/');
-        buf.append(destName);
+        return buf.toString();
+    }
+
+    /**
+     * Utility function to convert a list of ExplorerNodes to a
+     * String path.
+     * @param nodePath The path to convert.
+     * @return The string representing the path.
+     */
+    private static String resolveToString(final List<ExplorerNode> nodePath) {
+        final StringBuilder buf = new StringBuilder();
+        for (final ExplorerNode node : nodePath) {
+            buf.append('/');
+            buf.append(node.getName());
+        }
 
         return buf.toString();
-    }*/
+    }
 
     /**
      * @return The docRef to use as the imported docRef when importing
      * a Folder into Stroom.
      */
     public DocRef getImportedFolderDocRef() {
-        if (existingDocRef != null) {
-            return existingDocRef;
-        } else {
-            return nodeFileDocRef;
-        }
+        return Objects.requireNonNullElse(existingDocRef, importDocRef);
     }
 
     /**
@@ -298,15 +294,15 @@ class NodeFileDocRefStateV2 {
     /**
      * @return The node that was specified in the import structure node file.
      */
-    public DocRef getNodeFileDocRef() {
-        return nodeFileDocRef;
+    public DocRef getImportDocRef() {
+        return importDocRef;
     }
 
     /**
      * @return the ExplorerNode representing the parent DocRef.
      * Only valid if isMoving() returns true.
      */
-    public ExplorerNode getDestParentNode() {
+    public @Nullable ExplorerNode getDestParentNode() {
         return destParentNode;
     }
 
@@ -320,11 +316,11 @@ class NodeFileDocRefStateV2 {
     }
 
     /**
-     * Returns the path to give to ImportState.
+     * Returns the path to give to ImportState so the user knows where
+     * the file ended up.
      */
     public String getDestPathForImportState() {
-        // TODO
-        return pathAsString;
+        return destPathForImportStateAsString;
     }
 
     /**
@@ -348,7 +344,7 @@ class NodeFileDocRefStateV2 {
      * 'Folder'. Other types of folder result in false returned.
      */
     public boolean isNodeFileExactlyFolderType() {
-        return ExplorerConstants.FOLDER_TYPE.equals(nodeFileDocRef.getType());
+        return ExplorerConstants.FOLDER_TYPE.equals(importDocRef.getType());
     }
 
 }

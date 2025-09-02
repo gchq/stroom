@@ -1,0 +1,9 @@
+{
+  "type" : "Feed",
+  "uuid" : "6b1588cb-cf24-4b0c-93d9-53a205cd7ef0",
+  "name" : "BROADBAND_SPEED_TESTS",
+  "version" : "0c99a09b-6939-4f82-bb3e-14e263c40981",
+  "reference" : false,
+  "streamType" : "Raw Events",
+  "status" : "RECEIVE"
+}

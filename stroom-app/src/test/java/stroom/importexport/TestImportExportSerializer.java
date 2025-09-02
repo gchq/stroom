@@ -393,4 +393,62 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         FileUtil.deleteDir(outDir);
     }
 
+    @Test
+    void testConfigV2() throws IOException {
+        final Path inDir = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve("samples/config-v2");
+        final Path outDir = StroomCoreServerTestFileUtil.getTestOutputDir().resolve("samples/config-v2");
+
+        FileUtil.deleteDir(outDir);
+        Files.createDirectories(outDir);
+
+        // Read input.
+        final Set<DocRef> exported =
+                importExportSerializer.read(
+                        inDir,
+                        null,
+                        ImportSettings.auto());
+
+        // Write to output.
+        final ExportSummary exportSummary = importExportSerializer.write(
+                null,
+                outDir,
+                exported,
+                Collections.emptySet(),
+                true,
+                ImportExportVersion.V2);
+
+        final List<Message> messageList = exportSummary.getMessages();
+        messageList.forEach(message -> {
+            if (message.getSeverity().equals(Severity.ERROR)) {
+                LOGGER.error("Export error: {}", message.getMessage());
+            } else {
+                LOGGER.warn("Export warning: {}", message.getMessage());
+            }
+        });
+
+        // Compare input and output directory.
+        ComparisonHelper.compareDirs(inDir, outDir);
+
+        // If the comparison was ok then delete the output.
+        FileUtil.deleteDir(outDir);
+    }
+
+
+    /*@Test
+    void migrate() throws IOException {
+        final Path inDir = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve("samples/config");
+        final Path outDir = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve("samples/config-v2");
+
+        FileUtil.deleteDir(outDir);
+        Files.createDirectories(outDir);
+
+        final Set<DocRef> exported = importExportSerializer.read(inDir, null, ImportSettings.auto());
+        importExportSerializer.write(List.of(ExplorerConstants.SYSTEM_NODE),
+                outDir,
+                exported,
+                Collections.emptySet(),
+                true,
+                ImportExportVersion.V2);
+    }*/
+
 }
