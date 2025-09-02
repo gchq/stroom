@@ -98,7 +98,7 @@ class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegra
                 true,
                 ImportExportVersion.V1);
 
-        assertThat(FileUtil.count(testDataDir)).isEqualTo(3);
+        assertThat(FileUtil.count(testDataDir)).isEqualTo(2);
 
         // now clear out the java entities and import from file
         commonTestControl.clear();

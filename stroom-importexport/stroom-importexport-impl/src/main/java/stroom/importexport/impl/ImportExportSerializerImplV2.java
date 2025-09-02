@@ -64,37 +64,37 @@ import java.util.stream.Collectors;
 public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
     /** Extension of the node file */
-    private final static String NODE_EXTENSION = ".node";
+    private static final String NODE_EXTENSION = ".node";
 
     /** Indicates that the file is hidden (on UNIX) */
-    private final static String HIDDEN_FILENAME_PREFIX = ".";
+    private static final String HIDDEN_FILENAME_PREFIX = ".";
 
     /** Star symbol for globbing in directory streams */
-    private final static String GLOB_STAR = "*";
+    private static final String GLOB_STAR = "*";
 
     /** Key for version in .node files */
-    private final static String VERSION_KEY = "version";
+    private static final String VERSION_KEY = "version";
 
     /** Key for UUID in .node files */
-    private final static String UUID_KEY = "uuid";
+    private static final String UUID_KEY = "uuid";
 
     /** Key for Type in .node files */
-    private final static String TYPE_KEY = "type";
+    private static final String TYPE_KEY = "type";
 
     /** Key for Name in .node files */
-    private final static String NAME_KEY = "name";
+    private static final String NAME_KEY = "name";
 
     /** Key for Path in .node files */
-    private final static String PATH_KEY = "path";
+    private static final String PATH_KEY = "path";
 
     /** Key for tags in .node files */
-    private final static String TAGS_KEY = "tags";
+    private static final String TAGS_KEY = "tags";
 
     /** Delimiter for paths in .node files */
-    private final static String PATH_DELIMITER = "/";
+    private static final String PATH_DELIMITER = "/";
 
     /** Name of the .git directory - generally ignore this on import */
-    private final static Path GIT_REPO_DIR = Path.of(".git");
+    private static final Path GIT_REPO_DIR = Path.of(".git");
 
     /** Version 1 implementation */
     private final ImportExportSerializer importExportSerializerV1;
@@ -222,6 +222,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
     private static class ImportRoot {
         final ImportExportVersion version;
         @Nullable final Path rootPath;
+
         ImportRoot(final ImportExportVersion version, @Nullable final Path rootPath) {
             this.version = version;
             this.rootPath = rootPath;
@@ -261,7 +262,8 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
     public Set<DocRef> doV2Read(final Path dir,
                                 @Nullable List<ImportState> importStateList,
                                 final ImportSettings importSettings)
-    throws IOException {
+            throws IOException {
+
         LOGGER.info("V2 import from '{}'", dir);
         // (Re)Create the importStateList if necessary
         if (importStateList == null || ImportMode.IGNORE_CONFIRMATION.equals(importSettings.getImportMode())) {
@@ -407,7 +409,8 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
      * exist if the node file does not represent some kind of Folder.
      */
     private String nodeFilePathToDirectoryName(final Path nodeFilePath)
-    throws IOException {
+            throws IOException {
+
         final String nodeFileName = nodeFilePath.getFileName().toString();
         if (nodeFileName.endsWith(NODE_EXTENSION)) {
             return nodeFileName.substring(0, nodeFileName.length() - NODE_EXTENSION.length());
@@ -608,16 +611,16 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
      * @param importSettings Key settings for the import; notably the RootDocRef.
      * @return The DocRef of the imported document.
      */
-    private @Nullable DocRef
-    importExplorerDoc(@Nullable final ImportExportActionHandler importExportActionHandler,
-                      final Path nodeFile,
-                      final Deque<DocRef> importDocRefPath,
-                      final DocRef nodeFileDocRef,
-                      final Set<String> tags,
-                      final Map<String, byte[]> dataMap,
-                      final ImportState importState,
-                      final Map<DocRef, ImportState> confirmMap,
-                      final ImportSettings importSettings)
+    private @Nullable DocRef importExplorerDoc(
+            @Nullable final ImportExportActionHandler importExportActionHandler,
+            final Path nodeFile,
+            final Deque<DocRef> importDocRefPath,
+            final DocRef nodeFileDocRef,
+            final Set<String> tags,
+            final Map<String, byte[]> dataMap,
+            final ImportState importState,
+            final Map<DocRef, ImportState> confirmMap,
+            final ImportSettings importSettings)
             throws IOException {
 
         LOGGER.info("{}Importing explorer doc with node file '{}'", indent(importDocRefPath), nodeFileDocRef);
@@ -922,7 +925,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
     private void exportEverything(final ExportInfo exportInfo,
                                   final Deque<ExplorerNode> pathToCurrentNode,
                                   final ExplorerNode currentNode)
-    throws IOException {
+            throws IOException {
 
         // Check security permissions
         boolean hasPermission = false;

@@ -353,8 +353,10 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
     @Test
     void testV2() throws IOException {
-        final Path inDir = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve("samples/feeds-and-translations-internal-v2");
-        final Path outDir = StroomCoreServerTestFileUtil.getTestOutputDir().resolve("samples/feeds-and-translations-internal-v2");
+        final Path inDir = StroomCoreServerTestFileUtil.getTestResourcesDir()
+                .resolve("samples/feeds-and-translations-internal-v2");
+        final Path outDir = StroomCoreServerTestFileUtil.getTestOutputDir()
+                .resolve("samples/feeds-and-translations-internal-v2");
 
         FileUtil.deleteDir(outDir);
         Files.createDirectories(outDir);

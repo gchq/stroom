@@ -41,7 +41,7 @@ class NodeFileDocRefStateV2 {
     private @Nullable final ExplorerNode existingParentNode;
 
     /** The destination parent node; either import or existing */
-    private final ExplorerNode destParentNode;
+    private @Nullable final ExplorerNode destParentNode;
 
     /** Whether this DocRef needs renaming */
     private final boolean rename;
@@ -80,7 +80,10 @@ class NodeFileDocRefStateV2 {
         // Look for an existing ExplorerNode
         final Optional<ExplorerNode> optExistingNode =
                 findExistingNode(explorerNodeService, this.importParentDocRef, this.nodeFileDocRef);
-        LOGGER.info("Looking at {}/{}; already-exists={}", importParentDocRef.getName(), nodeFileDocRef.getName(), optExistingNode.isPresent());
+        LOGGER.info("Looking at {}/{}; already-exists={}",
+                importParentDocRef.getName(),
+                nodeFileDocRef.getName(),
+                optExistingNode.isPresent());
 
         // If we did find an ExplorerNode then use the DocRef of that node instead of the
         // one from the node file, as it may be different as V1 import created new UUIDs on
@@ -109,22 +112,24 @@ class NodeFileDocRefStateV2 {
 
             if (useImportFolders && !this.importParentDocRef.equals(existingParentDocRef)) {
                 this.moving = true;
+                this.destParentNode = getDestParentNode(explorerNodeService,
+                        useImportFolders,
+                        importParentDocRef,
+                        existingParentNode);
             } else {
                 this.moving = false;
+                this.destParentNode = null;
             }
 
         } else {
             this.existingNode = null;
             this.existingDocRef = null;
             this.existingParentNode = null;
+            this.destParentNode = null;
             this.rename = false;
             this.moving = false;
         }
 
-        this.destParentNode = getDestParentNode(explorerNodeService,
-                useImportFolders,
-                importParentDocRef,
-                existingParentNode);
 
         LOGGER.info("Import paths: {}/{}", importParentPath, nodeFileDocRef);
 
@@ -189,7 +194,7 @@ class NodeFileDocRefStateV2 {
               || ExplorerConstants.isFolder(parentDocRef))) {
             // Error somewhere in the import structure
             throw new IOException("Error: parent node '" + parentDocRef.getName()
-                                  + "' is not a Folder; instead it is a '" + parentDocRef.getType() +"'");
+                                  + "' is not a Folder; instead it is a '" + parentDocRef.getType() + "'");
         }
 
         return parentDocRef;
@@ -222,6 +227,8 @@ class NodeFileDocRefStateV2 {
             ExplorerNode weakDocRef = null;
             for (final ExplorerNode node : children) {
                 if (node.getDocRef().getName().equals(nodeFileDocRef.getName())) {
+                    LOGGER.warn("Found Folder docRef based on name ('{}') rather than UUID ('{}' != '{}')",
+                            nodeFileDocRef.getName(), nodeFileDocRef.getUuid(), node.getUuid());
                     weakDocRef = node;
                     break;
                 }
@@ -233,7 +240,7 @@ class NodeFileDocRefStateV2 {
         return optExistingNode;
     }
 
-    /**
+    /*
      * Utility to convert explorer node path to docRef path
      *//*
     private static Deque<DocRef> nodePathToDocRefPath(final List<ExplorerNode> nodePath) {
@@ -245,7 +252,7 @@ class NodeFileDocRefStateV2 {
         return docRefPath;
     }*/
 
-    /**
+    /*
      * Resolves the path and name to a String path separated with
      * / delimiters.
      * @param docRefPath The path to resolve against
@@ -297,6 +304,7 @@ class NodeFileDocRefStateV2 {
 
     /**
      * @return the ExplorerNode representing the parent DocRef.
+     * Only valid if isMoving() returns true.
      */
     public ExplorerNode getDestParentNode() {
         return destParentNode;
