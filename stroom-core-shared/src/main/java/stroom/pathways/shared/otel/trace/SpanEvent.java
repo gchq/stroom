@@ -1,5 +1,7 @@
 package stroom.pathways.shared.otel.trace;
 
+import stroom.util.shared.AbstractBuilder;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -78,5 +80,71 @@ public class SpanEvent {
                ", attributes=" + attributes +
                ", droppedAttributesCount=" + droppedAttributesCount +
                '}';
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder extends AbstractBuilder<SpanEvent, Builder> {
+
+        private String timeUnixNano;
+        private String name;
+        private List<KeyValue> attributes;
+        private int droppedAttributesCount;
+
+        private Builder() {
+        }
+
+        private Builder(final SpanEvent spanEvent) {
+            this.timeUnixNano = spanEvent.timeUnixNano;
+            this.name = spanEvent.name;
+            this.attributes = spanEvent.attributes;
+            this.droppedAttributesCount = spanEvent.droppedAttributesCount;
+        }
+
+        public Builder timeUnixNano(final NanoTime timeUnixNano) {
+            this.timeUnixNano = timeUnixNano.toNanoEpochString();
+            return self();
+        }
+
+        public Builder timeUnixNano(final String timeUnixNano) {
+            this.timeUnixNano = timeUnixNano;
+            return self();
+        }
+
+        public Builder name(final String name) {
+            this.name = name;
+            return self();
+        }
+
+        public Builder attributes(final List<KeyValue> attributes) {
+            this.attributes = attributes;
+            return self();
+        }
+
+        public Builder droppedAttributesCount(final int droppedAttributesCount) {
+            this.droppedAttributesCount = droppedAttributesCount;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        @Override
+        public SpanEvent build() {
+            return new SpanEvent(
+                    timeUnixNano,
+                    name,
+                    attributes,
+                    droppedAttributesCount
+            );
+        }
     }
 }

@@ -1,5 +1,7 @@
 package stroom.pathways.shared.otel.trace;
 
+import stroom.util.shared.StringUtil;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -65,6 +67,12 @@ public class NanoTime implements Comparable<NanoTime> {
             return new NanoTime(Long.parseLong(secondString), Integer.parseInt(nanoString));
         }
         return new NanoTime(0, Integer.parseInt(time));
+    }
+
+    public String toNanoEpochString() {
+        String nanoString = String.valueOf(nanos);
+        nanoString = StringUtil.prefix(nanoString, '0', 9 - nanoString.length());
+        return seconds + nanoString;
     }
 
     public long getSeconds() {

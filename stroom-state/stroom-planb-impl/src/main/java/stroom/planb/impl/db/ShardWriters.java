@@ -1,5 +1,6 @@
 package stroom.planb.impl.db;
 
+import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.meta.shared.Meta;
 import stroom.planb.impl.PlanBDocCache;
@@ -52,16 +53,19 @@ public class ShardWriters {
 
     private final PlanBDocCache planBDocCache;
     private final ByteBuffers byteBuffers;
+    private final ByteBufferFactory byteBufferFactory;
     private final StatePaths statePaths;
     private final FileTransferClient fileTransferClient;
 
     @Inject
     ShardWriters(final PlanBDocCache planBDocCache,
                  final ByteBuffers byteBuffers,
+                 final ByteBufferFactory byteBufferFactory,
                  final StatePaths statePaths,
                  final FileTransferClient fileTransferClient) {
         this.planBDocCache = planBDocCache;
         this.byteBuffers = byteBuffers;
+        this.byteBufferFactory = byteBufferFactory;
         this.statePaths = statePaths;
         this.fileTransferClient = fileTransferClient;
 
@@ -81,13 +85,14 @@ public class ShardWriters {
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
-        return new ShardWriter(planBDocCache, byteBuffers, fileTransferClient, dir, meta);
+        return new ShardWriter(planBDocCache, byteBuffers, byteBufferFactory, fileTransferClient, dir, meta);
     }
 
     public static class ShardWriter implements AutoCloseable {
 
         private final PlanBDocCache planBDocCache;
         private final ByteBuffers byteBuffers;
+        private final ByteBufferFactory byteBufferFactory;
         private final FileTransferClient fileTransferClient;
         private final Path dir;
         private final Meta meta;
@@ -96,11 +101,13 @@ public class ShardWriters {
 
         public ShardWriter(final PlanBDocCache planBDocCache,
                            final ByteBuffers byteBuffers,
+                           final ByteBufferFactory byteBufferFactory,
                            final FileTransferClient fileTransferClient,
                            final Path dir,
                            final Meta meta) {
             this.planBDocCache = planBDocCache;
             this.byteBuffers = byteBuffers;
+            this.byteBufferFactory = byteBufferFactory;
             this.fileTransferClient = fileTransferClient;
             this.dir = dir;
             this.meta = meta;
@@ -239,6 +246,7 @@ public class ShardWriters {
                     new WriterInstance(PlanBDb.open(doc,
                             getLmdbEnvDir(k),
                             byteBuffers,
+                            byteBufferFactory,
                             false),
                             NullSafe.getOrElse(
                                     doc,

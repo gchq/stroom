@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = TemporalRangeState.class, name = "temporalRangeState"),
         @JsonSubTypes.Type(value = Session.class, name = "session"),
         @JsonSubTypes.Type(value = TemporalValue.class, name = "histogram"),
-        @JsonSubTypes.Type(value = Trace.class, name = "trace")
+        @JsonSubTypes.Type(value = SpanKV.class, name = "trace")
 })
 public sealed interface PlanBValue permits
         State,
@@ -23,6 +23,6 @@ public sealed interface PlanBValue permits
         TemporalRangeState,
         Session,
         TemporalValue,
-        Trace {
+        SpanKV {
 
 }

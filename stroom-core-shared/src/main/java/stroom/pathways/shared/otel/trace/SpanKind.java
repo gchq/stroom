@@ -1,6 +1,9 @@
 package stroom.pathways.shared.otel.trace;
 
-public enum SpanKind {
+import stroom.util.shared.HasPrimitiveValue;
+import stroom.util.shared.PrimitiveValueConverter;
+
+public enum SpanKind implements HasPrimitiveValue {
     SPAN_KIND_UNSPECIFIED(0),
     SPAN_KIND_INTERNAL(1),
     SPAN_KIND_SERVER(2),
@@ -8,13 +11,17 @@ public enum SpanKind {
     SPAN_KIND_PRODUCER(4),
     SPAN_KIND_CONSUMER(5);
 
-    private final int value;
+    public static final PrimitiveValueConverter<SpanKind> PRIMITIVE_VALUE_CONVERTER =
+            PrimitiveValueConverter.create(SpanKind.class, SpanKind.values());
 
-    SpanKind(final int value) {
-        this.value = value;
+    private final byte primitiveValue;
+
+    SpanKind(final int primitiveValue) {
+        this.primitiveValue = (byte) primitiveValue;
     }
 
-    public int getValue() {
-        return value;
+    @Override
+    public byte getPrimitiveValue() {
+        return primitiveValue;
     }
 }

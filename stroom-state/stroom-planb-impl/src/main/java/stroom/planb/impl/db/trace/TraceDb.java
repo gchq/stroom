@@ -1,11 +1,11 @@
 package stroom.planb.impl.db.trace;
 
+import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.lmdb2.KV;
-import stroom.planb.impl.data.Trace;
-import stroom.planb.impl.data.TraceKey;
-import stroom.planb.impl.data.TraceValue;
+import stroom.pathways.shared.otel.trace.NanoTime;
+import stroom.planb.impl.data.SpanKV;
 import stroom.planb.impl.db.AbstractDb;
 import stroom.planb.impl.db.HashClashCommitRunnable;
 import stroom.planb.impl.db.LmdbWriter;
@@ -17,11 +17,13 @@ import stroom.planb.impl.db.PlanBSearchHelper.LazyKV;
 import stroom.planb.impl.db.PlanBSearchHelper.ValuesExtractor;
 import stroom.planb.impl.db.SchemaInfo;
 import stroom.planb.impl.db.UsedLookupsRecorder;
-import stroom.planb.impl.db.state.StateFields;
 import stroom.planb.impl.serde.KeySerde;
 import stroom.planb.impl.serde.Serde;
-import stroom.planb.impl.serde.trace.TraceKeySerde;
-import stroom.planb.impl.serde.trace.TraceValueSerde;
+import stroom.planb.impl.serde.trace.LookupSerdeImpl;
+import stroom.planb.impl.serde.trace.SpanKey;
+import stroom.planb.impl.serde.trace.SpanKeySerde;
+import stroom.planb.impl.serde.trace.SpanValue;
+import stroom.planb.impl.serde.trace.SpanValueSerde;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateSettings;
@@ -45,26 +47,27 @@ import org.lmdbjava.Txn;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.Base64;
 import java.util.Iterator;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class TraceDb extends AbstractDb<TraceKey, TraceValue> {
+public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
 
     private static final int CURRENT_SCHEMA_VERSION = 1;
 
-    private final KeySerde<TraceKey> keySerde;
-    private final Serde<TraceValue> valueSerde;
+    private final ByteBufferFactory byteBufferFactory;
+    private final KeySerde<SpanKey> keySerde;
+    private final Serde<SpanValue> valueSerde;
     private final UsedLookupsRecorder keyRecorder;
     private final UsedLookupsRecorder valueRecorder;
 
     private TraceDb(final PlanBEnv env,
                     final ByteBuffers byteBuffers,
+                    final ByteBufferFactory byteBufferFactory,
                     final PlanBDoc doc,
                     final StateSettings settings,
-                    final KeySerde<TraceKey> keySerde,
-                    final Serde<TraceValue> valueSerde,
+                    final KeySerde<SpanKey> keySerde,
+                    final Serde<SpanValue> valueSerde,
                     final HashClashCommitRunnable hashClashCommitRunnable) {
         super(env,
                 byteBuffers,
@@ -75,6 +78,7 @@ public class TraceDb extends AbstractDb<TraceKey, TraceValue> {
                         CURRENT_SCHEMA_VERSION,
                         JsonUtil.writeValueAsString(settings.getKeySchema()),
                         JsonUtil.writeValueAsString(settings.getValueSchema())));
+        this.byteBufferFactory = byteBufferFactory;
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
         this.keyRecorder = keySerde.getUsedLookupsRecorder(env);
@@ -83,6 +87,7 @@ public class TraceDb extends AbstractDb<TraceKey, TraceValue> {
 
     public static TraceDb create(final Path path,
                                  final ByteBuffers byteBuffers,
+                                 final ByteBufferFactory byteBufferFactory,
                                  final PlanBDoc doc,
                                  final boolean readOnly) {
         final StateSettings settings;
@@ -103,11 +108,13 @@ public class TraceDb extends AbstractDb<TraceKey, TraceValue> {
                 readOnly,
                 hashClashCommitRunnable);
         try {
-            final KeySerde<TraceKey> keySerde = new TraceKeySerde(byteBuffers);
-            final Serde<TraceValue> valueSerde = new TraceValueSerde(byteBuffers);
+            final KeySerde<SpanKey> keySerde = new SpanKeySerde(byteBuffers);
+            final LookupSerdeImpl lookupSerde = new LookupSerdeImpl(env, hashClashCommitRunnable, byteBuffers);
+            final Serde<SpanValue> valueSerde = new SpanValueSerde(byteBufferFactory, lookupSerde);
             return new TraceDb(
                     env,
                     byteBuffers,
+                    byteBufferFactory,
                     doc,
                     settings,
                     keySerde,
@@ -125,7 +132,7 @@ public class TraceDb extends AbstractDb<TraceKey, TraceValue> {
     }
 
     @Override
-    public void insert(final LmdbWriter writer, final KV<TraceKey, TraceValue> kv) {
+    public void insert(final LmdbWriter writer, final KV<SpanKey, SpanValue> kv) {
         final Txn<ByteBuffer> writeTxn = writer.getWriteTxn();
         keySerde.write(writeTxn, kv.key(), keyByteBuffer ->
                 valueSerde.write(writeTxn, kv.val(), valueByteBuffer ->
@@ -145,18 +152,19 @@ public class TraceDb extends AbstractDb<TraceKey, TraceValue> {
     @Override
     public void merge(final Path source) {
         env.write(writer -> {
-            try (final TraceDb sourceDb = TraceDb.create(source, byteBuffers, doc, true)) {
+            try (final TraceDb sourceDb = TraceDb.create(source, byteBuffers, byteBufferFactory, doc, true)) {
                 // Validate that the source DB has the same schema.
                 validateSchema(schemaInfo, sourceDb.getSchemaInfo());
 
                 // Merge.
                 sourceDb.env.read(readTxn -> {
                     sourceDb.iterate(readTxn, kv -> {
-                        if (sourceDb.keySerde.usesLookup(kv.key()) || sourceDb.valueSerde.usesLookup(kv.val())) {
+                        if (sourceDb.keySerde.usesLookup(kv.key()) ||
+                            sourceDb.valueSerde.usesLookup(kv.val())) {
                             // We need to do a full read and merge.
-                            final TraceKey key = sourceDb.keySerde.read(readTxn, kv.key());
-                            final TraceValue value = sourceDb.valueSerde.read(readTxn, kv.val());
-                            insert(writer, new Trace(key, value));
+                            final SpanKey key = sourceDb.keySerde.read(readTxn, kv.key());
+                            final SpanValue value = sourceDb.valueSerde.read(readTxn, kv.val());
+                            insert(writer, new SpanKV(key, value));
                         } else {
                             // Quick merge.
                             if (dbi.put(writer.getWriteTxn(), kv.key(), kv.val(), putFlags)) {
@@ -174,7 +182,7 @@ public class TraceDb extends AbstractDb<TraceKey, TraceValue> {
     }
 
     @Override
-    public TraceValue get(final TraceKey key) {
+    public SpanValue get(final SpanKey key) {
         return env.read(readTxn -> keySerde.toBufferForGet(readTxn, key, optionalKeyByteBuffer ->
                 optionalKeyByteBuffer.map(keyByteBuffer -> {
                     final ByteBuffer valueByteBuffer = dbi.get(readTxn, keyByteBuffer);
@@ -209,41 +217,41 @@ public class TraceDb extends AbstractDb<TraceKey, TraceValue> {
         });
     }
 
-    private Function<Context, TraceKey> getKeyExtractionFunction(final Txn<ByteBuffer> readTxn) {
+    private Function<Context, SpanKey> getKeyExtractionFunction(final Txn<ByteBuffer> readTxn) {
         return context -> keySerde.read(readTxn, context.kv().key().duplicate());
     }
 
-    private Function<Context, TraceValue> getValExtractionFunction(final Txn<ByteBuffer> readTxn) {
+    private Function<Context, SpanValue> getValExtractionFunction(final Txn<ByteBuffer> readTxn) {
         return context -> valueSerde.read(readTxn, context.kv().val().duplicate());
     }
 
-    public Trace getTrace(final TraceRequest request) {
-        final TraceValue value = get(request.key());
-        if (value == null) {
-            return null;
-        }
-        return new Trace(request.key(), value);
-    }
+//    public Trace getTrace(final TraceRequest request) {
+//        final SpanValue value = get(request.key());
+//        if (value == null) {
+//            return null;
+//        }
+//        return new Trace(request.key(), value);
+//    }
 
     public static ValuesExtractor createValuesExtractor(final FieldIndex fieldIndex,
-                                                        final Function<Context, TraceKey> keyFunction,
-                                                        final Function<Context, TraceValue> valFunction) {
+                                                        final Function<Context, SpanKey> keyFunction,
+                                                        final Function<Context, SpanValue> valFunction) {
         final String[] fields = fieldIndex.getFields();
         final TraceConverter[] converters = new TraceConverter[fields.length];
         for (int i = 0; i < fields.length; i++) {
             converters[i] = switch (fields[i]) {
                 case TraceFields.TRACE_ID -> kv ->
-                        ValString.create(Base64.getEncoder().encodeToString(kv.getKey().getTraceId()));
+                        ValString.create(kv.getKey().getTraceId());
                 case TraceFields.PARENT_SPAN_ID -> kv ->
-                        ValString.create(Base64.getEncoder().encodeToString(kv.getKey().getParentSpanId()));
+                        ValString.create(kv.getKey().getParentSpanId());
                 case TraceFields.SPAN_ID -> kv ->
-                        ValString.create(Base64.getEncoder().encodeToString(kv.getKey().getSpanId()));
+                        ValString.create(kv.getKey().getSpanId());
                 default -> kv -> ValNull.INSTANCE;
             };
         }
         return (readTxn, kv) -> {
             final Context context = new Context(readTxn, kv);
-            final LazyKV<TraceKey, TraceValue> lazyKV = new LazyKV<>(context, keyFunction, valFunction);
+            final LazyKV<SpanKey, SpanValue> lazyKV = new LazyKV<>(context, keyFunction, valFunction);
             final Val[] values = new Val[fields.length];
             for (int i = 0; i < fields.length; i++) {
                 values[i] = converters[i].convert(lazyKV);
@@ -255,7 +263,8 @@ public class TraceDb extends AbstractDb<TraceKey, TraceValue> {
     @Override
     public long deleteOldData(final Instant deleteBefore, final boolean useStateTime) {
         return env.write(writer -> {
-            final long count = deleteOldData(writer, deleteBefore);
+            final NanoTime nanoTime = new NanoTime(deleteBefore.getEpochSecond(), deleteBefore.getNano());
+            final long count = deleteOldData(writer, nanoTime);
 
             // Delete unused lookup keys.
             if (!Thread.currentThread().isInterrupted()) {
@@ -271,7 +280,7 @@ public class TraceDb extends AbstractDb<TraceKey, TraceValue> {
     }
 
     private long deleteOldData(final LmdbWriter writer,
-                               final Instant deleteBefore) {
+                               final NanoTime deleteBefore) {
         return env.read(readTxn -> {
             long changeCount = 0;
             try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
@@ -279,7 +288,7 @@ public class TraceDb extends AbstractDb<TraceKey, TraceValue> {
                 while (iterator.hasNext()
                        && !Thread.currentThread().isInterrupted()) {
                     final KeyVal<ByteBuffer> kv = iterator.next();
-                    final TraceValue value = valueSerde.read(readTxn, kv.val().duplicate());
+                    final SpanValue value = valueSerde.read(readTxn, kv.val().duplicate());
 
                     if (value.getInsertTime().isBefore(deleteBefore)) {
                         // If this is data we no longer want to retain then delete it.
@@ -303,7 +312,7 @@ public class TraceDb extends AbstractDb<TraceKey, TraceValue> {
         return 0;
     }
 
-    public interface TraceConverter extends Converter<TraceKey, TraceValue> {
+    public interface TraceConverter extends Converter<SpanKey, SpanValue> {
 
     }
 }

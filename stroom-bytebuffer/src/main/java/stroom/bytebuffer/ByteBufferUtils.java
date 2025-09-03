@@ -477,4 +477,8 @@ public class ByteBufferUtils {
             byteBuffer.put(i, MAX_BYTE_UNSIGNED);
         }
     }
+
+    public static void skip(final ByteBuffer byteBuffer, final int len) {
+        byteBuffer.position(byteBuffer.position() + len);
+    }
 }

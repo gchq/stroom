@@ -1,5 +1,6 @@
 package stroom.pathways.shared.otel.trace;
 
+import stroom.util.shared.AbstractBuilder;
 import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -120,6 +121,51 @@ public class Trace {
             sb.append(")\n");
 
             appendChild(sb, span.getSpanId(), depth + 1);
+        }
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder extends AbstractBuilder<Trace, Builder> {
+
+        private String traceId;
+        private Map<String, List<Span>> parentSpanIdMap;
+
+        private Builder() {
+        }
+
+        private Builder(final Trace trace) {
+            this.traceId = trace.traceId;
+            this.parentSpanIdMap = trace.parentSpanIdMap;
+        }
+
+        public Builder traceId(final String traceId) {
+            this.traceId = traceId;
+            return self();
+        }
+
+        public Builder parentSpanIdMap(final Map<String, List<Span>> parentSpanIdMap) {
+            this.parentSpanIdMap = parentSpanIdMap;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        @Override
+        public Trace build() {
+            return new Trace(
+                    traceId,
+                    parentSpanIdMap
+            );
         }
     }
 }

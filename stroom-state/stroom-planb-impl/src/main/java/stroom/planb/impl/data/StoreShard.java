@@ -1,6 +1,7 @@
 package stroom.planb.impl.data;
 
 
+import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.db.Db;
@@ -55,6 +56,7 @@ class StoreShard implements Shard {
     private static final String COMPACTED_DIR_NAME = "compacted";
 
     private final ByteBuffers byteBuffers;
+    private final ByteBufferFactory byteBufferFactory;
     private final Provider<PlanBConfig> configProvider;
     private final Path shardDir;
     private final Path snapshotDir;
@@ -71,10 +73,12 @@ class StoreShard implements Shard {
     private volatile Instant lastSnapshotTime;
 
     public StoreShard(final ByteBuffers byteBuffers,
+                      final ByteBufferFactory byteBufferFactory,
                       final Provider<PlanBConfig> configProvider,
                       final StatePaths statePaths,
                       final PlanBDoc doc) {
         this.byteBuffers = byteBuffers;
+        this.byteBufferFactory = byteBufferFactory;
         this.configProvider = configProvider;
         this.doc = doc;
         lastWriteTime = Instant.now();
@@ -440,7 +444,7 @@ class StoreShard implements Shard {
         if (!open) {
             if (Files.exists(shardDir)) {
                 LOGGER.info(() -> "Found local shard for '" + doc + "'");
-                db = PlanBDb.open(doc, shardDir, byteBuffers, false);
+                db = PlanBDb.open(doc, shardDir, byteBuffers, byteBufferFactory, false);
                 open = true;
 
             } else {

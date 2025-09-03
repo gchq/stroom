@@ -1,5 +1,7 @@
 package stroom.pathways.shared.otel.trace;
 
+import stroom.util.shared.AbstractBuilder;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -56,5 +58,50 @@ public class Resource {
                "attributes=" + attributes +
                ", droppedAttributesCount=" + droppedAttributesCount +
                '}';
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder extends AbstractBuilder<Resource, Builder> {
+
+        private List<KeyValue> attributes;
+        private int droppedAttributesCount;
+
+        private Builder() {
+        }
+
+        private Builder(final Resource resource) {
+            this.attributes = resource.attributes;
+            this.droppedAttributesCount = resource.droppedAttributesCount;
+        }
+
+        public Builder attributes(final List<KeyValue> attributes) {
+            this.attributes = attributes;
+            return self();
+        }
+
+        public Builder droppedAttributesCount(final int droppedAttributesCount) {
+            this.droppedAttributesCount = droppedAttributesCount;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        @Override
+        public Resource build() {
+            return new Resource(
+                    attributes,
+                    droppedAttributesCount
+            );
+        }
     }
 }

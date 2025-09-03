@@ -1,5 +1,7 @@
 package stroom.pathways.shared.otel.trace;
 
+import stroom.util.shared.AbstractBuilder;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -55,5 +57,50 @@ public class KeyValue {
                "key='" + key + '\'' +
                ", value=" + value +
                '}';
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder extends AbstractBuilder<KeyValue, Builder> {
+
+        private String key;
+        private AnyValue value;
+
+        private Builder() {
+        }
+
+        private Builder(final KeyValue keyValue) {
+            this.key = keyValue.key;
+            this.value = keyValue.value;
+        }
+
+        public Builder key(final String key) {
+            this.key = key;
+            return self();
+        }
+
+        public Builder value(final AnyValue value) {
+            this.value = value;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        @Override
+        public KeyValue build() {
+            return new KeyValue(
+                    key,
+                    value
+            );
+        }
     }
 }

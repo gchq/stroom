@@ -1,5 +1,7 @@
 package stroom.pathways.shared.otel.trace;
 
+import stroom.util.shared.AbstractBuilder;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -89,5 +91,74 @@ public class SpanLink {
                ", attributes=" + attributes +
                ", droppedAttributesCount=" + droppedAttributesCount +
                '}';
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder extends AbstractBuilder<SpanLink, Builder> {
+
+        private String traceId;
+        private String spanId;
+        private String traceState;
+        private List<KeyValue> attributes;
+        private int droppedAttributesCount;
+
+        private Builder() {
+        }
+
+        private Builder(final SpanLink spanLink) {
+            this.traceId = spanLink.traceId;
+            this.spanId = spanLink.spanId;
+            this.traceState = spanLink.traceState;
+            this.attributes = spanLink.attributes;
+            this.droppedAttributesCount = spanLink.droppedAttributesCount;
+        }
+
+        public Builder traceId(final String traceId) {
+            this.traceId = traceId;
+            return self();
+        }
+
+        public Builder spanId(final String spanId) {
+            this.spanId = spanId;
+            return self();
+        }
+
+        public Builder traceState(final String traceState) {
+            this.traceState = traceState;
+            return self();
+        }
+
+        public Builder attributes(final List<KeyValue> attributes) {
+            this.attributes = attributes;
+            return self();
+        }
+
+        public Builder droppedAttributesCount(final int droppedAttributesCount) {
+            this.droppedAttributesCount = droppedAttributesCount;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        @Override
+        public SpanLink build() {
+            return new SpanLink(
+                    traceId,
+                    spanId,
+                    traceState,
+                    attributes,
+                    droppedAttributesCount
+            );
+        }
     }
 }

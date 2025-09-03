@@ -1,6 +1,8 @@
 package stroom.planb.impl.data;
 
 import stroom.lmdb2.KV;
+import stroom.planb.impl.serde.trace.SpanKey;
+import stroom.planb.impl.serde.trace.SpanValue;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -10,11 +12,11 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder({"key", "value"})
 @JsonInclude(Include.NON_NULL)
-public final class Trace extends KV<TraceKey, TraceValue> implements PlanBValue {
+public final class SpanKV extends KV<SpanKey, SpanValue> implements PlanBValue {
 
     @JsonCreator
-    public Trace(@JsonProperty("key") final TraceKey key,
-                 @JsonProperty("value") final TraceValue value) {
+    public SpanKV(@JsonProperty("key") final SpanKey key,
+                  @JsonProperty("value") final SpanValue value) {
         super(key, value);
     }
 
@@ -26,12 +28,12 @@ public final class Trace extends KV<TraceKey, TraceValue> implements PlanBValue 
         return new Builder();
     }
 
-    public static class Builder extends AbstractKVBuilder<Trace, Builder, TraceKey, TraceValue> {
+    public static class Builder extends AbstractKVBuilder<SpanKV, Builder, SpanKey, SpanValue> {
 
         private Builder() {
         }
 
-        private Builder(final Trace key) {
+        private Builder(final SpanKV key) {
             super(key);
         }
 
@@ -40,8 +42,8 @@ public final class Trace extends KV<TraceKey, TraceValue> implements PlanBValue 
             return this;
         }
 
-        public Trace build() {
-            return new Trace(key, value);
+        public SpanKV build() {
+            return new SpanKV(key, value);
         }
     }
 }

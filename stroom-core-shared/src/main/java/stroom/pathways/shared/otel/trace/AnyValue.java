@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -47,6 +48,83 @@ public class AnyValue {
         this.arrayValue = arrayValue;
         this.kvlistValue = kvlistValue;
         this.bytesValue = bytesValue;
+    }
+
+    public static AnyValue stringValue(final String stringValue) {
+        return new AnyValue(
+                stringValue,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
+    }
+
+    public static AnyValue boolValue(final boolean boolValue) {
+        return new AnyValue(
+                null,
+                boolValue,
+                null,
+                null,
+                null,
+                null,
+                null);
+    }
+
+    public static AnyValue intValue(final int intValue) {
+        return new AnyValue(
+                null,
+                null,
+                intValue,
+                null,
+                null,
+                null,
+                null);
+    }
+
+    public static AnyValue doubleValue(final double doubleValue) {
+        return new AnyValue(
+                null,
+                null,
+                null,
+                doubleValue,
+                null,
+                null,
+                null);
+    }
+
+    public static AnyValue arrayValue(final List<AnyValue> values) {
+        return new AnyValue(
+                null,
+                null,
+                null,
+                null,
+                new ArrayValue(values),
+                null,
+                null);
+    }
+
+    public static AnyValue kvlistValue(final List<KeyValue> values) {
+        return new AnyValue(
+                null,
+                null,
+                null,
+                null,
+                null,
+                new KeyValueList(values),
+                null);
+    }
+
+    public static AnyValue bytesValue(final String bytesValue) {
+        return new AnyValue(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                bytesValue);
     }
 
     public String getStringValue() {

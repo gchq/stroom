@@ -1,5 +1,7 @@
 package stroom.pathways.shared.otel.trace;
 
+import stroom.util.shared.AbstractBuilder;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -45,5 +47,42 @@ public class ExportTraceServiceRequest {
         return "ExportTraceServiceRequest{" +
                "resourceSpans=" + resourceSpans +
                '}';
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder extends AbstractBuilder<ExportTraceServiceRequest, Builder> {
+
+        private List<ResourceSpans> resourceSpans;
+
+        private Builder() {
+        }
+
+        private Builder(final ExportTraceServiceRequest exportTraceServiceRequest) {
+            this.resourceSpans = exportTraceServiceRequest.resourceSpans;
+        }
+
+        public Builder resourceSpans(final List<ResourceSpans> resourceSpans) {
+            this.resourceSpans = resourceSpans;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        @Override
+        public ExportTraceServiceRequest build() {
+            return new ExportTraceServiceRequest(
+                    resourceSpans
+            );
+        }
     }
 }

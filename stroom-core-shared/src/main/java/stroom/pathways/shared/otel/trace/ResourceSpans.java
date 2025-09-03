@@ -1,5 +1,7 @@
 package stroom.pathways.shared.otel.trace;
 
+import stroom.util.shared.AbstractBuilder;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -67,5 +69,58 @@ public class ResourceSpans {
                ", scopeSpans=" + scopeSpans +
                ", schemaUrl='" + schemaUrl + '\'' +
                '}';
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder extends AbstractBuilder<ResourceSpans, Builder> {
+
+        private Resource resource;
+        private List<ScopeSpans> scopeSpans;
+        private String schemaUrl;
+
+        private Builder() {
+        }
+
+        private Builder(final ResourceSpans resourceSpans) {
+            this.resource = resourceSpans.resource;
+            this.scopeSpans = resourceSpans.scopeSpans;
+            this.schemaUrl = resourceSpans.schemaUrl;
+        }
+
+        public Builder resource(final Resource resource) {
+            this.resource = resource;
+            return self();
+        }
+
+        public Builder scopeSpans(final List<ScopeSpans> scopeSpans) {
+            this.scopeSpans = scopeSpans;
+            return self();
+        }
+
+        public Builder schemaUrl(final String schemaUrl) {
+            this.schemaUrl = schemaUrl;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        @Override
+        public ResourceSpans build() {
+            return new ResourceSpans(
+                    resource,
+                    scopeSpans,
+                    schemaUrl
+            );
+        }
     }
 }

@@ -1,6 +1,12 @@
-package stroom.pathways.shared.otel.trace;
+package stroom.planb.impl.serde.trace;
 
-import stroom.pathways.shared.otel.trace.Span.Builder;
+import stroom.pathways.shared.otel.trace.KeyValue;
+import stroom.pathways.shared.otel.trace.NanoTime;
+import stroom.pathways.shared.otel.trace.Span;
+import stroom.pathways.shared.otel.trace.SpanEvent;
+import stroom.pathways.shared.otel.trace.SpanKind;
+import stroom.pathways.shared.otel.trace.SpanLink;
+import stroom.pathways.shared.otel.trace.SpanStatus;
 import stroom.util.shared.AbstractBuilder;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -8,20 +14,15 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class Span {
+public class SpanValue {
 
-    @JsonProperty("traceId")
-    private final String traceId;
-
-    @JsonProperty("spanId")
-    private final String spanId;
-
-    @JsonProperty("parentSpanId")
-    private final String parentSpanId;
+    @JsonProperty("insertTime")
+    private final NanoTime insertTime;
 
     @JsonProperty("traceState")
     private final String traceState;
@@ -62,30 +63,22 @@ public class Span {
     @JsonProperty("status")
     private final SpanStatus status;
 
-    private NanoTime start;
-    private NanoTime end;
-    private NanoDuration duration;
-
     @JsonCreator
-    public Span(@JsonProperty("traceId") final String traceId,
-                @JsonProperty("spanId") final String spanId,
-                @JsonProperty("parentSpanId") final String parentSpanId,
-                @JsonProperty("traceState") final String traceState,
-                @JsonProperty("flags") final int flags,
-                @JsonProperty("name") final String name,
-                @JsonProperty("kind") final SpanKind kind,
-                @JsonProperty("startTimeUnixNano") final String startTimeUnixNano,
-                @JsonProperty("endTimeUnixNano") final String endTimeUnixNano,
-                @JsonProperty("attributes") final List<KeyValue> attributes,
-                @JsonProperty("droppedAttributesCount") final int droppedAttributesCount,
-                @JsonProperty("events") final List<SpanEvent> events,
-                @JsonProperty("droppedEventsCount") final int droppedEventsCount,
-                @JsonProperty("links") final List<SpanLink> links,
-                @JsonProperty("droppedLinksCount") final int droppedLinksCount,
-                @JsonProperty("status") final SpanStatus status) {
-        this.traceId = traceId;
-        this.spanId = spanId;
-        this.parentSpanId = parentSpanId;
+    public SpanValue(@JsonProperty("insertTime") final NanoTime insertTime,
+                     @JsonProperty("traceState") final String traceState,
+                     @JsonProperty("flags") final int flags,
+                     @JsonProperty("name") final String name,
+                     @JsonProperty("kind") final SpanKind kind,
+                     @JsonProperty("startTimeUnixNano") final String startTimeUnixNano,
+                     @JsonProperty("endTimeUnixNano") final String endTimeUnixNano,
+                     @JsonProperty("attributes") final List<KeyValue> attributes,
+                     @JsonProperty("droppedAttributesCount") final int droppedAttributesCount,
+                     @JsonProperty("events") final List<SpanEvent> events,
+                     @JsonProperty("droppedEventsCount") final int droppedEventsCount,
+                     @JsonProperty("links") final List<SpanLink> links,
+                     @JsonProperty("droppedLinksCount") final int droppedLinksCount,
+                     @JsonProperty("status") final SpanStatus status) {
+        this.insertTime = insertTime;
         this.traceState = traceState;
         this.flags = flags;
         this.name = name;
@@ -101,16 +94,8 @@ public class Span {
         this.status = status;
     }
 
-    public String getTraceId() {
-        return traceId;
-    }
-
-    public String getSpanId() {
-        return spanId;
-    }
-
-    public String getParentSpanId() {
-        return parentSpanId;
+    public NanoTime getInsertTime() {
+        return insertTime;
     }
 
     public String getTraceState() {
@@ -165,27 +150,6 @@ public class Span {
         return status;
     }
 
-    public NanoTime start() {
-        if (start == null) {
-            start = NanoTime.fromString(startTimeUnixNano);
-        }
-        return start;
-    }
-
-    public NanoTime end() {
-        if (end == null) {
-            end = NanoTime.fromString(endTimeUnixNano);
-        }
-        return end;
-    }
-
-    public NanoDuration duration() {
-        if (duration == null) {
-            duration = end().diff(start());
-        }
-        return duration;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -194,15 +158,12 @@ public class Span {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final Span span = (Span) o;
+        final SpanValue span = (SpanValue) o;
         return flags == span.flags &&
                droppedAttributesCount == span.droppedAttributesCount &&
                droppedEventsCount == span.droppedEventsCount &&
                droppedLinksCount == span.droppedLinksCount &&
-               Objects.equals(traceId, span.traceId) &&
-               Objects.equals(spanId, span.spanId) &&
                Objects.equals(traceState, span.traceState) &&
-               Objects.equals(parentSpanId, span.parentSpanId) &&
                Objects.equals(name, span.name) &&
                kind == span.kind &&
                Objects.equals(startTimeUnixNano, span.startTimeUnixNano) &&
@@ -215,10 +176,8 @@ public class Span {
 
     @Override
     public int hashCode() {
-        return Objects.hash(traceId,
-                spanId,
+        return Objects.hash(
                 traceState,
-                parentSpanId,
                 flags,
                 name,
                 kind,
@@ -236,10 +195,7 @@ public class Span {
     @Override
     public String toString() {
         return "Span{" +
-               "traceId='" + traceId + '\'' +
-               ", spanId='" + spanId + '\'' +
-               ", traceState='" + traceState + '\'' +
-               ", parentSpanId='" + parentSpanId + '\'' +
+               "traceState='" + traceState + '\'' +
                ", flags=" + flags +
                ", name='" + name + '\'' +
                ", kind=" + kind +
@@ -263,11 +219,9 @@ public class Span {
         return new Builder(this);
     }
 
-    public static final class Builder extends AbstractBuilder<Span, Span.Builder> {
+    public static final class Builder extends AbstractBuilder<SpanValue, SpanValue.Builder> {
 
-        private String traceId;
-        private String spanId;
-        private String parentSpanId;
+        private NanoTime insertTime;
         private String traceState;
         private int flags;
         private String name;
@@ -285,10 +239,8 @@ public class Span {
         private Builder() {
         }
 
-        private Builder(final Span span) {
-            this.traceId = span.traceId;
-            this.spanId = span.spanId;
-            this.parentSpanId = span.parentSpanId;
+        private Builder(final SpanValue span) {
+            this.insertTime = span.insertTime;
             this.traceState = span.traceState;
             this.flags = span.flags;
             this.name = span.name;
@@ -304,18 +256,26 @@ public class Span {
             this.status = span.status;
         }
 
-        public Builder traceId(final String traceId) {
-            this.traceId = traceId;
-            return self();
+        public Builder(final Span span) {
+            final Instant instant = Instant.now();
+            this.insertTime = new NanoTime(instant.getEpochSecond(), instant.getNano());
+            this.traceState = span.getTraceState();
+            this.flags = span.getFlags();
+            this.name = span.getName();
+            this.kind = span.getKind();
+            this.startTimeUnixNano = span.getStartTimeUnixNano();
+            this.endTimeUnixNano = span.getEndTimeUnixNano();
+            this.attributes = span.getAttributes();
+            this.droppedAttributesCount = span.getDroppedAttributesCount();
+            this.events = span.getEvents();
+            this.droppedEventsCount = span.getDroppedEventsCount();
+            this.links = span.getLinks();
+            this.droppedLinksCount = span.getDroppedLinksCount();
+            this.status = span.getStatus();
         }
 
-        public Builder spanId(final String spanId) {
-            this.spanId = spanId;
-            return self();
-        }
-
-        public Builder parentSpanId(final String parentSpanId) {
-            this.parentSpanId = parentSpanId;
+        public Builder insertTime(final NanoTime insertTime) {
+            this.insertTime = insertTime;
             return self();
         }
 
@@ -400,11 +360,9 @@ public class Span {
         }
 
         @Override
-        public Span build() {
-            return new Span(
-                    traceId,
-                    spanId,
-                    parentSpanId,
+        public SpanValue build() {
+            return new SpanValue(
+                    insertTime,
                     traceState,
                     flags,
                     name,
