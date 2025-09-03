@@ -1,7 +1,10 @@
 package stroom.query.language.functions;
 
+import org.junit.jupiter.api.Disabled;
+
 import java.util.stream.Stream;
 
+@Disabled // inconsistent error returned in different environments.
 class TestHostName extends AbstractFunctionTest<HostName> {
 
     @Override

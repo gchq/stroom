@@ -1572,6 +1572,24 @@ paths:
       summary: "Fetch a property by its name, e.g. 'stroom.path.home'"
       tags:
       - Global Config
+  /content/v1/abortImport:
+    post:
+      operationId: abortImport
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResourceKey"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json: {}
+          description: default response
+      summary: Abort Import
+      tags:
+      - Content
   /content/v1/export:
     post:
       operationId: exportContent
@@ -10126,6 +10144,10 @@ components:
       properties:
         complete:
           type: boolean
+        errorMessages:
+          type: array
+          items:
+            $ref: "#/components/schemas/ErrorMessage"
         errors:
           type: array
           items:
@@ -10689,6 +10711,7 @@ components:
           - REFRESH
           - REGEX
           - REMOVE
+          - RERUN
           - RESIZE
           - RESIZE_HANDLE
           - SAVE
@@ -11146,6 +11169,18 @@ components:
           type: string
       required:
       - type
+    ErrorMessage:
+      type: object
+      properties:
+        message:
+          type: string
+        severity:
+          type: string
+          enum:
+          - INFO
+          - WARN
+          - ERROR
+          - FATAL
     EventCoprocessorSettings:
       type: object
       allOf:
@@ -12794,6 +12829,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Message"
+        ownerDocRef:
+          $ref: "#/components/schemas/DocRef"
         sourcePath:
           type: string
         state:
@@ -14056,6 +14093,7 @@ components:
           - REFRESH
           - REGEX
           - REMOVE
+          - RERUN
           - RESIZE
           - RESIZE_HANDLE
           - SAVE
@@ -15394,14 +15432,16 @@ components:
           type: string
           description: The ID of the component that this result set was requested
             for. See ResultRequest in SearchRequest
-        errors:
+        errorMessages:
           type: array
           description: If an error has occurred producing this result set then this
-            will have details of the error
+            will have the details of the error
+          items:
+            $ref: "#/components/schemas/ErrorMessage"
+        errors:
+          type: array
           items:
             type: string
-            description: If an error has occurred producing this result set then this
-              will have details of the error
         type:
           type: string
       required:
@@ -15798,6 +15838,10 @@ components:
           - TABLE
           - VIS
           - QL_VIS
+        searchRequestSource:
+          $ref: "#/components/schemas/SearchRequestSource"
+        tableName:
+          type: string
         timeFilter:
           $ref: "#/components/schemas/TimeFilter"
     ResultStoreInfo:
@@ -16173,6 +16217,8 @@ components:
       properties:
         componentId:
           type: string
+        componentName:
+          type: string
         ownerDocRef:
           $ref: "#/components/schemas/DocRef"
         sourceType:
@@ -16192,6 +16238,10 @@ components:
       properties:
         complete:
           type: boolean
+        errorMessages:
+          type: array
+          items:
+            $ref: "#/components/schemas/ErrorMessage"
         errors:
           type: array
           items:
@@ -17473,6 +17523,11 @@ components:
                 \ grouping level, e.g. '1000,10,1' means 1000 results at group level\
                 \ 0, 10 at level 1 and 1 at level 2. In the absence of this field\
                 \ system defaults will apply"
+          maxStringFieldLength:
+            type: integer
+            format: int32
+          overrideMaxStringFieldLength:
+            type: boolean
           pageSize:
             type: integer
             format: int32
@@ -17581,6 +17636,11 @@ components:
               \ grouping level, e.g. '1000,10,1' means 1000 results at group level\
               \ 0, 10 at level 1 and 1 at level 2. In the absence of this field system\
               \ defaults will apply"
+        maxStringFieldLength:
+          type: integer
+          format: int32
+        overrideMaxStringFieldLength:
+          type: boolean
         queryId:
           type: string
           description: TODO
