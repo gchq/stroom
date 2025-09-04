@@ -45,6 +45,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.SequencedCollection;
 import java.util.Set;
@@ -872,10 +873,19 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                     rootNode = rootNodePath.getLast();
                 }
 
+                final Set<DocRef> surrogateDocRefs = findSurrogateDocRefs(docRefs);
                 final Deque<ExplorerNode> pathToCurrentNode = new ArrayDeque<>();
                 final ExportInfo exportInfo =
-                        new ExportInfo(dir, docRefs, typesToIgnore, omitAuditFields);
+                        new ExportInfo(dir, docRefs, surrogateDocRefs, typesToIgnore, omitAuditFields);
+
+                LOGGER.info("Searching for nodes to export below {}/{}", pathToCurrentNode, rootNode);
                 searchForNodesToExport(exportInfo, pathToCurrentNode, rootNode);
+
+                // Deal with any docRefs that were not exported by the tree.
+                // Note that this may include Folders where the UUID didn't match
+                // the previous import's random UUID generation.
+                final Set<DocRef> unexportedDocRefs = exportInfo.getUnexportedDocRefs();
+                LOGGER.info("Unexported docRefs: {}", unexportedDocRefs);
 
                 return exportInfo.toExportSummary();
 
@@ -883,6 +893,57 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                 throw new RuntimeException("Error exporting: " + e.getMessage(), e);
             }
         }
+    }
+
+    /**
+     * Given the set of docRefs from the client, finds any surrogate docRefs and
+     * returns them.
+     * @param docRefsFromClient The set of docRefs that were passed in from the caller
+     *                          of this service. Can be null.
+     * @return                  The surrogate docRefs, to act as placeholders for any
+     *                          docRefs that don't appear in the Explorer Tree.
+     */
+    private Set<DocRef> findSurrogateDocRefs(final @Nullable Set<DocRef> docRefsFromClient)
+            throws IOException {
+
+        LOGGER.info("Finding associated docRefs for {}", docRefsFromClient);
+        final Set<DocRef> surrogates = new HashSet<>();
+        if (docRefsFromClient != null) {
+            for (final DocRef docRef : docRefsFromClient) {
+                try {
+                    final ImportExportActionHandler handler = importExportActionHandlers.getHandler(docRef.getType());
+                    if (handler != null) {
+                        if (handler instanceof final NonExplorerDocRefProvider docRefProvider) {
+                            final DocRef nearestDocRef = docRefProvider.findNearestExplorerDocRef(docRef);
+
+                            // findNearestExplorerDocRef() returns a DocRef with null for a name.
+                            // This means the surrogate won't match the DocRefs found in the
+                            // Explorer Tree, so we need to find the full DocRef from the Explorer Tree.
+
+                            if (nearestDocRef != null) {
+                                LOGGER.info("Found nearest docRef: {}", nearestDocRef);
+
+                                final Optional<ExplorerNode> surrogateNode = explorerNodeService.getNode(nearestDocRef);
+                                if (surrogateNode.isEmpty()) {
+                                    throw new IOException("Could not find an explorer node for the nearest DocRef '"
+                                                          + nearestDocRef + "'");
+                                } else {
+                                    LOGGER.info("Found node with docRef '{}' for surrogate node",
+                                            surrogateNode.get().getDocRef());
+                                    surrogates.add(surrogateNode.get().getDocRef());
+                                }
+                            }
+                        }
+                    }
+                } catch (final PermissionException e) {
+                    LOGGER.info("Expected permission exception finding surrogate docRefs during export: {}",
+                            e.getMessage(), e);
+                }
+            }
+        }
+
+        LOGGER.info("Surrogate DocRefs are: {}", surrogates);
+        return surrogates;
     }
 
     /**
@@ -897,20 +958,30 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
     private void searchForNodesToExport(final ExportInfo exportInfo,
                                         final Deque<ExplorerNode> pathToCurrentNode,
                                         final ExplorerNode currentNode) throws IOException {
+
+        LOGGER.info("Searching '{}' for nodes to export", currentNode.getDocRef());
+
         if (exportInfo.shouldExportDocRef(currentNode.getDocRef())) {
+            LOGGER.info("Exporting everything under '{}'", currentNode.getDocRef());
             exportEverything(exportInfo, pathToCurrentNode, currentNode);
         } else {
+            LOGGER.info("Not exporting '{}'; looking for children to export...", currentNode.getDocRef());
+
             final List<ExplorerNode> children = explorerNodeService.getChildren(currentNode.getDocRef());
             for (final ExplorerNode child : children) {
-                if (ExplorerConstants.isFolder(child)) {
+                LOGGER.info("Looking at '{}'", child.getDocRef());
+                //if (ExplorerConstants.isFolder(child)) {
                     try {
                         // Recurse
                         pathToCurrentNode.addLast(child);
+                        LOGGER.info("Recursing search into '{}'", child.getDocRef());
                         searchForNodesToExport(exportInfo, pathToCurrentNode, child);
                     } finally {
                         pathToCurrentNode.removeLast();
                     }
-                }
+                //} else {
+                //    LOGGER.info("'{}' is not a Folder so not recursing", child.getDocRef());
+                //}
             }
         }
     }
@@ -1020,15 +1091,19 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
                     // Write node file and any other files
                     try {
-                        writeNodeFile(
-                                pathToIter,
-                                currentNode.getDocRef(),
-                                currentNode.getTags(),
-                                nodeParentPathOnDisk);
-                        writeHandlerFiles(
-                                exportInfo,
-                                currentNode.getDocRef(),
-                                nodeParentPathOnDisk);
+                        // Don't write surrogates out - their job is to provide
+                        // a location for the associated nodes
+                        if (!exportInfo.isSurrogate(currentNode.getDocRef())) {
+                            writeNodeFile(
+                                    pathToIter,
+                                    currentNode.getDocRef(),
+                                    currentNode.getTags(),
+                                    nodeParentPathOnDisk);
+                            writeHandlerFiles(
+                                    exportInfo,
+                                    currentNode.getDocRef(),
+                                    nodeParentPathOnDisk);
+                        }
 
                         // Write any non-explorer nodes in the same place as
                         // the node they are associated with
@@ -1100,34 +1175,37 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                                final Path parentDirPath)
         throws IOException {
 
-        final Properties nodeProps = new Properties();
-        nodeProps.setProperty(UUID_KEY, currentDocRef.getUuid());
-        nodeProps.setProperty(TYPE_KEY, currentDocRef.getType());
-        if (currentDocRef.getName() != null) {
-            // Name can be null for a Processor Filter
-            nodeProps.setProperty(NAME_KEY, currentDocRef.getName());
-        }
-        nodeProps.setProperty(VERSION_KEY, ImportExportVersion.V2.name());
+        // TODO May get security exceptions which must be ignored?
+        if (securityContext.hasDocumentPermission(currentDocRef, DocumentPermission.VIEW)) {
+            final Properties nodeProps = new Properties();
+            nodeProps.setProperty(UUID_KEY, currentDocRef.getUuid());
+            nodeProps.setProperty(TYPE_KEY, currentDocRef.getType());
+            if (currentDocRef.getName() != null) {
+                // Name can be null for a Processor Filter
+                nodeProps.setProperty(NAME_KEY, currentDocRef.getName());
+            }
+            nodeProps.setProperty(VERSION_KEY, ImportExportVersion.V2.name());
 
-        final String tagStr = NullSafe.get(tags, explorerService::nodeTagsToString);
-        if (!NullSafe.isBlankString(tagStr)) {
-            nodeProps.setProperty(TAGS_KEY, tagStr);
-        }
+            final String tagStr = NullSafe.get(tags, explorerService::nodeTagsToString);
+            if (!NullSafe.isBlankString(tagStr)) {
+                nodeProps.setProperty(TAGS_KEY, tagStr);
+            }
 
-        // Legacy path field
-        final StringBuilder buf = new StringBuilder();
-        for (final ExplorerNode node : pathToCurrentNode) {
-            buf.append(PATH_DELIMITER);
-            buf.append(node.getName());
-        }
-        nodeProps.setProperty(PATH_KEY, buf.toString());
+            // Legacy path field
+            final StringBuilder buf = new StringBuilder();
+            for (final ExplorerNode node : pathToCurrentNode) {
+                buf.append(PATH_DELIMITER);
+                buf.append(node.getName());
+            }
+            nodeProps.setProperty(PATH_KEY, buf.toString());
 
-        // Write the properties to disk
-        final String nodeFileName = ImportExportFileNameUtil.createFilePrefix(currentDocRef) + ".node";
-        try (final OutputStream nodeStream = Files.newOutputStream(parentDirPath.resolve(nodeFileName))) {
-            PropertiesSerialiser.write(nodeProps, nodeStream);
-            LOGGER.info("Wrote node file '{}' with contents '{}'",
-                    nodeFileName, nodeProps);
+            // Write the properties to disk
+            final String nodeFileName = ImportExportFileNameUtil.createFilePrefix(currentDocRef) + ".node";
+            try (final OutputStream nodeStream = Files.newOutputStream(parentDirPath.resolve(nodeFileName))) {
+                PropertiesSerialiser.write(nodeProps, nodeStream);
+                LOGGER.info("Wrote node file '{}' with contents '{}'",
+                        nodeFileName, nodeProps);
+            }
         }
     }
 
@@ -1143,19 +1221,22 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                                    final Path parentDirPath)
         throws IOException {
 
-        final ImportExportActionHandler handler = importExportActionHandlers.getHandler(currentDocRef.getType());
-        if (handler != null) {
+        // TODO May get security exceptions which should be ignored?
+        if (securityContext.hasDocumentPermission(currentDocRef, DocumentPermission.VIEW)) {
+            final ImportExportActionHandler handler = importExportActionHandlers.getHandler(currentDocRef.getType());
+            if (handler != null) {
 
-            final List<Message> messages = new ArrayList<>();
-            final Map<String, byte[]> dataMap =
-                    handler.exportDocument(currentDocRef, exportInfo.isOmitAuditFields(), messages);
+                final List<Message> messages = new ArrayList<>();
+                final Map<String, byte[]> dataMap =
+                        handler.exportDocument(currentDocRef, exportInfo.isOmitAuditFields(), messages);
 
-            final String filePrefix = ImportExportFileNameUtil.createFilePrefix(currentDocRef);
-            for (final Map.Entry<String, byte[]> entry : dataMap.entrySet()) {
-                final String fileName = filePrefix + "." + entry.getKey();
-                try (final OutputStream handlerStream = Files.newOutputStream(parentDirPath.resolve(fileName))) {
-                    handlerStream.write(entry.getValue());
-                    LOGGER.info("Wrote file '{}/{}'", parentDirPath, fileName);
+                final String filePrefix = ImportExportFileNameUtil.createFilePrefix(currentDocRef);
+                for (final Map.Entry<String, byte[]> entry : dataMap.entrySet()) {
+                    final String fileName = filePrefix + "." + entry.getKey();
+                    try (final OutputStream handlerStream = Files.newOutputStream(parentDirPath.resolve(fileName))) {
+                        handlerStream.write(entry.getValue());
+                        LOGGER.info("Wrote file '{}/{}'", parentDirPath, fileName);
+                    }
                 }
             }
         }
@@ -1174,13 +1255,15 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                                                  final ExplorerNode currentNode,
                                                  final Path parentDirPath)
         throws IOException {
-
+        LOGGER.info("Checking for associated docRefs");
         final ImportExportActionHandler handler = importExportActionHandlers.getHandler(currentNode.getType());
         if (handler != null) {
             final Set<DocRef> associatedNonExplorerDocRefs =
                     handler.findAssociatedNonExplorerDocRefs(currentNode.getDocRef());
             if (associatedNonExplorerDocRefs != null) {
+                LOGGER.info("Writing associated docRefs");
                 for (final DocRef docRef : associatedNonExplorerDocRefs) {
+                    LOGGER.info("Writing associated docRef '{}'", docRef);
                     writeNodeFile(
                             pathToCurrentNode,
                             docRef,
@@ -1217,6 +1300,9 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
         /** Whether the folder has already been created on disk */
         private final Set<ExplorerNode> alreadyExported = new HashSet<>();
 
+        /** Used to place non-explorer docRefs in the explorer tree */
+        private final Set<DocRef> surrogateDocRefs = new HashSet<>();
+
         /** Messages to return to the user */
         private final List<Message> messages = new ArrayList<>();
 
@@ -1228,15 +1314,19 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
         /**
          * Constructor.
-         * @param diskDirectory Location on disk where we're going to export to.
-         * @param docRefsToExport The document references that we want to export.
-         *                        Defensively copied. If null then everything
-         *                        gets exported.
-         * @param typesToIgnore Ignore these types. Defensively copied.
-         * @param omitAuditFields Whether to omit the audit fields.
+         *
+         * @param diskDirectory    Location on disk where we're going to export to.
+         * @param docRefsToExport  The document references that we want to export.
+         *                         Defensively copied. If null then everything
+         *                         gets exported.
+         * @param surrogateDocRefs DocRefs that act as a placeholder for docRefs that
+         *                         aren't in the Explorer Tree.
+         * @param typesToIgnore    Ignore these types. Defensively copied.
+         * @param omitAuditFields  Whether to omit the audit fields.
          */
         public ExportInfo(final Path diskDirectory,
                           @Nullable final Set<DocRef> docRefsToExport,
+                          final Set<DocRef> surrogateDocRefs,
                           final Set<String> typesToIgnore,
                           final boolean omitAuditFields) {
             this.diskDirectory = diskDirectory;
@@ -1245,9 +1335,11 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
             } else {
                 this.docRefsToExport = new HashSet<>();
                 this.docRefsToExport.addAll(docRefsToExport);
+                //this.docRefsToExport.addAll(surrogateDocRefs);
             }
             this.typesToIgnore.addAll(typesToIgnore);
             this.omitAuditFields = omitAuditFields;
+            this.surrogateDocRefs.addAll(surrogateDocRefs);
         }
 
         /**
@@ -1263,7 +1355,11 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
          * @return true if we should export, false if not.
          */
         public boolean shouldExportDocRef(final DocRef docRef) {
-            return docRefsToExport == null || docRefsToExport.contains(docRef);
+            LOGGER.info("Checking if docRef '{}' is in '{}' or '{}'",
+                    docRef, docRefsToExport, surrogateDocRefs);
+            return docRefsToExport == null
+                   || docRefsToExport.contains(docRef)
+                   || surrogateDocRefs.contains(docRef);
         }
 
         /**
@@ -1281,6 +1377,24 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
          */
         public boolean isOmitAuditFields() {
             return omitAuditFields;
+        }
+
+        /**
+         * @return The set of docRefs that were specified by the client
+         * but haven't been exported.
+         */
+        public Set<DocRef> getUnexportedDocRefs() {
+            final Set<DocRef> unexportedDocRefs;
+            if (this.docRefsToExport != null) {
+                unexportedDocRefs = new HashSet<>(this.docRefsToExport);
+            } else {
+                unexportedDocRefs = new HashSet<>();
+            }
+
+            final List<DocRef> exportedDocRefs = this.alreadyExported.stream().map(ExplorerNode::getDocRef).toList();
+            exportedDocRefs.forEach(unexportedDocRefs::remove);
+
+            return unexportedDocRefs;
         }
 
         /**
@@ -1341,6 +1455,19 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
             summary.setMessages(Collections.unmodifiableList(messages));
             return summary;
         }
+
+        /**
+         * Returns true if the docRef is a surrogate. That is, it exists
+         * as a placeholder in the ExplorerTree for things that are not
+         * in the ExplorerTree such as Processor Filters.
+         * @param docRef The docRef to check
+         * @return true if the docRef is a surrogate, false if not.
+         */
+        public boolean isSurrogate(final DocRef docRef) {
+            return surrogateDocRefs.contains(docRef)
+                    && ! (docRefsToExport == null || docRefsToExport.contains(docRef));
+        }
+
     }
 
 }
