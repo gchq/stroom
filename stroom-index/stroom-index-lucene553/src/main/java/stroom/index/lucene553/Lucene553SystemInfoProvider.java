@@ -100,7 +100,7 @@ class Lucene553SystemInfoProvider implements IndexSystemInfoProvider {
                 consumeDocument(indexSearcher, streamIdDocCounts, scoreDoc);
             }
 
-            final var detailMap = streamIdDocCounts
+            final Map<Long, Map<String, Object>> detailMap = streamIdDocCounts
                     .entrySet()
                     .stream()
                     .collect(Collectors.toMap(

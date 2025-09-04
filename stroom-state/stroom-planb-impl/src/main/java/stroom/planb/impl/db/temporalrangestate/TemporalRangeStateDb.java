@@ -48,6 +48,7 @@ import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
+import stroom.query.language.functions.Values;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.io.FileUtil;
 import stroom.util.json.JsonUtil;
@@ -314,7 +315,26 @@ public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
 
     @Override
     public long deleteOldData(final Instant deleteBefore, final boolean useStateTime) {
-        return env.readAndWrite((readTxn, writer) -> {
+        return env.write(writer -> {
+            final long count = deleteOldData(writer, deleteBefore, useStateTime);
+
+            // Delete unused lookup keys.
+            if (!Thread.currentThread().isInterrupted()) {
+                env.read(readTxn -> {
+                    keyRecorder.deleteUnused(readTxn, writer);
+                    valueRecorder.deleteUnused(readTxn, writer);
+                    return null;
+                });
+            }
+
+            return count;
+        });
+    }
+
+    private long deleteOldData(final LmdbWriter writer,
+                               final Instant deleteBefore,
+                               final boolean useStateTime) {
+        return env.read(readTxn -> {
             long changeCount = 0;
             try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
                 final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
@@ -333,20 +353,16 @@ public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
                     if (time.isBefore(deleteBefore)) {
                         // If this is data we no longer want to retain then delete it.
                         dbi.delete(writer.getWriteTxn(), kv.key());
-                        writer.tryCommit();
                         changeCount++;
                     } else {
                         // Record used lookup keys.
                         keyRecorder.recordUsed(writer, kv.key());
                         valueRecorder.recordUsed(writer, kv.val());
                     }
+                    writer.tryCommit();
                 }
             }
-
-            // Delete unused lookup keys.
-            keyRecorder.deleteUnused(readTxn, writer);
-            valueRecorder.deleteUnused(readTxn, writer);
-
+            writer.commit();
             return changeCount;
         });
     }
@@ -451,7 +467,7 @@ public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
             for (int i = 0; i < fields.length; i++) {
                 values[i] = converters[i].convert(lazyKV);
             }
-            return values;
+            return Values.of(values);
         };
     }
 

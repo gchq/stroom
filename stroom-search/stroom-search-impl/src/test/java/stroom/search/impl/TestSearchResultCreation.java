@@ -38,6 +38,7 @@ import stroom.query.api.SearchResponse;
 import stroom.query.api.Sort;
 import stroom.query.api.Sort.SortDirection;
 import stroom.query.api.TableSettings;
+import stroom.query.common.v2.AnnotationMapperFactory;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
@@ -123,7 +124,8 @@ class TestSearchResultCreation {
                 () -> executorService,
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
                 new ByteBufferFactoryImpl(),
-                new ExpressionPredicateFactory());
+                new ExpressionPredicateFactory(),
+                AnnotationMapperFactory.NO_OP);
     }
 
     @AfterEach

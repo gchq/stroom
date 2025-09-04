@@ -605,7 +605,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         final Meta refData3 = buildRefData(feed2, 2010, 2, StreamTypeNames.REFERENCE, false);
 
         // These 2 should get ignored as one is locked and the other is RAW
-        final HashSet<Long> invalidFeeds = new HashSet<>();
+        final Set<Long> invalidFeeds = new HashSet<>();
         invalidFeeds.add(buildRefData(feed2, 2010, 2, StreamTypeNames.REFERENCE, true).getId());
 
         invalidFeeds.add(buildRefData(feed2, 2010, 2, StreamTypeNames.RAW_REFERENCE, false).getId());

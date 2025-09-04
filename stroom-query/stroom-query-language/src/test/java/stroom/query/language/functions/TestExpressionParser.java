@@ -1940,10 +1940,11 @@ class TestExpressionParser extends AbstractExpressionParserTest {
 
     @Test
     void testBadFunction() {
-        Assertions.assertThatThrownBy(() -> {
-                    compute("foo(1)", out -> {
-                    });
-                })
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            compute("foo(1)", out -> {
+                            });
+                        })
                 .isInstanceOf(TokenException.class)
                 .hasMessageContainingAll("Unknown function", "foo");
     }

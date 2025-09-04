@@ -37,7 +37,7 @@ public class GwtCollectionUtil {
             return Collections.emptySet();
         } else {
             // Use a LinkedHashSet to ensure iteration order is consistent
-            final LinkedHashSet<T> cleanedSet = NullSafe.stream(items)
+            final Set<T> cleanedSet = NullSafe.stream(items)
                     .sorted() // Sort the items for consistent insert order
                     .filter(Objects::nonNull)
                     .collect(Collectors.toCollection(LinkedHashSet::new));
@@ -55,7 +55,7 @@ public class GwtCollectionUtil {
             return Collections.emptySet();
         } else {
             // Use a LinkedHashSet to ensure iteration order is consistent
-            final LinkedHashSet<T> cleanedSet = NullSafe.stream(items)
+            final Set<T> cleanedSet = NullSafe.stream(items)
                     .sorted() // Sort the items for consistent insert order
                     .filter(Objects::nonNull)
                     .collect(Collectors.toCollection(LinkedHashSet::new));

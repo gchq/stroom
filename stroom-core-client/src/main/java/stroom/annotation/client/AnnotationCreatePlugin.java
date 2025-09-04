@@ -36,7 +36,8 @@ public class AnnotationCreatePlugin extends Plugin {
     private final ClientSecurityContext securityContext;
 
     @Inject
-    public AnnotationCreatePlugin(final EventBus eventBus, final ClientSecurityContext securityContext) {
+    public AnnotationCreatePlugin(final EventBus eventBus,
+                                  final ClientSecurityContext securityContext) {
         super(eventBus);
         this.securityContext = securityContext;
     }

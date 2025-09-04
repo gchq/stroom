@@ -542,6 +542,26 @@ paths:
       summary: Applies a change to an annotation
       tags:
       - Annotations
+  /annotation/v1/changeAnnotationEntry:
+    post:
+      operationId: changeAnnotationEntry
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeAnnotationEntryRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Change an annotation entry
+      tags:
+      - Annotations
   /annotation/v1/changeDocumentPermissions:
     post:
       operationId: changeDocumentPermissions
@@ -620,6 +640,26 @@ paths:
       summary: Deletes an annotation
       tags:
       - Annotations
+  /annotation/v1/deleteAnnotationEntry:
+    post:
+      operationId: deleteAnnotationEntry
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteAnnotationEntryRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Delete an annotation entry
+      tags:
+      - Annotations
   /annotation/v1/deleteAnnotationTag:
     delete:
       operationId: deleteAnnotationTag
@@ -636,6 +676,26 @@ paths:
                 type: boolean
           description: default response
       summary: Delete an annotation tag
+      tags:
+      - Annotations
+  /annotation/v1/fetchAnnotationEntry:
+    post:
+      operationId: fetchAnnotationEntry
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FetchAnnotationEntryRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnnotationEntry"
+          description: default response
+      summary: Fetch an annotation entry
       tags:
       - Annotations
   /annotation/v1/findAnnotationTags:
@@ -658,24 +718,24 @@ paths:
       summary: Finds annotation tags matching request
       tags:
       - Annotations
-  /annotation/v1/getAnnotationByRef:
+  /annotation/v1/findAnnotations:
     post:
-      operationId: getAnnotationByRef
+      operationId: findAnnotations
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/DocRef"
-        description: annotationRef
+              $ref: "#/components/schemas/FindAnnotationRequest"
+        description: request
         required: true
       responses:
         default:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Annotation"
+                $ref: "#/components/schemas/ResultPageAnnotation"
           description: default response
-      summary: Gets an annotation by ref
+      summary: Finds annotations
       tags:
       - Annotations
   /annotation/v1/getAnnotationEntries:
@@ -1002,6 +1062,26 @@ paths:
                 $ref: "#/components/schemas/ResultPageHashedApiKey"
           description: default response
       summary: Find the API keys matching the supplied criteria
+      tags:
+      - API Key
+  /apikey/v2/verifyApiKey:
+    post:
+      operationId: findApiKeysByCriteria_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyApiKeyRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDesc"
+          description: default response
+      summary: Check if the passed API key is valid
       tags:
       - API Key
   /apikey/v2/{id}:
@@ -1492,6 +1572,24 @@ paths:
       summary: "Fetch a property by its name, e.g. 'stroom.path.home'"
       tags:
       - Global Config
+  /content/v1/abortImport:
+    post:
+      operationId: abortImport
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResourceKey"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json: {}
+          description: default response
+      summary: Abort Import
+      tags:
+      - Content
   /content/v1/export:
     post:
       operationId: exportContent
@@ -5556,6 +5654,35 @@ paths:
         easily
       tags:
       - Queries
+  /query/v1/csv/search:
+    get:
+      operationId: queryCsv
+      parameters:
+      - in: query
+        name: query
+        schema:
+          type: string
+      - in: query
+        name: offset
+        schema:
+          type: integer
+          format: int32
+      - in: query
+        name: length
+        schema:
+          type: integer
+          format: int32
+          default: 100
+      responses:
+        default:
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: default response
+      summary: Perform a csv query
+      tags:
+      - Queries
   /query/v1/downloadSearchResults:
     post:
       operationId: downloadQuerySearchResultsLocal
@@ -6287,71 +6414,9 @@ paths:
       summary: Find the result stores matching the supplied criteria for a node
       tags:
       - ResultStore
-  /ruleset/v2/export:
-    post:
-      operationId: exportReceiveDataRules
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/DocRef"
-        description: DocRef
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Base64EncodedDocumentData"
-          description: default response
-      summary: Submit an export request
-      tags:
-      - Rule Set
-  /ruleset/v2/import:
-    post:
-      operationId: importReceiveDataRules
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Base64EncodedDocumentData"
-        description: DocumentData
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DocRef"
-          description: default response
-      summary: Submit an import request
-      tags:
-      - Rule Set
-  /ruleset/v2/list:
-    get:
-      operationId: listReceiveDataRules
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/DocRef"
-                uniqueItems: true
-          description: default response
-      summary: Submit a request for a list of doc refs held by this service
-      tags:
-      - Rule Set
-  /ruleset/v2/{uuid}:
+  /ruleset/v2:
     get:
       operationId: fetchReceiveDataRules
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
       responses:
         default:
           content:
@@ -6359,17 +6424,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/ReceiveDataRules"
           description: default response
-      summary: Fetch a rules doc by its UUID
+      summary: Fetch receipt rules
       tags:
       - Rule Set
     put:
       operationId: updateReceiveDataRules
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
       requestBody:
         content:
           application/json:
@@ -6384,7 +6443,20 @@ paths:
               schema:
                 $ref: "#/components/schemas/ReceiveDataRules"
           description: default response
-      summary: Update a rules doc
+      summary: Update receipt rules
+      tags:
+      - Rule Set
+  /ruleset/v2/fetchHashedRules:
+    get:
+      operationId: fetchHashedReceiveDataRules
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HashedReceiveDataRules"
+          description: default response
+      summary: Fetch hashed receipt rules
       tags:
       - Rule Set
   /s3/v1/download:
@@ -7665,8 +7737,8 @@ paths:
         content:
           application/json:
             schema:
-              type: string
-        description: uuid
+              $ref: "#/components/schemas/GetUserRequest"
+        description: request
         required: true
       responses:
         default:
@@ -8151,7 +8223,6 @@ components:
           - ADMINISTRATOR
           - ANNOTATIONS
           - MANAGE_CACHE_PERMISSION
-          - MANAGE_CONTENT_TEMPLATES_PERMISSION
           - VIEW_DATA_PERMISSION
           - VIEW_DATA_WITH_PIPELINE_PERMISSION
           - DELETE_DATA_PERMISSION
@@ -8164,6 +8235,8 @@ components:
           - MANAGE_TASKS_PERMISSION
           - DOWNLOAD_SEARCH_RESULTS_PERMISSION
           - MANAGE_API_KEYS
+          - MANAGE_CONTENT_TEMPLATES_PERMISSION
+          - MANAGE_DATA_RECEIPT_RULES_PERMISSION
           - MANAGE_JOBS_PERMISSION
           - MANAGE_PROPERTIES_PERMISSION
           - MANAGE_POLICIES_PERMISSION
@@ -8175,6 +8248,9 @@ components:
           - EXPORT_CONFIGURATION
           - VIEW_SYSTEM_INFO_PERMISSION
           - CHECK_RECEIPT_STATUS
+          - FETCH_HASHED_RECEIPT_POLICY_RULES
+          - VERIFY_API_KEY
+          - STROOM_PROXY
         type:
           type: string
         userRef:
@@ -8374,6 +8450,14 @@ components:
         properties:
           sourceDocRef:
             $ref: "#/components/schemas/DocRef"
+    AddAnnotationTable:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractAnnotationChange"
+      - type: object
+        properties:
+          table:
+            $ref: "#/components/schemas/AnnotationTable"
     AddAppPermission:
       type: object
       allOf:
@@ -8636,6 +8720,8 @@ components:
     AnnotationEntry:
       type: object
       properties:
+        deleted:
+          type: boolean
         entryTime:
           type: integer
           format: int64
@@ -8647,14 +8733,17 @@ components:
           - STATUS
           - ASSIGNED
           - COMMENT
-          - LINK
-          - UNLINK
+          - LINK_EVENT
+          - UNLINK_EVENT
           - RETENTION_PERIOD
           - DESCRIPTION
           - ADD_TO_COLLECTION
           - REMOVE_FROM_COLLECTION
           - ADD_LABEL
           - REMOVE_LABEL
+          - ADD_TABLE_DATA
+          - LINK_ANNOTATION
+          - UNLINK_ANNOTATION
           - DELETE
         entryUser:
           $ref: "#/components/schemas/UserRef"
@@ -8663,6 +8752,29 @@ components:
         id:
           type: integer
           format: int64
+        previousValue:
+          $ref: "#/components/schemas/EntryValue"
+        updateTime:
+          type: integer
+          format: int64
+        updateUser:
+          $ref: "#/components/schemas/UserRef"
+    AnnotationTable:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/EntryValue"
+      - type: object
+        properties:
+          columns:
+            type: array
+            items:
+              type: string
+          values:
+            type: array
+            items:
+              type: array
+              items:
+                type: string
     AnnotationTag:
       type: object
       properties:
@@ -8745,6 +8857,65 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ApiKey"
+    AppPermissionSet:
+      type: object
+      discriminator:
+        propertyName: type
+      properties:
+        type:
+          type: string
+      required:
+      - type
+    AppPermissionSetImpl:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AppPermissionSet"
+      - type: object
+        properties:
+          appPermissions:
+            type: array
+            items:
+              type: string
+              enum:
+              - ADMINISTRATOR
+              - ANNOTATIONS
+              - MANAGE_CACHE_PERMISSION
+              - VIEW_DATA_PERMISSION
+              - VIEW_DATA_WITH_PIPELINE_PERMISSION
+              - DELETE_DATA_PERMISSION
+              - IMPORT_DATA_PERMISSION
+              - EXPORT_DATA_PERMISSION
+              - MANAGE_USERS_PERMISSION
+              - CHANGE_OWNER_PERMISSION
+              - STEPPING_PERMISSION
+              - MANAGE_PROCESSORS_PERMISSION
+              - MANAGE_TASKS_PERMISSION
+              - DOWNLOAD_SEARCH_RESULTS_PERMISSION
+              - MANAGE_API_KEYS
+              - MANAGE_CONTENT_TEMPLATES_PERMISSION
+              - MANAGE_DATA_RECEIPT_RULES_PERMISSION
+              - MANAGE_JOBS_PERMISSION
+              - MANAGE_PROPERTIES_PERMISSION
+              - MANAGE_POLICIES_PERMISSION
+              - MANAGE_NODES_PERMISSION
+              - MANAGE_INDEX_SHARDS_PERMISSION
+              - MANAGE_VOLUMES_PERMISSION
+              - MANAGE_DB_PERMISSION
+              - IMPORT_CONFIGURATION
+              - EXPORT_CONFIGURATION
+              - VIEW_SYSTEM_INFO_PERMISSION
+              - CHECK_RECEIPT_STATUS
+              - FETCH_HASHED_RECEIPT_POLICY_RULES
+              - VERIFY_API_KEY
+              - STROOM_PROXY
+            uniqueItems: true
+          operator:
+            type: string
+            enum:
+            - ALL_OF
+            - ONE_OF
+            - SINGLE
+            - EMPTY
     AppUserPermissions:
       type: object
       properties:
@@ -8756,7 +8927,6 @@ components:
             - ADMINISTRATOR
             - ANNOTATIONS
             - MANAGE_CACHE_PERMISSION
-            - MANAGE_CONTENT_TEMPLATES_PERMISSION
             - VIEW_DATA_PERMISSION
             - VIEW_DATA_WITH_PIPELINE_PERMISSION
             - DELETE_DATA_PERMISSION
@@ -8769,6 +8939,8 @@ components:
             - MANAGE_TASKS_PERMISSION
             - DOWNLOAD_SEARCH_RESULTS_PERMISSION
             - MANAGE_API_KEYS
+            - MANAGE_CONTENT_TEMPLATES_PERMISSION
+            - MANAGE_DATA_RECEIPT_RULES_PERMISSION
             - MANAGE_JOBS_PERMISSION
             - MANAGE_PROPERTIES_PERMISSION
             - MANAGE_POLICIES_PERMISSION
@@ -8780,6 +8952,9 @@ components:
             - EXPORT_CONFIGURATION
             - VIEW_SYSTEM_INFO_PERMISSION
             - CHECK_RECEIPT_STATUS
+            - FETCH_HASHED_RECEIPT_POLICY_RULES
+            - VERIFY_API_KEY
+            - STROOM_PROXY
           uniqueItems: true
         permissions:
           type: array
@@ -8789,7 +8964,6 @@ components:
             - ADMINISTRATOR
             - ANNOTATIONS
             - MANAGE_CACHE_PERMISSION
-            - MANAGE_CONTENT_TEMPLATES_PERMISSION
             - VIEW_DATA_PERMISSION
             - VIEW_DATA_WITH_PIPELINE_PERMISSION
             - DELETE_DATA_PERMISSION
@@ -8802,6 +8976,8 @@ components:
             - MANAGE_TASKS_PERMISSION
             - DOWNLOAD_SEARCH_RESULTS_PERMISSION
             - MANAGE_API_KEYS
+            - MANAGE_CONTENT_TEMPLATES_PERMISSION
+            - MANAGE_DATA_RECEIPT_RULES_PERMISSION
             - MANAGE_JOBS_PERMISSION
             - MANAGE_PROPERTIES_PERMISSION
             - MANAGE_POLICIES_PERMISSION
@@ -8813,6 +8989,9 @@ components:
             - EXPORT_CONFIGURATION
             - VIEW_SYSTEM_INFO_PERMISSION
             - CHECK_RECEIPT_STATUS
+            - FETCH_HASHED_RECEIPT_POLICY_RULES
+            - VERIFY_API_KEY
+            - STROOM_PROXY
           uniqueItems: true
         userRef:
           $ref: "#/components/schemas/UserRef"
@@ -8827,7 +9006,6 @@ components:
             - ADMINISTRATOR
             - ANNOTATIONS
             - MANAGE_CACHE_PERMISSION
-            - MANAGE_CONTENT_TEMPLATES_PERMISSION
             - VIEW_DATA_PERMISSION
             - VIEW_DATA_WITH_PIPELINE_PERMISSION
             - DELETE_DATA_PERMISSION
@@ -8840,6 +9018,8 @@ components:
             - MANAGE_TASKS_PERMISSION
             - DOWNLOAD_SEARCH_RESULTS_PERMISSION
             - MANAGE_API_KEYS
+            - MANAGE_CONTENT_TEMPLATES_PERMISSION
+            - MANAGE_DATA_RECEIPT_RULES_PERMISSION
             - MANAGE_JOBS_PERMISSION
             - MANAGE_PROPERTIES_PERMISSION
             - MANAGE_POLICIES_PERMISSION
@@ -8851,6 +9031,9 @@ components:
             - EXPORT_CONFIGURATION
             - VIEW_SYSTEM_INFO_PERMISSION
             - CHECK_RECEIPT_STATUS
+            - FETCH_HASHED_RECEIPT_POLICY_RULES
+            - VERIFY_API_KEY
+            - STROOM_PROXY
           uniqueItems: true
         inheritedPermissions:
           type: object
@@ -9082,15 +9265,6 @@ components:
             type: string
           webIdentityTokenFile:
             type: string
-    Base64EncodedDocumentData:
-      type: object
-      properties:
-        dataMap:
-          type: object
-          additionalProperties:
-            type: string
-        docRef:
-          $ref: "#/components/schemas/DocRef"
     BatchScheduleRequest:
       type: object
       properties:
@@ -9188,6 +9362,16 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CacheIdentity"
+    ChangeAnnotationEntryRequest:
+      type: object
+      properties:
+        annotationEntryId:
+          type: integer
+          format: int64
+        annotationRef:
+          $ref: "#/components/schemas/DocRef"
+        data:
+          type: string
     ChangeAssignedTo:
       type: object
       allOf:
@@ -9708,6 +9892,11 @@ components:
           $ref: "#/components/schemas/UserRef"
         comment:
           type: string
+        linkedAnnotations:
+          type: array
+          items:
+            type: integer
+            format: int64
         linkedEvents:
           type: array
           items:
@@ -9716,6 +9905,8 @@ components:
           type: string
         subject:
           type: string
+        table:
+          $ref: "#/components/schemas/AnnotationTable"
         title:
           type: string
     CreateAnnotationTagRequest:
@@ -9764,6 +9955,7 @@ components:
           - SHA2_256
           - BCRYPT
           - ARGON_2
+          - SHA2_512
         name:
           type: string
         owner:
@@ -9952,6 +10144,10 @@ components:
       properties:
         complete:
           type: boolean
+        errorMessages:
+          type: array
+          items:
+            $ref: "#/components/schemas/ErrorMessage"
         errors:
           type: array
           items:
@@ -10163,6 +10359,14 @@ components:
         lineNo:
           type: integer
           format: int32
+    DeleteAnnotationEntryRequest:
+      type: object
+      properties:
+        annotationEntryId:
+          type: integer
+          format: int64
+        annotationRef:
+          $ref: "#/components/schemas/DocRef"
     DeleteDuplicateCheckRequest:
       type: object
       properties:
@@ -10448,6 +10652,7 @@ components:
           - FUNCTION
           - GENERATE
           - HELP
+          - HELP_OUTLINE
           - HIDE
           - HIDE_MENU
           - HISTORY
@@ -10461,7 +10666,9 @@ components:
           - LOCKED
           - LOGO
           - LOGOUT
+          - MAXIMISE
           - MENU
+          - MINIMISE
           - MONITORING
           - MOVE
           - NODES
@@ -10504,6 +10711,7 @@ components:
           - REFRESH
           - REGEX
           - REMOVE
+          - RERUN
           - RESIZE
           - RESIZE_HANDLE
           - SAVE
@@ -10867,6 +11075,13 @@ components:
           type: string
         ok:
           type: boolean
+    ElementId:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
     EmbeddedQueryComponentSettings:
       type: object
       allOf:
@@ -10897,6 +11112,19 @@ components:
               $ref: "#/components/schemas/ComponentSelectionHandler"
           showTable:
             type: boolean
+    EmptyAppPermissionSet:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AppPermissionSet"
+      - type: object
+        properties:
+          operator:
+            type: string
+            enum:
+            - ALL_OF
+            - ONE_OF
+            - SINGLE
+            - EMPTY
     EntityEvent:
       type: object
       properties:
@@ -10941,6 +11169,18 @@ components:
           type: string
       required:
       - type
+    ErrorMessage:
+      type: object
+      properties:
+        message:
+          type: string
+        severity:
+          type: string
+          enum:
+          - INFO
+          - WARN
+          - ERROR
+          - FATAL
     EventCoprocessorSettings:
       type: object
       allOf:
@@ -11351,6 +11591,7 @@ components:
             - WORD_BOUNDARY
             - CONTAINS_CASE_SENSITIVE
             - EQUALS_CASE_SENSITIVE
+            - NOT_EQUALS_CASE_SENSITIVE
             - STARTS_WITH_CASE_SENSITIVE
             - ENDS_WITH_CASE_SENSITIVE
             - MATCHES_REGEX_CASE_SENSITIVE
@@ -11379,9 +11620,25 @@ components:
           type: boolean
         externalIdentityProvider:
           type: boolean
+        lastAnnotationChangeTime:
+          type: integer
+          format: int64
         maxApiKeyExpiryAgeMs:
           type: integer
           format: int64
+        obfuscatedFields:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        receiptCheckMode:
+          type: string
+          enum:
+          - FEED_STATUS
+          - RECEIPT_POLICY
+          - RECEIVE_ALL
+          - DROP_ALL
+          - REJECT_ALL
         uiConfig:
           $ref: "#/components/schemas/UiConfig"
     FeedDoc:
@@ -11436,6 +11693,14 @@ components:
           type: string
         volumeGroup:
           type: string
+    FetchAnnotationEntryRequest:
+      type: object
+      properties:
+        annotationEntryId:
+          type: integer
+          format: int64
+        annotationRef:
+          $ref: "#/components/schemas/DocRef"
     FetchAppUserPermissionsRequest:
       type: object
       properties:
@@ -11686,6 +11951,34 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CriteriaFieldSort"
+    FindAnnotationRequest:
+      type: object
+      properties:
+        destinationId:
+          type: integer
+          format: int64
+        filter:
+          type: string
+        pageRequest:
+          $ref: "#/components/schemas/PageRequest"
+        requiredPermission:
+          type: string
+          enum:
+          - OWNER
+          - DELETE
+          - EDIT
+          - VIEW
+          - USE
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: "#/components/schemas/CriteriaFieldSort"
+        sourceId:
+          type: integer
+          format: int64
     FindApiKeyCriteria:
       type: object
       properties:
@@ -11984,8 +12277,12 @@ components:
     FindUserCriteria:
       type: object
       properties:
-        activeUsersOnly:
-          type: boolean
+        context:
+          type: string
+          enum:
+          - RUN_AS
+          - ANNOTATION_ASSIGNMENT
+          - PERMISSIONS
         expression:
           $ref: "#/components/schemas/ExpressionOperator"
         pageRequest:
@@ -12205,6 +12502,7 @@ components:
           - 406 - 110 - Feed is not set to receive data
           - 406 - 111 - Feed is not valid
           - 406 - 112 - Data Feed key and/or accountId is not valid
+          - 406 - 113 - Data has been rejected by the receipt policy rules
           - 406 - 120 - Unexpected data type
           - 406 - 200 - Unknown compression
           - 401 - 300 - Client Certificate Required
@@ -12248,6 +12546,17 @@ components:
           format: int64
         scheduleRestriction:
           $ref: "#/components/schemas/ScheduleRestriction"
+    GetUserRequest:
+      type: object
+      properties:
+        context:
+          type: string
+          enum:
+          - RUN_AS
+          - ANNOTATION_ASSIGNMENT
+          - PERMISSIONS
+        uuid:
+          type: string
     GitRepoDoc:
       type: object
       properties:
@@ -12311,6 +12620,24 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CriteriaFieldSort"
+    GroupSelection:
+      type: object
+      description: Contains a set of group keys of parent rows we want to show (or
+        not show) children for
+      properties:
+        closedGroups:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        expandedDepth:
+          type: integer
+          format: int32
+        openGroups:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
     HashedApiKey:
       type: object
       properties:
@@ -12337,6 +12664,7 @@ components:
           - SHA2_256
           - BCRYPT
           - ARGON_2
+          - SHA2_512
         id:
           type: integer
           format: int32
@@ -12352,6 +12680,30 @@ components:
         version:
           type: integer
           format: int32
+    HashedReceiveDataRules:
+      type: object
+      properties:
+        fieldNameToSaltMap:
+          type: object
+          additionalProperties:
+            type: string
+        hashAlgorithm:
+          type: string
+          enum:
+          - SHA3_256
+          - SHA2_256
+          - BCRYPT
+          - ARGON_2
+          - SHA2_512
+        receiveDataRules:
+          $ref: "#/components/schemas/ReceiveDataRules"
+        snapshotTimeEpochMs:
+          type: integer
+          format: int64
+        uuidToFlattenedDictMap:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/DictionaryDoc"
     HistogramKeySchema:
       type: object
       properties:
@@ -12477,6 +12829,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Message"
+        ownerDocRef:
+          $ref: "#/components/schemas/DocRef"
         sourcePath:
           type: string
         state:
@@ -12893,6 +13247,17 @@ components:
         streamCount:
           type: integer
           format: int64
+    LinkAnnotations:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractAnnotationChange"
+      - type: object
+        properties:
+          annotations:
+            type: array
+            items:
+              type: integer
+              format: int64
     LinkEvents:
       type: object
       allOf:
@@ -13542,7 +13907,11 @@ components:
     PipelineElement:
       type: object
       properties:
+        description:
+          type: string
         id:
+          type: string
+        name:
           type: string
         type:
           type: string
@@ -13665,6 +14034,7 @@ components:
           - FUNCTION
           - GENERATE
           - HELP
+          - HELP_OUTLINE
           - HIDE
           - HIDE_MENU
           - HISTORY
@@ -13678,7 +14048,9 @@ components:
           - LOCKED
           - LOGO
           - LOGOUT
+          - MAXIMISE
           - MENU
+          - MINIMISE
           - MONITORING
           - MOVE
           - NODES
@@ -13721,6 +14093,7 @@ components:
           - REFRESH
           - REGEX
           - REMOVE
+          - RERUN
           - RESIZE
           - RESIZE_HANDLE
           - SAVE
@@ -14449,6 +14822,12 @@ components:
           - "'=', '!=', 'in', 'in dictionary'"
           - "'is', 'in folder', '=', '!=', 'in', 'in dictionary'"
           - "'=', '!=', 'in', 'in dictionary'"
+          - "'=', '!=', '==', '!==', 'in', 'in dictionary'"
+          - "'==', '!==', 'between', 'in', 'in dictionary'"
+          - "'==', '!==', 'in', 'in dictionary', '=', '!=', 'between', 'contains',\
+            \ 'contains (CS)', '>', '>=', '<', '<=', 'is null', 'is not null', 'matches\
+            \ regex', 'matches regex (CS)', 'starts with', 'starts with (CS)', 'ends\
+            \ with', 'ends with (CS)'"
           - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
           - "'=', '!=', 'in', 'in dictionary', 'matches regex'"
           - "'=', '!=', 'in', 'in dictionary'"
@@ -14651,6 +15030,8 @@ components:
     QuerySearchRequest:
       type: object
       properties:
+        groupSelection:
+          $ref: "#/components/schemas/GroupSelection"
         incremental:
           type: boolean
         openGroups:
@@ -15051,14 +15432,16 @@ components:
           type: string
           description: The ID of the component that this result set was requested
             for. See ResultRequest in SearchRequest
-        errors:
+        errorMessages:
           type: array
           description: If an error has occurred producing this result set then this
-            will have details of the error
+            will have the details of the error
+          items:
+            $ref: "#/components/schemas/ErrorMessage"
+        errors:
+          type: array
           items:
             type: string
-            description: If an error has occurred producing this result set then this
-              will have details of the error
         type:
           type: string
       required:
@@ -15094,6 +15477,16 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AnalyticDataShard"
+    ResultPageAnnotation:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: "#/components/schemas/PageResponse"
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/Annotation"
     ResultPageAnnotationTag:
       type: object
       description: A page of results.
@@ -15419,6 +15812,8 @@ components:
           - NONE
           - CHANGES
           - ALL
+        groupSelection:
+          $ref: "#/components/schemas/GroupSelection"
         mappings:
           type: array
           items:
@@ -15443,6 +15838,10 @@ components:
           - TABLE
           - VIS
           - QL_VIS
+        searchRequestSource:
+          $ref: "#/components/schemas/SearchRequestSource"
+        tableName:
+          type: string
         timeFilter:
           $ref: "#/components/schemas/TimeFilter"
     ResultStoreInfo:
@@ -15496,6 +15895,9 @@ components:
       type: object
       description: A row of data in a result set
       properties:
+        annotationId:
+          type: integer
+          format: int64
         depth:
           type: integer
           format: int32
@@ -15815,6 +16217,8 @@ components:
       properties:
         componentId:
           type: string
+        componentName:
+          type: string
         ownerDocRef:
           $ref: "#/components/schemas/DocRef"
         sourceType:
@@ -15834,6 +16238,10 @@ components:
       properties:
         complete:
           type: boolean
+        errorMessages:
+          type: array
+          items:
+            $ref: "#/components/schemas/ErrorMessage"
         errors:
           type: array
           items:
@@ -16177,6 +16585,46 @@ components:
           $ref: "#/components/schemas/AbstractDocumentPermissionsChange"
         docRef:
           $ref: "#/components/schemas/DocRef"
+    SingletonAppPermissionSet:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AppPermissionSet"
+      - type: object
+        properties:
+          appPermission:
+            type: string
+            enum:
+            - ADMINISTRATOR
+            - ANNOTATIONS
+            - MANAGE_CACHE_PERMISSION
+            - VIEW_DATA_PERMISSION
+            - VIEW_DATA_WITH_PIPELINE_PERMISSION
+            - DELETE_DATA_PERMISSION
+            - IMPORT_DATA_PERMISSION
+            - EXPORT_DATA_PERMISSION
+            - MANAGE_USERS_PERMISSION
+            - CHANGE_OWNER_PERMISSION
+            - STEPPING_PERMISSION
+            - MANAGE_PROCESSORS_PERMISSION
+            - MANAGE_TASKS_PERMISSION
+            - DOWNLOAD_SEARCH_RESULTS_PERMISSION
+            - MANAGE_API_KEYS
+            - MANAGE_CONTENT_TEMPLATES_PERMISSION
+            - MANAGE_DATA_RECEIPT_RULES_PERMISSION
+            - MANAGE_JOBS_PERMISSION
+            - MANAGE_PROPERTIES_PERMISSION
+            - MANAGE_POLICIES_PERMISSION
+            - MANAGE_NODES_PERMISSION
+            - MANAGE_INDEX_SHARDS_PERMISSION
+            - MANAGE_VOLUMES_PERMISSION
+            - MANAGE_DB_PERMISSION
+            - IMPORT_CONFIGURATION
+            - EXPORT_CONFIGURATION
+            - VIEW_SYSTEM_INFO_PERMISSION
+            - CHECK_RECEIPT_STATUS
+            - FETCH_HASHED_RECEIPT_POLICY_RULES
+            - VERIFY_API_KEY
+            - STROOM_PROXY
     Size:
       type: object
       properties:
@@ -16700,7 +17148,7 @@ components:
       type: object
       properties:
         elementId:
-          type: string
+          $ref: "#/components/schemas/ElementId"
         errorType:
           type: string
           enum:
@@ -17075,6 +17523,11 @@ components:
                 \ grouping level, e.g. '1000,10,1' means 1000 results at group level\
                 \ 0, 10 at level 1 and 1 at level 2. In the absence of this field\
                 \ system defaults will apply"
+          maxStringFieldLength:
+            type: integer
+            format: int32
+          overrideMaxStringFieldLength:
+            type: boolean
           pageSize:
             type: integer
             format: int32
@@ -17136,6 +17589,8 @@ components:
       - $ref: "#/components/schemas/ComponentResultRequest"
       - type: object
         properties:
+          groupSelection:
+            $ref: "#/components/schemas/GroupSelection"
           openGroups:
             type: array
             items:
@@ -17181,6 +17636,11 @@ components:
               \ grouping level, e.g. '1000,10,1' means 1000 results at group level\
               \ 0, 10 at level 1 and 1 at level 2. In the absence of this field system\
               \ defaults will apply"
+        maxStringFieldLength:
+          type: integer
+          format: int32
+        overrideMaxStringFieldLength:
+          type: boolean
         queryId:
           type: string
           description: TODO
@@ -17455,6 +17915,8 @@ components:
           type: string
         pageBorder:
           type: string
+        selectedTabColour:
+          type: string
     TimeFilter:
       type: object
       description: If the data includes time in the key then you can apply a time
@@ -17493,6 +17955,7 @@ components:
           - WORD_BOUNDARY
           - CONTAINS_CASE_SENSITIVE
           - EQUALS_CASE_SENSITIVE
+          - NOT_EQUALS_CASE_SENSITIVE
           - STARTS_WITH_CASE_SENSITIVE
           - ENDS_WITH_CASE_SENSITIVE
           - MATCHES_REGEX_CASE_SENSITIVE
@@ -17556,6 +18019,7 @@ components:
           - SHA2_256
           - BCRYPT
           - ARGON_2
+          - SHA2_512
         defaultMaxResults:
           type: string
         helpSubPathDocumentation:
@@ -17607,6 +18071,17 @@ components:
           $ref: "#/components/schemas/ThemeConfig"
         welcomeHtml:
           type: string
+    UnlinkAnnotations:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractAnnotationChange"
+      - type: object
+        properties:
+          annotations:
+            type: array
+            items:
+              type: integer
+              format: int64
     UnlinkEvents:
       type: object
       allOf:
@@ -17877,6 +18352,13 @@ components:
           - WARN
           - ERROR
           - FATAL
+    VerifyApiKeyRequest:
+      type: object
+      properties:
+        apiKey:
+          type: string
+        requiredAppPermissions:
+          $ref: "#/components/schemas/AppPermissionSet"
     ViewDoc:
       type: object
       properties:

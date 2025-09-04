@@ -21,7 +21,8 @@ public class FastInfosetByteBufferConsumer implements RefDataValueByteBufferCons
 
     private final SAXDocumentParser saxDocumentParser;
 
-    public FastInfosetByteBufferConsumer(final Receiver receiver, final PipelineConfiguration pipelineConfiguration) {
+    public FastInfosetByteBufferConsumer(final Receiver receiver,
+                                         final PipelineConfiguration pipelineConfiguration) {
 
         final FastInfosetContentHandler fastInfosetContentHandler = new FastInfosetContentHandler();
         fastInfosetContentHandler.setPipelineConfiguration(pipelineConfiguration);
@@ -32,20 +33,22 @@ public class FastInfosetByteBufferConsumer implements RefDataValueByteBufferCons
     }
 
     @Override
-    public void consumeBytes(final Receiver receiver, final ByteBuffer byteBuffer) {
+    public void consumeBytes(final ByteBuffer byteBuffer) {
         LOGGER.trace("consumeBytes()");
-        final ByteBufferInputStream inputStream = new ByteBufferInputStream(byteBuffer);
-        try {
+        try (final ByteBufferInputStream inputStream = new ByteBufferInputStream(byteBuffer)) {
             // do the parsing which will output to the tinyBuilder
             saxDocumentParser.parse(inputStream);
         } catch (final IOException | FastInfosetException | SAXException e) {
-            throw new RuntimeException("Error parsing fastinfoset bytes, "
-                    + ByteBufferUtils.byteBufferInfo(inputStream.getByteBuffer()) + " "
-                    + e.getMessage(), e);
+            throw new RuntimeException("Error parsing fastInfoset bytes, "
+                                       + ByteBufferUtils.byteBufferInfo(byteBuffer) + " "
+                                       + e.getMessage(), e);
         }
-
         saxDocumentParser.reset();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Factory implements RefDataValueByteBufferConsumer.Factory {
 

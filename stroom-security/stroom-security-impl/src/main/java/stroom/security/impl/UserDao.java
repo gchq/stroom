@@ -1,5 +1,6 @@
 package stroom.security.impl;
 
+import stroom.security.shared.FindUserContext;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.util.shared.ResultPage;
@@ -22,6 +23,8 @@ public interface UserDao {
 
     Optional<User> getByUuid(String uuid);
 
+    Optional<User> getByUuid(String uuid, String currentUserUuid, FindUserContext context);
+
     Optional<User> getUserBySubjectId(String subjectId);
 
     Optional<User> getGroupByName(String groupName);
@@ -37,13 +40,13 @@ public interface UserDao {
     ResultPage<User> find(FindUserCriteria criteria);
 
     /**
-     * Find users and groups that are direct parents or siblings of the current user.
+     * Find users and groups that are related to the current user.
      *
-     * @param userUuid The current user uuid.
-     * @param criteria Additional criteria to apply.
+     * @param currentUserUuid The current user uuid.
+     * @param criteria        Additional criteria to apply.
      * @return A page of users.
      */
-    ResultPage<User> findRestrictedUserList(String userUuid, FindUserCriteria criteria);
+    ResultPage<User> findRelatedUsers(String currentUserUuid, FindUserCriteria criteria);
 
     ResultPage<User> findUsersInGroup(String groupUuid, FindUserCriteria criteria);
 

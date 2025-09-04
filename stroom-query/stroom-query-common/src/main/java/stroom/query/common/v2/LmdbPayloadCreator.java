@@ -170,29 +170,26 @@ public class LmdbPayloadCreator {
                         final ByteBuffer keyBuffer = kv.key();
                         final ByteBuffer valBuffer = kv.val();
 
-                        // Make sure we don't add a state key to the payload.
-                        if (LmdbRowKeyFactoryFactory.isNotStateKey(keyBuffer)) {
-                            // Add to the size of the current payload.
-                            size += 4;
-                            size += keyBuffer.remaining();
-                            size += 4;
-                            size += valBuffer.remaining();
-                            count++;
+                        // Add to the size of the current payload.
+                        size += 4;
+                        size += keyBuffer.remaining();
+                        size += 4;
+                        size += valBuffer.remaining();
+                        count++;
 
-                            if (size < maxPayloadSize || count == 1) {
-                                payloadOutput.writeInt(keyBuffer.remaining());
-                                payloadOutput.writeByteBuffer(keyBuffer);
-                                payloadOutput.writeInt(valBuffer.remaining());
-                                payloadOutput.writeByteBuffer(valBuffer);
+                        if (size < maxPayloadSize || count == 1) {
+                            payloadOutput.writeInt(keyBuffer.remaining());
+                            payloadOutput.writeByteBuffer(keyBuffer);
+                            payloadOutput.writeInt(valBuffer.remaining());
+                            payloadOutput.writeByteBuffer(valBuffer);
 
-                                db.delete(writeTxn, keyBuffer.flip());
+                            db.delete(writeTxn, keyBuffer.flip());
 
-                            } else {
-                                // We have reached the maximum payload size so stop adding.
-                                // We also can't be complete as more payloads will be needed.
-                                finalPayload.set(false);
-                                break;
-                            }
+                        } else {
+                            // We have reached the maximum payload size so stop adding.
+                            // We also can't be complete as more payloads will be needed.
+                            finalPayload.set(false);
+                            break;
                         }
                     }
                 });

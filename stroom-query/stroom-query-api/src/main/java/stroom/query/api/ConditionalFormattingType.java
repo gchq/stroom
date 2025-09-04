@@ -8,7 +8,8 @@ import java.util.List;
 public enum ConditionalFormattingType implements HasDisplayValue {
     BACKGROUND("Background"),
     TEXT("Text"),
-    CUSTOM("Custom");
+    CUSTOM("Custom"),
+    ;
 
     public static final List<ConditionalFormattingType> LIST = new ArrayList<>();
 

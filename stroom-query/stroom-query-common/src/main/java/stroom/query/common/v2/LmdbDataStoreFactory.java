@@ -46,6 +46,7 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
     private final MapDataStoreFactory mapDataStoreFactory;
     private final ByteBufferFactory bufferFactory;
     private final ExpressionPredicateFactory expressionPredicateFactory;
+    private final AnnotationMapperFactory annotationMapperFactory;
 
     @Inject
     public LmdbDataStoreFactory(final LmdbEnvDirFactory lmdbEnvDirFactory,
@@ -54,13 +55,15 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                                 final Provider<Executor> executorProvider,
                                 final MapDataStoreFactory mapDataStoreFactory,
                                 final ByteBufferFactory bufferFactory,
-                                final ExpressionPredicateFactory expressionPredicateFactory) {
+                                final ExpressionPredicateFactory expressionPredicateFactory,
+                                final AnnotationMapperFactory annotationMapperFactory) {
         this.lmdbEnvDirFactory = lmdbEnvDirFactory;
         this.resultStoreConfigProvider = resultStoreConfigProvider;
         this.executorProvider = executorProvider;
         this.mapDataStoreFactory = mapDataStoreFactory;
         this.bufferFactory = bufferFactory;
         this.expressionPredicateFactory = expressionPredicateFactory;
+        this.annotationMapperFactory = annotationMapperFactory;
 
         // This config prop requires restart, so we can hold on to it
         this.searchResultStoreDir = getLocalDir(resultStoreConfigProvider.get(), pathCreator);
@@ -124,7 +127,8 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                     executorProvider,
                     errorConsumer,
                     bufferFactory,
-                    expressionPredicateFactory);
+                    expressionPredicateFactory,
+                    annotationMapperFactory);
         }
     }
 

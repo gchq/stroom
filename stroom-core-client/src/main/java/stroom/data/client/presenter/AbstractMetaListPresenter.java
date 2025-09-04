@@ -419,7 +419,7 @@ public abstract class AbstractMetaListPresenter
     }
 
     private Set<Long> getResultStreamIdSet() {
-        final HashSet<Long> rtn = new HashSet<>();
+        final Set<Long> rtn = new HashSet<>();
         if (resultPage != null) {
             for (final MetaRow e : resultPage.getValues()) {
                 rtn.add(e.getMeta().getId());

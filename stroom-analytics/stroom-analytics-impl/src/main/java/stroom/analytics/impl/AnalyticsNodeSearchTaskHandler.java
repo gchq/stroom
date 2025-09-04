@@ -50,7 +50,6 @@ import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.query.language.functions.ref.ErrorConsumer;
-import stroom.search.extraction.AnnotationsDecoratorFactory;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.search.impl.NodeSearchTask;
 import stroom.search.impl.NodeSearchTaskHandler;
@@ -63,6 +62,7 @@ import stroom.task.api.TaskTerminatedException;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ErrorMessage;
 
 import jakarta.inject.Inject;
 
@@ -81,7 +81,6 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnalyticsNodeSearchTaskHandler.class);
 
-    private final AnnotationsDecoratorFactory annotationsDecoratorFactory;
     private final SecurityContext securityContext;
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
@@ -94,13 +93,11 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
     private TaskContext parentContext;
 
     @Inject
-    AnalyticsNodeSearchTaskHandler(final AnnotationsDecoratorFactory annotationsDecoratorFactory,
-                                   final SecurityContext securityContext,
+    AnalyticsNodeSearchTaskHandler(final SecurityContext securityContext,
                                    final ExecutorProvider executorProvider,
                                    final TaskContextFactory taskContextFactory,
                                    final AnalyticDataStores analyticDataStores,
                                    final ExpressionPredicateFactory expressionPredicateFactory) {
-        this.annotationsDecoratorFactory = annotationsDecoratorFactory;
         this.securityContext = securityContext;
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
@@ -139,11 +136,6 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                     .addPrefixExcludeFilter(AnnotationDecorationFields.ANNOTATION_FIELD_PREFIX)
                     .build();
             final ExpressionOperator expression = expressionFilter.copy(query.getExpression());
-
-            // Decorate result with annotations.
-            final ValuesConsumer valuesConsumer =
-                    annotationsDecoratorFactory.create(coprocessors, coprocessors.getFieldIndex(), query);
-
             final List<CompletableFuture<Void>> futures = new ArrayList<>();
             try {
                 final FieldIndex fieldIndex = coprocessors.getFieldIndex();
@@ -168,10 +160,9 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                                             task,
                                             doc,
                                             expression,
-                                            fieldIndex,
                                             taskContext,
                                             hitCount,
-                                            valuesConsumer,
+                                            coprocessors,
                                             coprocessors.getErrorConsumer(),
                                             fieldArray,
                                             expressionMatcher));
@@ -205,9 +196,8 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
     }
 
     private void searchAnalyticDoc(final NodeSearchTask task,
-                                   final AbstractAnalyticRuleDoc doc,
+                                   final AnalyticRuleDoc doc,
                                    final ExpressionOperator expression,
-                                   final FieldIndex fieldIndex,
                                    final TaskContext parentContext,
                                    final LongAdder hitCount,
                                    final ValuesConsumer valuesConsumer,
@@ -320,9 +310,9 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
         }
 
         @Override
-        public TableResultConsumer errors(final List<String> errors) {
-            for (final String error : errors) {
-                LOGGER.error(error);
+        public TableResultConsumer errorMessages(final List<ErrorMessage> errorMessages) {
+            for (final ErrorMessage errorMessage : errorMessages) {
+                LOGGER.error(errorMessage.toString());
             }
             return this;
         }

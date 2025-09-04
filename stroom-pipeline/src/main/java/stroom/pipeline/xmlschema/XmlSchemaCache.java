@@ -86,8 +86,6 @@ public class XmlSchemaCache implements EntityEvent.Handler {
                     final List<String> systemIdList = new ArrayList<>();
 
                     // Get a list of matching schemas.
-                    final List<DocRef> allSchemas = xmlSchemaStore.list();
-
                     final List<XmlSchemaDoc> schemas = xmlSchemaStore.find(criteria).getValues();
                     schemas.forEach(schema -> {
                         addToMap(schemaNameMap, schema.getName(), schema);
@@ -96,7 +94,7 @@ public class XmlSchemaCache implements EntityEvent.Handler {
 
                         if (schema.getSystemId() != null) {
                             final String systemId = schema.getSystemId().trim();
-                            if (systemId.length() > 0) {
+                            if (!systemId.isEmpty()) {
                                 systemIdList.add(systemId);
                             }
                         }
@@ -109,7 +107,7 @@ public class XmlSchemaCache implements EntityEvent.Handler {
                         sb.append(systemId);
                         sb.append("\n");
                     }
-                    if (sb.length() > 0) {
+                    if (!sb.isEmpty()) {
                         sb.setLength(sb.length() - 1);
                     }
                     final String locations = sb.toString();
@@ -190,14 +188,14 @@ public class XmlSchemaCache implements EntityEvent.Handler {
         public XmlSchemaDoc getBestMatch(final String systemId, final String namespaceURI) {
             // Try and find a matching schema by system id.
             List<XmlSchemaDoc> matches = schemaSystemIdMap.get(systemId);
-            if (matches != null && matches.size() > 0) {
-                return matches.get(0);
+            if (matches != null && !matches.isEmpty()) {
+                return matches.getFirst();
             }
 
             // If not found try and match with namespace URI.
             matches = schemaNamespaceURIMap.get(namespaceURI);
-            if (matches != null && matches.size() > 0) {
-                return matches.get(0);
+            if (matches != null && !matches.isEmpty()) {
+                return matches.getFirst();
             }
 
             return null;

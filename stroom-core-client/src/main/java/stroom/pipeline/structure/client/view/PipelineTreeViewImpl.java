@@ -22,6 +22,7 @@ import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter.PipelineTreeView;
 import stroom.pipeline.structure.client.presenter.PipelineTreeUiHandlers;
 import stroom.pipeline.structure.client.presenter.StructureValidationUtil;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Severity;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
@@ -39,15 +40,16 @@ import java.util.Map;
 public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandlers> implements PipelineTreeView {
 
     private final PipelineTreePanel treePanel;
+    private final PipelineTreePanel subTreePanel;
     private final DraggableTreePanel<PipelineElement> layoutPanel;
     private SelectionModel<PipelineElement> selectionModel;
     private boolean allowNullSelection = true;
     private PipelineModel pipelineModel;
 
     @Inject
-    public PipelineTreeViewImpl(final PipelineElementBoxFactory pipelineElementBoxFactory) {
-        treePanel = new PipelineTreePanel(pipelineElementBoxFactory);
-        final PipelineTreePanel subTreePanel = new PipelineTreePanel(pipelineElementBoxFactory);
+    public PipelineTreeViewImpl() {
+        treePanel = new PipelineTreePanel();
+        subTreePanel = new PipelineTreePanel();
 
         layoutPanel = new DraggableTreePanel<PipelineElement>(treePanel, subTreePanel) {
             @Override
@@ -90,6 +92,7 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     public void setPipelineModel(final PipelineModel pipelineModel) {
         this.pipelineModel = pipelineModel;
         treePanel.setPipelineModel(pipelineModel);
+        subTreePanel.setPipelineModel(pipelineModel);
     }
 
     @Override

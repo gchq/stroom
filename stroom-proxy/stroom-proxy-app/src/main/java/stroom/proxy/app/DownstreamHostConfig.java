@@ -3,6 +3,8 @@ package stroom.proxy.app;
 import stroom.security.shared.ApiKeyCheckResource;
 import stroom.security.shared.ApiKeyResource;
 import stroom.security.shared.HashAlgorithm;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.net.UriConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NullSafe;
@@ -22,6 +24,8 @@ import java.util.Objects;
  */
 @JsonPropertyOrder(alphabetic = true)
 public class DownstreamHostConfig extends UriConfig implements IsProxyConfig {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DownstreamHostConfig.class);
 
     public static final String DEFAULT_API_KEY_VERIFICATION_URL_PATH = ResourcePaths.buildAuthenticatedApiPath(
             ApiKeyResource.BASE_PATH,
@@ -125,9 +129,16 @@ public class DownstreamHostConfig extends UriConfig implements IsProxyConfig {
         return apiKey;
     }
 
-    @JsonPropertyDescription("The path to use for verifying API keys. If not set the downstreamHost configuration " +
-                             "will be combined with the default API path for the verification. This is only needed " +
-                             "when identityProviderType is NO_IDP.")
+    @JsonPropertyDescription(
+            "The URL/path to use for verifying API keys. " +
+            "If not set the downstreamHost configuration will be combined with the default API " +
+            "path (/api/apikey/v2/verifyApiKey)." +
+            "If this property is not set, the downstreamHost configuration will be combined with the default API " +
+            "path (/status). " +
+            "If this property is just a path, it will be combined with the downstreamHost configuration. " +
+            "Only set this property if you wish to use a non-default path " +
+            "or you want to use a different host/port/scheme to that defined in downstreamHost. " +
+            "This property is also only needed when identityProviderType is NO_IDP.")
     @JsonProperty
     public String getApiKeyVerificationUrl() {
         return apiKeyVerificationUrl;
@@ -164,15 +175,49 @@ public class DownstreamHostConfig extends UriConfig implements IsProxyConfig {
     /**
      * @return The base URI combined with path.
      */
-    public String getUri(final String path) {
-        final StringBuilder sb = new StringBuilder(super.asUri());
-        if (NullSafe.isNonBlankString(path)) {
-            if (!path.startsWith("/")) {
-                sb.append("/");
+    public String createUri(final String path) {
+        final String baseUri = super.asUri();
+        final String trimmedPath = NullSafe.trim(path);
+        final StringBuilder sb = new StringBuilder(baseUri);
+        if (NullSafe.isNonBlankString(trimmedPath) && !trimmedPath.equals("/")) {
+            if (!baseUri.endsWith("/") && !trimmedPath.startsWith("/")) {
+                sb.append("/")
+                        .append(trimmedPath);
+            } else if (baseUri.endsWith("/")
+                       && trimmedPath.startsWith("/")
+                       && trimmedPath.length() > 1) {
+                sb.append(trimmedPath.substring(1));
+            } else {
+                sb.append(trimmedPath);
             }
         }
-        sb.append(path);
-        return sb.toString();
+        final String url = sb.toString();
+        LOGGER.debug("createUri() - path: '{}', url: '{}'", path, url);
+        return url;
+    }
+
+    /**
+     * Returns fullUri if it is non-blank, else builds a URI
+     * by this downstreamHost config with defaultPath.
+     */
+    public String createUri(final String urlOrPath,
+                            final String defaultPath) {
+        final String url;
+        if (NullSafe.isNonBlankString(urlOrPath)) {
+            final String trimmedUrlOrPath = urlOrPath.trim();
+            if (trimmedUrlOrPath.startsWith("/")) {
+                // Just a path, so append it to the downstream host
+                url = createUri(trimmedUrlOrPath);
+            } else {
+                // Have to assume it is a full url with host/port/etc
+                url = trimmedUrlOrPath;
+            }
+        } else {
+            url = createUri(Objects.requireNonNull(defaultPath, "defaultPath must be supplied"));
+        }
+        LOGGER.debug("createUri() - urlOrPath: '{}', defaultPath: '{}', url: '{}'",
+                urlOrPath, defaultPath, url);
+        return url;
     }
 
     @Override

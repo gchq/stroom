@@ -21,6 +21,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.security.api.UserService;
 import stroom.security.impl.db.SecurityDbConnProvider;
 import stroom.security.impl.db.SecurityTestUtil;
+import stroom.security.shared.FindUserContext;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.User;
@@ -156,7 +157,7 @@ class TestUserServiceImpl {
         final PageRequest pageRequest = new PageRequest(0, 100);
         final ExpressionOperator expression = QuickFilterExpressionParser
                 .parse(filter, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELDS_MAP);
-        return new FindUserCriteria(pageRequest, null, expression, false);
+        return new FindUserCriteria(pageRequest, null, expression, FindUserContext.PERMISSIONS);
     }
 
     private User createUser(final String baseName) {

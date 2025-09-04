@@ -21,11 +21,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestAttributeMap {
+
+    private static final Pattern UUID_PATTERN = Pattern.compile(
+            "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$");
 
     @Test
     void testSimple() {
@@ -259,7 +263,7 @@ class TestAttributeMap {
                 .withInputTypes(AttributeMap.class, String.class)
                 .withOutputType(String.class)
                 .withTestFunction(testCase -> {
-                    final var attrMap = testCase.getInput()._1;
+                    final AttributeMap attrMap = testCase.getInput()._1;
                     return attrMap.get(testCase.getInput()._2);
                 })
                 .withSimpleEqualityAssertion()
@@ -287,7 +291,7 @@ class TestAttributeMap {
                 .withInputTypes(AttributeMap.class, String.class)
                 .withOutputType(boolean.class)
                 .withTestFunction(testCase -> {
-                    final var attrMap = testCase.getInput()._1;
+                    final AttributeMap attrMap = testCase.getInput()._1;
                     return attrMap.containsKey(testCase.getInput()._2);
                 })
                 .withSimpleEqualityAssertion()
@@ -317,7 +321,7 @@ class TestAttributeMap {
                 .withInputTypes(AttributeMap.class, String.class)
                 .withOutputType(boolean.class)
                 .withTestFunction(testCase -> {
-                    final var attrMap = testCase.getInput()._1;
+                    final AttributeMap attrMap = testCase.getInput()._1;
                     return attrMap.containsValue(testCase.getInput()._2);
                 })
                 .withSimpleEqualityAssertion()
@@ -674,5 +678,20 @@ class TestAttributeMap {
                 .isEqualTo("value(initial)");
         assertThat(callCount)
                 .hasValue(0);
+    }
+
+    @Test
+    void testUUid() {
+        final AttributeMap attributeMap = new AttributeMap();
+        final String val1 = attributeMap.putRandomUuidIfAbsent("foo");
+        assertThat(val1)
+                .matches(UUID_PATTERN);
+        assertThat(attributeMap.get("foo"))
+                .isEqualTo(val1);
+        final String val2 = attributeMap.putRandomUuidIfAbsent("foo");
+        assertThat(val2)
+                .isEqualTo(val1);
+        assertThat(attributeMap.get("foo"))
+                .isEqualTo(val1);
     }
 }

@@ -38,6 +38,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 abstract class ManualCheckStreamPerformance {
+
     private static int testThreadCount = 10;
     private static int testSize = 100000;
 
@@ -48,7 +49,7 @@ abstract class ManualCheckStreamPerformance {
     }
 
     static void averageTimeCheck(final String msg, final TimedAction provider) throws InterruptedException {
-        final HashMap<Thread, Long> threadTimes = new HashMap<>();
+        final Map<Thread, Long> threadTimes = new HashMap<>();
         for (int i = 0; i < testThreadCount; i++) {
             final Thread t = new Thread((() -> {
                 try {
@@ -205,10 +206,12 @@ abstract class ManualCheckStreamPerformance {
     }
 
     public interface TimedAction {
+
         long newTimedAction() throws IOException;
     }
 
     public static class BlockGzipManualCheckStreamPerformance extends ManualCheckStreamPerformance {
+
         Path tempFile;
         int blockSize;
         long blockCount;
@@ -245,6 +248,7 @@ abstract class ManualCheckStreamPerformance {
     }
 
     public static class UncompressedCheckStreamPerformance extends ManualCheckStreamPerformance {
+
         Path tempFile;
 
         @Override
@@ -274,6 +278,7 @@ abstract class ManualCheckStreamPerformance {
     }
 
     public static class GzipCheckStreamPerformance extends ManualCheckStreamPerformance {
+
         Path tempFile;
 
         @Override

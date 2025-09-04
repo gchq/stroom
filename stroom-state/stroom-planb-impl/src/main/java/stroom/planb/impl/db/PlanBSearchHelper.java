@@ -7,9 +7,10 @@ import stroom.query.api.ExpressionUtil;
 import stroom.query.api.Format;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
-import stroom.query.common.v2.ValArrayFunctionFactory;
+import stroom.query.common.v2.ValuesFunctionFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.Values;
 import stroom.query.language.functions.ValuesConsumer;
 
 import org.lmdbjava.CursorIterable;
@@ -37,29 +38,29 @@ public class PlanBSearchHelper {
         final List<String> fields = ExpressionUtil.fields(criteria.getExpression());
         fields.forEach(fieldIndex::create);
 
-        final ValueFunctionFactories<Val[]> valueFunctionFactories = createValueFunctionFactories(fieldIndex);
-        final Optional<Predicate<Val[]>> optionalPredicate = expressionPredicateFactory
+        final ValueFunctionFactories<Values> valueFunctionFactories = createValueFunctionFactories(fieldIndex);
+        final Optional<Predicate<Values>> optionalPredicate = expressionPredicateFactory
                 .createOptional(criteria.getExpression(), valueFunctionFactories, dateTimeSettings);
-        final Predicate<Val[]> predicate = optionalPredicate.orElse(vals -> true);
+        final Predicate<Values> predicate = optionalPredicate.orElse(vals -> true);
 
         // TODO : It would be faster if we limit the iteration to keys based on the criteria.
         try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(readTxn)) {
             for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
-                final Val[] vals = valuesExtractor.apply(readTxn, keyVal);
+                final Values vals = valuesExtractor.apply(readTxn, keyVal);
                 if (predicate.test(vals)) {
-                    consumer.accept(vals);
+                    consumer.accept(vals.toArray());
                 }
             }
         }
     }
 
-    public static ValueFunctionFactories<Val[]> createValueFunctionFactories(final FieldIndex fieldIndex) {
+    public static ValueFunctionFactories<Values> createValueFunctionFactories(final FieldIndex fieldIndex) {
         return fieldName -> {
             final Integer index = fieldIndex.getPos(fieldName);
             if (index == null) {
                 throw new RuntimeException("Unexpected field: " + fieldName);
             }
-            return new ValArrayFunctionFactory(Column.builder().format(Format.TEXT).build(), index);
+            return new ValuesFunctionFactory(Column.builder().format(Format.TEXT).build(), index);
         };
     }
 
@@ -105,6 +106,6 @@ public class PlanBSearchHelper {
 
     public interface ValuesExtractor {
 
-        Val[] apply(Txn<ByteBuffer> readTxn, KeyVal<ByteBuffer> kv);
+        Values apply(Txn<ByteBuffer> readTxn, KeyVal<ByteBuffer> kv);
     }
 }

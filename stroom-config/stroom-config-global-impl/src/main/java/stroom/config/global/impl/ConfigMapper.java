@@ -258,7 +258,7 @@ public class ConfigMapper {
                 this::defaultValuePropertyConsumer,
                 false);
 
-        final HashSet<PropertyPath> allPropertyPaths = new HashSet<>(defaultPropertiesMap.keySet());
+        final Set<PropertyPath> allPropertyPaths = new HashSet<>(defaultPropertiesMap.keySet());
 //        throwAwayPropertyMap.clear();
 
         buildObjectInfoMap(

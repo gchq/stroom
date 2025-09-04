@@ -167,6 +167,38 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testEqualProperties_multipleGetters() {
+        final ABC obj1 = new ABC("a", "b", "c");
+        final ABC obj2 = new ABC("A", "b", "c");
+        final ABC obj3 = new ABC("a", "B", "c");
+        final ABC obj4 = new ABC("a", "b", "C");
+        final ABC obj5 = new ABC("a", null, "c");
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(
+                        new TypeLiteral<Tuple2<ABC, ABC>>() {
+                        })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> {
+                    return NullSafe.equalProperties(
+                            testCase.getInput()._1,
+                            testCase.getInput()._2,
+                            List.of(ABC::a, ABC::b, ABC::c));
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(obj1, obj1), true)
+                .addCase(Tuple.of(obj2, obj2), true)
+                .addCase(Tuple.of(obj3, obj3), true)
+                .addCase(Tuple.of(obj4, obj4), true)
+                .addCase(Tuple.of(obj5, obj5), true)
+                .addCase(Tuple.of(obj1, obj2), false)
+                .addCase(Tuple.of(obj1, obj3), false)
+                .addCase(Tuple.of(obj1, obj4), false)
+                .addCase(Tuple.of(obj1, obj5), false)
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testAllNull() {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String[].class)
@@ -899,7 +931,8 @@ class TestNullSafe {
                         })
                 .withOutputType(boolean.class)
                 .withTestFunction(testCase -> {
-                    final var mapWrapper = testCase.getInput()._1;
+                    final MapWrapper mapWrapper = testCase.getInput()._1;
+                    //noinspection VariableTypeCanBeExplicit
                     final var getter = testCase.getInput()._2;
                     return NullSafe.isEmptyMap(mapWrapper, getter);
                 })
@@ -924,7 +957,8 @@ class TestNullSafe {
                         })
                 .withOutputType(boolean.class)
                 .withTestFunction(testCase -> {
-                    final var mapWrapper = testCase.getInput()._1;
+                    final MapWrapper mapWrapper = testCase.getInput()._1;
+                    //noinspection VariableTypeCanBeExplicit
                     final var getter = testCase.getInput()._2;
                     return NullSafe.hasEntries(mapWrapper, getter);
                 })
@@ -1178,8 +1212,8 @@ class TestNullSafe {
                 .withInputTypes(String.class, String.class)
                 .withOutputType(Boolean.class)
                 .withTestFunction(testCase -> {
-                    final var str = testCase.getInput()._1;
-                    final var subStr = testCase.getInput()._2;
+                    final String str = testCase.getInput()._1;
+                    final String subStr = testCase.getInput()._2;
                     return NullSafe.contains(str, subStr);
                 })
                 .withSimpleEqualityAssertion()
@@ -1199,8 +1233,8 @@ class TestNullSafe {
                 .withInputTypes(String.class, String.class)
                 .withOutputType(Boolean.class)
                 .withTestFunction(testCase -> {
-                    final var str = testCase.getInput()._1;
-                    final var subStr = testCase.getInput()._2;
+                    final String str = testCase.getInput()._1;
+                    final String subStr = testCase.getInput()._2;
                     return NullSafe.containsIgnoringCase(str, subStr);
                 })
                 .withSimpleEqualityAssertion()
@@ -1223,8 +1257,8 @@ class TestNullSafe {
                 })
                 .withOutputType(Boolean.class)
                 .withTestFunction(testCase -> {
-                    final var collection = testCase.getInput()._1;
-                    final var item = testCase.getInput()._2;
+                    final Set<String> collection = testCase.getInput()._1;
+                    final String item = testCase.getInput()._2;
                     return NullSafe.collectionContains(collection, item);
                 })
                 .withSimpleEqualityAssertion()
@@ -1243,8 +1277,8 @@ class TestNullSafe {
                 })
                 .withOutputType(Boolean.class)
                 .withTestFunction(testCase -> {
-                    final var map = testCase.getInput()._1;
-                    final var key = testCase.getInput()._2;
+                    final Map<String, String> map = testCase.getInput()._1;
+                    final String key = testCase.getInput()._2;
                     return NullSafe.containsKey(map, key);
                 })
                 .withSimpleEqualityAssertion()
@@ -1269,8 +1303,8 @@ class TestNullSafe {
                 })
                 .withOutputType(boolean.class)
                 .withTestFunction(testCase -> {
-                    final var stringWrapper = testCase.getInput()._1;
-                    final var getter = testCase.getInput()._2;
+                    final StringWrapper stringWrapper = testCase.getInput()._1;
+                    final Function<StringWrapper, String> getter = testCase.getInput()._2;
                     return NullSafe.isEmptyString(stringWrapper, getter);
                 })
                 .withSimpleEqualityAssertion()
@@ -1295,8 +1329,8 @@ class TestNullSafe {
                 })
                 .withOutputType(boolean.class)
                 .withTestFunction(testCase -> {
-                    final var stringWrapper = testCase.getInput()._1;
-                    final var getter = testCase.getInput()._2;
+                    final StringWrapper stringWrapper = testCase.getInput()._1;
+                    final Function<StringWrapper, String> getter = testCase.getInput()._2;
                     return NullSafe.isBlankString(stringWrapper, getter);
                 })
                 .withSimpleEqualityAssertion()
@@ -2890,5 +2924,13 @@ class TestNullSafe {
         B,
         C,
         ;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record ABC(String a, String b, String c) {
+
     }
 }

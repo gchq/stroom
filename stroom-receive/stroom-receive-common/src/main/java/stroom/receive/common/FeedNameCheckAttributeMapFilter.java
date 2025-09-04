@@ -106,7 +106,7 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
         /**
          * Finds unwanted chars in a param
          */
-        private static final Pattern PARAM_REPLACE_PATTERN = Pattern.compile("[^a-zA-Z0-9_]");
+        private static final Pattern PARAM_REPLACEMENT_REPLACE_PATTERN = Pattern.compile("[^a-zA-Z0-9_]");
         /**
          * Finds unwanted chars in the static text
          */
@@ -121,7 +121,7 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
                 try {
                     this.templator = TemplateUtil.parseTemplate(
                             configState.feedNameTemplate,
-                            FeedNameGenerator::normaliseParam,
+                            FeedNameGenerator::normaliseParamReplacement,
                             FeedNameGenerator::normaliseStaticText);
                 } catch (final Exception e) {
                     throw new IllegalArgumentException(LogUtil.message(
@@ -137,13 +137,13 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
         }
 
         public String generateName(final AttributeMap attributeMap) {
-            return templator.apply(attributeMap);
+            return templator.generateWith(attributeMap);
         }
 
-        private static String normaliseParam(final String name) {
+        private static String normaliseParamReplacement(final String name) {
             String result = NullSafe.trim(name);
             result = result.toUpperCase();
-            result = PARAM_REPLACE_PATTERN.matcher(result)
+            result = PARAM_REPLACEMENT_REPLACE_PATTERN.matcher(result)
                     .replaceAll("_");
             return result;
         }

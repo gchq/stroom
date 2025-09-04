@@ -29,7 +29,6 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.web.bindery.event.shared.EventBus;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -133,6 +132,8 @@ public class DynamicColumnSelectionListModel
             resultPage = counts;
         } else if ("Custom.".equals(parentPath)) {
             resultPage = custom;
+//        } else if ("Annotation Links.".equals(parentPath)) {
+//            resultPage = annotationLinks;
         } else if ("Annotations.".equals(parentPath)) {
             resultPage = annotations;
         } else if ("Data Source.".equals(parentPath)) {
@@ -302,65 +303,45 @@ public class DynamicColumnSelectionListModel
 
         private static String buildAnnotationFieldExpression(final FieldType fieldType,
                                                              final String indexFieldName) {
-            String fieldParam = ParamUtil.create(indexFieldName);
-            if (FieldType.DATE.equals(fieldType)) {
-                fieldParam = "formatDate(" + fieldParam + ")";
-            }
-
-            final List<String> params = new ArrayList<>();
-            params.add(fieldParam);
-            addFieldIfPresent(params, "annotation:Id");
-            addFieldIfPresent(params, "StreamId");
-            addFieldIfPresent(params, "EventId");
-
-            final String argsStr = String.join(", ", params);
-            return "annotation(" + argsStr + ")";
+            return ParamUtil.create(indexFieldName);
         }
 
-        private static void addFieldIfPresent(final List<String> params,
-                                              final String fieldName) {
-            params.add(ParamUtil.create(fieldName));
-        }
-
-        private static Column convertFieldInfo(final QueryField fieldInfo) {
-            final String indexFieldName = fieldInfo.getFldName();
+        private static Column convertFieldInfo(final QueryField queryField) {
+            final String indexFieldName = queryField.getFldName();
             final Builder columnBuilder = Column.builder();
             columnBuilder.id(UniqueUtil.generateUUID());
             columnBuilder.name(indexFieldName);
             columnBuilder.format(Format.GENERAL);
 
-            final String expression;
-
-            // Annotation decoration fields are special and are turned into links with general formatting.
-            if (indexFieldName.startsWith(AnnotationDecorationFields.ANNOTATION_FIELD_PREFIX)) {
-                // Turn 'annotation:.*' fields into annotation links that make use of either the special
-                // eventId/streamId fields (so event results can link back to annotations) OR
-                // the annotation:Id field so Annotations datasource results can link back.
-                expression = buildAnnotationFieldExpression(fieldInfo.getFldType(), indexFieldName);
-                columnBuilder.expression(expression);
-
-            } else {
-                final FieldType fieldType = fieldInfo.getFldType();
-                if (fieldType != null) {
-                    switch (fieldType) {
-                        case DATE:
-                            columnBuilder.format(Format.DATE_TIME);
-                            break;
-                        case INTEGER:
-                        case LONG:
-                        case FLOAT:
-                        case DOUBLE:
-                        case ID:
-                            columnBuilder.format(Format.NUMBER);
-                            break;
-                        default:
-                            columnBuilder.format(Format.GENERAL);
-                            break;
-                    }
+            final FieldType fieldType = queryField.getFldType();
+            if (fieldType != null) {
+                switch (fieldType) {
+                    case DATE:
+                        columnBuilder.format(Format.DATE_TIME);
+                        break;
+                    case INTEGER:
+                    case LONG:
+                    case FLOAT:
+                    case DOUBLE:
+                    case ID:
+                        columnBuilder.format(Format.NUMBER);
+                        break;
+                    default:
+                        columnBuilder.format(Format.GENERAL);
+                        break;
                 }
+            }
 
-                expression = ParamUtil.create(indexFieldName);
-                columnBuilder.expression(expression);
+            columnBuilder.expression(ParamUtil.create(indexFieldName));
+
+            // Make annotation column names more readable.
+            if (indexFieldName.startsWith(AnnotationDecorationFields.ANNOTATION_FIELD_PREFIX)) {
+                String columnName = indexFieldName.substring(
+                        AnnotationDecorationFields.ANNOTATION_FIELD_PREFIX.length());
+                columnName = columnName.replaceAll("([A-Z])", " $1");
+                columnName = columnName.replaceAll("Uuid", "UUID");
+                columnName = "Annotation " + columnName.trim();
+                columnBuilder.name(columnName);
             }
 
             return columnBuilder.build();

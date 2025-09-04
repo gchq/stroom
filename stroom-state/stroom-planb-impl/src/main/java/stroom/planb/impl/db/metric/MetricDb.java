@@ -46,14 +46,14 @@ import stroom.query.api.Format;
 import stroom.query.api.UserTimeZone;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
-import stroom.query.common.v2.ValArrayFunctionFactory;
+import stroom.query.common.v2.ValuesFunctionFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.UserTimeZoneUtil;
-import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
+import stroom.query.language.functions.Values;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.io.FileUtil;
 import stroom.util.json.JsonUtil;
@@ -322,10 +322,10 @@ public class MetricDb extends AbstractDb<TemporalKey, Long> {
         fields.forEach(fieldIndex::create);
         env.read(readTxn -> {
 
-            final ValueFunctionFactories<Val[]> valueFunctionFactories = createValueFunctionFactories(fieldIndex);
-            final Optional<Predicate<Val[]>> optionalPredicate = expressionPredicateFactory
+            final ValueFunctionFactories<Values> valueFunctionFactories = createValueFunctionFactories(fieldIndex);
+            final Optional<Predicate<Values>> optionalPredicate = expressionPredicateFactory
                     .createOptional(criteria.getExpression(), valueFunctionFactories, dateTimeSettings);
-            final Predicate<Val[]> predicate = optionalPredicate.orElse(vals -> true);
+            final Predicate<Values> predicate = optionalPredicate.orElse(vals -> true);
             final List<ValConverter<Metric>> converters = createValuesExtractor(fieldIndex);
 
             // TODO : It would be faster if we limit the iteration to keys based on the criteria.
@@ -334,7 +334,7 @@ public class MetricDb extends AbstractDb<TemporalKey, Long> {
                     final TemporalKey key = keySerde.read(readTxn, keyVal.key());
                     valuesSerde.getValues(key, keyVal.val(), converters, vals -> {
                         if (predicate.test(vals)) {
-                            consumer.accept(vals);
+                            consumer.accept(vals.toArray());
                         }
                     });
                 }
@@ -344,13 +344,13 @@ public class MetricDb extends AbstractDb<TemporalKey, Long> {
         });
     }
 
-    public static ValueFunctionFactories<Val[]> createValueFunctionFactories(final FieldIndex fieldIndex) {
+    public static ValueFunctionFactories<Values> createValueFunctionFactories(final FieldIndex fieldIndex) {
         return fieldName -> {
             final Integer index = fieldIndex.getPos(fieldName);
             if (index == null) {
                 throw new RuntimeException("Unexpected field: " + fieldName);
             }
-            return new ValArrayFunctionFactory(Column.builder().format(Format.TEXT).build(), index);
+            return new ValuesFunctionFactory(Column.builder().format(Format.TEXT).build(), index);
         };
     }
 
@@ -383,7 +383,25 @@ public class MetricDb extends AbstractDb<TemporalKey, Long> {
 
     @Override
     public long deleteOldData(final Instant deleteBefore, final boolean useStateTime) {
-        return env.readAndWrite((readTxn, writer) -> {
+        return env.write(writer -> {
+            final long count = deleteOldData(writer, deleteBefore, useStateTime);
+
+            // Delete unused lookup keys.
+            if (!Thread.currentThread().isInterrupted()) {
+                env.read(readTxn -> {
+                    keyRecorder.deleteUnused(readTxn, writer);
+                    return null;
+                });
+            }
+
+            return count;
+        });
+    }
+
+    private long deleteOldData(final LmdbWriter writer,
+                               final Instant deleteBefore,
+                               final boolean useStateTime) {
+        return env.read(readTxn -> {
             long changeCount = 0;
             try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
                 final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
@@ -401,18 +419,15 @@ public class MetricDb extends AbstractDb<TemporalKey, Long> {
                     if (time.isBefore(deleteBefore)) {
                         // If this is data we no longer want to retain then delete it.
                         dbi.delete(writer.getWriteTxn(), kv.key());
-                        writer.tryCommit();
                         changeCount++;
                     } else {
                         // Record used lookup keys.
                         keyRecorder.recordUsed(writer, kv.key());
                     }
+                    writer.tryCommit();
                 }
             }
-
-            // Delete unused lookup keys.
-            keyRecorder.deleteUnused(readTxn, writer);
-
+            writer.commit();
             return changeCount;
         });
     }

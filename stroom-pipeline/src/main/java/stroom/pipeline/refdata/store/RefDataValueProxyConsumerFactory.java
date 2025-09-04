@@ -73,10 +73,13 @@ public class RefDataValueProxyConsumerFactory {
         return refDataValueProxyConsumer;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Factory {
 
         RefDataValueProxyConsumerFactory create(final Receiver receiver,
                                                 final PipelineConfiguration pipelineConfiguration);
     }
-
 }

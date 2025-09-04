@@ -20,12 +20,4 @@ class TestStringEntryValue {
         assertThat(value.asUiValue())
                 .isEqualTo("foo");
     }
-
-    @Test
-    void getAsPersistedValue() {
-        final StringEntryValue value = StringEntryValue.of("foo");
-
-        assertThat(value.asPersistedValue())
-                .isEqualTo("foo");
-    }
 }

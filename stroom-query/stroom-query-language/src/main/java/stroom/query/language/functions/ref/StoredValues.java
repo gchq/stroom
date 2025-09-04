@@ -28,6 +28,13 @@ public class StoredValues {
     }
 
     @Override
+    public String toString() {
+        return "StoredValues{" +
+               "values=" + Arrays.toString(this.values) +
+               '}';
+    }
+
+    @Override
     public boolean equals(final Object o) {
         if (this == o) {
             return true;
@@ -42,5 +49,13 @@ public class StoredValues {
     @Override
     public int hashCode() {
         return Arrays.hashCode(values);
+    }
+
+    public StoredValues copy() {
+        final Object[] arr = new Object[values.length];
+        System.arraycopy(values, 0, arr, 0, values.length);
+        final StoredValues copy = new StoredValues(arr);
+        copy.setPeriod(period);
+        return copy;
     }
 }

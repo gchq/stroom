@@ -32,5 +32,11 @@
         <form:FormGroup>
             <tickbox:CustomCheckBox ui:field="showDetail" identity="basicTableSettingsShowGroupDetail" label="Show Group Detail"/>
         </form:FormGroup>
+        <form:FormGroup identity="basicTableSettingsOverrideMaxStringFieldLength" >
+            <tickbox:CustomCheckBox ui:field="overrideMaxStringFieldLength" label="Override Maximum String Field Length"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTableSettingsMaxStringFieldLength">
+            <valuespinner:ValueSpinner ui:field="maxStringFieldLength" width="200px"/>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

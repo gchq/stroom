@@ -62,7 +62,7 @@ public class ContentTemplatePlugin extends MonitoringPlugin<ContentTemplateTabPr
 
     @Override
     protected Action getOpenAction() {
-        return Action.GOTO_CONTENT_TEMPALTES;
+        return Action.GOTO_CONTENT_TEMPLATES;
     }
 
     private MenuItem createContentTemplateMenuItem() {

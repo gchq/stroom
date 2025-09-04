@@ -80,9 +80,10 @@ class GitRepoResourceImpl implements GitRepoResource {
     /**
      * Called on the server when a REST request is received from the
      * UI for a Git Push.
+     *
      * @param gitRepoPushDto The DTO holding the info.
      * @return a GitRepoResponse with all the messages about
-     *         whether it worked.
+     * whether it worked.
      */
     @Override
     public GitRepoResponse pushToGit(final GitRepoPushDto gitRepoPushDto) {
@@ -91,9 +92,9 @@ class GitRepoResourceImpl implements GitRepoResource {
         try {
             LOGGER.info("Pushing to Git repo: '{}'", gitRepoPushDto.getGitRepoDoc().getUrl());
             final List<Message> messages = gitRepoStorageServiceProvider.get()
-                            .exportDoc(gitRepoPushDto.getGitRepoDoc(),
-                                       gitRepoPushDto.getCommitMessage(),
-                                       true);
+                    .exportDoc(gitRepoPushDto.getGitRepoDoc(),
+                            gitRepoPushDto.getCommitMessage(),
+                            true);
             response = this.createResponse("Success:", messages);
         } catch (final Exception e) {
             LOGGER.error("Error pushing to Git URL '{}': {}",
@@ -108,6 +109,7 @@ class GitRepoResourceImpl implements GitRepoResource {
     /**
      * Called on the server when a REST request is received from the
      * UI for a Git Pull.
+     *
      * @param gitRepoDoc The doc holding git repo info.
      * @return a GitRepoRespose with all the messages about
      * whether it worked.
@@ -162,6 +164,7 @@ class GitRepoResourceImpl implements GitRepoResource {
     /**
      * Converts the response from the exportDoc method into something we can
      * send back to the UI and show to the user.
+     *
      * @param message The message to show at the top of list of messages.
      * @param messages The collection of messages for the export process.
      * @return the response for the UI. Never returns null.

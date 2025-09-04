@@ -2,6 +2,7 @@ package stroom.util;
 
 import com.codahale.metrics.health.HealthCheck;
 
+import java.util.NavigableMap;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collector;
@@ -24,7 +25,7 @@ public interface HasHealthCheck {
      * Return a Collector that collects to a TreeMap using the supplied key and value mappers. Duplicate keys will
      * result in a {@link RuntimeException}. Useful for creating sorted maps to go into HealthCheck detail values
      */
-    static <T, K, U> Collector<T, ?, TreeMap<K, U>> buildTreeMapCollector(
+    static <T, K, U> Collector<T, ?, NavigableMap<K, U>> buildTreeMapCollector(
             final Function<? super T, ? extends K> keyMapper,
             final Function<? super T, ? extends U> valueMapper) {
 

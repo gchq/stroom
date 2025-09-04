@@ -27,8 +27,6 @@ import stroom.importexport.api.ExportSummary;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.api.ImportExportDocumentEventLog;
 import stroom.importexport.api.ImportExportSerializer;
-import stroom.importexport.api.ImportExportSpec;
-import stroom.importexport.api.ImportExportSpec.ImportExportCaller;
 import stroom.importexport.api.NonExplorerDocRefProvider;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportSettings.ImportMode;
@@ -37,23 +35,17 @@ import stroom.importexport.shared.ImportState.State;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.io.AbstractFileVisitor;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Message;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.Severity;
-import stroom.util.yaml.YamlUtil;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -81,7 +73,7 @@ import java.util.stream.Collectors;
 
 class ImportExportSerializerImpl implements ImportExportSerializer {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ImportExportSerializerImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ImportExportSerializerImpl.class);
 
     public static final String FOLDER = ExplorerConstants.FOLDER_TYPE;
 
@@ -91,12 +83,6 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
     private final SecurityContext securityContext;
     private final ImportExportDocumentEventLog importExportDocumentEventLog;
     private static final byte[] LINE_END_CHAR_BYTES = "\n".getBytes(Charset.defaultCharset());
-
-    /** Name of the spec file, in the root of the directory structure */
-    private static final String SPEC_FILE_NAME = "metadata.spec";
-
-    /** Delimiter or separator used when converting paths to & from Explorer trees */
-    private static final String PATH_DELIMITER = "/";
 
     @Inject
     ImportExportSerializerImpl(final ExplorerService explorerService,
@@ -117,9 +103,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
     @Override
     public Set<DocRef> read(final Path dir,
                             List<ImportState> importStateList,
-                            final ImportSettings importSettings,
-                            final ImportExportCaller reader) {
-
+                            final ImportSettings importSettings) {
         if (importStateList == null || ImportMode.IGNORE_CONFIRMATION.equals(importSettings.getImportMode())) {
             importStateList = new ArrayList<>();
         }
@@ -131,11 +115,8 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         final Map<DocRef, ImportState> confirmMap = importStateList.stream()
                 .collect(Collectors.toMap(ImportState::getDocRef, Function.identity()));
 
-        // Read the spec, if any
-        final ImportExportSpec spec = readSpec(dir);
-
         // Find all of the paths to import.
-        final Set<DocRef> result = processDir(dir, confirmMap, importSettings, reader, spec);
+        final Set<DocRef> result = processDir(dir, confirmMap, importSettings);
 
         // Rebuild the list
         importStateList.clear();
@@ -152,60 +133,10 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         return result;
     }
 
-    /**
-     * Reads the spec file in from the root of the import directory structure.
-     * @param dir Where to look for the spec file.
-     * @return The spec object. Never returns null - returns a meaningful object
-     * if the spec file doesn't exist.
-     * @throws RuntimeException if something goes wrong.
-     */
-    private ImportExportSpec readSpec(final Path dir) throws RuntimeException {
-        final ImportExportSpec spec;
-
-        final Path specfilePath = dir.resolve(SPEC_FILE_NAME);
-        if (specfilePath.toFile().exists()) {
-            final ObjectMapper mapper = YamlUtil.getMapper();
-            try (final InputStream istr = new BufferedInputStream(new FileInputStream(specfilePath.toFile()))) {
-                spec = mapper.readValue(istr, ImportExportSpec.class);
-            } catch (final IOException e) {
-                throw new RuntimeException("Error reading spec file '" + specfilePath
-                                           + "': " + e.getMessage(), e);
-            }
-        } else {
-            spec = ImportExportSpec.buildBackCompatible();
-        }
-
-        return spec;
-    }
-
-    /**
-     * Writes a spec file out to disk. Called during export.
-     * @param spec The spec data to write out.
-     * @param dir Where to write the spec file.
-     * @throws RuntimeException If something goes wrong.
-     */
-    private void writeSpec(final ImportExportSpec spec, final Path dir) throws RuntimeException {
-        if (!dir.toFile().exists()) {
-            if (!dir.toFile().mkdirs()) {
-                throw new RuntimeException("Could not create directory '" + dir + "' for spec file");
-            }
-        }
-        final Path specfilePath = dir.resolve(SPEC_FILE_NAME);
-        try (final OutputStream ostr = new BufferedOutputStream(new FileOutputStream(specfilePath.toFile()))) {
-            final ObjectMapper mapper = YamlUtil.getMapper();
-            mapper.writeValue(ostr, spec);
-        } catch (final IOException e) {
-            throw new RuntimeException("Error writing spec file '" + specfilePath
-                                       + "' " + e.getMessage(), e);
-        }
-    }
-
     private Set<DocRef> processDir(final Path dir,
                                    final Map<DocRef, ImportState> confirmMap,
-                                   final ImportSettings importSettings,
-                                   final ImportExportCaller reader,
-                                   final ImportExportSpec spec) {
-        final HashSet<DocRef> result = new HashSet<>();
+                                   final ImportSettings importSettings) {
+        final Set<DocRef> result = new HashSet<>();
 
         try {
             Files.walkFileTree(dir,
@@ -217,12 +148,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                             try {
                                 final String fileName = file.getFileName().toString();
                                 if (fileName.endsWith(".node") && !fileName.startsWith(".")) {
-                                    final DocRef imported = performImport(
-                                            file,
-                                            confirmMap,
-                                            importSettings,
-                                            reader,
-                                            spec);
+                                    final DocRef imported = performImport(file, confirmMap, importSettings);
                                     if (imported != null) {
                                         result.add(imported);
                                     }
@@ -241,9 +167,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
     private DocRef performImport(final Path nodeFile,
                                  final Map<DocRef, ImportState> confirmMap,
-                                 final ImportSettings importSettings,
-                                 final ImportExportCaller reader,
-                                 final ImportExportSpec spec) {
+                                 final ImportSettings importSettings) {
         DocRef imported = null;
         try {
             // Read the node file.
@@ -299,9 +223,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                             dataMap,
                             importState,
                             confirmMap,
-                            importSettings,
-                            reader,
-                            spec);
+                            importSettings);
 
                 } else {
                     imported = importExplorerDoc(
@@ -313,9 +235,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                             dataMap,
                             importState,
                             confirmMap,
-                            importSettings,
-                            reader,
-                            spec);
+                            importSettings);
                 }
             } catch (final IOException | PermissionException e) {
                 LOGGER.error("Error importing file {}", nodeFile.toAbsolutePath(), e);
@@ -335,14 +255,12 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                                         final Map<String, byte[]> dataMap,
                                         final ImportState importState,
                                         final Map<DocRef, ImportState> confirmMap,
-                                        final ImportSettings importSettings,
-                                        final ImportExportCaller reader,
-                                        final ImportExportSpec spec) {
+                                        final ImportSettings importSettings) {
         final NonExplorerDocRefProvider nonExplorerDocRefProvider =
                 (NonExplorerDocRefProvider) importExportActionHandler;
 
         final DocRef importRootDocRef = importSettings.getRootDocRef();
-        final String importPath = resolvePath(path, importRootDocRef, reader, spec);
+        final String importPath = resolvePath(path, importRootDocRef);
 
         final DocRef ownerDocument = nonExplorerDocRefProvider.getOwnerDocument(docRef, dataMap);
         final Optional<ExplorerNode> existingExplorerNode = explorerNodeService.getNode(ownerDocument);
@@ -361,12 +279,15 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         final String nameSuffix = " - (" + docRefName + ")";
         importState.setSourcePath(createPath(path, ownerDocument.getName()) + nameSuffix);
         importState.setDestPath(createPath(destPath, destName) + nameSuffix);
+        importState.setOwnerDocRef(ownerDocument);
+
 
         try {
             // Import the item via the appropriate handler.
-            if (ImportMode.CREATE_CONFIRMATION.equals(importSettings.getImportMode()) ||
-                ImportMode.IGNORE_CONFIRMATION.equals(importSettings.getImportMode()) ||
-                importState.isAction()) {
+            if (canImport(importSettings, importState)) {
+                LOGGER.debug(() -> LogUtil.message(
+                        "importNonExplorerDoc() - Importing {}, mode: {}, isAction: {} importState: {}",
+                        docRef, importSettings.getImportMode(), importState.isAction(), importState.getState()));
 
                 final DocRef imported = importExportActionHandler.importDocument(
                         docRef,
@@ -388,6 +309,9 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                             null);
                 }
             } else {
+                LOGGER.debug(() -> LogUtil.message(
+                        "importNonExplorerDoc() - Skipping {}, mode: {}, isAction: {} importState: {}",
+                        docRef, importSettings.getImportMode(), importState.isAction(), importState.getState()));
                 // We can't import this item so remove it from the map.
                 confirmMap.remove(docRef);
             }
@@ -407,18 +331,18 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
     /**
      * Imports something that appears in the Explorer Tree.
+     *
      * @param importExportActionHandler Handler for the type of DocRef
-     * @param nodeFile Path to the import file on disk
-     * @param docRef DocRef created from the .node data on disk
-     * @param tags List of tags extracted from .node data on disk
-     * @param path Path to the item in the Explorer Tree, from the .node data
-     *             on disk
-     * @param dataMap Map of disk file extension to disk file contents
-     * @param importState State of the import for docRef
-     * @param confirmMap Accessed to remove docRef from the map if the docRef
-     *                   cannot be imported.
-     * @param importSettings Key settings for the import; notably the RootDocRef.
-     * @param spec The spec file for the import. Allows us to work around issues.
+     * @param nodeFile                  Path to the import file on disk
+     * @param docRef                    DocRef created from the .node data on disk
+     * @param tags                      List of tags extracted from .node data on disk
+     * @param path                      Path to the item in the Explorer Tree, from the .node data
+     *                                  on disk
+     * @param dataMap                   Map of disk file extension to disk file contents
+     * @param importState               State of the import for docRef
+     * @param confirmMap                Accessed to remove docRef from the map if the docRef
+     *                                  cannot be imported.
+     * @param importSettings            Key settings for the import; notably the RootDocRef.
      * @return The DocRef of the imported document.
      */
     private DocRef importExplorerDoc(final ImportExportActionHandler importExportActionHandler,
@@ -429,14 +353,12 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                                      final Map<String, byte[]> dataMap,
                                      final ImportState importState,
                                      final Map<DocRef, ImportState> confirmMap,
-                                     final ImportSettings importSettings,
-                                     final ImportExportCaller reader,
-                                     final ImportExportSpec spec) {
+                                     final ImportSettings importSettings) {
 
         // This shows where the thing is in the Explorer Tree
         // Uses the importSettings.getRootDocRef() to work out where to put things
         final DocRef importRootDocRef = importSettings.getRootDocRef();
-        final String importPath = resolvePath(path, importRootDocRef, reader, spec);
+        final String importPath = resolvePath(path, importRootDocRef);
 
         String destPath = importPath;
         String destName = docRef.getName();
@@ -449,7 +371,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         if (docExists) {
             // This is a pre-existing item so make sure we are allowed to update it.
             if (!securityContext.hasDocumentPermission(docRef,
-                                                       DocumentPermission.EDIT)) {
+                    DocumentPermission.EDIT)) {
                 throw new PermissionException(securityContext.getUserRef(),
                         "You do not have permission to update '" + docRef + "'");
             }
@@ -471,33 +393,37 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         }
         importState.setDestPath(createPath(destPath, destName));
 
-        // Only do this if we're not mocked up
         // If we are creating a new node or moving an existing one then create the destination folders and check
         // permissions.
         DocRef folderRef = null;
         ExplorerNode parentNode = null;
-        if (!importSettings.isMockEnvironment()) {
-            if (importState.getState() == State.NEW || moving) {
-                // Create parent folders for the new node.
-                final ExplorerNode parent = explorerNodeService.getRoot();
-                parentNode = getOrCreateParentFolder(parent,
-                        importPath,
-                        ImportSettings.ok(importSettings, importState));
-                // Check permissions on the parent folder.
-                folderRef = new DocRef(parentNode.getType(), parentNode.getUuid(), parentNode.getName());
-                if (!securityContext.hasDocumentCreatePermission(folderRef, docRef.getType())) {
-                    throw new PermissionException(securityContext.getUserRef(),
-                            "You do not have permission to create '" + docRef + "' in '" + folderRef);
-                }
+        if (importState.getState() == State.NEW || moving) {
+            // Create parent folders for the new node.
+            final ExplorerNode parent = explorerNodeService.getRoot();
+            parentNode = getOrCreateParentFolder(parent,
+                    importPath,
+                    ImportSettings.ok(importSettings, importState));
+
+            // Check permissions on the parent folder.
+            folderRef = new DocRef(parentNode.getType(), parentNode.getUuid(), parentNode.getName());
+            if (!securityContext.hasDocumentCreatePermission(folderRef, docRef.getType())) {
+                throw new PermissionException(securityContext.getUserRef(),
+                        "You do not have permission to create '" + docRef + "' in '" + folderRef);
             }
         }
 
         try {
             // Import the item via the appropriate handler.
-            if (importExportActionHandler != null && (
-                    ImportMode.CREATE_CONFIRMATION.equals(importSettings.getImportMode()) ||
-                    ImportMode.IGNORE_CONFIRMATION.equals(importSettings.getImportMode()) ||
-                    importState.isAction())) {
+            if (importExportActionHandler == null) {
+                LOGGER.debug(() -> LogUtil.message(
+                        "importExplorerDoc() - No importExportActionHandler for {}", docRef));
+                // We can't import this item so remove it from the map.
+                confirmMap.remove(docRef);
+            } else if (canImport(importSettings, importState)) {
+
+                LOGGER.debug(() -> LogUtil.message(
+                        "importExplorerDoc() - Importing {}, mode: {}, isAction: {} importState: {}",
+                        docRef, importSettings.getImportMode(), importState.isAction(), importState.getState()));
 
                 final DocRef imported = importExportActionHandler.importDocument(
                         docRef,
@@ -509,42 +435,43 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                     throw new RuntimeException("Import failed - no DocRef returned");
                 }
 
-                if (!importSettings.isMockEnvironment()) {
-                    // Add explorer node afterwards on successful import as they won't be controlled by
-                    // doc service.
-                    if (ImportSettings.ok(importSettings, importState)) {
-                        final ExplorerNode explorerNode = ExplorerNode
-                                .builder()
-                                .docRef(docRef)
-                                .build();
+                // Add explorer node afterwards on successful import as they won't be controlled by
+                // doc service.
+                if (ImportSettings.ok(importSettings, importState)) {
+                    final ExplorerNode explorerNode = ExplorerNode
+                            .builder()
+                            .docRef(docRef)
+                            .build();
 
-                        // Create, rename and/or move explorer node.
-                        if (existingNode.isEmpty()) {
-                            explorerNodeService.createNode(
-                                    imported,
-                                    folderRef,
-                                    PermissionInheritance.DESTINATION);
-                            explorerService.rebuildTree();
-                        } else {
-                            if (importSettings.isUseImportNames()) {
-                                explorerService.rename(explorerNode, docRef.getName());
-                            }
-                            if (moving) {
-                                explorerService.move(
-                                        Collections.singletonList(explorerNode),
-                                        parentNode,
-                                        PermissionInheritance.DESTINATION);
-                            }
+                    // Create, rename and/or move explorer node.
+                    if (existingNode.isEmpty()) {
+                        explorerNodeService.createNode(
+                                imported,
+                                folderRef,
+                                PermissionInheritance.DESTINATION);
+                        explorerService.rebuildTree();
+                    } else {
+                        if (importSettings.isUseImportNames()) {
+                            explorerService.rename(explorerNode, docRef.getName());
                         }
-
-                        importExportDocumentEventLog.importDocument(
-                                docRef.getType(),
-                                imported.getUuid(),
-                                docRef.getName(),
-                                null);
+                        if (moving) {
+                            explorerService.move(
+                                    Collections.singletonList(explorerNode),
+                                    parentNode,
+                                    PermissionInheritance.DESTINATION);
+                        }
                     }
+
+                    importExportDocumentEventLog.importDocument(
+                            docRef.getType(),
+                            imported.getUuid(),
+                            docRef.getName(),
+                            null);
                 }
             } else {
+                LOGGER.debug(() -> LogUtil.message(
+                        "importExplorerDoc() - Skipping {}, mode: {}, isAction: {} importState: {}",
+                        docRef, importSettings.getImportMode(), importState.isAction(), importState.getState()));
                 // We can't import this item so remove it from the map.
                 confirmMap.remove(docRef);
             }
@@ -561,6 +488,17 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         return docRef;
     }
 
+    private boolean canImport(final ImportSettings importSettings, final ImportState importState) {
+        final ImportMode mode = importSettings.getImportMode();
+        final boolean canImport = ImportMode.CREATE_CONFIRMATION.equals(mode)
+                                  || ImportMode.IGNORE_CONFIRMATION.equals(mode)
+                                  || (importState.isAction() && importState.getState() != State.IGNORE);
+        LOGGER.debug(() -> LogUtil.message(
+                "canImport() - mode: {}, isAction: {} importState: {}, canImport: {}",
+                mode, importState.isAction(), importState.getState(), canImport));
+        return canImport;
+    }
+
     /**
      * Returns the path in the Explorer Tree.
      * It will return either 'path' (the first parameter), or the path resolved
@@ -571,135 +509,32 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
      *                         optional RootDocRef - i.e. where the stuff on
      *                         disk should be imported to. Will be null if
      *                         not set.
-     * @param reader           The type of thing that is doing the reading.
-     * @param spec             The spec object, so we can work around issues
-     *                         with different versions of import.
      * @return Returns path if the RootDocRef hasn't been set or cannot be
      * found in the Explorer Tree. Otherwise, returns the path to the
      * RootDocRef/path.
      */
-    private String resolvePath(String path,
-                               final DocRef importRootDocRef,
-                               final ImportExportCaller reader,
-                               final ImportExportSpec spec) {
+    private String resolvePath(final String path, final DocRef importRootDocRef) {
         String result = path;
-
-        // If we're not importing to root then we need the new path relative
-        // to the thing we're importing under (probably a GitRepo)
         if (importRootDocRef != null) {
             final Optional<ExplorerNode> optImportRootNode =
                     explorerNodeService.getNode(importRootDocRef);
             if (optImportRootNode.isPresent()) {
                 final ExplorerNode importRootNode = optImportRootNode.get();
-                final List<ExplorerNode> nodePathToImportRootDocRef =
-                        explorerNodeService.getPath(importRootDocRef);
+                final List<ExplorerNode> nodePathToImportRootDocRef = explorerNodeService.getPath(importRootDocRef);
                 nodePathToImportRootDocRef.add(importRootNode);
-
                 // Remove root node.
+
                 final ExplorerNode systemRootNode = explorerNodeService.getRoot();
                 if (nodePathToImportRootDocRef.getFirst().equals(systemRootNode)) {
                     nodePathToImportRootDocRef.removeFirst();
                 }
                 if (!nodePathToImportRootDocRef.isEmpty()) {
                     final String rootPath = getParentPath(nodePathToImportRootDocRef);
-                    path = collapseRootIfNecessary(rootPath, path, reader, spec);
                     result = createPath(rootPath, path);
                 }
             }
         }
         return result;
-    }
-
-    /**
-     * Called to make old repositories compatible with being loaded from
-     * a Content Pack via a GitRepo. The old repositories have a root that
-     * includes the name of the GitRepo. We want to get rid of that to avoid
-     * duplicate path names.
-     * <p>
-     *     This method is package-scope static so it can have unit tests.
-     * </p>
-     * <p>
-     *     If the GitRepo path (rootPath) is /A/B/C and the path in the
-     *     nodefile is /B/C/D, this will create a collapsed nodefile path
-     *     of /D so the full path is /A/B/C/D with no duplicates.
-     * </p>
-     * @param rootPath Where we're importing to.
-     * @param importedPath The path to process of the thing being imported.
-     * @param reader What is trying to do the import?
-     * @param spec The spec item read from disk to give us info about the
-     *             data on disk.
-     * @return The node path collapsed as necessary.
-     */
-    static String collapseRootIfNecessary(final String rootPath,
-                                          final String importedPath,
-                                          final ImportExportCaller reader,
-                                          final ImportExportSpec spec) {
-        String retval = importedPath;
-
-        // If export type was EXPORT and the reader is GITREPO
-        // then consider collapsing nodes to avoid repeated nodes.
-        // TODO Maybe add spec.getVersion() here
-        if (reader == ImportExportCaller.GITREPO
-            && spec.getCreator() == ImportExportCaller.EXPORT) {
-
-            final String[] rootElements = rootPath.split(PATH_DELIMITER);
-            final String[] importedElements = importedPath.split(PATH_DELIMITER);
-
-            enum State {
-                NO_MATCH,
-                IN_MATCH,
-                FULL_MATCH
-            }
-
-            State state = State.NO_MATCH;
-
-            // Work through the overlaps, starting at maximum overlap
-            for (int startOverlap = 0; startOverlap < rootElements.length; startOverlap++) {
-                if (state == State.FULL_MATCH) {
-                    // Stop at the first full match
-                    break;
-                }
-
-                // Reset indexes for this overlap
-                int iImportedElements = 0;
-                int iRootElements = startOverlap;
-
-                // Loop through the elements that might match
-                do {
-                    final String rootElement = rootElements[iRootElements];
-                    final String importedElement = importedElements[iImportedElements];
-
-                    LOGGER.debug("Overlap '{}'; root '{}' == imported '{}' (State {}) ??",
-                            startOverlap,
-                            rootElement,
-                            importedElement,
-                            state);
-
-                    if (!rootElement.equals(importedElement)) {
-                        // Doesn't match
-                        state = State.NO_MATCH;
-                    } else {
-                        // Got a match; next time look at the next root and import elements
-                        iImportedElements++;
-                        iRootElements++;
-
-                        if (iRootElements < rootElements.length) {
-                            state = State.IN_MATCH;
-                        } else {
-                            state = State.FULL_MATCH;
-                            retval = String.join(
-                                    PATH_DELIMITER,
-                                    Arrays.copyOfRange(importedElements,
-                                            rootElements.length - startOverlap,
-                                            importedElements.length));
-                        }
-                    }
-
-                }  while (state == State.IN_MATCH);
-            }
-        }
-
-        return retval;
     }
 
     /**
@@ -710,15 +545,15 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
     @Override
     public ExportSummary write(final Path dir,
                                final Set<DocRef> docRefs,
-                               final boolean omitAuditFields,
-                               final ImportExportSpec spec) {
+                               final boolean omitAuditFields) {
         final Set<String> docTypesToIgnore = Collections.emptySet();
-        return this.write(null, dir, docRefs, docTypesToIgnore, omitAuditFields, spec);
+        return this.write(null, dir, docRefs, docTypesToIgnore, omitAuditFields);
     }
 
     /**
      * Method for exporting; specific to GitRepo exports. Also called by write()
      * above for other exports.
+     *
      * @param rootNodePath     Path to root node of the export. If null then
      *                         performs the same as the other write() method.
      *                         Otherwise removes these path elements from the start of
@@ -729,7 +564,6 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
      * @param docTypesToIgnore Set of the Doc types that shouldn't be exported, nor
      *                         their children. Must not be null.
      * @param omitAuditFields  Do not export audit fields.
-     * @param spec             Spec for the export.
      * @return The summary of the export.
      */
     @Override
@@ -737,14 +571,9 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                                final Path dir,
                                final Set<DocRef> docRefs,
                                final Set<String> docTypesToIgnore,
-                               final boolean omitAuditFields,
-                               final ImportExportSpec spec) {
+                               final boolean omitAuditFields) {
 
         Objects.requireNonNull(docTypesToIgnore);
-        Objects.requireNonNull(spec);
-
-        // Write the spec file
-        writeSpec(spec, dir);
 
         // Create a set of all entities that we are going to try and export.
         final Set<DocRef> expandedDocRefs = expandDocRefSet(docRefs, docTypesToIgnore);
@@ -773,12 +602,10 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
     private ExplorerNode getOrCreateParentFolder(ExplorerNode parent,
                                                  final String path,
                                                  final boolean create) {
-
         // Create a parent folder for the new node.
-        final String[] elements = path.split(PATH_DELIMITER);
+        final String[] elements = path.split("/");
 
         for (final String element : elements) {
-
             if (!element.isEmpty()) {
                 List<ExplorerNode> nodes = explorerNodeService.getNodesByName(parent, element);
                 nodes = nodes.stream().filter(ExplorerConstants::isFolder).toList();
@@ -831,8 +658,9 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
     /**
      * Called recursively to add things to the set of Docs to export.
-     * @param docRef The root docref
-     * @param expandedDocRefs The output of the function
+     *
+     * @param docRef           The root docref
+     * @param expandedDocRefs  The output of the function
      * @param docTypesToIgnore Any types of doc to ignore and not recurse below.
      */
     private void addDescendants(final DocRef docRef,
@@ -840,7 +668,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                                 final Set<String> docTypesToIgnore) {
 
         final List<ExplorerNode> children = explorerNodeService.getChildren(docRef);
-        for (final var child : children) {
+        for (final ExplorerNode child : children) {
             if (ExplorerConstants.isFolder(child)) {
                 if (!docTypesToIgnore.contains(child.getType())) {
                     this.addDocRef(child.getDocRef(), expandedDocRefs);
@@ -878,6 +706,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
     /**
      * Prunes the node path for GitRepo exports. Removes everything in the rootPath
      * from the nodePath if the rootPath matches the start of the nodePath.
+     *
      * @param rootPath Can be null, in which case this function just returns nodePath.
      *                 Otherwise, the list of items to prune from the start of nodePath.
      * @param nodePath The node path to prune.
@@ -1047,7 +876,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
             properties.setProperty("uuid", explorerNode.getUuid());
             properties.setProperty("type", explorerNode.getType());
             properties.setProperty("name", explorerNode.getName());
-            properties.setProperty("path", String.join(PATH_DELIMITER, pathElements));
+            properties.setProperty("path", String.join("/", pathElements));
             final String tagsStr = NullSafe.get(explorerNode.getTags(), explorerService::nodeTagsToString);
             if (!NullSafe.isBlankString(tagsStr)) {
                 properties.setProperty("tags", tagsStr);
@@ -1083,19 +912,19 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         if (parent == null || parent.isEmpty()) {
             return child;
         }
-        return parent + PATH_DELIMITER + child;
+        return parent + "/" + child;
     }
 
     private String getParentPath(final List<ExplorerNode> parents) {
         if (parents != null && !parents.isEmpty()) {
             String parentPath = parents.stream()
                     .map(ExplorerNode::getName)
-                    .collect(Collectors.joining(PATH_DELIMITER));
+                    .collect(Collectors.joining("/"));
             int index = parentPath.indexOf("System");
             if (index == 0) {
                 parentPath = parentPath.substring(index + "System".length());
             }
-            index = parentPath.indexOf(PATH_DELIMITER);
+            index = parentPath.indexOf("/");
             if (index == 0) {
                 parentPath = parentPath.substring(1);
             }

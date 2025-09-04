@@ -41,7 +41,13 @@ public abstract class AbstractDownstreamClient {
     }
 
     /**
-     * @return The full URL if it has been explicitly configured.
+     * If empty the value of {@link AbstractDownstreamClient#getDefaultPath()} will be
+     * appended to the downstream host URI.
+     * If it is just a path then the value will be appended to the downstream host URI.
+     * If it is not a path then the value will be treated as the full URL and downstream host
+     * config will not be used.
+     *
+     * @return The path or full URL if it has been explicitly configured.
      */
     protected abstract Optional<String> getConfiguredUrl();
 
@@ -57,10 +63,9 @@ public abstract class AbstractDownstreamClient {
     public String getFullUrl() {
         // This allows a full url to be explicitly configured, else we just combine the default path
         // with the downstream host config.
-        final String url = getConfiguredUrl()
-                .filter(NullSafe::isNonBlankString)
-                .orElseGet(() ->
-                        downstreamHostConfigProvider.get().getUri(getDefaultPath()));
+        final String url = downstreamHostConfigProvider.get().createUri(
+                getConfiguredUrl().orElse(null),
+                getDefaultPath());
         LOGGER.debug("getFullUrl() - url: {}", url);
         return url;
     }
@@ -72,7 +77,8 @@ public abstract class AbstractDownstreamClient {
                 .request(MediaType.APPLICATION_JSON)
                 .headers(getAuthHeaders());
 
-        final Response response = Objects.requireNonNull(buildStep).apply(builder);
+        final Response response = Objects.requireNonNull(buildStep)
+                .apply(builder);
 
         LOGGER.debug(() -> LogUtil.message("getResponse() - url: '{}', webTarget: {}, response: {} - {}",
                 url,

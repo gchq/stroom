@@ -296,7 +296,7 @@ public class SteppingFilterPresenter extends
 
         final String elementId = NullSafe.get(element, PipelineElement::getId);
         if (elementId != null && !elementId.equals(currentElementId)) {
-            getView().setName(element.getDisplayName());
+            getView().setName(element.getFullName());
             xPathFilters = xPathListPresenter.getDataProvider().getList();
             xPathFilters.clear();
 

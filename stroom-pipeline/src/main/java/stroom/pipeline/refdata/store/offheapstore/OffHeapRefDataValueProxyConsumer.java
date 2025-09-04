@@ -35,7 +35,6 @@ public class OffHeapRefDataValueProxyConsumer
 
         super(pipelineConfiguration, receiver);
         this.typeToByteBufferConsumerFactoryMap = typeToByteBufferConsumerFactoryMap;
-
     }
 
     @Override
@@ -58,14 +57,17 @@ public class OffHeapRefDataValueProxyConsumer
             Objects.requireNonNull(consumer, () -> LogUtil.message("No consumer for typeId {}", typeId));
 
             // now we have the appropriate consumer for the value type, consume the value
-            consumer.consumeBytes(receiver, typedByteBuffer.getByteBuffer());
+            consumer.consumeBytes(typedByteBuffer.getByteBuffer());
         });
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Factory {
 
         OffHeapRefDataValueProxyConsumer create(final Receiver receiver,
                                                 final PipelineConfiguration pipelineConfiguration);
     }
-
 }

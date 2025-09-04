@@ -18,7 +18,6 @@ import stroom.security.common.impl.UpdatableToken;
 import stroom.security.impl.apikey.ApiKeyService;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.openid.api.IdpType;
-import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.TokenResponse;
 import stroom.security.shared.AppPermission;
@@ -31,6 +30,7 @@ import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.exception.DataChangedException;
 import stroom.util.exception.ThrowingFunction;
+import stroom.util.io.SimplePathCreator;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -88,8 +88,8 @@ public class StroomUserIdentityFactory
                                      final RefreshManager refreshManager,
                                      final ApiKeyService apiKeyService,
                                      final Provider<AuthorisationConfig> authorisationConfigProvider,
-                                     final CacheManager cacheManager) {
-
+                                     final CacheManager cacheManager,
+                                     final SimplePathCreator simplePathCreator) {
 
         super(jwtContextFactory,
                 openIdConfigProvider,
@@ -97,6 +97,7 @@ public class StroomUserIdentityFactory
                 certificateExtractor,
                 serviceUserFactory,
                 jerseyClientFactory,
+                simplePathCreator,
                 refreshManager);
 
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
@@ -123,8 +124,8 @@ public class StroomUserIdentityFactory
                                                     final HttpServletRequest request) {
 
         final String headerKey = UserIdentityFactory.RUN_AS_USER_HEADER;
-        final String runAsUserUuid = request.getHeader(headerKey);
-        if (!NullSafe.isBlankString(runAsUserUuid)) {
+        final String runAsUserUuid = NullSafe.trim(request.getHeader(headerKey));
+        if (!runAsUserUuid.isEmpty()) {
             // Request is proxying for a user, so it needs to be the processing user that
             // sent the request. Getting the proc user, even though we don't do anything with it will
             // ensure it is authenticated.
@@ -202,16 +203,12 @@ public class StroomUserIdentityFactory
     private User updateUserInfo(final String subjectId, final User user, final JwtClaims jwtClaims) {
         final AtomicReference<User> userRef = new AtomicReference<>(user);
 
-        // We must default the displayName in the same way as happens when the DB record is created
-        // (in stroom.security.impl.UserServiceImpl.getOrCreateUser)
-        // else it will always detect a mismatch.
-        final String displayName = JwtUtil.getUserDisplayName(openIdConfigProvider.get(), jwtClaims)
-                .filter(str -> !str.isBlank())
-                .orElse(subjectId);
+        final String displayName = getUserDisplayName(subjectId, jwtClaims);
 
-        // Hopefully this one is enough of a standard to always be there.
-        final String fullName = JwtUtil.getClaimValue(jwtClaims, OpenId.CLAIM__NAME)
+        final String fullName = getUserFullName(openIdConfigProvider.get(), jwtClaims)
                 .orElse(null);
+
+        LOGGER.debug("subjectId: '{}', displayName: '{}', fullName: '{}'", subjectId, displayName, fullName);
 
         final Predicate<User> hasUserInfoChangedPredicate = aUser ->
                 !Objects.equals(displayName, aUser.getDisplayName())
@@ -277,6 +274,16 @@ public class StroomUserIdentityFactory
         }
         return Objects.requireNonNull(userRef.get());
     }
+
+    private String getUserDisplayName(final String subjectId, final JwtClaims jwtClaims) {
+        // We must default the displayName in the same way as happens when the DB record is created
+        // (in stroom.security.impl.UserServiceImpl.getOrCreateUser)
+        // else it will always detect a mismatch.
+        return JwtUtil.getUserDisplayName(openIdConfigProvider.get(), jwtClaims)
+                .filter(str -> !str.isBlank())
+                .orElse(subjectId);
+    }
+
 
     private static void logNameChange(final User persistedUser,
                                       final String currentDisplayName,

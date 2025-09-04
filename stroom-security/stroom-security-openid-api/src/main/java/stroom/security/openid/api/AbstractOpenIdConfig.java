@@ -1,5 +1,6 @@
 package stroom.security.openid.api;
 
+import stroom.util.collections.CollectionUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.validation.AllMatchPattern;
@@ -35,6 +36,10 @@ public abstract class AbstractOpenIdConfig
     public static final String DEFAULT_CLAIM_PREFERRED_USERNAME = OpenId.CLAIM__PREFERRED_USERNAME;
     public static final boolean DEFAULT_FORM_TOKEN_REQUEST = true;
     public static final boolean DEFAULT_VALIDATE_AUDIENCE = true;
+    public static final boolean DEFAULT_AUDIENCE_CLAIM_REQUIRED = false;
+    public static final String DEFAULT_FULL_NAME_CLAIM_TEMPLATE = "${name}";
+    public static final String DEFAULT_AWS_PUBLIC_KEY_URI_TEMPLATE =
+            "https://public-keys.auth.elb.${awsRegion}.amazonaws.com/${keyId}";
 
     private final IdpType identityProviderType;
 
@@ -117,9 +122,17 @@ public abstract class AbstractOpenIdConfig
     private final List<String> clientCredentialsScopes;
 
     /**
-     * Whether to validate the audience in JWT token, when the audience is expected to be the clientId.
+     * A set of audience claim values, one of which must appear in the audience claim in the token.
+     * If empty, no validation will be performed on the audience claim.
+     * If audienceClaimRequired is false and there is no audience claim in the token, then allowedAudiences
+     * will be ignored.
      */
-    private final boolean validateAudience;
+    private final Set<String> allowedAudiences;
+
+    /**
+     * If true the token will fail validation if the audience claim is not present and allowedAudiences is not empty.
+     */
+    private final boolean audienceClaimRequired;
 
     private final Set<String> validIssuers;
 
@@ -135,7 +148,11 @@ public abstract class AbstractOpenIdConfig
      */
     private final String userDisplayNameClaim;
 
+    private final String fullNameClaimTemplate;
+
     private final Set<String> expectedSignerPrefixes;
+
+    private final String publicKeyUriPattern;
 
     public AbstractOpenIdConfig() {
         identityProviderType = getDefaultIdpType();
@@ -151,11 +168,14 @@ public abstract class AbstractOpenIdConfig
         clientId = null;
         requestScopes = DEFAULT_REQUEST_SCOPES;
         clientCredentialsScopes = DEFAULT_CLIENT_CREDENTIALS_SCOPES;
-        validateAudience = DEFAULT_VALIDATE_AUDIENCE;
+        allowedAudiences = Collections.emptySet();
+        audienceClaimRequired = DEFAULT_AUDIENCE_CLAIM_REQUIRED;
         validIssuers = Collections.emptySet();
         uniqueIdentityClaim = DEFAULT_CLAIM_SUBJECT;
         userDisplayNameClaim = DEFAULT_CLAIM_PREFERRED_USERNAME;
+        fullNameClaimTemplate = DEFAULT_FULL_NAME_CLAIM_TEMPLATE;
         expectedSignerPrefixes = Collections.emptySet();
+        publicKeyUriPattern = DEFAULT_AWS_PUBLIC_KEY_URI_TEMPLATE;
     }
 
     @JsonIgnore
@@ -176,11 +196,14 @@ public abstract class AbstractOpenIdConfig
             @JsonProperty("clientSecret") final String clientSecret,
             @JsonProperty("requestScopes") final List<String> requestScopes,
             @JsonProperty("clientCredentialsScopes") final List<String> clientCredentialsScopes,
-            @JsonProperty("validateAudience") final Boolean validateAudience,
+            @JsonProperty("allowedAudiences") final Set<String> allowedAudiences,
+            @JsonProperty("audienceClaimRequired") final Boolean audienceClaimRequired,
             @JsonProperty("validIssuers") final Set<String> validIssuers,
             @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim,
             @JsonProperty("userDisplayNameClaim") final String userDisplayNameClaim,
-            @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes) {
+            @JsonProperty("fullNameClaimTemplate") final String fullNameClaimTemplate,
+            @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes,
+            @JsonProperty("publicKeyUriPattern") final String publicKeyUriPattern) {
 
         this.identityProviderType = Objects.requireNonNullElseGet(identityProviderType, this::getDefaultIdpType);
         this.openIdConfigurationEndpoint = openIdConfigurationEndpoint;
@@ -197,11 +220,15 @@ public abstract class AbstractOpenIdConfig
         this.requestScopes = Objects.requireNonNullElse(requestScopes, DEFAULT_REQUEST_SCOPES);
         this.clientCredentialsScopes = Objects.requireNonNullElse(
                 clientCredentialsScopes, DEFAULT_CLIENT_CREDENTIALS_SCOPES);
-        this.validateAudience = Objects.requireNonNullElse(validateAudience, DEFAULT_VALIDATE_AUDIENCE);
+        this.allowedAudiences = CollectionUtil.cleanItems(allowedAudiences, String::trim);
+        this.audienceClaimRequired = Objects.requireNonNullElse(audienceClaimRequired, DEFAULT_AUDIENCE_CLAIM_REQUIRED);
         this.validIssuers = NullSafe.set(validIssuers);
         this.uniqueIdentityClaim = uniqueIdentityClaim;
         this.userDisplayNameClaim = userDisplayNameClaim;
+        this.fullNameClaimTemplate = NullSafe.nonBlankStringElse(
+                fullNameClaimTemplate, DEFAULT_FULL_NAME_CLAIM_TEMPLATE);
         this.expectedSignerPrefixes = NullSafe.set(expectedSignerPrefixes);
+        this.publicKeyUriPattern = publicKeyUriPattern;
     }
 
     /**
@@ -285,8 +312,7 @@ public abstract class AbstractOpenIdConfig
         return clientId;
     }
 
-    // TODO Not sure we can add NotNull to this as it has no default and if useInternal is true
-    //  it doesn't need a value
+    // May be null for mTLS auth
     @Override
     @JsonProperty(PROP_NAME_CLIENT_SECRET)
     @JsonPropertyDescription("The client secret used in OpenId authentication.")
@@ -320,10 +346,21 @@ public abstract class AbstractOpenIdConfig
 
     @Override
     @JsonProperty
-    @JsonPropertyDescription("Whether to validate the audience in JWT token, when the audience is expected " +
-                             "to be the clientId.")
-    public boolean isValidateAudience() {
-        return validateAudience;
+    @JsonPropertyDescription("A set of audience claim values, one of which must appear in the audience " +
+                             "claim in the token. " +
+                             "If empty, no validation will be performed on the audience claim." +
+                             "If audienceClaimRequired is false and there is no audience claim in the token, " +
+                             "then allowedAudiences will be ignored.")
+    public Set<String> getAllowedAudiences() {
+        return allowedAudiences;
+    }
+
+    @Override
+    @JsonProperty
+    @JsonPropertyDescription("If true the token will fail validation if the audience claim is not present " +
+                             "and allowedAudiences is not empty.")
+    public boolean isAudienceClaimRequired() {
+        return audienceClaimRequired;
     }
 
     @Override
@@ -357,6 +394,14 @@ public abstract class AbstractOpenIdConfig
         return userDisplayNameClaim;
     }
 
+    @Override
+    @JsonProperty
+    @JsonPropertyDescription("A template to build the user's full name using claim values as variables in the " +
+                             "template. E.g '${firstName} ${lastName}' or '${name}'.")
+    public String getFullNameClaimTemplate() {
+        return fullNameClaimTemplate;
+    }
+
     // A fairly basic pattern to ensure we get enough of an ARN, i.e.
     // arn:aws:elasticloadbalancing:region-code:account-id:
     // I.e. limit signers down to at least any ELB in an account
@@ -377,6 +422,15 @@ public abstract class AbstractOpenIdConfig
                              "latest/application/listener-authenticate-users.html#user-claims-encoding")
     public Set<String> getExpectedSignerPrefixes() {
         return expectedSignerPrefixes;
+    }
+
+    @Override
+    @JsonProperty
+    @JsonPropertyDescription("If the token is signed by AWS then use this pattern to form the URI to obtain the " +
+                             "public key from. The pattern supports the variables '${awsRegion}' and '${keyId}'. " +
+                             "Multiple instances of a variable are also supported.")
+    public String getPublicKeyUriPattern() {
+        return publicKeyUriPattern;
     }
 
     @JsonIgnore
@@ -403,8 +457,11 @@ public abstract class AbstractOpenIdConfig
                ", clientId='" + clientId + '\'' +
                ", clientSecret='" + clientSecret + '\'' +
                ", requestScopes='" + requestScopes + '\'' +
-               ", validateAudience=" + validateAudience +
+               ", allowedAudiences=" + allowedAudiences +
+               ", audienceClaimRequired=" + audienceClaimRequired +
                ", uniqueIdentityClaim=" + uniqueIdentityClaim +
+               ", userDisplayNameClaim=" + userDisplayNameClaim +
+               ", fullNameClaimTemplate=" + fullNameClaimTemplate +
                ", expectedSignerPrefixes=" + expectedSignerPrefixes +
                '}';
     }
@@ -419,7 +476,7 @@ public abstract class AbstractOpenIdConfig
         }
         final AbstractOpenIdConfig that = (AbstractOpenIdConfig) o;
         return formTokenRequest == that.formTokenRequest &&
-               validateAudience == that.validateAudience &&
+               audienceClaimRequired == that.audienceClaimRequired &&
                identityProviderType == that.identityProviderType &&
                Objects.equals(openIdConfigurationEndpoint, that.openIdConfigurationEndpoint) &&
                Objects.equals(issuer, that.issuer) &&
@@ -431,13 +488,17 @@ public abstract class AbstractOpenIdConfig
                Objects.equals(clientId, that.clientId) &&
                Objects.equals(clientSecret, that.clientSecret) &&
                Objects.equals(requestScopes, that.requestScopes) &&
+               Objects.equals(allowedAudiences, that.allowedAudiences) &&
                Objects.equals(uniqueIdentityClaim, that.uniqueIdentityClaim) &&
+               Objects.equals(userDisplayNameClaim, that.userDisplayNameClaim) &&
+               Objects.equals(fullNameClaimTemplate, that.fullNameClaimTemplate) &&
                Objects.equals(expectedSignerPrefixes, that.expectedSignerPrefixes);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(identityProviderType,
+        return Objects.hash(
+                identityProviderType,
                 openIdConfigurationEndpoint,
                 issuer,
                 authEndpoint,
@@ -449,8 +510,11 @@ public abstract class AbstractOpenIdConfig
                 clientId,
                 clientSecret,
                 requestScopes,
-                validateAudience,
+                allowedAudiences,
+                audienceClaimRequired,
                 uniqueIdentityClaim,
+                userDisplayNameClaim,
+                fullNameClaimTemplate,
                 expectedSignerPrefixes);
     }
 }

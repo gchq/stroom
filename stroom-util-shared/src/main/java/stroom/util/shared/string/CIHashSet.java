@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 /**
  * A {@link HashSet} containing case-insensitive {@link CIKey} string values.
  */
+@SuppressWarnings("checkstyle:IllegalType")
 public class CIHashSet extends HashSet<CIKey> {
 
     public CIHashSet(final Collection<String> collection) {

@@ -26,6 +26,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -111,6 +112,41 @@ public class NullSafe {
             final R result1 = getter.apply(val1);
             final R result2 = getter.apply(val2);
             return Objects.equals(result1, result2);
+        }
+    }
+
+    /**
+     * Test if the properties (accessed using the same getters for both) of two
+     * objects of the same class are equal in a null safe way.
+     *
+     * @return True if val1 and val2 are both null or if the results of applying all {@code getters}
+     * to va1 and val2 are all equal.
+     */
+    public static <T, R> boolean equalProperties(final T val1,
+                                                 final T val2,
+                                                 final List<Function<T, R>> getters) {
+        if (val1 == null && val2 == null) {
+            return true;
+        } else if (val1 != null && val2 == null) {
+            return false;
+        } else if (val1 == null) {
+            return false;
+        } else {
+            Objects.requireNonNull(getters);
+            if (isEmptyCollection(getters)) {
+                throw new IllegalArgumentException("No getters provided");
+            }
+            boolean areEqual = true;
+            for (final Function<T, R> getter : getters) {
+                final R result1 = getter.apply(val1);
+                final R result2 = getter.apply(val2);
+
+                areEqual = Objects.equals(result1, result2);
+                if (!areEqual) {
+                    break;
+                }
+            }
+            return areEqual;
         }
     }
 
@@ -456,6 +492,7 @@ public class NullSafe {
     public static boolean contains(final String str, final String subStr) {
         return str != null
                && subStr != null
+               && !str.isEmpty()
                && str.contains(subStr);
     }
 
@@ -657,6 +694,18 @@ public class NullSafe {
             return Stream.empty();
         } else {
             return Arrays.stream(items);
+        }
+    }
+
+    /**
+     * Returns a {@link Stream<Entry<K,V>>} of entries is non-null
+     * else returns an empty {@link Stream<Entry<K,V>>}
+     */
+    public static <K, V> Stream<Entry<K, V>> streamEntries(final Map<K, V> map) {
+        if (map == null || map.isEmpty()) {
+            return Stream.empty();
+        } else {
+            return map.entrySet().stream();
         }
     }
 

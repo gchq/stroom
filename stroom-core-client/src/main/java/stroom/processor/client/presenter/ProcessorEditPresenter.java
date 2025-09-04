@@ -22,6 +22,7 @@ import stroom.query.shared.ExpressionResource;
 import stroom.query.shared.ValidateExpressionRequest;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
+import stroom.security.shared.FindUserContext;
 import stroom.util.shared.UserRef;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -69,7 +70,7 @@ public class ProcessorEditPresenter
         this.clientSecurityContext = clientSecurityContext;
         view.setExpressionView(editExpressionPresenter.getView());
         view.setRunAsUserView(userRefSelectionBoxPresenter.getView());
-        userRefSelectionBoxPresenter.showActiveUsersOnly(true);
+        userRefSelectionBoxPresenter.setContext(FindUserContext.RUN_AS);
     }
 
     public void read(final ExpressionOperator expression,

@@ -54,6 +54,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import static stroom.index.shared.IndexConstants.EVENT_ID;
 import static stroom.index.shared.IndexConstants.STREAM_ID;
@@ -85,7 +86,7 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
     private String secondLevelElementToCreateDocs = "";
     private int depth = 0;
 
-    private HashMap<String, String> prefixMappings = new HashMap<>();
+    private Map<String, String> prefixMappings = new HashMap<>();
     private XPathExecutable[] xPathExecutables = null;
 
     private String topLevelUri = null;

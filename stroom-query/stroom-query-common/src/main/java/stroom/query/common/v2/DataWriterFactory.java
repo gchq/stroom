@@ -4,6 +4,7 @@ import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.query.language.functions.ref.KryoDataWriter;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.Severity;
 
 import com.esotericsoftware.kryo.io.Output;
 
@@ -48,7 +49,7 @@ public class DataWriterFactory {
             if (value.length() > maxStringFieldLength) {
                 LOGGER.trace(() -> "Truncating string: " + value);
                 final String truncated = value.substring(0, maxStringFieldLength);
-                errorConsumer.add(() -> {
+                errorConsumer.add(Severity.WARNING, () -> {
                     String sample = truncated;
                     if (sample.length() > SAMPLE_SIZE) {
                         sample = sample.substring(0, SAMPLE_SIZE);

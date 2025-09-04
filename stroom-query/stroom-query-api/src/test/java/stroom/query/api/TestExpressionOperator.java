@@ -25,8 +25,8 @@ class TestExpressionOperator {
                 .withInputTypes(String.class, ExpressionOperator.class)
                 .withOutputType(Boolean.class)
                 .withTestFunction(testCase -> {
-                    final var field = testCase.getInput()._1;
-                    final var expressionItem = testCase.getInput()._2;
+                    final String field = testCase.getInput()._1;
+                    final ExpressionOperator expressionItem = testCase.getInput()._2;
                     return expressionItem.containsField(field);
                 })
                 .withSimpleEqualityAssertion()
@@ -74,9 +74,9 @@ class TestExpressionOperator {
                 .withInputTypes(String.class, String.class, ExpressionOperator.class)
                 .withOutputType(Boolean.class)
                 .withTestFunction(testCase -> {
-                    final var field1 = testCase.getInput()._1;
-                    final var field2 = testCase.getInput()._2;
-                    final var expressionItem = testCase.getInput()._3;
+                    final String field1 = testCase.getInput()._1;
+                    final String field2 = testCase.getInput()._2;
+                    final ExpressionOperator expressionItem = testCase.getInput()._3;
                     return expressionItem.containsField(field1, field2);
                 })
                 .withSimpleEqualityAssertion()
@@ -117,8 +117,8 @@ class TestExpressionOperator {
                 })
                 .withOutputType(Boolean.class)
                 .withTestFunction(testCase -> {
-                    final var predicate = testCase.getInput()._1;
-                    final var expressionItem = testCase.getInput()._2;
+                    final Predicate<ExpressionTerm> predicate = testCase.getInput()._1;
+                    final ExpressionOperator expressionItem = testCase.getInput()._2;
                     return expressionItem.containsTerm(predicate);
                 })
                 .withSimpleEqualityAssertion()
@@ -131,14 +131,14 @@ class TestExpressionOperator {
                         false)
 
                 .addCase(Tuple.of(
-                                        term -> term.getField().equals("foo"),
-                        ExpressionOperator.builder()
-                        .addTerm(ExpressionTerm.builder()
-                                .field("bar")
-                                .condition(Condition.EQUALS)
-                                .value("123")
-                                .build())
-                        .build()),
+                                term -> term.getField().equals("foo"),
+                                ExpressionOperator.builder()
+                                        .addTerm(ExpressionTerm.builder()
+                                                .field("bar")
+                                                .condition(Condition.EQUALS)
+                                                .value("123")
+                                                .build())
+                                        .build()),
                         false)
 
                 .addCase(Tuple.of(
@@ -154,13 +154,13 @@ class TestExpressionOperator {
 
                 .addCase(Tuple.of(
                                 term -> term.getField().equals("foo"),
-                        ExpressionOperator.builder()
-                        .addOperator(ExpressionOperator.builder()
-                                .addOperator(ExpressionOperator.builder()
-                                        .addTerm(ExpressionTerm.builder().field("foo").build())
-                                        .build())
-                                .build())
-                        .build()),
+                                ExpressionOperator.builder()
+                                        .addOperator(ExpressionOperator.builder()
+                                                .addOperator(ExpressionOperator.builder()
+                                                        .addTerm(ExpressionTerm.builder().field("foo").build())
+                                                        .build())
+                                                .build())
+                                        .build()),
                         true)
 
                 .build();

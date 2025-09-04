@@ -39,7 +39,7 @@ public class OpenItems<T> {
     Set<T> getAllOpenItems() {
         // Ensure that we always get a new set returned so that changes to the open items after this set is returned are
         // not reflected in the returned set.
-        final HashSet<T> combined = new HashSet<>();
+        final Set<T> combined = new HashSet<>();
         combined.addAll(openItems);
         combined.addAll(temporaryOpenItems);
         return combined;

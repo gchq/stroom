@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.regex.Pattern;
 
-public class DelimitedWriter {
+public class DelimitedWriter implements AutoCloseable {
 
     private static final String NEW_LINE = "\n";
     private static final String QUOTE = "\"";
@@ -66,6 +66,7 @@ public class DelimitedWriter {
         writtenAnything = true;
     }
 
+    @Override
     public void close() throws IOException {
         writer.close();
     }

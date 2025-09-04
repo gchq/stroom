@@ -35,12 +35,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.Map;
 
 class BenchmarkIO {
 
     private static final int MB = 1000000;
-    private static final HashMap<StreamType, Integer> writeSpeed = new HashMap<>();
-    private static final HashMap<StreamType, Integer> readSpeed = new HashMap<>();
+    private static final Map<StreamType, Integer> writeSpeed = new HashMap<>();
+    private static final Map<StreamType, Integer> readSpeed = new HashMap<>();
 
     static {
         for (final StreamType streamType : StreamType.values()) {
@@ -80,7 +81,7 @@ class BenchmarkIO {
 
                     for (final StreamType streamType : StreamType.values()) {
                         System.out.println("Average " + streamType + " write = " + (writeSpeed.get(streamType) / run)
-                                + "Mb/s, read = " + (readSpeed.get(streamType) / run) + "Mb/s");
+                                           + "Mb/s, read = " + (readSpeed.get(streamType) / run) + "Mb/s");
                     }
                     System.out.println();
                 }
@@ -137,8 +138,8 @@ class BenchmarkIO {
                 break;
             case GZIP:
                 os = new GzipCompressorOutputStream(
-                                new BufferedOutputStream(Files.newOutputStream(file1),
-                                        FileSystemUtil.STREAM_BUFFER_SIZE));
+                        new BufferedOutputStream(Files.newOutputStream(file1),
+                                FileSystemUtil.STREAM_BUFFER_SIZE));
                 break;
             case BGZIP:
                 os = new BlockGZIPOutputFile(file1);
@@ -190,10 +191,10 @@ class BenchmarkIO {
         final long fileLength = Files.size(file1);
 
         System.out.println("Writing " + streamType + " " + (int) mb + "Mb to \"" +
-                FileUtil.getCanonicalPath(file1) + "\" took " + (int) elapsed + "ms = " + mbps + "Mb/s");
+                           FileUtil.getCanonicalPath(file1) + "\" took " + (int) elapsed + "ms = " + mbps + "Mb/s");
 
         System.out.println("Output file is " + (int) (fileLength / MB) + "Mb, compression ratio = " +
-                (int) (100 - ((100D / data.length) * fileLength)) + "%");
+                           (int) (100 - ((100D / data.length) * fileLength)) + "%");
 
         if (file2 != null) {
             final long fileLength2 = Files.size(file2);
@@ -255,7 +256,7 @@ class BenchmarkIO {
         sec = elapsed / 1000;
         mbps = (int) (mb / sec);
         System.out.println("Reading " + streamType + " " + (int) mb + "Mb from \"" + FileUtil.getCanonicalPath(file1)
-                + "\" took " + (int) elapsed + "ms = " + mbps + "Mb/s");
+                           + "\" took " + (int) elapsed + "ms = " + mbps + "Mb/s");
 
         readSpeed.put(streamType, readSpeed.get(streamType) + mbps);
 
@@ -269,7 +270,7 @@ class BenchmarkIO {
                 final byte b = buffer[i];
                 if (a != b) {
                     System.out.println("Bytes differ at position " + i + " of " + data.length + " (" + (char) a + " "
-                            + (char) b + ")");
+                                       + (char) b + ")");
                     System.exit(1);
                 }
             }

@@ -26,6 +26,7 @@ import stroom.docref.DocRef;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.query.api.ColumnRef;
+import stroom.query.api.GroupSelection;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.QLVisResult;
 import stroom.query.api.Result;
@@ -583,7 +584,7 @@ public class QueryResultVisPresenter
     }
 
     @Override
-    public Set<String> getOpenGroups() {
+    public GroupSelection getGroupSelection() {
         return null;
     }
 

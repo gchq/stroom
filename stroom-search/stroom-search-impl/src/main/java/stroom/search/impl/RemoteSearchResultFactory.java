@@ -7,6 +7,7 @@ import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ErrorMessage;
 
 import com.esotericsoftware.kryo.io.Output;
 
@@ -25,7 +26,7 @@ class RemoteSearchResultFactory {
     private volatile TaskId taskId;
     private volatile boolean destroy;
     private volatile boolean started;
-    private volatile List<String> initialisationError;
+    private volatile List<ErrorMessage> initialisationError;
 
     RemoteSearchResultFactory(final TaskManager taskManager,
                               final SecurityContext securityContext) {
@@ -56,7 +57,7 @@ class RemoteSearchResultFactory {
 
                     } else {
                         // Drain all current errors to a list.
-                        final List<String> errorsSnapshot = coprocessors.getErrorConsumer().drain();
+                        final List<ErrorMessage> errorsSnapshot = coprocessors.getErrorConsumer().drain();
                         NodeResultSerialiser.write(output, complete, coprocessors, errorsSnapshot);
                     }
 
@@ -102,7 +103,7 @@ class RemoteSearchResultFactory {
         this.started = started;
     }
 
-    public void setInitialisationError(final List<String> initialisationError) {
+    public void setInitialisationError(final List<ErrorMessage> initialisationError) {
         this.initialisationError = initialisationError;
     }
 }

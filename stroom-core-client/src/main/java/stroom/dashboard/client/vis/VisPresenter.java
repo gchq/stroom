@@ -638,6 +638,9 @@ public class VisPresenter
     public ComponentResultRequest getResultRequest(final Fetch fetch) {
         final VisComponentSettings visComponentSettings = getVisSettings();
 
+        // make sure table settings up to date
+        updateTableId(visComponentSettings.getTableId());
+
         // Update table settings.
         return VisResultRequest
                 .builder()

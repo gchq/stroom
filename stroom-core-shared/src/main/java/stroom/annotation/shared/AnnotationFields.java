@@ -1,5 +1,6 @@
 package stroom.annotation.shared;
 
+import stroom.docref.DocRef;
 import stroom.query.api.datasource.QueryField;
 
 import java.util.Arrays;
@@ -9,6 +10,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public interface AnnotationFields {
+
+    DocRef ANNOTATIONS_PSEUDO_DOC_REF = new DocRef("Annotations", "Annotations", "Annotations");
 
     String ID = "Id";
     String UUID = "UUID";

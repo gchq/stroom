@@ -91,15 +91,16 @@ public class QueryHelpRow {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof QueryHelpRow)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        return Objects.equals(id, ((QueryHelpRow) o).id);
+        final QueryHelpRow that = (QueryHelpRow) o;
+        return hasChildren == that.hasChildren && Objects.equals(id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(id, hasChildren);
     }
 
     public Builder copy() {

@@ -336,11 +336,10 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
     @Override
     public HealthCheck.Result getHealth() {
         final HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
-
         // isRunning will only be true if the file is also present and valid
         if (dirToWatch == null) {
             resultBuilder.healthy()
-                    .withMessage("No file provided to monitor");
+                    .withMessage("No dir provided to monitor");
         } else if (isRunning.get()) {
             resultBuilder.healthy();
         } else {
@@ -350,11 +349,11 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
         }
 
         return resultBuilder
-                .withDetail("monitoredFile", dirToWatch != null
+                .withDetail("monitoredDir", dirToWatch != null
                         ? dirToWatch.toAbsolutePath().normalize().toString()
                         : null)
                 .withDetail("isRunning", isRunning)
-                .withDetail("isValidFile", isValidDir)
+                .withDetail("isValidDir", isValidDir)
                 .build();
     }
 

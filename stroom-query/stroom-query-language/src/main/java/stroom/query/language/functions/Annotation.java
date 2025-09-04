@@ -27,6 +27,7 @@ import java.util.function.Supplier;
  * See also HyperlinkEventHandlerImpl
  */
 
+@Deprecated // Users are no longer expected to use this function to create or edit annotations
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = Annotation.NAME,

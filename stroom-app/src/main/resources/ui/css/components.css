@@ -1028,6 +1028,27 @@
     float: left;
 }
 
+.inline-label-icon {
+   display: flex;
+   align-items: center;
+   overflow: hidden;
+   gap: 5px;
+}
+
+.inline-label-icon > .gwt-Label {
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   width: auto;
+}
+
+.copyNameIcon {
+}
+
+.copyNameIcon svg {
+    color: var(--text-color);
+}
+
 .globalPropertyEditViewImpl-textArea {
     width: 100%;
     height: 100px;
@@ -2071,18 +2092,42 @@ button.main-menu svg {
     overflow: auto;
 }
 
-.find-topBar {
-    position: relative;
+.FindViewImpl {
+    gap: var(--control__gap--vertical);
 }
 
-.find-topBar .gwt-TextArea {
+.FindViewImpl--dialog {
+
+}
+
+.FindViewImpl-top {
+    position: relative;
+    padding: var(--control__padding--vertical) var(--control__padding--horizontal) 0 var(--control__padding--horizontal);
+}
+
+.FindViewImpl--dialog .FindViewImpl-top {
+    padding: 0;
+}
+
+.FindViewImpl-top .gwt-TextArea {
     /* Single line */
     height: 2.1rem;
 }
 
-.find-topBar .gwt-TextArea.multiLine {
+.FindViewImpl-top .gwt-TextArea.multiLine {
     /* Multi line */
     height: 6.3rem;
+}
+
+.FindViewImpl-bottom {
+    position: relative;
+    overflow: hidden;
+}
+
+.FindViewImpl--dialog .FindViewImpl-bottom {
+    background-color: var(--control__background-color);
+    border: solid 1px var(--control__border-color);
+    border-radius: .25rem;
 }
 
 .find-buttons {
@@ -2100,13 +2145,32 @@ button.main-menu svg {
     table-layout: fixed;
 }
 
+.FindCellTable tr:nth-child(even) {
+    background-color: var(--row__background-color--even);
+}
+.FindCellTable tr:nth-child(odd) {
+    background-color: var(--row__background-color--odd);
+}
+.FindCellTable tr:nth-child(even):hover,
+.FindCellTable tr:nth-child(odd):hover {
+    background-color: var(--row__background-color--hovered);
+}
+.FindCellTable tr:nth-child(even).cellTableSelectedRow,
+.FindCellTable tr:nth-child(odd).cellTableSelectedRow {
+	background-color: var(--row__background-color--selected);
+	color: var(--row__text-color--selected);
+}
+.FindCellTable tr:nth-child(even).cellTableSelectedRow:hover,
+.FindCellTable tr:nth-child(odd).cellTableSelectedRow:hover {
+    background-color: var(--row__background-color--selected--hovered);
+}
+
 .findCell {
 }
 
 .findCell-row {
 	display: flex;
 	flex-direction: column;
-	margin-bottom: 0.5em;
 }
 
 .findCell-main {
@@ -2565,16 +2629,22 @@ button.main-menu svg {
     vertical-align: middle;
 }
 
+.multiChooser .tickBox {
+    cursor: pointer;
+}
+
 .lozengeOuter {
     padding: 3px 0;
 }
 
 .lozenge {
-    padding: 2px 10px;
+    padding: 1px 8px;
     border: 1px solid rgba(0,0,0,.2);
     border-radius: 10rem;
     display: inline-block;
     border-color: var(--text-color);
+    cursor: pointer;
+    font-weight: 600;
 }
 
 .stroom-theme-dark .lozenge {

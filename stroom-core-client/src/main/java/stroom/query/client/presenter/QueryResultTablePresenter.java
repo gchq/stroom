@@ -17,10 +17,12 @@
 package stroom.query.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.annotation.client.AnnotationChangeEvent;
+import stroom.annotation.shared.AnnotationDecorationFields;
+import stroom.annotation.shared.AnnotationFields;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
 import stroom.dashboard.client.main.DashboardContext;
-import stroom.dashboard.client.table.AnnotationManager;
 import stroom.dashboard.client.table.ColumnFilterPresenter;
 import stroom.dashboard.client.table.ColumnValuesDataSupplier;
 import stroom.dashboard.client.table.ColumnValuesFilterPresenter;
@@ -28,10 +30,11 @@ import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.DownloadPresenter;
 import stroom.dashboard.client.table.FormatPresenter;
 import stroom.dashboard.client.table.HasComponentSelection;
+import stroom.dashboard.client.table.TableCollapseButton;
+import stroom.dashboard.client.table.TableExpandButton;
 import stroom.dashboard.client.table.TableRowStyles;
 import stroom.dashboard.client.table.cf.RulesPresenter;
 import stroom.dashboard.shared.ColumnValues;
-import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MessagePanel;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
@@ -47,6 +50,7 @@ import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnRef;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.api.GroupSelection;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.QueryKey;
 import stroom.query.api.Result;
@@ -73,14 +77,12 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
-import stroom.widget.util.client.SafeHtmlUtil;
 
-import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -92,7 +94,6 @@ import com.gwtplatform.mvp.client.View;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -121,7 +122,10 @@ public class QueryResultTablePresenter
     private boolean pause;
 
     private OffsetRange requestedRange = OffsetRange.ZERO_100;
-    private Set<String> openGroups = null;
+    private GroupSelection groupSelection = new GroupSelection();
+
+    private final TableExpandButton expandButton;
+    private final TableCollapseButton collapseButton;
 
     private final ButtonView downloadButton;
     private final DownloadPresenter downloadPresenter;
@@ -139,6 +143,10 @@ public class QueryResultTablePresenter
     private final TableRowStyles tableRowStyles;
     private DashboardContext dashboardContext;
     private DocRef currentDataSource;
+    private int maxDepth;
+
+    private boolean tableIsVisible = true;
+    private boolean annotationChanged;
 
     @Inject
     public QueryResultTablePresenter(final EventBus eventBus,
@@ -160,18 +168,16 @@ public class QueryResultTablePresenter
         this.downloadPresenter = downloadPresenter;
         this.annotationManager = annotationManager;
         tableRowStyles = new TableRowStyles(userPreferencesManager);
+        annotationManager.setTaskMonitorFactory(this);
 
         this.pagerView = pagerView;
         this.dataGrid = new MyDataGrid<>(this);
         dataGrid.addStyleName("TablePresenter");
         dataGrid.setRowStyles(tableRowStyles);
-        selectionModel = new MultiSelectionModelImpl<>();
-        final DataGridSelectionEventManager<TableRow> selectionEventManager = new DataGridSelectionEventManager<>(
-                dataGrid,
-                selectionModel,
-                false);
-        dataGrid.setSelectionModel(selectionModel, selectionEventManager);
+        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        pagerView.setDataWidget(dataGrid);
 
+        tableView.setTableView(pagerView);
 
         columnsManager = new QueryTableColumnsManager(
                 this,
@@ -181,10 +187,6 @@ public class QueryResultTablePresenter
                 columnValuesFilterPresenter);
         dataGrid.setHeadingListener(columnsManager);
         columnsManager.setColumnsStartIndex(1);
-
-
-        pagerView.setDataWidget(dataGrid);
-        tableView.setTableView(pagerView);
 
         // Expander column.
         expanderColumn = new com.google.gwt.user.cellview.client.Column<TableRow, Expander>(new ExpanderCell()) {
@@ -196,12 +198,18 @@ public class QueryResultTablePresenter
                 return row.getExpander();
             }
         };
-        expanderColumn.setFieldUpdater((index, result, value) -> {
-            toggleOpenGroup(result.getGroupKey());
+        expanderColumn.setFieldUpdater((index, row, value) -> {
+            toggle(row);
             refresh();
         });
 
         pagerView.getRefreshButton().setAllowPause(true);
+
+        expandButton = TableExpandButton.create();
+        pagerView.addButton(expandButton);
+
+        collapseButton = TableCollapseButton.create();
+        pagerView.addButton(collapseButton);
 
         // Download
         downloadButton = pagerView.addButton(SvgPresets.DOWNLOAD);
@@ -215,10 +223,8 @@ public class QueryResultTablePresenter
 
         // Annotate
         annotateButton = pagerView.addButton(SvgPresets.ANNOTATE);
-        annotateButton.setVisible(securityContext
-                .hasAppPermission(AppPermission.ANNOTATIONS));
+        annotateButton.setVisible(annotationManager.isEnabled());
 
-        annotationManager.setDataSourceSupplier(() -> currentDataSource);
         annotationManager.setColumnSupplier(() -> currentColumns);
     }
 
@@ -230,24 +236,12 @@ public class QueryResultTablePresenter
         this.dashboardContext = dashboardContext;
     }
 
-    private void toggleOpenGroup(final String group) {
-        openGroup(group, !isGroupOpen(group));
-    }
-
-    private void openGroup(final String group, final boolean open) {
-        if (openGroups == null) {
-            openGroups = new HashSet<>();
-        }
-
-        if (open) {
-            openGroups.add(group);
+    private void toggle(final TableRow row) {
+        if (groupSelection.isGroupOpen(row.getGroupKey(), row.getDepth())) {
+            groupSelection.close(row.getGroupKey());
         } else {
-            openGroups.remove(group);
+            groupSelection.open(row.getGroupKey());
         }
-    }
-
-    private boolean isGroupOpen(final String group) {
-        return openGroups != null && openGroups.contains(group);
     }
 
 //    public void setRequestedRange(final OffsetRange requestedRange) {
@@ -255,8 +249,8 @@ public class QueryResultTablePresenter
 //    }
 
     @Override
-    public Set<String> getOpenGroups() {
-        return openGroups;
+    public GroupSelection getGroupSelection() {
+        return groupSelection;
     }
 
     @Override
@@ -286,6 +280,16 @@ public class QueryResultTablePresenter
 
         registerHandler(pagerView.getRefreshButton().addClickHandler(event -> setPause(!pause, true)));
 
+        registerHandler(expandButton.addClickHandler(event -> {
+            groupSelection = expandButton.expand(groupSelection, maxDepth);
+            refresh();
+        }));
+
+        registerHandler(collapseButton.addClickHandler(event -> {
+            groupSelection = collapseButton.collapse(groupSelection);
+            refresh();
+        }));
+
         registerHandler(downloadButton.addClickHandler(event -> {
             if (currentSearchModel != null) {
                 if (currentSearchModel.isSearching()) {
@@ -314,13 +318,40 @@ public class QueryResultTablePresenter
 
         registerHandler(selectionModel.addSelectionHandler(event -> {
             if (event.getSelectionType().isDoubleSelect()) {
-                final List<Long> annotationIdList = annotationManager.getAnnotationIdList(
+                final Set<Long> annotationIdList = annotationManager.getAnnotationIds(
                         selectionModel.getSelectedItems());
                 if (annotationIdList.size() == 1) {
-                    annotationManager.editAnnotation(annotationIdList.get(0));
+                    annotationManager.editAnnotation(annotationIdList.iterator().next());
                 }
             }
         }));
+
+        registerHandler(getEventBus().addHandler(AnnotationChangeEvent.getType(), e ->
+                onAnnotationChange()));
+    }
+
+    private void onAnnotationChange() {
+        try {
+            annotationChanged = true;
+            if (tableIsVisible) {
+                annotationChanged = false;
+                final DocRef dataSource = currentDataSource;
+                if (dataSource != null &&
+                    AnnotationFields.ANNOTATIONS_PSEUDO_DOC_REF.getType().equals(dataSource.getType())) {
+                    // If this is an annotations data source then force a new search.
+                    forceNewSearch();
+                } else if (getCurrentColumns()
+                        .stream()
+                        .anyMatch(col ->
+                                NullSafe.getOrElse(col, Column::getExpression, "")
+                                        .contains(AnnotationDecorationFields.ANNOTATION_FIELD_PREFIX))) {
+                    // If the table contains annotations fields then just refresh to redecorate.
+                    refresh();
+                }
+            }
+        } catch (final RuntimeException e) {
+            GWT.log(e.getMessage());
+        }
     }
 
     public void toggleApplyValueFilters() {
@@ -368,6 +399,25 @@ public class QueryResultTablePresenter
 
     public void setFocused(final boolean focused) {
         dataGrid.setFocused(focused);
+    }
+
+    public void forceNewSearch() {
+        if (currentSearchModel != null) {
+            pagerView.getRefreshButton().setRefreshing(true);
+            currentSearchModel.forceNewSearch(QueryModel.TABLE_COMPONENT_ID, result -> {
+                try {
+                    if (result != null) {
+                        setDataInternal(result);
+                    }
+                } catch (final Exception e) {
+                    GWT.log(e.getMessage());
+                } finally {
+                    pagerView.getRefreshButton().setRefreshing(currentSearchModel.isSearching());
+                }
+            });
+        } else {
+            RefreshRequestEvent.fire(this);
+        }
     }
 
     public void refresh() {
@@ -606,7 +656,7 @@ public class QueryResultTablePresenter
                 downloadButton.setEnabled(true);
 
                 // Show errors if there are any.
-                messagePanel.showMessage(tableResult.getErrors());
+                messagePanel.showMessage(tableResult.getErrorMessages());
 
             } else {
                 // Disable download of current results.
@@ -659,18 +709,9 @@ public class QueryResultTablePresenter
     }
 
     private void addColumn(final Column column) {
-        final com.google.gwt.user.cellview.client.Column<TableRow, SafeHtml> col =
-                new com.google.gwt.user.cellview.client.Column<TableRow, SafeHtml>(new SafeHtmlCell()) {
-                    @Override
-                    public SafeHtml getValue(final TableRow row) {
-                        if (row == null) {
-                            return SafeHtmlUtil.NBSP;
-                        }
-
-                        return row.getValue(column.getId());
-                    }
-                };
-
+        final com.google.gwt.user.cellview.client.Column<TableRow, TableRow> col =
+                new com.google.gwt.user.cellview.client.IdentityColumn<TableRow>(
+                        new TableRowCell(annotationManager, column));
         final ColumnHeader columnHeader = new ColumnHeader(column, columnsManager);
         dataGrid.addResizableColumn(col, columnHeader, column.getWidth());
         existingColumns.add(col);
@@ -679,22 +720,7 @@ public class QueryResultTablePresenter
     private List<TableRow> processData(final List<Column> columns, final List<Row> values) {
         // See if any fields have more than 1 level. If they do then we will add
         // an expander column.
-        int maxGroup = -1;
-        final boolean showDetail = false; //getTableSettings().showDetail();
-        for (final Column column : columns) {
-            if (column.getGroup() != null) {
-                maxGroup = Math.max(maxGroup, column.getGroup());
-            }
-        }
-
-        int maxDepth = -1;
-        if (maxGroup > 0 && showDetail) {
-            maxDepth = maxGroup + 1;
-        } else if (maxGroup > 0) {
-            maxDepth = maxGroup;
-        } else if (maxGroup == 0 && showDetail) {
-            maxDepth = 1;
-        }
+        maxDepth = getMaxDepth(columns);
 
         final List<TableRow> processed = new ArrayList<>(values.size());
         for (final Row row : values) {
@@ -718,7 +744,7 @@ public class QueryResultTablePresenter
                     stylesBuilder.fontWeight(Style.FontWeight.BOLD);
                 }
 
-                final String style = stylesBuilder.toSafeStyles().asString();
+                final SafeStyles style = stylesBuilder.toSafeStyles();
 
                 final TableRow.Cell cell = new TableRow.Cell(value, style);
                 cellsMap.put(column.getName(), cell);
@@ -728,7 +754,7 @@ public class QueryResultTablePresenter
             // Create an expander for the row.
             Expander expander = null;
             if (row.getDepth() < maxDepth) {
-                final boolean open = isGroupOpen(row.getGroupKey());
+                final boolean open = groupSelection.isGroupOpen(row.getGroupKey(), row.getDepth());
                 expander = new Expander(row.getDepth(), open, false);
             } else if (row.getDepth() > 0) {
                 expander = new Expander(row.getDepth(), false, true);
@@ -737,15 +763,35 @@ public class QueryResultTablePresenter
             processed.add(new TableRow(
                     expander,
                     row.getGroupKey(),
+                    row.getAnnotationId(),
                     cellsMap,
-                    row.getMatchingRule()));
+                    row.getMatchingRule(),
+                    row.getDepth()));
         }
 
         // Set the expander column width.
         expanderColumnWidth = ExpanderCell.getColumnWidth(maxDepth);
         dataGrid.setColumnWidth(expanderColumn, expanderColumnWidth, Unit.PX);
 
+        expandButton.update(groupSelection, maxDepth);
+        collapseButton.update(groupSelection, maxDepth);
+
         return processed;
+    }
+
+    private int getMaxDepth(final List<Column> columns) {
+        int maxGroup = -1;
+        for (final Column column : columns) {
+            if (column.getGroup() != null) {
+                maxGroup = Math.max(maxGroup, column.getGroup());
+            }
+        }
+
+        int maxDepth = -1;
+        if (maxGroup > 0) {
+            maxDepth = maxGroup;
+        }
+        return maxDepth;
     }
 
     public HandlerRegistration addRefreshRequestHandler(final RefreshRequestEvent.Handler handler) {
@@ -907,6 +953,15 @@ public class QueryResultTablePresenter
                 .onSuccess(result -> currentDataSource = result)
                 .taskMonitorFactory(this)
                 .exec();
+    }
+
+    public void onContentTabVisible(final boolean visible) {
+        tableIsVisible = visible;
+        if (visible) {
+            if (annotationChanged) {
+                onAnnotationChange();
+            }
+        }
     }
 
     public static class QueryTableColumnValuesDataSupplier extends ColumnValuesDataSupplier {

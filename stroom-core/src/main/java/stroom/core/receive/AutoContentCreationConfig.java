@@ -103,7 +103,8 @@ public class AutoContentCreationConfig
             "Whether the auto-creation of content on data receipt is enabled or not. " +
             "If enabled, Stroom will automatically create content such as Feeds/XSLTs/Pipelines on receipt of " +
             "a data stream. The property 'templatesPath' will contain content to be used as templates for " +
-            "auto-creation.")
+            "auto-creation. Content will only be created if a Content Template rule matches the attributes " +
+            "on the incoming data.")
     public boolean isEnabled() {
         return enabled;
     }

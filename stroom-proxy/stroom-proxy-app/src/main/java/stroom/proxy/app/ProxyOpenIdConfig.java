@@ -37,12 +37,14 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
             @JsonProperty("clientSecret") final String clientSecret,
             @JsonProperty("requestScopes") final List<String> requestScopes,
             @JsonProperty("clientCredentialsScopes") final List<String> clientCredentialsScopes,
-            @JsonProperty("validateAudience") final boolean validateAudience,
+            @JsonProperty("allowedAudiences") final Set<String> allowedAudiences,
+            @JsonProperty("audienceClaimRequired") final Boolean audienceClaimRequired,
             @JsonProperty("validIssuers") final Set<String> validIssuers,
             @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim,
             @JsonProperty("userDisplayNameClaim") final String userDisplayNameClaim,
-            @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes) {
-
+            @JsonProperty("fullNameClaimTemplate") final String fullNameClaimTemplate,
+            @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes,
+            @JsonProperty("publicKeyUriPattern") final String publicKeyUriPattern) {
         super(identityProviderType,
                 openIdConfigurationEndpoint,
                 issuer,
@@ -56,11 +58,14 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
                 clientSecret,
                 requestScopes,
                 clientCredentialsScopes,
-                validateAudience,
+                allowedAudiences,
+                audienceClaimRequired,
                 validIssuers,
                 uniqueIdentityClaim,
                 userDisplayNameClaim,
-                expectedSignerPrefixes);
+                fullNameClaimTemplate,
+                expectedSignerPrefixes,
+                publicKeyUriPattern);
     }
 
     @JsonIgnore
@@ -106,10 +111,13 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
                 getClientId(),
                 getRequestScopes(),
                 getClientCredentialsScopes(),
-                isValidateAudience(),
+                getAllowedAudiences(),
+                isAudienceClaimRequired(),
                 getValidIssuers(),
                 getUniqueIdentityClaim(),
                 getUserDisplayNameClaim(),
-                getExpectedSignerPrefixes());
+                getFullNameClaimTemplate(),
+                getExpectedSignerPrefixes(),
+                getPublicKeyUriPattern());
     }
 }

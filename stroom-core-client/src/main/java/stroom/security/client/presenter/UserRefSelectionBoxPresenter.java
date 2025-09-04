@@ -19,6 +19,7 @@ package stroom.security.client.presenter;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
+import stroom.security.shared.FindUserContext;
 import stroom.util.shared.UserRef;
 import stroom.widget.dropdowntree.client.view.DropDownUiHandlers;
 import stroom.widget.dropdowntree.client.view.DropDownView;
@@ -97,7 +98,7 @@ public class UserRefSelectionBoxPresenter extends MyPresenterWidget<DropDownView
         }
     }
 
-    public void showActiveUsersOnly(final boolean activeUsersOnly) {
-        userRefPopupPresenter.showActiveUsersOnly(activeUsersOnly);
+    public void setContext(final FindUserContext context) {
+        userRefPopupPresenter.setContext(context);
     }
 }

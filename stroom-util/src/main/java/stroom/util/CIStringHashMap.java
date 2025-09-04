@@ -15,7 +15,7 @@ import java.util.function.Function;
 public class CIStringHashMap implements Serializable, Map<String, String> {
 
     private static final long serialVersionUID = 4877407570072403322L;
-    protected HashMap<CIString, String> realMap = new HashMap<>();
+    protected Map<CIString, String> realMap = new HashMap<>();
 
     @Override
     public void clear() {

@@ -49,7 +49,7 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
 
     private final FsPathHelper fileSystemStreamPathHelper;
     private final Map<String, FsSource> childMap = new HashMap<>();
-    private final HashMap<String, SegmentInputStreamProvider> inputStreamMap = new HashMap<>(10);
+    private final Map<String, SegmentInputStreamProvider> inputStreamMap = new HashMap<>(10);
     private final Path volumePath;
     private final String streamType;
     private final FsSource parent;

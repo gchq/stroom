@@ -21,6 +21,7 @@ import stroom.query.api.ResultStoreInfo;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.ErrorMessage;
 
 import java.util.List;
 
@@ -36,7 +37,7 @@ public interface Queryable {
 
     boolean getSearchState();
 
-    List<String> getCurrentErrors();
+    List<ErrorMessage> getCurrentErrors();
 
     void setQueryInfo(QueryInfo queryInfo);
 
