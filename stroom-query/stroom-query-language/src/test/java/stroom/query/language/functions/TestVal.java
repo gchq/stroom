@@ -10,6 +10,29 @@ import java.util.stream.Stream;
 
 public class TestVal {
 
+//    @TestFactory
+//    Stream<DynamicTest> testSerDeSer() {
+//        return TestUtil.buildDynamicTestStream()
+//                .withInputTypes(Val.class, Class.class)
+//                .withOutputType(Val.class)
+//                .withTestFunction(tesatCase -> {
+//                    final Val val = tesatCase.getInput()._1();
+//                    final Class clazz = tesatCase.getInput()._2();
+//                    final Val val2 = TestUtil.testSerialisation(val, clazz);
+//                    return val2;
+//                })
+//                .withAssertions(tuple2ValTestOutcome -> {
+//                    final Val input = tuple2ValTestOutcome.getInput()._1();
+//                    final Val output = tuple2ValTestOutcome.getActualOutput();
+//                    Assertions.assertThat(output)
+//                            .isEqualTo(input);
+//                })
+//                .addCase(Tuple.of(ValString.create("foo"), ValString.class), null)
+//                .addCase(Tuple.of(ValLong.create(123L), ValLong.class), null)
+//                .build();
+//    }
+
+
     @TestFactory
     Stream<DynamicTest> testNullSafeCreate() {
         return TestUtil.buildDynamicTestStream()
