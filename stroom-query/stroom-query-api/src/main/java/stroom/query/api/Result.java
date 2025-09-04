@@ -55,6 +55,7 @@ public abstract sealed class Result permits TableResult, FlatResult, VisResult, 
     /**
      * @deprecated Use {@link Result#errorMessages} instead.
      */
+    @Deprecated
     @JsonProperty
     private final List<String> errors;
 
