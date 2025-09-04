@@ -22,9 +22,15 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.util.shared.EntityServiceException;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 import stroom.xmlschema.shared.XmlSchemaResource;
+import stroom.xmlschema.shared.XmlSchemaValidationResponse;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+
+import java.io.StringReader;
+import javax.xml.XMLConstants;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.SchemaFactory;
 
 @AutoLogged
 class XmlSchemaResourceImpl implements XmlSchemaResource {
@@ -50,6 +56,17 @@ class XmlSchemaResourceImpl implements XmlSchemaResource {
             throw new EntityServiceException("The document UUID must match the update UUID");
         }
         return documentResourceHelperProvider.get().update(xmlSchemaStoreProvider.get(), doc);
+    }
+
+    @Override
+    public XmlSchemaValidationResponse validate(final String schemaData) {
+        try {
+            final SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+            factory.newSchema(new StreamSource(new StringReader(schemaData)));
+            return new XmlSchemaValidationResponse(true, null);
+        } catch (final Exception e) {
+            return new XmlSchemaValidationResponse(false, e.getMessage());
+        }
     }
 
     private DocRef getDocRef(final String uuid) {
