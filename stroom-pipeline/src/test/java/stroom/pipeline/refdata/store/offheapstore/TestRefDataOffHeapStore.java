@@ -107,7 +107,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         refDataStore.consumeEntries(
                 refStoreEntry ->
                         refStoreEntry.getKey().equals("key5")
-                                || refStoreEntry.getKey().equals("key2"),
+                        || refStoreEntry.getKey().equals("key2"),
                 null,
                 entries::add);
 
@@ -487,6 +487,38 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                 .isPresent();
         assertThat(refDataStore.getValue(mapDefinition, key2))
                 .isEmpty();
+    }
+
+    @Test
+    void testNoEntries() {
+        final boolean overwriteExisting = true;
+        final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
+        final long effectiveTimeMs = System.currentTimeMillis();
+
+        assertThat(refDataStore.getLoadState(refStreamDefinition))
+                .isEmpty();
+
+        assertThat(refDataStore.getKeyValueEntryCount())
+                .isEqualTo(0);
+
+        final AtomicBoolean wasWorkDone = new AtomicBoolean(false);
+        refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, loader -> {
+            wasWorkDone.set(true);
+            loader.initialise(overwriteExisting);
+
+            // No puts at all
+
+            loader.markPutsComplete();
+            loader.completeProcessing(ProcessingState.COMPLETE);
+        });
+
+        assertThat(wasWorkDone)
+                .isTrue();
+
+        refDataStore.logAllContents(LOGGER::debug);
+
+        assertThat(refDataStore.getLoadState(refStreamDefinition))
+                .hasValue(ProcessingState.COMPLETE);
     }
 
     @TestFactory
@@ -961,7 +993,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                 expectedRefStreamDefCount * keyValueMapCount * entryCount,
                 expectedRefStreamDefCount * rangeValueMapCount * entryCount,
                 (expectedRefStreamDefCount * rangeValueMapCount * entryCount) +
-                        (expectedRefStreamDefCount * rangeValueMapCount * entryCount));
+                (expectedRefStreamDefCount * rangeValueMapCount * entryCount));
     }
 
     @Test
@@ -1029,7 +1061,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                 expectedRefStreamDefCount * keyValueMapCount * entryCount,
                 expectedRefStreamDefCount * rangeValueMapCount * entryCount,
                 (expectedRefStreamDefCount * rangeValueMapCount * entryCount) +
-                        (expectedRefStreamDefCount * rangeValueMapCount * entryCount));
+                (expectedRefStreamDefCount * rangeValueMapCount * entryCount));
     }
 
     @Test
