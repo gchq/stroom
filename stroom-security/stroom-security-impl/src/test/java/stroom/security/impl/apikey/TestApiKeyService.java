@@ -493,6 +493,7 @@ class TestApiKeyService {
 
     @TestFactory
     Stream<DynamicTest> testHashAlgorithms() {
+        //noinspection VariableTypeCanBeExplicit
         final var builder = TestUtil.buildDynamicTestStream()
                 .withInputType(ApiKeyHashAlgorithm.class)
                 .withOutputType(boolean.class)

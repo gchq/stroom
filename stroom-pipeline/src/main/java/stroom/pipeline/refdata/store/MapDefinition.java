@@ -55,7 +55,7 @@ public class MapDefinition {
     public MapDefinition(final RefStreamDefinition refStreamDefinition) {
         this.refStreamDefinition = refStreamDefinition;
         this.mapName = null;
-        // pre compute the hash
+        // pre-compute the hash
         this.hashCode = buildHashCode();
     }
 
@@ -89,7 +89,7 @@ public class MapDefinition {
         }
         final MapDefinition that = (MapDefinition) o;
         return Objects.equals(refStreamDefinition, that.refStreamDefinition) &&
-                Objects.equals(mapName, that.mapName);
+               Objects.equals(mapName, that.mapName);
     }
 
     @Override
@@ -104,11 +104,11 @@ public class MapDefinition {
     @Override
     public String toString() {
         return "MapDefinition{" +
-                "pipelineDocRef=" + refStreamDefinition.getPipelineDocRef() +
-                ", pipelineVer=" + refStreamDefinition.getPipelineVersion() +
-                ", streamId=" + refStreamDefinition.getStreamId() +
-                ", partIndex=" + refStreamDefinition.getPartIndex() +
-                ", mapName='" + mapName + '\'' +
-                '}';
+               "pipelineDocRef=" + refStreamDefinition.getPipelineDocRef() +
+               ", pipelineVer=" + refStreamDefinition.getPipelineVersion() +
+               ", streamId=" + refStreamDefinition.getStreamId() +
+               ", partIndex=" + refStreamDefinition.getPartIndex() +
+               ", mapName='" + mapName + '\'' +
+               '}';
     }
 }

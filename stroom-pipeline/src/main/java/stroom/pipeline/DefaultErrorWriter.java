@@ -19,6 +19,7 @@ package stroom.pipeline;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.destination.DestinationProvider;
 import stroom.util.pipeline.scope.PipelineScoped;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
@@ -52,12 +53,12 @@ public class DefaultErrorWriter implements ErrorWriter {
     }
 
     @Override
-    public void log(final Severity severity, final Location location, final String elementId, final String message) {
-        if (message != null && destinationProviders != null && destinationProviders.size() > 0) {
+    public void log(final Severity severity, final Location location, final ElementId elementId, final String message) {
+        if (message != null && destinationProviders != null && !destinationProviders.isEmpty()) {
             final StringBuilder sb = new StringBuilder();
             sb.append(OPEN_BRACKET);
             if (location != null) {
-                sb.append(location.toString());
+                sb.append(location);
                 sb.append(SPACE);
             }
             sb.append(elementId);

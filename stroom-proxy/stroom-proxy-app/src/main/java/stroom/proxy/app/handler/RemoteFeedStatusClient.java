@@ -17,20 +17,27 @@ import stroom.util.shared.NullSafe;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheck.Result;
+import com.codahale.metrics.health.HealthCheck.ResultBuilder;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.Response.StatusType;
 
+import java.time.Instant;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
+@Singleton
 public class RemoteFeedStatusClient extends AbstractDownstreamClient implements HasHealthCheck {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RemoteFeedStatusClient.class);
     private final Provider<FeedStatusConfig> feedStatusConfigProvider;
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
+
+    private final AtomicLong lastSuccessfulCall = new AtomicLong(0);
 
     @Inject
     public RemoteFeedStatusClient(final JerseyClientFactory jerseyClientFactory,
@@ -68,6 +75,7 @@ public class RemoteFeedStatusClient extends AbstractDownstreamClient implements 
                         feedStatusResponse = response.readEntity(GetFeedStatusResponse.class);
                         LOGGER.debug("Got feed status '{}' for '{}' using url '{}'",
                                 feedStatusResponse.getStatus(), request.getFeedName(), url);
+                        lastSuccessfulCall.set(System.currentTimeMillis());
                     }
                 }
             } catch (final Throwable e) {
@@ -85,25 +93,39 @@ public class RemoteFeedStatusClient extends AbstractDownstreamClient implements 
         return feedStatusResponse;
     }
 
+    private Instant getLastSuccessfulCall() {
+        final long epochMs = lastSuccessfulCall.get();
+        return epochMs != 0
+                ? Instant.ofEpochMilli(epochMs)
+                : null;
+    }
+
     @Override
     public HealthCheck.Result getHealth() {
         LOGGER.debug("getHealth() called");
+        final ResultBuilder builder = HealthCheck.Result.builder();
+        HealthCheckUtils.addTime(builder, "lastSuccessfulCall", getLastSuccessfulCall());
         if (!isDownstreamEnabled()) {
-            return HealthCheckUtils.healthy("Downstream host disabled");
+            builder.healthy()
+                    .withMessage("Downstream host disabled");
         } else if (receiveDataConfigProvider.get().getReceiptCheckMode() != ReceiptCheckMode.FEED_STATUS
                    && receiveDataConfigProvider.get().getReceiptCheckMode() != ReceiptCheckMode.RECEIPT_POLICY) {
-            return HealthCheckUtils.healthy("Feed status checking disabled by receiptCheckMode");
+            builder.healthy()
+                    .withMessage("Feed status checking disabled by receiptCheckMode");
         } else {
             final GetFeedStatusRequestV2 request = new GetFeedStatusRequestV2(
                     "DUMMY_FEED", null, null);
             try {
-                try (final Response response = getResponse(builder -> builder.post(Entity.json(request)))) {
-                    return HealthCheckUtils.fromResponse(response)
-                            .build();
+                try (final Response response = getResponse(requestBuilder ->
+                        requestBuilder.post(Entity.json(request)))) {
+                    HealthCheckUtils.fromResponse(builder, response, Status.OK, getFullUrl());
                 }
             } catch (final Throwable e) {
+                builder.unhealthy(e)
+                        .withDetail("url", getFullUrl());
                 return Result.unhealthy(e);
             }
         }
+        return builder.build();
     }
 }

@@ -17,6 +17,7 @@ import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItem;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
@@ -127,16 +128,6 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                     .build());
             menuItems.add(createCopyAsMenuItem(docRef, priority++));
 
-        } else {
-            final String text = cellTextFunction.apply(value).asString();
-            if (NullSafe.isNonBlankString(text)) {
-                menuItems.add(new IconMenuItem.Builder()
-                        .priority(1)
-                        .icon(SvgImage.COPY)
-                        .text("Copy")
-                        .command(() -> ClipboardUtil.copy(text))
-                        .build());
-            }
         }
         return menuItems.isEmpty()
                 ? null
@@ -300,6 +291,10 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
     // --------------------------------------------------------------------------------
 
 
+    /**
+     * Use {@link SafeHtmlUtil#getTemplate()} instead
+     */
+    @Deprecated
     interface Template extends SafeHtmlTemplates {
 
         @Template("<div class=\"{0}\">{1}</div>")
@@ -308,6 +303,10 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
         @Template("<div title=\"{0}\">{1}</div>")
         SafeHtml divWithToolTip(String title, SafeHtml content);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder<T> {
 

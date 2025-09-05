@@ -19,8 +19,10 @@ package stroom.util;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.metrics.Metrics;
 import stroom.util.shared.BuildInfo;
 
+import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
@@ -67,6 +69,28 @@ public class BuildInfoProvider implements Provider<BuildInfo> {
             }
         }
         BUILD_INFO = new BuildInfo(upDate, buildVersion, buildTime);
+    }
+
+    @Inject
+    public BuildInfoProvider(final Metrics metrics) {
+        registerMetrics(metrics);
+    }
+
+    private static void registerMetrics(final Metrics metrics) {
+        metrics.registrationBuilder(BuildInfoProvider.class)
+                .addNamePart("buildVersion")
+                .gauge(BUILD_INFO::getBuildVersion)
+                .register();
+        metrics.registrationBuilder(BuildInfoProvider.class)
+                .addNamePart("buildDate")
+                .gauge(() ->
+                        DateUtil.createNormalDateTimeString(BUILD_INFO.getBuildTime()))
+                .register();
+        metrics.registrationBuilder(BuildInfoProvider.class)
+                .addNamePart("upTime")
+                .gauge(() ->
+                        DateUtil.createNormalDateTimeString(BUILD_INFO.getUpTime()))
+                .register();
     }
 
     // For use by Guice

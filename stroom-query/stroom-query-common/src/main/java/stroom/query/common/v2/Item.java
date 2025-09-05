@@ -16,11 +16,9 @@
 
 package stroom.query.common.v2;
 
-import stroom.query.language.functions.Val;
+import stroom.query.language.functions.Values;
 
-public interface Item {
+public interface Item extends Values {
 
     Key getKey();
-
-    Val getValue(int index);
 }

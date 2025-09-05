@@ -863,6 +863,7 @@ appConfig:
     - "Test Events"
     - "Test Reference"
     receiptCheckMode: "FEED_STATUS"
+    x509CertificateDnFormat: "LDAP"
     x509CertificateDnHeader: "X-SSL-CLIENT-S-DN"
     x509CertificateHeader: "X-SSL-CERT"
   s3:
@@ -931,6 +932,8 @@ appConfig:
         statisticsMode: "INTERNAL"
       maxApiKeyExpiryAge: "P365D"
       openId:
+        allowedAudiences: []
+        audienceClaimRequired: false
         authEndpoint: null
         clientCredentialsScopes:
         - "openid"
@@ -938,12 +941,14 @@ appConfig:
         clientSecret: null
         expectedSignerPrefixes: []
         formTokenRequest: true
+        fullNameClaimTemplate: "${name}"
         identityProviderType: "INTERNAL_IDP"
         issuer: null
         jwksUri: null
         logoutEndpoint: null
         logoutRedirectParamName: "post_logout_redirect_uri"
         openIdConfigurationEndpoint: null
+        publicKeyUriPattern: "https://public-keys.auth.elb.${awsRegion}.amazonaws.com/${keyId}"
         requestScopes:
         - "openid"
         - "email"
@@ -951,7 +956,6 @@ appConfig:
         uniqueIdentityClaim: "sub"
         userDisplayNameClaim: "preferred_username"
         validIssuers: []
-        validateAudience: true
       preventLogin: false
     authorisation:
       appPermissionIdCache:

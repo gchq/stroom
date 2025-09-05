@@ -19,6 +19,7 @@ package stroom.dashboard.impl;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.query.api.Result;
 import stroom.query.api.SearchResponse;
+import stroom.util.shared.ErrorMessage;
 
 import java.util.HashSet;
 import java.util.List;
@@ -49,12 +50,12 @@ public class SearchResponseMapper {
 //            }
 //        }
 
-        List<String> errors = searchResponse.getErrors();
-        if (errors != null) {
+        List<ErrorMessage> errorMessages = searchResponse.getErrorMessages();
+        if (errorMessages != null) {
             // Remove timeout message as this is expected to occur for non-incremental dashboard searches.
-            errors = errors
+            errorMessages = errorMessages
                     .stream()
-                    .filter(error -> !error.startsWith(SearchResponse.TIMEOUT_MESSAGE))
+                    .filter(error -> !error.getMessage().startsWith(SearchResponse.TIMEOUT_MESSAGE))
                     .toList();
         }
 
@@ -62,10 +63,11 @@ public class SearchResponseMapper {
                 node,
                 searchResponse.getKey(),
                 highlights,
-                errors,
+                null,
                 null,
                 searchResponse.complete(),
-                results);
+                results,
+                errorMessages);
     }
 
 //    private Result mapResult(final Result result) {

@@ -32,6 +32,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -172,7 +173,7 @@ class TestFileSystemUtil {
         final Path dir2 = tempDir.resolve(FileSystemTestUtil.getUniqueTestString());
         final Path file1 = dir1.resolve("test.dat");
         final Path file2 = dir2.resolve("test.dat");
-        final HashSet<Path> files = new HashSet<>();
+        final Set<Path> files = new HashSet<>();
         files.add(file1);
         files.add(file2);
 
@@ -214,7 +215,7 @@ class TestFileSystemUtil {
      */
     @Test
     void testParentMkdirs() throws InterruptedException {
-        final HashSet<Path> fileSet = new HashSet<>();
+        final Set<Path> fileSet = new HashSet<>();
 
         final String dir = FileSystemTestUtil.getUniqueTestString();
         final Path dir1 = tempDir.resolve(dir);

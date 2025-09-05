@@ -17,6 +17,7 @@
 
 package stroom.dashboard.client.main;
 
+import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
@@ -79,6 +80,13 @@ public class DashboardSuperPresenter
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(DASHBOARD);
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e ->
+                dashboardPresenter.onContentTabVisible(e.getTabData() == this)));
     }
 
     public void setParentContext(final Object context) {

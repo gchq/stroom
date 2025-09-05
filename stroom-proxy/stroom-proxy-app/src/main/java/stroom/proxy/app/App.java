@@ -39,6 +39,7 @@ import stroom.util.io.DirProvidersModule;
 import stroom.util.io.FileUtil;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.PathConfig;
+import stroom.util.io.PathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.DefaultLoggingFilter;
 import stroom.util.logging.LambdaLogger;
@@ -95,6 +96,8 @@ public class App extends Application<Config> {
     @Inject
     private HomeDirProvider homeDirProvider;
     @Inject
+    private PathCreator pathCreator;
+    @Inject
     private TempDirProvider tempDirProvider;
     @Inject
     private ProxyId proxyId;
@@ -149,6 +152,9 @@ public class App extends Application<Config> {
         // then we need to set the ValidatorFactory. As our main Guice Injector is not available yet we need to
         // create one just for the REST validation
         bootstrap.setValidatorFactory(validationOnlyInjector.getInstance(ValidatorFactory.class));
+
+        // Admin servlet for Prometheus to scrape (pull) metrics
+//        bootstrap.addBundle(new PrometheusBundle());
     }
 
     @Override
@@ -259,11 +265,14 @@ public class App extends Application<Config> {
 
     private void showInfo(final Config configuration) {
         Objects.requireNonNull(buildInfo);
+        final ProxyConfig proxyConfig = configuration.getProxyConfig();
 
-        final String forwaders = configuration.getProxyConfig().streamAllForwarders()
+        final String forwaders = proxyConfig.streamAllForwarders()
                 .map(forwarderConfig -> {
                     final String name = forwarderConfig.getName();
-                    final String destination = forwarderConfig.getDestinationDescription();
+                    final String destination = forwarderConfig.getDestinationDescription(
+                            proxyConfig.getDownstreamHostConfig(),
+                            pathCreator);
                     final String state = forwarderConfig.isEnabled()
                             ? ""
                             : " DISABLED";
@@ -279,7 +288,7 @@ public class App extends Application<Config> {
                 .sorted()
                 .collect(Collectors.joining("\n"));
         final IdpType idpType = NullSafe.get(
-                configuration.getProxyConfig(),
+                proxyConfig,
                 ProxyConfig::getProxySecurityConfig,
                 ProxySecurityConfig::getAuthenticationConfig,
                 ProxyAuthenticationConfig::getOpenIdConfig,

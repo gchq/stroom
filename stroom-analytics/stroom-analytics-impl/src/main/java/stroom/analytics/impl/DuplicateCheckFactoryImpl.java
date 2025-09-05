@@ -8,9 +8,9 @@ import stroom.analytics.shared.DuplicateNotificationConfig;
 import stroom.analytics.shared.FindDuplicateCheckCriteria;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBuffers;
-import stroom.query.api.Row;
 import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.DuplicateCheckStoreConfig;
+import stroom.query.language.functions.Values;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -69,8 +69,9 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
 
             return new DuplicateCheck() {
                 @Override
-                public boolean check(final Row row) {
-                    final DuplicateCheckRow duplicateCheckRow = duplicateCheckRowFactory.createDuplicateCheckRow(row);
+                public boolean check(final Values values) {
+                    final DuplicateCheckRow duplicateCheckRow =
+                            duplicateCheckRowFactory.createDuplicateCheckRow(values);
                     final boolean success = store.tryInsert(duplicateCheckRow);
                     if (duplicateNotificationConfig.isSuppressDuplicateNotifications()) {
                         return success;
@@ -107,7 +108,7 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
     private static class NoOpDuplicateCheck implements DuplicateCheck {
 
         @Override
-        public boolean check(final Row row) {
+        public boolean check(final Values values) {
             return true;
         }
 

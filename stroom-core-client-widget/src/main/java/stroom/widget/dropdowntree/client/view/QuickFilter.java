@@ -47,7 +47,7 @@ public class QuickFilter extends FlowPanel
 
     private static final int DEBOUNCE_DELAY_MS = 400;
     private static final SafeHtml DEFAULT_POPUP_TEXT = new HtmlBuilder()
-            .bold(hb -> hb.append("Quick Filter"))
+            .bold("Quick Filter")
             .br()
             .append("Field values containing the characters input will be included.")
             .br()
@@ -115,19 +115,17 @@ public class QuickFilter extends FlowPanel
 
     private void onChange() {
         final String text = textBox.getText();
-        final boolean isNotEmpty = text.length() > 0;
+        final boolean isNotEmpty = !text.isEmpty();
         clearButton.setEnabled(isNotEmpty);
         clearButton.setVisible(isNotEmpty);
 
         if (!Objects.equals(text, lastInput)) {
             lastInput = text;
-            if (handlerManager != null) {
-                // Add in a slight delay to give the user a chance to type a few chars before we fire off
-                // a rest call. This helps to reduce the logging too
-                if (!filterRefreshTimer.isRunning()) {
-                    filterRefreshTimer.schedule(DEBOUNCE_DELAY_MS);
-                }
-            }
+
+            // Add in a slight delay to give the user a chance to type a few chars before we fire off
+            // a rest call. This helps to reduce the logging too
+            filterRefreshTimer.cancel();
+            filterRefreshTimer.schedule(DEBOUNCE_DELAY_MS);
         }
     }
 

@@ -19,10 +19,11 @@ package stroom.resource.impl;
 import stroom.util.shared.ResourceKey;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class ResourceMap {
 
-    private final HashMap<ResourceKey, ResourceKey> map = new HashMap<>();
+    private final Map<ResourceKey, ResourceKey> map = new HashMap<>();
 
     public void put(final ResourceKey key, final ResourceKey value) {
         map.put(key, value);

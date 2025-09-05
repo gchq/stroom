@@ -16,6 +16,8 @@
 
 package stroom.query.api;
 
+import stroom.util.shared.ErrorMessage;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -24,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.List;
 
-@JsonPropertyOrder({"componentId", "jsonData", "dataPoints", "error"})
+@JsonPropertyOrder({"componentId", "jsonData", "dataPoints", "errors", "errorMessages"})
 @JsonInclude(Include.NON_NULL)
 public final class VisResult extends Result {
 
@@ -37,8 +39,9 @@ public final class VisResult extends Result {
     public VisResult(@JsonProperty("componentId") final String componentId,
                      @JsonProperty("jsonData") final String jsonData,
                      @JsonProperty("dataPoints") final long dataPoints,
-                     @JsonProperty("errors") final List<String> errors) {
-        super(componentId, errors);
+                     @JsonProperty("errors") final List<String> errors,
+                     @JsonProperty("errorMessages") final List<ErrorMessage> errorMessages) {
+        super(componentId, errors, errorMessages);
         this.jsonData = jsonData;
         this.dataPoints = dataPoints;
     }

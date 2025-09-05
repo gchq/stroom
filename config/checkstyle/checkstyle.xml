@@ -107,6 +107,13 @@
   <module name="SuppressWarningsFilter" />
 
   <module name="TreeWalker">
+    <module name="IllegalType"/> <!-- default check -->
+
+    <!-- Prevent use of 'var' -->
+<!--    <module name="IllegalType"> &lt;!&ndash; usage of var check &ndash;&gt;-->
+<!--      <property name="illegalClassNames" value="var"/>-->
+<!--      <property name="severity" value="warning"/>-->
+<!--    </module>-->
 
     <!-- Make the @SuppressWarnings annotations available to Checkstyle -->
     <module name="SuppressWarningsHolder" />

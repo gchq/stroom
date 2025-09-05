@@ -71,6 +71,11 @@ public class ExtendedUiConfig {
             "The type of check performed on received data.")
     private final ReceiptCheckMode receiptCheckMode;
 
+    @JsonProperty
+    @JsonPropertyDescription(
+            "The last time an annotation was updated.")
+    private final long lastAnnotationChangeTime;
+
     public ExtendedUiConfig() {
         this.externalIdentityProvider = false;
         this.uiConfig = new UiConfig();
@@ -92,6 +97,7 @@ public class ExtendedUiConfig {
                 "UploadUserId",
                 "X-Forwarded-For");
         this.receiptCheckMode = ReceiptCheckMode.getDefault();
+        this.lastAnnotationChangeTime = 0;
     }
 
     @JsonCreator
@@ -101,7 +107,8 @@ public class ExtendedUiConfig {
             @JsonProperty("dependencyWarningsEnabled") final boolean dependencyWarningsEnabled,
             @JsonProperty("maxApiKeyExpiryAgeMs") final long maxApiKeyExpiryAgeMs,
             @JsonProperty("obfuscatedFields") final Set<String> obfuscatedFields,
-            @JsonProperty("receiptCheckMode") final ReceiptCheckMode receiptCheckMode) {
+            @JsonProperty("receiptCheckMode") final ReceiptCheckMode receiptCheckMode,
+            @JsonProperty("lastAnnotationChangeTime") final long lastAnnotationChangeTime) {
 
         this.uiConfig = uiConfig;
         this.externalIdentityProvider = externalIdentityProvider;
@@ -110,6 +117,7 @@ public class ExtendedUiConfig {
         // Ensures serialisation tests work
         this.obfuscatedFields = GwtCollectionUtil.asUnmodifiabledConsistentOrderSet(obfuscatedFields);
         this.receiptCheckMode = NullSafe.requireNonNullElse(receiptCheckMode, ReceiptCheckMode.getDefault());
+        this.lastAnnotationChangeTime = lastAnnotationChangeTime;
     }
 
     public UiConfig getUiConfig() {
@@ -298,6 +306,10 @@ public class ExtendedUiConfig {
         return receiptCheckMode;
     }
 
+    public long getLastAnnotationChangeTime() {
+        return lastAnnotationChangeTime;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -312,7 +324,8 @@ public class ExtendedUiConfig {
                && maxApiKeyExpiryAgeMs == that.maxApiKeyExpiryAgeMs
                && Objects.equals(uiConfig, that.uiConfig)
                && Objects.equals(obfuscatedFields, that.obfuscatedFields)
-               && Objects.equals(receiptCheckMode, that.receiptCheckMode);
+               && Objects.equals(receiptCheckMode, that.receiptCheckMode)
+               && Objects.equals(lastAnnotationChangeTime, that.lastAnnotationChangeTime);
     }
 
     @Override
@@ -322,7 +335,8 @@ public class ExtendedUiConfig {
                 dependencyWarningsEnabled,
                 maxApiKeyExpiryAgeMs,
                 obfuscatedFields,
-                receiptCheckMode);
+                receiptCheckMode,
+                lastAnnotationChangeTime);
     }
 
     @Override
@@ -334,6 +348,7 @@ public class ExtendedUiConfig {
                ", maxApiKeyExpiryAgeMs=" + maxApiKeyExpiryAgeMs +
                ", obfuscatedFields=" + obfuscatedFields +
                ", receiptCheckMode=" + receiptCheckMode +
+               ", lastAnnotationChangeTime=" + lastAnnotationChangeTime +
                '}';
     }
 }

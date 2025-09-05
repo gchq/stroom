@@ -40,6 +40,7 @@ import stroom.document.client.event.OpenDocumentEvent;
 import stroom.query.api.ColumnRef;
 import stroom.query.api.DestroyReason;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.api.GroupSelection;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.ParamUtil;
 import stroom.query.api.QLVisResult;
@@ -59,6 +60,7 @@ import stroom.query.client.presenter.SearchStateListener;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 
@@ -109,7 +111,7 @@ public class EmbeddedQueryPresenter
     private QueryResultVisPresenter currentVisPresenter;
     private final List<HandlerRegistration> tableHandlerRegistrations = new ArrayList<>();
 
-    private List<String> currentErrors;
+    private List<ErrorMessage> currentErrors;
     private boolean initialised;
     private Timer autoRefreshTimer;
     private ExpressionOperator currentSelectionQuery;
@@ -145,8 +147,8 @@ public class EmbeddedQueryPresenter
             }
 
             @Override
-            public Set<String> getOpenGroups() {
-                return NullSafe.get(currentTablePresenter, QueryResultTablePresenter::getOpenGroups);
+            public GroupSelection getGroupSelection() {
+                return NullSafe.get(currentTablePresenter, QueryResultTablePresenter::getGroupSelection);
             }
 
             @Override
@@ -230,8 +232,8 @@ public class EmbeddedQueryPresenter
             }
 
             @Override
-            public Set<String> getOpenGroups() {
-                return NullSafe.get(currentVisPresenter, QueryResultVisPresenter::getOpenGroups);
+            public GroupSelection getGroupSelection() {
+                return NullSafe.get(currentVisPresenter, QueryResultVisPresenter::getGroupSelection);
             }
 
             @Override
@@ -574,7 +576,7 @@ public class EmbeddedQueryPresenter
 
             // Start search.
             final DashboardContext dashboardContext = getDashboardContext();
-            queryModel.startNewSearch(
+            queryModel.startNewSearch(getComponentConfig().getId(), getComponentConfig().getName(),
                     replaced,
                     dashboardContext.getParams(),
                     dashboardContext.getResolvedTimeRange(),
@@ -737,13 +739,13 @@ public class EmbeddedQueryPresenter
     }
 
     @Override
-    public void onError(final List<String> errors) {
+    public void onError(final List<ErrorMessage> errors) {
         currentErrors = errors;
 //        setWarningsVisible(currentErrors != null && !currentErrors.isEmpty());
     }
 
     @Override
-    public List<String> getCurrentErrors() {
+    public List<ErrorMessage> getCurrentErrors() {
         return currentErrors;
     }
 
@@ -846,6 +848,13 @@ public class EmbeddedQueryPresenter
 
     public QueryResultTablePresenter getCurrentTablePresenter() {
         return currentTablePresenter;
+    }
+
+    @Override
+    public void onContentTabVisible(final boolean visible) {
+        if (currentTablePresenter != null) {
+            currentTablePresenter.onContentTabVisible(visible);
+        }
     }
 
     public interface EmbeddedQueryView extends View, RequiresResize {

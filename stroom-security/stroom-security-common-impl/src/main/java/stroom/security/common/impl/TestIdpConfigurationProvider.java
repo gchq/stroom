@@ -12,6 +12,7 @@ import jakarta.inject.Singleton;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -74,7 +75,13 @@ public class TestIdpConfigurationProvider implements IdpConfigurationProvider {
     }
 
     @Override
-    public boolean isValidateAudience() {
+    public Set<String> getAllowedAudiences() {
+        showWarning();
+        return Collections.emptySet();
+    }
+
+    @Override
+    public boolean isAudienceClaimRequired() {
         showWarning();
         return false;
     }
@@ -91,6 +98,11 @@ public class TestIdpConfigurationProvider implements IdpConfigurationProvider {
 
     @Override
     public String getUserDisplayNameClaim() {
+        throw new UnsupportedOperationException("Not supported for this implementation");
+    }
+
+    @Override
+    public String getFullNameClaimTemplate() {
         throw new UnsupportedOperationException("Not supported for this implementation");
     }
 
@@ -130,6 +142,11 @@ public class TestIdpConfigurationProvider implements IdpConfigurationProvider {
         throw new UnsupportedOperationException("Not supported for this implementation");
     }
 
+    @Override
+    public String getPublicKeyUriPattern() {
+        throw new UnsupportedOperationException("Not supported for this implementation");
+    }
+
     private void showWarning() {
         // Show a warning every 5mins or so to remind people it is totally insecure
         final Instant now = Instant.now();
@@ -137,8 +154,8 @@ public class TestIdpConfigurationProvider implements IdpConfigurationProvider {
             synchronized (this) {
                 if (now.isAfter(nextWarningTime)) {
                     LOGGER.warn("Using default and publicly available Open ID authentication credentials. " +
-                            "This is totally insecure! Set property " + AbstractOpenIdConfig.PROP_NAME_IDP_TYPE +
-                            " to " + IdpType.EXTERNAL_IDP + "/" + IdpType.INTERNAL_IDP + ".");
+                                "This is totally insecure! Set property " + AbstractOpenIdConfig.PROP_NAME_IDP_TYPE +
+                                " to " + IdpType.EXTERNAL_IDP + "/" + IdpType.INTERNAL_IDP + ".");
                     nextWarningTime = Instant.now().plus(TIME_BETWEEN_WARNINGS);
                 }
             }

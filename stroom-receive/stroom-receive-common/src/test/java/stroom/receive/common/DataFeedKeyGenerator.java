@@ -25,7 +25,7 @@ public class DataFeedKeyGenerator {
                         DataFeedKeyServiceImpl.DATA_FEED_KEY_RANDOM_PART_LENGTH,
                         StringUtil.ALLOWED_CHARS_BASE_58_STYLE);
 
-        final HashMap<String, String> attrMap = new HashMap<>(NullSafe.map(attributeMap));
+        final Map<String, String> attrMap = new HashMap<>(NullSafe.map(attributeMap));
         attrMap.put(StandardHeaderArguments.ACCOUNT_ID, accountId);
         final HashOutput hashOutput = HASHER.hash(key);
 

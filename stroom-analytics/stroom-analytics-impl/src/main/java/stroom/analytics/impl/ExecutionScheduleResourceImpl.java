@@ -25,7 +25,8 @@ import stroom.analytics.shared.ExecutionTracker;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.AppPermission;
+import stroom.security.shared.FindUserContext;
+import stroom.security.user.api.UserRefLookup;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
@@ -33,19 +34,22 @@ import stroom.util.shared.UserRef;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
-import java.util.Objects;
+import java.util.Optional;
 
 @AutoLogged(OperationType.UNLOGGED)
 class ExecutionScheduleResourceImpl implements ExecutionScheduleResource {
 
     private final Provider<ExecutionScheduleDao> executionScheduleDaoProvider;
     private final Provider<SecurityContext> securityContextProvider;
+    private final Provider<UserRefLookup> userRefLookupProvider;
 
     @Inject
     ExecutionScheduleResourceImpl(final Provider<ExecutionScheduleDao> executionScheduleDaoProvider,
-                                  final Provider<SecurityContext> securityContextProvider) {
+                                  final Provider<SecurityContext> securityContextProvider,
+                                  final Provider<UserRefLookup> userRefLookupProvider) {
         this.executionScheduleDaoProvider = executionScheduleDaoProvider;
         this.securityContextProvider = securityContextProvider;
+        this.userRefLookupProvider = userRefLookupProvider;
     }
 
     @Override
@@ -86,10 +90,13 @@ class ExecutionScheduleResourceImpl implements ExecutionScheduleResource {
                     .copy()
                     .runAsUser(currentUser)
                     .build();
-        } else if (!Objects.equals(executionSchedule.getRunAsUser(), currentUser) && !securityContext.hasAppPermission(
-                AppPermission.MANAGE_USERS_PERMISSION)) {
-            throw new PermissionException(currentUser, "You do not have permission to execute as " +
-                    executionSchedule.getRunAsUser().toDisplayString());
+        } else {
+            final Optional<UserRef> userRef = userRefLookupProvider.get()
+                    .getByUuid(executionSchedule.getRunAsUser().getUuid(), FindUserContext.RUN_AS);
+            if (userRef.isEmpty()) {
+                throw new PermissionException(currentUser, "You do not have permission to execute as " +
+                                                           executionSchedule.getRunAsUser().toDisplayString());
+            }
         }
         return executionSchedule;
     }

@@ -1,5 +1,6 @@
 package stroom.util.io.capacity;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.Optional;
@@ -15,15 +16,15 @@ public class HasCapacitySelectorFactory {
     // Can't be built dynamically as it is used in annotations
     // Must be kept in sync with the map below.
     public static final String VOLUME_SELECTOR_PATTERN = "^(" +
-            MostFreePercentCapacitySelector.NAME + "|" +
-            MostFreeCapacitySelector.NAME + "|" +
-            RoundRobinCapacitySelector.NAME + "|" +
-            RandomCapacitySelector.NAME + "|" +
-            RoundRobinIgnoreLeastFreeCapacitySelector.NAME + "|" +
-            RoundRobinIgnoreLeastFreePercentCapacitySelector.NAME + "|" +
-            RoundRobinCapacitySelector.NAME + "|" +
-            WeightedFreePercentRandomCapacitySelector.NAME + "|" +
-            WeightedFreeRandomCapacitySelector.NAME + ")$";
+                                                         MostFreePercentCapacitySelector.NAME + "|" +
+                                                         MostFreeCapacitySelector.NAME + "|" +
+                                                         RoundRobinCapacitySelector.NAME + "|" +
+                                                         RandomCapacitySelector.NAME + "|" +
+                                                         RoundRobinIgnoreLeastFreeCapacitySelector.NAME + "|" +
+                                                         RoundRobinIgnoreLeastFreePercentCapacitySelector.NAME + "|" +
+                                                         RoundRobinCapacitySelector.NAME + "|" +
+                                                         WeightedFreePercentRandomCapacitySelector.NAME + "|" +
+                                                         WeightedFreeRandomCapacitySelector.NAME + ")$";
 
     // Need to create an instance briefly just to get the name
     private static final Map<String, Supplier<HasCapacitySelector>> SELECTOR_FACTORY_MAP = Stream.of(
@@ -77,7 +78,7 @@ public class HasCapacitySelectorFactory {
 
     private static Supplier<HasCapacitySelector> createSelectorSupplier(final HasCapacitySelector selector) {
         try {
-            final var constructor = selector.getClass()
+            final Constructor<? extends HasCapacitySelector> constructor = selector.getClass()
                     .getConstructor();
 
             return () -> {
@@ -87,14 +88,14 @@ public class HasCapacitySelectorFactory {
                                | IllegalAccessException
                                | InvocationTargetException e) {
                     throw new RuntimeException("Unable to instantiate "
-                            + selector.getClass().getName()
-                            + ". Is there a public no-args constructor?");
+                                               + selector.getClass().getName()
+                                               + ". Is there a public no-args constructor?");
                 }
             };
         } catch (final Exception e) {
             throw new RuntimeException("Unable to instantiate "
-                    + selector.getClass().getName()
-                    + ". Is there a public no-args constructor?");
+                                       + selector.getClass().getName()
+                                       + ". Is there a public no-args constructor?");
         }
     }
 }

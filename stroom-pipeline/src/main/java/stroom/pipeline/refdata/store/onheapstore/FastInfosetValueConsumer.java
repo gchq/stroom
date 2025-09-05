@@ -24,6 +24,7 @@ import stroom.pipeline.refdata.store.offheapstore.FastInfosetByteBufferConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
@@ -34,27 +35,38 @@ public class FastInfosetValueConsumer implements RefDataValueConsumer {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FastInfosetValueConsumer.class);
 
-    private final Receiver receiver;
     private final FastInfosetByteBufferConsumer fastInfosetByteBufferConsumer;
 
-    public FastInfosetValueConsumer(final Receiver receiver, final PipelineConfiguration pipelineConfiguration) {
-        this.receiver = receiver;
+    public FastInfosetValueConsumer(final Receiver receiver,
+                                    final PipelineConfiguration pipelineConfiguration) {
         this.fastInfosetByteBufferConsumer = new FastInfosetByteBufferConsumer(receiver, pipelineConfiguration);
     }
 
     @Override
     public void consume(final RefDataValue refDataValue) {
-        final ByteBuffer valueByteBuffer = ((FastInfosetValue) refDataValue).getByteBuffer();
-        LOGGER.trace(() -> LogUtil.message(
-                "Consuming {}", ByteBufferUtils.byteBufferInfo(valueByteBuffer)));
+        if (refDataValue instanceof final FastInfosetValue fastInfosetValue) {
+            // Duplicate to save altering the limit/pos for other users of this buffer
+            final ByteBuffer valueByteBuffer = fastInfosetValue.getByteBuffer().duplicate();
+            LOGGER.trace(() -> LogUtil.message(
+                    "Consuming {}", ByteBufferUtils.byteBufferInfo(valueByteBuffer)));
 
-        fastInfosetByteBufferConsumer.consumeBytes(receiver, valueByteBuffer);
+            fastInfosetByteBufferConsumer.consumeBytes(valueByteBuffer);
+        } else {
+            throw new RuntimeException(LogUtil.message("Expecting refDataValue of type {} to be {}",
+                    NullSafe.get(refDataValue, Object::getClass, Class::getName),
+                    FastInfosetValue.class.getName()));
+        }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Factory implements RefDataValueConsumer.Factory {
 
         @Override
-        public RefDataValueConsumer create(final Receiver receiver, final PipelineConfiguration pipelineConfiguration) {
+        public RefDataValueConsumer create(final Receiver receiver,
+                                           final PipelineConfiguration pipelineConfiguration) {
             return new FastInfosetValueConsumer(receiver, pipelineConfiguration);
         }
     }

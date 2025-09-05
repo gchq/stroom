@@ -56,9 +56,10 @@ import stroom.query.api.token.TokenException;
 import stroom.query.api.token.TokenType;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.common.v2.DataStore;
+import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory;
-import stroom.query.common.v2.Key;
+import stroom.query.common.v2.OpenGroups;
 import stroom.query.common.v2.OpenGroupsImpl;
 import stroom.query.common.v2.ResultCreator;
 import stroom.query.common.v2.ResultStoreManager;
@@ -89,10 +90,12 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.Severity;
 import stroom.util.string.ExceptionStringUtil;
 import stroom.util.string.StringUtil;
 
@@ -124,6 +127,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @AutoLogged
 class QueryServiceImpl implements QueryService, QueryFieldProvider {
@@ -282,7 +286,8 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                                         sampleGenerator,
                                         target);
                                 final TableResultCreator tableResultCreator =
-                                        new TableResultCreator(formatterFactory, expressionPredicateFactory) {
+                                        new TableResultCreator(formatterFactory,
+                                                expressionPredicateFactory) {
                                             @Override
                                             public TableResultBuilder createTableResultBuilder() {
                                                 return searchResultWriter;
@@ -356,13 +361,20 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                             .resultStore()
                             .getData(resultRequest.getComponentId());
 
-                    final TimeFilter timeFilter = null;
+                    TimeFilter timeFilter = null;
+                    if (mappedRequest.getQuery() != null && mappedRequest.getQuery().getTimeRange() != null) {
+                        timeFilter = DateExpressionParser.getTimeFilter(
+                                mappedRequest.getQuery().getTimeRange(),
+                                mappedRequest.getDateTimeSettings());
+                    }
+
                     final Predicate<Val> predicate = valPredicateFactory.createValPredicate(
                             request.getColumn(),
                             request.getFilter(),
                             dateTimeSettings);
 
-                    final Set<Key> openGroups = dataStore.getKeyFactory().decodeSet(resultRequest.getOpenGroups());
+                    final OpenGroups openGroups = OpenGroupsImpl.fromGroupSelection(
+                            resultRequest.getGroupSelection(), dataStore.getKeyFactory());
 
                     final int index = dataStore
                             .getColumns()
@@ -374,7 +386,7 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                         dataStore.fetch(
                                 dataStore.getColumns(),
                                 OffsetRange.UNBOUNDED,
-                                new OpenGroupsImpl(openGroups),
+                                openGroups,
                                 timeFilter,
                                 item -> {
                                     final Val val = item.getValue(index);
@@ -384,7 +396,7 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                                             list.add(string);
                                         }
                                     }
-                                    return null;
+                                    return Stream.empty();
                                 },
                                 row -> {
 
@@ -557,7 +569,7 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                 // Modify result request to open grouped rows and change result display range.
                 modified = modified
                         .copy()
-                        .openGroups(searchRequest.getOpenGroups())
+                        .groupSelection(searchRequest.getGroupSelection())
                         .requestedRange(range)
                         .build();
 
@@ -658,10 +670,11 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                         nodeInfo.getThisNodeName(),
                         queryKey,
                         null,
-                        Collections.singletonList(ExceptionStringUtil.getMessage(e)),
+                        null,
                         TokenExceptionUtil.toTokenError(e),
                         true,
-                        null);
+                        null,
+                        Collections.singletonList(new ErrorMessage(Severity.ERROR, ExceptionStringUtil.getMessage(e))));
 
             } catch (final RuntimeException e) {
                 exception = e;
@@ -671,10 +684,11 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                         nodeInfo.getThisNodeName(),
                         queryKey,
                         null,
-                        Collections.singletonList(ExceptionStringUtil.getMessage(e)),
+                        null,
                         null,
                         true,
-                        null);
+                        null,
+                        Collections.singletonList(new ErrorMessage(Severity.ERROR, ExceptionStringUtil.getMessage(e))));
             } finally {
                 if (queryKey == null) {
                     searchEventLog.search(

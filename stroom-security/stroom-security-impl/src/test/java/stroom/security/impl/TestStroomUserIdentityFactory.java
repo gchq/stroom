@@ -8,6 +8,7 @@ import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.shared.User;
 import stroom.util.entityevent.EntityEventBus;
+import stroom.util.io.SimplePathCreator;
 import stroom.util.logging.LogUtil;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -81,7 +82,8 @@ class TestStroomUserIdentityFactory {
                 null,
                 null,
                 AuthorisationConfig::new,
-                new CacheManagerImpl());
+                new CacheManagerImpl(),
+                new SimplePathCreator(() -> null, () -> null));
 
         stroomUserIdentityFactory.getApiUserIdentity(mockJwtContext, mockHttpServletRequest);
 

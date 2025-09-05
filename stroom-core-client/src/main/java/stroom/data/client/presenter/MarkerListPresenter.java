@@ -47,15 +47,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
 
-    private static final HashSet<Severity> ALL_SEVERITIES = new HashSet<>(Arrays.asList(Severity.SEVERITIES));
+    private static final Set<Severity> ALL_SEVERITIES = new HashSet<>(Arrays.asList(Severity.SEVERITIES));
 
     private final RegExp messageCauseDelimiterPattern;
 
     private final MyDataGrid<Marker> dataGrid;
-    private HashSet<Severity> expandedSeverities;
+    private Set<Severity> expandedSeverities;
     private DataPresenter dataPresenter;
 
     @Inject
@@ -129,7 +130,7 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
                             if (marker instanceof StoredError) {
                                 final StoredError storedError = (StoredError) marker;
                                 if (storedError.getElementId() != null) {
-                                    return SafeHtmlUtils.fromString(storedError.getElementId());
+                                    return SafeHtmlUtils.fromString(storedError.getElementId().toString());
                                 }
 
                             } else if (marker instanceof Summary) {
@@ -162,6 +163,7 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
                                 }
 
                                 // Make summery items bold.
+                                // TODO use SafeHtmlUtil#getTemplate
                                 final SafeHtmlBuilder builder = new SafeHtmlBuilder();
                                 builder.appendHtmlConstant("<div style=\"font-weight:500;\">");
                                 builder.appendEscaped(sb.toString());

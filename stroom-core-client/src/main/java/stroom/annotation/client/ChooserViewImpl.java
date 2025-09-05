@@ -34,7 +34,7 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.function.Supplier;
 
-class ChooserViewImpl extends ViewWithUiHandlers<ChooserUiHandlers> implements ChooserView {
+public class ChooserViewImpl extends ViewWithUiHandlers<ChooserUiHandlers> implements ChooserView {
 
     public interface Binder extends UiBinder<Widget, ChooserViewImpl> {
 

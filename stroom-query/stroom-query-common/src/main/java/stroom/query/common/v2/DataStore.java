@@ -26,13 +26,13 @@ public interface DataStore extends ValuesConsumer {
      * @param timeFilter The time filter to use to limit the data returned.
      * @return The filtered child items for the parent key.
      */
-    <R> void fetch(List<Column> columns,
-                   OffsetRange range,
-                   OpenGroups openGroups,
-                   TimeFilter timeFilter,
-                   ItemMapper<R> mapper,
-                   Consumer<R> resultConsumer,
-                   Consumer<Long> totalRowCountConsumer);
+    void fetch(List<Column> columns,
+               OffsetRange range,
+               OpenGroups openGroups,
+               TimeFilter timeFilter,
+               ItemMapper mapper,
+               Consumer<Item> resultConsumer,
+               Consumer<Long> totalRowCountConsumer);
 
     /**
      * Clear the data store.

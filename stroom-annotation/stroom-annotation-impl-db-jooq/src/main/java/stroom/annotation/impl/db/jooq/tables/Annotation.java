@@ -4,15 +4,9 @@
 package stroom.annotation.impl.db.jooq.tables;
 
 
-import stroom.annotation.impl.db.jooq.Keys;
-import stroom.annotation.impl.db.jooq.Stroom;
-import stroom.annotation.impl.db.jooq.tables.AnnotationDataLink.AnnotationDataLinkPath;
-import stroom.annotation.impl.db.jooq.tables.AnnotationEntry.AnnotationEntryPath;
-import stroom.annotation.impl.db.jooq.tables.AnnotationLink.AnnotationLinkPath;
-import stroom.annotation.impl.db.jooq.tables.AnnotationSubscription.AnnotationSubscriptionPath;
-import stroom.annotation.impl.db.jooq.tables.AnnotationTag.AnnotationTagPath;
-import stroom.annotation.impl.db.jooq.tables.AnnotationTagLink.AnnotationTagLinkPath;
-import stroom.annotation.impl.db.jooq.tables.records.AnnotationRecord;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 import org.jooq.Condition;
 import org.jooq.Field;
@@ -36,9 +30,15 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import stroom.annotation.impl.db.jooq.Keys;
+import stroom.annotation.impl.db.jooq.Stroom;
+import stroom.annotation.impl.db.jooq.tables.AnnotationDataLink.AnnotationDataLinkPath;
+import stroom.annotation.impl.db.jooq.tables.AnnotationEntry.AnnotationEntryPath;
+import stroom.annotation.impl.db.jooq.tables.AnnotationLink.AnnotationLinkPath;
+import stroom.annotation.impl.db.jooq.tables.AnnotationSubscription.AnnotationSubscriptionPath;
+import stroom.annotation.impl.db.jooq.tables.AnnotationTag.AnnotationTagPath;
+import stroom.annotation.impl.db.jooq.tables.AnnotationTagLink.AnnotationTagLinkPath;
+import stroom.annotation.impl.db.jooq.tables.records.AnnotationRecord;
 
 
 /**

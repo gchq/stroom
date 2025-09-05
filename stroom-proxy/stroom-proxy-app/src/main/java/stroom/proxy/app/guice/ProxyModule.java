@@ -21,6 +21,8 @@ import stroom.dropwizard.common.FilteredHealthCheckServlet;
 import stroom.dropwizard.common.LogLevelInspector;
 import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.TokenExceptionMapper;
+import stroom.dropwizard.common.prometheus.AppInfoProvider;
+import stroom.dropwizard.common.prometheus.PrometheusModule;
 import stroom.proxy.app.Config;
 import stroom.proxy.app.ProxyConfigHealthCheck;
 import stroom.proxy.app.ProxyConfigHolder;
@@ -30,11 +32,13 @@ import stroom.proxy.app.event.EventResourceImpl;
 import stroom.proxy.app.handler.ForwarderModule;
 import stroom.proxy.app.handler.RemoteFeedStatusClient;
 import stroom.proxy.app.handler.RemoteFeedStatusService;
+import stroom.proxy.app.metrics.ProxyAppInfoProvider;
 import stroom.proxy.app.security.ProxyApiKeyCheckClient;
 import stroom.proxy.app.servlet.ProxyQueueMonitoringServlet;
 import stroom.proxy.app.servlet.ProxySecurityFilter;
 import stroom.proxy.app.servlet.ProxyStatusServlet;
 import stroom.proxy.app.servlet.ProxyWelcomeServlet;
+import stroom.receive.common.DataFeedKeyDirWatcher;
 import stroom.receive.common.DebugServlet;
 import stroom.receive.common.FeedStatusResourceImpl;
 import stroom.receive.common.FeedStatusResourceV2Impl;
@@ -86,14 +90,16 @@ public class ProxyModule extends AbstractModule {
         bind(MetricRegistry.class).toInstance(environment.metrics());
         bind(HealthCheckRegistry.class).toInstance(environment.healthChecks());
         bind(Metrics.class).to(MetricsImpl.class);
+        bind(AppInfoProvider.class).to(ProxyAppInfoProvider.class);
 
         install(new ProxyConfigModule(proxyConfigHolder));
         install(new ProxyCoreModule());
         install(new DropwizardModule());
         install(new ForwarderModule());
+        install(new PrometheusModule());
 
         HasHealthCheckBinder.create(binder())
-                .bind(FeedStatusResourceV2Impl.class)
+                .bind(DataFeedKeyDirWatcher.class)
                 .bind(LogLevelInspector.class)
                 .bind(ProxyConfigHealthCheck.class)
                 .bind(ProxyApiKeyCheckClient.class)

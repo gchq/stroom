@@ -21,8 +21,8 @@ class TestExpressionTerm {
                 .withInputTypes(String.class, ExpressionTerm.class)
                 .withOutputType(Boolean.class)
                 .withTestFunction(testCase -> {
-                    final var field = testCase.getInput()._1;
-                    final var expressionTerm = testCase.getInput()._2;
+                    final String field = testCase.getInput()._1;
+                    final ExpressionTerm expressionTerm = testCase.getInput()._2;
                     return expressionTerm.containsField(field);
                 })
                 .withSimpleEqualityAssertion()
@@ -37,7 +37,7 @@ class TestExpressionTerm {
                         false)
 
                 .addCase(Tuple.of(
-                        "foo",
+                                "foo",
                                 ExpressionTerm.builder()
                                         .field("bar")
                                         .condition(Condition.EQUALS)
@@ -61,11 +61,12 @@ class TestExpressionTerm {
     Stream<DynamicTest> testContainsTerm() {
 
         return TestUtil.buildDynamicTestStream()
-                .withWrappedInputType(new TypeLiteral<Tuple2<Predicate<ExpressionTerm>, ExpressionTerm>>(){})
+                .withWrappedInputType(new TypeLiteral<Tuple2<Predicate<ExpressionTerm>, ExpressionTerm>>() {
+                })
                 .withOutputType(Boolean.class)
                 .withTestFunction(testCase -> {
-                    final var predicate = testCase.getInput()._1;
-                    final var expressionTerm = testCase.getInput()._2;
+                    final Predicate<ExpressionTerm> predicate = testCase.getInput()._1;
+                    final ExpressionTerm expressionTerm = testCase.getInput()._2;
                     return expressionTerm.containsTerm(predicate);
                 })
                 .withSimpleEqualityAssertion()

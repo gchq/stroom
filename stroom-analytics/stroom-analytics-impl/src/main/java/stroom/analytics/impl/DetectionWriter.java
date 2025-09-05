@@ -2,6 +2,7 @@ package stroom.analytics.impl;
 
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.filter.XMLFilter;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
@@ -104,7 +105,7 @@ public class DetectionWriter implements DetectionConsumer {
     private void logError(final String message, final Exception e) {
         LOGGER.error(message, e);
         errorReceiverProxy.log(Severity.ERROR, null,
-                getClass().getSimpleName(), message, e);
+                new ElementId(getClass().getSimpleName()), message, e);
     }
 
     @Override

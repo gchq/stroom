@@ -37,12 +37,13 @@ import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
 import stroom.query.common.v2.FieldInfoResultPageFactory;
-import stroom.query.common.v2.ValArrayFunctionFactory;
+import stroom.query.common.v2.ValuesFunctionFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
+import stroom.query.language.functions.Values;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
@@ -162,16 +163,16 @@ public class PlanBShardInfoServiceImpl implements Searchable {
                 "Querying Plan B Info");
     }
 
-    private ValueFunctionFactories<Val[]> createValueFunctionFactories(final FieldIndex fieldIndex) {
+    private ValueFunctionFactories<Values> createValueFunctionFactories(final FieldIndex fieldIndex) {
         return fieldName -> {
             final Integer index = fieldIndex.getPos(fieldName);
             if (index == null) {
                 throw new RuntimeException("Unexpected field: " + fieldName);
             }
             if (PlanBShardInfoFields.BYTE_SIZE_FIELD.getFldName().equals(fieldName)) {
-                return new ValArrayFunctionFactory(Column.builder().format(Format.NUMBER).build(), index);
+                return new ValuesFunctionFactory(Column.builder().format(Format.NUMBER).build(), index);
             }
-            return new ValArrayFunctionFactory(Column.builder().format(Format.TEXT).build(), index);
+            return new ValuesFunctionFactory(Column.builder().format(Format.TEXT).build(), index);
         };
     }
 
@@ -180,8 +181,8 @@ public class PlanBShardInfoServiceImpl implements Searchable {
                           final DateTimeSettings dateTimeSettings,
                           final ValuesConsumer consumer,
                           final TaskContext taskContext) {
-        final ValueFunctionFactories<Val[]> valueFunctionFactories = createValueFunctionFactories(fieldIndex);
-        final Predicate<Val[]> predicate = expressionPredicateFactory.createOptional(
+        final ValueFunctionFactories<Values> valueFunctionFactories = createValueFunctionFactories(fieldIndex);
+        final Predicate<Values> predicate = expressionPredicateFactory.createOptional(
                         criteria.getExpression(),
                         valueFunctionFactories,
                         dateTimeSettings)
@@ -231,7 +232,7 @@ public class PlanBShardInfoServiceImpl implements Searchable {
 
     private void processResult(final List<String[]> list,
                                final String[] fields,
-                               final Predicate<Val[]> predicate,
+                               final Predicate<Values> predicate,
                                final ValuesConsumer consumer) {
         list.forEach(result -> {
             final Val[] values = new Val[fields.length];
@@ -246,7 +247,7 @@ public class PlanBShardInfoServiceImpl implements Searchable {
                     values[i] = ValString.create(res);
                 }
             }
-            if (predicate.test(values)) {
+            if (predicate.test(Values.of(values))) {
                 consumer.accept(values);
             }
         });

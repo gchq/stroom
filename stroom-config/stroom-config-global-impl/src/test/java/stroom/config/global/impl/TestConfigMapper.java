@@ -45,7 +45,7 @@ import stroom.docstore.impl.db.DocStoreConfig;
 import stroom.event.logging.impl.LoggingConfig;
 import stroom.explorer.impl.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
-import stroom.gitrepo.impl.GitRepoConfig;
+import stroom.gitrepo.api.GitRepoConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.importexport.impl.ExportConfig;
 import stroom.index.impl.IndexConfig;
@@ -124,18 +124,31 @@ class TestConfigMapper {
         final Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
 
+        //noinspection VariableTypeCanBeExplicit
         final var rows = configProperties.stream()
                 .sorted(Comparator.comparing(ConfigProperty::getName))
                 .map(configProperty ->
                         Tuple.of(
                                 configProperty.getName().toString(),
                                 configProperty.getDataTypeName(),
-                                StringUtils.truncate(configProperty.getDefaultValue().orElse("").toString(), 0, 50),
-                                StringUtils.truncate(configProperty.getDatabaseOverrideValue().getValueOrElse("UNSET",
-                                        null), 0, 50),
-                                StringUtils.truncate(configProperty.getYamlOverrideValue().getValueOrElse("UNSET",
-                                        null), 0, 50),
-                                StringUtils.truncate(configProperty.getEffectiveValue().orElse("").toString(), 0, 50),
+                                StringUtils.truncate(
+                                        configProperty.getDefaultValue().orElse(""),
+                                        0,
+                                        50),
+                                StringUtils.truncate(
+                                        configProperty.getDatabaseOverrideValue().getValueOrElse(
+                                                "UNSET", null),
+                                        0,
+                                        50),
+                                StringUtils.truncate(
+                                        configProperty.getYamlOverrideValue().getValueOrElse(
+                                                "UNSET", null),
+                                        0,
+                                        50),
+                                StringUtils.truncate(
+                                        configProperty.getEffectiveValue().orElse(""),
+                                        0,
+                                        50),
                                 configProperty.getSource().getName(),
                                 StringUtils.truncate(configProperty.getDescription(), 0, 100)))
                 .collect(Collectors.toList());

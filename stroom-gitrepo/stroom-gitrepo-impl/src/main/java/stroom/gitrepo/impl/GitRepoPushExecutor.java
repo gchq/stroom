@@ -1,17 +1,16 @@
 package stroom.gitrepo.impl;
 
-import stroom.docref.DocRef;
-import stroom.gitrepo.api.GitRepoStorageService;
 import stroom.gitrepo.api.GitRepoStore;
 import stroom.gitrepo.shared.GitRepoDoc;
+import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
 import java.io.IOException;
-import java.util.List;
 
 /**
  * Runs the job to automatically push stuff to
@@ -62,24 +61,25 @@ public class GitRepoPushExecutor {
      * Runs the job.
      */
     public void exec() {
-        LOGGER.info(() -> TASK_NAME + " Running");
+        LOGGER.debug("{} - Running", TASK_NAME);
 
         // Get all the GitRepoDoc instances and push them
-        final List<DocRef> docRefs = gitRepoStore.list();
-        for (final DocRef docRef : docRefs) {
-            final GitRepoDoc gitRepoDoc = gitRepoStore.readDocument(docRef);
-
-            if (gitRepoDoc.isAutoPush()) {
-                try {
-                    gitRepoStorageService.exportDoc(
-                            gitRepoDoc,
-                            JOB_COMMIT_MESSAGE,
-                            false);
-                } catch (final IOException | EntityServiceException e) {
-                    LOGGER.error(TASK_NAME + " error: {}: {} ", e.getClass().getSimpleName(), e.getMessage());
-                }
-            }
-        }
+        NullSafe.stream(gitRepoStore.list())
+                .map(gitRepoStore::readDocument)
+                .filter(GitRepoDoc::isAutoPush)
+                .forEach(gitRepoDoc -> {
+                    try {
+                        final DurationTimer timer = DurationTimer.start();
+                        gitRepoStorageService.exportDoc(
+                                gitRepoDoc,
+                                JOB_COMMIT_MESSAGE,
+                                false);
+                        LOGGER.info("{} - Pushed gitRepoDoc {} in {}", TASK_NAME, gitRepoDoc, timer);
+                    } catch (final IOException | EntityServiceException e) {
+                        LOGGER.error("{} - error: {}: {} ", TASK_NAME, e.getClass().getSimpleName(), e.getMessage());
+                    }
+                });
+        LOGGER.debug("{} - Finished", TASK_NAME);
     }
 
 }

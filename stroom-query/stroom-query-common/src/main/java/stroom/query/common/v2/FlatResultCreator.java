@@ -36,6 +36,7 @@ import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValNull;
+import stroom.query.language.functions.Values;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
@@ -316,7 +317,7 @@ public class FlatResultCreator implements ResultCreator {
 
         resultBuilder
                 .componentId(resultRequest.getComponentId())
-                .errors(errorConsumer.getErrors());
+                .errorMessages(errorConsumer.getErrorMessages());
         FlatResult result = resultBuilder.build();
 
         if (cacheLastResult) {
@@ -426,7 +427,7 @@ public class FlatResultCreator implements ResultCreator {
                     errorConsumer);
 
             // Apply filter to parent.
-            final Optional<Predicate<Val[]>> filter = FilteredRowCreator.createValuesPredicate(
+            final Optional<Predicate<Values>> filter = FilteredMapper.createValuesPredicate(
                     parent.getColumns(),
                     parent.applyValueFilters(),
                     parent.getAggregateFilter(),
@@ -441,7 +442,7 @@ public class FlatResultCreator implements ResultCreator {
                     parentValues[i] = item.getValue(i);
                 }
 
-                if (predicate.test(parentValues)) {
+                if (predicate.test(Values.of(parentValues))) {
                     final Val[] values = new Val[parentFieldIndices.length];
                     for (int i = 0; i < parentFieldIndices.length; i++) {
                         final int index = parentFieldIndices[i];

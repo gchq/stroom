@@ -44,7 +44,7 @@ public class TestAppConfigValidator {
     @Test
     void testMyPojo_good() {
 
-        final var myPojo = new MyPojoErrors();
+        final MyPojoErrors myPojo = new MyPojoErrors();
 
         final ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateRecursively(myPojo);
 
@@ -64,7 +64,7 @@ public class TestAppConfigValidator {
 //        final Injector injector = Guice.createInjector(new ValidationModule());
 //        injector.injectMembers(this);
 
-        final var myPojo = new MyPojoErrors();
+        final MyPojoErrors myPojo = new MyPojoErrors();
         myPojo.setBooleanValue(false);
         myPojo.setRegexValue("(((");
         myPojo.setCronValue("xxxxxxxxxxxxx");
@@ -92,7 +92,7 @@ public class TestAppConfigValidator {
 //        final Injector injector = Guice.createInjector(new ValidationModule());
 //        injector.injectMembers(this);
 
-        final var myPojo = new MyPojoErrors();
+        final MyPojoErrors myPojo = new MyPojoErrors();
         myPojo.setBooleanValue(false);
         myPojo.setRegexValue("(((");
         myPojo.setCronValue("xxxxxxxxxxxxx");
@@ -120,7 +120,7 @@ public class TestAppConfigValidator {
 //        final Injector injector = Guice.createInjector(new ValidationModule());
 //        injector.injectMembers(this);
 
-        final var myPojo = new MyPojoWarnings();
+        final MyPojoWarnings myPojo = new MyPojoWarnings();
         myPojo.setBooleanValue(false);
         myPojo.setRegexValue("(((");
         myPojo.setCronValue("xxxxxxxxxxxxx");
@@ -147,6 +147,10 @@ public class TestAppConfigValidator {
         Assertions.assertThat(result.getErrorCount())
                 .isEqualTo(1);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class MyPojoErrors extends AbstractConfig {
 
@@ -220,12 +224,16 @@ public class TestAppConfigValidator {
         @Override
         public String toString() {
             return "MyPojo{" +
-                    "booleanValue=" + booleanValue +
-                    ", regexValue='" + regexValue + '\'' +
-                    ", intValue=" + intValue +
-                    '}';
+                   "booleanValue=" + booleanValue +
+                   ", regexValue='" + regexValue + '\'' +
+                   ", intValue=" + intValue +
+                   '}';
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class MyPojoWarnings extends AbstractConfig {
 
@@ -286,12 +294,15 @@ public class TestAppConfigValidator {
         @Override
         public String toString() {
             return "MyPojo{" +
-                    "booleanValue=" + booleanValue +
-                    ", regexValue='" + regexValue + '\'' +
-                    ", intValue=" + intValue +
-                    '}';
+                   "booleanValue=" + booleanValue +
+                   ", regexValue='" + regexValue + '\'' +
+                   ", intValue=" + intValue +
+                   '}';
         }
     }
+
+
+    // --------------------------------------------------------------------------------
 
 
     public static class NoddyPojo {
@@ -307,6 +318,10 @@ public class TestAppConfigValidator {
             this.value = value;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class NoddyPojoWithValidationMethod extends AbstractConfig {
 

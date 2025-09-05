@@ -43,6 +43,10 @@ abstract class AbstractLink extends AbstractManyChildFunction {
         }
 
         Val makeLink(final String text, final String url, final String type) {
+            return makeLink(text, url, type, null);
+        }
+
+        Val makeLink(final String text, final String url, final String type, final String target) {
             final StringBuilder sb = new StringBuilder();
             sb.append("[");
             sb.append(text);
@@ -54,14 +58,11 @@ abstract class AbstractLink extends AbstractManyChildFunction {
                 sb.append(type);
                 sb.append("}");
             }
-            return ValString.create(sb.toString());
-        }
-
-        String getString(final Val val) {
-            if (val.type().isValue()) {
-                return val.toString();
+            if (target != null && !target.isEmpty()) {
+                sb.append("<").append(target).append(">");
             }
-            return "";
+
+            return ValString.create(sb.toString());
         }
 
         String getEscapedString(final Val val) {

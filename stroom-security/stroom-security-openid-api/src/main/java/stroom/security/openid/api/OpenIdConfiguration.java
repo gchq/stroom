@@ -78,9 +78,14 @@ public interface OpenIdConfiguration {
     List<String> getClientCredentialsScopes();
 
     /**
-     * @see AbstractOpenIdConfig#isValidateAudience()
+     * @see AbstractOpenIdConfig#isAudienceClaimRequired()
      */
-    boolean isValidateAudience();
+    boolean isAudienceClaimRequired();
+
+    /**
+     * @see AbstractOpenIdConfig#getAllowedAudiences()
+     */
+    Set<String> getAllowedAudiences();
 
     /**
      * @see AbstractOpenIdConfig#getValidIssuers()
@@ -98,6 +103,11 @@ public interface OpenIdConfiguration {
     String getUserDisplayNameClaim();
 
     /**
+     * @see AbstractOpenIdConfig#getFullNameClaimTemplate()
+     */
+    String getFullNameClaimTemplate();
+
+    /**
      * @see AbstractOpenIdConfig#getLogoutRedirectParamName()
      */
     String getLogoutRedirectParamName();
@@ -106,4 +116,9 @@ public interface OpenIdConfiguration {
      * @see AbstractOpenIdConfig#getExpectedSignerPrefixes()
      */
     Set<String> getExpectedSignerPrefixes();
+
+    /**
+     * @see AbstractOpenIdConfig#getPublicKeyUriPattern()
+     */
+    String getPublicKeyUriPattern();
 }

@@ -16,6 +16,7 @@
 
 package stroom.ui.config.client;
 
+import stroom.annotation.client.AnnotationChangeEvent;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.QuietTaskMonitorFactory;
@@ -46,6 +47,7 @@ public class UiConfigCache implements HasHandlers {
     private final RestFactory restFactory;
     private ExtendedUiConfig clientProperties;
     private EventBus eventBus;
+    private long lastAnnotationChangeTime;
 
     @Inject
     public UiConfigCache(final RestFactory restFactory, final ClientSecurityContext securityContext) {
@@ -88,6 +90,15 @@ public class UiConfigCache implements HasHandlers {
                     clientProperties = result;
                     consumer.accept(result);
                     PropertyChangeEvent.fire(UiConfigCache.this, result);
+
+                    try {
+                        if (lastAnnotationChangeTime != result.getLastAnnotationChangeTime()) {
+                            lastAnnotationChangeTime = result.getLastAnnotationChangeTime();
+                            AnnotationChangeEvent.fire(this, null);
+                        }
+                    } catch (final RuntimeException e) {
+                        GWT.log(e.getMessage());
+                    }
                 })
                 .onFailure(error -> {
 //                    GWT.log("Error refreshing uiConfig: "

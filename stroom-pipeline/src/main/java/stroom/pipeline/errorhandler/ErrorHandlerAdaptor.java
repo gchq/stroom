@@ -17,6 +17,7 @@
 package stroom.pipeline.errorhandler;
 
 import stroom.pipeline.LocationFactory;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
@@ -31,11 +32,12 @@ public class ErrorHandlerAdaptor implements ErrorHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ErrorHandlerAdaptor.class);
 
-    private final String elementId;
+    private final ElementId elementId;
     private final LocationFactory locationFactory;
     private final ErrorReceiver errorReceiver;
 
-    public ErrorHandlerAdaptor(final String elementId, final LocationFactory locationFactory,
+    public ErrorHandlerAdaptor(final ElementId elementId,
+                               final LocationFactory locationFactory,
                                final ErrorReceiver errorReceiver) {
         this.elementId = elementId;
         this.locationFactory = locationFactory;

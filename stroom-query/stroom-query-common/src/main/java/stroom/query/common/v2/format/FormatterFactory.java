@@ -38,16 +38,12 @@ public class FormatterFactory {
         }
 
         final Type type = column.getFormat().getType();
-        switch (type) {
-            case TEXT:
-                return StringFormatter.create();
-            case NUMBER:
-                return NumberFormatter.create((NumberFormatSettings) column.getFormat().getSettings());
-            case DATE_TIME:
-                return DateTimeFormatter.create((DateTimeFormatSettings) column.getFormat().getSettings(),
-                        dateTimeSettings);
-            default:
-                return Unformatted.create();
-        }
+        return switch (type) {
+            case TEXT -> StringFormatter.create();
+            case NUMBER -> NumberFormatter.create((NumberFormatSettings) column.getFormat().getSettings());
+            case DATE_TIME -> DateTimeFormatter.create((DateTimeFormatSettings) column.getFormat().getSettings(),
+                    dateTimeSettings);
+            default -> Unformatted.create();
+        };
     }
 }

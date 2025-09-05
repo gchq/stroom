@@ -40,5 +40,10 @@ public class IntegerHashFactory implements HashFactory {
         public int len() {
             return Integer.BYTES;
         }
+
+        @Override
+        public String toString() {
+            return Integer.toString(hash);
+        }
     }
 }

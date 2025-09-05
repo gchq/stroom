@@ -9,6 +9,7 @@ import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.pipeline.ErrorWriterProxy;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -144,7 +145,7 @@ public class DetectionConsumerFactory {
                                 errorWriterProxyProvider.get().log(
                                         Severity.ERROR,
                                         null,
-                                        "Email Notification",
+                                        new ElementId(NotificationEmailDestination.class.getSimpleName()),
                                         e.getMessage());
                             }
                         }

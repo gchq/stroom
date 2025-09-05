@@ -350,7 +350,9 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                             sampleGenerator,
                             target);
                     final TableResultCreator tableResultCreator =
-                            new TableResultCreator(formatterFactory, expressionPredicateFactory) {
+                            new TableResultCreator(
+                                    formatterFactory,
+                                    expressionPredicateFactory) {
                                 @Override
                                 public TableResultBuilder createTableResultBuilder() {
                                     return searchResultWriter;

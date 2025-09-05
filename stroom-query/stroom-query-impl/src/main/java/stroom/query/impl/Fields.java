@@ -114,7 +114,7 @@ public class Fields {
                 resultPage.getValues().forEach(fieldInfo -> {
                     final QueryHelpRow row = new QueryHelpRow(
                             QueryHelpType.FIELD,
-                            "fields." + fieldInfo.getFldName(),
+                            FIELDS_PARENT + fieldInfo.getFldName(),
                             false,
                             null,
                             null,
@@ -245,11 +245,11 @@ public class Fields {
         if (FIELDS_ID.equals(row.getId())) {
             final InsertType insertType = InsertType.NOT_INSERTABLE;
             final String documentation = "A list of the fields available to 'select' from the specified data source. " +
-                                         "The fields will only become available one the data source has been " +
+                                         "The fields will only become available once the data source has been " +
                                          "specified using the 'from' keyword.";
             return Optional.of(new QueryHelpDetail(insertType, null, documentation));
 
-        } else if (row.getId().startsWith(FIELDS_ID + ".") && row.getData() instanceof
+        } else if (row.getId().startsWith(FIELDS_PARENT) && row.getData() instanceof
                 final QueryHelpField queryHelpField) {
             final QueryField fieldInfo = queryHelpField.getField();
             final InsertType insertType = InsertType.plainText(row.getTitle());

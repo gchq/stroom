@@ -521,7 +521,7 @@ public class TaskManagerListPresenter
                 responseMap.values(),
                 treeAction);
 
-        final HashSet<TaskProgress> currentTaskSet = new HashSet<>(resultPage.getValues());
+        final Set<TaskProgress> currentTaskSet = new HashSet<>(resultPage.getValues());
         selectedTaskProgress.retainAll(currentTaskSet);
 
         final String allErrors = errorMap.entrySet()

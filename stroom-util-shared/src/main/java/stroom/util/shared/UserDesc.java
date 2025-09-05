@@ -27,9 +27,10 @@ public class UserDesc {
     public UserDesc(@JsonProperty("subjectId") final String subjectId,
                     @JsonProperty("displayName") final String displayName,
                     @JsonProperty("fullName") final String fullName) {
-        this.subjectId = subjectId;
-        this.displayName = displayName;
-        this.fullName = fullName;
+        // Ensure there is no spurious leading/trailing space as these values may have come from user input
+        this.subjectId = NullSafe.get(subjectId, String::trim);
+        this.displayName = NullSafe.get(displayName, String::trim);
+        this.fullName = NullSafe.get(fullName, String::trim);
     }
 
     public static UserDesc forSubjectId(final String subjectId) {

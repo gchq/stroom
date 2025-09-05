@@ -42,7 +42,7 @@ public final class FeedKey {
         if (obj == null || obj.getClass() != this.getClass()) {
             return false;
         }
-        final var that = (FeedKey) obj;
+        final FeedKey that = (FeedKey) obj;
         return Objects.equals(this.feed, that.feed) &&
                Objects.equals(this.type, that.type);
     }

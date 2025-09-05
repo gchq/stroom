@@ -13,7 +13,7 @@ class KeyValueMapKey {
     KeyValueMapKey(final MapDefinition mapDefinition, final String key) {
         this.mapDefinition = mapDefinition;
         this.key = key;
-        // pre compute the hash
+        // pre-compute the hash
         this.hashCode = Objects.hash(mapDefinition, key);
     }
 
@@ -36,7 +36,7 @@ class KeyValueMapKey {
         }
         final KeyValueMapKey that = (KeyValueMapKey) o;
         return Objects.equals(mapDefinition, that.mapDefinition) &&
-                Objects.equals(key, that.key);
+               Objects.equals(key, that.key);
     }
 
     @Override
@@ -47,8 +47,8 @@ class KeyValueMapKey {
     @Override
     public String toString() {
         return "KeyValueMapKey{" +
-                "mapDefinition=" + mapDefinition +
-                ", key='" + key + '\'' +
-                '}';
+               "mapDefinition=" + mapDefinition +
+               ", key='" + key + '\'' +
+               '}';
     }
 }

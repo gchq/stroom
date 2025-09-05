@@ -36,13 +36,6 @@ public final class UserRefEntryValue implements EntryValue {
     }
 
     @Override
-    public String asPersistedValue() {
-        return userRef != null
-                ? userRef.getUuid()
-                : null;
-    }
-
-    @Override
     public boolean equals(final Object o) {
         if (this == o) {
             return true;

@@ -56,7 +56,6 @@ import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Expander;
-import stroom.util.shared.TreeRow;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -64,7 +63,6 @@ import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.NumberCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
@@ -79,7 +77,6 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-@SuppressWarnings("PatternVariableCanBeUsed") // Cos GWT
 public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         implements Refreshable, HasDocumentRead<Object> {
 
@@ -286,9 +283,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             @Override
             public Expander getValue(final ProcessorListRow row) {
                 Expander expander = null;
-                if (row instanceof TreeRow) {
-                    final TreeRow treeRow = row;
-                    expander = treeRow.getExpander();
+                if (row != null) {
+                    expander = row.getExpander();
                 }
                 return expander;
             }
@@ -372,8 +368,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             @Override
             public String getValue(final ProcessorListRow row) {
                 String lastPoll = null;
-                if (row instanceof ProcessorFilterRow) {
-                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                if (row instanceof final ProcessorFilterRow processorFilterRow) {
                     lastPoll = processorFilterRow.getProcessorFilter().getProcessorFilterTracker().getLastPollAge();
                 }
                 return lastPoll;
@@ -387,8 +382,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             @Override
             public Number getValue(final ProcessorListRow row) {
                 Number priority = null;
-                if (row instanceof ProcessorFilterRow) {
-                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                if (row instanceof final ProcessorFilterRow processorFilterRow) {
                     if (allowUpdate) {
                         priority = new EditableInteger(processorFilterRow.getProcessorFilter().getPriority());
                     } else {
@@ -399,15 +393,11 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             }
         };
         if (allowUpdate) {
-            priorityColumn.setFieldUpdater(new FieldUpdater<ProcessorListRow, Number>() {
-                @Override
-                public void update(final int index, final ProcessorListRow row, final Number value) {
-                    if (row instanceof ProcessorFilterRow) {
-                        final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
-                        final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
-                        processorFilter.setPriority(value.intValue());
-                        processorFilterPrioritySaveQueue.setValue(processorFilter.getId(), value.intValue());
-                    }
+            priorityColumn.setFieldUpdater((index, row, value) -> {
+                if (row instanceof final ProcessorFilterRow processorFilterRow) {
+                    final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
+                    processorFilter.setPriority(value.intValue());
+                    processorFilterPrioritySaveQueue.setValue(processorFilter.getId(), value.intValue());
                 }
             });
         }
@@ -422,8 +412,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             @Override
             public Number getValue(final ProcessorListRow row) {
                 Number maxProcessingTasks = null;
-                if (row instanceof ProcessorFilterRow) {
-                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                if (row instanceof final ProcessorFilterRow processorFilterRow) {
                     if (allowUpdate) {
                         maxProcessingTasks = new EditableInteger(processorFilterRow.getProcessorFilter()
                                 .getMaxProcessingTasks());
@@ -435,15 +424,11 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             }
         };
         if (allowUpdate) {
-            maxProcessingTasksColumn.setFieldUpdater(new FieldUpdater<ProcessorListRow, Number>() {
-                @Override
-                public void update(final int index, final ProcessorListRow row, final Number value) {
-                    if (row instanceof ProcessorFilterRow) {
-                        final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
-                        final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
-                        processorFilter.setMaxProcessingTasks(value.intValue());
-                        processorFilterMaxProcessingTasksSaveQueue.setValue(processorFilter.getId(), value.intValue());
-                    }
+            maxProcessingTasksColumn.setFieldUpdater((index, row, value) -> {
+                if (row instanceof final ProcessorFilterRow processorFilterRow) {
+                    final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
+                    processorFilter.setMaxProcessingTasks(value.intValue());
+                    processorFilterMaxProcessingTasksSaveQueue.setValue(processorFilter.getId(), value.intValue());
                 }
             });
         }
@@ -455,8 +440,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             @Override
             public Number getValue(final ProcessorListRow row) {
                 Number value = null;
-                if (row instanceof ProcessorFilterRow) {
-                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                if (row instanceof final ProcessorFilterRow processorFilterRow) {
                     value = processorFilterRow.getProcessorFilter().getProcessorFilterTracker().getMetaCount();
                 }
                 return value;
@@ -508,8 +492,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
 
         if (allowUpdate) {
             enabledColumn.setFieldUpdater((index, row, value) -> {
-                if (row instanceof ProcessorFilterRow) {
-                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                if (row instanceof final ProcessorFilterRow processorFilterRow) {
                     final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
                     processorFilter.setEnabled(value.toBoolean());
 
@@ -517,8 +500,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
 //                    final Rest<ProcessorFilter> rest = restFactory.create();
 //                    rest.call(PROCESSOR_FILTER_RESOURCE).setEnabled(processorFilter.getId(), value.toBoolean());
 
-                } else if (row instanceof ProcessorRow) {
-                    final ProcessorRow processorRow = (ProcessorRow) row;
+                } else if (row instanceof final ProcessorRow processorRow) {
                     final Processor processor = processorRow.getProcessor();
                     processor.setEnabled(value.toBoolean());
 
@@ -536,8 +518,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             @Override
             public String getValue(final ProcessorListRow row) {
                 String reprocess = null;
-                if (row instanceof ProcessorFilterRow) {
-                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                if (row instanceof final ProcessorFilterRow processorFilterRow) {
                     reprocess = processorFilterRow.getProcessorFilter().isReprocess()
                             ? "True"
                             : "False";
@@ -551,8 +532,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         dataGrid.addResizableColumn(
                 DataGridUtil.userRefColumnBuilder(
                                 (final ProcessorListRow row) -> {
-                                    if (row instanceof ProcessorFilterRow) {
-                                        final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                                    if (row instanceof final ProcessorFilterRow processorFilterRow) {
                                         return Optional
                                                 .of(processorFilterRow)
                                                 .map(ProcessorFilterRow::getProcessorFilter)
@@ -567,8 +547,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                                 true,
                                 DisplayType.AUTO)
                         .enabledWhen((final ProcessorListRow row) -> {
-                            if (row instanceof ProcessorFilterRow) {
-                                final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                            if (row instanceof final ProcessorFilterRow processorFilterRow) {
                                 return Optional
                                         .of(processorFilterRow)
                                         .map(ProcessorFilterRow::getProcessorFilter)

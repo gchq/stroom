@@ -14,6 +14,8 @@ import jakarta.inject.Singleton;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collections;
+import java.util.Set;
 
 // Overrides some internal IDP config
 @Singleton
@@ -54,7 +56,13 @@ public class StroomTestIdpConfigurationProvider extends InternalIdpConfiguration
     }
 
     @Override
-    public boolean isValidateAudience() {
+    public Set<String> getAllowedAudiences() {
+        showWarning();
+        return Collections.emptySet();
+    }
+
+    @Override
+    public boolean isAudienceClaimRequired() {
         showWarning();
         return false;
     }
@@ -72,8 +80,8 @@ public class StroomTestIdpConfigurationProvider extends InternalIdpConfiguration
             synchronized (this) {
                 if (now.isAfter(nextWarningTime)) {
                     LOGGER.warn("Using default and publicly available Open ID authentication credentials. " +
-                            "This is totally insecure! Set property " + AbstractOpenIdConfig.PROP_NAME_IDP_TYPE +
-                            " to " + IdpType.EXTERNAL_IDP + "/" + IdpType.INTERNAL_IDP + ".");
+                                "This is totally insecure! Set property " + AbstractOpenIdConfig.PROP_NAME_IDP_TYPE +
+                                " to " + IdpType.EXTERNAL_IDP + "/" + IdpType.INTERNAL_IDP + ".");
                     nextWarningTime = Instant.now().plus(TIME_BETWEEN_WARNINGS);
                 }
             }

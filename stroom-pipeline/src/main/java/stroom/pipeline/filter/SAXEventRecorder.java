@@ -26,6 +26,7 @@ import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.stepping.Recorder;
 import stroom.pipeline.stepping.SteppingFilter;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.OutputState;
@@ -59,7 +60,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
     private Set<CompiledXPathFilter> xPathFilters;
     private int currentElementDepth;
     private int maxElementDepth;
-    private String elementId;
+    private ElementId elementId;
 
     @Inject
     public SAXEventRecorder(final MetaHolder metaHolder,
@@ -396,12 +397,12 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
     }
 
     @Override
-    public String getElementId() {
+    public ElementId getElementId() {
         return elementId;
     }
 
     @Override
-    public void setElementId(final String elementId) {
+    public void setElementId(final ElementId elementId) {
         this.elementId = elementId;
     }
 

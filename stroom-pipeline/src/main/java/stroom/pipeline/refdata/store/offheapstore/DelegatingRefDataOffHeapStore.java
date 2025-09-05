@@ -139,7 +139,7 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
         initLegacyStore(false, localDir);
         // Set up all the stores we find on disk so NodeStatusServiceUtil can get all the size on disk
         // values
-        discoverFeedSpecificStores(localDir);
+        securityContext.asProcessingUser(() -> discoverFeedSpecificStores(localDir));
     }
 
     private Path ensureLmdbDirectories() {

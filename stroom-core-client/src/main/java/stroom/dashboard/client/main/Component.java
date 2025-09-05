@@ -69,4 +69,8 @@ public interface Component extends TabData, Layer, HasDisplayValue {
     ComponentConfig write();
 
     void setDesignMode(boolean designMode);
+
+    default void onContentTabVisible(final boolean visible) {
+
+    }
 }

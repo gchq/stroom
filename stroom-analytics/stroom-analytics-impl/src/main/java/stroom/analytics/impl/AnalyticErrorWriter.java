@@ -13,6 +13,7 @@ import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.pipeline.scope.PipelineScoped;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -25,6 +26,7 @@ import java.util.function.Function;
 public class AnalyticErrorWriter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnalyticErrorWriter.class);
+    private static final ElementId ELEMENT_ID = new ElementId("AnalyticsExecutor");
 
     private final RecordErrorReceiver recordErrorReceiver;
     private final ErrorReceiverProxy errorReceiverProxy;
@@ -97,9 +99,9 @@ public class AnalyticErrorWriter {
         if (errorReceiverProxy != null && !(e instanceof LoggedException)) {
             try {
                 if (e.getMessage() != null) {
-                    errorReceiverProxy.log(severity, null, "AnalyticsExecutor", e.getMessage(), e);
+                    errorReceiverProxy.log(severity, null, ELEMENT_ID, e.getMessage(), e);
                 } else {
-                    errorReceiverProxy.log(severity, null, "AnalyticsExecutor", e.toString(), e);
+                    errorReceiverProxy.log(severity, null, ELEMENT_ID, e.toString(), e);
                 }
             } catch (final RuntimeException e2) {
                 // Ignore exception as we generated it.

@@ -16,6 +16,7 @@ import stroom.query.language.functions.ValuesConsumer;
 import stroom.query.language.functions.ref.StoredValues;
 import stroom.search.extraction.ProcessLifecycleAware;
 import stroom.util.date.DateUtil;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
@@ -152,7 +153,7 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
     private void log(final Severity severity, final String message, final Exception e) {
         LOGGER.error(message, e);
         errorReceiverProxyProvider.get().log(severity, null,
-                "AlertExtractionReceiver", message, e);
+                new ElementId(getClass().getSimpleName()), message, e);
     }
 
     private void writeRecord(final ColumnValue[] columnValues) {
@@ -231,15 +232,6 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
 
         final DetectionConsumer detectionConsumer = getDetectionConsumer();
         detectionConsumer.accept(detection);
-    }
-
-    public static Long getSafeLong(final String value) {
-        try {
-            return Long.parseLong(value);
-        } catch (final RuntimeException e) {
-            LOGGER.debug(e.getMessage(), e);
-        }
-        return null;
     }
 
     public static Long getSafeLong(final Val value) {

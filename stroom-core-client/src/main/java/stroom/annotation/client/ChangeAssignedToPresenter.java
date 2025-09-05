@@ -22,6 +22,7 @@ import stroom.annotation.shared.MultiAnnotationChangeRequest;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.UserRefPopupPresenter;
+import stroom.security.shared.FindUserContext;
 import stroom.util.shared.UserRef;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -60,7 +61,7 @@ public class ChangeAssignedToPresenter
         this.assignedToPresenter = assignedToPresenter;
         this.clientSecurityContext = clientSecurityContext;
         getView().setUiHandlers(this);
-        assignedToPresenter.showActiveUsersOnly(true);
+        assignedToPresenter.setContext(FindUserContext.ANNOTATION_ASSIGNMENT);
     }
 
     public void show(final List<Long> annotationIdList) {
@@ -79,6 +80,9 @@ public class ChangeAssignedToPresenter
                         annotationResourceClient.batchChange(request,
                                 values -> {
                                     GWT.log("Updated " + values + " annotations");
+                                    if (values > 0) {
+                                        AnnotationChangeEvent.fire(this, null);
+                                    }
                                     e.hide();
                                 },
                                 RestErrorHandler.forPopup(this, e),

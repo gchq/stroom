@@ -290,7 +290,7 @@ public class BenchmarkDataFeed {
         long totalTime = 0;
         long maxTime = 0;
 
-        final HashMap<Integer, Integer> responseMap = new HashMap<>();
+        final Map<Integer, Integer> responseMap = new HashMap<>();
 
         final Set<String> messageSet = new HashSet<>();
 

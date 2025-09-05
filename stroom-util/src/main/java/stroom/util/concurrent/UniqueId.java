@@ -142,7 +142,7 @@ public final class UniqueId {
         if (obj == null || obj.getClass() != this.getClass()) {
             return false;
         }
-        final var that = (UniqueId) obj;
+        final UniqueId that = (UniqueId) obj;
         return this.epochMs == that.epochMs &&
                this.sequenceNo == that.sequenceNo &&
                Objects.equals(this.nodeId, that.nodeId);

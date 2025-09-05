@@ -149,7 +149,7 @@ class TestStringUtil {
         return TestUtil.buildDynamicTestStream()
                 .withInputAndOutputType(String.class)
                 .withTestFunction(testCase -> {
-                    final var quotedInput = StringUtil.addWhitespaceQuoting(testCase.getInput());
+                    final String quotedInput = StringUtil.addWhitespaceQuoting(testCase.getInput());
                     LOGGER.debug("quotedInput: '{}'", quotedInput);
                     return StringUtil.removeWhitespaceQuoting(quotedInput);
                 })

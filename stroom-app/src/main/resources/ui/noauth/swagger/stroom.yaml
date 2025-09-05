@@ -542,6 +542,26 @@ paths:
       summary: Applies a change to an annotation
       tags:
       - Annotations
+  /annotation/v1/changeAnnotationEntry:
+    post:
+      operationId: changeAnnotationEntry
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeAnnotationEntryRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Change an annotation entry
+      tags:
+      - Annotations
   /annotation/v1/changeDocumentPermissions:
     post:
       operationId: changeDocumentPermissions
@@ -620,6 +640,26 @@ paths:
       summary: Deletes an annotation
       tags:
       - Annotations
+  /annotation/v1/deleteAnnotationEntry:
+    post:
+      operationId: deleteAnnotationEntry
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteAnnotationEntryRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Delete an annotation entry
+      tags:
+      - Annotations
   /annotation/v1/deleteAnnotationTag:
     delete:
       operationId: deleteAnnotationTag
@@ -636,6 +676,26 @@ paths:
                 type: boolean
           description: default response
       summary: Delete an annotation tag
+      tags:
+      - Annotations
+  /annotation/v1/fetchAnnotationEntry:
+    post:
+      operationId: fetchAnnotationEntry
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FetchAnnotationEntryRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnnotationEntry"
+          description: default response
+      summary: Fetch an annotation entry
       tags:
       - Annotations
   /annotation/v1/findAnnotationTags:
@@ -658,24 +718,24 @@ paths:
       summary: Finds annotation tags matching request
       tags:
       - Annotations
-  /annotation/v1/getAnnotationByRef:
+  /annotation/v1/findAnnotations:
     post:
-      operationId: getAnnotationByRef
+      operationId: findAnnotations
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/DocRef"
-        description: annotationRef
+              $ref: "#/components/schemas/FindAnnotationRequest"
+        description: request
         required: true
       responses:
         default:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Annotation"
+                $ref: "#/components/schemas/ResultPageAnnotation"
           description: default response
-      summary: Gets an annotation by ref
+      summary: Finds annotations
       tags:
       - Annotations
   /annotation/v1/getAnnotationEntries:
@@ -1512,6 +1572,24 @@ paths:
       summary: "Fetch a property by its name, e.g. 'stroom.path.home'"
       tags:
       - Global Config
+  /content/v1/abortImport:
+    post:
+      operationId: abortImport
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResourceKey"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json: {}
+          description: default response
+      summary: Abort Import
+      tags:
+      - Content
   /content/v1/export:
     post:
       operationId: exportContent
@@ -5686,6 +5764,35 @@ paths:
         easily
       tags:
       - Queries
+  /query/v1/csv/search:
+    get:
+      operationId: queryCsv
+      parameters:
+      - in: query
+        name: query
+        schema:
+          type: string
+      - in: query
+        name: offset
+        schema:
+          type: integer
+          format: int32
+      - in: query
+        name: length
+        schema:
+          type: integer
+          format: int32
+          default: 100
+      responses:
+        default:
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: default response
+      summary: Perform a csv query
+      tags:
+      - Queries
   /query/v1/downloadSearchResults:
     post:
       operationId: downloadQuerySearchResultsLocal
@@ -7740,8 +7847,8 @@ paths:
         content:
           application/json:
             schema:
-              type: string
-        description: uuid
+              $ref: "#/components/schemas/GetUserRequest"
+        description: request
         required: true
       responses:
         default:
@@ -8453,6 +8560,14 @@ components:
         properties:
           sourceDocRef:
             $ref: "#/components/schemas/DocRef"
+    AddAnnotationTable:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractAnnotationChange"
+      - type: object
+        properties:
+          table:
+            $ref: "#/components/schemas/AnnotationTable"
     AddAppPermission:
       type: object
       allOf:
@@ -8715,6 +8830,8 @@ components:
     AnnotationEntry:
       type: object
       properties:
+        deleted:
+          type: boolean
         entryTime:
           type: integer
           format: int64
@@ -8726,14 +8843,17 @@ components:
           - STATUS
           - ASSIGNED
           - COMMENT
-          - LINK
-          - UNLINK
+          - LINK_EVENT
+          - UNLINK_EVENT
           - RETENTION_PERIOD
           - DESCRIPTION
           - ADD_TO_COLLECTION
           - REMOVE_FROM_COLLECTION
           - ADD_LABEL
           - REMOVE_LABEL
+          - ADD_TABLE_DATA
+          - LINK_ANNOTATION
+          - UNLINK_ANNOTATION
           - DELETE
         entryUser:
           $ref: "#/components/schemas/UserRef"
@@ -8742,6 +8862,29 @@ components:
         id:
           type: integer
           format: int64
+        previousValue:
+          $ref: "#/components/schemas/EntryValue"
+        updateTime:
+          type: integer
+          format: int64
+        updateUser:
+          $ref: "#/components/schemas/UserRef"
+    AnnotationTable:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/EntryValue"
+      - type: object
+        properties:
+          columns:
+            type: array
+            items:
+              type: string
+          values:
+            type: array
+            items:
+              type: array
+              items:
+                type: string
     AnnotationTag:
       type: object
       properties:
@@ -9329,6 +9472,16 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CacheIdentity"
+    ChangeAnnotationEntryRequest:
+      type: object
+      properties:
+        annotationEntryId:
+          type: integer
+          format: int64
+        annotationRef:
+          $ref: "#/components/schemas/DocRef"
+        data:
+          type: string
     ChangeAssignedTo:
       type: object
       allOf:
@@ -9936,6 +10089,11 @@ components:
           $ref: "#/components/schemas/UserRef"
         comment:
           type: string
+        linkedAnnotations:
+          type: array
+          items:
+            type: integer
+            format: int64
         linkedEvents:
           type: array
           items:
@@ -9944,6 +10102,8 @@ components:
           type: string
         subject:
           type: string
+        table:
+          $ref: "#/components/schemas/AnnotationTable"
         title:
           type: string
     CreateAnnotationTagRequest:
@@ -10181,6 +10341,10 @@ components:
       properties:
         complete:
           type: boolean
+        errorMessages:
+          type: array
+          items:
+            $ref: "#/components/schemas/ErrorMessage"
         errors:
           type: array
           items:
@@ -10392,6 +10556,14 @@ components:
         lineNo:
           type: integer
           format: int32
+    DeleteAnnotationEntryRequest:
+      type: object
+      properties:
+        annotationEntryId:
+          type: integer
+          format: int64
+        annotationRef:
+          $ref: "#/components/schemas/DocRef"
     DeleteDuplicateCheckRequest:
       type: object
       properties:
@@ -10693,7 +10865,9 @@ components:
           - LOCKED
           - LOGO
           - LOGOUT
+          - MAXIMISE
           - MENU
+          - MINIMISE
           - MONITORING
           - MOVE
           - NODES
@@ -10736,6 +10910,7 @@ components:
           - REFRESH
           - REGEX
           - REMOVE
+          - RERUN
           - RESIZE
           - RESIZE_HANDLE
           - SAVE
@@ -11099,6 +11274,13 @@ components:
           type: string
         ok:
           type: boolean
+    ElementId:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
     EmbeddedQueryComponentSettings:
       type: object
       allOf:
@@ -11186,6 +11368,18 @@ components:
           type: string
       required:
       - type
+    ErrorMessage:
+      type: object
+      properties:
+        message:
+          type: string
+        severity:
+          type: string
+          enum:
+          - INFO
+          - WARN
+          - ERROR
+          - FATAL
     EventCoprocessorSettings:
       type: object
       allOf:
@@ -11625,6 +11819,9 @@ components:
           type: boolean
         externalIdentityProvider:
           type: boolean
+        lastAnnotationChangeTime:
+          type: integer
+          format: int64
         maxApiKeyExpiryAgeMs:
           type: integer
           format: int64
@@ -11695,6 +11892,14 @@ components:
           type: string
         volumeGroup:
           type: string
+    FetchAnnotationEntryRequest:
+      type: object
+      properties:
+        annotationEntryId:
+          type: integer
+          format: int64
+        annotationRef:
+          $ref: "#/components/schemas/DocRef"
     FetchAppUserPermissionsRequest:
       type: object
       properties:
@@ -11945,6 +12150,34 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CriteriaFieldSort"
+    FindAnnotationRequest:
+      type: object
+      properties:
+        destinationId:
+          type: integer
+          format: int64
+        filter:
+          type: string
+        pageRequest:
+          $ref: "#/components/schemas/PageRequest"
+        requiredPermission:
+          type: string
+          enum:
+          - OWNER
+          - DELETE
+          - EDIT
+          - VIEW
+          - USE
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: "#/components/schemas/CriteriaFieldSort"
+        sourceId:
+          type: integer
+          format: int64
     FindApiKeyCriteria:
       type: object
       properties:
@@ -12243,8 +12476,12 @@ components:
     FindUserCriteria:
       type: object
       properties:
-        activeUsersOnly:
-          type: boolean
+        context:
+          type: string
+          enum:
+          - RUN_AS
+          - ANNOTATION_ASSIGNMENT
+          - PERMISSIONS
         expression:
           $ref: "#/components/schemas/ExpressionOperator"
         pageRequest:
@@ -12508,6 +12745,17 @@ components:
           format: int64
         scheduleRestriction:
           $ref: "#/components/schemas/ScheduleRestriction"
+    GetUserRequest:
+      type: object
+      properties:
+        context:
+          type: string
+          enum:
+          - RUN_AS
+          - ANNOTATION_ASSIGNMENT
+          - PERMISSIONS
+        uuid:
+          type: string
     GitRepoDoc:
       type: object
       properties:
@@ -12577,6 +12825,24 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CriteriaFieldSort"
+    GroupSelection:
+      type: object
+      description: Contains a set of group keys of parent rows we want to show (or
+        not show) children for
+      properties:
+        closedGroups:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        expandedDepth:
+          type: integer
+          format: int32
+        openGroups:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
     HashedApiKey:
       type: object
       properties:
@@ -12770,6 +13036,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Message"
+        ownerDocRef:
+          $ref: "#/components/schemas/DocRef"
         sourcePath:
           type: string
         state:
@@ -13186,6 +13454,17 @@ components:
         streamCount:
           type: integer
           format: int64
+    LinkAnnotations:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractAnnotationChange"
+      - type: object
+        properties:
+          annotations:
+            type: array
+            items:
+              type: integer
+              format: int64
     LinkEvents:
       type: object
       allOf:
@@ -13835,7 +14114,11 @@ components:
     PipelineElement:
       type: object
       properties:
+        description:
+          type: string
         id:
+          type: string
+        name:
           type: string
         type:
           type: string
@@ -13974,7 +14257,9 @@ components:
           - LOCKED
           - LOGO
           - LOGOUT
+          - MAXIMISE
           - MENU
+          - MINIMISE
           - MONITORING
           - MOVE
           - NODES
@@ -14017,6 +14302,7 @@ components:
           - REFRESH
           - REGEX
           - REMOVE
+          - RERUN
           - RESIZE
           - RESIZE_HANDLE
           - SAVE
@@ -14953,6 +15239,8 @@ components:
     QuerySearchRequest:
       type: object
       properties:
+        groupSelection:
+          $ref: "#/components/schemas/GroupSelection"
         incremental:
           type: boolean
         openGroups:
@@ -15353,14 +15641,16 @@ components:
           type: string
           description: The ID of the component that this result set was requested
             for. See ResultRequest in SearchRequest
-        errors:
+        errorMessages:
           type: array
           description: If an error has occurred producing this result set then this
-            will have details of the error
+            will have the details of the error
+          items:
+            $ref: "#/components/schemas/ErrorMessage"
+        errors:
+          type: array
           items:
             type: string
-            description: If an error has occurred producing this result set then this
-              will have details of the error
         type:
           type: string
       required:
@@ -15396,6 +15686,16 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AnalyticDataShard"
+    ResultPageAnnotation:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: "#/components/schemas/PageResponse"
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/Annotation"
     ResultPageAnnotationTag:
       type: object
       description: A page of results.
@@ -15731,6 +16031,8 @@ components:
           - NONE
           - CHANGES
           - ALL
+        groupSelection:
+          $ref: "#/components/schemas/GroupSelection"
         mappings:
           type: array
           items:
@@ -15755,6 +16057,10 @@ components:
           - TABLE
           - VIS
           - QL_VIS
+        searchRequestSource:
+          $ref: "#/components/schemas/SearchRequestSource"
+        tableName:
+          type: string
         timeFilter:
           $ref: "#/components/schemas/TimeFilter"
     ResultStoreInfo:
@@ -15808,6 +16114,9 @@ components:
       type: object
       description: A row of data in a result set
       properties:
+        annotationId:
+          type: integer
+          format: int64
         depth:
           type: integer
           format: int32
@@ -16127,6 +16436,8 @@ components:
       properties:
         componentId:
           type: string
+        componentName:
+          type: string
         ownerDocRef:
           $ref: "#/components/schemas/DocRef"
         sourceType:
@@ -16146,6 +16457,10 @@ components:
       properties:
         complete:
           type: boolean
+        errorMessages:
+          type: array
+          items:
+            $ref: "#/components/schemas/ErrorMessage"
         errors:
           type: array
           items:
@@ -17052,7 +17367,7 @@ components:
       type: object
       properties:
         elementId:
-          type: string
+          $ref: "#/components/schemas/ElementId"
         errorType:
           type: string
           enum:
@@ -17427,6 +17742,11 @@ components:
                 \ grouping level, e.g. '1000,10,1' means 1000 results at group level\
                 \ 0, 10 at level 1 and 1 at level 2. In the absence of this field\
                 \ system defaults will apply"
+          maxStringFieldLength:
+            type: integer
+            format: int32
+          overrideMaxStringFieldLength:
+            type: boolean
           pageSize:
             type: integer
             format: int32
@@ -17488,6 +17808,8 @@ components:
       - $ref: "#/components/schemas/ComponentResultRequest"
       - type: object
         properties:
+          groupSelection:
+            $ref: "#/components/schemas/GroupSelection"
           openGroups:
             type: array
             items:
@@ -17533,6 +17855,11 @@ components:
               \ grouping level, e.g. '1000,10,1' means 1000 results at group level\
               \ 0, 10 at level 1 and 1 at level 2. In the absence of this field system\
               \ defaults will apply"
+        maxStringFieldLength:
+          type: integer
+          format: int32
+        overrideMaxStringFieldLength:
+          type: boolean
         queryId:
           type: string
           description: TODO
@@ -17807,6 +18134,8 @@ components:
           type: string
         pageBorder:
           type: string
+        selectedTabColour:
+          type: string
     TimeFilter:
       type: object
       description: If the data includes time in the key then you can apply a time
@@ -17961,6 +18290,17 @@ components:
           $ref: "#/components/schemas/ThemeConfig"
         welcomeHtml:
           type: string
+    UnlinkAnnotations:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractAnnotationChange"
+      - type: object
+        properties:
+          annotations:
+            type: array
+            items:
+              type: integer
+              format: int64
     UnlinkEvents:
       type: object
       allOf:

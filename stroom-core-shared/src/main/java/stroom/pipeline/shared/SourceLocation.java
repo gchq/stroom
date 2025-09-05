@@ -16,6 +16,7 @@
 
 package stroom.pipeline.shared;
 
+import stroom.annotation.shared.EventId;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.TextRange;
 
@@ -69,6 +70,13 @@ public class SourceLocation {
         this.recordIndex = recordIndex;
         this.dataRange = dataRange;
         this.highlights = highlights;
+    }
+
+    public static SourceLocation fromEventId(final EventId eventId) {
+        return SourceLocation
+                .builder(eventId.getStreamId())
+                .withRecordIndex(eventId.getEventId() - 1)
+                .build();
     }
 
     private SourceLocation(final Builder builder) {
@@ -152,8 +160,8 @@ public class SourceLocation {
             return false;
         } else {
             return this.metaId == other.metaId
-                    && this.partIndex == other.partIndex
-                    && Objects.equals(this.childType, other.childType);
+                   && this.partIndex == other.partIndex
+                   && Objects.equals(this.childType, other.childType);
         }
     }
 
@@ -162,8 +170,8 @@ public class SourceLocation {
             return false;
         } else {
             return this.isSameSource(other)
-                    && this.recordIndex == other.recordIndex
-                    && Objects.equals(this.dataRange, other.dataRange);
+                   && this.recordIndex == other.recordIndex
+                   && Objects.equals(this.dataRange, other.dataRange);
         }
     }
 
@@ -186,11 +194,11 @@ public class SourceLocation {
         }
         final SourceLocation that = (SourceLocation) o;
         return metaId == that.metaId &&
-                partIndex == that.partIndex &&
-                recordIndex == that.recordIndex &&
-                Objects.equals(childType, that.childType) &&
-                Objects.equals(dataRange, that.dataRange) &&
-                Objects.equals(highlights, that.highlights);
+               partIndex == that.partIndex &&
+               recordIndex == that.recordIndex &&
+               Objects.equals(childType, that.childType) &&
+               Objects.equals(dataRange, that.dataRange) &&
+               Objects.equals(highlights, that.highlights);
     }
 
     @Override
@@ -201,13 +209,13 @@ public class SourceLocation {
     @Override
     public String toString() {
         return "SourceLocation{" +
-                "metaId=" + metaId +
-                ", childType='" + childType + '\'' +
-                ", partIndex=" + partIndex +
-                ", recordIndex=" + recordIndex +
-                ", dataRange=" + dataRange +
-                ", highlight=" + highlights +
-                '}';
+               "metaId=" + metaId +
+               ", childType='" + childType + '\'' +
+               ", partIndex=" + partIndex +
+               ", recordIndex=" + recordIndex +
+               ", dataRange=" + dataRange +
+               ", highlight=" + highlights +
+               '}';
     }
 
     public static Builder builder() {

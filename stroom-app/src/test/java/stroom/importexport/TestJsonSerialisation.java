@@ -417,7 +417,7 @@ class TestJsonSerialisation {
 
     private Set<String> getConstructorPropNames(final Constructor<?> constructor) {
         final Annotation[][] parameterAnnotations = constructor.getParameterAnnotations();
-        final HashSet<String> propNames = new HashSet<>();
+        final Set<String> propNames = new HashSet<>();
         for (final Annotation[] singleParamAnnos : parameterAnnotations) {
             for (final Annotation annotation : singleParamAnnos) {
                 if (JsonProperty.class.isAssignableFrom(annotation.annotationType())) {

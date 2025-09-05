@@ -263,10 +263,15 @@ public class OpenIdTokenRequestHelper {
     }
 
     private String getClientSecret() {
-        return NullSafe.getOrElseGet(
-                clientCredentials,
-                ClientCredentials::getClientSecret,
-                openIdConfiguration::getClientSecret);
+        // clientSecret may not be set, e.g. if we are using mTLS auth
+        String clientSecret = NullSafe.get(clientCredentials, ClientCredentials::getClientSecret);
+        if (NullSafe.isEmptyString(clientSecret)) {
+            clientSecret = openIdConfiguration.getClientSecret();
+        }
+        if (LOGGER.isDebugEnabled() && NullSafe.isBlankString(clientSecret)) {
+            LOGGER.debug("Blank clientSecret");
+        }
+        return clientSecret;
     }
 
     @Override

@@ -8,6 +8,7 @@ import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
 import stroom.query.language.functions.Generator;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValNull;
+import stroom.query.language.functions.Values;
 import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
 import stroom.util.shared.NullSafe;
@@ -27,9 +28,9 @@ public class ValFilter {
                                           final DateTimeSettings dateTimeSettings,
                                           final ExpressionPredicateFactory expressionPredicateFactory,
                                           final Map<String, String> paramMap) {
-        final ValueFunctionFactories<Val[]> queryFieldIndex = RowUtil
+        final ValueFunctionFactories<Values> queryFieldIndex = RowUtil
                 .createColumnNameValExtractor(compiledColumns.getColumns());
-        final Optional<Predicate<Val[]>> optionalRowExpressionMatcher =
+        final Optional<Predicate<Values>> optionalRowExpressionMatcher =
                 expressionPredicateFactory.createOptional(rowExpression, queryFieldIndex, dateTimeSettings);
 
         final Set<String> fieldsUsed = new HashSet<>(ExpressionUtil.fields(rowExpression));
@@ -63,7 +64,7 @@ public class ValFilter {
         // If we need column mappings then create a predicate that will use them.
         if (!usedColumns.isEmpty()) {
             final ValueReferenceIndex valueReferenceIndex = compiledColumns.getValueReferenceIndex();
-            final Predicate<Val[]> rowPredicate = optionalRowExpressionMatcher.orElse(values -> true);
+            final Predicate<Values> rowPredicate = optionalRowExpressionMatcher.orElse(values -> true);
 
             return values -> {
                 final StoredValues storedValues = valueReferenceIndex.createStoredValues();
@@ -85,8 +86,7 @@ public class ValFilter {
                 }
 
                 // Test the row value map.
-                return rowPredicate.test(vals);
-
+                return rowPredicate.test(Values.of(vals));
             };
         } else if (optionalRowExpressionMatcher.isPresent()) {
             return values -> false;

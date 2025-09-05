@@ -51,8 +51,9 @@ import stroom.query.api.SearchResponse;
 import stroom.query.api.TableResultBuilder;
 import stroom.query.api.TimeFilter;
 import stroom.query.common.v2.DataStore;
+import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.ExpressionPredicateFactory;
-import stroom.query.common.v2.Key;
+import stroom.query.common.v2.OpenGroups;
 import stroom.query.common.v2.OpenGroupsImpl;
 import stroom.query.common.v2.ResultCreator;
 import stroom.query.common.v2.ResultStoreManager;
@@ -80,10 +81,12 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.Severity;
 import stroom.util.string.ExceptionStringUtil;
 
 import jakarta.inject.Inject;
@@ -109,6 +112,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @AutoLogged
 class DashboardServiceImpl implements DashboardService {
@@ -327,7 +331,8 @@ class DashboardServiceImpl implements DashboardService {
                                         sampleGenerator,
                                         target);
                                 final TableResultCreator tableResultCreator =
-                                        new TableResultCreator(formatterFactory, expressionPredicateFactory) {
+                                        new TableResultCreator(formatterFactory,
+                                                expressionPredicateFactory) {
                                             @Override
                                             public TableResultBuilder createTableResultBuilder() {
                                                 return searchResultWriter;
@@ -467,17 +472,17 @@ class DashboardServiceImpl implements DashboardService {
                 }
             } catch (final RuntimeException e) {
                 exception = e;
-                final Search finalSearch = search;
-                LOGGER.debug(() -> "Error processing search " + finalSearch, e);
+                LOGGER.debug(() -> "Error processing search " + search, e);
 
                 result = new DashboardSearchResponse(
                         nodeInfo.getThisNodeName(),
                         queryKey,
                         null,
-                        Collections.singletonList(ExceptionStringUtil.getMessage(e)),
+                        null,
                         null,
                         true,
-                        null);
+                        null,
+                        Collections.singletonList(new ErrorMessage(Severity.ERROR, ExceptionStringUtil.getMessage(e))));
             } finally {
                 // Log here so we don't log twice if there is an error
                 if (queryKey == null) {
@@ -563,8 +568,6 @@ class DashboardServiceImpl implements DashboardService {
                     request.getPageRequest(),
                     new GenericComparator());
             for (final ResultRequest resultRequest : resultRequests) {
-//                final TableResultRequest tableResultRequest =
-//                        tableRequestMap.get(resultRequest.getComponentId());
                 try {
                     final RequestAndStore requestAndStore = searchResponseCreatorManager
                             .getResultStore(mappedRequest);
@@ -572,13 +575,20 @@ class DashboardServiceImpl implements DashboardService {
                             .resultStore()
                             .getData(resultRequest.getComponentId());
 
-                    final TimeFilter timeFilter = null;
+                    TimeFilter timeFilter = null;
+                    if (mappedRequest.getQuery() != null && mappedRequest.getQuery().getTimeRange() != null) {
+                        timeFilter = DateExpressionParser.getTimeFilter(
+                                mappedRequest.getQuery().getTimeRange(),
+                                mappedRequest.getDateTimeSettings());
+                    }
+
                     final Predicate<Val> predicate = valPredicateFactory.createValPredicate(
                             request.getColumn(),
                             request.getFilter(),
                             request.getSearchRequest().getDateTimeSettings());
 
-                    final Set<Key> openGroups = dataStore.getKeyFactory().decodeSet(resultRequest.getOpenGroups());
+                    final OpenGroups openGroups = OpenGroupsImpl.fromGroupSelection(
+                            resultRequest.getGroupSelection(), dataStore.getKeyFactory());
 
                     final int index = dataStore
                             .getColumns()
@@ -590,7 +600,7 @@ class DashboardServiceImpl implements DashboardService {
                         dataStore.fetch(
                                 dataStore.getColumns(),
                                 OffsetRange.UNBOUNDED,
-                                new OpenGroupsImpl(openGroups),
+                                openGroups,
                                 timeFilter,
                                 item -> {
                                     final Val val = item.getValue(index);
@@ -600,7 +610,7 @@ class DashboardServiceImpl implements DashboardService {
                                             list.add(string);
                                         }
                                     }
-                                    return null;
+                                    return Stream.empty();
                                 },
                                 row -> {
 

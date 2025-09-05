@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
  * converted to {@link CIKey} on the fly.
  * </p>
  */
+@SuppressWarnings("checkstyle:IllegalType")
 public class CIHashMap<V> extends HashMap<CIKey, V> {
 
     @SuppressWarnings("rawtypes")

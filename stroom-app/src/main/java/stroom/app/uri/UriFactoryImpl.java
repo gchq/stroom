@@ -7,6 +7,7 @@ import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
 import stroom.config.common.UriFactory;
 import stroom.util.net.UriConfig;
+import stroom.util.shared.NullSafe;
 
 import io.dropwizard.core.server.DefaultServerFactory;
 import io.dropwizard.jetty.ConnectorFactory;
@@ -154,12 +155,9 @@ class UriFactoryImpl implements UriFactory {
     }
 
     private String resolveHost(final String bindHost) {
-        if (bindHost != null && bindHost.length() > 0) {
-            return bindHost;
-        }
-
-        return "localhost";
-
+        return NullSafe.isNonEmptyString(bindHost)
+                ? bindHost
+                : "localhost";
 //        try {
 //            return InetAddress.getLocalHost().getHostName();
 //        } catch (final UnknownHostException e) {

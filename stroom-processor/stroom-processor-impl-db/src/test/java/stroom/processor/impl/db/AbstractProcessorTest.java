@@ -107,17 +107,8 @@ class AbstractProcessorTest {
                         bindMock(ProcessorTaskQueueManager.class);
                         bindMock(DocumentEventLog.class);
                         bindMock(DocumentPermissionService.class);
-                        bind(UserRefLookup.class).toInstance(new UserRefLookup() {
-                            @Override
-                            public Optional<UserRef> getByUuid(final String userUuid) {
-                                return Optional.of(UserRef.forUserUuid(userUuid));
-                            }
-
-                            @Override
-                            public UserRef decorate(final UserRef userRef) {
-                                return userRef;
-                            }
-                        });
+                        bind(UserRefLookup.class).toInstance((userUuid, context) ->
+                                Optional.of(UserRef.forUserUuid(userUuid)));
                     }
                 });
         injector.injectMembers(this);

@@ -91,7 +91,8 @@ public class MockProcessorFilterService implements ProcessorFilterService {
     }
 
     @Override
-    public ProcessorFilter importFilter(final Processor processor,
+    public ProcessorFilter importFilter(final ProcessorFilter existingProcessorFilter,
+                                        final Processor processor,
                                         final DocRef processorFilterDocRef,
                                         final CreateProcessFilterRequest request) {
         final ProcessorFilter filter = new ProcessorFilter();
@@ -163,6 +164,14 @@ public class MockProcessorFilterService implements ProcessorFilterService {
     @Override
     public Optional<String> getPipelineName(final ProcessorType processorType, final String uuid) {
         return Optional.empty();
+    }
+
+    @Override
+    public ProcessorFilter restore(final DocRef processorFilterDocRef, final boolean resetTracker) {
+        final ProcessorFilter processorFilter = dao.fetchByUuid(processorFilterDocRef.getUuid())
+                .orElseThrow();
+        processorFilter.setDeleted(false);
+        return processorFilter;
     }
 
     @Override

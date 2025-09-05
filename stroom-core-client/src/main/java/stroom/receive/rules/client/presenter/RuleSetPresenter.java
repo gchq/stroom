@@ -365,9 +365,7 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
     }
 
     private boolean isDirty(final TabData tabData) {
-        if (tabData instanceof HasSave) {
-            @SuppressWarnings("PatternVariableCanBeUsed") // cos GWT
-            final HasSave hasSave = (HasSave) tabData;
+        if (tabData instanceof final HasSave hasSave) {
             return hasSave.isDirty();
         } else {
             return false;

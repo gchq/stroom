@@ -1,5 +1,7 @@
 package stroom.query.api;
 
+import stroom.util.shared.ErrorMessage;
+
 import java.util.List;
 
 public interface TableResultBuilder {
@@ -10,13 +12,7 @@ public interface TableResultBuilder {
 
     TableResultBuilder addRow(Row row);
 
-    /**
-     * Add an error to the result.
-     *
-     * @param error The Error to add.
-     * @return The {@link FlatResultBuilder}, enabling method chaining
-     */
-    TableResultBuilder errors(List<String> errors);
+    TableResultBuilder errorMessages(List<ErrorMessage> errorMessages);
 
     TableResultBuilder resultRange(OffsetRange resultRange);
 

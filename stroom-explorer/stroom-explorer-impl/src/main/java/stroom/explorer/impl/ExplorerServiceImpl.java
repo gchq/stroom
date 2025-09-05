@@ -1062,10 +1062,11 @@ class ExplorerServiceImpl
         remappings.values().forEach(newExplorerNode -> {
             final ExplorerActionHandler handler = explorerActionHandlers.getHandler(newExplorerNode.getType());
             if (handler != null) {
-                final HashMap<DocRef, DocRef> docRefRemappings = new HashMap<>();
-                for (final var remapping : remappings.entrySet()) {
-                    docRefRemappings.put(remapping.getKey().getDocRef(), remapping.getValue().getDocRef());
-                }
+                final Map<DocRef, DocRef> docRefRemappings = remappings.entrySet()
+                        .stream()
+                        .collect(Collectors.toMap(
+                                entry -> entry.getKey().getDocRef(),
+                                entry -> entry.getValue().getDocRef()));
                 handler.remapDependencies(newExplorerNode.getDocRef(), docRefRemappings);
             }
         });
@@ -1401,7 +1402,7 @@ class ExplorerServiceImpl
         explorerNodes.forEach(explorerNode ->
                 EntityEvent.fire(entityEventBus, explorerNode.getDocRef(), EntityAction.PRE_DELETE));
 
-        final HashSet<ExplorerNode> deleted = new HashSet<>();
+        final Set<ExplorerNode> deleted = new HashSet<>();
         explorerNodes.forEach(explorerNode -> {
             // Check this document hasn't already been deleted.
             if (!deleted.contains(explorerNode)) {
@@ -1420,7 +1421,7 @@ class ExplorerServiceImpl
     }
 
     private void recursiveDelete(final List<ExplorerNode> explorerNodes,
-                                 final HashSet<ExplorerNode> deleted,
+                                 final Set<ExplorerNode> deleted,
                                  final List<ExplorerNode> resultDocRefs,
                                  final StringBuilder resultMessage) {
         explorerNodes.forEach(explorerNode -> {
