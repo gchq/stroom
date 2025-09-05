@@ -26,6 +26,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.net.UrlUtils;
+import stroom.util.servlet.UserAgentSessionUtil;
 import stroom.util.shared.AuthenticationBypassChecker;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourcePaths;
@@ -62,6 +63,8 @@ class SecurityFilter implements Filter {
             ".jpg", ".gif", ".ico", ".svg", ".ttf", ".woff", ".woff2");
 
     private static final String SIGN_IN_URL_PATH = ResourcePaths.buildServletPath(ResourcePaths.SIGN_IN_PATH);
+    private static final String STROOM_SESSION_ID = "STROOM_SESSION_ID";
+    private static final String JSESSIONID = "JSESSIONID";
 
     private final UriFactory uriFactory;
     private final SecurityContext securityContext;
@@ -152,27 +155,35 @@ class SecurityFilter implements Filter {
             // Need to do this first, so we get a fresh token from AWS ALB rather than using a stale
             // one from session.
             optUserIdentity = openIdManager.loginWithRequestToken(request);
+            optUserIdentity.ifPresent(userIdentity ->
+                    ensureSessionIfCookiePresent(request).ifPresent(session -> {
+                        LOGGER.debug(() -> LogUtil.message("Setting user in session, user: {} {}, path: {}",
+                                userIdentity.getClass().getSimpleName(),
+                                userIdentity,
+                                fullPath));
+                        UserIdentitySessionUtil.set(session, userIdentity);
+                    }));
+
+            // Log current user.
             if (LOGGER.isDebugEnabled()) {
                 logUserIdentityToDebug(
                         optUserIdentity, fullPath, "after trying to login with request token");
             }
 
             // If no user from header token, see if we have one in session already.
-            optUserIdentity = openIdManager.getOrSetSessionUser(request, optUserIdentity);
-            if (LOGGER.isDebugEnabled()) {
-                logUserIdentityToDebug(optUserIdentity, fullPath, "from session");
+            if (optUserIdentity.isEmpty()) {
+                optUserIdentity = UserIdentitySessionUtil.get(request.getSession(false));
+                if (LOGGER.isDebugEnabled()) {
+                    logUserIdentityToDebug(optUserIdentity, fullPath, "from session");
+                }
             }
 
             if (optUserIdentity.isPresent()) {
                 final UserIdentity userIdentity = optUserIdentity.get();
-                LOGGER.debug(() -> LogUtil.message("Setting user in session, user: {} {}, path: {}",
-                        userIdentity.getClass().getSimpleName(),
-                        userIdentity,
-                        fullPath));
-                // Set the identity in session if we have a session and cookie
-                if (UserIdentitySessionUtil.requestHasSessionCookie(request)) {
-                    UserIdentitySessionUtil.set(request, userIdentity);
-                }
+
+                // Now we have the session make note of the user-agent for logging and sessionListServlet duties
+                ensureSessionIfCookiePresent(request).ifPresent(session ->
+                        UserAgentSessionUtil.setUserAgentInSession(request, session));
 
                 // Now handle the request as this user
                 securityContext.asUser(userIdentity, () ->
@@ -318,5 +329,20 @@ class SecurityFilter implements Filter {
 
     @Override
     public void destroy() {
+    }
+
+    private Optional<HttpSession> ensureSessionIfCookiePresent(final HttpServletRequest request) {
+        if (requestHasSessionCookie(request)) {
+            return Optional.of(request.getSession(true));
+        }
+        return Optional.empty();
+    }
+
+    private boolean requestHasSessionCookie(final HttpServletRequest request) {
+        // Find out if we have a session cookie
+        return NullSafe.stream(NullSafe.get(request, HttpServletRequest::getCookies))
+                .anyMatch(cookie ->
+                        cookie.getName().equalsIgnoreCase(STROOM_SESSION_ID) ||
+                        cookie.getName().equalsIgnoreCase(JSESSIONID));
     }
 }

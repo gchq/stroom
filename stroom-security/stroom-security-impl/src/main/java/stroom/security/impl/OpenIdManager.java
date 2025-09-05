@@ -113,7 +113,7 @@ class OpenIdManager {
 
             if (optionalUserIdentity.isPresent()) {
                 // Set the token in the session.
-                UserIdentitySessionUtil.set(request, optionalUserIdentity.get());
+                UserIdentitySessionUtil.set(request.getSession(true), optionalUserIdentity.get());
 
                 // Successful login, so redirect to the original URL held in the state.
                 LOGGER.info(() -> "Redirecting to initiating URI: " + state.getInitiatingUri());
@@ -140,26 +140,6 @@ class OpenIdManager {
             LOGGER.trace("No token on request. This is valid for API calls from the front-end");
             return Optional.empty();
         }
-    }
-
-    public Optional<UserIdentity> getOrSetSessionUser(final HttpServletRequest request,
-                                                      final Optional<UserIdentity> userIdentity) {
-        Optional<UserIdentity> result = userIdentity;
-
-        if (userIdentity.isEmpty()) {
-            // Provide identity from the session if we are allowing this to happen.
-            result = UserIdentitySessionUtil.get(request.getSession(false));
-
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("User identity from session: [{}]", result.orElse(null));
-            }
-
-        } else if (UserIdentitySessionUtil.requestHasSessionCookie(request)) {
-            // Set the user ref in the session.
-            UserIdentitySessionUtil.set(request.getSession(true), userIdentity.get());
-        }
-
-        return result;
     }
 
     public String logout(final String postAuthRedirectUri) {
