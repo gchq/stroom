@@ -393,37 +393,33 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         }
         importState.setDestPath(createPath(destPath, destName));
 
+        // Only do this if we're not mocked up
         // If we are creating a new node or moving an existing one then create the destination folders and check
         // permissions.
         DocRef folderRef = null;
         ExplorerNode parentNode = null;
-        if (importState.getState() == State.NEW || moving) {
-            // Create parent folders for the new node.
-            final ExplorerNode parent = explorerNodeService.getRoot();
-            parentNode = getOrCreateParentFolder(parent,
-                    importPath,
-                    ImportSettings.ok(importSettings, importState));
-
-            // Check permissions on the parent folder.
-            folderRef = new DocRef(parentNode.getType(), parentNode.getUuid(), parentNode.getName());
-            if (!securityContext.hasDocumentCreatePermission(folderRef, docRef.getType())) {
-                throw new PermissionException(securityContext.getUserRef(),
-                        "You do not have permission to create '" + docRef + "' in '" + folderRef);
+        if (!importSettings.isMockEnvironment()) {
+            if (importState.getState() == State.NEW || moving) {
+                // Create parent folders for the new node.
+                final ExplorerNode parent = explorerNodeService.getRoot();
+                parentNode = getOrCreateParentFolder(parent,
+                        importPath,
+                        ImportSettings.ok(importSettings, importState));
+                // Check permissions on the parent folder.
+                folderRef = new DocRef(parentNode.getType(), parentNode.getUuid(), parentNode.getName());
+                if (!securityContext.hasDocumentCreatePermission(folderRef, docRef.getType())) {
+                    throw new PermissionException(securityContext.getUserRef(),
+                            "You do not have permission to create '" + docRef + "' in '" + folderRef);
+                }
             }
         }
 
         try {
             // Import the item via the appropriate handler.
-            if (importExportActionHandler == null) {
-                LOGGER.debug(() -> LogUtil.message(
-                        "importExplorerDoc() - No importExportActionHandler for {}", docRef));
-                // We can't import this item so remove it from the map.
-                confirmMap.remove(docRef);
-            } else if (canImport(importSettings, importState)) {
-
-                LOGGER.debug(() -> LogUtil.message(
-                        "importExplorerDoc() - Importing {}, mode: {}, isAction: {} importState: {}",
-                        docRef, importSettings.getImportMode(), importState.isAction(), importState.getState()));
+            if (importExportActionHandler != null && (
+                    ImportMode.CREATE_CONFIRMATION.equals(importSettings.getImportMode()) ||
+                    ImportMode.IGNORE_CONFIRMATION.equals(importSettings.getImportMode()) ||
+                    importState.isAction())) {
 
                 final DocRef imported = importExportActionHandler.importDocument(
                         docRef,

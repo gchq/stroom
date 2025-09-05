@@ -19,8 +19,6 @@ package stroom.importexport.impl;
 import stroom.docref.DocRef;
 import stroom.importexport.api.ExportSummary;
 import stroom.importexport.api.ImportExportSerializer;
-import stroom.importexport.api.ImportExportSpec;
-import stroom.importexport.api.ImportExportSpec.ImportExportCaller;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.util.io.FileUtil;
@@ -74,8 +72,7 @@ public class ImportExportServiceImpl implements ImportExportService {
             importExportSerializer.read(
                     explodeDir,
                     confirmList,
-                    importSettings,
-                    ImportExportCaller.EXPORT);
+                    importSettings);
         } catch (final IOException | RuntimeException e) {
             throw new RuntimeException(e.getMessage(), e);
         } finally {
@@ -97,8 +94,7 @@ public class ImportExportServiceImpl implements ImportExportService {
             final ExportSummary exportSummary = importExportSerializer.write(
                     explodeDir,
                     docRefs,
-                    true,
-                    ImportExportSpec.buildExportSpec());
+                    true);
 
             // Now zip the dir.
             ZipUtil.zip(zipFile, explodeDir);

@@ -27,8 +27,6 @@ import stroom.feed.shared.FeedDoc;
 import stroom.gitrepo.api.GitRepoStore;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.importexport.api.ImportExportSerializer;
-import stroom.importexport.api.ImportExportSpec;
-import stroom.importexport.api.ImportExportSpec.ImportExportCaller;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
@@ -108,22 +106,28 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
         public GitFileVisitor(final Path root,
                               final Map<Pattern, Boolean> pathsFound,
                               final List<String> pathsNotMatched) {
+            LOGGER.info("Checking root '{}'", root);
             this.root = root;
             this.pathsFound = pathsFound;
             this.pathsNotMatched = pathsNotMatched;
         }
 
         private void checkPath(final Path path) {
+            LOGGER.info("Checking path {}", path);
+
             final String pathName = root.relativize(path).toString();
             boolean foundIt = false;
             for (final Map.Entry<Pattern, Boolean> entry : pathsFound.entrySet()) {
+                LOGGER.info("    Checking {}", entry.getKey());
                 if (entry.getKey().matcher(pathName).matches()) {
+                    LOGGER.info("        MATCHED");
                     entry.setValue(Boolean.TRUE);
                     foundIt = true;
                     break;
                 }
             }
             if (!foundIt) {
+                LOGGER.info("        NOT MATCHED {}", pathName);
                 pathsNotMatched.add(pathName);
             }
         }
@@ -245,8 +249,7 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 testDataDir,
                 docRefsToExport,
                 docTypesToIgnore,
-                true,
-                ImportExportSpec.buildExportSpec());
+                true);
 
         final List<String> pathPatterns = List.of(
                 "",
@@ -256,8 +259,7 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 "folder2",
                 "folder2/Pipeline\\.Pipeline\\.[-a-f0-9]*.meta",
                 "folder2/Pipeline\\.Pipeline\\.[-a-f0-9]*.node",
-                "folder2/Pipeline\\.Pipeline\\.[-a-f0-9]*.json",
-                "metadata\\.spec");
+                "folder2/Pipeline\\.Pipeline\\.[-a-f0-9]*.json");
 
         this.testGitFilesOnDisk("testExport1",
                 testDataDir,
@@ -343,8 +345,7 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 testDataDir,
                 docRefsToExport,
                 docTypesToIgnore,
-                true,
-                ImportExportSpec.buildExportSpec());
+                true);
 
         final List<String> pathPatterns = List.of(
                 "",
@@ -354,8 +355,7 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 "folder2",
                 "folder2/Pipeline\\.Pipeline\\.[-a-f0-9]*.meta",
                 "folder2/Pipeline\\.Pipeline\\.[-a-f0-9]*.node",
-                "folder2/Pipeline\\.Pipeline\\.[-a-f0-9]*.json",
-                "metadata\\.spec");
+                "folder2/Pipeline\\.Pipeline\\.[-a-f0-9]*.json");
 
         this.testGitFilesOnDisk("testExport2",
                 testDataDir,
@@ -381,7 +381,7 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 .useImportNames(true)
                 .rootDocRef(gitRepoNode2.getDocRef())
                 .build();
-        importExportSerializer.read(testDataDir, importStates, importSettings, ImportExportCaller.EXPORT);
+        importExportSerializer.read(testDataDir, importStates, importSettings);
 
         final List<ExplorerNode> folder12 = this.explorerNodeService.getNodesByName(gitRepoNode2, "folder1");
         assertThat(folder12)

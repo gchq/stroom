@@ -1,4 +1,4 @@
-package stroom.gitrepo.impl;
+package stroom.gitrepo.api;
 
 import stroom.config.common.AbstractDbConfig;
 import stroom.config.common.ConnectionConfig;
@@ -94,8 +94,8 @@ public class GitRepoConfig extends AbstractConfig implements IsStroomConfig, Has
         @JsonCreator
         @SuppressWarnings("unused")
         public GitRepoDbConfig(
-                @JsonProperty(PROP_NAME_CONNECTION) final ConnectionConfig connectionConfig,
-                @JsonProperty(PROP_NAME_CONNECTION_POOL) final ConnectionPoolConfig connectionPoolConfig) {
+                @JsonProperty(AbstractDbConfig.PROP_NAME_CONNECTION) final ConnectionConfig connectionConfig,
+                @JsonProperty(AbstractDbConfig.PROP_NAME_CONNECTION_POOL) final ConnectionPoolConfig connectionPoolConfig) {
             super(connectionConfig, connectionPoolConfig);
         }
 

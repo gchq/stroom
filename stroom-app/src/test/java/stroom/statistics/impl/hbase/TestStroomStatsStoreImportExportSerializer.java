@@ -22,8 +22,6 @@ import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.api.ImportExportSerializer;
-import stroom.importexport.api.ImportExportSpec;
-import stroom.importexport.api.ImportExportSpec.ImportExportCaller;
 import stroom.importexport.shared.ImportSettings;
 import stroom.statistics.impl.hbase.entity.StroomStatsStoreStore;
 import stroom.statistics.impl.hbase.shared.StatisticField;
@@ -84,10 +82,9 @@ class TestStroomStatsStoreImportExportSerializer extends AbstractCoreIntegration
         importExportSerializer.write(
                 testDataDir,
                 Set.of(statNode.getDocRef()),
-                true,
-                ImportExportSpec.buildExportSpec());
+                true);
 
-        assertThat(FileUtil.count(testDataDir)).isEqualTo(3);
+        assertThat(FileUtil.count(testDataDir)).isEqualTo(2);
 
         // now clear out the java entities and import from file
         commonTestControl.clear();
@@ -97,8 +94,7 @@ class TestStroomStatsStoreImportExportSerializer extends AbstractCoreIntegration
         importExportSerializer.read(
                 testDataDir,
                 null,
-                ImportSettings.auto(),
-                ImportExportCaller.EXPORT);
+                ImportSettings.auto());
 
         final List<DocRef> dataSources = stroomStatsStoreStore.list();
 

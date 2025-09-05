@@ -27,7 +27,6 @@ import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.api.ImportExportSerializer;
-import stroom.importexport.api.ImportExportSpec.ImportExportCaller;
 import stroom.importexport.shared.ImportSettings;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaProperties;
@@ -66,7 +65,6 @@ import stroom.util.io.DiffUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.ElementId;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
@@ -197,8 +195,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         importExportSerializer.read(
                 configDir,
                 null,
-                ImportSettings.auto(),
-                ImportExportCaller.EXPORT);
+                ImportSettings.auto());
 
         contentStoreTestSetup.installStandardPacks();
     }

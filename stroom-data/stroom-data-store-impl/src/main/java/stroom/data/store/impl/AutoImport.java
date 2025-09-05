@@ -108,7 +108,12 @@ public final class AutoImport extends HttpServlet implements IsServlet {
             }
 
             final ImportSettings importSettings = new ImportSettings(ImportMode.IGNORE_CONFIRMATION,
-                    false, null, false, false, null);
+                    false,
+                    null,
+                    false,
+                    false,
+                    null,
+                    false);
             final ImportConfigRequest importRequest = new ImportConfigRequest(resourceKey, importSettings, List.of());
             final ImportConfigResponse result = contentService.importContent(importRequest);
 
