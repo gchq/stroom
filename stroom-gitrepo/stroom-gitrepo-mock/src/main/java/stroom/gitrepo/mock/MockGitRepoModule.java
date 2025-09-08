@@ -9,6 +9,7 @@ import stroom.gitrepo.impl.GitRepoStoreImpl;
 import com.google.inject.AbstractModule;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class MockGitRepoModule extends AbstractModule {
 
@@ -25,7 +26,7 @@ public class MockGitRepoModule extends AbstractModule {
     public static class MockGitRepoDaoImpl implements GitRepoDao {
 
         /** Mock DB */
-        private final HashMap<String, String> mockDb = new HashMap<>();
+        private final Map<String, String> mockDb = new HashMap<>();
 
         @Override
         public void storeHash(final String uuid, final String hash) {

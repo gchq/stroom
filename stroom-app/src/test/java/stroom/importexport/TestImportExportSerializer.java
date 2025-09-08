@@ -401,7 +401,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         // Debug
         dumpNodeStructure(explorerNodeService.getRoot(), 0);
 
-        final HashSet<DocRef> forExport = new HashSet<>();
+        final Set<DocRef> forExport = new HashSet<>();
 
 //        forExport.add (new DocRef(Processor.ENTITY_TYPE,processor.getUuid()));
         forExport.add(new DocRef(ProcessorFilter.ENTITY_TYPE, filter.getUuid()));

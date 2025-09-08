@@ -971,14 +971,14 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
             for (final ExplorerNode child : children) {
                 LOGGER.info("Looking at '{}'", child.getDocRef());
                 //if (ExplorerConstants.isFolder(child)) {
-                    try {
-                        // Recurse
-                        pathToCurrentNode.addLast(child);
-                        LOGGER.info("Recursing search into '{}'", child.getDocRef());
-                        searchForNodesToExport(exportInfo, pathToCurrentNode, child);
-                    } finally {
-                        pathToCurrentNode.removeLast();
-                    }
+                try {
+                    // Recurse
+                    pathToCurrentNode.addLast(child);
+                    LOGGER.info("Recursing search into '{}'", child.getDocRef());
+                    searchForNodesToExport(exportInfo, pathToCurrentNode, child);
+                } finally {
+                    pathToCurrentNode.removeLast();
+                }
                 //} else {
                 //    LOGGER.info("'{}' is not a Folder so not recursing", child.getDocRef());
                 //}
@@ -1040,7 +1040,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
      */
     private void exportCurrentNode(final ExportInfo exportInfo,
                                    final Deque<ExplorerNode> pathToCurrentNode)
-        throws IOException {
+            throws IOException {
 
         // Go through each path set in order, from root to currentNode
         for (int pathIter = 1; pathIter <= pathToCurrentNode.size(); ++pathIter) {
@@ -1173,7 +1173,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                                final DocRef currentDocRef,
                                @Nullable final Set<String> tags,
                                final Path parentDirPath)
-        throws IOException {
+            throws IOException {
 
         // TODO May get security exceptions which must be ignored?
         if (securityContext.hasDocumentPermission(currentDocRef, DocumentPermission.VIEW)) {
@@ -1219,7 +1219,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
     private void writeHandlerFiles(final ExportInfo exportInfo,
                                    final DocRef currentDocRef,
                                    final Path parentDirPath)
-        throws IOException {
+            throws IOException {
 
         // TODO May get security exceptions which should be ignored?
         if (securityContext.hasDocumentPermission(currentDocRef, DocumentPermission.VIEW)) {
@@ -1254,7 +1254,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                                                  final SequencedCollection<ExplorerNode> pathToCurrentNode,
                                                  final ExplorerNode currentNode,
                                                  final Path parentDirPath)
-        throws IOException {
+            throws IOException {
         LOGGER.info("Checking for associated docRefs");
         final ImportExportActionHandler handler = importExportActionHandlers.getHandler(currentNode.getType());
         if (handler != null) {
@@ -1465,7 +1465,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
          */
         public boolean isSurrogate(final DocRef docRef) {
             return surrogateDocRefs.contains(docRef)
-                    && ! (docRefsToExport == null || docRefsToExport.contains(docRef));
+                   && ! (docRefsToExport == null || docRefsToExport.contains(docRef));
         }
 
     }

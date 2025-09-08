@@ -94,8 +94,10 @@ public class GitRepoConfig extends AbstractConfig implements IsStroomConfig, Has
         @JsonCreator
         @SuppressWarnings("unused")
         public GitRepoDbConfig(
-                @JsonProperty(AbstractDbConfig.PROP_NAME_CONNECTION) final ConnectionConfig connectionConfig,
-                @JsonProperty(AbstractDbConfig.PROP_NAME_CONNECTION_POOL) final ConnectionPoolConfig connectionPoolConfig) {
+                @JsonProperty(AbstractDbConfig.PROP_NAME_CONNECTION)
+                final ConnectionConfig connectionConfig,
+                @JsonProperty(AbstractDbConfig.PROP_NAME_CONNECTION_POOL)
+                final ConnectionPoolConfig connectionPoolConfig) {
             super(connectionConfig, connectionPoolConfig);
         }
 
