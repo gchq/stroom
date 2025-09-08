@@ -3,7 +3,6 @@ package stroom.security.impl;
 import stroom.config.common.UriFactory;
 import stroom.security.api.UserIdentity;
 import stroom.security.common.impl.AuthenticationState;
-import stroom.security.common.impl.UserIdentitySessionUtil;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.util.jersey.UriBuilderUtil;
@@ -15,6 +14,7 @@ import stroom.util.shared.ResourcePaths;
 
 import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.ws.rs.core.UriBuilder;
 
 import java.net.URI;
@@ -43,11 +43,16 @@ class OpenIdManager {
         this.uriFactory = uriFactory;
     }
 
-    public String redirect(final HttpServletRequest request,
-                           final String code,
-                           final String stateId,
-                           final String postAuthRedirectUri) {
-        String redirectUri = null;
+    public RedirectUrl redirect(final HttpServletRequest request,
+                                final String code,
+                                final String stateId,
+                                final String postAuthRedirectUri) {
+        RedirectUrl redirectUri = null;
+        LOGGER.debug("redirect() - requestURI: {}, code: {}, stateId: {}, postAuthRedirectUri: {}",
+                request.getRequestURI(),
+                code,
+                stateId,
+                postAuthRedirectUri);
 
         // Retrieve state if we have a state id param.
         final Optional<AuthenticationState> optionalState = getState(stateId);
@@ -60,11 +65,13 @@ class OpenIdManager {
         // If we aren't doing back channel check yet or the back channel check failed then proceed with front channel.
         if (redirectUri == null) {
             // Restore the initiating URI as needed for logout.
-            redirectUri = optionalState
+            final String url = optionalState
                     .map(state -> frontChannelOIDC(state.getInitiatingUri(), state.isPrompt()))
                     .orElse(frontChannelOIDC(postAuthRedirectUri, false));
+            redirectUri = RedirectUrl.create(url);
         }
 
+        LOGGER.debug("redirect() - redirectUri: {}", redirectUri);
         return redirectUri;
     }
 
@@ -97,34 +104,40 @@ class OpenIdManager {
         return createAuthUri(endpoint, clientId, state);
     }
 
-    private String backChannelOIDC(final HttpServletRequest request,
-                                   final String code,
-                                   final AuthenticationState state) {
+    private RedirectUrl backChannelOIDC(final HttpServletRequest request,
+                                        final String code,
+                                        final AuthenticationState state) {
         Objects.requireNonNull(code, "Null code");
-
-        String redirectUri;
+        RedirectUrl redirectUri;
 
         // If we have a state id then this should be a return from the auth service.
-        LOGGER.debug(() -> LogUtil.message("We have the following backChannelOIDC state: {}", state));
+        LOGGER.debug(() -> LogUtil.message("backChannelOIDC() - state: {}, sessionId: {}, cookies: {}",
+                state,
+                NullSafe.get(request.getSession(false), HttpSession::getId),
+                request.getCookies()));
 
         try {
             final Optional<UserIdentity> optionalUserIdentity =
                     userIdentityFactory.getAuthFlowUserIdentity(request, code, state);
 
+            LOGGER.debug("backChannelOIDC() - optionalUserIdentity after back channel auth: {}", optionalUserIdentity);
+
             if (optionalUserIdentity.isPresent()) {
-                // Set the token in the session.
-                UserIdentitySessionUtil.set(request.getSession(true), optionalUserIdentity.get());
+                // Set the token in the session so that when we re-direct to the initiating page (i.e. '/')
+                // we will have the identity in session so won't go back round the code flow loop
+//                UserIdentitySessionUtil.set(request.getSession(true), optionalUserIdentity.get());
 
                 // Successful login, so redirect to the original URL held in the state.
-                LOGGER.info(() -> "Redirecting to initiating URI: " + state.getInitiatingUri());
-                redirectUri = state.getInitiatingUri();
+                final String uri = state.getInitiatingUri();
+                LOGGER.info(() -> LogUtil.message("backChannelOIDC() - Redirecting to initiating URI: {}", uri));
+                redirectUri = RedirectUrl.createWithRefresh(uri);
             } else {
-                LOGGER.debug("No userIdentity so redirect to error page");
-                redirectUri = createErrorUri("Authentication failed");
+                redirectUri = RedirectUrl.create(createErrorUri("Authentication failed"));
+                LOGGER.debug("backChannelOIDC() - No userIdentity so redirect to error page: {}", redirectUri);
             }
         } catch (final Exception e) {
-            LOGGER.debug("backChannelOIDC() - {}", e.getMessage(), e);
-            redirectUri = createErrorUri(e.getMessage());
+            LOGGER.debug("backChannelOIDC() - Error: {}", LogUtil.exceptionMessage(e), e);
+            redirectUri = RedirectUrl.create(createErrorUri(e.getMessage()));
         }
 
         return redirectUri;
@@ -214,5 +227,35 @@ class OpenIdManager {
         final String uriStr = uriBuilder.build().toString();
         LOGGER.debug("Sending user to error screen with uri: {}", uriStr);
         return uriStr;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public record RedirectUrl(String redirectUrl, RedirectMode redirectMode) {
+
+        public RedirectUrl(final String redirectUrl, final RedirectMode redirectMode) {
+            this.redirectUrl = redirectUrl;
+            this.redirectMode = Objects.requireNonNullElse(redirectMode, RedirectMode.REDIRECT);
+        }
+
+        static RedirectUrl create(final String url) {
+            return new RedirectUrl(url, RedirectMode.REDIRECT);
+        }
+
+        static RedirectUrl createWithRefresh(final String url) {
+            return new RedirectUrl(url, RedirectMode.REFRESH);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public enum RedirectMode {
+        REDIRECT,
+        REFRESH,
+        ;
     }
 }

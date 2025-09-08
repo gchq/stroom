@@ -15,6 +15,7 @@ import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.JwtUtil;
 import stroom.security.common.impl.RefreshManager;
 import stroom.security.common.impl.UpdatableToken;
+import stroom.security.common.impl.UserIdentitySessionUtil;
 import stroom.security.impl.apikey.ApiKeyService;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.openid.api.IdpType;
@@ -318,8 +319,12 @@ public class StroomUserIdentityFactory
                                                     final TokenResponse tokenResponse,
                                                     final User user) {
         Objects.requireNonNull(user);
-        final HttpSession session = request.getSession(false);
+        // At this point we have authenticated the User so need to ensure
+        // we have a session as that gets attached to the userIdentity object to
+        // allow us to refresh it's token.
+        final HttpSession session = request.getSession(true);
 
+        // Make a token object that we can update as/when we do a token refresh
         final UpdatableToken updatableToken = new UpdatableToken(
                 tokenResponse,
                 jwtClaims,
@@ -334,10 +339,19 @@ public class StroomUserIdentityFactory
                 session,
                 updatableToken);
 
+        // We have authenticated so set the userIdentity in the session for future requests
+        // to retrieve it from
+        UserIdentitySessionUtil.set(session, userIdentity);
+
         updatableToken.setUserIdentity(userIdentity);
         addTokenToRefreshManager(updatableToken);
 
-        LOGGER.info(() -> "Authenticated user " + userIdentity
+        LOGGER.debug(() -> LogUtil.message(
+                "createAuthFlowUserIdentity() - Authenticated user - session: {}, userIdentity: {}",
+                NullSafe.get(session, HttpSession::getId),
+                userIdentity));
+
+        LOGGER.info(() -> "createAuthFlowUserIdentity() - Authenticated user " + userIdentity
                           + " for sessionId " + NullSafe.get(session, HttpSession::getId));
         return userIdentity;
     }

@@ -1492,6 +1492,24 @@ paths:
       summary: "Fetch a property by its name, e.g. 'stroom.path.home'"
       tags:
       - Global Config
+  /content/v1/abortImport:
+    post:
+      operationId: abortImport
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResourceKey"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json: {}
+          description: default response
+      summary: Abort Import
+      tags:
+      - Content
   /content/v1/export:
     post:
       operationId: exportContent
@@ -6677,25 +6695,6 @@ paths:
                 $ref: "#/components/schemas/UrlResponse"
           description: default response
       summary: Logout of Stroom session
-      tags:
-      - Sessions
-  /session/v1/noauth/validateSession:
-    get:
-      operationId: validateStroomSession
-      parameters:
-      - in: query
-        name: redirect_uri
-        required: true
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ValidateSessionResponse"
-          description: default response
-      summary: "Validate the current session, return a redirect Uri if invalid."
       tags:
       - Sessions
   /sessionInfo/v1:
@@ -12492,6 +12491,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Message"
+        ownerDocRef:
+          $ref: "#/components/schemas/DocRef"
         sourcePath:
           type: string
         state:
@@ -17871,15 +17872,6 @@ components:
           type: boolean
         string:
           type: string
-    ValidateSessionResponse:
-      type: object
-      properties:
-        redirectUri:
-          type: string
-        userId:
-          type: string
-        valid:
-          type: boolean
     ValidationResult:
       type: object
       properties:

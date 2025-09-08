@@ -21,11 +21,13 @@ import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.exception.AuthenticationException;
 import stroom.security.common.impl.UserIdentitySessionUtil;
+import stroom.security.impl.OpenIdManager.RedirectUrl;
 import stroom.security.openid.api.OpenId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.net.UrlUtils;
+import stroom.util.servlet.SessionUtil;
 import stroom.util.servlet.UserAgentSessionUtil;
 import stroom.util.shared.AuthenticationBypassChecker;
 import stroom.util.shared.NullSafe;
@@ -45,8 +47,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.core.Response;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Optional;
 import java.util.Set;
 
@@ -63,8 +67,6 @@ class SecurityFilter implements Filter {
             ".jpg", ".gif", ".ico", ".svg", ".ttf", ".woff", ".woff2");
 
     private static final String SIGN_IN_URL_PATH = ResourcePaths.buildServletPath(ResourcePaths.SIGN_IN_PATH);
-    private static final String STROOM_SESSION_ID = "STROOM_SESSION_ID";
-    private static final String JSESSIONID = "JSESSIONID";
 
     private final UriFactory uriFactory;
     private final SecurityContext securityContext;
@@ -204,33 +206,61 @@ class SecurityFilter implements Filter {
                 response.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
 
             } else {
-                // No identity found and not an unauthenticated servlet/api so assume it is
-                // a UI request. Thus instigate an OpenID authentication flow
-                try {
-                    final String postAuthRedirectUri = getPostAuthRedirectUri(request);
+                doOpenIdFlow(request, response, fullPath);
+            }
+        }
+    }
 
-                    final String code = UrlUtils.getLastParam(request, OpenId.CODE);
-                    final String stateId = UrlUtils.getLastParam(request, OpenId.STATE);
-                    final String redirectUri = openIdManager.redirect(request, code, stateId, postAuthRedirectUri);
-                    LOGGER.debug("Code flow UI request so redirecting to IDP, " +
-                                 "redirectUri: {}, postAuthRedirectUri: {}, path: {}",
-                            redirectUri, postAuthRedirectUri, fullPath);
+    private void doOpenIdFlow(final HttpServletRequest request,
+                              final HttpServletResponse response,
+                              final String fullPath) throws IOException {
+        // No identity found and not an unauthenticated servlet/api so assume it is
+        // a UI request. Thus instigate an OpenID authentication flow
+        try {
+            final String postAuthRedirectUri = getPostAuthRedirectUri(request);
+            final String code = UrlUtils.getLastParam(request, OpenId.CODE);
+            final String stateId = UrlUtils.getLastParam(request, OpenId.STATE);
+            final RedirectUrl redirectUri = openIdManager.redirect(
+                    request, code, stateId, postAuthRedirectUri);
+            // HTTP 1.1.
+            response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+            // HTTP 1.0.
+            response.setHeader("Pragma", "no-cache");
+            // Proxies.
+            response.setHeader("Expires", "0");
 
-                    // HTTP 1.1.
-                    response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-                    // HTTP 1.0.
-                    response.setHeader("Pragma", "no-cache");
-                    // Proxies.
-                    response.setHeader("Expires", "0");
+            switch (redirectUri.redirectMode()) {
+                case REFRESH -> {
+                    // If the session has only just been created, and we do a normal redirect,
+                    // then the browser will never get the session cookie as the response is terminated
+                    // for the redirect. Thus, the session ID will not be known at the redirect URI.
+                    // A refresh will ensure the cookie is set.
+                    LOGGER.debug("Responding with a http-equiv refresh to {}", redirectUri);
+                    response.setContentType(ContentType.TEXT_HTML.getMimeType());
+                    try (final PrintWriter responseWriter = response.getWriter()) {
+                        responseWriter.print("<html>");
+                        responseWriter.print("<head>");
+                        responseWriter.print("<meta http-equiv=\"refresh\" content=\"0; URL='");
+                        responseWriter.print(redirectUri.redirectUrl());
+                        responseWriter.print("'\" />");
+                        responseWriter.print("</html>");
+                        responseWriter.print("</head>");
+                    }
+                }
+                case REDIRECT -> {
+                    // Do a standard http redirect, e.g. to the IDP
+                    final String url = redirectUri.redirectUrl();
+                    LOGGER.debug("Code flow UI request so redirecting to:, " +
+                                 "redirectUri: {}, url: {}, postAuthRedirectUri: {}, path: {}",
+                            redirectUri, url, postAuthRedirectUri, fullPath);
 
                     response.setStatus(HttpServletResponse.SC_TEMPORARY_REDIRECT);
-                    response.setHeader("Location", redirectUri);
-
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
-                    throw e;
+                    response.setHeader("Location", url);
                 }
             }
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw e;
         }
     }
 
@@ -332,17 +362,9 @@ class SecurityFilter implements Filter {
     }
 
     private Optional<HttpSession> ensureSessionIfCookiePresent(final HttpServletRequest request) {
-        if (requestHasSessionCookie(request)) {
+        if (SessionUtil.requestHasSessionCookie(request)) {
             return Optional.of(request.getSession(true));
         }
         return Optional.empty();
-    }
-
-    private boolean requestHasSessionCookie(final HttpServletRequest request) {
-        // Find out if we have a session cookie
-        return NullSafe.stream(NullSafe.get(request, HttpServletRequest::getCookies))
-                .anyMatch(cookie ->
-                        cookie.getName().equalsIgnoreCase(STROOM_SESSION_ID) ||
-                        cookie.getName().equalsIgnoreCase(JSESSIONID));
     }
 }

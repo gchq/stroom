@@ -54,6 +54,7 @@ import stroom.util.logging.DefaultLoggingFilter;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.servlet.SessionUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
@@ -88,7 +89,6 @@ public class App extends Application<Config> {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(App.class);
 
     private static final String APP_NAME = "Stroom";
-    public static final String SESSION_COOKIE_NAME = "STROOM_SESSION_ID";
 
     @Inject
     private HealthChecks healthChecks;
@@ -358,7 +358,9 @@ public class App extends Application<Config> {
         final SessionHandler sessionHandler = new SessionHandler();
         // We need to give our session cookie a name other than JSESSIONID, otherwise it might
         // clash with other services running on the same domain.
-        sessionHandler.setSessionCookie(SESSION_COOKIE_NAME);
+        sessionHandler.setSessionCookie(SessionUtil.STROOM_SESSION_COOKIE_NAME);
+        // In case we use URL encoding of the session ID, which we currently don't
+        sessionHandler.setSessionIdPathParameterName(SessionUtil.STROOM_SESSION_COOKIE_NAME);
         long maxInactiveIntervalSecs = NullSafe.getOrElse(
                 sessionConfig.getMaxInactiveInterval(),
                 StroomDuration::getDuration,
