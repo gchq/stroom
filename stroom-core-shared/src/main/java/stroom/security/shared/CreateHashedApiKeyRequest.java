@@ -1,5 +1,6 @@
 package stroom.security.shared;
 
+import stroom.util.shared.SerialisationTestConstructor;
 import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -40,6 +41,15 @@ public class CreateHashedApiKeyRequest {
         this.comments = comments;
         this.enabled = enabled;
         this.hashAlgorithm = Objects.requireNonNull(hashAlgorithm);
+    }
+
+    @SerialisationTestConstructor
+    private CreateHashedApiKeyRequest() {
+        this(CreateHashedApiKeyRequest
+                .builder()
+                .withOwner(UserRef.builder().build())
+                .withName("test")
+                .withHashAlgorithm(HashAlgorithm.BCRYPT));
     }
 
     private CreateHashedApiKeyRequest(final Builder builder) {
@@ -113,13 +123,13 @@ public class CreateHashedApiKeyRequest {
     @Override
     public String toString() {
         return "CreateApiKeyRequest{" +
-                "owner=" + owner +
-                ", expireTimeMs=" + expireTimeMs +
-                ", name='" + name + '\'' +
-                ", comments='" + comments + '\'' +
-                ", enabled=" + enabled +
-                ", hashAlgorithm=" + hashAlgorithm +
-                '}';
+               "owner=" + owner +
+               ", expireTimeMs=" + expireTimeMs +
+               ", name='" + name + '\'' +
+               ", comments='" + comments + '\'' +
+               ", enabled=" + enabled +
+               ", hashAlgorithm=" + hashAlgorithm +
+               '}';
     }
 
     // --------------------------------------------------------------------------------

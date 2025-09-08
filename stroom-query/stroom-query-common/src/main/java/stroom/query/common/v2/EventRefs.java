@@ -39,7 +39,7 @@ public class EventRefs implements Iterable<EventRef> {
     @JsonProperty
     private final long maxEventsPerStream;
     @JsonProperty
-    private final List<EventRef> list = new ArrayList<>();
+    private final List<EventRef> list;
     @JsonProperty
     private volatile EventRef maxEvent;
     @JsonProperty
@@ -47,15 +47,32 @@ public class EventRefs implements Iterable<EventRef> {
 
     @JsonCreator
     public EventRefs(@JsonProperty("minEvent") final EventRef minEvent,
-                     @JsonProperty("maxEvent") final EventRef maxEvent,
                      @JsonProperty("maxStreams") final long maxStreams,
                      @JsonProperty("maxEvents") final long maxEvents,
-                     @JsonProperty("maxEventsPerStream") final long maxEventsPerStream) {
+                     @JsonProperty("maxEventsPerStream") final long maxEventsPerStream,
+                     @JsonProperty("list") final List<EventRef> list,
+                     @JsonProperty("maxEvent") final EventRef maxEvent,
+                     @JsonProperty("reachedLimit") final boolean reachedLimit) {
+        this.minEvent = minEvent;
+        this.maxStreams = maxStreams;
+        this.maxEvents = maxEvents;
+        this.maxEventsPerStream = maxEventsPerStream;
+        this.list = list;
+        this.maxEvent = maxEvent;
+        this.reachedLimit = reachedLimit;
+    }
+
+    public EventRefs(final EventRef minEvent,
+                     final EventRef maxEvent,
+                     final long maxStreams,
+                     final long maxEvents,
+                     final long maxEventsPerStream) {
         this.minEvent = minEvent;
         this.maxEvent = maxEvent;
         this.maxStreams = maxStreams;
         this.maxEvents = maxEvents;
         this.maxEventsPerStream = maxEventsPerStream;
+        list = new ArrayList<>();
     }
 
     public void add(final List<EventRef> eventRefs) {
@@ -78,9 +95,9 @@ public class EventRefs implements Iterable<EventRef> {
 
     public void add(final EventRef ref) {
         if ((ref.getStreamId() > minEvent.getStreamId()
-                || (ref.getStreamId() == minEvent.getStreamId() && ref.getEventId() >= minEvent.getEventId()))
-                && (ref.getStreamId() < maxEvent.getStreamId() || (ref.getStreamId() == maxEvent.getStreamId()
-                && ref.getEventId() <= maxEvent.getEventId()))) {
+             || (ref.getStreamId() == minEvent.getStreamId() && ref.getEventId() >= minEvent.getEventId()))
+            && (ref.getStreamId() < maxEvent.getStreamId() || (ref.getStreamId() == maxEvent.getStreamId()
+                                                               && ref.getEventId() <= maxEvent.getEventId()))) {
             list.add(ref);
 
             // Trim if the list gets bigger than double the number of events.

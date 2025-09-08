@@ -19,11 +19,34 @@ package stroom.query.language.functions;
 
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.Objects;
 
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        property = "type"
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = ValNumber.class, name = "number"),
+        @JsonSubTypes.Type(value = ValString.class, name = "string"),
+        @JsonSubTypes.Type(value = ValErr.class, name = "err"),
+        @JsonSubTypes.Type(value = ValNull.class, name = "null"),
+        @JsonSubTypes.Type(value = ValBoolean.class, name = "boolean"),
+        @JsonSubTypes.Type(value = ValXml.class, name = "xml"),
+        @JsonSubTypes.Type(value = ValByte.class, name = "byte"),
+        @JsonSubTypes.Type(value = ValShort.class, name = "short"),
+        @JsonSubTypes.Type(value = ValInteger.class, name = "integer"),
+        @JsonSubTypes.Type(value = ValLong.class, name = "long"),
+        @JsonSubTypes.Type(value = ValFloat.class, name = "float"),
+        @JsonSubTypes.Type(value = ValDouble.class, name = "double"),
+        @JsonSubTypes.Type(value = ValDate.class, name = "date"),
+        @JsonSubTypes.Type(value = ValDuration.class, name = "duration")
+})
 public sealed interface Val
         extends Param, Appendable, Comparable<Val>
         permits ValNumber, ValString, ValErr, ValNull, ValBoolean, ValXml {
