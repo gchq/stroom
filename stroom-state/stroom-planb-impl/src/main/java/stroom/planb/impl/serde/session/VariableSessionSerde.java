@@ -184,7 +184,7 @@ public class VariableSessionSerde implements SessionSerde {
     }
 
     private ByteBuffer getKey(final ByteBuffer byteBuffer) {
-        return byteBuffer.slice(1, byteBuffer.remaining() - timeLength);
+        return byteBuffer.slice(1, byteBuffer.remaining() - 1 - timeLength);
     }
 
     @Override
