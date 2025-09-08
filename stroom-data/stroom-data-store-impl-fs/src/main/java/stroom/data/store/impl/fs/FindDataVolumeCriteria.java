@@ -23,6 +23,7 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.Selection;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -69,6 +70,7 @@ public class FindDataVolumeCriteria extends BaseCriteria {
         return rtn;
     }
 
+    @JsonIgnore
     public boolean isValidCriteria() {
         return metaIdSet != null && !metaIdSet.isMatchAll() && metaIdSet.size() > 0;
     }

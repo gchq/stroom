@@ -16,8 +16,10 @@
 
 package stroom.dashboard.impl;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.io.Serializable;
@@ -27,12 +29,14 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class VisLimit implements Serializable {
 
+    @JsonProperty
     private Long size;
 
     public VisLimit() {
     }
 
-    public VisLimit(final Long size) {
+    @JsonCreator
+    public VisLimit(@JsonProperty("size") final Long size) {
         this.size = size;
     }
 

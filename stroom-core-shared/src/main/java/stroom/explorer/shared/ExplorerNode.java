@@ -19,6 +19,7 @@ package stroom.explorer.shared;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.SerialisationTestConstructor;
 import stroom.util.shared.Severity;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -614,6 +615,12 @@ public class ExplorerNode implements HasDisplayValue {
                         @JsonProperty("description") final String description) {
             this.severity = Objects.requireNonNull(severity);
             this.description = Objects.requireNonNull(description);
+        }
+
+        @SerialisationTestConstructor
+        private NodeInfo() {
+            this.severity = Severity.INFO;
+            this.description = "test";
         }
 
         public Severity getSeverity() {

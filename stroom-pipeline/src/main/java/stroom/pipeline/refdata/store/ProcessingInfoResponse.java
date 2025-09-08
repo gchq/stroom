@@ -1,7 +1,9 @@
 package stroom.pipeline.refdata.store;
 
 
+import stroom.docref.DocRef;
 import stroom.util.date.DateUtil;
+import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -10,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
@@ -58,6 +61,16 @@ public class ProcessingInfoResponse {
                 DateUtil.createNormalDateTimeString(refDataProcessingInfo.getLastAccessedTimeEpochMs()),
                 DateUtil.createNormalDateTimeString(refDataProcessingInfo.getEffectiveTimeEpochMs()),
                 refDataProcessingInfo.getProcessingState());
+    }
+
+    @SerialisationTestConstructor
+    private ProcessingInfoResponse() {
+        this.refStreamDefinition = new RefStreamDefinition(new DocRef("test", "test"), null, 0L);
+        this.maps = Collections.emptyMap();
+        this.createTime = "2000-01-01T00:00:00.000Z";
+        this.lastAccessedTime = "2000-01-01T00:00:00.000Z";
+        this.effectiveTime = "2000-01-01T00:00:00.000Z";
+        this.processingState = ProcessingState.COMPLETE;
     }
 
     public RefStreamDefinition getRefStreamDefinition() {

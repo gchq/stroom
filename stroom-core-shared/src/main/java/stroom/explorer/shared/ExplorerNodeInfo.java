@@ -1,6 +1,7 @@
 package stroom.explorer.shared;
 
 import stroom.docref.DocRefInfo;
+import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -22,6 +23,12 @@ public class ExplorerNodeInfo {
                             @JsonProperty("docRefInfo") final DocRefInfo docRefInfo) {
         this.explorerNode = Objects.requireNonNull(explorerNode);
         this.docRefInfo = Objects.requireNonNull(docRefInfo);
+    }
+
+    @SerialisationTestConstructor
+    private ExplorerNodeInfo() {
+        this.explorerNode = ExplorerNode.builder().build();
+        this.docRefInfo = DocRefInfo.builder().build();
     }
 
     public ExplorerNode getExplorerNode() {

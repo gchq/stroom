@@ -38,6 +38,11 @@ public class UserDependency {
         this.docRef = null;
     }
 
+    @SerialisationTestConstructor
+    private UserDependency() {
+        this(UserRef.builder().build(), "test");
+    }
+
     /**
      * @return The user that the document/item has a dependency on.
      * Not null.

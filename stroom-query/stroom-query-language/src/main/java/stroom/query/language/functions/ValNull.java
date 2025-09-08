@@ -16,8 +16,11 @@
 
 package stroom.query.language.functions;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.util.Comparator;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public final class ValNull implements Val {
 
     public static final ValNull INSTANCE = new ValNull();

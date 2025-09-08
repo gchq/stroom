@@ -3,6 +3,7 @@ package stroom.security.shared;
 import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasAuditableUserIdentity;
 import stroom.util.shared.HasIntegerId;
+import stroom.util.shared.SerialisationTestConstructor;
 import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -78,6 +79,13 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
         this.comments = comments;
         this.enabled = enabled;
         this.hashAlgorithm = Objects.requireNonNull(hashAlgorithm);
+    }
+
+    @SerialisationTestConstructor
+    private HashedApiKey() {
+        this(HashedApiKey
+                .builder()
+                .withHashAlgorithm(HashAlgorithm.BCRYPT));
     }
 
     private HashedApiKey(final Builder builder) {

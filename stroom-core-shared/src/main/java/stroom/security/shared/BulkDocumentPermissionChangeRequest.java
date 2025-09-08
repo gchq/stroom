@@ -1,6 +1,8 @@
 package stroom.security.shared;
 
 import stroom.query.api.ExpressionOperator;
+import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllPermissions;
+import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -25,6 +27,11 @@ public final class BulkDocumentPermissionChangeRequest implements PermissionChan
         Objects.requireNonNull(change, "Request is null");
         this.expression = expression;
         this.change = change;
+    }
+
+    @SerialisationTestConstructor
+    private BulkDocumentPermissionChangeRequest() {
+        this(ExpressionOperator.builder().build(), new RemoveAllPermissions());
     }
 
     public ExpressionOperator getExpression() {

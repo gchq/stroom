@@ -28,13 +28,13 @@ import java.util.Objects;
 public class CronExpression {
 
     @JsonProperty
-    private String name;
+    private final String name;
     @JsonProperty
-    private String expression;
+    private final String expression;
 
     @JsonCreator
     public CronExpression(@JsonProperty("name") final String name,
-                          @JsonProperty("to") final String expression) {
+                          @JsonProperty("expression") final String expression) {
         this.name = name;
         this.expression = expression;
     }

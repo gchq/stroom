@@ -23,6 +23,10 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.math.DoubleMath;
 
 import java.math.BigDecimal;
@@ -30,6 +34,7 @@ import java.util.Comparator;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public final class ValString implements Val {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ValString.class);
@@ -47,14 +52,19 @@ public final class ValString implements Val {
 
     public static final Type TYPE = Type.STRING;
     public static final ValString EMPTY = new ValString("");
+    @JsonProperty
     private final String value;
 
     // Permanent lazy cache of the slightly costly conversion to long/double
+    @JsonIgnore
     private final transient LazyValue<Double> lazyDoubleValue;
+    @JsonIgnore
     private final transient LazyValue<Long> lazyLongValue;
+    @JsonIgnore
     private final transient LazyBoolean lazyHasFractionalPart;
 
-    private ValString(final String value) {
+    @JsonCreator
+    private ValString(@JsonProperty("value") final String value) {
         if (value == null) {
             // We should not be allowing null values, but not sure that we can risk a null check in case
             // it breaks existing content
