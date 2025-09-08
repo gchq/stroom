@@ -1,5 +1,6 @@
 package stroom.importexport;
 
+import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerNode;
@@ -208,6 +209,115 @@ public class TestImportExportV2 extends AbstractCoreIntegrationTest {
                 .isEqualTo(2);
     }
 
+    @Test
+    public void testImportWithRename() {
+        final Path inDirV2 = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(
+                "samples/config-feeds-internal-v2");
 
+        final ExplorerNode systemNode = explorerNodeService.getRoot();
+        // The Descendants returned includes the System Node so count is 1, not 0
+        assertThat(explorerNodeService.getDescendants(systemNode.getDocRef()).size())
+                .as("System should not have any children")
+                .isEqualTo(1);
+
+        final ImportSettings importSettings = ImportSettings.builder()
+                .importMode(ImportMode.IGNORE_CONFIRMATION)
+                .useImportFolders(true)
+                .useImportNames(true)
+                .rootDocRef(systemNode.getDocRef())
+                .build();
+
+        // Do the V2 import
+        LOGGER.info("================= Read V2 {}", inDirV2);
+        importExportSerializer.read(inDirV2,
+                null,
+                importSettings);
+
+        final List<ExplorerNode> children1 = explorerNodeService.getChildren(systemNode.getDocRef());
+        assertThat(children1.size())
+                .as("Should be one folder imported under System")
+                .isEqualTo(1);
+        final ExplorerNode internalFolder1 = children1.getFirst();
+
+        final DocRef internalFolderDocRef = internalFolder1.getDocRef();
+        internalFolderDocRef.setName("FooBar");
+        explorerNodeService.renameNode(internalFolderDocRef);
+
+        // Do the import again, renaming items to the import value
+        importExportSerializer.read(inDirV2,
+                null,
+                importSettings);
+
+        final List<ExplorerNode> childrenV2 = explorerNodeService.getChildren(systemNode.getDocRef());
+        assertThat(childrenV2.size())
+                .as("Should be one folder imported under System")
+                .isEqualTo(1);
+        final ExplorerNode internalFolderV2 = childrenV2.getFirst();
+        assertThat(internalFolderV2.getDocRef().getName())
+                .as("Name of folder must not be FooBar")
+                .isNotEqualTo("FooBar");
+        assertThat(internalFolderV2.getDocRef().getName())
+                .as("Name of folder must be FooBar")
+                .isEqualTo("Internal");
+    }
+
+    @Test
+    public void testImportWithoutRename() {
+        final Path inDirV2 = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(
+                "samples/config-feeds-internal-v2");
+
+        final ExplorerNode systemNode = explorerNodeService.getRoot();
+        // The Descendants returned includes the System Node so count is 1, not 0
+        assertThat(explorerNodeService.getDescendants(systemNode.getDocRef()).size())
+                .as("System should not have any children")
+                .isEqualTo(1);
+
+        final ImportSettings importSettings = ImportSettings.builder()
+                .importMode(ImportMode.IGNORE_CONFIRMATION)
+                .useImportFolders(true)
+                .useImportNames(true)
+                .rootDocRef(systemNode.getDocRef())
+                .build();
+
+        // Do the V2 import
+        LOGGER.info("================= Read V2 {}", inDirV2);
+        importExportSerializer.read(inDirV2,
+                null,
+                importSettings);
+
+        final List<ExplorerNode> children1 = explorerNodeService.getChildren(systemNode.getDocRef());
+        assertThat(children1.size())
+                .as("Should be one folder imported under System")
+                .isEqualTo(1);
+        final ExplorerNode internalFolder1 = children1.getFirst();
+
+        final DocRef internalFolderDocRef = internalFolder1.getDocRef();
+        internalFolderDocRef.setName("FooBar");
+        explorerNodeService.renameNode(internalFolderDocRef);
+
+        // Do the import again, not renaming items to the import value
+        final ImportSettings importSettings2 = ImportSettings.builder()
+                .importMode(ImportMode.IGNORE_CONFIRMATION)
+                .useImportFolders(true)
+                .useImportNames(false)
+                .rootDocRef(systemNode.getDocRef())
+                .build();
+
+        importExportSerializer.read(inDirV2,
+                null,
+                importSettings2);
+
+        final List<ExplorerNode> childrenV2 = explorerNodeService.getChildren(systemNode.getDocRef());
+        assertThat(childrenV2.size())
+                .as("Should be one folder imported under System")
+                .isEqualTo(1);
+        final ExplorerNode internalFolderV2 = childrenV2.getFirst();
+        assertThat(internalFolderV2.getDocRef().getName())
+                .as("Name of folder must be FooBar")
+                .isEqualTo("FooBar");
+        assertThat(internalFolderV2.getDocRef().getName())
+                .as("Name of folder must not be FooBar")
+                .isNotEqualTo("Internal");
+    }
 
 }
