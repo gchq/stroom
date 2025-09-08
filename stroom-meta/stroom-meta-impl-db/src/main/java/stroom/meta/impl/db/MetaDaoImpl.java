@@ -1661,42 +1661,51 @@ public class MetaDaoImpl implements MetaDao {
                                                           final int offset,
                                                           final int numberOfRows,
                                                           final Set<Integer> usedValKeys) {
-        return JooqUtil.contextResult(metaDbConnProvider, context -> {
-                    final var sql = metaExpressionMapper.addJoins(context
-                                            .select(
-                                                    DSL.countDistinct(parent.ID),
-                                                    DSL.countDistinct(parent.FEED_ID),
-                                                    DSL.groupConcatDistinct(parentFeed.NAME)
-                                                            .separator(GROUP_CONCAT_DELIMITER),
-                                                    DSL.countDistinct(parent.TYPE_ID),
-                                                    DSL.groupConcatDistinct(parentType.NAME)
-                                                            .separator(GROUP_CONCAT_DELIMITER),
-                                                    DSL.countDistinct(meta.PROCESSOR_ID),
-                                                    DSL.countDistinct(metaProcessor.PIPELINE_UUID),
-                                                    DSL.countDistinct(parent.STATUS),
-                                                    DSL.groupConcatDistinct(parent.STATUS)
-                                                            .separator(GROUP_CONCAT_DELIMITER),
-                                                    DSL.min(parent.CREATE_TIME),
-                                                    DSL.max(parent.CREATE_TIME)
-                                            )
-                                            .from(meta)
-                                            .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                                            .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
-                                            .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
-                                            .leftOuterJoin(parent).on(meta.PARENT_ID.eq(parent.ID))
-                                            .straightJoin(parentFeed).on(parent.FEED_ID.eq(parentFeed.ID))
-                                            .straightJoin(parentType).on(parent.TYPE_ID.eq(parentType.ID)),
-                                    meta.ID,
-                                    usedValKeys)
-                            .where(conditions)
-                            .and(parent.ID.isNotNull())
-                            .and(parent.STATUS.eq(MetaStatusId.getPrimitiveValue(Status.UNLOCKED)))
-                            .and(meta.STATUS.eq(MetaStatusId.getPrimitiveValue(Status.UNLOCKED)))
-                            .limit(offset, numberOfRows);
+        // CheckStyle is a bit fussy about this block
+        return JooqUtil.contextResult(
+                        metaDbConnProvider,
+                        context -> {
+                            final var baseQuery = context.select(
+                                            DSL.countDistinct(parent.ID),
+                                            DSL.countDistinct(parent.FEED_ID),
+                                            DSL.groupConcatDistinct(parentFeed.NAME)
+                                                    .separator(GROUP_CONCAT_DELIMITER),
+                                            DSL.countDistinct(parent.TYPE_ID),
+                                            DSL.groupConcatDistinct(parentType.NAME)
+                                                    .separator(GROUP_CONCAT_DELIMITER),
+                                            DSL.countDistinct(meta.PROCESSOR_ID),
+                                            DSL.countDistinct(metaProcessor.PIPELINE_UUID),
+                                            DSL.countDistinct(parent.STATUS),
+                                            DSL.groupConcatDistinct(parent.STATUS)
+                                                    .separator(GROUP_CONCAT_DELIMITER),
+                                            DSL.min(parent.CREATE_TIME),
+                                            DSL.max(parent.CREATE_TIME)
+                                    )
+                                    .from(meta)
+                                    .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                    .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                    .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
+                                    .leftOuterJoin(parent).on(meta.PARENT_ID.eq(parent.ID))
+                                    .straightJoin(parentFeed).on(parent.FEED_ID.eq(parentFeed.ID))
+                                    .straightJoin(parentType).on(parent.TYPE_ID.eq(parentType.ID));
 
-                    LOGGER.debug("getReprocessSelectionSummary() - sql:\n{}", sql);
-                    return sql.fetchOptional();
-                })
+                            // Status predicates need to be consistent with those in
+                            // stroom.processor.impl.ProcessorTaskCreatorImpl.runSelectMetaQuery
+                            // The default status=Unlocked term gets removed by the UI prior to
+                            // getting here.
+                            final var sql = metaExpressionMapper.addJoins(
+                                            baseQuery,
+                                            meta.ID,
+                                            usedValKeys)
+                                    .where(conditions)
+                                    .and(parent.ID.isNotNull())
+                                    .and(parent.STATUS.notEqual(MetaStatusId.getPrimitiveValue(Status.DELETED)))
+                                    .and(meta.STATUS.notEqual(MetaStatusId.getPrimitiveValue(Status.DELETED)))
+                                    .limit(offset, numberOfRows);
+
+                            LOGGER.debug("getReprocessSelectionSummary() - sql:\n{}", sql);
+                            return sql.fetchOptional();
+                        })
                 .map(record -> {
                     final Set<String> distinctFeeds = splitGroupConcat(record.get(2, String.class));
                     final Set<String> distinctTypes = splitGroupConcat(record.get(4, String.class));
