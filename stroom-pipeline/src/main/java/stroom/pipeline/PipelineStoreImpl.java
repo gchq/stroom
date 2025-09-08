@@ -16,6 +16,7 @@
 
 package stroom.pipeline;
 
+import stroom.cluster.lock.api.ClusterLockService;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
@@ -63,20 +64,22 @@ public class PipelineStoreImpl implements PipelineStore {
                              final PipelineSerialiser serialiser,
                              final Provider<ProcessorFilterService> processorFilterServiceProvider,
                              final Provider<ProcessorService> processorServiceProvider,
-                             final PipelineDataMigration pipelineDataMigration) {
+                             final PipelineDataMigration pipelineDataMigration,
+                             final ClusterLockService clusterLockService) {
         this.processorServiceProvider = processorServiceProvider;
         this.store = storeFactory.createStore(serialiser, PipelineDoc.TYPE, PipelineDoc.class);
         this.processorFilterServiceProvider = processorFilterServiceProvider;
         this.pipelineDataMigration = pipelineDataMigration;
 
         // TODO : Remove this code when we move past version 7.10
-        store.migratePipelines(data -> {
-            if (pipelineDataMigration.migrate(data)) {
-                return Optional.of(data);
-            } else {
-                return Optional.empty();
-            }
-        });
+        clusterLockService.lock("PIPELINE_MIGRATION", () ->
+                store.migratePipelines(data -> {
+                    if (pipelineDataMigration.migrate(data)) {
+                        return Optional.of(data);
+                    } else {
+                        return Optional.empty();
+                    }
+                }));
     }
 
     ////////////////////////////////////////////////////////////////////////
