@@ -201,8 +201,8 @@ class TestSessionDb {
                 final KeyPrefix key = valueFunction.apply(i);
                 final Session session = db.getState(new SessionRequest(key, time));
                 assertThat(session).isNotNull();
-                assertThat(session.getPrefix().getVal().type()).isEqualTo(valueFunction.apply(i).getVal().type());
-//                assertThat(value).isEqualTo(expectedVal); // Values will not be the same due to key overwrite.
+                assertThat(session.getPrefix().getVal().type()).isEqualTo(key.getVal().type());
+                assertThat(session.getPrefix().getVal()).isEqualTo(key.getVal());
             }
         }
     }

@@ -4,6 +4,7 @@ import stroom.docref.DocRef;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.query.api.ExpressionOperator;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -80,6 +81,15 @@ public class ContentTemplate {
         this.description = description;
         this.processorPriority = processorPriority;
         this.processorMaxConcurrent = processorMaxConcurrent;
+    }
+
+    @SerialisationTestConstructor
+    private ContentTemplate() {
+        this(ContentTemplate.builder()
+                .withExpression(ExpressionOperator.builder().build())
+                .withTemplateNumber(1)
+                .withPipeline(new DocRef("test", "test"))
+                .withTemplateType(TemplateType.INHERIT_PIPELINE));
     }
 
     private ContentTemplate(final Builder builder) {

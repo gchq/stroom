@@ -25,6 +25,7 @@ import stroom.security.api.SecurityContext;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,12 +33,14 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.ResourceInfo;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.WriterInterceptorContext;
 import org.glassfish.jersey.message.MessageUtils;
@@ -120,8 +123,7 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
 
         ThreadLocalLogState.setLogged(false);
 
-        if (exception instanceof WebApplicationException) {
-            final WebApplicationException wae = (WebApplicationException) exception;
+        if (exception instanceof final WebApplicationException wae) {
             return wae.getResponse();
         } else {
             return delegatingExceptionMapperProvider.get().toResponse(exception);
@@ -131,16 +133,27 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
     @Override
     public void aroundWriteTo(final WriterInterceptorContext writerInterceptorContext)
             throws WebApplicationException {
+        // When we come in here, the resource method will have completed successfully,
+        // so we can intercept its returned value (the entity) before jakarta.ws.rs
+        // serialises it to json (or some other mime type).
+        // This means we can include the returned entity in the audit log event.
+        Exception exception = null;
         try {
             writerInterceptorContext.proceed();
         } catch (final Exception ex) {
-            LOGGER.error("Error in Java RS filter chain processing.", ex);
+            // This is either an error serialising the entity or in another interceptor in the chain.
+            // Swallow and save the ex, so we can log the failure
+            LOGGER.error("Error in Jakarta RS filter chain processing, which is likely " +
+                         "a problem serialising the resource's response entity. " +
+                         "entityType: {}, entity: {}, exceptionMessage: {}",
+                    writerInterceptorContext.getType(),
+                    writerInterceptorContext.getEntity(),
+                    LogUtil.exceptionMessage(ex), ex);
+            exception = ex;
         }
 
-        final Object object = request.getAttribute(REQUEST_LOG_INFO_PROPERTY);
-        if (object != null) {
-            final RequestInfo requestInfo = (RequestInfo) object;
-            if (OperationType.MANUALLY_LOGGED.equals(requestInfo.getContainerResourceInfo().getOperationType())) {
+        if (request.getAttribute(REQUEST_LOG_INFO_PROPERTY) instanceof final RequestInfo requestInfo) {
+            if (OperationType.MANUALLY_LOGGED == requestInfo.getContainerResourceInfo().getOperationType()) {
                 if (!ThreadLocalLogState.hasLogged()) {
                     LOGGER.debug("Expected manual logging to have happened: "
                                  + NullSafe.get(requestInfo.getContainerResourceInfo(),
@@ -149,12 +162,34 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
                             UriInfo::getRequestUri));
                 }
             } else {
-                requestEventLogProvider.get().log(requestInfo, writerInterceptorContext.getEntity());
+                // The log() method will check if logging is required, e.g. for UNLOGGED
+                final Object entity = writerInterceptorContext.getEntity();
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("aroundWriteTo() - type: {}, entity: {}, exceptionMessage: {}",
+                            writerInterceptorContext.getType(),
+                            entity,
+                            LogUtil.exceptionMessage(exception));
+                }
+                if (exception != null) {
+                    // Log it as a failure
+                    requestEventLogProvider.get()
+                            .log(requestInfo, entity, exception);
+                } else {
+                    requestEventLogProvider.get()
+                            .log(requestInfo, entity);
+                }
             }
             request.setAttribute(REQUEST_LOG_INFO_PROPERTY, null);
         }
 
         ThreadLocalLogState.setLogged(false);
+
+        // Now we have done our audit logging, we can re-throw any error so the caller gets it
+        if (exception instanceof final WebApplicationException wae) {
+            throw wae;
+        } else if (exception != null) {
+            throw new ServerErrorException(LogUtil.exceptionMessage(exception), Status.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @Override
@@ -167,9 +202,10 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
                         context,
                         loggingConfigProvider.get().isLogEveryRestCallEnabled());
 
-        if (containerResourceInfo.shouldLog(loggingConfigProvider.get())) {
+        if (containerResourceInfo.shouldLog()) {
             if (context.hasEntity()) {
-                final RequestEntityCapturingInputStream stream = new RequestEntityCapturingInputStream(resourceInfo,
+                final RequestEntityCapturingInputStream stream = new RequestEntityCapturingInputStream(
+                        resourceInfo,
                         context.getEntityStream(),
                         OBJECT_MAPPER,
                         MessageUtils.getCharset(context.getMediaType()));
@@ -191,5 +227,4 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
     void setResourceContext(final ResourceContext resourceContext) {
         this.resourceContext = resourceContext;
     }
-
 }

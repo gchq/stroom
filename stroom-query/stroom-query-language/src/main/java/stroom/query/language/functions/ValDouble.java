@@ -19,23 +19,32 @@ package stroom.query.language.functions;
 import stroom.util.concurrent.LazyBoolean;
 import stroom.util.concurrent.LazyValue;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.math.DoubleMath;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.Objects;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public final class ValDouble implements ValNumber {
 
     private static final Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
             ValDouble.class, ValComparators.AS_DOUBLE_COMPARATOR);
 
     public static final Type TYPE = Type.DOUBLE;
+    @JsonProperty("value")
     private final double value;
+    @JsonIgnore
     private final transient LazyValue<String> lazyStringValue;
+    @JsonIgnore
     private final transient LazyBoolean lazyHasFractionalPart;
 
-    private ValDouble(final double value) {
+    @JsonCreator
+    private ValDouble(@JsonProperty("value") final double value) {
         this.value = value;
         this.lazyStringValue = LazyValue.initialisedBy(this::deriveStringValue);
         this.lazyHasFractionalPart = LazyBoolean.initialisedBy(this::deriveHasFractionalPart);

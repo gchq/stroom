@@ -36,7 +36,7 @@ public class FindNodeCriteria extends FindNamedEntityCriteria {
     public static final String FIELD_LAST_BOOT_MS = "LastBootMs";
 
     @JsonProperty("enabled")
-    private Boolean isEnabled = null;
+    private Boolean enabled = null;
 
     public FindNodeCriteria() {
     }
@@ -51,16 +51,16 @@ public class FindNodeCriteria extends FindNamedEntityCriteria {
     public FindNodeCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                             @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                             @JsonProperty("name") final StringCriteria name,
-                            @JsonProperty("isEnabled") final Boolean isEnabled) {
+                            @JsonProperty("enabled") final Boolean enabled) {
         super(pageRequest, sortList, name);
-        this.isEnabled = isEnabled;
+        this.enabled = enabled;
     }
 
     public Boolean isEnabled() {
-        return isEnabled;
+        return enabled;
     }
 
     public void setEnabled(final Boolean enabled) {
-        isEnabled = enabled;
+        this.enabled = enabled;
     }
 }
