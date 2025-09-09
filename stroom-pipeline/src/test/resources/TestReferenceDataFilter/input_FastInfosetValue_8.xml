@@ -18,17 +18,17 @@
 <referenceData
         xmlns="reference-data:2"
         version="2.0.1">
-    <reference>
-        <map>map1</map>
-        <key>key11</key>
-        <value>
+    <reFerence>
+        <MAP>map1</MAP>
+        <KeY>key11</KeY>
+        <VALUE>
             <!-- default namespace is declared outside our fragment so it will need adding in -->
             <Location>
                 <Room>room11</Room>
                 <Desk>desk11</Desk>
-                <Value>value11</Value>
+                <value>value11</value>
             </Location>
-        </value>
-    </reference>
+        </VALUE>
+    </reFerence>
 </referenceData>
 
