@@ -13,6 +13,21 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.10.1] - 2025-09-09
+
+* Issue **#5091** : Stop reference data loads failing if there are no entries in the stream.
+
+* Add `ReceiptId` to the INFO message on data receipt.
+
+* Issue **#5095** : Lock the cluster to perform pipeline migration to prevent other nodes clashing.
+
+* Issue **#5099** : Fix Plan B session key serialisation.
+
+* Issue **#5090** : Fix Plan B getVal() serialisation.
+
+* Issue **#5106** : Fix ref loads with XML values where the `<value>` element name is not in lower case.
+
+
 ## [v7.10.0] - 2025-08-28
 
 * Issue **#5042** : Allow the import of processor filters when the existing processor filter is in a logically deleted state. Add validation to the import confirm dialog to ensure the parent doc is selected when a processor filter is selected.
@@ -1647,7 +1662,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.0...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.1...HEAD
+[v7.10.1]: https://github.com/gchq/stroom/compare/v7.10.0...v7.10.1
 [v7.10.0]: https://github.com/gchq/stroom/compare/v7.10-beta.14...v7.10.0
 [v7.10-beta.14]: https://github.com/gchq/stroom/compare/v7.10-beta.13...v7.10-beta.14
 [v7.10-beta.13]: https://github.com/gchq/stroom/compare/v7.10-beta.12...v7.10-beta.13
