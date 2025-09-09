@@ -20,7 +20,7 @@
 <!--    <logger name="stroom.pipeline.refdata.store.offheapstore.OffHeapStagingStore" level="debug" />-->
 <!--    <logger name="stroom.pipeline.refdata.store.offheapstore.TestOffHeapStagingStore" level="debug" />-->
 <!--    <logger name="stroom.pipeline.refdata" level="trace" />-->
-    <logger name="stroom.pipeline.refdata.ReferenceDataFilter" level="trace" />
+<!--    <logger name="stroom.pipeline.refdata.ReferenceDataFilter" level="trace" />-->
 <!--    <logger name="stroom.pipeline.refdata.store.StagingValueOutputStream" level="trace" />-->
 <!--    <logger name="stroom.pipeline.refdata.store.offheapstore.RefDataOffHeapStore" level="debug" />-->
 <!--    <logger name="stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStoreDb" level="trace" />-->
