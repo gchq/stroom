@@ -17871,6 +17871,128 @@ components:
       - use
     Val:
       type: object
+      discriminator:
+        propertyName: type
+      properties:
+        type:
+          type: string
+      required:
+      - type
+    ValBoolean:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+      - type: object
+        properties:
+          value:
+            type: boolean
+    ValByte:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+      - type: object
+        properties:
+          value:
+            type: string
+            format: byte
+    ValDate:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+      - type: object
+        properties:
+          epochMs:
+            type: integer
+            format: int64
+    ValDouble:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+      - type: object
+        properties:
+          value:
+            type: number
+            format: double
+    ValDuration:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+      - type: object
+        properties:
+          milliseconds:
+            type: integer
+            format: int64
+    ValErr:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+      - type: object
+        properties:
+          message:
+            type: string
+    ValFloat:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+      - type: object
+        properties:
+          value:
+            type: number
+            format: float
+    ValInteger:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+      - type: object
+        properties:
+          value:
+            type: integer
+            format: int32
+    ValLong:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+      - type: object
+        properties:
+          value:
+            type: integer
+            format: int64
+    ValNull:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+    ValNumber:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+    ValShort:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+      - type: object
+        properties:
+          value:
+            type: integer
+            format: int32
+    ValString:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+      - type: object
+        properties:
+          value:
+            type: string
+    ValXml:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+      - type: object
+        properties:
+          bytes:
+            type: array
+            items:
+              type: string
+              format: byte
     ValidateExpressionRequest:
       type: object
       properties:
