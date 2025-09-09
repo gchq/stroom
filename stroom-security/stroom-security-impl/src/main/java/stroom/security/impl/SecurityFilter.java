@@ -143,9 +143,7 @@ class SecurityFilter implements Filter {
             chain.doFilter(request, response);
         } else {
             LOGGER.debug(() -> LogUtil.message("Session ID {}, request URI {}",
-                    Optional.ofNullable(request.getSession(false))
-                            .map(HttpSession::getId)
-                            .orElse("-"),
+                    SessionUtil.getSessionId(request),
                     request.getRequestURI() + Optional.ofNullable(request.getQueryString())
                             .map(str -> "/" + str)
                             .orElse("")));
@@ -174,7 +172,7 @@ class SecurityFilter implements Filter {
 
             // If no user from header token, see if we have one in session already.
             if (optUserIdentity.isEmpty()) {
-                optUserIdentity = UserIdentitySessionUtil.get(request.getSession(false));
+                optUserIdentity = UserIdentitySessionUtil.get(SessionUtil.getExistingSession(request));
                 if (LOGGER.isDebugEnabled()) {
                     logUserIdentityToDebug(optUserIdentity, fullPath, "from session");
                 }
@@ -363,7 +361,10 @@ class SecurityFilter implements Filter {
 
     private Optional<HttpSession> ensureSessionIfCookiePresent(final HttpServletRequest request) {
         if (SessionUtil.requestHasSessionCookie(request)) {
-            return Optional.of(request.getSession(true));
+            final HttpSession session = SessionUtil.getOrCreateSession(request, newSession ->
+                    LOGGER.debug(() -> LogUtil.message("ensureSessionIfCookiePresent() - Created new session {}",
+                            SessionUtil.getSessionId(newSession))));
+            return Optional.of(session);
         }
         return Optional.empty();
     }

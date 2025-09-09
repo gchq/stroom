@@ -17,7 +17,11 @@
 package stroom.resource.impl;
 
 import stroom.resource.api.ResourceStore;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.servlet.HttpServletRequestHolder;
+import stroom.util.servlet.SessionUtil;
 import stroom.util.shared.IsServlet;
 import stroom.util.shared.ResourceKey;
 
@@ -38,6 +42,8 @@ import java.util.UUID;
  * in the session.
  */
 public class SessionResourceStoreImpl extends HttpServlet implements ResourceStore, IsServlet {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SessionResourceStoreImpl.class);
 
     private static final Set<String> PATH_SPECS = Set.of("/resourcestore/*");
     private static final String UUID_ARG = "uuid";
@@ -94,7 +100,9 @@ public class SessionResourceStoreImpl extends HttpServlet implements ResourceSto
         }
 
         final String name = "SESSION_RESOURCE_STORE";
-        final HttpSession session = request.getSession();
+        final HttpSession session = SessionUtil.getOrCreateSession(request, newSession ->
+                LOGGER.debug(() -> LogUtil.message("getMap() - Created session {}",
+                        SessionUtil.getSessionId(newSession))));
         final Object object = session.getAttribute(name);
         if (object == null) {
             resourceMap = new ResourceMap();

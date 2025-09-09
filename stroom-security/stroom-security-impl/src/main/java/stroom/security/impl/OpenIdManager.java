@@ -125,7 +125,6 @@ class OpenIdManager {
             if (optionalUserIdentity.isPresent()) {
                 // Set the token in the session so that when we re-direct to the initiating page (i.e. '/')
                 // we will have the identity in session so won't go back round the code flow loop
-//                UserIdentitySessionUtil.set(request.getSession(true), optionalUserIdentity.get());
 
                 // Successful login, so redirect to the original URL held in the state.
                 final String uri = state.getInitiatingUri();

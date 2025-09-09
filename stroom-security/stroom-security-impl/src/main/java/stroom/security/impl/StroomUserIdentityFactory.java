@@ -36,6 +36,7 @@ import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.servlet.SessionUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
@@ -322,7 +323,10 @@ public class StroomUserIdentityFactory
         // At this point we have authenticated the User so need to ensure
         // we have a session as that gets attached to the userIdentity object to
         // allow us to refresh it's token.
-        final HttpSession session = request.getSession(true);
+        final HttpSession session = SessionUtil.getOrCreateSession(request, newSession -> {
+            LOGGER.debug(() -> LogUtil.message("createAuthFlowUserIdentity() - Created new session {}",
+                    newSession.getId()));
+        });
 
         // Make a token object that we can update as/when we do a token refresh
         final UpdatableToken updatableToken = new UpdatableToken(
@@ -348,11 +352,11 @@ public class StroomUserIdentityFactory
 
         LOGGER.debug(() -> LogUtil.message(
                 "createAuthFlowUserIdentity() - Authenticated user - session: {}, userIdentity: {}",
-                NullSafe.get(session, HttpSession::getId),
+                SessionUtil.getSessionId(session),
                 userIdentity));
 
         LOGGER.info(() -> "createAuthFlowUserIdentity() - Authenticated user " + userIdentity
-                          + " for sessionId " + NullSafe.get(session, HttpSession::getId));
+                          + " for sessionId " + SessionUtil.getSessionId(session));
         return userIdentity;
     }
 
@@ -403,15 +407,11 @@ public class StroomUserIdentityFactory
                                                          final String displayName,
                                                          final String userUuid,
                                                          final HttpServletRequest request) {
-        Objects.requireNonNull(userId);
-
-        final HttpSession session = request.getSession(false);
-
         return new ApiUserIdentity(
                 userUuid,
-                userId,
+                Objects.requireNonNull(userId),
                 displayName,
-                NullSafe.get(session, HttpSession::getId),
+                SessionUtil.getSessionId(request),
                 jwtContext);
     }
 
@@ -431,6 +431,7 @@ public class StroomUserIdentityFactory
     public boolean isServiceUser(final String subject,
                                  final String issuer,
                                  final UserIdentity serviceUser) {
+
         if (serviceUser instanceof final HasJwtClaims hasJwtClaims) {
             return Optional.ofNullable(hasJwtClaims.getJwtClaims())
                     .map(ThrowingFunction.unchecked(jwtClaims -> {
