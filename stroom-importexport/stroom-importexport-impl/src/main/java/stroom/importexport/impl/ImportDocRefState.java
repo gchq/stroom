@@ -101,6 +101,7 @@ class ImportDocRefState {
             if (optParentNode.isPresent()) {
                 this.existingParentNode = optParentNode.get();
                 existingParentDocRef = this.existingParentNode.getDocRef();
+                LOGGER.info("Found existing parent node named '{}'", existingParentNode.getName());
             } else {
                 throw new IOException("Parent node of the existing node '"
                                       + existingNode.getName() + "' cannot be found");
@@ -110,6 +111,9 @@ class ImportDocRefState {
             if (useImportNames && !existingDocRef.getName().equals(this.importDocRef.getName())) {
                 this.rename = true;
                 destName = existingDocRef.getName();
+                LOGGER.info("Need to rename the explorerNode from '{}' to '{}'",
+                        existingDocRef.getName(),
+                        importDocRef.getName());
             } else {
                 this.rename = false;
             }
@@ -117,11 +121,17 @@ class ImportDocRefState {
             // Do we need to move the ExplorerNode?
             if (useImportFolders && !this.importParentDocRef.equals(existingParentDocRef)) {
                 this.moving = true;
-                this.destParentNode = getDestParentNode(
-                        explorerNodeService,
-                        importParentDocRef,
-                        existingParentNode);
+
+                final Optional<ExplorerNode> optImportParentNode = explorerNodeService.getNode(importParentDocRef);
+                if (optImportParentNode.isEmpty()) {
+                    throw new IOException("Cannot find node for import parent '"
+                                          + importParentDocRef.getName() + "'");
+                }
+                destParentNode = optImportParentNode.get();
                 destPath = resolveToString(explorerNodeService.getPath(existingParentNode.getDocRef()));
+                LOGGER.info("Moving from '{}' to '{}'",
+                        existingParentDocRef.getName(),
+                        importParentDocRef.getName());
             } else {
                 this.moving = false;
                 this.destParentNode = null;
@@ -140,36 +150,6 @@ class ImportDocRefState {
         this.destPathForImportStateAsString = destPath + '/' + destName;
 
         LOGGER.info("Import paths: {}/{}", importParentPath, importDocRef);
-    }
-
-    /**
-     * Returns the parent node. This might be the parent from the import
-     * data structure or the parent of any existing node.
-     * @param explorerNodeService How to talk to the DB
-     * @param importParentDocRef  Parent doc ref defined in the import.
-     * @param existingParentNode  Existing node, if any
-     * @return                    Node for the parent of the node we're trying to
-     *                            insert.
-     * @throws IOException        If the parent node doesn't exist.
-     */
-    private static ExplorerNode getDestParentNode(final ExplorerNodeService explorerNodeService,
-                                                  final DocRef importParentDocRef,
-                                                  final @Nullable ExplorerNode existingParentNode)
-            throws IOException {
-
-        final ExplorerNode destParentNode;
-        if (existingParentNode == null) {
-            final Optional<ExplorerNode> optParentNode = explorerNodeService.getNode(importParentDocRef);
-            if (optParentNode.isEmpty()) {
-                throw new IOException("Cannot find node for import parent '"
-                                      + importParentDocRef.getName() + "'");
-            }
-            destParentNode = optParentNode.get();
-        } else {
-            destParentNode = existingParentNode;
-        }
-
-        return destParentNode;
     }
 
     /**

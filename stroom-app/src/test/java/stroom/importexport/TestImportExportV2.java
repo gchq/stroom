@@ -3,7 +3,9 @@ package stroom.importexport;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.PermissionInheritance;
 import stroom.feed.api.FeedStore;
 import stroom.importexport.api.ImportExportSerializer;
 import stroom.importexport.shared.ImportSettings;
@@ -20,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -318,6 +321,522 @@ public class TestImportExportV2 extends AbstractCoreIntegrationTest {
         assertThat(internalFolderV2.getDocRef().getName())
                 .as("Name of folder must not be FooBar")
                 .isNotEqualTo("Internal");
+    }
+
+    /**
+     * Does the import. Moves the items to a new folder. Does the import again
+     * and the items should have moved back to the location from the original import.
+     */
+    @Test
+    public void testImportWithMoveAndMoveBack() {
+        final Path inDirV2 = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(
+                "samples/config-feeds-internal-v2");
+
+        final ExplorerNode systemNode = explorerNodeService.getRoot();
+        // The Descendants returned includes the System Node so count is 1, not 0
+        assertThat(explorerNodeService.getDescendants(systemNode.getDocRef()).size())
+                .as("System should not have any children")
+                .isEqualTo(1);
+
+        final ImportSettings importSettings = ImportSettings.builder()
+                .importMode(ImportMode.IGNORE_CONFIRMATION)
+                .useImportFolders(true)
+                .useImportNames(true)
+                .rootDocRef(systemNode.getDocRef())
+                .build();
+
+        // Do the V2 import
+        LOGGER.info("================= Read V2 {}", inDirV2);
+        importExportSerializer.read(inDirV2,
+                null,
+                importSettings);
+
+        final List<ExplorerNode> systemChildren = explorerNodeService.getChildren(systemNode.getDocRef());
+        assertThat(systemChildren.size())
+                .as("Should be one folder imported under System")
+                .isEqualTo(1);
+        final ExplorerNode internalFolder = systemChildren.getFirst();
+
+        final List<ExplorerNode> folderChildren = explorerNodeService.getChildren(internalFolder.getDocRef());
+        assertThat(folderChildren.size())
+                .as("Should have two items under 'Internal Folder'")
+                .isEqualTo(2);
+
+        // Create somewhere to move the items to
+        final DocRef newFolderDocRef = DocRef.builder()
+                .name("New folder")
+                .type(ExplorerConstants.FOLDER_TYPE)
+                .uuid(UUID.randomUUID().toString())
+                .build();
+        final ExplorerNode newFolderNode = ExplorerNode.builder()
+                .docRef(newFolderDocRef)
+                .build();
+        explorerNodeService.createNode(newFolderNode.getDocRef(),
+                systemNode.getDocRef(),
+                PermissionInheritance.DESTINATION);
+        explorerService.rebuildTree();
+
+        // Move the items across
+        explorerService.move(folderChildren, newFolderNode, PermissionInheritance.DESTINATION);
+
+        // Check the items have moved
+        final List<ExplorerNode> folderChildrenAfterMove = explorerNodeService.getChildren(internalFolder.getDocRef());
+        assertThat(folderChildrenAfterMove.size())
+                .as("Internal folder should not have any children after move")
+                .isEqualTo(0);
+        final List<ExplorerNode> newFolderChildrenAfterMove = explorerNodeService.getChildren(newFolderNode.getDocRef());
+        assertThat(newFolderChildrenAfterMove.size())
+                .as("New folder should have two children after move")
+                        .isEqualTo(2);
+
+        // Do the import again, renaming items to the import value
+        final ImportSettings secondImportSettings = ImportSettings.builder()
+                .importMode(ImportMode.IGNORE_CONFIRMATION)
+                .useImportFolders(true)
+                .useImportNames(true)
+                .rootDocRef(systemNode.getDocRef())
+                .build();
+        LOGGER.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Doing second import");
+        importExportSerializer.read(inDirV2,
+                null,
+                secondImportSettings);
+
+        final List<ExplorerNode> folderChildrenAfterSecondImport =
+                explorerNodeService.getChildren(internalFolder.getDocRef());
+        assertThat(folderChildrenAfterSecondImport.size())
+                .as("Should be two children of original folder")
+                .isEqualTo(2);
+        final List<ExplorerNode> newFolderChildrenAfterSecondImport =
+                explorerNodeService.getChildren(newFolderNode.getDocRef());
+        assertThat(newFolderChildrenAfterSecondImport.size())
+                .as("New folder should not contain any children after second import")
+                .isEqualTo(0);
+    }
+
+    /**
+     * Does the import. Moves the items to a new folder. Does the import again
+     * and the items should stay moved.
+     */
+    @Test
+    public void testImportWithMoveAndStayMoved() {
+        final Path inDirV2 = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(
+                "samples/config-feeds-internal-v2");
+
+        final ExplorerNode systemNode = explorerNodeService.getRoot();
+        // The Descendants returned includes the System Node so count is 1, not 0
+        assertThat(explorerNodeService.getDescendants(systemNode.getDocRef()).size())
+                .as("System should not have any children")
+                .isEqualTo(1);
+
+        final ImportSettings importSettings = ImportSettings.builder()
+                .importMode(ImportMode.IGNORE_CONFIRMATION)
+                .useImportFolders(true)
+                .useImportNames(true)
+                .rootDocRef(systemNode.getDocRef())
+                .build();
+
+        // Do the V2 import
+        LOGGER.info("================= Read V2 {}", inDirV2);
+        importExportSerializer.read(inDirV2,
+                null,
+                importSettings);
+
+        final List<ExplorerNode> systemChildren = explorerNodeService.getChildren(systemNode.getDocRef());
+        assertThat(systemChildren.size())
+                .as("Should be one folder imported under System")
+                .isEqualTo(1);
+        final ExplorerNode internalFolder = systemChildren.getFirst();
+
+        final List<ExplorerNode> folderChildren = explorerNodeService.getChildren(internalFolder.getDocRef());
+        assertThat(folderChildren.size())
+                .as("Should have two items under 'Internal Folder'")
+                .isEqualTo(2);
+
+        // Create somewhere to move the items to
+        final DocRef newFolderDocRef = DocRef.builder()
+                .name("New folder")
+                .type(ExplorerConstants.FOLDER_TYPE)
+                .uuid(UUID.randomUUID().toString())
+                .build();
+        final ExplorerNode newFolderNode = ExplorerNode.builder()
+                .docRef(newFolderDocRef)
+                .build();
+        explorerNodeService.createNode(newFolderNode.getDocRef(),
+                systemNode.getDocRef(),
+                PermissionInheritance.DESTINATION);
+        explorerService.rebuildTree();
+
+        // Move the items across
+        explorerService.move(folderChildren, newFolderNode, PermissionInheritance.DESTINATION);
+
+        // Check the items have moved
+        final List<ExplorerNode> folderChildrenAfterMove = explorerNodeService.getChildren(internalFolder.getDocRef());
+        assertThat(folderChildrenAfterMove.size())
+                .as("Internal folder should not have any children after move")
+                .isEqualTo(0);
+        final List<ExplorerNode> newFolderChildrenAfterMove = explorerNodeService.getChildren(newFolderNode.getDocRef());
+        assertThat(newFolderChildrenAfterMove.size())
+                .as("New folder should have two children after move")
+                .isEqualTo(2);
+
+        // Do the import again, renaming items to the import value
+        final ImportSettings secondImportSettings = ImportSettings.builder()
+                .importMode(ImportMode.IGNORE_CONFIRMATION)
+                .useImportFolders(false)
+                .useImportNames(true)
+                .rootDocRef(systemNode.getDocRef())
+                .build();
+        LOGGER.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Doing second import");
+        importExportSerializer.read(inDirV2,
+                null,
+                secondImportSettings);
+
+        final List<ExplorerNode> folderChildrenAfterSecondImport =
+                explorerNodeService.getChildren(internalFolder.getDocRef());
+        assertThat(folderChildrenAfterSecondImport.size())
+                .as("Should be no children in original folder")
+                .isEqualTo(0);
+        final List<ExplorerNode> newFolderChildrenAfterSecondImport =
+                explorerNodeService.getChildren(newFolderNode.getDocRef());
+        assertThat(newFolderChildrenAfterSecondImport.size())
+                .as("New folder should contain two children after second import")
+                .isEqualTo(2);
+    }
+
+    /**
+     * Test moving and renaming after V1 import so folder UUIDs don't match
+     */
+    @Test
+    public void testImportV1FolderWithRename() {
+        final Path inDirV1 = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(
+                "samples/config-feeds-internal-v1");
+        final Path inDirV2 = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(
+                "samples/config-feeds-internal-v2");
+
+        final ExplorerNode systemNode = explorerNodeService.getRoot();
+        // The Descendants returned includes the System Node so count is 1, not 0
+        assertThat(explorerNodeService.getDescendants(systemNode.getDocRef()).size())
+                .as("System should not have any children")
+                .isEqualTo(1);
+
+        final ImportSettings importSettingsV1 = ImportSettings.builder()
+                .importMode(ImportMode.IGNORE_CONFIRMATION)
+                .useImportFolders(true)
+                .useImportNames(true)
+                .rootDocRef(systemNode.getDocRef())
+                .build();
+
+        // Do the V1 import
+        LOGGER.info("================= Read V1 {}", inDirV1);
+        importExportSerializer.read(inDirV1,
+                null,
+                importSettingsV1);
+
+        // This is the UUID of the folder on disk in V2
+        final String uuidInV2OnDisk = "9e1cbd84-47f0-45ea-8c49-a751fc212147";
+
+        final List<ExplorerNode> systemChildren = explorerNodeService.getChildren(systemNode.getDocRef());
+        for (final ExplorerNode node : systemChildren) {
+            LOGGER.info("{}", node.getDocRef());
+        }
+        assertThat(systemChildren.size())
+                .as("Should be one folder imported under System")
+                .isEqualTo(1);
+        final ExplorerNode internalFolderV1 = systemChildren.getFirst();
+        final String uuidInV1InStroom = internalFolderV1.getDocRef().getUuid();
+        assertThat(uuidInV1InStroom)
+                .as("V1 import should change UUID")
+                .isNotEqualTo(uuidInV2OnDisk);
+
+        // Check that the correct nodes are in the Folder - should only be one
+        final List<ExplorerNode> folderChildrenV1 = explorerNodeService.getChildren(internalFolderV1.getDocRef());
+        assertThat(folderChildrenV1.size())
+                .as("Should be one object under Internal folder")
+                .isEqualTo(1);
+
+        // Rename the folder - now neither name nor UUID match
+        final DocRef internalFolderDocRef = internalFolderV1.getDocRef();
+        internalFolderDocRef.setName("FooBar");
+        explorerNodeService.renameNode(internalFolderDocRef);
+
+        // Do a V2 import over the top
+        LOGGER.info("================= Read V2 {}", inDirV2);
+        final ImportSettings importSettingsV2 = ImportSettings.builder()
+                .importMode(ImportMode.IGNORE_CONFIRMATION)
+                .useImportFolders(true)
+                .useImportNames(true)
+                .rootDocRef(systemNode.getDocRef())
+                .build();
+        importExportSerializer.read(inDirV2,
+                null,
+                importSettingsV2);
+
+        // The existing renamed folder won't be recognised as the name and UUID are different
+        // so we should now have two folders under System
+        final List<ExplorerNode> systemChildrenV2 = explorerNodeService.getChildren(systemNode.getDocRef());
+        assertThat(systemChildrenV2.size())
+                .as("Should be two folders imported under System")
+                .isEqualTo(2);
+
+        boolean foundInternal = false;
+        boolean foundFooBar = false;
+        for (final ExplorerNode systemChild : systemChildrenV2) {
+            if (systemChild.getName().equals("Internal")) {
+                foundInternal = true;
+                assertThat(systemChild.getUuid())
+                        .as("UUID of 'internal' should match UUID in V2")
+                        .isEqualTo(uuidInV2OnDisk);
+                final List<ExplorerNode> folderChildrenV2 = explorerNodeService.getChildren(systemChild.getDocRef());
+                assertThat(folderChildrenV2.size())
+                        .as("Should be two objects under Internal folder")
+                        .isEqualTo(2);
+            } else if (systemChild.getName().equals("FooBar")) {
+                foundFooBar = true;
+                assertThat(systemChild.getUuid())
+                        .as("UUID of 'FooBar' should not match UUID of V2 import")
+                        .isNotEqualTo(uuidInV2OnDisk);
+                final List<ExplorerNode> folderChildrenV2 = explorerNodeService.getChildren(systemChild.getDocRef());
+                assertThat(folderChildrenV2.size())
+                        .as("Should be no objects under FooBar folder")
+                        .isEqualTo(0);
+            } else {
+                assertThat(systemChild.getName())
+                        .as("Unrecognised folder '" + systemChild.getName() + "'")
+                        .isEqualTo("");
+            }
+        }
+
+        assertThat(foundInternal)
+                .as("Should be a folder named 'Internal'")
+                .isEqualTo(true);
+        assertThat(foundFooBar)
+                .as("Should be a folder named 'Internal'")
+                .isEqualTo(true);
+
+    }
+
+    /**
+     * Test moving and renaming after V1 import so folder UUIDs don't match
+     */
+    @Test
+    public void testImportV1FolderWithRenameNotImportFolders() {
+        final Path inDirV1 = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(
+                "samples/config-feeds-internal-v1");
+        final Path inDirV2 = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(
+                "samples/config-feeds-internal-v2");
+
+        final ExplorerNode systemNode = explorerNodeService.getRoot();
+        // The Descendants returned includes the System Node so count is 1, not 0
+        assertThat(explorerNodeService.getDescendants(systemNode.getDocRef()).size())
+                .as("System should not have any children")
+                .isEqualTo(1);
+
+        final ImportSettings importSettingsV1 = ImportSettings.builder()
+                .importMode(ImportMode.IGNORE_CONFIRMATION)
+                .useImportFolders(true)
+                .useImportNames(true)
+                .rootDocRef(systemNode.getDocRef())
+                .build();
+
+        // Do the V1 import
+        LOGGER.info("================= Read V1 {}", inDirV1);
+        importExportSerializer.read(inDirV1,
+                null,
+                importSettingsV1);
+
+        // This is the UUID of the folder on disk in V2
+        final String uuidInV2OnDisk = "9e1cbd84-47f0-45ea-8c49-a751fc212147";
+
+        final List<ExplorerNode> systemChildren = explorerNodeService.getChildren(systemNode.getDocRef());
+        for (final ExplorerNode node : systemChildren) {
+            LOGGER.info("{}", node.getDocRef());
+        }
+        assertThat(systemChildren.size())
+                .as("Should be one folder imported under System")
+                .isEqualTo(1);
+        final ExplorerNode internalFolderV1 = systemChildren.getFirst();
+        final String uuidInV1InStroom = internalFolderV1.getDocRef().getUuid();
+        assertThat(uuidInV1InStroom)
+                .as("V1 import should change UUID")
+                .isNotEqualTo(uuidInV2OnDisk);
+
+        // Check that the correct nodes are in the Folder - should only be one
+        final List<ExplorerNode> folderChildrenV1 = explorerNodeService.getChildren(internalFolderV1.getDocRef());
+        assertThat(folderChildrenV1.size())
+                .as("Should be one object under Internal folder")
+                .isEqualTo(1);
+
+        // Rename the folder - now neither name nor UUID match
+        final DocRef internalFolderDocRef = internalFolderV1.getDocRef();
+        internalFolderDocRef.setName("FooBar");
+        explorerNodeService.renameNode(internalFolderDocRef);
+
+        // Do a V2 import over the top
+        LOGGER.info("================= Read V2 {}", inDirV2);
+        final ImportSettings importSettingsV2 = ImportSettings.builder()
+                .importMode(ImportMode.IGNORE_CONFIRMATION)
+                .useImportFolders(false)
+                .useImportNames(true)
+                .rootDocRef(systemNode.getDocRef())
+                .build();
+        importExportSerializer.read(inDirV2,
+                null,
+                importSettingsV2);
+
+        // The existing renamed folder won't be recognised as the name and UUID are different
+        // so we should now have two folders under System
+        final List<ExplorerNode> systemChildrenV2 = explorerNodeService.getChildren(systemNode.getDocRef());
+        assertThat(systemChildrenV2.size())
+                .as("Should be two folders imported under System")
+                .isEqualTo(2);
+
+        boolean foundInternal = false;
+        boolean foundFooBar = false;
+        for (final ExplorerNode systemChild : systemChildrenV2) {
+            if (systemChild.getName().equals("Internal")) {
+                foundInternal = true;
+                assertThat(systemChild.getUuid())
+                        .as("UUID of 'internal' should match UUID in V2")
+                        .isEqualTo(uuidInV2OnDisk);
+                final List<ExplorerNode> folderChildrenV2 = explorerNodeService.getChildren(systemChild.getDocRef());
+                assertThat(folderChildrenV2.size())
+                        .as("Should be one object under Internal folder")
+                        .isEqualTo(1);
+            } else if (systemChild.getName().equals("FooBar")) {
+                foundFooBar = true;
+                assertThat(systemChild.getUuid())
+                        .as("UUID of 'FooBar' should not match UUID of V2 import")
+                        .isNotEqualTo(uuidInV2OnDisk);
+                final List<ExplorerNode> folderChildrenV2 = explorerNodeService.getChildren(systemChild.getDocRef());
+                assertThat(folderChildrenV2.size())
+                        .as("Should be one object under FooBar folder")
+                        .isEqualTo(1);
+            } else {
+                assertThat(systemChild.getName())
+                        .as("Unrecognised folder '" + systemChild.getName() + "'")
+                        .isEqualTo("");
+            }
+        }
+
+        assertThat(foundInternal)
+                .as("Should be a folder named 'Internal'")
+                .isEqualTo(true);
+        assertThat(foundFooBar)
+                .as("Should be a folder named 'Internal'")
+                .isEqualTo(true);
+
+    }
+
+    /**
+     * Test moving and renaming after V1 import so folder UUIDs don't match
+     */
+    @Test
+    public void testImportV1FolderWithRenameNotImportNames() {
+        final Path inDirV1 = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(
+                "samples/config-feeds-internal-v1");
+        final Path inDirV2 = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(
+                "samples/config-feeds-internal-v2");
+
+        final ExplorerNode systemNode = explorerNodeService.getRoot();
+        // The Descendants returned includes the System Node so count is 1, not 0
+        assertThat(explorerNodeService.getDescendants(systemNode.getDocRef()).size())
+                .as("System should not have any children")
+                .isEqualTo(1);
+
+        final ImportSettings importSettingsV1 = ImportSettings.builder()
+                .importMode(ImportMode.IGNORE_CONFIRMATION)
+                .useImportFolders(true)
+                .useImportNames(true)
+                .rootDocRef(systemNode.getDocRef())
+                .build();
+
+        // Do the V1 import
+        LOGGER.info("================= Read V1 {}", inDirV1);
+        importExportSerializer.read(inDirV1,
+                null,
+                importSettingsV1);
+
+        // This is the UUID of the folder on disk in V2
+        final String uuidInV2OnDisk = "9e1cbd84-47f0-45ea-8c49-a751fc212147";
+
+        final List<ExplorerNode> systemChildren = explorerNodeService.getChildren(systemNode.getDocRef());
+        for (final ExplorerNode node : systemChildren) {
+            LOGGER.info("{}", node.getDocRef());
+        }
+        assertThat(systemChildren.size())
+                .as("Should be one folder imported under System")
+                .isEqualTo(1);
+        final ExplorerNode internalFolderV1 = systemChildren.getFirst();
+        final String uuidInV1InStroom = internalFolderV1.getDocRef().getUuid();
+        assertThat(uuidInV1InStroom)
+                .as("V1 import should change UUID")
+                .isNotEqualTo(uuidInV2OnDisk);
+
+        // Check that the correct nodes are in the Folder - should only be one
+        final List<ExplorerNode> folderChildrenV1 = explorerNodeService.getChildren(internalFolderV1.getDocRef());
+        assertThat(folderChildrenV1.size())
+                .as("Should be one object under Internal folder")
+                .isEqualTo(1);
+
+        // Rename the folder - now neither name nor UUID match
+        final DocRef internalFolderDocRef = internalFolderV1.getDocRef();
+        internalFolderDocRef.setName("FooBar");
+        explorerNodeService.renameNode(internalFolderDocRef);
+
+        // Do a V2 import over the top
+        LOGGER.info("================= Read V2 {}", inDirV2);
+        final ImportSettings importSettingsV2 = ImportSettings.builder()
+                .importMode(ImportMode.IGNORE_CONFIRMATION)
+                .useImportFolders(true)
+                .useImportNames(false)
+                .rootDocRef(systemNode.getDocRef())
+                .build();
+        importExportSerializer.read(inDirV2,
+                null,
+                importSettingsV2);
+
+        // The existing renamed folder won't be recognised as the name and UUID are different
+        // so we should now have two folders under System
+        final List<ExplorerNode> systemChildrenV2 = explorerNodeService.getChildren(systemNode.getDocRef());
+        assertThat(systemChildrenV2.size())
+                .as("Should be two folders imported under System")
+                .isEqualTo(2);
+
+        boolean foundInternal = false;
+        boolean foundFooBar = false;
+        for (final ExplorerNode systemChild : systemChildrenV2) {
+            if (systemChild.getName().equals("Internal")) {
+                foundInternal = true;
+                assertThat(systemChild.getUuid())
+                        .as("UUID of 'internal' should match UUID in V2")
+                        .isEqualTo(uuidInV2OnDisk);
+                final List<ExplorerNode> folderChildrenV2 = explorerNodeService.getChildren(systemChild.getDocRef());
+                assertThat(folderChildrenV2.size())
+                        .as("Should be two objects under Internal folder")
+                        .isEqualTo(2);
+            } else if (systemChild.getName().equals("FooBar")) {
+                foundFooBar = true;
+                assertThat(systemChild.getUuid())
+                        .as("UUID of 'FooBar' should not match UUID of V2 import")
+                        .isNotEqualTo(uuidInV2OnDisk);
+                final List<ExplorerNode> folderChildrenV2 = explorerNodeService.getChildren(systemChild.getDocRef());
+                assertThat(folderChildrenV2.size())
+                        .as("Should be no objects under FooBar folder")
+                        .isEqualTo(0);
+            } else {
+                assertThat(systemChild.getName())
+                        .as("Unrecognised folder '" + systemChild.getName() + "'")
+                        .isEqualTo("");
+            }
+        }
+
+        assertThat(foundInternal)
+                .as("Should be a folder named 'Internal'")
+                .isEqualTo(true);
+        assertThat(foundFooBar)
+                .as("Should be a folder named 'Internal'")
+                .isEqualTo(true);
+
     }
 
 }

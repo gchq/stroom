@@ -45,6 +45,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.SequencedCollection;
@@ -736,7 +737,9 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                                 indent(importDocRefPath),
                                 importedDocRef.getName());
 
-                        if (importSettings.isUseImportNames()) {
+                        // Don't rename unless name is incorrect
+                        if (!Objects.equals(explorerNode.getName(), importDocRef.getName())
+                            && importSettings.isUseImportNames()) {
                             LOGGER.info("{}Renaming '{}' to '{}'",
                                     indent(importDocRefPath),
                                     explorerNode.getName(),
