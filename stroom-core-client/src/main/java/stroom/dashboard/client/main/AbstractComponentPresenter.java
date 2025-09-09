@@ -115,7 +115,6 @@ public abstract class AbstractComponentPresenter<V extends View>
             ShowPopupEvent.builder(settingsPresenter)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
                     .popupSize(popupSize)
-                    .modal(true)
                     .caption("Settings")
                     .onShow(e -> settingsPresenter.focus())
                     .onHideRequest(e -> {

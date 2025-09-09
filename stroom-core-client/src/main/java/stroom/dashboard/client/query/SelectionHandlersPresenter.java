@@ -228,57 +228,55 @@ public class SelectionHandlersPresenter
                 .id(RandomId.createId(5))
                 .enabled(true)
                 .build();
-        final SelectionHandlerPresenter editSelectionHandlerPresenter = editRulePresenterProvider.get();
-        editSelectionHandlerPresenter.setDashboardContext(getDashboardContext());
-        editSelectionHandlerPresenter.read(newRule, fieldSelectionListModel);
-
-        final PopupSize popupSize = PopupSize.resizable(800, 800);
-        ShowPopupEvent.builder(editSelectionHandlerPresenter)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(popupSize)
-                .caption("Add New Selection Handler")
-                .onShow(e -> editSelectionHandlerPresenter.focus())
-                .onHideRequest(e -> {
-                    if (e.isOk()) {
-                        final ComponentSelectionHandler rule = editSelectionHandlerPresenter.write();
-                        selectionHandlers.add(rule);
-                        update();
-                        listPresenter.getSelectionModel().setSelected(rule);
-                        setDirty(true);
-                    }
-                    e.hide();
-                })
-                .fire();
+        edit(newRule, "Add New Selection Handler", rule -> {
+            selectionHandlers.add(rule);
+            update();
+            listPresenter.getSelectionModel().setSelected(rule);
+            setDirty(true);
+        });
     }
 
     private void edit(final ComponentSelectionHandler existingRule) {
+        edit(existingRule, "Edit Selection Handler", rule -> {
+            final int index = selectionHandlers.indexOf(existingRule);
+            selectionHandlers.remove(index);
+            selectionHandlers.add(index, rule);
+
+            update();
+            listPresenter.getSelectionModel().setSelected(rule);
+
+            // Only mark the policies as dirty if the rule was actually changed.
+            if (!existingRule.equals(rule)) {
+                setDirty(true);
+            }
+        });
+    }
+
+    private void edit(final ComponentSelectionHandler existingRule,
+                      final String caption,
+                      final Consumer<ComponentSelectionHandler> consumer) {
         final SelectionHandlerPresenter editSelectionHandlerPresenter = editRulePresenterProvider.get();
-        editSelectionHandlerPresenter.setDashboardContext(getDashboardContext());
         editSelectionHandlerPresenter.read(existingRule, fieldSelectionListModel);
+
+        final DashboardContext dashboardContext = getDashboardContext();
+        editSelectionHandlerPresenter.refreshSelection(dashboardContext);
+        final HandlerRegistration handlerRegistration = dashboardContext
+                .addContextChangeHandler(e -> editSelectionHandlerPresenter.refreshSelection(dashboardContext));
 
         final PopupSize popupSize = PopupSize.resizable(800, 800);
         ShowPopupEvent.builder(editSelectionHandlerPresenter)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
-                .caption("Edit Selection Handler")
+                .caption(caption)
                 .onShow(e -> editSelectionHandlerPresenter.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final ComponentSelectionHandler rule = editSelectionHandlerPresenter.write();
-                        final int index = selectionHandlers.indexOf(existingRule);
-                        selectionHandlers.remove(index);
-                        selectionHandlers.add(index, rule);
-
-                        update();
-                        listPresenter.getSelectionModel().setSelected(rule);
-
-                        // Only mark the policies as dirty if the rule was actually changed.
-                        if (!existingRule.equals(rule)) {
-                            setDirty(true);
-                        }
+                        consumer.accept(rule);
                     }
                     e.hide();
                 })
+                .onHide(e -> handlerRegistration.removeHandler())
                 .fire();
     }
 

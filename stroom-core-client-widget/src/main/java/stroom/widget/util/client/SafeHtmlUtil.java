@@ -324,6 +324,9 @@ public class SafeHtmlUtil {
 
     public interface Template extends SafeHtmlTemplates {
 
+        @SafeHtmlTemplates.Template("<div>{0}</div>")
+        SafeHtml div(SafeHtml inner);
+
         @SafeHtmlTemplates.Template("<div class=\"{0}\">{1}</div>")
         SafeHtml divWithClass(String className, SafeHtml inner);
 

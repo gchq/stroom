@@ -67,6 +67,7 @@ import stroom.widget.menu.client.presenter.SimpleMenuItem;
 import stroom.widget.menu.client.presenter.SimpleParentMenuItem;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
@@ -291,7 +292,17 @@ public class DashboardPresenter
         if (currentSelectionPresenter == null) {
             currentSelectionPresenter = currentSelectionPresenterProvider.get();
         }
-        currentSelectionPresenter.show(dashboardContext);
+
+        currentSelectionPresenter.refresh(dashboardContext);
+        final HandlerRegistration handlerRegistration = dashboardContext
+                .addContextChangeHandler(e -> currentSelectionPresenter.refresh(dashboardContext));
+        ShowPopupEvent.builder(currentSelectionPresenter)
+                .popupType(PopupType.CLOSE_DIALOG)
+                .popupSize(PopupSize.resizable(600, 800))
+                .caption("Current Selection")
+                .modal(false)
+                .onHide(e -> handlerRegistration.removeHandler())
+                .fire();
     }
 
     private void onDesign() {
