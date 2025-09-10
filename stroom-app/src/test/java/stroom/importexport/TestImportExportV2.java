@@ -10,6 +10,7 @@ import stroom.feed.api.FeedStore;
 import stroom.importexport.api.ImportExportSerializer;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportSettings.ImportMode;
+import stroom.importexport.shared.ImportState;
 import stroom.pipeline.PipelineStore;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
@@ -21,7 +22,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -100,7 +103,7 @@ public class TestImportExportV2 extends AbstractCoreIntegrationTest {
         final Path inDirV1 = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(
                 "samples/config-feeds-internal-v1");
         final Path inDirV2 = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(
-                "samples/config-feeds-internal-v2");
+                "samples/config-feeds-internal-4-items-v2");
 
         final ExplorerNode systemNode = explorerNodeService.getRoot();
         // The Descendants returned includes the System Node so count is 1, not 0
@@ -171,7 +174,7 @@ public class TestImportExportV2 extends AbstractCoreIntegrationTest {
     @Test
     public void testImportV2Folders() {
         final Path inDirV2 = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(
-                "samples/config-feeds-internal-v2");
+                "samples/config-feeds-internal-4-items-v2");
 
         final ExplorerNode systemNode = explorerNodeService.getRoot();
         // The Descendants returned includes the System Node so count is 1, not 0
@@ -215,7 +218,7 @@ public class TestImportExportV2 extends AbstractCoreIntegrationTest {
     @Test
     public void testImportWithRename() {
         final Path inDirV2 = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(
-                "samples/config-feeds-internal-v2");
+                "samples/config-feeds-internal-4-items-v2");
 
         final ExplorerNode systemNode = explorerNodeService.getRoot();
         // The Descendants returned includes the System Node so count is 1, not 0
@@ -267,7 +270,7 @@ public class TestImportExportV2 extends AbstractCoreIntegrationTest {
     @Test
     public void testImportWithoutRename() {
         final Path inDirV2 = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(
-                "samples/config-feeds-internal-v2");
+                "samples/config-feeds-internal-4-items-v2");
 
         final ExplorerNode systemNode = explorerNodeService.getRoot();
         // The Descendants returned includes the System Node so count is 1, not 0
@@ -330,7 +333,7 @@ public class TestImportExportV2 extends AbstractCoreIntegrationTest {
     @Test
     public void testImportWithMoveAndMoveBack() {
         final Path inDirV2 = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(
-                "samples/config-feeds-internal-v2");
+                "samples/config-feeds-internal-4-items-v2");
 
         final ExplorerNode systemNode = explorerNodeService.getRoot();
         // The Descendants returned includes the System Node so count is 1, not 0
@@ -420,7 +423,7 @@ public class TestImportExportV2 extends AbstractCoreIntegrationTest {
     @Test
     public void testImportWithMoveAndStayMoved() {
         final Path inDirV2 = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(
-                "samples/config-feeds-internal-v2");
+                "samples/config-feeds-internal-4-items-v2");
 
         final ExplorerNode systemNode = explorerNodeService.getRoot();
         // The Descendants returned includes the System Node so count is 1, not 0
@@ -511,7 +514,7 @@ public class TestImportExportV2 extends AbstractCoreIntegrationTest {
         final Path inDirV1 = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(
                 "samples/config-feeds-internal-v1");
         final Path inDirV2 = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(
-                "samples/config-feeds-internal-v2");
+                "samples/config-feeds-internal-4-items-v2");
 
         final ExplorerNode systemNode = explorerNodeService.getRoot();
         // The Descendants returned includes the System Node so count is 1, not 0
@@ -623,7 +626,7 @@ public class TestImportExportV2 extends AbstractCoreIntegrationTest {
         final Path inDirV1 = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(
                 "samples/config-feeds-internal-v1");
         final Path inDirV2 = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(
-                "samples/config-feeds-internal-v2");
+                "samples/config-feeds-internal-4-items-v2");
 
         final ExplorerNode systemNode = explorerNodeService.getRoot();
         // The Descendants returned includes the System Node so count is 1, not 0
@@ -735,7 +738,7 @@ public class TestImportExportV2 extends AbstractCoreIntegrationTest {
         final Path inDirV1 = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(
                 "samples/config-feeds-internal-v1");
         final Path inDirV2 = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(
-                "samples/config-feeds-internal-v2");
+                "samples/config-feeds-internal-4-items-v2");
 
         final ExplorerNode systemNode = explorerNodeService.getRoot();
         // The Descendants returned includes the System Node so count is 1, not 0
@@ -837,6 +840,175 @@ public class TestImportExportV2 extends AbstractCoreIntegrationTest {
                 .as("Should be a folder named 'Internal'")
                 .isEqualTo(true);
 
+    }
+
+    /**
+     * Tests importing under mode CREATE_CONFIRMATION.
+     * Should give the same results for V1 and V2.
+     */
+    @Test
+    void testImportModeCreateConfirmationImportFoldersImportNames() {
+        final Path inDirV2 = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(
+                "samples/config-feeds-internal-2-items-v2");
+
+        final ExplorerNode systemNode = explorerNodeService.getRoot();
+        final List<ImportState> importStateListV1 = importFrom(inDirV2,
+                ImportMode.CREATE_CONFIRMATION,
+                true,
+                true,
+                systemNode.getDocRef());
+
+        // Wipe down the database
+        commonTestControl.clear();
+
+        final List<ImportState> importStateListV2 = importFrom(inDirV2,
+                ImportMode.CREATE_CONFIRMATION,
+                true,
+                true,
+                systemNode.getDocRef());
+
+        assertThat(equalImportStateLists(importStateListV1, importStateListV2))
+                .as("Import States must be identical for V1 and V2")
+                .isEqualTo(true);
+    }
+
+    /**
+     * Tests importing under mode ACTION_CONFIRMATION.
+     * Should give the same results for V1 and V2.
+     */
+    @Test
+    void testImportModeActionConfirmationImportFoldersImportNames() {
+        final Path inDirV2 = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(
+                "samples/config-feeds-internal-2-items-v2");
+
+        final ExplorerNode systemNode = explorerNodeService.getRoot();
+        final List<ImportState> importStateListV1 = importFrom(inDirV2,
+                ImportMode.ACTION_CONFIRMATION,
+                true,
+                true,
+                systemNode.getDocRef());
+
+        // Wipe down the database
+        commonTestControl.clear();
+
+        final List<ImportState> importStateListV2 = importFrom(inDirV2,
+                ImportMode.ACTION_CONFIRMATION,
+                true,
+                true,
+                systemNode.getDocRef());
+
+        assertThat(equalImportStateLists(importStateListV1, importStateListV2))
+                .as("Import States must be identical for V1 and V2")
+                .isEqualTo(true);
+    }
+
+    /**
+     * Utility method to import data from a given directory
+     * with given settings.
+     */
+    private List<ImportState> importFrom(final Path dir,
+                                         final ImportMode importMode,
+                                         final boolean useImportFolders,
+                                         final boolean useImportNames,
+                                         final DocRef rootDocRef) {
+        final ImportSettings importSettings = ImportSettings.builder()
+                .importMode(importMode)
+                .useImportNames(useImportNames)
+                .useImportFolders(useImportFolders)
+                .rootDocRef(rootDocRef)
+                .build();
+
+        final List<ImportState> importStateList = new ArrayList<>();
+        importExportSerializer.read(dir,
+                importStateList,
+                importSettings);
+
+        return importStateList;
+    }
+
+    /**
+     * ImportState.equals() only compares the DocRef. For testing
+     * we need to compare everything. This function does that.
+     */
+    private boolean equals(final ImportState is1, final ImportState is2) {
+        return Objects.equals(is1.getDocRef(), is2.getDocRef())
+               && Objects.equals(is1.getSourcePath(), is2.getSourcePath())
+                && Objects.equals(is1.getDestPath(), is2.getDestPath())
+                && Objects.equals(is1.getOwnerDocRef(), is2.getOwnerDocRef())
+                && Objects.equals(is1.isAction(), is2.isAction())
+                && Objects.equals(is1.getMessageList(), is2.getMessageList())
+                && Objects.equals(is1.getSeverity(), is2.getSeverity())
+                && Objects.equals(is1.getUpdatedFieldList(), is2.getUpdatedFieldList())
+                && Objects.equals(is1.getState(), is2.getState());
+    }
+
+    /**
+     * ImportState.toString() only displays the DocRef. We need to see
+     * everything, so this function does that.
+     */
+    private String toString(final ImportState is) {
+        return "DocRef: " + is.getDocRef()
+                + "\n    Source Path: " + is.getSourcePath()
+                + "\n    Dest Path: " + is.getDestPath()
+                + "\n    Owner DocRef: " + is.getOwnerDocRef()
+                + "\n    Is Action: " + is.isAction()
+                + "\n    Severity: " + is.getSeverity()
+                + "\n    Updated field list: " + is.getUpdatedFieldList()
+                + "\n    State: " + is.getState()
+                + "\n    Message List: " + is.getMessageList();
+    }
+
+    private boolean equalImportStateLists(final List<ImportState> iss1, final List<ImportState> iss2) {
+        final List<ImportState> missingFrom2 = new ArrayList<>();
+        final List<ImportState> missingFrom1 = new ArrayList<>();
+        boolean equals = true;
+
+        LOGGER.info("========= COMPARING IMPORT STATE LISTS");
+        for (final ImportState is1 : iss1) {
+            boolean matched = false;
+            for (final ImportState is2 : iss2) {
+                LOGGER.info("Comparing {} and {}", is1, is2);
+                if (equals(is1, is2)) {
+                    LOGGER.info("    Matched!");
+                    matched = true;
+                    break;
+                }
+            }
+            if (!matched) {
+                missingFrom2.add(is1);
+                equals = false;
+            }
+        }
+
+        for (final ImportState is2 : iss2) {
+            boolean matched = false;
+            for (final ImportState is1 : iss1) {
+                if (equals(is1, is2)) {
+                    matched = true;
+                    break;
+                }
+            }
+            if (!matched) {
+                missingFrom1.add(is2);
+                equals = false;
+            }
+        }
+
+        if (!missingFrom1.isEmpty()) {
+            LOGGER.info("Missing from 1:");
+            for (final ImportState is1 : missingFrom1) {
+                LOGGER.info("---- {}", toString(is1));
+            }
+        }
+
+        if (!missingFrom2.isEmpty()) {
+            LOGGER.info("Missing from 2: ");
+            for (final ImportState is2 : missingFrom2) {
+                LOGGER.info("---- {}", toString(is2));
+            }
+        }
+
+        return equals;
     }
 
 }

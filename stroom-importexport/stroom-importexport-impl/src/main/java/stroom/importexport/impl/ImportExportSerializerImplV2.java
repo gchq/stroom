@@ -295,7 +295,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
         importStateList.clear();
         importStateList.addAll(confirmMap.values());
 
-        // Rebuild the tree,
+        // Rebuild the tree if anything might have changed
         if (!ImportMode.CREATE_CONFIRMATION.equals(importSettings.getImportMode())) {
             explorerService.rebuildTree();
         }
@@ -579,7 +579,9 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                 }
             } else {
                 // We can't import this item so remove it from the map.
+                LOGGER.info("Import mode is '{}': not importing '{}'", importSettings.getImportMode(), importDocRef);
                 confirmMap.remove(importDocRef);
+                // importDocRef == null => return value of method
             }
         } catch (final RuntimeException e) {
             importState.addMessage(Severity.ERROR, e.getMessage());
@@ -608,9 +610,10 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
      * @param confirmMap Accessed to remove docRef from the map if the docRef
      *                   cannot be imported.
      * @param importSettings Key settings for the import; notably the RootDocRef.
-     * @return The DocRef of the imported document.
+     * @return The DocRef of the imported document, or null if the importMode
+     *         means that the item shouldn't be imported.
      */
-    private @Nullable DocRef importExplorerDoc(
+    private DocRef importExplorerDoc(
             @Nullable final ImportExportActionHandler importExportActionHandler,
             final Path nodeFile,
             final Deque<DocRef> importDocRefPath,
@@ -770,8 +773,12 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
             } else {
                 // We can't import this item so remove it from the map.
-                LOGGER.info("{}Cannot import item '{}'", indent(importDocRefPath), importDocRef.getName());
+                LOGGER.info("{}Cannot import item '{}' as import mode is '{}'",
+                        indent(importDocRefPath),
+                        importDocRef.getName(),
+                        importSettings.getImportMode());
                 confirmMap.remove(importDocRef);
+                importedDocRef = importDocRef;
             }
         } catch (final Exception e) {
             importState.addMessage(Severity.ERROR, e.getMessage());
