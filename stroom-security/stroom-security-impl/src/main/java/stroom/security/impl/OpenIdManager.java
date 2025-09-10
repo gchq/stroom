@@ -9,6 +9,7 @@ import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.servlet.SessionUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourcePaths;
 
@@ -146,8 +147,17 @@ class OpenIdManager {
      * This method attempts to get a token from the request headers and, if present, use that to login.
      */
     public Optional<UserIdentity> loginWithRequestToken(final HttpServletRequest request) {
+        LOGGER.debug(() -> LogUtil.message("loginWithRequestToken() - session: {}",
+                SessionUtil.getSessionId(request)));
         if (userIdentityFactory.hasAuthenticationToken(request)) {
-            return userIdentityFactory.getApiUserIdentity(request);
+            final Optional<UserIdentity> optApiUserIdentity = userIdentityFactory.getApiUserIdentity(request);
+            if (LOGGER.isDebugEnabled()) {
+                final UserIdentity userIdentity = optApiUserIdentity.get();
+                LOGGER.debug("loginWithRequestToken() - Returning {} {}",
+                        LogUtil.getSimpleClassName(userIdentity),
+                        userIdentity);
+            }
+            return optApiUserIdentity;
         } else {
             LOGGER.trace("No token on request. This is valid for API calls from the front-end");
             return Optional.empty();

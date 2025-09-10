@@ -76,12 +76,12 @@ class SessionListListener implements HttpSessionListener, HttpSessionIdListener,
         this.webTargetFactory = webTargetFactory;
     }
 
-
     @Override
     public void sessionCreated(final HttpSessionEvent event) {
         final HttpSession httpSession = event.getSession();
-        LOGGER.info("sessionCreated() - {}", httpSession.getId());
-        sessionMap.put(httpSession.getId(), httpSession);
+        final String sessionId = httpSession.getId();
+        LOGGER.debug("sessionCreated() - sessionId: {}", sessionId);
+        sessionMap.put(sessionId, httpSession);
     }
 
     @Override
@@ -89,7 +89,7 @@ class SessionListListener implements HttpSessionListener, HttpSessionIdListener,
         final HttpSession httpSession = event.getSession();
         try {
             final UserRef userRef = getUserRefFromSession(httpSession);
-            final String userAgent = UserAgentSessionUtil.get(httpSession);
+            final String userAgent = UserAgentSessionUtil.getUserAgent(httpSession);
             final Instant createTime = Instant.ofEpochMilli(httpSession.getCreationTime());
             final Instant lastAccessedTime = Instant.ofEpochMilli(httpSession.getLastAccessedTime());
             LOGGER.info("sessionDestroyed() - {}, createTime: {} ({}), lastAccessTime: {} ({}), " +
@@ -180,7 +180,7 @@ class SessionListListener implements HttpSessionListener, HttpSessionIdListener,
                                             userRef,
                                             httpSession.getCreationTime(),
                                             httpSession.getLastAccessedTime(),
-                                            UserAgentSessionUtil.get(httpSession),
+                                            UserAgentSessionUtil.getUserAgent(httpSession),
                                             thisNodeName);
                                 })
                                 .collect(SessionListResponse.collector(SessionListResponse::new)),

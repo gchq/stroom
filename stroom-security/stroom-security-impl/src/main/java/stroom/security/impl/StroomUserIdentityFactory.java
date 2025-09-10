@@ -37,6 +37,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.servlet.SessionUtil;
+import stroom.util.servlet.UserAgentSessionUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
@@ -320,12 +321,16 @@ public class StroomUserIdentityFactory
                                                     final TokenResponse tokenResponse,
                                                     final User user) {
         Objects.requireNonNull(user);
-        // At this point we have authenticated the User so need to ensure
-        // we have a session as that gets attached to the userIdentity object to
-        // allow us to refresh it's token.
+        // At this point we have authenticated the code-flow User so need to ensure
+        // we have a session to store the userIdentity in. Also, the session gets attached
+        // to the userIdentity object to allow us to refresh it's token.
         final HttpSession session = SessionUtil.getOrCreateSession(request, newSession -> {
-            LOGGER.debug(() -> LogUtil.message("createAuthFlowUserIdentity() - Created new session {}",
-                    newSession.getId()));
+            UserAgentSessionUtil.setUserAgentInSession(request, newSession);
+            LOGGER.info(() -> LogUtil.message(
+                    "createAuthFlowUserIdentity() - Created new session, sessionId: {}, userRef: {}, user-agent: {}",
+                    newSession.getId(),
+                    user.getUserRef(),
+                    UserAgentSessionUtil.getUserAgent(newSession)));
         });
 
         // Make a token object that we can update as/when we do a token refresh
@@ -420,6 +425,7 @@ public class StroomUserIdentityFactory
             final JwtClaims jwtClaims = jwtContext.getJwtClaims();
             final UserIdentity serviceUser = getServiceUserIdentity();
             if (isServiceUser(jwtClaims.getSubject(), jwtClaims.getIssuer(), serviceUser)) {
+                LOGGER.debug("getProcessingUser() - {}", serviceUser);
                 return Optional.of(serviceUser);
             }
         } catch (final MalformedClaimException e) {

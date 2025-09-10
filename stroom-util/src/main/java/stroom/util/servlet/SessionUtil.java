@@ -28,7 +28,7 @@ public class SessionUtil {
                         cookie.getName().equalsIgnoreCase(JSESSIONID));
 
         LOGGER.debug("requestHasSessionCookie() - sessionId: {}, hasCookie: {}",
-                NullSafe.get(request, HttpServletRequest::getSession, HttpSession::getId),
+                SessionUtil.getSessionId(request),
                 hasCookie);
 
         return hasCookie;
@@ -58,17 +58,22 @@ public class SessionUtil {
     public static HttpSession getOrCreateSession(final HttpServletRequest request,
                                                  final Consumer<HttpSession> onSessionCreate) {
         if (request != null) {
-            if (onSessionCreate != null) {
-                final HttpSession existingSession = request.getSession(false);
-                final HttpSession session = request.getSession(true);
-
-                if (existingSession == null && session != null) {
+            HttpSession session = request.getSession(false);
+            if (session == null) {
+                session = request.getSession(true);
+                if (onSessionCreate != null) {
+                    // It is possible that two threads could do this but that seems unlikely
+                    // for a human to do that.
                     onSessionCreate.accept(session);
                 }
-                return session;
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("getOrCreateSession() - Created session: {}, user-agent: {}",
+                            session.getId(), UserAgentSessionUtil.getUserAgent(session));
+                }
             } else {
-                return request.getSession(true);
+                LOGGER.debug("getOrCreateSession() - Existing session: {}", session.getId());
             }
+            return session;
         } else {
             return null;
         }
@@ -96,6 +101,16 @@ public class SessionUtil {
     }
 
     /**
+     * Passes the {@link HttpSession} to sessionConsumer IF there is a session.
+     * Does NOT create a new session.
+     */
+    public static void withSession(final HttpServletRequest request,
+                                   final Consumer<HttpSession> sessionConsumer) {
+        final HttpSession session = SessionUtil.getExistingSession(request);
+        NullSafe.consume(session, sessionConsumer);
+    }
+
+    /**
      * Gets an attribute from the session if the session and attribute exists.
      * If createSession is true, a session will be created if it does not exist.
      */
@@ -105,19 +120,29 @@ public class SessionUtil {
                                      final boolean createSession) {
         if (request != null) {
             final HttpSession session = request.getSession(createSession);
-            if (session != null) {
-                final Object object = session.getAttribute(name);
-                LOGGER.debug("getAttribute() - object: {}", object);
-                if (object != null) {
-                    return type.cast(object);
-                } else {
-                    return null;
-                }
+            return getAttribute(session, name, type);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Gets an attribute from the session if the session and attribute exists.
+     * If createSession is true, a session will be created if it does not exist.
+     */
+    public static <T> T getAttribute(final HttpSession session,
+                                     final String name,
+                                     final Class<T> type) {
+        if (session != null) {
+            final Object object = session.getAttribute(name);
+            LOGGER.debug("getAttribute() - object: {}", object);
+            if (object != null) {
+                return type.cast(object);
             } else {
-                LOGGER.debug("No Session");
                 return null;
             }
         } else {
+            LOGGER.debug("No Session");
             return null;
         }
     }

@@ -120,10 +120,13 @@ class SecurityFilter implements Filter {
             throws IOException, ServletException {
 
         LOGGER.debug(() ->
-                LogUtil.message("Filtering request uri: {}, servletPath: {}, servletName: {}",
+                LogUtil.message("Filtering request uri: {}, servletPath: {}, servletName: {}, " +
+                                "session: {}, getQueryString: '{}'",
                         request.getRequestURI(),
                         request.getServletPath(),
-                        NullSafe.get(request.getHttpServletMapping(), HttpServletMapping::getServletName)));
+                        NullSafe.get(request.getHttpServletMapping(), HttpServletMapping::getServletName),
+                        SessionUtil.getSessionId(request),
+                        request.getQueryString()));
 
         // Log the request for debug purposes.
         RequestLog.log(request);
@@ -142,27 +145,19 @@ class SecurityFilter implements Filter {
                     servletName, fullPath, servletPath);
             chain.doFilter(request, response);
         } else {
-            LOGGER.debug(() -> LogUtil.message("Session ID {}, request URI {}",
-                    SessionUtil.getSessionId(request),
-                    request.getRequestURI() + Optional.ofNullable(request.getQueryString())
-                            .map(str -> "/" + str)
-                            .orElse("")));
-
-            Optional<UserIdentity> optUserIdentity;
-
             // Api requests that are not from the front-end should have a token.
             // Also request from an AWS ALB will have an ALB signed token containing the claims
             // Need to do this first, so we get a fresh token from AWS ALB rather than using a stale
             // one from session.
-            optUserIdentity = openIdManager.loginWithRequestToken(request);
-            optUserIdentity.ifPresent(userIdentity ->
-                    ensureSessionIfCookiePresent(request).ifPresent(session -> {
-                        LOGGER.debug(() -> LogUtil.message("Setting user in session, user: {} {}, path: {}",
-                                userIdentity.getClass().getSimpleName(),
-                                userIdentity,
-                                fullPath));
-                        UserIdentitySessionUtil.set(session, userIdentity);
-                    }));
+            Optional<UserIdentity> optUserIdentity = openIdManager.loginWithRequestToken(request);
+//            optUserIdentity.ifPresent(userIdentity ->
+//                    ensureSessionIfCookiePresent(request).ifPresent(session -> {
+//                        LOGGER.debug(() -> LogUtil.message("Setting user in session, user: {} {}, path: {}",
+//                                userIdentity.getClass().getSimpleName(),
+//                                userIdentity,
+//                                fullPath));
+//                        UserIdentitySessionUtil.set(session, userIdentity);
+//                    }));
 
             // Log current user.
             if (LOGGER.isDebugEnabled()) {
@@ -182,8 +177,11 @@ class SecurityFilter implements Filter {
                 final UserIdentity userIdentity = optUserIdentity.get();
 
                 // Now we have the session make note of the user-agent for logging and sessionListServlet duties
-                ensureSessionIfCookiePresent(request).ifPresent(session ->
-                        UserAgentSessionUtil.setUserAgentInSession(request, session));
+                UserAgentSessionUtil.setUserAgentInSession(request);
+//                SessionUtil.withSession(request, session ->
+//                        UserAgentSessionUtil.setUserAgentInSession(request, session));
+//                ensureSessionIfCookiePresent(request).ifPresent(session ->
+//                        UserAgentSessionUtil.setUserAgentInSession(request, session));
 
                 // Now handle the request as this user
                 securityContext.asUser(userIdentity, () ->
@@ -220,6 +218,8 @@ class SecurityFilter implements Filter {
             final String stateId = UrlUtils.getLastParam(request, OpenId.STATE);
             final RedirectUrl redirectUri = openIdManager.redirect(
                     request, code, stateId, postAuthRedirectUri);
+            LOGGER.debug("Doing code flow postAuthRedirectUri: {}, code: {}, stateId: {}, redirectUri: {}",
+                    postAuthRedirectUri, code, stateId, redirectUri);
             // HTTP 1.1.
             response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
             // HTTP 1.0.
@@ -362,8 +362,9 @@ class SecurityFilter implements Filter {
     private Optional<HttpSession> ensureSessionIfCookiePresent(final HttpServletRequest request) {
         if (SessionUtil.requestHasSessionCookie(request)) {
             final HttpSession session = SessionUtil.getOrCreateSession(request, newSession ->
-                    LOGGER.debug(() -> LogUtil.message("ensureSessionIfCookiePresent() - Created new session {}",
-                            SessionUtil.getSessionId(newSession))));
+                    LOGGER.debug(() -> LogUtil.message(
+                            "ensureSessionIfCookiePresent() - Created new session {}, request URL",
+                            SessionUtil.getSessionId(newSession), request.getRequestURI())));
             return Optional.of(session);
         }
         return Optional.empty();

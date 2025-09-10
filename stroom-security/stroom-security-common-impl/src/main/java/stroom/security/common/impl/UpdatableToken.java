@@ -8,6 +8,7 @@ import stroom.util.authentication.Refreshable;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.servlet.SessionUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.servlet.http.HttpSession;
@@ -189,6 +190,7 @@ public class UpdatableToken implements Refreshable, HasJwtClaims, HasJwt {
                 JwtUtil.getClaimValue(claims, OpenId.CLAIM__PREFERRED_USERNAME).orElse(null)) +
                ", expireTimeWithBuffer=" + Instant.ofEpochMilli(mutableState.expireTimeWithBufferEpochMs) +
                ", timeTilExpire=" + Duration.between(Instant.now(), getExpireTime()) +
+               ", session=" + SessionUtil.getSessionId(session) +
                '}';
     }
 

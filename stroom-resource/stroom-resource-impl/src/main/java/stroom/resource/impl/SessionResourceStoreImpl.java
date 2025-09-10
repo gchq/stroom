@@ -101,7 +101,7 @@ public class SessionResourceStoreImpl extends HttpServlet implements ResourceSto
 
         final String name = "SESSION_RESOURCE_STORE";
         final HttpSession session = SessionUtil.getOrCreateSession(request, newSession ->
-                LOGGER.debug(() -> LogUtil.message("getMap() - Created session {}",
+                LOGGER.info(() -> LogUtil.message("getMap() - Created session {}",
                         SessionUtil.getSessionId(newSession))));
         final Object object = session.getAttribute(name);
         if (object == null) {
