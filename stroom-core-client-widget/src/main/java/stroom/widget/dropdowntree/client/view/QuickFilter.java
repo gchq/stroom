@@ -30,7 +30,6 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FocusUtil;
 import com.google.gwt.user.client.ui.HTMLPanel;
@@ -45,7 +44,7 @@ import java.util.function.Supplier;
 public class QuickFilter extends FlowPanel
         implements HasText, HasValueChangeHandlers<String> {
 
-    private static final int DEBOUNCE_DELAY_MS = 400;
+//    private static final int DEBOUNCE_DELAY_MS = 400;
     private static final SafeHtml DEFAULT_POPUP_TEXT = new HtmlBuilder()
             .bold(hb -> hb.append("Quick Filter"))
             .br()
@@ -55,18 +54,17 @@ public class QuickFilter extends FlowPanel
 
     private final TextBox textBox = new TextBox();
     private final SvgButton clearButton;
-    private final SvgButton helpButton;
     private final HandlerManager handlerManager = new HandlerManager(this);
     private Supplier<SafeHtml> popupTextSupplier;
     private String lastInput = "";
 
-    private final Timer filterRefreshTimer = new Timer() {
-        @Override
-        public void run() {
-            // Fire the event to update the data based on the filter
-            ValueChangeEvent.fire(QuickFilter.this, textBox.getText());
-        }
-    };
+//    private final Timer filterRefreshTimer = new Timer() {
+//        @Override
+//        public void run() {
+//            // Fire the event to update the data based on the filter
+//            ValueChangeEvent.fire(QuickFilter.this, textBox.getText());
+//        }
+//    };
 
     public QuickFilter() {
         setStyleName("quickFilter");
@@ -77,19 +75,20 @@ public class QuickFilter extends FlowPanel
         clearButton = SvgButton.create(SvgPresets.CLEAR.title("Clear Filter"));
         clearButton.addStyleName("clear");
 
-        helpButton = SvgButton.create(SvgPresets.HELP.title("Quick Filter Syntax Help"));
+        final SvgButton helpButton = SvgButton.create(SvgPresets.HELP.title("Quick Filter Syntax Help"));
         helpButton.addStyleName("info");
 
         add(textBox);
         add(clearButton);
         add(helpButton);
 
-        textBox.addValueChangeHandler(event -> onChange(true));
+        textBox.addValueChangeHandler(event -> enableButtons());
         textBox.addKeyDownHandler(this::onKeyDown);
         helpButton.addClickHandler(event -> showHelpPopup());
         clearButton.addClickHandler(event -> clear());
 
-        onChange(true);
+        enableButtons();
+//        onChange(true);
     }
 
     private void showHelpPopup() {
@@ -111,28 +110,35 @@ public class QuickFilter extends FlowPanel
 
     private void onChange(final boolean fireEvents) {
         final String text = textBox.getText();
+        enableButtons();
+        if (!Objects.equals(text, lastInput)) {
+            lastInput = text;
+            if (fireEvents) {
+                // Fire the event to update the data based on the filter
+                ValueChangeEvent.fire(QuickFilter.this, text);
+
+//                // Add in a slight delay to give the user a chance to type a few chars before we fire off
+//                // a rest call. This helps to reduce the logging too
+//                if (!filterRefreshTimer.isRunning()) {
+//                    filterRefreshTimer.schedule(DEBOUNCE_DELAY_MS);
+//                }
+            }
+        }
+    }
+
+    private void enableButtons() {
+        final String text = textBox.getText();
         final boolean isNotEmpty = text.length() > 0;
         clearButton.setEnabled(isNotEmpty);
         clearButton.setVisible(isNotEmpty);
-
-        if (!Objects.equals(text, lastInput)) {
-            lastInput = text;
-            if (handlerManager != null) {
-                if (fireEvents) {
-                    // Add in a slight delay to give the user a chance to type a few chars before we fire off
-                    // a rest call. This helps to reduce the logging too
-                    if (!filterRefreshTimer.isRunning()) {
-                        filterRefreshTimer.schedule(DEBOUNCE_DELAY_MS);
-                    }
-                }
-            }
-        }
     }
 
     protected void onKeyDown(final KeyDownEvent event) {
         // Clear the text box if ESC is pressed
         if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE) {
-            textBox.setText("");
+            clear();
+        } else if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
+            onChange(true);
         }
     }
 
