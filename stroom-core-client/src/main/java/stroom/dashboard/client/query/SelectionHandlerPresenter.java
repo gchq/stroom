@@ -51,6 +51,8 @@ public class SelectionHandlerPresenter
         this.currentSelectionPresenter = currentSelectionPresenter;
         view.setExpressionView(editExpressionPresenter.getView());
         view.setCurrentSelection(currentSelectionPresenter.getView());
+
+        currentSelectionPresenter.setInsertHandler(editExpressionPresenter::insertValue);
     }
 
     @Override
@@ -75,7 +77,7 @@ public class SelectionHandlerPresenter
     }
 
     void refreshSelection(final DashboardContext dashboardContext) {
-        currentSelectionPresenter.refresh(dashboardContext);
+        currentSelectionPresenter.refresh(dashboardContext, true);
     }
 
     ComponentSelectionHandler write() {

@@ -57,7 +57,7 @@
 }
 
 .termEditor-item.wide {
-	width: 300px;
+	width: 400px;
 	min-width: 300px;
 }
 
@@ -75,6 +75,10 @@
 .termEditor-item.condition {
 	width: 140px;
 	padding-right: 25px;
+}
+
+.termEditor-item.condition-wide {
+	width: 230px;
 }
 
 .termEditor-item.docRef {

@@ -422,6 +422,7 @@
 .userRefLinkOpen,
 .docRefLinkCopy,
 .docRefLinkOpen,
+.docRefLinkInsert,
 .commandLinkOpen {
     cursor: pointer;
 }
@@ -1932,6 +1933,10 @@ button.main-menu svg {
     font-weight: bold;
     font-size: 125%;
     padding-bottom: 0.3em;
+}
+
+.infoTable td {
+    vertical-align: middle;
 }
 
 /* Make headers after the first add padding before */

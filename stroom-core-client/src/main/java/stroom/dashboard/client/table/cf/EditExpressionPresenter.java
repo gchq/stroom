@@ -131,6 +131,10 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         expressionPresenter.init(restFactory, dataSource, fieldSelectionListModel);
     }
 
+    public void insertValue(final String value) {
+        expressionPresenter.insertValue(value);
+    }
+
     private void setButtonsEnabled() {
         final stroom.query.client.Item selectedItem = getSelectedItem();
 

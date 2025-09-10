@@ -352,7 +352,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         super.setDashboardContext(dashboardContext);
         registerHandler(getDashboardContext().addContextChangeHandler(event -> {
             if (initialised && updateSelectionFilter()) {
-                reset();
+//                reset();
                 refresh();
             }
         }));

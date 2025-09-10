@@ -81,7 +81,7 @@ public class SelectionHandlerListPresenter
                         return row.getExpression().toString();
                     }
                 };
-        dataGrid.addResizableColumn(expressionColumn, "Expression", 200);
+        dataGrid.addResizableColumn(expressionColumn, "Expression", 500);
 
         dataGrid.addEndColumn(new EndColumn<>());
     }

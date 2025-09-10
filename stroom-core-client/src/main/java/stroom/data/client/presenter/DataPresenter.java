@@ -1171,9 +1171,8 @@ public class DataPresenter
                 sb.append(line);
             }
 
-            final SafeHtmlBuilder copyLinkHtml = new SafeHtmlBuilder();
-            CopyTextUtil.render(str, sb.toSafeHtml(), copyLinkHtml);
-
+            final HtmlBuilder copyLinkHtml = new HtmlBuilder();
+            CopyTextUtil.render(str, sb.toSafeHtml(), copyLinkHtml, false);
             return copyLinkHtml.toSafeHtml();
         } else {
             return null;

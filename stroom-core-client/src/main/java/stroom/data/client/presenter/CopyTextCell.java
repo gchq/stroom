@@ -9,6 +9,7 @@ import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.ElementUtil;
+import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
@@ -93,6 +94,6 @@ public class CopyTextCell extends AbstractCell<String> implements HasHandlers, E
 
     @Override
     public void render(final Context context, final String value, final SafeHtmlBuilder sb) {
-        CopyTextUtil.render(value, sb);
+        CopyTextUtil.render(value, new HtmlBuilder(sb), false);
     }
 }

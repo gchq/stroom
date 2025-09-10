@@ -38,6 +38,7 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.query.api.Column;
 import stroom.query.api.Format;
+import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.client.presenter.DynamicFieldSelectionListModel;
@@ -263,7 +264,7 @@ public class SelectionHandlersPresenter
         final HandlerRegistration handlerRegistration = dashboardContext
                 .addContextChangeHandler(e -> editSelectionHandlerPresenter.refreshSelection(dashboardContext));
 
-        final PopupSize popupSize = PopupSize.resizable(800, 800);
+        final PopupSize popupSize = PopupSize.resizable(1200, 1000, 800, 600);
         ShowPopupEvent.builder(editSelectionHandlerPresenter)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
@@ -325,12 +326,22 @@ public class SelectionHandlersPresenter
     private FieldSelectionListModel createSelectionListModelFromColumns(final List<Column> columns) {
         final List<QueryField> fields = columns
                 .stream()
-                .map(column -> QueryField
-                        .builder()
-                        .fldName(column.getName())
-                        .fldType(getFieldType(column))
-                        .queryable(true)
-                        .build())
+                .map(column -> {
+                    final FieldType fieldType = getFieldType(column);
+                    final ConditionSet conditionSet = switch(fieldType) {
+                        case LONG -> ConditionSet.ALL_UI_NUMERIC;
+                        case DATE -> ConditionSet.ALL_UI_DATE;
+                        default -> ConditionSet.ALL_UI_TEXT;
+                    };
+
+                    return QueryField
+                            .builder()
+                            .fldName(column.getName())
+                            .fldType(getFieldType(column))
+                            .queryable(true)
+                            .conditionSet(conditionSet)
+                            .build();
+                })
                 .collect(Collectors.toList());
         final SimpleFieldSelectionListModel simpleFieldSelectionListModel = new SimpleFieldSelectionListModel();
         simpleFieldSelectionListModel.addItems(fields);

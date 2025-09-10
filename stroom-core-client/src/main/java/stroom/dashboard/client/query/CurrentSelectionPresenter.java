@@ -28,8 +28,12 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.function.Consumer;
+
 public class CurrentSelectionPresenter
         extends MyPresenterWidget<CurrentSelectionView> {
+
+    private Consumer<String> insertHandler;
 
     @Inject
     public CurrentSelectionPresenter(final EventBus eventBus,
@@ -41,11 +45,16 @@ public class CurrentSelectionPresenter
     protected void onBind() {
         super.onBind();
         registerHandler(getView().getHtml().addDomHandler(e ->
-                CopyTextUtil.onClick(e.getNativeEvent(), this), MouseDownEvent.getType()));
+                CopyTextUtil.onClick(e.getNativeEvent(), this, insertHandler), MouseDownEvent.getType()));
     }
 
-    public void refresh(final DashboardContext dashboardContext) {
-        getView().getHtml().setHTML(dashboardContext.toSafeHtml());
+    public void refresh(final DashboardContext dashboardContext,
+                        final boolean showInsert) {
+        getView().getHtml().setHTML(dashboardContext.toSafeHtml(showInsert));
+    }
+
+    public void setInsertHandler(final Consumer<String> insertHandler) {
+        this.insertHandler = insertHandler;
     }
 
     public interface CurrentSelectionView extends View {

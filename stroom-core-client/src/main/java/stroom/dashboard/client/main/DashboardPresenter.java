@@ -293,9 +293,9 @@ public class DashboardPresenter
             currentSelectionPresenter = currentSelectionPresenterProvider.get();
         }
 
-        currentSelectionPresenter.refresh(dashboardContext);
+        currentSelectionPresenter.refresh(dashboardContext, false);
         final HandlerRegistration handlerRegistration = dashboardContext
-                .addContextChangeHandler(e -> currentSelectionPresenter.refresh(dashboardContext));
+                .addContextChangeHandler(e -> currentSelectionPresenter.refresh(dashboardContext, false));
         ShowPopupEvent.builder(currentSelectionPresenter)
                 .popupType(PopupType.CLOSE_DIALOG)
                 .popupSize(PopupSize.resizable(600, 800))

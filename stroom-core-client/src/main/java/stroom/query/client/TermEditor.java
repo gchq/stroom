@@ -92,12 +92,7 @@ public class TermEditor extends Composite {
 
         this.docSelectionBoxPresenter = docRefPresenter;
         this.userRefSelectionBoxPresenter = userRefProvider.get();
-        if (docSelectionBoxPresenter != null) {
-            docRefWidget = docSelectionBoxPresenter.getWidget();
-        } else {
-            docRefWidget = new Label();
-        }
-
+        docRefWidget = docSelectionBoxPresenter.getWidget();
         docRefWidget.addStyleName(ITEM_CLASS_NAME);
         docRefWidget.addStyleName("docRef");
         docRefWidget.setVisible(false);
@@ -173,17 +168,21 @@ public class TermEditor extends Composite {
         fieldListBox.setModel(fieldSelectionListModel);
     }
 
+    public void update(final Term term) {
+        final String value = term.getValue();
+        write(term);
+        term.setValue(value);
+        read(term);
+    }
+
     public void startEdit(final Term term) {
         if (!editing) {
             this.term = term;
-
             read(term);
-
             Scheduler.get().scheduleDeferred(() -> {
                 bind();
                 layout.setVisible(true);
             });
-
             editing = true;
         }
     }
@@ -213,11 +212,12 @@ public class TermEditor extends Composite {
 
     private void write(final Term term) {
         final QueryField selectedField = fieldListBox.getValue();
-        if (selectedField != null && conditionListBox.getValue() != null) {
+        final Condition condition = conditionListBox.getValue();
+        if (selectedField != null && condition != null) {
             DocRef docRef = null;
 
             term.setField(selectedField.getFldName());
-            term.setCondition(conditionListBox.getValue());
+            term.setCondition(condition);
 
             final StringBuilder sb = new StringBuilder();
             for (final Widget widget : activeWidgets) {
@@ -273,11 +273,20 @@ public class TermEditor extends Composite {
                 selected = Condition.IS_USER_REF;
             } else if (conditions.contains(Condition.USER_HAS_PERM)) {
                 selected = Condition.USER_HAS_PERM;
+            } else if (conditions.contains(Condition.CONTAINS)) {
+                selected = Condition.CONTAINS;
             } else if (conditions.contains(Condition.EQUALS)) {
                 selected = Condition.EQUALS;
             } else {
                 selected = conditions.get(0);
             }
+        }
+
+        // Make the condition box wider if needed.
+        if (conditions.contains(Condition.MATCHES_REGEX_CASE_SENSITIVE)) {
+            conditionListBox.addStyleName("condition-wide");
+        } else {
+            conditionListBox.removeStyleName("condition-wide");
         }
 
         conditionListBox.setValue(selected);
@@ -321,23 +330,17 @@ public class TermEditor extends Composite {
 
         } else {
             switch (condition) {
-                case EQUALS:
-                case NOT_EQUALS:
-                case LESS_THAN:
-                case LESS_THAN_OR_EQUAL_TO:
-                case GREATER_THAN:
-                case GREATER_THAN_OR_EQUAL_TO:
+                case EQUALS,
+                     NOT_EQUALS,
+                     LESS_THAN,
+                     LESS_THAN_OR_EQUAL_TO,
+                     GREATER_THAN,
+                     GREATER_THAN_OR_EQUAL_TO:
                     if (FieldType.DATE.equals(indexFieldType)) {
                         enterDateMode();
                     } else {
                         enterTextMode();
                     }
-                    break;
-//                case CONTAINS:
-//                    enterTextMode();
-//                    break;
-                case IN:
-                    enterTextMode();
                     break;
                 case BETWEEN:
                     if (FieldType.DATE.equals(indexFieldType)) {
@@ -346,36 +349,22 @@ public class TermEditor extends Composite {
                         enterTextRangeMode();
                     }
                     break;
-                case IN_DICTIONARY:
-                case IN_FOLDER:
-                case IS_DOC_REF:
+                case IN_DICTIONARY,
+                     IN_FOLDER,
+                     IS_DOC_REF,
+                     OF_DOC_REF:
                     enterDocRefMode(field, condition);
                     break;
-                case OF_DOC_REF:
-                    enterDocRefMode(field, condition);
-                    break;
-                case IS_USER_REF:
+                case IS_USER_REF,
+                     USER_HAS_PERM,
+                     USER_HAS_OWNER,
+                     USER_HAS_DELETE,
+                     USER_HAS_EDIT,
+                     USER_HAS_VIEW,
+                     USER_HAS_USE:
                     enterUserRefMode(field, condition);
                     break;
-                case USER_HAS_PERM:
-                    enterUserRefMode(field, condition);
-                    break;
-                case USER_HAS_OWNER:
-                    enterUserRefMode(field, condition);
-                    break;
-                case USER_HAS_DELETE:
-                    enterUserRefMode(field, condition);
-                    break;
-                case USER_HAS_EDIT:
-                    enterUserRefMode(field, condition);
-                    break;
-                case USER_HAS_VIEW:
-                    enterUserRefMode(field, condition);
-                    break;
-                case USER_HAS_USE:
-                    enterUserRefMode(field, condition);
-                    break;
-                case MATCHES_REGEX:
+                default:
                     enterTextMode();
                     break;
             }
@@ -518,7 +507,6 @@ public class TermEditor extends Composite {
                     fireDirty();
                 }
             }));
-
         }
 
         registerHandler(fieldListBox.addValueChangeHandler(event -> {
