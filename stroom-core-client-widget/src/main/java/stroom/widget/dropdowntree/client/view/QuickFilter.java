@@ -84,12 +84,12 @@ public class QuickFilter extends FlowPanel
         add(clearButton);
         add(helpButton);
 
-        textBox.addValueChangeHandler(event -> onChange());
+        textBox.addValueChangeHandler(event -> onChange(true));
         textBox.addKeyDownHandler(this::onKeyDown);
         helpButton.addClickHandler(event -> showHelpPopup());
         clearButton.addClickHandler(event -> clear());
 
-        onChange();
+        onChange(true);
     }
 
     private void showHelpPopup() {
@@ -109,7 +109,7 @@ public class QuickFilter extends FlowPanel
         });
     }
 
-    private void onChange() {
+    private void onChange(final boolean fireEvents) {
         final String text = textBox.getText();
         final boolean isNotEmpty = text.length() > 0;
         clearButton.setEnabled(isNotEmpty);
@@ -118,10 +118,12 @@ public class QuickFilter extends FlowPanel
         if (!Objects.equals(text, lastInput)) {
             lastInput = text;
             if (handlerManager != null) {
-                // Add in a slight delay to give the user a chance to type a few chars before we fire off
-                // a rest call. This helps to reduce the logging too
-                if (!filterRefreshTimer.isRunning()) {
-                    filterRefreshTimer.schedule(DEBOUNCE_DELAY_MS);
+                if (fireEvents) {
+                    // Add in a slight delay to give the user a chance to type a few chars before we fire off
+                    // a rest call. This helps to reduce the logging too
+                    if (!filterRefreshTimer.isRunning()) {
+                        filterRefreshTimer.schedule(DEBOUNCE_DELAY_MS);
+                    }
                 }
             }
         }
@@ -141,16 +143,12 @@ public class QuickFilter extends FlowPanel
     @Override
     public void clear() {
         textBox.setText("");
-        onChange();
+        onChange(true);
     }
 
     public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
         this.popupTextSupplier = popupTextSupplier;
     }
-
-//    public void registerClickHandler(final Supplier<String> popupTextProvider) {
-//        this.popupTextSupplier = popupTextSupplier;
-//    }
 
     @Override
     public String getText() {
@@ -159,8 +157,12 @@ public class QuickFilter extends FlowPanel
 
     @Override
     public void setText(final String text) {
-        textBox.setText(text);
-        onChange();
+        setText(text, true);
+    }
+
+    public void setText(final String text, final boolean fireEvents) {
+        textBox.setValue(text, fireEvents);
+        onChange(fireEvents);
     }
 
     @Override

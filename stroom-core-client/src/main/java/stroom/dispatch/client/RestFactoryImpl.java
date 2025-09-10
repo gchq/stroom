@@ -1,5 +1,6 @@
 package stroom.dispatch.client;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
@@ -233,7 +234,12 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
                     resultConsumer.accept(response);
                 }
             } catch (final Throwable t) {
-                new DefaultErrorHandler(hasHandlers, null).onError(new RestError(method, t));
+                GWT.log(t.toString());
+                if (method != null && method.getRequest() != null) {
+                    GWT.log(method.getRequest().toString());
+                }
+                GWT.log("Error processing successful response: " + response);
+                AlertEvent.fireErrorFromException(hasHandlers, t, null);
             } finally {
                 taskMonitor.onEnd(task);
             }

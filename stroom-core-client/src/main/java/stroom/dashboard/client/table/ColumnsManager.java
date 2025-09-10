@@ -67,6 +67,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
     private int currentMenuColIndex = -1;
     private int currentFilterColIndex = -1;
     private boolean moving;
+    private final Map<String, String> currentQuickFilters = new HashMap<>();
 
     public ColumnsManager(final TablePresenter tablePresenter,
                           final Provider<RenameColumnPresenter> renameColumnPresenterProvider,
@@ -133,11 +134,17 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
 
                             } else if (isFilterButton) {
                                 currentFilterColIndex = colIndex;
+                                columnValuesFilterPresenter.setNameFilter(currentQuickFilters.get(column.getId()));
                                 columnValuesFilterPresenter.show(
                                         button,
                                         th,
                                         tablePresenter.getDataSupplier(column),
-                                        hideEvent -> resetFilterColIndex(),
+                                        hideEvent -> {
+                                            currentQuickFilters.put(
+                                                    column.getId(),
+                                                    columnValuesFilterPresenter.getNameFilter());
+                                            resetFilterColIndex();
+                                        },
                                         column.getColumnValueSelection(),
                                         ColumnsManager.this);
                             }

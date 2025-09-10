@@ -80,6 +80,7 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
     private boolean inverseSelection = true;
     private RestDataProvider<String, ColumnValues> dataProvider;
     private FilterCellManager filterCellManager;
+    private String nameFilter;
 
     @Inject
     public ColumnValuesFilterPresenter(final EventBus eventBus,
@@ -120,6 +121,7 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
                      final FilterCellManager filterCellManager) {
         this.filterButton = filterButton;
         this.dataSupplier = dataSupplier;
+        dataSupplier.setNameFilter(nameFilter);
         this.filterCellManager = filterCellManager;
         dataSupplier.setTaskMonitorFactory(pagerView);
 
@@ -153,6 +155,15 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
     private void hideSelf() {
         HidePopupRequestEvent.builder(this)
                 .fire();
+    }
+
+    public String getNameFilter() {
+        return nameFilter;
+    }
+
+    public void setNameFilter(final String nameFilter) {
+        this.nameFilter = nameFilter;
+        quickFilterPageView.setText(nameFilter, false);
     }
 
     @Override
@@ -243,6 +254,7 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
 
     @Override
     public void onFilterChange(final String text) {
+        this.nameFilter = text;
         dataSupplier.setNameFilter(text);
         refresh();
     }

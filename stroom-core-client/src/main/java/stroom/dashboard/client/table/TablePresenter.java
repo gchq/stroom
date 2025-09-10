@@ -1318,7 +1318,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                             final Consumer<ColumnValues> dataConsumer,
                             final RestErrorHandler errorHandler) {
             if (searchRequest == null) {
-                dataConsumer.accept(new ColumnValues(Collections.emptyList(), PageResponse.empty()));
+                clear(dataConsumer);
 
             } else {
                 final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
@@ -1333,9 +1333,14 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         .method(res -> res.getColumnValues(searchModel.getCurrentNode(),
                                 columnValuesRequest))
                         .onSuccess(dataConsumer)
+                        .onFailure(e -> clear(dataConsumer))
                         .taskMonitorFactory(getTaskMonitorFactory())
                         .exec();
             }
+        }
+
+        private void clear(final Consumer<ColumnValues> dataConsumer) {
+            dataConsumer.accept(new ColumnValues(Collections.emptyList(), PageResponse.empty()));
         }
     }
 }
