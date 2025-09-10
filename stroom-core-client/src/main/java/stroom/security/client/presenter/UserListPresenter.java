@@ -88,6 +88,7 @@ public class UserListPresenter
     private Set<UserScreen> validUserScreensForActionMenu = UserScreen.all();
     @SuppressWarnings({"unused", "FieldCanBeLocal"}) // Used in commented debug
     private String name = this.getClass().getSimpleName();
+    private Function<UserRef, UserRefPopupPresenter> copyPermissionsPopupFunction;
 
     @Inject
     public UserListPresenter(final EventBus eventBus,
@@ -287,7 +288,8 @@ public class UserListPresenter
                                         isExternalIdp(),
                                         NullSafe.requireNonNullElseGet(
                                                 validUserScreensForActionMenu, UserScreen::all),
-                                        this),
+                                        this,
+                                        copyPermissionsPopupFunction),
                                 this))
 //                .enabledWhen(User::isEnabled)
                 .build();
@@ -478,6 +480,11 @@ public class UserListPresenter
 
     public void setResultPageConsumer(final Consumer<ResultPage<User>> resultPageConsumer) {
         this.resultPageConsumer = resultPageConsumer;
+    }
+
+    public void setCopyPermissionsPopupFunction(
+            final Function<UserRef, UserRefPopupPresenter> copyPermissionsPopupFunction) {
+        this.copyPermissionsPopupFunction = copyPermissionsPopupFunction;
     }
 
     /**

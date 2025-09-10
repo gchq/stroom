@@ -57,6 +57,8 @@ public interface UserService {
 
     User update(User user);
 
+    User copyGroupsAndPermissions(String fromUserUuid, String toUserUuid);
+
     ResultPage<User> find(FindUserCriteria criteria);
 
     UserRef getUserByUuid(String uuid, FindUserContext context);

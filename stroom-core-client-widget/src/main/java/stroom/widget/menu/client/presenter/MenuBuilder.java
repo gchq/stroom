@@ -18,6 +18,10 @@ public class MenuBuilder {
         return new MenuBuilder();
     }
 
+    public boolean hasItems() {
+        return !items.isEmpty();
+    }
+
     private int getNextPriority() {
         return items.size();
     }
