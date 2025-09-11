@@ -85,7 +85,7 @@ class ImportDocRefStateV2 {
         // Look for an existing ExplorerNode
         final Optional<ExplorerNode> optExistingNode =
                 findExistingNode(explorerNodeService, this.importParentDocRef, this.importDocRef);
-        LOGGER.info("Looking at {}/{}; already-exists={}",
+        LOGGER.debug("Looking at {}/{}; already-exists={}",
                 importParentDocRef.getName(),
                 importDocRef.getName(),
                 optExistingNode.isPresent());
@@ -101,7 +101,7 @@ class ImportDocRefStateV2 {
             if (optParentNode.isPresent()) {
                 existingParentNode = optParentNode.get();
                 existingParentDocRef = this.existingParentNode.getDocRef();
-                LOGGER.info("Found existing parent node named '{}'", existingParentNode.getName());
+                LOGGER.debug("Found existing parent node named '{}'", existingParentNode.getName());
             } else {
                 throw new IOException("Parent node of the existing node '"
                                       + existingNode.getName() + "' cannot be found");
@@ -111,7 +111,7 @@ class ImportDocRefStateV2 {
             if (useImportNames && !existingDocRef.getName().equals(this.importDocRef.getName())) {
                 this.rename = true;
                 destName = existingDocRef.getName();
-                LOGGER.info("Need to rename the explorerNode from '{}' to '{}'",
+                LOGGER.debug("Need to rename the explorerNode from '{}' to '{}'",
                         existingDocRef.getName(),
                         importDocRef.getName());
             } else {
@@ -129,7 +129,7 @@ class ImportDocRefStateV2 {
                 }
                 destParentNode = optImportParentNode.get();
                 destPath = resolveToString(explorerNodeService.getPath(existingParentNode.getDocRef()));
-                LOGGER.info("Moving from '{}' to '{}'",
+                LOGGER.debug("Moving from '{}' to '{}'",
                         existingParentDocRef.getName(),
                         importParentDocRef.getName());
             } else {
@@ -149,7 +149,7 @@ class ImportDocRefStateV2 {
         // Record where this file is going to end up
         this.destPathForImportStateAsString = destPath + '/' + destName;
 
-        LOGGER.info("Import paths: {}/{}", importParentPath, importDocRef);
+        LOGGER.debug("Import paths: {}/{}", importParentPath, importDocRef);
     }
 
     /**
