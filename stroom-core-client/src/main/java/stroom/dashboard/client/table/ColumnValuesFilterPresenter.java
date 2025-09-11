@@ -16,7 +16,6 @@
 
 package stroom.dashboard.client.table;
 
-import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.dashboard.client.table.ColumnValuesFilterPresenter.ColumnValuesFilterView;
 import stroom.dashboard.shared.ColumnValues;
 import stroom.data.client.event.DataSelectionEvent;
@@ -28,6 +27,7 @@ import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.MyCellTable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.query.api.ColumnValueSelection;
+import stroom.util.shared.NullSafe;
 import stroom.widget.dropdowntree.client.view.QuickFilterDialogView;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -59,17 +59,14 @@ import com.gwtplatform.mvp.client.View;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Consumer;
 
 public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesFilterView>
         implements
         HasDataSelectionHandlers<ColumnValuesFilterPresenter>,
-        ColumnValueSelectionModel,
         ColumnValuesFilterUiHandlers,
         QuickFilterUiHandlers {
 
-    private final Set<String> selected = new HashSet<>();
     private final QuickFilterDialogView quickFilterPageView;
     private final PagerView pagerView;
     private final CellTable<String> cellTable;
@@ -77,7 +74,7 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
 
     private Element filterButton;
     private ColumnValuesDataSupplier dataSupplier;
-    private boolean inverseSelection = true;
+    private final ColumnValueSelection.Builder selection = ColumnValueSelection.builder();
     private RestDataProvider<String, ColumnValues> dataProvider;
     private FilterCellManager filterCellManager;
     private String nameFilter;
@@ -125,11 +122,12 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         this.filterCellManager = filterCellManager;
         dataSupplier.setTaskMonitorFactory(pagerView);
 
-        inverseSelection = true;
-        selected.clear();
         if (currentSelection != null) {
-            inverseSelection = currentSelection.isInvert();
-            selected.addAll(currentSelection.getValues());
+            selection
+                    .values(new HashSet<>(currentSelection.getValues()))
+                    .invert(currentSelection.isInvert());
+        } else {
+            selection.clear().invert(true);
         }
 
         clear();
@@ -168,23 +166,36 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
 
     @Override
     public void onSelectAll() {
-        selected.clear();
-        this.inverseSelection = true;
+        if (NullSafe.isNonEmptyString(nameFilter)) {
+            final ColumnValueSelection sel = selection.build();
+            for (final String value : cellTable.getVisibleItems()) {
+                if (sel.isInvert()) {
+                    selection.remove(value);
+                } else {
+                    selection.add(value);
+                }
+            }
+        } else {
+            selection.clear().invert(true);
+        }
         updateTable();
     }
 
     @Override
     public void onSelectNone() {
-        selected.clear();
-        inverseSelection = false;
-        updateTable();
-    }
-
-    private ColumnValueSelection createSelection() {
-        if (inverseSelection && selected.isEmpty()) {
-            return null;
+        if (NullSafe.isNonEmptyString(nameFilter)) {
+            final ColumnValueSelection sel = selection.build();
+            for (final String value : cellTable.getVisibleItems()) {
+                if (sel.isInvert()) {
+                    selection.add(value);
+                } else {
+                    selection.remove(value);
+                }
+            }
+        } else {
+            selection.clear().invert(false);
         }
-        return new ColumnValueSelection(new HashSet<>(selected), inverseSelection);
+        updateTable();
     }
 
     private void clear() {
@@ -208,43 +219,25 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
 
     private void toggle(final String value) {
         if (value != null) {
-            if (selected.contains(value)) {
-                selected.remove(value);
-            } else {
-                selected.add(value);
-            }
-
+            selection.toggle(value);
             updateTable();
         }
     }
 
     private void updateTable() {
-        final ColumnValueSelection columnValueSelection = createSelection();
+        final ColumnValueSelection columnValueSelection = selection.build();
         filterCellManager.setValueSelection(dataSupplier.getColumn(), columnValueSelection);
         cellTable.redraw();
 
-        if (columnValueSelection != null && columnValueSelection.isEnabled()) {
+        if (columnValueSelection.isEnabled()) {
             filterButton.addClassName("icon-colour__blue");
         } else {
             filterButton.removeClassName("icon-colour__blue");
         }
     }
 
-    @Override
-    public TickBoxState getState(final String value) {
-        if (inverseSelection) {
-            return selected.contains(value)
-                    ? TickBoxState.UNTICK
-                    : TickBoxState.TICK;
-        } else {
-            return selected.contains(value)
-                    ? TickBoxState.TICK
-                    : TickBoxState.UNTICK;
-        }
-    }
-
     private Column<String, String> getTickBoxColumn() {
-        return new Column<String, String>(new ColumnValueCell(this)) {
+        return new Column<String, String>(new ColumnValueCell(selection)) {
             @Override
             public String getValue(final String string) {
                 return string;

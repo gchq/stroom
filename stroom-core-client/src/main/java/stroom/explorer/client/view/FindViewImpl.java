@@ -19,7 +19,6 @@ package stroom.explorer.client.view;
 import stroom.explorer.client.presenter.AbstractFindPresenter;
 import stroom.explorer.client.presenter.FindUiHandlers;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
-import stroom.widget.dropdowntree.client.view.SearchBox;
 
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -39,7 +38,7 @@ public class FindViewImpl
     private final Widget widget;
 
     @UiField
-    SearchBox nameFilter;
+    QuickFilter nameFilter;
     @UiField
     SimplePanel resultContainer;
 

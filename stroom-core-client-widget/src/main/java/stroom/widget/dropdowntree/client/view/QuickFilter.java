@@ -30,6 +30,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FocusUtil;
 import com.google.gwt.user.client.ui.HTMLPanel;
@@ -44,9 +45,9 @@ import java.util.function.Supplier;
 public class QuickFilter extends FlowPanel
         implements HasText, HasValueChangeHandlers<String> {
 
-//    private static final int DEBOUNCE_DELAY_MS = 400;
+    private static final int DEBOUNCE_DELAY_MS = 400;
     private static final SafeHtml DEFAULT_POPUP_TEXT = new HtmlBuilder()
-            .bold(hb -> hb.append("Quick Filter"))
+            .bold("Quick Filter")
             .br()
             .append("Field values containing the characters input will be included.")
             .br()
@@ -57,14 +58,14 @@ public class QuickFilter extends FlowPanel
     private final HandlerManager handlerManager = new HandlerManager(this);
     private Supplier<SafeHtml> popupTextSupplier;
     private String lastInput = "";
+    private boolean updateOnValueChange = true;
 
-//    private final Timer filterRefreshTimer = new Timer() {
-//        @Override
-//        public void run() {
-//            // Fire the event to update the data based on the filter
-//            ValueChangeEvent.fire(QuickFilter.this, textBox.getText());
-//        }
-//    };
+    private final Timer filterRefreshTimer = new Timer() {
+        @Override
+        public void run() {
+            updateValue(true);
+        }
+    };
 
     public QuickFilter() {
         setStyleName("quickFilter");
@@ -82,13 +83,12 @@ public class QuickFilter extends FlowPanel
         add(clearButton);
         add(helpButton);
 
-        textBox.addValueChangeHandler(event -> enableButtons());
+        textBox.addValueChangeHandler(event -> onValueChange());
         textBox.addKeyDownHandler(this::onKeyDown);
         helpButton.addClickHandler(event -> showHelpPopup());
         clearButton.addClickHandler(event -> clear());
 
         enableButtons();
-//        onChange(true);
     }
 
     private void showHelpPopup() {
@@ -108,20 +108,30 @@ public class QuickFilter extends FlowPanel
         });
     }
 
-    private void onChange(final boolean fireEvents) {
-        final String text = textBox.getText();
+    private void onValueChange() {
         enableButtons();
+        if (updateOnValueChange) {
+            // Add in a slight delay to give the user a chance to type a few chars before we fire off
+            // a rest call. This helps to reduce the logging too
+            filterRefreshTimer.cancel();
+            filterRefreshTimer.schedule(DEBOUNCE_DELAY_MS);
+        }
+    }
+
+    private void onChange(final boolean fireEvents) {
+        enableButtons();
+        updateValue(fireEvents);
+    }
+
+    private void updateValue(final boolean fireEvents) {
+        final String text = textBox.getText();
         if (!Objects.equals(text, lastInput)) {
             lastInput = text;
+            // Cancel an update timer if one is running.
+            filterRefreshTimer.cancel();
             if (fireEvents) {
                 // Fire the event to update the data based on the filter
                 ValueChangeEvent.fire(QuickFilter.this, text);
-
-//                // Add in a slight delay to give the user a chance to type a few chars before we fire off
-//                // a rest call. This helps to reduce the logging too
-//                if (!filterRefreshTimer.isRunning()) {
-//                    filterRefreshTimer.schedule(DEBOUNCE_DELAY_MS);
-//                }
             }
         }
     }
