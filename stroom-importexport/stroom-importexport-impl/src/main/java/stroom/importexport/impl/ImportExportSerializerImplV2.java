@@ -249,6 +249,81 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
     }
 
     /**
+     * Recursively searches the import data for items marked up as Actions.
+     * The path to them is then marked up as Actions so that the Folders
+     * get imported too.
+     * @param dir             The directory to search.
+     * @param confirmMap      Where the Actions are stored
+     * @param docRefPath      Path down to the current item
+     * @throws IOException    if something goes wrong.
+     */
+    private void recursiveMarkupAction(final Path dir,
+                                       final Map<DocRef, ImportState> confirmMap,
+                                       final Deque<DocRef> docRefPath) throws IOException {
+
+        LOGGER.info("{}>>>>>>>>>>>>>>>>>>>>>>>>", indent(docRefPath));
+        LOGGER.info("{}Recursive Markup Action: Looking in {}", indent(docRefPath), dir);
+
+        // Used to store the directory name -> DocRef so we can push the DocRef
+        // onto the docRefPath when we recurse the directory name.
+        final Map<String, DocRef> pathToFolderDocRef = new HashMap<>();
+
+        // Recurse through all the node files in this folder
+        try (final DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir, this::filterNodeFiles)) {
+            for (final Path nodeFile : dirStream) {
+                LOGGER.info("{}Found node file in Action search: {}", indent(docRefPath), nodeFile);
+                final DocRef docRef = nodeFileToDocRef(nodeFile, null);
+                if (ExplorerConstants.isFolder(docRef)) {
+                    final String childDirectoryName = nodeFilePathToDirectoryName(nodeFile);
+                    pathToFolderDocRef.put(childDirectoryName, docRef);
+                }
+                final ImportState nodeFileState = confirmMap.get(docRef);
+                if (nodeFileState != null && nodeFileState.isAction()) {
+                    // This is actioned - mark up path to this item
+                    final Deque<DocRef> pathToItem = new ArrayDeque<>();
+                    for (final DocRef pathItem : docRefPath) {
+                        final ImportState pathItemState =
+                                getImportStateFromConfirmMap(confirmMap, pathItem, pathToItem);
+                        LOGGER.info("Generated state from {} / {}", pathToItem, pathItem);
+                        if (!pathItemState.isAction()) {
+                            LOGGER.info("{}Marking Folder item as action: '{} / {}'",
+                                    indent(docRefPath), pathToItem, pathItem);
+                            pathItemState.setAction(true);
+                        }
+                        pathToItem.addLast(pathItem);
+                    }
+                }
+            }
+        }
+
+        // Recurse through all the child directories on disk
+        LOGGER.info("{}Looking for child directories of '{}'", indent(docRefPath), dir);
+        try (final DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir, Files::isDirectory)) {
+            for (final Path childPath : dirStream) {
+                LOGGER.info("{}Recursing into '{}'", indent(docRefPath), childPath);
+                // Pull the docRef for this directory from the map
+                final DocRef parentDocRef = pathToFolderDocRef.get(childPath.getFileName().toString());
+                if (parentDocRef == null) {
+                    throw new IOException("Node file for folder '" + childPath + "' was not found");
+                }
+                LOGGER.info("{}Parent DocRef of {} is {}", indent(docRefPath), childPath.getFileName(), parentDocRef);
+                docRefPath.addLast(parentDocRef);
+                try {
+                    LOGGER.info("{}Recursing into {}: {}", indent(docRefPath), childPath, docRefPath);
+                    this.recursiveMarkupAction(
+                            childPath,
+                            confirmMap,
+                            docRefPath);
+                } finally {
+                    LOGGER.info("{}Leaving {}: {}", indent(docRefPath), childPath, docRefPath);
+                    docRefPath.removeLast();
+                }
+            }
+        }
+
+    }
+
+    /**
      * Does the import for the version 2 structure.
      * Call to read the serialised format on disk.
      * @param dir             directory containing serialized DocRef items, e.g. files created by
@@ -258,7 +333,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
      * @return                DocRefs of items read from disk.
      * @throws IOException    if something goes wrong.
      */
-    public Set<DocRef> doV2Read(final Path dir,
+    private Set<DocRef> doV2Read(final Path dir,
                                 @Nullable List<ImportState> importStateList,
                                 final ImportSettings importSettings)
             throws IOException {
@@ -282,6 +357,13 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
             docRefPath.addLast(importSettings.getRootDocRef());
         } else {
             docRefPath.addLast(ExplorerConstants.SYSTEM_DOC_REF);
+        }
+
+        // If we're doing an ACTION_CONFIRMATION then we must make sure that
+        // all the Folders in the path to the Actioned items are also Actioned.
+        // Otherwise, we might try to import something with no Folder to put it in.
+        if (importSettings.getImportMode().equals(ImportMode.ACTION_CONFIRMATION)) {
+            recursiveMarkupAction(dir, confirmMap, docRefPath);
         }
 
         // Recursively read in the structure on disk
@@ -334,7 +416,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
         try (final DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir, this::filterNodeFiles)) {
             for (final Path filePath : dirStream) {
                 LOGGER.info("{}Found node file {}", indent(docRefPath), filePath);
-                final DocRef docRef = readNodeFile(
+                final DocRef docRef = importItemFromDisk(
                         filePath,
                         confirmMap,
                         importSettings,
@@ -421,6 +503,66 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
     }
 
     /**
+     * Returns the ImportState given a DocRef. Creates the ImportState if necessary.
+     * @param confirmMap       Map holding the ImportState
+     * @param importDocRef     The docRef we want ImportState for
+     * @param importDocRefPath The path to the docRef
+     * @return                 The ImportState for the docRef.
+     */
+    private ImportState getImportStateFromConfirmMap(final Map<DocRef, ImportState> confirmMap,
+                                                     final DocRef importDocRef,
+                                                     final Deque<DocRef> importDocRefPath) {
+        return confirmMap.computeIfAbsent(
+                importDocRef,
+                k -> new ImportState(importDocRef, resolvePath(importDocRefPath, importDocRef.getName())));
+    }
+
+    /**
+     * Reads a nodeFile and returns a DocRef.
+     * Also optionally returns the tags via an in-out parameter.
+     * @param nodeFile     The Path to the nodefile to read.
+     * @param tags         Null if not required, or somewhere to store any tags read
+     *                     from the nodefile.
+     * @return             The DocRef generated from the nodefile.
+     * @throws IOException If something goes wrong.
+     */
+    private DocRef nodeFileToDocRef(final Path nodeFile,
+                                    @Nullable final Set<String> tags)
+            throws IOException {
+
+        final Properties properties;
+        try (final InputStream inputStream = Files.newInputStream(nodeFile)) {
+            properties = PropertiesSerialiser.read(inputStream);
+        }
+
+        // Get the properties from the node file
+        final String uuid = properties.getProperty(UUID_KEY);
+        final String type = properties.getProperty(TYPE_KEY);
+        final String name = properties.getProperty(NAME_KEY);
+        if (tags != null) {
+            tags.addAll(explorerService.parseNodeTags(properties.getProperty(TAGS_KEY)));
+        }
+        final String versionOfNode = properties.getProperty(VERSION_KEY);
+
+        // Check that values were read
+        if (uuid == null) {
+            throw new IOException("Node file '" + nodeFile + "' does not contain a 'uuid'");
+        }
+        if (type == null) {
+            throw new IOException("Node file '" + nodeFile + "' does not contain a 'type'");
+        }
+        // name can be null in Processor Filters
+
+        // Check the version is correct - all node files should be the same version
+        if (!ImportExportVersion.V2.name().equals(versionOfNode)) {
+            throw new IOException("Node file '" + nodeFile
+                                  + "' is not version '" + ImportExportVersion.V2.name() + "'");
+        }
+
+        return new DocRef(type, uuid, name);
+    }
+
+    /**
      * Imports the node file, whatever it represents.
      * @param nodeFile          The Path to the nodeFile to import
      * @param confirmMap        Stuff to tell the user
@@ -429,39 +571,26 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
      *                          to import.
      * @return                  Reference of the imported doc.
      */
-    private @Nullable DocRef readNodeFile(final Path nodeFile,
-                                          final Map<DocRef, ImportState> confirmMap,
-                                          final ImportSettings importSettings,
-                                          final Deque<DocRef> importDocRefPath)
+    private @Nullable DocRef importItemFromDisk(final Path nodeFile,
+                                                final Map<DocRef, ImportState> confirmMap,
+                                                final ImportSettings importSettings,
+                                                final Deque<DocRef> importDocRefPath)
             throws IOException {
 
         DocRef imported = null;
 
         // Read the node file.
-        final InputStream inputStream = Files.newInputStream(nodeFile);
-        final Properties properties = PropertiesSerialiser.read(inputStream);
-
-        // Get the properties from the node file
-        final String uuid = properties.getProperty(UUID_KEY);
-        final String type = properties.getProperty(TYPE_KEY);
-        final String name = properties.getProperty(NAME_KEY);
-        final Set<String> tags = explorerService.parseNodeTags(properties.getProperty(TAGS_KEY));
-        final String versionOfNode = properties.getProperty(VERSION_KEY);
-
-        // Check the version is correct - all node files should be the same version
-        if (!ImportExportVersion.V2.name().equals(versionOfNode)) {
-            throw new IOException("Node file '" + nodeFile
-                                  + "' is not version '" + ImportExportVersion.V2.name() + "'");
-        }
+        final Set<String> tags = new HashSet<>();
 
         // Create a doc ref for temporary use.
-        final DocRef importDocRef = new DocRef(type, uuid, name);
+        final DocRef importDocRef = nodeFileToDocRef(nodeFile, tags);
         LOGGER.info("{}Read node file: {}", indent(importDocRefPath), importDocRef);
 
         // Create or get the import state.
-        final ImportState importState = confirmMap.computeIfAbsent(
+        final ImportState importState = getImportStateFromConfirmMap(
+                confirmMap,
                 importDocRef,
-                k -> new ImportState(importDocRef, resolvePath(importDocRefPath, importDocRef.getName())));
+                importDocRefPath);
 
         // Get other associated data.
         final Map<String, byte[]> dataMap = new HashMap<>();
@@ -489,9 +618,14 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
         try {
             // Find the appropriate handler
-            final ImportExportActionHandler importExportActionHandler = importExportActionHandlers.getHandler(type);
+            final ImportExportActionHandler importExportActionHandler =
+                    importExportActionHandlers.getHandler(importDocRef.getType());
+
             if (importExportActionHandler instanceof NonExplorerDocRefProvider) {
-                LOGGER.error("{}Importing non-explorer doc for node file {}", indent(importDocRefPath), nodeFile);
+                LOGGER.error("{}Importing non-explorer doc for node file {}",
+                        indent(importDocRefPath),
+                        nodeFile);
+
                 imported = importNonExplorerDoc(
                         importExportActionHandler,
                         nodeFile,

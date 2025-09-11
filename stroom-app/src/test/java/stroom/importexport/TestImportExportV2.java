@@ -387,7 +387,8 @@ public class TestImportExportV2 extends AbstractCoreIntegrationTest {
         assertThat(folderChildrenAfterMove.size())
                 .as("Internal folder should not have any children after move")
                 .isEqualTo(0);
-        final List<ExplorerNode> newFolderChildrenAfterMove = explorerNodeService.getChildren(newFolderNode.getDocRef());
+        final List<ExplorerNode> newFolderChildrenAfterMove =
+                explorerNodeService.getChildren(newFolderNode.getDocRef());
         assertThat(newFolderChildrenAfterMove.size())
                 .as("New folder should have two children after move")
                         .isEqualTo(2);
@@ -473,11 +474,13 @@ public class TestImportExportV2 extends AbstractCoreIntegrationTest {
         explorerService.move(folderChildren, newFolderNode, PermissionInheritance.DESTINATION);
 
         // Check the items have moved
-        final List<ExplorerNode> folderChildrenAfterMove = explorerNodeService.getChildren(internalFolder.getDocRef());
+        final List<ExplorerNode> folderChildrenAfterMove =
+                explorerNodeService.getChildren(internalFolder.getDocRef());
         assertThat(folderChildrenAfterMove.size())
                 .as("Internal folder should not have any children after move")
                 .isEqualTo(0);
-        final List<ExplorerNode> newFolderChildrenAfterMove = explorerNodeService.getChildren(newFolderNode.getDocRef());
+        final List<ExplorerNode> newFolderChildrenAfterMove =
+                explorerNodeService.getChildren(newFolderNode.getDocRef());
         assertThat(newFolderChildrenAfterMove.size())
                 .as("New folder should have two children after move")
                 .isEqualTo(2);
@@ -900,6 +903,50 @@ public class TestImportExportV2 extends AbstractCoreIntegrationTest {
         assertThat(equalImportStateLists(importStateListV1, importStateListV2))
                 .as("Import States must be identical for V1 and V2")
                 .isEqualTo(true);
+    }
+
+    /**
+     * Tests importing under mode ACTION_CONFIRMATION.
+     * Should give the same results for V1 and V2.
+     */
+    @Test
+    void testImportModeActionConfirmationActionWithinFolder() {
+        final Path inDirV2 = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(
+                "samples/config-feeds-internal-2-items-v2");
+
+        final ExplorerNode systemNode = explorerNodeService.getRoot();
+        final ImportSettings importSettings = ImportSettings.builder()
+                .importMode(ImportMode.ACTION_CONFIRMATION)
+                .useImportNames(true)
+                .useImportFolders(true)
+                .rootDocRef(systemNode.getDocRef())
+                .build();
+
+        // Create Action to import the Internal/DECORATION XSLT item
+        final List<ImportState> importStateList = new ArrayList<>();
+        final DocRef decorationDocRef = new DocRef("XSLT",
+                "c2b9b9b0-45fe-473a-84b6-936ab1b629b2",
+                "DECORATION");
+        final ImportState decorationImportState = new ImportState(decorationDocRef,
+                "Internal/DECORATION.XSLT");
+        decorationImportState.setAction(true);
+        importStateList.add(decorationImportState);
+
+        importExportSerializer.read(inDirV2,
+                importStateList,
+                importSettings);
+
+        final List<ExplorerNode> systemChildren = explorerNodeService.getChildren(systemNode.getDocRef());
+        assertThat(systemChildren.size())
+                .as("Should be one folder imported under System")
+                .isEqualTo(1);
+        final ExplorerNode internalFolder = systemChildren.getFirst();
+
+        // Check that the correct nodes are in the Folder - should only be one
+        final List<ExplorerNode> folderChildren = explorerNodeService.getChildren(internalFolder.getDocRef());
+        assertThat(folderChildren.size())
+                .as("Should be one object under Internal folder")
+                .isEqualTo(1);
     }
 
     /**
