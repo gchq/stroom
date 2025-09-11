@@ -4,7 +4,7 @@
              xmlns:v="urn:import:stroom.widget.dropdowntree.client.view">
     <g:FlowPanel styleName="max form">
         <g:FlowPanel styleName="dock-container-horizontal dock-min find-topBar">
-            <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-max"/>
+            <v:SearchBox ui:field="nameFilter" addStyleNames="dock-max"/>
         </g:FlowPanel>
         <g:SimplePanel ui:field="resultContainer" styleName="max form-control-border form-control-background"/>
     </g:FlowPanel>
