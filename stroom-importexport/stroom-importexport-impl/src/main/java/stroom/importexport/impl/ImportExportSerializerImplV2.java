@@ -45,7 +45,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.SequencedCollection;
@@ -261,7 +260,6 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                                        final Map<DocRef, ImportState> confirmMap,
                                        final Deque<DocRef> docRefPath) throws IOException {
 
-        LOGGER.info("{}>>>>>>>>>>>>>>>>>>>>>>>>", indent(docRefPath));
         LOGGER.info("{}Recursive Markup Action: Looking in {}", indent(docRefPath), dir);
 
         // Used to store the directory name -> DocRef so we can push the DocRef
@@ -761,7 +759,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
         LOGGER.info("{}Importing explorer doc with node file '{}'", indent(importDocRefPath), importDocRef);
 
-        final ImportDocRefState importDocRefState = new ImportDocRefState(
+        final ImportDocRefStateV2 importDocRefState = new ImportDocRefStateV2(
                 explorerNodeService,
                 importDocRefPath,
                 importDocRef,
@@ -814,7 +812,8 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                                               + "' as its handler is cannot be found");
                     }
 
-                    // One implementation is in stroom/docstore/impl/StoreImpl.java:
+                    // One implementation of importExportActionHandler.importDocument()
+                    // is in stroom/docstore/impl/StoreImpl.java:
                     // Checks if there is an existing document
                     // Checks if the new document is the same as the old one
                     // Checks for EDIT permission in some cases
@@ -875,8 +874,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                                 importedDocRef.getName());
 
                         // Don't rename unless name is incorrect
-                        if (!Objects.equals(explorerNode.getName(), importDocRef.getName())
-                            && importSettings.isUseImportNames()) {
+                        if (importDocRefState.isRenamed()) {
                             LOGGER.info("{}Renaming '{}' to '{}'",
                                     indent(importDocRefPath),
                                     explorerNode.getName(),
@@ -912,6 +910,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                         importDocRef.getName(),
                         importSettings.getImportMode());
                 confirmMap.remove(importDocRef);
+                // We need to return a DocRef so that the importDocRefPath can be set correctly
                 importedDocRef = importDocRef;
             }
         } catch (final Exception e) {

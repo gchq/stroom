@@ -24,7 +24,7 @@ import java.util.Optional;
  * Used in the V2 Import/Export code.
  */
 @NullMarked
-class ImportDocRefState {
+class ImportDocRefStateV2 {
 
     /** DocRef defined by contents of .node file in the import structure on disk */
     private final DocRef importDocRef;
@@ -55,7 +55,7 @@ class ImportDocRefState {
 
     /** Logger */
     private static final Logger LOGGER =
-            LoggerFactory.getLogger(ImportDocRefState.class);
+            LoggerFactory.getLogger(ImportDocRefStateV2.class);
 
     /**
      * Constructor.
@@ -68,11 +68,11 @@ class ImportDocRefState {
      * @param useImportNames      From ImportSettings. Use the item name specified in the
      *                            import data strcture rather than any existing name.
      */
-    public ImportDocRefState(final ExplorerNodeService explorerNodeService,
-                             final Deque<DocRef> importParentPath,
-                             final DocRef importDocRef,
-                             final boolean useImportFolders,
-                             final boolean useImportNames)
+    public ImportDocRefStateV2(final ExplorerNodeService explorerNodeService,
+                               final Deque<DocRef> importParentPath,
+                               final DocRef importDocRef,
+                               final boolean useImportFolders,
+                               final boolean useImportNames)
             throws IOException {
 
         this.importDocRef = importDocRef;
@@ -99,7 +99,7 @@ class ImportDocRefState {
             final Optional<ExplorerNode> optParentNode = explorerNodeService.getParent(existingNode.getDocRef());
             final DocRef existingParentDocRef;
             if (optParentNode.isPresent()) {
-                this.existingParentNode = optParentNode.get();
+                existingParentNode = optParentNode.get();
                 existingParentDocRef = this.existingParentNode.getDocRef();
                 LOGGER.info("Found existing parent node named '{}'", existingParentNode.getName());
             } else {
@@ -197,8 +197,7 @@ class ImportDocRefState {
      */
     private static Optional<ExplorerNode> findExistingNode(final ExplorerNodeService explorerNodeService,
                                                            final DocRef importParentDocRef,
-                                                           final DocRef nodeFileDocRef)
-            throws IOException {
+                                                           final DocRef nodeFileDocRef) {
 
         // Lookup based on UUID
         Optional<ExplorerNode> optExistingNode = explorerNodeService.getNode(nodeFileDocRef);
@@ -291,7 +290,6 @@ class ImportDocRefState {
      * the import structure.
      */
     public DocRef getImportParentDocRef() {
-        // TODO
         return importParentDocRef;
     }
 
