@@ -26,8 +26,12 @@ import java.nio.file.Path;
  */
 public interface ResourceStore {
 
+    String RESOURCE_STORE_PATH_PART = "/resourcestore";
+
     /**
      * Create a temporary file and give it a UUID.
+     *
+     * @param name The name of the file resource. Held mostly for logging/debug purposes.
      */
     ResourceKey createTempFile(String name);
 

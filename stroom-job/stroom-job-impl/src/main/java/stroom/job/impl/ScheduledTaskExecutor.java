@@ -189,7 +189,8 @@ class ScheduledTaskExecutor {
                                 LOGGER.logDurationIfDebugEnabled(
                                         function, () -> scheduledJobToStr(scheduledJob));
                             } catch (final RuntimeException e) {
-                                LOGGER.error("Error executing task '{}'", taskName, e);
+                                LOGGER.error("Error executing task '{}' - {}",
+                                        taskName, LogUtil.exceptionMessage(e), e);
                             }
                         });
 

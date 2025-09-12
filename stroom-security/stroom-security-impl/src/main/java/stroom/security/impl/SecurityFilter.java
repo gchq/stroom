@@ -51,8 +51,8 @@ import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Filter to avoid posts to the wrong place (e.g. the root of the app)
@@ -61,12 +61,6 @@ import java.util.Set;
 class SecurityFilter implements Filter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SecurityFilter.class);
-
-    private static final Set<String> STATIC_RESOURCE_EXTENSIONS = Set.of(
-            ".js", ".js.map", ".css", ".css.map", ".htm", ".html", ".json", ".png",
-            ".jpg", ".gif", ".ico", ".svg", ".ttf", ".woff", ".woff2");
-
-    private static final String SIGN_IN_URL_PATH = ResourcePaths.buildServletPath(ResourcePaths.SIGN_IN_PATH);
 
     private final UriFactory uriFactory;
     private final SecurityContext securityContext;
@@ -135,14 +129,12 @@ class SecurityFilter implements Filter {
         final String fullPath = request.getRequestURI();
         final String servletName = NullSafe.get(request.getHttpServletMapping(), HttpServletMapping::getServletName);
 
-        if (request.getMethod().equalsIgnoreCase(HttpMethod.OPTIONS)) {
+        if (HttpMethod.OPTIONS.equalsIgnoreCase(request.getMethod())) {
             // We need to allow CORS preflight requests
             LOGGER.debug("Passing on OPTIONS request to next filter, servletName: {}, fullPath: {}, servletPath: {}",
                     servletName, fullPath, servletPath);
             chain.doFilter(request, response);
-        } else if (isStaticResource(fullPath, servletPath)) {
-            LOGGER.debug("Static content, servletName: {}, fullPath: {}, servletPath: {}",
-                    servletName, fullPath, servletPath);
+        } else if (isStaticResource(fullPath, servletPath, servletName)) {
             chain.doFilter(request, response);
         } else {
             // Api requests that are not from the front-end should have a token.
@@ -150,14 +142,6 @@ class SecurityFilter implements Filter {
             // Need to do this first, so we get a fresh token from AWS ALB rather than using a stale
             // one from session.
             Optional<UserIdentity> optUserIdentity = openIdManager.loginWithRequestToken(request);
-//            optUserIdentity.ifPresent(userIdentity ->
-//                    ensureSessionIfCookiePresent(request).ifPresent(session -> {
-//                        LOGGER.debug(() -> LogUtil.message("Setting user in session, user: {} {}, path: {}",
-//                                userIdentity.getClass().getSimpleName(),
-//                                userIdentity,
-//                                fullPath));
-//                        UserIdentitySessionUtil.set(session, userIdentity);
-//                    }));
 
             // Log current user.
             if (LOGGER.isDebugEnabled()) {
@@ -178,10 +162,6 @@ class SecurityFilter implements Filter {
 
                 // Now we have the session make note of the user-agent for logging and sessionListServlet duties
                 UserAgentSessionUtil.setUserAgentInSession(request);
-//                SessionUtil.withSession(request, session ->
-//                        UserAgentSessionUtil.setUserAgentInSession(request, session));
-//                ensureSessionIfCookiePresent(request).ifPresent(session ->
-//                        UserAgentSessionUtil.setUserAgentInSession(request, session));
 
                 // Now handle the request as this user
                 securityContext.asUser(userIdentity, () ->
@@ -194,15 +174,15 @@ class SecurityFilter implements Filter {
                 securityContext.asProcessingUser(() ->
                         process(request, response, chain));
 
-            } else if (isApiRequest(servletPath)) {
+//            } else if (isApiRequest(servletPath)) {
+            } else if (Objects.equals(ResourcePaths.STROOM_SERVLET_NAME, servletName)) {
+                doOpenIdFlow(request, response, fullPath);
+            } else {
                 // If we couldn't log in with a token or couldn't get a token then error as this is an API call
                 // or no login flow is possible/expected.
                 LOGGER.debug("No user identity so responding with UNAUTHORIZED for servletName: {}, " +
                              "fullPath: {}, servletPath: {}", servletName, fullPath, servletPath);
                 response.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
-
-            } else {
-                doOpenIdFlow(request, response, fullPath);
             }
         }
     }
@@ -294,31 +274,18 @@ class SecurityFilter implements Filter {
         return uriFactory.publicUri(originalPath).toString();
     }
 
-    private boolean isStaticResource(final String fullPath, final String servletPath) {
+    private boolean isStaticResource(final String fullPath,
+                                     final String servletPath,
+                                     final String servletName) {
         // Test for internal IdP sign in request.
-        if (servletPath.startsWith(SIGN_IN_URL_PATH)) {
+        if (ResourcePaths.UI_SERVLET_NAME.equals(servletName)
+            || ResourcePaths.SIGN_IN_SERVLET_NAME.equals(servletName)) {
+            LOGGER.debug("Unauthenticated static content, servletName: {}, fullPath: {}, servletPath: {}",
+                    servletName, fullPath, servletPath);
             return true;
+        } else {
+            return false;
         }
-
-        int index = fullPath.lastIndexOf(".");
-        if (index > 0) {
-            String extension = fullPath.substring(index).toLowerCase();
-            if (STATIC_RESOURCE_EXTENSIONS.contains(extension)) {
-                return true;
-            } else {
-                // Handle stuff like .css.map
-                index = fullPath.lastIndexOf(".", index - 1);
-                if (index > 0) {
-                    extension = fullPath.substring(index).toLowerCase();
-                    return STATIC_RESOURCE_EXTENSIONS.contains(extension);
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean isApiRequest(final String servletPath) {
-        return servletPath.startsWith(ResourcePaths.API_ROOT_PATH);
     }
 
     private boolean shouldBypassAuthentication(final HttpServletRequest servletRequest,

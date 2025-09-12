@@ -124,7 +124,7 @@ public class UpdatableToken implements Refreshable, HasJwtClaims, HasJwt {
             didWork = false;
         } else {
             synchronized (this) {
-                final FetchTokenResult fetchTokenResult = updateFunction.apply(this);
+                final FetchTokenResult fetchTokenResult = fetchToken();
                 if (fetchTokenResult != null) {
                     try {
                         this.mutableState = createMutableState(
@@ -144,6 +144,16 @@ public class UpdatableToken implements Refreshable, HasJwtClaims, HasJwt {
             }
         }
         return didWork;
+    }
+
+    private FetchTokenResult fetchToken() {
+        try {
+            return updateFunction.apply(this);
+        } catch (final Exception e) {
+            LOGGER.error("Error fetching token - {}. Enable DEBUG for stack trace.", LogUtil.exceptionMessage(e));
+            LOGGER.debug("Error fetching token - {}.", LogUtil.exceptionMessage(e), e);
+            throw e;
+        }
     }
 
     @Override

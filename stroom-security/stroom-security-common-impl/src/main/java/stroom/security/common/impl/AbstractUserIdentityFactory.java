@@ -272,30 +272,34 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
     @Override
     public UserIdentity getServiceUserIdentity() {
 
-        // Ideally the token will get recreated by the refresh queue just before
-        // it expires so callers to this will find a token that is good to use and
-        // thus won't be contended.
-        final boolean didCreate;
-        if (serviceUserIdentity == null) {
-            synchronized (this) {
-                if (serviceUserIdentity == null) {
-                    serviceUserIdentity = createServiceUserIdentity();
-                    didCreate = true;
-                } else {
-                    didCreate = false;
+        try {
+            // Ideally the token will get recreated by the refresh queue just before
+            // it expires so callers to this will find a token that is good to use and
+            // thus won't be contended.
+            final boolean didCreate;
+            if (serviceUserIdentity == null) {
+                synchronized (this) {
+                    if (serviceUserIdentity == null) {
+                        serviceUserIdentity = createServiceUserIdentity();
+                        didCreate = true;
+                    } else {
+                        didCreate = false;
+                    }
                 }
+            } else {
+                didCreate = false;
             }
-        } else {
-            didCreate = false;
-        }
 
-        // Make sure it is up-to-date before giving it out
-        if (!didCreate && serviceUserIdentity instanceof final HasRefreshable hasRefreshable) {
-            NullSafe.consume(hasRefreshable.getRefreshable(), refreshable ->
-                    refreshable.refreshIfRequired(RefreshMode.JUST_IN_TIME, refreshManager::addOrUpdate));
-        }
+            // Make sure it is up-to-date before giving it out
+            if (!didCreate && serviceUserIdentity instanceof final HasRefreshable hasRefreshable) {
+                NullSafe.consume(hasRefreshable.getRefreshable(), refreshable ->
+                        refreshable.refreshIfRequired(RefreshMode.JUST_IN_TIME, refreshManager::addOrUpdate));
+            }
 
-        return serviceUserIdentity;
+            return serviceUserIdentity;
+        } catch (final Exception e) {
+            throw new RuntimeException("Error getting service user identity - " + LogUtil.exceptionMessage(e), e);
+        }
     }
 
     @Override
@@ -379,7 +383,11 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                 newTokenResponse = fetchTokenResult.tokenResponse();
                 jwtClaims = fetchTokenResult.jwtClaims();
             } catch (final RuntimeException e) {
-                LOGGER.error("Error refreshing token for {} - {}", identity, e.getMessage(), e);
+                LOGGER.error("Error refreshing token for {} {} ({}) - {}",
+                        identity.getSubjectId(),
+                        identity.getDisplayName(),
+                        identity.getFullName().orElse("-"),
+                        LogUtil.exceptionMessage(e), e);
                 if (identity instanceof final HasSession userWithSession) {
                     userWithSession.invalidateSession();
                 }

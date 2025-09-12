@@ -25,6 +25,7 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.User;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.authentication.HasRefreshable;
+import stroom.util.authentication.Refreshable;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
@@ -56,6 +57,7 @@ import org.jose4j.jwt.consumer.JwtContext;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
@@ -192,7 +194,16 @@ public class StroomUserIdentityFactory
     public void logoutUser(final UserIdentity userIdentity) {
         LOGGER.debug("Logging out user {}", userIdentity);
         if (userIdentity instanceof final HasRefreshable hasRefreshable) {
-            removeTokenFromRefreshManager(hasRefreshable.getRefreshable());
+            final Refreshable refreshable = hasRefreshable.getRefreshable();
+            if (refreshable != null) {
+                try {
+                    removeTokenFromRefreshManager(refreshable);
+                } catch (final Exception e) {
+                    LOGGER.error("Error removing refreshable {} from refresh manager for userIdentity {}. {}",
+                            refreshable, userIdentity, LogUtil.exceptionMessage(e), e);
+                    // Swallow the error so the rest of the logout can proceed
+                }
+            }
         }
     }
 
@@ -324,45 +335,53 @@ public class StroomUserIdentityFactory
         // At this point we have authenticated the code-flow User so need to ensure
         // we have a session to store the userIdentity in. Also, the session gets attached
         // to the userIdentity object to allow us to refresh it's token.
-        final HttpSession session = SessionUtil.getOrCreateSession(request, newSession -> {
-            UserAgentSessionUtil.setUserAgentInSession(request, newSession);
+        final AtomicBoolean isNewSession = new AtomicBoolean(false);
+        final HttpSession session = SessionUtil.getOrCreateSession(request, newSession -> isNewSession.set(true));
+        try {
+            UserAgentSessionUtil.setUserAgentInSession(request, session);
+
+            // Make a token object that we can update as/when we do a token refresh
+            final UpdatableToken updatableToken = new UpdatableToken(
+                    tokenResponse,
+                    jwtClaims,
+                    super::refreshUsingRefreshToken,
+                    session);
+
+            final UserIdentity userIdentity = new UserIdentityImpl(
+                    user.getUuid(),
+                    user.getSubjectId(),
+                    user.getDisplayName(),
+                    user.getFullName(),
+                    session,
+                    updatableToken);
+
+            // We have authenticated so set the userIdentity in the session for future requests
+            // to retrieve it from
+            UserIdentitySessionUtil.set(session, userIdentity);
+
+            // Register the token with the refresh manager so it gets refreshed periodically.
+            updatableToken.setUserIdentity(userIdentity);
+            addTokenToRefreshManager(updatableToken);
+
             LOGGER.info(() -> LogUtil.message(
-                    "createAuthFlowUserIdentity() - Created new session, sessionId: {}, userRef: {}, user-agent: {}",
-                    newSession.getId(),
-                    user.getUserRef(),
-                    UserAgentSessionUtil.getUserAgent(newSession)));
-        });
-
-        // Make a token object that we can update as/when we do a token refresh
-        final UpdatableToken updatableToken = new UpdatableToken(
-                tokenResponse,
-                jwtClaims,
-                super::refreshUsingRefreshToken,
-                session);
-
-        final UserIdentity userIdentity = new UserIdentityImpl(
-                user.getUuid(),
-                user.getSubjectId(),
-                user.getDisplayName(),
-                user.getFullName(),
-                session,
-                updatableToken);
-
-        // We have authenticated so set the userIdentity in the session for future requests
-        // to retrieve it from
-        UserIdentitySessionUtil.set(session, userIdentity);
-
-        updatableToken.setUserIdentity(userIdentity);
-        addTokenToRefreshManager(updatableToken);
-
-        LOGGER.debug(() -> LogUtil.message(
-                "createAuthFlowUserIdentity() - Authenticated user - session: {}, userIdentity: {}",
-                SessionUtil.getSessionId(session),
-                userIdentity));
-
-        LOGGER.info(() -> "createAuthFlowUserIdentity() - Authenticated user " + userIdentity
-                          + " for sessionId " + SessionUtil.getSessionId(session));
-        return userIdentity;
+                    "createAuthFlowUserIdentity() - Authenticated user: {} {} ({}), " +
+                    "sessionId: {} ({}), user-agent: '{}'",
+                    userIdentity.getSubjectId(),
+                    userIdentity.getDisplayName(),
+                    userIdentity.getFullName().orElse("-"),
+                    SessionUtil.getSessionId(session),
+                    (isNewSession.get()
+                            ? "NEW"
+                            : "EXISTING"),
+                    UserAgentSessionUtil.getUserAgent(session)));
+            return userIdentity;
+        } catch (final Exception e) {
+            LOGGER.error(LogUtil.message(
+                    "Error creating userIdentity for user {}. Session {} has been invalidated. {}",
+                    user, SessionUtil.getSessionId(session), LogUtil.exceptionMessage(e)), e);
+            session.invalidate();
+            throw e;
+        }
     }
 
     /**

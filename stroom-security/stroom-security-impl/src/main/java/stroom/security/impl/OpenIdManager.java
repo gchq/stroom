@@ -129,7 +129,8 @@ class OpenIdManager {
 
                 // Successful login, so redirect to the original URL held in the state.
                 final String uri = state.getInitiatingUri();
-                LOGGER.info(() -> LogUtil.message("backChannelOIDC() - Redirecting to initiating URI: {}", uri));
+                LOGGER.debug(() -> LogUtil.message(
+                        "backChannelOIDC() - Using browser refresh to redirect to initiating URI: {}", uri));
                 redirectUri = RedirectUrl.createWithRefresh(uri);
             } else {
                 redirectUri = RedirectUrl.create(createErrorUri("Authentication failed"));
