@@ -2540,16 +2540,18 @@ button.main-menu svg {
     color: var(--heading-color);
     font-weight: bold;
     font-size: 125%;
-    padding-bottom: 0.3em;
+    padding: 2px 5px;
 }
 
 .table-filter-panel {
     display: flex;
     flex-direction: column;
+    flex-grow: 1;
 }
 
 .table-filter-outer .ColumnValuesFilterViewImpl {
     gap: 0;
+    flex-grow: 1;
 }
 
 .table-filter-outer .ColumnValuesFilterViewImpl .listContainer {
