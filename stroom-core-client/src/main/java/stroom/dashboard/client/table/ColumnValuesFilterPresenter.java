@@ -28,6 +28,7 @@ import stroom.data.table.client.MyCellTable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.query.api.ColumnValueSelection;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.PageResponse;
 import stroom.widget.dropdowntree.client.view.QuickFilterDialogView;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -60,6 +61,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.function.Consumer;
+import javax.inject.Provider;
 
 public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesFilterView>
         implements
@@ -72,9 +74,10 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
     private final CellTable<String> cellTable;
     private final ColumnValueSelectionEventManager typeFilterSelectionEventManager;
 
-    private Element filterButton;
-    private ColumnValuesDataSupplier dataSupplier;
+    private Provider<Element> filterButtonProvider;
+    private Provider<ColumnValuesDataSupplier> dataSupplierProvider;
     private final ColumnValueSelection.Builder selection = ColumnValueSelection.builder();
+    private stroom.query.api.Column column;
     private RestDataProvider<String, ColumnValues> dataProvider;
     private FilterCellManager filterCellManager;
     private String nameFilter;
@@ -110,17 +113,39 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         view.setList(quickFilterPageView);
     }
 
-    public void show(final Element filterButton,
+    public void init(final Provider<Element> filterButtonProvider,
+                     final stroom.query.api.Column column,
+                     final Provider<ColumnValuesDataSupplier> dataSupplierProvider,
+                     final ColumnValueSelection currentSelection,
+                     final FilterCellManager filterCellManager) {
+        this.filterButtonProvider = filterButtonProvider;
+        this.column = column;
+        this.dataSupplierProvider = dataSupplierProvider;
+        this.filterCellManager = filterCellManager;
+
+        if (currentSelection != null) {
+            selection
+                    .values(new HashSet<>(currentSelection.getValues()))
+                    .invert(currentSelection.isInvert());
+        } else {
+            selection.clear().invert(true);
+        }
+
+        clear();
+        refresh();
+    }
+
+    public void show(final Provider<Element> filterButtonProvider,
                      final Element autoHidePartner,
-                     final ColumnValuesDataSupplier dataSupplier,
+                     final stroom.query.api.Column column,
+                     final Provider<ColumnValuesDataSupplier> dataSupplierProvider,
                      final HidePopupEvent.Handler handler,
                      final ColumnValueSelection currentSelection,
                      final FilterCellManager filterCellManager) {
-        this.filterButton = filterButton;
-        this.dataSupplier = dataSupplier;
-        dataSupplier.setNameFilter(nameFilter);
+        this.filterButtonProvider = filterButtonProvider;
+        this.column = column;
+        this.dataSupplierProvider = dataSupplierProvider;
         this.filterCellManager = filterCellManager;
-        dataSupplier.setTaskMonitorFactory(pagerView);
 
         if (currentSelection != null) {
             selection
@@ -133,7 +158,7 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         clear();
         refresh();
 
-        Rect relativeRect = new Rect(filterButton);
+        Rect relativeRect = new Rect(filterButtonProvider.get());
         relativeRect = relativeRect.grow(3);
         final PopupPosition popupPosition = new PopupPosition(relativeRect, PopupLocation.BELOW);
         ShowPopupEvent.builder(this)
@@ -226,13 +251,16 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
 
     private void updateTable() {
         final ColumnValueSelection columnValueSelection = selection.build();
-        filterCellManager.setValueSelection(dataSupplier.getColumn(), columnValueSelection);
+        filterCellManager.setValueSelection(column, columnValueSelection);
         cellTable.redraw();
 
-        if (columnValueSelection.isEnabled()) {
-            filterButton.addClassName("icon-colour__blue");
-        } else {
-            filterButton.removeClassName("icon-colour__blue");
+        final Element filterButton = filterButtonProvider.get();
+        if (filterButton != null) {
+            if (columnValueSelection.isEnabled()) {
+                filterButton.addClassName("icon-colour__blue");
+            } else {
+                filterButton.removeClassName("icon-colour__blue");
+            }
         }
     }
 
@@ -248,11 +276,10 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
     @Override
     public void onFilterChange(final String text) {
         this.nameFilter = text;
-        dataSupplier.setNameFilter(text);
         refresh();
     }
 
-    private void refresh() {
+    public void refresh() {
         if (dataProvider == null) {
             //noinspection Convert2Diamond
             dataProvider = new RestDataProvider<String, ColumnValues>(getEventBus()) {
@@ -260,7 +287,14 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
                 protected void exec(final Range range,
                                     final Consumer<ColumnValues> dataConsumer,
                                     final RestErrorHandler errorHandler) {
-                    dataSupplier.exec(range, dataConsumer, errorHandler);
+                    final ColumnValuesDataSupplier dataSupplier = dataSupplierProvider.get();
+                    if (dataSupplier != null) {
+                        dataSupplier.setTaskMonitorFactory(pagerView);
+                        dataSupplier.setNameFilter(nameFilter);
+                        dataSupplier.exec(range, dataConsumer, errorHandler);
+                    } else {
+                        dataConsumer.accept(new ColumnValues(Collections.emptyList(), PageResponse.empty()));
+                    }
                 }
             };
             dataProvider.addDataDisplay(cellTable);

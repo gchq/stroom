@@ -103,6 +103,7 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -114,14 +115,18 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.google.web.bindery.event.shared.SimpleEventBus;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
@@ -138,7 +143,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class TablePresenter extends AbstractComponentPresenter<TableView>
-        implements HasDirtyHandlers, ResultComponent, HasComponentSelection {
+        implements HasDirtyHandlers, ResultComponent, HasComponentSelection, HasHandlers {
 
     public static final String TAB_TYPE = "table-component";
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
@@ -177,6 +182,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private ExpressionOperator currentSelectionFilter;
     private final TableRowStyles tableRowStyles;
     private boolean initialised;
+    private final EventBus tableEventBus = new SimpleEventBus();
 
     @Inject
     public TablePresenter(final EventBus eventBus,
@@ -559,6 +565,21 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
     }
 
+    public Element getFilterButton(final Column column) {
+        final int index = columnsManager.getColumnIndex(column);
+        if (index >= 0) {
+            final Header<?> header = dataGrid.getHeader(index);
+            final Element th = dataGrid.getTableHeadElement().getChild(index).cast();
+            return ElementUtil.findChild(th, "column-valueFilterIcon");
+        }
+
+        return null;
+    }
+
+    public ColumnsManager getColumnsManager() {
+        return columnsManager;
+    }
+
     private void setDataInternal(final Result componentResult) {
         ignoreRangeChange = true;
         final MessagePanel messagePanel = pagerView.getMessagePanel();
@@ -596,6 +617,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
                 selectionModel.clear();
             }
+
+            TableUpdateEvent.fire(this);
+
         } catch (final RuntimeException e) {
             GWT.log(e.getMessage());
         }
@@ -1342,5 +1366,14 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         private void clear(final Consumer<ColumnValues> dataConsumer) {
             dataConsumer.accept(new ColumnValues(Collections.emptyList(), PageResponse.empty()));
         }
+    }
+
+    public HandlerRegistration addUpdateHandler(final TableUpdateEvent.Handler handler) {
+        return tableEventBus.addHandler(TableUpdateEvent.getType(), handler);
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> event) {
+        tableEventBus.fireEvent(event);
     }
 }

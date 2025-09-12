@@ -18,6 +18,7 @@ package stroom.query.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.table.ColumnFilterPresenter;
+import stroom.dashboard.client.table.ColumnValuesDataSupplier;
 import stroom.dashboard.client.table.ColumnValuesFilterPresenter;
 import stroom.dashboard.client.table.FilterCellManager;
 import stroom.dashboard.client.table.FormatPresenter;
@@ -132,10 +133,12 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
 
                             } else if (isFilterButton) {
                                 currentFilterColIndex = colIndex;
+                                final ColumnValuesDataSupplier dataSupplier = tablePresenter.getDataSupplier(column);
                                 columnValuesFilterPresenter.show(
-                                        button,
+                                        () -> button,
                                         th,
-                                        tablePresenter.getDataSupplier(column),
+                                        column,
+                                        () -> dataSupplier,
                                         hideEvent -> resetFilterColIndex(),
                                         column.getColumnValueSelection(),
                                         QueryTableColumnsManager.this);

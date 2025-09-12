@@ -2448,10 +2448,6 @@ button.main-menu svg {
 }
 
 .ColumnValuesFilterViewImpl {
-    min-width: 200px;
-    max-width: 600px;
-    min-height: 200px;
-    max-height: 600px;
     display: flex;
     flex-direction: column;
     gap: var(--control__padding--vertical);
@@ -2483,6 +2479,7 @@ button.main-menu svg {
 
 .columnValueCell-text {
 	white-space: nowrap;
+	min-width: 200px;
 }
 
 .durationSetting {
@@ -2526,3 +2523,35 @@ button.main-menu svg {
     padding-bottom: 0.3em;
 }
 
+
+
+
+.table-filter-outer {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    overflow: auto;
+    flex-direction: column;
+    padding: 5px;
+    gap: 10px;
+}
+
+.table-filter-label {
+    color: var(--heading-color);
+    font-weight: bold;
+    font-size: 125%;
+    padding-bottom: 0.3em;
+}
+
+.table-filter-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.table-filter-outer .ColumnValuesFilterViewImpl {
+    gap: 0;
+}
+
+.table-filter-outer .ColumnValuesFilterViewImpl .listContainer {
+    height: 150px;
+}
