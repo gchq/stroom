@@ -112,6 +112,7 @@ public interface StandardHeaderArguments {
     String SYSTEM = "System";
     String COMPONENT = "Component";
     String FEED = "Feed";
+    String HOST = "Host"; // Receiving host
     String TYPE = "Type";
     String ENVIRONMENT = "Environment";
     String FORMAT = "Format"; // The data format, e.g. XML, JSON, CSV, etc.
@@ -133,6 +134,14 @@ public interface StandardHeaderArguments {
             "transfer-encoding",
             "expect",
             COMPRESSION);
+
+    /**
+     * Avoid overriding certain HTTP POST headers like `Host`, which causes Server Name Indication (SNI) checks
+     * to fail with some servers.
+     */
+    Set<String> HTTP_POST_EXCLUDE_SET = Set.of(
+            HOST
+    );
 
     /**
      * Header keys for values that are date/time strings
