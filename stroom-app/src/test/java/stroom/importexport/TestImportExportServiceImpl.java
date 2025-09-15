@@ -30,14 +30,15 @@ import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.resource.api.ResourceStore;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.shared.ResourceKey;
 
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -50,8 +51,6 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
     @Inject
     private ImportExportService importExportService;
     @Inject
-    private ResourceStore resourceStore;
-    @Inject
     private PipelineStore pipelineStore;
     @Inject
     private FeedStore feedStore;
@@ -59,6 +58,13 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
     private ExplorerService explorerService;
     @Inject
     private ExplorerNodeService explorerNodeService;
+
+    @TempDir
+    private Path tempDir;
+
+    private Path createTempFile(final String filename) {
+        return tempDir.resolve(filename);
+    }
 
     @Test
     void testExport() {
@@ -136,17 +142,17 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         final int startTranslationSize = pipelineStore.list().size();
         final int startFeedSize = feedStore.list().size();
 
-        final ResourceKey file = resourceStore.createTempFile("Export.zip");
+        final Path file = createTempFile("Export.zip");
         final Set<DocRef> docRefs = new HashSet<>();
         docRefs.add(folder1.getDocRef());
         docRefs.add(folder2.getDocRef());
 
         // Export
-        importExportService.exportConfig(docRefs, resourceStore.getTempFile(file));
+        importExportService.exportConfig(docRefs, file);
 
-        final ResourceKey exportConfig = resourceStore.createTempFile("ExportPlain.zip");
+        final Path exportConfig = createTempFile("ExportPlain.zip");
 
-        importExportService.exportConfig(docRefs, resourceStore.getTempFile(exportConfig));
+        importExportService.exportConfig(docRefs, exportConfig);
 
         // Delete it and check
         pipelineStore.deleteDocument(tran2.asDocRef());
@@ -157,7 +163,7 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
 
         // Import
         final List<ImportState> confirmations = importExportService.importConfig(
-                resourceStore.getTempFile(file),
+                file,
                 ImportSettings.createConfirmation(),
                 new ArrayList<>());
 
@@ -166,7 +172,7 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         }
 
         importExportService.importConfig(
-                resourceStore.getTempFile(file),
+                file,
                 ImportSettings.actionConfirmation(),
                 confirmations);
 
