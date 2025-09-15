@@ -341,6 +341,7 @@ public class UserResourceStoreImpl extends HttpServlet implements ResourceStore,
         public String toString() {
             return "UserResourceKey{" +
                    "userRef=" + userRef +
+                   ", userUuid=" + userRef.getUuid() +
                    ", key=" + resourceKey.getKey() +
                    ", name=" + resourceKey.getName() +
                    '}';

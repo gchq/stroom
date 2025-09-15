@@ -14,5 +14,6 @@ dependencies {
     implementation libs.jakarta.servlet.api
     implementation libs.guice
     implementation libs.mockito.core
+    implementation libs.slf4j.api
     implementation libs.ws.rs.api
 }
