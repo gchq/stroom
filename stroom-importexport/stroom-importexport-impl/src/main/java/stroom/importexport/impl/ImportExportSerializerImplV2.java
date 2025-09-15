@@ -16,6 +16,8 @@ import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.State;
+import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.shared.ProcessorFilter;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.Message;
@@ -106,6 +108,9 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
     /** Provides action handles to allow us to export each node type */
     private final ImportExportActionHandlersImpl importExportActionHandlers;
 
+    /** Provides access to Processor Filters so we can find out whether to export them */
+    private final ProcessorFilterService processorFilterService;
+
     /** Security info */
     private final SecurityContext securityContext;
 
@@ -126,12 +131,14 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                                         final ExplorerService explorerService,
                                         final ExplorerNodeService explorerNodeService,
                                         final ImportExportActionHandlersImpl importExportActionHandlers,
+                                        final ProcessorFilterService processorFilterService,
                                         final SecurityContext securityContext,
                                         final ImportExportDocumentEventLog importExportDocumentEventLog) {
         this.importExportSerializerV1 = importExportSerializerV1;
         this.explorerService = explorerService;
         this.explorerNodeService = explorerNodeService;
         this.importExportActionHandlers = importExportActionHandlers;
+        this.processorFilterService = processorFilterService;
         this.securityContext = securityContext;
         this.importExportDocumentEventLog = importExportDocumentEventLog;
     }
@@ -620,7 +627,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                     importExportActionHandlers.getHandler(importDocRef.getType());
 
             if (importExportActionHandler instanceof NonExplorerDocRefProvider) {
-                LOGGER.error("{}Importing non-explorer doc for node file {}",
+                LOGGER.debug("{}Importing non-explorer doc for node file {}",
                         indent(importDocRefPath),
                         nodeFile);
 
@@ -1408,16 +1415,42 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
             if (associatedNonExplorerDocRefs != null) {
                 LOGGER.debug("Writing associated docRefs");
                 for (final DocRef docRef : associatedNonExplorerDocRefs) {
-                    LOGGER.debug("Writing associated docRef '{}'", docRef);
-                    writeNodeFile(
-                            pathToCurrentNode,
-                            docRef,
-                            null,
-                            parentDirPath);
-                    writeHandlerFiles(
-                            exportInfo,
-                            docRef,
-                            parentDirPath);
+
+                    // What kind of thing have we got?
+                    if (docRef.getType().equals(ProcessorFilter.ENTITY_TYPE)) {
+                        final Optional<ProcessorFilter> optProcessorFilter =
+                                processorFilterService.fetchByUuid(docRef.getUuid());
+                        if (optProcessorFilter.isEmpty()) {
+                            throw new IOException("No Processor Filter found for document reference '"
+                                                  + docRef + "'");
+                        } else {
+                            if (optProcessorFilter.get().isExport()) {
+                                LOGGER.debug("Writing associated docRef '{}'", docRef);
+                                writeNodeFile(
+                                        pathToCurrentNode,
+                                        docRef,
+                                        null,
+                                        parentDirPath);
+                                writeHandlerFiles(
+                                        exportInfo,
+                                        docRef,
+                                        parentDirPath);
+                            } else {
+                                LOGGER.info("DocRef '{}' is not marked for export", docRef);
+                            }
+                        }
+                    } else {
+                        LOGGER.debug("Writing associated docRef '{}'", docRef);
+                        writeNodeFile(
+                                pathToCurrentNode,
+                                docRef,
+                                null,
+                                parentDirPath);
+                        writeHandlerFiles(
+                                exportInfo,
+                                docRef,
+                                parentDirPath);
+                    }
                 }
             }
         }

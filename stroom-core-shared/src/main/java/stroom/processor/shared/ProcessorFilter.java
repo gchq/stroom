@@ -115,6 +115,8 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
     @JsonProperty
     private boolean deleted;
     @JsonProperty
+    private boolean export;
+    @JsonProperty
     private Long minMetaCreateTimeMs;
     @JsonProperty
     private Long maxMetaCreateTimeMs;
@@ -139,6 +141,7 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
                            @JsonProperty("reprocess") final boolean reprocess,
                            @JsonProperty("enabled") final boolean enabled,
                            @JsonProperty("deleted") final boolean deleted,
+                           @JsonProperty("export") final boolean export,
                            @JsonProperty("processorType") final ProcessorType processorType,
                            @JsonProperty("processorUuid") final String processorUuid,
                            @JsonProperty("pipelineUuid") final String pipelineUuid,
@@ -146,6 +149,7 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
                            @JsonProperty("runAsUser") final UserRef runAsUser,
                            @JsonProperty("minMetaCreateTimeMs") final Long minMetaCreateTimeMs,
                            @JsonProperty("maxMetaCreateTimeMs") final Long maxMetaCreateTimeMs) {
+
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -164,6 +168,7 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
         this.reprocess = reprocess;
         this.enabled = enabled;
         this.deleted = deleted;
+        this.export = export;
         this.processorType = processorType == null
                 ? ProcessorType.PIPELINE
                 : processorType;
@@ -391,6 +396,20 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
         this.deleted = deleted;
     }
 
+    /**
+     * @return true if the Processor Filter should be exported, false if not.
+     */
+    public boolean isExport() {
+        return export;
+    }
+
+    /**
+     * Sets whether the Processor Filter should be exported.
+     */
+    public void setExport(final boolean export) {
+        this.export = export;
+    }
+
     public Long getMinMetaCreateTimeMs() {
         return minMetaCreateTimeMs;
     }
@@ -468,6 +487,7 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
                ", reprocess=" + reprocess +
                ", enabled=" + enabled +
                ", deleted=" + deleted +
+               ", export=" + export +
                ", minMetaCreateTimeMs=" + minMetaCreateTimeMs +
                ", maxMetaCreateTimeMs=" + maxMetaCreateTimeMs +
                '}';
@@ -530,6 +550,7 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
         private boolean reprocess;
         private boolean enabled;
         private boolean deleted;
+        private boolean export;
         private Long minMetaCreateTimeMs;
         private Long maxMetaCreateTimeMs;
 
@@ -560,6 +581,7 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
             this.reprocess = filter.reprocess;
             this.enabled = filter.enabled;
             this.deleted = filter.deleted;
+            this.export = filter.export;
             this.minMetaCreateTimeMs = filter.minMetaCreateTimeMs;
             this.maxMetaCreateTimeMs = filter.maxMetaCreateTimeMs;
         }
@@ -664,6 +686,14 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
             return this;
         }
 
+        /**
+         * Flag the Processor Filter to show whether it should be exported.
+         */
+        public Builder export(final boolean export) {
+            this.export = export;
+            return this;
+        }
+
         public Builder minMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
             this.minMetaCreateTimeMs = minMetaCreateTimeMs;
             return this;
@@ -691,6 +721,7 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
                     reprocess,
                     enabled,
                     deleted,
+                    export,
                     processorType,
                     processorUuid,
                     pipelineUuid,
