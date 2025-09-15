@@ -32,7 +32,6 @@ import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
-import stroom.util.shared.ResourceKey;
 
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -179,11 +178,11 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         assertThat(feedStore.list().size()).isEqualTo(startFeedSize);
         assertThat(pipelineStore.list().size()).isEqualTo(startTranslationSize);
 
-        final ResourceKey fileChild = resourceStore.createTempFile("ExportChild.zip");
+        final Path fileChild = createTempFile("ExportChild.zip");
         final Set<DocRef> criteriaChild = new HashSet<>();
         criteriaChild.add(folder2child2.getDocRef());
 
         // Export
-        importExportService.exportConfig(criteriaChild, resourceStore.getTempFile(fileChild));
+        importExportService.exportConfig(criteriaChild, fileChild);
     }
 }
