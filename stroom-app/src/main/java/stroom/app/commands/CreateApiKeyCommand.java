@@ -5,9 +5,9 @@ import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserService;
 import stroom.security.impl.apikey.ApiKeyService;
-import stroom.security.shared.ApiKeyHashAlgorithm;
 import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.CreateHashedApiKeyResponse;
+import stroom.security.shared.HashAlgorithm;
 import stroom.security.shared.User;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.logging.LogUtil;
@@ -166,9 +166,9 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
             throw new RuntimeException(EXPIRY_DAYS_ARG_NAME + " must be greater than zero.");
         }
 
-        final ApiKeyHashAlgorithm hashAlgorithm = Objects.requireNonNullElse(
+        final HashAlgorithm hashAlgorithm = Objects.requireNonNullElse(
                 namespace.get(HASH_ALGORITHM_ARG_NAME),
-                ApiKeyHashAlgorithm.DEFAULT);
+                HashAlgorithm.DEFAULT);
 
         LOGGER.info("Creating API key for user '{}' using algorithm '{}'",
                 userRef.toInfoString(),

@@ -48,7 +48,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
     @JsonProperty
     private final boolean enabled;
     @JsonProperty
-    private final ApiKeyHashAlgorithm hashAlgorithm;
+    private final HashAlgorithm hashAlgorithm;
 
     @JsonCreator
     public HashedApiKey(@JsonProperty("id") final Integer id,
@@ -64,7 +64,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
                         @JsonProperty("name") final String name,
                         @JsonProperty("comments") final String comments,
                         @JsonProperty("enabled") final boolean enabled,
-                        @JsonProperty("hashAlgorithm") final ApiKeyHashAlgorithm hashAlgorithm) {
+                        @JsonProperty("hashAlgorithm") final HashAlgorithm hashAlgorithm) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -85,7 +85,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
     private HashedApiKey() {
         this(HashedApiKey
                 .builder()
-                .withHashAlgorithm(ApiKeyHashAlgorithm.BCRYPT));
+                .withHashAlgorithm(HashAlgorithm.BCRYPT));
     }
 
     private HashedApiKey(final Builder builder) {
@@ -185,7 +185,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
         return enabled;
     }
 
-    public ApiKeyHashAlgorithm getHashAlgorithm() {
+    public HashAlgorithm getHashAlgorithm() {
         return hashAlgorithm;
     }
 
@@ -262,7 +262,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
         private String name;
         private String comments;
         private boolean enabled = true;
-        private ApiKeyHashAlgorithm hashAlgorithm = ApiKeyHashAlgorithm.DEFAULT;
+        private HashAlgorithm hashAlgorithm = HashAlgorithm.DEFAULT;
 
         private Builder() {
         }
@@ -348,7 +348,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
             return this;
         }
 
-        public Builder withHashAlgorithm(final ApiKeyHashAlgorithm val) {
+        public Builder withHashAlgorithm(final HashAlgorithm val) {
             hashAlgorithm = val;
             return this;
         }

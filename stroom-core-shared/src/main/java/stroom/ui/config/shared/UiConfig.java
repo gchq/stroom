@@ -18,7 +18,7 @@ package stroom.ui.config.shared;
 
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.StandardExplorerTags;
-import stroom.security.shared.ApiKeyHashAlgorithm;
+import stroom.security.shared.HashAlgorithm;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.validation.AllMatchPattern;
@@ -165,7 +165,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                              "'BCRYPT' and 'ARGON2'. " +
                              "This property controls the default value of a selection box, but the user select a " +
                              "different one.")
-    private final ApiKeyHashAlgorithm defaultApiKeyHashAlgorithm;
+    private final HashAlgorithm defaultHashAlgorithm;
 
     @JsonProperty
     @JsonPropertyDescription("The maximum number of code completion entries to show in the popup when using " +
@@ -200,7 +200,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         nestedIndexFieldsDelimiterPattern = "[.:]"; // : is to split the special annotation:XXX fields
         referencePipelineSelectorIncludedTags = StandardExplorerTags.asTagNameSet(
                 StandardExplorerTags.REFERENCE_LOADER);
-        defaultApiKeyHashAlgorithm = ApiKeyHashAlgorithm.SHA3_256;
+        defaultHashAlgorithm = HashAlgorithm.SHA3_256;
         maxEditorCompletionEntries = 1_000;
     }
 
@@ -232,7 +232,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                     @JsonProperty("reportUiDefaultConfig") final ReportUiDefaultConfig reportUiDefaultConfig,
                     @JsonProperty("nestedIndexFieldsDelimiterPattern") final String nestedIndexFieldsDelimiterPattern,
                     @JsonProperty("referencePipelineSelectorIncludedTags") final Set<String> referencePipelineSelectorIncludedTags,
-                    @JsonProperty("defaultApiKeyHashAlgorithm") final ApiKeyHashAlgorithm defaultApiKeyHashAlgorithm,
+                    @JsonProperty("defaultHashAlgorithm") final HashAlgorithm defaultHashAlgorithm,
                     @JsonProperty("maxEditorCompletionEntries") final int maxEditorCompletionEntries) {
         this.welcomeHtml = welcomeHtml;
         this.aboutHtml = aboutHtml;
@@ -260,7 +260,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         this.reportUiDefaultConfig = reportUiDefaultConfig;
         this.nestedIndexFieldsDelimiterPattern = nestedIndexFieldsDelimiterPattern;
         this.referencePipelineSelectorIncludedTags = referencePipelineSelectorIncludedTags;
-        this.defaultApiKeyHashAlgorithm = defaultApiKeyHashAlgorithm;
+        this.defaultHashAlgorithm = defaultHashAlgorithm;
         this.maxEditorCompletionEntries = maxEditorCompletionEntries;
     }
 
@@ -428,8 +428,8 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         return referencePipelineSelectorIncludedTags;
     }
 
-    public ApiKeyHashAlgorithm getDefaultApiKeyHashAlgorithm() {
-        return defaultApiKeyHashAlgorithm;
+    public HashAlgorithm getDefaultHashAlgorithm() {
+        return defaultHashAlgorithm;
     }
 
     public int getMaxEditorCompletionEntries() {
@@ -470,7 +470,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                && Objects.equals(nodeMonitoring, uiConfig.nodeMonitoring)
                && Objects.equals(nestedIndexFieldsDelimiterPattern, uiConfig.nestedIndexFieldsDelimiterPattern)
                && Objects.equals(referencePipelineSelectorIncludedTags, uiConfig.referencePipelineSelectorIncludedTags)
-               && Objects.equals(defaultApiKeyHashAlgorithm, uiConfig.defaultApiKeyHashAlgorithm)
+               && Objects.equals(defaultHashAlgorithm, uiConfig.defaultHashAlgorithm)
                && Objects.equals(maxEditorCompletionEntries, uiConfig.maxEditorCompletionEntries);
     }
 
@@ -500,7 +500,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 reportUiDefaultConfig,
                 nestedIndexFieldsDelimiterPattern,
                 referencePipelineSelectorIncludedTags,
-                defaultApiKeyHashAlgorithm,
+                defaultHashAlgorithm,
                 maxEditorCompletionEntries);
     }
 
@@ -531,7 +531,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                ", reportUiDefaultConfig=" + reportUiDefaultConfig +
                ", nestedIndexFieldsDelimiterPattern=" + nestedIndexFieldsDelimiterPattern +
                ", referencePipelineSelectorIncludedTags=" + referencePipelineSelectorIncludedTags +
-               ", defaultApiKeyHashAlgorithm=" + defaultApiKeyHashAlgorithm +
+               ", defaultHashAlgorithm=" + defaultHashAlgorithm +
                ", maxEditorCompletionEntries=" + maxEditorCompletionEntries +
                '}';
     }

@@ -26,7 +26,7 @@ public class CreateHashedApiKeyRequest {
     @JsonProperty
     private final boolean enabled;
     @JsonProperty
-    private final ApiKeyHashAlgorithm hashAlgorithm;
+    private final HashAlgorithm hashAlgorithm;
 
     @JsonCreator
     public CreateHashedApiKeyRequest(@JsonProperty("owner") final UserRef owner,
@@ -34,7 +34,7 @@ public class CreateHashedApiKeyRequest {
                                      @JsonProperty("name") final String name,
                                      @JsonProperty("comments") final String comments,
                                      @JsonProperty("enabled") final boolean enabled,
-                                     @JsonProperty("hashAlgorithm") final ApiKeyHashAlgorithm hashAlgorithm) {
+                                     @JsonProperty("hashAlgorithm") final HashAlgorithm hashAlgorithm) {
         this.owner = Objects.requireNonNull(owner);
         this.expireTimeMs = expireTimeMs;
         this.name = Objects.requireNonNull(name);
@@ -49,7 +49,7 @@ public class CreateHashedApiKeyRequest {
                 .builder()
                 .withOwner(UserRef.builder().build())
                 .withName("test")
-                .withHashAlgorithm(ApiKeyHashAlgorithm.BCRYPT));
+                .withHashAlgorithm(HashAlgorithm.BCRYPT));
     }
 
     private CreateHashedApiKeyRequest(final Builder builder) {
@@ -96,7 +96,7 @@ public class CreateHashedApiKeyRequest {
         return enabled;
     }
 
-    public ApiKeyHashAlgorithm getHashAlgorithm() {
+    public HashAlgorithm getHashAlgorithm() {
         return hashAlgorithm;
     }
 
@@ -142,7 +142,7 @@ public class CreateHashedApiKeyRequest {
         private String name;
         private String comments;
         private boolean enabled = true;
-        private ApiKeyHashAlgorithm hashAlgorithm = ApiKeyHashAlgorithm.DEFAULT;
+        private HashAlgorithm hashAlgorithm = HashAlgorithm.DEFAULT;
 
         private Builder() {
         }
@@ -176,7 +176,7 @@ public class CreateHashedApiKeyRequest {
             return this;
         }
 
-        public Builder withHashAlgorithm(final ApiKeyHashAlgorithm val) {
+        public Builder withHashAlgorithm(final HashAlgorithm val) {
             hashAlgorithm = val;
             return this;
         }

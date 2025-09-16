@@ -5,10 +5,10 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.EditApiKeyPresenter.EditApiKeyView;
-import stroom.security.shared.ApiKeyHashAlgorithm;
 import stroom.security.shared.ApiKeyResource;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.CreateHashedApiKeyRequest;
+import stroom.security.shared.HashAlgorithm;
 import stroom.security.shared.HashedApiKey;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
@@ -95,8 +95,8 @@ public class EditApiKeyPresenter
         uiConfigCache.get(uiConfigCache -> {
             if (Mode.PRE_CREATE.equals(mode)) {
                 getView().setHashAlgorithm(NullSafe.requireNonNullElse(
-                        uiConfigCache.getDefaultApiKeyHashAlgorithm(),
-                        ApiKeyHashAlgorithm.DEFAULT));
+                        uiConfigCache.getDefaultHashAlgorithm(),
+                        HashAlgorithm.DEFAULT));
             }
             ShowPopupEvent.builder(this)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
@@ -345,8 +345,8 @@ public class EditApiKeyPresenter
 
         void reset(Long milliseconds);
 
-        void setHashAlgorithm(ApiKeyHashAlgorithm hashAlgorithm);
+        void setHashAlgorithm(HashAlgorithm hashAlgorithm);
 
-        ApiKeyHashAlgorithm getHashAlgorithm();
+        HashAlgorithm getHashAlgorithm();
     }
 }
