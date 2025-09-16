@@ -8113,6 +8113,24 @@ paths:
       summary: Fetch a list of words from a dictionary by its UUID
       tags:
       - Word List (v1)
+  /xmlSchema/v1/validate:
+    post:
+      operationId: validateXmlSchema
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/XmlSchemaValidationResponse"
+          description: default response
+      summary: Validate an XML schema
+      tags:
+      - XML Schemas
   /xmlSchema/v1/{uuid}:
     get:
       operationId: fetchXmlSchema
@@ -18670,6 +18688,13 @@ components:
           type: string
         version:
           type: string
+    XmlSchemaValidationResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        ok:
+          type: boolean
     XsltDoc:
       type: object
       properties:

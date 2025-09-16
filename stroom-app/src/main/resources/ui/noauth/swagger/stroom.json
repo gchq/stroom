@@ -11831,6 +11831,34 @@
         "tags" : [ "Word List (v1)" ]
       }
     },
+    "/xmlSchema/v1/validate" : {
+      "post" : {
+        "operationId" : "validateXmlSchema",
+        "requestBody" : {
+          "content" : {
+            "text/plain" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/XmlSchemaValidationResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Validate an XML schema",
+        "tags" : [ "XML Schemas" ]
+      }
+    },
     "/xmlSchema/v1/{uuid}" : {
       "get" : {
         "operationId" : "fetchXmlSchema",
@@ -24984,6 +25012,17 @@
           },
           "version" : {
             "type" : "string"
+          }
+        }
+      },
+      "XmlSchemaValidationResponse" : {
+        "type" : "object",
+        "properties" : {
+          "error" : {
+            "type" : "string"
+          },
+          "ok" : {
+            "type" : "boolean"
           }
         }
       },
