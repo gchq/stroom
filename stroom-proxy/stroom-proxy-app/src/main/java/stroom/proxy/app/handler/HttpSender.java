@@ -174,7 +174,9 @@ public class HttpSender implements StreamDestination {
 
         final AttributeMap sendHeader = AttributeMapUtil.cloneAllowable(attributeMap);
         for (final Entry<String, String> entry : sendHeader.entrySet()) {
-            httpPost.addHeader(entry.getKey(), entry.getValue());
+            if (!StandardHeaderArguments.HTTP_POST_EXCLUDE_SET.contains(entry.getKey())) {
+                httpPost.addHeader(entry.getKey(), entry.getValue());
+            }
         }
 
         // We may be doing an instant forward so need to pass on the compression type.

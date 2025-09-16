@@ -13,6 +13,18 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#5091** : Stop reference data loads failing if there are no entries in the stream.
+
+* Add `ReceiptId` to the INFO message on data receipt.
+
+* Issue **#5095** : Lock the cluster to perform pipeline migration to prevent other nodes clashing.
+
+* Issue **#5099** : Fix Plan B session key serialisation.
+
+* Issue **#5090** : Fix Plan B getVal() serialisation.
+
+* Issue **#5106** : Fix ref loads with XML values where the `<value>` element name is not in lower case.
+
 * Issue **#5042** : Allow the import of processor filters when the existing processor filter is in a logically deleted state. Add validation to the import confirm dialog to ensure the parent doc is selected when a processor filter is selected.
 
 * Change DocRef Info Cache to evict entries on document creation to stop stroom saying that a document doesn't exist after import.
