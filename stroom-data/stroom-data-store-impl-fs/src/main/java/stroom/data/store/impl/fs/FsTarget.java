@@ -33,7 +33,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
-import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -170,49 +169,33 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
             throw new DataException("Target already closed");
         }
 
-        try {
-            if (!deleted) {
-                // If we get error on closing the stream we must return it to the caller
-                IOException streamCloseException = null;
+        if (!deleted) {
+            // If we get error on closing the stream we must return it to the caller
+            RuntimeException streamCloseException = null;
+            try {
+                closeStreams();
+            } catch (final RuntimeException e) {
+                streamCloseException = e;
+            }
 
-                // Close the stream target.
-                try {
-                    if (outputStream != null) {
-                        outputStream.close();
-                    }
+            // Only write meta for the root target.
+            if (parent == null) {
+                // Update attributes and write the manifest.
+                updateAttribute(this, MetaFields.RAW_SIZE, String.valueOf(getStreamSize()));
+                updateAttribute(this, MetaFields.FILE_SIZE, String.valueOf(getTotalFileSize()));
+                writeManifest();
 
-                    // Close off any open kids .... closing the parent
-                    // closes kids (the caller can also close the kid off if they like).
-                    childMap.forEach((k, v) -> v.close());
-                    childMap.clear();
-                } catch (final ClosedByInterruptException e) {
-                    // WE expect these exceptions if a user is trying to terminate.
-                    LOGGER.debug(() -> "closeStreamTarget() - Error on closing stream " + this, e);
-                    streamCloseException = e;
-                } catch (final IOException e) {
-                    LOGGER.error(() -> "closeStreamTarget() - Error on closing stream " + this, e);
-                    streamCloseException = e;
-                }
-
-                // Only write meta for the root target.
-                if (parent == null) {
-                    // Update attributes and write the manifest.
-                    updateAttribute(this, MetaFields.RAW_SIZE, String.valueOf(getStreamSize()));
-                    updateAttribute(this, MetaFields.FILE_SIZE, String.valueOf(getTotalFileSize()));
-                    writeManifest();
-
-                    if (streamCloseException == null) {
-                        // Unlock will update the meta data so set it back on the stream
-                        // target so the client has the up to date copy
-                        unlock(getMeta(), getAttributes());
-                    } else {
-                        throw new UncheckedIOException(streamCloseException);
-                    }
+                if (streamCloseException == null) {
+                    // Unlock will update the meta data so set it back on the stream
+                    // target so the client has the up to date copy
+                    unlock(getMeta(), getAttributes());
+                } else {
+                    throw streamCloseException;
                 }
             }
-        } finally {
-            closed = true;
         }
+
+        closed = true;
     }
 
     private void unlock(final Meta meta, final AttributeMap attributeMap) {
@@ -237,32 +220,51 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
         if (deleted) {
             throw new DataException("Target already deleted");
         }
-        if (closed) {
-            throw new DataException("Target already closed");
-        }
 
         try {
             // Close the stream target.
-            try {
-                if (outputStream != null) {
-                    outputStream.close();
-                }
-
-                // Close off any open kids .... closing the parent
-                // closes kids (the caller can also close the kid off if they like).
-                childMap.forEach((k, v) -> v.close());
-                childMap.clear();
-            } catch (final IOException e) {
-                LOGGER.error(() -> "closeStreamTarget() - Error on closing stream " + this, e);
-            }
-
+            closeStreams();
+        } finally {
             // Only delete the root target.
             if (parent == null) {
                 // Mark the target meta as deleted.
                 this.meta = metaService.updateStatus(meta, Status.LOCKED, Status.DELETED);
             }
-        } finally {
             deleted = true;
+        }
+    }
+
+    private synchronized void closeStreams() {
+        RuntimeException exception = null;
+
+        // Close the stream target.
+        if (outputStream != null) {
+            try {
+                outputStream.close();
+            } catch (final IOException e) {
+                LOGGER.error(() -> "closeStreams() - Error on closing stream " + this, e);
+                exception = new UncheckedIOException(e);
+            } finally {
+                outputStream = null;
+            }
+        }
+
+        // Close off any open kids .... closing the parent
+        // closes kids (the caller can also close the kid off if they like).
+        for (final FsTarget child : childMap.values()) {
+            try {
+                child.close();
+            } catch (final RuntimeException e) {
+                LOGGER.error(() -> "closeStreams() - Error on closing child stream " + this, e);
+                if (exception != null) {
+                    exception = e;
+                }
+            }
+        }
+        childMap.clear();
+
+        if (exception != null) {
+            throw exception;
         }
     }
 
