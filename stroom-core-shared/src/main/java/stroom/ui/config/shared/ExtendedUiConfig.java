@@ -275,8 +275,8 @@ public class ExtendedUiConfig {
     }
 
     @JsonIgnore
-    public HashAlgorithm getDefaultHashAlgorithm() {
-        return uiConfig.getDefaultHashAlgorithm();
+    public HashAlgorithm getDefaultApiKeyHashAlgorithm() {
+        return uiConfig.getDefaultApiKeyHashAlgorithm();
     }
 
     @JsonIgnore

@@ -95,7 +95,7 @@ public class EditApiKeyPresenter
         uiConfigCache.get(uiConfigCache -> {
             if (Mode.PRE_CREATE.equals(mode)) {
                 getView().setHashAlgorithm(NullSafe.requireNonNullElse(
-                        uiConfigCache.getDefaultHashAlgorithm(),
+                        uiConfigCache.getDefaultApiKeyHashAlgorithm(),
                         HashAlgorithm.DEFAULT));
             }
             ShowPopupEvent.builder(this)
