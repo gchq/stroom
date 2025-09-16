@@ -79,6 +79,6 @@ END $$
 CALL processor_add_column_v1(
         'processor_filter',
         'export',
-        'TINYINT(1) NOT NULL DEFAULT 0');
+        'TINYINT(1) NOT NULL DEFAULT 0')$$
 
 -- vim: set shiftwidth=4 tabstop=4 expandtab:
