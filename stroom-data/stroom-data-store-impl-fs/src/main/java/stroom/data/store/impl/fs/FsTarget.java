@@ -169,35 +169,33 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
             throw new DataException("Target already closed");
         }
 
-        try {
-            if (!deleted) {
-                // If we get error on closing the stream we must return it to the caller
-                RuntimeException streamCloseException = null;
-                try {
-                    closeStreams();
-                } catch (final RuntimeException e) {
-                    streamCloseException = e;
-                }
+        if (!deleted) {
+            // If we get error on closing the stream we must return it to the caller
+            RuntimeException streamCloseException = null;
+            try {
+                closeStreams();
+            } catch (final RuntimeException e) {
+                streamCloseException = e;
+            }
 
-                // Only write meta for the root target.
-                if (parent == null) {
-                    // Update attributes and write the manifest.
-                    updateAttribute(this, MetaFields.RAW_SIZE, String.valueOf(getStreamSize()));
-                    updateAttribute(this, MetaFields.FILE_SIZE, String.valueOf(getTotalFileSize()));
-                    writeManifest();
+            // Only write meta for the root target.
+            if (parent == null) {
+                // Update attributes and write the manifest.
+                updateAttribute(this, MetaFields.RAW_SIZE, String.valueOf(getStreamSize()));
+                updateAttribute(this, MetaFields.FILE_SIZE, String.valueOf(getTotalFileSize()));
+                writeManifest();
 
-                    if (streamCloseException == null) {
-                        // Unlock will update the meta data so set it back on the stream
-                        // target so the client has the up to date copy
-                        unlock(getMeta(), getAttributes());
-                    } else {
-                        throw streamCloseException;
-                    }
+                if (streamCloseException == null) {
+                    // Unlock will update the meta data so set it back on the stream
+                    // target so the client has the up to date copy
+                    unlock(getMeta(), getAttributes());
+                } else {
+                    throw streamCloseException;
                 }
             }
-        } finally {
-            closed = true;
         }
+
+        closed = true;
     }
 
     private void unlock(final Meta meta, final AttributeMap attributeMap) {
@@ -224,19 +222,14 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
         }
 
         try {
-            try {
-                // Close the stream target.
-                closeStreams();
-            } finally {
-                closed = true;
-
-                // Only delete the root target.
-                if (parent == null) {
-                    // Mark the target meta as deleted.
-                    this.meta = metaService.updateStatus(meta, Status.LOCKED, Status.DELETED);
-                }
-            }
+            // Close the stream target.
+            closeStreams();
         } finally {
+            // Only delete the root target.
+            if (parent == null) {
+                // Mark the target meta as deleted.
+                this.meta = metaService.updateStatus(meta, Status.LOCKED, Status.DELETED);
+            }
             deleted = true;
         }
     }
