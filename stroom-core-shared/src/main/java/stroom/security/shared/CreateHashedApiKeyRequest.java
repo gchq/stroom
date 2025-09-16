@@ -49,7 +49,7 @@ public class CreateHashedApiKeyRequest {
                 .builder()
                 .withOwner(UserRef.builder().build())
                 .withName("test")
-                .withHashAlgorithm(HashAlgorithm.BCRYPT));
+                .withHashAlgorithm(ApiKeyHashAlgorithm.BCRYPT));
     }
 
     private CreateHashedApiKeyRequest(final Builder builder) {

@@ -85,7 +85,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
     private HashedApiKey() {
         this(HashedApiKey
                 .builder()
-                .withHashAlgorithm(HashAlgorithm.BCRYPT));
+                .withHashAlgorithm(ApiKeyHashAlgorithm.BCRYPT));
     }
 
     private HashedApiKey(final Builder builder) {
