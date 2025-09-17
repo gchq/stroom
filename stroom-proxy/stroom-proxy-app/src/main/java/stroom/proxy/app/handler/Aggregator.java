@@ -20,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -103,7 +104,7 @@ public class Aggregator {
                                     final Map.Entry<String, String> entry = iterator.next();
                                     final String otherValue = headers.get(entry.getKey());
                                     // If this header is different then remove the common header.
-                                    if (!entry.getValue().equals(otherValue)) {
+                                    if (!Objects.equals(entry.getValue(), otherValue)) {
                                         iterator.remove();
                                     }
                                 }
