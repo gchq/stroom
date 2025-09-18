@@ -1,5 +1,6 @@
 package stroom.dashboard.client.table;
 
+import stroom.dashboard.shared.ColumnValue;
 import stroom.query.api.ColumnValueSelection;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.HtmlBuilder;
@@ -10,7 +11,7 @@ import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
-public class ColumnValueCell extends AbstractCell<String> {
+public class ColumnValueCell extends AbstractCell<ColumnValue> {
 
     private final ColumnValueSelection.Builder columnValueSelection;
 
@@ -19,13 +20,13 @@ public class ColumnValueCell extends AbstractCell<String> {
     }
 
     @Override
-    public void render(final Context context, final String item, final SafeHtmlBuilder sb) {
+    public void render(final Context context, final ColumnValue item, final SafeHtmlBuilder sb) {
         if (item != null) {
             final HtmlBuilder hb = new HtmlBuilder(sb);
             final ColumnValueSelection selection = columnValueSelection.build();
 
             final boolean selected;
-            if (selection.getValues().contains(item)) {
+            if (selection.getValues().contains(item.getValue())) {
                 selected = !selection.isInvert();
             } else {
                 selected = selection.isInvert();
@@ -50,7 +51,7 @@ public class ColumnValueCell extends AbstractCell<String> {
                             Attribute.className("tickBox tickBox-noBorder tickBox-untick"));
                 }
 
-                outer.div(item, Attribute.className("columnValueCell-text"));
+                outer.div(item.getValue(), Attribute.className("columnValueCell-text"));
             }, Attribute.className("columnValueCell"));
         }
     }

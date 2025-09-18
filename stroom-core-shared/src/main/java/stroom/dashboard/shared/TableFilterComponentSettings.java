@@ -17,6 +17,7 @@
 package stroom.dashboard.shared;
 
 import stroom.query.api.ColumnRef;
+import stroom.query.api.ConditionalFormattingRule;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -25,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @JsonPropertyOrder({
@@ -37,12 +39,17 @@ public final class TableFilterComponentSettings implements ComponentSettings {
     private final String tableId;
     @JsonProperty
     private final List<ColumnRef> columns;
+    @JsonProperty
+    private final Map<String, List<ConditionalFormattingRule>> conditionalFormattingRules;
 
     @JsonCreator
     public TableFilterComponentSettings(@JsonProperty("tableId") final String tableId,
-                                        @JsonProperty("columns") final List<ColumnRef> columns) {
+                                        @JsonProperty("columns") final List<ColumnRef> columns,
+                                        @JsonProperty("conditionalFormattingRules")
+                                            final Map<String, List<ConditionalFormattingRule>> conditionalFormattingRules) {
         this.tableId = tableId;
         this.columns = columns;
+        this.conditionalFormattingRules = conditionalFormattingRules;
     }
 
     public String getTableId() {
@@ -51,6 +58,10 @@ public final class TableFilterComponentSettings implements ComponentSettings {
 
     public List<ColumnRef> getColumns() {
         return columns;
+    }
+
+    public Map<String, List<ConditionalFormattingRule>> getConditionalFormattingRules() {
+        return conditionalFormattingRules;
     }
 
     @Override
@@ -63,12 +74,13 @@ public final class TableFilterComponentSettings implements ComponentSettings {
         }
         final TableFilterComponentSettings that = (TableFilterComponentSettings) o;
         return Objects.equals(tableId, that.tableId) &&
-               Objects.equals(columns, that.columns);
+               Objects.equals(columns, that.columns) &&
+               Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(tableId, columns);
+        return Objects.hash(tableId, columns, conditionalFormattingRules);
     }
 
     @Override
@@ -76,6 +88,7 @@ public final class TableFilterComponentSettings implements ComponentSettings {
         return "VisComponentSettings{" +
                "tableId='" + tableId + '\'' +
                ", columns=" + columns +
+               ", conditionalFormattingRules=" + conditionalFormattingRules +
                '}';
     }
 
@@ -93,13 +106,15 @@ public final class TableFilterComponentSettings implements ComponentSettings {
 
         private String tableId;
         private List<ColumnRef> columns;
+        private Map<String, List<ConditionalFormattingRule>> conditionalFormattingRules;
 
         private Builder() {
         }
 
-        private Builder(final TableFilterComponentSettings visComponentSettings) {
-            this.tableId = visComponentSettings.tableId;
-            this.columns = visComponentSettings.columns;
+        private Builder(final TableFilterComponentSettings settings) {
+            this.tableId = settings.tableId;
+            this.columns = settings.columns;
+            this.conditionalFormattingRules = settings.conditionalFormattingRules;
         }
 
         public Builder tableId(final String tableId) {
@@ -112,6 +127,12 @@ public final class TableFilterComponentSettings implements ComponentSettings {
             return self();
         }
 
+        public Builder conditionalFormattingRules(
+                final Map<String, List<ConditionalFormattingRule>> conditionalFormattingRules) {
+            this.conditionalFormattingRules = conditionalFormattingRules;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -119,7 +140,10 @@ public final class TableFilterComponentSettings implements ComponentSettings {
 
         @Override
         public TableFilterComponentSettings build() {
-            return new TableFilterComponentSettings(tableId, columns);
+            return new TableFilterComponentSettings(
+                    tableId,
+                    columns,
+                    conditionalFormattingRules);
         }
     }
 }

@@ -16,7 +16,9 @@
 
 package stroom.dashboard.client.table;
 
+import stroom.dashboard.client.input.ColumnValueRowStyles;
 import stroom.dashboard.client.table.ColumnValuesFilterPresenter.ColumnValuesFilterView;
+import stroom.dashboard.shared.ColumnValue;
 import stroom.dashboard.shared.ColumnValues;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
@@ -26,7 +28,9 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.MyCellTable;
 import stroom.dispatch.client.RestErrorHandler;
+import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.ColumnValueSelection;
+import stroom.query.api.ConditionalFormattingRule;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageResponse;
 import stroom.widget.dropdowntree.client.view.QuickFilterDialogView;
@@ -71,14 +75,15 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
 
     private final QuickFilterDialogView quickFilterPageView;
     private final PagerView pagerView;
-    private final CellTable<String> cellTable;
+    private final CellTable<ColumnValue> cellTable;
     private final ColumnValueSelectionEventManager typeFilterSelectionEventManager;
+    private final ColumnValueRowStyles rowStyles;
 
     private Provider<Element> filterButtonProvider;
     private Provider<ColumnValuesDataSupplier> dataSupplierProvider;
     private final ColumnValueSelection.Builder selection = ColumnValueSelection.builder();
     private stroom.query.api.Column column;
-    private RestDataProvider<String, ColumnValues> dataProvider;
+    private RestDataProvider<ColumnValue, ColumnValues> dataProvider;
     private FilterCellManager filterCellManager;
     private String nameFilter;
 
@@ -86,15 +91,18 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
     public ColumnValuesFilterPresenter(final EventBus eventBus,
                                        final ColumnValuesFilterView view,
                                        final QuickFilterDialogView quickFilterPageView,
-                                       final PagerView pagerView) {
+                                       final PagerView pagerView,
+                                       final UserPreferencesManager userPreferencesManager) {
         super(eventBus, view);
         view.setUiHandlers(this);
         quickFilterPageView.setUiHandlers(this);
         this.quickFilterPageView = quickFilterPageView;
         this.pagerView = pagerView;
 
+        rowStyles = new ColumnValueRowStyles(userPreferencesManager);
         cellTable = new MyCellTable<>(MyDataGrid.DEFAULT_LIST_PAGE_SIZE);
         cellTable.getElement().setClassName("menuCellTable");
+        cellTable.setRowStyles(rowStyles);
 
         // Sink events.
         final int mouseMove = Event.getTypeInt(BrowserEvents.MOUSEMOVE);
@@ -103,7 +111,7 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         cellTable.addColumn(getTickBoxColumn());
         cellTable.setSkipRowHoverCheck(true);
 
-        final MySingleSelectionModel<String> selectionModel = new MySingleSelectionModel<>();
+        final MySingleSelectionModel<ColumnValue> selectionModel = new MySingleSelectionModel<>();
         typeFilterSelectionEventManager = new ColumnValueSelectionEventManager(cellTable);
         cellTable.setSelectionModel(selectionModel, typeFilterSelectionEventManager);
 
@@ -117,11 +125,13 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
                      final stroom.query.api.Column column,
                      final Provider<ColumnValuesDataSupplier> dataSupplierProvider,
                      final ColumnValueSelection currentSelection,
-                     final FilterCellManager filterCellManager) {
+                     final FilterCellManager filterCellManager,
+                     final List<ConditionalFormattingRule> rules) {
         this.filterButtonProvider = filterButtonProvider;
         this.column = column;
         this.dataSupplierProvider = dataSupplierProvider;
         this.filterCellManager = filterCellManager;
+        rowStyles.setConditionalFormattingRules(rules);
 
         if (currentSelection != null) {
             selection
@@ -193,11 +203,11 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
     public void onSelectAll() {
         if (NullSafe.isNonEmptyString(nameFilter)) {
             final ColumnValueSelection sel = selection.build();
-            for (final String value : cellTable.getVisibleItems()) {
+            for (final ColumnValue value : cellTable.getVisibleItems()) {
                 if (sel.isInvert()) {
-                    selection.remove(value);
+                    selection.remove(value.getValue());
                 } else {
-                    selection.add(value);
+                    selection.add(value.getValue());
                 }
             }
         } else {
@@ -210,11 +220,11 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
     public void onSelectNone() {
         if (NullSafe.isNonEmptyString(nameFilter)) {
             final ColumnValueSelection sel = selection.build();
-            for (final String value : cellTable.getVisibleItems()) {
+            for (final ColumnValue value : cellTable.getVisibleItems()) {
                 if (sel.isInvert()) {
-                    selection.add(value);
+                    selection.add(value.getValue());
                 } else {
-                    selection.remove(value);
+                    selection.remove(value.getValue());
                 }
             }
         } else {
@@ -227,7 +237,7 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         setData(Collections.emptyList());
     }
 
-    private void setData(final List<String> values) {
+    private void setData(final List<ColumnValue> values) {
         cellTable.setRowData(0, values);
         cellTable.setRowCount(values.size());
     }
@@ -242,9 +252,9 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         return getEventBus().addHandlerToSource(DataSelectionEvent.getType(), this, handler);
     }
 
-    private void toggle(final String value) {
+    private void toggle(final ColumnValue value) {
         if (value != null) {
-            selection.toggle(value);
+            selection.toggle(value.getValue());
             updateTable();
         }
     }
@@ -264,10 +274,10 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         }
     }
 
-    private Column<String, String> getTickBoxColumn() {
-        return new Column<String, String>(new ColumnValueCell(selection)) {
+    private Column<ColumnValue, ColumnValue> getTickBoxColumn() {
+        return new Column<ColumnValue, ColumnValue>(new ColumnValueCell(selection)) {
             @Override
-            public String getValue(final String string) {
+            public ColumnValue getValue(final ColumnValue string) {
                 return string;
             }
         };
@@ -282,7 +292,7 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
     public void refresh() {
         if (dataProvider == null) {
             //noinspection Convert2Diamond
-            dataProvider = new RestDataProvider<String, ColumnValues>(getEventBus()) {
+            dataProvider = new RestDataProvider<ColumnValue, ColumnValues>(getEventBus()) {
                 @Override
                 protected void exec(final Range range,
                                     final Consumer<ColumnValues> dataConsumer,
@@ -308,24 +318,24 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         void setList(View view);
     }
 
-    private class ColumnValueSelectionEventManager extends CheckListSelectionEventManager<String> {
+    private class ColumnValueSelectionEventManager extends CheckListSelectionEventManager<ColumnValue> {
 
-        public ColumnValueSelectionEventManager(final AbstractHasData<String> cellTable) {
+        public ColumnValueSelectionEventManager(final AbstractHasData<ColumnValue> cellTable) {
             super(cellTable);
         }
 
         @Override
-        protected void onToggle(final String item) {
+        protected void onToggle(final ColumnValue item) {
             toggle(item);
         }
 
         @Override
-        protected void onClose(final CellPreviewEvent<String> e) {
+        protected void onClose(final CellPreviewEvent<ColumnValue> e) {
             hideSelf();
         }
 
         @Override
-        protected void onSelectAll(final CellPreviewEvent<String> e) {
+        protected void onSelectAll(final CellPreviewEvent<ColumnValue> e) {
             ColumnValuesFilterPresenter.this.onSelectAll();
         }
     }

@@ -27,9 +27,16 @@ import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.query.api.ColumnRef;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.view.client.Range;
@@ -38,18 +45,20 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class ColumnSelectionPresenter
         extends MyPresenterWidget<PagerView>
-        implements Refreshable {
+        implements Refreshable, HasValueChangeHandlers<Set<ColumnRef>> {
 
     private final MyDataGrid<ColumnRef> dataGrid;
     private RestDataProvider<ColumnRef, ResultPage<ColumnRef>> dataProvider;
-    private Set<ColumnRef> allColumns;
-    private Set<ColumnRef> selectedColumns;
+    private final Set<ColumnRef> allColumns = new HashSet<>();
+    private final Set<ColumnRef> selectedColumns = new HashSet<>();
+    private final HandlerManager handlerManager = new HandlerManager(this);
 
     @Inject
     public ColumnSelectionPresenter(final EventBus eventBus,
@@ -63,11 +72,17 @@ public class ColumnSelectionPresenter
     }
 
     public void setSelectedColumns(final Set<ColumnRef> selectedColumns) {
-        this.selectedColumns = selectedColumns;
+        this.selectedColumns.clear();
+        this.selectedColumns.addAll(NullSafe.set(selectedColumns));
     }
 
     public void setAllColumns(final Set<ColumnRef> allColumns) {
-        this.allColumns = allColumns;
+        this.allColumns.clear();
+        this.allColumns.addAll(NullSafe.set(allColumns));
+    }
+
+    public Set<ColumnRef> getSelectedColumns() {
+        return selectedColumns;
     }
 
     @Override
@@ -116,6 +131,7 @@ public class ColumnSelectionPresenter
                 selectedColumns.clear();
                 selectedColumns.addAll(allColumns);
             }
+            ValueChangeEvent.fire(this, selectedColumns);
             refresh();
         });
         column.setFieldUpdater((index, row, value) -> {
@@ -124,6 +140,7 @@ public class ColumnSelectionPresenter
             } else {
                 selectedColumns.remove(row);
             }
+            ValueChangeEvent.fire(this, selectedColumns);
             dataGrid.redrawHeaders();
         });
     }
@@ -156,5 +173,16 @@ public class ColumnSelectionPresenter
         } else {
             dataProvider.refresh();
         }
+    }
+
+    @Override
+    public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<Set<ColumnRef>> handler) {
+        return handlerManager.addHandler(ValueChangeEvent.getType(), handler);
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> event) {
+        super.fireEvent(event);
+        handlerManager.fireEvent(event);
     }
 }

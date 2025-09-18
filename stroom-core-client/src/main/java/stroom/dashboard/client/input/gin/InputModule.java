@@ -36,6 +36,9 @@ import stroom.dashboard.client.input.ListInputPlugin;
 import stroom.dashboard.client.input.ListInputPresenter;
 import stroom.dashboard.client.input.ListInputPresenter.ListInputView;
 import stroom.dashboard.client.input.ListInputViewImpl;
+import stroom.dashboard.client.input.MultiRulesPresenter;
+import stroom.dashboard.client.input.MultiRulesPresenter.MultiRulesView;
+import stroom.dashboard.client.input.MultiRulesViewImpl;
 import stroom.dashboard.client.input.TableFilterPlugin;
 import stroom.dashboard.client.input.TableFilterPresenter;
 import stroom.dashboard.client.input.TableFilterPresenter.TableFilterView;
@@ -75,5 +78,8 @@ public class InputModule extends AbstractPresenterModule {
         bindPresenterWidget(BasicTableFilterSettingsPresenter.class,
                 BasicTableFilterSettingsView.class,
                 BasicTableFilterSettingsViewImpl.class);
+        bindPresenterWidget(MultiRulesPresenter.class,
+                MultiRulesView.class,
+                MultiRulesViewImpl.class);
     }
 }

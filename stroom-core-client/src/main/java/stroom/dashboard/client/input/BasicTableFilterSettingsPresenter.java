@@ -33,8 +33,10 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -43,8 +45,7 @@ public class BasicTableFilterSettingsPresenter
         implements BasicTableFilterSettingsUiHandlers, Focus {
 
     private final ColumnSelectionPresenter columnSelectionPresenter;
-    private final Set<ColumnRef> allColumns = new HashSet<>();
-    private final Set<ColumnRef> selectedColumns = new HashSet<>();
+    private MultiRulesPresenter multiRulesPresenter;
 
     @Inject
     public BasicTableFilterSettingsPresenter(final EventBus eventBus,
@@ -63,7 +64,8 @@ public class BasicTableFilterSettingsPresenter
 
     @Override
     protected void onBind() {
-
+        registerHandler(columnSelectionPresenter.addValueChangeHandler(e ->
+                multiRulesPresenter.setSelectedColumns(columnSelectionPresenter.getSelectedColumns())));
     }
 
     @Override
@@ -72,20 +74,26 @@ public class BasicTableFilterSettingsPresenter
     }
 
     private void updateFieldNames(final Component component) {
-        allColumns.clear();
+        final Map<ColumnRef, Column> allColumns = new HashMap<>();
         if (component instanceof final TablePresenter tablePresenter) {
             final List<Column> columns = tablePresenter.getTableComponentSettings().getColumns();
             if (columns != null && !columns.isEmpty()) {
                 for (final Column column : columns) {
                     final ColumnRef ref = ColumnRef.builder().id(column.getId()).name(column.getName()).build();
-                    allColumns.add(ref);
+                    allColumns.put(ref, column);
                 }
             }
         }
-        selectedColumns.retainAll(allColumns);
-        columnSelectionPresenter.setAllColumns(allColumns);
+
+        final Set<ColumnRef> selectedColumns = new HashSet<>(columnSelectionPresenter.getSelectedColumns());
+        final Set<ColumnRef> allColumnRefs = allColumns.keySet();
+        selectedColumns.retainAll(allColumnRefs);
+        columnSelectionPresenter.setAllColumns(allColumnRefs);
         columnSelectionPresenter.setSelectedColumns(selectedColumns);
         columnSelectionPresenter.refresh();
+
+        multiRulesPresenter.setAllColumns(allColumns);
+        multiRulesPresenter.setSelectedColumns(columnSelectionPresenter.getSelectedColumns());
     }
 
     @Override
@@ -98,7 +106,7 @@ public class BasicTableFilterSettingsPresenter
 
         final TableFilterComponentSettings settings = (TableFilterComponentSettings) componentConfig.getSettings();
         getView().setTable(getDashboardContext().getComponents().get(settings.getTableId()));
-        selectedColumns.addAll(NullSafe.list(settings.getColumns()));
+        columnSelectionPresenter.setSelectedColumns(new HashSet<>(NullSafe.list(settings.getColumns())));
         updateFieldNames(getView().getTable());
     }
 
@@ -114,7 +122,7 @@ public class BasicTableFilterSettingsPresenter
         return settings
                 .copy()
                 .tableId(getTableId())
-                .columns(new ArrayList<>(selectedColumns))
+                .columns(new ArrayList<>(columnSelectionPresenter.getSelectedColumns()))
                 .build();
     }
 
@@ -141,6 +149,9 @@ public class BasicTableFilterSettingsPresenter
         return !equal;
     }
 
+    public void setMultiRulesPresenter(final MultiRulesPresenter multiRulesPresenter) {
+        this.multiRulesPresenter = multiRulesPresenter;
+    }
 
     // --------------------------------------------------------------------------------
 

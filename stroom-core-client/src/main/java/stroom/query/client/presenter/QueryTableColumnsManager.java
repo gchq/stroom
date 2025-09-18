@@ -133,7 +133,8 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
 
                             } else if (isFilterButton) {
                                 currentFilterColIndex = colIndex;
-                                final ColumnValuesDataSupplier dataSupplier = tablePresenter.getDataSupplier(column);
+                                final ColumnValuesDataSupplier dataSupplier = tablePresenter
+                                        .getDataSupplier(column, null);
                                 columnValuesFilterPresenter.show(
                                         () -> button,
                                         th,

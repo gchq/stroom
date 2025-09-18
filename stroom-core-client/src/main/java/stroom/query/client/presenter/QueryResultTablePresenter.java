@@ -46,6 +46,7 @@ import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnRef;
+import stroom.query.api.ConditionalFormattingRule;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.QueryKey;
@@ -137,7 +138,7 @@ public class QueryResultTablePresenter
     private List<Column> currentColumns = Collections.emptyList();
     private QueryResultVisPresenter queryResultVisPresenter;
     private ExpressionOperator currentSelectionFilter;
-    private final TableRowStyles tableRowStyles;
+    private final TableRowStyles rowStyles;
     private DashboardContext dashboardContext;
     private DocRef currentDataSource;
 
@@ -160,12 +161,12 @@ public class QueryResultTablePresenter
         this.locationManager = locationManager;
         this.downloadPresenter = downloadPresenter;
         this.annotationManager = annotationManager;
-        tableRowStyles = new TableRowStyles(userPreferencesManager);
+        rowStyles = new TableRowStyles(userPreferencesManager);
 
         this.pagerView = pagerView;
         this.dataGrid = new MyDataGrid<>();
         dataGrid.addStyleName("TablePresenter");
-        dataGrid.setRowStyles(tableRowStyles);
+        dataGrid.setRowStyles(rowStyles);
         selectionModel = new MultiSelectionModelImpl<>();
         final DataGridSelectionEventManager<TableRow> selectionEventManager = new DataGridSelectionEventManager<>(
                 dataGrid,
@@ -347,7 +348,7 @@ public class QueryResultTablePresenter
         updatePageSize(queryTablePreferences);
 
         // Update styles and re-render
-        tableRowStyles.setConditionalFormattingRules(queryTablePreferences.getConditionalFormattingRules());
+        rowStyles.setConditionalFormattingRules(queryTablePreferences.getConditionalFormattingRules());
     }
 
     private void updatePageSize(final QueryTablePreferences queryTablePreferences) {
@@ -597,7 +598,7 @@ public class QueryResultTablePresenter
                 // Only set data in the table if we have got some results and
                 // they have changed.
                 if (valuesRange.getOffset() == 0 || !values.isEmpty()) {
-                    tableRowStyles.setConditionalFormattingRules(getQueryTablePreferences()
+                    rowStyles.setConditionalFormattingRules(getQueryTablePreferences()
                             .getConditionalFormattingRules());
                     dataGrid.setRowData((int) valuesRange.getOffset(), values);
                     dataGrid.setRowCount(tableResult.getTotalResults().intValue(), true);
@@ -895,10 +896,12 @@ public class QueryResultTablePresenter
         }
     }
 
-    public ColumnValuesDataSupplier getDataSupplier(final Column column) {
+    public ColumnValuesDataSupplier getDataSupplier(final Column column,
+                                                    final List<ConditionalFormattingRule> conditionalFormattingRules) {
         return new QueryTableColumnValuesDataSupplier(restFactory,
                 currentSearchModel,
-                column);
+                column,
+                conditionalFormattingRules);
     }
 
     public void setQuery(final String query) {
@@ -922,8 +925,9 @@ public class QueryResultTablePresenter
         public QueryTableColumnValuesDataSupplier(
                 final RestFactory restFactory,
                 final QueryModel searchModel,
-                final stroom.query.api.Column column) {
-            super(column.copy().build());
+                final stroom.query.api.Column column,
+                final List<ConditionalFormattingRule> conditionalFormattingRules) {
+            super(column.copy().build(), conditionalFormattingRules);
             this.restFactory = restFactory;
             this.searchModel = searchModel;
 
@@ -954,7 +958,8 @@ public class QueryResultTablePresenter
                         searchRequest,
                         getColumn(),
                         getNameFilter(),
-                        pageRequest);
+                        pageRequest,
+                        getConditionalFormattingRules());
 
                 restFactory
                         .create(QUERY_RESOURCE)

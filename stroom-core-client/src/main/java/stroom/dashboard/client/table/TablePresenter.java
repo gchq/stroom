@@ -180,7 +180,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private boolean pause;
     private SelectionPopup<Column, ColumnSelectionItem> addColumnPopup;
     private ExpressionOperator currentSelectionFilter;
-    private final TableRowStyles tableRowStyles;
+    private final TableRowStyles rowStyles;
     private boolean initialised;
     private final EventBus tableEventBus = new SimpleEventBus();
 
@@ -214,13 +214,13 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         this.userPreferencesManager = userPreferencesManager;
         this.columnSelectionListModel = columnSelectionListModel;
         this.dataSourceClient = dataSourceClient;
-        tableRowStyles = new TableRowStyles(userPreferencesManager);
+        rowStyles = new TableRowStyles(userPreferencesManager);
 
         columnSelectionListModel.setTaskMonitorFactory(this);
 
         dataGrid = new MyDataGrid<>();
         dataGrid.addStyleName("TablePresenter");
-        dataGrid.setRowStyles(tableRowStyles);
+        dataGrid.setRowStyles(rowStyles);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         pagerView.setDataWidget(dataGrid);
 
@@ -568,8 +568,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     public Element getFilterButton(final Column column) {
         final int index = columnsManager.getColumnIndex(column);
         if (index >= 0) {
-            final Header<?> header = dataGrid.getHeader(index);
-            final Element th = dataGrid.getTableHeadElement().getChild(index).cast();
+            final Element thead = dataGrid.getTableHeadElement().cast();
+            final Element tr = thead.getChild(0).cast();
+            final Element th = tr.getChild(index).cast();
             return ElementUtil.findChild(th, "column-valueFilterIcon");
         }
 
@@ -596,7 +597,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 // Only set data in the table if we have got some results and
                 // they have changed.
                 if (valuesRange.getOffset() == 0 || !values.isEmpty()) {
-                    tableRowStyles.setConditionalFormattingRules(getTableComponentSettings()
+                    rowStyles.setConditionalFormattingRules(getTableComponentSettings()
                             .getConditionalFormattingRules());
                     dataGrid.setRowData((int) valuesRange.getOffset(), values);
                     dataGrid.setRowCount(tableResult.getTotalResults().intValue(), true);
@@ -641,12 +642,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     return QueryField.createDate(column.getName());
 
                 default:
-                    // CONTAINS only supported for legacy content, not for use in UI
                     return QueryField
                             .builder()
                             .fldName(column.getName())
                             .fldType(FieldType.TEXT)
-                            .conditionSet(ConditionSet.BASIC_TEXT)
+                            .conditionSet(ConditionSet.ALL_UI_TEXT)
                             .queryable(true)
                             .build();
 
@@ -1060,7 +1060,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         updateSelectionFilter();
 
         // Update styles and re-render
-        tableRowStyles.setConditionalFormattingRules(tableComponentSettings.getConditionalFormattingRules());
+        rowStyles.setConditionalFormattingRules(tableComponentSettings.getConditionalFormattingRules());
         dataGrid.redraw();
     }
 
@@ -1266,13 +1266,15 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         void setTableView(View view);
     }
 
-    public ColumnValuesDataSupplier getDataSupplier(final Column column) {
+    public ColumnValuesDataSupplier getDataSupplier(final Column column,
+                                                    final List<ConditionalFormattingRule> conditionalFormattingRules) {
         return new TableColumnValuesDataSupplier(restFactory,
                 currentSearchModel,
                 column,
                 resolveTableSettings(),
                 getDateTimeSettings(),
-                getTableName(getId()));
+                getTableName(getId()),
+                conditionalFormattingRules);
     }
 
     public static class TableColumnValuesDataSupplier extends ColumnValuesDataSupplier {
@@ -1289,8 +1291,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 final stroom.query.api.Column column,
                 final TableSettings tableSettings,
                 final DateTimeSettings dateTimeSettings,
-                final String tableName) {
-            super(column.copy().build());
+                final String tableName,
+                final List<ConditionalFormattingRule> conditionalFormattingRules) {
+            super(column.copy().build(), conditionalFormattingRules);
             this.restFactory = restFactory;
             this.searchModel = searchModel;
 
@@ -1350,7 +1353,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         searchRequest,
                         getColumn(),
                         getNameFilter(),
-                        pageRequest);
+                        pageRequest,
+                        getConditionalFormattingRules());
 
                 restFactory
                         .create(DASHBOARD_RESOURCE)

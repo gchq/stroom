@@ -149,7 +149,8 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
                             } else if (isFilterButton) {
                                 currentFilterColIndex = colIndex;
                                 columnValuesFilterPresenter.setNameFilter(currentQuickFilters.get(column.getId()));
-                                final ColumnValuesDataSupplier dataSupplier = tablePresenter.getDataSupplier(column);
+                                final ColumnValuesDataSupplier dataSupplier = tablePresenter
+                                        .getDataSupplier(column, null);
                                 columnValuesFilterPresenter.show(
                                         () -> button,
                                         th,

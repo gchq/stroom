@@ -17,6 +17,7 @@
 package stroom.dashboard.client.input;
 
 import stroom.dashboard.client.main.SettingsPresenter;
+import stroom.dashboard.client.table.cf.RulesPresenter;
 import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 
 import com.google.inject.Inject;
@@ -25,10 +26,16 @@ import com.google.web.bindery.event.shared.EventBus;
 public class TableFilterSettingsPresenter extends SettingsPresenter {
 
     @Inject
-    public TableFilterSettingsPresenter(final EventBus eventBus, final LinkTabsLayoutView view,
-                                        final BasicTableFilterSettingsPresenter basicSettingsPresenter) {
+    public TableFilterSettingsPresenter(final EventBus eventBus,
+                                        final LinkTabsLayoutView view,
+                                        final BasicTableFilterSettingsPresenter basicSettingsPresenter,
+                                        final MultiRulesPresenter multiRulesPresenter) {
         super(eventBus, view);
+
+        basicSettingsPresenter.setMultiRulesPresenter(multiRulesPresenter);
+
         getView().asWidget().addStyleName("settingsPresenter");
         addTab("Basic", basicSettingsPresenter);
+        addTab("Conditional Formatting", multiRulesPresenter);
     }
 }

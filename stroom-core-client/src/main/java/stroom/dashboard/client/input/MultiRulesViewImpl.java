@@ -16,7 +16,7 @@
 
 package stroom.dashboard.client.input;
 
-import stroom.dashboard.client.input.TableFilterPresenter.TableFilterView;
+import stroom.dashboard.client.input.MultiRulesPresenter.MultiRulesView;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -25,7 +25,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-public class TableFilterViewImpl extends ViewImpl implements TableFilterView {
+public class MultiRulesViewImpl extends ViewImpl implements MultiRulesView {
 
     private final Widget widget;
 
@@ -33,7 +33,7 @@ public class TableFilterViewImpl extends ViewImpl implements TableFilterView {
     FlowPanel panel;
 
     @Inject
-    public TableFilterViewImpl(final Binder binder) {
+    public MultiRulesViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -47,7 +47,7 @@ public class TableFilterViewImpl extends ViewImpl implements TableFilterView {
         return panel;
     }
 
-    public interface Binder extends UiBinder<Widget, TableFilterViewImpl> {
+    public interface Binder extends UiBinder<Widget, MultiRulesViewImpl> {
 
     }
 }

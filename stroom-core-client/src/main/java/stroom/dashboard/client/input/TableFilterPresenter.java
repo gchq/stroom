@@ -29,6 +29,7 @@ import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableFilterComponentSettings;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnRef;
+import stroom.query.api.ConditionalFormattingRule;
 import stroom.util.shared.NullSafe;
 
 import com.google.gwt.dom.client.Element;
@@ -42,6 +43,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -101,7 +103,12 @@ public class TableFilterPresenter
                         tablePresenter,
                         TablePresenter::getTableComponentSettings,
                         TableComponentSettings::getColumns,
+                        list -> list
+                                .stream()
+                                .sorted(Comparator.comparing(Column::getName))
+                                .collect(Collectors.toList()),
                         Collections.emptyList());
+
                 final Set<String> included = NullSafe
                         .list(getTableFilterSettings().getColumns())
                         .stream()
@@ -115,13 +122,17 @@ public class TableFilterPresenter
                         final ColumnValuesFilterPresenter columnValuesFilterPresenter =
                                 columnValuesFilterPresenterProvider.get();
 
+                        final List<ConditionalFormattingRule> rules =
+                                NullSafe.map(settings.getConditionalFormattingRules()).get(column.getId());
+
                         final Provider<Element> filterButtonProvider = () -> tablePresenter.getFilterButton(column);
                         columnValuesFilterPresenter.init(
                                 filterButtonProvider,
                                 column,
-                                () -> tablePresenter.getDataSupplier(column),
+                                () -> tablePresenter.getDataSupplier(column, rules),
                                 column.getColumnValueSelection(),
-                                tablePresenter.getColumnsManager());
+                                tablePresenter.getColumnsManager(),
+                                rules);
 
                         final FlowPanel panel = new FlowPanel();
                         panel.addStyleName("table-filter-panel");

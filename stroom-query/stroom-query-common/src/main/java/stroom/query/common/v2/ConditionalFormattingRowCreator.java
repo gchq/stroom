@@ -174,7 +174,7 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
         return true;
     }
 
-    private record RuleAndMatcher(ConditionalFormattingRule rule, Predicate<Val[]> matcher) {
+    public record RuleAndMatcher(ConditionalFormattingRule rule, Predicate<Val[]> matcher) {
 
     }
 }

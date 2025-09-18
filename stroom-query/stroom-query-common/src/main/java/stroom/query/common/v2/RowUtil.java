@@ -104,7 +104,7 @@ public class RowUtil {
         return fieldPositionMap::get;
     }
 
-    static ValueFunctionFactories<Val[]> createColumnNameValExtractor(final List<Column> newColumns) {
+    public static ValueFunctionFactories<Val[]> createColumnNameValExtractor(final List<Column> newColumns) {
         // Create the field position map for the new columns.
         final Map<String, ValueFunctionFactory<Val[]>> fieldPositionMap = new HashMap<>();
         for (int i = 0; i < newColumns.size(); i++) {
