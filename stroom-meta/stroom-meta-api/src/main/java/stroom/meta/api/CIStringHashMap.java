@@ -1,6 +1,5 @@
 package stroom.meta.api;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -8,7 +7,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -16,7 +14,7 @@ import java.util.stream.Collectors;
  */
 class CIStringHashMap implements Map<String, String> {
 
-    private final HashMap<CIString, String> map = new HashMap<>();
+    private final HashMap<String, KV> map = new HashMap<>();
 
     @Override
     public void clear() {
@@ -25,25 +23,51 @@ class CIStringHashMap implements Map<String, String> {
 
     @Override
     public boolean containsKey(final Object key) {
-        return map.containsKey(new CIString((String) key));
+        return map.containsKey(toLowerCase(key));
     }
 
     @Override
     public boolean containsValue(final Object value) {
-        return map.containsValue(value);
+        return map.entrySet().stream().anyMatch(entry -> Objects.equals(entry.getValue().getValue(), value));
+    }
+
+    private String toLowerCase(final Object key) {
+        return ((String) key).toLowerCase(Locale.ROOT);
+    }
+
+    private String getKey(final KV kv) {
+        if (kv == null) {
+            return null;
+        }
+        return kv.getKey();
+    }
+
+    private String getValue(final KV kv) {
+        if (kv == null) {
+            return null;
+        }
+        return kv.getValue();
     }
 
     @Override
     public String get(final Object key) {
-        return map.get(new CIString((String) key));
+        return getValue(map.get(toLowerCase(key)));
+    }
+
+    public String getKey(final String key) {
+        return getKey(map.get(toLowerCase(key)));
+    }
+
+    public KV getEntry(final String key) {
+        return map.get(toLowerCase(key));
     }
 
     @Override
     public String getOrDefault(final Object key, final String defaultVal) {
-        final String val = map.get(new CIString((String) key));
-        return val == null
+        final KV kv = map.get(toLowerCase(key));
+        return kv == null
                 ? defaultVal
-                : val;
+                : kv.getKey();
     }
 
     @Override
@@ -51,24 +75,17 @@ class CIStringHashMap implements Map<String, String> {
         return map.isEmpty();
     }
 
-    public String computeIfAbsent(final String key, final Function<String, String> mappingFunction) {
-        return map.computeIfAbsent(new CIString(key), k -> mappingFunction.apply(k.key));
-    }
-
     @Override
     public String put(final String key, String value) {
         if (value != null) {
             value = value.trim();
         }
-        final CIString newKey = new CIString(key);
-        final String oldValue = map.remove(newKey);
-        map.put(newKey, value);
-        return oldValue;
+        return getValue(map.put(toLowerCase(key), new KV(key, value)));
     }
 
     @Override
     public String remove(final Object key) {
-        return map.remove(new CIString((String) key));
+        return getValue(map.remove(toLowerCase(key)));
     }
 
     @Override
@@ -82,9 +99,9 @@ class CIStringHashMap implements Map<String, String> {
      */
     @Override
     public Set<Entry<String, String>> entrySet() {
-        final Set<Entry<String, String>> rtnSet = new HashSet<>();
-        for (final Entry<CIString, String> entry : map.entrySet()) {
-            rtnSet.add(new CIEntryAdaptor(entry));
+        final Set<Entry<String, String>> rtnSet = new HashSet<>(map.size());
+        for (final KV kv : map.values()) {
+            rtnSet.add(Map.entry(kv.getKey(), kv.getValue()));
         }
         return rtnSet;
     }
@@ -95,9 +112,9 @@ class CIStringHashMap implements Map<String, String> {
      */
     @Override
     public Set<String> keySet() {
-        final Set<String> rtnSet = new HashSet<>();
-        for (final CIString entry : map.keySet()) {
-            rtnSet.add(entry.key);
+        final Set<String> rtnSet = new HashSet<>(map.size());
+        for (final KV kv : map.values()) {
+            rtnSet.add(kv.getKey());
         }
         return rtnSet;
     }
@@ -111,7 +128,7 @@ class CIStringHashMap implements Map<String, String> {
 
     @Override
     public Collection<String> values() {
-        return map.values();
+        return map.values().stream().map(KV::getValue).collect(Collectors.toSet());
     }
 
     @Override
@@ -141,30 +158,34 @@ class CIStringHashMap implements Map<String, String> {
      *                      will be left in their original case.
      */
     public Map<String, String> asMap(final boolean normaliseKeys) {
-        final Function<Entry<CIString, String>, String> keyMapper = normaliseKeys
-                ? entry -> entry.getKey().lowerKey
-                : entry -> entry.getKey().key;
-
-        return map.entrySet()
+        if (normaliseKeys) {
+            return map
+                    .values()
+                    .stream()
+                    .collect(Collectors.toMap(kv -> kv.getKey().toLowerCase(Locale.ROOT), KV::getValue));
+        }
+        return map
+                .values()
                 .stream()
-                .collect(Collectors.toMap(keyMapper, Entry::getValue));
+                .collect(Collectors.toMap(KV::getKey, KV::getValue));
     }
 
-    // --------------------------------------------------------------------------------
-
-
-    protected static class CIString implements Comparable<CIString>, Serializable {
+    public static class KV {
 
         private final String key;
-        private final String lowerKey;
+        private final String value;
 
-        CIString(final String key) {
-            this.key = key.trim();
-            this.lowerKey = this.key.toLowerCase(Locale.ENGLISH);
+        public KV(final String key, final String value) {
+            this.key = key;
+            this.value = value;
         }
 
         public String getKey() {
             return key;
+        }
+
+        public String getValue() {
+            return value;
         }
 
         @Override
@@ -175,51 +196,18 @@ class CIStringHashMap implements Map<String, String> {
             if (o == null || getClass() != o.getClass()) {
                 return false;
             }
-            final CIString ciString = (CIString) o;
-            return lowerKey.equals(ciString.lowerKey);
+            final KV kv = (KV) o;
+            return Objects.equals(value, kv.value);
         }
 
         @Override
         public int hashCode() {
-            return lowerKey.hashCode();
-        }
-
-        @Override
-        public int compareTo(final CIString o) {
-            return lowerKey.compareTo(o.lowerKey);
+            return Objects.hashCode(value);
         }
 
         @Override
         public String toString() {
-            return key;
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private static class CIEntryAdaptor implements Entry<String, String> {
-
-        private final Entry<CIString, String> realEntry;
-
-        private CIEntryAdaptor(final Entry<CIString, String> realEntry) {
-            this.realEntry = realEntry;
-        }
-
-        @Override
-        public String getKey() {
-            return realEntry.getKey().key;
-        }
-
-        @Override
-        public String getValue() {
-            return realEntry.getValue();
-        }
-
-        @Override
-        public String setValue(final String value) {
-            return realEntry.setValue(value);
+            return value;
         }
     }
 }

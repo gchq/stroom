@@ -30,8 +30,13 @@ public class LogStream {
         final List<String> metaKeys = logStreamConfigProvider.get().getMetaKeys();
         if (NullSafe.hasItems(metaKeys)) {
             final Map<String, String> map = new LinkedHashMap<>(metaKeys.size());
-            metaKeys.forEach(key ->
-                    map.put(key, attributeMap.get(key)));
+            metaKeys.forEach(key -> {
+                final AttributeMap.KV kv = attributeMap.getEntry(key);
+                // Ignore nulls.
+                if (kv != null) {
+                    map.put(kv.getKey(), kv.getValue());
+                }
+            });
             return map;
         } else {
             return Collections.emptyMap();
