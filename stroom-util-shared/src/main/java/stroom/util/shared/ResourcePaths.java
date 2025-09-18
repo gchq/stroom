@@ -58,6 +58,10 @@ public interface ResourcePaths {
     String V2 = "/v2";
     String V3 = "/v3";
 
+    String UI_SERVLET_NAME = "UI";
+    String STROOM_SERVLET_NAME = "StroomServlet";
+    String SIGN_IN_SERVLET_NAME = "SignInServlet";
+
 
     static String addLegacyUnauthenticatedServletPrefix(final String... parts) {
         return new Builder()

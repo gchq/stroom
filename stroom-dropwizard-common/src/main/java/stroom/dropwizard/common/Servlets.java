@@ -51,27 +51,10 @@ public class Servlets {
     public void register() {
         final ServletContextHandler servletContextHandler = environment.getApplicationContext();
 
-        // Check for duplicate servlet path specs, assumes they are globally unique
-        final List<String> duplicatePaths = servlets.stream()
-                .flatMap(servlet ->
-                        servlet.getPathSpecs().stream())
-                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
-                .entrySet()
-                .stream()
-                .filter(entry -> entry.getValue() > 1)
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
-
-        if (!duplicatePaths.isEmpty()) {
-            throw new RuntimeException(LogUtil.message(
-                    "Multiple servlets exist for each of the following servlet paths [{}]",
-                    String.join(", ", duplicatePaths)));
-        }
+        validateServlets();
 
         LOGGER.info("Adding servlets to application path/port:");
-
         final Set<String> allPaths = new HashSet<>();
-
         final int maxNameLength = servlets.stream()
                 .mapToInt(servlet -> servlet.getClass().getName().length())
                 .max()
@@ -82,28 +65,62 @@ public class Servlets {
                 .flatMap(servlet ->
                         servlet.getPathSpecs().stream()
                                 .map(partialPathSpec -> {
-                                    final String name = servlet.getClass().getName();
+//                                    final String name = servlet.getClass().getName();
+                                    final String servletName = servlet.getName();
                                     Objects.requireNonNull(partialPathSpec);
                                     final String fullPathSpec = ResourcePaths.buildServletPath(partialPathSpec);
-                                    return new ServletInfo(servlet, name, fullPathSpec);
+                                    return new ServletInfo(servlet, servletName, fullPathSpec);
                                 }))
                 .sorted(Comparator.comparing(ServletInfo::fullPathSpec))
                 .forEach(servletInfo -> {
-
                     addServlet(
                             servletContextHandler,
                             allPaths,
                             maxNameLength,
                             servletInfo.servlet,
-                            servletInfo.name,
+                            servletInfo.servletName,
                             servletInfo.fullPathSpec);
                 });
+    }
+
+    private void validateServlets() {
+        // Check for duplicate servlet path specs, assumes they are globally unique
+        final List<String> duplicatePaths = servlets.stream()
+                .flatMap(servlet ->
+                        servlet.getPathSpecs().stream())
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                .entrySet()
+                .stream()
+                .filter(entry -> entry.getValue() > 1)
+                .map(Map.Entry::getKey)
+                .toList();
+
+        if (!duplicatePaths.isEmpty()) {
+            throw new RuntimeException(LogUtil.message(
+                    "Multiple servlets exist for each of the following servlet paths [{}]",
+                    String.join(", ", duplicatePaths)));
+        }
+
+        final List<String> duplicateNames = servlets.stream()
+                .map(IsServlet::getName)
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                .entrySet()
+                .stream()
+                .filter(entry -> entry.getValue() > 1)
+                .map(Map.Entry::getKey)
+                .toList();
+
+        if (!duplicateNames.isEmpty()) {
+            throw new RuntimeException(LogUtil.message(
+                    "Multiple servlets exist for each of the following names [{}]. Servlets must have unique names",
+                    String.join(", ", duplicateNames)));
+        }
     }
 
     private void addServlet(final ServletContextHandler servletContextHandler,
                             final Set<String> allPaths,
                             final int maxNameLength,
-                            final IsServlet servlet,
+                            final IsServlet aServlet,
                             final String servletName,
                             final String fullPathSpec) {
 
@@ -116,7 +133,7 @@ public class Servlets {
             throw new RuntimeException(LogUtil.message("Duplicate servlet path {}", fullPathSpec));
         } else {
             final boolean isUnauthenticated;
-            if (servlet.getClass().isAnnotationPresent(Unauthenticated.class)) {
+            if (aServlet.getClass().isAnnotationPresent(Unauthenticated.class)) {
                 isUnauthenticated = true;
                 authenticationBypassCheckerImpl.registerUnauthenticatedServletName(servletName);
             } else {
@@ -135,17 +152,17 @@ public class Servlets {
                     suffix);
 
             final ServletHolder servletHolder;
-            try {
-                servletHolder = new ServletHolder(servletName, (Servlet) servlet);
-            } catch (final ClassCastException e) {
+            if (aServlet instanceof final Servlet servlet) {
+                servletHolder = new ServletHolder(servletName, servlet);
+            } else {
                 throw new RuntimeException(LogUtil.message("Injected class {} is not a Servlet",
-                        servlet.getClass().getName()));
+                        LogUtil.getClassName(aServlet)));
             }
 
             servletContextHandler.addServlet(servletHolder, fullPathSpec);
             allPaths.add(fullPathSpec);
 
-            registerHealthCheck(servlet, fullPathSpec);
+            registerHealthCheck(aServlet, fullPathSpec);
         }
     }
 
@@ -155,7 +172,7 @@ public class Servlets {
         final HealthCheckRegistry healthCheckRegistry = environment.healthChecks();
         final String name = servlet.getClass().getName();
 
-        if (servlet instanceof HasHealthCheck) {
+        if (servlet instanceof final HasHealthCheck hasHealthCheck) {
             LOGGER.info("Adding health check for servlet {}", name);
             // object has a getHealth method so build a HealthCheck that wraps it and
             // adds in the servlet path information
@@ -164,7 +181,7 @@ public class Servlets {
                 protected HealthCheck.Result check() {
                     // Decorate the existing health check results with the full path spec
                     // as the servlet doesn't know its own full path
-                    HealthCheck.Result result = ((HasHealthCheck) servlet).getHealth();
+                    HealthCheck.Result result = hasHealthCheck.getHealth();
 
                     final HealthCheck.ResultBuilder builder = Result.builder();
                     if (result.isHealthy()) {
@@ -210,7 +227,7 @@ public class Servlets {
 
     private record ServletInfo(
             IsServlet servlet,
-            String name,
+            String servletName,
             String fullPathSpec) {
 
     }
