@@ -79,6 +79,10 @@ include 'stroom-core-client-widget'
 include 'stroom-core'
 include 'stroom-core-shared'
 
+// Credentials Store
+include 'stroom-credentials:stroom-credentials-api'
+include 'stroom-credentials:stroom-credentials-impl-db'
+
 // Dashboard
 include 'stroom-dashboard-gwt'
 include 'stroom-dashboard:stroom-dashboard-client'
