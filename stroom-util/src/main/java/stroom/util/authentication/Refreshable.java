@@ -12,7 +12,7 @@ import java.util.function.Consumer;
  * Something with an expiry time that can be refreshed before or after the expiry time is
  * reached to renew it and move the expiry time into the future.
  */
-public interface Refreshable {
+public interface Refreshable extends HasExpiry {
 
     LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Refreshable.class);
 
@@ -110,6 +110,7 @@ public interface Refreshable {
     /**
      * @return The actual hard expiry time of this item.
      */
+    @Override
     long getExpireTimeEpochMs();
 
     /**

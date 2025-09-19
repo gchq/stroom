@@ -54,7 +54,7 @@ class SessionResourceImpl implements SessionResource {
         // Get the session.
         final HttpSession session = SessionUtil.getExistingSession(request);
         if (session != null) {
-            final UserIdentity userIdentity = UserIdentitySessionUtil.get(session)
+            final UserIdentity userIdentity = UserIdentitySessionUtil.getUserFromSession(session)
                     .orElse(null);
             LOGGER.info(() -> LogUtil.message(
                     "logout() - Logout called for {}, userIdentity: {} {} ({}), session: {}, redirectUri: {}",
@@ -70,7 +70,7 @@ class SessionResourceImpl implements SessionResource {
                 // Create an event for logout
                 authenticationEventLogProvider.get().logoff(userIdentity.getSubjectId());
                 // Remove the user identity from the current session.
-                UserIdentitySessionUtil.set(session, null);
+                UserIdentitySessionUtil.setUserInSession(session, null);
             }
             session.invalidate();
         } else {

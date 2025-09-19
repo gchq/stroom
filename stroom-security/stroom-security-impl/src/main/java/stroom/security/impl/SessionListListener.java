@@ -100,7 +100,7 @@ class SessionListListener implements HttpSessionListener, HttpSessionIdListener,
         try {
             // In case the session has been destroyed due to it expiring rather than an explicit
             // logout, we need to stop the refresh manager from trying to refresh tokens.
-            UserIdentitySessionUtil.get(httpSession)
+            UserIdentitySessionUtil.getUserFromSession(httpSession)
                     .ifPresent(stroomUserIdentityFactory::logoutUser);
 
             final UserRef userRef = getUserRefFromSession(httpSession);
@@ -205,7 +205,7 @@ class SessionListListener implements HttpSessionListener, HttpSessionIdListener,
     }
 
     private static UserRef getUserRefFromSession(final HttpSession httpSession) {
-        return UserIdentitySessionUtil.get(httpSession)
+        return UserIdentitySessionUtil.getUserFromSession(httpSession)
                 .filter(uid -> uid instanceof HasUserRef)
                 .map(uid -> ((HasUserRef) uid).getUserRef())
                 .orElse(null);

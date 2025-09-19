@@ -3,6 +3,7 @@ package stroom.util.authentication;
 import stroom.util.shared.NullSafe;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -43,8 +44,13 @@ public class RefreshableItem<T> implements Refreshable {
     }
 
     @Override
+    public Instant getExpireTime() {
+        return perishableItem.getExpireTime();
+    }
+
+    @Override
     public long getExpireTimeEpochMs() {
-        return perishableItem.getExpiryTimeEpochMs();
+        return perishableItem.getExpireTimeEpochMs();
     }
 
     @Override

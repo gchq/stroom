@@ -23,6 +23,7 @@ import stroom.security.api.exception.AuthenticationException;
 import stroom.security.common.impl.UserIdentitySessionUtil;
 import stroom.security.impl.OpenIdManager.RedirectUrl;
 import stroom.security.openid.api.OpenId;
+import stroom.util.authentication.HasExpiry;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -143,17 +144,30 @@ class SecurityFilter implements Filter {
             securityContext.asProcessingUser(() ->
                     process(request, response, chain));
         } else {
-            // Api requests that are not from the front-end should have a token.
-            // Also request from an AWS ALB will have an ALB signed token containing the claims
-            // Need to do this first, so we get a fresh token from AWS ALB rather than using a stale
-            // one from session.
-            Optional<UserIdentity> optUserIdentity = openIdManager.loginWithRequestToken(request);
-            logUserIdentityToDebug(optUserIdentity, fullPath, servletPath, "from request token");
+            // First see if a previous call has placed a userIdentity in session
+            Optional<UserIdentity> optUserIdentity = UserIdentitySessionUtil.getUserFromSession(
+                    SessionUtil.getExistingSession(request));
+            logUserIdentityToDebug(optUserIdentity, fullPath, servletPath, "from session");
 
-            // If no user from header token, see if we have one in session already.
+            // Check if the underlying claims/token have expired. The expiry time of some impls
+            // may get refreshed over time, so we may never hit it. When code flow is handled by
+            // AWS ALB we will expire, so will just get the latest token from headers which the
+            // ALB will be refreshing.
+            optUserIdentity = optUserIdentity.map(userIdentity -> {
+                if (userIdentity instanceof final HasExpiry hasExpiry && hasExpiry.hasExpired()) {
+                    LOGGER.info("UserIdentity {} has expired, expiry: {}",
+                            userIdentityToString(userIdentity), hasExpiry.getExpireTime());
+                    // Clear the identity, so we have to re-acquire it from headers or code flow
+                    return null;
+                }
+                return userIdentity;
+            });
+
+            // API requests that are not from the front-end should have a token.
+            // Also requests from an AWS ALB will have an ALB signed token containing the claims
             if (optUserIdentity.isEmpty()) {
-                optUserIdentity = UserIdentitySessionUtil.get(SessionUtil.getExistingSession(request));
-                logUserIdentityToDebug(optUserIdentity, fullPath, servletPath, "from session");
+                optUserIdentity = openIdManager.loginWithRequestToken(request);
+                logUserIdentityToDebug(optUserIdentity, fullPath, servletPath, "from request token");
             }
 
             if (optUserIdentity.isPresent()) {
@@ -165,10 +179,10 @@ class SecurityFilter implements Filter {
                 // If OIDC code flow has been handled by the AWS ALB then the session won't have been
                 // created by our code flow code. Thus, ensure we have a session with the user in it
                 if (isStroomUIServlet(servletName)) {
-                    SessionUtil.getOrCreateSession(request, session -> {
+                    SessionUtil.getOrCreateSession(request, aSession -> {
                         LOGGER.info("Creating session {} for user {}, fullPath: {}, servlet: {}",
-                                session.getId(), userIdentity, fullPath, servletName);
-                        UserIdentitySessionUtil.set(session, userIdentity);
+                                aSession.getId(), userIdentity, fullPath, servletName);
+                        UserIdentitySessionUtil.setUserInSession(aSession, userIdentity);
                     });
                 }
 
@@ -253,18 +267,23 @@ class SecurityFilter implements Filter {
                                         final String msg) {
         LOGGER.debug(() -> LogUtil.message("User identity ({}): {}, fullPath: {}, servletName: {}",
                 msg,
-                optUserIdentity.map(
-                                identity -> {
-                                    final String id = identity.getDisplayName() != null
-                                            ? identity.getSubjectId() + " (" + identity.getDisplayName() + ")"
-                                            : identity.getSubjectId();
-                                    return LogUtil.message("'{}' {}",
-                                            id,
-                                            identity.getClass().getSimpleName());
-                                })
+                optUserIdentity.map(this::userIdentityToString)
                         .orElse("<empty>"),
                 fullPath,
                 servletName));
+    }
+
+    private String userIdentityToString(final UserIdentity userIdentity) {
+        if (userIdentity == null) {
+            return "";
+        } else {
+            final String id = userIdentity.getDisplayName() != null
+                    ? userIdentity.getSubjectId() + " (" + userIdentity.getDisplayName() + ")"
+                    : userIdentity.getSubjectId();
+            return LogUtil.message("'{}' {}",
+                    id,
+                    userIdentity.getClass().getSimpleName());
+        }
     }
 
     private String getPostAuthRedirectUri(final HttpServletRequest request) {
