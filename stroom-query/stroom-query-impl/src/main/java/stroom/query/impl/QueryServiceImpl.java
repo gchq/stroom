@@ -17,6 +17,7 @@
 package stroom.query.impl;
 
 import stroom.dashboard.impl.ColumnValueComparator;
+import stroom.dashboard.impl.ColumnValueSelectionPredicateFactory;
 import stroom.dashboard.impl.SampleGenerator;
 import stroom.dashboard.impl.SearchResponseMapper;
 import stroom.dashboard.impl.download.DelimitedTarget;
@@ -59,10 +60,10 @@ import stroom.query.api.token.TokenType;
 import stroom.query.common.v2.ConditionalFormattingRowCreator.RuleAndMatcher;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.common.v2.DataStore;
-import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
+import stroom.query.common.v2.Item;
 import stroom.query.common.v2.Key;
 import stroom.query.common.v2.OpenGroupsImpl;
 import stroom.query.common.v2.ResultCreator;
@@ -371,18 +372,22 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
 
                     final Set<Key> openGroups = dataStore.getKeyFactory().decodeSet(resultRequest.getOpenGroups());
 
-                    final int index = dataStore
+                    final List<String> columnIdList = dataStore
                             .getColumns()
                             .stream()
                             .map(Column::getId)
-                            .toList()
+                            .toList();
+                    final int primaryColumnIndex = columnIdList
                             .indexOf(request.getColumn().getId());
+                    if (primaryColumnIndex != -1) {
+                        // Get rules.
+                        final List<RuleAndMatcher> ruleAndMatchers = getRules(
+                                request.getColumn(),
+                                dateTimeSettings,
+                                request.getConditionalFormattingRules());
 
-                    if (index != -1) {
-                        final List<RuleAndMatcher> ruleAndMatchers =
-                                getRules(request.getColumn(),
-                                        dateTimeSettings,
-                                        request.getConditionalFormattingRules());
+                        final Predicate<Item> columnValueSelectionPredicate = ColumnValueSelectionPredicateFactory
+                                .create(columnIdList, request.getSelections(), primaryColumnIndex);
 
                         dataStore.fetch(
                                 dataStore.getColumns(),
@@ -390,8 +395,8 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                                 new OpenGroupsImpl(openGroups),
                                 timeFilter,
                                 item -> {
-                                    final Val val = item.getValue(index);
-                                    if (predicate.test(val)) {
+                                    final Val val = item.getValue(primaryColumnIndex);
+                                    if (predicate.test(val) && columnValueSelectionPredicate.test(item)) {
                                         final Optional<RuleAndMatcher> matchingRule = ruleAndMatchers
                                                 .stream()
                                                 .filter(ruleAndMatcher ->

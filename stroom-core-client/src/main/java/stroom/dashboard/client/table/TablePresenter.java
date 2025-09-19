@@ -31,8 +31,6 @@ import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.query.SelectionHandlerExpressionBuilder;
 import stroom.dashboard.client.table.TablePresenter.TableView;
-import stroom.dashboard.shared.ColumnValues;
-import stroom.dashboard.shared.ColumnValuesRequest;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
@@ -46,7 +44,6 @@ import stroom.data.grid.client.MessagePanel;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.ExportFileCompleteUtil;
-import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
@@ -95,8 +92,6 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.PageRequest;
-import stroom.util.shared.PageResponse;
 import stroom.util.shared.RandomId;
 import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonView;
@@ -120,7 +115,6 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -130,7 +124,6 @@ import com.google.web.bindery.event.shared.SimpleEventBus;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -139,7 +132,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class TablePresenter extends AbstractComponentPresenter<TableView>
@@ -634,23 +626,17 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .orElse(Type.GENERAL);
 
         try {
-            switch (colType) {
-                case NUMBER:
-                    return QueryField.createLong(column.getName());
-
-                case DATE_TIME:
-                    return QueryField.createDate(column.getName());
-
-                default:
-                    return QueryField
-                            .builder()
-                            .fldName(column.getName())
-                            .fldType(FieldType.TEXT)
-                            .conditionSet(ConditionSet.ALL_UI_TEXT)
-                            .queryable(true)
-                            .build();
-
-            }
+            return switch (colType) {
+                case NUMBER -> QueryField.createLong(column.getName());
+                case DATE_TIME -> QueryField.createDate(column.getName());
+                default -> QueryField
+                        .builder()
+                        .fldName(column.getName())
+                        .fldType(FieldType.TEXT)
+                        .conditionSet(ConditionSet.ALL_UI_TEXT)
+                        .queryable(true)
+                        .build();
+            };
         } catch (final Exception e) {
             GWT.log(e.getMessage());
             throw new RuntimeException(e);
@@ -1275,101 +1261,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 getDateTimeSettings(),
                 getTableName(getId()),
                 conditionalFormattingRules);
-    }
-
-    public static class TableColumnValuesDataSupplier extends ColumnValuesDataSupplier {
-
-        private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
-
-        private final RestFactory restFactory;
-        private final SearchModel searchModel;
-        private final DashboardSearchRequest searchRequest;
-
-        public TableColumnValuesDataSupplier(
-                final RestFactory restFactory,
-                final SearchModel searchModel,
-                final stroom.query.api.Column column,
-                final TableSettings tableSettings,
-                final DateTimeSettings dateTimeSettings,
-                final String tableName,
-                final List<ConditionalFormattingRule> conditionalFormattingRules) {
-            super(column.copy().build(), conditionalFormattingRules);
-            this.restFactory = restFactory;
-            this.searchModel = searchModel;
-
-            DashboardSearchRequest dashboardSearchRequest = null;
-            if (searchModel != null) {
-                final QueryKey queryKey = searchModel.getCurrentQueryKey();
-                final Search currentSearch = searchModel.getCurrentSearch();
-                if (queryKey != null && currentSearch != null) {
-                    final List<ComponentResultRequest> requests = new ArrayList<>();
-                    currentSearch.getComponentSettingsMap().entrySet()
-                            .stream()
-                            .filter(settings -> settings.getValue() instanceof TableComponentSettings)
-                            .forEach(componentSettings -> requests.add(TableResultRequest
-                                    .builder()
-                                    .componentId(componentSettings.getKey())
-                                    .requestedRange(OffsetRange.UNBOUNDED)
-                                    .tableName(tableName)
-                                    .tableSettings(tableSettings)
-                                    .fetch(Fetch.ALL)
-                                    .build()));
-
-                    final Search search = Search
-                            .builder()
-                            .dataSourceRef(currentSearch.getDataSourceRef())
-                            .expression(currentSearch.getExpression())
-                            .componentSettingsMap(currentSearch.getComponentSettingsMap())
-                            .params(currentSearch.getParams())
-                            .timeRange(currentSearch.getTimeRange())
-                            .incremental(true)
-                            .queryInfo(currentSearch.getQueryInfo())
-                            .build();
-
-                    dashboardSearchRequest = DashboardSearchRequest
-                            .builder()
-                            .searchRequestSource(searchModel.getSearchRequestSource())
-                            .queryKey(queryKey)
-                            .search(search)
-                            .componentResultRequests(requests)
-                            .dateTimeSettings(dateTimeSettings)
-                            .build();
-                }
-            }
-
-            searchRequest = dashboardSearchRequest;
-        }
-
-        @Override
-        protected void exec(final Range range,
-                            final Consumer<ColumnValues> dataConsumer,
-                            final RestErrorHandler errorHandler) {
-            if (searchRequest == null) {
-                clear(dataConsumer);
-
-            } else {
-                final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
-                final ColumnValuesRequest columnValuesRequest = new ColumnValuesRequest(
-                        searchRequest,
-                        getColumn(),
-                        getNameFilter(),
-                        pageRequest,
-                        getConditionalFormattingRules());
-
-                restFactory
-                        .create(DASHBOARD_RESOURCE)
-                        .method(res -> res.getColumnValues(searchModel.getCurrentNode(),
-                                columnValuesRequest))
-                        .onSuccess(dataConsumer)
-                        .onFailure(e -> clear(dataConsumer))
-                        .taskMonitorFactory(getTaskMonitorFactory())
-                        .exec();
-            }
-        }
-
-        private void clear(final Consumer<ColumnValues> dataConsumer) {
-            dataConsumer.accept(new ColumnValues(Collections.emptyList(), PageResponse.empty()));
-        }
     }
 
     public HandlerRegistration addUpdateHandler(final TableUpdateEvent.Handler handler) {

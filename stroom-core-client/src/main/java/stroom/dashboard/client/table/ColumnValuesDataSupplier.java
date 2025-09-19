@@ -3,12 +3,14 @@ package stroom.dashboard.client.table;
 import stroom.dashboard.shared.ColumnValues;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.query.api.Column;
+import stroom.query.api.ColumnValueSelection;
 import stroom.query.api.ConditionalFormattingRule;
 import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.view.client.Range;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 public abstract class ColumnValuesDataSupplier {
@@ -25,8 +27,9 @@ public abstract class ColumnValuesDataSupplier {
     }
 
     protected abstract void exec(Range range,
-                       Consumer<ColumnValues> dataConsumer,
-                       RestErrorHandler errorHandler);
+                                 Consumer<ColumnValues> dataConsumer,
+                                 RestErrorHandler errorHandler,
+                                 Map<String, ColumnValueSelection> selections);
 
     public Column getColumn() {
         return column;

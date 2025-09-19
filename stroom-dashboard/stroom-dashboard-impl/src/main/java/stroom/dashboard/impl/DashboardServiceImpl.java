@@ -57,6 +57,7 @@ import stroom.query.common.v2.ConditionalFormattingRowCreator.RuleAndMatcher;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
+import stroom.query.common.v2.Item;
 import stroom.query.common.v2.Key;
 import stroom.query.common.v2.OpenGroupsImpl;
 import stroom.query.common.v2.ResultCreator;
@@ -587,17 +588,22 @@ class DashboardServiceImpl implements DashboardService {
 
                     final Set<Key> openGroups = dataStore.getKeyFactory().decodeSet(resultRequest.getOpenGroups());
 
-                    final int index = dataStore
+                    final List<String> columnIdList = dataStore
                             .getColumns()
                             .stream()
                             .map(Column::getId)
-                            .toList()
+                            .toList();
+                    final int primaryColumnIndex = columnIdList
                             .indexOf(request.getColumn().getId());
-                    if (index != -1) {
+                    if (primaryColumnIndex != -1) {
+                        // Get rules.
                         final List<RuleAndMatcher> ruleAndMatchers = getRules(
                                 request.getColumn(),
                                 request.getSearchRequest().getDateTimeSettings(),
                                 request.getConditionalFormattingRules());
+
+                        final Predicate<Item> columnValueSelectionPredicate = ColumnValueSelectionPredicateFactory
+                                .create(columnIdList, request.getSelections(), primaryColumnIndex);
 
                         dataStore.fetch(
                                 dataStore.getColumns(),
@@ -605,8 +611,8 @@ class DashboardServiceImpl implements DashboardService {
                                 new OpenGroupsImpl(openGroups),
                                 timeFilter,
                                 item -> {
-                                    final Val val = item.getValue(index);
-                                    if (predicate.test(val)) {
+                                    final Val val = item.getValue(primaryColumnIndex);
+                                    if (predicate.test(val) && columnValueSelectionPredicate.test(item)) {
                                         final Optional<RuleAndMatcher> matchingRule = ruleAndMatchers
                                                 .stream()
                                                 .filter(ruleAndMatcher ->

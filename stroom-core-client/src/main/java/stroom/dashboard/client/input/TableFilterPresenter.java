@@ -44,7 +44,10 @@ import com.gwtplatform.mvp.client.View;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -60,6 +63,7 @@ public class TableFilterPresenter
 
     private final Provider<ColumnValuesFilterPresenter> columnValuesFilterPresenterProvider;
     private final List<HandlerRegistration> registrations = new ArrayList<>();
+    private final Map<String, ColumnValuesFilterPresenter> columnFilterPresenters = new HashMap<>();
 
     @Inject
     public TableFilterPresenter(final EventBus eventBus,
@@ -93,6 +97,7 @@ public class TableFilterPresenter
         getView().getPanel().clear();
         registrations.forEach(HandlerRegistration::removeHandler);
         registrations.clear();
+        columnFilterPresenters.clear();
 
         if (settings.getTableId() != null) {
             final Component component = getDashboardContext()
@@ -121,6 +126,7 @@ public class TableFilterPresenter
 
                         final ColumnValuesFilterPresenter columnValuesFilterPresenter =
                                 columnValuesFilterPresenterProvider.get();
+                        columnFilterPresenters.put(column.getId(), columnValuesFilterPresenter);
 
                         final List<ConditionalFormattingRule> rules =
                                 NullSafe.map(settings.getConditionalFormattingRules()).get(column.getId());
@@ -130,6 +136,12 @@ public class TableFilterPresenter
                                 filterButtonProvider,
                                 column,
                                 () -> tablePresenter.getDataSupplier(column, rules),
+                                () -> columnFilterPresenters
+                                        .entrySet()
+                                        .stream()
+                                        .collect(Collectors.toMap(
+                                                Entry::getKey,
+                                                entry -> entry.getValue().getSelection())),
                                 column.getColumnValueSelection(),
                                 tablePresenter.getColumnsManager(),
                                 rules);
