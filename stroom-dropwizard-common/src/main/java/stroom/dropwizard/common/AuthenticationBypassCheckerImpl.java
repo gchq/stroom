@@ -33,7 +33,9 @@ public class AuthenticationBypassCheckerImpl implements AuthenticationBypassChec
     }
 
     @Override
-    public boolean isUnauthenticated(final String servletName, final String servletPath, final String fullPath) {
+    public boolean isUnauthenticated(final String servletName,
+                                     final String servletPath,
+                                     final String fullPath) {
         if (servletPath == null) {
             return false;
         } else {
@@ -49,8 +51,8 @@ public class AuthenticationBypassCheckerImpl implements AuthenticationBypassChec
                 canBypassAuth = unauthenticatedServletNames.contains(servletName);
             }
 
-            LOGGER.debug("servletName: {}, servletPath: {}, canBypassAuth: {}",
-                    servletName, servletPath, canBypassAuth);
+            LOGGER.debug("isUnauthenticated() - servletName: {}, servletPath: {}, fullPath: {}, canBypassAuth: {}",
+                    servletName, servletPath, fullPath, canBypassAuth);
             return canBypassAuth;
         }
     }

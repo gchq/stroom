@@ -6,6 +6,7 @@ import stroom.security.api.UserIdentity;
 import stroom.security.common.impl.UpdatableToken;
 import stroom.security.common.impl.UserIdentitySessionUtil;
 import stroom.security.shared.HasUserRef;
+import stroom.util.authentication.HasExpiry;
 import stroom.util.authentication.HasRefreshable;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -15,11 +16,12 @@ import stroom.util.shared.UserRef;
 
 import jakarta.servlet.http.HttpSession;
 
+import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 
 public class UserIdentityImpl
-        implements UserIdentity, HasSession, HasUserRef, HasJwt, HasRefreshable {
+        implements UserIdentity, HasSession, HasUserRef, HasJwt, HasRefreshable, HasExpiry {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UserIdentityImpl.class);
 
@@ -87,7 +89,7 @@ public class UserIdentityImpl
      */
     public void removeUserFromSession() {
         if (httpSession != null) {
-            UserIdentitySessionUtil.set(httpSession, null);
+            UserIdentitySessionUtil.setUserInSession(httpSession, null);
         }
     }
 
@@ -114,7 +116,7 @@ public class UserIdentityImpl
             final Optional<UserIdentity> optUserIdentity;
 
             try {
-                optUserIdentity = UserIdentitySessionUtil.get(httpSession);
+                optUserIdentity = UserIdentitySessionUtil.getUserFromSession(httpSession);
             } catch (final Exception e) {
                 LOGGER.debug(() -> LogUtil.message(
                         "Error getting identity from session, likely due to it being removed at logout: {}",
@@ -141,6 +143,11 @@ public class UserIdentityImpl
     @Override
     public UpdatableToken getRefreshable() {
         return updatableToken;
+    }
+
+    @Override
+    public Instant getExpireTime() {
+        return updatableToken.getExpireTime();
     }
 
     @Override

@@ -9,6 +9,7 @@ import stroom.util.shared.NullSafe;
 
 import jakarta.servlet.http.HttpSession;
 
+import java.util.Objects;
 import java.util.Optional;
 
 public final class UserIdentitySessionUtil {
@@ -23,7 +24,8 @@ public final class UserIdentitySessionUtil {
     /**
      * Set the {@link UserIdentity} on the session
      */
-    public static void set(final HttpSession session, final UserIdentity userIdentity) {
+    public static void setUserInSession(final HttpSession session, final UserIdentity userIdentity) {
+        Objects.requireNonNull(session);
         LOGGER.debug(() -> LogUtil.message("Setting userIdentity of type {} in session {}, userIdentity: {}",
                 LogUtil.getSimpleClassName(userIdentity),
                 NullSafe.get(session, HttpSession::getId),
@@ -31,7 +33,7 @@ public final class UserIdentitySessionUtil {
         session.setAttribute(SESSION_USER_IDENTITY, userIdentity);
     }
 
-    public static Optional<UserIdentity> get(final HttpSession session) {
+    public static Optional<UserIdentity> getUserFromSession(final HttpSession session) {
         final Optional<UserIdentity> optUserIdentity = Optional.ofNullable(session)
                 .map(session2 ->
                         (UserIdentity) session2.getAttribute(SESSION_USER_IDENTITY));

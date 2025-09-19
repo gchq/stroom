@@ -92,8 +92,9 @@ public class UpdatableToken implements Refreshable, HasJwtClaims, HasJwt {
     /**
      * @return The time the token will expire (with a small buffer before the actual expiry included)
      */
+    @Override
     public Instant getExpireTime() {
-        return Instant.ofEpochMilli(mutableState.expireTimeWithBufferEpochMs);
+        return Instant.ofEpochMilli(mutableState.expireTimeEpochMs);
     }
 
     @Override
@@ -199,7 +200,8 @@ public class UpdatableToken implements Refreshable, HasJwtClaims, HasJwt {
                ", preferredUsername=" + NullSafe.get(mutableState.jwtClaims, claims ->
                 JwtUtil.getClaimValue(claims, OpenId.CLAIM__PREFERRED_USERNAME).orElse(null)) +
                ", expireTimeWithBuffer=" + Instant.ofEpochMilli(mutableState.expireTimeWithBufferEpochMs) +
-               ", timeTilExpire=" + Duration.between(Instant.now(), getExpireTime()) +
+               ", timeTilExpire=" + Duration.between(Instant.now(), Instant.ofEpochMilli(
+                mutableState.expireTimeWithBufferEpochMs())) +
                ", session=" + SessionUtil.getSessionId(session) +
                '}';
     }
