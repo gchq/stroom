@@ -169,33 +169,36 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
             throw new DataException("Target already closed");
         }
 
-        if (!deleted) {
-            // If we get error on closing the stream we must return it to the caller
-            RuntimeException streamCloseException = null;
-            try {
-                closeStreams();
-            } catch (final RuntimeException e) {
-                streamCloseException = e;
-            }
+        try {
+            if (!deleted) {
+                // If we get error on closing the stream we must return it to the caller
+                RuntimeException streamCloseException = null;
+                try {
+                    closeStreams();
+                } catch (final RuntimeException e) {
+                    streamCloseException = e;
+                } finally {
+                    // Only write meta for the root target.
+                    if (parent == null) {
+                        // Update attributes and write the manifest.
+                        updateAttribute(this, MetaFields.RAW_SIZE, String.valueOf(getStreamSize()));
+                        updateAttribute(this, MetaFields.FILE_SIZE, String.valueOf(getTotalFileSize()));
+                        writeManifest();
 
-            // Only write meta for the root target.
-            if (parent == null) {
-                // Update attributes and write the manifest.
-                updateAttribute(this, MetaFields.RAW_SIZE, String.valueOf(getStreamSize()));
-                updateAttribute(this, MetaFields.FILE_SIZE, String.valueOf(getTotalFileSize()));
-                writeManifest();
-
-                if (streamCloseException == null) {
-                    // Unlock will update the meta data so set it back on the stream
-                    // target so the client has the up to date copy
-                    unlock(getMeta(), getAttributes());
-                } else {
-                    throw streamCloseException;
+                        if (streamCloseException == null) {
+                            // Unlock will update the meta data so set it back on the stream
+                            // target so the client has the up to date copy
+                            unlock(getMeta(), getAttributes());
+                        } else {
+                            throw streamCloseException;
+                        }
+                    }
                 }
             }
+        } finally {
+            outputStream = null;
+            closed = true;
         }
-
-        closed = true;
     }
 
     private void unlock(final Meta meta, final AttributeMap attributeMap) {
@@ -225,16 +228,20 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
             // Close the stream target.
             closeStreams();
         } finally {
-            // Only delete the root target.
-            if (parent == null) {
-                // Mark the target meta as deleted.
-                this.meta = metaService.updateStatus(meta, Status.LOCKED, Status.DELETED);
+            try {
+                // Only delete the root target.
+                if (parent == null) {
+                    // Mark the target meta as deleted.
+                    this.meta = metaService.updateStatus(meta, Status.LOCKED, Status.DELETED);
+                }
+            } finally {
+                outputStream = null;
+                deleted = true;
             }
-            deleted = true;
         }
     }
 
-    private synchronized void closeStreams() {
+    private void closeStreams() {
         RuntimeException exception = null;
 
         // Close the stream target.
@@ -244,8 +251,6 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
             } catch (final IOException e) {
                 LOGGER.error(() -> "closeStreams() - Error on closing stream " + this, e);
                 exception = new UncheckedIOException(e);
-            } finally {
-                outputStream = null;
             }
         }
 
