@@ -20,7 +20,9 @@ import stroom.node.api.FindNodeCriteria;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
+import stroom.security.api.SecurityContext;
 import stroom.security.common.impl.UserIdentitySessionUtil;
+import stroom.security.shared.AppPermission;
 import stroom.security.shared.HasUserRef;
 import stroom.security.shared.SessionDetails;
 import stroom.security.shared.SessionListResponse;
@@ -58,38 +60,51 @@ class SessionListListener implements HttpSessionListener, HttpSessionIdListener,
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SessionListListener.class);
 
-    private final ConcurrentHashMap<String, HttpSession> sessionMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, HttpSession> sessionIdToSessionMap = new ConcurrentHashMap<>();
 
     private final NodeInfo nodeInfo;
     private final NodeService nodeService;
     private final TaskContextFactory taskContextFactory;
     private final WebTargetFactory webTargetFactory;
+    // Need to use the impl rather than iface as iface doesn't support all the
+    // user/session/codeFlow stuff
+    private final StroomUserIdentityFactory stroomUserIdentityFactory;
+    private final SecurityContext securityContext;
 
     @Inject
     SessionListListener(final NodeInfo nodeInfo,
                         final NodeService nodeService,
                         final TaskContextFactory taskContextFactory,
-                        final WebTargetFactory webTargetFactory) {
+                        final WebTargetFactory webTargetFactory,
+                        final StroomUserIdentityFactory stroomUserIdentityFactory,
+                        final SecurityContext securityContext) {
         this.nodeInfo = nodeInfo;
         this.nodeService = nodeService;
         this.taskContextFactory = taskContextFactory;
         this.webTargetFactory = webTargetFactory;
+        this.stroomUserIdentityFactory = stroomUserIdentityFactory;
+        this.securityContext = securityContext;
     }
-
 
     @Override
     public void sessionCreated(final HttpSessionEvent event) {
         final HttpSession httpSession = event.getSession();
-        LOGGER.info("sessionCreated() - {}", httpSession.getId());
-        sessionMap.put(httpSession.getId(), httpSession);
+        final String sessionId = httpSession.getId();
+        LOGGER.debug("sessionCreated() - sessionId: {}", sessionId);
+        sessionIdToSessionMap.put(sessionId, httpSession);
     }
 
     @Override
     public void sessionDestroyed(final HttpSessionEvent event) {
         final HttpSession httpSession = event.getSession();
         try {
+            // In case the session has been destroyed due to it expiring rather than an explicit
+            // logout, we need to stop the refresh manager from trying to refresh tokens.
+            UserIdentitySessionUtil.get(httpSession)
+                    .ifPresent(stroomUserIdentityFactory::logoutUser);
+
             final UserRef userRef = getUserRefFromSession(httpSession);
-            final String userAgent = UserAgentSessionUtil.get(httpSession);
+            final String userAgent = UserAgentSessionUtil.getUserAgent(httpSession);
             final Instant createTime = Instant.ofEpochMilli(httpSession.getCreationTime());
             final Instant lastAccessedTime = Instant.ofEpochMilli(httpSession.getLastAccessedTime());
             LOGGER.info("sessionDestroyed() - {}, createTime: {} ({}), lastAccessTime: {} ({}), " +
@@ -102,7 +117,7 @@ class SessionListListener implements HttpSessionListener, HttpSessionIdListener,
                     userRef,
                     userAgent);
         } finally {
-            sessionMap.remove(httpSession.getId());
+            sessionIdToSessionMap.remove(httpSession.getId());
         }
     }
 
@@ -131,56 +146,58 @@ class SessionListListener implements HttpSessionListener, HttpSessionIdListener,
 //    }
 
     public SessionListResponse listSessions(final String nodeName) {
-        LOGGER.debug("listSessions(\"{}\") called", nodeName);
-        // TODO add audit logging?
-        Objects.requireNonNull(nodeName);
+        return securityContext.secureResult(AppPermission.MANAGE_USERS_PERMISSION, () -> {
+            LOGGER.debug("listSessions(\"{}\") called", nodeName);
+            // TODO add audit logging?
+            Objects.requireNonNull(nodeName);
 
-        final SessionListResponse sessionList;
+            final SessionListResponse sessionList;
 
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
-            // This is our node so execute locally
-            sessionList = listSessionsOnThisNode();
+            if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
+                // This is our node so execute locally
+                sessionList = listSessionsOnThisNode();
 
-        } else {
-            // This is a different node so make a rest call to it to get the result
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName) +
-                               ResourcePaths.buildAuthenticatedApiPath(
-                                       SessionResource.BASE_PATH,
-                                       SessionResource.LIST_PATH_PART);
+            } else {
+                // This is a different node so make a rest call to it to get the result
+                final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName) +
+                                   ResourcePaths.buildAuthenticatedApiPath(
+                                           SessionResource.BASE_PATH,
+                                           SessionResource.LIST_PATH_PART);
 
-            try {
-                LOGGER.debug("Sending request to {} for node {}", url, nodeName);
-                WebTarget webTarget = webTargetFactory.create(url);
-                webTarget = UriBuilderUtil.addParam(webTarget, SessionResource.NODE_NAME_PARAM, nodeName);
-                try (final Response response = webTarget
-                        .request(MediaType.APPLICATION_JSON)
-                        .get()) {
+                try {
+                    LOGGER.debug("Sending request to {} for node {}", url, nodeName);
+                    WebTarget webTarget = webTargetFactory.create(url);
+                    webTarget = UriBuilderUtil.addParam(webTarget, SessionResource.NODE_NAME_PARAM, nodeName);
+                    try (final Response response = webTarget
+                            .request(MediaType.APPLICATION_JSON)
+                            .get()) {
 
-                    if (response.getStatus() != 200) {
-                        throw new WebApplicationException(response);
+                        if (response.getStatus() != 200) {
+                            throw new WebApplicationException(response);
+                        }
+
+                        sessionList = response.readEntity(SessionListResponse.class);
                     }
-
-                    sessionList = response.readEntity(SessionListResponse.class);
+                } catch (final Throwable e) {
+                    throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
                 }
-            } catch (final Throwable e) {
-                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
-        }
-        LOGGER.debug(() -> LogUtil.message("Returning {} session items", sessionList.size()));
-        return sessionList;
+            LOGGER.debug(() -> LogUtil.message("Returning {} session items", sessionList.size()));
+            return sessionList;
+        });
     }
 
     private SessionListResponse listSessionsOnThisNode() {
         final String thisNodeName = nodeInfo.getThisNodeName();
         return LOGGER.logDurationIfDebugEnabled(() ->
-                        sessionMap.values().stream()
+                        sessionIdToSessionMap.values().stream()
                                 .map(httpSession -> {
                                     final UserRef userRef = getUserRefFromSession(httpSession);
                                     return new SessionDetails(
                                             userRef,
                                             httpSession.getCreationTime(),
                                             httpSession.getLastAccessedTime(),
-                                            UserAgentSessionUtil.get(httpSession),
+                                            UserAgentSessionUtil.getUserAgent(httpSession),
                                             thisNodeName);
                                 })
                                 .collect(SessionListResponse.collector(SessionListResponse::new)),
@@ -195,36 +212,37 @@ class SessionListListener implements HttpSessionListener, HttpSessionIdListener,
     }
 
     public SessionListResponse listSessions() {
-        return taskContextFactory.contextResult("Get session list on all active nodes", parentTaskContext ->
-                nodeService.findNodeNames(FindNodeCriteria.allEnabled())
-                        .stream()
-                        .map(nodeName -> {
-                            final Supplier<SessionListResponse> listSessionsOnNodeTask =
-                                    taskContextFactory.childContextResult(parentTaskContext,
-                                            LogUtil.message("Get session list on node [{}]", nodeName),
-                                            taskContext ->
-                                                    listSessions(nodeName));
+        return securityContext.secureResult(AppPermission.MANAGE_USERS_PERMISSION, () ->
+                taskContextFactory.contextResult("Get session list on all active nodes", parentTaskContext ->
+                        nodeService.findNodeNames(FindNodeCriteria.allEnabled())
+                                .stream()
+                                .map(nodeName -> {
+                                    final Supplier<SessionListResponse> listSessionsOnNodeTask =
+                                            taskContextFactory.childContextResult(parentTaskContext,
+                                                    LogUtil.message("Get session list on node [{}]", nodeName),
+                                                    taskContext ->
+                                                            listSessions(nodeName));
 
-                            LOGGER.debug("Creating async task for node {}", nodeName);
-                            return CompletableFuture
-                                    .supplyAsync(listSessionsOnNodeTask)
-                                    .exceptionally(throwable -> {
-                                        LOGGER.error("Error getting session list for node [{}]: {}. " +
-                                                     "Enable DEBUG for stacktrace",
-                                                nodeName,
-                                                throwable.getMessage());
-                                        LOGGER.debug("Error getting session list for node [{}]",
-                                                nodeName, throwable);
-                                        // TODO do we want to silently ignore nodes that error?
-                                        // If we can't talk to one node we still want to see the results from the
-                                        // other nodes
-                                        return SessionListResponse.empty();
-                                    });
-                        })
-                        .map(CompletableFuture::join)
-                        .reduce(SessionListResponse.reducer(
-                                SessionListResponse::new,
-                                SessionDetails.class))
-                        .orElse(SessionListResponse.empty())).get();
+                                    LOGGER.debug("Creating async task for node {}", nodeName);
+                                    return CompletableFuture
+                                            .supplyAsync(listSessionsOnNodeTask)
+                                            .exceptionally(throwable -> {
+                                                LOGGER.error("Error getting session list for node [{}]: {}. " +
+                                                             "Enable DEBUG for stacktrace",
+                                                        nodeName,
+                                                        throwable.getMessage());
+                                                LOGGER.debug("Error getting session list for node [{}]",
+                                                        nodeName, throwable);
+                                                // TODO do we want to silently ignore nodes that error?
+                                                // If we can't talk to one node we still want to see the
+                                                // results from the other nodes
+                                                return SessionListResponse.empty();
+                                            });
+                                })
+                                .map(CompletableFuture::join)
+                                .reduce(SessionListResponse.reducer(
+                                        SessionListResponse::new,
+                                        SessionDetails.class))
+                                .orElse(SessionListResponse.empty())).get());
     }
 }

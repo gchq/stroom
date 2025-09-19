@@ -48,7 +48,8 @@ public class TestUtil {
     }
 
     /**
-     * Build a {@link Provider} for a mocked class.
+     * Build a {@link Provider} that will provide a mock for the supplied class.
+     * Useful for constructors whose arguments are all providers.
      */
     public static <T> Provider<T> mockProvider(final Class<T> type) {
         return () -> Mockito.mock(type);

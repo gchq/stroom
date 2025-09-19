@@ -74,11 +74,11 @@ public class UserIdentityImpl
 
     @Override
     public String getSessionId() {
-        return httpSession.getId();
+        return NullSafe.get(httpSession, HttpSession::getId);
     }
 
     public void invalidateSession() {
-        httpSession.invalidate();
+        NullSafe.consume(httpSession, HttpSession::invalidate);
     }
 
     /**
@@ -86,7 +86,9 @@ public class UserIdentityImpl
      * to re-authenticate with the IDP.
      */
     public void removeUserFromSession() {
-        UserIdentitySessionUtil.set(httpSession, null);
+        if (httpSession != null) {
+            UserIdentitySessionUtil.set(httpSession, null);
+        }
     }
 
 //    /**

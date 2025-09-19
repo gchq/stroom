@@ -6,7 +6,7 @@ import stroom.dropwizard.common.FilteredHealthCheckServlet;
 import stroom.dropwizard.common.LogLevelInspector;
 import stroom.lifecycle.impl.LifecycleServiceModule;
 import stroom.meta.statistics.impl.MetaStatisticsModule;
-import stroom.resource.impl.SessionResourceModule;
+import stroom.resource.impl.ResourceModule;
 import stroom.security.impl.SecurityContextModule;
 import stroom.statistics.impl.sql.search.SQLStatisticSearchModule;
 import stroom.util.guice.AdminServletBinder;
@@ -27,7 +27,7 @@ public class AppModule extends AbstractModule {
         install(new SecurityContextModule());
         install(new MetaStatisticsModule());
         install(new SQLStatisticSearchModule());
-        install(new SessionResourceModule());
+        install(new ResourceModule());
         install(new JerseyModule());
 
         HasSystemInfoBinder.create(binder())

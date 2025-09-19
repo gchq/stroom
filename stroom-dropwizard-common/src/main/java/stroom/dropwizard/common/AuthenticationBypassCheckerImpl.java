@@ -14,7 +14,8 @@ import java.util.Set;
 public class AuthenticationBypassCheckerImpl implements AuthenticationBypassChecker {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AuthenticationBypassCheckerImpl.class);
-    // Servlet name taken from AbstractServerFactory
+    // Servlet name hard coded in io.dropwizard.core.server.AbstractServerFactory, so this
+    // should match that.
     private static final String JERSEY_SERVLET_NAME = "jersey";
 
     // These are populated by a single thread when dropwizard boots, so no need for synch
