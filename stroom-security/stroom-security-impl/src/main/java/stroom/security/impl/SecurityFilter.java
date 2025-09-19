@@ -207,7 +207,8 @@ class SecurityFilter implements Filter {
     }
 
     private boolean isStroomUIServlet(final String servletName) {
-        return Objects.equals(ResourcePaths.STROOM_SERVLET_NAME, servletName);
+        return Objects.equals(ResourcePaths.STROOM_SERVLET_NAME, servletName)
+               || Objects.equals(ResourcePaths.SESSION_LIST_SERVLET_NAME, servletName);
     }
 
     private void doOpenIdFlow(final HttpServletRequest request,
