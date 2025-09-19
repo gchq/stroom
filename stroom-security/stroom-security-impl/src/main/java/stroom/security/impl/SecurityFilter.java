@@ -136,25 +136,24 @@ class SecurityFilter implements Filter {
             chain.doFilter(request, response);
         } else if (isStaticResource(fullPath, servletPath, servletName)) {
             chain.doFilter(request, response);
+        } else if (shouldBypassAuthentication(request, fullPath, servletPath, servletName)) {
+            LOGGER.debug("Running as proc user for unauthenticated resource, servletName: {}, " +
+                         "fullPath: {}, servletPath: {}", servletName, fullPath, servletPath);
+            // Some paths don't need authentication. If that is the case then proceed as proc user.
+            securityContext.asProcessingUser(() ->
+                    process(request, response, chain));
         } else {
             // Api requests that are not from the front-end should have a token.
             // Also request from an AWS ALB will have an ALB signed token containing the claims
             // Need to do this first, so we get a fresh token from AWS ALB rather than using a stale
             // one from session.
             Optional<UserIdentity> optUserIdentity = openIdManager.loginWithRequestToken(request);
-
-            // Log current user.
-            if (LOGGER.isDebugEnabled()) {
-                logUserIdentityToDebug(
-                        optUserIdentity, fullPath, "after trying to login with request token");
-            }
+            logUserIdentityToDebug(optUserIdentity, fullPath, servletPath, "from request token");
 
             // If no user from header token, see if we have one in session already.
             if (optUserIdentity.isEmpty()) {
                 optUserIdentity = UserIdentitySessionUtil.get(SessionUtil.getExistingSession(request));
-                if (LOGGER.isDebugEnabled()) {
-                    logUserIdentityToDebug(optUserIdentity, fullPath, "from session");
-                }
+                logUserIdentityToDebug(optUserIdentity, fullPath, servletPath, "from session");
             }
 
             if (optUserIdentity.isPresent()) {
@@ -163,19 +162,20 @@ class SecurityFilter implements Filter {
                 // Now we have the session make note of the user-agent for logging and sessionListServlet duties
                 UserAgentSessionUtil.setUserAgentInSession(request);
 
+                // If OIDC code flow has been handled by the AWS ALB then the session won't have been
+                // created by our code flow code. Thus, ensure we have a session with the user in it
+                if (isStroomUIServlet(servletName)) {
+                    SessionUtil.getOrCreateSession(request, session -> {
+                        LOGGER.info("Creating session {} for user {}, fullPath: {}, servlet: {}",
+                                session.getId(), userIdentity, fullPath, servletName);
+                        UserIdentitySessionUtil.set(session, userIdentity);
+                    });
+                }
+
                 // Now handle the request as this user
                 securityContext.asUser(userIdentity, () ->
                         process(request, response, chain));
-
-            } else if (shouldBypassAuthentication(request, fullPath, servletPath, servletName)) {
-                LOGGER.debug("Running as proc user for unauthenticated servletName: {}, " +
-                             "fullPath: {}, servletPath: {}", servletName, fullPath, servletPath);
-                // Some paths don't need authentication. If that is the case then proceed as proc user.
-                securityContext.asProcessingUser(() ->
-                        process(request, response, chain));
-
-//            } else if (isApiRequest(servletPath)) {
-            } else if (Objects.equals(ResourcePaths.STROOM_SERVLET_NAME, servletName)) {
+            } else if (isStroomUIServlet(servletName)) {
                 doOpenIdFlow(request, response, fullPath);
             } else {
                 // If we couldn't log in with a token or couldn't get a token then error as this is an API call
@@ -185,6 +185,10 @@ class SecurityFilter implements Filter {
                 response.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
             }
         }
+    }
+
+    private boolean isStroomUIServlet(final String servletName) {
+        return Objects.equals(ResourcePaths.STROOM_SERVLET_NAME, servletName);
     }
 
     private void doOpenIdFlow(final HttpServletRequest request,
@@ -245,8 +249,9 @@ class SecurityFilter implements Filter {
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private void logUserIdentityToDebug(final Optional<UserIdentity> optUserIdentity,
                                         final String fullPath,
+                                        final String servletName,
                                         final String msg) {
-        LOGGER.debug("User identity ({}): {} path: {}",
+        LOGGER.debug(() -> LogUtil.message("User identity ({}): {}, fullPath: {}, servletName: {}",
                 msg,
                 optUserIdentity.map(
                                 identity -> {
@@ -258,7 +263,8 @@ class SecurityFilter implements Filter {
                                             identity.getClass().getSimpleName());
                                 })
                         .orElse("<empty>"),
-                fullPath);
+                fullPath,
+                servletName));
     }
 
     private String getPostAuthRedirectUri(final HttpServletRequest request) {
@@ -297,17 +303,6 @@ class SecurityFilter implements Filter {
             shouldBypass = false;
         } else {
             shouldBypass = authenticationBypassChecker.isUnauthenticated(servletName, servletPath, fullPath);
-        }
-
-        if (LOGGER.isDebugEnabled()) {
-            if (shouldBypass) {
-                LOGGER.debug("Bypassing authentication for servletName: {}, fullPath: {}, servletPath: {}",
-                        NullSafe.get(
-                                servletRequest.getHttpServletMapping(),
-                                HttpServletMapping::getServletName),
-                        fullPath,
-                        servletPath);
-            }
         }
         return shouldBypass;
     }
