@@ -154,11 +154,16 @@ class SecurityFilter implements Filter {
             // AWS ALB we will expire, so will just get the latest token from headers which the
             // ALB will be refreshing.
             optUserIdentity = optUserIdentity.map(userIdentity -> {
-                if (userIdentity instanceof final HasExpiry hasExpiry && hasExpiry.hasExpired()) {
-                    LOGGER.info("UserIdentity {} has expired, expiry: {}",
-                            userIdentityToString(userIdentity), hasExpiry.getExpireTime());
-                    // Clear the identity, so we have to re-acquire it from headers or code flow
-                    return null;
+                if (userIdentity instanceof final HasExpiry hasExpiry) {
+                    if (hasExpiry.hasExpired()) {
+                        LOGGER.info("UserIdentity {} has expired, expiry: {}",
+                                userIdentityToString(userIdentity), hasExpiry.getExpireTime());
+                        // Clear the identity, so we have to re-acquire it from headers or code flow
+                        return null;
+                    } else {
+                        LOGGER.debug(() -> LogUtil.message("UserIdentity {} expires in {}",
+                                userIdentityToString(userIdentity), hasExpiry.getTimeTilExpired()));
+                    }
                 }
                 return userIdentity;
             });
