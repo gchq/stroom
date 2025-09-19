@@ -24,6 +24,8 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
 
     @JsonCreator
     public ProxyOpenIdConfig(
+            @JsonProperty("enabled") final Boolean enabled,
+            @JsonProperty("idpName") final String idpName,
             @JsonProperty(PROP_NAME_IDP_TYPE) final IdpType identityProviderType,
             @JsonProperty(PROP_NAME_CONFIGURATION_ENDPOINT) final String openIdConfigurationEndpoint,
             @JsonProperty("issuer") final String issuer,
@@ -45,7 +47,9 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
             @JsonProperty("fullNameClaimTemplate") final String fullNameClaimTemplate,
             @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes,
             @JsonProperty("publicKeyUriPattern") final String publicKeyUriPattern) {
-        super(identityProviderType,
+        super(enabled,
+                idpName,
+                identityProviderType,
                 openIdConfigurationEndpoint,
                 issuer,
                 authEndpoint,
@@ -98,6 +102,8 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
 
     public ProxyOpenIdConfig withIdentityProviderType(final IdpType identityProviderType) {
         return new ProxyOpenIdConfig(
+                isEnabled(),
+                getIdpName(),
                 identityProviderType,
                 getOpenIdConfigurationEndpoint(),
                 getIssuer(),

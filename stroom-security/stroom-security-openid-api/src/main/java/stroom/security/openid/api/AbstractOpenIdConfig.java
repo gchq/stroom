@@ -34,6 +34,11 @@ public abstract class AbstractOpenIdConfig
     public static final String DEFAULT_AWS_PUBLIC_KEY_URI_TEMPLATE =
             "https://public-keys.auth.elb.${awsRegion}.amazonaws.com/${keyId}";
 
+    private static final boolean ENABLED_DEFAULT = false;
+
+    private final boolean enabled;
+    private final String idpName;
+
     private final IdpType identityProviderType;
 
     /**
@@ -148,6 +153,8 @@ public abstract class AbstractOpenIdConfig
     private final String publicKeyUriPattern;
 
     public AbstractOpenIdConfig() {
+        enabled = ENABLED_DEFAULT;
+        idpName = null;
         identityProviderType = getDefaultIdpType();
         openIdConfigurationEndpoint = null;
         issuer = null;
@@ -176,6 +183,8 @@ public abstract class AbstractOpenIdConfig
 
     @JsonCreator
     public AbstractOpenIdConfig(
+            @JsonProperty("enabled") final Boolean enabled,
+            @JsonProperty("idpName") final String idpName,
             @JsonProperty(PROP_NAME_IDP_TYPE) final IdpType identityProviderType,
             @JsonProperty(PROP_NAME_CONFIGURATION_ENDPOINT) final String openIdConfigurationEndpoint,
             @JsonProperty("issuer") final String issuer,
@@ -198,6 +207,8 @@ public abstract class AbstractOpenIdConfig
             @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes,
             @JsonProperty("publicKeyUriPattern") final String publicKeyUriPattern) {
 
+        this.enabled = Objects.requireNonNullElse(enabled, ENABLED_DEFAULT);
+        this.idpName = idpName;
         this.identityProviderType = identityProviderType;
         this.openIdConfigurationEndpoint = openIdConfigurationEndpoint;
         this.issuer = issuer;
@@ -220,6 +231,19 @@ public abstract class AbstractOpenIdConfig
                 fullNameClaimTemplate, DEFAULT_FULL_NAME_CLAIM_TEMPLATE);
         this.expectedSignerPrefixes = expectedSignerPrefixes;
         this.publicKeyUriPattern = publicKeyUriPattern;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    @Override
+    @JsonProperty
+    @JsonPropertyDescription("The name of the identity provider. Must be unique within the identity providers " +
+                             "in this configuration.")
+    public String getIdpName() {
+        return idpName;
     }
 
     /**

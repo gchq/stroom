@@ -17,6 +17,13 @@ import java.util.Set;
  */
 public interface OpenIdConfiguration {
 
+    boolean isEnabled();
+
+    /**
+     * @see AbstractOpenIdConfig#getIdpName()
+     */
+    String getIdpName();
+
     /**
      * @see AbstractOpenIdConfig#getIdentityProviderType()
      */
