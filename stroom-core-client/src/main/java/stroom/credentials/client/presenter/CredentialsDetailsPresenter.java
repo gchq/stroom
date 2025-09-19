@@ -68,7 +68,7 @@ implements HasHandlers {
             lstType.addItem(type.getDisplayName(), type.name());
         }
         lstType.setMultipleSelect(false);
-        lstType.addChangeHandler(event -> lstTypeHandler());
+        lstType.addChangeHandler(event -> setState());
         final FormGroup fmgType = new FormGroup();
         fmgType.setLabel("Type");
         fmgType.add(lstType);
@@ -106,9 +106,11 @@ implements HasHandlers {
         this.add(pnlVertical);
     }
 
-    public void lstTypeHandler() {
-        // Handle lstType changes
-        setState();
+    /**
+     * Called from CredentialsPresenter to hook stuff together.
+     */
+    public void setCredentialsPresenter(final CredentialsPresenter credentialsPresenter) {
+        this.credentialsPresenter = credentialsPresenter;
     }
 
     private CredentialsType getCredentialsType() {

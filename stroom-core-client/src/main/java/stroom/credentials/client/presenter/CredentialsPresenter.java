@@ -16,6 +16,10 @@ import com.gwtplatform.mvp.client.View;
  */
 public class CredentialsPresenter extends ContentTabPresenter<CredentialsPresenter.CredentialsView> {
 
+    private final CredentialsListPresenter credentialsListPresenter;
+
+    private final CredentialsDetailsPresenter credentialsDetailsPresenter;
+
     /** Label for the content */
     private static final String LABEL = "Credentials";
 
@@ -41,6 +45,10 @@ public class CredentialsPresenter extends ContentTabPresenter<CredentialsPresent
                                 final CredentialsListPresenter credentialsListPresenter,
                                 final CredentialsDetailsPresenter credentialsDetailsPresenter) {
         super(eventBus, view);
+        this.credentialsListPresenter = credentialsListPresenter;
+        this.credentialsListPresenter.setCredentialsPresenter(this);
+        this.credentialsDetailsPresenter = credentialsDetailsPresenter;
+        this.credentialsDetailsPresenter.setCredentialsPresenter(this);
         this.setInSlot(CREDENTIALS_LIST, credentialsListPresenter);
         view.getDetailsPanel().add(credentialsDetailsPresenter);
     }

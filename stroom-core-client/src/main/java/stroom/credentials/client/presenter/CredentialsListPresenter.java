@@ -68,17 +68,23 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
 
     }
 
+    /**
+     * Initialise the columns in the data grid.
+     */
     private void initColumns(final MyDataGrid<Credentials> grid) {
-        dataGrid.addResizableColumn(
+        grid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(Credentials::getName)
                         .build(),
                 DataGridUtil.headingBuilder("Credential")
                         .withToolTip("The set of credentials")
                         .build(),
                 300);
-        dataGrid.addEndColumn(new EndColumn<>());
+        grid.addEndColumn(new EndColumn<>());
     }
 
+    /**
+     * Sets up the data provider for the list of credentials.
+     */
     private RestDataProvider<Credentials, ResultPage<Credentials>>
     createDataProvider(final EventBus eventBus,
                        final PagerView view,
@@ -102,6 +108,13 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                         .exec();
             }
         };
+    }
+
+    /**
+     * Called from CredentialsPresenter to hook stuff together.
+     */
+    public void setCredentialsPresenter(final CredentialsPresenter credentialsPresenter) {
+        this.credentialsPresenter = credentialsPresenter;
     }
 
 }
