@@ -1,5 +1,6 @@
 package stroom.credentials.client.presenter;
 
+import stroom.credentials.client.view.CredentialsViewImpl;
 import stroom.credentials.shared.Credentials;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
@@ -15,9 +16,9 @@ import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.SelectionModel;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.google.inject.Inject;
 
 import java.util.function.Consumer;
-import javax.inject.Inject;
 
 /**
  * Shows the list of credentials.
@@ -63,6 +64,8 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                 ResultPage<Credentials>> dataProvider = createDataProvider(eventBus,
                 view,
                 restFactory);
+        dataProvider.addDataDisplay(dataGrid);
+
     }
 
     private void initColumns(final MyDataGrid<Credentials> grid) {
@@ -80,12 +83,13 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     createDataProvider(final EventBus eventBus,
                        final PagerView view,
                        final RestFactory restFactory) {
-
-        return new RestDataProvider<Credentials, ResultPage<Credentials>>(eventBus) {
+        CredentialsViewImpl.console("Creating data provider");
+        return new RestDataProvider<>(eventBus) {
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<Credentials>> dataConsumer,
                                 final RestErrorHandler restErrorHandler) {
+                CredentialsViewImpl.console("Requesting range " + range);
                 final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
                 restFactory
                         .create(CredentialsPresenter.CREDENTIALS_RESOURCE)

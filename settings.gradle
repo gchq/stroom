@@ -305,3 +305,6 @@ include 'stroom-contentstore'
 include 'stroom-gitrepo:stroom-gitrepo-impl-db'
 include 'stroom-gitrepo:stroom-gitrepo-impl-db-jooq'
 include 'stroom-gitrepo:stroom-gitrepo-mock'
+
+include 'stroom-credentials:stroom-credentials-impl'
+include 'stroom-credentials:stroom-credentials-impl-db-jooq'

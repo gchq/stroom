@@ -6,6 +6,7 @@ import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
@@ -21,6 +22,9 @@ public class CredentialsPresenter extends ContentTabPresenter<CredentialsPresent
     /** Tab type for the content (what is this?) */
     private static final String TAB_TYPE = "Credentials";
 
+    /** ID of the presenter for the list of credentials */
+    public static final String CREDENTIALS_LIST = "CREDENTIALS_LIST";
+
     /** The resource to access server-side data */
     public static final CredentialsResource CREDENTIALS_RESOURCE
             = GWT.create(CredentialsResource.class);
@@ -33,8 +37,12 @@ public class CredentialsPresenter extends ContentTabPresenter<CredentialsPresent
     @SuppressWarnings("unused")
     @Inject
     public CredentialsPresenter(final EventBus eventBus,
-                                final CredentialsView view) {
+                                final CredentialsView view,
+                                final CredentialsListPresenter credentialsListPresenter,
+                                final CredentialsDetailsPresenter credentialsDetailsPresenter) {
         super(eventBus, view);
+        this.setInSlot(CREDENTIALS_LIST, credentialsListPresenter);
+        view.getDetailsPanel().add(credentialsDetailsPresenter);
     }
 
     /**
@@ -81,7 +89,7 @@ public class CredentialsPresenter extends ContentTabPresenter<CredentialsPresent
      * GWT view managed by this presenter.
      */
     public interface CredentialsView extends View {
-
+        SimplePanel getDetailsPanel();
     }
 
 }

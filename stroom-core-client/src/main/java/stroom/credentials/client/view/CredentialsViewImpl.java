@@ -1,5 +1,6 @@
 package stroom.credentials.client.view;
 
+import stroom.credentials.client.presenter.CredentialsPresenter;
 import stroom.credentials.client.presenter.CredentialsPresenter.CredentialsView;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -40,6 +41,24 @@ public class CredentialsViewImpl extends ViewImpl implements CredentialsView {
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    /**
+     * Used to add the list of credentials to the main tab.
+     */
+    @Override
+    public void setInSlot(final Object slot, final Widget content) {
+        if (CredentialsPresenter.CREDENTIALS_LIST.equals(slot)) {
+            credentialsList.setWidget(content);
+        }
+    }
+
+    /**
+     * Makes the list panel available for adding stuff to etc.
+     */
+    @Override
+    public SimplePanel getDetailsPanel() {
+        return this.credentialsDetails;
     }
 
     /**

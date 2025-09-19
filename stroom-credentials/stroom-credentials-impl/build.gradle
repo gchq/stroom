@@ -1,0 +1,14 @@
+ext.moduleName = 'stroom.stroom-credentials.impl'
+
+dependencies {
+    implementation project(':stroom-credentials:stroom-credentials-api')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+
+    implementation libs.guice
+    implementation libs.jackson.annotations
+    implementation libs.restygwt
+    implementation libs.slf4j.api
+
+}
