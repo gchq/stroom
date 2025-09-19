@@ -161,10 +161,11 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
         return jwtContextFactory.hasToken(request);
     }
 
-    @Override
-    public boolean hasAuthenticationCertificate(final HttpServletRequest request) {
-        return certificateExtractor.extractCertificate(request).isPresent();
-    }
+//    @Override
+//    public boolean hasAuthenticationCertificate(final HttpServletRequest request) {
+//        final List<X509Certificate> certs = certificateExtractor.extractCertificates(request);
+//        return !certs.isEmpty();
+//    }
 
     @Override
     public void removeAuthEntries(final Map<String, String> headers) {

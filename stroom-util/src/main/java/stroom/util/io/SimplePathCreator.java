@@ -63,6 +63,7 @@ public class SimplePathCreator implements PathCreator {
             STROOM_TEMP};
 
     private static final Set<String> NON_ENV_VARS_SET = Set.of(NON_ENV_VARS);
+    private static final Supplier<String> EMPTY_STRING_SUPPLIER = () -> "";
 
     private final TempDirProvider tempDirProvider;
     private final HomeDirProvider homeDirProvider;
@@ -175,6 +176,24 @@ public class SimplePathCreator implements PathCreator {
         }
 
         return vars.toArray(new String[0]);
+    }
+
+    @Override
+    public String clearVars(final String path) {
+        if (NullSafe.isNonBlankString(path)) {
+            final String[] vars = findVars(path);
+            if (vars.length > 0) {
+                String output = path;
+                for (final String var : vars) {
+                    output = replace(output, var, EMPTY_STRING_SUPPLIER);
+                }
+                return output;
+            } else {
+                return path;
+            }
+        } else {
+            return path;
+        }
     }
 
     @Override

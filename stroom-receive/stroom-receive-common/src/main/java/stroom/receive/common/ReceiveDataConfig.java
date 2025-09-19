@@ -3,7 +3,9 @@ package stroom.receive.common;
 import stroom.data.shared.StreamTypeNames;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.util.cache.CacheConfig;
+import stroom.util.cert.CertVerificationConfig;
 import stroom.util.cert.DNFormat;
+import stroom.util.cert.EncodingType;
 import stroom.util.collections.CollectionUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
@@ -37,10 +39,13 @@ public class ReceiveDataConfig
         implements IsStroomConfig, IsProxyConfig {
 
     public static final String DEFAULT_X509_CERT_HEADER = "X-SSL-CERT";
+    public static final EncodingType DEFAULT_X509_CERT_ENCODING = EncodingType.URL_ENCODED;
     public static final String DEFAULT_X509_CERT_DN_HEADER = "X-SSL-CLIENT-S-DN";
     public static final DNFormat DEFAULT_X509_CERT_DN_FORMAT = DNFormat.LDAP;
     public static final String PROP_NAME_ALLOWED_CERTIFICATE_PROVIDERS = "allowedCertificateProviders";
     public static final String DEFAULT_OWNER_META_KEY = StandardHeaderArguments.ACCOUNT_ID;
+    public static final boolean DEFAULT_VALIDATE_CLIENT_CERTIFICATE_EXPIRY = true;
+    public static final String DEFAULT_TRUS_TSTORE_TYPE = "JKS";
 
     @JsonProperty
     private final String receiptPolicyUuid;
@@ -58,6 +63,10 @@ public class ReceiveDataConfig
     private final Set<AuthenticationType> enabledAuthenticationTypes;
     @JsonProperty
     private final String x509CertificateHeader;
+    @JsonProperty
+    private final EncodingType x509CertificateEncoding;
+    @JsonProperty
+    private final CertVerificationConfig certVerificationConfig;
     @JsonProperty
     private final String x509CertificateDnHeader;
     @JsonProperty
@@ -85,6 +94,8 @@ public class ReceiveDataConfig
                 .statisticsMode(CacheConfig.PROXY_DEFAULT_STATISTICS_MODE) // Used by stroom & proxy so need DW metrics
                 .build();
         x509CertificateHeader = DEFAULT_X509_CERT_HEADER;
+        x509CertificateEncoding = DEFAULT_X509_CERT_ENCODING;
+        certVerificationConfig = new CertVerificationConfig();
         x509CertificateDnHeader = DEFAULT_X509_CERT_DN_HEADER;
         x509CertificateDnFormat = DEFAULT_X509_CERT_DN_FORMAT;
         allowedCertificateProviders = Collections.emptySet();
@@ -113,6 +124,8 @@ public class ReceiveDataConfig
             @JsonProperty("dataFeedKeyOwnerMetaKey") final String dataFeedKeyOwnerMetaKey,
             @JsonProperty("authenticatedDataFeedKeyCache") final CacheConfig authenticatedDataFeedKeyCache,
             @JsonProperty("x509CertificateHeader") final String x509CertificateHeader,
+            @JsonProperty("x509CertificateEncoding") final EncodingType x509CertificateEncoding,
+            @JsonProperty("certVerificationConfig") final CertVerificationConfig certVerificationConfig,
             @JsonProperty("x509CertificateDnHeader") final String x509CertificateDnHeader,
             @JsonProperty("x509CertificateDnFormat") final DNFormat x509CertificateDnFormat,
             @JsonProperty(PROP_NAME_ALLOWED_CERTIFICATE_PROVIDERS) final Set<String> allowedCertificateProviders,
@@ -128,6 +141,9 @@ public class ReceiveDataConfig
         this.dataFeedKeyOwnerMetaKey = Objects.requireNonNullElse(dataFeedKeyOwnerMetaKey, DEFAULT_OWNER_META_KEY);
         this.authenticatedDataFeedKeyCache = authenticatedDataFeedKeyCache;
         this.x509CertificateHeader = x509CertificateHeader;
+        this.x509CertificateEncoding = Objects.requireNonNullElse(x509CertificateEncoding, DEFAULT_X509_CERT_ENCODING);
+        this.certVerificationConfig = Objects.requireNonNullElseGet(
+                certVerificationConfig, CertVerificationConfig::new);
         this.x509CertificateDnHeader = x509CertificateDnHeader;
         this.x509CertificateDnFormat = Objects.requireNonNullElse(x509CertificateDnFormat, DEFAULT_X509_CERT_DN_FORMAT);
         this.allowedCertificateProviders = cleanSet(allowedCertificateProviders);
@@ -146,6 +162,8 @@ public class ReceiveDataConfig
                 builder.dataFeedKeyOwnerMetaKey,
                 builder.authenticatedDataFeedKeyCache,
                 builder.x509CertificateHeader,
+                builder.x509CertificateEncoding,
+                builder.certVerificationConfig,
                 builder.x509CertificateDnHeader,
                 builder.x509CertificateDnFormat,
                 builder.allowedCertificateProviders,
@@ -232,6 +250,15 @@ public class ReceiveDataConfig
             "authentication if a value is set and 'enabledAuthenticationTypes' includes CERTIFICATE.")
     public String getX509CertificateHeader() {
         return x509CertificateHeader;
+    }
+
+    @JsonPropertyDescription("The encoding used to encode the X509 certificate in the HTTP header.")
+    public EncodingType getX509CertificateEncoding() {
+        return x509CertificateEncoding;
+    }
+
+    public CertVerificationConfig getCertVerificationConfig() {
+        return certVerificationConfig;
     }
 
     @JsonPropertyDescription(
@@ -386,6 +413,8 @@ public class ReceiveDataConfig
 
     public static final class Builder {
 
+        private CertVerificationConfig certVerificationConfig;
+        private EncodingType x509CertificateEncoding;
         private String receiptPolicyUuid;
         private Set<String> metaTypes;
         private Set<AuthenticationType> enabledAuthenticationTypes = EnumSet.noneOf(AuthenticationType.class);
@@ -460,6 +489,16 @@ public class ReceiveDataConfig
             return this;
         }
 
+        public Builder withX509CertificateEncoding(final EncodingType val) {
+            x509CertificateEncoding = val;
+            return this;
+        }
+
+        public Builder withCertVerificationConfig(final CertVerificationConfig val) {
+            certVerificationConfig = val;
+            return this;
+        }
+
         public Builder withX509CertificateDnHeader(final String val) {
             x509CertificateDnHeader = val;
             return this;
@@ -494,4 +533,9 @@ public class ReceiveDataConfig
             return new ReceiveDataConfig(this);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
+
 }

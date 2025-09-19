@@ -65,6 +65,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.security.auth.x500.X500Principal;
 
 // TODO: 08/12/2022 This should be an injectable class with instance methods to make test mocking possible
 public class AttributeMapUtil {
@@ -383,12 +384,13 @@ public class AttributeMapUtil {
     private static void addAllSecureTokens(final HttpServletRequest httpServletRequest,
                                            final CertificateExtractor certificateExtractor,
                                            final AttributeMap attributeMap) {
-        final Optional<X509Certificate> optional = certificateExtractor.extractCertificate(httpServletRequest);
+        final Optional<X509Certificate> optional = certificateExtractor.extractFirstCertificate(httpServletRequest);
         optional.ifPresent(cert -> {
             // If we get here it means SSL has been terminated by DropWizard, so we need to add meta items
             // from the certificate
-            if (cert.getSubjectDN() != null) {
-                final String remoteDN = cert.getSubjectDN().toString();
+            final X500Principal subjectPrinciple = cert.getSubjectX500Principal();
+            if (subjectPrinciple != null) {
+                final String remoteDN = subjectPrinciple.toString();
                 attributeMap.put(StandardHeaderArguments.REMOTE_DN, remoteDN);
             } else {
                 LOGGER.debug("Cert {} doesn't have a subject DN", cert);

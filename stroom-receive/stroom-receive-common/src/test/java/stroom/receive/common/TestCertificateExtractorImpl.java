@@ -3,6 +3,9 @@ package stroom.receive.common;
 import stroom.test.common.TestUtil;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.cert.DNFormat;
+import stroom.util.cert.X509CertificateHelper;
+import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
 
 import com.google.inject.TypeLiteral;
 import io.vavr.Tuple;
@@ -13,15 +16,20 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.security.Principal;
+import java.nio.file.Path;
+import java.security.Provider;
+import java.security.Security;
 import java.security.cert.X509Certificate;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
+import javax.security.auth.x500.X500Principal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,7 +43,11 @@ class TestCertificateExtractorImpl {
     @Mock
     private X509Certificate mockX509Certificate;
     @Mock
-    private Principal mockPrincipal;
+    private X509CertificateHelper mockX509CertificateHelper;
+    @Mock
+    private X500Principal mockPrincipal;
+    @TempDir
+    private Path tempTestDir;
 
     @BeforeEach
     void setUp() {
@@ -44,11 +56,15 @@ class TestCertificateExtractorImpl {
 
     @Test
     void getDN_fromX509CertHeader() {
-        final CertificateExtractor certificateExtractor = new CertificateExtractorImpl(() -> receiveDataConfig);
+        final CertificateExtractor certificateExtractor = createCertificateExtractor();
         final String myDn = "this is my DN";
-        Mockito.when(mockHttpServletRequest.getAttribute(receiveDataConfig.getX509CertificateHeader()))
-                .thenReturn(new Object[]{mockX509Certificate});
-        Mockito.when(mockX509Certificate.getSubjectDN())
+//        Mockito.when(mockHttpServletRequest.getAttribute(receiveDataConfig.getX509CertificateHeader()))
+//                .thenReturn(new Object[]{mockX509Certificate});
+        Mockito.when(mockHttpServletRequest.getHeader(receiveDataConfig.getX509CertificateHeader()))
+                .thenReturn("mock cert");
+        Mockito.when(mockX509CertificateHelper.parseX509Certificates(Mockito.anyString(), Mockito.any()))
+                .thenReturn(List.of(mockX509Certificate));
+        Mockito.when(mockX509Certificate.getSubjectX500Principal())
                 .thenReturn(mockPrincipal);
         Mockito.when(mockPrincipal.getName())
                 .thenReturn(myDn);
@@ -63,13 +79,17 @@ class TestCertificateExtractorImpl {
                 .withAllowedCertificateProviders(Set.of("host1", "host2"))
                 .build();
 
-        final CertificateExtractor certificateExtractor = new CertificateExtractorImpl(() -> receiveDataConfig);
+        final CertificateExtractor certificateExtractor = createCertificateExtractor();
         final String myDn = "this is my DN";
-        Mockito.when(mockHttpServletRequest.getAttribute(receiveDataConfig.getX509CertificateHeader()))
-                .thenReturn(new Object[]{mockX509Certificate});
+//        Mockito.when(mockHttpServletRequest.getHeader(receiveDataConfig.getX509CertificateHeader()))
+//                .thenReturn(new Object[]{mockX509Certificate});
+        Mockito.when(mockHttpServletRequest.getHeader(receiveDataConfig.getX509CertificateHeader()))
+                .thenReturn("mock cert");
+        Mockito.when(mockX509CertificateHelper.parseX509Certificates(Mockito.anyString(), Mockito.any()))
+                .thenReturn(List.of(mockX509Certificate));
         Mockito.when(mockHttpServletRequest.getRemoteHost())
                 .thenReturn("host1");
-        Mockito.when(mockX509Certificate.getSubjectDN())
+        Mockito.when(mockX509Certificate.getSubjectX500Principal())
                 .thenReturn(mockPrincipal);
         Mockito.when(mockPrincipal.getName())
                 .thenReturn(myDn);
@@ -84,10 +104,14 @@ class TestCertificateExtractorImpl {
                 .withAllowedCertificateProviders(Set.of("host1", "host2"))
                 .build();
 
-        final CertificateExtractor certificateExtractor = new CertificateExtractorImpl(() -> receiveDataConfig);
+        final CertificateExtractor certificateExtractor = createCertificateExtractor();
         final String myDn = "this is my DN";
-        Mockito.when(mockHttpServletRequest.getAttribute(receiveDataConfig.getX509CertificateHeader()))
-                .thenReturn(new Object[]{mockX509Certificate});
+//        Mockito.when(mockHttpServletRequest.getAttribute(receiveDataConfig.getX509CertificateHeader()))
+//                .thenReturn(new Object[]{mockX509Certificate});
+        Mockito.when(mockHttpServletRequest.getHeader(receiveDataConfig.getX509CertificateHeader()))
+                .thenReturn("mock cert");
+        Mockito.when(mockX509CertificateHelper.parseX509Certificates(Mockito.anyString(), Mockito.any()))
+                .thenReturn(List.of(mockX509Certificate));
         Mockito.when(mockHttpServletRequest.getRemoteHost())
                 .thenReturn("bad-host");
         Mockito.when(mockHttpServletRequest.getRemoteAddr())
@@ -100,13 +124,15 @@ class TestCertificateExtractorImpl {
 
     @Test
     void getDN_fromServletHeader() {
-        final CertificateExtractor certificateExtractor = new CertificateExtractorImpl(() -> receiveDataConfig);
+        final CertificateExtractor certificateExtractor = createCertificateExtractor();
         final String myDn = "this is my DN";
-        Mockito.when(mockHttpServletRequest.getAttribute(receiveDataConfig.getX509CertificateHeader()))
-                .thenReturn(null);
-        Mockito.when(mockHttpServletRequest.getAttribute(CertificateExtractorImpl.SERVLET_CERT_ARG))
-                .thenReturn(new Object[]{mockX509Certificate});
-        Mockito.when(mockX509Certificate.getSubjectDN())
+        Mockito.when(mockHttpServletRequest.getHeader(receiveDataConfig.getX509CertificateHeader()))
+                .thenReturn("mock cert");
+//        Mockito.when(mockHttpServletRequest.getAttribute(CertificateExtractorImpl.SERVLET_CERT_ARG))
+//                .thenReturn(new Object[]{mockX509Certificate});
+        Mockito.when(mockX509CertificateHelper.parseX509Certificates(Mockito.anyString(), Mockito.any()))
+                .thenReturn(List.of(mockX509Certificate));
+        Mockito.when(mockX509Certificate.getSubjectX500Principal())
                 .thenReturn(mockPrincipal);
         Mockito.when(mockPrincipal.getName())
                 .thenReturn(myDn);
@@ -117,11 +143,11 @@ class TestCertificateExtractorImpl {
 
     @Test
     void getDN_fromDnHeader() {
-        final CertificateExtractor certificateExtractor = new CertificateExtractorImpl(() -> receiveDataConfig);
+        final CertificateExtractor certificateExtractor = createCertificateExtractor();
         final String myDn = "this is my DN";
-        Mockito.when(mockHttpServletRequest.getAttribute(receiveDataConfig.getX509CertificateHeader()))
+        Mockito.when(mockHttpServletRequest.getHeader(Mockito.eq(receiveDataConfig.getX509CertificateHeader())))
                 .thenReturn(null);
-        Mockito.when(mockHttpServletRequest.getAttribute(CertificateExtractorImpl.SERVLET_CERT_ARG))
+        Mockito.when(mockHttpServletRequest.getAttribute(Mockito.eq(CertificateExtractorImpl.SERVLET_CERT_ARG)))
                 .thenReturn(null);
         Mockito.when(mockHttpServletRequest.getHeader(receiveDataConfig.getX509CertificateDnHeader()))
                 .thenReturn(myDn);
@@ -140,7 +166,9 @@ class TestCertificateExtractorImpl {
                     final CertificateExtractor certificateExtractor = new CertificateExtractorImpl(() ->
                             ReceiveDataConfig.builder()
                                     .withX509CertificateDnFormat(testCase.getInput()._2)
-                                    .build());
+                                    .build(),
+                            createPathCreator(),
+                            mockX509CertificateHelper);
 
                     return certificateExtractor.extractCNFromDN(testCase.getInput()._1)
                             .orElse(null);
@@ -175,5 +203,27 @@ class TestCertificateExtractorImpl {
                         Tuple.of(" cn = Jane Smith , ou = Users , o = Example ", DNFormat.LDAP),
                         "Jane Smith")
                 .build();
+    }
+
+    private CertificateExtractorImpl createCertificateExtractor() {
+        return new CertificateExtractorImpl(
+                () -> receiveDataConfig,
+                createPathCreator(),
+                mockX509CertificateHelper);
+    }
+
+    private PathCreator createPathCreator() {
+        return new SimplePathCreator(
+                () -> tempTestDir.resolve("home"),
+                () -> tempTestDir.resolve("temp"));
+    }
+
+    @Test
+    void name() {
+
+        final Provider[] providers = Security.getProviders();
+        for (final Provider provider : providers) {
+            System.out.println(provider.getName());
+        }
     }
 }

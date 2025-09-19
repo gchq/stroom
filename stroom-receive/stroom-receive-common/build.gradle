@@ -35,6 +35,7 @@ dependencies {
 
     testImplementation project(':stroom-cache:stroom-cache-impl')
     testImplementation project(':stroom-test-common')
+    testImplementation project(':stroom-bytebuffer')
 
     testImplementation libs.commons.lang
     testImplementation libs.vavr

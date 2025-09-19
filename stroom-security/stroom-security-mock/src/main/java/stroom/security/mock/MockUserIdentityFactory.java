@@ -62,10 +62,10 @@ public class MockUserIdentityFactory implements UserIdentityFactory {
 
     }
 
-    @Override
-    public boolean hasAuthenticationCertificate(final jakarta.servlet.http.HttpServletRequest request) {
-        return false;
-    }
+//    @Override
+//    public boolean hasAuthenticationCertificate(final jakarta.servlet.http.HttpServletRequest request) {
+//        return false;
+//    }
 
     @Override
     public boolean hasAuthenticationToken(final jakarta.servlet.http.HttpServletRequest request) {

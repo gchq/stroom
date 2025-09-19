@@ -16,19 +16,32 @@
 
 package stroom.receive.common;
 
+import stroom.security.api.exception.AuthenticationException;
+import stroom.util.cert.CertVerificationConfig;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.cert.DNFormat;
+import stroom.util.cert.X509CertificateHelper;
+import stroom.util.concurrent.CachedValue;
+import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
+import org.eclipse.jetty.util.resource.PathResource;
+import org.eclipse.jetty.util.resource.Resource;
+import org.eclipse.jetty.util.security.CertificateUtils;
 
+import java.nio.file.Path;
+import java.security.KeyStore;
 import java.security.cert.X509Certificate;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -42,10 +55,29 @@ public class CertificateExtractorImpl implements CertificateExtractor {
     static final String SERVLET_CERT_ARG = "jakarta.servlet.request.X509Certificate";
 
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
+    private final PathCreator pathCreator;
+    private final X509CertificateHelper x509CertificateHelper;
+    private final CachedValue<KeyStore, CachedTrustStoreState> cachedTrustStore;
 
     @Inject
-    public CertificateExtractorImpl(final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
+    public CertificateExtractorImpl(final Provider<ReceiveDataConfig> receiveDataConfigProvider,
+                                    final PathCreator pathCreator,
+                                    final X509CertificateHelper x509CertificateHelper) {
         this.receiveDataConfigProvider = receiveDataConfigProvider;
+        this.pathCreator = pathCreator;
+        this.x509CertificateHelper = x509CertificateHelper;
+        this.cachedTrustStore = CachedValue.builder()
+                .withMaxCheckIntervalSeconds(60)
+                .withStateSupplier(() -> {
+                    final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
+                    final CertVerificationConfig certVerificationConfig = receiveDataConfig.getCertVerificationConfig();
+                    return new CachedTrustStoreState(
+                            certVerificationConfig.getTrustStorePath(),
+                            certVerificationConfig.getTrustStorePassword(),
+                            certVerificationConfig.getTrustStoreType());
+                })
+                .withValueFunction(this::createTrustStore)
+                .build();
     }
 
     @Override
@@ -59,7 +91,8 @@ public class CertificateExtractorImpl implements CertificateExtractor {
         // First see if we have a cert we can use.
         final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
         final boolean isRemoteHostTrusted = isRemoteHostTrustedCertProvider(request, receiveDataConfig);
-        final Optional<X509Certificate> cert = extractCertificate(request, receiveDataConfig, isRemoteHostTrusted);
+        final Optional<X509Certificate> cert = extractFirstCertificate(
+                request, receiveDataConfig, isRemoteHostTrusted);
         if (cert.isPresent()) {
             LOGGER.debug(() -> "Found certificate " + cert.get());
             return extractDNFromCertificate(cert.get());
@@ -73,10 +106,10 @@ public class CertificateExtractorImpl implements CertificateExtractor {
      * "CN=some.server.co.uk, OU=servers, O=some organisation, C=GB"
      */
     @Override
-    public Optional<X509Certificate> extractCertificate(final ServletRequest request) {
+    public List<X509Certificate> extractCertificates(final HttpServletRequest request) {
         final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
         final boolean isRemoteHostTrusted = isRemoteHostTrustedCertProvider(request, receiveDataConfig);
-        return extractCertificate(request, receiveDataConfig, isRemoteHostTrusted);
+        return extractCertificates(request, receiveDataConfig, isRemoteHostTrusted);
     }
 
     /**
@@ -157,20 +190,46 @@ public class CertificateExtractorImpl implements CertificateExtractor {
         }
     }
 
-    private Optional<X509Certificate> extractCertificate(final ServletRequest request,
-                                                         final ReceiveDataConfig receiveDataConfig,
-                                                         final boolean isRemoteHostTrusted) {
+    private Optional<X509Certificate> extractFirstCertificate(final HttpServletRequest request,
+                                                              final ReceiveDataConfig receiveDataConfig,
+                                                              final boolean isRemoteHostTrusted) {
+        return extractCertificates(request, receiveDataConfig, isRemoteHostTrusted)
+                .stream()
+                .findFirst();
+    }
+
+    private List<X509Certificate> extractCertificates(final HttpServletRequest request,
+                                                      final ReceiveDataConfig receiveDataConfig,
+                                                      final boolean isRemoteHostTrusted) {
         final String x509CertificateHeader = receiveDataConfig.getX509CertificateHeader();
-        Optional<X509Certificate> optCert;
-        // First try and get a cert placed in the header by the load balancer (if trusted)
-        optCert = extractCertificate(request, x509CertificateHeader);
-        if (!isRemoteHostTrusted && optCert.isPresent()) {
+        // First try and get a cert placed in the header by nginx or load balancer (if trusted)
+        List<X509Certificate> certs = extractCertificatesFromHeader(
+                request,
+                receiveDataConfig,
+                x509CertificateHeader);
+
+        if (!isRemoteHostTrusted && !certs.isEmpty()) {
+            // Only warn if we found a cert in the header, as we don't need a trusted host
+            // for SERVLET_CERT_ARG as that comes from DropWiz.
             logUntrustedHostWarning(request, receiveDataConfig, x509CertificateHeader);
-            optCert = Optional.empty();
+            // Not trusted so clear out the certs
+            certs = Collections.emptyList();
         }
-        // Fall back to one placed there by the servlet container, i.e. DropWiz does the termination
-        return optCert
-                .or(() -> extractCertificate(request, SERVLET_CERT_ARG));
+        if (certs.isEmpty()) {
+            // Fall back to one placed there by the servlet container,
+            // i.e. DropWiz does the termination
+            certs = extractCertificatesFromAttribute(request, SERVLET_CERT_ARG);
+        }
+        validateCertificates(certs, receiveDataConfig.getCertVerificationConfig());
+        return certs;
+    }
+
+    private void validateCertificates(final List<X509Certificate> certificates,
+                                      final CertVerificationConfig certVerificationConfig) {
+        if (NullSafe.hasItems(certificates)) {
+            final KeyStore trustStore = cachedTrustStore.getValue();
+            x509CertificateHelper.validateCertificates(certificates, trustStore, certVerificationConfig);
+        }
     }
 
     private void logUntrustedHostWarning(final ServletRequest request,
@@ -185,29 +244,30 @@ public class CertificateExtractorImpl implements CertificateExtractor {
                 receiveDataConfig.getFullPath(ReceiveDataConfig.PROP_NAME_ALLOWED_CERTIFICATE_PROVIDERS));
     }
 
-    private static Optional<X509Certificate> extractCertificate(final ServletRequest request,
-                                                                final String attributeName) {
+    private static List<X509Certificate> extractCertificatesFromAttribute(final ServletRequest request,
+                                                                          final String attributeName) {
         final Object[] certs = (Object[]) request.getAttribute(attributeName);
-        return Optional.ofNullable(certs)
-                .flatMap(certs2 -> {
-                    LOGGER.debug(() -> "Found certificate using " + attributeName + " header");
-                    return extractCertificate(certs);
-                });
+        return NullSafe.stream(certs)
+                .map(obj -> switch (obj) {
+                    case final X509Certificate x509Certificate -> {
+                        LOGGER.debug(() -> LogUtil.message(
+                                "extractCertificateFromAttribute() - Extracted certificate {} from attributeName {}",
+                                x509Certificate.getSubjectX500Principal(), attributeName));
+                        yield x509Certificate;
+                    }
+                    case null, default -> null;
+                })
+                .filter(Objects::nonNull)
+                .toList();
     }
 
-    /**
-     * Pull out the Subject from the certificate. E.g.
-     * "CN=some.server.co.uk, OU=servers, O=some organisation, C=GB"
-     *
-     * @param certs ARGS from the SERVLET request.
-     */
-    private static Optional<X509Certificate> extractCertificate(final Object[] certs) {
-        for (final Object cert : certs) {
-            if (cert instanceof final X509Certificate x509Certificate) {
-                return Optional.of(x509Certificate);
-            }
-        }
-        return Optional.empty();
+    private List<X509Certificate> extractCertificatesFromHeader(final HttpServletRequest request,
+                                                                final ReceiveDataConfig receiveDataConfig,
+                                                                final String headerName) {
+        final String headerValue = request.getHeader(headerName);
+        return x509CertificateHelper.parseX509Certificates(
+                headerValue,
+                receiveDataConfig.getX509CertificateEncoding());
     }
 
     /**
@@ -217,7 +277,27 @@ public class CertificateExtractorImpl implements CertificateExtractor {
      * @return null or the CN name
      */
     private static Optional<String> extractDNFromCertificate(final X509Certificate cert) {
-        return Optional.ofNullable(cert.getSubjectDN().getName());
+        return Optional.ofNullable(cert.getSubjectX500Principal().getName());
+    }
+
+    private KeyStore createTrustStore(final CachedTrustStoreState cachedTrustStoreState) {
+        if (NullSafe.isNonBlankString(cachedTrustStoreState.path)) {
+            final Path trustStorePath = pathCreator.toAppPath(cachedTrustStoreState.path);
+            try (final Resource trustStoreResource = PathResource.newResource(trustStorePath)) {
+                try {
+                    return CertificateUtils.getKeyStore(
+                            trustStoreResource,
+                            cachedTrustStoreState.type,
+                            null,
+                            cachedTrustStoreState.password);
+                } catch (final Exception e) {
+                    throw new AuthenticationException(LogUtil.message("Error loading trust store '{}' - {}",
+                            trustStorePath, LogUtil.exceptionMessage(e)), e);
+                }
+            }
+        } else {
+            return null;
+        }
     }
 
     //    /**
@@ -285,4 +365,12 @@ public class CertificateExtractorImpl implements CertificateExtractor {
 //            return dn;
 //        }
 //    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record CachedTrustStoreState(String path, String password, String type) {
+
+    }
 }

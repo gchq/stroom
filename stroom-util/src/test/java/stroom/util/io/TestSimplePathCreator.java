@@ -94,6 +94,27 @@ class TestSimplePathCreator {
     }
 
     @TestFactory
+    Stream<DynamicTest> testClearUnused() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(String.class)
+                .withTestFunction(testCase -> {
+                    return new SimplePathCreator(() -> null, () -> null)
+                            .clearVars(testCase.getInput());
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(null, null)
+                .addCase("", "")
+                .addCase("foo", "foo")
+                .addCase("${}", "")
+                .addCase("${x}", "")
+                .addCase("${abc}", "")
+                .addCase("x${abc}y", "xy")
+                .addCase("x${abc}y${def}z", "xyz")
+                .addCase("x${abc}y${def}z${abc}", "xyz")
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testContainsVars() {
         final PathCreator pathCreator = new SimplePathCreator(() -> null, () -> null);
         return TestUtil.buildDynamicTestStream()

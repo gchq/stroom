@@ -31,7 +31,6 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.security.Principal;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -44,6 +43,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
+import javax.security.auth.x500.X500Principal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -417,7 +417,7 @@ class TestAttributeMapUtil {
         final HttpServletRequest mockRequest = Mockito.mock(HttpServletRequest.class);
         final CertificateExtractor mockCertificateExtractor = Mockito.mock(CertificateExtractor.class);
         final X509Certificate mockX509Certificate = Mockito.mock(X509Certificate.class);
-        final Principal mockPrincipal = Mockito.mock(Principal.class);
+        final X500Principal mockPrincipal = Mockito.mock(X500Principal.class);
 
         final Instant time = Instant.now();
         final UniqueIdGenerator uniqueIdGenerator = new UniqueIdGenerator(NodeType.PROXY, "proxy1");
@@ -433,9 +433,9 @@ class TestAttributeMapUtil {
         final String remoteHost = "somehost.somedomain";
         final String hostname = HostNameUtil.determineHostName();
 
-        Mockito.when(mockCertificateExtractor.extractCertificate(Mockito.any()))
+        Mockito.when(mockCertificateExtractor.extractFirstCertificate(Mockito.any()))
                 .thenReturn(Optional.of(mockX509Certificate));
-        Mockito.when(mockX509Certificate.getSubjectDN())
+        Mockito.when(mockX509Certificate.getSubjectX500Principal())
                 .thenReturn(mockPrincipal);
         Mockito.when(mockPrincipal.toString())
                 .thenReturn(subjectDn);
@@ -496,7 +496,7 @@ class TestAttributeMapUtil {
         final HttpServletRequest mockRequest = Mockito.mock(HttpServletRequest.class);
         final CertificateExtractor mockCertificateExtractor = Mockito.mock(CertificateExtractor.class);
         final X509Certificate mockX509Certificate = Mockito.mock(X509Certificate.class);
-        final Principal mockPrincipal = Mockito.mock(Principal.class);
+        final X500Principal mockPrincipal = Mockito.mock(X500Principal.class);
 
         final Instant time1 = Instant.now();
         ThreadUtil.sleepIgnoringInterrupts(5);
@@ -527,9 +527,9 @@ class TestAttributeMapUtil {
 
         final String queryString = "name=ferret&colour=purple";
 
-        Mockito.when(mockCertificateExtractor.extractCertificate(Mockito.any()))
+        Mockito.when(mockCertificateExtractor.extractFirstCertificate(Mockito.any()))
                 .thenReturn(Optional.of(mockX509Certificate));
-        Mockito.when(mockX509Certificate.getSubjectDN())
+        Mockito.when(mockX509Certificate.getSubjectX500Principal())
                 .thenReturn(mockPrincipal);
         Mockito.when(mockPrincipal.toString())
                 .thenReturn(subjectDn);
@@ -591,7 +591,7 @@ class TestAttributeMapUtil {
         final HttpServletRequest mockRequest = Mockito.mock(HttpServletRequest.class);
         final CertificateExtractor mockCertificateExtractor = Mockito.mock(CertificateExtractor.class);
         final X509Certificate mockX509Certificate = Mockito.mock(X509Certificate.class);
-        final Principal mockPrincipal = Mockito.mock(Principal.class);
+        final X500Principal mockPrincipal = Mockito.mock(X500Principal.class);
 
         final Instant time1 = Instant.now();
         ThreadUtil.sleepIgnoringInterrupts(5);
@@ -619,9 +619,9 @@ class TestAttributeMapUtil {
 
         final String queryString = "name=ferret&colour=purple";
 
-        Mockito.when(mockCertificateExtractor.extractCertificate(Mockito.any()))
+        Mockito.when(mockCertificateExtractor.extractFirstCertificate(Mockito.any()))
                 .thenReturn(Optional.of(mockX509Certificate));
-        Mockito.when(mockX509Certificate.getSubjectDN())
+        Mockito.when(mockX509Certificate.getSubjectX500Principal())
                 .thenReturn(mockPrincipal);
         Mockito.when(mockPrincipal.toString())
                 .thenReturn(subjectDn);

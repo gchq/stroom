@@ -15,7 +15,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 public class TemplateUtil {
 
@@ -53,15 +52,15 @@ public class TemplateUtil {
         if (NullSafe.isEmptyString(template)) {
             return Templator.EMPTY_TEMPLATE;
         } else {
-            final List<PartExtractor> funcList = new ArrayList<>();
+            final List<Object> funcList = new ArrayList<>();
             final Set<String> varsInTemplate = new HashSet<>();
             final Map<String, PartExtractor> varToPartExtractorMap = new HashMap<>();
             final StringBuilder sb = new StringBuilder();
             char lastChar = 0;
             boolean inVariable = false;
-            final Function<String, String> effectiveParamFormatter = replacementFormatter != null
-                    ? str -> replacementFormatter.apply(NullSafe.string(str))
-                    : NullSafe::string;
+//            final Function<String, String> effectiveParamFormatter = replacementFormatter != null
+//                    ? str -> replacementFormatter.apply(NullSafe.string(str))
+//                    : NullSafe::string;
 
             for (final char chr : template.toCharArray()) {
                 if (chr == '{' && lastChar == '$') {
@@ -69,7 +68,7 @@ public class TemplateUtil {
                     if (!sb.isEmpty()) {
                         // Stuff before must be static text
                         final String staticText = format(sb.toString(), staticTextFormatter);
-                        funcList.add(StaticPart.of(staticText));
+                        funcList.add(staticText);
                         LOGGER.debug("Adding static text func for '{}'", staticText);
                         sb.setLength(0);
                     }
@@ -77,8 +76,7 @@ public class TemplateUtil {
                     inVariable = false;
                     final String var = sb.toString();
                     varsInTemplate.add(var);
-                    final PartExtractor partExtractor = varToPartExtractorMap.computeIfAbsent(var, aVar ->
-                            new DynamicPart(aVar, effectiveParamFormatter));
+                    final PartExtractor partExtractor = varToPartExtractorMap.computeIfAbsent(var, DynamicPart::new);
                     funcList.add(partExtractor);
                     LOGGER.debug("Adding replacement func for var '{}'", var);
                     sb.setLength(0);
@@ -97,10 +95,10 @@ public class TemplateUtil {
             if (!sb.isEmpty()) {
                 // Stuff before must be static text
                 final String staticText = format(sb.toString(), staticTextFormatter);
-                funcList.add(StaticPart.of(staticText));
+                funcList.add(staticText);
                 sb.setLength(0);
             }
-            return new Templator(template, varsInTemplate, funcList);
+            return new Templator(template, varsInTemplate, funcList, replacementFormatter);
         }
     }
 
@@ -131,21 +129,32 @@ public class TemplateUtil {
         private static final Templator EMPTY_TEMPLATE = new Templator(
                 "",
                 Collections.emptySet(),
-                Collections.emptyList());
+                Collections.emptyList(),
+                null);
 
         /**
          * Here for debugging and toString
          */
         private final String template;
         private final Set<String> varsInTemplate;
-        private final List<PartExtractor> partExtractors;
+
+        /**
+         * Items are either a String or a {@link DynamicPart}. Object is used to avoid
+         * having to wrap the simple strings with another object.
+         */
+        private final List<Object> partExtractors;
+        private final int partCount;
+        private final Function<String, String> replacementFormatter;
 
         private Templator(final String template,
                           final Set<String> varsInTemplate,
-                          final List<PartExtractor> partExtractors) {
+                          final List<Object> partExtractors,
+                          final Function<String, String> replacementFormatter) {
             this.template = template;
             this.varsInTemplate = NullSafe.unmodifialbeSet(varsInTemplate);
             this.partExtractors = NullSafe.unmodifiableList(partExtractors);
+            this.replacementFormatter = replacementFormatter;
+            this.partCount = partExtractors.size();
         }
 
         /**
@@ -165,26 +174,30 @@ public class TemplateUtil {
                         .addCommonReplacementFunction(map::get)
                         .generate();
             }
-
-            LOGGER.debug("Generated output '{}' from varToReplacementProviderMap: {}",
-                    output, varToReplacementMap);
+//            LOGGER.debug("Generated output '{}' from varToReplacementProviderMap: {}",
+//                    output, varToReplacementMap);
             return output;
         }
 
-        private String doGenerate(final Map<String, ReplacementProvider> varToReplacementMap) {
+        private String doGenerate(final Map<String, Object> varToReplacementMap) {
             // partExtractors cope with null map
             final String output;
             if (partExtractors.isEmpty()) {
                 output = "";
             } else {
-                output = partExtractors.stream()
-                        .map(partExtractor ->
-                                partExtractor.apply(varToReplacementMap))
-                        .map(NullSafe::string)
-                        .collect(Collectors.joining());
+                final String[] parts = new String[partCount];
+                for (int i = 0; i < partExtractors.size(); i++) {
+                    final Object partExtractor = partExtractors.get(i);
+                    final String part = switch (partExtractor) {
+                        case final String str -> str;
+                        case final DynamicPart dynamicPart -> NullSafe.string(dynamicPart.apply(varToReplacementMap));
+                        case null, default -> "";
+                    };
+                    parts[i] = part;
+                }
+                return String.join("", parts);
             }
-
-            LOGGER.debug("Generated output '{}' from varToReplacementProviderMap: {}", output, varToReplacementMap);
+//            LOGGER.debug("Generated output '{}' from varToReplacementProviderMap: {}", output, varToReplacementMap);
             return output;
         }
 
@@ -244,7 +257,9 @@ public class TemplateUtil {
 
     public static class GeneratorBuilder {
 
-        private final Map<String, ReplacementProvider> varToReplacementProviderMap = new HashMap<>();
+        // Value is either a String or a ReplacementProvider. Object is used to avoid
+        // having to wrap the simple strings in another object
+        private final Map<String, Object> varToReplacementMap = new HashMap<>();
         private final Templator templator;
 
         private GeneratorBuilder(final Templator templator) {
@@ -259,12 +274,9 @@ public class TemplateUtil {
         public GeneratorBuilder addReplacement(final String var, final String replacement) {
             if (NullSafe.isNonBlankString(var)) {
                 if (templator.isVarInTemplate(var)) {
-                    if (NullSafe.isNonEmptyString(replacement)) {
-                        // No point adding a func for an empty replacement
-                        varToReplacementProviderMap.put(var, aVar -> replacement);
-                    }
+                    putReplacement(var, replacement);
                 } else {
-                    LOGGER.debug("var '{}' is not in template '{}'", var, templator.template);
+//                    LOGGER.debug("var '{}' is not in template '{}'", var, templator.template);
                 }
             } else {
                 throw new IllegalArgumentException("Blank var");
@@ -281,13 +293,25 @@ public class TemplateUtil {
         public GeneratorBuilder addReplacements(final Map<String, String> replacementsMap) {
             NullSafe.map(replacementsMap)
                     .forEach((var, replacement) -> {
-                        if (templator.isVarInTemplate(var)
-                            && NullSafe.isNonEmptyString(replacement)) {
-                            // No point adding a func for an empty replacement
-                            varToReplacementProviderMap.put(var, aVar -> replacement);
+                        if (templator.isVarInTemplate(var)) {
+                            putReplacement(var, replacement);
                         }
                     });
             return this;
+        }
+
+        private void putReplacement(final String var, final String replacement) {
+            if (NullSafe.isNonEmptyString(replacement)) {
+                // No point adding a replacement for an empty replacement
+                if (templator.replacementFormatter != null) {
+                    // Format the replacement
+                    varToReplacementMap.put(
+                            var,
+                            NullSafe.string(templator.replacementFormatter.apply(replacement)));
+                } else {
+                    varToReplacementMap.put(var, replacement);
+                }
+            }
         }
 
         /**
@@ -301,11 +325,9 @@ public class TemplateUtil {
             Objects.requireNonNull(replacementSupplier);
             if (NullSafe.isNonBlankString(var)) {
                 if (templator.isVarInTemplate(var)) {
-                    final SingleStatefulReplacementProvider singleStatefulReplacementProvider =
-                            new SingleStatefulReplacementProvider(var, replacementSupplier);
-                    varToReplacementProviderMap.put(var, singleStatefulReplacementProvider);
+                    putReplacement(var, replacementSupplier.get());
                 } else {
-                    LOGGER.debug("var '{}' is not in template '{}'", var, templator.template);
+//                    LOGGER.debug("var '{}' is not in template '{}'", var, templator.template);
                 }
             } else {
                 throw new IllegalArgumentException("Blank var");
@@ -320,9 +342,11 @@ public class TemplateUtil {
             Objects.requireNonNull(replacementProvider);
 
             final ReplacementProvider statefulReplacementProvider = new CommonStatefulReplacementProvider(
-                    replacementProvider);
+                    replacementProvider,
+                    templator.replacementFormatter);
+
             for (final String var : templator.getVarsInTemplate()) {
-                varToReplacementProviderMap.put(var, statefulReplacementProvider);
+                varToReplacementMap.put(var, statefulReplacementProvider);
             }
             return this;
         }
@@ -333,7 +357,7 @@ public class TemplateUtil {
          * @return The String generated from replacing the variables in the template.
          */
         public String generate() {
-            return templator.doGenerate(varToReplacementProviderMap);
+            return templator.doGenerate(varToReplacementMap);
         }
     }
 
@@ -356,42 +380,19 @@ public class TemplateUtil {
     // --------------------------------------------------------------------------------
 
 
-    private static class SingleStatefulReplacementProvider implements ReplacementProvider {
-
-        private final String var;
-        private final Supplier<String> replacementSupplier;
-        private String replacement = null;
-
-        private SingleStatefulReplacementProvider(final String var,
-                                                  final Supplier<String> replacementSupplier) {
-            this.var = var;
-            this.replacementSupplier = replacementSupplier;
-        }
-
-        @Override
-        public String apply(final String var) {
-            if (!Objects.equals(var, this.var)) {
-                throw new IllegalArgumentException(LogUtil.message("Vars are different! '{}' vs '{}'",
-                        var, this.var));
-            }
-            if (replacement == null) {
-                replacement = replacementSupplier.get();
-            }
-            return replacement;
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
+    /**
+     * One replacement provider for all vars, e.g. it can wrap the lookup of a var in an AttributeMap.
+     */
     private static class CommonStatefulReplacementProvider implements ReplacementProvider {
 
         private final ReplacementProvider replacementProvider;
+        private final Function<String, String> replacementFormatter;
         private final Map<String, String> replacements = new HashMap<>();
 
-        private CommonStatefulReplacementProvider(final ReplacementProvider replacementProvider) {
+        private CommonStatefulReplacementProvider(final ReplacementProvider replacementProvider,
+                                                  final Function<String, String> replacementFormatter) {
             this.replacementProvider = replacementProvider;
+            this.replacementFormatter = replacementFormatter;
         }
 
         @Override
@@ -399,7 +400,10 @@ public class TemplateUtil {
             Objects.requireNonNull(var);
             String replacement = replacements.get(var);
             if (replacement == null) {
-                replacement = replacementProvider.apply(var);
+                replacement = NullSafe.string(replacementProvider.apply(var));
+                if (replacementFormatter != null) {
+                    replacement = NullSafe.string(replacementFormatter.apply(replacement));
+                }
                 replacements.put(var, replacement);
             }
             return replacement;
@@ -411,37 +415,29 @@ public class TemplateUtil {
 
 
     @FunctionalInterface
-    private interface PartExtractor extends Function<Map<String, ReplacementProvider>, String> {
+    private interface PartExtractor extends Function<Map<String, Object>, String> {
 
         @Override
-        String apply(Map<String, ReplacementProvider> stringReplacementProviderMap);
+        String apply(Map<String, Object> stringReplacementProviderMap);
     }
 
 
     // --------------------------------------------------------------------------------
 
 
-    private static class DynamicPart implements PartExtractor {
-
-        private final String var;
-        private final Function<String, String> formatter;
-
-        private DynamicPart(final String var,
-                            final Function<String, String> formatter) {
-            this.var = var;
-            this.formatter = formatter;
-        }
+    private record DynamicPart(String var) implements PartExtractor {
 
         @Override
-        public String apply(final Map<String, ReplacementProvider> varToReplacementProviderMap) {
+        public String apply(final Map<String, Object> varToReplacementProviderMap) {
             // Reuse the replacement across calls
-            final ReplacementProvider replacementProvider = varToReplacementProviderMap.get(var);
-            // Get the replacement from the replacementProvider, then format it
-            return NullSafe.getOrElse(
-                    replacementProvider,
-                    aReplacementProvider -> aReplacementProvider.apply(var),
-                    formatter,
-                    "");
+            final Object obj = varToReplacementProviderMap.get(var);
+
+            final String replacement = switch (obj) {
+                case final String str -> str;
+                case final ReplacementProvider aReplacementProvider -> aReplacementProvider.apply(var);
+                case null, default -> "";
+            };
+            return NullSafe.string(replacement);
         }
 
         @Override
@@ -449,26 +445,6 @@ public class TemplateUtil {
             return "DynamicPart{" +
                    "var='" + var + '\'' +
                    '}';
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private record StaticPart(String staticText) implements PartExtractor {
-
-        private StaticPart(final String staticText) {
-            this.staticText = NullSafe.string(staticText);
-        }
-
-        private static StaticPart of(final String staticText) {
-            return new StaticPart(staticText);
-        }
-
-        @Override
-        public String apply(final Map<String, ReplacementProvider> ignored) {
-            return staticText;
         }
     }
 }

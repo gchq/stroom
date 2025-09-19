@@ -36,7 +36,7 @@ public interface UserIdentityFactory {
      */
     boolean hasAuthenticationToken(final HttpServletRequest request);
 
-    boolean hasAuthenticationCertificate(final HttpServletRequest request);
+//    boolean hasAuthenticationCertificate(final HttpServletRequest request);
 
     /**
      * Remove any authentication headers key/value pairs from the map

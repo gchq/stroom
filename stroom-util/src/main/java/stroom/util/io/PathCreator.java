@@ -44,6 +44,8 @@ public interface PathCreator {
 
     String[] findVars(String path);
 
+    String clearVars(String path);
+
     boolean containsVars(String path);
 
     String replace(String path,
