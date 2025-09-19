@@ -42,11 +42,11 @@ public final class TableFilterComponentSettings implements ComponentSettings {
     @JsonProperty
     private final Map<String, List<ConditionalFormattingRule>> conditionalFormattingRules;
 
+    @SuppressWarnings("checkstyle:LineLength")
     @JsonCreator
     public TableFilterComponentSettings(@JsonProperty("tableId") final String tableId,
                                         @JsonProperty("columns") final List<ColumnRef> columns,
-                                        @JsonProperty("conditionalFormattingRules")
-                                            final Map<String, List<ConditionalFormattingRule>> conditionalFormattingRules) {
+                                        @JsonProperty("conditionalFormattingRules") final Map<String, List<ConditionalFormattingRule>> conditionalFormattingRules) {
         this.tableId = tableId;
         this.columns = columns;
         this.conditionalFormattingRules = conditionalFormattingRules;

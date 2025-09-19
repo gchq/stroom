@@ -47,6 +47,7 @@ public class QueryColumnValuesRequest {
     @JsonProperty
     private final Map<String, ColumnValueSelection> selections;
 
+    @SuppressWarnings("checkstyle:LineLength")
     @JsonCreator
     public QueryColumnValuesRequest(@JsonProperty("searchRequest") final QuerySearchRequest searchRequest,
                                     @JsonProperty("column") final Column column,

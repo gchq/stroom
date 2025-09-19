@@ -45,8 +45,7 @@ public class ColumnValueCell extends AbstractCell<ColumnValue> {
                     outer.append(safeHtml);
 
                 } else {
-                    outer.div(d -> {
-                            },
+                    outer.div("",
                             Attribute.title("Not Ticked"),
                             Attribute.className("tickBox tickBox-noBorder tickBox-untick"));
                 }

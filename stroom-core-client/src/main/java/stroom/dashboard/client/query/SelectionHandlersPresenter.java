@@ -328,7 +328,7 @@ public class SelectionHandlersPresenter
                 .stream()
                 .map(column -> {
                     final FieldType fieldType = getFieldType(column);
-                    final ConditionSet conditionSet = switch(fieldType) {
+                    final ConditionSet conditionSet = switch (fieldType) {
                         case LONG -> ConditionSet.ALL_UI_NUMERIC;
                         case DATE -> ConditionSet.ALL_UI_DATE;
                         default -> ConditionSet.ALL_UI_TEXT;

@@ -155,7 +155,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
                                         () -> button,
                                         th,
                                         column,
-                                        () ->dataSupplier,
+                                        () -> dataSupplier,
                                         hideEvent -> {
                                             currentQuickFilters.put(
                                                     column.getId(),

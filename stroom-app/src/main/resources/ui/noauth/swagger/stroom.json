@@ -13396,6 +13396,17 @@
           }
         }
       },
+      "ColumnValue" : {
+        "type" : "object",
+        "properties" : {
+          "matchingRule" : {
+            "type" : "string"
+          },
+          "value" : {
+            "type" : "string"
+          }
+        }
+      },
       "ColumnValueSelection" : {
         "type" : "object",
         "properties" : {
@@ -13420,7 +13431,7 @@
           "values" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/ColumnValue"
             }
           }
         }
@@ -13431,6 +13442,12 @@
           "column" : {
             "$ref" : "#/components/schemas/Column"
           },
+          "conditionalFormattingRules" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ConditionalFormattingRule"
+            }
+          },
           "filter" : {
             "type" : "string"
           },
@@ -13439,6 +13456,12 @@
           },
           "searchRequest" : {
             "$ref" : "#/components/schemas/DashboardSearchRequest"
+          },
+          "selections" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "$ref" : "#/components/schemas/ColumnValueSelection"
+            }
           }
         }
       },
@@ -15721,7 +15744,7 @@
             "condition" : {
               "type" : "string",
               "description" : "The condition of the predicate term",
-              "enum" : [ "CONTAINS", "EQUALS", "STARTS_WITH", "ENDS_WITH", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_USER_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX", "WORD_BOUNDARY", "CONTAINS_CASE_SENSITIVE", "EQUALS_CASE_SENSITIVE", "STARTS_WITH_CASE_SENSITIVE", "ENDS_WITH_CASE_SENSITIVE", "MATCHES_REGEX_CASE_SENSITIVE", "OF_DOC_REF", "USER_HAS_PERM", "USER_HAS_OWNER", "USER_HAS_DELETE", "USER_HAS_EDIT", "USER_HAS_VIEW", "USER_HAS_USE" ]
+              "enum" : [ "CONTAINS", "EQUALS", "STARTS_WITH", "ENDS_WITH", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_USER_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX", "WORD_BOUNDARY", "CONTAINS_CASE_SENSITIVE", "EQUALS_CASE_SENSITIVE", "NOT_EQUALS_CASE_SENSITIVE", "STARTS_WITH_CASE_SENSITIVE", "ENDS_WITH_CASE_SENSITIVE", "MATCHES_REGEX_CASE_SENSITIVE", "OF_DOC_REF", "USER_HAS_PERM", "USER_HAS_OWNER", "USER_HAS_DELETE", "USER_HAS_EDIT", "USER_HAS_VIEW", "USER_HAS_USE" ]
             },
             "docRef" : {
               "$ref" : "#/components/schemas/DocRef"
@@ -19418,6 +19441,12 @@
           "column" : {
             "$ref" : "#/components/schemas/Column"
           },
+          "conditionalFormattingRules" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ConditionalFormattingRule"
+            }
+          },
           "filter" : {
             "type" : "string"
           },
@@ -19426,6 +19455,12 @@
           },
           "searchRequest" : {
             "$ref" : "#/components/schemas/QuerySearchRequest"
+          },
+          "selections" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "$ref" : "#/components/schemas/ColumnValueSelection"
+            }
           }
         }
       },
@@ -19583,7 +19618,7 @@
         "properties" : {
           "conditionSet" : {
             "type" : "string",
-            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'contains', '=', '!=', 'matches regex', 'in'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'is'", "'of'", "'has permissions', 'has owner permission', 'has delete permission', 'has edit permission', 'has view permission', 'has use permission'", "'is'" ]
+            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'contains', '=', '!=', 'matches regex', 'in'", "'contains', 'contains (case sensitive)', '=', '==', '!=', '!==', 'starts with', 'starts with (case sensitive)', 'ends with', 'ends with (case sensitive)', 'matches regex', 'matches regex (case sensitive)', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'contains', 'contains (case sensitive)', '=', '==', '!=', '!==', 'starts with', 'starts with (case sensitive)', 'ends with', 'ends with (case sensitive)', 'matches regex', 'matches regex (case sensitive)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'contains', 'contains (case sensitive)', '=', '==', '!=', '!==', 'starts with', 'starts with (case sensitive)', 'ends with', 'ends with (case sensitive)', 'matches regex', 'matches regex (case sensitive)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'is'", "'of'", "'has permissions', 'has owner permission', 'has delete permission', 'has edit permission', 'has view permission', 'has use permission'", "'is'" ]
           },
           "docRefType" : {
             "type" : "string"
@@ -23031,6 +23066,34 @@
           }
         } ]
       },
+      "TableFilterComponentSettings" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ComponentSettings"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "columns" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/ColumnRef"
+              }
+            },
+            "conditionalFormattingRules" : {
+              "type" : "object",
+              "additionalProperties" : {
+                "type" : "array",
+                "items" : {
+                  "$ref" : "#/components/schemas/ConditionalFormattingRule"
+                }
+              }
+            },
+            "tableId" : {
+              "type" : "string"
+            }
+          }
+        } ]
+      },
       "TableResult" : {
         "type" : "object",
         "allOf" : [ {
@@ -23501,7 +23564,7 @@
         "properties" : {
           "condition" : {
             "type" : "string",
-            "enum" : [ "CONTAINS", "EQUALS", "STARTS_WITH", "ENDS_WITH", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_USER_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX", "WORD_BOUNDARY", "CONTAINS_CASE_SENSITIVE", "EQUALS_CASE_SENSITIVE", "STARTS_WITH_CASE_SENSITIVE", "ENDS_WITH_CASE_SENSITIVE", "MATCHES_REGEX_CASE_SENSITIVE", "OF_DOC_REF", "USER_HAS_PERM", "USER_HAS_OWNER", "USER_HAS_DELETE", "USER_HAS_EDIT", "USER_HAS_VIEW", "USER_HAS_USE" ]
+            "enum" : [ "CONTAINS", "EQUALS", "STARTS_WITH", "ENDS_WITH", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_USER_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX", "WORD_BOUNDARY", "CONTAINS_CASE_SENSITIVE", "EQUALS_CASE_SENSITIVE", "NOT_EQUALS_CASE_SENSITIVE", "STARTS_WITH_CASE_SENSITIVE", "ENDS_WITH_CASE_SENSITIVE", "MATCHES_REGEX_CASE_SENSITIVE", "OF_DOC_REF", "USER_HAS_PERM", "USER_HAS_OWNER", "USER_HAS_DELETE", "USER_HAS_EDIT", "USER_HAS_VIEW", "USER_HAS_USE" ]
           },
           "from" : {
             "type" : "string"
