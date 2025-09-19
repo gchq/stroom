@@ -19,6 +19,7 @@ package stroom.query.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
+import stroom.dashboard.client.input.FilterableTable;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.table.AnnotationManager;
 import stroom.dashboard.client.table.ColumnFilterPresenter;
@@ -26,9 +27,11 @@ import stroom.dashboard.client.table.ColumnValuesDataSupplier;
 import stroom.dashboard.client.table.ColumnValuesFilterPresenter;
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.DownloadPresenter;
+import stroom.dashboard.client.table.FilterCellManager;
 import stroom.dashboard.client.table.FormatPresenter;
 import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.client.table.TableRowStyles;
+import stroom.dashboard.client.table.TableUpdateEvent;
 import stroom.dashboard.client.table.cf.RulesPresenter;
 import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MessagePanel;
@@ -67,14 +70,18 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -83,6 +90,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.google.web.bindery.event.shared.SimpleEventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
@@ -100,7 +108,7 @@ import java.util.stream.Collectors;
 
 public class QueryResultTablePresenter
         extends MyPresenterWidget<QueryResultTableView>
-        implements ResultComponent, HasComponentSelection, HasDirtyHandlers {
+        implements ResultComponent, HasComponentSelection, HasDirtyHandlers, HasHandlers, FilterableTable {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
@@ -136,6 +144,7 @@ public class QueryResultTablePresenter
     private final TableRowStyles rowStyles;
     private DashboardContext dashboardContext;
     private DocRef currentDataSource;
+    private final EventBus tableEventBus = new SimpleEventBus();
 
     @Inject
     public QueryResultTablePresenter(final EventBus eventBus,
@@ -510,16 +519,14 @@ public class QueryResultTablePresenter
 
         final QueryTablePreferences queryTablePreferences = getQueryTablePreferences();
         ignoreRangeChange = true;
-
         try {
             if (componentResult != null) {
                 // Don't refresh the table unless the results have changed.
                 final TableResult tableResult = (TableResult) componentResult;
 
                 // Get result columns.
-                List<Column> columns = tableResult.getColumns();
-
-                if (columns != null && queryTablePreferences != null && queryTablePreferences.getColumns() != null) {
+                List<Column> columns = NullSafe.list(tableResult.getColumns());
+                if (queryTablePreferences != null && queryTablePreferences.getColumns() != null) {
 
                     // Create a map of the result columns by id and remember the order that the result has them in.
                     final Map<String, ColAndPosition> mapped = new HashMap<>();
@@ -587,7 +594,7 @@ public class QueryResultTablePresenter
 
                 updateColumns(columns);
 
-                final List<TableRow> values = processData(tableResult.getColumns(), tableResult.getRows());
+                final List<TableRow> values = processData(columns, tableResult.getRows());
                 final OffsetRange valuesRange = tableResult.getResultRange();
 
                 // Only set data in the table if we have got some results and
@@ -604,6 +611,8 @@ public class QueryResultTablePresenter
 
                 // Show errors if there are any.
                 messagePanel.showMessage(tableResult.getErrors());
+
+                fireColumnAndDataUpdate();
 
             } else {
                 // Disable download of current results.
@@ -647,6 +656,8 @@ public class QueryResultTablePresenter
 
 //                dataGrid.redrawHeaders();
             dataGrid.resizeTableToFitColumns();
+
+            fireColumnAndDataUpdate();
         }
     }
 
@@ -802,7 +813,7 @@ public class QueryResultTablePresenter
     }
 
     @Override
-    public List<ColumnRef> getColumns() {
+    public List<ColumnRef> getColumnRefs() {
         return NullSafe.list(currentColumns)
                 .stream()
                 .map(col -> new ColumnRef(col.getId(), col.getName()))
@@ -817,6 +828,8 @@ public class QueryResultTablePresenter
         setQueryTablePreferences(getQueryTablePreferences().copy().columns(columns).build());
         currentColumns = columns;
         setDirty(true);
+
+        fireColumnAndDataUpdate();
     }
 
     QueryTablePreferences getQueryTablePreferences() {
@@ -829,7 +842,7 @@ public class QueryResultTablePresenter
 
     @Override
     public List<ComponentSelection> getSelection() {
-        final List<ColumnRef> columns = NullSafe.list(getColumns());
+        final List<ColumnRef> columns = NullSafe.list(getColumnRefs());
         return stroom.query.client.presenter.TableComponentSelection.create(columns, selectionModel.getSelectedItems());
     }
 
@@ -891,6 +904,7 @@ public class QueryResultTablePresenter
         }
     }
 
+    @Override
     public ColumnValuesDataSupplier getDataSupplier(final Column column,
                                                     final List<ConditionalFormattingRule> conditionalFormattingRules) {
         return new QueryTableColumnValuesDataSupplier(restFactory,
@@ -906,5 +920,42 @@ public class QueryResultTablePresenter
                 .onSuccess(result -> currentDataSource = result)
                 .taskMonitorFactory(this)
                 .exec();
+    }
+
+    @Override
+    public Element getFilterButton(final Column column) {
+        final int index = columnsManager.getColumnIndex(column);
+        if (index >= 0) {
+            final Element thead = dataGrid.getTableHeadElement().cast();
+            final Element tr = thead.getChild(0).cast();
+            final Element th = tr.getChild(index).cast();
+            return ElementUtil.findChild(th, "column-valueFilterIcon");
+        }
+
+        return null;
+    }
+
+    @Override
+    public List<Column> getColumns() {
+        return getCurrentColumns();
+    }
+
+    @Override
+    public FilterCellManager getFilterCellManager() {
+        return columnsManager;
+    }
+
+    private void fireColumnAndDataUpdate() {
+        TableUpdateEvent.fire(this);
+    }
+
+    @Override
+    public HandlerRegistration addUpdateHandler(final TableUpdateEvent.Handler handler) {
+        return tableEventBus.addHandler(TableUpdateEvent.getType(), handler);
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> event) {
+        tableEventBus.fireEvent(event);
     }
 }

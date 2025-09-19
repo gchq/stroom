@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public class TableColumnValuesDataSupplier  extends ColumnValuesDataSupplier {
+public class TableColumnValuesDataSupplier extends ColumnValuesDataSupplier {
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
 

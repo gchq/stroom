@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.input;
 
+import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter;
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
 import stroom.dashboard.client.main.BasicSettingsView;
 import stroom.dashboard.client.main.Component;
@@ -75,9 +76,9 @@ public class BasicTableFilterSettingsPresenter
 
     private void updateFieldNames(final Component component) {
         final Map<ColumnRef, Column> allColumns = new HashMap<>();
-        if (component instanceof final TablePresenter tablePresenter) {
-            final List<Column> columns = tablePresenter.getTableComponentSettings().getColumns();
-            if (columns != null && !columns.isEmpty()) {
+        if (component instanceof final FilterableTable filterableTable) {
+            final List<Column> columns = filterableTable.getColumns();
+            if (!NullSafe.isEmptyCollection(columns)) {
                 for (final Column column : columns) {
                     final ColumnRef ref = ColumnRef.builder().id(column.getId()).name(column.getName()).build();
                     allColumns.put(ref, column);
@@ -101,7 +102,9 @@ public class BasicTableFilterSettingsPresenter
         super.read(componentConfig);
 
         final List<Component> list = getDashboardContext()
-                .getComponents().getSortedComponentsByType(TablePresenter.TYPE.getId());
+                .getComponents().getSortedComponentsByType(
+                        TablePresenter.TYPE.getId(),
+                        EmbeddedQueryPresenter.TYPE.getId());
         getView().setTableList(list);
 
         final TableFilterComponentSettings settings = (TableFilterComponentSettings) componentConfig.getSettings();

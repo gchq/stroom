@@ -20,6 +20,7 @@ package stroom.dashboard.client.table;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
+import stroom.dashboard.client.input.FilterableTable;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
@@ -124,6 +125,7 @@ import com.google.web.bindery.event.shared.SimpleEventBus;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -135,7 +137,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class TablePresenter extends AbstractComponentPresenter<TableView>
-        implements HasDirtyHandlers, ResultComponent, HasComponentSelection, HasHandlers {
+        implements HasDirtyHandlers, ResultComponent, HasComponentSelection, HasHandlers, FilterableTable {
 
     public static final String TAB_TYPE = "table-component";
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
@@ -557,6 +559,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
     }
 
+    @Override
     public Element getFilterButton(final Column column) {
         final int index = columnsManager.getColumnIndex(column);
         if (index >= 0) {
@@ -569,7 +572,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         return null;
     }
 
-    public ColumnsManager getColumnsManager() {
+    @Override
+    public FilterCellManager getFilterCellManager() {
         return columnsManager;
     }
 
@@ -611,7 +615,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 selectionModel.clear();
             }
 
-            TableUpdateEvent.fire(this);
+            fireColumnAndDataUpdate();
 
         } catch (final RuntimeException e) {
             GWT.log(e.getMessage());
@@ -923,6 +927,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
 
         dataGrid.resizeTableToFitColumns();
+        fireColumnAndDataUpdate();
     }
 
     @Override
@@ -1190,7 +1195,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     @Override
-    public List<ColumnRef> getColumns() {
+    public List<ColumnRef> getColumnRefs() {
         return NullSafe.list(getTableComponentSettings().getColumns())
                 .stream()
                 .map(col -> new ColumnRef(col.getId(), col.getName()))
@@ -1199,7 +1204,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     @Override
     public List<ComponentSelection> getSelection() {
-        final List<ColumnRef> columns = NullSafe.list(getColumns());
+        final List<ColumnRef> columns = NullSafe.list(getColumnRefs());
         return TableComponentSelection.create(columns, selectionModel.getSelectedItems());
     }
 
@@ -1247,11 +1252,20 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         columnSelectionListModel.setTaskMonitorFactory(taskMonitorFactory);
     }
 
+    @Override
+    public List<Column> getColumns() {
+        return NullSafe.getOrElse(
+                getTableComponentSettings(),
+                TableComponentSettings::getColumns,
+                Collections.emptyList());
+    }
+
     public interface TableView extends View {
 
         void setTableView(View view);
     }
 
+    @Override
     public ColumnValuesDataSupplier getDataSupplier(final Column column,
                                                     final List<ConditionalFormattingRule> conditionalFormattingRules) {
         return new TableColumnValuesDataSupplier(restFactory,
@@ -1263,6 +1277,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 conditionalFormattingRules);
     }
 
+    private void fireColumnAndDataUpdate() {
+        TableUpdateEvent.fire(this);
+    }
+
+    @Override
     public HandlerRegistration addUpdateHandler(final TableUpdateEvent.Handler handler) {
         return tableEventBus.addHandler(TableUpdateEvent.getType(), handler);
     }

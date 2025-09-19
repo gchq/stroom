@@ -423,6 +423,20 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
         return null;
     }
 
+    public int getColumnIndex(final Column column) {
+        final List<Column> columns = getColumns();
+        int index = columnsStartIndex;
+        for (final Column col : columns) {
+            if (col.isVisible()) {
+                if (col.getId().equals(column.getId())) {
+                    return index;
+                }
+                index++;
+            }
+        }
+        return -1;
+    }
+
     public void setColumnsStartIndex(final int columnsStartIndex) {
         this.columnsStartIndex = columnsStartIndex;
     }

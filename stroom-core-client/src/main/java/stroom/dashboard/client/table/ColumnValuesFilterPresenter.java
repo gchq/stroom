@@ -265,16 +265,18 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
     }
 
     private void updateTable() {
-        final ColumnValueSelection columnValueSelection = selection.build();
-        filterCellManager.setValueSelection(column, columnValueSelection);
-        cellTable.redraw();
+        if (filterCellManager != null) {
+            final ColumnValueSelection columnValueSelection = selection.build();
+            filterCellManager.setValueSelection(column, columnValueSelection);
+            cellTable.redraw();
 
-        final Element filterButton = filterButtonProvider.get();
-        if (filterButton != null) {
-            if (columnValueSelection.isEnabled()) {
-                filterButton.addClassName("icon-colour__blue");
-            } else {
-                filterButton.removeClassName("icon-colour__blue");
+            final Element filterButton = filterButtonProvider.get();
+            if (filterButton != null) {
+                if (columnValueSelection.isEnabled()) {
+                    filterButton.addClassName("icon-colour__blue");
+                } else {
+                    filterButton.removeClassName("icon-colour__blue");
+                }
             }
         }
     }
