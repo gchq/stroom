@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.10.4] - 2025-09-22
+
+* Issue **#5135** : Fix proxy multi part gzip handling.
+
+
 ## [v7.10.3] - 2025-09-19
 
 * Uplift JDK to 21.0.8_9 in docker images and sdkmanrc.
@@ -1694,7 +1699,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.3...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.4...HEAD
+[v7.10.4]: https://github.com/gchq/stroom/compare/v7.10.3...v7.10.4
 [v7.10.3]: https://github.com/gchq/stroom/compare/v7.10.2...v7.10.3
 [v7.10.2]: https://github.com/gchq/stroom/compare/v7.10.1...v7.10.2
 [v7.10.1]: https://github.com/gchq/stroom/compare/v7.10.0...v7.10.1
