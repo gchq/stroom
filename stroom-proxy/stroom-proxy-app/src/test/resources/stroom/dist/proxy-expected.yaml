@@ -62,6 +62,7 @@ proxyConfig:
   - addOpenIdAccessToken: false
     apiKey: null
     enabled: true
+    forwardHeadersAdditionalAllowSet: []
     forwardUrl: null
     httpClient:
       connectionRequestTimeout: "PT1M"

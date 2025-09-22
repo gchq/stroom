@@ -1,9 +1,11 @@
 package stroom.proxy.app.handler;
 
+import stroom.util.collections.CollectionUtil;
 import stroom.util.http.HttpClientConfiguration;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
+import stroom.util.shared.NullSafe;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -13,7 +15,10 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 @NotInjectableConfig // Used in lists so not a unique thing
 @JsonPropertyOrder(alphabetic = true)
@@ -35,6 +40,7 @@ public final class ForwardHttpPostConfig
     private final boolean addOpenIdAccessToken;
     private final HttpClientConfiguration httpClient;
     private final ForwardHttpQueueConfig forwardQueueConfig;
+    private final Set<String> forwardHeadersAdditionalAllowSet;
 
     public ForwardHttpPostConfig() {
         enabled = true;
@@ -46,19 +52,23 @@ public final class ForwardHttpPostConfig
         addOpenIdAccessToken = false;
         httpClient = createDefaultHttpClientConfiguration();
         forwardQueueConfig = new ForwardHttpQueueConfig();
+        forwardHeadersAdditionalAllowSet = Collections.emptySet();
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public ForwardHttpPostConfig(@JsonProperty("enabled") final boolean enabled,
-                                 @JsonProperty("instant") final boolean instant,
-                                 @JsonProperty("name") final String name,
-                                 @JsonProperty("forwardUrl") final String forwardUrl,
-                                 @JsonProperty("livenessCheckUrl") final String livenessCheckUrl,
-                                 @JsonProperty("apiKey") final String apiKey,
-                                 @JsonProperty("addOpenIdAccessToken") final boolean addOpenIdAccessToken,
-                                 @JsonProperty("httpClient") final HttpClientConfiguration httpClient,
-                                 @JsonProperty("queue") final ForwardHttpQueueConfig forwardQueueConfig) {
+    public ForwardHttpPostConfig(
+            @JsonProperty("enabled") final boolean enabled,
+            @JsonProperty("instant") final boolean instant,
+            @JsonProperty("name") final String name,
+            @JsonProperty("forwardUrl") final String forwardUrl,
+            @JsonProperty("livenessCheckUrl") final String livenessCheckUrl,
+            @JsonProperty("apiKey") final String apiKey,
+            @JsonProperty("addOpenIdAccessToken") final boolean addOpenIdAccessToken,
+            @JsonProperty("httpClient") final HttpClientConfiguration httpClient,
+            @JsonProperty("queue") final ForwardHttpQueueConfig forwardQueueConfig,
+            @JsonProperty("forwardHeadersAdditionalAllowSet") final Set<String> forwardHeadersAdditionalAllowSet) {
+
         this.enabled = enabled;
         this.instant = instant;
         this.name = name;
@@ -68,6 +78,7 @@ public final class ForwardHttpPostConfig
         this.addOpenIdAccessToken = addOpenIdAccessToken;
         this.httpClient = Objects.requireNonNullElse(httpClient, createDefaultHttpClientConfiguration());
         this.forwardQueueConfig = Objects.requireNonNullElseGet(forwardQueueConfig, ForwardHttpQueueConfig::new);
+        this.forwardHeadersAdditionalAllowSet = NullSafe.unmodifialbeSet(forwardHeadersAdditionalAllowSet);
     }
 
     private HttpClientConfiguration createDefaultHttpClientConfiguration() {
@@ -160,6 +171,13 @@ public final class ForwardHttpPostConfig
         return forwardQueueConfig;
     }
 
+    @JsonProperty
+    @JsonPropertyDescription("Set of HTTP headers that should be added to the request when proxy forwards data. " +
+                             "THis set is in addition to the base set of allowed headers.")
+    public Set<String> getForwardHeadersAdditionalAllowSet() {
+        return forwardHeadersAdditionalAllowSet;
+    }
+
     @JsonIgnore
     @Override
     public String getDestinationDescription() {
@@ -222,6 +240,10 @@ public final class ForwardHttpPostConfig
                '}';
     }
 
+    private static Set<String> normaliseFields(final Set<String> fields) {
+        return CollectionUtil.cleanItems(fields, s -> s.trim().toLowerCase());
+    }
+
     // --------------------------------------------------------------------------------
 
 
@@ -236,6 +258,7 @@ public final class ForwardHttpPostConfig
         private boolean addOpenIdAccessToken;
         private HttpClientConfiguration httpClient;
         private ForwardHttpQueueConfig forwardQueueConfig;
+        private Set<String> forwardHeadersAdditionalAllowSet;
 
         private Builder() {
             this(new ForwardHttpPostConfig());
@@ -252,6 +275,7 @@ public final class ForwardHttpPostConfig
             this.addOpenIdAccessToken = forwardHttpPostConfig.addOpenIdAccessToken;
             this.httpClient = forwardHttpPostConfig.httpClient;
             this.forwardQueueConfig = forwardHttpPostConfig.forwardQueueConfig;
+            this.forwardHeadersAdditionalAllowSet = forwardHttpPostConfig.forwardHeadersAdditionalAllowSet;
         }
 
         public Builder enabled(final boolean enabled) {
@@ -299,6 +323,17 @@ public final class ForwardHttpPostConfig
             return this;
         }
 
+        public Builder forwardHeadersAdditionalAllowSet(final Set<String> forwardHeadersAdditionalAllowSet) {
+            if (this.forwardHeadersAdditionalAllowSet == null) {
+                this.forwardHeadersAdditionalAllowSet = new HashSet<>();
+            }
+            NullSafe.stream(forwardHeadersAdditionalAllowSet)
+                    .filter(NullSafe::isNonBlankString)
+                    .forEach(header ->
+                            this.forwardHeadersAdditionalAllowSet.add(header));
+            return this;
+        }
+
         public ForwardHttpPostConfig build() {
             return new ForwardHttpPostConfig(
                     enabled,
@@ -309,7 +344,8 @@ public final class ForwardHttpPostConfig
                     apiKey,
                     addOpenIdAccessToken,
                     httpClient,
-                    forwardQueueConfig);
+                    forwardQueueConfig,
+                    forwardHeadersAdditionalAllowSet);
         }
     }
 }

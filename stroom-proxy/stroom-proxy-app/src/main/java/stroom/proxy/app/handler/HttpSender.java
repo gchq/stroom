@@ -1,7 +1,6 @@
 package stroom.proxy.app.handler;
 
 import stroom.meta.api.AttributeMap;
-import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.proxy.repo.LogStream;
@@ -17,6 +16,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.metrics.Metrics;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.string.CIKey;
 
 import com.codahale.metrics.Timer;
 import org.apache.commons.io.IOUtils;
@@ -39,6 +39,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -71,6 +72,7 @@ public class HttpSender implements StreamDestination {
     private final String forwarderName;
     private final ProxyServices proxyServices;
     private final Timer sendTimer;
+    private final Set<CIKey> headerAllowSet;
 
     public HttpSender(final LogStream logStream,
                       final ForwardHttpPostConfig config,
@@ -92,6 +94,7 @@ public class HttpSender implements StreamDestination {
                 .addNamePart("send")
                 .timer()
                 .createAndRegister();
+        this.headerAllowSet = buildHeaderAllowSet(config);
     }
 
     @Override
@@ -167,14 +170,16 @@ public class HttpSender implements StreamDestination {
         httpPost.addHeader("User-Agent", userAgent);
         httpPost.addHeader("Content-Type", "application/audit");
 
+        // Add the header(s) for authenticating with the downstream (e.g. API key/OAuth token)
         addAuthHeaders(httpPost);
 
-        final AttributeMap sendHeader = AttributeMapUtil.cloneAllowable(attributeMap);
-        for (final Entry<String, String> entry : sendHeader.entrySet()) {
-            if (!StandardHeaderArguments.HTTP_POST_EXCLUDE_SET.contains(entry.getKey())) {
-                httpPost.addHeader(entry.getKey(), entry.getValue());
+        // Add meta entries that we are allowed to include
+        attributeMap.forEach((k, v) -> {
+            final CIKey ciKey = CIKey.of(k);
+            if (headerAllowSet.contains(ciKey)) {
+                httpPost.addHeader(k, v);
             }
-        }
+        });
 
         // We may be doing an instant forward so need to pass on the compression type.
         // If it is a forward after a store/agg then the caller should have set it in
@@ -503,6 +508,24 @@ public class HttpSender implements StreamDestination {
             LOGGER.debug(ioex.getMessage(), ioex);
         }
         return "";
+    }
+
+    private Set<CIKey> buildHeaderAllowSet(final ForwardHttpPostConfig config) {
+        final Set<CIKey> baseSet = StandardHeaderArguments.HTTP_POST_BASE_META_ALLOW_SET;
+        final Set<String> additionalSet = NullSafe.set(NullSafe.get(
+                config,
+                ForwardHttpPostConfig::getForwardHeadersAdditionalAllowSet));
+
+        final Set<CIKey> combinedSet = new HashSet<>(baseSet.size() + additionalSet.size());
+        combinedSet.addAll(baseSet);
+        config.getForwardHeadersAdditionalAllowSet()
+                .stream()
+                .filter(NullSafe::isNonBlankString)
+                .map(CIKey::of)
+                .forEach(combinedSet::add);
+
+        LOGGER.debug("buildHeaderAllowSet() - combinedSet: {}", combinedSet);
+        return combinedSet;
     }
 
 
