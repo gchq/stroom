@@ -2466,7 +2466,7 @@ button.main-menu svg {
 }
 
 .ColumnValuesFilterViewImpl .listContainer {
-    height: 300px;
+    /*height: 300px;*/
 }
 
 .columnValueCell {
@@ -2548,13 +2548,29 @@ button.main-menu svg {
     flex-direction: column;
     flex-grow: 1;
     min-height: 200px;
+    overflow: hidden;
 }
 
 .table-filter-outer .ColumnValuesFilterViewImpl {
     gap: 0;
     flex-grow: 1;
+    overflow: hidden;
 }
 
-.table-filter-outer .ColumnValuesFilterViewImpl .listContainer {
-    height: 150px;
+.popupContent .ColumnValuesFilterViewImpl {
+    width: 400px;
+    height: 400px;
+}
+
+.ColumnValuesFilterViewImpl .cellTableOddRow {
+    background-color: var(--row__background-color--odd);
+}
+
+.ColumnValuesFilterViewImpl .cellTableEvenRow {
+    background-color: var(--row__background-color--even);
+}
+
+.ColumnValuesFilterViewImpl .cellTableOddRow:hover,
+.ColumnValuesFilterViewImpl .cellTableEvenRow:hover {
+    background-color: var(--row__background-color--hovered);
 }

@@ -33,14 +33,12 @@ import stroom.query.api.ColumnValueSelection;
 import stroom.query.api.ConditionalFormattingRule;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageResponse;
-import stroom.widget.dropdowntree.client.view.QuickFilterDialogView;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
-import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.CheckListSelectionEventManager;
 import stroom.widget.util.client.MySingleSelectionModel;
@@ -48,10 +46,12 @@ import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
@@ -66,6 +66,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import javax.inject.Provider;
 
 public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesFilterView>
@@ -74,7 +75,6 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         ColumnValuesFilterUiHandlers,
         QuickFilterUiHandlers {
 
-    private final QuickFilterDialogView quickFilterPageView;
     private final PagerView pagerView;
     private final CellTable<ColumnValue> cellTable;
     private final ColumnValueSelectionEventManager typeFilterSelectionEventManager;
@@ -92,13 +92,10 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
     @Inject
     public ColumnValuesFilterPresenter(final EventBus eventBus,
                                        final ColumnValuesFilterView view,
-                                       final QuickFilterDialogView quickFilterPageView,
                                        final PagerView pagerView,
                                        final UserPreferencesManager userPreferencesManager) {
         super(eventBus, view);
         view.setUiHandlers(this);
-        quickFilterPageView.setUiHandlers(this);
-        this.quickFilterPageView = quickFilterPageView;
         this.pagerView = pagerView;
 
         rowStyles = new ColumnValueRowStyles(userPreferencesManager);
@@ -118,9 +115,7 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         cellTable.setSelectionModel(selectionModel, typeFilterSelectionEventManager);
 
         pagerView.setDataWidget(cellTable);
-        quickFilterPageView.setDataView(pagerView);
-
-        view.setList(quickFilterPageView);
+        view.setDataView(pagerView);
     }
 
     public void init(final Provider<Element> filterButtonProvider,
@@ -178,10 +173,9 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         final PopupPosition popupPosition = new PopupPosition(relativeRect, PopupLocation.BELOW);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.POPUP)
-                .popupSize(PopupSize.resizable(400, 400))
                 .popupPosition(popupPosition)
                 .addAutoHidePartner(autoHidePartner)
-                .onShow(e -> quickFilterPageView.focus())
+                .onShow(e -> getView().focus())
                 .onHide(handler)
                 .fire();
     }
@@ -201,7 +195,7 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
 
     public void setNameFilter(final String nameFilter) {
         this.nameFilter = nameFilter;
-        quickFilterPageView.setText(nameFilter, false);
+        getView().setText(nameFilter, false);
     }
 
     @Override
@@ -324,9 +318,13 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         return selection.build();
     }
 
-    public interface ColumnValuesFilterView extends View, HasUiHandlers<ColumnValuesFilterUiHandlers> {
+    public interface ColumnValuesFilterView extends View, Focus, HasUiHandlers<ColumnValuesFilterUiHandlers> {
 
-        void setList(View view);
+        void registerPopupTextProvider(Supplier<SafeHtml> popupTextSupplier);
+
+        void setDataView(View view);
+
+        void setText(String text, boolean fireEvents);
     }
 
     private class ColumnValueSelectionEventManager extends CheckListSelectionEventManager<ColumnValue> {
