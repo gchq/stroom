@@ -5,9 +5,9 @@ import java.util.List;
 public interface OpenIdConfigProvider {
 
     /**
-     * @return True if at least one IDP is configured
+     * @return True if at least one IDP is configured and enabled.
      */
-    boolean hasIDP();
+    boolean hasIdpConfig();
 
     /**
      * If true, use hard-coded credentials for testing/demo only.

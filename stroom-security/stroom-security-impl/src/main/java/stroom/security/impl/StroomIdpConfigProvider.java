@@ -25,6 +25,7 @@ public class StroomIdpConfigProvider extends AbstractConfig implements IsStroomC
 
     //    private final boolean useIdp;  // proxy only
     private final boolean useTestCredentials;
+    //
     private final OpenIdConfiguration internal;
     private final OpenIdConfiguration external1;
     private final OpenIdConfiguration external2;
@@ -59,7 +60,7 @@ public class StroomIdpConfigProvider extends AbstractConfig implements IsStroomC
     }
 
     @Override
-    public boolean hasIDP() {
+    public boolean hasIdpConfig() {
         return streamAllEnabled()
                 .findAny()
                 .isPresent();
@@ -101,17 +102,14 @@ public class StroomIdpConfigProvider extends AbstractConfig implements IsStroomC
         return internal;
     }
 
-    @Override
     public OpenIdConfiguration getExternal1() {
         return external1;
     }
 
-    @Override
     public OpenIdConfiguration getExternal2() {
         return external2;
     }
 
-    @Override
     public OpenIdConfiguration getExternal3() {
         return external3;
     }

@@ -5,6 +5,7 @@ import stroom.security.openid.api.IdpType;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.config.annotations.RequiresRestart.RestartScope;
 import stroom.util.shared.IsStroomConfig;
+import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -15,6 +16,7 @@ import io.dropwizard.validation.ValidationMethod;
 import java.util.List;
 import java.util.Set;
 
+@NotInjectableConfig
 @JsonPropertyOrder(alphabetic = true)
 public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroomConfig {
 

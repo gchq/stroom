@@ -3,6 +3,7 @@ package stroom.proxy.app;
 import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.util.shared.IsProxyConfig;
+import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -15,6 +16,7 @@ import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Set;
 
+@NotInjectableConfig
 @JsonPropertyOrder(alphabetic = true)
 public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyConfig {
 

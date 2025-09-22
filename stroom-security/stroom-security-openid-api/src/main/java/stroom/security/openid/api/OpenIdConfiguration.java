@@ -1,5 +1,7 @@
 package stroom.security.openid.api;
 
+import stroom.util.shared.NotInjectableConfig;
+
 import java.util.List;
 import java.util.Set;
 
@@ -15,6 +17,7 @@ import java.util.Set;
  * any classes that are the implementation of our internal IDP should be using an instance of this
  * class that is only backed by the config file.
  */
+@NotInjectableConfig
 public interface OpenIdConfiguration {
 
     boolean isEnabled();
