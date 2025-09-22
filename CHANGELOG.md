@@ -13,6 +13,34 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#5135** : Fix proxy multi part gzip handling.
+
+* Uplift JDK to 21.0.8_9 in docker images and sdkmanrc.
+
+* Issue **#5130** : Fix raw size meta bug.
+
+* Issue **#5132** : Fix missing session when AWS ALB does the code flow.
+
+* Fix the OpenID code flow to stop the session being lost after redirection back to the initiating URL.
+
+* Issue **#5101** : Fix select-all filtering when doing a reprocess of everything in a folder. It no longer tries to re-process deleted items streams.
+
+* Issue **#5086** : Improve stream error handling.
+
+* Change the resource store to not rely on sessions. Resources are now linked to a user.
+
+* Issue **#5114** : Improve handling of loss of connection to IDP.
+
+* Change the way security filter decides whether to authenticate or not, e.g. how it determines what is a static resource that does not need authentication.
+
+* Issue **#5115** : Use correct  header during proxy forward requests.
+
+* Issue **#5121** : Proxy aggregation now keeps only common headers in aggregated data.
+
+* Fix exception handling of DistributedTaskFetcher so it will restart after failure.
+
+* Issue **#5127** : Maintain case for proxy meta attributes when logging.
+
 * Issue **#5091** : Stop reference data loads failing if there are no entries in the stream.
 
 * Add `ReceiptId` to the INFO message on data receipt.

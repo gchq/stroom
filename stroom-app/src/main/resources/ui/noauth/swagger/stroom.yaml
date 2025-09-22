@@ -6751,25 +6751,6 @@ paths:
       summary: Logout of Stroom session
       tags:
       - Sessions
-  /session/v1/noauth/validateSession:
-    get:
-      operationId: validateStroomSession
-      parameters:
-      - in: query
-        name: redirect_uri
-        required: true
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ValidateSessionResponse"
-          description: default response
-      summary: "Validate the current session, return a redirect Uri if invalid."
-      tags:
-      - Sessions
   /sessionInfo/v1:
     get:
       operationId: getSessionInfo
@@ -18471,15 +18452,6 @@ components:
           type: boolean
         string:
           type: string
-    ValidateSessionResponse:
-      type: object
-      properties:
-        redirectUri:
-          type: string
-        userId:
-          type: string
-        valid:
-          type: boolean
     ValidationResult:
       type: object
       properties:

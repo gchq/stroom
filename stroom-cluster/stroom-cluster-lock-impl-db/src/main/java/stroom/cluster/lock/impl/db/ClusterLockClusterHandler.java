@@ -77,6 +77,8 @@ public class ClusterLockClusterHandler {
                 // have just tried to put.
                 if (lock == newLock) {
                     success = true;
+                } else {
+                    LOGGER.debug("tryLock() - Didn't get lock, lock held by {}", lock);
                 }
             }
 
@@ -229,7 +231,9 @@ public class ClusterLockClusterHandler {
         LOGGER.error(sb.toString());
     }
 
-    private void appendStatus(final StringBuilder sb, final ClusterLockKey clusterLockKey, final Lock lock,
+    private void appendStatus(final StringBuilder sb,
+                              final ClusterLockKey clusterLockKey,
+                              final Lock lock,
                               final Boolean success) {
         if (clusterLockKey != null) {
             sb.append(" key=(");
@@ -247,10 +251,15 @@ public class ClusterLockClusterHandler {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class Lock {
 
         private final ClusterLockKey clusterLockKey;
         private volatile long refreshTime;
+        private volatile Thread thread;
 
         public Lock(final ClusterLockKey clusterLockKey) {
             this.clusterLockKey = clusterLockKey;
@@ -259,6 +268,7 @@ public class ClusterLockClusterHandler {
 
         public void refresh() {
             this.refreshTime = System.currentTimeMillis();
+            this.thread = Thread.currentThread();
         }
 
         @Override
@@ -274,6 +284,9 @@ public class ClusterLockClusterHandler {
             clusterLockKey.append(sb);
             sb.append(" age=");
             sb.append(ModelStringUtil.formatDurationString(age));
+            sb.append(" thread='");
+            sb.append(thread.getName());
+            sb.append("'");
         }
     }
 }

@@ -151,6 +151,10 @@ class CIStringHashMap implements Map<String, String> {
         return map.toString();
     }
 
+    public Map<String, String> getKeyMap() {
+        return map.keySet().stream().collect(Collectors.toMap(CIString::getLowerKey, CIString::getKey));
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -197,6 +201,10 @@ class CIStringHashMap implements Map<String, String> {
 
         public String getKey() {
             return key;
+        }
+
+        public String getLowerKey() {
+            return lowerKey;
         }
 
         @Override
