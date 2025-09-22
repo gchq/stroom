@@ -119,8 +119,14 @@ class CIStringHashMap implements Map<String, String> {
         return map.toString();
     }
 
+    /**
+     * @return A {@link Map} that maps the lower-case key to the key in its original case (whatever that
+     * may be).
+     */
     public Map<String, String> getKeyMap() {
-        return map.keySet().stream().collect(Collectors.toMap(CIString::getLowerKey, CIString::getKey));
+        return map.keySet()
+                .stream()
+                .collect(Collectors.toMap(CIString::getLowerKey, CIString::getKey));
     }
 
     @Override
