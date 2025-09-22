@@ -14,6 +14,7 @@ import stroom.util.io.CommonDirSetup;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
@@ -41,7 +42,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ResourceLock(TestResourceLocks.STROOM_APP_PORT_8080)
 @ExtendWith(MockitoExtension.class)
@@ -79,7 +84,10 @@ class TestHttpSender {
 
     @Test
     void testSend() throws IOException, ProtocolException, ForwardException {
-        final ForwardHttpPostConfig config = MockHttpDestination.createForwardHttpPostConfig(false);
+        final ForwardHttpPostConfig config = MockHttpDestination.createForwardHttpPostConfig(false)
+                .copy()
+                .forwardHeadersAdditionalAllowSet(Set.of("Foo"))
+                .build();
         final StroomStatusCode stroomStatusCode = StroomStatusCode.OK;
         final String receiptId = "my-receipt-id";
         Mockito.when(mockUserIdentityFactory.getServiceUserAuthHeaders())
@@ -111,8 +119,13 @@ class TestHttpSender {
         Mockito.when(mockHttpEntity.getContent())
                 .thenReturn(IOUtils.toInputStream(receiptId, StandardCharsets.UTF_8));
 
+        final Set<String> headerKeysInPost = new HashSet<>();
         Mockito.doAnswer(
                         invocation -> {
+                            final HttpPost httpPost = invocation.getArgument(0, HttpPost.class);
+                            NullSafe.stream(httpPost.getHeaders())
+                                    .map(Header::getName)
+                                    .forEach(headerKeysInPost::add);
                             final HttpClientResponseHandler<?> responseHandler = invocation.getArgument(
                                     1, HttpClientResponseHandler.class);
                             return responseHandler.handleResponse(mockHttpResponse);
@@ -129,7 +142,10 @@ class TestHttpSender {
                 new MockMetrics(),
                 mockProxyServices);
         final AttributeMap attributeMap = new AttributeMap(Map.of(
-                StandardHeaderArguments.FEED, "MY_FEED"
+                StandardHeaderArguments.FEED, "MY_FEED",
+                StandardHeaderArguments.TYPE, "MY_TYPE",
+                "foo", "Foo Value",
+                "bar", "Bar Value"
         ));
         final InputStream inputStream = IOUtils.toInputStream("my payload", StandardCharsets.UTF_8);
         httpSender.send(attributeMap, inputStream);
@@ -143,6 +159,17 @@ class TestHttpSender {
                         Mockito.eq(receiptId),
                         Mockito.anyLong(),
                         Mockito.anyLong());
+
+        // All these are in the base or additional allow lists, so should be there
+        assertThat(headerKeysInPost)
+                .contains(
+                        StandardHeaderArguments.FEED,
+                        StandardHeaderArguments.TYPE,
+                        "foo");
+
+        // bar is not in the allow list so should not be there
+        assertThat(headerKeysInPost)
+                .doesNotContain("bar", "Bar");
     }
 
     @Test
@@ -495,7 +522,7 @@ class TestHttpSender {
 
     private void assertLivenessCheck(final HttpSender httpSender, final boolean isLive) {
         try {
-            Assertions.assertThat(httpSender.performLivenessCheck())
+            assertThat(httpSender.performLivenessCheck())
                     .isEqualTo(isLive);
         } catch (final Exception e) {
             if (isLive) {

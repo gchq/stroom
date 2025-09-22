@@ -275,7 +275,8 @@ public final class ForwardHttpPostConfig
             this.addOpenIdAccessToken = forwardHttpPostConfig.addOpenIdAccessToken;
             this.httpClient = forwardHttpPostConfig.httpClient;
             this.forwardQueueConfig = forwardHttpPostConfig.forwardQueueConfig;
-            this.forwardHeadersAdditionalAllowSet = forwardHttpPostConfig.forwardHeadersAdditionalAllowSet;
+            this.forwardHeadersAdditionalAllowSet = NullSafe.mutableSet(
+                    forwardHttpPostConfig.forwardHeadersAdditionalAllowSet);
         }
 
         public Builder enabled(final boolean enabled) {
