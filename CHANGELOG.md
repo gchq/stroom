@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.10.5] - 2025-09-22
+
+* Issue **#5137** : Fix how proxy adds HTTP headers when sending downstream. It now only adds received meta entries to the headers if they are on an allow list. This list is made up of a hard coded base list `accountId, accountName, classification, component, contextEncoding, contextFormat, encoding, environment, feed, format, guid, schema, schemaVersion, system, type` and is supplemented by the new config property `forwardHeadersAdditionalAllowSet` in the `forwardHttpDestinations` items.
+
+
 ## [v7.10.4] - 2025-09-22
 
 * Issue **#5135** : Fix proxy multi part gzip handling.
@@ -1699,7 +1704,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.4...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.5...HEAD
+[v7.10.5]: https://github.com/gchq/stroom/compare/v7.10.4...v7.10.5
 [v7.10.4]: https://github.com/gchq/stroom/compare/v7.10.3...v7.10.4
 [v7.10.3]: https://github.com/gchq/stroom/compare/v7.10.2...v7.10.3
 [v7.10.2]: https://github.com/gchq/stroom/compare/v7.10.1...v7.10.2
