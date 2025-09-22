@@ -100,7 +100,7 @@ public class SimpleReceiver implements Receiver {
                         // Deal with GZIP compression.
                         final String compression = attributeMap.get(StandardHeaderArguments.COMPRESSION);
                         final InputStream in = StandardHeaderArguments.COMPRESSION_GZIP.equalsIgnoreCase(compression)
-                                ? new GzipCompressorInputStream(bufferedInputStream)
+                                ? new GzipCompressorInputStream(bufferedInputStream, true)
                                 : bufferedInputStream;
 
                         // Write the .dat file in the zip
