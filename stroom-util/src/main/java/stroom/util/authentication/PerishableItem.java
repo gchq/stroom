@@ -6,9 +6,10 @@ import java.util.Objects;
 
 /**
  * An item of type T that has a finite life as defined by its expiry time.
+ *
  * @param <T>
  */
-public class PerishableItem<T> {
+public class PerishableItem<T> implements HasExpiry {
 
     private final Instant expiryTime;
     private final T item;
@@ -23,12 +24,9 @@ public class PerishableItem<T> {
         this.item = Objects.requireNonNull(item);
     }
 
-    public Instant getExpiryTime() {
+    @Override
+    public Instant getExpireTime() {
         return expiryTime;
-    }
-
-    public long getExpiryTimeEpochMs() {
-        return expiryTime.toEpochMilli();
     }
 
     public T getItem() {
@@ -38,8 +36,8 @@ public class PerishableItem<T> {
     @Override
     public String toString() {
         return "Perishable{" +
-                "expiryTime=" + expiryTime +
-                ", item=" + item +
-                '}';
+               "expiryTime=" + expiryTime +
+               ", item=" + item +
+               '}';
     }
 }

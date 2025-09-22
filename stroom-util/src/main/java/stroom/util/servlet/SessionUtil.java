@@ -34,6 +34,11 @@ public class SessionUtil {
         return hasCookie;
     }
 
+    public static boolean hasSession(final HttpServletRequest request) {
+        return request.getSession(false) != null;
+    }
+
+
     /**
      * Gets the existing {@link HttpSession} or returns null if no session is present.
      * Does NOT create a session.

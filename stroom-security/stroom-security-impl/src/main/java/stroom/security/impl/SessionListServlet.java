@@ -167,4 +167,9 @@ class SessionListServlet extends HttpServlet implements IsServlet {
     public Set<String> getPathSpecs() {
         return PATH_SPECS;
     }
+
+    @Override
+    public String getName() {
+        return ResourcePaths.SESSION_LIST_SERVLET_NAME;
+    }
 }

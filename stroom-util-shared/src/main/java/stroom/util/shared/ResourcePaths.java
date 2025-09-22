@@ -61,6 +61,7 @@ public interface ResourcePaths {
     String UI_SERVLET_NAME = "UI";
     String STROOM_SERVLET_NAME = "StroomServlet";
     String SIGN_IN_SERVLET_NAME = "SignInServlet";
+    String SESSION_LIST_SERVLET_NAME = "SessionListServlet";
 
 
     static String addLegacyUnauthenticatedServletPrefix(final String... parts) {

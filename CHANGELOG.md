@@ -13,6 +13,20 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.10.4] - 2025-09-22
+
+* Issue **#5135** : Fix proxy multi part gzip handling.
+
+
+## [v7.10.3] - 2025-09-19
+
+* Uplift JDK to 21.0.8_9 in docker images and sdkmanrc.
+
+* Issue **#5130** : Fix raw size meta bug.
+
+* Issue **#5132** : Fix missing session when AWS ALB does the code flow.
+
+
 ## [v7.10.2] - 2025-09-18
 
 * Fix the OpenID code flow to stop the session being lost after redirection back to the initiating URL.
@@ -1685,7 +1699,9 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.2...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.4...HEAD
+[v7.10.4]: https://github.com/gchq/stroom/compare/v7.10.3...v7.10.4
+[v7.10.3]: https://github.com/gchq/stroom/compare/v7.10.2...v7.10.3
 [v7.10.2]: https://github.com/gchq/stroom/compare/v7.10.1...v7.10.2
 [v7.10.1]: https://github.com/gchq/stroom/compare/v7.10.0...v7.10.1
 [v7.10.0]: https://github.com/gchq/stroom/compare/v7.10-beta.14...v7.10.0

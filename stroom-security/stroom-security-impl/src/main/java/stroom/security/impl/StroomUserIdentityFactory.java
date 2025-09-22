@@ -357,7 +357,7 @@ public class StroomUserIdentityFactory
 
             // We have authenticated so set the userIdentity in the session for future requests
             // to retrieve it from
-            UserIdentitySessionUtil.set(session, userIdentity);
+            UserIdentitySessionUtil.setUserInSession(session, userIdentity);
 
             // Register the token with the refresh manager so it gets refreshed periodically.
             updatableToken.setUserIdentity(userIdentity);
