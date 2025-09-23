@@ -7875,6 +7875,32 @@ paths:
       summary: Updates a user
       tags:
       - Authorisation
+  /users/v1/{toUserUuid}/copyPermissions:
+    post:
+      operationId: copyGroupsAndPermissions
+      parameters:
+      - in: path
+        name: toUserUuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+        description: fromUserUuid
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+          description: default response
+      summary: Copy user groups and permissions from one user to another
+      tags:
+      - Authorisation
   /users/v1/{userUuid}:
     delete:
       operationId: deleteUser
@@ -14862,21 +14888,18 @@ components:
           - '''between'''
           - "'=', '!=', 'in'"
           - "'contains', '=', '!=', 'matches regex', 'in'"
-          - "'contains', 'contains (case sensitive)', '=', '==', '!=', '!==', 'starts\
-            \ with', 'starts with (case sensitive)', 'ends with', 'ends with (case\
-            \ sensitive)', 'matches regex', 'matches regex (case sensitive)', 'in',\
-            \ 'in dictionary'"
+          - "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts\
+            \ with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches\
+            \ regex (CS)', 'in', 'in dictionary'"
           - "'=', '!=', 'in', 'in dictionary'"
           - "'=', '!=', 'in', 'in dictionary', 'is'"
-          - "'contains', 'contains (case sensitive)', '=', '==', '!=', '!==', 'starts\
-            \ with', 'starts with (case sensitive)', 'ends with', 'ends with (case\
-            \ sensitive)', 'matches regex', 'matches regex (case sensitive)', '>',\
-            \ '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+          - "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts\
+            \ with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches\
+            \ regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
           - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
-          - "'contains', 'contains (case sensitive)', '=', '==', '!=', '!==', 'starts\
-            \ with', 'starts with (case sensitive)', 'ends with', 'ends with (case\
-            \ sensitive)', 'matches regex', 'matches regex (case sensitive)', '>',\
-            \ '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+          - "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts\
+            \ with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches\
+            \ regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
           - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
           - '''is'''
           - '''of'''
@@ -18671,9 +18694,16 @@ components:
           - CONTAINS
           - EQUALS
           - NOT_EQUALS
+          - NOT_CONTAINS
+          - NOT_EXISTS
           - UNIQUE
         path:
           type: string
+        searchType:
+          type: string
+          enum:
+          - ALL
+          - XPATH
         uniqueValues:
           type: object
           additionalProperties:

@@ -370,7 +370,7 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                             .resultStore()
                             .getData(resultRequest.getComponentId());
 
-                    TimeFilter timeFilter = null;
+                    final TimeFilter timeFilter = null;
 //                    if (mappedRequest.getQuery() != null && mappedRequest.getQuery().getTimeRange() != null) {
 //                        timeFilter = DateExpressionParser.getTimeFilter(
 //                                mappedRequest.getQuery().getTimeRange(),
