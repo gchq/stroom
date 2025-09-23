@@ -316,6 +316,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
             // Create some processing info.
             final String info = " pipeline=" +
                                 pipelineDoc.getName() +
+                                ", pipeline uuid=" + pipelineDoc.getUuid() +
                                 ", feed=" +
                                 feedName +
                                 ", meta_id=" +

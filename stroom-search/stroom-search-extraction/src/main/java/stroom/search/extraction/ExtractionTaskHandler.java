@@ -122,7 +122,7 @@ public class ExtractionTaskHandler {
                 taskContext.info(() -> "" +
                         "Extracting " +
                         eventIds.length +
-                        " records from stream " +
+                        " records from stream_id=" +
                         streamId);
 
                 meta = source.getMeta();
