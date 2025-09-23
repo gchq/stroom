@@ -120,6 +120,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -341,6 +342,7 @@ public class DocumentPluginEventManager extends Plugin {
                         event.isForceOpen(),
                         event.isFullScreen(),
                         event.getSelectedTab().orElse(null),
+                        event.getCallbackOnOpen(),
                         explorerListener)));
 
         registerHandler(getEventBus().addHandler(CloseSelectedDocumentEvent.getType(), event -> {
@@ -761,6 +763,7 @@ public class DocumentPluginEventManager extends Plugin {
                      final boolean forceOpen,
                      final boolean fullScreen,
                      final CommonDocLinkTab selectedLinkTab,
+                     final Consumer<MyPresenterWidget<?>> callbackOnOpen,
                      final TaskMonitorFactory taskMonitorFactory) {
         if (docRef != null && docRef.getType() != null) {
             final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(docRef.getType());
@@ -781,6 +784,7 @@ public class DocumentPluginEventManager extends Plugin {
                                         forceOpen,
                                         fullScreen,
                                         selectedLinkTab,
+                                        callbackOnOpen,
                                         new DefaultTaskMonitorFactory(this));
                                 highlight(decoratedDocRef, explorerListener);
                             }

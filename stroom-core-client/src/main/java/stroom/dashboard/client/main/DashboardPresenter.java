@@ -46,14 +46,17 @@ import stroom.dashboard.shared.VisComponentSettings;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.OpenDocumentEvent;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.HasToolbar;
+import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.query.api.ParamUtil;
 import stroom.query.api.ResultStoreInfo;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.client.presenter.QueryToolbarPresenter;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
+import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.HasTaskMonitorFactory;
 import stroom.util.shared.ErrorMessage;
@@ -115,6 +118,7 @@ public class DashboardPresenter
     private final QueryInfo queryInfo;
     private final Provider<LayoutConstraintPresenter> layoutConstraintPresenterProvider;
     private final Provider<CurrentSelectionPresenter> currentSelectionPresenterProvider;
+    private final Provider<DocSelectionPopup> dashboardSelection;
     private CurrentSelectionPresenter currentSelectionPresenter;
     private String lastLabel;
     private boolean loaded;
@@ -150,7 +154,8 @@ public class DashboardPresenter
                               final QueryInfo queryInfo,
                               final Provider<LayoutConstraintPresenter> layoutConstraintPresenterProvider,
                               final Provider<CurrentSelectionPresenter> currentSelectionPresenterProvider,
-                              final UrlParameters urlParameters) {
+                              final UrlParameters urlParameters,
+                              final Provider<DocSelectionPopup> dashboardSelection) {
         super(eventBus, view);
         this.queryToolbarPresenter = queryToolbarPresenter;
         this.layoutPresenter = flexLayout;
@@ -158,6 +163,8 @@ public class DashboardPresenter
         this.queryInfo = queryInfo;
         this.layoutConstraintPresenterProvider = layoutConstraintPresenterProvider;
         this.currentSelectionPresenterProvider = currentSelectionPresenterProvider;
+        this.dashboardSelection = dashboardSelection;
+
         dashboardContext = new DashboardContextImpl(eventBus, components, queryToolbarPresenter);
         queryToolbarPresenter.setParamValues(dashboardContext);
 
@@ -677,24 +684,50 @@ public class DashboardPresenter
 //        }
     }
 
+    public void duplicateTabTo(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
+        final DocSelectionPopup chooser = dashboardSelection.get();
+        chooser.setCaption("Choose Dashboard");
+        chooser.setIncludedTypes(DashboardDoc.TYPE);
+        chooser.setRequiredPermissions(DocumentPermission.EDIT);
+
+        chooser.show(dashDocRef -> {
+            if (dashDocRef != null) {
+                OpenDocumentEvent.builder(this, dashDocRef)
+                        .forceOpen(true)
+                        .callbackOnOpen(presenter -> {
+                            if (presenter instanceof final DashboardSuperPresenter dashboardSuperPresenter) {
+                                dashboardSuperPresenter.getDashboardPresenter()
+                                        .duplicateTab(tabLayoutConfig, tabConfig, components);
+                            }
+                        }).fire();
+            }
+        });
+    }
+
     public void duplicateTab(final TabLayoutConfig tabLayoutConfig, final TabConfig tab) {
-        duplicateTabs(tabLayoutConfig, Collections.singletonList(tab));
+        duplicateTabs(tabLayoutConfig, Collections.singletonList(tab), components);
+    }
+
+    public void duplicateTab(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig,
+                             final Components components) {
+        duplicateTabs(tabLayoutConfig, Collections.singletonList(tabConfig), components);
     }
 
     public void duplicateTabPanel(final TabLayoutConfig tabLayoutConfig) {
-        duplicateTabs(tabLayoutConfig, new ArrayList<>(tabLayoutConfig.getTabs()));
+        duplicateTabs(tabLayoutConfig, new ArrayList<>(tabLayoutConfig.getTabs()), components);
     }
 
-    public void duplicateTabs(final TabLayoutConfig tabLayoutConfig, final List<TabConfig> tabs) {
+    public void duplicateTabs(final TabLayoutConfig tabLayoutConfig, final List<TabConfig> tabs,
+                              final Components orginalComponents) {
         // Get sets of unique component ids and names.
-        final ComponentNameSet componentNameSet = new ComponentNameSet(components);
+        final ComponentNameSet componentNameSet = new ComponentNameSet(this.components);
         final Map<String, String> idMapping = new HashMap<>();
         final List<ComponentConfig> newComponents = new ArrayList<>();
         final Map<String, TabConfig> newTabConfigMap = new HashMap<>();
         if (tabs != null) {
             for (final TabConfig tabConfig : tabs) {
                 // Duplicate the referenced component.
-                final Component originalComponent = components.get(tabConfig.getId());
+                final Component originalComponent = orginalComponents.get(tabConfig.getId());
                 originalComponent.write();
                 final ComponentType type = originalComponent.getComponentType();
 

@@ -158,6 +158,8 @@ public class ContentTabPanePresenter
         forceReveal();
         add(event.getTabData(), event.getLayer());
 
+        event.runCallbackOnOpen();
+
         if (event.getLayer() instanceof HasTaskMonitorFactory) {
             final AbstractTab tab = getView().getTabBar().getTab(event.getTabData());
             ((HasTaskMonitorFactory) event.getLayer())
