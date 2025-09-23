@@ -13,6 +13,46 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11-beta.6] - 2025-09-23
+
+* Issue **#4121** : Add rename option for pipeline elements.
+
+* Issue **#2374** : Add pipeline element descriptions.
+
+* Issue **#4099** : Add InRange function.
+
+* Issue **#2374** : Add description is now editable for pipeline elements.
+
+* Issue **#268** : Add not contains and not exists filters to pipeline stepping.
+
+* Issue **#844** : Add functions for hostname and hostaddress.
+
+* Issue **#4579** : Add table name/id to conditional formatting exceptions.
+
+* Issue **#4124** : Show severity of search error messages.
+
+* Issue **#4369** : Add new rerun scheduled execution icon.
+
+* Issue **#3207** : Add maxStringFieldLength table setting.
+
+* Issue **#1249** : Dashboard links can open in the same tab.
+
+* Issue **#1304** : Copy dashboard components between dashboards.
+
+* Issue **#4614** : Fix StroomQL highlight.
+
+* Issue **#2145** : New add-meta xslt function.
+
+* Issue **#370** : Perform schema validation on save.
+
+* Issue **#397** : Copy user permissions.
+
+* Issue **#5088** : Add table column filter dashboard component.
+
+* Issue **#2571** : Show Tasks for processor filter.
+
+* Issue **#4177** : Add stream id links.
+
 * Issue **#5137** : Fix how proxy adds HTTP headers when sending downstream. It now only adds received meta entries to the headers if they are on an allow list. This list is made up of a hard coded base list `accountId, accountName, classification, component, contextEncoding, contextFormat, encoding, environment, feed, format, guid, schema, schemaVersion, system, type` and is supplemented by the new config property `forwardHeadersAdditionalAllowSet` in the `forwardHttpDestinations` items.
 
 * Issue **#5135** : Fix proxy multi part gzip handling.
@@ -1734,7 +1774,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.5...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.6...HEAD
+[v7.11-beta.6]: https://github.com/gchq/stroom/compare/v7.11-beta.5...v7.11-beta.6
 [v7.11-beta.5]: https://github.com/gchq/stroom/compare/v7.11-beta.4...v7.11-beta.5
 [v7.11-beta.4]: https://github.com/gchq/stroom/compare/v7.11-beta.3...v7.11-beta.4
 [v7.11-beta.3]: https://github.com/gchq/stroom/compare/v7.11-beta.2...v7.11-beta.3
