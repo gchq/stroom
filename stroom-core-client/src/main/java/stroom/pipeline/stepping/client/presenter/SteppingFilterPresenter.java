@@ -18,6 +18,7 @@ package stroom.pipeline.stepping.client.presenter;
 
 import stroom.data.table.client.MyCellTable;
 import stroom.pipeline.shared.XPathFilter;
+import stroom.pipeline.shared.XPathFilter.SearchType;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
@@ -177,6 +178,7 @@ public class SteppingFilterPresenter extends
 
     private void addXPathFilter() {
         final XPathFilter xPathFilter = new XPathFilter();
+        xPathFilter.setSearchType(SearchType.ALL);
         xPathFilter.setMatchType(XPathFilter.DEFAULT_MATCH_TYPE);
 
         final HidePopupRequestEvent.Handler handler = e -> {
