@@ -67,6 +67,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
     private int currentMenuColIndex = -1;
     private int currentFilterColIndex = -1;
     private boolean moving;
+    private final Map<String, String> currentQuickFilters = new HashMap<>();
 
     public ColumnsManager(final TablePresenter tablePresenter,
                           final Provider<RenameColumnPresenter> renameColumnPresenterProvider,
@@ -106,6 +107,20 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
         }
     }
 
+    public int getColumnIndex(final Column column) {
+        final List<Column> columns = getColumns();
+        int index = columnsStartIndex;
+        for (final Column col : columns) {
+            if (col.isVisible()) {
+                if (col.getId().equals(column.getId())) {
+                    return index;
+                }
+                index++;
+            }
+        }
+        return -1;
+    }
+
     @Override
     public void onMoveEnd(final NativeEvent event, final Supplier<Heading> headingSupplier) {
         moving = false;
@@ -133,11 +148,20 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
 
                             } else if (isFilterButton) {
                                 currentFilterColIndex = colIndex;
+                                columnValuesFilterPresenter.setNameFilter(currentQuickFilters.get(column.getId()));
+                                final ColumnValuesDataSupplier dataSupplier = tablePresenter
+                                        .getDataSupplier(column, null);
                                 columnValuesFilterPresenter.show(
-                                        button,
+                                        () -> button,
                                         th,
-                                        tablePresenter.getDataSupplier(column),
-                                        hideEvent -> resetFilterColIndex(),
+                                        column,
+                                        () -> dataSupplier,
+                                        hideEvent -> {
+                                            currentQuickFilters.put(
+                                                    column.getId(),
+                                                    columnValuesFilterPresenter.getNameFilter());
+                                            resetFilterColIndex();
+                                        },
                                         column.getColumnValueSelection(),
                                         ColumnsManager.this);
                             }

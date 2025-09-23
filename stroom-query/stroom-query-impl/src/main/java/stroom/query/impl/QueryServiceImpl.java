@@ -16,13 +16,15 @@
 
 package stroom.query.impl;
 
-import stroom.dashboard.impl.GenericComparator;
+import stroom.dashboard.impl.ColumnValueComparator;
+import stroom.dashboard.impl.ColumnValueSelectionPredicateFactory;
 import stroom.dashboard.impl.SampleGenerator;
 import stroom.dashboard.impl.SearchResponseMapper;
 import stroom.dashboard.impl.download.DelimitedTarget;
 import stroom.dashboard.impl.download.ExcelTarget;
 import stroom.dashboard.impl.download.SearchResultWriter;
 import stroom.dashboard.impl.logging.SearchEventLog;
+import stroom.dashboard.shared.ColumnValue;
 import stroom.dashboard.shared.ColumnValues;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
@@ -31,6 +33,7 @@ import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.Column;
+import stroom.query.api.ConditionalFormattingRule;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionUtil;
@@ -54,22 +57,27 @@ import stroom.query.api.datasource.QueryFieldProvider;
 import stroom.query.api.token.Token;
 import stroom.query.api.token.TokenException;
 import stroom.query.api.token.TokenType;
+import stroom.query.common.v2.ConditionalFormattingMapper.RuleAndMatcher;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory;
+import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
+import stroom.query.common.v2.Item;
 import stroom.query.common.v2.OpenGroups;
 import stroom.query.common.v2.OpenGroupsImpl;
 import stroom.query.common.v2.ResultCreator;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
+import stroom.query.common.v2.RowUtil;
 import stroom.query.common.v2.TableResultCreator;
 import stroom.query.common.v2.ValPredicateFactory;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.Values;
 import stroom.query.language.token.Tokeniser;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryColumnValuesRequest;
@@ -338,7 +346,8 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                 throw new EntityServiceException("No query is active");
             }
 
-            final DateTimeSettings dateTimeSettings = searchRequest.getQueryContext().getDateTimeSettings();
+            final QueryContext queryContext = searchRequest.getQueryContext();
+            final DateTimeSettings dateTimeSettings = queryContext.getDateTimeSettings();
             final List<ResultRequest> resultRequests = mappedRequest
                     .getResultRequests()
                     .stream()
@@ -350,9 +359,9 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
             }
 
             final Set<String> dedupe = new HashSet<>();
-            final TrimmedSortedList<String> list = new TrimmedSortedList<>(
-                    request.getPageRequest(),
-                    new GenericComparator());
+            final ColumnValueComparator comparator = new ColumnValueComparator();
+            final TrimmedSortedList<ColumnValue> list = new TrimmedSortedList<>(
+                    request.getPageRequest(), comparator);
             for (final ResultRequest resultRequest : resultRequests) {
                 try {
                     final RequestAndStore requestAndStore = searchResponseCreatorManager
@@ -362,11 +371,11 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                             .getData(resultRequest.getComponentId());
 
                     TimeFilter timeFilter = null;
-                    if (mappedRequest.getQuery() != null && mappedRequest.getQuery().getTimeRange() != null) {
-                        timeFilter = DateExpressionParser.getTimeFilter(
-                                mappedRequest.getQuery().getTimeRange(),
-                                mappedRequest.getDateTimeSettings());
-                    }
+//                    if (mappedRequest.getQuery() != null && mappedRequest.getQuery().getTimeRange() != null) {
+//                        timeFilter = DateExpressionParser.getTimeFilter(
+//                                mappedRequest.getQuery().getTimeRange(),
+//                                mappedRequest.getDateTimeSettings());
+//                    }
 
                     final Predicate<Val> predicate = valPredicateFactory.createValPredicate(
                             request.getColumn(),
@@ -376,24 +385,45 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                     final OpenGroups openGroups = OpenGroupsImpl.fromGroupSelection(
                             resultRequest.getGroupSelection(), dataStore.getKeyFactory());
 
-                    final int index = dataStore
+                    final List<String> columnIdList = dataStore
                             .getColumns()
                             .stream()
                             .map(Column::getId)
-                            .toList()
+                            .toList();
+                    final int primaryColumnIndex = columnIdList
                             .indexOf(request.getColumn().getId());
-                    if (index != -1) {
+                    if (primaryColumnIndex != -1) {
+                        // Get rules.
+                        final List<RuleAndMatcher> ruleAndMatchers = getRules(
+                                request.getColumn(),
+                                dateTimeSettings,
+                                request.getConditionalFormattingRules());
+
+                        final Predicate<Item> columnValueSelectionPredicate = ColumnValueSelectionPredicateFactory
+                                .create(columnIdList, request.getSelections(), primaryColumnIndex);
+
                         dataStore.fetch(
                                 dataStore.getColumns(),
                                 OffsetRange.UNBOUNDED,
                                 openGroups,
                                 timeFilter,
                                 item -> {
-                                    final Val val = item.getValue(index);
-                                    if (predicate.test(val)) {
-                                        final String string = val.toString();
-                                        if (string != null && dedupe.add(string)) {
-                                            list.add(string);
+                                    final Val val = item.getValue(primaryColumnIndex);
+                                    if (predicate.test(val) && columnValueSelectionPredicate.test(item)) {
+                                        final Optional<RuleAndMatcher> matchingRule = ruleAndMatchers
+                                                .stream()
+                                                .filter(ruleAndMatcher ->
+                                                        ruleAndMatcher.matcher().test(Values.of(val)))
+                                                .findFirst();
+
+                                        final String value = val.toString();
+                                        if (value != null && dedupe.add(value)) {
+                                            final ColumnValue columnValue = new ColumnValue(value,
+                                                    matchingRule
+                                                            .map(RuleAndMatcher::rule)
+                                                            .map(ConditionalFormattingRule::getId)
+                                                            .orElse(null));
+                                            list.add(columnValue);
                                         }
                                     }
                                     return Stream.empty();
@@ -411,12 +441,46 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                 }
             }
 
-            final ResultPage<String> resultPage = list.getResultPage();
+            final ResultPage<ColumnValue> resultPage = list.getResultPage();
             return new ColumnValues(resultPage.getValues(), resultPage.getPageResponse());
         } catch (final Exception e) {
             LOGGER.debug(e::getMessage, e);
             throw e;
         }
+    }
+
+    private List<RuleAndMatcher> getRules(final Column column,
+                                          final DateTimeSettings dateTimeSettings,
+                                          final List<ConditionalFormattingRule> rules) {
+        final List<ConditionalFormattingRule> activeRules = NullSafe.list(rules)
+                .stream()
+                .filter(ConditionalFormattingRule::isEnabled)
+                .toList();
+        final List<RuleAndMatcher> ruleAndMatchers = new ArrayList<>();
+        if (!activeRules.isEmpty()) {
+            final ValueFunctionFactories<Values> queryFieldIndex = RowUtil
+                    .createColumnNameValExtractor(Collections.singletonList(column));
+            for (final ConditionalFormattingRule rule : activeRules) {
+                try {
+                    final Optional<Predicate<Values>> optionalValuesPredicate =
+                            expressionPredicateFactory.createOptional(
+                                    rule.getExpression(),
+                                    queryFieldIndex,
+                                    dateTimeSettings);
+                    final Predicate<Values> conditionalFormattingPredicate =
+                            optionalValuesPredicate.orElse(t -> true);
+                    ruleAndMatchers.add(new RuleAndMatcher(rule, conditionalFormattingPredicate));
+                } catch (final RuntimeException e) {
+                    throw new RuntimeException("Error evaluating conditional formatting rule: " +
+                                               rule.getExpression() +
+                                               " (" +
+                                               e.getMessage() +
+                                               ")", e);
+                }
+            }
+        }
+
+        return ruleAndMatchers;
     }
 
     private String getResultsFilename(final DownloadQueryResultsRequest request) {

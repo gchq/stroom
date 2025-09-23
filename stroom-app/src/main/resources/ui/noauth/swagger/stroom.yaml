@@ -9538,6 +9538,13 @@ components:
           type: string
         name:
           type: string
+    ColumnValue:
+      type: object
+      properties:
+        matchingRule:
+          type: string
+        value:
+          type: string
     ColumnValueSelection:
       type: object
       properties:
@@ -9556,18 +9563,26 @@ components:
         values:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/ColumnValue"
     ColumnValuesRequest:
       type: object
       properties:
         column:
           $ref: "#/components/schemas/Column"
+        conditionalFormattingRules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConditionalFormattingRule"
         filter:
           type: string
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
         searchRequest:
           $ref: "#/components/schemas/DashboardSearchRequest"
+        selections:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/ColumnValueSelection"
     CompletionItem:
       type: object
       discriminator:
@@ -14701,12 +14716,20 @@ components:
       properties:
         column:
           $ref: "#/components/schemas/Column"
+        conditionalFormattingRules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConditionalFormattingRule"
         filter:
           type: string
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
         searchRequest:
           $ref: "#/components/schemas/QuerySearchRequest"
+        selections:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/ColumnValueSelection"
     QueryComponentSettings:
       type: object
       allOf:
@@ -14839,9 +14862,21 @@ components:
           - '''between'''
           - "'=', '!=', 'in'"
           - "'contains', '=', '!=', 'matches regex', 'in'"
+          - "'contains', 'contains (case sensitive)', '=', '==', '!=', '!==', 'starts\
+            \ with', 'starts with (case sensitive)', 'ends with', 'ends with (case\
+            \ sensitive)', 'matches regex', 'matches regex (case sensitive)', 'in',\
+            \ 'in dictionary'"
           - "'=', '!=', 'in', 'in dictionary'"
           - "'=', '!=', 'in', 'in dictionary', 'is'"
+          - "'contains', 'contains (case sensitive)', '=', '==', '!=', '!==', 'starts\
+            \ with', 'starts with (case sensitive)', 'ends with', 'ends with (case\
+            \ sensitive)', 'matches regex', 'matches regex (case sensitive)', '>',\
+            \ '>=', '<', '<=', 'between', 'in', 'in dictionary'"
           - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+          - "'contains', 'contains (case sensitive)', '=', '==', '!=', '!==', 'starts\
+            \ with', 'starts with (case sensitive)', 'ends with', 'ends with (case\
+            \ sensitive)', 'matches regex', 'matches regex (case sensitive)', '>',\
+            \ '>=', '<', '<=', 'between', 'in', 'in dictionary'"
           - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
           - '''is'''
           - '''of'''
@@ -17556,6 +17591,24 @@ components:
               type: string
           tableSettings:
             $ref: "#/components/schemas/TableSettings"
+    TableFilterComponentSettings:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/ComponentSettings"
+      - type: object
+        properties:
+          columns:
+            type: array
+            items:
+              $ref: "#/components/schemas/ColumnRef"
+          conditionalFormattingRules:
+            type: object
+            additionalProperties:
+              type: array
+              items:
+                $ref: "#/components/schemas/ConditionalFormattingRule"
+          tableId:
+            type: string
     TableResult:
       type: object
       allOf:

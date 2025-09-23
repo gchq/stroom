@@ -22,24 +22,25 @@ import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.annotation.shared.AnnotationFields;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
+import stroom.dashboard.client.input.FilterableTable;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.table.ColumnFilterPresenter;
 import stroom.dashboard.client.table.ColumnValuesDataSupplier;
 import stroom.dashboard.client.table.ColumnValuesFilterPresenter;
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.DownloadPresenter;
+import stroom.dashboard.client.table.FilterCellManager;
 import stroom.dashboard.client.table.FormatPresenter;
 import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.client.table.TableCollapseButton;
 import stroom.dashboard.client.table.TableExpandButton;
 import stroom.dashboard.client.table.TableRowStyles;
+import stroom.dashboard.client.table.TableUpdateEvent;
 import stroom.dashboard.client.table.cf.RulesPresenter;
-import stroom.dashboard.shared.ColumnValues;
 import stroom.data.grid.client.MessagePanel;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.ExportFileCompleteUtil;
-import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
@@ -49,6 +50,7 @@ import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnRef;
+import stroom.query.api.ConditionalFormattingRule;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.GroupSelection;
 import stroom.query.api.OffsetRange;
@@ -59,7 +61,6 @@ import stroom.query.api.TableResult;
 import stroom.query.client.presenter.QueryResultTablePresenter.QueryResultTableView;
 import stroom.query.client.presenter.TableRow.Cell;
 import stroom.query.shared.DownloadQueryResultsRequest;
-import stroom.query.shared.QueryColumnValuesRequest;
 import stroom.query.shared.QueryResource;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.query.shared.QueryTablePreferences;
@@ -69,18 +70,20 @@ import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.PageRequest;
-import stroom.util.shared.PageResponse;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.view.client.Range;
@@ -88,6 +91,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.google.web.bindery.event.shared.SimpleEventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
@@ -104,7 +108,7 @@ import java.util.stream.Collectors;
 
 public class QueryResultTablePresenter
         extends MyPresenterWidget<QueryResultTableView>
-        implements ResultComponent, HasComponentSelection, HasDirtyHandlers {
+        implements ResultComponent, HasComponentSelection, HasDirtyHandlers, HasHandlers, FilterableTable {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
@@ -140,13 +144,14 @@ public class QueryResultTablePresenter
     private List<Column> currentColumns = Collections.emptyList();
     private QueryResultVisPresenter queryResultVisPresenter;
     private ExpressionOperator currentSelectionFilter;
-    private final TableRowStyles tableRowStyles;
+    private final TableRowStyles rowStyles;
     private DashboardContext dashboardContext;
     private DocRef currentDataSource;
     private int maxDepth;
 
     private boolean tableIsVisible = true;
     private boolean annotationChanged;
+    private final EventBus tableEventBus = new SimpleEventBus();
 
     @Inject
     public QueryResultTablePresenter(final EventBus eventBus,
@@ -167,13 +172,13 @@ public class QueryResultTablePresenter
         this.locationManager = locationManager;
         this.downloadPresenter = downloadPresenter;
         this.annotationManager = annotationManager;
-        tableRowStyles = new TableRowStyles(userPreferencesManager);
+        rowStyles = new TableRowStyles(userPreferencesManager);
         annotationManager.setTaskMonitorFactory(this);
 
         this.pagerView = pagerView;
         this.dataGrid = new MyDataGrid<>(this);
         dataGrid.addStyleName("TablePresenter");
-        dataGrid.setRowStyles(tableRowStyles);
+        dataGrid.setRowStyles(rowStyles);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         pagerView.setDataWidget(dataGrid);
 
@@ -377,7 +382,7 @@ public class QueryResultTablePresenter
         updatePageSize(queryTablePreferences);
 
         // Update styles and re-render
-        tableRowStyles.setConditionalFormattingRules(queryTablePreferences.getConditionalFormattingRules());
+        rowStyles.setConditionalFormattingRules(queryTablePreferences.getConditionalFormattingRules());
     }
 
     private void updatePageSize(final QueryTablePreferences queryTablePreferences) {
@@ -563,16 +568,14 @@ public class QueryResultTablePresenter
 
         final QueryTablePreferences queryTablePreferences = getQueryTablePreferences();
         ignoreRangeChange = true;
-
         try {
             if (componentResult != null) {
                 // Don't refresh the table unless the results have changed.
                 final TableResult tableResult = (TableResult) componentResult;
 
                 // Get result columns.
-                List<Column> columns = tableResult.getColumns();
-
-                if (columns != null && queryTablePreferences != null && queryTablePreferences.getColumns() != null) {
+                List<Column> columns = NullSafe.list(tableResult.getColumns());
+                if (queryTablePreferences != null && queryTablePreferences.getColumns() != null) {
 
                     // Create a map of the result columns by id and remember the order that the result has them in.
                     final Map<String, ColAndPosition> mapped = new HashMap<>();
@@ -640,13 +643,13 @@ public class QueryResultTablePresenter
 
                 updateColumns(columns);
 
-                final List<TableRow> values = processData(tableResult.getColumns(), tableResult.getRows());
+                final List<TableRow> values = processData(columns, tableResult.getRows());
                 final OffsetRange valuesRange = tableResult.getResultRange();
 
                 // Only set data in the table if we have got some results and
                 // they have changed.
                 if (valuesRange.getOffset() == 0 || !values.isEmpty()) {
-                    tableRowStyles.setConditionalFormattingRules(getQueryTablePreferences()
+                    rowStyles.setConditionalFormattingRules(getQueryTablePreferences()
                             .getConditionalFormattingRules());
                     dataGrid.setRowData((int) valuesRange.getOffset(), values);
                     dataGrid.setRowCount(tableResult.getTotalResults().intValue(), true);
@@ -657,6 +660,8 @@ public class QueryResultTablePresenter
 
                 // Show errors if there are any.
                 messagePanel.showMessage(tableResult.getErrorMessages());
+
+                fireColumnAndDataUpdate();
 
             } else {
                 // Disable download of current results.
@@ -700,6 +705,8 @@ public class QueryResultTablePresenter
 
 //                dataGrid.redrawHeaders();
             dataGrid.resizeTableToFitColumns();
+
+            fireColumnAndDataUpdate();
         }
     }
 
@@ -851,7 +858,7 @@ public class QueryResultTablePresenter
     }
 
     @Override
-    public List<ColumnRef> getColumns() {
+    public List<ColumnRef> getColumnRefs() {
         return NullSafe.list(currentColumns)
                 .stream()
                 .map(col -> new ColumnRef(col.getId(), col.getName()))
@@ -866,6 +873,8 @@ public class QueryResultTablePresenter
         setQueryTablePreferences(getQueryTablePreferences().copy().columns(columns).build());
         currentColumns = columns;
         setDirty(true);
+
+        fireColumnAndDataUpdate();
     }
 
     QueryTablePreferences getQueryTablePreferences() {
@@ -878,7 +887,7 @@ public class QueryResultTablePresenter
 
     @Override
     public List<ComponentSelection> getSelection() {
-        final List<ColumnRef> columns = NullSafe.list(getColumns());
+        final List<ColumnRef> columns = NullSafe.list(getColumnRefs());
         return stroom.query.client.presenter.TableComponentSelection.create(columns, selectionModel.getSelectedItems());
     }
 
@@ -940,10 +949,13 @@ public class QueryResultTablePresenter
         }
     }
 
-    public ColumnValuesDataSupplier getDataSupplier(final Column column) {
+    @Override
+    public ColumnValuesDataSupplier getDataSupplier(final Column column,
+                                                    final List<ConditionalFormattingRule> conditionalFormattingRules) {
         return new QueryTableColumnValuesDataSupplier(restFactory,
                 currentSearchModel,
-                column);
+                column,
+                conditionalFormattingRules);
     }
 
     public void setQuery(final String query) {
@@ -964,60 +976,40 @@ public class QueryResultTablePresenter
         }
     }
 
-    public static class QueryTableColumnValuesDataSupplier extends ColumnValuesDataSupplier {
-
-        private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
-
-        private final RestFactory restFactory;
-        private final QueryModel searchModel;
-        private final QuerySearchRequest searchRequest;
-
-
-        public QueryTableColumnValuesDataSupplier(
-                final RestFactory restFactory,
-                final QueryModel searchModel,
-                final stroom.query.api.Column column) {
-            super(column.copy().build());
-            this.restFactory = restFactory;
-            this.searchModel = searchModel;
-
-            QuerySearchRequest querySearchRequest = null;
-            final QueryKey queryKey = searchModel.getCurrentQueryKey();
-            final QuerySearchRequest currentSearch = searchModel.getCurrentSearch();
-            if (queryKey != null && currentSearch != null) {
-                querySearchRequest = currentSearch
-                        .copy()
-                        .queryKey(queryKey)
-                        .storeHistory(false)
-                        .requestedRange(OffsetRange.UNBOUNDED)
-                        .build();
-            }
-            searchRequest = querySearchRequest;
+    @Override
+    public Element getFilterButton(final Column column) {
+        final int index = columnsManager.getColumnIndex(column);
+        if (index >= 0) {
+            final Element thead = dataGrid.getTableHeadElement().cast();
+            final Element tr = thead.getChild(0).cast();
+            final Element th = tr.getChild(index).cast();
+            return ElementUtil.findChild(th, "column-valueFilterIcon");
         }
 
-        @Override
-        protected void exec(final Range range,
-                            final Consumer<ColumnValues> dataConsumer,
-                            final RestErrorHandler errorHandler) {
-            if (searchRequest == null) {
-                dataConsumer.accept(new ColumnValues(Collections.emptyList(), PageResponse.empty()));
+        return null;
+    }
 
-            } else {
-                final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
-                final QueryColumnValuesRequest columnValuesRequest = new QueryColumnValuesRequest(
-                        searchRequest,
-                        getColumn(),
-                        getNameFilter(),
-                        pageRequest);
+    @Override
+    public List<Column> getColumns() {
+        return getCurrentColumns();
+    }
 
-                restFactory
-                        .create(QUERY_RESOURCE)
-                        .method(res -> res.getColumnValues(searchModel.getCurrentNode(),
-                                columnValuesRequest))
-                        .onSuccess(dataConsumer)
-                        .taskMonitorFactory(getTaskMonitorFactory())
-                        .exec();
-            }
-        }
+    @Override
+    public FilterCellManager getFilterCellManager() {
+        return columnsManager;
+    }
+
+    private void fireColumnAndDataUpdate() {
+        TableUpdateEvent.fire(this);
+    }
+
+    @Override
+    public HandlerRegistration addUpdateHandler(final TableUpdateEvent.Handler handler) {
+        return tableEventBus.addHandler(TableUpdateEvent.getType(), handler);
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> event) {
+        tableEventBus.fireEvent(event);
     }
 }

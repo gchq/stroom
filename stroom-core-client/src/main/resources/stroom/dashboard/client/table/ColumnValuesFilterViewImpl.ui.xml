@@ -1,12 +1,16 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:view="urn:import:stroom.widget.dropdowntree.client.view">
     <g:FlowPanel styleName="ColumnValuesFilterViewImpl dock-container-vertical">
         <g:FlowPanel styleName="dock-min bar">
             <g:Label ui:field="selectAllLink" styleName="gwt-Label link" text="Select All"/>
             <g:Label styleName="gwt-Label" text="-"/>
             <g:Label ui:field="selectNoneLink" styleName="gwt-Label link" text="Select None"/>
         </g:FlowPanel>
-        <g:SimplePanel ui:field="listContainer" styleName="dock-max dock-container-vertical"/>
+        <g:FlowPanel styleName="dock-max dock-container-vertical quickFilter-container overflow-hidden">
+            <view:QuickFilter ui:field="quickFilter" addStyleNames="dock-min"/>
+            <g:SimplePanel ui:field="data" styleName="dock-max form-control-border form-control-background overflow-hidden"/>
+        </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder>

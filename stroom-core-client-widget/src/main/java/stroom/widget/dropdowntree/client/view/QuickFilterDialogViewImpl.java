@@ -59,6 +59,11 @@ public class QuickFilterDialogViewImpl extends ViewWithUiHandlers<QuickFilterUiH
         data.setWidget(view.asWidget());
     }
 
+    @Override
+    public void setText(final String text, final boolean fireEvents) {
+        quickFilter.setText(text, fireEvents);
+    }
+
     @UiHandler("quickFilter")
     void onFilterChange(final ValueChangeEvent<String> event) {
         getUiHandlers().onFilterChange(quickFilter.getText());

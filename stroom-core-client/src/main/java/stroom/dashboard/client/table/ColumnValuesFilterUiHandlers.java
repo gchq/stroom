@@ -23,4 +23,6 @@ public interface ColumnValuesFilterUiHandlers extends UiHandlers {
     void onSelectAll();
 
     void onSelectNone();
+
+    void onFilterChange(String text);
 }

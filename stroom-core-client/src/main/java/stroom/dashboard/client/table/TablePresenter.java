@@ -23,6 +23,7 @@ import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.annotation.shared.AnnotationFields;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
+import stroom.dashboard.client.input.FilterableTable;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
@@ -34,8 +35,6 @@ import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.query.SelectionHandlerExpressionBuilder;
 import stroom.dashboard.client.table.TablePresenter.TableView;
-import stroom.dashboard.shared.ColumnValues;
-import stroom.dashboard.shared.ColumnValuesRequest;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
@@ -49,7 +48,6 @@ import stroom.data.grid.client.MessagePanel;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.ExportFileCompleteUtil;
-import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
@@ -102,14 +100,13 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.PageRequest;
-import stroom.util.shared.PageResponse;
 import stroom.util.shared.RandomId;
 import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -119,6 +116,8 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.view.client.Range;
@@ -126,6 +125,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.google.web.bindery.event.shared.SimpleEventBus;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
@@ -138,11 +138,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class TablePresenter extends AbstractComponentPresenter<TableView>
-        implements HasDirtyHandlers, ResultComponent, HasComponentSelection {
+        implements HasDirtyHandlers, ResultComponent, HasComponentSelection, HasHandlers, FilterableTable {
 
     public static final String TAB_TYPE = "table-component";
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
@@ -182,12 +181,13 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private boolean pause;
     private SelectionPopup<Column, ColumnSelectionItem> addColumnPopup;
     private ExpressionOperator currentSelectionFilter;
-    private final TableRowStyles tableRowStyles;
+    private final TableRowStyles rowStyles;
     private boolean initialised;
     private int maxDepth;
 
     private boolean tableIsVisible = true;
     private boolean annotationChanged;
+    private final EventBus tableEventBus = new SimpleEventBus();
 
     @Inject
     public TablePresenter(final EventBus eventBus,
@@ -219,14 +219,14 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         this.userPreferencesManager = userPreferencesManager;
         this.columnSelectionListModel = columnSelectionListModel;
         this.dataSourceClient = dataSourceClient;
-        tableRowStyles = new TableRowStyles(userPreferencesManager);
+        rowStyles = new TableRowStyles(userPreferencesManager);
 
         columnSelectionListModel.setTaskMonitorFactory(this);
         annotationManager.setTaskMonitorFactory(this);
 
         dataGrid = new MyDataGrid<>(this);
         dataGrid.addStyleName("TablePresenter");
-        dataGrid.setRowStyles(tableRowStyles);
+        dataGrid.setRowStyles(rowStyles);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         pagerView.setDataWidget(dataGrid);
 
@@ -434,7 +434,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         super.setDashboardContext(dashboardContext);
         registerHandler(getDashboardContext().addContextChangeHandler(event -> {
             if (initialised && updateSelectionFilter()) {
-                reset();
+//                reset();
                 refresh();
             }
         }));
@@ -641,6 +641,24 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
     }
 
+    @Override
+    public Element getFilterButton(final Column column) {
+        final int index = columnsManager.getColumnIndex(column);
+        if (index >= 0) {
+            final Element thead = dataGrid.getTableHeadElement().cast();
+            final Element tr = thead.getChild(0).cast();
+            final Element th = tr.getChild(index).cast();
+            return ElementUtil.findChild(th, "column-valueFilterIcon");
+        }
+
+        return null;
+    }
+
+    @Override
+    public FilterCellManager getFilterCellManager() {
+        return columnsManager;
+    }
+
     private void setDataInternal(final Result componentResult) {
         ignoreRangeChange = true;
         final MessagePanel messagePanel = pagerView.getMessagePanel();
@@ -657,7 +675,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 // Only set data in the table if we have got some results and
                 // they have changed.
                 if (valuesRange.getOffset() == 0 || !values.isEmpty()) {
-                    tableRowStyles.setConditionalFormattingRules(getTableComponentSettings()
+                    rowStyles.setConditionalFormattingRules(getTableComponentSettings()
                             .getConditionalFormattingRules());
                     dataGrid.setRowData((int) valuesRange.getOffset(), values);
                     dataGrid.setRowCount(tableResult.getTotalResults().intValue(), true);
@@ -678,6 +696,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
                 selectionModel.clear();
             }
+
+            fireColumnAndDataUpdate();
+
         } catch (final RuntimeException e) {
             GWT.log(e.getMessage());
         }
@@ -694,13 +715,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             return switch (colType) {
                 case NUMBER -> QueryField.createLong(column.getName());
                 case DATE_TIME -> QueryField.createDate(column.getName());
-                // CONTAINS only supported for legacy content, not for use in UI
                 default -> QueryField
-                        // CONTAINS only supported for legacy content, not for use in UI
                         .builder()
                         .fldName(column.getName())
                         .fldType(FieldType.TEXT)
-                        .conditionSet(ConditionSet.BASIC_TEXT)
+                        .conditionSet(ConditionSet.ALL_UI_TEXT)
                         .queryable(true)
                         .build();
             };
@@ -991,6 +1010,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
 
         dataGrid.resizeTableToFitColumns();
+        fireColumnAndDataUpdate();
     }
 
     @Override
@@ -1115,7 +1135,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         updateSelectionFilter();
 
         // Update styles and re-render
-        tableRowStyles.setConditionalFormattingRules(tableComponentSettings.getConditionalFormattingRules());
+        rowStyles.setConditionalFormattingRules(tableComponentSettings.getConditionalFormattingRules());
         dataGrid.redraw();
     }
 
@@ -1276,7 +1296,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     @Override
-    public List<ColumnRef> getColumns() {
+    public List<ColumnRef> getColumnRefs() {
         return NullSafe.list(getTableComponentSettings().getColumns())
                 .stream()
                 .map(col -> new ColumnRef(col.getId(), col.getName()))
@@ -1285,7 +1305,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     @Override
     public List<ComponentSelection> getSelection() {
-        final List<ColumnRef> columns = NullSafe.list(getColumns());
+        final List<ColumnRef> columns = NullSafe.list(getColumnRefs());
         return TableComponentSelection.create(columns, selectionModel.getSelectedItems());
     }
 
@@ -1333,105 +1353,42 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         columnSelectionListModel.setTaskMonitorFactory(taskMonitorFactory);
     }
 
+    @Override
+    public List<Column> getColumns() {
+        return NullSafe.getOrElse(
+                getTableComponentSettings(),
+                TableComponentSettings::getColumns,
+                Collections.emptyList());
+    }
+
     public interface TableView extends View {
 
         void setTableView(View view);
     }
 
-    public ColumnValuesDataSupplier getDataSupplier(final Column column) {
+    @Override
+    public ColumnValuesDataSupplier getDataSupplier(final Column column,
+                                                    final List<ConditionalFormattingRule> conditionalFormattingRules) {
         return new TableColumnValuesDataSupplier(restFactory,
                 currentSearchModel,
                 column,
                 resolveTableSettings(),
                 getDateTimeSettings(),
-                getTableName(getId()));
+                getTableName(getId()),
+                conditionalFormattingRules);
     }
 
-    public static class TableColumnValuesDataSupplier extends ColumnValuesDataSupplier {
+    private void fireColumnAndDataUpdate() {
+        TableUpdateEvent.fire(this);
+    }
 
-        private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
+    @Override
+    public HandlerRegistration addUpdateHandler(final TableUpdateEvent.Handler handler) {
+        return tableEventBus.addHandler(TableUpdateEvent.getType(), handler);
+    }
 
-        private final RestFactory restFactory;
-        private final SearchModel searchModel;
-        private final DashboardSearchRequest searchRequest;
-
-        public TableColumnValuesDataSupplier(
-                final RestFactory restFactory,
-                final SearchModel searchModel,
-                final stroom.query.api.Column column,
-                final TableSettings tableSettings,
-                final DateTimeSettings dateTimeSettings,
-                final String tableName) {
-            super(column.copy().build());
-            this.restFactory = restFactory;
-            this.searchModel = searchModel;
-
-            DashboardSearchRequest dashboardSearchRequest = null;
-            if (searchModel != null) {
-                final QueryKey queryKey = searchModel.getCurrentQueryKey();
-                final Search currentSearch = searchModel.getCurrentSearch();
-                if (queryKey != null && currentSearch != null) {
-                    final List<ComponentResultRequest> requests = new ArrayList<>();
-                    currentSearch.getComponentSettingsMap().entrySet()
-                            .stream()
-                            .filter(settings -> settings.getValue() instanceof TableComponentSettings)
-                            .forEach(componentSettings -> requests.add(TableResultRequest
-                                    .builder()
-                                    .componentId(componentSettings.getKey())
-                                    .requestedRange(OffsetRange.UNBOUNDED)
-                                    .tableName(tableName)
-                                    .tableSettings(tableSettings)
-                                    .fetch(Fetch.ALL)
-                                    .build()));
-
-                    final Search search = Search
-                            .builder()
-                            .dataSourceRef(currentSearch.getDataSourceRef())
-                            .expression(currentSearch.getExpression())
-                            .componentSettingsMap(currentSearch.getComponentSettingsMap())
-                            .params(currentSearch.getParams())
-                            .timeRange(currentSearch.getTimeRange())
-                            .incremental(true)
-                            .queryInfo(currentSearch.getQueryInfo())
-                            .build();
-
-                    dashboardSearchRequest = DashboardSearchRequest
-                            .builder()
-                            .searchRequestSource(searchModel.getSearchRequestSource())
-                            .queryKey(queryKey)
-                            .search(search)
-                            .componentResultRequests(requests)
-                            .dateTimeSettings(dateTimeSettings)
-                            .build();
-                }
-            }
-
-            searchRequest = dashboardSearchRequest;
-        }
-
-        @Override
-        protected void exec(final Range range,
-                            final Consumer<ColumnValues> dataConsumer,
-                            final RestErrorHandler errorHandler) {
-            if (searchRequest == null) {
-                dataConsumer.accept(new ColumnValues(Collections.emptyList(), PageResponse.empty()));
-
-            } else {
-                final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
-                final ColumnValuesRequest columnValuesRequest = new ColumnValuesRequest(
-                        searchRequest,
-                        getColumn(),
-                        getNameFilter(),
-                        pageRequest);
-
-                restFactory
-                        .create(DASHBOARD_RESOURCE)
-                        .method(res -> res.getColumnValues(searchModel.getCurrentNode(),
-                                columnValuesRequest))
-                        .onSuccess(dataConsumer)
-                        .taskMonitorFactory(getTaskMonitorFactory())
-                        .exec();
-            }
-        }
+    @Override
+    public void fireEvent(final GwtEvent<?> event) {
+        tableEventBus.fireEvent(event);
     }
 }

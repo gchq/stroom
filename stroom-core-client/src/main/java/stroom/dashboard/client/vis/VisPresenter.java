@@ -709,8 +709,8 @@ public class VisPresenter
     }
 
     @Override
-    public List<ColumnRef> getColumns() {
-        return visSelectionModel.getColumns();
+    public List<ColumnRef> getColumnRefs() {
+        return visSelectionModel.getColumnRefs();
     }
 
     @Override

@@ -42,7 +42,8 @@ public final class ExpressionItemRenderer implements CellRenderer2<Item>, NodeEx
     private Item editingItem;
     private SelectionModel<Item> selectionModel;
 
-    public ExpressionItemRenderer(final FlowPanel panel, final OperatorEditor operatorEditor,
+    public ExpressionItemRenderer(final FlowPanel panel,
+                                  final OperatorEditor operatorEditor,
                                   final TermEditor termEditor) {
         this.panel = panel;
 
@@ -78,16 +79,18 @@ public final class ExpressionItemRenderer implements CellRenderer2<Item>, NodeEx
 
         if (editing != null) {
             if (editing.equals(item)) {
-                if (editingItem == null) {
-                    if (item instanceof Operator) {
-                        final Operator operator = (Operator) item;
+                if (item instanceof final Operator operator) {
+                    if (editingItem == null) {
                         operatorEditor.startEdit(operator);
-                    } else if (item instanceof Term) {
-                        final Term term = (Term) item;
-                        termEditor.startEdit(term);
                     }
-                    editingItem = editing;
+                } else if (item instanceof final Term term) {
+                    if (editingItem == null) {
+                        termEditor.startEdit(term);
+                    } else {
+                        termEditor.update(term);
+                    }
                 }
+                editingItem = editing;
 
                 if (item instanceof Operator) {
                     widget = operatorEditor;

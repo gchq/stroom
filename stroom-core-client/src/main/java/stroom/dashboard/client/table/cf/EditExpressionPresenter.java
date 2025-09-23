@@ -52,8 +52,9 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
 
     private final ExpressionTreePresenter expressionPresenter;
 
-    private final ButtonView addOperatorButton;
     private final ButtonView addTermButton;
+    private final ButtonView addOperatorButton;
+    private final ButtonView copyButton;
     private final ButtonView disableItemButton;
     private final ButtonView deleteItemButton;
 
@@ -81,6 +82,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         addTermButton = view.addButton(SvgPresets.ADD);
         addTermButton.setTitle("Add Term");
         addOperatorButton = view.addButton(SvgPresets.OPERATOR);
+        copyButton = view.addButton(SvgPresets.COPY.enabled(false));
         disableItemButton = view.addButton(SvgPresets.DISABLE);
         deleteItemButton = view.addButton(SvgPresets.DELETE);
     }
@@ -96,14 +98,19 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
                 showMenu(menuItems, event.getPopupPosition());
             }
         }));
+        registerHandler(addTermButton.addClickHandler(event -> {
+            if (MouseUtil.isPrimary(event)) {
+                addTerm();
+            }
+        }));
         registerHandler(addOperatorButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
                 addOperator();
             }
         }));
-        registerHandler(addTermButton.addClickHandler(event -> {
+        registerHandler(copyButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
-                addTerm();
+                copy();
             }
         }));
         registerHandler(disableItemButton.addClickHandler(event -> {
@@ -124,23 +131,29 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         expressionPresenter.init(restFactory, dataSource, fieldSelectionListModel);
     }
 
+    public void insertValue(final String value) {
+        expressionPresenter.insertValue(value);
+    }
+
     private void setButtonsEnabled() {
         final stroom.query.client.Item selectedItem = getSelectedItem();
 
         if (selectedItem == null) {
             disableItemButton.setEnabled(false);
             disableItemButton.setTitle("");
+
+            deleteItemButton.setEnabled(false);
+            deleteItemButton.setTitle("");
+
+            copyButton.setEnabled(false);
         } else {
             disableItemButton.setEnabled(true);
             disableItemButton.setTitle(getEnableDisableText());
-        }
 
-        if (selectedItem == null) {
-            deleteItemButton.setEnabled(false);
-            deleteItemButton.setTitle("");
-        } else {
             deleteItemButton.setEnabled(true);
             deleteItemButton.setTitle("Delete");
+
+            copyButton.setEnabled(true);
         }
     }
 
@@ -152,12 +165,16 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         return expressionPresenter.write();
     }
 
+    private void addTerm() {
+        expressionPresenter.addTerm();
+    }
+
     private void addOperator() {
         expressionPresenter.addOperator();
     }
 
-    private void addTerm() {
-        expressionPresenter.addTerm();
+    private void copy() {
+        expressionPresenter.copy();
     }
 
     private void disable() {

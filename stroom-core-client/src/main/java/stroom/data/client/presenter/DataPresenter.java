@@ -61,7 +61,6 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Focus;
@@ -1171,9 +1170,8 @@ public class DataPresenter
                 sb.append(line);
             }
 
-            final SafeHtmlBuilder copyLinkHtml = new SafeHtmlBuilder();
-            CopyTextUtil.render(str, sb.toSafeHtml(), copyLinkHtml);
-
+            final HtmlBuilder copyLinkHtml = new HtmlBuilder();
+            CopyTextUtil.render(str, sb.toSafeHtml(), copyLinkHtml, false);
             return copyLinkHtml.toSafeHtml();
         } else {
             return null;
