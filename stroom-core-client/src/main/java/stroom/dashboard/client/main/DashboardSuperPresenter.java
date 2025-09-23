@@ -127,6 +127,10 @@ public class DashboardSuperPresenter
         return dashboardPresenter.getToolbars();
     }
 
+    public DashboardPresenter getDashboardPresenter() {
+        return dashboardPresenter;
+    }
+
     @Override
     public String getType() {
         return DashboardDoc.TYPE;

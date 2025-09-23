@@ -83,11 +83,12 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                                      final boolean forceOpen,
                                      final boolean fullScreen,
                                      final CommonDocLinkTab selectedLinkTab,
+                                     final Consumer<MyPresenterWidget<?>> callbackOnOpen,
                                      final TaskMonitorFactory taskMonitorFactory) {
         if (docRef.getType().equals(getType())) {
             currentUuid = docRef.getUuid();
         }
-        return super.open(docRef, forceOpen, fullScreen, selectedLinkTab, taskMonitorFactory);
+        return super.open(docRef, forceOpen, fullScreen, selectedLinkTab, callbackOnOpen, taskMonitorFactory);
     }
 
     private void openParameterisedDashboard(final Object context, final String href) {
