@@ -21,6 +21,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.data.client.presenter.ExpressionPresenter;
+import stroom.data.client.presenter.OpenLinkUtil;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -344,6 +345,8 @@ public class ProcessorPresenter
     private void setData(final ProcessorListRow row) {
         final SafeHtml safeHtml = processorInfoBuilder.get(row);
         getView().setInfo(safeHtml);
+
+        OpenLinkUtil.addClickHandler(this, getWidget());
 
         ExpressionOperator expression = null;
         if (row instanceof ProcessorFilterRow) {

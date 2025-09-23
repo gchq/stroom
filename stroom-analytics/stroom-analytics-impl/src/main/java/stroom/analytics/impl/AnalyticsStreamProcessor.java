@@ -96,7 +96,7 @@ public class AnalyticsStreamProcessor {
         try (final Source source = streamStore.openSource(streamId)) {
             if (source != null) {
                 taskContext.reset();
-                taskContext.info(() -> "Extracting from stream " + streamId);
+                taskContext.info(() -> "Extracting from stream meta_id=" + streamId);
 
                 meta = source.getMeta();
 

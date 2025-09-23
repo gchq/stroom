@@ -18,6 +18,7 @@ package stroom.data.client.presenter;
 
 import stroom.data.client.SourceTabPlugin;
 import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
+import stroom.data.client.presenter.OpenLinkUtil.LinkType;
 import stroom.data.shared.DataInfoSection;
 import stroom.data.shared.DataResource;
 import stroom.data.shared.DataType;
@@ -151,6 +152,8 @@ public class DataPresenter
     private String lastTabName;
     // The currently selected tab
     private String currentTabName = null;
+
+    private static final List<String> STREAM_ATTRIBUTE_NAMES = List.of("Parent Stream Id", "Stream Id");
 
     @Inject
     public DataPresenter(final EventBus eventBus,
@@ -1147,22 +1150,26 @@ public class DataPresenter
 
             // Add rows.
             section.getEntries()
-                    .forEach(entry ->
-                            tableBuilder
-                                    .row(SafeHtmlUtils.fromString(entry.getKey()),
-                                            toHtmlLineBreaks(entry.getValue())));
+                    .forEach(entry -> {
+                        final String key = entry.getKey();
+                        final String value = entry.getValue();
+
+                        tableBuilder.row(SafeHtmlUtils.fromString(key), toHtmlLineBreaks(key, value));
+                    });
         }
 
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
         htmlBuilder.div(tableBuilder::write, Attribute.className("infoTable"));
         htmlPresenter.setHtml(htmlBuilder.toSafeHtml().asString());
+
+        OpenLinkUtil.addClickHandler(this, htmlPresenter.getWidget());
     }
 
-    private SafeHtml toHtmlLineBreaks(final String str) {
-        if (str != null) {
+    private SafeHtml toHtmlLineBreaks(final String key, final String value) {
+        if (value != null) {
             final HtmlBuilder sb = new HtmlBuilder();
             // Change any line breaks html line breaks
-            final String[] lines = str.split("\n");
+            final String[] lines = value.split("\n");
             for (int i = 0; i < lines.length; i++) {
                 final String line = lines[i];
                 if (i > 0) {
@@ -1171,10 +1178,16 @@ public class DataPresenter
                 sb.append(line);
             }
 
-            final SafeHtmlBuilder copyLinkHtml = new SafeHtmlBuilder();
-            CopyTextUtil.render(str, sb.toSafeHtml(), copyLinkHtml);
+            final SafeHtmlBuilder copyLinkHtmlBuilder = new SafeHtmlBuilder();
+            CopyTextUtil.render(value, sb.toSafeHtml(), copyLinkHtmlBuilder);
 
-            return copyLinkHtml.toSafeHtml();
+            if (STREAM_ATTRIBUTE_NAMES.contains(key)) {
+                return OpenLinkUtil.render(value, LinkType.STREAM, copyLinkHtmlBuilder.toSafeHtml());
+            } else if ("Feed".equals(key)) {
+                return OpenLinkUtil.render(value, LinkType.FEED, copyLinkHtmlBuilder.toSafeHtml());
+            }
+
+            return copyLinkHtmlBuilder.toSafeHtml();
         } else {
             return null;
         }
