@@ -2618,6 +2618,7 @@ button.main-menu svg {
     display: flex;
     flex-direction: column;
     flex-grow: 1;
+    flex-basis: 0;
     min-height: 200px;
     overflow: hidden;
 }
