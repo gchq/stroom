@@ -184,6 +184,20 @@ class UserServiceImpl implements UserService, ContentPackUserService {
     }
 
     @Override
+    public User copyGroupsAndPermissions(final String fromUserUuid, final String toUserUuid) {
+        final User toUser = userDao.getByUuid(toUserUuid).orElseThrow();
+        AuditUtil.stamp(securityContext, toUser);
+
+        return securityContext.secureResult(AppPermission.MANAGE_USERS_PERMISSION, () -> {
+            userDao.copyGroupsAndPermissions(fromUserUuid, toUserUuid);
+
+            fireUserChangeEvent(toUser.asRef());
+
+            return toUser;
+        });
+    }
+
+    @Override
     public ResultPage<User> find(final FindUserCriteria criteria) {
         return securityContext.secureResult(() -> {
             if (securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {

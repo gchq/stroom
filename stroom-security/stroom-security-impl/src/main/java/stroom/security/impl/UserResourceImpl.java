@@ -166,6 +166,11 @@ public class UserResourceImpl implements UserResource {
     }
 
     @Override
+    public User copyGroupsAndPermissions(final String fromUserUuid, final String toUserUuid) {
+        return userServiceProvider.get().copyGroupsAndPermissions(fromUserUuid, toUserUuid);
+    }
+
+    @Override
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     public Boolean addUserToGroup(final String userUuid,
                                   final String groupUuid) {
