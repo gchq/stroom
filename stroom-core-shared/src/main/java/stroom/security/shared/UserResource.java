@@ -113,4 +113,12 @@ public interface UserResource extends RestResource, DirectRestService, FetchWith
             operationId = "removeUserFromGroup")
     Boolean removeUserFromGroup(@PathParam("userUuid") String userUuid,
                                 @PathParam("groupUuid") String groupUuid);
+
+    @POST
+    @Path("/{toUserUuid}/copyPermissions")
+    @Operation(
+            summary = "Copy user groups and permissions from one user to another",
+            operationId = "copyGroupsAndPermissions")
+    User copyGroupsAndPermissions(@Parameter(description = "fromUserUuid", required = true) String fromUserUuid,
+                         @PathParam("toUserUuid") String toUserUuid);
 }
