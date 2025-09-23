@@ -268,9 +268,23 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
                     }
                 }
             }
+            case NOT_CONTAINS -> {
+                for (final Object object : objects) {
+                    if (!contains(object, xPathFilter.getValue(), xPathFilter.isIgnoreCase())) {
+                        return true;
+                    }
+                }
+            }
+            case NOT_EXISTS -> {
+                if (objects.isEmpty()) {
+                    return true;
+                }
+            }
         }
         return false;
     }
+
+
 
     /**
      * @return value as a string, trimmed and, if ignoreCase is true, converted to lower case
@@ -438,6 +452,20 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
             xPathEvaluator.getStaticContext().setDefaultElementNamespace(defaultNamespaceURI);
             xPathEvaluator.getStaticContext().setNamespaceContext(namespaceContext);
             xPathExpression = xPathEvaluator.compile(path);
+        }
+
+        private String buildPath(final XPathFilter xPathFilter) {
+            final String basePath = xPathFilter.getPath();
+            XPathFilter.SearchType searchType = xPathFilter.getSearchType();
+
+            if (searchType == null) {
+                searchType = XPathFilter.SearchType.ALL;
+            }
+
+            return switch (searchType) {
+                case ALL -> "//*";
+                case XPATH -> (basePath == null || basePath.isBlank()) ? "." : basePath;
+            };
         }
 
         public XPathFilter getXPathFilter() {
