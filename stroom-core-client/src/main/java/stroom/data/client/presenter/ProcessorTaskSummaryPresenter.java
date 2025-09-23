@@ -33,6 +33,7 @@ import stroom.processor.shared.ProcessorTaskExpressionUtil;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskResource;
 import stroom.processor.shared.ProcessorTaskSummary;
+import stroom.query.api.ExpressionOperator;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
@@ -160,22 +161,18 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
 
     private void setPipeline(final DocRef pipeline) {
         criteria.setExpression(ProcessorTaskExpressionUtil.createPipelineExpression(pipeline));
-        refresh();
     }
 
     private void setFeed(final DocRef feed) {
         criteria.setExpression(ProcessorTaskExpressionUtil.createFeedExpression(feed));
-        refresh();
     }
 
     private void setFolder(final DocRef folder) {
         criteria.setExpression(ProcessorTaskExpressionUtil.createFolderExpression(folder));
-        refresh();
     }
 
     private void setNullCriteria() {
         criteria.setExpression(null);
-        refresh();
     }
 
     @Override
@@ -189,6 +186,8 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
         } else {
             setNullCriteria();
         }
+
+        refresh();
     }
 
     public void refresh() {
@@ -226,5 +225,10 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
         } else {
             dataProvider.refresh();
         }
+    }
+
+    public void setExpression(final ExpressionOperator expressionOperator) {
+        criteria.setExpression(expressionOperator);
+        refresh();
     }
 }

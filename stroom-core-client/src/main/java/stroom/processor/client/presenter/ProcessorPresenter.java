@@ -34,6 +34,7 @@ import stroom.processor.shared.ProcessorFilterRow;
 import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.QueryData;
+import stroom.processor.task.client.event.OpenProcessorTaskEvent;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.client.ExpressionTreePresenter;
@@ -91,6 +92,7 @@ public class ProcessorPresenter
     //    private ButtonView permissionsButton;
     private ButtonView filterButton;
     private ButtonView batchEditButton;
+    private ButtonView showTasksButton;
 
     private boolean allowCreate;
     private boolean allowUpdate;
@@ -223,6 +225,16 @@ public class ProcessorPresenter
                 }));
             }
 
+            showTasksButton = processorListPresenter.getView().addButton(new Preset(
+                    SvgImage.JOBS,
+                    "Show Tasks",
+                    true));
+            registerHandler(showTasksButton.addClickHandler(e -> {
+                if (MouseUtil.isPrimary(e)) {
+                    showTasksTab();
+                }
+            }));
+
             enableButtons(false);
         }
     }
@@ -233,6 +245,13 @@ public class ProcessorPresenter
         presenter.show(processorListPresenter.getExpression(),
                 NullSafe.get(processorListPresenter.getCurrentResultPageResponse(), ResultPage::getPageResponse),
                 processorListPresenter::refresh);
+    }
+
+    private void showTasksTab() {
+        final ProcessorListRow selectedProcessor = processorListPresenter.getSelectionModel().getSelected();
+        if (selectedProcessor instanceof final ProcessorFilterRow processorFilterRow) {
+            OpenProcessorTaskEvent.fire(this, processorFilterRow.getProcessorFilter());
+        }
     }
 
     private void onFilter() {
@@ -264,12 +283,14 @@ public class ProcessorPresenter
     }
 
     private void enableButtons(final boolean enabled) {
+        final boolean onlyOneRowSelected = processorListPresenter.getSelectionModel().getSelectedItems().size() == 1;
+
         if (addButton != null) {
             addButton.setEnabled(allowUpdate);
         }
         if (editButton != null) {
             if (allowUpdate) {
-                editButton.setEnabled(enabled);
+                editButton.setEnabled(enabled && onlyOneRowSelected);
             } else {
                 editButton.setEnabled(false);
             }
@@ -295,6 +316,9 @@ public class ProcessorPresenter
 //                permissionsButton.setEnabled(false);
 //            }
 //        }
+        if (showTasksButton != null) {
+            showTasksButton.setEnabled(enabled && onlyOneRowSelected);
+        }
     }
 
     @Override
