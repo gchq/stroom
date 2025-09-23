@@ -26,22 +26,33 @@ import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
+import stroom.data.client.presenter.DataViewType;
+import stroom.data.client.presenter.DisplayMode;
 import stroom.data.client.presenter.RestDataProvider;
+import stroom.data.client.presenter.ShowDataEvent;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
+import stroom.document.client.event.OpenDocumentEvent;
 import stroom.entity.client.presenter.TreeRowHandler;
+import stroom.feed.shared.FeedDoc;
 import stroom.node.client.NodeManager;
 import stroom.node.shared.FindNodeStatusCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeStatusResult;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.SourceLocation;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.task.client.event.OpenProcessorTaskEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.presenter.TaskInfoParser.TaskInfoKey;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.FindTaskProgressRequest;
@@ -60,6 +71,8 @@ import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.HtmlBuilder;
@@ -68,7 +81,10 @@ import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.TableBuilder;
 import stroom.widget.util.client.TableCell;
 
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
@@ -79,6 +95,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -367,7 +384,8 @@ public class TaskManagerListPresenter
 
         // Info
         dataGrid.addAutoResizableColumn(
-                DataGridUtil.htmlColumnBuilder(getWrapableColouredCellFunc(TaskProgress::getTaskInfo))
+                DataGridUtil.hasContextMenusColumnBuilder(getWrapableColouredCellFunc(TaskProgress::getTaskInfo),
+                                this::getContextMenus)
                         .withSorting(FindTaskProgressCriteria.FIELD_INFO)
                         .build(),
                 FindTaskProgressCriteria.FIELD_INFO,
@@ -437,6 +455,76 @@ public class TaskManagerListPresenter
                 return colouredText;
             }
         };
+    }
+
+    private List<Item> getContextMenus(final Context context, final SafeHtml safeHtml) {
+        final List<Item> menuItems = new ArrayList<>();
+
+        // strip any html tags caused by line wrap
+        final DivElement tempDiv = Document.get().createDivElement();
+        tempDiv.setInnerHTML(safeHtml.asString());
+        final String taskInfo = tempDiv.getInnerText();
+
+        if (taskInfo != null) {
+            int priority = 1;
+            final TaskInfoParser parser = new TaskInfoParser(taskInfo);
+
+            final String feedName = parser.getString(TaskInfoKey.FEED_NAME);
+            if (feedName != null) {
+                final DocRef docRef = new DocRef(FeedDoc.TYPE, null, feedName);
+                menuItems.add(new IconMenuItem.Builder()
+                        .priority(priority++)
+                        .icon(SvgImage.OPEN)
+                        .text("Open Feed")
+                        .enabled(true)
+                        .command(() -> OpenDocumentEvent.fire(this, docRef, true))
+                        .build());
+            }
+
+            final Integer filterId = parser.getInt(TaskInfoKey.FILTER_ID);
+            if (filterId != null) {
+                final ProcessorFilter processorFilter = ProcessorFilter.builder().id(filterId).build();
+                menuItems.add(new IconMenuItem.Builder()
+                        .priority(priority++)
+                        .icon(SvgImage.OPEN)
+                        .text("Show Filter Tasks")
+                        .enabled(true)
+                        .command(() -> OpenProcessorTaskEvent.fire(this, processorFilter))
+                        .build());
+            }
+
+            final String pipelineUuid = parser.getString(TaskInfoKey.PIPELINE_UUID);
+            if (pipelineUuid != null) {
+                final DocRef docRef = new DocRef(PipelineDoc.TYPE, pipelineUuid, null);
+                menuItems.add(new IconMenuItem.Builder()
+                        .priority(priority++)
+                        .icon(SvgImage.OPEN)
+                        .text("Open Pipeline")
+                        .enabled(true)
+                        .command(() -> OpenDocumentEvent.fire(this, docRef, true))
+                        .build());
+            }
+
+            final Long streamId = parser.getLong(TaskInfoKey.STREAM_ID);
+            if (streamId != null) {
+                final SourceLocation location = SourceLocation.builder(streamId).build();
+                menuItems.add(new IconMenuItem.Builder()
+                        .priority(priority++)
+                        .icon(SvgImage.OPEN)
+                        .text("Open Stream")
+                        .enabled(true)
+                        .command(() -> ShowDataEvent.fire(this,
+                                location,
+                                DataViewType.INFO,
+                                DisplayMode.STROOM_TAB))
+                        .build());
+            }
+
+            if (!menuItems.isEmpty()) {
+                menuItems.add(new stroom.widget.menu.client.presenter.Separator(1));
+            }
+        }
+        return menuItems;
     }
 
     private Expander buildExpander(final TaskProgress row) {

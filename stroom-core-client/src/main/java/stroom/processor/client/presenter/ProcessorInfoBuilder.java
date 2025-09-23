@@ -1,5 +1,7 @@
 package stroom.processor.client.presenter;
 
+import stroom.data.client.presenter.OpenLinkUtil;
+import stroom.data.client.presenter.OpenLinkUtil.LinkType;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.processor.shared.Processor;
@@ -19,6 +21,7 @@ import stroom.widget.util.client.TableBuilder;
 import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 import javax.inject.Inject;
 
@@ -107,7 +110,10 @@ public class ProcessorInfoBuilder {
                 tb.row("Last Poll Age", tracker.getLastPollAge());
                 tb.row(SafeHtmlUtil.from("Last Poll Task Count"),
                         SafeHtmlUtil.from(tracker.getLastPollTaskCount()));
-                tb.row("Min Stream Id", String.valueOf(tracker.getMinMetaId()));
+
+                tb.row(SafeHtmlUtils.fromString("Min Stream Id"),
+                        OpenLinkUtil.render(String.valueOf(tracker.getMinMetaId()), LinkType.STREAM));
+
                 tb.row("Min Event Id", String.valueOf(tracker.getMinEventId()));
                 tb.row(SafeHtmlUtil.from("Total Tasks Created"),
                         SafeHtmlUtil.from(tracker.getMetaCount()));

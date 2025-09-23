@@ -144,7 +144,7 @@ class ReferenceDataLoadTaskHandler {
 
                     LOGGER.debug("Loading reference data: {}", refStreamDefinition);
                     taskContext.info(() -> LogUtil.message(
-                            "Loading reference data stream {}:{}",
+                            "Loading reference data stream_id={}, part={}",
                             refStreamDefinition.getStreamId(),
                             refStreamDefinition.getPartNumber()));
 
@@ -215,7 +215,7 @@ class ReferenceDataLoadTaskHandler {
         final RefDataStore refDataStore = refDataStoreFactory.getOffHeapStore(refStreamDefinition);
 
         taskContext.info(() -> LogUtil.message(
-                "Loading reference data stream {}:{} - Acquiring stream lock",
+                "Loading reference data stream_id={}, part={}, Acquiring stream lock",
                 refStreamDefinition.getStreamId(),
                 refStreamDefinition.getPartNumber()));
 
@@ -223,7 +223,7 @@ class ReferenceDataLoadTaskHandler {
             // we are now blocking any other thread loading the same refStreamDefinition
             // and know that this stream has not already been loaded.
             taskContext.info(() -> LogUtil.message(
-                    "Loading reference data stream {}:{} - Starting stream processing",
+                    "Loading reference data stream_id={}, part={}, Starting stream processing",
                     refStreamDefinition.getStreamId(),
                     refStreamDefinition.getPartNumber()));
 
