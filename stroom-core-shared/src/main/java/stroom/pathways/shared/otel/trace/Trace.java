@@ -10,8 +10,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @JsonInclude(Include.NON_NULL)
 public class Trace {
@@ -38,58 +36,20 @@ public class Trace {
 
     public Span root() {
         final List<Span> roots = parentSpanIdMap.get("");
-        if (roots != null) {
-            if (roots.size() == 1) {
-                return roots.get(0);
-            } else if (roots.isEmpty()) {
-                throw new RuntimeException("No root found");
-            } else {
-                throw new RuntimeException("Multiple roots found");
-            }
+        if (roots == null) {
+            throw new RuntimeException("No root found");
         }
-        throw new RuntimeException("No root found");
+        if (roots.size() == 1) {
+            return roots.get(0);
+        } else if (roots.isEmpty()) {
+            throw new RuntimeException("No root found");
+        } else {
+            throw new RuntimeException("Multiple roots found");
+        }
     }
 
     public List<Span> children(final Span span) {
         return NullSafe.list(parentSpanIdMap.get(span.getSpanId()));
-    }
-
-    public int services() {
-        final Set<String> set = parentSpanIdMap
-                .values()
-                .stream()
-                .flatMap(List::stream)
-                .map(Span::getName)
-                .collect(Collectors.toSet());
-        return set.size();
-    }
-
-    public int depth() {
-        final Span root = root();
-        int depth = 1;
-        depth = Math.max(depth, depth(root) + 1);
-        return depth;
-    }
-
-    private int depth(final Span span) {
-        int depth = 0;
-        final List<Span> children = parentSpanIdMap.get(span.getSpanId());
-        if (children == null || children.isEmpty()) {
-            return 0;
-        }
-        depth = 1;
-        for (final Span child : children) {
-            depth = Math.max(depth, depth(child) + 1);
-        }
-        return depth;
-    }
-
-    public int totalSpans() {
-        return parentSpanIdMap
-                .values()
-                .stream()
-                .mapToInt(List::size)
-                .sum();
     }
 
     @Override

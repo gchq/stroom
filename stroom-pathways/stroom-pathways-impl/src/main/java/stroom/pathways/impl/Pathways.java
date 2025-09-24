@@ -2,16 +2,21 @@ package stroom.pathways.impl;
 
 import stroom.docref.DocRef;
 import stroom.pathways.shared.FindPathwayCriteria;
+import stroom.pathways.shared.FindTraceCriteria;
+import stroom.pathways.shared.GetTraceRequest;
 import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.otel.trace.NanoTime;
 import stroom.pathways.shared.otel.trace.Span;
 import stroom.pathways.shared.otel.trace.Trace;
+import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.pathways.shared.pathway.PathKey;
 import stroom.pathways.shared.pathway.PathNode;
 import stroom.pathways.shared.pathway.Pathway;
+import stroom.planb.impl.db.trace.NanoTimeUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
 import java.time.Instant;
@@ -47,40 +52,35 @@ public class Pathways {
         this.pathwaysStore = pathwaysStore;
         this.tracesStore = tracesStore;
         this.messageReceiverFactory = messageReceiverFactory;
-
-//        // FIXME: TEMPORARY - Construct test pathways
-//
-//
-//        // Read in sample data and create a map of traces.
-//        final Map<String, Trace> traceMap = new HashMap<>();
-//        for (int i = 1; i <= 17; i++) {
-//            final Path path = Paths.get(
-//                    "/home/stroomdev66/work/stroom-master-temp2/" +
-//                    "stroom-pathways/stroom-pathways-impl/src/test/resources/" + StringIdUtil.idToString(
-//                            i) + ".dat");
-//            loadData(path, traceMap);
-//        }
-//
-//        addTraces(traceMap.values());
     }
 
     public void process() {
         final PathwaysDoc doc = pathwaysStore.readDocument(docRef);
-        if (doc != null) {
-            final Collection<Trace> traces = tracesStore.getTraces(docRef);
-            if (!NullSafe.isEmptyCollection(traces)) {
-                addTraces(traces, doc);
+        if (doc != null && doc.getTracesDocRef() != null) {
+            final FindTraceCriteria criteria =
+                    new FindTraceCriteria(PageRequest.unlimited(),
+                            null,
+                            doc.getTracesDocRef(),
+                            doc.getTemporalOrderingTolerance());
+            final ResultPage<TraceRoot> traces = tracesStore.findTraces(criteria);
+            if (!NullSafe.isEmptyCollection(traces.getValues())) {
+                addTraces(traces.getValues(), doc);
             }
         }
     }
 
-    private void addTraces(final Collection<Trace> traces,
+    private void addTraces(final Collection<TraceRoot> traces,
                            final PathwaysDoc doc) {
         final DocRef infoFeed = doc.getInfoFeed();
         if (infoFeed != null && infoFeed.getName() != null) {
             messageReceiverFactory.create(infoFeed.getName(), messageReceiver -> {
                 // Output the tree for each trace.
-                for (final Trace trace : traces) {
+                for (final TraceRoot traceRoot : traces) {
+                    final GetTraceRequest request = new GetTraceRequest(
+                            doc.getTracesDocRef(),
+                            traceRoot.getTraceId(),
+                            doc.getTemporalOrderingTolerance());
+                    final Trace trace = tracesStore.findTrace(request);
                     if (addedTraces.add(trace)) {
                         LOGGER.info("\n" + trace.toString());
 
@@ -93,7 +93,7 @@ public class Pathways {
                         }
 
                         final Instant now = Instant.now();
-                        final NanoTime nanoTime = new NanoTime(now.getEpochSecond(), now.getNano());
+                        final NanoTime nanoTime = NanoTimeUtil.fromInstant(now);
                         roots.forEach((key, value) -> pathways.compute(
                                 key.toString(),
                                 (k, v) -> {

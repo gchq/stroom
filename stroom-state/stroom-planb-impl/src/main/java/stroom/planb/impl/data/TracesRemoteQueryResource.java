@@ -16,6 +16,10 @@
 
 package stroom.planb.impl.data;
 
+import stroom.pathways.shared.FindTraceCriteria;
+import stroom.pathways.shared.GetTraceRequest;
+import stroom.pathways.shared.TracesResultPage;
+import stroom.pathways.shared.otel.trace.Trace;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -28,29 +32,29 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 
 /**
- * Used to remotely query Plan B
+ * Used to remotely query Plan B for traces
  */
-@Tag(name = "Plan B Query")
-@Path(PlanBRemoteQueryResource.BASE_PATH)
+@Tag(name = "Traces Query")
+@Path(TracesRemoteQueryResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface PlanBRemoteQueryResource extends RestResource {
+public interface TracesRemoteQueryResource extends RestResource {
 
-    String BASE_PATH = "/planb" + ResourcePaths.V1;
-    String GET_VALUE_PATH = "/getValue";
-    String GET_STORE_INFO = "/getStoreInfo";
-
-    @POST
-    @Path(GET_VALUE_PATH)
-    @Operation(
-            summary = "Gets a value from a remote Plan B store.",
-            operationId = "planBQueryGetValue")
-    PlanBValue getValue(GetRequest request);
+    String BASE_PATH = "/traces" + ResourcePaths.V1;
+    String GET_TRACES_PATH = "/getTraces";
+    String GET_TRACE_PATH = "/getTrace";
 
     @POST
-    @Path(GET_STORE_INFO)
+    @Path(GET_TRACES_PATH)
     @Operation(
-            summary = "Gets Plan B store info.",
-            operationId = "getPlanBStoreInfo")
-    PlanBShardInfoResponse getStoreInfo(PlanBShardInfoRequest request);
+            summary = "Gets traces from a remote Plan B store.",
+            operationId = "tracesGetTraces")
+    TracesResultPage getTraces(FindTraceCriteria criteria);
+
+    @POST
+    @Path(GET_TRACE_PATH)
+    @Operation(
+            summary = "Gets trace from a remote Plan B store.",
+            operationId = "tracesGetTrace")
+    Trace getTrace(GetTraceRequest request);
 }

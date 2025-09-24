@@ -11,6 +11,7 @@ import stroom.planb.impl.data.FileTransferClient;
 import stroom.planb.impl.data.RangeState;
 import stroom.planb.impl.data.SequentialFileStore;
 import stroom.planb.impl.data.Session;
+import stroom.planb.impl.data.SpanKV;
 import stroom.planb.impl.data.State;
 import stroom.planb.impl.data.TemporalRangeState;
 import stroom.planb.impl.data.TemporalState;
@@ -22,6 +23,7 @@ import stroom.planb.impl.db.session.SessionDb;
 import stroom.planb.impl.db.state.StateDb;
 import stroom.planb.impl.db.temporalrangestate.TemporalRangeStateDb;
 import stroom.planb.impl.db.temporalstate.TemporalStateDb;
+import stroom.planb.impl.db.trace.TraceDb;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.util.io.FileUtil;
@@ -195,6 +197,11 @@ public class ShardWriters {
                 db.insert(writer, temporalValue);
             }
 
+            public void addSpanValue(final SpanKV spanKV) {
+                final TraceDb db = (TraceDb) lmdb;
+                db.insert(writer, spanKV);
+            }
+
             public boolean isSynchroniseMerge() {
                 return synchroniseMerge;
             }
@@ -239,6 +246,11 @@ public class ShardWriters {
         public void addMetricValue(final PlanBDoc doc,
                                    final TemporalValue temporalValue) {
             getWriter(doc).addMetricValue(temporalValue);
+        }
+
+        public void addSpanValue(final PlanBDoc doc,
+                                 final SpanKV spanKV) {
+            getWriter(doc).addSpanValue(spanKV);
         }
 
         private WriterInstance getWriter(final PlanBDoc doc) {

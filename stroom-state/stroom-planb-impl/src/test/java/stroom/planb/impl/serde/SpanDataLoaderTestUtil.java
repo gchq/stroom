@@ -1,7 +1,5 @@
 package stroom.planb.impl.serde;
 
-import stroom.bytebuffer.impl6.ByteBufferFactory;
-import stroom.bytebuffer.impl6.SimpleByteBufferFactory;
 import stroom.pathways.shared.otel.trace.ExportTraceServiceRequest;
 import stroom.pathways.shared.otel.trace.Span;
 import stroom.test.common.ProjectPathUtil;
@@ -19,7 +17,6 @@ public class SpanDataLoaderTestUtil {
 
     public static void load(final Consumer<Span> consumer) {
         try {
-            final ByteBufferFactory byteBufferFactory = new SimpleByteBufferFactory();
             final Path dir = ProjectPathUtil.resolveDir("stroom-planb-impl");
             final Path testDir = dir.resolve("src/test/resources/TestSpanValueSerde");
             try (final Stream<Path> stream = Files.list(testDir)) {

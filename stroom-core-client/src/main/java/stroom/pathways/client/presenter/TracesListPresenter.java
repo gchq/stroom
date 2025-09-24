@@ -29,13 +29,13 @@ import stroom.pathways.shared.FindTraceCriteria;
 import stroom.pathways.shared.TracesResource;
 import stroom.pathways.shared.otel.trace.NanoDuration;
 import stroom.pathways.shared.otel.trace.NanoTime;
-import stroom.pathways.shared.otel.trace.Span;
-import stroom.pathways.shared.otel.trace.Trace;
+import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.pathways.shared.pathway.Pathway;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -55,9 +55,9 @@ public class TracesListPresenter
 
     private final DateTimeFormatter dateTimeFormatter;
     private final RestFactory restFactory;
-    private final MyDataGrid<Trace> dataGrid;
-    private final MultiSelectionModelImpl<Trace> selectionModel;
-    private RestDataProvider<Trace, ResultPage<Trace>> dataProvider;
+    private final MyDataGrid<TraceRoot> dataGrid;
+    private final MultiSelectionModelImpl<TraceRoot> selectionModel;
+    private RestDataProvider<TraceRoot, ResultPage<TraceRoot>> dataProvider;
 
     private DocRef dataSourceRef;
     private String filter;
@@ -87,7 +87,7 @@ public class TracesListPresenter
         registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
-    public MultiSelectionModelImpl<Trace> getSelectionModel() {
+    public MultiSelectionModelImpl<TraceRoot> getSelectionModel() {
         return selectionModel;
     }
 
@@ -103,30 +103,29 @@ public class TracesListPresenter
     }
 
     private void addNameColumn() {
-        final Function<Trace, String> valueExtractor = trace -> NullSafe.get(trace, Trace::root, Span::getName);
+        final Function<TraceRoot, String> valueExtractor = trace -> NullSafe.get(trace, TraceRoot::getName);
         addTextColumn("Operation", 300, valueExtractor);
     }
 
     private void addIdColumn() {
-        final Function<Trace, String> valueExtractor = trace -> NullSafe.get(trace, Trace::getTraceId);
+        final Function<TraceRoot, String> valueExtractor = trace -> NullSafe.get(trace, TraceRoot::getTraceId);
         addTextColumn("Trace Id", 300, valueExtractor);
     }
 
 
     private void addTraceStartColumn() {
-        final Function<Trace, NanoTime> valueExtractor = trace ->
-                NanoTime.fromString(trace.root().getStartTimeUnixNano());
+        final Function<TraceRoot, NanoTime> valueExtractor = TraceRoot::getStartTime;
         addTimeColumn("Trace Start", 200, valueExtractor);
     }
 
     private void addDurationColumn() {
-        final Function<Trace, String> valueExtractor = trace -> {
-            final NanoTime start = NanoTime.fromString(trace.root().getStartTimeUnixNano());
-            final NanoTime end = NanoTime.fromString(trace.root().getEndTimeUnixNano());
+        final Function<TraceRoot, String> valueExtractor = trace -> {
+            final NanoTime start = trace.getStartTime();
+            final NanoTime end = trace.getEndTime();
             final NanoDuration duration = end.diff(start);
             return duration.toString();
         };
-        final Column<Trace, String> column = DataGridUtil
+        final Column<TraceRoot, String> column = DataGridUtil
                 .textColumnBuilder(valueExtractor)
                 .withSorting("Duration")
                 .build();
@@ -136,25 +135,27 @@ public class TracesListPresenter
     }
 
     private void addServicesColumn() {
-        final Function<Trace, String> valueExtractor = trace -> Integer.toString(NullSafe.get(trace, Trace::services));
+        final Function<TraceRoot, String> valueExtractor = trace ->
+                Integer.toString(NullSafe.get(trace, TraceRoot::getServices));
         addTextColumn("Services", 100, valueExtractor);
     }
 
     private void addDepthColumn() {
-        final Function<Trace, String> valueExtractor = trace -> Integer.toString(NullSafe.get(trace, Trace::depth));
+        final Function<TraceRoot, String> valueExtractor = trace ->
+                Integer.toString(NullSafe.get(trace, TraceRoot::getDepth));
         addTextColumn("Depth", 100, valueExtractor);
     }
 
     private void addTotalSpansColumn() {
-        final Function<Trace, String> valueExtractor = trace -> Integer.toString(NullSafe.get(trace,
-                Trace::totalSpans));
+        final Function<TraceRoot, String> valueExtractor = trace -> Integer.toString(NullSafe.get(trace,
+                TraceRoot::getTotalSpans));
         addTextColumn("Total Spans", 100, valueExtractor);
     }
 
     private void addTextColumn(final String name,
                                final int width,
-                               final Function<Trace, String> function) {
-        final Column<Trace, String> column = DataGridUtil
+                               final Function<TraceRoot, String> function) {
+        final Column<TraceRoot, String> column = DataGridUtil
                 .textColumnBuilder(function)
                 .withSorting(name)
                 .build();
@@ -166,14 +167,14 @@ public class TracesListPresenter
 
     private void addTimeColumn(final String name,
                                final int width,
-                               final Function<Trace, NanoTime> function) {
-        final Function<Trace, String> valueExtractor = pathway -> {
+                               final Function<TraceRoot, NanoTime> function) {
+        final Function<TraceRoot, String> valueExtractor = pathway -> {
             final NanoTime nanoTime = function.apply(pathway);
             return nanoTime == null
                     ? ""
                     : dateTimeFormatter.format(nanoTime.toEpochMillis());
         };
-        final Column<Trace, String> column = DataGridUtil
+        final Column<TraceRoot, String> column = DataGridUtil
                 .textColumnBuilder(valueExtractor)
                 .withSorting(name)
                 .build();
@@ -185,17 +186,18 @@ public class TracesListPresenter
 
     public void refresh() {
         if (dataProvider == null) {
-            dataProvider = new RestDataProvider<Trace, ResultPage<Trace>>(getEventBus()) {
+            dataProvider = new RestDataProvider<TraceRoot, ResultPage<TraceRoot>>(getEventBus()) {
                 @Override
                 protected void exec(final Range range,
-                                    final Consumer<ResultPage<Trace>> dataConsumer,
+                                    final Consumer<ResultPage<TraceRoot>> dataConsumer,
                                     final RestErrorHandler errorHandler) {
                     final FindTraceCriteria criteria = new FindTraceCriteria(
                             CriteriaUtil.createPageRequest(range),
                             CriteriaUtil.createSortList(dataGrid.getColumnSortList()),
                             dataSourceRef,
                             filter,
-                            pathway);
+                            pathway,
+                            SimpleDuration.ZERO);
 
                     restFactory
                             .create(TRACES_RESOURCE)

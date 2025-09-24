@@ -14,6 +14,7 @@ import stroom.pathways.shared.otel.trace.ValueType;
 import stroom.planb.impl.db.LmdbWriter;
 import stroom.planb.impl.db.PlanBEnv;
 import stroom.planb.impl.db.UsedLookupsRecorder;
+import stroom.planb.impl.db.trace.NanoTimeUtil;
 import stroom.planb.impl.serde.Serde;
 import stroom.planb.impl.serde.time.NanoTimeSerde;
 import stroom.planb.impl.serde.time.TimeSerde;
@@ -65,13 +66,13 @@ public class SpanValueSerde implements Serde<SpanValue> {
     private ByteBuffer writeNanoTime(final NanoTime nanoTime, final ByteBuffer byteBuffer) {
         final NanoTime time = Objects.requireNonNullElse(nanoTime, NanoTime.ZERO);
         final ByteBuffer result = ensure(byteBuffer, timeSerde.getSize());
-        timeSerde.write(result, Instant.ofEpochSecond(time.getSeconds(), time.getNanos()));
+        timeSerde.write(result, NanoTimeUtil.toInstant(time));
         return result;
     }
 
     private NanoTime readNanoTime(final ByteBuffer byteBuffer) {
         final Instant instant = timeSerde.read(byteBuffer);
-        return new NanoTime(instant.getEpochSecond(), instant.getNano());
+        return NanoTimeUtil.fromInstant(instant);
     }
 
     private ByteBuffer writeKvList(final Txn<ByteBuffer> txn, final List<KeyValue> list, final ByteBuffer byteBuffer) {

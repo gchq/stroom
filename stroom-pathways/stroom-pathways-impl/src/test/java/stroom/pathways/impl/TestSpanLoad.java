@@ -1,6 +1,8 @@
 package stroom.pathways.impl;
 
 import stroom.docref.DocRef;
+import stroom.pathways.shared.FindTraceCriteria;
+import stroom.pathways.shared.GetTraceRequest;
 import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.otel.trace.ExportTraceServiceRequest;
 import stroom.pathways.shared.otel.trace.NanoDuration;
@@ -8,11 +10,15 @@ import stroom.pathways.shared.otel.trace.ResourceSpans;
 import stroom.pathways.shared.otel.trace.ScopeSpans;
 import stroom.pathways.shared.otel.trace.Span;
 import stroom.pathways.shared.otel.trace.Trace;
+import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.pathways.shared.pathway.PathKey;
 import stroom.pathways.shared.pathway.PathNode;
+import stroom.planb.shared.PlanBDoc;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.time.SimpleDuration;
 import stroom.util.string.StringIdUtil;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -27,9 +33,12 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,7 +48,8 @@ public class TestSpanLoad {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestSpanLoad.class);
     private static final ObjectMapper MAPPER = createMapper(true);
 
-    private static final DocRef DOC_REF = DocRef.builder().type(PathwaysDoc.TYPE).uuid("test").build();
+    //    private static final DocRef DOC_REF = DocRef.builder().type(PathwaysDoc.TYPE).uuid("test").build();
+    private static final DocRef TRACE_STORE_DOC_REF = DocRef.builder().type(PlanBDoc.TYPE).uuid("traces").build();
     private static final PathwaysDoc PATHWAYS_DOC = new PathwaysDoc();
 
     @Test
@@ -47,14 +57,15 @@ public class TestSpanLoad {
 
 
         // Read in sample data and create a map of traces.
-        final TracesStore tracesStore = new TracesStore(null);
+        final TracesStore tracesStore = new TracesStoreMemoryImpl();
         for (int i = 1; i <= 13; i++) {
             final Path path = Paths.get("src/test/resources/" + StringIdUtil.idToString(i) + ".dat");
             loadData(path, tracesStore);
         }
 
         // Output the tree for each trace.
-        for (final Trace trace : tracesStore.getTraces(DOC_REF)) {
+        Collection<Trace> traces = getTraces(tracesStore);
+        for (final Trace trace : traces) {
             LOGGER.info("\n" + trace.toString());
         }
 
@@ -67,23 +78,43 @@ public class TestSpanLoad {
         };
 
         // Construct known paths for all traces.
-        final Map<PathKey, PathNode> roots = buildPathways(tracesStore.getTraces(DOC_REF), messageReceiver);
+        final Map<PathKey, PathNode> pathRoots = buildPathways(traces, messageReceiver);
 
         // Output found pathways.
-        for (final PathNode node : roots.values()) {
+        for (final PathNode node : pathRoots.values()) {
             LOGGER.info("\n" + node.toString());
         }
 
         // Validate traces against known paths.
-        validate(tracesStore.getTraces(DOC_REF), roots, messageReceiver);
+        traces = getTraces(tracesStore);
+        validate(traces, pathRoots, messageReceiver);
 
         // Introduce an invalid pathway.
         for (int i = 14; i <= 17; i++) {
             final Path path = Paths.get("src/test/resources/" + StringIdUtil.idToString(i) + ".dat");
             loadData(path, tracesStore);
         }
-        validate(tracesStore.getTraces(DOC_REF), roots, messageReceiver);
+        traces = getTraces(tracesStore);
+        validate(traces, pathRoots, messageReceiver);
         assertThat(messages.toString()).contains("ERROR: [GET /people] thread.id '125' not equal");
+    }
+
+    private Collection<Trace> getTraces(final TracesStore tracesStore) {
+        final FindTraceCriteria findTraceCriteria = new FindTraceCriteria(
+                PageRequest.unlimited(),
+                Collections.emptyList(),
+                TRACE_STORE_DOC_REF,
+                SimpleDuration.ZERO);
+        final List<TraceRoot> traceRoots = tracesStore.findTraces(findTraceCriteria).getValues();
+        final List<Trace> traces = new ArrayList<>(traceRoots.size());
+        for (final TraceRoot traceRoot : traceRoots) {
+            final Trace trace = tracesStore
+                    .findTrace(new GetTraceRequest(TRACE_STORE_DOC_REF, traceRoot.getTraceId(), SimpleDuration.ZERO));
+            if (trace != null) {
+                traces.add(trace);
+            }
+        }
+        return traces;
     }
 
     private Map<PathKey, PathNode> buildPathways(final Collection<Trace> traces,
@@ -118,7 +149,7 @@ public class TestSpanLoad {
             for (final ResourceSpans resourceSpans : NullSafe.list(exportRequest.getResourceSpans())) {
                 for (final ScopeSpans scopeSpans : NullSafe.list(resourceSpans.getScopeSpans())) {
                     for (final Span span : NullSafe.list(scopeSpans.getSpans())) {
-                        tracesStore.addSpan(DOC_REF, span);
+                        tracesStore.addSpan(TRACE_STORE_DOC_REF, span);
                     }
                 }
             }

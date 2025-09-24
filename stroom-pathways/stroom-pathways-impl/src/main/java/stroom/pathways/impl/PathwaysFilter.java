@@ -52,7 +52,7 @@ class PathwaysFilter extends AbstractXMLFilter {
 
     private final StringBuilder sb = new StringBuilder();
     private final PathwaysStore pathwaysStore;
-    private final TracesStore tracesStore;
+    private final TracesStoreMemoryImpl tracesStore;
     private final LocationFactoryProxy locationFactory;
     private final ErrorReceiverProxy errorReceiverProxy;
     private DocRef docRef;
@@ -63,7 +63,7 @@ class PathwaysFilter extends AbstractXMLFilter {
     PathwaysFilter(final LocationFactoryProxy locationFactory,
                    final ErrorReceiverProxy errorReceiverProxy,
                    final PathwaysStore pathwaysStore,
-                   final TracesStore tracesStore) {
+                   final TracesStoreMemoryImpl tracesStore) {
         this.locationFactory = locationFactory;
         this.errorReceiverProxy = errorReceiverProxy;
         this.pathwaysStore = pathwaysStore;

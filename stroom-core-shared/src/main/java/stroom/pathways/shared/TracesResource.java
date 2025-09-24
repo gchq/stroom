@@ -17,6 +17,7 @@
 package stroom.pathways.shared;
 
 import stroom.pathways.shared.otel.trace.Trace;
+import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
@@ -38,13 +39,22 @@ import org.fusesource.restygwt.client.DirectRestService;
 public interface TracesResource extends RestResource, DirectRestService {
 
     String BASE_PATH = "/traces" + ResourcePaths.V2;
-    String FIND_PATHWAYS_SUB_PATH = "/findTraces";
+    String FIND_TRACES_SUB_PATH = "/findTraces";
+    String FIND_TRACE_SUB_PATH = "/findTrace";
 
     @POST
-    @Path(FIND_PATHWAYS_SUB_PATH)
+    @Path(FIND_TRACES_SUB_PATH)
     @Operation(
             summary = "Find traces",
             operationId = "findTraces")
-    ResultPage<Trace> findTraces(
+    ResultPage<TraceRoot> findTraces(
             @Parameter(description = "criteria", required = true) FindTraceCriteria criteria);
+
+    @POST
+    @Path(FIND_TRACE_SUB_PATH)
+    @Operation(
+            summary = "Find trace",
+            operationId = "findTrace")
+    Trace findTrace(
+            @Parameter(description = "request", required = true) GetTraceRequest request);
 }

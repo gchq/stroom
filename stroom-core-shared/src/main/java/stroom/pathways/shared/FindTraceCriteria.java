@@ -6,6 +6,7 @@ import stroom.query.api.datasource.FieldFields;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.time.SimpleDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -32,11 +33,14 @@ public class FindTraceCriteria extends BaseCriteria {
     private final String filter;
     @JsonProperty
     private final Pathway pathway;
+    @JsonProperty
+    private SimpleDuration temporalOrderingTolerance;
 
     public FindTraceCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                              @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                             @JsonProperty("dataSourceRef") final DocRef dataSourceRef) {
-        this(pageRequest, sortList, dataSourceRef, null, null);
+                             @JsonProperty("dataSourceRef") final DocRef dataSourceRef,
+                             @JsonProperty("temporalOrderingTolerance") final SimpleDuration temporalOrderingTolerance) {
+        this(pageRequest, sortList, dataSourceRef, null, null, temporalOrderingTolerance);
     }
 
     @JsonCreator
@@ -44,11 +48,13 @@ public class FindTraceCriteria extends BaseCriteria {
                              @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                              @JsonProperty("dataSourceRef") final DocRef dataSourceRef,
                              @JsonProperty("filter") final String filter,
-                             @JsonProperty("pathway") final Pathway pathway) {
+                             @JsonProperty("pathway") final Pathway pathway,
+                             @JsonProperty("temporalOrderingTolerance") final SimpleDuration temporalOrderingTolerance) {
         super(pageRequest, sortList);
         this.dataSourceRef = dataSourceRef;
         this.filter = filter;
         this.pathway = pathway;
+        this.temporalOrderingTolerance = temporalOrderingTolerance;
     }
 
     public DocRef getDataSourceRef() {
@@ -61,6 +67,10 @@ public class FindTraceCriteria extends BaseCriteria {
 
     public Pathway getPathway() {
         return pathway;
+    }
+
+    public SimpleDuration getTemporalOrderingTolerance() {
+        return temporalOrderingTolerance;
     }
 
     @Override
@@ -77,12 +87,13 @@ public class FindTraceCriteria extends BaseCriteria {
         final FindTraceCriteria that = (FindTraceCriteria) o;
         return Objects.equals(dataSourceRef, that.dataSourceRef) &&
                Objects.equals(filter, that.filter) &&
-               Objects.equals(pathway, that.pathway);
+               Objects.equals(pathway, that.pathway) &&
+               Objects.equals(temporalOrderingTolerance, that.temporalOrderingTolerance);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), dataSourceRef, filter, pathway);
+        return Objects.hash(super.hashCode(), dataSourceRef, filter, pathway, temporalOrderingTolerance);
     }
 
     @Override
@@ -91,6 +102,7 @@ public class FindTraceCriteria extends BaseCriteria {
                "dataSourceRef=" + dataSourceRef +
                ", filter='" + filter + '\'' +
                ", pathway=" + pathway +
+               ", temporalOrderingTolerance=" + temporalOrderingTolerance +
                '}';
     }
 }

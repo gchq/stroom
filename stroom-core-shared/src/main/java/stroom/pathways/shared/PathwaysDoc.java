@@ -65,6 +65,8 @@ public class PathwaysDoc extends Doc {
     @JsonProperty
     private boolean allowConstraintMutation = true;
     @JsonProperty
+    private DocRef tracesDocRef;
+    @JsonProperty
     private DocRef infoFeed;
 
     public PathwaysDoc() {
@@ -87,6 +89,7 @@ public class PathwaysDoc extends Doc {
                        @JsonProperty("allowPathwayMutation") final boolean allowPathwayMutation,
                        @JsonProperty("allowConstraintCreation") final boolean allowConstraintCreation,
                        @JsonProperty("allowConstraintMutation") final boolean allowConstraintMutation,
+                       @JsonProperty("tracesDocRef") final DocRef tracesDocRef,
                        @JsonProperty("infoFeed") final DocRef infoFeed) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
@@ -96,6 +99,7 @@ public class PathwaysDoc extends Doc {
         this.allowPathwayMutation = allowPathwayMutation;
         this.allowConstraintCreation = allowConstraintCreation;
         this.allowConstraintMutation = allowConstraintMutation;
+        this.tracesDocRef = tracesDocRef;
         this.infoFeed = infoFeed;
     }
 
@@ -171,6 +175,14 @@ public class PathwaysDoc extends Doc {
         this.allowConstraintMutation = allowConstraintMutation;
     }
 
+    public DocRef getTracesDocRef() {
+        return tracesDocRef;
+    }
+
+    public void setTracesDocRef(final DocRef tracesDocRef) {
+        this.tracesDocRef = tracesDocRef;
+    }
+
     public DocRef getInfoFeed() {
         return infoFeed;
     }
@@ -198,6 +210,7 @@ public class PathwaysDoc extends Doc {
                Objects.equals(description, that.description) &&
                Objects.equals(temporalOrderingTolerance, that.temporalOrderingTolerance) &&
                Objects.equals(pathways, that.pathways) &&
+               Objects.equals(tracesDocRef, that.tracesDocRef) &&
                Objects.equals(infoFeed, that.infoFeed);
     }
 
@@ -211,6 +224,7 @@ public class PathwaysDoc extends Doc {
                 allowPathwayMutation,
                 allowConstraintCreation,
                 allowConstraintMutation,
+                tracesDocRef,
                 infoFeed);
     }
 
@@ -224,6 +238,7 @@ public class PathwaysDoc extends Doc {
                ", allowPathwayMutation=" + allowPathwayMutation +
                ", allowConstraintCreation=" + allowConstraintCreation +
                ", allowConstraintMutation=" + allowConstraintMutation +
+               ", tracesDocRef=" + tracesDocRef +
                ", infoFeed=" + infoFeed +
                '}';
     }

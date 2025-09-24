@@ -3,6 +3,7 @@ package stroom.planb.impl.serde;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.SimpleByteBufferFactory;
 import stroom.pathways.shared.otel.trace.NanoTime;
+import stroom.planb.impl.db.trace.NanoTimeUtil;
 import stroom.planb.impl.serde.trace.MockLookupSerde;
 import stroom.planb.impl.serde.trace.SpanValue;
 import stroom.planb.impl.serde.trace.SpanValueSerde;
@@ -21,9 +22,7 @@ public class TestSpanValueSerde {
         final SpanValueSerde serde = new SpanValueSerde(byteBufferFactory, new MockLookupSerde());
         SpanDataLoaderTestUtil.load(span -> {
 
-            final Instant now = Instant.now();
-            final NanoTime insertTime = new NanoTime(now.getEpochSecond(), now.getNano());
-
+            final NanoTime insertTime = NanoTimeUtil.now();
             final SpanValue in = SpanValue
                     .builder()
                     .insertTime(insertTime)

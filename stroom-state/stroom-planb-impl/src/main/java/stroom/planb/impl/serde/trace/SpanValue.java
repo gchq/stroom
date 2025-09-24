@@ -7,6 +7,7 @@ import stroom.pathways.shared.otel.trace.SpanEvent;
 import stroom.pathways.shared.otel.trace.SpanKind;
 import stroom.pathways.shared.otel.trace.SpanLink;
 import stroom.pathways.shared.otel.trace.SpanStatus;
+import stroom.planb.impl.db.trace.NanoTimeUtil;
 import stroom.util.shared.AbstractBuilder;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -257,8 +258,7 @@ public class SpanValue {
         }
 
         public Builder(final Span span) {
-            final Instant instant = Instant.now();
-            this.insertTime = new NanoTime(instant.getEpochSecond(), instant.getNano());
+            this.insertTime = NanoTimeUtil.now();
             this.traceState = span.getTraceState();
             this.flags = span.getFlags();
             this.name = span.getName();

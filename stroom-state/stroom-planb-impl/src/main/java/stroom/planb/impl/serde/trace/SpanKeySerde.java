@@ -2,10 +2,12 @@ package stroom.planb.impl.serde.trace;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.serde.KeySerde;
+import stroom.util.shared.NullSafe;
 
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -44,12 +46,8 @@ public class SpanKeySerde implements KeySerde<SpanKey> {
 
     private void write(final SpanKey spanKey, final ByteBuffer byteBuffer) {
         final byte[] traceId = HexStringUtil.decode(spanKey.getTraceId());
-        byte[] parentSpanId = HexStringUtil.decode(spanKey.getParentSpanId());
+        final byte[] parentSpanId = spanIdStringToBytes(spanKey.getParentSpanId());
         final byte[] spanId = HexStringUtil.decode(spanKey.getSpanId());
-
-        if (parentSpanId.length == 0) {
-            parentSpanId = NO_PARENT_SPAN_ID;
-        }
 
         if (traceId.length != TRACE_ID_LENGTH) {
             throw new IllegalArgumentException("Trace id not " + TRACE_ID_LENGTH + " bytes long");
@@ -75,7 +73,20 @@ public class SpanKeySerde implements KeySerde<SpanKey> {
         byteBuffer.get(parentSpanId);
         byteBuffer.get(spanId);
         return new SpanKey(HexStringUtil.encode(traceId),
-                HexStringUtil.encode(parentSpanId),
-                HexStringUtil.encode(spanId));
+                HexStringUtil.encode(spanId),
+                spanIdBytesToString(parentSpanId));
+    }
+
+    private byte[] spanIdStringToBytes(final String spanId) {
+        return NullSafe.isEmptyString(spanId)
+                ? NO_PARENT_SPAN_ID
+                : HexStringUtil.decode(spanId);
+    }
+
+    private String spanIdBytesToString(final byte[] bytes) {
+        if (Arrays.equals(bytes, NO_PARENT_SPAN_ID)) {
+            return "";
+        }
+        return HexStringUtil.encode(bytes);
     }
 }
