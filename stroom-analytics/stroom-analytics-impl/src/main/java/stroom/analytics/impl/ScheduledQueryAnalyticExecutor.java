@@ -67,6 +67,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.scheduler.Trigger;
+import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
@@ -287,7 +288,9 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
                                     errorConsumer,
                                     expressionPredicateFactory,
                                     mapper);
-                            mapper = ConditionalFormattingMapper.create(
+
+                            mapper = ConditionalFormattingMapper.create(resultRequest.getSourceComponentId(),
+                                    resultRequest.getSourceComponentName(),
                                     columns,
                                     tableSettings.getConditionalFormattingRules(),
                                     expressionContext.getDateTimeSettings(),
@@ -306,16 +309,16 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
                         }
 
                     } finally {
-                        final List<String> errors = errorConsumer.getErrors();
-                        if (errors != null) {
-                            for (final String error : errors) {
+                        final List<ErrorMessage> errorMessages = errorConsumer.getErrorMessages();
+                        if (errorMessages != null) {
+                            for (final ErrorMessage errorMessage : errorMessages) {
                                 if (executionResult.status() == null) {
-                                    executionResult = new ExecutionResult("Error", error);
+                                    executionResult = new ExecutionResult("Error", errorMessage.getMessage());
                                 }
 
                                 errorReceiverProxyProvider.get()
                                         .getErrorReceiver()
-                                        .log(Severity.ERROR, null, null, error, null);
+                                        .log(errorMessage.getSeverity(), null, null, errorMessage.getMessage(), null);
                             }
                         }
 

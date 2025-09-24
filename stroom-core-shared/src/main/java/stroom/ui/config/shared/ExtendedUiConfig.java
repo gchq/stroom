@@ -17,7 +17,7 @@
 package stroom.ui.config.shared;
 
 import stroom.receive.rules.shared.ReceiptCheckMode;
-import stroom.security.shared.ApiKeyHashAlgorithm;
+import stroom.security.shared.HashAlgorithm;
 import stroom.util.shared.NotInjectableConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.collection.GwtCollectionUtil;
@@ -275,7 +275,7 @@ public class ExtendedUiConfig {
     }
 
     @JsonIgnore
-    public ApiKeyHashAlgorithm getDefaultApiKeyHashAlgorithm() {
+    public HashAlgorithm getDefaultApiKeyHashAlgorithm() {
         return uiConfig.getDefaultApiKeyHashAlgorithm();
     }
 

@@ -44,7 +44,8 @@ public interface ProcessorFilterService
 
     List<ReprocessDataInfo> reprocess(CreateProcessFilterRequest request);
 
-    ProcessorFilter importFilter(Processor processor,
+    ProcessorFilter importFilter(ProcessorFilter existingProcessorFilter,
+                                 Processor processor,
                                  DocRef processorFilterDocRef,
                                  CreateProcessFilterRequest request);
 
@@ -63,4 +64,6 @@ public interface ProcessorFilterService
     ProcessorFilterRow getRow(ProcessorFilter processorFilter);
 
     Optional<String> getPipelineName(ProcessorType processorType, String uuid);
+
+    ProcessorFilter restore(DocRef processorFilterDocRef, final boolean resetTracker);
 }

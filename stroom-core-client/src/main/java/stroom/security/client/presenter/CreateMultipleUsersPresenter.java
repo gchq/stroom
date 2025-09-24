@@ -66,10 +66,10 @@ public class CreateMultipleUsersPresenter extends MyPresenterWidget<CreateMultip
                                     .filter(user -> !user.isEnabled())
                                     .collect(Collectors.toList());
                             final Optional<User> nextSelection = result.stream().findFirst();
-                            if (disabled.size() > 0) {
+                            if (!disabled.isEmpty()) {
                                 ConfirmEvent.fire(this,
                                         "Some deleted users already exist with the same names, " +
-                                                "would you like to restore them?",
+                                        "would you like to restore them?",
                                         ok -> {
                                             if (ok) {
                                                 enable(disabled, consumer, event, nextSelection, taskMonitorFactory);

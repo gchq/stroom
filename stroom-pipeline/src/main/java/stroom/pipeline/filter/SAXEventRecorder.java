@@ -225,26 +225,20 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
             case EXISTS -> {
                 return true;
             }
+            case NOT_EXISTS -> {
+                return objects.isEmpty();
+            }
             case CONTAINS -> {
-                for (final Object object : objects) {
-                    if (contains(object, xPathFilter.getValue(), xPathFilter.isIgnoreCase())) {
-                        return true;
-                    }
-                }
+                return contains(objects, xPathFilter);
+            }
+            case NOT_CONTAINS -> {
+                return !contains(objects, xPathFilter);
             }
             case EQUALS -> {
-                for (final Object object : objects) {
-                    if (equals(object, xPathFilter.getValue(), xPathFilter.isIgnoreCase())) {
-                        return true;
-                    }
-                }
+                return equals(objects, xPathFilter);
             }
             case NOT_EQUALS -> {
-                for (final Object object : objects) {
-                    if (!equals(object, xPathFilter.getValue(), xPathFilter.isIgnoreCase())) {
-                        return true;
-                    }
-                }
+                return !equals(objects, xPathFilter);
             }
             case UNIQUE -> {
                 for (final Object object : objects) {
@@ -294,6 +288,16 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
                         : val.trim());
     }
 
+    private static boolean contains(final List<Object> objects,
+                                    final XPathFilter xPathFilter) {
+        for (final Object object : objects) {
+            if (contains(object, xPathFilter.getValue(), xPathFilter.isIgnoreCase())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static boolean contains(final Object value, final String text, final Boolean ignoreCase) {
         // Contains doesn't really make any sense for any type other than string, so just convert whatever it
         // is to a string and do contains on that.
@@ -310,6 +314,16 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
             txt = text.toLowerCase();
         }
         return valueStr.contains(txt);
+    }
+
+    private static boolean equals(final List<Object> objects,
+                                  final XPathFilter xPathFilter) {
+        for (final Object object : objects) {
+            if (equals(object, xPathFilter.getValue(), xPathFilter.isIgnoreCase())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean equals(final Object value, final String text, final Boolean ignoreCase) {

@@ -43,6 +43,10 @@ abstract class AbstractLink extends AbstractManyChildFunction {
         }
 
         Val makeLink(final String text, final String url, final String type) {
+            return makeLink(text, url, type, null);
+        }
+
+        Val makeLink(final String text, final String url, final String type, final String target) {
             final StringBuilder sb = new StringBuilder();
             sb.append("[");
             sb.append(text);
@@ -54,6 +58,10 @@ abstract class AbstractLink extends AbstractManyChildFunction {
                 sb.append(type);
                 sb.append("}");
             }
+            if (target != null && !target.isEmpty()) {
+                sb.append("<").append(target).append(">");
+            }
+
             return ValString.create(sb.toString());
         }
 

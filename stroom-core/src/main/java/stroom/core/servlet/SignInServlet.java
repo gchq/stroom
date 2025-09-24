@@ -44,4 +44,9 @@ public class SignInServlet extends AppServlet implements IsServlet {
     public Set<String> getPathSpecs() {
         return PATH_SPECS;
     }
+
+    @Override
+    public String getName() {
+        return ResourcePaths.SIGN_IN_SERVLET_NAME;
+    }
 }

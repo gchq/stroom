@@ -38,6 +38,7 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.query.api.Column;
 import stroom.query.api.Format;
+import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.client.presenter.DynamicFieldSelectionListModel;
@@ -228,57 +229,55 @@ public class SelectionHandlersPresenter
                 .id(RandomId.createId(5))
                 .enabled(true)
                 .build();
-        final SelectionHandlerPresenter editSelectionHandlerPresenter = editRulePresenterProvider.get();
-        editSelectionHandlerPresenter.setDashboardContext(getDashboardContext());
-        editSelectionHandlerPresenter.read(newRule, fieldSelectionListModel);
-
-        final PopupSize popupSize = PopupSize.resizable(800, 800);
-        ShowPopupEvent.builder(editSelectionHandlerPresenter)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(popupSize)
-                .caption("Add New Selection Handler")
-                .onShow(e -> editSelectionHandlerPresenter.focus())
-                .onHideRequest(e -> {
-                    if (e.isOk()) {
-                        final ComponentSelectionHandler rule = editSelectionHandlerPresenter.write();
-                        selectionHandlers.add(rule);
-                        update();
-                        listPresenter.getSelectionModel().setSelected(rule);
-                        setDirty(true);
-                    }
-                    e.hide();
-                })
-                .fire();
+        edit(newRule, "Add New Selection Handler", rule -> {
+            selectionHandlers.add(rule);
+            update();
+            listPresenter.getSelectionModel().setSelected(rule);
+            setDirty(true);
+        });
     }
 
     private void edit(final ComponentSelectionHandler existingRule) {
+        edit(existingRule, "Edit Selection Handler", rule -> {
+            final int index = selectionHandlers.indexOf(existingRule);
+            selectionHandlers.remove(index);
+            selectionHandlers.add(index, rule);
+
+            update();
+            listPresenter.getSelectionModel().setSelected(rule);
+
+            // Only mark the policies as dirty if the rule was actually changed.
+            if (!existingRule.equals(rule)) {
+                setDirty(true);
+            }
+        });
+    }
+
+    private void edit(final ComponentSelectionHandler existingRule,
+                      final String caption,
+                      final Consumer<ComponentSelectionHandler> consumer) {
         final SelectionHandlerPresenter editSelectionHandlerPresenter = editRulePresenterProvider.get();
-        editSelectionHandlerPresenter.setDashboardContext(getDashboardContext());
         editSelectionHandlerPresenter.read(existingRule, fieldSelectionListModel);
 
-        final PopupSize popupSize = PopupSize.resizable(800, 800);
+        final DashboardContext dashboardContext = getDashboardContext();
+        editSelectionHandlerPresenter.refreshSelection(dashboardContext);
+        final HandlerRegistration handlerRegistration = dashboardContext
+                .addContextChangeHandler(e -> editSelectionHandlerPresenter.refreshSelection(dashboardContext));
+
+        final PopupSize popupSize = PopupSize.resizable(1200, 1000, 800, 600);
         ShowPopupEvent.builder(editSelectionHandlerPresenter)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
-                .caption("Edit Selection Handler")
+                .caption(caption)
                 .onShow(e -> editSelectionHandlerPresenter.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final ComponentSelectionHandler rule = editSelectionHandlerPresenter.write();
-                        final int index = selectionHandlers.indexOf(existingRule);
-                        selectionHandlers.remove(index);
-                        selectionHandlers.add(index, rule);
-
-                        update();
-                        listPresenter.getSelectionModel().setSelected(rule);
-
-                        // Only mark the policies as dirty if the rule was actually changed.
-                        if (!existingRule.equals(rule)) {
-                            setDirty(true);
-                        }
+                        consumer.accept(rule);
                     }
                     e.hide();
                 })
+                .onHide(e -> handlerRegistration.removeHandler())
                 .fire();
     }
 
@@ -327,12 +326,22 @@ public class SelectionHandlersPresenter
     private FieldSelectionListModel createSelectionListModelFromColumns(final List<Column> columns) {
         final List<QueryField> fields = columns
                 .stream()
-                .map(column -> QueryField
-                        .builder()
-                        .fldName(column.getName())
-                        .fldType(getFieldType(column))
-                        .queryable(true)
-                        .build())
+                .map(column -> {
+                    final FieldType fieldType = getFieldType(column);
+                    final ConditionSet conditionSet = switch (fieldType) {
+                        case LONG -> ConditionSet.ALL_UI_NUMERIC;
+                        case DATE -> ConditionSet.ALL_UI_DATE;
+                        default -> ConditionSet.ALL_UI_TEXT;
+                    };
+
+                    return QueryField
+                            .builder()
+                            .fldName(column.getName())
+                            .fldType(getFieldType(column))
+                            .queryable(true)
+                            .conditionSet(conditionSet)
+                            .build();
+                })
                 .collect(Collectors.toList());
         final SimpleFieldSelectionListModel simpleFieldSelectionListModel = new SimpleFieldSelectionListModel();
         simpleFieldSelectionListModel.addItems(fields);

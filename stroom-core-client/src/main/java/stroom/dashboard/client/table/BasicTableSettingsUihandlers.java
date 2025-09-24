@@ -25,4 +25,6 @@ public interface BasicTableSettingsUihandlers extends UiHandlers {
 //    void setExtractValues(boolean extractValues);
 
     void onUseDefaultExtractionPipeline(boolean useDefaultExtractionPipeline);
+
+    void onOverrideMaxStringFieldLength(boolean overrideMaxStringFieldLength);
 }

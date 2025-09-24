@@ -1,6 +1,7 @@
 package stroom.security.shared;
 
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -9,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -46,6 +48,14 @@ public class AppPermissionSetImpl implements AppPermissionSet {
         this.appPermissions = Collections.unmodifiableSet(NullSafe.stream(appPermissions)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(AppPermission.class))));
+    }
+
+    @SerialisationTestConstructor
+    private AppPermissionSetImpl() {
+        this(AppPermissionOperator.ALL_OF,
+                Arrays
+                        .stream(new AppPermission[]{AppPermission.ADMINISTRATOR, AppPermission.ANNOTATIONS})
+                        .collect(Collectors.toList()));
     }
 
     @Override
@@ -153,6 +163,11 @@ public class AppPermissionSetImpl implements AppPermissionSet {
         @JsonCreator
         SingletonAppPermissionSet(@JsonProperty("appPermission") final AppPermission appPermission) {
             this.appPermission = Objects.requireNonNull(appPermission);
+        }
+
+        @SerialisationTestConstructor
+        private SingletonAppPermissionSet() {
+            this(AppPermission.ADMINISTRATOR);
         }
 
         @Override
@@ -281,9 +296,14 @@ public class AppPermissionSetImpl implements AppPermissionSet {
             // This field is pointless, but can't seem to get jackson to play ball without it.
             // Empty perm sets are unlikely to be used anyway, so not worth losing sleep over.
             if (operator != AppPermissionOperator.EMPTY) {
-                throw new IllegalArgumentException("Only ALL_OF allowed");
+                throw new IllegalArgumentException("Only EMPTY allowed");
             }
             this.operator = operator;
+        }
+
+        @SerialisationTestConstructor
+        private EmptyAppPermissionSet() {
+            this(AppPermissionOperator.EMPTY);
         }
 
         @Override

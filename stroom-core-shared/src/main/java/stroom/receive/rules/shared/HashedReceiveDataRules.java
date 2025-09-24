@@ -9,6 +9,7 @@ import stroom.query.api.ExpressionUtil;
 import stroom.query.api.datasource.QueryField;
 import stroom.security.shared.HashAlgorithm;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -18,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -91,6 +93,15 @@ public class HashedReceiveDataRules {
                 this.uuidToFlattenedDictMap,
                 this.fieldNameToSaltMap,
                 this.hashAlgorithm);
+    }
+
+    @SerialisationTestConstructor
+    private HashedReceiveDataRules() {
+        this(0L,
+                ReceiveDataRules.builder().build(),
+                Collections.emptyMap(),
+                Collections.emptyMap(),
+                HashAlgorithm.BCRYPT);
     }
 
     public HashedReceiveDataRules(final ReceiveDataRules receiveDataRules,

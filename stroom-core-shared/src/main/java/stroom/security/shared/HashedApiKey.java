@@ -3,6 +3,7 @@ package stroom.security.shared;
 import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasAuditableUserIdentity;
 import stroom.util.shared.HasIntegerId;
+import stroom.util.shared.SerialisationTestConstructor;
 import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -47,7 +48,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
     @JsonProperty
     private final boolean enabled;
     @JsonProperty
-    private final ApiKeyHashAlgorithm hashAlgorithm;
+    private final HashAlgorithm hashAlgorithm;
 
     @JsonCreator
     public HashedApiKey(@JsonProperty("id") final Integer id,
@@ -63,7 +64,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
                         @JsonProperty("name") final String name,
                         @JsonProperty("comments") final String comments,
                         @JsonProperty("enabled") final boolean enabled,
-                        @JsonProperty("hashAlgorithm") final ApiKeyHashAlgorithm hashAlgorithm) {
+                        @JsonProperty("hashAlgorithm") final HashAlgorithm hashAlgorithm) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -78,6 +79,13 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
         this.comments = comments;
         this.enabled = enabled;
         this.hashAlgorithm = Objects.requireNonNull(hashAlgorithm);
+    }
+
+    @SerialisationTestConstructor
+    private HashedApiKey() {
+        this(HashedApiKey
+                .builder()
+                .withHashAlgorithm(HashAlgorithm.BCRYPT));
     }
 
     private HashedApiKey(final Builder builder) {
@@ -177,7 +185,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
         return enabled;
     }
 
-    public ApiKeyHashAlgorithm getHashAlgorithm() {
+    public HashAlgorithm getHashAlgorithm() {
         return hashAlgorithm;
     }
 
@@ -254,7 +262,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
         private String name;
         private String comments;
         private boolean enabled = true;
-        private ApiKeyHashAlgorithm hashAlgorithm = ApiKeyHashAlgorithm.DEFAULT;
+        private HashAlgorithm hashAlgorithm = HashAlgorithm.DEFAULT;
 
         private Builder() {
         }
@@ -340,7 +348,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
             return this;
         }
 
-        public Builder withHashAlgorithm(final ApiKeyHashAlgorithm val) {
+        public Builder withHashAlgorithm(final HashAlgorithm val) {
             hashAlgorithm = val;
             return this;
         }

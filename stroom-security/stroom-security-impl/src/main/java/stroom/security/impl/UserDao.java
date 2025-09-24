@@ -31,6 +31,8 @@ public interface UserDao {
 
     User update(User user);
 
+    void copyGroupsAndPermissions(String fromUserUuid, String toUserUuid);
+
     /**
      * Find users and groups.
      *

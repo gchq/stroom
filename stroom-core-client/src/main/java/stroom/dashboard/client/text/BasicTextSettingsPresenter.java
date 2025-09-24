@@ -96,7 +96,7 @@ public class BasicTextSettingsPresenter
 
     private void addColumnNames(final Component component, final List<ColumnRef> allColumns) {
         if (component instanceof final HasComponentSelection hasSelectedRows) {
-            final List<ColumnRef> columns = hasSelectedRows.getColumns();
+            final List<ColumnRef> columns = hasSelectedRows.getColumnRefs();
             if (columns != null && !columns.isEmpty()) {
                 allColumns.addAll(columns);
             }

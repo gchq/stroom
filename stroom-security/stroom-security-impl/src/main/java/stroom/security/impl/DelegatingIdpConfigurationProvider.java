@@ -120,8 +120,13 @@ public class DelegatingIdpConfigurationProvider implements IdpConfigurationProvi
     }
 
     @Override
-    public boolean isValidateAudience() {
-        return delegate.isValidateAudience();
+    public Set<String> getAllowedAudiences() {
+        return delegate.getAllowedAudiences();
+    }
+
+    @Override
+    public boolean isAudienceClaimRequired() {
+        return delegate.isAudienceClaimRequired();
     }
 
     @Override
@@ -137,6 +142,11 @@ public class DelegatingIdpConfigurationProvider implements IdpConfigurationProvi
     @Override
     public String getUserDisplayNameClaim() {
         return delegate.getUserDisplayNameClaim();
+    }
+
+    @Override
+    public String getFullNameClaimTemplate() {
+        return delegate.getFullNameClaimTemplate();
     }
 
     @Override

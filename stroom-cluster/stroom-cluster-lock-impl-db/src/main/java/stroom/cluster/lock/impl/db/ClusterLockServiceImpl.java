@@ -67,6 +67,11 @@ class ClusterLockServiceImpl implements ClusterLockService {
 
     @Override
     public void tryLock(final String lockName, final Runnable runnable) {
+
+        // TODO Why are we using a call to the master node to do this?
+        //  Why not use the dbClusterLock with a .nowait() added to the JOOQ sql?
+        //  See https://github.com/gchq/stroom/issues/5124
+
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         LOGGER.debug("tryLock({}) - >>>", lockName);
         boolean success = false;

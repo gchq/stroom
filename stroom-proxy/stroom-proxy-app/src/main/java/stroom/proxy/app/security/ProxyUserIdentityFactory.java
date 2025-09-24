@@ -9,12 +9,12 @@ import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.JwtUtil;
 import stroom.security.common.impl.RefreshManager;
 import stroom.security.openid.api.IdpType;
-import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.TokenResponse;
 import stroom.security.shared.VerifyApiKeyRequest;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.cert.CertificateExtractor;
+import stroom.util.io.SimplePathCreator;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -48,6 +48,7 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
                              final ServiceUserFactory serviceUserFactory,
                              final JerseyClientFactory jerseyClientFactory,
                              final RefreshManager refreshManager,
+                             final SimplePathCreator simplePathCreator,
                              final Provider<ProxyApiKeyService> proxyApiKeyServiceProvider,
                              final Provider<ReceiveDataConfig> receiveDataConfigProvider,
                              final Provider<CommonSecurityContext> proxySecurityContextProvider) {
@@ -57,6 +58,7 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
                 certificateExtractor,
                 serviceUserFactory,
                 jerseyClientFactory,
+                simplePathCreator,
                 refreshManager);
         this.openIdConfigurationProvider = openIdConfigProvider;
         this.proxyApiKeyServiceProvider = proxyApiKeyServiceProvider;
@@ -72,11 +74,15 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
 
         final JwtClaims jwtClaims = jwtContext.getJwtClaims();
 
-        final String uniqueIdentity = JwtUtil.getUniqueIdentity(openIdConfigurationProvider.get(), jwtClaims);
-        final String displayName = JwtUtil.getUserDisplayName(openIdConfigurationProvider.get(), jwtClaims)
+        final OpenIdConfiguration openIdConfiguration = openIdConfigurationProvider.get();
+        final String uniqueIdentity = JwtUtil.getUniqueIdentity(openIdConfiguration, jwtClaims);
+        final String displayName = JwtUtil.getUserDisplayName(openIdConfiguration, jwtClaims)
                 .orElse(null);
-        final String fullName = JwtUtil.getClaimValue(jwtClaims, OpenId.CLAIM__NAME)
+        final String fullName = getUserFullName(openIdConfiguration, jwtClaims)
                 .orElse(null);
+
+        LOGGER.debug("uniqueIdentity: '{}', displayName: '{}', fullName: '{}', claims: {}",
+                uniqueIdentity, displayName, fullName, jwtClaims);
 
         return Optional.of(new ProxyClientUserIdentity(
                 uniqueIdentity, displayName, fullName, jwtContext));

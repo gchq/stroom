@@ -19,6 +19,7 @@ package stroom.dashboard.client.embeddedquery;
 import stroom.core.client.ContentManager;
 import stroom.core.client.event.WindowCloseEvent;
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter.EmbeddedQueryView;
+import stroom.dashboard.client.input.FilterableTable;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
@@ -26,8 +27,11 @@ import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.main.Queryable;
 import stroom.dashboard.client.query.QueryInfo;
 import stroom.dashboard.client.query.SelectionHandlerExpressionBuilder;
+import stroom.dashboard.client.table.ColumnValuesDataSupplier;
 import stroom.dashboard.client.table.ComponentSelection;
+import stroom.dashboard.client.table.FilterCellManager;
 import stroom.dashboard.client.table.HasComponentSelection;
+import stroom.dashboard.client.table.TableUpdateEvent;
 import stroom.dashboard.client.vis.VisSelectionModel;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
@@ -37,7 +41,9 @@ import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
+import stroom.query.api.Column;
 import stroom.query.api.ColumnRef;
+import stroom.query.api.ConditionalFormattingRule;
 import stroom.query.api.DestroyReason;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.GroupSelection;
@@ -60,15 +66,19 @@ import stroom.query.client.presenter.SearchStateListener;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.google.web.bindery.event.shared.SimpleEventBus;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
@@ -79,7 +89,7 @@ import java.util.Set;
 
 public class EmbeddedQueryPresenter
         extends AbstractComponentPresenter<EmbeddedQueryView>
-        implements Queryable, SearchStateListener, SearchErrorListener, HasComponentSelection {
+        implements Queryable, SearchStateListener, SearchErrorListener, HasComponentSelection, FilterableTable {
 
     public static final String TAB_TYPE = "embedded-query-component";
 
@@ -94,7 +104,6 @@ public class EmbeddedQueryPresenter
 
 
     private final QueryClient queryClient;
-    private final RestFactory restFactory;
     private final QueryModel queryModel;
     private final Provider<QueryDocPresenter> queryDocPresenterProvider;
     private final ContentManager contentManager;
@@ -110,11 +119,12 @@ public class EmbeddedQueryPresenter
     private QueryResultVisPresenter currentVisPresenter;
     private final List<HandlerRegistration> tableHandlerRegistrations = new ArrayList<>();
 
-    private List<String> currentErrors;
+    private List<ErrorMessage> currentErrors;
     private boolean initialised;
     private Timer autoRefreshTimer;
     private ExpressionOperator currentSelectionQuery;
     private DocRef loadedQueryRef;
+    private final EventBus tableEventBus = new SimpleEventBus();
 
     @Inject
     public EmbeddedQueryPresenter(final EventBus eventBus,
@@ -130,7 +140,6 @@ public class EmbeddedQueryPresenter
                                   final ContentManager contentManager) {
         super(eventBus, view, settingsPresenterProvider);
         this.queryClient = queryClient;
-        this.restFactory = restFactory;
         this.tablePresenterProvider = tablePresenterProvider;
         this.visPresenterProvider = visPresenterProvider;
         this.queryDocPresenterProvider = queryDocPresenterProvider;
@@ -475,6 +484,10 @@ public class EmbeddedQueryPresenter
             if (currentVisPresenter != null) {
                 currentTablePresenter.setQueryResultVisPresenter(currentVisPresenter);
             }
+
+            // Chain update events.
+            tableHandlerRegistrations.add(currentTablePresenter.addUpdateHandler(e ->
+                    fireColumnAndDataUpdate()));
         }
     }
 
@@ -575,7 +588,7 @@ public class EmbeddedQueryPresenter
 
             // Start search.
             final DashboardContext dashboardContext = getDashboardContext();
-            queryModel.startNewSearch(
+            queryModel.startNewSearch(getComponentConfig().getId(), getComponentConfig().getName(),
                     replaced,
                     dashboardContext.getParams(),
                     dashboardContext.getResolvedTimeRange(),
@@ -738,13 +751,13 @@ public class EmbeddedQueryPresenter
     }
 
     @Override
-    public void onError(final List<String> errors) {
+    public void onError(final List<ErrorMessage> errors) {
         currentErrors = errors;
 //        setWarningsVisible(currentErrors != null && !currentErrors.isEmpty());
     }
 
     @Override
-    public List<String> getCurrentErrors() {
+    public List<ErrorMessage> getCurrentErrors() {
         return currentErrors;
     }
 
@@ -811,11 +824,11 @@ public class EmbeddedQueryPresenter
     }
 
     @Override
-    public List<ColumnRef> getColumns() {
+    public List<ColumnRef> getColumnRefs() {
         if (currentVisPresenter != null) {
-            return currentVisPresenter.getColumns();
+            return currentVisPresenter.getColumnRefs();
         } else if (currentTablePresenter != null) {
-            return currentTablePresenter.getColumns();
+            return currentTablePresenter.getColumnRefs();
         }
         return Collections.emptyList();
     }
@@ -851,7 +864,56 @@ public class EmbeddedQueryPresenter
 
     @Override
     public void onContentTabVisible(final boolean visible) {
-        currentTablePresenter.onContentTabVisible(visible);
+        if (currentTablePresenter != null) {
+            currentTablePresenter.onContentTabVisible(visible);
+        }
+    }
+
+    @Override
+    public List<Column> getColumns() {
+        return NullSafe.getOrElse(
+                currentTablePresenter,
+                QueryResultTablePresenter::getColumns,
+                Collections.emptyList());
+    }
+
+    @Override
+    public Element getFilterButton(final Column column) {
+        if (currentTablePresenter == null) {
+            return null;
+        }
+        return currentTablePresenter.getFilterButton(column);
+    }
+
+    @Override
+    public ColumnValuesDataSupplier getDataSupplier(final Column column,
+                                                    final List<ConditionalFormattingRule> conditionalFormattingRules) {
+        if (currentTablePresenter == null) {
+            return null;
+        }
+        return currentTablePresenter.getDataSupplier(column, conditionalFormattingRules);
+    }
+
+    private void fireColumnAndDataUpdate() {
+        TableUpdateEvent.fire(this);
+    }
+
+    @Override
+    public HandlerRegistration addUpdateHandler(final TableUpdateEvent.Handler handler) {
+        return tableEventBus.addHandler(TableUpdateEvent.getType(), handler);
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> event) {
+        tableEventBus.fireEvent(event);
+    }
+
+    @Override
+    public FilterCellManager getFilterCellManager() {
+        if (currentTablePresenter == null) {
+            return null;
+        }
+        return currentTablePresenter.getFilterCellManager();
     }
 
     public interface EmbeddedQueryView extends View, RequiresResize {

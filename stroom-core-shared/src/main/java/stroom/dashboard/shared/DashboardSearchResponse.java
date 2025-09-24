@@ -18,6 +18,7 @@ package stroom.dashboard.shared;
 
 import stroom.query.api.QueryKey;
 import stroom.query.api.Result;
+import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.TokenError;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -26,11 +27,19 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-@JsonPropertyOrder({"queryKey", "highlights", "errors", "tokenError", "complete", "results"})
+@JsonPropertyOrder({
+        "queryKey",
+        "highlights",
+        "errors",
+        "tokenError",
+        "complete",
+        "results",
+        "errorMessages"})
 @JsonInclude(Include.NON_NULL)
 public class DashboardSearchResponse {
 
@@ -54,10 +63,18 @@ public class DashboardSearchResponse {
     private final Set<String> highlights;
 
     /**
+     * @deprecated Use {@link DashboardSearchResponse#errorMessages} instead.
+     */
+    @Deprecated
+    @JsonProperty
+    private final List<String> errors;
+
+    /**
      * Any errors that have been generated during searching.
      */
     @JsonProperty
-    private final List<String> errors;
+    private final List<ErrorMessage> errorMessages;
+
     @JsonProperty
     private final TokenError tokenError;
 
@@ -78,7 +95,8 @@ public class DashboardSearchResponse {
                                    @JsonProperty("errors") final List<String> errors,
                                    @JsonProperty("tokenError") final TokenError tokenError,
                                    @JsonProperty("complete") final boolean complete,
-                                   @JsonProperty("results") final List<Result> results) {
+                                   @JsonProperty("results") final List<Result> results,
+                                   @JsonProperty("errorMessages") final List<ErrorMessage> errorMessages) {
         this.node = node;
         this.queryKey = queryKey;
         this.highlights = highlights;
@@ -86,6 +104,7 @@ public class DashboardSearchResponse {
         this.tokenError = tokenError;
         this.complete = complete;
         this.results = results;
+        this.errorMessages = errorMessages;
     }
 
     public String getNode() {
@@ -101,7 +120,15 @@ public class DashboardSearchResponse {
     }
 
     public List<String> getErrors() {
-        return errors;
+        return errors == null
+                ? Collections.emptyList()
+                : errors;
+    }
+
+    public List<ErrorMessage> getErrorMessages() {
+        return errorMessages == null
+                ? Collections.emptyList()
+                : errorMessages;
     }
 
     public TokenError getTokenError() {
@@ -126,27 +153,28 @@ public class DashboardSearchResponse {
         }
         final DashboardSearchResponse that = (DashboardSearchResponse) o;
         return complete == that.complete &&
-                Objects.equals(queryKey, that.queryKey) &&
-                Objects.equals(highlights, that.highlights) &&
-                Objects.equals(errors, that.errors) &&
-                Objects.equals(tokenError, that.tokenError) &&
-                Objects.equals(results, that.results);
+               Objects.equals(queryKey, that.queryKey) &&
+               Objects.equals(highlights, that.highlights) &&
+               Objects.equals(errors, that.errors) &&
+               Objects.equals(tokenError, that.tokenError) &&
+               Objects.equals(results, that.results) &&
+               Objects.equals(errorMessages, that.errorMessages);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(queryKey, highlights, errors, tokenError, complete, results);
+        return Objects.hash(queryKey, highlights, errors, tokenError, complete, results, errorMessages);
     }
 
     @Override
     public String toString() {
         return "DashboardSearchResponse{" +
-                "queryKey=" + queryKey +
-                ", highlights=" + highlights +
-                ", errors=" + errors +
-                ", tokenError=" + tokenError +
-                ", complete=" + complete +
-                ", results=" + results +
-                '}';
+               "queryKey=" + queryKey +
+               ", highlights=" + highlights +
+               ", tokenError=" + tokenError +
+               ", complete=" + complete +
+               ", results=" + results +
+               ", errorMessages=" + errorMessages +
+               '}';
     }
 }

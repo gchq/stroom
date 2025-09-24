@@ -18,6 +18,7 @@ package stroom.importexport.shared;
 
 import stroom.util.shared.DocRefs;
 import stroom.util.shared.ResourceGeneration;
+import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
@@ -46,6 +47,14 @@ public interface ContentResource extends RestResource, DirectRestService {
             operationId = "importContent")
     ImportConfigResponse importContent(
             @NotNull @Parameter(description = "request", required = true) ImportConfigRequest request);
+
+    @POST
+    @Path("abortImport")
+    @Operation(
+            summary = "Abort Import",
+            operationId = "abortImport")
+    void abortImport(
+            @NotNull @Parameter(description = "request", required = true) ResourceKey resourceKey);
 
     @POST
     @Path("export")

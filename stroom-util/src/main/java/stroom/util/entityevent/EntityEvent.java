@@ -17,6 +17,7 @@
 package stroom.util.entityevent;
 
 import stroom.docref.DocRef;
+import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -48,6 +49,11 @@ public class EntityEvent {
         this.docRef = Objects.requireNonNull(docRef);
         this.oldDocRef = oldDocRef;
         this.action = action;
+    }
+
+    @SerialisationTestConstructor
+    private EntityEvent() {
+        this(new DocRef("test", "test"), null, null);
     }
 
     public EntityEvent(final DocRef docRef,

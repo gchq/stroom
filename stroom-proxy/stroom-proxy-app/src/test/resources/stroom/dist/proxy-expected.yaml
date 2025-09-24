@@ -66,6 +66,7 @@ proxyConfig:
   - addOpenIdAccessToken: false
     apiKey: null
     enabled: true
+    forwardHeadersAdditionalAllowSet: []
     forwardUrl: null
     httpClient:
       connectionRequestTimeout: "PT1M"
@@ -161,6 +162,8 @@ proxyConfig:
     authentication:
       authenticationRequired: true
       openId:
+        allowedAudiences: []
+        audienceClaimRequired: false
         authEndpoint: null
         clientCredentialsScopes:
         - "openid"
@@ -168,13 +171,14 @@ proxyConfig:
         clientSecret: null
         expectedSignerPrefixes: []
         formTokenRequest: true
+        fullNameClaimTemplate: "${name}"
         identityProviderType: "NO_IDP"
         issuer: null
         jwksUri: null
         logoutEndpoint: null
         logoutRedirectParamName: "post_logout_redirect_uri"
         openIdConfigurationEndpoint: null
-        publicKeyUriPattern: "https://public-keys.auth.elb.{}.amazonaws.com/{}"
+        publicKeyUriPattern: "https://public-keys.auth.elb.${awsRegion}.amazonaws.com/${keyId}"
         requestScopes:
         - "openid"
         - "email"
@@ -182,7 +186,6 @@ proxyConfig:
         uniqueIdentityClaim: "sub"
         userDisplayNameClaim: "preferred_username"
         validIssuers: []
-        validateAudience: true
   sqsConnectors:
   - awsProfileName: null
     awsRegionName: null

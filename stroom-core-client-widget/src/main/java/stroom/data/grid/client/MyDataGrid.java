@@ -21,6 +21,7 @@ import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.presenter.IconMenuItem.Builder;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -43,6 +44,7 @@ import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
@@ -253,34 +255,33 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                 }
             }
 
-            if (!specialItems) {
-                Element linkElement = target;
-                while (linkElement != null && !"a".equalsIgnoreCase(linkElement.getTagName())) {
-                    linkElement = linkElement.getParentElement();
+            Element linkElement = target;
+            while (linkElement != null && !"a".equalsIgnoreCase(linkElement.getTagName())) {
+                linkElement = linkElement.getParentElement();
+            }
+
+            if (linkElement != null) {
+                final String href = linkElement.getAttribute("href");
+                if (href != null && !href.isEmpty() && !href.startsWith("javascript")) {
+                    hyperlink = new Hyperlink(
+                            normalizeWhitespace(linkElement.getInnerText()),
+                            URL.decodeQueryString(href),
+                            null,
+                            null,
+                            null);
+                }
+            }
+
+            if (hyperlink == null) {
+                Element customLinkElement = target;
+                while (customLinkElement != null && !customLinkElement.hasAttribute("link")) {
+                    customLinkElement = customLinkElement.getParentElement();
                 }
 
-                if (linkElement != null) {
-                    final String href = linkElement.getAttribute("href");
-                    if (href != null && !href.isEmpty() && !href.startsWith("javascript")) {
-                        hyperlink = new Hyperlink(
-                                normalizeWhitespace(linkElement.getInnerText()),
-                                href,
-                                null,
-                                null);
-                    }
-                }
-
-                if (hyperlink == null) {
-                    Element customLinkElement = target;
-                    while (customLinkElement != null && !customLinkElement.hasAttribute("link")) {
-                        customLinkElement = customLinkElement.getParentElement();
-                    }
-
-                    if (customLinkElement != null) {
-                        final String linkAttr = customLinkElement.getAttribute("link");
-                        if (linkAttr != null) {
-                            hyperlink = Hyperlink.create(linkAttr);
-                        }
+                if (customLinkElement != null) {
+                    final String linkAttr = customLinkElement.getAttribute("link");
+                    if (linkAttr != null) {
+                        hyperlink = Hyperlink.create(linkAttr);
                     }
                 }
             }
@@ -290,6 +291,9 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         if (hyperlink != null) {
             isLink = true;
             final Hyperlink finalHyperlink = hyperlink;
+            if (!menuItems.isEmpty()) {
+                menuItems.add(new stroom.widget.menu.client.presenter.Separator(1));
+            }
             menuItems.add(new IconMenuItem.Builder()
                     .icon(SvgImage.COPY)
                     .text("Copy Link URL")
@@ -303,6 +307,28 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                             finalHyperlink,
                             new DefaultTaskMonitorFactory(globalEventBus)))
                     .build());
+
+            if ("dashboard".equals(hyperlink.getType())) {
+                if ("self".equals(hyperlink.getTarget())) {
+                    menuItems.add(new Builder()
+                            .icon(SvgImage.OPEN)
+                            .text("Open In New Tab")
+                            .command(() -> HyperlinkEvent.fire(
+                                    globalEventBus,
+                                    finalHyperlink.copy().target("tab").build(),
+                                    new DefaultTaskMonitorFactory(globalEventBus)))
+                            .build());
+                } else {
+                    menuItems.add(new Builder()
+                            .icon(SvgImage.OPEN)
+                            .text("Open In This Tab")
+                            .command(() -> HyperlinkEvent.fire(
+                                    globalEventBus,
+                                    finalHyperlink.copy().target("self").build(),
+                                    new DefaultTaskMonitorFactory(globalEventBus)))
+                            .build());
+                }
+            }
         }
 
         if (rowIndex >= 0 && colIndex >= 0) {

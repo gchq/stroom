@@ -108,10 +108,10 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
         return combinedParams;
     }
 
-    public SafeHtml toSafeHtml() {
+    public SafeHtml toSafeHtml(final boolean showInsert) {
         final TableBuilder tb = new TableBuilder();
         final List<ComponentState> componentStates = getComponentStates();
-        printContext(tb, componentStates);
+        printContext(tb, componentStates, showInsert);
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
         htmlBuilder.div(tb::write, Attribute.className("infoTable"));
         return htmlBuilder.toSafeHtml();
@@ -222,13 +222,15 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
     }
 
     private void printContext(final TableBuilder tb,
-                              final List<ComponentState> componentStates) {
+                              final List<ComponentState> componentStates,
+                              final boolean showInsert) {
         if (componentStates != null) {
             for (final ComponentState componentState : componentStates) {
                 tb.row(TableCell.header(componentState.name));
                 for (final Param param : componentState.params) {
                     final String key = ParamUtil.create(param.getKey());
-                    tb.row(TableCell.data(CopyTextUtil.render(key)), TableCell.data(param.getValue()));
+                    tb.row(TableCell.data(CopyTextUtil.render(key, showInsert)),
+                            TableCell.data(CopyTextUtil.render(param.getValue(), showInsert)));
                 }
 
                 if (NullSafe.hasItems(componentState.selectionList)) {
@@ -239,7 +241,9 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                         }
                         for (final Param param : selection) {
                             final String key = ParamUtil.create(param.getKey());
-                            tb.row(TableCell.data(CopyTextUtil.render(key)), TableCell.data(param.getValue()));
+
+                            tb.row(TableCell.data(CopyTextUtil.render(key, showInsert)),
+                                    TableCell.data(CopyTextUtil.render(param.getValue(), showInsert)));
                         }
                         first = false;
                     }
@@ -261,7 +265,8 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                             }
 
                             final String key = ParamUtil.create(filter.id);
-                            tb.row(TableCell.data(CopyTextUtil.render(key)), TableCell.data(value));
+                            tb.row(TableCell.data(CopyTextUtil.render(key, showInsert)),
+                                    TableCell.data(CopyTextUtil.render(value, showInsert)));
                         }
                     }
                 }

@@ -1,5 +1,6 @@
 package stroom.security.impl;
 
+import stroom.security.mock.MockSecurityContext;
 import stroom.security.shared.SessionDetails;
 import stroom.security.shared.SessionListResponse;
 import stroom.security.shared.SessionResource;
@@ -31,7 +32,8 @@ class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
                 TestUtil.mockProvider(HttpServletRequest.class),
                 TestUtil.mockProvider(AuthenticationEventLog.class),
                 () -> sessionListService,
-                TestUtil.mockProvider(StroomUserIdentityFactory.class));
+                TestUtil.mockProvider(StroomUserIdentityFactory.class),
+                MockSecurityContext::new);
 
     }
 

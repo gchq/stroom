@@ -125,8 +125,13 @@ public class InternalIdpConfigurationProvider implements IdpConfigurationProvide
     }
 
     @Override
-    public boolean isValidateAudience() {
-        return localOpenIdConfigProvider.get().isValidateAudience();
+    public Set<String> getAllowedAudiences() {
+        return localOpenIdConfigProvider.get().getAllowedAudiences();
+    }
+
+    @Override
+    public boolean isAudienceClaimRequired() {
+        return localOpenIdConfigProvider.get().isAudienceClaimRequired();
     }
 
     @Override
@@ -142,6 +147,11 @@ public class InternalIdpConfigurationProvider implements IdpConfigurationProvide
     @Override
     public String getUserDisplayNameClaim() {
         return localOpenIdConfigProvider.get().getUserDisplayNameClaim();
+    }
+
+    @Override
+    public String getFullNameClaimTemplate() {
+        return localOpenIdConfigProvider.get().getFullNameClaimTemplate();
     }
 
     @Override

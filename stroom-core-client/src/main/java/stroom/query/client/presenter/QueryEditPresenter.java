@@ -396,6 +396,8 @@ public class QueryEditPresenter
 
         // Start search.
         queryModel.startNewSearch(
+                null,
+                null,
                 editorPresenter.getText(),
                 null, //getDashboardContext().getCombinedParams(),
                 queryToolbarPresenter.getTimeRange(),

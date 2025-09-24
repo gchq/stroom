@@ -16,6 +16,8 @@
 
 package stroom.widget.popup.client.presenter;
 
+import com.google.gwt.user.client.Window;
+
 public class PopupSize {
 
     private final Size width;
@@ -46,9 +48,14 @@ public class PopupSize {
                                       final int initialHeight,
                                       final int minWidth,
                                       final int minHeight) {
+        final int maxWidth = Window.getClientWidth();
+        final int maxHeight = Window.getClientHeight();
+        final int width = Math.max(Math.min(initialWidth, maxWidth), minWidth);
+        final int height = Math.max(Math.min(initialHeight, maxHeight), minHeight);
+
         return PopupSize.builder()
-                .width(Size.builder().initial(initialWidth).min(minWidth).resizable(true).build())
-                .height(Size.builder().initial(initialHeight).min(minHeight).resizable(true).build())
+                .width(Size.builder().initial(width).min(minWidth).resizable(true).build())
+                .height(Size.builder().initial(height).min(minHeight).resizable(true).build())
                 .build();
     }
 

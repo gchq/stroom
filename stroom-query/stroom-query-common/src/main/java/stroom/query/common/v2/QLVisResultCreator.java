@@ -7,6 +7,8 @@ import stroom.query.api.Result;
 import stroom.query.api.ResultRequest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ErrorMessage;
+import stroom.util.shared.Severity;
 import stroom.util.string.ExceptionStringUtil;
 
 import java.util.Collections;
@@ -36,14 +38,15 @@ public class QLVisResultCreator implements ResultCreator {
 
     private QLVisResult mapVisResult(final QLVisSettings visSettings, final FlatResult result) {
         String json = null;
-        List<String> errors = result.getErrors();
+        List<ErrorMessage> errorMessages = result.getErrorMessages();
         try {
             json = new VisJson().createJson(result);
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
-            errors = Collections.singletonList(ExceptionStringUtil.getMessage(e));
+            errorMessages = Collections.singletonList(
+                    new ErrorMessage(Severity.ERROR, ExceptionStringUtil.getMessage(e)));
         }
 
-        return new QLVisResult(result.getComponentId(), visSettings, json, result.getSize(), errors);
+        return new QLVisResult(result.getComponentId(), visSettings, json, result.getSize(), null, errorMessages);
     }
 }

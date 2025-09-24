@@ -85,6 +85,8 @@ public class UserRefPopupPresenter
 
     };
 
+    private Consumer<UserRef> userConsumer = userRef -> {};
+
     @Inject
     public UserRefPopupPresenter(final EventBus eventBus,
                                  final QuickFilterDialogView userListView,
@@ -175,6 +177,10 @@ public class UserRefPopupPresenter
         this.selectionChangeConsumer = selectionChangeConsumer;
     }
 
+    public void setUserConsumer(final Consumer<UserRef> userConsumer) {
+        this.userConsumer = userConsumer;
+    }
+
     @Override
     public void onFilterChange(final String text) {
         filter = text;
@@ -187,11 +193,15 @@ public class UserRefPopupPresenter
         refresh();
     }
 
-    public void show(final Consumer<UserRef> userConsumer) {
-        show("Select User Or Group", userConsumer);
+    public void show(final String caption) {
+        show(caption, userConsumer);
     }
 
-    public void show(final String caption, final Consumer<UserRef> userConsumer) {
+    public void show(final Consumer<UserRef> consumer) {
+        show("Select User Or Group", consumer);
+    }
+
+    public void show(final String caption, final Consumer<UserRef> consumer) {
         initialSelection = getSelected();
         refresh();
 
@@ -205,7 +215,7 @@ public class UserRefPopupPresenter
                     if (e.isOk()) {
                         final UserRef selected = getSelected();
                         selectionChangeConsumer.accept(selected);
-                        userConsumer.accept(selected);
+                        consumer.accept(selected);
                         e.hide();
                     } else {
                         selectionChangeConsumer.accept(initialSelection);

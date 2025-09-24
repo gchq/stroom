@@ -62,6 +62,7 @@ import stroom.task.api.TaskTerminatedException;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ErrorMessage;
 
 import jakarta.inject.Inject;
 
@@ -309,9 +310,9 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
         }
 
         @Override
-        public TableResultConsumer errors(final List<String> errors) {
-            for (final String error : errors) {
-                LOGGER.error(error);
+        public TableResultConsumer errorMessages(final List<ErrorMessage> errorMessages) {
+            for (final ErrorMessage errorMessage : errorMessages) {
+                LOGGER.error(errorMessage.toString());
             }
             return this;
         }

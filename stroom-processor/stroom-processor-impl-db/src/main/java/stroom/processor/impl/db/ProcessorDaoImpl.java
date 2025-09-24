@@ -114,26 +114,35 @@ class ProcessorDaoImpl implements ProcessorDao {
     public Processor update(final Processor processor) {
         return JooqUtil.contextResult(
                         processorDbConnProvider,
-                        context -> {
-                            final int count = context
-                                    .update(PROCESSOR)
-                                    .set(PROCESSOR.VERSION, PROCESSOR.VERSION.plus(1))
-                                    .set(PROCESSOR.UPDATE_TIME_MS, processor.getUpdateTimeMs())
-                                    .set(PROCESSOR.UPDATE_USER, processor.getUpdateUser())
-                                    .set(PROCESSOR.ENABLED, processor.isEnabled())
-                                    .set(PROCESSOR.DELETED, processor.isDeleted())
-                                    .where(PROCESSOR.ID.eq(processor.getId()))
-                                    .and(PROCESSOR.VERSION.eq(processor.getVersion()))
-                                    .execute();
-
-                            if (count == 0) {
-                                throw new DataChangedException("Failed to update processor, " +
-                                        "it may have been updated by another user or deleted");
-                            }
-
-                            return fetch(context, processor.getId());
-                        }).map(RECORD_TO_PROCESSOR_MAPPER)
+                        context ->
+                                doUpdate(processor, context))
+                .map(RECORD_TO_PROCESSOR_MAPPER)
                 .orElseThrow(() -> new RuntimeException("Error fetching updated processor"));
+    }
+
+    public Processor update(final Processor processor, final DSLContext context) {
+        return doUpdate(processor, context)
+                .map(RECORD_TO_PROCESSOR_MAPPER)
+                .orElseThrow(() -> new RuntimeException("Error fetching updated processor"));
+    }
+
+    private Optional<Record> doUpdate(final Processor processor, final DSLContext context) {
+        final int count = context
+                .update(PROCESSOR)
+                .set(PROCESSOR.VERSION, PROCESSOR.VERSION.plus(1))
+                .set(PROCESSOR.UPDATE_TIME_MS, processor.getUpdateTimeMs())
+                .set(PROCESSOR.UPDATE_USER, processor.getUpdateUser())
+                .set(PROCESSOR.ENABLED, processor.isEnabled())
+                .set(PROCESSOR.DELETED, processor.isDeleted())
+                .where(PROCESSOR.ID.eq(processor.getId()))
+                .and(PROCESSOR.VERSION.eq(processor.getVersion()))
+                .execute();
+
+        if (count == 0) {
+            throw new DataChangedException("Failed to update processor, " +
+                                           "it may have been updated by another user or deleted");
+        }
+        return fetch(context, processor.getId());
     }
 
     @Override

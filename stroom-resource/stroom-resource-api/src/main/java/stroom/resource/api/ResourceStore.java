@@ -21,23 +21,32 @@ import stroom.util.shared.ResourceKey;
 import java.nio.file.Path;
 
 /**
- * API to a store of generated resources. This store only last 1 hour so it
- * should be used for temp files (e.g. GUI generated temp files
+ * API to a store of generated resources. This store only last 1 hour, so it
+ * should be used for temp files (e.g. GUI generated temp files).
+ * <p>
+ * Created resources are specific to the logged in user, so a resource
+ * created by one user cannot be accessed by another user.
+ * </p>
  */
 public interface ResourceStore {
 
+    String RESOURCE_STORE_PATH_PART = "/resourcestore";
+
     /**
      * Create a temporary file and give it a UUID.
+     *
+     * @param name The name of the file resource. Held mostly for logging/debug purposes.
+     *             Does not have to be unique.
      */
     ResourceKey createTempFile(String name);
 
     /**
-     * Get a temporary file
+     * Get the temporary file associated with a {@link ResourceKey}
      */
     Path getTempFile(ResourceKey key);
 
     /**
-     * Delete a temporary file.
+     * Delete the temporary file associated with a {@link ResourceKey}
      */
     void deleteTempFile(ResourceKey key);
 }

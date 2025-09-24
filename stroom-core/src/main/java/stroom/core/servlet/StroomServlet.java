@@ -19,6 +19,7 @@ package stroom.core.servlet;
 import stroom.ui.config.shared.UiConfig;
 import stroom.ui.config.shared.UserPreferencesService;
 import stroom.util.shared.IsServlet;
+import stroom.util.shared.ResourcePaths;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -42,5 +43,10 @@ public class StroomServlet extends AppServlet implements IsServlet {
     @Override
     public Set<String> getPathSpecs() {
         return PATH_SPECS;
+    }
+
+    @Override
+    public String getName() {
+        return ResourcePaths.STROOM_SERVLET_NAME;
     }
 }

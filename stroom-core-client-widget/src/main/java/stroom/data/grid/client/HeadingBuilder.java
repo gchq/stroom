@@ -67,7 +67,8 @@ public class HeadingBuilder {
             final SafeHtml headingDiv = SafeHtmlUtil.getTemplate().divWithTitle(toolTip, headingText);
             header = new SafeHtmlHeader(headingDiv);
         } else {
-            header = new SafeHtmlHeader(headingText);
+            final SafeHtml headingDiv = SafeHtmlUtil.getTemplate().div(headingText);
+            header = new SafeHtmlHeader(headingDiv);
         }
 
         // Apply a class to the header itself

@@ -6,7 +6,7 @@
     <g:SimplePanel styleName="QueryToolbarViewImpl-outer">
         <g:FlowPanel styleName="QueryToolbarViewImpl-inner">
             <q:TimeRangeSelector ui:field="timeRangeSelector" addStyleNames="dock-min"/>
-            <b:InlineSvgButton ui:field="warnings" title="Show Warnings"/>
+            <b:InlineSvgButton ui:field="errors" title="Show Errors"/>
             <q:QueryButtons ui:field="queryButtons" addStyleNames="dock-min"/>
         </g:FlowPanel>
     </g:SimplePanel>

@@ -71,6 +71,11 @@ public class QueryViewImpl extends ViewImpl implements QueryView, RequiresResize
     }
 
     @Override
+    public void addButtonRight(final ButtonView button) {
+        buttonPanelRight.addButton(button);
+    }
+
+    @Override
     public void setExpressionView(final View view) {
         expressionTree.add(view.asWidget());
     }

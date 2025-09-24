@@ -80,11 +80,17 @@ public abstract class CurveTabLayoutPresenter<P extends Proxy<?>> extends MyPres
     }
 
     public void remove(final TabData tabData) {
+        remove(tabData, true);
+    }
+
+    public void remove(final TabData tabData, final boolean resizeTabBar) {
         final Layer layer = tabContentMap.remove(tabData);
         if (layer != null) {
-            getView().getTabBar().removeTab(tabData);
+            getView().getTabBar().removeTab(tabData, resizeTabBar);
             layer.removeLayer();
-            fireSelectedTabChange(getSelectedTab());
+            if (resizeTabBar) {
+                fireSelectedTabChange(getSelectedTab());
+            }
         }
     }
 

@@ -255,7 +255,7 @@ public final class ExpressionTerm extends ExpressionItem {
                 "equals (case sensitive)"),
         NOT_EQUALS_CASE_SENSITIVE("!==",
                 "!==",
-                "equals (case sensitive)"),
+                "not equals (case sensitive)"),
         STARTS_WITH_CASE_SENSITIVE("=^",
                 "starts with (CS)",
                 "starts with (case sensitive)"),

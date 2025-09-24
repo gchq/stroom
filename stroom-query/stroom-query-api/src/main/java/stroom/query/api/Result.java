@@ -16,6 +16,8 @@
 
 package stroom.query.api;
 
+import stroom.util.shared.ErrorMessage;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -50,16 +52,25 @@ public abstract sealed class Result permits TableResult, FlatResult, VisResult, 
     @JsonProperty
     private final String componentId;
 
-    @Schema(description = "If an error has occurred producing this result set then this will have details " +
-                          "of the error")
+    /**
+     * @deprecated Use {@link Result#errorMessages} instead.
+     */
+    @Deprecated
     @JsonProperty
     private final List<String> errors;
 
+    @Schema(description = "If an error has occurred producing this result set then this will have the details " +
+                          "of the error")
+    @JsonProperty
+    private final List<ErrorMessage> errorMessages;
+
     @JsonCreator
     public Result(@JsonProperty("componentId") final String componentId,
-                  @JsonProperty("errors") final List<String> errors) {
+                  @JsonProperty("errors") final List<String> errors,
+                  @JsonProperty("errorMessages") final List<ErrorMessage> errorMessages) {
         this.componentId = componentId;
         this.errors = errors;
+        this.errorMessages = errorMessages;
     }
 
     public String getComponentId() {
@@ -68,6 +79,10 @@ public abstract sealed class Result permits TableResult, FlatResult, VisResult, 
 
     public List<String> getErrors() {
         return errors;
+    }
+
+    public List<ErrorMessage> getErrorMessages() {
+        return errorMessages;
     }
 
     @Override
@@ -80,19 +95,20 @@ public abstract sealed class Result permits TableResult, FlatResult, VisResult, 
         }
         final Result result = (Result) o;
         return Objects.equals(componentId, result.componentId) &&
-               Objects.equals(errors, result.errors);
+               Objects.equals(errors, result.errors) &&
+               Objects.equals(errorMessages, result.errorMessages);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(componentId, errors);
+        return Objects.hash(componentId, errors, errorMessages);
     }
 
     @Override
     public String toString() {
         return "Result{" +
                "componentId='" + componentId + '\'' +
-               ", errors='" + errors + '\'' +
+               ", errorMessages=" + errorMessages +
                '}';
     }
 }

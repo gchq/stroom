@@ -26,7 +26,7 @@ public interface DashboardContext extends ParamValues {
 
     DocRef getDashboardDocRef();
 
-    SafeHtml toSafeHtml();
+    SafeHtml toSafeHtml(boolean showInsert);
 
     ExpressionOperator replaceExpression(ExpressionOperator operator, boolean keepUnmatched);
 

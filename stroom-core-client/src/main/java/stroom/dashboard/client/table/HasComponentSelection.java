@@ -7,7 +7,7 @@ import java.util.Set;
 
 public interface HasComponentSelection {
 
-    List<ColumnRef> getColumns();
+    List<ColumnRef> getColumnRefs();
 
     List<ComponentSelection> getSelection();
 

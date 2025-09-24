@@ -61,6 +61,10 @@ public class BasicTableSettingsViewImpl
     ValueSpinner pageSize;
     @UiField
     CustomCheckBox showDetail;
+    @UiField
+    CustomCheckBox overrideMaxStringFieldLength;
+    @UiField
+    ValueSpinner maxStringFieldLength;
 
     @Inject
     public BasicTableSettingsViewImpl(final Binder binder) {
@@ -68,6 +72,7 @@ public class BasicTableSettingsViewImpl
         pageSize.setValue(100);
         pageSize.setMin(1);
         pageSize.setMax(10000);
+        maxStringFieldLength.setMax(Long.MAX_VALUE);
     }
 
     @Override
@@ -173,6 +178,31 @@ public class BasicTableSettingsViewImpl
         this.showDetail.setValue(showDetail);
     }
 
+    @Override
+    public void setMaxStringFieldLength(final Integer maxStringFieldLength) {
+        this.maxStringFieldLength.setValue(maxStringFieldLength);
+    }
+
+    @Override
+    public Integer getMaxStringFieldLength() {
+        return maxStringFieldLength == null ? null : maxStringFieldLength.getIntValue();
+    }
+
+    @Override
+    public void setOverrideMaxStringFieldLength(final boolean overrideMaxStringFieldLength) {
+        this.overrideMaxStringFieldLength.setValue(overrideMaxStringFieldLength);
+    }
+
+    @Override
+    public boolean isOverrideMaxStringFieldLength() {
+        return overrideMaxStringFieldLength.getValue();
+    }
+
+    @Override
+    public void enableMaxStringFieldLength(final boolean enable) {
+        maxStringFieldLength.setEnabled(enable);
+    }
+
     public void onResize() {
         ((RequiresResize) widget).onResize();
     }
@@ -180,6 +210,11 @@ public class BasicTableSettingsViewImpl
     @UiHandler("useDefaultExtractionPipeline")
     public void onUseDefaultExtractionPipeline(final ValueChangeEvent<Boolean> event) {
         getUiHandlers().onUseDefaultExtractionPipeline(useDefaultExtractionPipeline.getValue());
+    }
+
+    @UiHandler("overrideMaxStringFieldLength")
+    public void overrideMaxStringFieldLength(final ValueChangeEvent<Boolean> event) {
+        getUiHandlers().onOverrideMaxStringFieldLength(overrideMaxStringFieldLength.getValue());
     }
 
     public interface Binder extends UiBinder<Widget, BasicTableSettingsViewImpl> {

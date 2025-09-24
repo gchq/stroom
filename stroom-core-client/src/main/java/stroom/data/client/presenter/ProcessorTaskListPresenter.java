@@ -17,6 +17,7 @@
 package stroom.data.client.presenter;
 
 import stroom.cell.info.client.InfoColumn;
+import stroom.data.client.presenter.OpenLinkUtil.LinkType;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
@@ -52,6 +53,7 @@ import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -167,7 +169,13 @@ public class ProcessorTaskListPresenter
             }
         };
 
-        DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Feed", feedExtractionFunction);
+        dataGrid.addResizableColumn(
+                DataGridUtil.docRefColumnBuilder(feedExtractionFunction,
+                                getEventBus(),
+                                true)
+                        .build(),
+                "Feed",
+                ColumnSizeConstants.BIG_COL);
 
         dataGrid.addResizableColumn(new OrderByColumn<ProcessorTask, String>(
                 new TextCell(), ProcessorTaskFields.FIELD_PRIORITY, false) {
@@ -228,15 +236,23 @@ public class ProcessorTaskListPresenter
                 .row("Start Time", toDateString(processorTask.getStartTimeMs()))
                 .row("End Time", toDateString(processorTask.getEndTimeMs()))
                 .row("Node", processorTask.getNodeName())
-                .row("Feed", processorTask.getFeedName())
+                .row(SafeHtmlUtils.fromString("Feed"),
+                        OpenLinkUtil.render(processorTask.getFeedName(), LinkType.FEED))
                 .row();
 
         if (meta != null) {
             tb
                     .row(TableCell.header("Stream", 2))
-                    .row("Stream Id", String.valueOf(meta.getId()))
-                    .row("Status", meta.getStatus().getDisplayValue())
-                    .row("Parent Stream Id", String.valueOf(meta.getParentMetaId()))
+                    .row(SafeHtmlUtils.fromString("Stream Id"),
+                            OpenLinkUtil.render(String.valueOf(meta.getId()), LinkType.STREAM))
+                    .row("Status", meta.getStatus().getDisplayValue());
+
+            if (meta.getParentMetaId() != null) {
+                tb.row(SafeHtmlUtils.fromString("Parent Stream Id"),
+                        OpenLinkUtil.render(String.valueOf(meta.getParentMetaId()), LinkType.STREAM));
+            }
+
+            tb
                     .row("Created", toDateString(meta.getCreateMs()))
                     .row("Effective", toDateString(meta.getEffectiveMs()))
                     .row("Stream Type", meta.getTypeName());
@@ -267,6 +283,8 @@ public class ProcessorTaskListPresenter
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
         htmlBuilder.div(tb::write, Attribute.className("infoTable"));
         tooltipPresenter.show(htmlBuilder.toSafeHtml(), popupPosition);
+
+        OpenLinkUtil.addClickHandler(this, tooltipPresenter.getView().asWidget());
     }
 
     private String toDateString(final Long ms) {

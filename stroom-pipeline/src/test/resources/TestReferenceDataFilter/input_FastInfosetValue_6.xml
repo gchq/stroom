@@ -27,6 +27,7 @@
             <Location xmlns="stroom" xmlns:s="stroom" xmlns:xxx="extra-namespace" >
                 <s:Room attr1="123" xxx:attr2="456" yyy:attr3="789">room11</s:Room>
                 <xxx:Desk>desk11</xxx:Desk>
+                <xxx:Value>value11</xxx:Value>
             </Location>
         </value>
     </reference>

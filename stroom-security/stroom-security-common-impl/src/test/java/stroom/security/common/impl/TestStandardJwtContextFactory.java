@@ -7,6 +7,7 @@ import stroom.test.common.TestUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.string.TemplateUtil;
 
 import com.google.inject.TypeLiteral;
 import io.vavr.Tuple;
@@ -84,7 +85,7 @@ class TestStandardJwtContextFactory {
         return StandardJwtContextFactory.getAwsPublicKeyUri(
                 jwsParts,
                 expectedSignerPrefixes,
-                StandardJwtContextFactory.DEFAULT_PUBLIC_KEY_URI_PATTERN);
+                TemplateUtil.parseTemplate(AbstractOpenIdConfig.DEFAULT_AWS_PUBLIC_KEY_URI_TEMPLATE));
     }
 
     @Test

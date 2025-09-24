@@ -16,9 +16,14 @@
 
 package stroom.query.language.functions;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Comparator;
 import java.util.Objects;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public final class ValLong implements ValNumber {
 
     private static final Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
@@ -26,9 +31,12 @@ public final class ValLong implements ValNumber {
 
     public static final Type TYPE = Type.LONG;
     public static final int OFFSET = 128;
+
+    @JsonProperty
     private final long value;
 
-    private ValLong(final long value) {
+    @JsonCreator
+    private ValLong(@JsonProperty("value") final long value) {
         this.value = value;
     }
 

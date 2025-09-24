@@ -48,7 +48,8 @@ public class ExternalServiceUserFactory implements ServiceUserFactory {
         final OpenIdConfiguration openIdConfiguration = openIdConfigProvider.get();
         final UserIdentity serviceUserIdentity = new ServiceUserIdentity(
                 JwtUtil.getUniqueIdentity(openIdConfiguration, jwtClaims),
-                JwtUtil.getUserDisplayName(openIdConfiguration, jwtClaims).orElse(null),
+                JwtUtil.getUserDisplayName(openIdConfiguration, jwtClaims)
+                        .orElse(null),
                 updatableToken);
 
         // Associate the token with the user it is for

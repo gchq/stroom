@@ -60,11 +60,12 @@ public class StroomStreamStatus {
                 StandardHeaderArguments.REMOTE_HOST,
                 StandardHeaderArguments.REMOTE_ADDRESS,
                 StandardHeaderArguments.RECEIVED_PATH,
+                StandardHeaderArguments.RECEIPT_ID,
                 StandardHeaderArguments.DATA_RECEIPT_RULE);
 
         final String clientDetailsStr = clientDetailsStringBuilder.isEmpty()
                 ? ""
-                : " - " + clientDetailsStringBuilder;
+                : " -" + clientDetailsStringBuilder;
 
         return stroomStatusCode.getHttpCode() + " - " + buildStatusMessage() + clientDetailsStr;
     }

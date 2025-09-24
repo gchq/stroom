@@ -35,6 +35,7 @@ import stroom.query.api.TableSettings;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.json.JsonUtil;
+import stroom.util.shared.ErrorMessage;
 
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -91,13 +92,14 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
         for (final String componentId : componentIds) {
             final TableSettings tableSettings = tableSettingsCreator.apply(extractValues);
 
-            final ResultRequest tableResultRequest = new ResultRequest(componentId,
+            final ResultRequest tableResultRequest = new ResultRequest(componentId, null,
                     Collections.singletonList(tableSettings),
                     null,
                     null,
                     null,
                     ResultRequest.ResultStyle.TABLE,
                     Fetch.CHANGES,
+                    null,
                     null);
             resultRequests.add(tableResultRequest);
         }
@@ -122,8 +124,10 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
                 .search(searchRequest, searchResponseCreatorManager);
 
         assertThat(searchResponse).as("Search response is null").isNotNull();
-        if (searchResponse.getErrors() != null && searchResponse.getErrors().size() > 0) {
-            final String errors = String.join(", ", searchResponse.getErrors());
+        if (searchResponse.getErrorMessages() != null && searchResponse.getErrorMessages().size() > 0) {
+            final List<String> messages = searchResponse.getErrorMessages().stream()
+                    .map(ErrorMessage::getMessage).toList();
+            final String errors = String.join(", ", messages);
             assertThat(errors).as("Found errors: " + errors).isBlank();
         }
         assertThat(searchResponse.complete()).as("Search is not complete").isTrue();

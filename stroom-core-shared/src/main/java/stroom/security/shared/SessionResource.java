@@ -30,13 +30,6 @@ public interface SessionResource extends RestResource, DirectRestService {
     String NODE_NAME_PARAM = "nodeName";
 
     @GET
-    @Path("/noauth/validateSession")
-    @Operation(
-            summary = "Validate the current session, return a redirect Uri if invalid.",
-            operationId = "validateStroomSession")
-    ValidateSessionResponse validateSession(@QueryParam("redirect_uri") @NotNull String redirectUri);
-
-    @GET
     @Path("logout")
     @Operation(
             summary = "Logout of Stroom session",

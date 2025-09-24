@@ -11,10 +11,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
-public class ColumnValues extends ResultPage<String> {
+public class ColumnValues extends ResultPage<ColumnValue> {
 
     @JsonCreator
-    public ColumnValues(@JsonProperty("values") final List<String> values,
+    public ColumnValues(@JsonProperty("values") final List<ColumnValue> values,
                         @JsonProperty("pageResponse") final PageResponse pageResponse) {
         super(values, pageResponse);
     }

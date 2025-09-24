@@ -51,6 +51,8 @@ public class SelectionHandlerPresenter
         this.currentSelectionPresenter = currentSelectionPresenter;
         view.setExpressionView(editExpressionPresenter.getView());
         view.setCurrentSelection(currentSelectionPresenter.getView());
+
+        currentSelectionPresenter.setInsertHandler(editExpressionPresenter::insertValue);
     }
 
     @Override
@@ -72,7 +74,10 @@ public class SelectionHandlerPresenter
             editExpressionPresenter.read(componentSelectionHandler.getExpression());
         }
         getView().setEnabled(componentSelectionHandler.isEnabled());
-        currentSelectionPresenter.refresh();
+    }
+
+    void refreshSelection(final DashboardContext dashboardContext) {
+        currentSelectionPresenter.refresh(dashboardContext, true);
     }
 
     ComponentSelectionHandler write() {
@@ -96,10 +101,6 @@ public class SelectionHandlerPresenter
     public synchronized void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
         super.setTaskMonitorFactory(taskMonitorFactory);
         fieldSelectionListModel.setTaskMonitorFactory(taskMonitorFactory);
-    }
-
-    public void setDashboardContext(final DashboardContext dashboardContext) {
-        currentSelectionPresenter.setDashboardContext(dashboardContext);
     }
 
     public interface SelectionHandlerView extends View, Focus {

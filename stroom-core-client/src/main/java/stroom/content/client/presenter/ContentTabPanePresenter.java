@@ -158,6 +158,8 @@ public class ContentTabPanePresenter
         forceReveal();
         add(event.getTabData(), event.getLayer());
 
+        event.runCallbackOnOpen();
+
         if (event.getLayer() instanceof HasTaskMonitorFactory) {
             final AbstractTab tab = getView().getTabBar().getTab(event.getTabData());
             ((HasTaskMonitorFactory) event.getLayer())
@@ -168,7 +170,7 @@ public class ContentTabPanePresenter
     @ProxyEvent
     @Override
     public void onClose(final CloseContentTabEvent event) {
-        remove(event.getTabData());
+        remove(event.getTabData(), event.resizeTabBar());
 
         for (int i = historyList.size() - 1; i >= 0; i--) {
             final TabData tabData = historyList.get(i);

@@ -111,11 +111,10 @@ public abstract class AbstractComponentPresenter<V extends View>
             settingsPresenter.setDashboardContext(dashboardContext);
             settingsPresenter.read(componentConfig);
 
-            final PopupSize popupSize = PopupSize.resizable(800, 650);
+            final PopupSize popupSize = PopupSize.resizable(800, 700);
             ShowPopupEvent.builder(settingsPresenter)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
                     .popupSize(popupSize)
-                    .modal(true)
                     .caption("Settings")
                     .onShow(e -> settingsPresenter.focus())
                     .onHideRequest(e -> {

@@ -15,26 +15,30 @@ import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.JwtUtil;
 import stroom.security.common.impl.RefreshManager;
 import stroom.security.common.impl.UpdatableToken;
+import stroom.security.common.impl.UserIdentitySessionUtil;
 import stroom.security.impl.apikey.ApiKeyService;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.openid.api.IdpType;
-import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.TokenResponse;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.User;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.authentication.HasRefreshable;
+import stroom.util.authentication.Refreshable;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.exception.DataChangedException;
 import stroom.util.exception.ThrowingFunction;
+import stroom.util.io.SimplePathCreator;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.servlet.SessionUtil;
+import stroom.util.servlet.UserAgentSessionUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
@@ -53,6 +57,7 @@ import org.jose4j.jwt.consumer.JwtContext;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
@@ -88,8 +93,8 @@ public class StroomUserIdentityFactory
                                      final RefreshManager refreshManager,
                                      final ApiKeyService apiKeyService,
                                      final Provider<AuthorisationConfig> authorisationConfigProvider,
-                                     final CacheManager cacheManager) {
-
+                                     final CacheManager cacheManager,
+                                     final SimplePathCreator simplePathCreator) {
 
         super(jwtContextFactory,
                 openIdConfigProvider,
@@ -97,6 +102,7 @@ public class StroomUserIdentityFactory
                 certificateExtractor,
                 serviceUserFactory,
                 jerseyClientFactory,
+                simplePathCreator,
                 refreshManager);
 
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
@@ -123,8 +129,8 @@ public class StroomUserIdentityFactory
                                                     final HttpServletRequest request) {
 
         final String headerKey = UserIdentityFactory.RUN_AS_USER_HEADER;
-        final String runAsUserUuid = request.getHeader(headerKey);
-        if (!NullSafe.isBlankString(runAsUserUuid)) {
+        final String runAsUserUuid = NullSafe.trim(request.getHeader(headerKey));
+        if (!runAsUserUuid.isEmpty()) {
             // Request is proxying for a user, so it needs to be the processing user that
             // sent the request. Getting the proc user, even though we don't do anything with it will
             // ensure it is authenticated.
@@ -188,7 +194,16 @@ public class StroomUserIdentityFactory
     public void logoutUser(final UserIdentity userIdentity) {
         LOGGER.debug("Logging out user {}", userIdentity);
         if (userIdentity instanceof final HasRefreshable hasRefreshable) {
-            removeTokenFromRefreshManager(hasRefreshable.getRefreshable());
+            final Refreshable refreshable = hasRefreshable.getRefreshable();
+            if (refreshable != null) {
+                try {
+                    removeTokenFromRefreshManager(refreshable);
+                } catch (final Exception e) {
+                    LOGGER.error("Error removing refreshable {} from refresh manager for userIdentity {}. {}",
+                            refreshable, userIdentity, LogUtil.exceptionMessage(e), e);
+                    // Swallow the error so the rest of the logout can proceed
+                }
+            }
         }
     }
 
@@ -202,16 +217,12 @@ public class StroomUserIdentityFactory
     private User updateUserInfo(final String subjectId, final User user, final JwtClaims jwtClaims) {
         final AtomicReference<User> userRef = new AtomicReference<>(user);
 
-        // We must default the displayName in the same way as happens when the DB record is created
-        // (in stroom.security.impl.UserServiceImpl.getOrCreateUser)
-        // else it will always detect a mismatch.
-        final String displayName = JwtUtil.getUserDisplayName(openIdConfigProvider.get(), jwtClaims)
-                .filter(str -> !str.isBlank())
-                .orElse(subjectId);
+        final String displayName = getUserDisplayName(subjectId, jwtClaims);
 
-        // Hopefully this one is enough of a standard to always be there.
-        final String fullName = JwtUtil.getClaimValue(jwtClaims, OpenId.CLAIM__NAME)
+        final String fullName = getUserFullName(openIdConfigProvider.get(), jwtClaims)
                 .orElse(null);
+
+        LOGGER.debug("subjectId: '{}', displayName: '{}', fullName: '{}'", subjectId, displayName, fullName);
 
         final Predicate<User> hasUserInfoChangedPredicate = aUser ->
                 !Objects.equals(displayName, aUser.getDisplayName())
@@ -278,6 +289,16 @@ public class StroomUserIdentityFactory
         return Objects.requireNonNull(userRef.get());
     }
 
+    private String getUserDisplayName(final String subjectId, final JwtClaims jwtClaims) {
+        // We must default the displayName in the same way as happens when the DB record is created
+        // (in stroom.security.impl.UserServiceImpl.getOrCreateUser)
+        // else it will always detect a mismatch.
+        return JwtUtil.getUserDisplayName(openIdConfigProvider.get(), jwtClaims)
+                .filter(str -> !str.isBlank())
+                .orElse(subjectId);
+    }
+
+
     private static void logNameChange(final User persistedUser,
                                       final String currentDisplayName,
                                       final String currentFullName,
@@ -311,28 +332,56 @@ public class StroomUserIdentityFactory
                                                     final TokenResponse tokenResponse,
                                                     final User user) {
         Objects.requireNonNull(user);
-        final HttpSession session = request.getSession(false);
+        // At this point we have authenticated the code-flow User so need to ensure
+        // we have a session to store the userIdentity in. Also, the session gets attached
+        // to the userIdentity object to allow us to refresh it's token.
+        final AtomicBoolean isNewSession = new AtomicBoolean(false);
+        final HttpSession session = SessionUtil.getOrCreateSession(request, newSession -> isNewSession.set(true));
+        try {
+            UserAgentSessionUtil.setUserAgentInSession(request, session);
 
-        final UpdatableToken updatableToken = new UpdatableToken(
-                tokenResponse,
-                jwtClaims,
-                super::refreshUsingRefreshToken,
-                session);
+            // Make a token object that we can update as/when we do a token refresh
+            final UpdatableToken updatableToken = new UpdatableToken(
+                    tokenResponse,
+                    jwtClaims,
+                    super::refreshUsingRefreshToken,
+                    session);
 
-        final UserIdentity userIdentity = new UserIdentityImpl(
-                user.getUuid(),
-                user.getSubjectId(),
-                user.getDisplayName(),
-                user.getFullName(),
-                session,
-                updatableToken);
+            final UserIdentity userIdentity = new UserIdentityImpl(
+                    user.getUuid(),
+                    user.getSubjectId(),
+                    user.getDisplayName(),
+                    user.getFullName(),
+                    session,
+                    updatableToken);
 
-        updatableToken.setUserIdentity(userIdentity);
-        addTokenToRefreshManager(updatableToken);
+            // We have authenticated so set the userIdentity in the session for future requests
+            // to retrieve it from
+            UserIdentitySessionUtil.setUserInSession(session, userIdentity);
 
-        LOGGER.info(() -> "Authenticated user " + userIdentity
-                          + " for sessionId " + NullSafe.get(session, HttpSession::getId));
-        return userIdentity;
+            // Register the token with the refresh manager so it gets refreshed periodically.
+            updatableToken.setUserIdentity(userIdentity);
+            addTokenToRefreshManager(updatableToken);
+
+            LOGGER.info(() -> LogUtil.message(
+                    "createAuthFlowUserIdentity() - Authenticated user: {} {} ({}), " +
+                    "sessionId: {} ({}), user-agent: '{}'",
+                    userIdentity.subjectId(),
+                    userIdentity.getDisplayName(),
+                    userIdentity.getFullName().orElse("-"),
+                    SessionUtil.getSessionId(session),
+                    (isNewSession.get()
+                            ? "NEW"
+                            : "EXISTING"),
+                    UserAgentSessionUtil.getUserAgent(session)));
+            return userIdentity;
+        } catch (final Exception e) {
+            LOGGER.error(LogUtil.message(
+                    "Error creating userIdentity for user {}. Session {} has been invalidated. {}",
+                    user, SessionUtil.getSessionId(session), LogUtil.exceptionMessage(e)), e);
+            session.invalidate();
+            throw e;
+        }
     }
 
     /**
@@ -382,15 +431,11 @@ public class StroomUserIdentityFactory
                                                          final String displayName,
                                                          final String userUuid,
                                                          final HttpServletRequest request) {
-        Objects.requireNonNull(userId);
-
-        final HttpSession session = request.getSession(false);
-
         return new ApiUserIdentity(
                 userUuid,
-                userId,
+                Objects.requireNonNull(userId),
                 displayName,
-                NullSafe.get(session, HttpSession::getId),
+                SessionUtil.getSessionId(request),
                 jwtContext);
     }
 
@@ -399,6 +444,7 @@ public class StroomUserIdentityFactory
             final JwtClaims jwtClaims = jwtContext.getJwtClaims();
             final UserIdentity serviceUser = getServiceUserIdentity();
             if (isServiceUser(jwtClaims.getSubject(), jwtClaims.getIssuer(), serviceUser)) {
+                LOGGER.debug("getProcessingUser() - {}", serviceUser);
                 return Optional.of(serviceUser);
             }
         } catch (final MalformedClaimException e) {
@@ -410,6 +456,7 @@ public class StroomUserIdentityFactory
     public boolean isServiceUser(final String subject,
                                  final String issuer,
                                  final UserIdentity serviceUser) {
+
         if (serviceUser instanceof final HasJwtClaims hasJwtClaims) {
             return Optional.ofNullable(hasJwtClaims.getJwtClaims())
                     .map(ThrowingFunction.unchecked(jwtClaims -> {

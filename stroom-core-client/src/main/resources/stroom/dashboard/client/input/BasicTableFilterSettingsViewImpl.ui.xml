@@ -1,0 +1,20 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:i="urn:import:stroom.item.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="basicTableFilterSettingsId" label="Id">
+            <g:Label ui:field="id" addStyleNames="w-100 stroom-control-label"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTableFilterSettingsName" label="Name">
+            <g:TextBox ui:field="name" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTableFilterSettingsTable" label="Table">
+            <i:SelectionBox ui:field="table" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup label="Columns To Display" addStyleNames="dock-max">
+            <g:SimplePanel ui:field="columns" styleName="max form-control-border form-control-background"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder> 

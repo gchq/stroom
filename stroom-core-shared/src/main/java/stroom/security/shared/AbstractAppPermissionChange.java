@@ -2,6 +2,7 @@ package stroom.security.shared;
 
 import stroom.security.shared.AbstractAppPermissionChange.AddAppPermission;
 import stroom.security.shared.AbstractAppPermissionChange.RemoveAppPermission;
+import stroom.util.shared.SerialisationTestConstructor;
 import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -55,6 +56,11 @@ public abstract sealed class AbstractAppPermissionChange permits AddAppPermissio
                                 @JsonProperty("permission") final AppPermission permission) {
             super(userRef, permission);
         }
+
+        @SerialisationTestConstructor
+        private AddAppPermission() {
+            this(UserRef.builder().build(), AppPermission.ADMINISTRATOR);
+        }
     }
 
     @JsonInclude(Include.NON_NULL)
@@ -64,6 +70,11 @@ public abstract sealed class AbstractAppPermissionChange permits AddAppPermissio
         public RemoveAppPermission(@JsonProperty("userRef") final UserRef userRef,
                                    @JsonProperty("permission") final AppPermission permission) {
             super(userRef, permission);
+        }
+
+        @SerialisationTestConstructor
+        private RemoveAppPermission() {
+            this(UserRef.builder().build(), AppPermission.ADMINISTRATOR);
         }
     }
 }

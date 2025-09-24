@@ -45,7 +45,7 @@ public class Schedule {
         }
         final Schedule schedule = (Schedule) o;
         return type == schedule.type &&
-                Objects.equals(expression, schedule.expression);
+               Objects.equals(expression, schedule.expression);
     }
 
     @Override
@@ -59,7 +59,8 @@ public class Schedule {
         if (type != null) {
             sb.append(type.getDisplayValue());
         }
-        if ((ScheduleType.FREQUENCY.equals(type) || ScheduleType.CRON.equals(type)) && expression != null) {
+        if ((ScheduleType.FREQUENCY.equals(type) || ScheduleType.CRON.equals(type))
+            && expression != null) {
             sb.append(" ");
             sb.append(expression);
         }

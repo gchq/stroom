@@ -52,6 +52,10 @@ public class OpenId {
             OpenId.SCOPE__OPENID);
 
     /**
+     * A claim holding a set of audience values.
+     */
+    public static final String CLAIM__AUDIENCE = "aud";
+    /**
      * Subject - Identifier for the End-User at the Issuer.
      * <p>
      * NOTE: Not all IDPs use this, e.g. Azure AD use 'oid', so refer to {@link OpenIdConfiguration} for

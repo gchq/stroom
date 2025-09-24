@@ -123,6 +123,10 @@ public class TabManager {
         }
     }
 
+    public void duplicateTabTo(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
+        dashboardPresenter.duplicateTabTo(tabLayoutConfig, tabConfig);
+    }
+
     private void duplicateTab(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
         dashboardPresenter.duplicateTab(tabLayoutConfig, tabConfig);
     }
@@ -191,6 +195,7 @@ public class TabManager {
 
             // Create duplicate menus.
             menuItems.add(createDuplicateMenu(tabLayoutConfig, tabConfig));
+            menuItems.add(createDuplicateToMenu(tabLayoutConfig, tabConfig));
             if (tabLayoutConfig.getAllTabCount() > 1) {
                 menuItems.add(createDuplicateTabPanelMenu(tabLayoutConfig));
             }
@@ -289,6 +294,15 @@ public class TabManager {
                 .icon(SvgImage.COPY)
                 .text("Duplicate")
                 .command(() -> duplicateTab(tabLayoutConfig, tabConfig))
+                .build();
+    }
+
+    private Item createDuplicateToMenu(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
+        return new IconMenuItem.Builder()
+                .priority(8)
+                .icon(SvgImage.COPY)
+                .text("Duplicate To...")
+                .command(() -> duplicateTabTo(tabLayoutConfig, tabConfig))
                 .build();
     }
 

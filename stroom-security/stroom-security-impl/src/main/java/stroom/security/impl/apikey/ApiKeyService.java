@@ -11,12 +11,12 @@ import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.BasicUserIdentity;
 import stroom.security.impl.HashedApiKeyParts;
 import stroom.security.impl.UserCache;
-import stroom.security.shared.ApiKeyHashAlgorithm;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppPermissionSet;
 import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.CreateHashedApiKeyResponse;
 import stroom.security.shared.FindApiKeyCriteria;
+import stroom.security.shared.HashAlgorithm;
 import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.User;
 import stroom.security.shared.VerifyApiKeyRequest;
@@ -64,7 +64,7 @@ public class ApiKeyService {
 
     private static final String CACHE_NAME = "API Key cache";
     private static final int MAX_CREATION_ATTEMPTS = 100;
-    private static final Map<ApiKeyHashAlgorithm, ApiKeyHasher> API_KEY_HASHER_MAP = Stream.of(
+    private static final Map<HashAlgorithm, ApiKeyHasher> API_KEY_HASHER_MAP = Stream.of(
                     new ShaThree256ApiKeyHasher(),
                     new ShaTwo256ApiKeyHasher(),
                     new BCryptApiKeyHasher(),
@@ -74,8 +74,8 @@ public class ApiKeyService {
 
     static {
         // Make sure all enum values have an associated impl
-        final Set<ApiKeyHashAlgorithm> keySet = API_KEY_HASHER_MAP.keySet();
-        for (final ApiKeyHashAlgorithm hashAlgorithm : ApiKeyHashAlgorithm.values()) {
+        final Set<HashAlgorithm> keySet = API_KEY_HASHER_MAP.keySet();
+        for (final HashAlgorithm hashAlgorithm : HashAlgorithm.values()) {
             if (!keySet.contains(hashAlgorithm)) {
                 throw new RuntimeException("No ApiKeyHasher implementation defined for algorithm " + hashAlgorithm);
             }
@@ -262,7 +262,7 @@ public class ApiKeyService {
         final CreateHashedApiKeyRequest request = ensureExpireTimeEpochMs(createHashedApiKeyRequest);
 
         final String apiKeyStr = apiKeyGenerator.generateRandomApiKey();
-        final ApiKeyHashAlgorithm hashAlgorithm = Objects.requireNonNull(
+        final HashAlgorithm hashAlgorithm = Objects.requireNonNull(
                 createHashedApiKeyRequest.getHashAlgorithm());
         final String apiKeyHash = computeApiKeyHash(apiKeyStr, hashAlgorithm);
         final HashedApiKeyParts hashedApiKeyParts = new HashedApiKeyParts(
@@ -369,17 +369,17 @@ public class ApiKeyService {
     }
 
     String computeApiKeyHash(final String apiKeyStr) {
-        return computeApiKeyHash(apiKeyStr, ApiKeyHashAlgorithm.DEFAULT);
+        return computeApiKeyHash(apiKeyStr, HashAlgorithm.DEFAULT);
     }
 
-    String computeApiKeyHash(final String apiKeyStr, final ApiKeyHashAlgorithm hashAlgorithm) {
+    String computeApiKeyHash(final String apiKeyStr, final HashAlgorithm hashAlgorithm) {
         Objects.requireNonNull(apiKeyStr);
         Objects.requireNonNull(hashAlgorithm);
         final ApiKeyHasher apiKeyHasher = getApiKeyHasher(hashAlgorithm);
         return apiKeyHasher.hash(apiKeyStr.trim());
     }
 
-    private static ApiKeyHasher getApiKeyHasher(final ApiKeyHashAlgorithm hashAlgorithm) {
+    private static ApiKeyHasher getApiKeyHasher(final HashAlgorithm hashAlgorithm) {
         final ApiKeyHasher apiKeyHasher = API_KEY_HASHER_MAP.get(hashAlgorithm);
         Objects.requireNonNull(apiKeyHasher, () -> "No ApiKeyHasher implementation for algorithm " + hashAlgorithm);
         return apiKeyHasher;
@@ -387,7 +387,7 @@ public class ApiKeyService {
 
     boolean verifyApiKeyHash(final String apiKeyStr,
                              final String hash,
-                             final ApiKeyHashAlgorithm hashAlgorithm) {
+                             final HashAlgorithm hashAlgorithm) {
         Objects.requireNonNull(apiKeyStr);
         Objects.requireNonNull(hash);
         Objects.requireNonNull(hashAlgorithm);
@@ -462,7 +462,7 @@ public class ApiKeyService {
             return Objects.equals(Objects.requireNonNull(hash), computedHash);
         }
 
-        ApiKeyHashAlgorithm getType();
+        HashAlgorithm getType();
     }
 
 
@@ -478,8 +478,8 @@ public class ApiKeyService {
         }
 
         @Override
-        public ApiKeyHashAlgorithm getType() {
-            return ApiKeyHashAlgorithm.SHA3_256;
+        public HashAlgorithm getType() {
+            return HashAlgorithm.SHA3_256;
         }
     }
 
@@ -496,8 +496,8 @@ public class ApiKeyService {
         }
 
         @Override
-        public ApiKeyHashAlgorithm getType() {
-            return ApiKeyHashAlgorithm.SHA2_256;
+        public HashAlgorithm getType() {
+            return HashAlgorithm.SHA2_256;
         }
     }
 
@@ -513,8 +513,8 @@ public class ApiKeyService {
         }
 
         @Override
-        public ApiKeyHashAlgorithm getType() {
-            return ApiKeyHashAlgorithm.SHA2_512;
+        public HashAlgorithm getType() {
+            return HashAlgorithm.SHA2_512;
         }
     }
 
@@ -539,8 +539,8 @@ public class ApiKeyService {
         }
 
         @Override
-        public ApiKeyHashAlgorithm getType() {
-            return ApiKeyHashAlgorithm.BCRYPT;
+        public HashAlgorithm getType() {
+            return HashAlgorithm.BCRYPT;
         }
     }
 
@@ -590,8 +590,8 @@ public class ApiKeyService {
 
 
         @Override
-        public ApiKeyHashAlgorithm getType() {
-            return ApiKeyHashAlgorithm.ARGON_2;
+        public HashAlgorithm getType() {
+            return HashAlgorithm.ARGON_2;
         }
     }
 }

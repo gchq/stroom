@@ -628,8 +628,8 @@ public class QueryResultVisPresenter
     }
 
     @Override
-    public List<ColumnRef> getColumns() {
-        return NullSafe.get(visSelectionModel, VisSelectionModel::getColumns);
+    public List<ColumnRef> getColumnRefs() {
+        return NullSafe.get(visSelectionModel, VisSelectionModel::getColumnRefs);
     }
 
     @Override

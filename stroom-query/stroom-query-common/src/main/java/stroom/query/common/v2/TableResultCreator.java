@@ -102,7 +102,9 @@ public class TableResultCreator implements ResultCreator {
                         errorConsumer,
                         expressionPredicateFactory,
                         mapper);
-                mapper = ConditionalFormattingMapper.create(
+
+                mapper = ConditionalFormattingMapper.create(resultRequest.getSourceComponentId(),
+                        resultRequest.getSourceComponentName(),
                         columns,
                         tableSettings.getConditionalFormattingRules(),
                         dataStore.getDateTimeSettings(),
@@ -138,7 +140,7 @@ public class TableResultCreator implements ResultCreator {
         }
 
         resultBuilder.componentId(resultRequest.getComponentId());
-        resultBuilder.errors(errorConsumer.getErrors());
+        resultBuilder.errorMessages(errorConsumer.getErrorMessages());
         resultBuilder.resultRange(new OffsetRange(offset, pageLength.get()));
         TableResult result = resultBuilder.build();
 
