@@ -41,6 +41,10 @@ public class PathwaysSettingsViewImpl
     private final Widget widget;
 
     @UiField
+    SimplePanel traceStore;
+    @UiField
+    SimplePanel infoFeed;
+    @UiField
     DurationPicker temporalOrderingTolerance;
     @UiField
     CustomCheckBox allowPathwayCreation;
@@ -50,8 +54,6 @@ public class PathwaysSettingsViewImpl
     CustomCheckBox allowConstraintCreation;
     @UiField
     CustomCheckBox allowConstraintMutation;
-    @UiField
-    SimplePanel infoFeed;
 
     @Inject
     public PathwaysSettingsViewImpl(final Binder binder) {
@@ -63,6 +65,16 @@ public class PathwaysSettingsViewImpl
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public void setTraceStoreView(final View view) {
+        this.traceStore.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setInfoFeedView(final View view) {
+        this.infoFeed.setWidget(view.asWidget());
     }
 
     @Override
@@ -117,11 +129,6 @@ public class PathwaysSettingsViewImpl
     @Override
     public void setAllowConstraintMutation(final boolean allowConstraintMutation) {
         this.allowConstraintMutation.setValue(allowConstraintMutation);
-    }
-
-    @Override
-    public void setInfoFeedView(final View view) {
-        this.infoFeed.setWidget(view.asWidget());
     }
 
     @Override

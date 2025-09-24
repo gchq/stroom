@@ -23,6 +23,7 @@ import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.feed.shared.FeedDoc;
 import stroom.pathways.client.presenter.PathwaysSettingsPresenter.PathwaysSettingsView;
 import stroom.pathways.shared.PathwaysDoc;
+import stroom.planb.shared.PlanBDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.time.SimpleDuration;
 
@@ -34,15 +35,22 @@ import com.gwtplatform.mvp.client.View;
 public class PathwaysSettingsPresenter extends DocumentEditPresenter<PathwaysSettingsView, PathwaysDoc>
         implements PathwaysSettingsUiHandlers {
 
+    private final DocSelectionBoxPresenter traceStorePresenter;
     private final DocSelectionBoxPresenter feedPresenter;
 
     @Inject
     public PathwaysSettingsPresenter(final EventBus eventBus,
                                      final PathwaysSettingsView view,
+                                     final DocSelectionBoxPresenter traceStorePresenter,
                                      final DocSelectionBoxPresenter feedPresenter) {
         super(eventBus, view);
+        this.traceStorePresenter = traceStorePresenter;
         this.feedPresenter = feedPresenter;
         view.setUiHandlers(this);
+
+        traceStorePresenter.setIncludedTypes(PlanBDoc.TYPE);
+        traceStorePresenter.setRequiredPermissions(DocumentPermission.VIEW);
+        view.setTraceStoreView(traceStorePresenter.getView());
 
         feedPresenter.setIncludedTypes(FeedDoc.TYPE);
         feedPresenter.setRequiredPermissions(DocumentPermission.VIEW);
@@ -52,6 +60,7 @@ public class PathwaysSettingsPresenter extends DocumentEditPresenter<PathwaysSet
     @Override
     protected void onBind() {
         super.onBind();
+        registerHandler(traceStorePresenter.addDataSelectionHandler(e -> setDirty(true)));
         registerHandler(feedPresenter.addDataSelectionHandler(e -> setDirty(true)));
     }
 
@@ -67,6 +76,7 @@ public class PathwaysSettingsPresenter extends DocumentEditPresenter<PathwaysSet
         getView().setAllowPathwayMutation(doc.isAllowPathwayMutation());
         getView().setAllowConstraintCreation(doc.isAllowConstraintCreation());
         getView().setAllowConstraintMutation(doc.isAllowConstraintMutation());
+        traceStorePresenter.setSelectedEntityReference(doc.getTracesDocRef(), true);
         feedPresenter.setSelectedEntityReference(doc.getInfoFeed(), true);
     }
 
@@ -77,12 +87,17 @@ public class PathwaysSettingsPresenter extends DocumentEditPresenter<PathwaysSet
         doc.setAllowPathwayMutation(getView().isAllowPathwayMutation());
         doc.setAllowConstraintCreation(getView().isAllowConstraintCreation());
         doc.setAllowConstraintMutation(getView().isAllowConstraintMutation());
+        doc.setTracesDocRef(traceStorePresenter.getSelectedEntityReference());
         doc.setInfoFeed(feedPresenter.getSelectedEntityReference());
         return doc;
     }
 
     public interface PathwaysSettingsView
             extends View, ReadOnlyChangeHandler, HasUiHandlers<PathwaysSettingsUiHandlers> {
+
+        void setTraceStoreView(View view);
+
+        void setInfoFeedView(View view);
 
         SimpleDuration getTemporalOrderingTolerance();
 
@@ -103,7 +118,5 @@ public class PathwaysSettingsPresenter extends DocumentEditPresenter<PathwaysSet
         boolean isAllowConstraintMutation();
 
         void setAllowConstraintMutation(boolean allowConstraintMutation);
-
-        void setInfoFeedView(View view);
     }
 }

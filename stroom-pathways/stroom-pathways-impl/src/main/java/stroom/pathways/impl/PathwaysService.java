@@ -4,6 +4,7 @@ import stroom.docref.DocRef;
 import stroom.pathways.shared.AddPathway;
 import stroom.pathways.shared.DeletePathway;
 import stroom.pathways.shared.FindPathwayCriteria;
+import stroom.pathways.shared.TracesStore;
 import stroom.pathways.shared.UpdatePathway;
 import stroom.pathways.shared.pathway.Pathway;
 import stroom.util.shared.ResultPage;

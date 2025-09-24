@@ -4,6 +4,7 @@ import stroom.pathways.shared.otel.trace.Span.Builder;
 import stroom.util.shared.AbstractBuilder;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -62,8 +63,11 @@ public class Span {
     @JsonProperty("status")
     private final SpanStatus status;
 
+    @JsonIgnore
     private NanoTime start;
+    @JsonIgnore
     private NanoTime end;
+    @JsonIgnore
     private NanoDuration duration;
 
     @JsonCreator

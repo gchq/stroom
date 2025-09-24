@@ -14,10 +14,10 @@ import jakarta.inject.Singleton;
 @Singleton
 public class TracesRemoteQueryResourceImpl implements TracesRemoteQueryResource {
 
-    private final Provider<TracesQueryService> tracesQueryServiceProvider;
+    private final Provider<TracesStoreImpl> tracesQueryServiceProvider;
 
     @Inject
-    public TracesRemoteQueryResourceImpl(final Provider<TracesQueryService> tracesQueryServiceProvider) {
+    public TracesRemoteQueryResourceImpl(final Provider<TracesStoreImpl> tracesQueryServiceProvider) {
         this.tracesQueryServiceProvider = tracesQueryServiceProvider;
     }
 

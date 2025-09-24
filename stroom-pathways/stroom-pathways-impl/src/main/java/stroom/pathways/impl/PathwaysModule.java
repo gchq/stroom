@@ -21,6 +21,8 @@ import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.pathways.shared.PathwaysDoc;
+import stroom.pathways.shared.TracesStore;
+import stroom.planb.impl.data.TracesStoreImpl;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
@@ -37,6 +39,7 @@ public class PathwaysModule extends AbstractModule {
 //        bind(IndexFieldProviders.class).to(IndexFieldProvidersImpl.class);
 //        bind(IndexFieldCache.class).to(IndexFieldCacheImpl.class);
         bind(PathwaysStore.class).to(PathwaysStoreImpl.class);
+        bind(TracesStore.class).to(TracesStoreImpl.class);
 //        bind(IndexFieldService.class).to(IndexFieldServiceImpl.class);
 
 //        GuiceUtil.buildMultiBinder(binder(), Clearable.class)

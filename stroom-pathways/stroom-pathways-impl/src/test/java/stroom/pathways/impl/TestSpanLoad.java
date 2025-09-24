@@ -4,6 +4,7 @@ import stroom.docref.DocRef;
 import stroom.pathways.shared.FindTraceCriteria;
 import stroom.pathways.shared.GetTraceRequest;
 import stroom.pathways.shared.PathwaysDoc;
+import stroom.pathways.shared.TracesStore;
 import stroom.pathways.shared.otel.trace.ExportTraceServiceRequest;
 import stroom.pathways.shared.otel.trace.NanoDuration;
 import stroom.pathways.shared.otel.trace.ResourceSpans;
@@ -57,7 +58,7 @@ public class TestSpanLoad {
 
 
         // Read in sample data and create a map of traces.
-        final TracesStore tracesStore = new TracesStoreMemoryImpl();
+        final TracesStoreMemoryImpl tracesStore = new TracesStoreMemoryImpl();
         for (int i = 1; i <= 13; i++) {
             final Path path = Paths.get("src/test/resources/" + StringIdUtil.idToString(i) + ".dat");
             loadData(path, tracesStore);
@@ -141,7 +142,7 @@ public class TestSpanLoad {
     }
 
     private void loadData(final Path path,
-                          final TracesStore tracesStore) {
+                          final TracesStoreMemoryImpl tracesStore) {
         try (final BufferedReader lineReader = Files.newBufferedReader(path)) {
             final String line = lineReader.readLine();
             final ExportTraceServiceRequest exportRequest =

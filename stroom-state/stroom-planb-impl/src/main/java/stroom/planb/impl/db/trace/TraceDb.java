@@ -416,7 +416,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                         final Trace trace = traceBuilder.build();
                         if (tracePredicate.test(trace)) {
                             if (criteria.getPageRequest().getOffset() <= position &&
-                                criteria.getPageRequest().getLength() < count) {
+                                criteria.getPageRequest().getLength() > count) {
                                 count++;
                                 list.add(root);
                             }
@@ -442,7 +442,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                     long count = 0;
                     for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
                         if (criteria.getPageRequest().getOffset() <= position &&
-                            criteria.getPageRequest().getLength() < count) {
+                            criteria.getPageRequest().getLength() > count) {
                             count++;
 
                             final TraceRoot root = traceRootValueSerde.read(keyVal.val());

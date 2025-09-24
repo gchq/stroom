@@ -5,6 +5,12 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:d="urn:import:stroom.widget.customdatebox.client">
     <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="pathwaysTraceStore" label="Trace Store">
+            <g:SimplePanel ui:field="traceStore"/>
+        </form:FormGroup>
+        <form:FormGroup identity="pathwaysInfoFeed" label="Info Feed">
+            <g:SimplePanel ui:field="infoFeed"/>
+        </form:FormGroup>
         <form:FormGroup identity="temporalOrderingTolerance"
                         label="Temporal Ordering Tolerance">
             <d:DurationPicker ui:field="temporalOrderingTolerance"/>
@@ -20,9 +26,6 @@
         </form:FormGroup>
         <form:FormGroup identity="pathwaysInfoAllowConstraintMutation" label="Allow Constraint Mutation">
             <tickbox:CustomCheckBox ui:field="allowConstraintMutation"/>
-        </form:FormGroup>
-        <form:FormGroup identity="pathwaysInfoFeed" label="Info Feed">
-            <g:SimplePanel ui:field="infoFeed"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

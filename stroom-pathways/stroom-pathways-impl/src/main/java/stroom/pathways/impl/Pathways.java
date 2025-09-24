@@ -5,6 +5,7 @@ import stroom.pathways.shared.FindPathwayCriteria;
 import stroom.pathways.shared.FindTraceCriteria;
 import stroom.pathways.shared.GetTraceRequest;
 import stroom.pathways.shared.PathwaysDoc;
+import stroom.pathways.shared.TracesStore;
 import stroom.pathways.shared.otel.trace.NanoTime;
 import stroom.pathways.shared.otel.trace.Span;
 import stroom.pathways.shared.otel.trace.Trace;
@@ -32,9 +33,6 @@ import java.util.stream.Collectors;
 public class Pathways {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Pathways.class);
-
-//    private static final ObjectMapper MAPPER = createMapper(true);
-
 
     private final DocRef docRef;
     private final PathwaysStore pathwaysStore;

@@ -6,7 +6,7 @@ import stroom.pathways.shared.GetTraceRequest;
 import stroom.pathways.shared.TracesResource;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.otel.trace.TraceRoot;
-import stroom.planb.impl.data.TracesQueryService;
+import stroom.planb.impl.data.TracesStoreImpl;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
@@ -15,10 +15,10 @@ import jakarta.inject.Provider;
 @AutoLogged
 public class TracesResourceImpl implements TracesResource {
 
-    private final Provider<TracesQueryService> tracesStoreProvider;
+    private final Provider<TracesStoreImpl> tracesStoreProvider;
 
     @Inject
-    TracesResourceImpl(final Provider<TracesQueryService> tracesStoreProvider) {
+    TracesResourceImpl(final Provider<TracesStoreImpl> tracesStoreProvider) {
         this.tracesStoreProvider = tracesStoreProvider;
     }
 

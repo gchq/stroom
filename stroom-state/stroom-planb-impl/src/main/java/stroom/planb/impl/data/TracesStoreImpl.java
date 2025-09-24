@@ -6,6 +6,7 @@ import stroom.node.api.NodeService;
 import stroom.pathways.shared.FindTraceCriteria;
 import stroom.pathways.shared.GetTraceRequest;
 import stroom.pathways.shared.TracesResultPage;
+import stroom.pathways.shared.TracesStore;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBDocCache;
@@ -31,9 +32,9 @@ import jakarta.ws.rs.core.Response.Status;
 import java.util.List;
 
 @Singleton
-public class TracesQueryService {
+public class TracesStoreImpl implements TracesStore {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TracesQueryService.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TracesStoreImpl.class);
 
     private final PlanBDocCache planBDocCache;
     private final Provider<PlanBConfig> configProvider;
@@ -43,12 +44,12 @@ public class TracesQueryService {
     private final Provider<WebTargetFactory> webTargetFactoryProvider;
 
     @Inject
-    public TracesQueryService(final PlanBDocCache planBDocCache,
-                              final Provider<PlanBConfig> configProvider,
-                              final ShardManager shardManager,
-                              final Provider<NodeService> nodeServiceProvider,
-                              final Provider<NodeInfo> nodeInfoProvider,
-                              final Provider<WebTargetFactory> webTargetFactoryProvider) {
+    public TracesStoreImpl(final PlanBDocCache planBDocCache,
+                           final Provider<PlanBConfig> configProvider,
+                           final ShardManager shardManager,
+                           final Provider<NodeService> nodeServiceProvider,
+                           final Provider<NodeInfo> nodeInfoProvider,
+                           final Provider<WebTargetFactory> webTargetFactoryProvider) {
         this.planBDocCache = planBDocCache;
         this.configProvider = configProvider;
         this.shardManager = shardManager;
@@ -57,6 +58,7 @@ public class TracesQueryService {
         this.webTargetFactoryProvider = webTargetFactoryProvider;
     }
 
+    @Override
     public TracesResultPage findTraces(final FindTraceCriteria criteria) {
         final String name = criteria.getDataSourceRef().getName();
         final PlanBDoc doc = planBDocCache.get(name);
@@ -115,35 +117,7 @@ public class TracesQueryService {
     }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    @Override
     public Trace findTrace(final GetTraceRequest request) {
         final String name = request.getDataSourceRef().getName();
         final PlanBDoc doc = planBDocCache.get(name);

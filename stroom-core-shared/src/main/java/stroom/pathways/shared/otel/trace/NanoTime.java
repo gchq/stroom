@@ -3,7 +3,6 @@ package stroom.pathways.shared.otel.trace;
 import stroom.util.shared.StringUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -139,32 +138,26 @@ public class NanoTime implements Comparable<NanoTime> {
 //                (int) (nanos + ((seconds % 1) * NANOS_IN_SECOND)));
 //    }
 
-    @JsonIgnore
     public boolean isLessThan(final NanoTime nanoTime) {
         return seconds < nanoTime.seconds || (seconds == nanoTime.seconds && nanos < nanoTime.nanos);
     }
 
-    @JsonIgnore
     public boolean isLessThanEquals(final NanoTime nanoTime) {
         return seconds < nanoTime.seconds || (seconds == nanoTime.seconds && nanos <= nanoTime.nanos);
     }
 
-    @JsonIgnore
     public boolean isBefore(final NanoTime nanoTime) {
         return isLessThan(nanoTime);
     }
 
-    @JsonIgnore
     public boolean isGreaterThan(final NanoTime nanoTime) {
         return seconds > nanoTime.seconds || (seconds == nanoTime.seconds && nanos > nanoTime.nanos);
     }
 
-    @JsonIgnore
     public boolean isGreaterThanEquals(final NanoTime nanoTime) {
         return seconds > nanoTime.seconds || (seconds == nanoTime.seconds && nanos >= nanoTime.nanos);
     }
 
-    @JsonIgnore
     public boolean isAfter(final NanoTime nanoTime) {
         return isGreaterThan(nanoTime);
     }
