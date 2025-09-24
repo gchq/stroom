@@ -77,7 +77,7 @@ public class ContentStoreContentPackListPresenter
         // Add the style MULTI_LINE to the CSS
         dataGrid.setMultiLine(true);
 
-        // Allow multi-selection
+        // Don't allow multi-selection
         this.gridSelectionModel = dataGrid.addDefaultSelectionModel(false);
 
         // Initialise the columns

@@ -11,6 +11,8 @@ dependencies {
     implementation project(':stroom-annotation:stroom-annotation-impl-db')
     implementation project(':stroom-contentstore:stroom-contentstore-api')
     implementation project(':stroom-contentstore:stroom-contentstore-impl')
+    implementation project(':stroom-credentials:stroom-credentials-api')
+    implementation project(':stroom-credentials:stroom-credentials-impl')
     implementation project(':stroom-aws:stroom-aws-s3-impl')
     implementation project(':stroom-bytebuffer')
     implementation project(':stroom-core')

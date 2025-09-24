@@ -1,9 +1,11 @@
 package stroom.credentials.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
+import stroom.credentials.shared.Credentials;
 import stroom.credentials.shared.CredentialsResource;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.util.client.MultiSelectEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -13,11 +15,15 @@ import com.gwtplatform.mvp.client.View;
 
 /**
  * Represents the Credentials Tab of the UI.
+ * Ties together the List and Details view of the data.
  */
-public class CredentialsPresenter extends ContentTabPresenter<CredentialsPresenter.CredentialsView> {
+public class CredentialsPresenter
+        extends ContentTabPresenter<CredentialsPresenter.CredentialsView> {
 
+    /** Reference to the List view within this tab */
     private final CredentialsListPresenter credentialsListPresenter;
 
+    /** Reference to the details view within this tab */
     private final CredentialsDetailsPresenter credentialsDetailsPresenter;
 
     /** Label for the content */
@@ -59,6 +65,9 @@ public class CredentialsPresenter extends ContentTabPresenter<CredentialsPresent
     @Override
     protected void onBind() {
         super.onBind();
+
+        // Add in the handler on the list selection
+        credentialsListPresenter.getSelectionModel().addSelectionHandler(this::credentialsListSelectionHandler);
     }
 
     /**
@@ -94,9 +103,18 @@ public class CredentialsPresenter extends ContentTabPresenter<CredentialsPresent
     }
 
     /**
+     * Called by the selection model in the list to set the Credentials shown in the details view.
+     */
+    private void credentialsListSelectionHandler(@SuppressWarnings("unused") final MultiSelectEvent event) {
+        final Credentials credentials = credentialsListPresenter.getSelectionModel().getSelected();
+        credentialsDetailsPresenter.setCredentials(credentials);
+    }
+
+    /**
      * GWT view managed by this presenter.
      */
     public interface CredentialsView extends View {
+
         SimplePanel getDetailsPanel();
     }
 

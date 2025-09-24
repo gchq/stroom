@@ -10,7 +10,7 @@ public class CredentialsModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(CredentialsResource.class).to(CredentialsResourceImpl.class);
-        RestResourcesBinder.create(binder()).bind(CredentialsResource.class);
+        RestResourcesBinder.create(binder()).bind(CredentialsResourceImpl.class);
     }
 
 }

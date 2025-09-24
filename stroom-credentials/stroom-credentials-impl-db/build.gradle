@@ -2,8 +2,11 @@ ext.moduleName = 'stroom.stroom-credentials.impl.db'
 
 dependencies {
     implementation project(':stroom-config:stroom-config-common')
-    implementation project(':stroom-db-util')
+    implementation project(':stroom-core-shared')
     implementation project(':stroom-credentials:stroom-credentials-api')
+    implementation project(':stroom-credentials:stroom-credentials-impl')
+    implementation project(':stroom-credentials:stroom-credentials-impl-db-jooq')
+    implementation project(':stroom-db-util')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
@@ -18,4 +21,10 @@ dependencies {
     implementation libs.slf4j.api
 
     runtimeOnly libs.mysql.connector.java
+
+    testImplementation project(':stroom-test-common')
+    testImplementation libs.flyway.core
+
+    testImplementation libs.bundles.common.test.implementation
+
 }

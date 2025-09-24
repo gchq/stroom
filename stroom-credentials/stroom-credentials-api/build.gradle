@@ -1,6 +1,11 @@
 ext.moduleName = 'stroom.stroom-credentials.api'
 
 dependencies {
-    testImplementation platform('org.junit:junit-bom:5.10.0')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+
+    implementation libs.jackson.annotations
+    implementation libs.jakarta.validation.api
 }

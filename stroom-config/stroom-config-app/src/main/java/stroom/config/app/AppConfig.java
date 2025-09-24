@@ -29,6 +29,7 @@ import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
 import stroom.contentstore.impl.ContentStoreConfig;
 import stroom.core.receive.AutoContentCreationConfig;
+import stroom.credentials.api.CredentialsConfig;
 import stroom.dashboard.impl.DashboardConfig;
 import stroom.docstore.impl.db.DocStoreConfig;
 import stroom.event.logging.impl.LoggingConfig;
@@ -91,6 +92,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_CLUSTER_TASK = "clusterTask";
     public static final String PROP_NAME_COMMON_DB_DETAILS = "commonDbDetails";
     public static final String PROP_NAME_CONTENT_PACK_IMPORT = "contentPackImport";
+    public static final String PROP_NAME_CREDENTIALS = "credentials";
     public static final String PROP_NAME_CORE = "core";
     public static final String PROP_NAME_DASHBOARD = "dashboard";
     public static final String PROP_NAME_DATA = "data";
@@ -144,6 +146,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final ClusterLockConfig clusterLockConfig;
     private final CommonDbConfig commonDbConfig;
     private final ContentPackImportConfig contentPackImportConfig;
+    private final CredentialsConfig credentialsConfig;
     private final DashboardConfig dashboardConfig;
     private final DataConfig dataConfig;
     private final DocStoreConfig docStoreConfig;
@@ -198,6 +201,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                 new ClusterLockConfig(),
                 new CommonDbConfig(),
                 new ContentPackImportConfig(),
+                new CredentialsConfig(),
                 new DashboardConfig(),
                 new DataConfig(),
                 new DocStoreConfig(),
@@ -251,6 +255,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_CLUSTER_LOCK) final ClusterLockConfig clusterLockConfig,
                      @JsonProperty(PROP_NAME_COMMON_DB_DETAILS) final CommonDbConfig commonDbConfig,
                      @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT) final ContentPackImportConfig contentPackImportConfig,
+                     @JsonProperty(PROP_NAME_CREDENTIALS) final CredentialsConfig credentialsConfig,
                      @JsonProperty(PROP_NAME_DASHBOARD) final DashboardConfig dashboardConfig,
                      @JsonProperty(PROP_NAME_DATA) final DataConfig dataConfig,
                      @JsonProperty(PROP_NAME_DOCSTORE) final DocStoreConfig docStoreConfig,
@@ -300,6 +305,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.clusterLockConfig = clusterLockConfig;
         this.commonDbConfig = commonDbConfig;
         this.contentPackImportConfig = contentPackImportConfig;
+        this.credentialsConfig = credentialsConfig;
         this.dashboardConfig = dashboardConfig;
         this.dataConfig = dataConfig;
         this.docStoreConfig = docStoreConfig;
@@ -374,6 +380,11 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty(PROP_NAME_CONTENT_STORE)
     public ContentStoreConfig getContentStoreConfig() {
         return contentStoreConfig;
+    }
+
+    @JsonProperty(PROP_NAME_CREDENTIALS)
+    public CredentialsConfig getCredentialsConfig() {
+        return credentialsConfig;
     }
 
     @JsonProperty(PROP_NAME_AUTO_CONTENT_CREATION)

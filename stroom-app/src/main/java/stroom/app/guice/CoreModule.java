@@ -15,6 +15,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.annotation.pipeline.AnnotationPipelineModule());
         install(new stroom.contentstore.impl.ContentStoreModule());
         install(new stroom.credentials.impl.CredentialsModule());
+        install(new stroom.credentials.impl.db.CredentialsDaoModule());
         install(new stroom.aws.s3.impl.S3ConfigHandlerModule());
         install(new stroom.aws.s3.impl.S3ConfigModule());
         install(new stroom.cache.impl.CacheModule());
