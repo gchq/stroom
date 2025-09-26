@@ -1,14 +1,9 @@
 package stroom.credentials.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.credentials.shared.Credentials;
-import stroom.credentials.shared.CredentialsResource;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.util.client.MultiSelectEvent;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;

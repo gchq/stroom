@@ -52,7 +52,7 @@ public class GitRepoCredentialsDialogViewImpl
      * Sets the username in the UI.
      */
     @Override
-    public void setUsername(String username) {
+    public void setUsername(final String username) {
         txtUsername.setText(username);
     }
 
@@ -68,7 +68,7 @@ public class GitRepoCredentialsDialogViewImpl
      * Sets the password in the UI.
      */
     @Override
-    public void setPassword(String password) {
+    public void setPassword(final String password) {
         pwdPassword.setText(password);
     }
 

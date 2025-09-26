@@ -5,8 +5,6 @@ import stroom.credentials.client.view.CredentialsViewImpl;
 import stroom.credentials.shared.Credentials;
 import stroom.credentials.shared.CredentialsResource;
 import stroom.credentials.shared.CredentialsResponse.Status;
-import stroom.credentials.shared.CredentialsSecret;
-import stroom.credentials.shared.CredentialsType;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;

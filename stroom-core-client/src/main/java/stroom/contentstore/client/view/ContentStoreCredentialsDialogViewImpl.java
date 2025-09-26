@@ -62,7 +62,7 @@ public class ContentStoreCredentialsDialogViewImpl
      *                        for getting credentials for this content pack.
      */
     @Override
-    public void setAuthContactHtml(SafeHtml authContactHtml) {
+    public void setAuthContactHtml(final SafeHtml authContactHtml) {
         lblAuthContactHtml.setHTML(authContactHtml);
     }
 
