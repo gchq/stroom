@@ -142,8 +142,8 @@ class TestHttpSender {
                 new MockMetrics(),
                 mockProxyServices);
         final AttributeMap attributeMap = new AttributeMap(Map.of(
-                StandardHeaderArguments.FEED, "MY_FEED",
-                StandardHeaderArguments.TYPE, "MY_TYPE",
+                "FeEd", "MY_FEED",
+                "type", "MY_TYPE",
                 "foo", "Foo Value",
                 "bar", "Bar Value"
         ));
@@ -163,8 +163,8 @@ class TestHttpSender {
         // All these are in the base or additional allow lists, so should be there
         assertThat(headerKeysInPost)
                 .contains(
-                        StandardHeaderArguments.FEED,
-                        StandardHeaderArguments.TYPE,
+                        "FeEd",
+                        "type",
                         "foo");
 
         // bar is not in the allow list so should not be there
