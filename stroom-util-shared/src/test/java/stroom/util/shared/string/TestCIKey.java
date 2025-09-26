@@ -314,6 +314,7 @@ public class TestCIKey {
                 "Feed", CIKey.ofDynamicKey("Feed"));
 
         // Feed
+        CIKeys.addCommonKey(CIKeys.FEED);
         final CIKey feed1a = CIKeys.FEED;
         final CIKey feed1b = CIKey.of("Feed");
         final CIKey feed1c = CIKey.of("Feed", "feed");
@@ -729,6 +730,7 @@ public class TestCIKey {
 
     @Test
     void testKnownLowerCase() {
+        CIKeys.addCommonKey(CIKeys.ACCEPT);
         final String key = CIKeys.ACCEPT.get();
 
         final CIKey ciKey1 = CIKey.of(key);
@@ -770,6 +772,7 @@ public class TestCIKey {
 
     @Test
     void testKnownUpperCase() {
+        CIKeys.addCommonKey(CIKeys.UUID);
         final String key = CIKeys.UUID.get();
 
         final CIKey ciKey1 = CIKey.of(key);
@@ -836,6 +839,7 @@ public class TestCIKey {
     @Test
     void testOfDynamicKey2() {
         final String key = "accept";
+        CIKeys.addCommonKey(CIKeys.ACCEPT);
         final CIKey ciKey1 = CIKeys.ACCEPT;
         final CIKey ciKey2 = CIKey.of(key);
         final CIKey ciKey3 = CIKey.ofDynamicKey(key);
