@@ -65,6 +65,11 @@ public class Credentials extends TableImpl<CredentialsRecord> {
     public final TableField<CredentialsRecord, String> TYPE = createField(DSL.name("type"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
+     * The column <code>stroom.credentials.credsExpire</code>.
+     */
+    public final TableField<CredentialsRecord, Byte> CREDSEXPIRE = createField(DSL.name("credsExpire"), SQLDataType.TINYINT.nullable(false), this, "");
+
+    /**
      * The column <code>stroom.credentials.expires</code>.
      */
     public final TableField<CredentialsRecord, Long> EXPIRES = createField(DSL.name("expires"), SQLDataType.BIGINT.nullable(false), this, "");

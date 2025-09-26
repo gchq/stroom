@@ -61,31 +61,45 @@ public class CredentialsRecord extends UpdatableRecordImpl<CredentialsRecord> {
     }
 
     /**
+     * Setter for <code>stroom.credentials.credsExpire</code>.
+     */
+    public void setCredsexpire(Byte value) {
+        set(3, value);
+    }
+
+    /**
+     * Getter for <code>stroom.credentials.credsExpire</code>.
+     */
+    public Byte getCredsexpire() {
+        return (Byte) get(3);
+    }
+
+    /**
      * Setter for <code>stroom.credentials.expires</code>.
      */
     public void setExpires(Long value) {
-        set(3, value);
+        set(4, value);
     }
 
     /**
      * Getter for <code>stroom.credentials.expires</code>.
      */
     public Long getExpires() {
-        return (Long) get(3);
+        return (Long) get(4);
     }
 
     /**
      * Setter for <code>stroom.credentials.secret</code>.
      */
     public void setSecret(String value) {
-        set(4, value);
+        set(5, value);
     }
 
     /**
      * Getter for <code>stroom.credentials.secret</code>.
      */
     public String getSecret() {
-        return (String) get(4);
+        return (String) get(5);
     }
 
     // -------------------------------------------------------------------------
@@ -111,12 +125,13 @@ public class CredentialsRecord extends UpdatableRecordImpl<CredentialsRecord> {
     /**
      * Create a detached, initialised CredentialsRecord
      */
-    public CredentialsRecord(String uuid, String name, String type, Long expires, String secret) {
+    public CredentialsRecord(String uuid, String name, String type, Byte credsexpire, Long expires, String secret) {
         super(Credentials.CREDENTIALS);
 
         setUuid(uuid);
         setName(name);
         setType(type);
+        setCredsexpire(credsexpire);
         setExpires(expires);
         setSecret(secret);
         resetChangedOnNotNull();

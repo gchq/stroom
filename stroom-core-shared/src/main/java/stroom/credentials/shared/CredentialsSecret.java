@@ -93,6 +93,17 @@ public class CredentialsSecret {
         this.privateKey = privateKey;
     }
 
+    /**
+     * @return A deep copy of this object.
+     */
+    public CredentialsSecret copy() {
+        return new CredentialsSecret(this.username,
+                this.password,
+                this.accessToken,
+                this.passphrase,
+                this.privateKey);
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (o == null || getClass() != o.getClass()) {

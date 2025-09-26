@@ -2625,6 +2625,17 @@ button.main-menu svg {
 .gitrepo-settings-form input[type="text"] {
     width: 400px;
 }
+
+/* Credentials Manager */
+.credentials-manager .credentials-details {
+    margin-left: 10px;
+}
+
+.credentials-manager .credentials-list {
+    margin-right: 10px;
+}
+
+/* --- */
 .multiChooser td {
     vertical-align: middle;
 }

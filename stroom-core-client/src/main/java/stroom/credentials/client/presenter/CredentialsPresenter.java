@@ -15,16 +15,9 @@ import com.gwtplatform.mvp.client.View;
 
 /**
  * Represents the Credentials Tab of the UI.
- * Ties together the List and Details view of the data.
  */
 public class CredentialsPresenter
         extends ContentTabPresenter<CredentialsPresenter.CredentialsView> {
-
-    /** Reference to the List view within this tab */
-    private final CredentialsListPresenter credentialsListPresenter;
-
-    /** Reference to the details view within this tab */
-    private final CredentialsDetailsPresenter credentialsDetailsPresenter;
 
     /** Label for the content */
     private static final String LABEL = "Credentials";
@@ -35,10 +28,6 @@ public class CredentialsPresenter
     /** ID of the presenter for the list of credentials */
     public static final String CREDENTIALS_LIST = "CREDENTIALS_LIST";
 
-    /** The resource to access server-side data */
-    public static final CredentialsResource CREDENTIALS_RESOURCE
-            = GWT.create(CredentialsResource.class);
-
     /**
      * Injected constructor.
      * @param eventBus Passed to superclass
@@ -48,15 +37,11 @@ public class CredentialsPresenter
     @Inject
     public CredentialsPresenter(final EventBus eventBus,
                                 final CredentialsView view,
-                                final CredentialsListPresenter credentialsListPresenter,
-                                final CredentialsDetailsPresenter credentialsDetailsPresenter) {
+                                final CredentialsListPresenter credentialsListPresenter) {
         super(eventBus, view);
-        this.credentialsListPresenter = credentialsListPresenter;
-        this.credentialsListPresenter.setCredentialsPresenter(this);
-        this.credentialsDetailsPresenter = credentialsDetailsPresenter;
-        this.credentialsDetailsPresenter.setCredentialsPresenter(this);
+
+        credentialsListPresenter.setCredentialsPresenter(this);
         this.setInSlot(CREDENTIALS_LIST, credentialsListPresenter);
-        view.getDetailsPanel().add(credentialsDetailsPresenter);
     }
 
     /**
@@ -65,9 +50,6 @@ public class CredentialsPresenter
     @Override
     protected void onBind() {
         super.onBind();
-
-        // Add in the handler on the list selection
-        credentialsListPresenter.getSelectionModel().addSelectionHandler(this::credentialsListSelectionHandler);
     }
 
     /**
@@ -103,19 +85,10 @@ public class CredentialsPresenter
     }
 
     /**
-     * Called by the selection model in the list to set the Credentials shown in the details view.
-     */
-    private void credentialsListSelectionHandler(@SuppressWarnings("unused") final MultiSelectEvent event) {
-        final Credentials credentials = credentialsListPresenter.getSelectionModel().getSelected();
-        credentialsDetailsPresenter.setCredentials(credentials);
-    }
-
-    /**
      * GWT view managed by this presenter.
      */
     public interface CredentialsView extends View {
-
-        SimplePanel getDetailsPanel();
+        // No code
     }
 
 }

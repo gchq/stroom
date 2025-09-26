@@ -12,7 +12,7 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import javax.inject.Inject;
 
 /**
- * Provides backing for ContentStoreCredentialsDialogView.ui.xml,
+ * Provides backing for CredentialsDetailsDialogView.ui.xml,
  * to provide the UI for the Dialog that allows users to enter authentication
  * information to obtain a Content Pack.
  */

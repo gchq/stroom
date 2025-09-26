@@ -21,9 +21,6 @@ public class CredentialsViewImpl extends ViewImpl implements CredentialsView {
     @UiField
     public SimplePanel credentialsList;
 
-    @UiField
-    public SimplePanel credentialsDetails;
-
     /**
      * Injected constructor.
      * @param binder Links this to the XML UI spec.
@@ -51,14 +48,6 @@ public class CredentialsViewImpl extends ViewImpl implements CredentialsView {
         if (CredentialsPresenter.CREDENTIALS_LIST.equals(slot)) {
             credentialsList.setWidget(content);
         }
-    }
-
-    /**
-     * Makes the list panel available for adding stuff to etc.
-     */
-    @Override
-    public SimplePanel getDetailsPanel() {
-        return this.credentialsDetails;
     }
 
     /**

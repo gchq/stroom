@@ -54,6 +54,7 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
                 record.getName(),
                 record.getUuid(),
                 CredentialsType.valueOf(record.getType()),
+                record.getCredsexpire() == 1,
                 record.getExpires(),
                 secret);
     }
@@ -63,7 +64,8 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
         try {
             final Result<CredentialsRecord> result =
                     JooqUtil.contextResult(credentialsDbConnProvider, context -> context
-                            .fetch(CREDENTIALS));
+                            .fetch(CREDENTIALS)
+                            .sortAsc(CREDENTIALS.NAME));
 
             final List<Credentials> list = new ArrayList<>(result.size());
             for (final CredentialsRecord record : result) {
@@ -99,17 +101,21 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
                     .columns(CREDENTIALS.UUID,
                             CREDENTIALS.NAME,
                             CREDENTIALS.TYPE,
+                            CREDENTIALS.CREDSEXPIRE,
                             CREDENTIALS.EXPIRES,
                             CREDENTIALS.SECRET)
                     .values(credentials.getUuid(),
                             credentials.getName(),
                             credentials.getType().name(),
+                            (byte)(credentials.isCredsExpire() ? 1 : 0),
                             credentials.getExpires(),
                             JsonUtil.writeValueAsString(credentials.getSecret()))
                     .onDuplicateKeyUpdate()
                     .set(CREDENTIALS.UUID, credentials.getUuid())
                     .set(CREDENTIALS.NAME, credentials.getName())
                     .set(CREDENTIALS.TYPE, credentials.getType().name())
+                    .set(CREDENTIALS.CREDSEXPIRE, (byte)(credentials.isCredsExpire() ? 1 : 0))
+                    .set(CREDENTIALS.EXPIRES, credentials.getExpires())
                     .set(CREDENTIALS.SECRET, JsonUtil.writeValueAsString(credentials.getSecret()))
                     .execute());
         } catch (final DataAccessException e) {

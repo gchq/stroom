@@ -3,6 +3,7 @@ package stroom.credentials.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.credentials.client.view.CredentialsViewImpl;
 import stroom.credentials.shared.Credentials;
+import stroom.credentials.shared.CredentialsResource;
 import stroom.credentials.shared.CredentialsResponse.Status;
 import stroom.credentials.shared.CredentialsSecret;
 import stroom.credentials.shared.CredentialsType;
@@ -18,8 +19,10 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.util.client.MultiSelectionModel;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.LoadingStateChangeEvent.LoadingState;
 import com.google.gwt.view.client.Range;
 import com.google.web.bindery.event.shared.EventBus;
@@ -58,8 +61,18 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     /** Button in view to delete a credential */
     private final ButtonView btnDelete;
 
+    /** Button in view to edit a credential */
+    private final ButtonView btnEdit;
+
+    /** Dialog to edit the credentials */
+    private final CredentialsDetailsDialogPresenter detailsDialog;
+
     /** Index of the first item in the list of credentials */
     private static final int FIRST_ITEM_INDEX = 0;
+
+    /** The resource to access server-side data */
+    public static final CredentialsResource CREDENTIALS_RESOURCE
+            = GWT.create(CredentialsResource.class);
 
     /**
      * Injected constructor.
@@ -69,9 +82,11 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     public CredentialsListPresenter(final EventBus eventBus,
                                     final PagerView view,
                                     final RestFactory restFactory,
+                                    final CredentialsDetailsDialogPresenter detailsDialog,
                                     final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
         this.restFactory = restFactory;
+        this.detailsDialog = detailsDialog;
         this.dateTimeFormatter = dateTimeFormatter;
 
         // REST to server
@@ -86,6 +101,8 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
         btnAdd.addClickHandler(event -> handleAddButtonClick());
         btnDelete = this.getView().addButton(SvgPresets.DELETE);
         btnDelete.addClickHandler(event -> handleDeleteButtonClick());
+        btnEdit = this.getView().addButton(SvgPresets.EDIT);
+        btnEdit.addClickHandler(event -> handleEditButtonClick());
 
         // Set selection model
         this.gridSelectionModel = dataGrid.addDefaultSelectionModel(false);
@@ -97,6 +114,9 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                 view,
                 restFactory);
         dataProvider.addDataDisplay(dataGrid);
+
+        // Define a class for the CSS
+        this.getWidget().addStyleName("credentials-list");
 
         // Get notified when data has loaded and load up the first item
         dataGrid.addLoadingStateChangeHandler(event -> {
@@ -162,7 +182,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                 CredentialsViewImpl.console("Requesting range " + range);
                 final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
                 restFactory
-                        .create(CredentialsPresenter.CREDENTIALS_RESOURCE)
+                        .create(CREDENTIALS_RESOURCE)
                         .method((r) -> r.list(pageRequest))
                         .onSuccess(dataConsumer)
                         .onFailure(restErrorHandler)
@@ -182,9 +202,9 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     /**
      * @return The selected items in the list. Called from the Details view.
      */
-    public MultiSelectionModel<Credentials> getSelectionModel() {
-        return this.gridSelectionModel;
-    }
+    //public MultiSelectionModel<Credentials> getSelectionModel() {
+    //    return this.gridSelectionModel;
+    //}
 
     /**
      * Updates the UI state.
@@ -192,8 +212,10 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     private void updateState() {
         if (gridSelectionModel.getSelected() != null) {
             btnDelete.setEnabled(true);
+            btnEdit.setEnabled(true);
         } else {
             btnDelete.setEnabled(false);
+            btnEdit.setEnabled(false);
         }
     }
 
@@ -201,33 +223,8 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      * Called when the Add (+) button is clicked.
      */
     private void handleAddButtonClick() {
-        // TODO Show a dialog for naming the credentials and basic info
-        final CredentialsSecret secret = new CredentialsSecret();
-        final Credentials credentials = new Credentials("New Credentials",
-                UUID.randomUUID().toString(),
-                CredentialsType.USERNAME_PASSWORD,
-                0,
-                secret);
-
-        restFactory.create(CredentialsPresenter.CREDENTIALS_RESOURCE)
-                .method(res -> res.store(credentials))
-                .onSuccess(result -> {
-                    CredentialsViewImpl.console("Saved credentials");
-                    if (result.getStatus() == Status.OK) {
-                        // Reload the list & select it
-                        dataProvider.refresh();
-                        gridSelectionModel.setSelected(credentials);
-                    } else {
-                        CredentialsViewImpl.console("Error saving credentials");
-
-                        AlertEvent.fireError(credentialsPresenter,
-                                "Save Error",
-                                result.getMessage(),
-                                null);
-                    }
-                })
-                .taskMonitorFactory(CredentialsListPresenter.this)
-                .exec();
+        final Credentials newCredentials = new Credentials();
+        showDetailsDialog(newCredentials);
     }
 
     /**
@@ -238,7 +235,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
 
         final Credentials selectedCredentials = gridSelectionModel.getSelected();
         if (selectedCredentials != null) {
-            restFactory.create(CredentialsPresenter.CREDENTIALS_RESOURCE)
+            restFactory.create(CREDENTIALS_RESOURCE)
                     .method(res -> res.delete(selectedCredentials.getUuid()))
                     .onSuccess(result -> {
                         if (result.getStatus() == Status.OK) {
@@ -257,6 +254,79 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                     })
                     .taskMonitorFactory(CredentialsListPresenter.this)
                     .exec();
+        }
+    }
+
+    /**
+     * When edit button is clicked
+     */
+    private void handleEditButtonClick() {
+        final Credentials credentials = gridSelectionModel.getSelected();
+        showDetailsDialog(credentials);
+    }
+
+    /**
+     * Called when adding or editing credentials.
+     * @param credentials The credentials to add or edit.
+     */
+    private void showDetailsDialog(final Credentials credentials) {
+        if (credentials != null) {
+            final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(detailsDialog);
+            detailsDialog.setupDialog(credentials, builder);
+            builder.onHideRequest(e -> {
+                        if (e.isOk()) {
+                            if (detailsDialog.isValid()) {
+                                e.hide();
+                                saveCredentials(detailsDialog.getView().getCredentials());
+
+                            } else {
+                                AlertEvent.fireWarn(detailsDialog,
+                                        detailsDialog.getValidationMessage(),
+                                        e::reset);
+                            }
+                        } else {
+                            // Cancel pressed
+                            e.hide();
+                        }
+                    })
+                    .fire();
+        }
+    }
+
+    private void saveCredentials(final Credentials creds) {
+        restFactory.create(CREDENTIALS_RESOURCE)
+                .method(res -> res.store(creds))
+                .onSuccess(result -> {
+                    CredentialsViewImpl.console("Saved credentials");
+                    if (result.getStatus() == Status.OK) {
+                        // Reload the list & select it
+                        dataProvider.refresh();
+                        // TODO This isn't working...
+                        gridSelectionModel.setSelected(creds);
+
+                    } else {
+                        CredentialsViewImpl.console("Error saving credentials");
+
+                        AlertEvent.fireError(credentialsPresenter,
+                                "Save Error",
+                                result.getMessage(),
+                                null);
+                    }
+                })
+                .taskMonitorFactory(CredentialsListPresenter.this)
+                .exec();
+
+    }
+
+    /**
+     * Refreshes the list from the DB.
+     */
+    void refreshList(final Credentials selected) {
+        dataProvider.refresh();
+        if (selected != null) {
+            // This doesn't work - don't know why.
+            // Maybe the credentials objects don't match.
+            gridSelectionModel.setSelected(selected);
         }
     }
 

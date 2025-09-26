@@ -17,6 +17,7 @@ import java.util.UUID;
         "name",
         "uuid",
         "type",
+        "credsExpire",
         "expires",
         "secret"
 })
@@ -34,12 +35,27 @@ public class Credentials {
     @JsonProperty
     private CredentialsType type;
 
+    /** Whether the credentials expire */
+    @JsonProperty
+    private boolean credsExpire;
+
     /** When this credential expires */
     private long expires;
 
     /** The secret stuff */
     @JsonProperty
     private CredentialsSecret secret;
+
+    /**
+     * Creates a new, empty credentials object.
+     */
+    public Credentials() {
+        this.uuid = UUID.randomUUID().toString();
+        this.type = CredentialsType.USERNAME_PASSWORD;
+        this.credsExpire = false;
+        this.expires = 0L;
+        this.secret = new CredentialsSecret();
+    }
 
     /**
      * Constructor.
@@ -54,6 +70,7 @@ public class Credentials {
             @JsonProperty("name") final String name,
             @JsonProperty("uuid") final String uuid,
             @JsonProperty("type") final CredentialsType type,
+            @JsonProperty("credsExpire") final boolean credsExpire,
             @JsonProperty("expires") final long expires,
             @JsonProperty("secret") final CredentialsSecret secret) {
 
@@ -63,6 +80,7 @@ public class Credentials {
         this.name = name;
         this.uuid = uuid == null ? UUID.randomUUID().toString() : uuid;
         this.type = type;
+        this.credsExpire = credsExpire;
         this.expires = expires;
         this.secret = secret;
     }
@@ -112,6 +130,14 @@ public class Credentials {
         this.type = type;
     }
 
+    public boolean isCredsExpire() {
+        return credsExpire;
+    }
+
+    public void setCredsExpire(final boolean credsExpire) {
+        this.credsExpire = credsExpire;
+    }
+
     public long getExpires() {
         return expires;
     }
@@ -135,6 +161,20 @@ public class Credentials {
         this.secret = secret;
     }
 
+    /**
+     * Returns a deep copy of this object.
+     */
+    public Credentials copy() {
+        final CredentialsSecret copyOfSecret = this.secret.copy();
+        return new Credentials(
+                this.name,
+                this.uuid,
+                this.type,
+                this.credsExpire,
+                this.expires,
+                copyOfSecret);
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (o == null || getClass() != o.getClass()) {
@@ -144,13 +184,14 @@ public class Credentials {
         return Objects.equals(name, that.name)
                && Objects.equals(uuid, that.uuid)
                && type == that.type
+               && credsExpire == that.credsExpire
                && expires == that.expires
                && secret == that.secret;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, uuid, type, expires, secret);
+        return Objects.hash(name, uuid, type, credsExpire, expires, secret);
     }
 
     @Override
@@ -159,6 +200,7 @@ public class Credentials {
                "name='" + name +
                "', uuid='" + uuid +
                "', type=" + type +
+               ", credsExpire=" + credsExpire +
                ", expires=" + expires +
                ", secret=" + secret +
                '}';

@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS credentials (
   uuid         varchar(255) NOT NULL,
   name         varchar(255) NOT NULL,
   type         varchar(255) NOT NULL,
+  credsExpire  bool NOT NULL,
   expires      bigint NOT NULL,
   secret       longtext NOT NULL,
   PRIMARY KEY  (uuid)
