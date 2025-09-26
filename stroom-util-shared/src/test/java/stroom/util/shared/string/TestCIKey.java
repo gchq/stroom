@@ -21,7 +21,9 @@ import stroom.test.common.TestUtil.TimedCase;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.CompareUtil;
+import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -42,11 +44,14 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.ResourceLock;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -60,6 +65,7 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static stroom.util.shared.string.CIKey.equalsIgnoreCase;
 import static stroom.util.shared.string.CIKey.listOf;
+import static stroom.util.shared.string.CIKeys.commonKeys;
 import static stroom.util.shared.string.CIKeys.getCommonKey;
 import static stroom.util.shared.string.TestCIKeys.CI_KEYS_RESOURCE_LOCK;
 
@@ -267,6 +273,117 @@ public class TestCIKey {
                 .isEqualTo("FOO");
         assertThat(map.get(CIKey.of("FOO")))
                 .isEqualTo("FOO");
+    }
+
+    @Test
+    void testWithSet() {
+        final Set<CIKey> set = Stream.of(
+                        "foo", "Foo", "FOO",
+                        "bar", "Bar", "BAR",
+                        "feed", "Feed", "FEED")
+                .map(CIKey::ofDynamicKey)
+                .collect(Collectors.toSet());
+        assertThat(set)
+                .hasSize(3);
+
+        assertThat(set.contains(CIKey.ofDynamicKey("foo")))
+                .isTrue();
+        assertThat(set.contains(CIKey.ofDynamicKey("Foo")))
+                .isTrue();
+        assertThat(set.contains(CIKey.ofDynamicKey("FOO")))
+                .isTrue();
+        assertThat(set.contains(CIKey.ofDynamicKey("bar")))
+                .isTrue();
+        assertThat(set.contains(CIKey.ofDynamicKey("Bar")))
+                .isTrue();
+        assertThat(set.contains(CIKey.ofDynamicKey("BAR")))
+                .isTrue();
+        assertThat(set.contains(CIKey.ofDynamicKey("feed")))
+                .isTrue();
+        assertThat(set.contains(CIKey.ofDynamicKey("Feed")))
+                .isTrue();
+        assertThat(set.contains(CIKey.ofDynamicKey("FEED")))
+                .isTrue();
+        assertThat(set.contains(CIKey.ofDynamicKey("xxx")))
+                .isFalse();
+    }
+
+    @Test
+    void testEqualsHash() {
+        final Map<String, CIKey> knownKeys = Map.of(
+                "Feed", CIKey.ofDynamicKey("Feed"));
+
+        // Feed
+        final CIKey feed1a = CIKeys.FEED;
+        final CIKey feed1b = CIKey.of("Feed");
+        final CIKey feed1c = CIKey.of("Feed", "feed");
+        final CIKey feed1d = CIKey.ofDynamicKey("Feed");
+        final CIKey feed1e = CIKey.ofIgnoringCase("Feed");
+        final CIKey feed1f = CIKey.ofIgnoringCase("feed");
+        final CIKey feed1g = CIKey.ofIgnoringCase("FEED");
+        final CIKey feed1h = CIKey.of("Feed", knownKeys);
+
+        // feed
+        final CIKey feed2a = CIKey.of("feed");
+        final CIKey feed2b = CIKey.ofLowerCase("feed");
+
+        // FEED
+        final CIKey feed3 = CIKey.of("FEED");
+
+        final List<CIKey> feed1Keys = List.of(
+                feed1a,
+                feed1b,
+                feed1c,
+                feed1d,
+                feed1e,
+                feed1f,
+                feed1g,
+                feed1h);
+
+        final List<CIKey> feed2Keys = List.of(
+                feed2a,
+                feed2b);
+        final List<CIKey> feed3Keys = List.of(feed3);
+
+        final List<CIKey> allKeys = Stream.of(feed1Keys, feed2Keys, feed3Keys)
+                .flatMap(List::stream)
+                .toList();
+
+        dumpCiKeys(allKeys);
+        LOGGER.debug("Hash of 'feed': {}, {}", "feed".hashCode(), Objects.hash("feed"));
+
+        // All keys should be equal except for a case-sense match on get()
+        allKeys.forEach(aCiKey -> {
+            assertThat(feed1a)
+                    .isEqualTo(aCiKey);
+            assertThat(feed1a.getAsLowerCase())
+                    .isEqualTo(aCiKey.getAsLowerCase());
+            assertThat(feed1a.get())
+                    .isEqualToIgnoringCase(aCiKey.get());
+            assertThat(feed1a.hashCode())
+                    .isEqualTo(aCiKey.hashCode());
+
+            assertThat(feed1a)
+                    .isNotEqualTo(CIKey.ofDynamicKey("Foo"));
+            assertThat(feed1a.get())
+                    .isNotEqualTo("Foo");
+            assertThat(feed1a.hashCode())
+                    .isNotEqualTo("Foo".hashCode());
+        });
+
+        // Each set of keys with the same case-sense 'key' should be equal on get()
+        feed1Keys.forEach(aCiKey -> {
+            assertThat(feed1a.get())
+                    .isEqualTo(aCiKey.get());
+        });
+        feed2Keys.forEach(aCiKey -> {
+            assertThat(feed2a.get())
+                    .isEqualTo(aCiKey.get());
+        });
+        feed3Keys.forEach(aCiKey -> {
+            assertThat(feed3.get())
+                    .isEqualTo(aCiKey.get());
+        });
     }
 
     @TestFactory
@@ -539,10 +656,187 @@ public class TestCIKey {
     }
 
     @Test
-    void testOfDynamicKey() {
+    void testOfLowerCase_throws() {
+        final String key = "foO";
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            final CIKey ciKey = CIKey.ofLowerCase(key);
+                        })
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void testUnknownUpperCase() {
+        final String key = "XXX";
+        final CIKey ciKey1 = CIKey.of(key);
+        final CIKey ciKey2 = CIKey.ofDynamicKey(key);
+        Assertions.assertThatThrownBy(
+                        () -> CIKey.of(key, key))
+                .isInstanceOf(IllegalArgumentException.class);
+        Assertions.assertThatThrownBy(
+                        () -> CIKey.ofLowerCase(key))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        assertThat(ciKey1)
+                .isNotSameAs(ciKey2);
+        assertThat(ciKey1)
+                .isEqualTo(ciKey2);
+        assertThat(ciKey1.get())
+                .isEqualToIgnoringCase(ciKey2.get());
+        assertThat(ciKey1.getAsLowerCase())
+                .isEqualTo(ciKey2.getAsLowerCase());
+        assertThat(ciKey1.hashCode())
+                .isEqualTo(ciKey2.hashCode());
+
+        // Make sure not a common key
+        assertThat(commonKeys())
+                .doesNotContain(ciKey1);
+    }
+
+    @Test
+    void testUnknownLowerCase() {
+        final String key = "xxx";
+        final CIKey ciKey1 = CIKey.of(key);
+        final CIKey ciKey2 = CIKey.ofDynamicKey(key);
+        final CIKey ciKey3 = CIKey.ofLowerCase(key);
+        final CIKey ciKey4 = CIKey.of(key, key);
+
+        assertThat(ciKey1)
+                .isNotSameAs(ciKey2)
+                .isNotSameAs(ciKey3)
+                .isNotSameAs(ciKey4);
+        assertThat(ciKey1)
+                .isEqualTo(ciKey2)
+                .isEqualTo(ciKey3)
+                .isEqualTo(ciKey4);
+        assertThat(ciKey1.get())
+                .isEqualToIgnoringCase(ciKey2.get())
+                .isEqualToIgnoringCase(ciKey3.get())
+                .isEqualToIgnoringCase(ciKey4.get());
+        assertThat(ciKey1.getAsLowerCase())
+                .isEqualTo(ciKey2.getAsLowerCase())
+                .isEqualTo(ciKey3.getAsLowerCase())
+                .isEqualTo(ciKey4.getAsLowerCase());
+        assertThat(ciKey1.hashCode())
+                .isEqualTo(ciKey2.hashCode())
+                .isEqualTo(ciKey3.hashCode())
+                .isEqualTo(ciKey4.hashCode());
+
+        // Make sure not a common key
+        assertThat(commonKeys())
+                .doesNotContain(ciKey1);
+    }
+
+    @Test
+    void testKnownLowerCase() {
+        final String key = CIKeys.ACCEPT.get();
+
+        final CIKey ciKey1 = CIKey.of(key);
+        final CIKey ciKey2 = CIKey.ofDynamicKey(key);
+        final CIKey ciKey3 = CIKey.ofLowerCase(key);
+        final CIKey ciKey4 = CIKey.of(key, key);
+        final CIKey ciKey5 = CIKeys.ACCEPT;
+
+        assertThat(ciKey1)
+                .isNotSameAs(ciKey2)  // Dynamic one
+                .isSameAs(ciKey3)
+                .isSameAs(ciKey4)
+                .isSameAs(ciKey5);
+        assertThat(ciKey1)
+                .isEqualTo(ciKey2)
+                .isEqualTo(ciKey3)
+                .isEqualTo(ciKey4)
+                .isEqualTo(ciKey5);
+        assertThat(ciKey1.get())
+                .isEqualToIgnoringCase(ciKey2.get())
+                .isEqualToIgnoringCase(ciKey3.get())
+                .isEqualToIgnoringCase(ciKey4.get())
+                .isEqualToIgnoringCase(ciKey5.get());
+        assertThat(ciKey1.getAsLowerCase())
+                .isEqualTo(ciKey2.getAsLowerCase())
+                .isEqualTo(ciKey3.getAsLowerCase())
+                .isEqualTo(ciKey4.getAsLowerCase())
+                .isEqualTo(ciKey5.getAsLowerCase());
+        assertThat(ciKey1.hashCode())
+                .isEqualTo(ciKey2.hashCode())
+                .isEqualTo(ciKey3.hashCode())
+                .isEqualTo(ciKey4.hashCode())
+                .isEqualTo(ciKey5.hashCode());
+
+        // Make sure not a common key
+        assertThat(commonKeys())
+                .contains(ciKey1);
+    }
+
+    @Test
+    void testKnownUpperCase() {
+        final String key = CIKeys.UUID.get();
+
+        final CIKey ciKey1 = CIKey.of(key);
+        final CIKey ciKey2 = CIKey.ofDynamicKey(key);
+        // Key is known so this will work even though the case is wrong
+        final CIKey ciKey3 = CIKey.ofLowerCase(key);
+        // Key is known so this will work even though the case is wrong
+        final CIKey ciKey4 = CIKey.of(key, key);
+        final CIKey ciKey5 = CIKeys.UUID;
+
+        assertThat(ciKey1)
+                .isNotSameAs(ciKey2)  // Dynamic one
+                .isSameAs(ciKey3)
+                .isSameAs(ciKey4)
+                .isSameAs(ciKey5);
+        assertThat(ciKey1)
+                .isEqualTo(ciKey2)
+                .isEqualTo(ciKey3)
+                .isEqualTo(ciKey4)
+                .isEqualTo(ciKey5);
+        assertThat(ciKey1.get())
+                .isEqualToIgnoringCase(ciKey2.get())
+                .isEqualToIgnoringCase(ciKey3.get())
+                .isEqualToIgnoringCase(ciKey4.get())
+                .isEqualToIgnoringCase(ciKey5.get());
+        assertThat(ciKey1.getAsLowerCase())
+                .isEqualTo(ciKey2.getAsLowerCase())
+                .isEqualTo(ciKey3.getAsLowerCase())
+                .isEqualTo(ciKey4.getAsLowerCase())
+                .isEqualTo(ciKey5.getAsLowerCase());
+        assertThat(ciKey1.hashCode())
+                .isEqualTo(ciKey2.hashCode())
+                .isEqualTo(ciKey3.hashCode())
+                .isEqualTo(ciKey4.hashCode())
+                .isEqualTo(ciKey5.hashCode());
+
+        // Make sure not a common key
+        assertThat(commonKeys())
+                .contains(ciKey1);
+    }
+
+    @Test
+    void testOfDynamicKey1() {
         final String key = "UUID";
         CIKeys.addCommonKey(CIKeys.UUID);
         final CIKey ciKey1 = CIKeys.UUID;
+        final CIKey ciKey2 = CIKey.of(key);
+        final CIKey ciKey3 = CIKey.ofDynamicKey(key);
+        final CIKey ciKey4 = CIKey.ofDynamicKey(key);
+
+        assertThat(ciKey1)
+                .isSameAs(ciKey2);
+        assertThat(ciKey1)
+                .isNotSameAs(ciKey3);
+        assertThat(ciKey1)
+                .isNotSameAs(ciKey4);
+
+        assertThat(ciKey1)
+                .isEqualTo(ciKey3);
+        assertThat(ciKey1)
+                .isEqualTo(ciKey4);
+    }
+
+    @Test
+    void testOfDynamicKey2() {
+        final String key = "accept";
+        final CIKey ciKey1 = CIKeys.ACCEPT;
         final CIKey ciKey2 = CIKey.of(key);
         final CIKey ciKey3 = CIKey.ofDynamicKey(key);
         final CIKey ciKey4 = CIKey.ofDynamicKey(key);
@@ -637,6 +931,60 @@ public class TestCIKey {
                 .build();
     }
 
+    @Test
+    @Disabled
+        // manual run only
+    void testOfLowerKeyPerf() {
+        final List<String> lowerKeys = commonKeys()
+                .stream()
+                .map(CIKey::getAsLowerCase)
+                .toList();
+
+        final TimedCase caseCheckCase = TimedCase.of("Case check", (round, iterations) -> {
+            long num = 0;
+            for (long i = 0; i < iterations; i++) {
+                for (final String key : lowerKeys) {
+                    final String lower = key.toLowerCase();
+                    // Hashcode should be cached after 1st round
+                    num += key.hashCode();
+                }
+            }
+            if (num == 0) {
+                throw new RuntimeException("Shouldn't happen");
+            }
+
+        });
+
+        final TimedCase toLowerCaseCase = TimedCase.of("To lowercase", (round, iterations) -> {
+            long num = 0;
+            for (long i = 0; i < iterations; i++) {
+                for (final String key : lowerKeys) {
+                    for (int j = 0; j < key.length(); j++) {
+                        final char chr = key.charAt(j);
+                        if (Character.isUpperCase(chr)) {
+                            throw new RuntimeException(LogUtil.message("not lower case '{}'", key));
+                        }
+                    }
+                    // Hashcode should be cached after 1st round
+                    num += key.hashCode();
+                }
+            }
+            if (num == 0) {
+                throw new RuntimeException("Shouldn't happen");
+            }
+        });
+        final int iterations = 1_000_000;
+
+        TestUtil.comparePerformance(
+                10,
+                iterations,
+                LOGGER::info,
+                caseCheckCase,
+                toLowerCaseCase);
+
+        LOGGER.info("Check count = {}", ModelStringUtil.formatCsv(iterations * lowerKeys.size()));
+    }
+
     // Last time I ran this it did:
     // Completed 'Local Known Key' (round 3) in PT0.734136101S
     // Completed 'Common Key' (round 3) in PT0.800335664S
@@ -648,8 +996,7 @@ public class TestCIKey {
     @Disabled
     // manual run only
     void testPerf() {
-        final List<CIKey> ciKeys = new ArrayList<>(CIKeys.commonKeys());
-        ciKeys.add(CIKey.EMPTY_STRING);
+        final List<CIKey> ciKeys = new ArrayList<>(commonKeys());
 
         LOGGER.info("Key count: {}", ciKeys.size());
 
@@ -657,8 +1004,16 @@ public class TestCIKey {
                 .stream()
                 .map(CIKey::get)
                 .toList());
-        keys.add(CIKey.EMPTY_STRING.get());
-        keys.add(null);
+
+        final Set<CIKey> keysWithDups = ciKeys.stream()
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                .entrySet()
+                .stream()
+                .filter(entry -> entry.getValue() > 1)
+                .map(Entry::getKey)
+                .collect(Collectors.toSet());
+        assertThat(keysWithDups)
+                .isEmpty();
 
         final Map<String, CIKey> localKnownKeys = ciKeys
                 .stream()
@@ -765,6 +1120,13 @@ public class TestCIKey {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    private void dumpCiKeys(final Collection<CIKey> ciKeys) {
+        NullSafe.stream(ciKeys)
+                .forEach(ciKey ->
+                        LOGGER.debug("CiKey {}, lower: {}, hash: {}",
+                                ciKey.get(), ciKey.getAsLowerCase(), ciKey.hashCode()));
     }
 
 

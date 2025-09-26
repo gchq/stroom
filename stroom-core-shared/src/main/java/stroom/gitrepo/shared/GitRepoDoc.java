@@ -31,7 +31,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 
 @Description(
-        "Contains the configuration for a connection to a GIT repository.")
+        "Contains the configuration for a connection to a Git repository.")
 @JsonPropertyOrder({
         "type",
         "uuid",
@@ -238,12 +238,12 @@ public class GitRepoDoc extends Doc {
     @Override
     public String toString() {
         return "GitRepoDoc: {\n  "
-                + this.getName() + ",\n  "
-                + description + ",\n  "
-                + url + ",\n  "
-                + username + ",\n  "
-                + branch + "\n  "
-                + path + "\n  "
-                + autoPush + "\n}";
+               + this.getName() + ",\n  "
+               + description + ",\n  "
+               + url + ",\n  "
+               + username + ",\n  "
+               + branch + "\n  "
+               + path + "\n  "
+               + autoPush + "\n}";
     }
 }

@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#5147** : Fix proxy omitting allowed headers (e.g. 'Feed') if the case does not match that in the allowed set.
+
+* Issue **#5148** : Allow annotation users to edit labels.
+
+
 ## [v7.11-beta.6] - 2025-09-23
 
 * Issue **#4121** : Add rename option for pipeline elements.
