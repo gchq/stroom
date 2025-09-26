@@ -935,6 +935,81 @@ public class TestCIKey {
                 .build();
     }
 
+    @TestFactory
+    Stream<DynamicTest> testOf2() {
+        CIKeys.addCommonKey(CIKeys.FEED);
+        CIKeys.addCommonKey(CIKeys.ACCEPT);
+        CIKeys.addCommonKey(CIKeys.UUID);
+        Assertions.assertThat(CIKeys.getCommonKey("unknown"))
+                .isNull();
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withOutputType(CIKey.class)
+                .withSingleArgTestFunction(CIKey::of)
+                .withAssertions(testOutcome -> {
+                    Assertions.assertThat(testOutcome.getActualOutput())
+                            .isEqualTo(testOutcome.getExpectedOutput());
+                    if (testOutcome.getInput().equals(testOutcome.getExpectedOutput().get())) {
+                        // Make sure it is same instance as the common one
+                        // Feed vs Feed, common instance
+                        Assertions.assertThat(testOutcome.getActualOutput())
+                                .isSameAs(testOutcome.getExpectedOutput());
+                    } else {
+                        // FEED vs Feed, new instance
+                        Assertions.assertThat(testOutcome.getActualOutput())
+                                .isNotSameAs(testOutcome.getExpectedOutput());
+                    }
+                })
+                // Common key is 'Feed'
+                .addCase("Feed", CIKeys.FEED)
+                .addCase("feed", CIKeys.FEED)
+                .addCase("FEED", CIKeys.FEED)
+                // Common key is 'accept'
+                .addCase("Accept", CIKeys.ACCEPT)
+                .addCase("accept", CIKeys.ACCEPT)
+                .addCase("ACCEPT", CIKeys.ACCEPT)
+                // Common key is 'UUID'
+                .addCase("Uuid", CIKeys.UUID)
+                .addCase("uuid", CIKeys.UUID)
+                .addCase("UUID", CIKeys.UUID)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testOfIgnoringCase2() {
+        CIKeys.addCommonKey(CIKeys.FEED);
+        CIKeys.addCommonKey(CIKeys.ACCEPT);
+        CIKeys.addCommonKey(CIKeys.UUID);
+        Assertions.assertThat(CIKeys.getCommonKey("unknown"))
+                .isNull();
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withOutputType(CIKey.class)
+                .withSingleArgTestFunction(CIKey::ofIgnoringCase)
+                .withAssertions(testOutcome -> {
+                    Assertions.assertThat(testOutcome.getActualOutput())
+                            .isEqualTo(testOutcome.getExpectedOutput());
+                    // Make sure it is same instance as the common one
+                    Assertions.assertThat(testOutcome.getActualOutput())
+                            .isSameAs(testOutcome.getExpectedOutput());
+                })
+                // Common key is 'Feed'
+                .addCase("Feed", CIKeys.FEED)
+                .addCase("feed", CIKeys.FEED)
+                .addCase("FEED", CIKeys.FEED)
+                // Common key is 'accept'
+                .addCase("Accept", CIKeys.ACCEPT)
+                .addCase("accept", CIKeys.ACCEPT)
+                .addCase("ACCEPT", CIKeys.ACCEPT)
+                // Common key is 'UUID'
+                .addCase("Uuid", CIKeys.UUID)
+                .addCase("uuid", CIKeys.UUID)
+                .addCase("UUID", CIKeys.UUID)
+                .build();
+    }
+
     @Test
     @Disabled
         // manual run only

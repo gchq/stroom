@@ -178,7 +178,7 @@ public class CIKey implements Comparable<CIKey> {
     /**
      * Create a {@link CIKey} for key, providing a map of known {@link CIKey}s keyed
      * on their key value.
-     * Will fall back on {@link CIKeys#commonKeys()} if not found in knownKeys.
+     * Will fall back on {@link CIKeys#getCommonKey(String)} ()} if not found in knownKeys.
      * Allows callers to hold their own local set of known {@link CIKey}s to save
      * re-creating them each time.
      * <p>
@@ -323,11 +323,11 @@ public class CIKey implements Comparable<CIKey> {
             // First assume it matches the case exactly
             CIKey ciKey = CIKeys.getCommonKey(key);
             if (ciKey == null) {
-                // If the first char is lower case then there is a good change key is
+                // If the first char is lower case then there is a good chance key is
                 // all lower case
                 final char firstChar = key.charAt(0);
                 if (Character.isLowerCase(firstChar)) {
-                    // Now assume it is already lower-case
+                    // Now assume it is ALL lower-case
                     ciKey = CIKeys.getCommonKeyByLowerCase(key);
                 }
                 if (ciKey == null) {
