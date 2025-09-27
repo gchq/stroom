@@ -1,6 +1,7 @@
 package stroom.credentials.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.credentials.client.presenter.CredentialsDetailsDialogPresenter.CredentialsDetailsDialogView;
 import stroom.credentials.client.view.CredentialsViewImpl;
 import stroom.credentials.shared.Credentials;
 import stroom.credentials.shared.CredentialsResource;
@@ -27,7 +28,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.google.inject.Inject;
 
-import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
@@ -45,7 +45,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     private final DateTimeFormatter dateTimeFormatter;
 
     /** Where the data grid gets its data from */
-    private final RestDataProvider<Credentials,  ResultPage<Credentials>> dataProvider;
+    private RestDataProvider<Credentials,  ResultPage<Credentials>> dataProvider;
 
     /** List of credentials */
     private final MyDataGrid<Credentials> dataGrid;
@@ -86,32 +86,37 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
         this.restFactory = restFactory;
         this.detailsDialog = detailsDialog;
         this.dateTimeFormatter = dateTimeFormatter;
+        CredentialsViewImpl.console("CredentialsListPresenter ctor");
 
-        // REST to server
         this.dataGrid = new MyDataGrid<>(this);
+        view.setDataWidget(dataGrid);
+        this.gridSelectionModel = dataGrid.addDefaultSelectionModel(false);
+        btnAdd = this.getView().addButton(SvgPresets.ADD);
+        btnDelete = this.getView().addButton(SvgPresets.DELETE);
+        btnEdit = this.getView().addButton(SvgPresets.EDIT);
+    }
+
+    private void init() {
+        CredentialsViewImpl.console("init()");
+        // REST to server
+
 
         // Create the grid
-        view.setDataWidget(dataGrid);
+
         dataGrid.setMultiLine(true);
 
         // Add buttons to the pager
-        btnAdd = this.getView().addButton(SvgPresets.ADD);
+
         btnAdd.addClickHandler(event -> handleAddButtonClick());
-        btnDelete = this.getView().addButton(SvgPresets.DELETE);
+
         btnDelete.addClickHandler(event -> handleDeleteButtonClick());
-        btnEdit = this.getView().addButton(SvgPresets.EDIT);
+
         btnEdit.addClickHandler(event -> handleEditButtonClick());
 
         // Set selection model
-        this.gridSelectionModel = dataGrid.addDefaultSelectionModel(false);
+
 
         this.initColumns(dataGrid);
-
-        // Hook up the data
-        dataProvider = createDataProvider(eventBus,
-                view,
-                restFactory);
-        dataProvider.addDataDisplay(dataGrid);
 
         // Define a class for the CSS
         this.getWidget().addStyleName("credentials-list");
@@ -124,12 +129,20 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                     && dataGrid.getRowCount() > 0) {
                     final Credentials credentials = dataGrid.getVisibleItem(FIRST_ITEM_INDEX);
                     gridSelectionModel.setSelected(credentials);
+                    CredentialsViewImpl.console("Data loaded and first item selected");
                 }
             }
         });
 
         // Set the state of the UI
         gridSelectionModel.addSelectionHandler(event -> updateState());
+
+        // Hook up the data
+        dataProvider = createDataProvider(super.getEventBus(),
+                super.getView(),
+                restFactory);
+        dataProvider.addDataDisplay(dataGrid);
+
         updateState();
     }
 
@@ -181,7 +194,11 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                 final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
                 restFactory
                         .create(CREDENTIALS_RESOURCE)
-                        .method((r) -> r.list(pageRequest))
+                        .method((r) -> {
+                            CredentialsViewImpl.console("Getting creds from server");
+                            return r.list(pageRequest);
+                            //CredentialsViewImpl.console("Requested creds from server");
+                        })
                         .onSuccess(dataConsumer)
                         .onFailure(restErrorHandler)
                         .taskMonitorFactory(view)
@@ -192,9 +209,11 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
 
     /**
      * Called from CredentialsPresenter to hook UI elements together on initialisation.
+     * Needed so that the spinner works when waiting for server.
      */
     public void setCredentialsPresenter(final CredentialsPresenter credentialsPresenter) {
         this.credentialsPresenter = credentialsPresenter;
+        this.init();
     }
 
     /**
@@ -208,6 +227,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      * Updates the UI state.
      */
     private void updateState() {
+        CredentialsViewImpl.console("updateState()");
         if (gridSelectionModel.getSelected() != null) {
             btnDelete.setEnabled(true);
             btnEdit.setEnabled(true);
@@ -221,6 +241,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      * Called when the Add (+) button is clicked.
      */
     private void handleAddButtonClick() {
+        CredentialsViewImpl.console("handleAddButtonClick()");
         final Credentials newCredentials = new Credentials();
         showDetailsDialog(newCredentials);
     }
@@ -259,6 +280,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      * When edit button is clicked
      */
     private void handleEditButtonClick() {
+        CredentialsViewImpl.console("handleEditButtonClick()");
         final Credentials credentials = gridSelectionModel.getSelected();
         showDetailsDialog(credentials);
     }
@@ -268,19 +290,40 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      * @param credentials The credentials to add or edit.
      */
     private void showDetailsDialog(final Credentials credentials) {
+        CredentialsViewImpl.console("showDetailsDialog()");
         if (credentials != null) {
             final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(detailsDialog);
             detailsDialog.setupDialog(credentials, builder);
             builder.onHideRequest(e -> {
+                        CredentialsViewImpl.console("showDetailsDialog() hide request");
                         if (e.isOk()) {
+                            CredentialsViewImpl.console("showDetailsDialog() isOk");
+
                             if (detailsDialog.isValid()) {
+                                CredentialsViewImpl.console("showDetailsDialog() isValid");
+                                final CredentialsDetailsDialogView view = detailsDialog.getView();
+                                CredentialsViewImpl.console("Got view: " + view);
+                                final Credentials credsToSave = view.getCredentials();
+                                CredentialsViewImpl.console("showDetailsDialog() creds to save " + credsToSave.toString());
                                 e.hide();
-                                saveCredentials(detailsDialog.getView().getCredentials());
+                                CredentialsViewImpl.console("showDetailsDialog() hidden");
+
+                                //saveCredentials(detailsDialog.getView().getCredentials());
+                                saveCredentials(credsToSave);
+                                CredentialsViewImpl.console("showDetailsDialog() creds saved");
+
 
                             } else {
-                                AlertEvent.fireWarn(detailsDialog,
-                                        detailsDialog.getValidationMessage(),
-                                        e::reset);
+                                CredentialsViewImpl.console("showDetailsDialog() not valid");
+
+                                final String validationMessage = detailsDialog.getValidationMessage();
+                                CredentialsViewImpl.console("showDetailsDialog() " + validationMessage);
+
+                                if (validationMessage != null) {
+                                    AlertEvent.fireWarn(detailsDialog,
+                                            detailsDialog.getValidationMessage(),
+                                            e::reset);
+                                }
                             }
                         } else {
                             // Cancel pressed
@@ -292,8 +335,12 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     }
 
     private void saveCredentials(final Credentials creds) {
+        CredentialsViewImpl.console("saveCredentials()");
         restFactory.create(CREDENTIALS_RESOURCE)
-                .method(res -> res.store(creds))
+                .method(res -> {
+                    CredentialsViewImpl.console("saveCredentials() res.store()");
+                    return res.store(creds);
+                })
                 .onSuccess(result -> {
                     CredentialsViewImpl.console("Saved credentials");
                     if (result.getStatus() == Status.OK) {
@@ -311,6 +358,9 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                                 null);
                     }
                 })
+                .onFailure(error -> {
+                    CredentialsViewImpl.console("onFailure: " + error);
+                })
                 .taskMonitorFactory(CredentialsListPresenter.this)
                 .exec();
 
@@ -320,6 +370,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      * Refreshes the list from the DB.
      */
     void refreshList(final Credentials selected) {
+        CredentialsViewImpl.console("refreshList()");
         dataProvider.refresh();
         if (selected != null) {
             // This doesn't work - don't know why.

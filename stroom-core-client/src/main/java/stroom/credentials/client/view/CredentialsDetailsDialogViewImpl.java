@@ -159,19 +159,30 @@ public class CredentialsDetailsDialogViewImpl
      */
     @Override
     public Credentials getCredentials() {
+        CredentialsViewImpl.console("getCredentials()");
         final CredentialsSecret secret = new CredentialsSecret(
                 txtUsername.getText(),
                 pwdPassword.getText(),
                 txtAccessToken.getText(),
                 txtPassphrase.getText(),
                 txtPrivateKey.getText());
-        return new Credentials(
+        CredentialsViewImpl.console("getCredentials() got secret " + secret.toString());
+        CredentialsViewImpl.console("txtname" + txtName.getText());
+        CredentialsViewImpl.console("uuid" + uuid);
+        CredentialsViewImpl.console("type" + getCredentialsType());
+        CredentialsViewImpl.console("credsExpire" + chkCredsExpire.getValue());
+        CredentialsViewImpl.console("expires" + dtpExpires.getMilliseconds());
+        final Long expiresAsLong = dtpExpires.getMilliseconds();
+        final long expires = expiresAsLong == null ? 0L : expiresAsLong;
+        final Credentials retval = new Credentials(
                 txtName.getText(),
                 uuid,
                 getCredentialsType(),
                 chkCredsExpire.getValue(),
-                dtpExpires.getMilliseconds(),
+                expires,
                 secret);
+        CredentialsViewImpl.console("getCredentials() got creds " + retval.toString());
+        return retval;
     }
 
     /**
@@ -186,7 +197,7 @@ public class CredentialsDetailsDialogViewImpl
      * if everything is ok.
      */
     public String getValidationMessage() {
-
+        CredentialsViewImpl.console("getValidationMessage()");
         final CredentialsType type = getCredentialsType();
 
         if (type == null || uuid == null) {
@@ -204,6 +215,7 @@ public class CredentialsDetailsDialogViewImpl
             }
         }
 
+        CredentialsViewImpl.console("getValidationMessage() = null");
         return null;
     }
 

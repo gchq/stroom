@@ -62,6 +62,7 @@ public class TestCredentialsDaoImpl {
         final Credentials credentials1 = new Credentials("Test creds",
                 uuid,
                 CredentialsType.USERNAME_PASSWORD,
+                false,
                 expires,
                 secret);
 

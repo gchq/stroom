@@ -45,6 +45,7 @@ public class CredentialsViewImpl extends ViewImpl implements CredentialsView {
      */
     @Override
     public void setInSlot(final Object slot, final Widget content) {
+        console("Setting in slot");
         if (CredentialsPresenter.CREDENTIALS_LIST.equals(slot)) {
             credentialsList.setWidget(content);
         }
