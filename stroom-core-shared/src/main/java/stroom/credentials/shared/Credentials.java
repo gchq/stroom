@@ -53,7 +53,7 @@ public class Credentials {
         this.uuid = UUID.randomUUID().toString();
         this.type = CredentialsType.USERNAME_PASSWORD;
         this.credsExpire = false;
-        this.expires = 0L;
+        this.expires = System.currentTimeMillis();
         this.secret = new CredentialsSecret();
     }
 
