@@ -262,9 +262,12 @@ class TestAnnotationDaoImpl {
 
         // Try all fields first.
         final FieldIndex fieldIndex = new FieldIndex();
-        final List<QueryField> filteredFields = AnnotationFields.FIELDS.stream().filter(field -> !field.equals(AnnotationFields.ID_FIELD)).toList();
+        final List<QueryField> filteredFields = AnnotationFields.FIELDS
+                .stream()
+                .filter(field -> !field.equals(AnnotationFields.ID_FIELD))
+                .toList();
 
-        filteredFields .forEach(field -> fieldIndex.create(field.getFldName()));
+        filteredFields.forEach(field -> fieldIndex.create(field.getFldName()));
         final List<Val[]> list = new ArrayList<>();
         annotationDao.search(new ExpressionCriteria(), fieldIndex, list::add, uuid -> true);
         assertThat(list.size()).isOne();
