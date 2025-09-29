@@ -1,7 +1,7 @@
 package stroom.credentials.client.view;
 
-import stroom.contentstore.client.presenter.ContentStoreCredentialsDialogUiHandlers;
 import stroom.credentials.client.presenter.CredentialsDetailsDialogPresenter.CredentialsDetailsDialogView;
+import stroom.credentials.client.presenter.CredentialsDetailsDialogUiHandlers;
 import stroom.credentials.shared.Credentials;
 import stroom.credentials.shared.CredentialsSecret;
 import stroom.credentials.shared.CredentialsType;
@@ -26,7 +26,7 @@ import javax.inject.Inject;
  * Provides backing for CredentialsDetailsDialogView.ui.xml.
  */
 public class CredentialsDetailsDialogViewImpl
-        extends ViewWithUiHandlers<ContentStoreCredentialsDialogUiHandlers>
+        extends ViewWithUiHandlers<CredentialsDetailsDialogUiHandlers>
         implements CredentialsDetailsDialogView {
 
     /** Underlying Widget created by UiBinder */
@@ -159,30 +159,21 @@ public class CredentialsDetailsDialogViewImpl
      */
     @Override
     public Credentials getCredentials() {
-        CredentialsViewImpl.console("getCredentials()");
         final CredentialsSecret secret = new CredentialsSecret(
                 txtUsername.getText(),
                 pwdPassword.getText(),
                 txtAccessToken.getText(),
                 txtPassphrase.getText(),
                 txtPrivateKey.getText());
-        CredentialsViewImpl.console("getCredentials() got secret " + secret.toString());
-        CredentialsViewImpl.console("txtname" + txtName.getText());
-        CredentialsViewImpl.console("uuid" + uuid);
-        CredentialsViewImpl.console("type" + getCredentialsType());
-        CredentialsViewImpl.console("credsExpire" + chkCredsExpire.getValue());
-        CredentialsViewImpl.console("expires" + dtpExpires.getMilliseconds());
         final Long expiresAsLong = dtpExpires.getMilliseconds();
         final long expires = expiresAsLong == null ? 0L : expiresAsLong;
-        final Credentials retval = new Credentials(
+        return new Credentials(
                 txtName.getText(),
                 uuid,
                 getCredentialsType(),
                 chkCredsExpire.getValue(),
                 expires,
                 secret);
-        CredentialsViewImpl.console("getCredentials() got creds " + retval.toString());
-        return retval;
     }
 
     /**
@@ -197,7 +188,6 @@ public class CredentialsDetailsDialogViewImpl
      * if everything is ok.
      */
     public String getValidationMessage() {
-        CredentialsViewImpl.console("getValidationMessage()");
         final CredentialsType type = getCredentialsType();
 
         if (type == null || uuid == null) {
@@ -215,7 +205,6 @@ public class CredentialsDetailsDialogViewImpl
             }
         }
 
-        CredentialsViewImpl.console("getValidationMessage() = null");
         return null;
     }
 

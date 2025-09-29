@@ -1,6 +1,7 @@
 package stroom.credentials.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.ConfirmEvent;
 import stroom.credentials.client.presenter.CredentialsDetailsDialogPresenter.CredentialsDetailsDialogView;
 import stroom.credentials.client.view.CredentialsViewImpl;
 import stroom.credentials.shared.Credentials;
@@ -45,7 +46,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     private final DateTimeFormatter dateTimeFormatter;
 
     /** Where the data grid gets its data from */
-    private RestDataProvider<Credentials,  ResultPage<Credentials>> dataProvider;
+    private final RestDataProvider<Credentials,  ResultPage<Credentials>> dataProvider;
 
     /** List of credentials */
     private final MyDataGrid<Credentials> dataGrid;
@@ -86,35 +87,18 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
         this.restFactory = restFactory;
         this.detailsDialog = detailsDialog;
         this.dateTimeFormatter = dateTimeFormatter;
-        CredentialsViewImpl.console("CredentialsListPresenter ctor");
 
         this.dataGrid = new MyDataGrid<>(this);
         view.setDataWidget(dataGrid);
+        dataGrid.setMultiLine(true);
         this.gridSelectionModel = dataGrid.addDefaultSelectionModel(false);
+
         btnAdd = this.getView().addButton(SvgPresets.ADD);
         btnDelete = this.getView().addButton(SvgPresets.DELETE);
         btnEdit = this.getView().addButton(SvgPresets.EDIT);
-    }
-
-    private void init() {
-        CredentialsViewImpl.console("init()");
-        // REST to server
-
-
-        // Create the grid
-
-        dataGrid.setMultiLine(true);
-
-        // Add buttons to the pager
-
         btnAdd.addClickHandler(event -> handleAddButtonClick());
-
         btnDelete.addClickHandler(event -> handleDeleteButtonClick());
-
         btnEdit.addClickHandler(event -> handleEditButtonClick());
-
-        // Set selection model
-
 
         this.initColumns(dataGrid);
 
@@ -129,7 +113,6 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                     && dataGrid.getRowCount() > 0) {
                     final Credentials credentials = dataGrid.getVisibleItem(FIRST_ITEM_INDEX);
                     gridSelectionModel.setSelected(credentials);
-                    CredentialsViewImpl.console("Data loaded and first item selected");
                 }
             }
         });
@@ -159,7 +142,13 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                 300);
 
         grid.addResizableColumn(
-                DataGridUtil.textColumnBuilder((Credentials c) -> dateTimeFormatter.format(c.getExpires()))
+                DataGridUtil.textColumnBuilder((final Credentials c) -> {
+                            if (c.isCredsExpire()) {
+                                return dateTimeFormatter.format(c.getExpires());
+                            } else {
+                                return "";
+                            }
+                        })
                         .build(),
                 DataGridUtil.headingBuilder("Expires")
                         .withToolTip("When these credentials expire")
@@ -184,21 +173,15 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     createDataProvider(final EventBus eventBus,
                        final PagerView view,
                        final RestFactory restFactory) {
-        CredentialsViewImpl.console("Creating data provider");
         return new RestDataProvider<>(eventBus) {
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<Credentials>> dataConsumer,
                                 final RestErrorHandler restErrorHandler) {
-                CredentialsViewImpl.console("Requesting range " + range);
                 final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
                 restFactory
                         .create(CREDENTIALS_RESOURCE)
-                        .method((r) -> {
-                            CredentialsViewImpl.console("Getting creds from server");
-                            return r.list(pageRequest);
-                            //CredentialsViewImpl.console("Requested creds from server");
-                        })
+                        .method(r ->  r.list(pageRequest))
                         .onSuccess(dataConsumer)
                         .onFailure(restErrorHandler)
                         .taskMonitorFactory(view)
@@ -213,21 +196,12 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      */
     public void setCredentialsPresenter(final CredentialsPresenter credentialsPresenter) {
         this.credentialsPresenter = credentialsPresenter;
-        this.init();
     }
-
-    /**
-     * @return The selected items in the list. Called from the Details view.
-     */
-    //public MultiSelectionModel<Credentials> getSelectionModel() {
-    //    return this.gridSelectionModel;
-    //}
 
     /**
      * Updates the UI state.
      */
     private void updateState() {
-        CredentialsViewImpl.console("updateState()");
         if (gridSelectionModel.getSelected() != null) {
             btnDelete.setEnabled(true);
             btnEdit.setEnabled(true);
@@ -241,7 +215,6 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      * Called when the Add (+) button is clicked.
      */
     private void handleAddButtonClick() {
-        CredentialsViewImpl.console("handleAddButtonClick()");
         final Credentials newCredentials = new Credentials();
         showDetailsDialog(newCredentials);
     }
@@ -250,9 +223,22 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      * Called when the delete button is clicked.
      */
     private void handleDeleteButtonClick() {
-        CredentialsViewImpl.console("handleDeleteButtonClick");
-
         final Credentials selectedCredentials = gridSelectionModel.getSelected();
+
+        ConfirmEvent.fire(this, "Are you sure you want to delete the credentials '" +
+                                selectedCredentials.getName() + "' ?", ok -> {
+            if (ok) {
+                deleteCredentials(selectedCredentials);
+            }
+        });
+    }
+
+    /**
+     * Performs the deletion in the database.
+     * @param selectedCredentials The currently selected credentials, which are to be deleted.
+     */
+    private void deleteCredentials(final Credentials selectedCredentials) {
+
         if (selectedCredentials != null) {
             restFactory.create(CREDENTIALS_RESOURCE)
                     .method(res -> res.delete(selectedCredentials.getUuid()))
@@ -280,7 +266,6 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      * When edit button is clicked
      */
     private void handleEditButtonClick() {
-        CredentialsViewImpl.console("handleEditButtonClick()");
         final Credentials credentials = gridSelectionModel.getSelected();
         showDetailsDialog(credentials);
     }
@@ -290,34 +275,20 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      * @param credentials The credentials to add or edit.
      */
     private void showDetailsDialog(final Credentials credentials) {
-        CredentialsViewImpl.console("showDetailsDialog()");
         if (credentials != null) {
             final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(detailsDialog);
             detailsDialog.setupDialog(credentials, builder);
             builder.onHideRequest(e -> {
-                        CredentialsViewImpl.console("showDetailsDialog() hide request");
                         if (e.isOk()) {
-                            CredentialsViewImpl.console("showDetailsDialog() isOk");
 
                             if (detailsDialog.isValid()) {
-                                CredentialsViewImpl.console("showDetailsDialog() isValid");
                                 final CredentialsDetailsDialogView view = detailsDialog.getView();
-                                CredentialsViewImpl.console("Got view: " + view);
                                 final Credentials credsToSave = view.getCredentials();
-                                CredentialsViewImpl.console("showDetailsDialog() creds to save " + credsToSave.toString());
                                 e.hide();
-                                CredentialsViewImpl.console("showDetailsDialog() hidden");
 
-                                //saveCredentials(detailsDialog.getView().getCredentials());
                                 saveCredentials(credsToSave);
-                                CredentialsViewImpl.console("showDetailsDialog() creds saved");
-
-
                             } else {
-                                CredentialsViewImpl.console("showDetailsDialog() not valid");
-
                                 final String validationMessage = detailsDialog.getValidationMessage();
-                                CredentialsViewImpl.console("showDetailsDialog() " + validationMessage);
 
                                 if (validationMessage != null) {
                                     AlertEvent.fireWarn(detailsDialog,
@@ -335,14 +306,9 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     }
 
     private void saveCredentials(final Credentials creds) {
-        CredentialsViewImpl.console("saveCredentials()");
         restFactory.create(CREDENTIALS_RESOURCE)
-                .method(res -> {
-                    CredentialsViewImpl.console("saveCredentials() res.store()");
-                    return res.store(creds);
-                })
+                .method(res -> res.store(creds))
                 .onSuccess(result -> {
-                    CredentialsViewImpl.console("Saved credentials");
                     if (result.getStatus() == Status.OK) {
                         // Reload the list & select it
                         dataProvider.refresh();
@@ -350,33 +316,15 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                         gridSelectionModel.setSelected(creds);
 
                     } else {
-                        CredentialsViewImpl.console("Error saving credentials");
-
                         AlertEvent.fireError(credentialsPresenter,
                                 "Save Error",
                                 result.getMessage(),
                                 null);
                     }
                 })
-                .onFailure(error -> {
-                    CredentialsViewImpl.console("onFailure: " + error);
-                })
+                .onFailure(error -> CredentialsViewImpl.console("onFailure: " + error))
                 .taskMonitorFactory(CredentialsListPresenter.this)
                 .exec();
-
-    }
-
-    /**
-     * Refreshes the list from the DB.
-     */
-    void refreshList(final Credentials selected) {
-        CredentialsViewImpl.console("refreshList()");
-        dataProvider.refresh();
-        if (selected != null) {
-            // This doesn't work - don't know why.
-            // Maybe the credentials objects don't match.
-            gridSelectionModel.setSelected(selected);
-        }
     }
 
 }

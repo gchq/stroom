@@ -1,7 +1,6 @@
 package stroom.credentials.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.credentials.client.view.CredentialsViewImpl;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 
@@ -35,10 +34,8 @@ public class CredentialsPresenter
                                 final CredentialsView view,
                                 final CredentialsListPresenter credentialsListPresenter) {
         super(eventBus, view);
-        CredentialsViewImpl.console("CredentialsPresenter ctor");
         credentialsListPresenter.setCredentialsPresenter(this);
         this.setInSlot(CREDENTIALS_LIST, credentialsListPresenter);
-        CredentialsViewImpl.console("List set in slot");
     }
 
     /**

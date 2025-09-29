@@ -74,6 +74,7 @@ public class TestCredentialsDaoImpl {
         assertThat(credentials2.getName()).isEqualTo("Test creds");
         assertThat(credentials2.getUuid()).isEqualTo(uuid);
         assertThat(credentials2.getType()).isEqualTo(CredentialsType.USERNAME_PASSWORD);
+        assertThat(credentials2.isCredsExpire()).isEqualTo(false);
         assertThat(credentials2.getExpires()).isEqualTo(expires);
         assertThat(credentials2.getSecret()).isEqualTo(secret);
 
@@ -84,6 +85,7 @@ public class TestCredentialsDaoImpl {
         assertThat(cl1.getName()).isEqualTo("Test creds");
         assertThat(cl1.getUuid()).isEqualTo(uuid);
         assertThat(cl1.getType()).isEqualTo(CredentialsType.USERNAME_PASSWORD);
+        assertThat(cl1.isCredsExpire()).isEqualTo(false);
         assertThat(cl1.getExpires()).isEqualTo(expires);
         assertThat(cl1.getSecret()).isEqualTo(secret);
     }
