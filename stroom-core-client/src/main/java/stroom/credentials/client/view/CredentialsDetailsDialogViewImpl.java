@@ -209,14 +209,6 @@ public class CredentialsDetailsDialogViewImpl
     }
 
     /**
-     * Resets all dialog information for the next use.
-     */
-    @Override
-    public void resetData() {
-        setCredentials(null);
-    }
-
-    /**
      * @return The selected credentials type as an enum.
      */
     private CredentialsType getCredentialsType() {

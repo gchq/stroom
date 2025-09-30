@@ -13,10 +13,7 @@ import com.gwtplatform.mvp.client.View;
 import javax.inject.Inject;
 
 /**
- * Dialog to ask users for credentials when they want to install
- * a content pack that needs GIT authentication.
- * This content pack is probably a commercial one that requires payment
- * to get the credentials.
+ * Dialog to show and edit the details of one set of Credentials.
  */
 public class CredentialsDetailsDialogPresenter
         extends MyPresenterWidget<CredentialsDetailsDialogView> {
@@ -84,11 +81,6 @@ public class CredentialsDetailsDialogPresenter
         boolean isValid();
 
         String getValidationMessage();
-
-        /**
-         * Resets all dialog information for the next use.
-         */
-        void resetData();
 
     }
 }

@@ -23,6 +23,7 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.cellview.client.LoadingStateChangeEvent.LoadingState;
 import com.google.gwt.view.client.Range;
 import com.google.web.bindery.event.shared.EventBus;
@@ -37,7 +38,7 @@ import java.util.function.Consumer;
 public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
 
     /** Reference to top level of page. Allows updating state */
-    private CredentialsPresenter credentialsPresenter = null;
+    private HasHandlers parentPresenter = null;
 
     /** Used to talk to the server */
     private final RestFactory restFactory;
@@ -66,12 +67,18 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     /** Dialog to edit the credentials */
     private final CredentialsDetailsDialogPresenter detailsDialog;
 
+    /** Flag to set whether something is selected by default */
+    private boolean defaultSelection = true;
+
     /** Index of the first item in the list of credentials */
     private static final int FIRST_ITEM_INDEX = 0;
 
     /** The resource to access server-side data */
     public static final CredentialsResource CREDENTIALS_RESOURCE
             = GWT.create(CredentialsResource.class);
+
+    /** ID of the presenter for the list of credentials */
+    public static final String CREDENTIALS_LIST = "CREDENTIALS_LIST";
 
     /**
      * Injected constructor.
@@ -109,10 +116,12 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
         dataGrid.addLoadingStateChangeHandler(event -> {
             if (event.getLoadingState() == LoadingState.LOADED
                 || event.getLoadingState() == LoadingState.PARTIALLY_LOADED) {
-                if (gridSelectionModel.getSelected() == null
-                    && dataGrid.getRowCount() > 0) {
-                    final Credentials credentials = dataGrid.getVisibleItem(FIRST_ITEM_INDEX);
-                    gridSelectionModel.setSelected(credentials);
+                if (defaultSelection) {
+                    if (gridSelectionModel.getSelected() == null
+                        && dataGrid.getRowCount() > 0) {
+                        final Credentials credentials = dataGrid.getVisibleItem(FIRST_ITEM_INDEX);
+                        gridSelectionModel.setSelected(credentials);
+                    }
                 }
             }
         });
@@ -194,8 +203,66 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      * Called from CredentialsPresenter to hook UI elements together on initialisation.
      * Needed so that the spinner works when waiting for server.
      */
-    public void setCredentialsPresenter(final CredentialsPresenter credentialsPresenter) {
-        this.credentialsPresenter = credentialsPresenter;
+    public void setParentPresenter(final HasHandlers parentPresenter) {
+        this.parentPresenter = parentPresenter;
+    }
+
+    /**
+     * Allows clients to turn off the selection of the first item in the list if nothing
+     * else is selected.
+     * If this isn't called then the default selection will be made.
+     * @param defaultSelection true if the first item should be selected if nothing
+     *                         else is selected. false if nothing should be selected
+     *                         in that case.
+     */
+    public void setDefaultSelection(final boolean defaultSelection) {
+        this.defaultSelection = defaultSelection;
+    }
+
+    public void setSelectedCredentialsId(final String uuid) {
+        dataProvider.refresh();
+        if (uuid != null) {
+            restFactory.create(CREDENTIALS_RESOURCE)
+                    .method(res -> res.get(uuid))
+                    .onSuccess(res -> {
+                        if (res.getStatus() == Status.OK) {
+                            setSelectedCredentials(res.getCredentials());
+                        } else {
+                            AlertEvent.fireError(parentPresenter,
+                                    "Error finding selected credentials",
+                                    res.getMessage(),
+                                    null);
+                        }
+                    })
+                    .onFailure(error -> AlertEvent.fireError(parentPresenter,
+                            "Error finding selected credentials",
+                            error.getMessage(),
+                            null))
+                    .taskMonitorFactory(CredentialsListPresenter.this)
+                    .exec();
+        } else {
+            setSelectedCredentials(null);
+        }
+    }
+
+    /**
+     * Sets the selected credentials in the UI.
+     * @param credentials The credentials to show as selected. Can be null if nothing is selected.
+     */
+    private void setSelectedCredentials(final Credentials credentials) {
+        gridSelectionModel.setSelected(credentials);
+    }
+
+    /**
+     * @return The ID of the currently selected credentials, or null if nothing is selected.
+     */
+    public String getSelectedCredentialsId() {
+        final Credentials selectedCredentials = gridSelectionModel.getSelected();
+        if (selectedCredentials != null) {
+            return selectedCredentials.getUuid();
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -251,7 +318,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                                 gridSelectionModel.setSelected(firstItem);
                             }
                         } else {
-                            AlertEvent.fireError(credentialsPresenter,
+                            AlertEvent.fireError(parentPresenter,
                                     "Delete Error",
                                     result.getMessage(),
                                     null);
@@ -312,11 +379,10 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                     if (result.getStatus() == Status.OK) {
                         // Reload the list & select it
                         dataProvider.refresh();
-                        // TODO This isn't working...
                         gridSelectionModel.setSelected(creds);
 
                     } else {
-                        AlertEvent.fireError(credentialsPresenter,
+                        AlertEvent.fireError(parentPresenter,
                                 "Save Error",
                                 result.getMessage(),
                                 null);

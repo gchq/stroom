@@ -20,9 +20,6 @@ public class CredentialsPresenter
     /** Tab type for the content (what is this?) */
     private static final String TAB_TYPE = "Credentials";
 
-    /** ID of the presenter for the list of credentials */
-    public static final String CREDENTIALS_LIST = "CREDENTIALS_LIST";
-
     /**
      * Injected constructor.
      * @param eventBus Passed to superclass
@@ -34,8 +31,8 @@ public class CredentialsPresenter
                                 final CredentialsView view,
                                 final CredentialsListPresenter credentialsListPresenter) {
         super(eventBus, view);
-        credentialsListPresenter.setCredentialsPresenter(this);
-        this.setInSlot(CREDENTIALS_LIST, credentialsListPresenter);
+        credentialsListPresenter.setParentPresenter(this);
+        this.setInSlot(CredentialsListPresenter.CREDENTIALS_LIST, credentialsListPresenter);
     }
 
     /**

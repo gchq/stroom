@@ -60,7 +60,7 @@ public class CredentialsResourceImpl implements CredentialsResource {
         CredentialsResponse response;
         try {
             credentialsDao.store(credentials);
-            response = new CredentialsResponse(Status.OK, "");
+            response = new CredentialsResponse(Status.OK);
         } catch (final IOException e) {
             response = new CredentialsResponse(Status.GENERAL_ERR, e.getMessage());
         }
@@ -68,9 +68,18 @@ public class CredentialsResourceImpl implements CredentialsResource {
     }
 
     @Override
-    public Credentials get(final String uuid) throws IOException {
+    public CredentialsResponse get(final String uuid) {
         LOGGER.info("Getting credentials for '{}'", uuid);
-        return credentialsDao.get(uuid);
+        final Credentials credentials;
+        try {
+            credentials = credentialsDao.get(uuid);
+            return new CredentialsResponse(Status.OK,
+                    "",
+                    credentials);
+        } catch (final IOException e) {
+            return new CredentialsResponse(Status.GENERAL_ERR,
+                    "Error getting credentials: " + e.getMessage());
+        }
     }
 
     @Override
@@ -78,7 +87,7 @@ public class CredentialsResourceImpl implements CredentialsResource {
         LOGGER.info("Deleting credentials for '{}'", uuid);
         try {
             credentialsDao.delete(uuid);
-            return new CredentialsResponse(Status.OK, "");
+            return new CredentialsResponse(Status.OK);
         } catch (final IOException e) {
             return new CredentialsResponse(Status.GENERAL_ERR,
                     "Error deleting credentials: "

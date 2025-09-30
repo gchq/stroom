@@ -88,6 +88,9 @@ public class GitRepoDoc extends Doc {
     private String password = "";
 
     @JsonProperty
+    private String credentialsId = "";
+
+    @JsonProperty
     private String branch = "";
 
     @JsonProperty
@@ -121,6 +124,7 @@ public class GitRepoDoc extends Doc {
                       @JsonProperty("url") final String url,
                       @JsonProperty("username") final String username,
                       @JsonProperty("password") final String password,
+                      @JsonProperty("credentialsId") final String credentialsId,
                       @JsonProperty("branch") final String branch,
                       @JsonProperty("path") final String path,
                       @JsonProperty("commit") final String commit,
@@ -136,6 +140,7 @@ public class GitRepoDoc extends Doc {
         this.url = url;
         this.username = username;
         this.password = password;
+        this.credentialsId = credentialsId;
         this.branch = branch;
         this.path = path;
         this.commit = commit;
@@ -150,6 +155,9 @@ public class GitRepoDoc extends Doc {
         }
         if (this.password == null) {
             this.password = "";
+        }
+        if (this.credentialsId == null) {
+            this.credentialsId = "";
         }
         if (this.branch == null) {
             this.branch = "";
@@ -196,6 +204,7 @@ public class GitRepoDoc extends Doc {
                && Objects.equals(url, that.url)
                && Objects.equals(username, that.username)
                && Objects.equals(password, that.password)
+               && Objects.equals(credentialsId, that.credentialsId)
                && Objects.equals(branch, that.branch)
                && Objects.equals(path, that.path)
                && Objects.equals(commit, that.commit)
@@ -211,6 +220,7 @@ public class GitRepoDoc extends Doc {
                 url,
                 username,
                 password,
+                credentialsId,
                 branch,
                 path,
                 commit,
@@ -280,6 +290,14 @@ public class GitRepoDoc extends Doc {
 
     public void setPassword(final String password) {
         this.password = password;
+    }
+
+    public String getCredentialsId() {
+        return credentialsId;
+    }
+
+    public void setCredentialsId(final String id) {
+        this.credentialsId = id;
     }
 
     public String getBranch() {

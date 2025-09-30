@@ -20,18 +20,48 @@ public class CredentialsResponse {
     @JsonProperty
     private final String message;
 
+    @JsonProperty
+    private final Credentials credentials;
+
     /**
-     * Constructor.
+     * Constructor that just takes the status. Default values for other parameters.
      * @param status If the API call worked. Must not be null.
-     * @param message Any message. Must not be null.
      */
-    @JsonCreator
-    public CredentialsResponse(@JsonProperty("status") final CredentialsResponse.Status status,
-                               @JsonProperty("message") final String message) {
+    public CredentialsResponse(final CredentialsResponse.Status status) {
+        Objects.requireNonNull(status);
+        this.status = status;
+        this.message = "";
+        this.credentials = null;
+    }
+
+    /**
+     * Constructor that just takes the status. Default values for other parameters.
+     * @param status If the API call worked. Must not be null.
+     */
+    public CredentialsResponse(final CredentialsResponse.Status status,
+                               final String message) {
         Objects.requireNonNull(status);
         Objects.requireNonNull(message);
         this.status = status;
         this.message = message;
+        this.credentials = null;
+    }
+
+    /**
+     * Constructor.
+     * @param status If the API call worked. Must not be null.
+     * @param message Any message. Must not be null.
+     * @param credentials Optional credentials - can be null.
+     */
+    @JsonCreator
+    public CredentialsResponse(@JsonProperty("status") final CredentialsResponse.Status status,
+                               @JsonProperty("message") final String message,
+                               @JsonProperty("credentials") final Credentials credentials) {
+        Objects.requireNonNull(status);
+        Objects.requireNonNull(message);
+        this.status = status;
+        this.message = message;
+        this.credentials = credentials;
     }
 
     /**
@@ -46,5 +76,12 @@ public class CredentialsResponse {
      */
     public String getMessage() {
         return message;
+    }
+
+    /**
+     * @return The credentials, if any. Will return null if no credentials present.
+     */
+    public Credentials getCredentials() {
+        return credentials;
     }
 }

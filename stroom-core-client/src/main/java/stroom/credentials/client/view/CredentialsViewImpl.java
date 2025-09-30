@@ -1,6 +1,6 @@
 package stroom.credentials.client.view;
 
-import stroom.credentials.client.presenter.CredentialsPresenter;
+import stroom.credentials.client.presenter.CredentialsListPresenter;
 import stroom.credentials.client.presenter.CredentialsPresenter.CredentialsView;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -45,7 +45,7 @@ public class CredentialsViewImpl extends ViewImpl implements CredentialsView {
      */
     @Override
     public void setInSlot(final Object slot, final Widget content) {
-        if (CredentialsPresenter.CREDENTIALS_LIST.equals(slot)) {
+        if (CredentialsListPresenter.CREDENTIALS_LIST.equals(slot)) {
             credentialsList.setWidget(content);
         }
     }

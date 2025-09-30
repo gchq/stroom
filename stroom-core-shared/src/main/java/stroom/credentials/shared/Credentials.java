@@ -181,16 +181,20 @@ public class Credentials {
             return false;
         }
         final Credentials that = (Credentials) o;
+
+        //return Objects.equals(uuid, that.uuid);
+
         return Objects.equals(name, that.name)
                && Objects.equals(uuid, that.uuid)
                && type == that.type
                && credsExpire == that.credsExpire
                && expires == that.expires
-               && secret == that.secret;
+               && Objects.equals(secret, that.secret);
     }
 
     @Override
     public int hashCode() {
+        //return Objects.hash(uuid);
         return Objects.hash(name, uuid, type, credsExpire, expires, secret);
     }
 

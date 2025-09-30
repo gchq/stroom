@@ -48,15 +48,19 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
      * @return Our Credentials object.
      */
     private Credentials recordToCredentials(final CredentialsRecord record) {
-        final CredentialsSecret secret =
-                JsonUtil.readValue(record.getSecret(), CredentialsSecret.class);
-        return new Credentials(
-                record.getName(),
-                record.getUuid(),
-                CredentialsType.valueOf(record.getType()),
-                record.getCredsexpire() == 1,
-                record.getExpires(),
-                secret);
+        if (record == null) {
+            return null;
+        } else {
+            final CredentialsSecret secret =
+                    JsonUtil.readValue(record.getSecret(), CredentialsSecret.class);
+            return new Credentials(
+                    record.getName(),
+                    record.getUuid(),
+                    CredentialsType.valueOf(record.getType()),
+                    record.getCredsexpire() == 1,
+                    record.getExpires(),
+                    secret);
+        }
     }
 
     @Override
@@ -75,6 +79,7 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
             return list;
 
         } catch (final DataAccessException e) {
+            LOGGER.error("Error listing credentials: {}", e.getMessage(), e);
             throw new IOException("Error listing credentials: " + e.getMessage(), e);
         }
     }
@@ -89,6 +94,7 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
             return recordToCredentials(credRecord);
 
         } catch (final DataAccessException e) {
+            LOGGER.error("Error gettings credentials: {}", e.getMessage(), e);
             throw new IOException("Error getting credentials for '" + uuid + "': " + e.getMessage(), e);
         }
     }
@@ -119,6 +125,7 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
                     .set(CREDENTIALS.SECRET, JsonUtil.writeValueAsString(credentials.getSecret()))
                     .execute());
         } catch (final DataAccessException e) {
+            LOGGER.error("Error storing credentials: {}", e.getMessage(), e);
             throw new IOException("Error storing credentials: " + e.getMessage(), e);
         }
     }
@@ -131,6 +138,7 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
                     .where(CREDENTIALS.UUID.eq(uuid))
                     .execute());
         } catch (final DataAccessException e) {
+            LOGGER.error("Error deleting credentials: {}", e.getMessage(), e);
             throw new IOException("Error deleting credentials: " + e.getMessage(), e);
         }
     }

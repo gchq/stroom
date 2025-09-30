@@ -13,8 +13,6 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.fusesource.restygwt.client.DirectRestService;
 
-import java.io.IOException;
-
 @Tag(name = "Credentials")
 @Path("/credentials")
 @Produces(MediaType.APPLICATION_JSON)
@@ -43,14 +41,13 @@ public interface CredentialsResource extends RestResource, DirectRestService {
 
     /**
      * Gets one credential by UUID.
-     * @throws IOException if something goes wrong.
      */
     @POST
     @Path("/get")
     @Operation(
             summary = "Returns the credentials with the given UUID, if it exists, or null if it does not exist",
             operationId="getCredentialsWithUuid")
-    Credentials get(String uuid) throws IOException;
+    CredentialsResponse get(String uuid);
 
     /**
      * Deletes one credential by UUID.

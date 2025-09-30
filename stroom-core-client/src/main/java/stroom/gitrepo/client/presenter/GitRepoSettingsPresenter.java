@@ -18,6 +18,7 @@
 package stroom.gitrepo.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.credentials.client.presenter.CredentialsManagerDialogPresenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
@@ -54,7 +55,9 @@ public class GitRepoSettingsPresenter
     /**
      * Shows the credentials dialog box.
      */
-    private final GitRepoCredentialsDialogPresenter credentialsDialog;
+    //private final GitRepoCredentialsDialogPresenter credentialsDialog;
+
+    private final CredentialsManagerDialogPresenter credentialsManagerDialog;
 
     /**
      * Server REST API.
@@ -68,14 +71,9 @@ public class GitRepoSettingsPresenter
     private GitRepoDoc gitRepoDoc = null;
 
     /**
-     * Local copy of the username.
+     * Local copy of the credentials ID
      */
-    private String gitRepoUsername = "";
-
-    /**
-     * Local copy of the password.
-     */
-    private String gitRepoPassword = "";
+    private String credentialsId;
 
     /**
      * Injected constructor.
@@ -83,19 +81,19 @@ public class GitRepoSettingsPresenter
      * @param view The View for showing stuff to users
      * @param restFactory For talking to the server
      * @param commitDialog Injected dialog for commit message
-     * @param credentialsDialog Injected dialog for credentials
+     * @param credentialsManagerDialog Injected dialog for credentials
      */
     @Inject
     public GitRepoSettingsPresenter(final EventBus eventBus,
                                     final GitRepoSettingsView view,
                                     final RestFactory restFactory,
                                     final GitRepoCommitDialogPresenter commitDialog,
-                                    final GitRepoCredentialsDialogPresenter credentialsDialog) {
+                                    final CredentialsManagerDialogPresenter credentialsManagerDialog) {
         super(eventBus, view);
         this.restFactory = restFactory;
         view.setUiHandlers(this);
         this.commitDialog = commitDialog;
-        this.credentialsDialog = credentialsDialog;
+        this.credentialsManagerDialog = credentialsManagerDialog;
     }
 
     /**
@@ -122,8 +120,7 @@ public class GitRepoSettingsPresenter
         view.setAutoPush(doc.isAutoPush());
 
         // Credentials - store locally
-        gitRepoUsername = doc.getUsername();
-        gitRepoPassword = doc.getPassword();
+        credentialsId = doc.getCredentialsId();
 
         // Set the initial state of the UI
         view.setState();
@@ -150,8 +147,7 @@ public class GitRepoSettingsPresenter
         }
 
         // Credentials - store from local values
-        doc.setUsername(gitRepoUsername);
-        doc.setPassword(gitRepoPassword);
+        doc.setCredentialsId(credentialsId);
 
         return doc;
     }
@@ -312,37 +308,33 @@ public class GitRepoSettingsPresenter
      */
     @Override
     public void onShowCredentialsDialog(final TaskMonitorFactory taskMonitorFactory) {
-
-        final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(credentialsDialog);
-        credentialsDialog.setupDialog(
-                gitRepoUsername,
-                gitRepoPassword,
-                builder);
-
-        builder.onHideRequest(e -> {
-            if (e.isOk()) {
-                // OK pressed
-                if (credentialsDialog.isValid()) {
-                    // All good
+        if (gitRepoDoc != null) {
+            final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(credentialsManagerDialog);
+            credentialsManagerDialog.setupDialog(
+                    builder,
+                    credentialsId);
+            builder.onHideRequest(e -> {
+                if (e.isOk()) {
                     e.hide();
-                    // Store the values in this presenter
-                    gitRepoUsername = credentialsDialog.getView().getUsername();
-                    gitRepoPassword = credentialsDialog.getView().getPassword();
-                    // Mark the doc as dirty
+                    credentialsId = credentialsManagerDialog.getCredentialsId();
                     this.setDirty(true);
+                    console("Credentials ID is " + credentialsId);
                 } else {
-                    // Something wrong
-                    AlertEvent.fireWarn(credentialsDialog,
-                                        credentialsDialog.getValidationMessage(),
-                                        e::reset);
+                    // Cancel pressed
+                    e.hide();
                 }
-            } else {
-                // Cancel pressed
-                e.hide();
-            }
-        })
-            .fire();
+            })
+                    .fire();
+        }
     }
+    /**
+     * Writes to the Javascript console for debugging.
+     * @param text What to write.
+     */
+    public static native void console(String text)
+        /*-{
+        console.log(text);
+         }-*/;
 
     public interface GitRepoSettingsView
             extends View, HasUiHandlers<GitRepoSettingsUiHandlers> {
