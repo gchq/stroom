@@ -16,6 +16,8 @@
 
 package stroom.query.common.v2;
 
+import stroom.dictionary.api.WordListProvider;
+import stroom.docref.DocRef;
 import stroom.query.api.IncludeExcludeFilter;
 
 import java.util.ArrayList;
@@ -25,10 +27,13 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
+import static stroom.util.PredicateUtil.createWildCardedInPredicate;
+
 public class CompiledIncludeExcludeFilter {
 
     public static Optional<Predicate<String>> create(final IncludeExcludeFilter filter,
-                                                     final Map<String, String> paramMap) {
+                                                     final Map<String, String> paramMap,
+                                                     final WordListProvider wordListProvider) {
         if (filter == null) {
             return Optional.empty();
         }
@@ -47,6 +52,16 @@ public class CompiledIncludeExcludeFilter {
             optional = Optional.of(includePredicate);
         }
 
+        if (!filter.getIncludeDictionaries().isEmpty()) {
+            for (final DocRef dictionary : filter.getIncludeDictionaries()) {
+                final Predicate<String> includeDictionary = createWildCardedInPredicate(
+                        loadWords(dictionary, wordListProvider), true);
+                optional = optional
+                        .map(predicate -> predicate.or(includeDictionary))
+                        .or(() -> Optional.of(includeDictionary));
+            }
+        }
+
         final List<Pattern> excludes = createPatternList(filter.getExcludes(), paramMap);
         if (excludes != null) {
             final Predicate<String> excludePredicate = value -> {
@@ -58,11 +73,30 @@ public class CompiledIncludeExcludeFilter {
                 return true;
             };
             optional = optional
-                    .map(includePredicate -> includePredicate.and(excludePredicate))
+                    .map(predicate -> predicate.and(excludePredicate))
                     .or(() -> Optional.of(excludePredicate));
         }
 
+        if (!filter.getExcludeDictionaries().isEmpty()) {
+            for (final DocRef dictionary : filter.getExcludeDictionaries()) {
+                final Predicate<String> excludeDictionary = Predicate.not(createWildCardedInPredicate(
+                        loadWords(dictionary, wordListProvider), true));
+                optional = optional
+                        .map(predicate -> predicate.and(excludeDictionary))
+                        .or(() -> Optional.of(excludeDictionary));
+            }
+        }
+
         return optional;
+    }
+
+    private static String[] loadWords(final DocRef docRef, final WordListProvider wordListProvider) {
+        final String[] words = wordListProvider.getWords(docRef);
+        if (words == null) {
+            throw new IllegalArgumentException("Dictionary \"" + docRef + "\" not found");
+        }
+
+        return words;
     }
 
     private static List<Pattern> createPatternList(final String patterns, final Map<String, String> paramMap) {

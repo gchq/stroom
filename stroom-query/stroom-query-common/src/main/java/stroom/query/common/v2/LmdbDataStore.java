@@ -18,6 +18,7 @@
 package stroom.query.common.v2;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.dictionary.api.WordListProvider;
 import stroom.lmdb2.LmdbDb;
 import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.ReadTxn;
@@ -146,7 +147,8 @@ public class LmdbDataStore implements DataStore {
                          final ErrorConsumer errorConsumer,
                          final ByteBufferFactory bufferFactory,
                          final ExpressionPredicateFactory expressionPredicateFactory,
-                         final AnnotationMapperFactory annotationMapperFactory) {
+                         final AnnotationMapperFactory annotationMapperFactory,
+                         final WordListProvider wordListProvider) {
         this.bufferFactory = bufferFactory;
         this.queryKey = queryKey;
         this.componentId = componentId;
@@ -217,7 +219,7 @@ public class LmdbDataStore implements DataStore {
                 compiledColumns,
                 dateTimeSettings,
                 expressionPredicateFactory,
-                paramMap);
+                paramMap, wordListProvider);
 
         // Filter puts to the store if we need to. This filter has the effect of preventing addition of items if we have
         // reached the max result size if specified and aren't grouping or sorting.
@@ -341,8 +343,8 @@ public class LmdbDataStore implements DataStore {
                                         uncommittedCount++;
                                     }
                                     case final CurrentDbStateLmdbQueueItem currentDbStateLmdbQueueItem ->
-                                            currentDbState = currentDbStateLmdbQueueItem.getCurrentDbState()
-                                                    .mergeExisting(currentDbState);
+                                        currentDbState = currentDbStateLmdbQueueItem.getCurrentDbState()
+                                                .mergeExisting(currentDbState);
                                     case final Sync sync -> {
                                         commit(writeTxn, currentDbState);
                                         sync.sync();
