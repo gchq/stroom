@@ -25,15 +25,23 @@ public class ValueStoreMetaSerde implements Serde<ValueStoreMeta> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ValueStoreMetaSerde.class);
 
     private static final UnsignedBytes REF_COUNT_UNSIGNED_BYTES = UnsignedBytesInstances.THREE;
-    private static final byte[] REF_COUNT_ZERO = REF_COUNT_UNSIGNED_BYTES.toBytes(0);
-    private static final byte[] REF_COUNT_ONE = REF_COUNT_UNSIGNED_BYTES.toBytes(1);
+    private static final int REFERENCE_COUNT_BYTES = REF_COUNT_UNSIGNED_BYTES.length();
 
     private static final int TYPE_ID_OFFSET = 0;
     private static final int TYPE_ID_BYTES = 1;
     private static final int REFERENCE_COUNT_OFFSET = TYPE_ID_OFFSET + TYPE_ID_BYTES;
 
-    private static final int REFERENCE_COUNT_BYTES = REF_COUNT_UNSIGNED_BYTES.length();
     private static final int BUFFER_CAPACITY = TYPE_ID_BYTES + REFERENCE_COUNT_BYTES;
+
+    private static final ByteBuffer ZERO = ByteBuffer.allocateDirect(REFERENCE_COUNT_BYTES);
+    private static final ByteBuffer ONE = ByteBuffer.allocateDirect(REFERENCE_COUNT_BYTES);
+
+    static {
+        REF_COUNT_UNSIGNED_BYTES.put(ZERO, 0);
+        ZERO.flip();
+        REF_COUNT_UNSIGNED_BYTES.put(ONE, 1);
+        ONE.flip();
+    }
 
     @Override
     public int getBufferCapacity() {
@@ -53,8 +61,7 @@ public class ValueStoreMetaSerde implements Serde<ValueStoreMeta> {
 
     @Override
     public void serialize(final ByteBuffer byteBuffer, final ValueStoreMeta valueStoreMeta) {
-
-        byteBuffer.put((byte) valueStoreMeta.getTypeId());
+        byteBuffer.put(valueStoreMeta.getTypeId());
         REF_COUNT_UNSIGNED_BYTES.put(byteBuffer, valueStoreMeta.getReferenceCount());
         byteBuffer.flip();
     }
@@ -77,15 +84,8 @@ public class ValueStoreMetaSerde implements Serde<ValueStoreMeta> {
      * @return True if the reference count is one or zero.
      */
     public boolean isLastReference(final ByteBuffer byteBuffer) {
-        // Ever so slightly cheaper than extracting the count and checking the long value
-        // TODO could maybe use ByteBufferUtils.equals
-        return stroom.bytebuffer.hbase.ByteBufferUtils.compareTo(
-                REF_COUNT_ONE, 0, REFERENCE_COUNT_BYTES,
-                byteBuffer, REFERENCE_COUNT_OFFSET, REFERENCE_COUNT_BYTES) == 0L
-               ||
-               stroom.bytebuffer.hbase.ByteBufferUtils.compareTo(
-                       REF_COUNT_ZERO, 0, REFERENCE_COUNT_BYTES,
-                       byteBuffer, REFERENCE_COUNT_OFFSET, REFERENCE_COUNT_BYTES) == 0L;
+        final ByteBuffer slice = byteBuffer.slice(REFERENCE_COUNT_OFFSET, REFERENCE_COUNT_BYTES);
+        return ONE.equals(slice) || ZERO.equals(slice);
     }
 
     public void cloneAndDecrementRefCount(final ByteBuffer sourceBuffer, final ByteBuffer destBuffer) {

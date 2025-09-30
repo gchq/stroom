@@ -308,10 +308,7 @@ class TestPooledByteBufferOutputStream {
                     .isGreaterThan(BYTES);
             assertThat(pooledBuffer.limit())
                     .isEqualTo(BYTES);
-            assertThat(ByteBufferUtils.compareTo(
-                    byteBuffer, 5, BYTES,
-                    pooledBuffer, 0, BYTES))
-                    .isZero();
+            assertThat(byteBuffer.slice(5, BYTES)).isEqualTo(pooledBuffer.slice(0, BYTES));
         }
     }
 }

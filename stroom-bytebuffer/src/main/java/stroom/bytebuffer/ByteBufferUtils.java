@@ -200,30 +200,6 @@ public class ByteBufferUtils {
                 StandardCharsets.UTF_8.decode(byteBuffer.duplicate()));
     }
 
-//    public static String byteBufferToAllForms(final ByteBuffer byteBuffer) {
-//        if (byteBuffer == null) {
-//            return "null";
-//        }
-//        return ByteArrayUtils.byteArrayToAllForms(toBytes(byteBuffer));
-//    }
-//
-//    public static int compare(final ByteBuffer left, final ByteBuffer right) {
-//        int cmpResult = stroom.bytebuffer.hbase.ByteBufferUtils.compareTo(
-//                left, left.position(), left.remaining(),
-//                right, right.position(), right.remaining());
-//
-//        LOGGER.trace(() -> LogUtil.message("compare({}, {}) returned {}",
-//                ByteBufferUtils.byteBufferInfo(left),
-//                ByteBufferUtils.byteBufferInfo(right),
-//                cmpResult));
-//        return cmpResult;
-//
-//    }
-
-    public static int compareTo(final ByteBuffer buf1, final int o1, final int l1, final ByteBuffer buf2, final int o2, final int l2) {
-        return stroom.bytebuffer.hbase.ByteBufferUtils.compareTo(buf1, o1, l1, buf2, o2, l2);
-    }
-
     /**
      * Compare two {@link ByteBuffer} objects as if they are longs
      *
