@@ -29,19 +29,16 @@ public class ValueStoreMetaSerde implements Serde<ValueStoreMeta> {
 
     private static final int TYPE_ID_OFFSET = 0;
     private static final int TYPE_ID_BYTES = 1;
+    /**
+     * The offset of the first byte of the reference count
+     */
     private static final int REFERENCE_COUNT_OFFSET = TYPE_ID_OFFSET + TYPE_ID_BYTES;
+    /**
+     * The offset of the last byte of the reference count
+     */
+    public static final int REFERENCE_COUNT_END_OFFSET = REFERENCE_COUNT_OFFSET + REFERENCE_COUNT_BYTES - 1;
 
     private static final int BUFFER_CAPACITY = TYPE_ID_BYTES + REFERENCE_COUNT_BYTES;
-
-    private static final ByteBuffer ZERO = ByteBuffer.allocateDirect(REFERENCE_COUNT_BYTES);
-    private static final ByteBuffer ONE = ByteBuffer.allocateDirect(REFERENCE_COUNT_BYTES);
-
-    static {
-        REF_COUNT_UNSIGNED_BYTES.put(ZERO, 0);
-        ZERO.flip();
-        REF_COUNT_UNSIGNED_BYTES.put(ONE, 1);
-        ONE.flip();
-    }
 
     @Override
     public int getBufferCapacity() {
@@ -84,8 +81,21 @@ public class ValueStoreMetaSerde implements Serde<ValueStoreMeta> {
      * @return True if the reference count is one or zero.
      */
     public boolean isLastReference(final ByteBuffer byteBuffer) {
-        final ByteBuffer slice = byteBuffer.slice(REFERENCE_COUNT_OFFSET, REFERENCE_COUNT_BYTES);
-        return ONE.equals(slice) || ZERO.equals(slice);
+        // This relies on UnsignedBytes serialising 1 to 001 and 0 to 000.
+
+        // Check the last byte first as low numbers are more likely than high numbers.
+        final byte lastByte = byteBuffer.get(REFERENCE_COUNT_END_OFFSET);
+        if (lastByte != 1 && lastByte != 0) {
+            return false;
+        }
+
+        // Everything else should be zero
+        for (int j = REFERENCE_COUNT_END_OFFSET - 1; j >= REFERENCE_COUNT_OFFSET; j--) {
+            if (byteBuffer.get(j) != 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public void cloneAndDecrementRefCount(final ByteBuffer sourceBuffer, final ByteBuffer destBuffer) {
