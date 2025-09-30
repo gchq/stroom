@@ -23,6 +23,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.util.shared.ResultPage;
 
 import java.util.Optional;
+import java.util.function.Predicate;
 
 public interface AnnotationTagDao {
 
@@ -32,7 +33,8 @@ public interface AnnotationTagDao {
 
     Boolean deleteAnnotationTag(AnnotationTag annotationTag);
 
-    ResultPage<AnnotationTag> findAnnotationTags(ExpressionCriteria request);
+    ResultPage<AnnotationTag> findAnnotationTags(ExpressionCriteria request,
+                                                 Predicate<String> uuidPredicate);
 
     Optional<AnnotationTag> findAnnotationTag(AnnotationTagType annotationTagType, String name);
 }
