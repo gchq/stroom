@@ -46,13 +46,13 @@ public class V07_10_07_100__pipeline_migration extends BaseJavaMigration {
                                   " `data`" +
                                   " FROM `doc`" +
                                   " WHERE `type` = ?" +
-                                  " AND `ext` = ?;")) {
+                                  " AND `ext` = ?")) {
             preparedStatement.setString(1, "Pipeline");
             preparedStatement.setString(2, "xml");
 
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
-                    final int id = resultSet.getInt(1);
+                    final long id = resultSet.getLong(1);
                     final String uuid = resultSet.getString(2);
                     final String name = resultSet.getString(3);
                     final String data = resultSet.getString(4);
@@ -88,7 +88,7 @@ public class V07_10_07_100__pipeline_migration extends BaseJavaMigration {
                                   " FROM `doc`" +
                                   " WHERE `uuid` = ?" +
                                   " AND `type` = ?" +
-                                  " AND `ext` = ?;")) {
+                                  " AND `ext` = ?")) {
             preparedStatement.setString(1, uuid);
             preparedStatement.setString(2, "Pipeline");
             preparedStatement.setString(3, "json");
@@ -102,23 +102,23 @@ public class V07_10_07_100__pipeline_migration extends BaseJavaMigration {
         return null;
     }
 
-    private boolean updatePipelineJson(final Context context, final String json, final int id) throws SQLException {
+    private boolean updatePipelineJson(final Context context, final String json, final long id) throws SQLException {
         try (final PreparedStatement preparedStatement = context.getConnection()
                 .prepareStatement("UPDATE `doc` " +
                                   "SET `data` = ?, `ext` = ? " +
-                                  "WHERE `id` = ?;")) {
+                                  "WHERE `id` = ?")) {
             preparedStatement.setString(1, json);
             preparedStatement.setString(2, "json");
-            preparedStatement.setInt(3, id);
+            preparedStatement.setLong(3, id);
             return preparedStatement.executeUpdate() == 1;
         }
     }
 
-    private boolean deleteDocEntry(final Context context, final int id) throws SQLException {
+    private boolean deleteDocEntry(final Context context, final long id) throws SQLException {
         try (final PreparedStatement preparedStatement = context.getConnection()
                 .prepareStatement("DELETE FROM `doc` " +
-                                  "WHERE `id` = ?;")) {
-            preparedStatement.setInt(1, id);
+                                  "WHERE `id` = ?")) {
+            preparedStatement.setLong(1, id);
             return preparedStatement.executeUpdate() == 1;
         }
     }
