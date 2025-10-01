@@ -52,10 +52,22 @@ public class DBPersistence implements Persistence {
             WHERE type = ?
             AND uuid = ?""";
 
+    private static final String SELECT_EXTENSIONS_BY_TYPE_UUID_SQL = """
+            SELECT
+              id,
+              ext
+            FROM doc
+            WHERE type = ?
+            AND uuid = ?""";
+
     private static final String DELETE_BY_UUID_SQL = """
             DELETE FROM doc
             WHERE type = ?
             AND uuid = ?""";
+
+    private static final String DELETE_BY_ID_SQL = """
+            DELETE FROM doc
+            WHERE id = ?""";
 
     private static final String LIST_BY_TYPE_SQL = """
             SELECT DISTINCT
@@ -109,14 +121,6 @@ public class DBPersistence implements Persistence {
               ext,
               data)
             VALUES (?, ?, ?, ?, ?)""";
-
-    private static final String SELECT_ID_BY_TYPE_UUID_EXT_SQL = """
-            SELECT
-            id
-            FROM doc
-            WHERE type = ?
-            AND uuid = ?
-            AND ext = ?""";
 
     private final DataSource dataSource;
 
@@ -181,9 +185,11 @@ public class DBPersistence implements Persistence {
                     throw new RuntimeException("Document already exists with uuid=" + docRef.getUuid());
                 }
 
+                // Get existing ids.
+                final Map<String, Long> existingExtensionIds = getExtensionIds(docRef);
                 data.forEach((ext, bytes) -> {
                     if (update) {
-                        final Long existingId = getId(connection, docRef, ext);
+                        final Long existingId = existingExtensionIds.remove(ext);
                         if (existingId != null) {
                             update(connection, existingId, docRef, ext, bytes);
                         } else {
@@ -193,6 +199,9 @@ public class DBPersistence implements Persistence {
                         save(connection, docRef, ext, bytes);
                     }
                 });
+
+                // Remove any old extensions.
+                existingExtensionIds.values().forEach(this::delete);
 
                 // Commit all of the changes.
                 connection.commit();
@@ -206,6 +215,40 @@ public class DBPersistence implements Persistence {
             } finally {
                 // Turn auto commit back on.
                 connection.setAutoCommit(autoCommit);
+            }
+        } catch (final SQLException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    private Map<String, Long> getExtensionIds(final DocRef docRef) {
+        // Get existing ids.
+        final Map<String, Long> existingExtensionIds = new HashMap<>();
+        try (final Connection connection = dataSource.getConnection()) {
+            try (final PreparedStatement preparedStatement = connection
+                    .prepareStatement(SELECT_EXTENSIONS_BY_TYPE_UUID_SQL)) {
+                preparedStatement.setString(1, docRef.getType());
+                preparedStatement.setString(2, docRef.getUuid());
+
+                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        existingExtensionIds.put(resultSet.getString(2), resultSet.getLong(1));
+                    }
+                }
+            }
+        } catch (final SQLException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
+        }
+        return existingExtensionIds;
+    }
+
+    private void delete(final long id) {
+        try (final Connection connection = dataSource.getConnection()) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(DELETE_BY_ID_SQL)) {
+                preparedStatement.setLong(1, id);
+                preparedStatement.execute();
             }
         } catch (final SQLException e) {
             LOGGER.debug(e.getMessage(), e);
@@ -295,25 +338,6 @@ public class DBPersistence implements Persistence {
         try (final PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ID_BY_TYPE_UUID_SQL)) {
             preparedStatement.setString(1, docRef.getType());
             preparedStatement.setString(2, docRef.getUuid());
-
-            try (final ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    return resultSet.getLong(1);
-                }
-            }
-        } catch (final SQLException e) {
-            LOGGER.debug(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
-
-        return null;
-    }
-
-    private Long getId(final Connection connection, final DocRef docRef, final String ext) {
-        try (final PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ID_BY_TYPE_UUID_EXT_SQL)) {
-            preparedStatement.setString(1, docRef.getType());
-            preparedStatement.setString(2, docRef.getUuid());
-            preparedStatement.setString(3, ext);
 
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
