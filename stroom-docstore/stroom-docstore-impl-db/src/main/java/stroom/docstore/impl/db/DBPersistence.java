@@ -186,10 +186,10 @@ public class DBPersistence implements Persistence {
                 }
 
                 // Get existing ids.
-                final Map<String, Long> existingExtensionIds = getExtensionIds(docRef);
+                final Map<String, Long> existingExtensionToIdMap = getExtensionIds(docRef);
                 data.forEach((ext, bytes) -> {
                     if (update) {
-                        final Long existingId = existingExtensionIds.remove(ext);
+                        final Long existingId = existingExtensionToIdMap.get(ext);
                         if (existingId != null) {
                             update(connection, existingId, docRef, ext, bytes);
                         } else {
@@ -201,7 +201,12 @@ public class DBPersistence implements Persistence {
                 });
 
                 // Remove any old extensions.
-                existingExtensionIds.values().forEach(this::delete);
+                existingExtensionToIdMap.forEach((ext, id) -> {
+                    if (!data.containsKey(ext)) {
+                        LOGGER.debug("Deleting doc entry {}", id);
+                        delete(id);
+                    }
+                });
 
                 // Commit all of the changes.
                 connection.commit();
@@ -224,7 +229,7 @@ public class DBPersistence implements Persistence {
 
     private Map<String, Long> getExtensionIds(final DocRef docRef) {
         // Get existing ids.
-        final Map<String, Long> existingExtensionIds = new HashMap<>();
+        final Map<String, Long> existingExtensionToIdMap = new HashMap<>();
         try (final Connection connection = dataSource.getConnection()) {
             try (final PreparedStatement preparedStatement = connection
                     .prepareStatement(SELECT_EXTENSIONS_BY_TYPE_UUID_SQL)) {
@@ -233,7 +238,7 @@ public class DBPersistence implements Persistence {
 
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {
-                        existingExtensionIds.put(resultSet.getString(2), resultSet.getLong(1));
+                        existingExtensionToIdMap.put(resultSet.getString(2), resultSet.getLong(1));
                     }
                 }
             }
@@ -241,7 +246,7 @@ public class DBPersistence implements Persistence {
             LOGGER.debug(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);
         }
-        return existingExtensionIds;
+        return existingExtensionToIdMap;
     }
 
     private void delete(final long id) {
