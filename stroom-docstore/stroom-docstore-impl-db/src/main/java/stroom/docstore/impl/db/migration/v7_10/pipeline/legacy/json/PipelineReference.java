@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.docstore.impl.db.migration.pipeline.legacy.json;
+package stroom.docstore.impl.db.migration.v7_10.pipeline.legacy.json;
 
 import stroom.docref.DocRef;
 import stroom.util.shared.CompareBuilder;

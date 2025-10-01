@@ -1,5 +1,7 @@
-package stroom.docstore.impl.db.migration.pipeline.legacy;
+package stroom.docstore.impl.db.migration.v7_10.pipeline.legacy;
 
+import stroom.docstore.impl.db.migration.v7_10.pipeline.legacy.json.PipelineData;
+import stroom.docstore.impl.db.migration.v7_10.pipeline.legacy.json.PipelineDataBuilder;
 import stroom.util.json.JsonUtil;
 import stroom.util.xml.XMLMarshallerUtil;
 
@@ -14,7 +16,7 @@ public class PipelineDataMigration {
     public PipelineDataMigration() {
         try {
             jaxbContext = JAXBContext.newInstance(
-                    stroom.docstore.impl.db.migration.pipeline.legacy.xml.PipelineData.class);
+                    stroom.docstore.impl.db.migration.v7_10.pipeline.legacy.xml.PipelineData.class);
         } catch (final JAXBException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -22,14 +24,14 @@ public class PipelineDataMigration {
 
     public String xmlToJson(final String xml) {
         try {
-            final stroom.docstore.impl.db.migration.pipeline.legacy.xml.PipelineData pipelineData =
+            final stroom.docstore.impl.db.migration.v7_10.pipeline.legacy.xml.PipelineData pipelineData =
                     XMLMarshallerUtil.unmarshal(jaxbContext,
-                            stroom.docstore.impl.db.migration.pipeline.legacy.xml.PipelineData.class, xml);
+                            stroom.docstore.impl.db.migration.v7_10.pipeline.legacy.xml.PipelineData.class, xml);
             final String json = JsonUtil.writeValueAsString(pipelineData);
-            final stroom.docstore.impl.db.migration.pipeline.legacy.json.PipelineData newData =
-                    JsonUtil.readValue(json, stroom.docstore.impl.db.migration.pipeline.legacy.json.PipelineData.class);
-            final stroom.docstore.impl.db.migration.pipeline.legacy.json.PipelineData cleaned =
-                    new stroom.docstore.impl.db.migration.pipeline.legacy.json.PipelineDataBuilder(newData).build();
+            final PipelineData newData =
+                    JsonUtil.readValue(json, PipelineData.class);
+            final PipelineData cleaned =
+                    new PipelineDataBuilder(newData).build();
             return JsonUtil.writeValueAsString(cleaned);
         } catch (final Exception e) {
             throw new RuntimeException(e);

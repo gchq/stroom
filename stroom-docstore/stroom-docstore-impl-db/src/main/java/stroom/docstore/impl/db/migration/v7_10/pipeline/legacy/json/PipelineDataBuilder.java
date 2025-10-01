@@ -1,6 +1,6 @@
-package stroom.docstore.impl.db.migration.pipeline.legacy.json;
+package stroom.docstore.impl.db.migration.v7_10.pipeline.legacy.json;
 
-import stroom.docstore.impl.db.migration.pipeline.legacy.json.PipelineElements.Builder;
+import stroom.docstore.impl.db.migration.v7_10.pipeline.legacy.json.PipelineElements.Builder;
 import stroom.util.shared.NullSafe;
 
 import java.util.Collection;

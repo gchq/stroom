@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.docstore.impl.db.migration.pipeline.legacy.json;
+package stroom.docstore.impl.db.migration.v7_10.pipeline.legacy.json;
+
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -26,11 +27,11 @@ import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({"add", "remove"})
-public class PipelineLinks extends AbstractAddRemove<PipelineLink> {
+public class PipelineProperties extends AbstractAddRemove<PipelineProperty> {
 
     @JsonCreator
-    public PipelineLinks(@JsonProperty("add") final List<PipelineLink> add,
-                         @JsonProperty("remove") final List<PipelineLink> remove) {
+    public PipelineProperties(@JsonProperty("add") final List<PipelineProperty> add,
+                              @JsonProperty("remove") final List<PipelineProperty> remove) {
         super(add, remove);
     }
 
@@ -38,14 +39,14 @@ public class PipelineLinks extends AbstractAddRemove<PipelineLink> {
     // --------------------------------------------------------------------------------
 
 
-    public static class Builder extends AbstractAddRemoveListBuilder<PipelineLink, PipelineLinks, Builder> {
+    public static class Builder extends AbstractAddRemoveListBuilder<PipelineProperty, PipelineProperties, Builder> {
 
         public Builder() {
 
         }
 
-        public Builder(final PipelineLinks links) {
-            super(links);
+        public Builder(final PipelineProperties properties) {
+            super(properties);
         }
 
         @Override
@@ -53,8 +54,8 @@ public class PipelineLinks extends AbstractAddRemove<PipelineLink> {
             return this;
         }
 
-        public PipelineLinks build() {
-            return new PipelineLinks(copyAddList(), copyRemoveList());
+        public PipelineProperties build() {
+            return new PipelineProperties(copyAddList(), copyRemoveList());
         }
     }
 }
