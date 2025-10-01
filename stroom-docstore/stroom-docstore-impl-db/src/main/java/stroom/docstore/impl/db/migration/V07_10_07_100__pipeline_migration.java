@@ -50,28 +50,38 @@ public class V07_10_07_100__pipeline_migration extends BaseJavaMigration {
             preparedStatement.setString(2, "xml");
 
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                Exception lastException = null;
                 while (resultSet.next()) {
-                    final long id = resultSet.getLong(1);
-                    final String uuid = resultSet.getString(2);
-                    final String name = resultSet.getString(3);
-                    final String data = resultSet.getString(4);
+                    try {
+                        final long id = resultSet.getLong(1);
+                        final String uuid = resultSet.getString(2);
+                        final String name = resultSet.getString(3);
+                        final String data = resultSet.getString(4);
 
-                    // Check there is no json already.
-                    final String existingJson = getPipelineJson(context, uuid);
-                    if (NullSafe.isNonBlankString(existingJson)) {
-                        LOGGER.info("Pipeline {} has already been migrated, deleting XML", name);
-                        if (!deleteDocEntry(context, id)) {
-                            LOGGER.error("Error deleting pipeline {} XML", name);
+                        // Check there is no json already.
+                        final String existingJson = getPipelineJson(context, uuid);
+                        if (NullSafe.isNonBlankString(existingJson)) {
+                            LOGGER.info("Pipeline {} has already been migrated, deleting XML", name);
+                            if (!deleteDocEntry(context, id)) {
+                                LOGGER.error("Error deleting pipeline {} XML", name);
+                            }
+                        } else {
+                            // Perform migration.
+                            final String json = pipelineDataMigration.xmlToJson(data);
+                            // Update record.
+                            LOGGER.info("Updating pipeline {} to JSON structure", name);
+                            if (!updatePipelineJson(context, json, id)) {
+                                LOGGER.error("Error updating pipeline {} to json", name);
+                            }
                         }
-                    } else {
-                        // Perform migration.
-                        final String json = pipelineDataMigration.xmlToJson(data);
-                        // Update record.
-                        LOGGER.info("Updating pipeline {} to JSON structure", name);
-                        if (!updatePipelineJson(context, json, id)) {
-                            LOGGER.error("Error updating pipeline {} to json", name);
-                        }
+                    } catch (final Exception e) {
+                        LOGGER.error("Error migrating pipeline", e);
+                        lastException = e;
                     }
+                }
+
+                if (lastException != null) {
+                    throw lastException;
                 }
             }
         }
