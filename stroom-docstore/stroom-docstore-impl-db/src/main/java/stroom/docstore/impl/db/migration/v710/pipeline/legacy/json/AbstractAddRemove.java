@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.docstore.impl.db.migration.v7_10.pipeline.legacy.json;
+package stroom.docstore.impl.db.migration.v710.pipeline.legacy.json;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -23,38 +23,47 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.List;
+import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({"add, remove"})
-public class PipelineElements extends AbstractAddRemove<PipelineElement> {
+public abstract class AbstractAddRemove<T> {
+
+    @JsonProperty
+    protected final List<T> add;
+    @JsonProperty
+    protected final List<T> remove;
 
     @JsonCreator
-    public PipelineElements(@JsonProperty("add") final List<PipelineElement> add,
-                            @JsonProperty("remove") final List<PipelineElement> remove) {
-        super(add, remove);
+    public AbstractAddRemove(@JsonProperty("add") final List<T> add,
+                             @JsonProperty("remove") final List<T> remove) {
+        this.add = add;
+        this.remove = remove;
     }
 
+    public List<T> getAdd() {
+        return add;
+    }
 
-    // --------------------------------------------------------------------------------
+    public List<T> getRemove() {
+        return remove;
+    }
 
-
-    public static class Builder extends AbstractAddRemoveListBuilder<PipelineElement, PipelineElements, Builder> {
-
-        public Builder() {
-
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
         }
-
-        public Builder(final PipelineElements elements) {
-            super(elements);
+        if (o == null || getClass() != o.getClass()) {
+            return false;
         }
+        final AbstractAddRemove<?> that = (AbstractAddRemove<?>) o;
+        return Objects.equals(add, that.add) &&
+               Objects.equals(remove, that.remove);
+    }
 
-        @Override
-        protected Builder self() {
-            return this;
-        }
-
-        public PipelineElements build() {
-            return new PipelineElements(copyAddList(), copyRemoveList());
-        }
+    @Override
+    public int hashCode() {
+        return Objects.hash(add, remove);
     }
 }

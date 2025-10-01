@@ -14,38 +14,56 @@
  * limitations under the License.
  */
 
-package stroom.docstore.impl.db.migration.v7_10.pipeline.legacy.json;
+package stroom.docstore.impl.db.migration.v710.pipeline.legacy.xml;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElementWrapper;
+import jakarta.xml.bind.annotation.XmlType;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "Elements", propOrder = {"add", "remove"})
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({"add, remove"})
-public abstract class AbstractAddRemove<T> {
+public class PipelineElements {
 
+    @XmlElementWrapper(name = "add")
+    @XmlElement(name = "element")
     @JsonProperty
-    protected final List<T> add;
+    private final List<PipelineElement> add;
+
+    @XmlElementWrapper(name = "remove")
+    @XmlElement(name = "element")
     @JsonProperty
-    protected final List<T> remove;
+    private final List<PipelineElement> remove;
+
+    public PipelineElements() {
+        add = new ArrayList<>();
+        remove = new ArrayList<>();
+    }
 
     @JsonCreator
-    public AbstractAddRemove(@JsonProperty("add") final List<T> add,
-                             @JsonProperty("remove") final List<T> remove) {
+    public PipelineElements(@JsonProperty("add") final List<PipelineElement> add,
+                            @JsonProperty("remove") final List<PipelineElement> remove) {
         this.add = add;
         this.remove = remove;
     }
 
-    public List<T> getAdd() {
+    public List<PipelineElement> getAdd() {
         return add;
     }
 
-    public List<T> getRemove() {
+    public List<PipelineElement> getRemove() {
         return remove;
     }
 
@@ -57,9 +75,9 @@ public abstract class AbstractAddRemove<T> {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final AbstractAddRemove<?> that = (AbstractAddRemove<?>) o;
+        final PipelineElements that = (PipelineElements) o;
         return Objects.equals(add, that.add) &&
-               Objects.equals(remove, that.remove);
+                Objects.equals(remove, that.remove);
     }
 
     @Override

@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.docstore.impl.db.migration.v7_10.pipeline.legacy.xml;
+package stroom.docstore.impl.db.migration.v710.pipeline.legacy.xml;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -30,19 +31,19 @@ import java.util.Objects;
 
 /**
  * <p>
- * Java class for Link complex type.
+ * Java class for Element complex type.
  * <p>
  * <p>
  * The following schema fragment specifies the expected content contained within
  * this class.
  * <p>
  * <pre>
- * &lt;complexType name="Link">
+ * &lt;complexType name="Element">
  *   &lt;complexContent>
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
  *       &lt;sequence>
- *         &lt;element name="from" type="{http://www.w3.org/2001/XMLSchema}string"/>
- *         &lt;element name="to" type="{http://www.w3.org/2001/XMLSchema}string"/>
+ *         &lt;element name="id" type="{http://www.w3.org/2001/XMLSchema}string"/>
+ *         &lt;element name="type" type="{http://www.w3.org/2001/XMLSchema}string"/>
  *       &lt;/sequence>
  *     &lt;/restriction>
  *   &lt;/complexContent>
@@ -50,34 +51,47 @@ import java.util.Objects;
  * </pre>
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "Link", propOrder = {"from", "to"})
+@XmlType(name = "Element", propOrder = {"id", "type"})
 @JsonInclude(Include.NON_NULL)
-@JsonPropertyOrder({"from", "to"})
-public class PipelineLink implements Comparable<PipelineLink> {
+@JsonPropertyOrder({"id", "type"})
+public class PipelineElement implements Comparable<PipelineElement> {
 
     @XmlElement(required = true)
     @JsonProperty
-    private String from;
+    private String id;
     @XmlElement(required = true)
     @JsonProperty
-    private String to;
+    private String type;
 
-    public PipelineLink() {
+    public PipelineElement() {
     }
 
     @JsonCreator
-    public PipelineLink(@JsonProperty("from") final String from,
-                        @JsonProperty("to") final String to) {
-        this.from = from;
-        this.to = to;
+    public PipelineElement(@JsonProperty("id") final String id,
+                           @JsonProperty("type") final String type) {
+        this.id = id;
+        this.type = type;
     }
 
-    public String getFrom() {
-        return from;
+    public String getId() {
+        return id;
     }
 
-    public String getTo() {
-        return to;
+    public void setId(final String value) {
+        this.id = value;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(final String value) {
+        this.type = value;
+    }
+
+    @Override
+    public int compareTo(final PipelineElement o) {
+        return id.compareTo(o.id);
     }
 
     @Override
@@ -88,31 +102,27 @@ public class PipelineLink implements Comparable<PipelineLink> {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final PipelineLink that = (PipelineLink) o;
-        return from.equals(that.from) &&
-               to.equals(that.to);
+        final PipelineElement that = (PipelineElement) o;
+        return id.equals(that.id) &&
+               type.equals(that.type);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(from, to);
-    }
-
-    @Override
-    public int compareTo(final PipelineLink o) {
-        if (!(from.equals(o.from))) {
-            return from.compareTo(o.from);
-        }
-
-        if (!(to.equals(o.to))) {
-            return to.compareTo(o.to);
-        }
-
-        return 0;
+        return Objects.hash(id, type);
     }
 
     @Override
     public String toString() {
-        return "from=" + from + ", to=" + to;
+        return "id=" + id + ", type=" + type;
+    }
+
+    /**
+     * E.g.
+     * <pre>{@code CombinedParser 'myCombinedParser'}</pre>
+     */
+    @JsonIgnore
+    public String getDisplayName() {
+        return type + " '" + id + "'";
     }
 }

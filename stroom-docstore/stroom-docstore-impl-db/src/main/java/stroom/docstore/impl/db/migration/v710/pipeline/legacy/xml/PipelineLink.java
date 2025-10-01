@@ -14,25 +14,56 @@
  * limitations under the License.
  */
 
-package stroom.docstore.impl.db.migration.v7_10.pipeline.legacy.json;
-
+package stroom.docstore.impl.db.migration.v710.pipeline.legacy.xml;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlType;
 
 import java.util.Objects;
 
+/**
+ * <p>
+ * Java class for Link complex type.
+ * <p>
+ * <p>
+ * The following schema fragment specifies the expected content contained within
+ * this class.
+ * <p>
+ * <pre>
+ * &lt;complexType name="Link">
+ *   &lt;complexContent>
+ *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
+ *       &lt;sequence>
+ *         &lt;element name="from" type="{http://www.w3.org/2001/XMLSchema}string"/>
+ *         &lt;element name="to" type="{http://www.w3.org/2001/XMLSchema}string"/>
+ *       &lt;/sequence>
+ *     &lt;/restriction>
+ *   &lt;/complexContent>
+ * &lt;/complexType>
+ * </pre>
+ */
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "Link", propOrder = {"from", "to"})
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({"from", "to"})
 public class PipelineLink implements Comparable<PipelineLink> {
 
+    @XmlElement(required = true)
     @JsonProperty
-    private final String from;
+    private String from;
+    @XmlElement(required = true)
     @JsonProperty
-    private final String to;
+    private String to;
+
+    public PipelineLink() {
+    }
 
     @JsonCreator
     public PipelineLink(@JsonProperty("from") final String from,
@@ -83,35 +114,5 @@ public class PipelineLink implements Comparable<PipelineLink> {
     @Override
     public String toString() {
         return "from=" + from + ", to=" + to;
-    }
-
-    public static class Builder {
-
-        private String from;
-        private String to;
-
-        public Builder() {
-        }
-
-        public Builder(final PipelineLink link) {
-            if (link != null) {
-                this.from = link.from;
-                this.to = link.to;
-            }
-        }
-
-        public Builder from(final String from) {
-            this.from = from;
-            return this;
-        }
-
-        public Builder to(final String to) {
-            this.to = to;
-            return this;
-        }
-
-        public PipelineLink build() {
-            return new PipelineLink(from, to);
-        }
     }
 }

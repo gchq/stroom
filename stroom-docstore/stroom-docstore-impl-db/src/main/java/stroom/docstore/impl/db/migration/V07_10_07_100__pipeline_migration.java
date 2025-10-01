@@ -16,7 +16,7 @@
 
 package stroom.docstore.impl.db.migration;
 
-import stroom.docstore.impl.db.migration.v7_10.pipeline.legacy.PipelineDataMigration;
+import stroom.docstore.impl.db.migration.v710.pipeline.legacy.PipelineDataMigration;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;

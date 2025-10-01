@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.docstore.impl.db.migration.v7_10.pipeline.legacy.xml;
+package stroom.docstore.impl.db.migration.v710.pipeline.legacy.xml;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -32,38 +32,38 @@ import java.util.List;
 import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "PipelineReferences", propOrder = {"add", "remove"})
+@XmlType(name = "Links", propOrder = {"add", "remove"})
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({"add", "remove"})
-public class PipelineReferences {
+public class PipelineLinks {
 
     @XmlElementWrapper(name = "add")
-    @XmlElement(name = "reference")
+    @XmlElement(name = "link")
     @JsonProperty
-    private final List<PipelineReference> add;
+    private final List<PipelineLink> add;
 
     @XmlElementWrapper(name = "remove")
-    @XmlElement(name = "reference")
+    @XmlElement(name = "link")
     @JsonProperty
-    private final List<PipelineReference> remove;
+    private final List<PipelineLink> remove;
 
-    public PipelineReferences() {
+    public PipelineLinks() {
         add = new ArrayList<>();
         remove = new ArrayList<>();
     }
 
     @JsonCreator
-    public PipelineReferences(@JsonProperty("add") final List<PipelineReference> add,
-                              @JsonProperty("remove") final List<PipelineReference> remove) {
+    public PipelineLinks(@JsonProperty("add") final List<PipelineLink> add,
+                         @JsonProperty("remove") final List<PipelineLink> remove) {
         this.add = add;
         this.remove = remove;
     }
 
-    public List<PipelineReference> getAdd() {
+    public List<PipelineLink> getAdd() {
         return add;
     }
 
-    public List<PipelineReference> getRemove() {
+    public List<PipelineLink> getRemove() {
         return remove;
     }
 
@@ -75,7 +75,7 @@ public class PipelineReferences {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final PipelineReferences that = (PipelineReferences) o;
+        final PipelineLinks that = (PipelineLinks) o;
         return Objects.equals(add, that.add) &&
                 Objects.equals(remove, that.remove);
     }

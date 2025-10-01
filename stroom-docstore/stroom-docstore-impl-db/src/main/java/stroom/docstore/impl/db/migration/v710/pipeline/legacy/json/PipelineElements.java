@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.docstore.impl.db.migration.v7_10.pipeline.legacy.json;
+package stroom.docstore.impl.db.migration.v710.pipeline.legacy.json;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -25,12 +25,12 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
-@JsonPropertyOrder({"add", "remove"})
-public class PipelineReferences extends AbstractAddRemove<PipelineReference> {
+@JsonPropertyOrder({"add, remove"})
+public class PipelineElements extends AbstractAddRemove<PipelineElement> {
 
     @JsonCreator
-    public PipelineReferences(@JsonProperty("add") final List<PipelineReference> add,
-                              @JsonProperty("remove") final List<PipelineReference> remove) {
+    public PipelineElements(@JsonProperty("add") final List<PipelineElement> add,
+                            @JsonProperty("remove") final List<PipelineElement> remove) {
         super(add, remove);
     }
 
@@ -38,14 +38,14 @@ public class PipelineReferences extends AbstractAddRemove<PipelineReference> {
     // --------------------------------------------------------------------------------
 
 
-    public static class Builder extends AbstractAddRemoveListBuilder<PipelineReference, PipelineReferences, Builder> {
+    public static class Builder extends AbstractAddRemoveListBuilder<PipelineElement, PipelineElements, Builder> {
 
         public Builder() {
 
         }
 
-        public Builder(final PipelineReferences references) {
-            super(references);
+        public Builder(final PipelineElements elements) {
+            super(elements);
         }
 
         @Override
@@ -53,8 +53,8 @@ public class PipelineReferences extends AbstractAddRemove<PipelineReference> {
             return this;
         }
 
-        public PipelineReferences build() {
-            return new PipelineReferences(copyAddList(), copyRemoveList());
+        public PipelineElements build() {
+            return new PipelineElements(copyAddList(), copyRemoveList());
         }
     }
 }
