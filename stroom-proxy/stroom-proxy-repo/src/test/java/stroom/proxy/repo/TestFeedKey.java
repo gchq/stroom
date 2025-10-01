@@ -59,4 +59,46 @@ class TestFeedKey {
                 .isEqualTo(feedKey1b)
                 .isSameAs(feedKey1a);
     }
+
+    @Test
+    void testIntern3() {
+        final FeedKeyInterner interner = FeedKey.createInterner();
+        final FeedKey feedKeyNulla = interner.intern(null, null);
+        final FeedKey feedKeyNullb = interner.intern(null, null);
+        final FeedKey feedKey11a = interner.intern("feed1", "type1");
+        final FeedKey feedKey11b = interner.intern("feed1", "type1");
+        final FeedKey feedKey12a = interner.intern("feed1", "type2");
+        final FeedKey feedKey12b = interner.intern("feed1", "type2");
+        final FeedKey feedKey21a = interner.intern("feed2", "type1");
+        final FeedKey feedKey21b = interner.intern("feed2", "type1");
+        final FeedKey feedKey22a = interner.intern("feed2", "type2");
+        final FeedKey feedKey22b = interner.intern("feed2", "type2");
+
+        assertThat(feedKeyNulla)
+                .isSameAs(feedKeyNullb)
+                .isNotEqualTo(feedKey11a)
+                .isNotEqualTo(feedKey12a)
+                .isNotEqualTo(feedKey21a)
+                .isNotEqualTo(feedKey22a);
+        assertThat(feedKey11a)
+                .isSameAs(feedKey11b)
+                .isNotEqualTo(feedKey12a)
+                .isNotEqualTo(feedKey21a)
+                .isNotEqualTo(feedKey22a);
+        assertThat(feedKey12a)
+                .isSameAs(feedKey12b)
+                .isNotEqualTo(feedKey11a)
+                .isNotEqualTo(feedKey21a)
+                .isNotEqualTo(feedKey22a);
+        assertThat(feedKey21a)
+                .isSameAs(feedKey21b)
+                .isNotEqualTo(feedKey11a)
+                .isNotEqualTo(feedKey12a)
+                .isNotEqualTo(feedKey22a);
+        assertThat(feedKey22a)
+                .isSameAs(feedKey22b)
+                .isNotEqualTo(feedKey11a)
+                .isNotEqualTo(feedKey12a)
+                .isNotEqualTo(feedKey21a);
+    }
 }

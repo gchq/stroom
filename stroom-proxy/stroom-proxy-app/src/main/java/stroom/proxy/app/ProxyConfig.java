@@ -51,6 +51,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     public static final String PROP_NAME_RECEIVE = "receive";
     public static final String PROP_NAME_EVENT_STORE = "eventStore";
     public static final String PROP_NAME_AGGREGATOR = "aggregator";
+    public static final String PROP_NAME_DIR_SCANNER = "dirScanner";
     public static final String PROP_NAME_FORWARD_FILE_DESTINATIONS = "forwardFileDestinations";
     public static final String PROP_NAME_FORWARD_HTTP_DESTINATIONS = "forwardHttpDestinations";
     public static final String PROP_NAME_LOG_STREAM = "logStream";
@@ -72,6 +73,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     private final ReceiveDataConfig receiveDataConfig;
     private final EventStoreConfig eventStoreConfig;
     private final AggregatorConfig aggregatorConfig;
+    private final DirScannerConfig dirScannerConfig;
     private final List<ForwardFileConfig> forwardFileDestinations;
     private final List<ForwardHttpPostConfig> forwardHttpDestinations;
     private final LogStreamConfig logStreamConfig;
@@ -89,6 +91,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                 new ReceiveDataConfig(),
                 new EventStoreConfig(),
                 new AggregatorConfig(),
+                new DirScannerConfig(),
                 new ArrayList<>(),
                 new ArrayList<>(),
                 new LogStreamConfig(),
@@ -109,6 +112,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             @JsonProperty(PROP_NAME_RECEIVE) final ReceiveDataConfig receiveDataConfig,
             @JsonProperty(PROP_NAME_EVENT_STORE) final EventStoreConfig eventStoreConfig,
             @JsonProperty(PROP_NAME_AGGREGATOR) final AggregatorConfig aggregatorConfig,
+            @JsonProperty(PROP_NAME_DIR_SCANNER) final DirScannerConfig dirScannerConfig,
             @JsonProperty(PROP_NAME_FORWARD_FILE_DESTINATIONS) final List<ForwardFileConfig> forwardFileDestinations,
             @JsonProperty(PROP_NAME_FORWARD_HTTP_DESTINATIONS) final List<ForwardHttpPostConfig> forwardHttpDestinations,
             @JsonProperty(PROP_NAME_LOG_STREAM) final LogStreamConfig logStreamConfig,
@@ -125,6 +129,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         this.receiveDataConfig = receiveDataConfig;
         this.eventStoreConfig = eventStoreConfig;
         this.aggregatorConfig = aggregatorConfig;
+        this.dirScannerConfig = dirScannerConfig;
         this.forwardFileDestinations = forwardFileDestinations;
         this.forwardHttpDestinations = forwardHttpDestinations;
         this.logStreamConfig = logStreamConfig;
@@ -182,6 +187,11 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     @JsonProperty(PROP_NAME_AGGREGATOR)
     public AggregatorConfig getAggregatorConfig() {
         return aggregatorConfig;
+    }
+
+    @JsonProperty(PROP_NAME_DIR_SCANNER)
+    public DirScannerConfig getDirScannerConfig() {
+        return dirScannerConfig;
     }
 
     @RequiresProxyRestart
@@ -352,6 +362,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         private ReceiveDataConfig receiveDataConfig = new ReceiveDataConfig();
         private EventStoreConfig eventStoreConfig = new EventStoreConfig();
         private AggregatorConfig aggregatorConfig = new AggregatorConfig();
+        private DirScannerConfig dirScannerConfig = new DirScannerConfig();
         private final List<ForwardFileConfig> forwardFileDestinations = new ArrayList<>();
         private final List<ForwardHttpPostConfig> forwardHttpDestinations = new ArrayList<>();
         private LogStreamConfig logStreamConfig = new LogStreamConfig();
@@ -359,7 +370,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         private FeedStatusConfig feedStatusConfig = new FeedStatusConfig();
         private ThreadConfig threadConfig = new ThreadConfig();
         private ProxySecurityConfig proxySecurityConfig = new ProxySecurityConfig();
-        private List<SqsConnectorConfig> sqsConnectors = new ArrayList<>();
+        private final List<SqsConnectorConfig> sqsConnectors = new ArrayList<>();
 
         private Builder() {
 
@@ -397,6 +408,11 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
         public Builder aggregatorConfig(final AggregatorConfig aggregatorConfig) {
             this.aggregatorConfig = aggregatorConfig;
+            return this;
+        }
+
+        public Builder dirScannerConfig(final DirScannerConfig dirScannerConfig) {
+            this.dirScannerConfig = dirScannerConfig;
             return this;
         }
 
@@ -465,6 +481,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                     receiveDataConfig,
                     eventStoreConfig,
                     aggregatorConfig,
+                    dirScannerConfig,
                     forwardFileDestinations,
                     forwardHttpDestinations,
                     logStreamConfig,

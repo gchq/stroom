@@ -16,6 +16,17 @@ import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
+/**
+ * Creates unique non-nested directories as direct children of parentDir, where each child
+ * is a number padded to 10 digits.
+ * <p>
+ * See also {@link DirUtil#createNestedNumberedDirProvider(Path)} for a nested directory
+ * structure with <= 999 items per directory.
+ * </p>
+ * <p>
+ * e.g. {@code parent_dir/0000000123}
+ * </p>
+ */
 public class NumberedDirProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(NumberedDirProvider.class);
@@ -83,6 +94,7 @@ public class NumberedDirProvider {
      * Find all direct child directories in path.
      */
     private static Stream<Path> findDirectories(final Path path) throws IOException {
+        //noinspection resource // See javadoc.
         return Files.find(path, 1,
                         (aPath, basicFileAttributes) -> {
                             LOGGER.trace(() -> LogUtil.message("aPath: {}, isDirectory {}",
