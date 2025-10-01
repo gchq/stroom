@@ -6,6 +6,7 @@ import stroom.contentstore.shared.ContentStoreContentPackStatus;
 import stroom.contentstore.shared.ContentStoreContentPackWithDynamicState;
 import stroom.contentstore.shared.ContentStoreCreateGitRepoRequest;
 import stroom.contentstore.shared.ContentStoreResponse.Status;
+import stroom.credentials.client.presenter.CredentialsManagerDialogPresenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
@@ -40,7 +41,7 @@ public class ContentStoreContentPackDetailsPresenter
     private final RestFactory restFactory;
 
     /** Credentials dialog */
-    private final ContentStoreCredentialsDialogPresenter credentialsDialog;
+    private final CredentialsManagerDialogPresenter credentialsDialog;
 
     /** Displays the icon of the content pack */
     private final HTML lblIcon = new HTML();
@@ -106,7 +107,7 @@ public class ContentStoreContentPackDetailsPresenter
     @Inject
     public ContentStoreContentPackDetailsPresenter(final MarkdownConverter markdownConverter,
                                                    final RestFactory restFactory,
-                                                   final ContentStoreCredentialsDialogPresenter credentialsDialog) {
+                                                   final CredentialsManagerDialogPresenter credentialsDialog) {
 
         this.markdownConverter = markdownConverter;
         this.restFactory = restFactory;
@@ -312,23 +313,25 @@ public class ContentStoreContentPackDetailsPresenter
 
             // Ask for credentials if (contentPack.getGitNeedsAuth())
             if (cpws.getContentPack().getGitNeedsAuth()) {
-                // TODO Show another credentials dialog
                 final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(credentialsDialog);
                 credentialsDialog.setupDialog(
-                        cpws.getContentPack(),
-                        builder);
+                        builder,
+                        cpws.getContentPack().getContentStoreMetadata().getAuthContact(),
+                        null);
                 builder.onHideRequest(e -> {
                     if (e.isOk()) {
-                        if (credentialsDialog.isValid()) {
+                        final String credentialsId = credentialsDialog.getCredentialsId();
+
+                        if (credentialsId != null) {
                             // Create the GitRepo with the given credentials
                             e.hide();
-                            // TODO Replace null with the credentials ID
-                            requestGitRepoCreation(cpws, null);
+                            requestGitRepoCreation(cpws, credentialsId);
                         } else {
                             // Something is wrong
                             AlertEvent.fireWarn(credentialsDialog,
-                                                credentialsDialog.getValidationMessage(),
-                                                e::reset);
+                                    "No credentials were selected; "
+                                    + "this content pack cannot be downloaded",
+                                    e::reset);
                         }
                     } else {
                         // Cancel pressed

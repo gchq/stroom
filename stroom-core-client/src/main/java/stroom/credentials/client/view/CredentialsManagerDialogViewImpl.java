@@ -4,8 +4,10 @@ import stroom.credentials.client.presenter.CredentialsListPresenter;
 import stroom.credentials.client.presenter.CredentialsManagerDialogPresenter.CredentialsManagerDialogView;
 import stroom.credentials.client.presenter.CredentialsManagerDialogUiHandlers;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -24,6 +26,10 @@ implements CredentialsManagerDialogView {
 
     /** Reference to the credentials list */
     private CredentialsListPresenter credentialsList;
+
+    /** Introduces the credentials and tells users where to get the credentials from */
+    @UiField
+    HTML lblHtml;
 
     @UiField
     SimplePanel pnlCredentialsList;
@@ -72,12 +78,37 @@ implements CredentialsManagerDialogView {
     }
 
     /**
+     * Allows the client to show additional information to the user.
+     * @param html The HTML to show above the rest of the info.
+     *             If null then the label is hidden.
+     */
+    @Override
+    public void setLabelHtml(final SafeHtml html) {
+        if (html != null) {
+            lblHtml.setHTML(html);
+            lblHtml.setVisible(true);
+        } else {
+            lblHtml.setText("");
+            lblHtml.setVisible(false);
+        }
+    }
+
+    /**
      * @return The UUID of the credentials set within this UI, or null if no credentials were set.
      */
     @Override
     public String getCredentialsId() {
         return credentialsList.getSelectedCredentialsId();
     }
+
+    /**
+     * Writes to the Javascript console for debugging.
+     * @param text What to write.
+     */
+    public static native void console(String text)
+        /*-{
+        console.log(text);
+         }-*/;
 
     /**
      * Interface to keep GWT UiBinder happy.

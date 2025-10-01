@@ -76,6 +76,11 @@ public class GitRepoSettingsPresenter
     private String credentialsId;
 
     /**
+     * Provides a label for the Credentials dialog that doesn't show anything.
+     */
+    private static final String EMPTY_LABEL = null;
+
+    /**
      * Injected constructor.
      * @param eventBus For parent class
      * @param view The View for showing stuff to users
@@ -312,6 +317,7 @@ public class GitRepoSettingsPresenter
             final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(credentialsManagerDialog);
             credentialsManagerDialog.setupDialog(
                     builder,
+                    EMPTY_LABEL,
                     credentialsId);
             builder.onHideRequest(e -> {
                 if (e.isOk()) {
@@ -327,6 +333,7 @@ public class GitRepoSettingsPresenter
                     .fire();
         }
     }
+
     /**
      * Writes to the Javascript console for debugging.
      * @param text What to write.
