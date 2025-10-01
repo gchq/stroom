@@ -454,6 +454,17 @@ public class ByteBufferUtils {
         }
     }
 
+    /**
+     * Check for byte buffer equality over portions of two buffers. This is generally quicker than slicing as no object
+     * creation is required.
+     *
+     * @param a      Byte buffer 1.
+     * @param aOff   Byte buffer 1 offset.
+     * @param b      Byte buffer 2.
+     * @param bOff   Byte buffer 2 offset.
+     * @param length Length to compare.
+     * @return True if byte buffer portions are equal.
+     */
     public static boolean equals(final ByteBuffer a,
                                  final int aOff,
                                  final ByteBuffer b,
