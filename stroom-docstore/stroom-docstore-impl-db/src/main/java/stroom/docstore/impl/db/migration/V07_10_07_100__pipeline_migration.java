@@ -19,7 +19,6 @@ package stroom.docstore.impl.db.migration;
 import stroom.docstore.impl.db.migration.v7_10.pipeline.legacy.PipelineDataMigration;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import org.flywaydb.core.api.migration.BaseJavaMigration;
@@ -60,19 +59,17 @@ public class V07_10_07_100__pipeline_migration extends BaseJavaMigration {
                     // Check there is no json already.
                     final String existingJson = getPipelineJson(context, uuid);
                     if (NullSafe.isNonBlankString(existingJson)) {
-                        LOGGER.info(() -> LogUtil
-                                .message("Pipeline {} has already been migrated, deleting XML", name));
+                        LOGGER.info("Pipeline {} has already been migrated, deleting XML", name);
                         if (!deleteDocEntry(context, id)) {
-                            LOGGER.error(() -> LogUtil.message("Error deleting pipeline {} XML", name));
+                            LOGGER.error("Error deleting pipeline {} XML", name);
                         }
                     } else {
                         // Perform migration.
                         final String json = pipelineDataMigration.xmlToJson(data);
                         // Update record.
-                        LOGGER.info(() -> LogUtil
-                                .message("Updating pipeline {} to JSON structure", name));
+                        LOGGER.info("Updating pipeline {} to JSON structure", name);
                         if (!updatePipelineJson(context, json, id)) {
-                            LOGGER.error(() -> LogUtil.message("Error updating pipeline {} to json", name));
+                            LOGGER.error("Error updating pipeline {} to json", name);
                         }
                     }
                 }
