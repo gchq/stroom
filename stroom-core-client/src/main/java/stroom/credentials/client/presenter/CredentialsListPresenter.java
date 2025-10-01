@@ -148,7 +148,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                 DataGridUtil.headingBuilder("Name")
                         .withToolTip("Name of credentials")
                         .build(),
-                300);
+                280);
 
         grid.addResizableColumn(
                 DataGridUtil.textColumnBuilder((final Credentials c) -> {
@@ -162,7 +162,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                 DataGridUtil.headingBuilder("Expires")
                         .withToolTip("When these credentials expire")
                         .build(),
-                300);
+                190);
 
         grid.addResizableColumn(
                 DataGridUtil.textColumnBuilder((Credentials c) -> c.getType().getDisplayName())
@@ -170,7 +170,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
         DataGridUtil.headingBuilder("Type")
                 .withToolTip("Type of credential")
                 .build(),
-                300);
+                150);
 
         grid.addEndColumn(new EndColumn<>());
     }

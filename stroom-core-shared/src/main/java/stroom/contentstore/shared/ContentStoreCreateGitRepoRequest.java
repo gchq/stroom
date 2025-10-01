@@ -30,28 +30,22 @@ public class ContentStoreCreateGitRepoRequest {
     private final ContentStoreContentPack contentPack;
 
     @JsonProperty
-    private final String username;
-
-    @JsonProperty
-    private final String password;
+    private final String credentialsId;
 
     /**
      * Constructor for content pack. Called by JSON serialisation system.
      * @param contentPack The content pack to create the GitRepoDoc from.
      *                    Must never be null.
-     * @param username The username, if authentication is required. Can be null.
-     * @param password The password, if authentication is required. Can be null.
+     * @param credentialsId The credentialsId, if authentication is required. Can be null.
      */
     @JsonCreator
     @SuppressWarnings("unused")
     public ContentStoreCreateGitRepoRequest(@JsonProperty("contentPack") final ContentStoreContentPack contentPack,
-                                            @JsonProperty("username") final String username,
-                                            @JsonProperty("password") final String password) {
+                                            @JsonProperty("credentialsId") final String credentialsId) {
         Objects.requireNonNull(contentPack);
         this.contentPack = contentPack;
         final boolean gitNeedsAuth = contentPack.getGitNeedsAuth();
-        this.username = gitNeedsAuth && username != null ? username : "";
-        this.password = gitNeedsAuth && password != null ? password : "";
+        this.credentialsId = gitNeedsAuth && credentialsId != null ? credentialsId : "";
     }
 
     /**
@@ -62,19 +56,11 @@ public class ContentStoreCreateGitRepoRequest {
     }
 
     /**
-     * @return The username, if getGitNeedsAuth() returns true.
+     * @return The credentialsId, if getGitNeedsAuth() returns true.
      * Never returns null but may return empty string.
      */
-    public String getUsername() {
-        return username;
-    }
-
-    /**
-     * @return The password, if getGitNeedsAuth() returns true.
-     * Never returns null but may return empty string.
-     */
-    public String getPassword() {
-        return password;
+    public String getCredentialsId() {
+        return credentialsId;
     }
 
     @Override
@@ -83,20 +69,20 @@ public class ContentStoreCreateGitRepoRequest {
             return false;
         }
         final ContentStoreCreateGitRepoRequest that = (ContentStoreCreateGitRepoRequest) o;
-        return Objects.equals(contentPack, that.contentPack) && Objects.equals(username,
-                that.username) && Objects.equals(password, that.password);
+        return Objects.equals(contentPack, that.contentPack)
+               && Objects.equals(credentialsId, that.credentialsId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(contentPack, username, password);
+        return Objects.hash(contentPack, credentialsId);
     }
 
     @Override
     public String toString() {
         return "ContentStoreCreateGitRepoRequest{" +
                "\n   contentPack=" + contentPack +
-               ",\n   username='" + username +
+               ",\n   username='" + credentialsId +
                "'\n}";
     }
 }

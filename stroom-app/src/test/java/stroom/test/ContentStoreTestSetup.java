@@ -115,7 +115,7 @@ public class ContentStoreTestSetup {
 
         // Install the pack
         final ContentStoreCreateGitRepoRequest request =
-                new ContentStoreCreateGitRepoRequest(cp, null, null);
+                new ContentStoreCreateGitRepoRequest(cp, null);
         final ContentStoreResponse response = contentStoreResource.create(request);
         final ContentStoreResponse.Status status = response.getStatus();
         if (!(status.equals(Status.OK) || status.equals(Status.ALREADY_EXISTS))) {

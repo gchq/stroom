@@ -82,12 +82,6 @@ public class GitRepoDoc extends Doc {
     private String url = "";
 
     @JsonProperty
-    private String username = "";
-
-    @JsonProperty
-    private String password = "";
-
-    @JsonProperty
     private String credentialsId = "";
 
     @JsonProperty
@@ -122,8 +116,6 @@ public class GitRepoDoc extends Doc {
                       @JsonProperty("contentStoreMetadata") final ContentStoreMetadata contentStoreMetadata,
                       @JsonProperty("contentStoreContentPackId") final String contentStoreContentPackId,
                       @JsonProperty("url") final String url,
-                      @JsonProperty("username") final String username,
-                      @JsonProperty("password") final String password,
                       @JsonProperty("credentialsId") final String credentialsId,
                       @JsonProperty("branch") final String branch,
                       @JsonProperty("path") final String path,
@@ -138,8 +130,6 @@ public class GitRepoDoc extends Doc {
 
         // Git settings
         this.url = url;
-        this.username = username;
-        this.password = password;
         this.credentialsId = credentialsId;
         this.branch = branch;
         this.path = path;
@@ -149,12 +139,6 @@ public class GitRepoDoc extends Doc {
         // Make sure none of the settings are null
         if (this.url == null) {
             this.url = "";
-        }
-        if (this.username == null) {
-            this.username = "";
-        }
-        if (this.password == null) {
-            this.password = "";
         }
         if (this.credentialsId == null) {
             this.credentialsId = "";
@@ -202,8 +186,6 @@ public class GitRepoDoc extends Doc {
                && Objects.equals(contentStoreMetadata, that.contentStoreMetadata)
                && Objects.equals(contentStoreContentPackId, that.contentStoreContentPackId)
                && Objects.equals(url, that.url)
-               && Objects.equals(username, that.username)
-               && Objects.equals(password, that.password)
                && Objects.equals(credentialsId, that.credentialsId)
                && Objects.equals(branch, that.branch)
                && Objects.equals(path, that.path)
@@ -218,8 +200,6 @@ public class GitRepoDoc extends Doc {
                 contentStoreMetadata,
                 contentStoreContentPackId,
                 url,
-                username,
-                password,
                 credentialsId,
                 branch,
                 path,
@@ -276,28 +256,19 @@ public class GitRepoDoc extends Doc {
         this.url = url;
     }
 
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(final String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(final String password) {
-        this.password = password;
-    }
-
     public String getCredentialsId() {
         return credentialsId;
     }
 
     public void setCredentialsId(final String id) {
         this.credentialsId = id;
+    }
+
+    /**
+     * @return true if this GitRepoDoc needs credentials to push to Git. false if not.
+     */
+    public boolean needsCredentials() {
+        return credentialsId != null && !credentialsId.isBlank();
     }
 
     public String getBranch() {
@@ -348,7 +319,7 @@ public class GitRepoDoc extends Doc {
                + contentStoreMetadata + ",\n"
                + contentStoreContentPackId + ",\n"
                + url + ",\n  "
-               + username + ",\n  "
+               + credentialsId + ",\n  "
                + branch + "\n  "
                + path + "\n  "
                + commit + "\n  "

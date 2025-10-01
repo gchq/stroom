@@ -1,5 +1,7 @@
 package stroom.gitrepo.impl;
 
+import stroom.credentials.impl.CredentialsDao;
+import stroom.credentials.shared.Credentials;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
@@ -22,6 +24,7 @@ import stroom.util.shared.Severity;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -32,6 +35,7 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
+import org.jspecify.annotations.NonNull;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -87,6 +91,11 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
     private final GitRepoDao gitRepoDao;
 
     /**
+     * Provides credential information
+     */
+    private final CredentialsDao credentialsDao;
+
+    /**
      * Logger so we can follow what is going on.
      */
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GitRepoStorageServiceImpl.class);
@@ -108,6 +117,16 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
     private static final String GIT_USERNAME = "Stroom";
 
     /**
+     * The email address to use in the commit to Git - empty string
+     */
+    private static final String GIT_EMAIL = "";
+
+    /**
+     * Empty string
+     */
+    private static final String EMPTY = "";
+
+    /**
      * Constructor so we can log when this object is constructed.
      * Called by injection system.
      */
@@ -118,13 +137,15 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                                      final ImportExportSerializer importExportSerializer,
                                      final Provider<GitRepoConfig> config,
                                      final PathCreator pathCreator,
-                                     final GitRepoDao gitRepoDao) {
+                                     final GitRepoDao gitRepoDao,
+                                     final CredentialsDao credentialsDao) {
         this.explorerService = explorerService;
         this.explorerNodeService = explorerNodeService;
         this.importExportSerializer = importExportSerializer;
         this.config = config;
         this.pathCreator = pathCreator;
         this.gitRepoDao = gitRepoDao;
+        this.credentialsDao = credentialsDao;
     }
 
     /**
@@ -171,7 +192,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                     // The export directory is somewhere within the gitWorkDir,
                     // defined by the path the user specified
                     final Path exportDir = addDirectoryToPath(gitWorkDir.getDirectory(),
-                                                              Paths.get(gitRepoDoc.getPath()));
+                            Paths.get(gitRepoDoc.getPath()));
                     this.ensureDirectoryExists(exportDir);
 
                     // Delete all the files that are currently in the repo
@@ -181,8 +202,8 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
 
                     // Export everything from Stroom to local git repo dir
                     final ExportSummary exportSummary = this.export(gitRepoNodePath,
-                                                                    gitRepoExplorerNode,
-                                                                    exportDir);
+                            gitRepoExplorerNode,
+                            exportDir);
                     messages.addAll(exportSummary.getMessages());
                     addMessage(messages, Severity.INFO, "Export to disk successful");
 
@@ -199,13 +220,17 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                         git.add().setUpdate(false).addFilepattern(".").call();
 
                         final RevCommit gitCommit = git.commit()
-                                .setCommitter(GIT_USERNAME, gitRepoDoc.getUsername())
+                                .setCommitter(GIT_USERNAME, GIT_EMAIL)
                                 .setMessage(commitMessage)
                                 .call();
                         addMessage(messages, Severity.INFO, "Local commit successful");
 
                         // Push to remote
-                        git.push().setCredentialsProvider(this.getGitCreds(gitRepoDoc)).call();
+                        if (gitRepoDoc.needsCredentials()) {
+                            git.push().setCredentialsProvider(this.getGitCreds(gitRepoDoc)).call();
+                        } else {
+                            git.pull().call();
+                        }
                         addMessage(messages, Severity.INFO, "Pushed to Git");
 
                         // Store the commit version
@@ -444,7 +469,8 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
 
         Files.walkFileTree(root, new SimpleFileVisitor<>() {
             @Override
-            public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) {
+            public @NonNull FileVisitResult preVisitDirectory(@NonNull final Path dir,
+                                                              @NonNull final BasicFileAttributes attrs) {
 
                 // Ignore any .git subtree
                 if (keepGitStuff && dir.endsWith(GIT_REPO_DIRNAME)) {
@@ -455,7 +481,8 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
             }
 
             @Override
-            public FileVisitResult visitFile(final Path p, final BasicFileAttributes attrs)
+            public @NonNull FileVisitResult visitFile(@NonNull final Path p,
+                                                      @NonNull final BasicFileAttributes attrs)
                     throws IOException {
 
                 // Don't delete README files
@@ -466,7 +493,8 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
             }
 
             @Override
-            public FileVisitResult postVisitDirectory(final Path dir, final IOException ex)
+            public @NonNull FileVisitResult postVisitDirectory(@NonNull final Path dir,
+                                                               final IOException ex)
                     throws IOException {
 
                 // Don't delete the root dir or the .git dir
@@ -527,10 +555,52 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
      * @param gitRepoDoc Where we get the credential data from. Must not be null.
      * @return Credentials to log into a remote GIT repo. Never returns null.
      */
-    private CredentialsProvider getGitCreds(final GitRepoDoc gitRepoDoc) {
-        final String username = gitRepoDoc.getUsername();
-        final String password = gitRepoDoc.getPassword();
-        return new UsernamePasswordCredentialsProvider(username, password);
+    private CredentialsProvider getGitCreds(final GitRepoDoc gitRepoDoc) throws IOException {
+        final String credentialsId = gitRepoDoc.getCredentialsId();
+        final CredentialsProvider retval;
+
+        if (credentialsId != null && !credentialsId.isBlank()) {
+            try {
+                // Grab the credentials from the database
+                final Credentials credentials = credentialsDao.get(gitRepoDoc.getCredentialsId());
+
+                // Note any field of the secrets might be null so handle that
+                switch (credentials.getType()) {
+                    case USERNAME_PASSWORD -> {
+                        String username = credentials.getSecret().getUsername();
+                        if (username == null) {
+                            username = EMPTY;
+                        }
+                        String password = credentials.getSecret().getPassword();
+                        if (password == null) {
+                            password = EMPTY;
+                        }
+                        retval = new UsernamePasswordCredentialsProvider(username, password);
+                    }
+                    case ACCESS_TOKEN -> {
+                        String accessToken = credentials.getSecret().getAccessToken();
+                        if (accessToken == null) {
+                            accessToken = EMPTY;
+                        }
+                        retval = new UsernamePasswordCredentialsProvider(GIT_USERNAME, accessToken);
+                    }
+                    case PRIVATE_CERT -> {
+                        throw new IOException("Private certs not supported yet!");
+                    }
+                    default -> {
+                        throw new IOException("Unknown type of credentials: " + credentials.getType());
+                    }
+                }
+            } catch (final IOException e) {
+                throw new IOException("Error getting GIT credentials: " + e.getMessage(), e);
+            }
+        } else {
+            // If no credentials then return empty username / password credentials
+            // Shouldn't be needed but avoids returning null.
+            retval = new UsernamePasswordCredentialsProvider(EMPTY, EMPTY);
+        }
+
+        return retval;
     }
 
     /**
@@ -552,14 +622,18 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
         // Clone the remote repo
         // Note depth is 1 - we only want the latest items not the history
         LOGGER.debug("Cloning repository '{}' to '{}' for push", gitRepoDoc.getUrl(), gitWorkDir);
-        return Git.cloneRepository()
+        final CloneCommand cloneCommand = Git.cloneRepository()
                 .setURI(gitRepoDoc.getUrl())
                 .setDirectory(gitWorkDir.toFile())
-                .setCredentialsProvider(this.getGitCreds(gitRepoDoc))
                 .setDepth(1)
                 .setBranch(gitRepoDoc.getBranch())
-                .setCloneAllBranches(false)
-                .call();
+                .setCloneAllBranches(false);
+
+        if (gitRepoDoc.needsCredentials()) {
+            cloneCommand.setCredentialsProvider(this.getGitCreds(gitRepoDoc));
+        }
+
+        return cloneCommand.call();
     }
 
     /**
@@ -582,14 +656,17 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
         final String gitCommit = gitRepoDoc.getCommit();
         if (gitCommit == null || gitCommit.isEmpty()) {
             // No commit data so just do clone
-            try (final Git git = Git.cloneRepository()
+            final CloneCommand cloneCommand = Git.cloneRepository()
                     .setURI(gitRepoDoc.getUrl())
                     .setDirectory(gitWorkDir.toFile())
-                    .setCredentialsProvider(this.getGitCreds(gitRepoDoc))
                     .setDepth(1)
                     .setBranch(gitRepoDoc.getBranch())
-                    .setCloneAllBranches(false)
-                    .call()) {
+                    .setCloneAllBranches(false);
+            if (gitRepoDoc.needsCredentials()) {
+                cloneCommand.setCredentialsProvider(this.getGitCreds(gitRepoDoc));
+            }
+
+            try (final Git git = cloneCommand.call()) {
 
                 // Store the commit we've got
                 gitRepoDao.storeHash(gitRepoDoc.getUuid(), this.gitGetCurrentRevCommitName(git));
@@ -602,12 +679,14 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
             }
         } else {
             // We want a particular commit so get everything - all commits
-            try (final Git git = Git.cloneRepository()
+            final CloneCommand cloneCommand = Git.cloneRepository()
                     .setURI(gitRepoDoc.getUrl())
                     .setDirectory(gitWorkDir.toFile())
-                    .setCredentialsProvider(this.getGitCreds(gitRepoDoc))
-                    .setBranch(gitRepoDoc.getBranch())
-                    .call()) {
+                    .setBranch(gitRepoDoc.getBranch());
+            if (gitRepoDoc.needsCredentials()) {
+                cloneCommand.setCredentialsProvider(this.getGitCreds(gitRepoDoc));
+            }
+            try (final Git git = cloneCommand.call()) {
                 // Ok that worked; now find the commit in the repo
                 git.checkout()
                         .setName(gitCommit)
@@ -676,14 +755,16 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
             gitCloneDepth = Integer.MAX_VALUE;
         }
 
-        try (final Git git = Git.cloneRepository()
+        final CloneCommand cloneCommand = Git.cloneRepository()
                 .setURI(gitRepoDoc.getUrl())
                 .setDirectory(gitWorkDir.toFile())
-                .setCredentialsProvider(this.getGitCreds(gitRepoDoc))
                 .setDepth(gitCloneDepth)
                 .setBranch(gitRepoDoc.getBranch())
-                .setCloneAllBranches(false)
-                .call()) {
+                .setCloneAllBranches(false);
+        if (gitRepoDoc.needsCredentials()) {
+            cloneCommand.setCredentialsProvider(this.getGitCreds(gitRepoDoc));
+        }
+        try (final Git git = cloneCommand.call()) {
 
             final String newGitCommitName = this.gitGetCurrentRevCommitName(git);
             final String oldGitCommitName = gitRepoDao.getHash(gitRepoDoc.getUuid());
@@ -859,7 +940,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
          * @param prefix The start of the directory name.
          */
         public AutoDeletingTempDirectory(final Path location, final String prefix)
-            throws IOException {
+                throws IOException {
             // Try to create parent directories
             if (!location.toFile().exists()) {
                 if (!location.toFile().mkdirs()) {
@@ -887,12 +968,14 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
 
             Files.walkFileTree(directory, new SimpleFileVisitor<>() {
                 @Override
-                public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) {
+                public @NonNull FileVisitResult preVisitDirectory(@NonNull final Path dir,
+                                                                  @NonNull final BasicFileAttributes attrs) {
                     return FileVisitResult.CONTINUE;
                 }
 
                 @Override
-                public FileVisitResult visitFile(final Path p, final BasicFileAttributes attrs)
+                public @NonNull FileVisitResult visitFile(@NonNull final Path p,
+                                                          @NonNull final BasicFileAttributes attrs)
                         throws IOException {
 
                     Files.delete(p);
@@ -900,7 +983,8 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                 }
 
                 @Override
-                public FileVisitResult postVisitDirectory(final Path dir, final IOException ex)
+                public @NonNull FileVisitResult postVisitDirectory(@NonNull final Path dir,
+                                                                   final IOException ex)
                         throws IOException {
 
                     Files.delete(dir);

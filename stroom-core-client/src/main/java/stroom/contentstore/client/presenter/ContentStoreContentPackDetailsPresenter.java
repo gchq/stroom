@@ -312,6 +312,7 @@ public class ContentStoreContentPackDetailsPresenter
 
             // Ask for credentials if (contentPack.getGitNeedsAuth())
             if (cpws.getContentPack().getGitNeedsAuth()) {
+                // TODO Show another credentials dialog
                 final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(credentialsDialog);
                 credentialsDialog.setupDialog(
                         cpws.getContentPack(),
@@ -321,9 +322,8 @@ public class ContentStoreContentPackDetailsPresenter
                         if (credentialsDialog.isValid()) {
                             // Create the GitRepo with the given credentials
                             e.hide();
-                            requestGitRepoCreation(cpws,
-                                                   credentialsDialog.getView().getUsername(),
-                                                   credentialsDialog.getView().getPassword());
+                            // TODO Replace null with the credentials ID
+                            requestGitRepoCreation(cpws, null);
                         } else {
                             // Something is wrong
                             AlertEvent.fireWarn(credentialsDialog,
@@ -339,7 +339,7 @@ public class ContentStoreContentPackDetailsPresenter
 
             } else {
                 // No authentication needed
-                requestGitRepoCreation(cpws, null, null);
+                requestGitRepoCreation(cpws, null);
             }
         }
     }
@@ -347,17 +347,13 @@ public class ContentStoreContentPackDetailsPresenter
     /**
      * Performs the REST request to the server to create a GitRepo.
      * @param cpws The content pack with state. Must not be null.
-     * @param username The username for authentication, if required.
-     * @param password The password for authentication, if required.
+     * @param credentialsId The credentials ID for authentication, if required.
      */
     private void requestGitRepoCreation(final ContentStoreContentPackWithDynamicState cpws,
-                                        final String username,
-                                        final String password) {
+                                        final String credentialsId) {
 
         final ContentStoreCreateGitRepoRequest request =
-                new ContentStoreCreateGitRepoRequest(cpws.getContentPack(),
-                        username,
-                        password);
+                new ContentStoreCreateGitRepoRequest(cpws.getContentPack(), credentialsId);
 
         restFactory
                 .create(ContentStorePresenter.CONTENT_STORE_RESOURCE)
