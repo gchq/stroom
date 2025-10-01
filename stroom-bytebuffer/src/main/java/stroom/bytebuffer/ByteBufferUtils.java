@@ -453,4 +453,20 @@ public class ByteBufferUtils {
             byteBuffer.put(i, MAX_BYTE_UNSIGNED);
         }
     }
+
+    public static boolean equals(final ByteBuffer a,
+                                 final int aOff,
+                                 final ByteBuffer b,
+                                 final int bOff,
+                                 final int length) {
+        if (length > 7) {
+            return a.slice(aOff, length).equals(b.slice(bOff, length));
+        }
+        for (int i = 0; i < length; i++) {
+            if (a.get(aOff + i) != b.get(bOff + i)) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
