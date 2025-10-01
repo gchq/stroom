@@ -8,8 +8,13 @@ dependencies {
     implementation project(':stroom-docstore:stroom-docstore-impl')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
-    
+
+    implementation libs.flyway.core
+    implementation libs.flyway.mysql
     implementation libs.guice
     implementation libs.jackson.annotations
+    implementation libs.jackson.core
+    implementation libs.jackson.databind
+    implementation libs.jaxb.api
     implementation libs.slf4j.api
 }
