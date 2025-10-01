@@ -10,7 +10,6 @@ import stroom.util.shared.Message;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -75,10 +74,6 @@ public interface Store<D extends Doc>
      * List all documents of this stores type
      */
     List<DocRef> list();
-
-    // This is only used to migrate pipelines. Do not use!!!
-    @Deprecated
-    void migratePipelines(Function<Map<String, byte[]>, Optional<Map<String, byte[]>>> function);
 
     interface DocumentCreator<D extends Doc> {
 
