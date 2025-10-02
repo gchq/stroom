@@ -19,6 +19,9 @@ updates:
       interval: "weekly"
     rebase-strategy: "disabled"
     open-pull-requests-limit: 5
+    update-types:
+      - "version-update:semver-patch"
+      - "version-update:semver-minor"
 
   # Enable version updates for stroom-proxy Docker
   - package-ecosystem: "docker"
@@ -29,6 +32,9 @@ updates:
       interval: "weekly"
     rebase-strategy: "disabled"
     open-pull-requests-limit: 5
+    update-types:
+      - "version-update:semver-patch"
+      - "version-update:semver-minor"
 
   # Enable version updates for java container build
   - package-ecosystem: "docker"
