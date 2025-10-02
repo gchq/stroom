@@ -1,5 +1,6 @@
 package stroom.util.zip;
 
+import stroom.test.common.TestUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -7,7 +8,9 @@ import stroom.util.logging.LambdaLoggerFactory;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.BufferedOutputStream;
@@ -16,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -154,6 +158,54 @@ class TestZipUtil {
                 .hasMessageContaining("would extract outside target directory");
 
         dumpDirContents(dir);
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testIsSafeRelativePath() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase ->
+                        ZipUtil.isSafeZipPath(Path.of(testCase.getInput())))
+                .withSimpleEqualityAssertion()
+                .addCase("/", false)
+                .addCase("/tmp/foo.txt", false)
+                .addCase("../foo.txt", false)
+                .addCase("..", false)
+                .addCase("../..", false)
+                .addCase("../../../foo", false)
+                .addCase("a/b/../../../foo.txt", false)
+                .addCase("foo.txt", true)
+                .addCase("a/b/foo.txt", true)
+                .addCase("a/b/../foo.txt", true)
+                .addCase("a/b/../../foo.txt", true)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testIsSafeRelativePath2() {
+        final Path destDir = Path.of("/c/d");
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase ->
+                        ZipUtil.isSafeZipPath(Path.of(testCase.getInput()), destDir))
+                .withSimpleEqualityAssertion()
+                .addCase("/", false)
+                .addCase("/tmp/foo.txt", false)
+                .addCase("../foo.txt", false)
+                .addCase("..", false)
+                .addCase("../..", false)
+                .addCase("../../../foo", false)
+                .addCase("a/b/../../../foo.txt", false)
+                .addCase("/c/foo.txt", false)
+                .addCase("foo.txt", true)
+                .addCase("a/b/foo.txt", true)
+                .addCase("a/b/../foo.txt", true)
+                .addCase("a/b/../../foo.txt", true)
+                .addCase("/c/d/foo.txt", true)
+                .addCase("/c/d/../d/foo.txt", true)
+                .build();
     }
 
     private static void dumpDirContents(final Path dir) {

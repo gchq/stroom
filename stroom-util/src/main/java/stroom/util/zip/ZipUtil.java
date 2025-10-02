@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -43,6 +44,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
+import java.util.stream.StreamSupport;
 
 public final class ZipUtil {
 
@@ -129,7 +131,7 @@ public final class ZipUtil {
                 final Path file = dir.resolve(zipEntry.getName());
 
                 // Ensure that the resolved path is within the target directory
-                if (!file.normalize().startsWith(dir.normalize())) {
+                if (!isSafeZipPath(Path.of(zipEntry.getName()), dir)) {
                     throw new IOException(LogUtil.message(
                             "Zip entry '{}' (normalised: {}) would extract outside target directory '{}'. " +
                                     "Only relative paths inside the target directory are allowed.",
@@ -166,5 +168,52 @@ public final class ZipUtil {
             }
         }
         return pathList;
+    }
+
+    /**
+     * Tests if a zip entry path is safe to use, i.e. when path is unzipped into
+     * any directory, it does not resolve to a path that is outside that directory.
+     * @param path The path to test, relative or absolute.
+     * @return True if the path is safe.
+     */
+    public static boolean isSafeZipPath(final Path path) {
+        return isSafeZipPath(path, null);
+    }
+
+    /**
+     * Tests if a zip entry path is safe to use, i.e. it does not resolve to a path
+     * that is outside destDir.
+     * @param path The path to test, relative or absolute.
+     * @param destDir The directory that path will be resolved against.
+     * @return True if the path is safe.
+     */
+    public static boolean isSafeZipPath(final Path path, final Path destDir) {
+        Objects.requireNonNull(path);
+        final Path normalisedPath = path.normalize();
+
+        final Path basePath;
+        if (destDir != null) {
+            basePath = destDir;
+        } else {
+            // We don't have a destination dir, so need to construct a base path to
+            // test normalisedPath against that has at least as many parts,
+            // e.g. if normalisedPath is ../../../foo basePath needs to be /0/1/2/3
+            // to give a fullPath of /0/foo when combined, which does not start
+            // with /0/1/2/3
+            final long partCount = StreamSupport.stream(normalisedPath.spliterator(), false)
+                    .count();
+            final StringBuilder stringBuilder = new StringBuilder();
+            for (long i = 0; i < partCount; i++) {
+                stringBuilder.append(File.separatorChar)
+                        .append(i);
+            }
+            basePath = Path.of(stringBuilder.toString());
+        }
+        final Path fullPath = basePath.resolve(normalisedPath);
+
+        LOGGER.trace("path: {}, destDir: {}, normalisedPath: {}, basePath: {}, fullPath: {}",
+                path, destDir, normalisedPath, basePath, fullPath);
+
+        return fullPath.normalize().startsWith(basePath.normalize());
     }
 }
