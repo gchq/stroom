@@ -8,6 +8,7 @@ updates:
       interval: "weekly"
     # Stops noise in CI
     rebase-strategy: "disabled"
+    open-pull-requests-limit: 5
 
   # Enable version updates for stroom Docker
   - package-ecosystem: "docker"
@@ -17,6 +18,7 @@ updates:
     schedule:
       interval: "weekly"
     rebase-strategy: "disabled"
+    open-pull-requests-limit: 5
 
   # Enable version updates for stroom-proxy Docker
   - package-ecosystem: "docker"
@@ -26,6 +28,7 @@ updates:
     schedule:
       interval: "weekly"
     rebase-strategy: "disabled"
+    open-pull-requests-limit: 5
 
   # Enable version updates for java container build
   - package-ecosystem: "docker"
@@ -33,8 +36,9 @@ updates:
     directory: "/container_build/docker_java/"
     # Check for updates once a week
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     rebase-strategy: "disabled"
+    open-pull-requests-limit: 1
 
   # Enable version updates for node container build
   - package-ecosystem: "docker"
@@ -42,8 +46,9 @@ updates:
     directory: "/container_build/docker_node/"
     # Check for updates once a week
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     rebase-strategy: "disabled"
+    open-pull-requests-limit: 1
 
   # Enable version updates for node container build
   - package-ecosystem: "docker"
@@ -51,5 +56,6 @@ updates:
     directory: "/container_build/docker_puml_erd/"
     # Check for updates once a week
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     rebase-strategy: "disabled"
+    open-pull-requests-limit: 1
