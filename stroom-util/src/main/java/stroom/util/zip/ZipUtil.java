@@ -18,6 +18,7 @@ package stroom.util.zip;
 
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LogUtil;
 
 import org.apache.commons.compress.archivers.zip.Zip64Mode;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
@@ -40,6 +41,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 public final class ZipUtil {
@@ -112,12 +114,29 @@ public final class ZipUtil {
     }
 
     public static void unzip(final Path zipFile, final Path dir) throws IOException {
+        Objects.requireNonNull(dir);
+        if (Files.exists(dir) && !Files.isDirectory(dir)) {
+            throw new IOException(LogUtil.message("'{}' is not a directory.", dir.toAbsolutePath()));
+        }
+
+        // TODO change to use ZipFile as ZipArchiveInputStream doesn't read the central
+        //  directory. See the javadoc for ZipArchiveInputStream
         try (final ZipArchiveInputStream zip =
                 new ZipArchiveInputStream(new BufferedInputStream(Files.newInputStream(zipFile)))) {
             ZipArchiveEntry zipEntry;
             while ((zipEntry = zip.getNextEntry()) != null) {
                 // Get output file.
                 final Path file = dir.resolve(zipEntry.getName());
+
+                // Ensure that the resolved path is within the target directory
+                if (!file.normalize().startsWith(dir.normalize())) {
+                    throw new IOException(LogUtil.message(
+                            "Zip entry '{}' (normalised: {}) would extract outside target directory '{}'. " +
+                                    "Only relative paths inside the target directory are allowed.",
+                            zipEntry.getName(),
+                            file.normalize().toAbsolutePath(),
+                            dir.normalize().toAbsolutePath()));
+                }
 
                 if (zipEntry.isDirectory()) {
                     // Make sure output directories exist.
@@ -137,6 +156,8 @@ public final class ZipUtil {
 
     public static List<String> pathList(final Path zipFile) throws IOException {
         final List<String> pathList = new ArrayList<>();
+        // TODO change to use ZipFile as ZipArchiveInputStream doesn't read the central
+        //  directory. See the javadoc for ZipArchiveInputStream
         try (final ZipArchiveInputStream zip =
                 new ZipArchiveInputStream(new BufferedInputStream(Files.newInputStream(zipFile)))) {
             ZipArchiveEntry zipEntry;
