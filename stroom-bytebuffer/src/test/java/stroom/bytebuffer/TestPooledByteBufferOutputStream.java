@@ -308,10 +308,31 @@ class TestPooledByteBufferOutputStream {
                     .isGreaterThan(BYTES);
             assertThat(pooledBuffer.limit())
                     .isEqualTo(BYTES);
-            assertThat(ByteBufferUtils.compareTo(
-                    byteBuffer, 5, BYTES,
-                    pooledBuffer, 0, BYTES))
-                    .isZero();
+            assertThat(byteBuffer.slice(5, BYTES)).isEqualTo(pooledBuffer.slice(0, BYTES));
         }
+    }
+
+    @Test
+    void testWriteLong() throws IOException {
+        final ByteBufferPool byteBufferPool = getByteBufferPool();
+        try (final PooledByteBufferOutputStream pooledByteBufferOutputStream = new PooledByteBufferOutputStream(
+                byteBufferPool,
+                BYTES)) {
+            pooledByteBufferOutputStream.writeLong(234556L);
+            final ByteBuffer pooledBuffer = pooledByteBufferOutputStream.getByteBuffer();
+            final byte[] actual = ByteBufferUtils.toBytes(pooledBuffer);
+            final byte[] expected = new byte[BYTES];
+            oldPutLong(expected, 0, 234556L);
+            assertThat(actual).isEqualTo(expected);
+        }
+    }
+
+    private int oldPutLong(final byte[] bytes, final int offset, long val) {
+        for (int i = offset + 7; i > offset; i--) {
+            bytes[i] = (byte) val;
+            val >>>= 8;
+        }
+        bytes[offset] = (byte) val;
+        return offset + BYTES;
     }
 }

@@ -17,6 +17,7 @@
 package stroom.statistics.impl.sql.rollup;
 
 
+import stroom.bytebuffer.ByteArrayUtils;
 import stroom.test.common.util.test.StroomUnitTest;
 
 import jakarta.xml.bind.DatatypeConverter;

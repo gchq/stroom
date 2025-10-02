@@ -1,7 +1,6 @@
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 import stroom.bytebuffer.PooledByteBufferOutputStream;
-import stroom.bytebuffer.hbase.Bytes;
 import stroom.lmdb.serde.Deserializer;
 import stroom.lmdb.serde.Serde;
 import stroom.lmdb.serde.Serializer;
@@ -68,7 +67,7 @@ public class StagingRefDataValueSerde
 
         try {
             pooledByteBufferOutputStream.write(stagingRefDataValue.getTypeId());
-            pooledByteBufferOutputStream.write(Bytes.toBytes(refDataValue.getValueHashCode(valueStoreHashAlgorithm)));
+            pooledByteBufferOutputStream.writeLong(refDataValue.getValueHashCode(valueStoreHashAlgorithm));
             final ByteBuffer refDataValueBuffer = genericRefDataValueSerde.serialize(
                     pooledByteBufferOutputStream, refDataValue);
 
