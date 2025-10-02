@@ -136,6 +136,7 @@ public class QueryResultTablePresenter
     private final AnnotationManager annotationManager;
     private final InlineSvgToggleButton valueFilterButton;
     private final ButtonView annotateButton;
+    private final EventBus eventBus;
 
     private Supplier<QueryTablePreferences> queryTablePreferencesSupplier;
     private Consumer<QueryTablePreferences> queryTablePreferencesConsumer;
@@ -151,7 +152,6 @@ public class QueryResultTablePresenter
 
     private boolean tableIsVisible = true;
     private boolean annotationChanged;
-    private final EventBus tableEventBus = new SimpleEventBus();
 
     @Inject
     public QueryResultTablePresenter(final EventBus eventBus,
@@ -168,6 +168,7 @@ public class QueryResultTablePresenter
                                      final ColumnValuesFilterPresenter columnValuesFilterPresenter,
                                      final UserPreferencesManager userPreferencesManager) {
         super(eventBus, tableView);
+        this.eventBus = eventBus;
         this.restFactory = restFactory;
         this.locationManager = locationManager;
         this.downloadPresenter = downloadPresenter;
@@ -184,7 +185,7 @@ public class QueryResultTablePresenter
 
         tableView.setTableView(pagerView);
 
-        columnsManager = new QueryTableColumnsManager(
+        columnsManager = new QueryTableColumnsManager(eventBus,
                 this,
                 formatPresenter,
                 rulesPresenterProvider,
@@ -1005,11 +1006,6 @@ public class QueryResultTablePresenter
 
     @Override
     public HandlerRegistration addUpdateHandler(final TableUpdateEvent.Handler handler) {
-        return tableEventBus.addHandler(TableUpdateEvent.getType(), handler);
-    }
-
-    @Override
-    public void fireEvent(final GwtEvent<?> event) {
-        tableEventBus.fireEvent(event);
+        return eventBus.addHandler(TableUpdateEvent.getType(), handler);
     }
 }
