@@ -1,6 +1,7 @@
 package stroom.gitrepo.impl;
 
 import stroom.credentials.impl.CredentialsDao;
+import stroom.credentials.impl.CredentialsJgitSshTransportCallback;
 import stroom.credentials.shared.Credentials;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
@@ -26,18 +27,20 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.Status;
+import org.eclipse.jgit.api.TransportCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.jspecify.annotations.NonNull;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.FileVisitResult;
@@ -95,6 +98,9 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
      */
     private final CredentialsDao credentialsDao;
 
+    /** System temporary directory for SSH home and SSH directories. Not used. */
+    private static final File tempDir;
+
     /**
      * Logger so we can follow what is going on.
      */
@@ -125,6 +131,23 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
      * Empty string
      */
     private static final String EMPTY = "";
+
+    /**
+     * Name of the system property holding the temporary directory.
+     */
+    private static final String TEMPDIR_PROPERTY_NAME = "java.io.tmpdir";
+
+    /**
+     * Default value of temporary directory (shouldn't be needed but just in case)
+     */
+    private static final String DEFAULT_TEMPDIR = "/tmp";
+
+    /*
+     * Initialise the temp directory
+     */
+    static {
+        tempDir = Paths.get(System.getProperty(TEMPDIR_PROPERTY_NAME, DEFAULT_TEMPDIR)).toFile();
+    }
 
     /**
      * Constructor so we can log when this object is constructed.
@@ -226,11 +249,9 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                         addMessage(messages, Severity.INFO, "Local commit successful");
 
                         // Push to remote
-                        if (gitRepoDoc.needsCredentials()) {
-                            git.push().setCredentialsProvider(this.getGitCreds(gitRepoDoc)).call();
-                        } else {
-                            git.pull().call();
-                        }
+                        final PushCommand pushCommand = git.push();
+                        setGitCreds(gitRepoDoc, pushCommand);
+                        pushCommand.call();
                         addMessage(messages, Severity.INFO, "Pushed to Git");
 
                         // Store the commit version
@@ -552,17 +573,17 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
     /**
      * Returns the credentials to log into Git.
      *
-     * @param gitRepoDoc Where we get the credential data from. Must not be null.
-     * @return Credentials to log into a remote GIT repo. Never returns null.
+     * @param gitRepoDoc Where we get the credential ID from. Must not be null.
+     * @param transportCommand Where to put the credentials.
      */
-    private CredentialsProvider getGitCreds(final GitRepoDoc gitRepoDoc) throws IOException {
-        final String credentialsId = gitRepoDoc.getCredentialsId();
-        final CredentialsProvider retval;
+    private void setGitCreds(final GitRepoDoc gitRepoDoc, final TransportCommand transportCommand)
+            throws IOException {
+        if (gitRepoDoc.needsCredentials()) {
+            final String credentialsId = gitRepoDoc.getCredentialsId();
 
-        if (credentialsId != null && !credentialsId.isBlank()) {
             try {
                 // Grab the credentials from the database
-                final Credentials credentials = credentialsDao.get(gitRepoDoc.getCredentialsId());
+                final Credentials credentials = credentialsDao.get(credentialsId);
 
                 // Note any field of the secrets might be null so handle that
                 switch (credentials.getType()) {
@@ -575,17 +596,22 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                         if (password == null) {
                             password = EMPTY;
                         }
-                        retval = new UsernamePasswordCredentialsProvider(username, password);
+                        transportCommand.setCredentialsProvider(
+                                new UsernamePasswordCredentialsProvider(username, password));
                     }
                     case ACCESS_TOKEN -> {
                         String accessToken = credentials.getSecret().getAccessToken();
                         if (accessToken == null) {
                             accessToken = EMPTY;
                         }
-                        retval = new UsernamePasswordCredentialsProvider(GIT_USERNAME, accessToken);
+                        transportCommand.setCredentialsProvider(
+                                new UsernamePasswordCredentialsProvider(GIT_USERNAME, accessToken));
                     }
                     case PRIVATE_CERT -> {
-                        throw new IOException("Private certs not supported yet!");
+                        transportCommand.setTransportConfigCallback(
+                                new CredentialsJgitSshTransportCallback(credentialsDao,
+                                        tempDir,
+                                        credentialsId));
                     }
                     default -> {
                         throw new IOException("Unknown type of credentials: " + credentials.getType());
@@ -594,13 +620,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
             } catch (final IOException e) {
                 throw new IOException("Error getting GIT credentials: " + e.getMessage(), e);
             }
-        } else {
-            // If no credentials then return empty username / password credentials
-            // Shouldn't be needed but avoids returning null.
-            retval = new UsernamePasswordCredentialsProvider(EMPTY, EMPTY);
         }
-
-        return retval;
     }
 
     /**
@@ -629,9 +649,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                 .setBranch(gitRepoDoc.getBranch())
                 .setCloneAllBranches(false);
 
-        if (gitRepoDoc.needsCredentials()) {
-            cloneCommand.setCredentialsProvider(this.getGitCreds(gitRepoDoc));
-        }
+        setGitCreds(gitRepoDoc, cloneCommand);
 
         return cloneCommand.call();
     }
@@ -662,9 +680,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                     .setDepth(1)
                     .setBranch(gitRepoDoc.getBranch())
                     .setCloneAllBranches(false);
-            if (gitRepoDoc.needsCredentials()) {
-                cloneCommand.setCredentialsProvider(this.getGitCreds(gitRepoDoc));
-            }
+            setGitCreds(gitRepoDoc, cloneCommand);
 
             try (final Git git = cloneCommand.call()) {
 
@@ -683,9 +699,8 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                     .setURI(gitRepoDoc.getUrl())
                     .setDirectory(gitWorkDir.toFile())
                     .setBranch(gitRepoDoc.getBranch());
-            if (gitRepoDoc.needsCredentials()) {
-                cloneCommand.setCredentialsProvider(this.getGitCreds(gitRepoDoc));
-            }
+            setGitCreds(gitRepoDoc, cloneCommand);
+
             try (final Git git = cloneCommand.call()) {
                 // Ok that worked; now find the commit in the repo
                 git.checkout()
@@ -761,9 +776,8 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                 .setDepth(gitCloneDepth)
                 .setBranch(gitRepoDoc.getBranch())
                 .setCloneAllBranches(false);
-        if (gitRepoDoc.needsCredentials()) {
-            cloneCommand.setCredentialsProvider(this.getGitCreds(gitRepoDoc));
-        }
+        setGitCreds(gitRepoDoc, cloneCommand);
+
         try (final Git git = cloneCommand.call()) {
 
             final String newGitCommitName = this.gitGetCurrentRevCommitName(git);

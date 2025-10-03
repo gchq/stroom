@@ -60,7 +60,9 @@ public class CredentialsResourceImpl implements CredentialsResource {
         CredentialsResponse response;
         try {
             credentialsDao.store(credentials);
+
             response = new CredentialsResponse(Status.OK);
+
         } catch (final IOException e) {
             response = new CredentialsResponse(Status.GENERAL_ERR, e.getMessage());
         }

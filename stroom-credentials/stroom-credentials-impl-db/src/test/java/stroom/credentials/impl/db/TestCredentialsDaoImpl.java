@@ -88,6 +88,16 @@ public class TestCredentialsDaoImpl {
         assertThat(cl1.isCredsExpire()).isEqualTo(false);
         assertThat(cl1.getExpires()).isEqualTo(expires);
         assertThat(cl1.getSecret()).isEqualTo(secret);
+
+        // Get all of type USERNAME_PASSWORD
+        final List<Credentials> listOfUP = credentialsDao.list(CredentialsType.USERNAME_PASSWORD);
+        assertThat(listOfUP.size()).isEqualTo(1);
+
+        // Try other types
+        final List<Credentials> listOfAT = credentialsDao.list(CredentialsType.ACCESS_TOKEN);
+        assertThat(listOfAT.size()).isEqualTo(0);
+        final List<Credentials> listOfPC = credentialsDao.list(CredentialsType.PRIVATE_CERT);
+        assertThat(listOfPC.size()).isEqualTo(0);
     }
 
 }

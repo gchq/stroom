@@ -1,6 +1,7 @@
 package stroom.credentials.impl;
 
 import stroom.credentials.shared.Credentials;
+import stroom.credentials.shared.CredentialsType;
 
 import java.io.IOException;
 import java.util.List;
@@ -12,6 +13,14 @@ public interface CredentialsDao {
      * @throws IOException if something goes wrong.
      */
     List<Credentials> list() throws IOException;
+
+    /**
+     * Returns a list of all the credentials of a given type.
+     * @param type The type of credentials to select, or all credentials if null.
+     * @return The credentials that match the type.
+     * @throws IOException if something goes wrong.
+     */
+    List<Credentials> list(CredentialsType type) throws IOException;
 
     /**
      * Stores the given credential to the database.

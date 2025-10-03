@@ -85,6 +85,36 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
     }
 
     @Override
+    public List<Credentials> list(final CredentialsType type)
+        throws IOException {
+
+        final List<Credentials> retval;
+
+        if (type == null) {
+            retval = this.list();
+        } else {
+            try {
+                final Result<CredentialsRecord> result =
+                        JooqUtil.contextResult(credentialsDbConnProvider, context -> context
+                                .fetch(CREDENTIALS, CREDENTIALS.TYPE.eq(type.name()))
+                                .sortAsc(CREDENTIALS.NAME));
+
+                retval = new ArrayList<>(result.size());
+                for (final CredentialsRecord record : result) {
+                    retval.add(recordToCredentials(record));
+                }
+
+            } catch (final DataAccessException e) {
+                LOGGER.error("Error listing credentials of type '{}': {}", type, e.getMessage(), e);
+                throw new IOException("Error listing credentials of type '"
+                                      + type + "': " + e.getMessage(), e);
+            }
+        }
+
+        return retval;
+    }
+
+    @Override
     public Credentials get(final String uuid) throws IOException {
         try {
             final CredentialsRecord credRecord =
