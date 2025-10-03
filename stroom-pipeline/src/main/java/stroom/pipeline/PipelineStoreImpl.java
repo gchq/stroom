@@ -16,7 +16,6 @@
 
 package stroom.pipeline;
 
-import stroom.cluster.lock.api.ClusterLockService;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
@@ -47,7 +46,6 @@ import jakarta.inject.Singleton;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
@@ -64,27 +62,16 @@ public class PipelineStoreImpl implements PipelineStore {
                              final PipelineSerialiser serialiser,
                              final Provider<ProcessorFilterService> processorFilterServiceProvider,
                              final Provider<ProcessorService> processorServiceProvider,
-                             final PipelineDataMigration pipelineDataMigration,
-                             final ClusterLockService clusterLockService) {
+                             final PipelineDataMigration pipelineDataMigration) {
         this.processorServiceProvider = processorServiceProvider;
         this.store = storeFactory.createStore(serialiser, PipelineDoc.TYPE, PipelineDoc.class);
         this.processorFilterServiceProvider = processorFilterServiceProvider;
         this.pipelineDataMigration = pipelineDataMigration;
-
-        // TODO : Remove this code when we move past version 7.10
-        clusterLockService.lock("PIPELINE_MIGRATION", () ->
-                store.migratePipelines(data -> {
-                    if (pipelineDataMigration.migrate(data)) {
-                        return Optional.of(data);
-                    } else {
-                        return Optional.empty();
-                    }
-                }));
     }
 
     ////////////////////////////////////////////////////////////////////////
     // START OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    /// /////////////////////////////////////////////////////////////////////
 
     @Override
     public DocRef createDocument(final String name) {

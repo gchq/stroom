@@ -13,6 +13,12 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#5146** : Fix use of not equals in annotation queries.
+
+* Issue **#5145** : Expand all now affects favourites.
+
+* Issue **#5109** : Fix pipeline migration.
+
 * Issue **#5147** : Fix proxy omitting allowed headers (e.g. 'Feed') if the case does not match that in the allowed set.
 
 * Issue **#5148** : Allow annotation users to edit labels.
