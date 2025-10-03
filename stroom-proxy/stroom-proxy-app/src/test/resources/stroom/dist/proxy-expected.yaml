@@ -12,6 +12,11 @@ proxyConfig:
     contentSyncEnabled: false
     syncFrequency: "PT1M"
     upstreamUrl: null
+  dirScanner:
+    dirs: []
+    enabled: false
+    failureDir: "file_ingest_failed"
+    scanFrequency: "PT10S"
   eventStore:
     forwardQueueSize: 1000
     maxAge: "PT1M"

@@ -27,6 +27,15 @@ public class ProxyConfigProvidersModule extends AbstractModule {
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.proxy.app.DirScannerConfig getDirScannerConfig(
+            final ProxyConfigProvider proxyConfigProvider) {
+        return proxyConfigProvider.getConfigObject(
+                stroom.proxy.app.DirScannerConfig.class);
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.proxy.app.ProxyAuthenticationConfig getProxyAuthenticationConfig(
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(
@@ -172,6 +181,16 @@ public class ProxyConfigProvidersModule extends AbstractModule {
             final ProxyConfigProvider proxyConfigProvider) {
         throw new UnsupportedOperationException(
                 "stroom.proxy.app.handler.ForwardQueueConfig cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.proxy.app.handler.PathTemplateConfig getPathTemplateConfigButThrow(
+            final ProxyConfigProvider proxyConfigProvider) {
+        throw new UnsupportedOperationException(
+                "stroom.proxy.app.handler.PathTemplateConfig cannot be injected directly. "
                         + "Inject a config class that uses it or one of its sub-class instead.");
     }
 

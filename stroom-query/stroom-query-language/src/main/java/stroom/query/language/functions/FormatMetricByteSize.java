@@ -46,6 +46,7 @@ import java.util.function.Supplier;
                                         description = "The number of bytes"),
                                 @FunctionArg(
                                         name = "omitTrailingZeros",
+                                        defaultValue = "false",
                                         argType = ValBoolean.class,
                                         description = "Whether to omit trailing zeros (default false)")},
                         returnDescription = "A more human readable metric representation of byte size.",
@@ -59,6 +60,7 @@ import java.util.function.Supplier;
                                 @FunctionArg(
                                         name = "omitTrailingZeros",
                                         argType = ValBoolean.class,
+                                        defaultValue = "false",
                                         description = "Whether to omit trailing zeros (default false)"),
                                 @FunctionArg(
                                         name = "significantFigures",
