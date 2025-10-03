@@ -22,10 +22,10 @@ import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogUtil;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
-import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.examples.Expander;
 import org.apache.commons.compress.archivers.zip.Zip64Mode;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.slf4j.Logger;
@@ -54,10 +54,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
-import java.util.regex.Pattern;
-import java.util.stream.StreamSupport;
-import java.util.Objects;
-import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 import java.util.stream.StreamSupport;
 
@@ -164,7 +160,8 @@ public final class ZipUtil {
 
     /**
      * Unzips zipFile into targetDir. targetDir will be created if it doesn't exist.
-     * @param zipFile The ZIP file to unzip.
+     *
+     * @param zipFile   The ZIP file to unzip.
      * @param targetDir The target directory to unzip into.
      * @throws IOException
      */
@@ -176,6 +173,44 @@ public final class ZipUtil {
         try (ZipFile zipArchive = createZipFile(zipFile)) {
             // This will check zip entry paths are not outside the targetDir
             new Expander().expand(zipArchive, targetDir);
+        }
+    }
+
+    /**
+     * Unzipping from an {@link InputStream} means you may unzip entries that are not in the
+     * ZIP central directory. See ZipArchiveInputStream javadoc.
+     *
+     * @param inputStream The input stream to unzip.
+     * @param targetDir   The target directory to unzip into.
+     * @throws IOException
+     */
+    @Deprecated
+    public static void unzip(final InputStream inputStream, final Path targetDir) throws IOException {
+        Objects.requireNonNull(inputStream);
+        Objects.requireNonNull(targetDir);
+        if (Files.exists(targetDir) && !Files.isDirectory(targetDir)) {
+            throw new IOException(LogUtil.message("'{}' is not a directory.", targetDir.toAbsolutePath()));
+        }
+
+        try (final ZipArchiveInputStream zip = new ZipArchiveInputStream(new BufferedInputStream(inputStream))) {
+            ZipArchiveEntry zipEntry;
+            while ((zipEntry = zip.getNextEntry()) != null) {
+                // Get output file. This will throw if the entry is outside targetDir
+                final Path file = zipEntry.resolveIn(targetDir);
+
+                if (zipEntry.isDirectory()) {
+                    // Make sure output directories exist.
+                    Files.createDirectories(file);
+                } else {
+                    // Make sure output directories exist.
+                    Files.createDirectories(file.getParent());
+
+                    // Write file.
+                    try (final OutputStream outputStream = Files.newOutputStream(file)) {
+                        StreamUtil.streamToStream(zip, outputStream);
+                    }
+                }
+            }
         }
     }
 
