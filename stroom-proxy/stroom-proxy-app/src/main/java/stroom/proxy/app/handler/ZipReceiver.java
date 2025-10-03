@@ -331,10 +331,17 @@ public class ZipReceiver implements Receiver {
         }
     }
 
+    /**
+     * Static and pkg private to aid testing
+     */
     static ReceiveResult receiveZipStream(final InputStream inputStream,
                                           final AttributeMap attributeMap,
                                           final Path destZipFile) throws IOException {
 
+        LOGGER.debug("receiveZipStream() - destZipFile: {}, attributeMap: {}", destZipFile, attributeMap);
+        // Create a .zip.staging file for the inputStream to be written to. We can then
+        // copy what we want out of that zip into a new zip at zipFilePath.
+        // Don't use a temp dir as these files may be very big, so just make it a sibling.
         final Path stagingZipFile = destZipFile.resolveSibling(destZipFile.getFileName() + ".staging");
 
         final long receivedBytes;
@@ -356,26 +363,18 @@ public class ZipReceiver implements Receiver {
                                           final Path sourceZipFile,
                                           final Path destZipFile,
                                           final long receivedBytes) throws IOException {
-        LOGGER.debug("receiveZipStream() - START zipFilePath: {}", destZipFile);
+        LOGGER.debug("receiveZipStream() - sourceZipFile: {}, destZipFile: {}, attributeMap: {}",
+                sourceZipFile, destZipFile, attributeMap);
         final DurationTimer timer = LogUtil.startTimerIfDebugEnabled(LOGGER);
         final String defaultFeedName = attributeMap.get(StandardHeaderArguments.FEED);
         final String defaultTypeName = attributeMap.get(StandardHeaderArguments.TYPE);
+        // This is to reduce the memory used by all the FeedKey objects in the ZipEntryGroups
         final FeedKeyInterner feedKeyInterner = FeedKey.createInterner();
         final FeedKey defaultFeedKey = feedKeyInterner.intern(defaultFeedName, defaultTypeName);
 
         final Map<String, ZipEntryGroup> baseNameToGroupMap = new HashMap<>();
         final ProxyZipValidator validator = new ProxyZipValidator();
         final List<Entry> dataEntries = new ArrayList<>();
-
-        // Create a .zip.staging file for the inputStream to be written to. We can then
-        // copy what we want out of that zip into a new zip at zipFilePath.
-        // Don't use a temp dir as these files may be very big, so just make it a sibling.
-//        final Path stagingZipFile = destZipFile.resolveSibling(destZipFile.getFileName() + ".staging");
-//        try {
-        // Write the stream to disk, because reading the stream as a ZipArchiveInputStream is risky
-        // as it can't read the central directory at the end of the stream, so it doesn't know which
-        // entries are actually valid and doesn't know the uncompressed sizes.
-//            receivedBytes = writeStreamToFile(inputStream, stagingZipFile);
 
         // Clone the zip with added/updated meta entries
         cloneZipFileWithUpdatedMeta(
@@ -387,9 +386,6 @@ public class ZipReceiver implements Receiver {
                 dataEntries,
                 sourceZipFile,
                 destZipFile);
-//        } finally {
-//            Files.deleteIfExists(stagingZipFile);
-//        }
 
         // TODO : Worry about memory usage here storing potentially 1000's of data entries and groups.
         // Now look at the entries and see if we can match them to meta.
@@ -410,7 +406,6 @@ public class ZipReceiver implements Receiver {
                 zipEntryGroup = new ZipEntryGroup(defaultFeedKey);
                 zipEntryGroup.setDataEntry(dataEntry);
                 entryList.add(zipEntryGroup);
-
             } else {
                 if (zipEntryGroup.getDataEntry() != null) {
                     // This shouldn't really happen as it means we found meta that could be for more than

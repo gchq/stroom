@@ -82,7 +82,6 @@ public final class FeedKey {
      */
     public static class FeedKeyInterner {
 
-        private final Map<FeedKey, FeedKey> map = new HashMap<>();
         // Fewer types than feeds so key on that first to reduce number of child maps
         private final Map<String, Map<String, FeedKey>> typeToFeedToFeedKeyMap = new HashMap<>();
 
@@ -97,7 +96,6 @@ public final class FeedKey {
 
         public FeedKey intern(final FeedKey feedKey) {
             if (feedKey != null) {
-//                return intern(feedKey.feed, feedKey.type);
                 final FeedKey prevVal = typeToFeedToFeedKeyMap.computeIfAbsent(
                                 feedKey.type, k -> new HashMap<>())
                         .putIfAbsent(feedKey.feed, feedKey);

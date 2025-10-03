@@ -1,12 +1,22 @@
 package stroom.proxy.repo;
 
 import stroom.proxy.repo.FeedKey.FeedKeyInterner;
+import stroom.test.common.TestUtil;
+import stroom.test.common.TestUtil.TimedCase;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestFeedKey {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestFeedKey.class);
 
     @Test
     void testIntern_null() {
@@ -100,5 +110,45 @@ class TestFeedKey {
                 .isNotEqualTo(feedKey11a)
                 .isNotEqualTo(feedKey12a)
                 .isNotEqualTo(feedKey21a);
+    }
+
+    @Disabled // Manual perf only
+    @Test
+    void testInternPerf() {
+
+        final FeedKeyInterner feedKeyInterner = FeedKey.createInterner();
+        for (int i = 1; i <= 2; i++) {
+            for (int j = 1; j <= 2; j++) {
+                feedKeyInterner.intern("feed" + i, "type" + j);
+            }
+        }
+        final int iter = 1_000_000;
+        final List<FeedKey> feedKeys = new ArrayList<>(iter * 4);
+
+        TestUtil.comparePerformance(
+                5,
+                iter,
+                (rounds, iterations1) -> {
+                    feedKeys.clear();
+                },
+                LOGGER::info,
+                TimedCase.of("intern", (round, iterations) -> {
+                    for (long k = 0; k < iterations; k++) {
+                        for (int i = 1; i <= 2; i++) {
+                            for (int j = 1; j <= 2; j++) {
+                                feedKeys.add(feedKeyInterner.intern("feed" + i, "type" + j));
+                            }
+                        }
+                    }
+                }),
+                TimedCase.of("Obj Creation", (round, iterations) -> {
+                    for (long k = 0; k < iterations; k++) {
+                        for (int i = 1; i <= 2; i++) {
+                            for (int j = 1; j <= 2; j++) {
+                                feedKeys.add(new FeedKey("feed" + i, "type" + j));
+                            }
+                        }
+                    }
+                }));
     }
 }
