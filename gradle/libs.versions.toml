@@ -22,7 +22,7 @@ kafka = "3.9.0"
 poi = "5.4.1"
 scylladb = "4.19.0.1"
 simple-java-mail = "8.8.0"
-swagger = "2.2.21"
+swagger = "2.2.38"
 
 [libraries]
 #------Stroom-libs---------------
