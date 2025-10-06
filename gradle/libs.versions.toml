@@ -42,7 +42,7 @@ caffeine = { module = "com.github.ben-manes.caffeine:caffeine" } # version contr
 commons-beanutils = { module = "commons-beanutils:commons-beanutils", version = "1.9.4" }
 commons-codec = { module = "commons-codec:commons-codec" } # version controlled by dropwizard-dependencies
 commons-compress = { module = "org.apache.commons:commons-compress", version = "1.27.1" }
-commons-csv = { module = "org.apache.commons:commons-csv", version = "1.10.0" }
+commons-csv = { module = "org.apache.commons:commons-csv", version = "1.14.1" }
 commons-fileupload = { module = "org.apache.commons:commons-fileupload2-jakarta-servlet6", version = "2.0.0-M4" }
 commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
 commons-lang = { module = "org.apache.commons:commons-lang3" } # version controlled by dropwizard-dependencies
