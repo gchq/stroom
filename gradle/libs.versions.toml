@@ -46,7 +46,7 @@ commons-csv = { module = "org.apache.commons:commons-csv", version = "1.10.0" }
 commons-fileupload = { module = "org.apache.commons:commons-fileupload2-jakarta-servlet6", version = "2.0.0-M4" }
 commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
 commons-lang = { module = "org.apache.commons:commons-lang3" } # version controlled by dropwizard-dependencies
-commons-pool2 = { module = "org.apache.commons:commons-pool2", version = "2.12.0" }
+commons-pool2 = { module = "org.apache.commons:commons-pool2", version = "2.12.1" }
 commons-text = { module = "org.apache.commons:commons-text" } # version controlled by dropwizard-dependencies
 classgraph = { module = "io.github.classgraph:classgraph", version = "4.8.179" }
 data-faker = { module = "net.datafaker:datafaker", version = "2.4.2" }
