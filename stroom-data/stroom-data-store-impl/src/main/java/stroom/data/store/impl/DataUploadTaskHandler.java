@@ -158,11 +158,6 @@ public class DataUploadTaskHandler {
                                   final String typeName,
                                   final AttributeMap attributeMap,
                                   final Consumer<Long> progressHandler) {
-        // TODO we should not be reading the file to an input stream to then
-        //  use the flawed ZipArchiveInputStream. We should instead read the file into a
-        //  ZipFile and pass that to stroomStreamProcessor via a new method.
-        //  i.e. ZipFile zipFileArchive = ZipUtil.createZipFile(file);
-        //  See https://github.com/gchq/stroom/issues/5177
         try (final InputStream inputStream = Files.newInputStream(file)) {
             streamHandlers.handle(feedName, typeName, attributeMap, handler -> {
                 final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
