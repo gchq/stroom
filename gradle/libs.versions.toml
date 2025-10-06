@@ -88,7 +88,6 @@ gwtp-mvp-client = { module = "com.gwtplatform:gwtp-mvp-client", version = "0.7" 
 gson = { module = "com.google.code.gson:gson", version = "2.6.2" }
 hbase-shaded-netty = { module = "org.apache.hbase.thirdparty:hbase-shaded-netty", version = "4.1.12" } # Needed by our copied HBase classes in stroom.bytebuffer.hbase
 hessian = { module = "com.caucho:hessian", version = "4.0.65" }
-hibernate-jpa = { module = "org.hibernate.javax.persistence:hibernate-jpa-2.1-api", version = "1.0.0.Final" } # remove when legacy code is removed
 hikari = { module = "com.zaxxer:HikariCP", version = "5.1.0" }
 http-client = { module = "org.apache.httpcomponents.client5:httpclient5" } # version controlled by dropwizard-dependencies
 httpcore = { module = "org.apache.httpcomponents.core5:httpcore5", version.ref = "httpcore" }
