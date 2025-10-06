@@ -397,6 +397,7 @@ public class ZipReceiver implements Receiver {
         // Read the entries from the staging zip and write them to the
         try (final ZipWriter zipWriter = new ZipWriter(zipFilePath, LocalByteBuffer.get())) {
             ZipUtil.forEachEntry(stagingZipFilePath, (stagingZip, entry) -> {
+                checkZipEntry(entry);
                 final long size = cloneZipEntry(
                         defaultFeedKey,
                         feedKeyInterner,
@@ -421,6 +422,16 @@ public class ZipReceiver implements Receiver {
         LOGGER.debug("cloneZipFileWithUpdateMeta() - START defaultFeedKey: '{}', " +
                      "stagingZipFilePath: {}, zipFilePath: {}, totalUncompressedSize: {}, duration: {}",
                 defaultFeedKey, stagingZipFilePath, zipFilePath, totalUncompressedSize, timer);
+    }
+
+    private static void checkZipEntry(final ZipArchiveEntry zipEntry) {
+        final String fileName = zipEntry.getName();
+        if (!ZipUtil.isSafeZipPath(Path.of(fileName))) {
+            // Only a warning as we do not use the zip entry name when extracting from the zip.
+            LOGGER.warn("Zip archive stream contains a path that would extract to outside the " +
+                        "target directory '{}'. Stroom-Proxy will not use this path but this is " +
+                        "dangerous behaviour.", fileName);
+        }
     }
 
     private static long cloneZipEntry(final FeedKey defaultFeedKey,
