@@ -33,12 +33,15 @@ import java.util.Set;
 @JsonPropertyOrder({
         "componentId",
         "fetch",
+        "tableName",
         "tableSettings",
         "requestedRange",
         "openGroups"})
 @JsonInclude(Include.NON_NULL)
 public class TableResultRequest extends ComponentResultRequest {
 
+    @JsonProperty
+    private final String tableName;
     @JsonProperty
     private final TableSettings tableSettings;
     @JsonProperty
@@ -49,10 +52,12 @@ public class TableResultRequest extends ComponentResultRequest {
     @JsonCreator
     public TableResultRequest(@JsonProperty("componentId") final String componentId,
                               @JsonProperty("fetch") final Fetch fetch,
+                              @JsonProperty("tableName") final String tableName,
                               @JsonProperty("tableSettings") final TableSettings tableSettings,
                               @JsonProperty("requestedRange") final OffsetRange requestedRange,
                               @JsonProperty("openGroups") final Set<String> openGroups) {
         super(componentId, fetch);
+        this.tableName = tableName;
         this.tableSettings = tableSettings;
         this.requestedRange = requestedRange;
         this.openGroups = openGroups;
@@ -60,6 +65,10 @@ public class TableResultRequest extends ComponentResultRequest {
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    public String getTableName() {
+        return tableName;
     }
 
     public TableSettings getTableSettings() {
@@ -87,20 +96,26 @@ public class TableResultRequest extends ComponentResultRequest {
             return false;
         }
         final TableResultRequest that = (TableResultRequest) o;
-        return Objects.equals(tableSettings, that.tableSettings) &&
+        return Objects.equals(tableName, that.tableName) &&
+                Objects.equals(tableSettings, that.tableSettings) &&
                 Objects.equals(requestedRange, that.requestedRange) &&
                 Objects.equals(openGroups, that.openGroups);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(tableSettings, requestedRange, openGroups);
+        return Objects.hash(
+                tableName,
+                tableSettings,
+                requestedRange,
+                openGroups);
     }
 
     @Override
     public String toString() {
         return "TableResultRequest{" +
-                "tableSettings=" + tableSettings +
+                "tableName='" + tableName + '\'' +
+                ",tableSettings=" + tableSettings +
                 ", requestedRange=" + requestedRange +
                 ", openGroups=" + openGroups +
                 '}';
@@ -114,6 +129,7 @@ public class TableResultRequest extends ComponentResultRequest {
 
         private String componentId;
         private Fetch fetch;
+        private String tableName;
         private TableSettings tableSettings;
         private OffsetRange requestedRange = new OffsetRange(0, 100);
         private Set<String> openGroups;
@@ -124,6 +140,7 @@ public class TableResultRequest extends ComponentResultRequest {
         private Builder(final TableResultRequest tableResultRequest) {
             this.componentId = tableResultRequest.getComponentId();
             this.fetch = tableResultRequest.getFetch();
+            this.tableName = tableResultRequest.tableName;
             this.tableSettings = tableResultRequest.tableSettings;
             this.requestedRange = tableResultRequest.requestedRange;
             this.openGroups = tableResultRequest.openGroups;
@@ -136,6 +153,11 @@ public class TableResultRequest extends ComponentResultRequest {
 
         public Builder fetch(final Fetch fetch) {
             this.fetch = fetch;
+            return this;
+        }
+
+        public Builder tableName(final String tableName) {
+            this.tableName = tableName;
             return this;
         }
 
@@ -169,7 +191,13 @@ public class TableResultRequest extends ComponentResultRequest {
         }
 
         public TableResultRequest build() {
-            return new TableResultRequest(componentId, fetch, tableSettings, requestedRange, openGroups);
+            return new TableResultRequest(
+                    componentId,
+                    fetch,
+                    tableName,
+                    tableSettings,
+                    requestedRange,
+                    openGroups);
         }
     }
 }

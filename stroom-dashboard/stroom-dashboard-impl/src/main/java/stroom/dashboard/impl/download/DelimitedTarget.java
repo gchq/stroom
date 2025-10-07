@@ -49,6 +49,16 @@ public class DelimitedTarget implements SearchResultWriter.Target {
     }
 
     @Override
+    public void startTable(final String tableName) {
+        // Do nothing
+    }
+
+    @Override
+    public void endTable() {
+        // Do nothing
+    }
+
+    @Override
     public void startLine() {
         // Do nothing
     }

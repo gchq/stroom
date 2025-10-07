@@ -17,23 +17,28 @@
 package stroom.dashboard.impl.download;
 
 import stroom.dashboard.impl.SampleGenerator;
+import stroom.dashboard.shared.DashboardSearchRequest;
+import stroom.dashboard.shared.TableResultRequest;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Row;
+import stroom.query.api.v2.TableResult;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SearchResultWriter {
 
-    private final List<Field> fields;
-    private final List<Row> rows;
+    private final DashboardSearchRequest searchRequest;
+    private final List<TableResult> tableResults;
     private final SampleGenerator sampleGenerator;
 
-    public SearchResultWriter(final List<Field> fields,
-                              final List<Row> rows,
+    public SearchResultWriter(final DashboardSearchRequest searchRequest,
+                              final List<TableResult> tableResults,
                               final SampleGenerator sampleGenerator) {
-        this.fields = fields;
-        this.rows = rows;
+        this.searchRequest = searchRequest;
+        this.tableResults = tableResults;
         this.sampleGenerator = sampleGenerator;
     }
 
@@ -41,11 +46,29 @@ public class SearchResultWriter {
         // Start writing.
         target.start();
 
-        // Write heading.
-        writeHeadings(fields, target);
+        // Map each component ID to its corresponding table request
+        final Map<String, TableResultRequest> tableRequestMap = new HashMap<>();
+        searchRequest.getComponentResultRequests().forEach(request -> {
+            if (request instanceof final TableResultRequest tableResultRequest) {
+                tableRequestMap.put(tableResultRequest.getComponentId(), tableResultRequest);
+            }
+        });
 
-        // Write content.
-        writeContent(rows, fields, sampleGenerator, target);
+        for (final TableResult tableResult : tableResults) {
+            final TableResultRequest tableResultRequest = tableRequestMap.get(tableResult.getComponentId());
+            final List<Field> fields = tableResultRequest.getTableSettings().getFields();
+            final List<Row> rows = tableResult.getRows();
+
+            target.startTable(tableResultRequest.getTableName());
+
+            // Write heading.
+            writeHeadings(fields, target);
+
+            // Write content.
+            writeContent(rows, fields, sampleGenerator, target);
+
+            target.endTable();
+        }
 
         // End writing.
         target.end();
@@ -89,6 +112,10 @@ public class SearchResultWriter {
         void start() throws IOException;
 
         void end() throws IOException;
+
+        void startTable(final String tableName);
+
+        void endTable();
 
         void startLine() throws IOException;
 
