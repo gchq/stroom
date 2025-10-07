@@ -561,6 +561,34 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testForEach() {
+        final List<Integer> nonEmptyList = List.of(1, 2, 3);
+        final List<Integer> emptyList = Collections.emptyList();
+        final List<Integer> nullList = null;
+
+        final List<Integer> output = new ArrayList<>();
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<List<Integer>>() {
+                })
+                .withWrappedOutputType(new TypeLiteral<List<Integer>>() {
+                })
+                .withTestFunction(testCase -> {
+                    NullSafe.forEach(
+                            testCase.getInput(),
+                            output::add);
+                    return output;
+                })
+                .withSimpleEqualityAssertion()
+                .withBeforeTestCaseAction(output::clear)
+                .addCase(null, emptyList)
+                .addCase(emptyList, emptyList)
+                .addCase(nonEmptyList, nonEmptyList)
+                .build();
+    }
+
+
+    @TestFactory
     Stream<DynamicTest> testSize_collection() {
         final List<String> emptyList = Collections.emptyList();
         final List<String> nonEmptyList = List.of("foo", "bar");

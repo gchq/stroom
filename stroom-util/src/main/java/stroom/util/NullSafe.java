@@ -358,6 +358,18 @@ public class NullSafe {
     }
 
     /**
+     * If iterable is non-null, performs action on each item in iterable.
+     */
+    public static <T> void forEach(
+            final Iterable<T> iterable,
+            final Consumer<? super T> action) {
+
+        if (iterable != null) {
+            iterable.forEach(action);
+        }
+    }
+
+    /**
      * Returns a {@link Stream<E>} if collection is non-null else returns an empty {@link Stream<E>}
      */
     public static <E> Stream<E> stream(final Collection<E> collection) {

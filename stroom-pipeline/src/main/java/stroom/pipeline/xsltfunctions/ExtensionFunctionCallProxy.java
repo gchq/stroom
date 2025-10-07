@@ -16,14 +16,22 @@
 
 package stroom.pipeline.xsltfunctions;
 
+import stroom.util.NullSafe;
+import stroom.util.shared.DefaultLocation;
+import stroom.util.shared.Location;
+
+import net.sf.saxon.expr.Expression;
+import net.sf.saxon.expr.StaticContext;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.lib.ExtensionFunctionCall;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 
 class ExtensionFunctionCallProxy extends ExtensionFunctionCall {
+
     private final String functionName;
     private transient StroomExtensionFunctionCall functionCall;
+    private transient Location location = null;
 
     ExtensionFunctionCallProxy(final String functionName) {
         this.functionName = functionName;
@@ -31,10 +39,35 @@ class ExtensionFunctionCallProxy extends ExtensionFunctionCall {
 
     @Override
     public Sequence call(final XPathContext context, final Sequence[] arguments) throws XPathException {
-        return functionCall.call(functionName, context, arguments);
+        return functionCall.call(functionName, context, arguments, location);
     }
 
     void setFunctionCall(final StroomExtensionFunctionCall functionCall) {
         this.functionCall = functionCall;
+    }
+
+    void clearFunctionCall() {
+        this.functionCall = null;
+    }
+
+    @Override
+    public void supplyStaticContext(final StaticContext context,
+                                    final int locationId,
+                                    final Expression[] arguments) {
+
+        // Called before the func executes, but after setFunctionCall(), so hold the location locally
+        // such that we can pass the location into the function when called.
+        this.location = NullSafe.get(
+                context,
+                StaticContext::getContainingLocation,
+                saxonLocation ->
+                        DefaultLocation.of(saxonLocation.getLineNumber(), saxonLocation.getColumnNumber()));
+
+//        LOGGER.trace("supplyStaticContext [{}({})] for {}({}), line: {}",
+//                functionName,
+//                System.identityHashCode(this),
+//                NullSafe.get(functionCall, Object::getClass, Class::getSimpleName),
+//                NullSafe.get(functionCall, System::identityHashCode),
+//                NullSafe.get(location, Location::getLineNo));
     }
 }

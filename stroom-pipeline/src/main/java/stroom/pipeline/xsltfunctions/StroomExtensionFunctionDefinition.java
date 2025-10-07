@@ -20,6 +20,7 @@ import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.xml.NamespaceConstants;
+import stroom.util.NullSafe;
 
 import jakarta.inject.Provider;
 import net.sf.saxon.lib.ExtensionFunctionCall;
@@ -27,6 +28,7 @@ import net.sf.saxon.lib.ExtensionFunctionDefinition;
 import net.sf.saxon.om.StructuredQName;
 import net.sf.saxon.value.SequenceType;
 
+import java.util.ArrayList;
 import java.util.List;
 
 class StroomExtensionFunctionDefinition<T extends StroomExtensionFunctionCall> extends ExtensionFunctionDefinition {
@@ -39,7 +41,7 @@ class StroomExtensionFunctionDefinition<T extends StroomExtensionFunctionCall> e
     private final transient StructuredQName qName;
     private final Provider<T> functionCallProvider;
 
-    private ExtensionFunctionCallProxy proxy;
+    private List<ExtensionFunctionCallProxy> proxies = null;
 
     StroomExtensionFunctionDefinition(final String functionName,
                                       final int minArgs,
@@ -84,25 +86,30 @@ class StroomExtensionFunctionDefinition<T extends StroomExtensionFunctionCall> e
 
     @Override
     public ExtensionFunctionCall makeCallExpression() {
-        if (proxy == null) {
-            proxy = new ExtensionFunctionCallProxy(functionName);
+        // Think this is called for each call to a func in an XSLT. E.g. if there are two instances
+        // of stroom:log in an XSLT, then this will be called twice (even if one or both of those
+        // instances is called >1 time, e.g. in a loop). Maybe.
+        if (proxies == null) {
+            proxies = new ArrayList<>();
         }
+        final ExtensionFunctionCallProxy proxy = new ExtensionFunctionCallProxy(functionName);
+        proxies.add(proxy);
         return proxy;
     }
 
     void configure(final ErrorReceiver errorReceiver,
                    final LocationFactory locationFactory,
                    final List<PipelineReference> pipelineReferences) {
-        if (proxy != null) {
+        NullSafe.forEach(proxies, proxy -> {
             final StroomExtensionFunctionCall functionCall = functionCallProvider.get();
             functionCall.configure(errorReceiver, locationFactory, pipelineReferences);
             proxy.setFunctionCall(functionCall);
-        }
+        });
     }
 
     void reset() {
-        if (proxy != null) {
-            proxy.setFunctionCall(null);
-        }
+        NullSafe.forEach(
+                proxies,
+                ExtensionFunctionCallProxy::clearFunctionCall);
     }
 }
