@@ -3,6 +3,8 @@ package stroom.data.zip;
 import stroom.data.zip.StroomZipEntries.StroomZipEntryGroup;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.zip.ZipUtil;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
@@ -35,8 +37,23 @@ public class StroomZipFile implements AutoCloseable {
             if (!entry.isDirectory()) {
                 LOGGER.debug("File entry: {}", entry);
                 final String fileName = entry.getName();
+                checkZipEntry(path, fileName);
                 stroomZipEntries.addFile(fileName);
             }
+        }
+    }
+
+    private static void checkZipEntry(final Path zipFile, final String entryName) {
+        if (!ZipUtil.isSafeZipPath(Path.of(entryName))) {
+            // Only a warning as we do not use the zip entry name when extracting from the zip.
+            LOGGER.warn("Zip file '{}' contains a path that would extract to outside the " +
+                        "target directory '{}'. Stroom will not use this path but this is " +
+                        "dangerous behaviour. Enable DEBUG for stacktrace",
+                    zipFile.toAbsolutePath(), entryName);
+            LOGGER.debug(() -> LogUtil.message(
+                    "Zip file '{}' contains a path that would extract to outside the " +
+                    "target directory '{}'. Stacktrace:\n{}",
+                    zipFile.toAbsolutePath(), entryName, Thread.currentThread().getStackTrace()));
         }
     }
 
