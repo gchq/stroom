@@ -351,7 +351,7 @@ public class ElasticSearchTaskHandler {
                     .map(this::jsonValueToNative)
                     .toList();
         } else {
-            return jsonValueToNative(docField.get(0));
+            return jsonValueToNative(docField.getFirst());
         }
     }
 
