@@ -13,6 +13,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.10.7-gwt-sourcemaps] - 2025-10-07
+
+* Issue **#5175** : Fix zip handling.
+
+* Fix config validation not being run on config branches that are items in a list, e.g. `forwardHttpDestinations`.
+
+* Remove `NotNull` validation condition on `forwardHttpDestinations[n].apiKey` as proxy may use OAuth tokens to authenticate with the downstream destination.
+
+* Issue **#5175** : Add warning messages to stroom and proxy `/datafeed` to warn if a zip is received that contains paths that would unzip outside of a target directory. Only a warning as the paths in a zip sent to `/datafeed` are not used by stroom/proxy.
+
+
 ## [v7.10.7] - 2025-10-01
 
 * Issue **#5146** : Fix use of not equals in annotation queries.
@@ -1720,7 +1731,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.7...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.7-gwt-sourcemaps...HEAD
+[v7.10.7-gwt-sourcemaps]: https://github.com/gchq/stroom/compare/v7.10.7...v7.10.7-gwt-sourcemaps
 [v7.10.7]: https://github.com/gchq/stroom/compare/v7.10.6...v7.10.7
 [v7.10.6]: https://github.com/gchq/stroom/compare/v7.10.5...v7.10.6
 [v7.10.5]: https://github.com/gchq/stroom/compare/v7.10.4...v7.10.5
