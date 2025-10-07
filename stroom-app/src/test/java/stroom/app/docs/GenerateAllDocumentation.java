@@ -24,7 +24,8 @@ public class GenerateAllDocumentation {
         final List<DocumentationGenerator> documentationGenerators = List.of(
                 new GenerateDocumentReferenceDoc(),
                 new GeneratePipelineElementsDoc(),
-                new GenerateSnippetsDoc());
+                new GenerateSnippetsDoc(),
+                new GenerateXsltFunctionDefinitions());
 
         StroomDocsUtil.doWithClassScanResult(scanResult -> {
             documentationGenerators.forEach(documentationGenerator -> {
