@@ -1,5 +1,6 @@
 package stroom.security.identity.openid;
 
+import stroom.config.common.UriFactory;
 import stroom.security.identity.authenticate.api.AuthenticationService;
 import stroom.security.identity.authenticate.api.AuthenticationService.AuthState;
 import stroom.security.identity.authenticate.api.AuthenticationService.AuthStatus;
@@ -44,6 +45,7 @@ class OpenIdService {
     private final AuthenticationService authenticationService;
     private final OpenIdClientFactory openIdClientDetailsFactory;
     private final IdentityConfig identityConfig;
+    private final UriFactory uriFactory;
 
     @Inject
     OpenIdService(final AccessCodeCache accessCodeCache,
@@ -51,13 +53,15 @@ class OpenIdService {
                   final TokenBuilderFactory tokenBuilderFactory,
                   final AuthenticationService authenticationService,
                   final OpenIdClientFactory openIdClientDetailsFactory,
-                  final IdentityConfig identityConfig) {
+                  final IdentityConfig identityConfig,
+                  final UriFactory uriFactory) {
         this.accessCodeCache = accessCodeCache;
         this.refreshTokenCache = refreshTokenCache;
         this.tokenBuilderFactory = tokenBuilderFactory;
         this.authenticationService = authenticationService;
         this.openIdClientDetailsFactory = openIdClientDetailsFactory;
         this.identityConfig = identityConfig;
+        this.uriFactory = uriFactory;
     }
 
     public AuthResult auth(final HttpServletRequest request,
@@ -72,6 +76,8 @@ class OpenIdService {
         AuthStatus authStatus = null;
 
         OpenIdClient oAuth2Client = openIdClientDetailsFactory.getClient(clientId);
+        // After sign in attempts we want to come back here.
+        final String postSignInRedirectUri = getPostSignInRedirectUri(request);
 
         final Pattern pattern = Pattern.compile(oAuth2Client.getUriPattern());
         if (!pattern.matcher(redirectUri).matches()) {
@@ -94,18 +100,18 @@ class OpenIdService {
                 }
             };
 
-            result = authenticationService.createSignInUri(redirectUri);
+            result = authenticationService.createSignInUri(postSignInRedirectUri);
 
         } else {
             // If the prompt is 'login' then we always want to prompt the user to login in with username and password.
-            final boolean requireLoginPrompt = prompt != null && prompt.equalsIgnoreCase("login");
+            final boolean requireLoginPrompt = prompt != null && prompt.equalsIgnoreCase(OpenId.LOGIN_PROMPT);
             if (requireLoginPrompt) {
                 LOGGER.info("Relying party requested a user login page by using 'prompt=login'");
             }
 
             if (requireLoginPrompt) {
                 LOGGER.debug("Login has been requested by the RP");
-                result = authenticationService.createSignInUri(redirectUri);
+                result = authenticationService.createSignInUri(postSignInRedirectUri);
 
             } else {
                 // We need to make sure our understanding of the session is correct
@@ -118,15 +124,15 @@ class OpenIdService {
                             authStatus.getError().get().getReason().value(),
                             authStatus.getError().get().getMessage());
                     //Send back to log in with username/password
-                    result = authenticationService.createSignInUri(redirectUri);
+                    result = authenticationService.createSignInUri(postSignInRedirectUri);
 
                 } else if (authStatus.getAuthState().isPresent()) {
                     // If we have an authenticated session then the user is logged in
                     final AuthState authState = authStatus.getAuthState().get();
 
-                    // If the users password still needs tp be changed then send them back to the login page.
+                    // If the users password still needs to be changed then send them back to the login page.
                     if (authState.isRequirePasswordChange()) {
-                        result = authenticationService.createSignInUri(redirectUri);
+                        result = authenticationService.createSignInUri(postSignInRedirectUri);
 
                     } else {
                         LOGGER.debug("User has a session, sending them back to the RP");
@@ -150,7 +156,7 @@ class OpenIdService {
 
                 } else {
                     LOGGER.debug("User has no session and no certificate - sending them to login.");
-                    result = authenticationService.createSignInUri(redirectUri);
+                    result = authenticationService.createSignInUri(postSignInRedirectUri);
                 }
 
             }
@@ -267,6 +273,24 @@ class OpenIdService {
                 .replaceQueryParam(OpenId.CODE, code)
                 .replaceQueryParam(OpenId.STATE, state)
                 .build();
+    }
+
+    private String getPostSignInRedirectUri(final HttpServletRequest request) {
+        // We have a new request so we're going to redirect with an AuthenticationRequest.
+        // Get the redirect URL for the auth service from the current request.
+        final String originalPath = request.getRequestURI() + Optional.ofNullable(request.getQueryString())
+                .map(queryStr -> "?" + queryStr)
+                .orElse("");
+
+        // Dropwiz is likely sat behind Nginx with requests reverse proxied to it
+        // so we need to append just the path/query part to the public URI defined in config
+        // rather than using the full url of the request
+        final String uri = uriFactory.publicUri(originalPath).toString();
+
+        final UriBuilder uriBuilder = UriBuilder.fromUri(uri);
+        // Ensure we have no prompt so we don't go round in circles.
+        uriBuilder.replaceQueryParam(OpenId.PROMPT, "");
+        return uriBuilder.build().toString();
     }
 
     private TokenResponse createTokenResponse(final String clientId,

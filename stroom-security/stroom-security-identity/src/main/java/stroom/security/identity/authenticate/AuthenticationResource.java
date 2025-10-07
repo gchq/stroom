@@ -79,7 +79,8 @@ public interface AuthenticationResource extends RestResource {
             operationId = "logout")
     Boolean logout(
             @Context @NotNull HttpServletRequest request,
-            @QueryParam(OpenId.REDIRECT_URI) @NotNull String redirectUri);
+            @QueryParam(OpenId.POST_LOGOUT_REDIRECT_URI) @NotNull String postLogoutRedirectUri,
+            @QueryParam(OpenId.STATE) @NotNull String state);
 
     @POST
     @Path("/noauth/confirmPassword")

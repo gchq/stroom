@@ -124,7 +124,7 @@ class OpenIdResourceImpl implements OpenIdResource {
                     eventBuilder.build());
         }
 
-        throw new RedirectionException(Status.SEE_OTHER, result.getUri());
+        throw new RedirectionException(Status.TEMPORARY_REDIRECT, result.getUri());
     }
 
     @Timed
