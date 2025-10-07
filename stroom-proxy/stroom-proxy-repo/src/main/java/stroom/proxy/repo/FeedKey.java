@@ -82,18 +82,23 @@ public final class FeedKey {
      */
     public static class FeedKeyInterner {
 
-        private final Map<FeedKey, FeedKey> map = new HashMap<>();
+        // Fewer types than feeds so key on that first to reduce number of child maps
+        private final Map<String, Map<String, FeedKey>> typeToFeedToFeedKeyMap = new HashMap<>();
 
         private FeedKeyInterner() {
         }
 
         public FeedKey intern(final String feed, final String type) {
-            return intern(FeedKey.of(feed, type));
+            final Map<String, FeedKey> feedToFeedKeyMap = typeToFeedToFeedKeyMap.computeIfAbsent(
+                    type, k -> new HashMap<>());
+            return feedToFeedKeyMap.computeIfAbsent(feed, aFeed -> FeedKey.of(aFeed, type));
         }
 
         public FeedKey intern(final FeedKey feedKey) {
             if (feedKey != null) {
-                final FeedKey prevVal = map.putIfAbsent(feedKey, feedKey);
+                final FeedKey prevVal = typeToFeedToFeedKeyMap.computeIfAbsent(
+                                feedKey.type, k -> new HashMap<>())
+                        .putIfAbsent(feedKey.feed, feedKey);
                 return prevVal != null
                         ? prevVal
                         : feedKey;

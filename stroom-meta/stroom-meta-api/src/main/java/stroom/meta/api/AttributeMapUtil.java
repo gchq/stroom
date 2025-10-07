@@ -144,6 +144,11 @@ public class AttributeMapUtil {
     }
 
     public static void addReceiptInfo(final AttributeMap attributeMap,
+                                      final UniqueId receiptId) {
+        addReceiptInfo(attributeMap, Instant.now(), receiptId);
+    }
+
+    public static void addReceiptInfo(final AttributeMap attributeMap,
                                       final Instant receiveTime,
                                       final UniqueId receiptId) {
         // Add ReceiptId and ReceiptIdPath
