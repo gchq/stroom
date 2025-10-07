@@ -85,6 +85,11 @@ class TestValueStoreMetaSerde extends AbstractSerdeTest<ValueStoreMeta, ValueSto
                 .addCase(1, true)
                 .addCase(2, false)
                 .addCase(3, false)
+                .addCase(8, false)
+                .addCase(10, false)
+                .addCase(100, false)
+                .addCase(1000, false)
+                .addCase(10000, false)
                 .addCase(16_000_000, false)
                 .build();
     }
@@ -174,6 +179,7 @@ class TestValueStoreMetaSerde extends AbstractSerdeTest<ValueStoreMeta, ValueSto
 
     @Override
     TypeLiteral<ValueStoreMetaSerde> getSerdeType() {
-        return new TypeLiteral<ValueStoreMetaSerde>(){};
+        return new TypeLiteral<ValueStoreMetaSerde>() {
+        };
     }
 }
