@@ -68,4 +68,14 @@ public class ThreadUtil {
             throw UncheckedInterruptedException.create(e);
         }
     }
+
+    public static void checkInterrupt() {
+        if (Thread.currentThread().isInterrupted()) {
+            try {
+                throw new InterruptedException("Interrupted");
+            } catch (final InterruptedException e) {
+                throw UncheckedInterruptedException.create(e);
+            }
+        }
+    }
 }

@@ -448,8 +448,8 @@ public class TestTraceDb {
     private void insertData(final TraceDb db) {
         db.write(writer -> {
             SpanDataLoaderTestUtil.load(span -> {
-                final SpanKey key = new SpanKey.Builder(span).build();
-                final SpanValue value = new SpanValue.Builder(span).build();
+                final SpanKey key = SpanKey.create(span);
+                final SpanValue value = SpanValue.create(span);
                 db.insert(writer, new SpanKV(key, value));
             });
         });

@@ -36,6 +36,7 @@ public class FindTraceCriteria extends BaseCriteria {
     @JsonProperty
     private SimpleDuration temporalOrderingTolerance;
 
+    @SuppressWarnings("checkstyle:linelength")
     public FindTraceCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                              @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                              @JsonProperty("dataSourceRef") final DocRef dataSourceRef,
@@ -43,6 +44,7 @@ public class FindTraceCriteria extends BaseCriteria {
         this(pageRequest, sortList, dataSourceRef, null, null, temporalOrderingTolerance);
     }
 
+    @SuppressWarnings("checkstyle:linelength")
     @JsonCreator
     public FindTraceCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                              @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,

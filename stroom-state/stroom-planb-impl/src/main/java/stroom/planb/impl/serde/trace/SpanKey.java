@@ -73,6 +73,10 @@ public class SpanKey {
                '}';
     }
 
+    public static SpanKey create(final Span span) {
+        return new Builder(span).build();
+    }
+
     public static Builder builder() {
         return new Builder();
     }

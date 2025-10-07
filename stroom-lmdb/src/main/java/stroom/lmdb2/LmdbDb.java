@@ -141,20 +141,6 @@ public class LmdbDb {
         }
     }
 
-    public void iterate(final AbstractTxn txn,
-                        final Consumer<CursorIterable<ByteBuffer>> iteratorConsumer) {
-        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(
-                txn.get())) {
-            try {
-                iteratorConsumer.accept(cursorIterable);
-            } catch (final Throwable e) {
-                error(e);
-            }
-        } catch (final Throwable e) {
-            error(e);
-        }
-    }
-
     public boolean delete(final WriteTxn txn, final ByteBuffer key) {
         try {
             return dbi.delete(txn.get(), key);

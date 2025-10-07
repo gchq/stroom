@@ -33,7 +33,7 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class TraceValidator implements TraceProcessor {
+public class TraceValidator implements TraceWalker {
 
     private final Comparator<Span> spanComparator;
     private final PathKeyFactory pathKeyFactory;

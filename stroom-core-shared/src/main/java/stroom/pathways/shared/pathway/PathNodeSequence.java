@@ -1,5 +1,7 @@
 package stroom.pathways.shared.pathway;
 
+import stroom.util.shared.AbstractBuilder;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -63,5 +65,57 @@ public class PathNodeSequence {
                ", pathKey=" + pathKey +
                ", nodes=" + nodes +
                '}';
+    }
+
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder extends AbstractBuilder<PathNodeSequence, Builder> {
+
+        private String uuid;
+        private PathKey pathKey;
+        private List<PathNode> nodes;
+
+        public Builder() {
+        }
+
+        public Builder(final PathNodeSequence pathNodeSequence) {
+            this.uuid = pathNodeSequence.uuid;
+            this.pathKey = pathNodeSequence.pathKey;
+            this.nodes = pathNodeSequence.nodes;
+        }
+
+        public Builder uuid(final String uuid) {
+            this.uuid = uuid;
+            return self();
+        }
+
+        public Builder pathKey(final PathKey pathKey) {
+            this.pathKey = pathKey;
+            return self();
+        }
+
+        public Builder nodes(final List<PathNode> nodes) {
+            this.nodes = nodes;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public PathNodeSequence build() {
+            return new PathNodeSequence(
+                    uuid,
+                    pathKey,
+                    nodes);
+        }
     }
 }

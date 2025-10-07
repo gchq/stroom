@@ -4,6 +4,9 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.lmdb.LmdbEntry;
+import stroom.lmdb.LmdbIterableSupport;
+import stroom.lmdb.LmdbStreamSupport;
 import stroom.lmdb2.KV;
 import stroom.pathways.shared.FindTraceCriteria;
 import stroom.pathways.shared.GetTraceRequest;
@@ -14,6 +17,7 @@ import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.planb.impl.data.SpanKV;
 import stroom.planb.impl.db.AbstractDb;
+import stroom.planb.impl.db.Count;
 import stroom.planb.impl.db.HashClashCommitRunnable;
 import stroom.planb.impl.db.LmdbWriter;
 import stroom.planb.impl.db.PlanBEnv;
@@ -49,11 +53,8 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageResponse;
 
-import org.lmdbjava.CursorIterable;
-import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
-import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
@@ -61,18 +62,20 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
 
     private static final int CURRENT_SCHEMA_VERSION = 1;
+    private static final ByteBuffer VALUE = ByteBuffer.allocateDirect(0);
 
     private final ByteBufferFactory byteBufferFactory;
     private final KeySerde<SpanKey> keySerde;
@@ -80,8 +83,11 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     private final UsedLookupsRecorder keyRecorder;
     private final UsedLookupsRecorder valueRecorder;
     private final Dbi<ByteBuffer> traceRootsDbi;
+    //    private final Dbi<ByteBuffer> traceUpdateTimeDbi;
+//    private final Dbi<ByteBuffer> updateTimeDbi;
     private final TraceRootKeySerde traceRootKeySerde;
     private final TraceRootValueSerde traceRootValueSerde;
+//    private final TimeSerde updateTimeSerde;
 
     private TraceDb(final PlanBEnv env,
                     final ByteBuffers byteBuffers,
@@ -109,6 +115,11 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         traceRootKeySerde = new TraceRootKeySerde(byteBuffers);
         traceRootValueSerde = new TraceRootValueSerde(byteBufferFactory);
         traceRootsDbi = env.openDbi("trace-roots", DbiFlags.MDB_CREATE);
+
+//        traceUpdateTimeDbi = env.openDbi("trace-update-time", DbiFlags.MDB_CREATE);
+//        updateTimeDbi = env.openDbi("update-time", DbiFlags.MDB_CREATE);
+//
+//        updateTimeSerde = new MillisecondTimeSerde();
     }
 
     public static TraceDb create(final Path path,
@@ -157,6 +168,12 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         }
     }
 
+    public void insert(final LmdbWriter writer, final Span span) {
+        final SpanKey spanKey = SpanKey.create(span);
+        final SpanValue spanValue = SpanValue.create(span);
+        insert(writer, new SpanKV(spanKey, spanValue));
+    }
+
     @Override
     public void insert(final LmdbWriter writer, final KV<SpanKey, SpanValue> kv) {
         final Txn<ByteBuffer> writeTxn = writer.getWriteTxn();
@@ -165,36 +182,65 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                         dbi.put(writeTxn, keyByteBuffer, valueByteBuffer, putFlags)));
 
         // Add trace root if this is one.
+        final byte[] traceIdBytes = HexStringUtil.decode(kv.key().getTraceId());
         if (NullSafe.isEmptyString(kv.key().getParentSpanId())) {
             // TODO : We are currently assuming that we get the root last but we might want to reevaluate depth etc
             //  later.
             final Trace trace = getTrace(writeTxn, kv.key().getTraceId());
-            final TraceRootKey key = new TraceRootKey(
-                    HexStringUtil.decode(kv.key().getTraceId()),
-                    trace.root().start());
+            final TraceRootKey key = new TraceRootKey(traceIdBytes);
             final TraceRoot value = new TraceRoot(trace);
 
             traceRootKeySerde.write(key, keyBuffer ->
                     traceRootValueSerde.write(value, valueBuffer ->
                             traceRootsDbi.put(writeTxn, keyBuffer, valueBuffer)));
+
+//            // Write update time for processing new traces.
+//            updateInsertOrder(writeTxn, traceIdBytes);
         }
 
         writer.tryCommit();
     }
 
-    private void iterate(final Txn<ByteBuffer> txn,
-                         final Consumer<KeyVal<ByteBuffer>> consumer) {
-        iterate(txn, consumer, dbi);
-    }
+//    private void updateInsertOrder( final Txn<ByteBuffer> writeTxn,
+//                                    final byte[] traceIdBytes) {
+//        // Write update time for processing new traces.
+//        final Instant updateTime =  Instant.now();
+//        byteBuffers.useBytes(traceIdBytes, idBuffer -> {
+//            byteBuffers.use(updateTimeSerde.getSize(), timeBuffer -> {
+//                updateTimeSerde.write(timeBuffer, updateTime);
+//                timeBuffer.flip();
+//
+//                traceUpdateTimeDbi.put(writeTxn, idBuffer, timeBuffer);
+//                byteBuffers.use(traceIdBytes.length + updateTimeSerde.getSize(), keyBuffer -> {
+//                    keyBuffer.put(traceIdBytes);
+//                    updateTimeSerde.write(keyBuffer, updateTime);
+//                    keyBuffer.flip();
+//                    updateTimeDbi.put(writeTxn, keyBuffer, VALUE);
+//                });
+//            });
+//        });
+//    }
 
-    private void iterate(final Txn<ByteBuffer> txn,
-                         final Consumer<KeyVal<ByteBuffer>> consumer,
-                         final Dbi<ByteBuffer> dbi) {
-        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(txn)) {
-            for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
-                consumer.accept(keyVal);
+//    public void iterateTraceRoots(final BiConsumer<TraceRoot, Function<TraceRoot, Trace>> consumer) {
+//        env.read(txn -> {
+//            iterate(txn, kv -> {
+//                final TraceRoot traceRoot = traceRootValueSerde.read(kv.val());
+//                consumer.accept(traceRoot, root -> getTrace(txn, root.getTraceId()));
+//            }, traceRootsDbi);
+//            return null;
+//        });
+//    }
+
+    public void iterateTraces(final BiConsumer<byte[], Function<byte[], Trace>> consumer) {
+        env.read(txn -> {
+            try (final Stream<LmdbEntry> stream = LmdbStreamSupport.stream(txn, traceRootsDbi)) {
+                stream.forEach(entry -> {
+                    final byte[] traceId = ByteBufferUtils.toBytes(entry.getKey());
+                    consumer.accept(traceId, id -> getTrace(txn, id));
+                });
             }
-        }
+            return null;
+        });
     }
 
     @Override
@@ -206,27 +252,29 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
 
                 // Merge.
                 sourceDb.env.read(readTxn -> {
-                    sourceDb.iterate(readTxn, kv -> {
-                        if (sourceDb.keySerde.usesLookup(kv.key()) ||
-                            sourceDb.valueSerde.usesLookup(kv.val())) {
-                            // We need to do a full read and merge.
-                            final SpanKey key = sourceDb.keySerde.read(readTxn, kv.key());
-                            final SpanValue value = sourceDb.valueSerde.read(readTxn, kv.val());
-                            insert(writer, new SpanKV(key, value));
-                        } else {
-                            // Quick merge.
-                            if (dbi.put(writer.getWriteTxn(), kv.key(), kv.val(), putFlags)) {
-                                writer.tryCommit();
+                    try (final Stream<LmdbEntry> stream = LmdbStreamSupport.stream(readTxn, sourceDb.dbi)) {
+                        stream.forEach(entry -> {
+                            if (sourceDb.keySerde.usesLookup(entry.getKey()) ||
+                                sourceDb.valueSerde.usesLookup(entry.getVal())) {
+                                // We need to do a full read and merge.
+                                final SpanKey spanKey = sourceDb.keySerde.read(readTxn, entry.getKey());
+                                final SpanValue spanValue = sourceDb.valueSerde.read(readTxn, entry.getVal());
+                                insert(writer, new SpanKV(spanKey, spanValue));
+                            } else {
+                                // Quick merge.
+                                if (dbi.put(writer.getWriteTxn(), entry.getKey(), entry.getVal(), putFlags)) {
+                                    writer.tryCommit();
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
 
                     // Merge trace roots.
-                    sourceDb.iterate(readTxn, kv -> {
-                        if (traceRootsDbi.put(writer.getWriteTxn(), kv.key(), kv.val(), putFlags)) {
+                    LmdbIterableSupport.iterate(readTxn, sourceDb.traceRootsDbi, (key, val) -> {
+                        if (traceRootsDbi.put(writer.getWriteTxn(), key, val, putFlags)) {
                             writer.tryCommit();
                         }
-                    }, sourceDb.traceRootsDbi);
+                    });
 
                     return null;
                 });
@@ -274,11 +322,11 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     }
 
     private Function<Context, SpanKey> getKeyExtractionFunction(final Txn<ByteBuffer> readTxn) {
-        return context -> keySerde.read(readTxn, context.kv().key().duplicate());
+        return context -> keySerde.read(readTxn, context.key().duplicate());
     }
 
     private Function<Context, SpanValue> getValExtractionFunction(final Txn<ByteBuffer> readTxn) {
-        return context -> valueSerde.read(readTxn, context.kv().val().duplicate());
+        return context -> valueSerde.read(readTxn, context.val().duplicate());
     }
 
 //    public Trace getTrace(final TraceRequest request) {
@@ -305,8 +353,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 default -> kv -> ValNull.INSTANCE;
             };
         }
-        return (readTxn, kv) -> {
-            final Context context = new Context(readTxn, kv);
+        return (readTxn, key, value) -> {
+            final Context context = new Context(readTxn, key, value);
             final LazyKV<SpanKey, SpanValue> lazyKV = new LazyKV<>(context, keyFunction, valFunction);
             final Val[] values = new Val[fields.length];
             for (int i = 0; i < fields.length; i++) {
@@ -337,48 +385,37 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     private long deleteOldData(final LmdbWriter writer,
                                final NanoTime deleteBefore) {
         return env.read(readTxn -> {
-            long changeCount = 0;
+            final Count changeCount = new Count();
 
             // Delete old spans.
-            try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
-                final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-                while (iterator.hasNext()
-                       && !Thread.currentThread().isInterrupted()) {
-                    final KeyVal<ByteBuffer> kv = iterator.next();
-                    final SpanValue value = valueSerde.read(readTxn, kv.val().duplicate());
+            LmdbIterableSupport.iterate(readTxn, dbi, (key, val) -> {
+                final SpanValue value = valueSerde.read(readTxn, val.duplicate());
 
-                    if (value.getInsertTime().isBefore(deleteBefore)) {
-                        // If this is data we no longer want to retain then delete it.
-                        dbi.delete(writer.getWriteTxn(), kv.key());
-                        changeCount++;
-                    } else {
-                        // Record used lookup keys.
-                        keyRecorder.recordUsed(writer, kv.key());
-                        valueRecorder.recordUsed(writer, kv.val());
-                    }
-                    writer.tryCommit();
+                if (value.getInsertTime().isBefore(deleteBefore)) {
+                    // If this is data we no longer want to retain then delete it.
+                    dbi.delete(writer.getWriteTxn(), key);
+                    changeCount.increment();
+                } else {
+                    // Record used lookup keys.
+                    keyRecorder.recordUsed(writer, key);
+                    valueRecorder.recordUsed(writer, val);
                 }
-            }
+                writer.tryCommit();
+            });
 
             // Delete old trace roots.
-            try (final CursorIterable<ByteBuffer> cursor = traceRootsDbi.iterate(readTxn)) {
-                final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-                while (iterator.hasNext()
-                       && !Thread.currentThread().isInterrupted()) {
-                    final KeyVal<ByteBuffer> kv = iterator.next();
-                    final TraceRootKey value = traceRootKeySerde.read(kv.key().duplicate());
-
-                    if (value.getStartTime().isBefore(deleteBefore)) {
-                        // If this is data we no longer want to retain then delete it.
-                        traceRootsDbi.delete(writer.getWriteTxn(), kv.key());
-                        changeCount++;
-                    }
-                    writer.tryCommit();
+            LmdbIterableSupport.iterate(readTxn, traceRootsDbi, (key, val) -> {
+                final TraceRoot value = traceRootValueSerde.read(val.duplicate());
+                if (value.getStartTime().isBefore(deleteBefore)) {
+                    // If this is data we no longer want to retain then delete it.
+                    traceRootsDbi.delete(writer.getWriteTxn(), key);
+                    changeCount.increment();
                 }
-            }
+                writer.tryCommit();
+            });
 
             writer.commit();
-            return changeCount;
+            return changeCount.get();
         });
     }
 
@@ -387,7 +424,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         return 0;
     }
 
-    public TracesResultPage getTraces(final FindTraceCriteria criteria) {
+    public TracesResultPage findTraces(final FindTraceCriteria criteria) {
         final List<TraceRoot> list = new ArrayList<>();
         final PageResponse.Builder builder = PageResponse.builder();
 
@@ -401,62 +438,49 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
 
             // Just find traces in the requested range.
             env.read(readTxn -> {
+                final Count count = new Count();
+                LmdbIterableSupport.iterate(readTxn, traceRootsDbi, (key, val) -> {
+                    final TraceRootKey traceRootKey = traceRootKeySerde.read(key);
+                    final TraceRoot root = traceRootValueSerde.read(val);
+                    final TraceBuilder traceBuilder = new TraceBuilder(root.getTraceId());
+                    // Get all the spans.
+                    byteBuffers.useBytes(traceRootKey.getTraceId(), prefixBuffer -> {
+                        findSpans(readTxn, traceRootKey.getTraceId(), traceBuilder::addSpan);
+                    });
+                    final Trace trace = traceBuilder.build();
 
-                try (final CursorIterable<ByteBuffer> cursorIterable = traceRootsDbi.iterate(readTxn)) {
-                    int position = 0;
-                    long count = 0;
-                    for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
-                        final TraceRootKey key = traceRootKeySerde.read(keyVal.key());
-                        final TraceRoot root = traceRootValueSerde.read(keyVal.val());
-                        final TraceBuilder traceBuilder = new TraceBuilder(root.getTraceId());
-                        // Get all the spans.
-                        byteBuffers.useBytes(key.getTraceId(), prefixBuffer -> {
-                            findSpans(readTxn, key.getTraceId(), traceBuilder::addSpan);
-                        });
-                        final Trace trace = traceBuilder.build();
-                        if (tracePredicate.test(trace)) {
-                            if (criteria.getPageRequest().getOffset() <= position &&
-                                criteria.getPageRequest().getLength() > count) {
-                                count++;
-                                list.add(root);
-                            }
-                            position++;
-                        }
+                    final long pos = count.getAndIncrement();
+                    if (criteria.getPageRequest().getOffset() <= pos &&
+                        criteria.getPageRequest().getLength() > list.size() &&
+                        tracePredicate.test(trace)) {
+                        list.add(root);
                     }
-
-                    builder.offset(criteria.getPageRequest().getOffset());
-                    builder.length(list.size());
-                    builder.total(count);
-                    builder.exact(true);
-
-                }
+                });
+                builder.offset(criteria.getPageRequest().getOffset());
+                builder.length(list.size());
+                builder.total(count.get());
+                builder.exact(true);
                 return list;
             });
 
         } else {
             // Just find traces in the requested range.
             env.read(readTxn -> {
+                final Count count = new Count();
 
-                try (final CursorIterable<ByteBuffer> cursorIterable = traceRootsDbi.iterate(readTxn)) {
-                    int position = 0;
-                    long count = 0;
-                    for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
-                        if (criteria.getPageRequest().getOffset() <= position &&
-                            criteria.getPageRequest().getLength() > count) {
-                            count++;
-
-                            final TraceRoot root = traceRootValueSerde.read(keyVal.val());
-                            list.add(root);
-                        }
-                        position++;
+                LmdbIterableSupport.iterate(readTxn, traceRootsDbi, (key, val) -> {
+                    final long pos = count.getAndIncrement();
+                    if (criteria.getPageRequest().getOffset() <= pos &&
+                        criteria.getPageRequest().getLength() > list.size()) {
+                        final TraceRoot root = traceRootValueSerde.read(val);
+                        list.add(root);
                     }
+                });
 
-                    builder.offset(criteria.getPageRequest().getOffset());
-                    builder.length(list.size());
-                    builder.total(count);
-                    builder.exact(true);
-
-                }
+                builder.offset(criteria.getPageRequest().getOffset());
+                builder.length(list.size());
+                builder.total(count.get());
+                builder.exact(true);
                 return list;
             });
         }
@@ -466,6 +490,15 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
 
     public Trace getTrace(final GetTraceRequest request) {
         return env.read(readTxn -> getTrace(readTxn, request.getTraceId()));
+    }
+
+    public Trace getTrace(final Txn<ByteBuffer> txn, final byte[] traceId) {
+        final TraceBuilder traceBuilder = new TraceBuilder(HexStringUtil.encode(traceId));
+        // Get all the spans.
+        byteBuffers.useBytes(traceId, prefixBuffer -> {
+            findSpans(txn, traceId, traceBuilder::addSpan);
+        });
+        return traceBuilder.build();
     }
 
     public Trace getTrace(final Txn<ByteBuffer> txn, final String traceIdString) {
@@ -483,22 +516,12 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                            final Consumer<Span> consumer) {
         byteBuffers.useBytes(traceId, prefixBuffer -> {
             // Get all the spans.
-            final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(prefixBuffer);
-            try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(txn, keyRange)) {
-                final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-                while (iterator.hasNext()
-                       && !Thread.currentThread().isInterrupted()) {
-                    final KeyVal<ByteBuffer> kv = iterator.next();
-                    if (!ByteBufferUtils.containsPrefix(kv.key(), prefixBuffer)) {
-                        break;
-                    }
-
-                    final SpanKey spanKey = keySerde.read(txn, kv.key());
-                    final SpanValue spanValue = valueSerde.read(txn, kv.val());
-                    final Span span = createSpan(spanKey, spanValue);
-                    consumer.accept(span);
-                }
-            }
+            LmdbIterableSupport.builder(txn, dbi).prefix(prefixBuffer).iterate((key, val) -> {
+                final SpanKey spanKey = keySerde.read(txn, key);
+                final SpanValue spanValue = valueSerde.read(txn, val);
+                final Span span = createSpan(spanKey, spanValue);
+                consumer.accept(span);
+            });
         });
     }
 

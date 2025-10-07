@@ -2,10 +2,12 @@ package stroom.planb.impl.db.histogram;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.lmdb.LmdbIterableSupport;
 import stroom.lmdb.serde.UnsignedBytes;
 import stroom.lmdb.serde.UnsignedBytesInstances;
 import stroom.lmdb2.KV;
 import stroom.planb.impl.db.AbstractDb;
+import stroom.planb.impl.db.Count;
 import stroom.planb.impl.db.HashClashCommitRunnable;
 import stroom.planb.impl.db.LmdbWriter;
 import stroom.planb.impl.db.PlanBEnv;
@@ -60,8 +62,6 @@ import stroom.util.json.JsonUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
-import org.lmdbjava.CursorIterable;
-import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
@@ -69,10 +69,8 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public class HistogramDb extends AbstractDb<TemporalKey, Long> {
@@ -248,15 +246,6 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
         writer.tryCommit();
     }
 
-    private void iterate(final Txn<ByteBuffer> txn,
-                         final Consumer<KeyVal<ByteBuffer>> consumer) {
-        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(txn)) {
-            for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
-                consumer.accept(keyVal);
-            }
-        }
-    }
-
     @Override
     public void merge(final Path source) {
         env.write(writer -> {
@@ -266,15 +255,15 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
 
                 // Merge.
                 sourceDb.env.read(readTxn -> {
-                    sourceDb.iterate(readTxn, kv -> {
+                    sourceDb.iterate(readTxn, (key, val) -> {
                         final Txn<ByteBuffer> writeTxn = writer.getWriteTxn();
-                        final TemporalKey key = sourceDb.keySerde.read(readTxn, kv.key());
-                        keySerde.write(writeTxn, key, keyByteBuffer -> {
+                        final TemporalKey temporalKey = sourceDb.keySerde.read(readTxn, key);
+                        keySerde.write(writeTxn, temporalKey, keyByteBuffer -> {
                             final ByteBuffer existingValueByteBuffer = dbi.get(writeTxn, keyByteBuffer);
                             if (existingValueByteBuffer == null) {
-                                dbi.put(writeTxn, keyByteBuffer, kv.val());
+                                dbi.put(writeTxn, keyByteBuffer, val);
                             } else {
-                                valuesSerde.merge(kv.val(), existingValueByteBuffer, valueByteBuffer ->
+                                valuesSerde.merge(val, existingValueByteBuffer, valueByteBuffer ->
                                         dbi.put(writeTxn, keyByteBuffer, valueByteBuffer));
                             }
                         });
@@ -318,16 +307,14 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
             final List<ValConverter<Long>> valConverters = createValuesExtractor(fieldIndex);
 
             // TODO : It would be faster if we limit the iteration to keys based on the criteria.
-            try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(readTxn)) {
-                for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
-                    final TemporalKey key = keySerde.read(readTxn, keyVal.key());
-                    valuesSerde.getValues(key, keyVal.val(), valConverters, vals -> {
-                        if (predicate.test(vals)) {
-                            consumer.accept(vals.toArray());
-                        }
-                    });
-                }
-            }
+            iterate(readTxn, (key, val) -> {
+                final TemporalKey temporalKey = keySerde.read(readTxn, key);
+                valuesSerde.getValues(temporalKey, val, valConverters, vals -> {
+                    if (predicate.test(vals)) {
+                        consumer.accept(vals.toArray());
+                    }
+                });
+            });
 
             return null;
         });
@@ -380,33 +367,28 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
                                final Instant deleteBefore,
                                final boolean useStateTime) {
         return env.read(readTxn -> {
-            long changeCount = 0;
-            try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
-                final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-                while (iterator.hasNext()
-                       && !Thread.currentThread().isInterrupted()) {
-                    final KeyVal<ByteBuffer> kv = iterator.next();
-                    final TemporalKey key = keySerde.read(readTxn, kv.key().duplicate());
-                    final Instant time;
-                    if (useStateTime) {
-                        time = key.getTime();
-                    } else {
-                        time = valuesSerde.readInsertTime(kv.val());
-                    }
-
-                    if (time.isBefore(deleteBefore)) {
-                        // If this is data we no longer want to retain then delete it.
-                        dbi.delete(writer.getWriteTxn(), kv.key());
-                        changeCount++;
-                    } else {
-                        // Record used lookup keys.
-                        keyRecorder.recordUsed(writer, kv.key());
-                    }
-                    writer.tryCommit();
+            final Count count = new Count();
+            LmdbIterableSupport.builder(readTxn, dbi).iterate((key, val) -> {
+                final TemporalKey temporalKey = keySerde.read(readTxn, key.duplicate());
+                final Instant time;
+                if (useStateTime) {
+                    time = temporalKey.getTime();
+                } else {
+                    time = valuesSerde.readInsertTime(val);
                 }
-            }
+
+                if (time.isBefore(deleteBefore)) {
+                    // If this is data we no longer want to retain then delete it.
+                    dbi.delete(writer.getWriteTxn(), key);
+                    count.incrementAndGet();
+                } else {
+                    // Record used lookup keys.
+                    keyRecorder.recordUsed(writer, key);
+                }
+                writer.tryCommit();
+            });
             writer.commit();
-            return changeCount;
+            return count.get();
         });
     }
 

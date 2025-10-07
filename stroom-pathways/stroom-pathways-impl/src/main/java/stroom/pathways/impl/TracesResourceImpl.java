@@ -29,6 +29,6 @@ public class TracesResourceImpl implements TracesResource {
 
     @Override
     public Trace findTrace(final GetTraceRequest request) {
-        return tracesStoreProvider.get().findTrace(request);
+        return tracesStoreProvider.get().getTrace(request);
     }
 }

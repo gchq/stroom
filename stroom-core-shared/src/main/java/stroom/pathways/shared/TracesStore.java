@@ -8,5 +8,5 @@ public interface TracesStore {
 
     ResultPage<TraceRoot> findTraces(FindTraceCriteria criteria);
 
-    Trace findTrace(GetTraceRequest request);
+    Trace getTrace(GetTraceRequest request);
 }

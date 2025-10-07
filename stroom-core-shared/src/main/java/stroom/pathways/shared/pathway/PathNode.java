@@ -1,6 +1,5 @@
 package stroom.pathways.shared.pathway;
 
-import stroom.pathways.shared.otel.trace.Span;
 import stroom.util.shared.AbstractBuilder;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -27,8 +26,6 @@ public class PathNode {
     @JsonProperty
     private final List<PathNodeSequence> targets;
     @JsonProperty
-    private final List<Span> spans;
-    @JsonProperty
     private final Map<String, Constraint> constraints;
 
     @JsonCreator
@@ -36,7 +33,6 @@ public class PathNode {
                     @JsonProperty("name") final String name,
                     @JsonProperty("path") final List<String> path,
                     @JsonProperty("targets") final List<PathNodeSequence> targets,
-                    @JsonProperty("spans") final List<Span> spans,
                     @JsonProperty("constraints") final Map<String, Constraint> constraints) {
         this.uuid = uuid;
         this.name = name;
@@ -44,9 +40,6 @@ public class PathNode {
         this.targets = targets == null
                 ? new ArrayList<>()
                 : new ArrayList<>(targets);
-        this.spans = spans == null
-                ? new ArrayList<>()
-                : new ArrayList<>(spans);
         this.constraints = constraints;
     }
 
@@ -56,7 +49,6 @@ public class PathNode {
         this.name = name;
         this.path = path;
         this.targets = new ArrayList<>();
-        this.spans = new ArrayList<>();
         this.constraints = null;
     }
 
@@ -65,7 +57,6 @@ public class PathNode {
         this.name = name;
         this.path = Collections.singletonList(name);
         this.targets = new ArrayList<>();
-        this.spans = new ArrayList<>();
         this.constraints = null;
     }
 
@@ -83,10 +74,6 @@ public class PathNode {
 
     public List<PathNodeSequence> getTargets() {
         return targets;
-    }
-
-    public List<Span> getSpans() {
-        return spans;
     }
 
     public Map<String, Constraint> getConstraints() {
@@ -139,7 +126,6 @@ public class PathNode {
         private String name;
         private List<String> path;
         private List<PathNodeSequence> targets;
-        private List<Span> spans;
         private Map<String, Constraint> constraints;
 
         public Builder() {
@@ -150,7 +136,6 @@ public class PathNode {
             this.name = pathNode.name;
             this.path = pathNode.path;
             this.targets = pathNode.targets;
-            this.spans = pathNode.spans;
             this.constraints = pathNode.constraints;
         }
 
@@ -174,11 +159,6 @@ public class PathNode {
             return self();
         }
 
-        public Builder spans(final List<Span> spans) {
-            this.spans = spans;
-            return self();
-        }
-
         public Builder constraints(final Map<String, Constraint> constraints) {
             this.constraints = constraints;
             return self();
@@ -195,7 +175,6 @@ public class PathNode {
                     name,
                     path,
                     targets,
-                    spans,
                     constraints);
         }
     }

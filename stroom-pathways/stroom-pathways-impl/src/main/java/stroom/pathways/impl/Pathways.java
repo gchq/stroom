@@ -78,7 +78,7 @@ public class Pathways {
                             doc.getTracesDocRef(),
                             traceRoot.getTraceId(),
                             doc.getTemporalOrderingTolerance());
-                    final Trace trace = tracesStore.findTrace(request);
+                    final Trace trace = tracesStore.getTrace(request);
                     if (addedTraces.add(trace)) {
                         LOGGER.info("\n" + trace.toString());
 
@@ -141,7 +141,7 @@ public class Pathways {
                                final MessageReceiver messageReceiver) {
         final Comparator<Span> spanComparator = new CloseSpanComparator(doc.getTemporalOrderingTolerance());
         final PathKeyFactory pathKeyFactory = new PathKeyFactoryImpl();
-        final TraceProcessor traceProcessor = new NodeMutatorImpl(spanComparator, pathKeyFactory);
+        final TraceWalker traceProcessor = new NodeMutatorImpl(spanComparator, pathKeyFactory);
         traceProcessor.process(trace, roots, messageReceiver, doc);
     }
 

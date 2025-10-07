@@ -110,15 +110,14 @@ public class TracesStoreImpl implements TracesStore {
     public TracesResultPage getLocalTraces(final FindTraceCriteria criteria) {
         return shardManager.get(criteria.getDataSourceRef().getName(), reader -> {
             if (reader instanceof final TraceDb traceDb) {
-                return traceDb.getTraces(criteria);
+                return traceDb.findTraces(criteria);
             }
             throw new IllegalStateException("Unexpected value: " + reader);
         });
     }
 
-
     @Override
-    public Trace findTrace(final GetTraceRequest request) {
+    public Trace getTrace(final GetTraceRequest request) {
         final String name = request.getDataSourceRef().getName();
         final PlanBDoc doc = planBDocCache.get(name);
         if (doc == null) {

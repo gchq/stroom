@@ -873,8 +873,8 @@ public class PlanBFilter extends AbstractXMLFilter {
         } else {
             try {
                 final Span span = JsonUtil.readValue(currentValue, Span.class);
-                final SpanKey spanKey = new SpanKey.Builder(span).build();
-                final SpanValue spanValue = new SpanValue.Builder(span).build();
+                final SpanKey spanKey = SpanKey.create(span);
+                final SpanValue spanValue = SpanValue.create(span);
                 LOGGER.trace("Putting span value {} into table {}", span, mapName);
                 catchLmdbError(() -> writer.addSpanValue(doc, new SpanKV(spanKey, spanValue)));
             } catch (final RuntimeException e) {

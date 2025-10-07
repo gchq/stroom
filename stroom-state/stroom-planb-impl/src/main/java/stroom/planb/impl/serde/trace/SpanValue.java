@@ -15,7 +15,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 
@@ -210,6 +209,10 @@ public class SpanValue {
                ", droppedLinksCount=" + droppedLinksCount +
                ", status=" + status +
                '}';
+    }
+
+    public static SpanValue create(final Span span) {
+        return new Builder(span).build();
     }
 
     public static Builder builder() {

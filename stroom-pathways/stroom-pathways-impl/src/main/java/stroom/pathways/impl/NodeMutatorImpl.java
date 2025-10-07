@@ -39,7 +39,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class NodeMutatorImpl implements TraceProcessor {
+public class NodeMutatorImpl implements TraceWalker {
 
     private static final int MAX_SET_SIZE = 10;
 
@@ -52,6 +52,38 @@ public class NodeMutatorImpl implements TraceProcessor {
         this.pathKeyFactory = pathKeyFactory;
     }
 
+
+    public PathNode process(final Trace trace,
+                            final PathKey pathKey,
+                            final PathNode pathNode,
+                            final MessageReceiver messageReceiver,
+                            final PathwaysDoc pathwaysDoc) {
+        final Span root = trace.root();
+        if (pathNode == null && !pathwaysDoc.isAllowPathwayCreation()) {
+            messageReceiver.log(Severity.ERROR, () -> "Invalid path: " + pathKey);
+            return pathNode;
+        }
+
+
+        final PathNode node;
+        if (pathNode == null) {
+            messageReceiver.log(Severity.INFO, () -> "Adding new root path: " + root.getName());
+            node = new PathNode(root.getName());
+        } else {
+            node = pathNode;
+        }
+
+        final Map<PathKey, Map<String, Map<PathKey, PathNodeSequence>>> maps = new HashMap<>();
+        final Map<String, Map<PathKey, PathNodeSequence>> map = maps.computeIfAbsent(pathKey, k -> new HashMap<>());
+        return walk(trace, root, node, map, messageReceiver, pathwaysDoc);
+
+
+//        final Map<PathKey, Map<String, Map<PathKey, PathNodeSequence>>> maps = new HashMap<>();
+//        final Span root = trace.root();
+//        final PathKey pathKey = pathKeyFactory.create(Collections.singletonList(root));
+//
+//        PathNode node = roots.get(pathKey);
+    }
 
     @Override
     public void process(final Trace trace,
@@ -138,15 +170,15 @@ public class NodeMutatorImpl implements TraceProcessor {
                                             final PathwaysDoc pathwaysDoc) {
         final PathNode.Builder pathNodeBuilder = pathNode.copy();
 
-        // Add additional span info if wanted.
-        final List<Span> spans;
-        if (pathNode.getSpans() != null) {
-            spans = new ArrayList<>(pathNode.getSpans());
-            spans.add(span);
-        } else {
-            spans = Collections.singletonList(span);
-        }
-        pathNodeBuilder.spans(spans);
+//        // Add additional span info if wanted.
+//        final List<Span> spans;
+//        if (pathNode.getSpans() != null) {
+//            spans = new ArrayList<>(pathNode.getSpans());
+//            spans.add(span);
+//        } else {
+//            spans = Collections.singletonList(span);
+//        }
+//        pathNodeBuilder.spans(spans);
 
         // TODO : Expand min/max/average execution times.
         final Map<String, Constraint> constraints;

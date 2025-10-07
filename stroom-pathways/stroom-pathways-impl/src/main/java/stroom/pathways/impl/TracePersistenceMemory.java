@@ -1,9 +1,9 @@
 package stroom.pathways.impl;
 
-import stroom.docref.DocRef;
 import stroom.pathways.shared.FindTraceCriteria;
 import stroom.pathways.shared.GetTraceRequest;
-import stroom.pathways.shared.TracesStore;
+import stroom.pathways.shared.TracePersistence;
+import stroom.pathways.shared.TraceWriter;
 import stroom.pathways.shared.otel.trace.Span;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.otel.trace.TraceRoot;
@@ -11,7 +11,6 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -19,19 +18,26 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-public class TracesStoreMemoryImpl implements TracesStore {
+public class TracePersistenceMemory implements TracePersistence {
 
-    private final Map<DocRef, Traces> tracesMap = new ConcurrentHashMap<>();
+    private final Traces traces = new Traces();
 
-    public void addSpan(final DocRef docRef, final Span span) {
-        tracesMap.computeIfAbsent(docRef, k -> new Traces()).addSpan(span);
+    @Override
+    public TraceWriter createWriter() {
+        return new TraceWriter() {
+            @Override
+            public void addSpan(final Span span) {
+                traces.addSpan(span);
+            }
+
+            @Override
+            public void close() {
+
+            }
+        };
     }
 
-    public Collection<Trace> getTraces(final DocRef docRef) {
-        final Traces traces = tracesMap.get(docRef);
-        if (traces == null) {
-            return Collections.emptyList();
-        }
+    public Collection<Trace> getTraces() {
         return traces.getTraces();
     }
 
@@ -39,7 +45,7 @@ public class TracesStoreMemoryImpl implements TracesStore {
     public ResultPage<TraceRoot> findTraces(final FindTraceCriteria criteria) {
         final Comparator<Span> spanComparator = new CloseSpanComparator(criteria.getTemporalOrderingTolerance());
         final PathKeyFactory pathKeyFactory = new PathKeyFactoryImpl();
-        final Collection<Trace> traces = getTraces(criteria.getDataSourceRef());
+        final Collection<Trace> traces = getTraces();
         if (criteria.getPathway() != null) {
             final TracePredicate tracePredicate = new TracePredicate(
                     spanComparator,
@@ -61,11 +67,7 @@ public class TracesStoreMemoryImpl implements TracesStore {
     }
 
     @Override
-    public Trace findTrace(final GetTraceRequest request) {
-        final Traces traces = tracesMap.get(request.getDataSourceRef());
-        if (traces == null) {
-            return null;
-        }
+    public Trace getTrace(final GetTraceRequest request) {
         final TraceBuilder traceBuilder = traces.traceMap.get(request.getTraceId());
         if (traceBuilder == null) {
             return null;

@@ -4,6 +4,8 @@ import stroom.docref.DocRef;
 import stroom.pathways.shared.FindTraceCriteria;
 import stroom.pathways.shared.GetTraceRequest;
 import stroom.pathways.shared.PathwaysDoc;
+import stroom.pathways.shared.TracePersistence;
+import stroom.pathways.shared.TraceWriter;
 import stroom.pathways.shared.TracesStore;
 import stroom.pathways.shared.otel.trace.ExportTraceServiceRequest;
 import stroom.pathways.shared.otel.trace.NanoDuration;
@@ -26,7 +28,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import org.junit.jupiter.api.Test;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -44,28 +45,25 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestSpanLoad {
+public class TraceLoader {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestSpanLoad.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TraceLoader.class);
     private static final ObjectMapper MAPPER = createMapper(true);
 
-    //    private static final DocRef DOC_REF = DocRef.builder().type(PathwaysDoc.TYPE).uuid("test").build();
     private static final DocRef TRACE_STORE_DOC_REF = DocRef.builder().type(PlanBDoc.TYPE).uuid("traces").build();
     private static final PathwaysDoc PATHWAYS_DOC = new PathwaysDoc();
 
-    @Test
-    void testLoadStandard() {
-
-
-        // Read in sample data and create a map of traces.
-        final TracesStoreMemoryImpl tracesStore = new TracesStoreMemoryImpl();
-        for (int i = 1; i <= 13; i++) {
-            final Path path = Paths.get("src/test/resources/" + StringIdUtil.idToString(i) + ".dat");
-            loadData(path, tracesStore);
+    public void load(final TracePersistence persistence) {
+        try (final TraceWriter writer = persistence.createWriter()) {
+            for (int i = 1; i <= 13; i++) {
+                final Path path = Paths.get("src/test/resources/" + StringIdUtil.idToString(i) + ".dat");
+                loadData(path, writer);
+            }
         }
 
         // Output the tree for each trace.
-        Collection<Trace> traces = getTraces(tracesStore);
+        Collection<Trace> traces = getTraces(persistence);
+        assertThat(traces.size()).isEqualTo(48);
         for (final Trace trace : traces) {
             LOGGER.info("\n" + trace.toString());
         }
@@ -87,15 +85,19 @@ public class TestSpanLoad {
         }
 
         // Validate traces against known paths.
-        traces = getTraces(tracesStore);
+        traces = getTraces(persistence);
+        assertThat(traces.size()).isEqualTo(48);
         validate(traces, pathRoots, messageReceiver);
 
         // Introduce an invalid pathway.
-        for (int i = 14; i <= 17; i++) {
-            final Path path = Paths.get("src/test/resources/" + StringIdUtil.idToString(i) + ".dat");
-            loadData(path, tracesStore);
+        try (final TraceWriter writer = persistence.createWriter()) {
+            for (int i = 14; i <= 17; i++) {
+                final Path path = Paths.get("src/test/resources/" + StringIdUtil.idToString(i) + ".dat");
+                loadData(path, writer);
+            }
         }
-        traces = getTraces(tracesStore);
+        traces = getTraces(persistence);
+        assertThat(traces.size()).isEqualTo(69);
         validate(traces, pathRoots, messageReceiver);
         assertThat(messages.toString()).contains("ERROR: [GET /people] thread.id '125' not equal");
     }
@@ -110,7 +112,7 @@ public class TestSpanLoad {
         final List<Trace> traces = new ArrayList<>(traceRoots.size());
         for (final TraceRoot traceRoot : traceRoots) {
             final Trace trace = tracesStore
-                    .findTrace(new GetTraceRequest(TRACE_STORE_DOC_REF, traceRoot.getTraceId(), SimpleDuration.ZERO));
+                    .getTrace(new GetTraceRequest(TRACE_STORE_DOC_REF, traceRoot.getTraceId(), SimpleDuration.ZERO));
             if (trace != null) {
                 traces.add(trace);
             }
@@ -122,7 +124,7 @@ public class TestSpanLoad {
                                                  final MessageReceiver messageReceiver) {
         final Comparator<Span> spanComparator = new CloseSpanComparator(NanoDuration.ofMillis(10));
         final PathKeyFactory pathKeyFactory = new PathKeyFactoryImpl();
-        final TraceProcessor traceProcessor = new NodeMutatorImpl(spanComparator, pathKeyFactory);
+        final TraceWalker traceProcessor = new NodeMutatorImpl(spanComparator, pathKeyFactory);
         final Map<PathKey, PathNode> roots = new HashMap<>();
         for (final Trace trace : traces) {
             traceProcessor.process(trace, roots, messageReceiver, PATHWAYS_DOC);
@@ -135,14 +137,14 @@ public class TestSpanLoad {
                           final MessageReceiver messageReceiver) {
         final Comparator<Span> spanComparator = new CloseSpanComparator(NanoDuration.ofMillis(10));
         final PathKeyFactory pathKeyFactory = new PathKeyFactoryImpl();
-        final TraceProcessor traceProcessor = new TraceValidator(spanComparator, pathKeyFactory);
+        final TraceWalker traceProcessor = new TraceValidator(spanComparator, pathKeyFactory);
         for (final Trace trace : traces) {
             traceProcessor.process(trace, roots, messageReceiver, PATHWAYS_DOC);
         }
     }
 
     private void loadData(final Path path,
-                          final TracesStoreMemoryImpl tracesStore) {
+                          final TraceWriter writer) {
         try (final BufferedReader lineReader = Files.newBufferedReader(path)) {
             final String line = lineReader.readLine();
             final ExportTraceServiceRequest exportRequest =
@@ -150,7 +152,7 @@ public class TestSpanLoad {
             for (final ResourceSpans resourceSpans : NullSafe.list(exportRequest.getResourceSpans())) {
                 for (final ScopeSpans scopeSpans : NullSafe.list(resourceSpans.getScopeSpans())) {
                     for (final Span span : NullSafe.list(scopeSpans.getSpans())) {
-                        tracesStore.addSpan(TRACE_STORE_DOC_REF, span);
+                        writer.addSpan(span);
                     }
                 }
             }

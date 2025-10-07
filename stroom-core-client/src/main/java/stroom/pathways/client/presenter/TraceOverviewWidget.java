@@ -272,10 +272,9 @@ public class TraceOverviewWidget extends Composite {
     private void appendTimelineBar(final HtmlBuilder hb) {
         final String style = computeGridStyle(0, extents.totalDuration.getNanos());
         hb.div(div -> {
-                    final AtomicInteger row = new AtomicInteger();
-                    appendSpan(div, trace.root(), row);
-                },
-                Attribute.className("timeline-bar"),
+            final AtomicInteger row = new AtomicInteger();
+            appendSpan(div, trace.root(), row);
+        }, Attribute.className("timeline-bar"),
                 Attribute.id("timelineBar"),
                 Attribute.style("height: 40px;" + style));
     }
@@ -521,79 +520,82 @@ public class TraceOverviewWidget extends Composite {
         }
 
 
-        //                    <div class="operation-item " data-expanded="true" data-span-id="7d62e820df6d74d8">
-        //                        <div class="operation-content">
-        //                            <span class="expand-icon">▼</span>
-        //                            <span class="service-name">order-service</span>
-        //                            <span class="operation-name">POST /orders</span>
-        //                        </div>
-        //                        <div class="waterfall-container">
-        //                            <div class="span-bar span-http" style="left: 0%; width: 100%;"></div>
-        //                            <span class="duration" style="left: 100%;">245.00ms</span>
-        //                        </div>
-        //                    </div>
-        //                <div class="children" data-parent="7d62e820df6d74d8">
-        //                    <div class="operation-item indent-1" data-expanded="true" data-span-id="d1e5f7a9b2c8e123">
-        //                        <div class="operation-content">
-        //                            <span class="expand-icon">▼</span>
-        //                            <span class="service-name">inventory-service</span>
-        //                            <span class="operation-name">check_inventory</span>
-        //                        </div>
-        //                        <div class="waterfall-container">
-        //                            <div class="span-bar span-internal" style="left: 0%; width: 56.37545993458708%;"></div>
-        //                            <span class="duration" style="left: 56.37545993458708%;">65.00ms</span>
-        //                        </div>
-        //                    </div>
-        //                <div class="children" data-parent="d1e5f7a9b2c8e123">
-        //                    <div class="operation-item indent-2" data-expanded="true" data-span-id="e3f8a1c5d9e7b456">
-        //                        <div class="operation-content">
-        //                            <span class="expand-icon"></span>
-        //                            <span class="service-name">inventory-service</span>
-        //                            <span class="operation-name">GET /inventory/:product</span>
-        //                        </div>
-        //                        <div class="waterfall-container">
-        //                            <div class="span-bar span-internal" style="left: 0%; width: 20.602769828291088%;"></div>
-        //                            <span class="duration" style="left: 20.602769828291088%;">25.00ms</span>
-        //                        </div>
-        //                    </div>
-        //
-        //                    <div class="operation-item indent-2" data-expanded="true" data-span-id="f5b9c2e6a4d8f789">
-        //                        <div class="operation-content">
-        //                            <span class="expand-icon"></span>
-        //                            <span class="service-name">inventory-service</span>
-        //                            <span class="operation-name">cache.get</span>
-        //                        </div>
-        //                        <div class="waterfall-container">
-        //                            <div class="span-bar span-cache" style="left: 25.713154129190514%; width: 5.110384300899427%;"></div>
-        //                            <span class="duration" style="left: 30.82353843008994%;">5.00ms</span>
-        //                        </div>
-        //                    </div>
-        //                </div>
-        //                    <div class="operation-item indent-1" data-expanded="true" data-span-id="a7c3e8f1b5d9a012">
-        //                        <div class="operation-content">
-        //                            <span class="expand-icon">▼</span>
-        //                            <span class="service-name">payment-service</span>
-        //                            <span class="operation-name">process_payment</span>
-        //                        </div>
-        //                        <div class="waterfall-container">
-        //                            <div class="span-bar span-internal" style="left: 61.48584423548651%; width: 38.51415576451349%;"></div>
-        //                            <span class="duration" style="left: 100%;">85.00ms</span>
-        //                        </div>
-        //                    </div>
-        //                <div class="children" data-parent="a7c3e8f1b5d9a012">
-        //                    <div class="operation-item indent-2" data-expanded="true" data-span-id="b8d4f9a2c6e1b345">
-        //                        <div class="operation-content">
-        //                            <span class="expand-icon"></span>
-        //                            <span class="service-name">payment-service</span>
-        //                            <span class="operation-name">stripe.charge</span>
-        //                        </div>
-        //                        <div class="waterfall-container">
-        //                            <div class="span-bar span-grpc" style="left: 66.59622853638594%; width: 33.40377146361406%;"></div>
-        //                            <span class="duration" style="left: 100%;">75.00ms</span>
-        //                        </div>
-        //                    </div>
-        //                </div></div></div>
-        //    </div>
+//                    <div class="operation-item " data-expanded="true" data-span-id="7d62e820df6d74d8">
+//                        <div class="operation-content">
+//                            <span class="expand-icon">▼</span>
+//                            <span class="service-name">order-service</span>
+//                            <span class="operation-name">POST /orders</span>
+//                        </div>
+//                        <div class="waterfall-container">
+//                            <div class="span-bar span-http" style="left: 0%; width: 100%;"></div>
+//                            <span class="duration" style="left: 100%;">245.00ms</span>
+//                        </div>
+//                    </div>
+//                <div class="children" data-parent="7d62e820df6d74d8">
+//                    <div class="operation-item indent-1" data-expanded="true" data-span-id="d1e5f7a9b2c8e123">
+//                        <div class="operation-content">
+//                            <span class="expand-icon">▼</span>
+//                            <span class="service-name">inventory-service</span>
+//                            <span class="operation-name">check_inventory</span>
+//                        </div>
+//                        <div class="waterfall-container">
+//                            <div class="span-bar span-internal" style="left: 0%; width: 56.37545993458708%;"></div>
+//                            <span class="duration" style="left: 56.37545993458708%;">65.00ms</span>
+//                        </div>
+//                    </div>
+//                <div class="children" data-parent="d1e5f7a9b2c8e123">
+//                    <div class="operation-item indent-2" data-expanded="true" data-span-id="e3f8a1c5d9e7b456">
+//                        <div class="operation-content">
+//                            <span class="expand-icon"></span>
+//                            <span class="service-name">inventory-service</span>
+//                            <span class="operation-name">GET /inventory/:product</span>
+//                        </div>
+//                        <div class="waterfall-container">
+//                            <div class="span-bar span-internal" style="left: 0%; width: 20.602769828291088%;"></div>
+//                            <span class="duration" style="left: 20.602769828291088%;">25.00ms</span>
+//                        </div>
+//                    </div>
+//
+//                    <div class="operation-item indent-2" data-expanded="true" data-span-id="f5b9c2e6a4d8f789">
+//                        <div class="operation-content">
+//                            <span class="expand-icon"></span>
+//                            <span class="service-name">inventory-service</span>
+//                            <span class="operation-name">cache.get</span>
+//                        </div>
+//                        <div class="waterfall-container">
+//                            <div class="span-bar span-cache"
+//                            style="left: 25.713154129190514%; width: 5.110384300899427%;"></div>
+//                            <span class="duration" style="left: 30.82353843008994%;">5.00ms</span>
+//                        </div>
+//                    </div>
+//                </div>
+//                    <div class="operation-item indent-1" data-expanded="true" data-span-id="a7c3e8f1b5d9a012">
+//                        <div class="operation-content">
+//                            <span class="expand-icon">▼</span>
+//                            <span class="service-name">payment-service</span>
+//                            <span class="operation-name">process_payment</span>
+//                        </div>
+//                        <div class="waterfall-container">
+//                            <div class="span-bar span-internal"
+//                            style="left: 61.48584423548651%; width: 38.51415576451349%;"></div>
+//                            <span class="duration" style="left: 100%;">85.00ms</span>
+//                        </div>
+//                    </div>
+//                <div class="children" data-parent="a7c3e8f1b5d9a012">
+//                    <div class="operation-item indent-2" data-expanded="true" data-span-id="b8d4f9a2c6e1b345">
+//                        <div class="operation-content">
+//                            <span class="expand-icon"></span>
+//                            <span class="service-name">payment-service</span>
+//                            <span class="operation-name">stripe.charge</span>
+//                        </div>
+//                        <div class="waterfall-container">
+//                            <div class="span-bar span-grpc"
+//                            style="left: 66.59622853638594%; width: 33.40377146361406%;"></div>
+//                            <span class="duration" style="left: 100%;">75.00ms</span>
+//                        </div>
+//                    </div>
+//                </div></div></div>
+//    </div>
     }
 
 

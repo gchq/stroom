@@ -10,8 +10,6 @@ import stroom.planb.impl.serde.trace.SpanValueSerde;
 
 import org.junit.jupiter.api.Test;
 
-import java.time.Instant;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestSpanValueSerde {

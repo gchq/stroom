@@ -158,7 +158,8 @@ public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
 //                final ConstraintValue optional = optionalAttributes.get(key);
 //                if (optional != null) {
 //                    hb.div(div ->
-//                            append(div, key, optional.toString()), Attribute.className("pathway-attributes-optional"));
+//                            append(div, key, optional.toString()),
+//                            Attribute.className("pathway-attributes-optional"));
 //                }
 //            }
 //        }

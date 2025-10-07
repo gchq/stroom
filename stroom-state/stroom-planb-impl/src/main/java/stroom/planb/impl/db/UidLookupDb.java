@@ -1,19 +1,17 @@
 package stroom.planb.impl.db;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
+import stroom.lmdb.LmdbIterableSupport;
 import stroom.lmdb.serde.UnsignedBytes;
 import stroom.lmdb.serde.UnsignedBytesInstances;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import org.lmdbjava.CursorIterable;
-import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
-import java.util.Iterator;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -146,14 +144,7 @@ public class UidLookupDb {
     }
 
     public void forEachUid(final Txn<ByteBuffer> readTxn, final Consumer<ByteBuffer> keyConsumer) {
-        try (final CursorIterable<ByteBuffer> cursor = uidToKeyDbi.iterate(readTxn)) {
-            final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-            while (iterator.hasNext()
-                   && !Thread.currentThread().isInterrupted()) {
-                final KeyVal<ByteBuffer> kv = iterator.next();
-                keyConsumer.accept(kv.key());
-            }
-        }
+        LmdbIterableSupport.iterate(readTxn, uidToKeyDbi, (key, val) -> keyConsumer.accept(key));
     }
 
     public void deleteByUid(final Txn<ByteBuffer> writeTxn, final ByteBuffer uid) {

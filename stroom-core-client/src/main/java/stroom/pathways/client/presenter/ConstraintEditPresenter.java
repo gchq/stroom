@@ -157,7 +157,8 @@ public class ConstraintEditPresenter extends MyPresenterWidget<ConstraintEditVie
 //                final ConstraintValue optional = optionalAttributes.get(key);
 //                if (optional != null) {
 //                    hb.div(div ->
-//                            append(div, key, optional.toString()), Attribute.className("constraint-attributes-optional"));
+//                            append(div, key, optional.toString()),
+//                            Attribute.className("constraint-attributes-optional"));
 //                }
 //            }
 //        }

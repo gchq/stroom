@@ -3,9 +3,13 @@ package stroom.planb.impl.db.session;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.lmdb.LmdbEntry;
+import stroom.lmdb.LmdbIterableSupport;
+import stroom.lmdb.LmdbIterableSupport.LmdbIterable;
 import stroom.lmdb2.KV;
 import stroom.planb.impl.data.Session;
 import stroom.planb.impl.db.AbstractDb;
+import stroom.planb.impl.db.Count;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.HashClashCommitRunnable;
 import stroom.planb.impl.db.HashLookupDb;
@@ -66,9 +70,6 @@ import stroom.util.json.JsonUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
-import org.lmdbjava.CursorIterable;
-import org.lmdbjava.CursorIterable.KeyVal;
-import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
@@ -77,7 +78,6 @@ import java.time.Instant;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -262,15 +262,6 @@ public class SessionDb extends AbstractDb<Session, Session> {
         writer.tryCommit();
     }
 
-    private void iterate(final Txn<ByteBuffer> txn,
-                         final Consumer<KeyVal<ByteBuffer>> consumer) {
-        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(txn)) {
-            for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
-                consumer.accept(keyVal);
-            }
-        }
-    }
-
     @Override
     public void merge(final Path source) {
         env.write(writer -> {
@@ -280,14 +271,14 @@ public class SessionDb extends AbstractDb<Session, Session> {
 
                 // Merge.
                 sourceDb.env.read(readTxn -> {
-                    sourceDb.iterate(readTxn, kv -> {
-                        if (sourceDb.keySerde.usesLookup(kv.key())) {
+                    sourceDb.iterate(readTxn, (key, val) -> {
+                        if (sourceDb.keySerde.usesLookup(key)) {
                             // We need to do a full read and merge.
-                            final Session session = sourceDb.keySerde.read(readTxn, kv.key());
+                            final Session session = sourceDb.keySerde.read(readTxn, key);
                             insert(writer, session);
                         } else {
                             // Quick merge.
-                            if (dbi.put(writer.getWriteTxn(), kv.key(), kv.val(), putFlags)) {
+                            if (dbi.put(writer.getWriteTxn(), key, val, putFlags)) {
                                 writer.tryCommit();
                             }
                         }
@@ -339,14 +330,11 @@ public class SessionDb extends AbstractDb<Session, Session> {
             CurrentSession lastSession = null;
 
             // TODO : It would be faster if we limit the iteration to keys based on the criteria.
-            try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
-                final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-                while (iterator.hasNext() && !Thread.currentThread().isInterrupted()) {
-                    final KeyVal<ByteBuffer> kv = iterator.next();
-                    final Values vals = valuesExtractor.apply(readTxn, kv);
+            try (final LmdbIterable iterable = LmdbIterableSupport.builder(readTxn, dbi).create()) {
+                for (final LmdbEntry entry : iterable) {
+                    final Values vals = valuesExtractor.apply(readTxn, entry.getKey(), entry.getVal());
                     if (predicate.test(vals)) {
-
-                        final Session session = keySerde.read(readTxn, kv.key());
+                        final Session session = keySerde.read(readTxn, entry.getKey());
 
                         if (lastSession != null &&
                             lastSession.prefix.equals(session.getPrefix()) &&
@@ -409,7 +397,7 @@ public class SessionDb extends AbstractDb<Session, Session> {
     }
 
     private Function<Context, Session> getKeyExtractionFunction(final Txn<ByteBuffer> readTxn) {
-        return context -> keySerde.read(readTxn, context.kv().key().duplicate());
+        return context -> keySerde.read(readTxn, context.key().duplicate());
     }
 
     public Session getState(final SessionRequest request) {
@@ -428,23 +416,39 @@ public class SessionDb extends AbstractDb<Session, Session> {
                                             - timeSerde.getSize()
                                             - timeSerde.getSize());
 
-                                    final KeyRange<ByteBuffer> keyRange = KeyRange.atLeastBackward(keyByteBuffer);
                                     Session result = null;
-                                    try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn, keyRange)) {
-                                        final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-                                        while (iterator.hasNext()
-                                               && !Thread.currentThread().isInterrupted()) {
-                                            final KeyVal<ByteBuffer> kv = iterator.next();
-                                            if (!ByteBufferUtils.containsPrefix(kv.key(), keyPrefix)) {
+
+                                    try (final LmdbIterable iterable = LmdbIterableSupport
+                                            .builder(readTxn, dbi)
+                                            .start(keyByteBuffer)
+                                            .reverse()
+                                            .create()) {
+                                        final Iterator<LmdbEntry> iterator = iterable.iterator();
+
+                                        // Move to or beyond the key.
+                                        boolean isFound = iterator.hasNext();
+
+                                        // Move previous if not in prefix range.
+                                        if (isFound) {
+                                            final LmdbEntry entry = iterator.next();
+                                            if (!ByteBufferUtils.containsPrefix(entry.getKey(), keyPrefix)) {
+                                                isFound = iterator.hasNext();
+                                            }
+                                        }
+
+                                        while (isFound) {
+                                            final LmdbEntry entry = iterator.next();
+                                            if (!ByteBufferUtils.containsPrefix(entry.getKey(), keyPrefix)) {
                                                 return result;
                                             }
-                                            final Session session = keySerde.read(readTxn, kv.key());
+                                            final Session session = keySerde.read(readTxn, entry.getKey());
                                             if (session.getEnd().isBefore(request.time())) {
                                                 return result;
                                             } else if ((session.getStart().isBefore(request.time()) ||
                                                         session.getStart().equals(request.time()))) {
                                                 result = session;
                                             }
+                                            isFound = iterator.hasNext();
                                         }
                                     }
                                     return result;
@@ -473,33 +477,29 @@ public class SessionDb extends AbstractDb<Session, Session> {
                                final Instant deleteBefore,
                                final boolean useStateTime) {
         return env.read(readTxn -> {
-            long changeCount = 0;
-            try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
-                final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-                while (iterator.hasNext() && !Thread.currentThread().isInterrupted()) {
-                    final KeyVal<ByteBuffer> kv = iterator.next();
-                    final Instant time;
-                    if (useStateTime) {
-                        final Session session = keySerde.read(writer.getWriteTxn(), kv.key().duplicate());
-                        time = session.getEnd();
-                    } else {
-                        time = valueSerde.read(writer.getWriteTxn(), kv.val());
-                    }
-
-                    if (time.isBefore(deleteBefore)) {
-                        // If this is data we no longer want to retain then delete it.
-                        dbi.delete(writer.getWriteTxn(), kv.key(), kv.val());
-                        changeCount++;
-                    } else {
-                        // Record used lookup keys.
-                        keyRecorder.recordUsed(writer, kv.key());
-                        valueRecorder.recordUsed(writer, kv.val());
-                    }
-                    writer.tryCommit();
+            final Count changeCount = new Count();
+            iterate(readTxn, (key, val) -> {
+                final Instant time;
+                if (useStateTime) {
+                    final Session session = keySerde.read(writer.getWriteTxn(), key.duplicate());
+                    time = session.getEnd();
+                } else {
+                    time = valueSerde.read(writer.getWriteTxn(), val);
                 }
-            }
+
+                if (time.isBefore(deleteBefore)) {
+                    // If this is data we no longer want to retain then delete it.
+                    dbi.delete(writer.getWriteTxn(), key, val);
+                    changeCount.increment();
+                } else {
+                    // Record used lookup keys.
+                    keyRecorder.recordUsed(writer, key);
+                    valueRecorder.recordUsed(writer, val);
+                }
+                writer.tryCommit();
+            });
             writer.commit();
-            return changeCount;
+            return changeCount.get();
         });
     }
 
@@ -510,11 +510,9 @@ public class SessionDb extends AbstractDb<Session, Session> {
             Session lastSession = null;
             Session newSession = null;
 
-            try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
-                final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-                while (iterator.hasNext() && !Thread.currentThread().isInterrupted()) {
-                    final KeyVal<ByteBuffer> kv = iterator.next();
-                    Session session = keySerde.read(writer.getWriteTxn(), kv.key().duplicate());
+            try (final LmdbIterable iterable = LmdbIterableSupport.builder(readTxn, dbi).create()) {
+                for (final LmdbEntry entry : iterable) {
+                    Session session = keySerde.read(writer.getWriteTxn(), entry.getKey().duplicate());
 
                     if (lastSession != null &&
                         lastSession.getPrefix().equals(session.getPrefix()) &&
@@ -596,8 +594,8 @@ public class SessionDb extends AbstractDb<Session, Session> {
                 default -> kv -> ValNull.INSTANCE;
             };
         }
-        return (readTxn, kv) -> {
-            final Context context = new Context(readTxn, kv);
+        return (readTxn, key, val) -> {
+            final Context context = new Context(readTxn, key, val);
             final LazyKV<Session, Session> lazyKV = new LazyKV<>(context, keyFunction, keyFunction);
             final Val[] values = new Val[fields.length];
             for (int i = 0; i < fields.length; i++) {

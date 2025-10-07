@@ -8,6 +8,9 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferPoolOutput;
 import stroom.bytebuffer.impl6.ByteBuffers;
+import stroom.lmdb.LmdbEntry;
+import stroom.lmdb.LmdbIterableSupport;
+import stroom.lmdb.LmdbIterableSupport.LmdbIterable;
 import stroom.lmdb2.LmdbDb;
 import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.LmdbEnvDir;
@@ -27,7 +30,7 @@ import stroom.util.shared.ResultPage;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.unsafe.UnsafeByteBufferInput;
 import jakarta.inject.Provider;
-import org.lmdbjava.CursorIterable.KeyVal;
+import org.lmdbjava.Cursor;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.EnvFlags;
 import org.lmdbjava.PutFlags;
@@ -249,13 +252,12 @@ class DuplicateCheckStore {
         lmdbEnv.read(txn -> {
             final PageRequest pageRequest = criteria.getPageRequest();
             readColumnNames(txn, columnNames);
-            db.iterate(txn, cursorIterable -> {
-                long count = 0;
 
-                for (final KeyVal<ByteBuffer> kv : cursorIterable) {
+            long count = 0;
+            try (final LmdbIterable iterable = LmdbIterableSupport.builder(txn.get(), db.getDbi()).create()) {
+                for (final LmdbEntry entry : iterable) {
                     if (count >= pageRequest.getOffset()) {
-                        final ByteBuffer keyBuffer = kv.key();
-                        final ByteBuffer valBuffer = kv.val();
+                        final ByteBuffer valBuffer = entry.getVal();
                         results.add(duplicateCheckRowSerde.createDuplicateCheckRow(valBuffer));
                     }
                     count++;
@@ -265,7 +267,7 @@ class DuplicateCheckStore {
                         break;
                     }
                 }
-            });
+            }
             totalSize.set(db.count(txn));
         });
 

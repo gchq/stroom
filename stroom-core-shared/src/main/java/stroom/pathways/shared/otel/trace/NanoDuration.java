@@ -131,7 +131,8 @@ public class NanoDuration implements Comparable<NanoDuration> {
     }
 
 //    /**
-//     * We have to use Double.toString and trim trailing 0's rather than use DecimalFormat as it isn't supported by GWT.
+//     * We have to use Double.toString and trim trailing 0's rather
+//     than use DecimalFormat as it isn't supported by GWT.
 //     *
 //     * @param d The double to format to 2 decimal places.
 //     * @return A decimal place (or less) string.

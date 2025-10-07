@@ -178,7 +178,8 @@ public class LookupSerdeImpl implements LookupSerde {
         @Override
         public void recordUsed(final LmdbWriter writer, final ByteBuffer byteBuffer) {
             // Read the variable type.
-            final VariableValType valType = VariableValType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(byteBuffer.get());
+            final VariableValType valType =
+                    VariableValType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(byteBuffer.get());
             switch (valType) {
                 case DIRECT -> {
                     // Read direct.

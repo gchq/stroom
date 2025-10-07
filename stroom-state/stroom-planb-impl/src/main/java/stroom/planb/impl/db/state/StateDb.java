@@ -5,6 +5,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.lmdb2.KV;
 import stroom.planb.impl.data.State;
 import stroom.planb.impl.db.AbstractDb;
+import stroom.planb.impl.db.Count;
 import stroom.planb.impl.db.HashClashCommitRunnable;
 import stroom.planb.impl.db.LmdbWriter;
 import stroom.planb.impl.db.PlanBEnv;
@@ -43,15 +44,11 @@ import stroom.util.json.JsonUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
-import org.lmdbjava.CursorIterable;
-import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.Iterator;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class StateDb extends AbstractDb<KeyPrefix, Val> {
@@ -167,15 +164,6 @@ public class StateDb extends AbstractDb<KeyPrefix, Val> {
         writer.tryCommit();
     }
 
-    private void iterate(final Txn<ByteBuffer> txn,
-                         final Consumer<KeyVal<ByteBuffer>> consumer) {
-        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(txn)) {
-            for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
-                consumer.accept(keyVal);
-            }
-        }
-    }
-
     @Override
     public void merge(final Path source) {
         env.write(writer -> {
@@ -185,15 +173,15 @@ public class StateDb extends AbstractDb<KeyPrefix, Val> {
 
                 // Merge.
                 sourceDb.env.read(readTxn -> {
-                    sourceDb.iterate(readTxn, kv -> {
-                        if (sourceDb.keySerde.usesLookup(kv.key()) || sourceDb.valueSerde.usesLookup(kv.val())) {
+                    sourceDb.iterate(readTxn, (key, val) -> {
+                        if (sourceDb.keySerde.usesLookup(key) || sourceDb.valueSerde.usesLookup(val)) {
                             // We need to do a full read and merge.
-                            final KeyPrefix key = sourceDb.keySerde.read(readTxn, kv.key());
-                            final ValTime value = sourceDb.valueSerde.read(readTxn, kv.val());
-                            insert(writer, new State(key, value.val()));
+                            final KeyPrefix keyPrefix = sourceDb.keySerde.read(readTxn, key);
+                            final ValTime value = sourceDb.valueSerde.read(readTxn, val);
+                            insert(writer, new State(keyPrefix, value.val()));
                         } else {
                             // Quick merge.
-                            if (dbi.put(writer.getWriteTxn(), kv.key(), kv.val(), putFlags)) {
+                            if (dbi.put(writer.getWriteTxn(), key, val, putFlags)) {
                                 writer.tryCommit();
                             }
                         }
@@ -244,11 +232,11 @@ public class StateDb extends AbstractDb<KeyPrefix, Val> {
     }
 
     private Function<Context, KeyPrefix> getKeyExtractionFunction(final Txn<ByteBuffer> readTxn) {
-        return context -> keySerde.read(readTxn, context.kv().key().duplicate());
+        return context -> keySerde.read(readTxn, context.key().duplicate());
     }
 
     private Function<Context, Val> getValExtractionFunction(final Txn<ByteBuffer> readTxn) {
-        return context -> NullSafe.get(valueSerde.read(readTxn, context.kv().val().duplicate()), ValTime::val);
+        return context -> NullSafe.get(valueSerde.read(readTxn, context.val().duplicate()), ValTime::val);
     }
 
     public State getState(final StateRequest request) {
@@ -272,8 +260,8 @@ public class StateDb extends AbstractDb<KeyPrefix, Val> {
                 default -> kv -> ValNull.INSTANCE;
             };
         }
-        return (readTxn, kv) -> {
-            final Context context = new Context(readTxn, kv);
+        return (readTxn, key, val) -> {
+            final Context context = new Context(readTxn, key, val);
             final LazyKV<KeyPrefix, Val> lazyKV = new LazyKV<>(context, keyFunction, valFunction);
             final Val[] values = new Val[fields.length];
             for (int i = 0; i < fields.length; i++) {
@@ -304,28 +292,23 @@ public class StateDb extends AbstractDb<KeyPrefix, Val> {
     private long deleteOldData(final LmdbWriter writer,
                                final Instant deleteBefore) {
         return env.read(readTxn -> {
-            long changeCount = 0;
-            try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
-                final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-                while (iterator.hasNext()
-                       && !Thread.currentThread().isInterrupted()) {
-                    final KeyVal<ByteBuffer> kv = iterator.next();
-                    final ValTime value = valueSerde.read(readTxn, kv.val().duplicate());
+            final Count changeCount = new Count();
+            iterate(readTxn, (key, val) -> {
+                final ValTime value = valueSerde.read(readTxn, val.duplicate());
 
-                    if (value.insertTime().isBefore(deleteBefore)) {
-                        // If this is data we no longer want to retain then delete it.
-                        dbi.delete(writer.getWriteTxn(), kv.key());
-                        changeCount++;
-                    } else {
-                        // Record used lookup keys.
-                        keyRecorder.recordUsed(writer, kv.key());
-                        valueRecorder.recordUsed(writer, kv.val());
-                    }
-                    writer.tryCommit();
+                if (value.insertTime().isBefore(deleteBefore)) {
+                    // If this is data we no longer want to retain then delete it.
+                    dbi.delete(writer.getWriteTxn(), key);
+                    changeCount.increment();
+                } else {
+                    // Record used lookup keys.
+                    keyRecorder.recordUsed(writer, key);
+                    valueRecorder.recordUsed(writer, val);
                 }
-            }
+                writer.tryCommit();
+            });
             writer.commit();
-            return changeCount;
+            return changeCount.get();
         });
     }
 

@@ -20,36 +20,23 @@ import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.job.api.ScheduledJobsBinder;
 import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.TracesStore;
 import stroom.planb.impl.data.TracesStoreImpl;
+import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
+import jakarta.inject.Inject;
 
 public class PathwaysModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        install(new PathwaysElementModule());
-
-
-//        bind(LuceneIndexDocCache.class).to(LuceneIndexDocCacheImpl.class);
-//        bind(IndexFieldProviders.class).to(IndexFieldProvidersImpl.class);
-//        bind(IndexFieldCache.class).to(IndexFieldCacheImpl.class);
         bind(PathwaysStore.class).to(PathwaysStoreImpl.class);
         bind(TracesStore.class).to(TracesStoreImpl.class);
-//        bind(IndexFieldService.class).to(IndexFieldServiceImpl.class);
-
-//        GuiceUtil.buildMultiBinder(binder(), Clearable.class)
-//                .addBinding(LuceneIndexDocCacheImpl.class)
-//                .addBinding(IndexVolumeServiceImpl.class)
-//                .addBinding(IndexVolumeGroupServiceImpl.class)
-//                .addBinding(IndexFieldCacheImpl.class);
-//
-//        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
-//                .addBinding(IndexConfigCacheEntityEventHandler.class);
 
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
                 .addBinding(PathwaysStoreImpl.class);
@@ -64,30 +51,19 @@ public class PathwaysModule extends AbstractModule {
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(PathwaysDoc.TYPE, PathwaysStoreImpl.class);
-//
-//        ScheduledJobsBinder.create(binder())
-//                .bindJobTo(IndexShardDelete.class, builder -> builder
-//                        .name("Index Shard Delete")
-//                        .description("Job to delete index shards from disk that have been marked as deleted")
-//                        .cronSchedule(CronExpressions.EVERY_DAY_AT_MIDNIGHT.getExpression()))
-//                .bindJobTo(IndexShardRetention.class, builder -> builder
-//                        .name("Index Shard Retention")
-//                        .description("Job to set index shards to have a status of deleted that have past their " +
-//                                "retention period")
-//                        .frequencySchedule("10m"))
-//                .bindJobTo(IndexWriterCacheSweep.class, builder -> builder
-//                        .name("Index Writer Cache Sweep")
-//                        .description("Job to remove old index shard writers from the cache")
-//                        .frequencySchedule("10m"))
-//                .bindJobTo(IndexWriterFlush.class, builder -> builder
-//                        .name("Index Writer Flush")
-//                        .description("Job to flush index shard data to disk")
-//                        .frequencySchedule("10m"))
-//                .bindJobTo(VolumeStatus.class, builder -> builder
-//                        .name("Index Volume Status")
-//                        .description("Update the usage status of volumes owned by the node")
-//                        .frequencySchedule("5m"));
 
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(ProcessPathways.class, builder -> builder
+                        .name("Process Pathways")
+                        .description("Job to process trace data to form pathways and/or validate traces")
+                        .frequencySchedule("10m"));
     }
 
+    private static class ProcessPathways extends RunnableWrapper {
+
+        @Inject
+        ProcessPathways(final PathwaysProcessor pathwaysProcessor) {
+            super(pathwaysProcessor::exec);
+        }
+    }
 }
