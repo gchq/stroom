@@ -19,6 +19,7 @@ package stroom.contentindex;
 import stroom.explorer.shared.StringMatch;
 import stroom.explorer.shared.StringMatch.MatchType;
 import stroom.explorer.shared.StringMatchLocation;
+import stroom.explorer.shared.TagsPatternParser;
 import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
@@ -59,7 +60,7 @@ public class StringMatcher {
         } else {
             matchType = stringMatch.getMatchType();
             caseSensitive = stringMatch.isCaseSensitive();
-            pattern = stringMatch.getPattern();
+            pattern = new TagsPatternParser(stringMatch.getPattern()).getText();
             pattern = NullSafe.string(pattern);
             if (!caseSensitive && TYPES_NEEDING_CASE_CHANGE.contains(matchType)) {
                 pattern = normaliseCase(pattern);
