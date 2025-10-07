@@ -435,7 +435,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
 
         try {
             final GetFieldMappingResponse response = elasticClient.indices().getFieldMapping(request);
-            final Map<String, TypeFieldMappings> allMappings = response.result();
+            final Map<String, TypeFieldMappings> allMappings = response.fieldMappings();
 
             // Build a list of all multi fields (i.e. those defined only in the field mapping).
             // These are excluded from the fields the user can pick via the Stroom UI, as they are not part

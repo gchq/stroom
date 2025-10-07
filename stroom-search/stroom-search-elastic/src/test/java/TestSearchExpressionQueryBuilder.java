@@ -98,7 +98,7 @@ public class TestSearchExpressionQueryBuilder {
                 "Inner bool query contains one item");
 
         final RangeQuery firstRangeQuery = innerBoolQuery.mustNot().getFirst().range();
-        Assertions.assertEquals(dateField.getFldName(), firstRangeQuery.field(),
+        Assertions.assertEquals(dateField.getFldName(), firstRangeQuery.untyped().field(),
                 "Field name of first range query is correct");
     }
 }

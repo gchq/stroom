@@ -25,6 +25,8 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import co.elastic.clients.elasticsearch.core.search.BoundaryScanner;
 import co.elastic.clients.elasticsearch.core.search.Highlight;
+import co.elastic.clients.elasticsearch.core.search.HighlightField;
+import co.elastic.clients.util.NamedValue;
 import jakarta.inject.Inject;
 
 import java.util.concurrent.CompletableFuture;
@@ -131,11 +133,11 @@ public class ElasticSearchFactory {
 
     private Highlight getHighlighter() {
         return Highlight.of(h -> h
-                .fields("*", f -> f
+                .fields(NamedValue.of("*", HighlightField.of(f -> f
                         .preTags("")
                         .postTags("")
                         .boundaryScanner(BoundaryScanner.Word)
-                )
+                )))
         );
     }
 }

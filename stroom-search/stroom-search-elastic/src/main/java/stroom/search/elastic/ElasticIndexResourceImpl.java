@@ -96,7 +96,7 @@ class ElasticIndexResourceImpl implements ElasticIndexResource, FetchWithUuid<El
             final GetIndexResponse getIndexResponse = elasticClient.indices()
                     .get(r -> r.index(indexName));
 
-            if (getIndexResponse.result().isEmpty()) {
+            if (getIndexResponse.indices().isEmpty()) {
                 throw new NotFoundException("Index '" + indexName + "' was not found");
             }
 

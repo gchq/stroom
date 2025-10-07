@@ -3,11 +3,11 @@ package stroom.search.elastic;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 
+import co.elastic.clients.transport.rest5_client.low_level.Rest5ClientBuilder;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import org.elasticsearch.client.RestClientBuilder;
 
 @JsonPropertyOrder(alphabetic = true)
 public class ElasticClientConfig extends AbstractConfig implements IsStroomConfig {
@@ -16,8 +16,8 @@ public class ElasticClientConfig extends AbstractConfig implements IsStroomConfi
     private final int maxConnections;
 
     public ElasticClientConfig() {
-        maxConnectionsPerRoute = RestClientBuilder.DEFAULT_MAX_CONN_PER_ROUTE;
-        maxConnections = RestClientBuilder.DEFAULT_MAX_CONN_TOTAL;
+        maxConnectionsPerRoute = Rest5ClientBuilder.DEFAULT_MAX_CONN_PER_ROUTE;
+        maxConnections = Rest5ClientBuilder.DEFAULT_MAX_CONN_TOTAL;
     }
 
     @SuppressWarnings("unused")

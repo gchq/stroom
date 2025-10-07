@@ -38,6 +38,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.MatchAllQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
+import co.elastic.clients.elasticsearch._types.query_dsl.UntypedRangeQuery;
 import co.elastic.clients.json.JsonData;
 
 import java.net.InetAddress;
@@ -303,30 +304,34 @@ public class SearchExpressionQueryBuilder {
             case GREATER_THAN -> {
                 fieldValue = valueParser.apply(condition, fieldName, rawValue);
                 return QueryBuilders
-                        .range(q -> q
+                        .range(q -> q.untyped(UntypedRangeQuery.of(r -> r
                                 .field(fieldName)
-                                .gt(JsonData.of(fieldValue)));
+                                .gt(JsonData.of(fieldValue)))
+                        ));
             }
             case GREATER_THAN_OR_EQUAL_TO -> {
                 fieldValue = valueParser.apply(condition, fieldName, rawValue);
                 return QueryBuilders
-                        .range(q -> q
+                        .range(q -> q.untyped(UntypedRangeQuery.of(r -> r
                                 .field(fieldName)
-                                .gte(JsonData.of(fieldValue)));
+                                .gte(JsonData.of(fieldValue)))
+                        ));
             }
             case LESS_THAN -> {
                 fieldValue = valueParser.apply(condition, fieldName, rawValue);
                 return QueryBuilders
-                        .range(q -> q
+                        .range(q -> q.untyped(UntypedRangeQuery.of(r -> r
                                 .field(fieldName)
-                                .lt(JsonData.of(fieldValue)));
+                                .lt(JsonData.of(fieldValue)))
+                        ));
             }
             case LESS_THAN_OR_EQUAL_TO -> {
                 fieldValue = valueParser.apply(condition, fieldName, rawValue);
                 return QueryBuilders
-                        .range(q -> q
+                        .range(q -> q.untyped(UntypedRangeQuery.of(r -> r
                                 .field(fieldName)
-                                .lte(JsonData.of(fieldValue)));
+                                .lte(JsonData.of(fieldValue)))
+                        ));
             }
             case BETWEEN -> {
                 fieldValues = tokenizeExpression(rawValue)
@@ -337,10 +342,11 @@ public class SearchExpressionQueryBuilder {
                             "Two values needed for between query. Only " + fieldValues.size() + " provided");
                 }
                 return QueryBuilders
-                        .range(q -> q
+                        .range(q -> q.untyped(UntypedRangeQuery.of(r -> r
                                 .field(fieldName)
                                 .gte(JsonData.of(fieldValues.get(0)))
-                                .lte(JsonData.of(fieldValues.get(1))));
+                                .lte(JsonData.of(fieldValues.get(1))))
+                        ));
             }
             case IN_DICTIONARY -> {
                 return buildDictionaryQuery(condition, fieldName, docRef, indexField);
