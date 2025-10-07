@@ -39,14 +39,11 @@ public final class AuthenticationStateSessionUtil {
             final HttpSession session = request.getSession(false);
             return LogUtil.message("Creating new AuthenticationState, stateId: {}, session: {}, requestUri: {}",
                     stateId,
-                    session != null
-                            ? session.getId()
-                            : null,
-                    request.getRequestURI());
+                    session != null ? session.getId() : null,
+                    url);
         });
 
         final AuthenticationState state = new AuthenticationState(stateId, url, nonce);
-
         final Cache<String, AuthenticationState> cache = getOrCreateCache(request);
         cache.put(stateId, state);
         return state;

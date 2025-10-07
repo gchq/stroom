@@ -174,13 +174,9 @@ class SecurityFilter implements Filter {
                 } else if (request.getRequestURI().equals("/")) {
                     // UI request, so instigate an OpenID authentication flow
                     try {
-                        final String postAuthRedirectUri = getPostAuthRedirectUri(request);
-
-                        LOGGER.debug("Using postAuthRedirectUri: {}", postAuthRedirectUri);
-
                         final String code = UrlUtils.getLastParam(request, OpenId.CODE);
                         final String stateId = UrlUtils.getLastParam(request, OpenId.STATE);
-                        final String redirectUri = openIdManager.redirect(request, code, stateId, postAuthRedirectUri);
+                        final String redirectUri = openIdManager.redirect(request, code, stateId);
                         response.sendRedirect(redirectUri);
 
                     } catch (final RuntimeException e) {
@@ -194,19 +190,6 @@ class SecurityFilter implements Filter {
                 }
             }
         }
-    }
-
-    private String getPostAuthRedirectUri(final HttpServletRequest request) {
-        // We have a a new request so we're going to redirect with an AuthenticationRequest.
-        // Get the redirect URL for the auth service from the current request.
-        final String originalPath = request.getRequestURI() + Optional.ofNullable(request.getQueryString())
-                .map(queryStr -> "?" + queryStr)
-                .orElse("");
-
-        // Dropwiz is likely sat behind Nginx with requests reverse proxied to it
-        // so we need to append just the path/query part to the public URI defined in config
-        // rather than using the full url of the request
-        return uriFactory.publicUri(originalPath).toString();
     }
 
     private boolean isStaticResource(final HttpServletRequest request) {

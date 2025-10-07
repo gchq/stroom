@@ -1,5 +1,6 @@
 package stroom.security.impl;
 
+import stroom.config.common.UriFactory;
 import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.exception.AuthenticationException;
@@ -56,6 +57,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
     private final InternalJwtContextFactory internalJwtContextFactory;
     private final StandardJwtContextFactory standardJwtContextFactory;
     private final OpenIdConfig openIdConfig;
+    private final OpenIdManager openIdManager;
     private final ResolvedOpenIdConfig resolvedOpenIdConfig;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final UserCache userCache;
@@ -66,6 +68,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
                             final InternalJwtContextFactory internalJwtContextFactory,
                             final StandardJwtContextFactory standardJwtContextFactory,
                             final OpenIdConfig openIdConfig,
+                            final OpenIdManager openIdManager,
                             final ResolvedOpenIdConfig resolvedOpenIdConfig,
                             final DefaultOpenIdCredentials defaultOpenIdCredentials,
                             final UserCache userCache,
@@ -74,6 +77,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
         this.internalJwtContextFactory = internalJwtContextFactory;
         this.standardJwtContextFactory = standardJwtContextFactory;
         this.openIdConfig = openIdConfig;
+        this.openIdManager = openIdManager;
         this.resolvedOpenIdConfig = resolvedOpenIdConfig;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.userCache = userCache;
@@ -125,6 +129,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
 
         final ObjectMapper mapper = getMapper();
         final String tokenEndpoint = resolvedOpenIdConfig.getTokenEndpoint();
+        final String redirectUri = openIdManager.getRedirectUri(state.getUri());
         final HttpPost httpPost = new HttpPost(tokenEndpoint);
 
         // AWS requires form content and not a JSON object.
@@ -134,7 +139,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
             nvps.add(new BasicNameValuePair(OpenId.GRANT_TYPE, OpenId.GRANT_TYPE__AUTHORIZATION_CODE));
             nvps.add(new BasicNameValuePair(OpenId.CLIENT_ID, resolvedOpenIdConfig.getClientId()));
             nvps.add(new BasicNameValuePair(OpenId.CLIENT_SECRET, resolvedOpenIdConfig.getClientSecret()));
-            nvps.add(new BasicNameValuePair(OpenId.REDIRECT_URI, state.getUri()));
+            nvps.add(new BasicNameValuePair(OpenId.REDIRECT_URI, redirectUri));
             setFormParams(httpPost, nvps);
 
         } else {
@@ -144,7 +149,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
                         .grantType(OpenId.GRANT_TYPE__AUTHORIZATION_CODE)
                         .clientId(resolvedOpenIdConfig.getClientId())
                         .clientSecret(resolvedOpenIdConfig.getClientSecret())
-                        .redirectUri(state.getUri())
+                        .redirectUri(redirectUri)
                         .build();
                 final String json = mapper.writeValueAsString(tokenRequest);
 
