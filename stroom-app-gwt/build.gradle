@@ -267,7 +267,7 @@ tasks.register('makeGwtSourceDirs') {
     }
 }
 
-tasks.register('gwtCompile', JavaExec) {
+tasks.register('gwtOptimisedCompile', JavaExec) {
     dependsOn classes
     group = "gwt"
     dependsOn 'makeGwtSourceDirs'
@@ -337,6 +337,94 @@ tasks.register('gwtCompile', JavaExec) {
     ]
     minHeapSize = gwtCompilerProps.minHeap
     maxHeapSize = gwtCompilerProps.maxHeap
+}
+
+tasks.register('gwtCompileWithSourceMaps', JavaExec) {
+    dependsOn classes
+    group "gwt"
+    dependsOn 'makeGwtSourceDirs'
+
+    def module = 'stroom.app.AppWithSourceMaps'
+
+    doFirst {
+        println 'Deleting GWT build dirs in ' + gwtBuildDir.toString()
+        delete outputDir
+        delete "${warDir}/sourceMaps"
+        delete gwtTmpDir
+        delete workDir
+        delete deployDir
+        delete extraDir
+
+        logger.info("Ensuring directory gwtBuildDir ${gwtBuildDir}")
+        new File(gwtBuildDir).mkdirs()
+        logger.info("Ensuring directory gwtTmpDir ${gwtTmpDir}")
+        new File(gwtTmpDir).mkdirs()
+        logger.info("Ensuring directory workDir ${workDir}")
+        new File(workDir).mkdirs()
+        logger.info("Ensuring directory deployDir ${deployDir}")
+        new File(deployDir).mkdirs()
+        logger.info("Ensuring directory extraDir ${extraDir}")
+        new File(extraDir).mkdirs()
+
+        logger.info("gwtSourceDirs count: ${gwtSourceDirs.size()}")
+
+        //println "Dumping $gwtSourceDirs.size gwtSourceDirs"
+        //gwtSourceDirs.each {
+        //println "${it.toString()}"
+        //}
+
+        gwtSourceDirs.each {
+            if (it instanceof java.nio.file.Path && Files.exists(it)) {
+                println "Can't find gwtSourceDir" + it
+                //throw new GradleException("Can't find gwtSourceDir ${it}")
+            } else if (it instanceof File && !Files.exists(it.toPath())) {
+                println "Can't find gwtSourceDir" + it
+            }
+        }
+    }
+
+    mainClass.set(gwtCompilerProps.mainClass.toString())
+
+    classpath {
+        gwtSourceDirs
+    }
+
+    args = [
+            '-sourceLevel', '17',
+            '-logLevel', 'INFO',
+            '-workDir', workDir,
+            '-XfragmentCount', '5',
+            '-optimize', '9',
+            '-failOnError',
+            '-localWorkers', gwtCompilerProps.workers,
+            '-war', warDir,
+            '-deploy', deployDir,
+//            '-extra', "${warDir}/gwt/extra",
+            '-extra', extraDir,
+            '-strict',
+            '-saveSource',
+            '-style', 'PRETTY', // OBF (default), PRETTY, DETAILED
+//            '-saveSourceOutput', "${warDir}/gwt/src",
+//            '-gen', "${warDir}/gwt/src/gen",
+            module                               // Your GWT module
+    ]
+
+    jvmArgs = [
+            "-Djava.io.tmpdir=${gwtTmpDir}",
+            //'-Dgwt.persistentunitcache=false',
+            '--add-opens', 'java.base/java.lang=ALL-UNNAMED',  // needed for GWT
+    ]
+    minHeapSize = gwtCompilerProps.minHeap
+    maxHeapSize = gwtCompilerProps.maxHeap
+}
+
+tasks.register('gwtCompile', Copy) {
+    group "gwt"
+    dependsOn 'gwtCompileWithSourceMaps'
+
+    from "${extraDir}/stroom/symbolMaps"
+    from "${extraDir}/stroom/src"
+    into "${warDir}/sourceMaps"
 }
 
 tasks.register('gwtDraftCompile', JavaExec) {

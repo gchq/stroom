@@ -797,6 +797,38 @@ tasks.register('Stroom Node 1 (GWT Super Dev)', JavaExec) {
     args = ['server', 'local.yml']
 }
 
+tasks.register('Stroom Node 1', JavaExec) {
+    doFirst {
+        // We have to alter the existing jvm args rather than set them so that we don't lose debug args added by
+        // IJ Idea.
+        def jvmArgsCopy = []
+        for (arg in jvmArgs) {
+            jvmArgsCopy.add(arg)
+        }
+        //    -DgwtSuperDevMode=true
+        //    -Xmx4g
+        //    -Devent.logging.validate=true
+        //    --add-opens java.base/java.nio=ALL-UNNAMED
+        //    --add-opens java.base/sun.nio.ch=ALL-UNNAMED
+        //    --add-opens java.base/java.lang=ALL-UNNAMED
+        jvmArgsCopy.add("-Xmx4g")
+        jvmArgsCopy.add("-Devent.logging.validate=true")
+        jvmArgsCopy.add("--add-opens")
+        jvmArgsCopy.add("java.base/java.nio=ALL-UNNAMED")
+        jvmArgsCopy.add("--add-opens")
+        jvmArgsCopy.add("java.base/sun.nio.ch=ALL-UNNAMED")
+        jvmArgsCopy.add("--add-opens")
+        jvmArgsCopy.add("java.base/java.lang=ALL-UNNAMED")
+        jvmArgs = jvmArgsCopy
+    }
+
+    group = 'application'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'stroom.app.App'
+    workingDir = '../'
+    args = ['server', 'local.yml']
+}
+
 tasks.register('Stroom Node 2 (GWT Super Dev)', JavaExec) {
     doFirst {
         // We have to alter the existing jvm args rather than set them so that we don't lose debug args added by
