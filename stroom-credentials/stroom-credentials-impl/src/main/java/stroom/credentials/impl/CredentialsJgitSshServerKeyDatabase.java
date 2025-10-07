@@ -1,17 +1,27 @@
 package stroom.credentials.impl;
 
 import stroom.credentials.shared.Credentials;
+import stroom.credentials.shared.CredentialsSecret;
 
+import org.apache.sshd.common.config.keys.KeyUtils;
+import org.apache.sshd.common.config.keys.PublicKeyEntry;
+import org.apache.sshd.common.config.keys.PublicKeyEntryResolver;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.sshd.ServerKeyDatabase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.security.GeneralSecurityException;
 import java.security.PublicKey;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Class to check if the public key from the server matches the public key we've
+ * got stored for that server.
+ */
 public class CredentialsJgitSshServerKeyDatabase implements ServerKeyDatabase {
 
     /** Talks to credentials DAO to get the server's public key for this connection */
@@ -23,6 +33,7 @@ public class CredentialsJgitSshServerKeyDatabase implements ServerKeyDatabase {
 
     /**
      * Constructor.
+     * @param credentials The credentials we want to use for the connection.
      */
     public CredentialsJgitSshServerKeyDatabase(final Credentials credentials) {
         this.credentials = credentials;
@@ -39,11 +50,12 @@ public class CredentialsJgitSshServerKeyDatabase implements ServerKeyDatabase {
     public List<PublicKey> lookup(final String connectAddress,
                                   final InetSocketAddress remoteAddress,
                                   final Configuration configuration) {
-        LOGGER.info("Lookup for connectAddress='{}', remoteAddress='{}', conf='{}'",
+        LOGGER.debug("Lookup for connectAddress='{}', remoteAddress='{}', conf='{}'",
                 connectAddress,
                 remoteAddress,
                 configuration);
 
+        // Ignore here; handle in accept()
         return Collections.emptyList();
     }
 
@@ -62,7 +74,7 @@ public class CredentialsJgitSshServerKeyDatabase implements ServerKeyDatabase {
                           final PublicKey serverPublicKey,
                           final Configuration configuration,
                           final CredentialsProvider credentialsProvider) {
-        LOGGER.info("Accept for connectAddress='{}', remoteAddress='{}', serverPublicKey='{}', conf='{}', creds='{}'",
+        LOGGER.debug("Accept for connectAddress='{}', remoteAddress='{}', serverPublicKey='{}', conf='{}', creds='{}'",
                 connectAddress,
                 remoteAddress,
                 serverPublicKey,
@@ -71,11 +83,37 @@ public class CredentialsJgitSshServerKeyDatabase implements ServerKeyDatabase {
 
         boolean accepted = false;
 
-        // TODO Get server key from credentials
+        // Get server key from credentials
+        final CredentialsSecret secret = credentials.getSecret();
+        final String storedServerPublicKeyString = secret.getServerPublicKey();
 
-        // TODO Compare that server key to value passed in
+        if (storedServerPublicKeyString == null || storedServerPublicKeyString.isBlank()) {
+            LOGGER.warn("No server public key stored for '{}'; accepting server.", connectAddress);
+            accepted = true;
+        } else {
+            final PublicKeyEntry storedServerPublicKeyEntry =
+                    PublicKeyEntry.parsePublicKeyEntry(storedServerPublicKeyString);
+            final PublicKey storedServerPublicKey;
+            try {
+                storedServerPublicKey = storedServerPublicKeyEntry.resolvePublicKey(
+                        null,
+                        null,
+                        PublicKeyEntryResolver.IGNORING);
+            } catch (final IOException | GeneralSecurityException e) {
+                LOGGER.error("Error resolving public key for '{}': {}", connectAddress, e.getMessage(), e);
+                throw new CredentialsJgitRuntimeException("Error resolving public key for '"
+                                                          + connectAddress + "': " + e.getMessage(), e);
+            }
 
-        accepted = true;
+            accepted = KeyUtils.compareKeys(serverPublicKey, storedServerPublicKey);
+            if (accepted) {
+                LOGGER.info("The server public key matches the stored server public key. "
+                             + "Connection permitted.");
+            } else {
+                LOGGER.warn("The server public key does not match the stored server public key. "
+                        + "Connection not permitted.");
+            }
+        }
 
         return accepted;
     }

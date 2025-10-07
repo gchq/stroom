@@ -26,6 +26,7 @@ import java.util.Objects;
 @NullMarked
 public class CredentialsJgitSshTransportCallback implements TransportConfigCallback {
 
+    /** DAO to get credentials given the credentialsID */
     private final CredentialsDao credentialsDao;
 
     /** Temporary directory to use for home and ssh directories. Not used but must exist. */
@@ -58,6 +59,10 @@ public class CredentialsJgitSshTransportCallback implements TransportConfigCallb
         this.tempDir = tempDir;
     }
 
+    /**
+     * Callback to configure the Transport link.
+     * @param transport a {@link org.eclipse.jgit.transport.Transport} object.
+     */
     @Override
     public void configure(final Transport transport) {
         LOGGER.info("Configuring transport");

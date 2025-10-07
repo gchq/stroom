@@ -4,6 +4,7 @@ import stroom.activity.mock.MockActivityModule;
 import stroom.cache.impl.CacheModule;
 import stroom.cache.service.impl.CacheServiceModule;
 import stroom.core.dataprocess.PipelineStreamTaskModule;
+import stroom.credentials.impl.db.MockCredentialsDaoModule;
 import stroom.data.store.mock.MockStreamStoreModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
@@ -63,6 +64,7 @@ public class MockServiceModule extends AbstractModule {
         install(new MockMetricsModule());
         install(new CacheModule());
         install(new CacheServiceModule());
+        install(new MockCredentialsDaoModule());
         install(new MockMetaModule());
         install(new MockStreamStoreModule());
         install(new MockWordListProviderModule());

@@ -1,7 +1,5 @@
 package stroom.config.global.impl;
 
-import stroom.gitrepo.api.GitRepoConfig;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
@@ -209,6 +207,15 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.credentials.api.CredentialsConfig getCredentialsConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.credentials.api.CredentialsConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.dashboard.impl.DashboardConfig getDashboardConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
@@ -281,10 +288,10 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    GitRepoConfig getGitRepoConfig(
+    stroom.gitrepo.api.GitRepoConfig getGitRepoConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
-                GitRepoConfig.class);
+                stroom.gitrepo.api.GitRepoConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")

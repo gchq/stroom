@@ -55,6 +55,7 @@ public class TestCredentialsDaoImpl {
                 "password",
                 null,
                 null,
+                null,
                 null);
         final String uuid = UUID.randomUUID().toString();
         final long expires = System.currentTimeMillis();

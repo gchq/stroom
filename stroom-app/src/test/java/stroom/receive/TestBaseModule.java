@@ -5,6 +5,7 @@ import stroom.cache.service.impl.CacheServiceModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.core.receive.ReceiveDataModule;
+import stroom.credentials.impl.db.MockCredentialsDaoModule;
 import stroom.data.store.mock.MockStreamStoreModule;
 import stroom.dictionary.impl.DictionaryModule;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
@@ -59,6 +60,7 @@ public class TestBaseModule extends AbstractModule {
         install(new MockDocRefInfoModule());
         install(new FeedModule());
         install(new MockGitRepoModule());
+        install(new MockCredentialsDaoModule());
         install(new ImportExportModule());
         install(new MemoryPersistenceModule());
         install(new MockClusterLockModule());

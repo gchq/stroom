@@ -1,7 +1,10 @@
 package stroom.credentials.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
@@ -9,6 +12,15 @@ import java.util.Objects;
  * Represents the secret part of credentials.
  * All fields can be null.
  */
+@JsonPropertyOrder({
+        "username",
+        "password",
+        "accessToken",
+        "passphrase",
+        "privateKey",
+        "serverPublicKey"
+})
+@JsonInclude(Include.NON_NULL)
 public class CredentialsSecret {
 
     /** Username */
@@ -31,6 +43,10 @@ public class CredentialsSecret {
     @JsonProperty
     private String privateKey;
 
+    /** Server public certificate */
+    @JsonProperty
+    private String serverPublicKey;
+
     /**
      * Default constructor. All elements are null.
      */
@@ -44,13 +60,15 @@ public class CredentialsSecret {
             @JsonProperty("password") final String password,
             @JsonProperty("accessToken") final String accessToken,
             @JsonProperty("passphrase") final String passphrase,
-            @JsonProperty("privateKey") final String privateKey) {
+            @JsonProperty("privateKey") final String privateKey,
+            @JsonProperty("serverPublicKey") final String serverPublicKey) {
 
         this.username = username;
         this.password = password;
         this.accessToken = accessToken;
         this.passphrase = passphrase;
         this.privateKey = privateKey;
+        this.serverPublicKey = serverPublicKey;
     }
 
     public String getUsername() {
@@ -93,6 +111,14 @@ public class CredentialsSecret {
         this.privateKey = privateKey;
     }
 
+    public String getServerPublicKey() {
+        return serverPublicKey;
+    }
+
+    public void setServerPublicKey(final String serverPublicKey) {
+        this.serverPublicKey = serverPublicKey;
+    }
+
     /**
      * @return A deep copy of this object.
      */
@@ -101,7 +127,8 @@ public class CredentialsSecret {
                 this.password,
                 this.accessToken,
                 this.passphrase,
-                this.privateKey);
+                this.privateKey,
+                this.serverPublicKey);
     }
 
     @Override
@@ -114,12 +141,18 @@ public class CredentialsSecret {
                && Objects.equals(password, that.password)
                && Objects.equals(accessToken, that.accessToken)
                && Objects.equals(passphrase, that.passphrase)
-               && Objects.equals(privateKey, that.privateKey);
+               && Objects.equals(privateKey, that.privateKey)
+               && Objects.equals(serverPublicKey, that.serverPublicKey);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(username, password, accessToken, passphrase, privateKey);
+        return Objects.hash(username,
+                password,
+                accessToken,
+                passphrase,
+                privateKey,
+                serverPublicKey);
     }
 
     @Override

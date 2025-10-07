@@ -15,7 +15,7 @@ import com.gwtplatform.mvp.client.View;
  * Dialog to be called from clients when they want to pick an available credential.
  */
 public class CredentialsManagerDialogPresenter
-extends MyPresenterWidget<CredentialsManagerDialogPresenter.CredentialsManagerDialogView> {
+        extends MyPresenterWidget<CredentialsManagerDialogPresenter.CredentialsManagerDialogView> {
 
     /** Converts markdown to HTML */
     private final MarkdownConverter markdownConverter;

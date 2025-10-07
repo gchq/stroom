@@ -143,14 +143,14 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
                     .values(credentials.getUuid(),
                             credentials.getName(),
                             credentials.getType().name(),
-                            (byte)(credentials.isCredsExpire() ? 1 : 0),
+                            (byte) (credentials.isCredsExpire() ? 1 : 0),
                             credentials.getExpires(),
                             JsonUtil.writeValueAsString(credentials.getSecret()))
                     .onDuplicateKeyUpdate()
                     .set(CREDENTIALS.UUID, credentials.getUuid())
                     .set(CREDENTIALS.NAME, credentials.getName())
                     .set(CREDENTIALS.TYPE, credentials.getType().name())
-                    .set(CREDENTIALS.CREDSEXPIRE, (byte)(credentials.isCredsExpire() ? 1 : 0))
+                    .set(CREDENTIALS.CREDSEXPIRE, (byte) (credentials.isCredsExpire() ? 1 : 0))
                     .set(CREDENTIALS.EXPIRES, credentials.getExpires())
                     .set(CREDENTIALS.SECRET, JsonUtil.writeValueAsString(credentials.getSecret()))
                     .execute());

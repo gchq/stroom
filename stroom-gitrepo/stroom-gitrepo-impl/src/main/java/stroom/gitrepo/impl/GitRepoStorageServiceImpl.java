@@ -88,7 +88,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
      */
     private final PathCreator pathCreator;
 
-    /*
+    /**
      * Where to write changes of the GitRepoDoc
      */
     private final GitRepoDao gitRepoDao;

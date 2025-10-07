@@ -5,6 +5,7 @@ dependencies {
     implementation project(':stroom-core-shared')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
+    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
 
     implementation libs.guice
     implementation libs.jackson.annotations

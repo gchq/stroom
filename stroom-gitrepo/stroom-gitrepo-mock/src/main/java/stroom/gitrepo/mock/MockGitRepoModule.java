@@ -18,6 +18,7 @@ public class MockGitRepoModule extends AbstractModule {
         bind(GitRepoStore.class).to(GitRepoStoreImpl.class);
         bind(GitRepoStorageService.class).to(GitRepoStorageServiceImpl.class);
         bind(GitRepoDao.class).to(MockGitRepoDaoImpl.class);
+        //bind(CredentialsDao.class).to(MockCredentialsDao.class);
     }
 
     /**

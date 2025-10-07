@@ -19,7 +19,7 @@ public class CredentialsDetailsDialogPresenter
         extends MyPresenterWidget<CredentialsDetailsDialogView> {
 
     /** Width of dialog */
-    private static final int DIALOG_WIDTH = 400;
+    private static final int DIALOG_WIDTH = 650;
 
     /** Height of dialog */
     private static final int DIALOG_HEIGHT = 560;

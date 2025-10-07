@@ -18,6 +18,7 @@ dependencies {
     implementation libs.restygwt
     implementation libs.slf4j.api
 
+    testImplementation project(':stroom-credentials:stroom-credentials-impl-db')
     testImplementation project(':stroom-gitrepo:stroom-gitrepo-impl-db')
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

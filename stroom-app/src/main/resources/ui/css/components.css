@@ -2627,12 +2627,10 @@ button.main-menu svg {
 }
 
 /* Credentials Manager */
-.credentials-manager .credentials-details {
-    margin-left: 10px;
-}
-
-.credentials-manager .credentials-list {
-    margin-right: 10px;
+/* Text area needs to be big enough to display certificates */
+.credentials-details-dialog textarea {
+    width: 650px;
+    height: 150px;
 }
 
 /* --- */

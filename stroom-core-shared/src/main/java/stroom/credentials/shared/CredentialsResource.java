@@ -46,7 +46,7 @@ public interface CredentialsResource extends RestResource, DirectRestService {
     @Path("/get")
     @Operation(
             summary = "Returns the credentials with the given UUID, if it exists, or null if it does not exist",
-            operationId="getCredentialsWithUuid")
+            operationId = "getCredentialsWithUuid")
     CredentialsResponse get(String uuid);
 
     /**
@@ -56,7 +56,7 @@ public interface CredentialsResource extends RestResource, DirectRestService {
     @Path("/delete")
     @Operation(
             summary = "Deletes the credentials with the given UUID",
-            operationId="deleteCredential")
+            operationId = "deleteCredential")
     CredentialsResponse delete(String uuid);
 
 }

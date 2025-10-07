@@ -26,9 +26,9 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.cellview.client.LoadingStateChangeEvent.LoadingState;
 import com.google.gwt.view.client.Range;
+import com.google.inject.Inject; // Ordering
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.google.inject.Inject;
 
 import java.util.function.Consumer;
 
@@ -152,12 +152,12 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
 
         grid.addResizableColumn(
                 DataGridUtil.textColumnBuilder((final Credentials c) -> {
-                            if (c.isCredsExpire()) {
-                                return dateTimeFormatter.format(c.getExpires());
-                            } else {
-                                return "";
-                            }
-                        })
+                    if (c.isCredsExpire()) {
+                        return dateTimeFormatter.format(c.getExpires());
+                    } else {
+                        return "";
+                    }
+                })
                         .build(),
                 DataGridUtil.headingBuilder("Expires")
                         .withToolTip("When these credentials expire")
@@ -166,10 +166,10 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
 
         grid.addResizableColumn(
                 DataGridUtil.textColumnBuilder((Credentials c) -> c.getType().getDisplayName())
-                .build(),
-        DataGridUtil.headingBuilder("Type")
-                .withToolTip("Type of credential")
-                .build(),
+                        .build(),
+                DataGridUtil.headingBuilder("Type")
+                        .withToolTip("Type of credential")
+                        .build(),
                 150);
 
         grid.addEndColumn(new EndColumn<>());
@@ -179,9 +179,9 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      * Sets up the data provider for the list of credentials.
      */
     private RestDataProvider<Credentials, ResultPage<Credentials>>
-    createDataProvider(final EventBus eventBus,
-                       final PagerView view,
-                       final RestFactory restFactory) {
+        createDataProvider(final EventBus eventBus,
+                           final PagerView view,
+                           final RestFactory restFactory) {
         return new RestDataProvider<>(eventBus) {
             @Override
             protected void exec(final Range range,
@@ -294,10 +294,10 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
 
         ConfirmEvent.fire(this, "Are you sure you want to delete the credentials '" +
                                 selectedCredentials.getName() + "' ?", ok -> {
-            if (ok) {
-                deleteCredentials(selectedCredentials);
-            }
-        });
+                if (ok) {
+                    deleteCredentials(selectedCredentials);
+                }
+            });
     }
 
     /**
@@ -346,29 +346,27 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
             final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(detailsDialog);
             detailsDialog.setupDialog(credentials, builder);
             builder.onHideRequest(e -> {
-                        if (e.isOk()) {
+                if (e.isOk()) {
+                    if (detailsDialog.isValid()) {
+                        final CredentialsDetailsDialogView view = detailsDialog.getView();
+                        final Credentials credsToSave = view.getCredentials();
+                        e.hide();
 
-                            if (detailsDialog.isValid()) {
-                                final CredentialsDetailsDialogView view = detailsDialog.getView();
-                                final Credentials credsToSave = view.getCredentials();
-                                e.hide();
+                        saveCredentials(credsToSave);
+                    } else {
+                        final String validationMessage = detailsDialog.getValidationMessage();
 
-                                saveCredentials(credsToSave);
-                            } else {
-                                final String validationMessage = detailsDialog.getValidationMessage();
-
-                                if (validationMessage != null) {
-                                    AlertEvent.fireWarn(detailsDialog,
-                                            detailsDialog.getValidationMessage(),
-                                            e::reset);
-                                }
-                            }
-                        } else {
-                            // Cancel pressed
-                            e.hide();
+                        if (validationMessage != null) {
+                            AlertEvent.fireWarn(detailsDialog,
+                                    detailsDialog.getValidationMessage(),
+                                    e::reset);
                         }
-                    })
-                    .fire();
+                    }
+                } else {
+                    // Cancel pressed
+                    e.hide();
+                }
+            }).fire();
         }
     }
 

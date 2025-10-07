@@ -96,6 +96,9 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
     /** Delimiter for paths in .node files */
     private static final String PATH_DELIMITER = "/";
 
+    /** Name of the .git directory - to be ignored */
+    private static final String GIT_DIRECTORY = ".git";
+
     /** Version 1 implementation */
     private final ImportExportSerializer importExportSerializerV1;
 
@@ -305,7 +308,11 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
         LOGGER.debug("{}Looking for child directories of '{}'", indent(docRefPath), dir);
         try (final DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir, Files::isDirectory)) {
             for (final Path childPath : dirStream) {
-                LOGGER.debug("{}Recursing into '{}'", indent(docRefPath), childPath);
+                LOGGER.info("{}Recursing into '{}'", indent(docRefPath), childPath);
+                if (childPath.endsWith(GIT_DIRECTORY)) {
+                    LOGGER.info("{}Ignoring .git directory", indent(docRefPath));
+                    continue;
+                }
                 // Pull the docRef for this directory from the map
                 final DocRef parentDocRef = pathToFolderDocRef.get(childPath.getFileName().toString());
                 if (parentDocRef == null) {
@@ -442,7 +449,12 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
         LOGGER.debug("{}Looking for child directories of '{}'", indent(docRefPath), dir);
         try (final DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir, Files::isDirectory)) {
             for (final Path childPath : dirStream) {
-                LOGGER.debug("{}Recursing into '{}'", indent(docRefPath), childPath);
+                LOGGER.info("{}Recursing into '{}'", indent(docRefPath), childPath);
+                if (childPath.endsWith(GIT_DIRECTORY)) {
+                    LOGGER.info("{}Ignoring .git directory", indent(docRefPath));
+                    continue;
+                }
+
                 // Pull the docRef for this directory from the map
                 final DocRef parentDocRef = pathToFolderDocRef.get(childPath.getFileName().toString());
                 if (parentDocRef == null) {

@@ -4,11 +4,13 @@ import stroom.credentials.shared.Credentials;
 import stroom.credentials.shared.CredentialsResource;
 import stroom.credentials.shared.CredentialsResponse;
 import stroom.credentials.shared.CredentialsResponse.Status;
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,10 +18,11 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
+@AutoLogged
 public class CredentialsResourceImpl implements CredentialsResource {
 
     /** DAO to talk to the DB */
-    private final CredentialsDao credentialsDao;
+    private final Provider<CredentialsDao> credentialsDao;
 
     /** Logger */
     private static final Logger LOGGER = LoggerFactory.getLogger(CredentialsResourceImpl.class);
@@ -29,7 +32,7 @@ public class CredentialsResourceImpl implements CredentialsResource {
      */
     @SuppressWarnings("unused")
     @Inject
-    public CredentialsResourceImpl(final CredentialsDao credentialsDao) {
+    public CredentialsResourceImpl(final Provider<CredentialsDao> credentialsDao) {
         this.credentialsDao = credentialsDao;
     }
 
@@ -42,12 +45,12 @@ public class CredentialsResourceImpl implements CredentialsResource {
     public ResultPage<Credentials> list(final PageRequest pageRequest) {
         LOGGER.info("Request for list of credentials");
         try {
-            final List<Credentials> fullList = credentialsDao.list();
+            final List<Credentials> fullList = credentialsDao.get().list();
 
             final int start = Math.max(pageRequest.getOffset(), 0);
             final int end = Math.min(start + pageRequest.getLength(), fullList.size());
             return new ResultPage<>(fullList.subList(start, end),
-                    new PageResponse(start, end - start, (long)(end - start), true));
+                    new PageResponse(start, end - start, (long) (end - start), true));
         } catch (final IOException e) {
             LOGGER.error("Error retrieving the list of credentials: {}", e.getMessage(), e);
             return new ResultPage<>(Collections.emptyList());
@@ -59,7 +62,7 @@ public class CredentialsResourceImpl implements CredentialsResource {
         LOGGER.info("Storing credentials '{}'", credentials);
         CredentialsResponse response;
         try {
-            credentialsDao.store(credentials);
+            credentialsDao.get().store(credentials);
 
             response = new CredentialsResponse(Status.OK);
 
@@ -74,7 +77,7 @@ public class CredentialsResourceImpl implements CredentialsResource {
         LOGGER.info("Getting credentials for '{}'", uuid);
         final Credentials credentials;
         try {
-            credentials = credentialsDao.get(uuid);
+            credentials = credentialsDao.get().get(uuid);
             return new CredentialsResponse(Status.OK,
                     "",
                     credentials);
@@ -88,7 +91,7 @@ public class CredentialsResourceImpl implements CredentialsResource {
     public CredentialsResponse delete(final String uuid) {
         LOGGER.info("Deleting credentials for '{}'", uuid);
         try {
-            credentialsDao.delete(uuid);
+            credentialsDao.get().delete(uuid);
             return new CredentialsResponse(Status.OK);
         } catch (final IOException e) {
             return new CredentialsResponse(Status.GENERAL_ERR,

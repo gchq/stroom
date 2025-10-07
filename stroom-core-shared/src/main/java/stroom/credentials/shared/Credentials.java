@@ -1,6 +1,8 @@
 package stroom.credentials.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
@@ -21,6 +23,7 @@ import java.util.UUID;
         "expires",
         "secret"
 })
+@JsonInclude(Include.NON_NULL)
 public class Credentials {
 
     /** The name of these credentials, set by and to display to the user */
@@ -40,16 +43,20 @@ public class Credentials {
     private boolean credsExpire;
 
     /** When this credential expires */
+    @JsonProperty
     private long expires;
 
     /** The secret stuff */
     @JsonProperty
     private CredentialsSecret secret;
 
+    private static final String EMPTY_NAME = "";
+
     /**
      * Creates a new, empty credentials object.
      */
     public Credentials() {
+        this.name = EMPTY_NAME;
         this.uuid = UUID.randomUUID().toString();
         this.type = CredentialsType.USERNAME_PASSWORD;
         this.credsExpire = false;
@@ -59,11 +66,11 @@ public class Credentials {
 
     /**
      * Constructor.
-     * @param name Name. Must not be null.
+     * @param name Name. If null then empty string is assigned.
      * @param uuid UUID. Can be null in which case UUID will be assigned to a random value.
-     * @param type Type. Must not be null.
+     * @param type Type. If null then empty string is assigned.
      * @param expires Time in ms since epoch when this expires.
-     * @param secret The secret stuff. Must not be null.
+     * @param secret The secret stuff. If null then empty secrets are assigned.
      */
     @JsonCreator
     public Credentials(
@@ -74,15 +81,12 @@ public class Credentials {
             @JsonProperty("expires") final long expires,
             @JsonProperty("secret") final CredentialsSecret secret) {
 
-        Objects.requireNonNull(name);
-        Objects.requireNonNull(type);
-        Objects.requireNonNull(secret);
-        this.name = name;
+        this.name = name == null ? EMPTY_NAME : name;
         this.uuid = uuid == null ? UUID.randomUUID().toString() : uuid;
-        this.type = type;
+        this.type = type == null ? CredentialsType.USERNAME_PASSWORD : type;
         this.credsExpire = credsExpire;
         this.expires = expires;
-        this.secret = secret;
+        this.secret = secret == null ? new CredentialsSecret() : secret;
     }
 
     /**

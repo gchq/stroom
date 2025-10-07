@@ -91,6 +91,12 @@ public class CredentialsDetailsDialogViewImpl
     @UiField
     TextArea txtPrivateKey;
 
+    @UiField
+    FormGroup fmgServerPublicKey;
+
+    @UiField
+    TextArea txtServerPublicKey;
+
     /** Used when we need an empty string */
     private static final String EMPTY = "";
 
@@ -136,6 +142,7 @@ public class CredentialsDetailsDialogViewImpl
             txtAccessToken.setText(EMPTY);
             txtPassphrase.setText(EMPTY);
             txtPrivateKey.setText(EMPTY);
+            txtServerPublicKey.setText(EMPTY);
         } else {
 
             uuid = credentials.getUuid();
@@ -148,6 +155,7 @@ public class CredentialsDetailsDialogViewImpl
             txtAccessToken.setText(credentials.getSecret().getAccessToken());
             txtPassphrase.setText(credentials.getSecret().getPassphrase());
             txtPrivateKey.setText(credentials.getSecret().getPrivateKey());
+            txtServerPublicKey.setText(credentials.getSecret().getServerPublicKey());
         }
         updateState();
     }
@@ -164,7 +172,8 @@ public class CredentialsDetailsDialogViewImpl
                 pwdPassword.getText(),
                 txtAccessToken.getText(),
                 txtPassphrase.getText(),
-                txtPrivateKey.getText());
+                txtPrivateKey.getText(),
+                txtServerPublicKey.getText());
         final Long expiresAsLong = dtpExpires.getMilliseconds();
         final long expires = expiresAsLong == null ? 0L : expiresAsLong;
         return new Credentials(
@@ -253,6 +262,7 @@ public class CredentialsDetailsDialogViewImpl
                         fmgAccessToken.setVisible(false);
                         fmgPassphrase.setVisible(false);
                         fmgPrivateKey.setVisible(false);
+                        fmgServerPublicKey.setVisible(false);
                     }
                     case ACCESS_TOKEN -> {
                         fmgUsername.setVisible(false);
@@ -260,6 +270,7 @@ public class CredentialsDetailsDialogViewImpl
                         fmgAccessToken.setVisible(true);
                         fmgPassphrase.setVisible(false);
                         fmgPrivateKey.setVisible(false);
+                        fmgServerPublicKey.setVisible(false);
                     }
                     case PRIVATE_CERT -> {
                         fmgUsername.setVisible(false);
@@ -267,6 +278,7 @@ public class CredentialsDetailsDialogViewImpl
                         fmgAccessToken.setVisible(false);
                         fmgPassphrase.setVisible(true);
                         fmgPrivateKey.setVisible(true);
+                        fmgServerPublicKey.setVisible(true);
                     }
                 }
             }

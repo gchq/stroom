@@ -13,6 +13,7 @@ dependencies {
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core')
     implementation project(':stroom-core-shared')
+    implementation project(':stroom-credentials:stroom-credentials-api')
     implementation project(':stroom-dashboard:stroom-dashboard-impl')
     implementation project(':stroom-dashboard:stroom-storedquery-impl')
     implementation project(':stroom-data:stroom-data-retention-api')
@@ -76,6 +77,7 @@ dependencies {
     implementation libs.vavr
     implementation libs.ws.rs.api
 
+    testImplementation project(':stroom-credentials:stroom-credentials-api')
     testImplementation project(':stroom-test-common')
     testImplementation project(':stroom-event-logging:stroom-event-logging-mock')
     testImplementation libs.dropwizard.configuration

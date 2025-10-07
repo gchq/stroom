@@ -39,7 +39,7 @@ public class CredentialsConfig extends AbstractConfig implements IsStroomConfig,
 
     @Override
     @JsonProperty("db")
-    public AbstractDbConfig getDbConfig() {
+    public CredentialsDbConfig getDbConfig() {
         return dbConfig;
     }
 

@@ -18,8 +18,8 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
  * Useful for objects that want to use credentials.
  */
 public class CredentialsManagerDialogViewImpl
-extends ViewWithUiHandlers<CredentialsManagerDialogUiHandlers>
-implements CredentialsManagerDialogView {
+        extends ViewWithUiHandlers<CredentialsManagerDialogUiHandlers>
+        implements CredentialsManagerDialogView {
 
     /** GWT widget */
     private final Widget widget;
