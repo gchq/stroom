@@ -185,18 +185,22 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         // Add trace root if this is one.
         final byte[] traceIdBytes = HexStringUtil.decode(kv.key().getTraceId());
         if (NullSafe.isEmptyString(kv.key().getParentSpanId())) {
-            // TODO : We are currently assuming that we get the root last but we might want to reevaluate depth etc
-            //  later.
-            final Trace trace = getTrace(writeTxn, kv.key().getTraceId());
-            final TraceRootKey key = new TraceRootKey(traceIdBytes);
-            final TraceRoot value = new TraceRoot(trace);
+            try {
+                // TODO : We are currently assuming that we get the root last but we might want to reevaluate depth etc
+                //  later.
+                final Trace trace = getTrace(writeTxn, kv.key().getTraceId());
+                final TraceRootKey key = new TraceRootKey(traceIdBytes);
+                final TraceRoot value = new TraceRoot(trace);
 
-            traceRootKeySerde.write(key, keyBuffer ->
-                    traceRootValueSerde.write(value, valueBuffer ->
-                            traceRootsDbi.put(writeTxn, keyBuffer, valueBuffer)));
+                traceRootKeySerde.write(key, keyBuffer ->
+                        traceRootValueSerde.write(value, valueBuffer ->
+                                traceRootsDbi.put(writeTxn, keyBuffer, valueBuffer)));
 
 //            // Write update time for processing new traces.
 //            updateInsertOrder(writeTxn, traceIdBytes);
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e::getMessage, e);
+            }
         }
 
         writer.tryCommit();
@@ -236,8 +240,12 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         env.read(txn -> {
             try (final Stream<LmdbEntry> stream = LmdbStream.stream(txn, traceRootsDbi)) {
                 stream.forEach(entry -> {
-                    final byte[] traceId = ByteBufferUtils.toBytes(entry.getKey());
-                    consumer.accept(traceId, id -> getTrace(txn, id));
+                    try {
+                        final byte[] traceId = ByteBufferUtils.toBytes(entry.getKey());
+                        consumer.accept(traceId, id -> getTrace(txn, id));
+                    } catch (final RuntimeException e) {
+                        LOGGER.debug(e::getMessage, e);
+                    }
                 });
             }
             return null;
@@ -441,20 +449,25 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             env.read(readTxn -> {
                 final Count count = new Count();
                 LmdbIterable.iterate(readTxn, traceRootsDbi, (key, val) -> {
-                    final TraceRootKey traceRootKey = traceRootKeySerde.read(key);
-                    final TraceRoot root = traceRootValueSerde.read(val);
-                    final TraceBuilder traceBuilder = new TraceBuilder(root.getTraceId());
-                    // Get all the spans.
-                    byteBuffers.useBytes(traceRootKey.getTraceId(), prefixBuffer -> {
-                        findSpans(readTxn, traceRootKey.getTraceId(), traceBuilder::addSpan);
-                    });
-                    final Trace trace = traceBuilder.build();
+                    try {
+                        final TraceRootKey traceRootKey = traceRootKeySerde.read(key);
+                        final TraceRoot root = traceRootValueSerde.read(val);
+                        final TraceBuilder traceBuilder = new TraceBuilder(root.getTraceId());
+                        // Get all the spans.
+                        byteBuffers.useBytes(traceRootKey.getTraceId(), prefixBuffer -> {
+                            findSpans(readTxn, traceRootKey.getTraceId(), traceBuilder::addSpan);
+                        });
+                        final Trace trace = traceBuilder.build();
 
-                    final long pos = count.getAndIncrement();
-                    if (criteria.getPageRequest().getOffset() <= pos &&
-                        criteria.getPageRequest().getLength() > list.size() &&
-                        tracePredicate.test(trace)) {
-                        list.add(root);
+                        final long pos = count.getAndIncrement();
+                        if (criteria.getPageRequest().getOffset() <= pos &&
+                            criteria.getPageRequest().getLength() > list.size() &&
+                            tracePredicate.test(trace)) {
+                            list.add(root);
+                        }
+                    } catch (final RuntimeException e) {
+                        // Expected exception if no trace root.
+                        LOGGER.debug(e.getMessage(), e);
                     }
                 });
                 builder.offset(criteria.getPageRequest().getOffset());
