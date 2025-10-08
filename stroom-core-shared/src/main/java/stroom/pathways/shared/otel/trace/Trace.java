@@ -35,17 +35,7 @@ public class Trace {
     }
 
     public Span root() {
-        final List<Span> roots = parentSpanIdMap.get("");
-        if (roots == null) {
-            throw new RuntimeException("No root found");
-        }
-        if (roots.size() == 1) {
-            return roots.get(0);
-        } else if (roots.isEmpty()) {
-            throw new RuntimeException("No root found");
-        } else {
-            throw new RuntimeException("Multiple roots found");
-        }
+        return parentSpanIdMap.get("").get(0);
     }
 
     public List<Span> children(final Span span) {
@@ -122,10 +112,20 @@ public class Trace {
 
         @Override
         public Trace build() {
-            return new Trace(
-                    traceId,
-                    parentSpanIdMap
-            );
+            if (parentSpanIdMap == null || parentSpanIdMap.isEmpty()) {
+                throw new RuntimeException("No spans found");
+            }
+            final List<Span> roots = parentSpanIdMap.get("");
+            if (roots == null) {
+                throw new RuntimeException("No root found");
+            }
+            if (roots.isEmpty()) {
+                throw new RuntimeException("No root found");
+            } else if (roots.size() > 1) {
+                throw new RuntimeException("Multiple roots found");
+            }
+
+            return new Trace(traceId, parentSpanIdMap);
         }
     }
 }

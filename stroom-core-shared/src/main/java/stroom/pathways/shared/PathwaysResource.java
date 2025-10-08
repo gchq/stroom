@@ -16,11 +16,9 @@
 
 package stroom.pathways.shared;
 
-import stroom.pathways.shared.pathway.Pathway;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
-import stroom.util.shared.ResultPage;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -65,7 +63,7 @@ public interface PathwaysResource extends RestResource, DirectRestService, Fetch
     @Operation(
             summary = "Find pathways",
             operationId = "findPathways")
-    ResultPage<Pathway> findPathways(
+    PathwayResultPage findPathways(
             @Parameter(description = "criteria", required = true) FindPathwayCriteria criteria);
 
     @POST

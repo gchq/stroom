@@ -12,6 +12,7 @@ import stroom.planb.impl.db.LmdbWriter;
 import stroom.planb.impl.db.trace.NanoTimeUtil;
 import stroom.planb.impl.db.trace.PathwaysDb;
 import stroom.planb.impl.db.trace.PathwaysDb.SimpleDb;
+import stroom.planb.impl.serde.trace.HexStringUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
@@ -44,26 +45,30 @@ public class TraceProcessor {
                              final Function<byte[], Trace> traceFunction,
                              final PathwaysDoc doc,
                              final MessageReceiver messageReceiver) {
-        byteBuffers.useBytes(traceId, keyByteBuffer -> {
-            final SimpleDb processingStatus = pathwaysDb.getProcessingStatus();
-            final boolean processed = processingStatus
-                    .get(keyByteBuffer.duplicate(), Objects::nonNull);
-            if (!processed) {
-                // Get the full trace.
-                final Trace trace = traceFunction.apply(traceId);
+        try {
+            byteBuffers.useBytes(traceId, keyByteBuffer -> {
+                final SimpleDb processingStatus = pathwaysDb.getProcessingStatus();
+                final boolean processed = processingStatus
+                        .get(keyByteBuffer.duplicate(), Objects::nonNull);
+                if (!processed) {
+                    // Get the full trace.
+                    final Trace trace = traceFunction.apply(traceId);
 
-                // If we have no status then process this trace root.
-                LOGGER.debug(() -> "\n" + trace.toString());
+                    // If we have no status then process this trace root.
+                    LOGGER.debug(() -> "\n" + trace.toString());
 
-                // Construct known paths for all traces.
-                buildPathways(writer, trace, doc, messageReceiver, pathwaysDb);
+                    // Construct known paths for all traces.
+                    buildPathways(writer, trace, doc, messageReceiver, pathwaysDb);
 
-                // After processing record that we have processed.
-                processingStatus.insert(writer, keyByteBuffer, PROCESSED);
+                    // After processing record that we have processed.
+                    processingStatus.insert(writer, keyByteBuffer, PROCESSED);
 
-                writer.tryCommit();
-            }
-        });
+                    writer.tryCommit();
+                }
+            });
+        } catch (final RuntimeException e) {
+            LOGGER.error("Error processing trace {}", HexStringUtil.encode(traceId), e);
+        }
     }
 
     private void buildPathways(final LmdbWriter writer,

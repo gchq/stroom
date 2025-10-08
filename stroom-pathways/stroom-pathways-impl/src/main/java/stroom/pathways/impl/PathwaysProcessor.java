@@ -3,7 +3,9 @@ package stroom.pathways.impl;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.docref.DocRef;
+import stroom.node.api.NodeInfo;
 import stroom.pathways.shared.FindPathwayCriteria;
+import stroom.pathways.shared.PathwayResultPage;
 import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.pathway.Pathway;
 import stroom.planb.impl.data.ShardManager;
@@ -17,7 +19,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
-import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -30,6 +31,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
@@ -45,6 +47,7 @@ public class PathwaysProcessor {
     private final Map<String, PathwaysDb> pathwaysDbMap = new ConcurrentHashMap<>();
     private final PathwaySerde pathwaySerde;
     private final ShardManager shardManager;
+    private final NodeInfo nodeInfo;
 
     @Inject
     public PathwaysProcessor(final PathwaysStore pathwaysStore,
@@ -52,26 +55,31 @@ public class PathwaysProcessor {
                              final PathCreator pathCreator,
                              final ByteBuffers byteBuffers,
                              final PathwaySerde pathwaySerde,
-                             final ShardManager shardManager) {
+                             final ShardManager shardManager,
+                             final NodeInfo nodeInfo) {
         this.pathwaysStore = pathwaysStore;
         this.messageReceiverFactory = messageReceiverFactory;
         this.byteBuffers = byteBuffers;
         this.pathwaySerde = pathwaySerde;
         this.shardManager = shardManager;
+        this.nodeInfo = nodeInfo;
 
         dbPath = pathCreator.toAppPath("${stroom.home}/pathways");
     }
 
     public void exec() {
-        // Check that this is the node that trace stores are likely to be located.
-        if (shardManager.isSnapshotNode()) {
-            throw new RuntimeException("Attempt to run pathways processing on different node to trace store");
-        }
-
         final List<DocRef> docRefs = pathwaysStore.list();
         for (final DocRef docRef : NullSafe.list(docRefs)) {
             final PathwaysDoc doc = pathwaysStore.readDocument(docRef);
-            if (doc != null && doc.getTracesDocRef() != null) {
+            if (doc != null &&
+                doc.getTracesDocRef() != null &&
+                Objects.equals(doc.getProcessingNode(), nodeInfo.getThisNodeName())) {
+
+                // Check that this is the node that trace stores are likely to be located.
+                if (shardManager.isSnapshotNode()) {
+                    throw new RuntimeException("Attempt to run pathways processing on different node to trace store");
+                }
+
                 // Load pathways DB for doc.
                 final PathwaysDb pathwaysDb = getPathwaysDb(docRef);
 
@@ -115,7 +123,7 @@ public class PathwaysProcessor {
         });
     }
 
-    public ResultPage<Pathway> findPathways(final FindPathwayCriteria criteria) {
+    public PathwayResultPage findPathways(final FindPathwayCriteria criteria) {
         final PathwaysDb pathwaysDb = getPathwaysDb(criteria.getDataSourceRef());
         final Count count = new Count();
         final List<Pathway> list = new ArrayList<>();
@@ -147,6 +155,6 @@ public class PathwaysProcessor {
                 .total(count.get())
                 .exact(true)
                 .build();
-        return new ResultPage<>(list, pageResponse);
+        return new PathwayResultPage(list, pageResponse);
     }
 }

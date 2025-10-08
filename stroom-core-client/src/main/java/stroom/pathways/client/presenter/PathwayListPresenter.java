@@ -340,7 +340,8 @@ public class PathwayListPresenter
                     restFactory
                             .create(PATHWAYS_RESOURCE)
                             .method(res -> res.findPathways(criteria))
-                            .onSuccess(dataConsumer)
+                            .onSuccess(result ->
+                                    dataConsumer.accept(new ResultPage<>(result.getValues(), result.getPageResponse())))
                             .onFailure(errorHandler)
                             .taskMonitorFactory(pagerView)
                             .exec();

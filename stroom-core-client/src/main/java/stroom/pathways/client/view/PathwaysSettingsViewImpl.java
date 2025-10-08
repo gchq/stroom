@@ -29,6 +29,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -54,6 +55,8 @@ public class PathwaysSettingsViewImpl
     CustomCheckBox allowConstraintCreation;
     @UiField
     CustomCheckBox allowConstraintMutation;
+    @UiField
+    TextBox processingNode;
 
     @Inject
     public PathwaysSettingsViewImpl(final Binder binder) {
@@ -136,6 +139,16 @@ public class PathwaysSettingsViewImpl
         temporalOrderingTolerance.setEnabled(!readOnly);
     }
 
+    @Override
+    public String getProcessingNode() {
+        return processingNode.getValue();
+    }
+
+    @Override
+    public void setProcessingNode(final String processingNode) {
+        this.processingNode.setValue(processingNode);
+    }
+
     @UiHandler("temporalOrderingTolerance")
     public void onTemporalOrderingTolerance(final ValueChangeEvent<SimpleDuration> e) {
         fireChange();
@@ -158,6 +171,11 @@ public class PathwaysSettingsViewImpl
 
     @UiHandler("allowConstraintMutation")
     public void onAllowConstraintMutation(final ValueChangeEvent<Boolean> e) {
+        fireChange();
+    }
+
+    @UiHandler("processingNode")
+    public void onProcessingNode(final ValueChangeEvent<String> e) {
         fireChange();
     }
 

@@ -554,7 +554,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                                     .stream()
                                     .sorted(Comparator.comparing(Span::start))
                                     .toList()));
-            return new Trace(traceId, parentSpanIdMap);
+            return Trace.builder().traceId(traceId).parentSpanIdMap(parentSpanIdMap).build();
         }
     }
 

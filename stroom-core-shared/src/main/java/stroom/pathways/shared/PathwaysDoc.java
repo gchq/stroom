@@ -68,6 +68,8 @@ public class PathwaysDoc extends Doc {
     private DocRef tracesDocRef;
     @JsonProperty
     private DocRef infoFeed;
+    @JsonProperty
+    private String processingNode;
 
     public PathwaysDoc() {
         temporalOrderingTolerance = new SimpleDuration(0, TimeUnit.NANOSECONDS);
@@ -90,7 +92,8 @@ public class PathwaysDoc extends Doc {
                        @JsonProperty("allowConstraintCreation") final boolean allowConstraintCreation,
                        @JsonProperty("allowConstraintMutation") final boolean allowConstraintMutation,
                        @JsonProperty("tracesDocRef") final DocRef tracesDocRef,
-                       @JsonProperty("infoFeed") final DocRef infoFeed) {
+                       @JsonProperty("infoFeed") final DocRef infoFeed,
+                       @JsonProperty("processingNode") final String processingNode) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.temporalOrderingTolerance = temporalOrderingTolerance;
@@ -101,6 +104,7 @@ public class PathwaysDoc extends Doc {
         this.allowConstraintMutation = allowConstraintMutation;
         this.tracesDocRef = tracesDocRef;
         this.infoFeed = infoFeed;
+        this.processingNode = processingNode;
     }
 
     /**
@@ -191,6 +195,14 @@ public class PathwaysDoc extends Doc {
         this.infoFeed = infoFeed;
     }
 
+    public String getProcessingNode() {
+        return processingNode;
+    }
+
+    public void setProcessingNode(final String processingNode) {
+        this.processingNode = processingNode;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -211,7 +223,8 @@ public class PathwaysDoc extends Doc {
                Objects.equals(temporalOrderingTolerance, that.temporalOrderingTolerance) &&
                Objects.equals(pathways, that.pathways) &&
                Objects.equals(tracesDocRef, that.tracesDocRef) &&
-               Objects.equals(infoFeed, that.infoFeed);
+               Objects.equals(infoFeed, that.infoFeed) &&
+               Objects.equals(processingNode, that.processingNode);
     }
 
     @Override
@@ -225,7 +238,8 @@ public class PathwaysDoc extends Doc {
                 allowConstraintCreation,
                 allowConstraintMutation,
                 tracesDocRef,
-                infoFeed);
+                infoFeed,
+                processingNode);
     }
 
     @Override
@@ -240,6 +254,7 @@ public class PathwaysDoc extends Doc {
                ", allowConstraintMutation=" + allowConstraintMutation +
                ", tracesDocRef=" + tracesDocRef +
                ", infoFeed=" + infoFeed +
+               ", processingNode=" + processingNode +
                '}';
     }
 }

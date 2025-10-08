@@ -14,6 +14,7 @@ dependencies {
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-lmdb')
     implementation project(':stroom-meta:stroom-meta-api')
+    implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-state:stroom-planb-impl')
     implementation project(':stroom-util')
@@ -27,6 +28,7 @@ dependencies {
     implementation libs.restygwt
     implementation libs.saxon.he
     implementation libs.slf4j.api
+    implementation libs.ws.rs.api
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

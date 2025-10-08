@@ -78,6 +78,7 @@ public class PathwaysSettingsPresenter extends DocumentEditPresenter<PathwaysSet
         getView().setAllowConstraintMutation(doc.isAllowConstraintMutation());
         traceStorePresenter.setSelectedEntityReference(doc.getTracesDocRef(), true);
         feedPresenter.setSelectedEntityReference(doc.getInfoFeed(), true);
+        getView().setProcessingNode(doc.getProcessingNode());
     }
 
     @Override
@@ -89,6 +90,7 @@ public class PathwaysSettingsPresenter extends DocumentEditPresenter<PathwaysSet
         doc.setAllowConstraintMutation(getView().isAllowConstraintMutation());
         doc.setTracesDocRef(traceStorePresenter.getSelectedEntityReference());
         doc.setInfoFeed(feedPresenter.getSelectedEntityReference());
+        doc.setProcessingNode(getView().getProcessingNode());
         return doc;
     }
 
@@ -118,5 +120,9 @@ public class PathwaysSettingsPresenter extends DocumentEditPresenter<PathwaysSet
         boolean isAllowConstraintMutation();
 
         void setAllowConstraintMutation(boolean allowConstraintMutation);
+
+        String getProcessingNode();
+
+        void setProcessingNode(String processingNode);
     }
 }

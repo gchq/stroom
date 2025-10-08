@@ -116,7 +116,7 @@ public class TracePersistenceMemory implements TracePersistence {
                                     .stream()
                                     .sorted(Comparator.comparing(Span::start))
                                     .toList()));
-            return new Trace(traceId, parentSpanIdMap);
+            return Trace.builder().traceId(traceId).parentSpanIdMap(parentSpanIdMap).build();
         }
     }
 }
