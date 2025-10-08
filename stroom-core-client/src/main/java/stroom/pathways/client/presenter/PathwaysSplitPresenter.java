@@ -32,7 +32,7 @@ public class PathwaysSplitPresenter extends DocumentEditPresenter<PathwaysSplitV
         super.onBind();
         registerHandler(pathwayListPresenter.getSelectionModel().addSelectionHandler(e -> {
             final Pathway selected = pathwayListPresenter.getSelectionModel().getSelected();
-            pathwayTreePresenter.read(getEntity().asDocRef(), selected, isReadOnly());
+            pathwayTreePresenter.read(getEntity(), selected, isReadOnly());
         }));
     }
 

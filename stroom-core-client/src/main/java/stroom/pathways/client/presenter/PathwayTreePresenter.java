@@ -1,7 +1,7 @@
 package stroom.pathways.client.presenter;
 
-import stroom.docref.DocRef;
 import stroom.pathways.client.presenter.PathwayTreePresenter.PathwayTreeView;
+import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.pathway.PathNode;
 import stroom.pathways.shared.pathway.PathNodeSequence;
 import stroom.pathways.shared.pathway.Pathway;
@@ -47,7 +47,7 @@ public class PathwayTreePresenter
     private final HTML html;
     private final MySingleSelectionModel<PathNode> selectionModel = new MySingleSelectionModel<PathNode>();
 
-    private DocRef pathwaysDocRef;
+    private PathwaysDoc pathwaysDoc;
     private Pathway pathway;
     private Element selected;
     private boolean readOnly = true;
@@ -126,7 +126,7 @@ public class PathwayTreePresenter
 
             ShowTracesEvent.fire(
                     this,
-                    pathwaysDocRef,
+                    pathwaysDoc.getTracesDocRef(),
                     null,
                     pathway);
         }));
@@ -147,10 +147,10 @@ public class PathwayTreePresenter
         });
     }
 
-    public void read(final DocRef pathwaysDocRef,
+    public void read(final PathwaysDoc pathwaysDoc,
                      final Pathway pathway,
                      final boolean readOnly) {
-        this.pathwaysDocRef = pathwaysDocRef;
+        this.pathwaysDoc = pathwaysDoc;
         this.pathway = pathway;
         this.readOnly = readOnly;
         this.selected = null;

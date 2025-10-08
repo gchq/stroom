@@ -16,8 +16,8 @@
 
 package stroom.pathways.client.presenter;
 
-import stroom.docref.DocRef;
 import stroom.pathways.client.presenter.PathwayEditPresenter.PathwayEditView;
+import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.otel.trace.NanoTime;
 import stroom.pathways.shared.pathway.PathNode;
 import stroom.pathways.shared.pathway.Pathway;
@@ -249,13 +249,13 @@ public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
 //        return hb.toSafeHtml();
 //    }
 
-    public void read(final DocRef pathwaysDocRef, final Pathway pathway, final boolean readOnly) {
+    public void read(final PathwaysDoc pathwaysDoc, final Pathway pathway, final boolean readOnly) {
         this.readOnly = readOnly;
         this.pathway = pathway;
 //        this.selected = null;
 //
 //        getView().setDetails(SafeHtmlUtils.EMPTY_SAFE_HTML);
-        pathwayTreePresenter.read(pathwaysDocRef, pathway, readOnly);
+        pathwayTreePresenter.read(pathwaysDoc, pathway, readOnly);
         constraintListPresenter.setData(null, readOnly);
 //        getView().setConstraints(SafeHtmlUtils.EMPTY_SAFE_HTML);
 //        getView().setSpans(SafeHtmlUtils.EMPTY_SAFE_HTML);

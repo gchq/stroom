@@ -78,6 +78,7 @@ public class PathwayListPresenter
 
     private String filter;
     private DocRef docRef;
+    private PathwaysDoc pathwaysDoc;
     private boolean readOnly = true;
 
     @Inject
@@ -226,7 +227,7 @@ public class PathwayListPresenter
 
     private void onAdd() {
         final NanoTime now = NanoTime.ofMillis(System.currentTimeMillis());
-        pathwayEditPresenter.read(docRef, Pathway.builder().name("").createTime(now).build(), readOnly);
+        pathwayEditPresenter.read(pathwaysDoc, Pathway.builder().name("").createTime(now).build(), readOnly);
         pathwayEditPresenter.show("New Pathway", e -> {
             if (e.isOk()) {
                 final Pathway pathway = pathwayEditPresenter.write();
@@ -251,7 +252,7 @@ public class PathwayListPresenter
     private void onEdit() {
         final Pathway existingPathway = selectionModel.getSelected();
         if (existingPathway != null) {
-            pathwayEditPresenter.read(docRef, existingPathway, readOnly);
+            pathwayEditPresenter.read(pathwaysDoc, existingPathway, readOnly);
             pathwayEditPresenter.show("Edit Pathway", e -> {
                 if (e.isOk()) {
                     try {
@@ -311,6 +312,7 @@ public class PathwayListPresenter
     @Override
     protected void onRead(final DocRef docRef, final PathwaysDoc document, final boolean readOnly) {
         this.docRef = docRef;
+        this.pathwaysDoc = document;
         this.readOnly = readOnly;
         enableButtons();
         refresh();

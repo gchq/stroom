@@ -191,21 +191,25 @@ public class TracesListPresenter
                 protected void exec(final Range range,
                                     final Consumer<ResultPage<TraceRoot>> dataConsumer,
                                     final RestErrorHandler errorHandler) {
-                    final FindTraceCriteria criteria = new FindTraceCriteria(
-                            CriteriaUtil.createPageRequest(range),
-                            CriteriaUtil.createSortList(dataGrid.getColumnSortList()),
-                            dataSourceRef,
-                            filter,
-                            pathway,
-                            SimpleDuration.ZERO);
+                    if (dataSourceRef == null) {
+                        dataConsumer.accept(ResultPage.empty());
+                    } else {
+                        final FindTraceCriteria criteria = new FindTraceCriteria(
+                                CriteriaUtil.createPageRequest(range),
+                                CriteriaUtil.createSortList(dataGrid.getColumnSortList()),
+                                dataSourceRef,
+                                filter,
+                                pathway,
+                                SimpleDuration.ZERO);
 
-                    restFactory
-                            .create(TRACES_RESOURCE)
-                            .method(res -> res.findTraces(criteria))
-                            .onSuccess(dataConsumer)
-                            .onFailure(errorHandler)
-                            .taskMonitorFactory(getView())
-                            .exec();
+                        restFactory
+                                .create(TRACES_RESOURCE)
+                                .method(res -> res.findTraces(criteria))
+                                .onSuccess(dataConsumer)
+                                .onFailure(errorHandler)
+                                .taskMonitorFactory(getView())
+                                .exec();
+                    }
                 }
             };
             dataProvider.addDataDisplay(dataGrid);
