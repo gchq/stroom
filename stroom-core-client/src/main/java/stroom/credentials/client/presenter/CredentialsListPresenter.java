@@ -209,6 +209,20 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     }
 
     /**
+     * Called when the presenter gets loaded into the UI. Sets up the event handlers.
+     */
+    @Override
+    protected void onBind() {
+        super.onBind();
+
+        registerHandler(gridSelectionModel.addSelectionHandler(event -> {
+            if (event.getSelectionType().isDoubleSelect()) {
+                handleEditButtonClick();
+            }
+        }));
+    }
+
+    /**
      * Allows clients to turn off the selection of the first item in the list if nothing
      * else is selected.
      * If this isn't called then the default selection will be made.
