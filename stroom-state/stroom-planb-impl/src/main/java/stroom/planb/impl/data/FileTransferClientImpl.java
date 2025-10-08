@@ -219,6 +219,8 @@ public class FileTransferClientImpl implements FileTransferClient {
             }
 
             try (final InputStream stream = (InputStream) response.getEntity()) {
+                // Should be OK to unzip from an inputStream as stroom is in full control of the
+                // ZIP creation, so we won't have any spurious zip entries.
                 ZipUtil.unzip(stream, snapshotDir);
             }
             final String info = Files.readString(snapshotDir.resolve(Shard.SNAPSHOT_INFO_FILE_NAME));

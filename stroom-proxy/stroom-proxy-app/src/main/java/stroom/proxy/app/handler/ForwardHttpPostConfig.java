@@ -165,7 +165,6 @@ public final class ForwardHttpPostConfig
         return livenessCheckEnabled;
     }
 
-    @NotNull
     @JsonProperty
     @JsonPropertyDescription("The API key to use when forwarding data if Stroom is configured to require an API key.")
     public String getApiKey() {

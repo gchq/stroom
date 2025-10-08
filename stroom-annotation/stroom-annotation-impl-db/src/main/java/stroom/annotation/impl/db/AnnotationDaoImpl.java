@@ -62,6 +62,7 @@ import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.StreamFeedProvider;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.DateExpressionParser;
@@ -267,6 +268,17 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                     queryField,
                     ANNOTATION_TAG_LINK.FK_ANNOTATION_TAG_ID,
                     converter);
+
+            // We need to put negation on 'in'.
+            if (ExpressionTerm.Condition.NOT_EQUALS.equals(term.getCondition())) {
+                final ExpressionTerm inverted = term.copy().condition(ExpressionTerm.Condition.EQUALS).build();
+                final Condition condition = termHandler.apply(inverted);
+                return ANNOTATION.ID.notIn(DSL
+                        .selectDistinct(ANNOTATION_TAG_LINK.FK_ANNOTATION_ID)
+                        .from(ANNOTATION_TAG_LINK)
+                        .where(condition));
+            }
+
             final Condition condition = termHandler.apply(term);
             return ANNOTATION.ID.in(DSL
                     .selectDistinct(ANNOTATION_TAG_LINK.FK_ANNOTATION_ID)
@@ -283,6 +295,17 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                     queryField,
                     ANNOTATION_ENTRY.DATA,
                     converter);
+
+            // We need to put negation on 'in'.
+            if (ExpressionTerm.Condition.NOT_EQUALS.equals(term.getCondition())) {
+                final ExpressionTerm inverted = term.copy().condition(ExpressionTerm.Condition.EQUALS).build();
+                final Condition condition = termHandler.apply(inverted);
+                return ANNOTATION.ID.notIn(DSL
+                        .selectDistinct(ANNOTATION_ENTRY.FK_ANNOTATION_ID)
+                        .from(ANNOTATION_ENTRY)
+                        .where(condition));
+            }
+
             final Condition condition = termHandler.apply(term);
             return ANNOTATION.ID.in(DSL
                     .selectDistinct(ANNOTATION_ENTRY.FK_ANNOTATION_ID)
@@ -1435,6 +1458,8 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
 
     @Override
     public void clear() {
+        JooqUtil.context(connectionProvider, context -> context.deleteFrom(ANNOTATION_DATA_LINK).execute());
+        JooqUtil.context(connectionProvider, context -> context.deleteFrom(ANNOTATION_TAG_LINK).execute());
         JooqUtil.context(connectionProvider, context -> context.deleteFrom(ANNOTATION_ENTRY).execute());
         JooqUtil.context(connectionProvider, context -> context.deleteFrom(ANNOTATION).execute());
     }

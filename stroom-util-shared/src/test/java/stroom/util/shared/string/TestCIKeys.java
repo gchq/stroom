@@ -139,7 +139,7 @@ class TestCIKeys {
 
         final int count = 5_000;
         final Map<String, String> concurrentMap = new ConcurrentHashMap<>();
-        final Map<String, String> copyOnWriteMap = CopyOnWriteMap.newHashMap();
+        final Map<String, String> copyOnWriteMap = new CopyOnWriteMap<>();
         final List<String> uuids = IntStream.rangeClosed(1, count)
                 .boxed()
                 .map(i -> UUID.randomUUID().toString())
