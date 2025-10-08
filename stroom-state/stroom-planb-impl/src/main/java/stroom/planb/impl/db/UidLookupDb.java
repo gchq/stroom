@@ -1,7 +1,7 @@
 package stroom.planb.impl.db;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
-import stroom.lmdb.LmdbIterableSupport;
+import stroom.lmdb.stream.LmdbIterable;
 import stroom.lmdb.serde.UnsignedBytes;
 import stroom.lmdb.serde.UnsignedBytesInstances;
 import stroom.util.logging.LambdaLogger;
@@ -144,7 +144,7 @@ public class UidLookupDb {
     }
 
     public void forEachUid(final Txn<ByteBuffer> readTxn, final Consumer<ByteBuffer> keyConsumer) {
-        LmdbIterableSupport.iterate(readTxn, uidToKeyDbi, (key, val) -> keyConsumer.accept(key));
+        LmdbIterable.iterate(readTxn, uidToKeyDbi, (key, val) -> keyConsumer.accept(key));
     }
 
     public void deleteByUid(final Txn<ByteBuffer> writeTxn, final ByteBuffer uid) {

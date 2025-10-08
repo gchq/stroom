@@ -1,7 +1,7 @@
 package stroom.planb.impl.db;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
-import stroom.lmdb.LmdbIterableSupport;
+import stroom.lmdb.stream.LmdbIterable;
 import stroom.lmdb2.LmdbKeySequence;
 import stroom.planb.impl.serde.hash.Hash;
 import stroom.planb.impl.serde.hash.HashClashCount;
@@ -187,7 +187,7 @@ public class HashLookupDb {
     }
 
     public void forEachHash(final Txn<ByteBuffer> readTxn, final Consumer<ByteBuffer> keyConsumer) {
-        LmdbIterableSupport.iterate(readTxn, dbi, (key, val) -> keyConsumer.accept(key));
+        LmdbIterable.iterate(readTxn, dbi, (key, val) -> keyConsumer.accept(key));
     }
 
     public void deleteByHash(final Txn<ByteBuffer> writeTxn, final ByteBuffer key) {

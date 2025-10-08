@@ -1,6 +1,9 @@
-package stroom.lmdb;
+package stroom.lmdb.stream;
 
 import stroom.bytebuffer.ByteBufferUtils;
+import stroom.lmdb.stream.LmdbKeyRange.All;
+import stroom.lmdb.stream.LmdbKeyRange.Prefix;
+import stroom.lmdb.stream.LmdbKeyRange.Range;
 import stroom.util.concurrent.ThreadUtil;
 
 import org.lmdbjava.Cursor;
@@ -15,7 +18,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public class LmdbStreamSupport {
+public class LmdbStream {
 
     private static final UnsignedByteBufferComparator BUFFER_COMPARATOR = new UnsignedByteBufferComparator();
     private static final LmdbEntryComparator ENTRY_COMPARATOR = new LmdbEntryComparator();
@@ -23,212 +26,70 @@ public class LmdbStreamSupport {
 
     public static Stream<LmdbEntry> stream(final Txn<ByteBuffer> txn,
                                            final Dbi<ByteBuffer> dbi) {
-        return streamBuilder(txn, dbi).create();
+        return stream(txn, dbi, LmdbKeyRange.all());
     }
 
-    public static StreamBuilder streamBuilder(final Txn<ByteBuffer> txn,
-                                              final Dbi<ByteBuffer> dbi) {
-        return new StreamBuilder(txn, dbi);
+    public static Stream<LmdbEntry> stream(final Txn<ByteBuffer> txn,
+                                           final Dbi<ByteBuffer> dbi,
+                                           final LmdbKeyRange keyRange) {
+        final Cursor<ByteBuffer> cursor = dbi.openCursor(txn);
+        try {
+            final LmdbSpliterator spliterator = createSpliterator(cursor, keyRange);
+            return StreamSupport
+                    .stream(spliterator, false)
+                    .onClose(cursor::close);
+        } catch (final Error | RuntimeException e) {
+            cursor.close();
+            throw e;
+        }
     }
 
-    public static abstract class AbstractStreamBuilder<B extends AbstractStreamBuilder<?>> {
+    private static LmdbSpliterator createSpliterator(final Cursor<ByteBuffer> cursor,
+                                                     final LmdbKeyRange keyRange) {
+        final LmdbSpliterator spliterator;
 
-        final Txn<ByteBuffer> txn;
-        final Dbi<ByteBuffer> dbi;
-        boolean reverse;
-
-        AbstractStreamBuilder(final Txn<ByteBuffer> txn,
-                              final Dbi<ByteBuffer> dbi) {
-            this.txn = txn;
-            this.dbi = dbi;
-        }
-
-        AbstractStreamBuilder(final AbstractStreamBuilder<?> streamBuilder) {
-            this.txn = streamBuilder.txn;
-            this.dbi = streamBuilder.dbi;
-            this.reverse = streamBuilder.reverse;
-        }
-
-        public B reverse() {
-            this.reverse = true;
-            return self();
-        }
-
-        public B reverse(final boolean reverse) {
-            this.reverse = reverse;
-            return self();
-        }
-
-        abstract B self();
-
-        public abstract Stream<LmdbEntry> create();
-    }
-
-    public static class StreamBuilder extends AbstractStreamBuilder<StreamBuilder> {
-
-        private StreamBuilder(final Txn<ByteBuffer> txn,
-                              final Dbi<ByteBuffer> dbi) {
-            super(txn, dbi);
-        }
-
-        public PrefixStreamBuilder prefix(final ByteBuffer prefix) {
-            final PrefixStreamBuilder prefixStreamBuilder = new PrefixStreamBuilder(this);
-            prefixStreamBuilder.prefix(prefix);
-            return prefixStreamBuilder;
-        }
-
-        public RangeStreamBuilder start(final ByteBuffer start) {
-            return start(start, true);
-        }
-
-        public RangeStreamBuilder start(final ByteBuffer start,
-                                        final boolean startInclusive) {
-            final RangeStreamBuilder rangeStreamBuilder = new RangeStreamBuilder(this);
-            return rangeStreamBuilder.start(start, startInclusive);
-        }
-
-        public RangeStreamBuilder stop(final ByteBuffer stop) {
-            return stop(stop, true);
-        }
-
-        public RangeStreamBuilder stop(final ByteBuffer stop,
-                                       final boolean stopInclusive) {
-            final RangeStreamBuilder rangeStreamBuilder = new RangeStreamBuilder(this);
-            return rangeStreamBuilder.stop(stop, stopInclusive);
-        }
-
-        StreamBuilder self() {
-            return this;
-        }
-
-        public Stream<LmdbEntry> create() {
-            final Cursor<ByteBuffer> cursor = dbi.openCursor(txn);
-            try {
-                final LmdbSpliterator spliterator;
-                if (reverse) {
-                    spliterator = new LmdbReversedSpliterator(cursor);
+        switch (keyRange) {
+            case final Range range -> {
+                if (range.reverse) {
+                    spliterator = new LmdbRangeReversedSpliterator(cursor,
+                            range.start,
+                            range.stop,
+                            range.startInclusive,
+                            range.stopInclusive);
                 } else {
-                    spliterator = new LmdbSpliterator(cursor);
+                    spliterator = new LmdbRangeSpliterator(cursor,
+                            range.start,
+                            range.stop,
+                            range.startInclusive,
+                            range.stopInclusive);
                 }
-                return StreamSupport.stream(spliterator, false)
-                        .onClose(cursor::close);
-            } catch (final Error | RuntimeException e) {
-                cursor.close();
-                throw e;
             }
-        }
-    }
-
-    public static class PrefixStreamBuilder extends AbstractStreamBuilder<PrefixStreamBuilder> {
-
-        private ByteBuffer prefix;
-
-        private PrefixStreamBuilder(final StreamBuilder streamBuilder) {
-            super(streamBuilder);
-        }
-
-        public PrefixStreamBuilder prefix(final ByteBuffer prefix) {
-            this.prefix = prefix;
-            return self();
-        }
-
-        @Override
-        PrefixStreamBuilder self() {
-            return this;
-        }
-
-        public Stream<LmdbEntry> create() {
-            final Cursor<ByteBuffer> cursor = dbi.openCursor(txn);
-            try {
-                final LmdbSpliterator spliterator;
-                if (reverse) {
-                    if (prefix != null) {
-                        spliterator = new LmdbPrefixReversedSpliterator(cursor, prefix);
+            case final Prefix prefix -> {
+                if (prefix.reverse) {
+                    if (prefix.prefix != null) {
+                        spliterator = new LmdbPrefixReversedSpliterator(cursor, prefix.prefix);
                     } else {
                         spliterator = new LmdbReversedSpliterator(cursor);
                     }
                 } else {
-                    if (prefix != null) {
-                        spliterator = new LmdbPrefixSpliterator(cursor, prefix);
+                    if (prefix.prefix != null) {
+                        spliterator = new LmdbPrefixSpliterator(cursor, prefix.prefix);
                     } else {
                         spliterator = new LmdbSpliterator(cursor);
                     }
                 }
-                return StreamSupport.stream(spliterator, false)
-                        .onClose(cursor::close);
-            } catch (final Error | RuntimeException e) {
-                cursor.close();
-                throw e;
             }
-        }
-    }
-
-    public static class RangeStreamBuilder extends AbstractStreamBuilder<RangeStreamBuilder> {
-
-        private ByteBuffer start;
-        private ByteBuffer stop;
-        private boolean startInclusive;
-        private boolean stopInclusive;
-
-        private RangeStreamBuilder(final StreamBuilder streamBuilder) {
-            super(streamBuilder);
-        }
-
-        public RangeStreamBuilder start(final ByteBuffer start) {
-            return start(start, true);
-        }
-
-        public RangeStreamBuilder start(final ByteBuffer start,
-                                        final boolean startInclusive) {
-            this.start = start;
-            this.startInclusive = startInclusive;
-            return self();
-        }
-
-        public RangeStreamBuilder stop(final ByteBuffer stop) {
-            return stop(stop, true);
-        }
-
-        public RangeStreamBuilder stop(final ByteBuffer stop,
-                                       final boolean stopInclusive) {
-            this.stop = stop;
-            this.stopInclusive = stopInclusive;
-            return self();
-        }
-
-        @Override
-        RangeStreamBuilder self() {
-            return this;
-        }
-
-        public Stream<LmdbEntry> create() {
-            final Cursor<ByteBuffer> cursor = dbi.openCursor(txn);
-            try {
-                final LmdbSpliterator spliterator;
-                if (reverse) {
-                    // Check that start >= stop.
-                    if (start != null && stop != null) {
-                        if (BUFFER_COMPARATOR.compare(start, stop) < 0) {
-                            throw new IllegalStateException("Start key < stop key");
-                        }
-                    }
-                    spliterator = new LmdbRangeReversedSpliterator(cursor, start, stop, startInclusive, stopInclusive);
+            case final All all -> {
+                if (all.reverse) {
+                    spliterator = new LmdbReversedSpliterator(cursor);
                 } else {
-                    // Check that start <= stop.
-                    if (start != null && stop != null) {
-                        if (BUFFER_COMPARATOR.compare(start, stop) > 0) {
-                            throw new IllegalStateException("Start key > stop key");
-                        }
-                    }
-                    spliterator = new LmdbRangeSpliterator(cursor, start, stop, startInclusive, stopInclusive);
+                    spliterator = new LmdbSpliterator(cursor);
                 }
-                return StreamSupport.stream(spliterator, false)
-                        .onClose(cursor::close);
-            } catch (final Error | RuntimeException e) {
-                cursor.close();
-                throw e;
             }
+
+            default -> throw new IllegalStateException("Unexpected value: " + keyRange);
         }
+        return spliterator;
     }
 
     private static class LmdbSpliterator implements Spliterator<LmdbEntry> {

@@ -2,6 +2,7 @@ package stroom.lmdb;
 
 
 import stroom.bytebuffer.ByteBufferUtils;
+import stroom.lmdb.stream.LmdbIterable;
 import stroom.util.io.ByteSize;
 
 import org.junit.jupiter.api.Test;
@@ -40,7 +41,7 @@ class TestLmdbUtils {
 
             final AtomicInteger count = new AtomicInteger();
             try (final Txn<ByteBuffer> txn = env.txnRead()) {
-                LmdbIterableSupport.iterate(txn, dbi, (key, val) -> {
+                LmdbIterable.iterate(txn, dbi, (key, val) -> {
                     count.incrementAndGet();
                 });
             }

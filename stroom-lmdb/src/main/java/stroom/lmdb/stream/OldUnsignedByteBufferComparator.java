@@ -1,11 +1,11 @@
-package stroom.lmdb;
+package stroom.lmdb.stream;
 
 import java.nio.ByteBuffer;
 import java.util.Comparator;
 
 import static java.util.Objects.requireNonNull;
 
-public class OldUnsignedByteBufferComparator implements Comparator<ByteBuffer> {
+class OldUnsignedByteBufferComparator implements Comparator<ByteBuffer> {
 
     @Override
     public int compare(final ByteBuffer o1, final ByteBuffer o2) {

@@ -1,4 +1,4 @@
-package stroom.lmdb;
+package stroom.lmdb.stream;
 
 import java.nio.ByteBuffer;
 

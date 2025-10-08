@@ -2,11 +2,11 @@ package stroom.lmdb2;
 
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBuffers;
-import stroom.lmdb.LmdbEntry;
-import stroom.lmdb.LmdbIterableSupport;
-import stroom.lmdb.LmdbIterableSupport.LmdbIterable;
 import stroom.lmdb.serde.UnsignedBytes;
 import stroom.lmdb.serde.UnsignedBytesInstances;
+import stroom.lmdb.stream.LmdbEntry;
+import stroom.lmdb.stream.LmdbIterable;
+import stroom.lmdb.stream.LmdbKeyRange;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -52,7 +52,8 @@ public class LmdbKeySequence {
         // Iterate over all entries with the same hash. Will only be one unless
         // we get a hash clash. Have to use a cursor as entries can be deleted, thus leaving
         // gaps in the seq numbers.
-        try (final LmdbIterable iterable = LmdbIterableSupport.builder(writeTxn, dbi).start(rowKey).create()) {
+        final LmdbKeyRange keyRange = LmdbKeyRange.builder().start(rowKey).build();
+        try (final LmdbIterable iterable = LmdbIterable.create(writeTxn, dbi, keyRange)) {
             for (final LmdbEntry entry : iterable) {
                 final ByteBuffer key = entry.getKey();
                 final ByteBuffer val = entry.getVal();
@@ -90,7 +91,8 @@ public class LmdbKeySequence {
                        final ByteBuffer rowKey,
                        final Predicate<ByteBuffer> valueMatchPredicate) {
         // Iterate forward from the key onwards until we find a match to delete.
-        try (final LmdbIterable iterable = LmdbIterableSupport.builder(writeTxn, dbi).start(rowKey).create()) {
+        final LmdbKeyRange keyRange = LmdbKeyRange.builder().start(rowKey).build();
+        try (final LmdbIterable iterable = LmdbIterable.create(writeTxn, dbi, keyRange)) {
             // Iterate over all entries with the same hash. Will only be one unless
             // we get a hash clash. Have to use a cursor as entries can be deleted, thus leaving
             // gaps in the seq numbers.

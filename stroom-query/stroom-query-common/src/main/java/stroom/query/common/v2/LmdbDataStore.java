@@ -18,6 +18,8 @@
 package stroom.query.common.v2;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.lmdb.stream.LmdbEntry;
+import stroom.lmdb.stream.LmdbKeyRange;
 import stroom.lmdb2.LmdbDb;
 import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.ReadTxn;
@@ -56,10 +58,8 @@ import com.esotericsoftware.kryo.io.ByteBufferInput;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import jakarta.inject.Provider;
-import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Env.MapFullException;
 import org.lmdbjava.EnvFlags;
-import org.lmdbjava.KeyRange;
 import org.lmdbjava.LmdbException;
 import org.lmdbjava.PutFlags;
 
@@ -177,8 +177,10 @@ public class LmdbDataStore implements DataStore {
         compiledDepths = new CompiledDepths(this.compiledColumnArray, tableSettings.showDetail());
         compiledSorters = new CompiledSorters<>(compiledDepths, columns);
         final int maxStringFieldLength = tableSettings.overrideMaxStringFieldLength() &&
-                                         tableSettings.getMaxStringFieldLength() != null ?
-                tableSettings.getMaxStringFieldLength() : resultStoreConfig.getMaxStringFieldLength();
+                                         tableSettings.getMaxStringFieldLength() != null
+                ?
+                tableSettings.getMaxStringFieldLength()
+                : resultStoreConfig.getMaxStringFieldLength();
         writerFactory = new DataWriterFactory(errorConsumer, maxStringFieldLength);
         keyFactoryConfig = new KeyFactoryConfigImpl(sourceType, this.compiledColumnArray, compiledDepths);
         keyFactory = KeyFactoryFactory.create(keyFactoryConfig, compiledDepths);
@@ -435,8 +437,8 @@ public class LmdbDataStore implements DataStore {
                 deleteCommand.getParentKey(), deleteCommand.getTimeFilter(), keyRange -> {
                     db.iterate(writeTxn, keyRange, iterator -> {
                         while (iterator.hasNext()) {
-                            final KeyVal<ByteBuffer> keyVal = iterator.next();
-                            final ByteBuffer keyBuffer = keyVal.key();
+                            final LmdbEntry keyVal = iterator.next();
+                            final ByteBuffer keyBuffer = keyVal.getKey();
                             if (keyBuffer.limit() > 1) {
                                 db.delete(writeTxn, keyBuffer);
                             }
@@ -910,9 +912,9 @@ public class LmdbDataStore implements DataStore {
                            iterator.hasNext() &&
                            !Thread.currentThread().isInterrupted()) {
 
-                        final KeyVal<ByteBuffer> keyVal = iterator.next();
-                        final ByteBuffer keyBuffer = keyVal.key();
-                        final ByteBuffer valueBuffer = keyVal.val();
+                        final LmdbEntry keyVal = iterator.next();
+                        final ByteBuffer keyBuffer = keyVal.getKey();
+                        final ByteBuffer valueBuffer = keyVal.getVal();
 
                         // If we are just counting the total results from this point then we don't need to
                         // deserialise unless we are hiding rows.
@@ -1063,10 +1065,10 @@ public class LmdbDataStore implements DataStore {
                 final AtomicLong totalRowCount = new AtomicLong();
                 while (iterator.hasNext()
                        && !Thread.currentThread().isInterrupted()) {
-                    final KeyVal<ByteBuffer> keyVal = iterator.next();
+                    final LmdbEntry keyVal = iterator.next();
 
-                    final ByteBuffer keyBuffer = keyVal.key();
-                    final ByteBuffer valueBuffer = keyVal.val();
+                    final ByteBuffer keyBuffer = keyVal.getKey();
+                    final ByteBuffer valueBuffer = keyVal.getVal();
                     boolean isFirstValue = true;
                     // It is possible to have no actual values, e.g. if you have just one col of
                     // 'currentUser()' so we still need to create and add an empty storedValues
@@ -1166,13 +1168,13 @@ public class LmdbDataStore implements DataStore {
             this.timeFilter = timeFilter;
         }
 
-        public <R> R readResult(final KeyRange<ByteBuffer> keyRange,
-                                final Function<Iterator<KeyVal<ByteBuffer>>, R> iteratorConsumer) {
+        public <R> R readResult(final LmdbKeyRange keyRange,
+                                final Function<Iterator<LmdbEntry>, R> iteratorConsumer) {
             return db.iterateResult(readTxn, keyRange, iteratorConsumer);
         }
 
-        public void read(final KeyRange<ByteBuffer> keyRange,
-                         final Consumer<Iterator<KeyVal<ByteBuffer>>> iteratorConsumer) {
+        public void read(final LmdbKeyRange keyRange,
+                         final Consumer<Iterator<LmdbEntry>> iteratorConsumer) {
             db.iterate(readTxn, keyRange, iteratorConsumer);
         }
 

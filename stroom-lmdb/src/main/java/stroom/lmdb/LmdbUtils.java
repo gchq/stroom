@@ -20,6 +20,7 @@ package stroom.lmdb;
 import stroom.bytebuffer.ByteBufferPool;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.lmdb.serde.Serde;
+import stroom.lmdb.stream.LmdbIterable;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -259,7 +260,7 @@ public class LmdbUtils {
                 getEntryCount(env, txn, dbi), new String(dbi.getName())));
 
         // loop over all DB entries
-        LmdbIterableSupport.iterate(txn, dbi, (key, val) ->
+        LmdbIterable.iterate(txn, dbi, (key, val) ->
                 stringBuilder.append(LogUtil.message("\n  key: [{}] - value [{}]",
                         keyToStringFunc.apply(key),
                         valueToStringFunc.apply(val))));

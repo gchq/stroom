@@ -3,9 +3,9 @@ package stroom.planb.impl.db.temporalstate;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.lmdb.LmdbEntry;
-import stroom.lmdb.LmdbIterableSupport;
-import stroom.lmdb.LmdbIterableSupport.LmdbIterable;
+import stroom.lmdb.stream.LmdbEntry;
+import stroom.lmdb.stream.LmdbIterable;
+import stroom.lmdb.stream.LmdbKeyRange;
 import stroom.lmdb2.KV;
 import stroom.planb.impl.data.TemporalState;
 import stroom.planb.impl.db.AbstractDb;
@@ -279,11 +279,9 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
                         optionalKeyByteBuffer.map(keyByteBuffer -> {
                             final ByteBuffer prefix = keyByteBuffer.slice(0,
                                     keyByteBuffer.remaining() - timeSerde.getSize());
-                            try (final LmdbIterable iterable = LmdbIterableSupport
-                                    .builder(readTxn, dbi)
-                                    .start(keyByteBuffer)
-                                    .reverse()
-                                    .create()) {
+                            final LmdbKeyRange keyRange =
+                                    LmdbKeyRange.builder().start(keyByteBuffer).reverse().build();
+                            try (final LmdbIterable iterable = LmdbIterable.create(readTxn, dbi, keyRange)) {
                                 for (final LmdbEntry entry : iterable) {
                                     if (!ByteBufferUtils.containsPrefix(entry.getKey(), prefix)) {
                                         return null;
@@ -379,7 +377,7 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
             long changeCount = 0;
             TemporalState lastState = null;
             TemporalState newState = null;
-            try (final LmdbIterable iterable = LmdbIterableSupport.builder(readTxn, dbi).create()) {
+            try (final LmdbIterable iterable = LmdbIterable.create(readTxn, dbi)) {
                 for (final LmdbEntry entry : iterable) {
                     final TemporalKey key = keySerde.read(readTxn, entry.getKey().duplicate());
                     final ValTime valTime = valueSerde.read(readTxn, entry.getVal().duplicate());

@@ -3,9 +3,9 @@ package stroom.planb.impl.db.session;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.lmdb.LmdbEntry;
-import stroom.lmdb.LmdbIterableSupport;
-import stroom.lmdb.LmdbIterableSupport.LmdbIterable;
+import stroom.lmdb.stream.LmdbEntry;
+import stroom.lmdb.stream.LmdbIterable;
+import stroom.lmdb.stream.LmdbKeyRange;
 import stroom.lmdb2.KV;
 import stroom.planb.impl.data.Session;
 import stroom.planb.impl.db.AbstractDb;
@@ -330,7 +330,7 @@ public class SessionDb extends AbstractDb<Session, Session> {
             CurrentSession lastSession = null;
 
             // TODO : It would be faster if we limit the iteration to keys based on the criteria.
-            try (final LmdbIterable iterable = LmdbIterableSupport.builder(readTxn, dbi).create()) {
+            try (final LmdbIterable iterable = LmdbIterable.create(readTxn, dbi)) {
                 for (final LmdbEntry entry : iterable) {
                     final Values vals = valuesExtractor.apply(readTxn, entry.getKey(), entry.getVal());
                     if (predicate.test(vals)) {
@@ -418,11 +418,10 @@ public class SessionDb extends AbstractDb<Session, Session> {
 
                                     Session result = null;
 
-                                    try (final LmdbIterable iterable = LmdbIterableSupport
-                                            .builder(readTxn, dbi)
-                                            .start(keyByteBuffer)
-                                            .reverse()
-                                            .create()) {
+                                    final LmdbKeyRange keyRange =
+                                            LmdbKeyRange.builder().start(keyByteBuffer).reverse().build();
+                                    try (final LmdbIterable iterable =
+                                            LmdbIterable.create(readTxn, dbi, keyRange)) {
                                         final Iterator<LmdbEntry> iterator = iterable.iterator();
 
                                         // Move to or beyond the key.
@@ -510,7 +509,7 @@ public class SessionDb extends AbstractDb<Session, Session> {
             Session lastSession = null;
             Session newSession = null;
 
-            try (final LmdbIterable iterable = LmdbIterableSupport.builder(readTxn, dbi).create()) {
+            try (final LmdbIterable iterable = LmdbIterable.create(readTxn, dbi)) {
                 for (final LmdbEntry entry : iterable) {
                     Session session = keySerde.read(writer.getWriteTxn(), entry.getKey().duplicate());
 

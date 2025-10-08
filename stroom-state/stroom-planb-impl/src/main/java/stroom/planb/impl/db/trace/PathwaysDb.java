@@ -1,8 +1,8 @@
 package stroom.planb.impl.db.trace;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
-import stroom.lmdb.LmdbIterableSupport;
-import stroom.lmdb.LmdbIterableSupport.EntryConsumer;
+import stroom.lmdb.stream.LmdbIterable;
+import stroom.lmdb.stream.LmdbIterable.EntryConsumer;
 import stroom.planb.impl.db.AbstractDb;
 import stroom.planb.impl.db.HashClashCommitRunnable;
 import stroom.planb.impl.db.LmdbWriter;
@@ -119,7 +119,7 @@ public class PathwaysDb {
 
         public void iterate(final Txn<ByteBuffer> txn,
                             final EntryConsumer consumer) {
-            LmdbIterableSupport.iterate(txn, dbi, consumer);
+            LmdbIterable.iterate(txn, dbi, consumer);
         }
 
         public <R> R get(final ByteBuffer keyByteBuffer,

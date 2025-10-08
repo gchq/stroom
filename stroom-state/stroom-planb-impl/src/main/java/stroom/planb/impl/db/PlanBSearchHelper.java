@@ -1,7 +1,7 @@
 package stroom.planb.impl.db;
 
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.lmdb.LmdbIterableSupport;
+import stroom.lmdb.stream.LmdbIterable;
 import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionUtil;
@@ -43,7 +43,7 @@ public class PlanBSearchHelper {
         final Predicate<Values> predicate = optionalPredicate.orElse(vals -> true);
 
         // TODO : It would be faster if we limit the iteration to keys based on the criteria.
-        LmdbIterableSupport.iterate(readTxn, dbi, (key, val) -> {
+        LmdbIterable.iterate(readTxn, dbi, (key, val) -> {
             final Values vals = valuesExtractor.apply(readTxn, key, val);
             if (predicate.test(vals)) {
                 consumer.accept(vals.toArray());

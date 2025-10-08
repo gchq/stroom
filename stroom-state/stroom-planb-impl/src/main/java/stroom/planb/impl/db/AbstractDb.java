@@ -2,8 +2,8 @@ package stroom.planb.impl.db;
 
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBuffers;
-import stroom.lmdb.LmdbIterableSupport;
-import stroom.lmdb.LmdbIterableSupport.EntryConsumer;
+import stroom.lmdb.stream.LmdbIterable;
+import stroom.lmdb.stream.LmdbIterable.EntryConsumer;
 import stroom.planb.impl.db.PlanBEnv.EnvInf;
 import stroom.planb.shared.PlanBDoc;
 import stroom.util.json.JsonUtil;
@@ -121,7 +121,7 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
 
     protected final void iterate(final Txn<ByteBuffer> txn,
                                  final EntryConsumer consumer) {
-        LmdbIterableSupport.iterate(txn, dbi, consumer);
+        LmdbIterable.iterate(txn, dbi, consumer);
     }
 
     private Optional<SchemaInfo> readSchema(final Txn<ByteBuffer> txn) {

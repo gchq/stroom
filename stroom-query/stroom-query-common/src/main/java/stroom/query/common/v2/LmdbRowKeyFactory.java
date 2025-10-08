@@ -1,9 +1,8 @@
 package stroom.query.common.v2;
 
+import stroom.lmdb.stream.LmdbKeyRange;
 import stroom.query.api.TimeFilter;
 import stroom.query.language.functions.ref.StoredValues;
-
-import org.lmdbjava.KeyRange;
 
 import java.nio.ByteBuffer;
 import java.util.function.Consumer;
@@ -51,19 +50,17 @@ public interface LmdbRowKeyFactory {
      *
      * @param parentKey The parent key to create the child key range for.
      * @param consumer  A consumer that will receive the child key.
-     * @return A key range to filter rows to find the children of the supplied parent key.
      */
-    void createChildKeyRange(Key parentKey, Consumer<KeyRange<ByteBuffer>> consumer);
+    void createChildKeyRange(Key parentKey, Consumer<LmdbKeyRange> consumer);
 
     /**
      * Create a key range to filter rows to find the children of the supplied parent key that also filters by time.
      *
      * @param parentKey  The parent key to create the child key range for.
      * @param timeFilter The time filter to apply to the key range.
-     * @param consumer   Consumer for the key range to filter rows to find the children of the supplied parent key that
-     *                   also filters by time.
+     * @param consumer   A consumer that will receive the child key.
      */
-    void createChildKeyRange(Key parentKey, TimeFilter timeFilter, Consumer<KeyRange<ByteBuffer>> consumer);
+    void createChildKeyRange(Key parentKey, TimeFilter timeFilter, Consumer<LmdbKeyRange> consumer);
 
     Key createKey(Key parentKey, StoredValues storedValues, ByteBuffer keyBuffer);
 }

@@ -4,9 +4,10 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.lmdb.LmdbEntry;
-import stroom.lmdb.LmdbIterableSupport;
-import stroom.lmdb.LmdbStreamSupport;
+import stroom.lmdb.stream.LmdbEntry;
+import stroom.lmdb.stream.LmdbIterable;
+import stroom.lmdb.stream.LmdbKeyRange;
+import stroom.lmdb.stream.LmdbStream;
 import stroom.lmdb2.KV;
 import stroom.pathways.shared.FindTraceCriteria;
 import stroom.pathways.shared.GetTraceRequest;
@@ -233,7 +234,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
 
     public void iterateTraces(final BiConsumer<byte[], Function<byte[], Trace>> consumer) {
         env.read(txn -> {
-            try (final Stream<LmdbEntry> stream = LmdbStreamSupport.stream(txn, traceRootsDbi)) {
+            try (final Stream<LmdbEntry> stream = LmdbStream.stream(txn, traceRootsDbi)) {
                 stream.forEach(entry -> {
                     final byte[] traceId = ByteBufferUtils.toBytes(entry.getKey());
                     consumer.accept(traceId, id -> getTrace(txn, id));
@@ -252,7 +253,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
 
                 // Merge.
                 sourceDb.env.read(readTxn -> {
-                    try (final Stream<LmdbEntry> stream = LmdbStreamSupport.stream(readTxn, sourceDb.dbi)) {
+                    try (final Stream<LmdbEntry> stream = LmdbStream.stream(readTxn, sourceDb.dbi)) {
                         stream.forEach(entry -> {
                             if (sourceDb.keySerde.usesLookup(entry.getKey()) ||
                                 sourceDb.valueSerde.usesLookup(entry.getVal())) {
@@ -270,7 +271,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                     }
 
                     // Merge trace roots.
-                    LmdbIterableSupport.iterate(readTxn, sourceDb.traceRootsDbi, (key, val) -> {
+                    LmdbIterable.iterate(readTxn, sourceDb.traceRootsDbi, (key, val) -> {
                         if (traceRootsDbi.put(writer.getWriteTxn(), key, val, putFlags)) {
                             writer.tryCommit();
                         }
@@ -388,7 +389,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             final Count changeCount = new Count();
 
             // Delete old spans.
-            LmdbIterableSupport.iterate(readTxn, dbi, (key, val) -> {
+            LmdbIterable.iterate(readTxn, dbi, (key, val) -> {
                 final SpanValue value = valueSerde.read(readTxn, val.duplicate());
 
                 if (value.getInsertTime().isBefore(deleteBefore)) {
@@ -404,7 +405,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             });
 
             // Delete old trace roots.
-            LmdbIterableSupport.iterate(readTxn, traceRootsDbi, (key, val) -> {
+            LmdbIterable.iterate(readTxn, traceRootsDbi, (key, val) -> {
                 final TraceRoot value = traceRootValueSerde.read(val.duplicate());
                 if (value.getStartTime().isBefore(deleteBefore)) {
                     // If this is data we no longer want to retain then delete it.
@@ -439,7 +440,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             // Just find traces in the requested range.
             env.read(readTxn -> {
                 final Count count = new Count();
-                LmdbIterableSupport.iterate(readTxn, traceRootsDbi, (key, val) -> {
+                LmdbIterable.iterate(readTxn, traceRootsDbi, (key, val) -> {
                     final TraceRootKey traceRootKey = traceRootKeySerde.read(key);
                     final TraceRoot root = traceRootValueSerde.read(val);
                     final TraceBuilder traceBuilder = new TraceBuilder(root.getTraceId());
@@ -468,7 +469,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             env.read(readTxn -> {
                 final Count count = new Count();
 
-                LmdbIterableSupport.iterate(readTxn, traceRootsDbi, (key, val) -> {
+                LmdbIterable.iterate(readTxn, traceRootsDbi, (key, val) -> {
                     final long pos = count.getAndIncrement();
                     if (criteria.getPageRequest().getOffset() <= pos &&
                         criteria.getPageRequest().getLength() > list.size()) {
@@ -516,7 +517,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                            final Consumer<Span> consumer) {
         byteBuffers.useBytes(traceId, prefixBuffer -> {
             // Get all the spans.
-            LmdbIterableSupport.builder(txn, dbi).prefix(prefixBuffer).iterate((key, val) -> {
+            final LmdbKeyRange keyRange = LmdbKeyRange.builder().prefix(prefixBuffer).build();
+            LmdbIterable.iterate(txn, dbi, keyRange, (key, val) -> {
                 final SpanKey spanKey = keySerde.read(txn, key);
                 final SpanValue spanValue = valueSerde.read(txn, val);
                 final Span span = createSpan(spanKey, spanValue);

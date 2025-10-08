@@ -1,6 +1,9 @@
-package stroom.lmdb;
+package stroom.lmdb.stream;
 
 import stroom.bytebuffer.ByteBufferUtils;
+import stroom.lmdb.stream.LmdbKeyRange.All;
+import stroom.lmdb.stream.LmdbKeyRange.Prefix;
+import stroom.lmdb.stream.LmdbKeyRange.Range;
 import stroom.util.concurrent.ThreadUtil;
 
 import org.lmdbjava.Cursor;
@@ -12,13 +15,16 @@ import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.function.BiConsumer;
 
-public class LmdbIterableSupport {
+public class LmdbIterable implements Iterable<LmdbEntry>, AutoCloseable {
 
     private static final UnsignedByteBufferComparator BUFFER_COMPARATOR = new UnsignedByteBufferComparator();
 
-    public static IterableBuilder builder(final Txn<ByteBuffer> txn,
-                                          final Dbi<ByteBuffer> dbi) {
-        return new IterableBuilder(txn, dbi);
+    private final Cursor<ByteBuffer> cursor;
+    private final Iterator<LmdbEntry> iterator;
+
+    private LmdbIterable(final Cursor<ByteBuffer> cursor, final Iterator<LmdbEntry> iterator) {
+        this.cursor = cursor;
+        this.iterator = iterator;
     }
 
     public static void iterate(final Txn<ByteBuffer> txn,
@@ -35,195 +41,90 @@ public class LmdbIterableSupport {
         }
     }
 
-    public static abstract class AbstractIterableBuilder<B extends AbstractIterableBuilder<?>> {
-
-        final Txn<ByteBuffer> txn;
-        final Dbi<ByteBuffer> dbi;
-        boolean reverse;
-
-        AbstractIterableBuilder(final Txn<ByteBuffer> txn,
-                                final Dbi<ByteBuffer> dbi) {
-            this.txn = txn;
-            this.dbi = dbi;
-        }
-
-        AbstractIterableBuilder(final AbstractIterableBuilder<?> streamBuilder) {
-            this.txn = streamBuilder.txn;
-            this.dbi = streamBuilder.dbi;
-            this.reverse = streamBuilder.reverse;
-        }
-
-        public B reverse() {
-            this.reverse = true;
-            return self();
-        }
-
-        public B reverse(final boolean reverse) {
-            this.reverse = reverse;
-            return self();
-        }
-
-        abstract B self();
-
-        public final LmdbIterable create() {
-            final Cursor<ByteBuffer> cursor = dbi.openCursor(txn);
-            try {
-                final LmdbIterator iterator = createIterator(cursor);
-                return new LmdbIterable(cursor, iterator);
-            } catch (final Error | RuntimeException e) {
-                cursor.close();
-                throw e;
+    public static void iterate(final Txn<ByteBuffer> txn,
+                               final Dbi<ByteBuffer> dbi,
+                               final LmdbKeyRange keyRange,
+                               final EntryConsumer consumer) {
+        try (final LmdbIterable iterable = create(txn, dbi, keyRange)) {
+            for (final LmdbEntry entry : iterable) {
+                consumer.accept(entry.key, entry.val);
             }
         }
+    }
 
-        public final void iterate(final EntryConsumer consumer) {
-            try (final LmdbIterable iterable = create()) {
-                for (final LmdbEntry entry : iterable) {
-                    consumer.accept(entry.getKey(), entry.getVal());
+    public static LmdbIterable create(final Txn<ByteBuffer> txn,
+                                      final Dbi<ByteBuffer> dbi) {
+        return create(txn, dbi, LmdbKeyRange.all());
+    }
+
+    public static LmdbIterable create(final Txn<ByteBuffer> txn,
+                                      final Dbi<ByteBuffer> dbi,
+                                      final LmdbKeyRange keyRange) {
+        final Cursor<ByteBuffer> cursor = dbi.openCursor(txn);
+        try {
+            final LmdbIterator iterator = createIterator(cursor, keyRange);
+            return new LmdbIterable(cursor, iterator);
+        } catch (final Error | RuntimeException e) {
+            cursor.close();
+            throw e;
+        }
+    }
+
+    private static LmdbIterator createIterator(final Cursor<ByteBuffer> cursor,
+                                               final LmdbKeyRange keyRange) {
+        final LmdbIterator iterator;
+        switch (keyRange) {
+            case final Range range -> {
+                if (range.reverse) {
+                    iterator = new LmdbRangeReversedIterator(cursor,
+                            range.start,
+                            range.stop,
+                            range.startInclusive,
+                            range.stopInclusive);
+                } else {
+                    iterator = new LmdbRangeIterator(cursor,
+                            range.start,
+                            range.stop,
+                            range.startInclusive,
+                            range.stopInclusive);
                 }
             }
-        }
-
-        public abstract LmdbIterator createIterator(Cursor<ByteBuffer> cursor);
-    }
-
-    public static class IterableBuilder extends AbstractIterableBuilder<IterableBuilder> {
-
-        private IterableBuilder(final Txn<ByteBuffer> txn,
-                                final Dbi<ByteBuffer> dbi) {
-            super(txn, dbi);
-        }
-
-        public PrefixBuilder prefix(final ByteBuffer prefix) {
-            final PrefixBuilder prefixBuilder = new PrefixBuilder(this);
-            prefixBuilder.prefix(prefix);
-            return prefixBuilder;
-        }
-
-        public RangeBuilder start(final ByteBuffer start) {
-            return start(start, true);
-        }
-
-        public RangeBuilder start(final ByteBuffer start,
-                                  final boolean startInclusive) {
-            final RangeBuilder rangeBuilder = new RangeBuilder(this);
-            return rangeBuilder.start(start, startInclusive);
-        }
-
-        public RangeBuilder stop(final ByteBuffer stop) {
-            return stop(stop, true);
-        }
-
-        public RangeBuilder stop(final ByteBuffer stop,
-                                 final boolean stopInclusive) {
-            final RangeBuilder rangeBuilder = new RangeBuilder(this);
-            return rangeBuilder.stop(stop, stopInclusive);
-        }
-
-        IterableBuilder self() {
-            return this;
-        }
-
-        @Override
-        public LmdbIterator createIterator(final Cursor<ByteBuffer> cursor) {
-            if (reverse) {
-                return new LmdbReversedIterator(cursor);
-            }
-            return new LmdbIterator(cursor);
-        }
-    }
-
-    public static class PrefixBuilder extends AbstractIterableBuilder<PrefixBuilder> {
-
-        private ByteBuffer prefix;
-
-        private PrefixBuilder(final IterableBuilder streamBuilder) {
-            super(streamBuilder);
-        }
-
-        public PrefixBuilder prefix(final ByteBuffer prefix) {
-            this.prefix = prefix;
-            return self();
-        }
-
-        @Override
-        PrefixBuilder self() {
-            return this;
-        }
-
-        @Override
-        public LmdbIterator createIterator(final Cursor<ByteBuffer> cursor) {
-            if (reverse) {
-                if (prefix != null) {
-                    return new LmdbPrefixReversedIterator(cursor, prefix);
-                }
-                return new LmdbReversedIterator(cursor);
-            }
-            if (prefix != null) {
-                return new LmdbPrefixIterator(cursor, prefix);
-            }
-            return new LmdbIterator(cursor);
-        }
-    }
-
-    public static class RangeBuilder extends AbstractIterableBuilder<RangeBuilder> {
-
-        private ByteBuffer start;
-        private ByteBuffer stop;
-        private boolean startInclusive;
-        private boolean stopInclusive;
-
-        private RangeBuilder(final IterableBuilder streamBuilder) {
-            super(streamBuilder);
-        }
-
-        public RangeBuilder start(final ByteBuffer start) {
-            return start(start, true);
-        }
-
-        public RangeBuilder start(final ByteBuffer start,
-                                  final boolean startInclusive) {
-            this.start = start;
-            this.startInclusive = startInclusive;
-            return self();
-        }
-
-        public RangeBuilder stop(final ByteBuffer stop) {
-            return stop(stop, true);
-        }
-
-        public RangeBuilder stop(final ByteBuffer stop,
-                                 final boolean stopInclusive) {
-            this.stop = stop;
-            this.stopInclusive = stopInclusive;
-            return self();
-        }
-
-        @Override
-        RangeBuilder self() {
-            return this;
-        }
-
-        @Override
-        public LmdbIterator createIterator(final Cursor<ByteBuffer> cursor) {
-            if (reverse) {
-                // Check that start >= stop.
-                if (start != null && stop != null) {
-                    if (BUFFER_COMPARATOR.compare(start, stop) < 0) {
-                        throw new IllegalStateException("Start key < stop key");
+            case final Prefix prefix -> {
+                if (prefix.reverse) {
+                    if (prefix.prefix != null) {
+                        iterator = new LmdbPrefixReversedIterator(cursor, prefix.prefix);
+                    } else {
+                        iterator = new LmdbReversedIterator(cursor);
+                    }
+                } else {
+                    if (prefix.prefix != null) {
+                        iterator = new LmdbPrefixIterator(cursor, prefix.prefix);
+                    } else {
+                        iterator = new LmdbIterator(cursor);
                     }
                 }
-                return new LmdbRangeReversedIterator(cursor, start, stop, startInclusive, stopInclusive);
             }
-
-            // Check that start <= stop.
-            if (start != null && stop != null) {
-                if (BUFFER_COMPARATOR.compare(start, stop) > 0) {
-                    throw new IllegalStateException("Start key > stop key");
+            case final All all -> {
+                if (all.reverse) {
+                    iterator = new LmdbReversedIterator(cursor);
+                } else {
+                    iterator = new LmdbIterator(cursor);
                 }
             }
-            return new LmdbRangeIterator(cursor, start, stop, startInclusive, stopInclusive);
+
+            default -> throw new IllegalStateException("Unexpected value: " + keyRange);
         }
+        return iterator;
+    }
+
+    @Override
+    public Iterator<LmdbEntry> iterator() {
+        return iterator;
+    }
+
+    @Override
+    public void close() {
+        cursor.close();
     }
 
     public static class LmdbIterator implements Iterator<LmdbEntry> {
@@ -466,27 +367,6 @@ public class LmdbIterableSupport {
 
         // All bytes are at maximum value
         return null;
-    }
-
-    public static class LmdbIterable implements Iterable<LmdbEntry>, AutoCloseable {
-
-        private final Cursor<ByteBuffer> cursor;
-        private final Iterator<LmdbEntry> iterator;
-
-        public LmdbIterable(final Cursor<ByteBuffer> cursor, final Iterator<LmdbEntry> iterator) {
-            this.cursor = cursor;
-            this.iterator = iterator;
-        }
-
-        @Override
-        public Iterator<LmdbEntry> iterator() {
-            return iterator;
-        }
-
-        @Override
-        public void close() {
-            cursor.close();
-        }
     }
 
     public interface EntryConsumer extends BiConsumer<ByteBuffer, ByteBuffer> {

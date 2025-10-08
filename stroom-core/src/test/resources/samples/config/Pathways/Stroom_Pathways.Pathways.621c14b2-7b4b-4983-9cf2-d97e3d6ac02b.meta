@@ -3,10 +3,6 @@
   "uuid" : "621c14b2-7b4b-4983-9cf2-d97e3d6ac02b",
   "name" : "Stroom Pathways",
   "version" : "195b0314-38e9-4620-b0ac-ea3816416f6b",
-  "createTimeMs" : 1755783505770,
-  "updateTimeMs" : 1755787541436,
-  "createUser" : "admin",
-  "updateUser" : "admin",
   "temporalOrderingTolerance" : {
     "time" : 0,
     "timeUnit" : "NANOSECONDS"

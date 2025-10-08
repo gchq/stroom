@@ -2,9 +2,9 @@ package stroom.planb.impl.db.temporalrangestate;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.lmdb.LmdbEntry;
-import stroom.lmdb.LmdbIterableSupport;
-import stroom.lmdb.LmdbIterableSupport.LmdbIterable;
+import stroom.lmdb.stream.LmdbEntry;
+import stroom.lmdb.stream.LmdbIterable;
+import stroom.lmdb.stream.LmdbKeyRange;
 import stroom.lmdb2.KV;
 import stroom.planb.impl.data.TemporalRangeState;
 import stroom.planb.impl.data.TemporalRangeState.Key;
@@ -282,11 +282,9 @@ public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
         return env.read(readTxn ->
                 keySerde.toKeyStart(request.key(), start -> {
                     TemporalRangeState result = null;
-                    try (final LmdbIterable iterable = LmdbIterableSupport
-                            .builder(readTxn, dbi)
-                            .start(start)
-                            .reverse()
-                            .create()) {
+                    final LmdbKeyRange keyRange =
+                            LmdbKeyRange.builder().start(start).reverse().build();
+                    try (final LmdbIterable iterable = LmdbIterable.create(readTxn, dbi, keyRange)) {
                         for (final LmdbEntry entry : iterable) {
                             final Key k = keySerde.read(readTxn, entry.getKey());
                             if (k.getKeyEnd() < request.key()) {
@@ -358,7 +356,7 @@ public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
             long changeCount = 0;
             TemporalRangeState lastState = null;
             TemporalRangeState newState = null;
-            try (final LmdbIterable iterable = LmdbIterableSupport.builder(readTxn, dbi).create()) {
+            try (final LmdbIterable iterable = LmdbIterable.create(readTxn, dbi)) {
                 for (final LmdbEntry entry : iterable) {
                     final Key key = keySerde.read(readTxn, entry.getKey().duplicate());
                     final ValTime valTime = valueSerde.read(readTxn, entry.getVal().duplicate());

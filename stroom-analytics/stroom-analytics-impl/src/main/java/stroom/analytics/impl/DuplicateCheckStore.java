@@ -8,9 +8,8 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferPoolOutput;
 import stroom.bytebuffer.impl6.ByteBuffers;
-import stroom.lmdb.LmdbEntry;
-import stroom.lmdb.LmdbIterableSupport;
-import stroom.lmdb.LmdbIterableSupport.LmdbIterable;
+import stroom.lmdb.stream.LmdbEntry;
+import stroom.lmdb.stream.LmdbIterable;
 import stroom.lmdb2.LmdbDb;
 import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.LmdbEnvDir;
@@ -30,7 +29,6 @@ import stroom.util.shared.ResultPage;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.unsafe.UnsafeByteBufferInput;
 import jakarta.inject.Provider;
-import org.lmdbjava.Cursor;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.EnvFlags;
 import org.lmdbjava.PutFlags;
@@ -254,7 +252,7 @@ class DuplicateCheckStore {
             readColumnNames(txn, columnNames);
 
             long count = 0;
-            try (final LmdbIterable iterable = LmdbIterableSupport.builder(txn.get(), db.getDbi()).create()) {
+            try (final LmdbIterable iterable = LmdbIterable.create(txn.get(), db.getDbi())) {
                 for (final LmdbEntry entry : iterable) {
                     if (count >= pageRequest.getOffset()) {
                         final ByteBuffer valBuffer = entry.getVal();

@@ -2,9 +2,9 @@ package stroom.planb.impl.db.histogram;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.lmdb.LmdbIterableSupport;
 import stroom.lmdb.serde.UnsignedBytes;
 import stroom.lmdb.serde.UnsignedBytesInstances;
+import stroom.lmdb.stream.LmdbIterable;
 import stroom.lmdb2.KV;
 import stroom.planb.impl.db.AbstractDb;
 import stroom.planb.impl.db.Count;
@@ -368,7 +368,7 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
                                final boolean useStateTime) {
         return env.read(readTxn -> {
             final Count count = new Count();
-            LmdbIterableSupport.builder(readTxn, dbi).iterate((key, val) -> {
+            LmdbIterable.iterate(readTxn, dbi, (key, val) -> {
                 final TemporalKey temporalKey = keySerde.read(readTxn, key.duplicate());
                 final Instant time;
                 if (useStateTime) {

@@ -1,4 +1,4 @@
-package stroom.lmdb;
+package stroom.lmdb.stream;
 
 
 import stroom.bytebuffer.ByteBufferUtils;
@@ -24,11 +24,11 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestLmdbStreamSupport {
+class TestLmdbStream {
 
     @Test
     void testStream() {
-        final Result result = run(LmdbStreamSupport::stream);
+        final Result result = run(LmdbStream::stream);
         assertThat(result.count).isEqualTo(10000);
         assertThat(result.first).isEqualTo(createTestBuffer(0, 0));
         assertThat(result.last).isEqualTo(createTestBuffer(99, 99));
@@ -36,7 +36,7 @@ class TestLmdbStreamSupport {
 
     @Test
     void testStreamReversed() {
-        final Result result = run((txn, dbi) -> LmdbStreamSupport.streamBuilder(txn, dbi).reverse().create());
+        final Result result = run((txn, dbi) -> LmdbStream.stream(txn, dbi, LmdbKeyRange.allReverse()));
         assertThat(result.count).isEqualTo(10000);
         assertThat(result.first).isEqualTo(createTestBuffer(99, 99));
         assertThat(result.last).isEqualTo(createTestBuffer(0, 0));
@@ -45,10 +45,10 @@ class TestLmdbStreamSupport {
     @Test
     void testStreamRangeStartInclusive() {
         final ByteBuffer start = createTestBuffer(42, 42);
-        final Result result = run((txn, dbi) -> LmdbStreamSupport
-                .streamBuilder(txn, dbi)
-                .start(start)
-                .create());
+        final Result result = run((txn, dbi) -> LmdbStream
+                .stream(txn, dbi, LmdbKeyRange.builder()
+                        .start(start)
+                        .build()));
         assertThat(result.count).isEqualTo(5758);
         assertThat(result.first).isEqualTo(createTestBuffer(42, 42));
         assertThat(result.last).isEqualTo(createTestBuffer(99, 99));
@@ -57,10 +57,10 @@ class TestLmdbStreamSupport {
     @Test
     void testStreamRangeStartExclusive() {
         final ByteBuffer start = createTestBuffer(42, 42);
-        final Result result = run((txn, dbi) -> LmdbStreamSupport
-                .streamBuilder(txn, dbi)
-                .start(start, false)
-                .create());
+        final Result result = run((txn, dbi) -> LmdbStream
+                .stream(txn, dbi, LmdbKeyRange.builder()
+                        .start(start, false)
+                        .build()));
         assertThat(result.count).isEqualTo(5757);
         assertThat(result.first).isEqualTo(createTestBuffer(42, 43));
         assertThat(result.last).isEqualTo(createTestBuffer(99, 99));
@@ -69,10 +69,10 @@ class TestLmdbStreamSupport {
     @Test
     void testStreamRangeStopInclusive() {
         final ByteBuffer stop = createTestBuffer(42, 42);
-        final Result result = run((txn, dbi) -> LmdbStreamSupport
-                .streamBuilder(txn, dbi)
-                .stop(stop)
-                .create());
+        final Result result = run((txn, dbi) -> LmdbStream
+                .stream(txn, dbi, LmdbKeyRange.builder()
+                        .stop(stop)
+                        .build()));
         assertThat(result.count).isEqualTo(4243);
         assertThat(result.first).isEqualTo(createTestBuffer(0, 0));
         assertThat(result.last).isEqualTo(createTestBuffer(42, 42));
@@ -81,10 +81,10 @@ class TestLmdbStreamSupport {
     @Test
     void testStreamRangeStopExclusive() {
         final ByteBuffer stop = createTestBuffer(42, 42);
-        final Result result = run((txn, dbi) -> LmdbStreamSupport
-                .streamBuilder(txn, dbi)
-                .stop(stop, false)
-                .create());
+        final Result result = run((txn, dbi) -> LmdbStream
+                .stream(txn, dbi, LmdbKeyRange.builder()
+                        .stop(stop, false)
+                        .build()));
         assertThat(result.count).isEqualTo(4242);
         assertThat(result.first).isEqualTo(createTestBuffer(0, 0));
         assertThat(result.last).isEqualTo(createTestBuffer(42, 41));
@@ -95,11 +95,11 @@ class TestLmdbStreamSupport {
     void testStreamRangeStartInclusiveStopInclusive() {
         final ByteBuffer start = createTestBuffer(40, 40);
         final ByteBuffer stop = createTestBuffer(42, 42);
-        final Result result = run((txn, dbi) -> LmdbStreamSupport
-                .streamBuilder(txn, dbi)
-                .start(start)
-                .stop(stop)
-                .create());
+        final Result result = run((txn, dbi) -> LmdbStream
+                .stream(txn, dbi, LmdbKeyRange.builder()
+                        .start(start)
+                        .stop(stop)
+                        .build()));
         assertThat(result.count).isEqualTo(203);
         assertThat(result.first).isEqualTo(createTestBuffer(40, 40));
         assertThat(result.last).isEqualTo(createTestBuffer(42, 42));
@@ -109,11 +109,11 @@ class TestLmdbStreamSupport {
     void testStreamRangeStartInclusiveStopExclusive() {
         final ByteBuffer start = createTestBuffer(40, 40);
         final ByteBuffer stop = createTestBuffer(42, 42);
-        final Result result = run((txn, dbi) -> LmdbStreamSupport
-                .streamBuilder(txn, dbi)
-                .start(start)
-                .stop(stop, false)
-                .create());
+        final Result result = run((txn, dbi) -> LmdbStream
+                .stream(txn, dbi, LmdbKeyRange.builder()
+                        .start(start)
+                        .stop(stop, false)
+                        .build()));
         assertThat(result.count).isEqualTo(202);
         assertThat(result.first).isEqualTo(createTestBuffer(40, 40));
         assertThat(result.last).isEqualTo(createTestBuffer(42, 41));
@@ -123,11 +123,11 @@ class TestLmdbStreamSupport {
     void testStreamRangeStartExclusiveStopInclusive() {
         final ByteBuffer start = createTestBuffer(40, 40);
         final ByteBuffer stop = createTestBuffer(42, 42);
-        final Result result = run((txn, dbi) -> LmdbStreamSupport
-                .streamBuilder(txn, dbi)
-                .start(start, false)
-                .stop(stop)
-                .create());
+        final Result result = run((txn, dbi) -> LmdbStream
+                .stream(txn, dbi, LmdbKeyRange.builder()
+                        .start(start, false)
+                        .stop(stop)
+                        .build()));
         assertThat(result.count).isEqualTo(202);
         assertThat(result.first).isEqualTo(createTestBuffer(40, 41));
         assertThat(result.last).isEqualTo(createTestBuffer(42, 42));
@@ -137,11 +137,11 @@ class TestLmdbStreamSupport {
     void testStreamRangeStartExclusiveStopExclusive() {
         final ByteBuffer start = createTestBuffer(40, 40);
         final ByteBuffer stop = createTestBuffer(42, 42);
-        final Result result = run((txn, dbi) -> LmdbStreamSupport
-                .streamBuilder(txn, dbi)
-                .start(start, false)
-                .stop(stop, false)
-                .create());
+        final Result result = run((txn, dbi) -> LmdbStream
+                .stream(txn, dbi, LmdbKeyRange.builder()
+                        .start(start, false)
+                        .stop(stop, false)
+                        .build()));
         assertThat(result.count).isEqualTo(201);
         assertThat(result.first).isEqualTo(createTestBuffer(40, 41));
         assertThat(result.last).isEqualTo(createTestBuffer(42, 41));
@@ -151,11 +151,11 @@ class TestLmdbStreamSupport {
     @Test
     void testStreamRangeStartInclusiveReversed() {
         final ByteBuffer start = createTestBuffer(42, 42);
-        final Result result = run((txn, dbi) -> LmdbStreamSupport
-                .streamBuilder(txn, dbi)
-                .start(start)
-                .reverse()
-                .create());
+        final Result result = run((txn, dbi) -> LmdbStream
+                .stream(txn, dbi, LmdbKeyRange.builder()
+                        .start(start)
+                        .reverse()
+                        .build()));
         assertThat(result.count).isEqualTo(4243);
         assertThat(result.first).isEqualTo(createTestBuffer(42, 42));
         assertThat(result.last).isEqualTo(createTestBuffer(0, 0));
@@ -164,11 +164,11 @@ class TestLmdbStreamSupport {
     @Test
     void testStreamRangeStartExclusiveReversed() {
         final ByteBuffer start = createTestBuffer(42, 42);
-        final Result result = run((txn, dbi) -> LmdbStreamSupport
-                .streamBuilder(txn, dbi)
-                .start(start, false)
-                .reverse()
-                .create());
+        final Result result = run((txn, dbi) -> LmdbStream
+                .stream(txn, dbi, LmdbKeyRange.builder()
+                        .start(start, false)
+                        .reverse()
+                        .build()));
         assertThat(result.count).isEqualTo(4242);
         assertThat(result.first).isEqualTo(createTestBuffer(42, 41));
         assertThat(result.last).isEqualTo(createTestBuffer(0, 0));
@@ -177,11 +177,11 @@ class TestLmdbStreamSupport {
     @Test
     void testStreamRangeStopInclusiveReversed() {
         final ByteBuffer stop = createTestBuffer(42, 42);
-        final Result result = run((txn, dbi) -> LmdbStreamSupport
-                .streamBuilder(txn, dbi)
-                .stop(stop)
-                .reverse()
-                .create());
+        final Result result = run((txn, dbi) -> LmdbStream
+                .stream(txn, dbi, LmdbKeyRange.builder()
+                        .stop(stop)
+                        .reverse()
+                        .build()));
         assertThat(result.count).isEqualTo(5758);
         assertThat(result.first).isEqualTo(createTestBuffer(99, 99));
         assertThat(result.last).isEqualTo(createTestBuffer(42, 42));
@@ -190,11 +190,11 @@ class TestLmdbStreamSupport {
     @Test
     void testStreamRangeStopExclusiveReversed() {
         final ByteBuffer stop = createTestBuffer(42, 42);
-        final Result result = run((txn, dbi) -> LmdbStreamSupport
-                .streamBuilder(txn, dbi)
-                .stop(stop, false)
-                .reverse()
-                .create());
+        final Result result = run((txn, dbi) -> LmdbStream
+                .stream(txn, dbi, LmdbKeyRange.builder()
+                        .stop(stop, false)
+                        .reverse()
+                        .build()));
         assertThat(result.count).isEqualTo(5757);
         assertThat(result.first).isEqualTo(createTestBuffer(99, 99));
         assertThat(result.last).isEqualTo(createTestBuffer(42, 43));
@@ -205,12 +205,12 @@ class TestLmdbStreamSupport {
     void testStreamRangeStartInclusiveStopInclusiveReversed() {
         final ByteBuffer start = createTestBuffer(42, 42);
         final ByteBuffer stop = createTestBuffer(40, 40);
-        final Result result = run((txn, dbi) -> LmdbStreamSupport
-                .streamBuilder(txn, dbi)
-                .start(start)
-                .stop(stop)
-                .reverse()
-                .create());
+        final Result result = run((txn, dbi) -> LmdbStream
+                .stream(txn, dbi, LmdbKeyRange.builder()
+                        .start(start)
+                        .stop(stop)
+                        .reverse()
+                        .build()));
         assertThat(result.count).isEqualTo(203);
         assertThat(result.first).isEqualTo(createTestBuffer(42, 42));
         assertThat(result.last).isEqualTo(createTestBuffer(40, 40));
@@ -220,12 +220,12 @@ class TestLmdbStreamSupport {
     void testStreamRangeStartInclusiveStopExclusiveReversed() {
         final ByteBuffer start = createTestBuffer(42, 42);
         final ByteBuffer stop = createTestBuffer(40, 40);
-        final Result result = run((txn, dbi) -> LmdbStreamSupport
-                .streamBuilder(txn, dbi)
-                .start(start)
-                .stop(stop, false)
-                .reverse()
-                .create());
+        final Result result = run((txn, dbi) -> LmdbStream
+                .stream(txn, dbi, LmdbKeyRange.builder()
+                        .start(start)
+                        .stop(stop, false)
+                        .reverse()
+                        .build()));
         assertThat(result.count).isEqualTo(202);
         assertThat(result.first).isEqualTo(createTestBuffer(42, 42));
         assertThat(result.last).isEqualTo(createTestBuffer(40, 41));
@@ -235,12 +235,12 @@ class TestLmdbStreamSupport {
     void testStreamRangeStartExclusiveStopInclusiveReversed() {
         final ByteBuffer start = createTestBuffer(42, 42);
         final ByteBuffer stop = createTestBuffer(40, 40);
-        final Result result = run((txn, dbi) -> LmdbStreamSupport
-                .streamBuilder(txn, dbi)
-                .start(start, false)
-                .stop(stop)
-                .reverse()
-                .create());
+        final Result result = run((txn, dbi) -> LmdbStream
+                .stream(txn, dbi, LmdbKeyRange.builder()
+                        .start(start, false)
+                        .stop(stop)
+                        .reverse()
+                        .build()));
         assertThat(result.count).isEqualTo(202);
         assertThat(result.first).isEqualTo(createTestBuffer(42, 41));
         assertThat(result.last).isEqualTo(createTestBuffer(40, 40));
@@ -250,12 +250,12 @@ class TestLmdbStreamSupport {
     void testStreamRangeStartExclusiveStopExclusiveReversed() {
         final ByteBuffer start = createTestBuffer(42, 42);
         final ByteBuffer stop = createTestBuffer(40, 40);
-        final Result result = run((txn, dbi) -> LmdbStreamSupport
-                .streamBuilder(txn, dbi)
-                .start(start, false)
-                .stop(stop, false)
-                .reverse()
-                .create());
+        final Result result = run((txn, dbi) -> LmdbStream
+                .stream(txn, dbi, LmdbKeyRange.builder()
+                        .start(start, false)
+                        .stop(stop, false)
+                        .reverse()
+                        .build()));
         assertThat(result.count).isEqualTo(201);
         assertThat(result.first).isEqualTo(createTestBuffer(42, 41));
         assertThat(result.last).isEqualTo(createTestBuffer(40, 41));
@@ -264,10 +264,10 @@ class TestLmdbStreamSupport {
     @Test
     void testStreamPrefix() {
         final ByteBuffer prefix = createTestBuffer(42);
-        final Result result = run((txn, dbi) -> LmdbStreamSupport
-                .streamBuilder(txn, dbi)
-                .prefix(prefix)
-                .create());
+        final Result result = run((txn, dbi) -> LmdbStream
+                .stream(txn, dbi, LmdbKeyRange.builder()
+                        .prefix(prefix)
+                        .build()));
         assertThat(result.count).isEqualTo(100);
         assertThat(result.first).isEqualTo(createTestBuffer(42, 0));
         assertThat(result.last).isEqualTo(createTestBuffer(42, 99));
@@ -276,11 +276,11 @@ class TestLmdbStreamSupport {
     @Test
     void testStreamPrefixReversed() {
         final ByteBuffer prefix = createTestBuffer(42);
-        final Result result = run((txn, dbi) -> LmdbStreamSupport
-                .streamBuilder(txn, dbi)
-                .prefix(prefix)
-                .reverse()
-                .create());
+        final Result result = run((txn, dbi) -> LmdbStream
+                .stream(txn, dbi, LmdbKeyRange.builder()
+                        .prefix(prefix)
+                        .reverse()
+                        .build()));
         assertThat(result.count).isEqualTo(100);
         assertThat(result.first).isEqualTo(createTestBuffer(42, 99));
         assertThat(result.last).isEqualTo(createTestBuffer(42, 0));

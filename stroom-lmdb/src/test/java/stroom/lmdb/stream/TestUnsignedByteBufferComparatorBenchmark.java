@@ -1,4 +1,4 @@
-package stroom.lmdb;
+package stroom.lmdb.stream;
 
 import stroom.test.common.TestUtil;
 import stroom.test.common.TestUtil.TimedCase;

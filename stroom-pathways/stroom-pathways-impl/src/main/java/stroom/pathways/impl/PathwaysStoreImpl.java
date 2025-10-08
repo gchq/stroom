@@ -18,6 +18,7 @@ package stroom.pathways.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -26,13 +27,11 @@ import stroom.importexport.shared.ImportState;
 import stroom.pathways.shared.PathwaysDoc;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 import stroom.util.shared.Message;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -216,11 +215,10 @@ public class PathwaysStoreImpl implements PathwaysStore {
 //                return d;
 //            });
 //        }
-        return store.exportDocument(docRef, messageList, d -> {
-            // TODO : Leaving here as we will want to copy pathways once they are in the DB.
-//            d.setFields(fields);
-            return d;
-        });
+        if (omitAuditFields) {
+            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
+        }
+        return store.exportDocument(docRef, messageList, d -> d);
     }
 
     // TODO : Leaving here as we will want to copy pathways once they are in the DB.
