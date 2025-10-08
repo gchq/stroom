@@ -46,10 +46,6 @@ public class Credentials {
     @JsonProperty
     private long expires;
 
-    /** The secret stuff */
-    @JsonProperty
-    private CredentialsSecret secret;
-
     private static final String EMPTY_NAME = "";
 
     /**
@@ -61,7 +57,6 @@ public class Credentials {
         this.type = CredentialsType.USERNAME_PASSWORD;
         this.credsExpire = false;
         this.expires = System.currentTimeMillis();
-        this.secret = new CredentialsSecret();
     }
 
     /**
@@ -70,7 +65,6 @@ public class Credentials {
      * @param uuid UUID. Can be null in which case UUID will be assigned to a random value.
      * @param type Type. If null then empty string is assigned.
      * @param expires Time in ms since epoch when this expires.
-     * @param secret The secret stuff. If null then empty secrets are assigned.
      */
     @JsonCreator
     public Credentials(
@@ -78,15 +72,13 @@ public class Credentials {
             @JsonProperty("uuid") final String uuid,
             @JsonProperty("type") final CredentialsType type,
             @JsonProperty("credsExpire") final boolean credsExpire,
-            @JsonProperty("expires") final long expires,
-            @JsonProperty("secret") final CredentialsSecret secret) {
+            @JsonProperty("expires") final long expires) {
 
         this.name = name == null ? EMPTY_NAME : name;
         this.uuid = uuid == null ? UUID.randomUUID().toString() : uuid;
         this.type = type == null ? CredentialsType.USERNAME_PASSWORD : type;
         this.credsExpire = credsExpire;
         this.expires = expires;
-        this.secret = secret == null ? new CredentialsSecret() : secret;
     }
 
     /**
@@ -151,32 +143,15 @@ public class Credentials {
     }
 
     /**
-     * @return Never returns null.
-     */
-    public CredentialsSecret getSecret() {
-        return secret;
-    }
-
-    /**
-     * @param secret Must not be null.
-     */
-    public void setSecret(final CredentialsSecret secret) {
-        Objects.requireNonNull(secret);
-        this.secret = secret;
-    }
-
-    /**
      * Returns a deep copy of this object.
      */
     public Credentials copy() {
-        final CredentialsSecret copyOfSecret = this.secret.copy();
         return new Credentials(
                 this.name,
                 this.uuid,
                 this.type,
                 this.credsExpire,
-                this.expires,
-                copyOfSecret);
+                this.expires);
     }
 
     @Override
@@ -192,14 +167,13 @@ public class Credentials {
                && Objects.equals(uuid, that.uuid)
                && type == that.type
                && credsExpire == that.credsExpire
-               && expires == that.expires
-               && Objects.equals(secret, that.secret);
+               && expires == that.expires;
     }
 
     @Override
     public int hashCode() {
         //return Objects.hash(uuid);
-        return Objects.hash(name, uuid, type, credsExpire, expires, secret);
+        return Objects.hash(name, uuid, type, credsExpire, expires);
     }
 
     @Override
@@ -210,7 +184,7 @@ public class Credentials {
                "', type=" + type +
                ", credsExpire=" + credsExpire +
                ", expires=" + expires +
-               ", secret=" + secret +
                '}';
     }
+
 }

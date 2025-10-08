@@ -74,11 +74,6 @@ public class Credentials extends TableImpl<CredentialsRecord> {
      */
     public final TableField<CredentialsRecord, Long> EXPIRES = createField(DSL.name("expires"), SQLDataType.BIGINT.nullable(false), this, "");
 
-    /**
-     * The column <code>stroom.credentials.secret</code>.
-     */
-    public final TableField<CredentialsRecord, String> SECRET = createField(DSL.name("secret"), SQLDataType.CLOB.nullable(false), this, "");
-
     private Credentials(Name alias, Table<CredentialsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

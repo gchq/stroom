@@ -1,6 +1,5 @@
 package stroom.credentials.impl;
 
-import stroom.credentials.shared.Credentials;
 import stroom.credentials.shared.CredentialsSecret;
 
 import org.apache.sshd.common.config.keys.KeyUtils;
@@ -25,7 +24,7 @@ import java.util.List;
 public class CredentialsJgitSshServerKeyDatabase implements ServerKeyDatabase {
 
     /** Talks to credentials DAO to get the server's public key for this connection */
-    private final Credentials credentials;
+    private final CredentialsSecret secret;
 
     /** Logger to figure out what is going on */
     private static final Logger LOGGER =
@@ -33,10 +32,10 @@ public class CredentialsJgitSshServerKeyDatabase implements ServerKeyDatabase {
 
     /**
      * Constructor.
-     * @param credentials The credentials we want to use for the connection.
+     * @param secret The secrets we want to use for the connection.
      */
-    public CredentialsJgitSshServerKeyDatabase(final Credentials credentials) {
-        this.credentials = credentials;
+    public CredentialsJgitSshServerKeyDatabase(final CredentialsSecret secret) {
+        this.secret = secret;
     }
 
     /**
@@ -84,7 +83,6 @@ public class CredentialsJgitSshServerKeyDatabase implements ServerKeyDatabase {
         boolean accepted = false;
 
         // Get server key from credentials
-        final CredentialsSecret secret = credentials.getSecret();
         final String storedServerPublicKeyString = secret.getServerPublicKey();
 
         if (storedServerPublicKeyString == null || storedServerPublicKeyString.isBlank()) {
@@ -107,11 +105,11 @@ public class CredentialsJgitSshServerKeyDatabase implements ServerKeyDatabase {
 
             accepted = KeyUtils.compareKeys(serverPublicKey, storedServerPublicKey);
             if (accepted) {
-                LOGGER.info("The server public key matches the stored server public key. "
-                             + "Connection permitted.");
+                LOGGER.info("The server public key for '{}' matches the stored server public key. "
+                             + "Connection permitted.", connectAddress);
             } else {
-                LOGGER.warn("The server public key does not match the stored server public key. "
-                        + "Connection not permitted.");
+                LOGGER.warn("The server public key for '{}' does not match the stored server public key. "
+                        + "Connection not permitted.", connectAddress);
             }
         }
 

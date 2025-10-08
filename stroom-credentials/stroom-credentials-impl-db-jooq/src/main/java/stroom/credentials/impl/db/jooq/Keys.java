@@ -10,7 +10,9 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
 
 import stroom.credentials.impl.db.jooq.tables.Credentials;
+import stroom.credentials.impl.db.jooq.tables.CredentialsSecret;
 import stroom.credentials.impl.db.jooq.tables.records.CredentialsRecord;
+import stroom.credentials.impl.db.jooq.tables.records.CredentialsSecretRecord;
 
 
 /**
@@ -25,4 +27,5 @@ public class Keys {
     // -------------------------------------------------------------------------
 
     public static final UniqueKey<CredentialsRecord> KEY_CREDENTIALS_PRIMARY = Internal.createUniqueKey(Credentials.CREDENTIALS, DSL.name("KEY_credentials_PRIMARY"), new TableField[] { Credentials.CREDENTIALS.UUID }, true);
+    public static final UniqueKey<CredentialsSecretRecord> KEY_CREDENTIALS_SECRET_PRIMARY = Internal.createUniqueKey(CredentialsSecret.CREDENTIALS_SECRET, DSL.name("KEY_credentials_secret_PRIMARY"), new TableField[] { CredentialsSecret.CREDENTIALS_SECRET.UUID }, true);
 }

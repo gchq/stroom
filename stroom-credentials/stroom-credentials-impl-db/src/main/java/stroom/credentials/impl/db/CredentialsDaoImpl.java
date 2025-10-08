@@ -2,6 +2,7 @@ package stroom.credentials.impl.db;
 
 import stroom.credentials.impl.CredentialsDao;
 import stroom.credentials.impl.db.jooq.tables.records.CredentialsRecord;
+import stroom.credentials.impl.db.jooq.tables.records.CredentialsSecretRecord;
 import stroom.credentials.shared.Credentials;
 import stroom.credentials.shared.CredentialsSecret;
 import stroom.credentials.shared.CredentialsType;
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static stroom.credentials.impl.db.jooq.tables.Credentials.CREDENTIALS;
+import static stroom.credentials.impl.db.jooq.tables.CredentialsSecret.CREDENTIALS_SECRET;
 
 /**
  * Implementation of the Credentials DAO.
@@ -51,20 +53,31 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
         if (record == null) {
             return null;
         } else {
-            final CredentialsSecret secret =
-                    JsonUtil.readValue(record.getSecret(), CredentialsSecret.class);
             return new Credentials(
                     record.getName(),
                     record.getUuid(),
                     CredentialsType.valueOf(record.getType()),
                     record.getCredsexpire() == 1,
-                    record.getExpires(),
-                    secret);
+                    record.getExpires());
+        }
+    }
+
+    /**
+     * Converts the Jooq generated CredentialsSecretRecord into a CredentialsSecret object.
+     * @param record The Jooq object to convert
+     * @return Our CredentialsSecret object.
+     */
+    private CredentialsSecret recordToSecret(final CredentialsSecretRecord record) {
+        if (record == null) {
+            return null;
+        } else {
+            return JsonUtil.readValue(record.getSecret(), CredentialsSecret.class);
+
         }
     }
 
     @Override
-    public List<Credentials> list() throws IOException {
+    public List<Credentials> listCredentials() throws IOException {
         try {
             final Result<CredentialsRecord> result =
                     JooqUtil.contextResult(credentialsDbConnProvider, context -> context
@@ -85,13 +98,13 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
     }
 
     @Override
-    public List<Credentials> list(final CredentialsType type)
+    public List<Credentials> listCredentials(final CredentialsType type)
         throws IOException {
 
         final List<Credentials> retval;
 
         if (type == null) {
-            retval = this.list();
+            retval = this.listCredentials();
         } else {
             try {
                 final Result<CredentialsRecord> result =
@@ -115,7 +128,7 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
     }
 
     @Override
-    public Credentials get(final String uuid) throws IOException {
+    public Credentials getCredentials(final String uuid) throws IOException {
         try {
             final CredentialsRecord credRecord =
                     JooqUtil.contextResult(credentialsDbConnProvider, context -> context
@@ -130,7 +143,7 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
     }
 
     @Override
-    public void store(final Credentials credentials) throws IOException {
+    public void storeCredentials(final Credentials credentials) throws IOException {
         try {
             JooqUtil.context(credentialsDbConnProvider, context -> context
                     .insertInto(CREDENTIALS)
@@ -138,21 +151,18 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
                             CREDENTIALS.NAME,
                             CREDENTIALS.TYPE,
                             CREDENTIALS.CREDSEXPIRE,
-                            CREDENTIALS.EXPIRES,
-                            CREDENTIALS.SECRET)
+                            CREDENTIALS.EXPIRES)
                     .values(credentials.getUuid(),
                             credentials.getName(),
                             credentials.getType().name(),
                             (byte) (credentials.isCredsExpire() ? 1 : 0),
-                            credentials.getExpires(),
-                            JsonUtil.writeValueAsString(credentials.getSecret()))
+                            credentials.getExpires())
                     .onDuplicateKeyUpdate()
                     .set(CREDENTIALS.UUID, credentials.getUuid())
                     .set(CREDENTIALS.NAME, credentials.getName())
                     .set(CREDENTIALS.TYPE, credentials.getType().name())
                     .set(CREDENTIALS.CREDSEXPIRE, (byte) (credentials.isCredsExpire() ? 1 : 0))
                     .set(CREDENTIALS.EXPIRES, credentials.getExpires())
-                    .set(CREDENTIALS.SECRET, JsonUtil.writeValueAsString(credentials.getSecret()))
                     .execute());
         } catch (final DataAccessException e) {
             LOGGER.error("Error storing credentials: {}", e.getMessage(), e);
@@ -161,15 +171,68 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
     }
 
     @Override
-    public void delete(final String uuid) throws IOException {
+    public void deleteCredentialsAndSecret(final String uuid) throws IOException {
+        DataAccessException exception = null;
         try {
             JooqUtil.context(credentialsDbConnProvider, context -> context
                     .deleteFrom(CREDENTIALS)
                     .where(CREDENTIALS.UUID.eq(uuid))
                     .execute());
         } catch (final DataAccessException e) {
+            // Store the exception for later so we can try to delete the secrets
+            exception = e;
+        }
+
+        try {
+            JooqUtil.context(credentialsDbConnProvider, context -> context
+                    .deleteFrom(CREDENTIALS_SECRET)
+                    .where(CREDENTIALS_SECRET.UUID.eq(uuid))
+                    .execute());
+
+            // Throw any exception from deleting the credentials
+            if (exception != null) {
+                throw exception;
+            }
+
+        } catch (final DataAccessException e) {
             LOGGER.error("Error deleting credentials: {}", e.getMessage(), e);
             throw new IOException("Error deleting credentials: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void storeSecret(final CredentialsSecret secret) throws IOException {
+        try {
+            JooqUtil.context(credentialsDbConnProvider, context -> context
+                    .insertInto(CREDENTIALS_SECRET)
+                    .columns(CREDENTIALS_SECRET.UUID,
+                            CREDENTIALS_SECRET.SECRET)
+                    .values(secret.getUuid(),
+                            JsonUtil.writeValueAsString(secret))
+                    .onDuplicateKeyUpdate()
+                    .set(CREDENTIALS_SECRET.UUID, secret.getUuid())
+                    .set(CREDENTIALS_SECRET.SECRET, JsonUtil.writeValueAsString(secret))
+                    .execute());
+        } catch (final DataAccessException e) {
+            // TODO Ensure nothing secret is logged
+            LOGGER.error("Error storing credential's secrets: {}", e.getMessage(), e);
+            throw new IOException("Error storing credential's secrets");
+        }
+    }
+
+    @Override
+    public CredentialsSecret getSecret(final String uuid) throws IOException {
+        try {
+            final CredentialsSecretRecord secretRecord =
+                    JooqUtil.contextResult(credentialsDbConnProvider, context -> context
+                            .fetchOne(CREDENTIALS_SECRET,
+                                    CREDENTIALS_SECRET.UUID.eq(uuid)));
+
+            return recordToSecret(secretRecord);
+
+        } catch (final DataAccessException e) {
+            LOGGER.error("Error gettings credentials: {}", e.getMessage(), e);
+            throw new IOException("Error getting credentials for '" + uuid + "': " + e.getMessage(), e);
         }
     }
 
@@ -178,7 +241,10 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
      */
     @Override
     public void clear() {
-        JooqUtil.context(credentialsDbConnProvider, context -> context.deleteFrom(CREDENTIALS).execute());
+        JooqUtil.context(credentialsDbConnProvider,
+                context -> context.deleteFrom(CREDENTIALS).execute());
+        JooqUtil.context(credentialsDbConnProvider,
+                context -> context.deleteFrom(CREDENTIALS_SECRET).execute());
     }
 
 }

@@ -3,6 +3,7 @@ package stroom.gitrepo.impl;
 import stroom.credentials.impl.CredentialsDao;
 import stroom.credentials.impl.CredentialsJgitSshTransportCallback;
 import stroom.credentials.shared.Credentials;
+import stroom.credentials.shared.CredentialsSecret;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
@@ -583,16 +584,17 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
 
             try {
                 // Grab the credentials from the database
-                final Credentials credentials = credentialsDao.get(credentialsId);
+                final Credentials credentials = credentialsDao.getCredentials(credentialsId);
+                final CredentialsSecret secret = credentialsDao.getSecret(credentialsId);
 
                 // Note any field of the secrets might be null so handle that
                 switch (credentials.getType()) {
                     case USERNAME_PASSWORD -> {
-                        String username = credentials.getSecret().getUsername();
+                        String username = secret.getUsername();
                         if (username == null) {
                             username = EMPTY;
                         }
-                        String password = credentials.getSecret().getPassword();
+                        String password = secret.getPassword();
                         if (password == null) {
                             password = EMPTY;
                         }
@@ -600,7 +602,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                                 new UsernamePasswordCredentialsProvider(username, password));
                     }
                     case ACCESS_TOKEN -> {
-                        String accessToken = credentials.getSecret().getAccessToken();
+                        String accessToken = secret.getAccessToken();
                         if (accessToken == null) {
                             accessToken = EMPTY;
                         }

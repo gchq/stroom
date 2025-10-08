@@ -24,7 +24,6 @@ dependencies {
 
     testImplementation project(':stroom-test-common')
     testImplementation libs.flyway.core
-
     testImplementation libs.bundles.common.test.implementation
 
 }

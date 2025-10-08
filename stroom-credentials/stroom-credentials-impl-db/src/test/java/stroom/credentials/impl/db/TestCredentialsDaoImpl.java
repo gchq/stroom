@@ -50,54 +50,69 @@ public class TestCredentialsDaoImpl {
 
     @Test
     void testDao() throws IOException {
+        final String uuid = UUID.randomUUID().toString();
         final CredentialsSecret secret = new CredentialsSecret(
+                uuid,
                 "username",
                 "password",
                 null,
                 null,
                 null,
                 null);
-        final String uuid = UUID.randomUUID().toString();
         final long expires = System.currentTimeMillis();
 
         final Credentials credentials1 = new Credentials("Test creds",
                 uuid,
                 CredentialsType.USERNAME_PASSWORD,
                 false,
-                expires,
-                secret);
+                expires);
 
-        credentialsDao.store(credentials1);
+        credentialsDao.storeCredentials(credentials1);
+        credentialsDao.storeSecret(secret);
 
         // Get one item out
-        final Credentials credentials2 = credentialsDao.get(uuid);
+        final Credentials credentials2 = credentialsDao.getCredentials(uuid);
+        final CredentialsSecret secret2 = credentialsDao.getSecret(uuid);
 
         assertThat(credentials2.getName()).isEqualTo("Test creds");
         assertThat(credentials2.getUuid()).isEqualTo(uuid);
         assertThat(credentials2.getType()).isEqualTo(CredentialsType.USERNAME_PASSWORD);
         assertThat(credentials2.isCredsExpire()).isEqualTo(false);
         assertThat(credentials2.getExpires()).isEqualTo(expires);
-        assertThat(credentials2.getSecret()).isEqualTo(secret);
+        assertThat(secret2).isEqualTo(secret);
+
+        // Update the credentials, then check again
+        credentials2.setName("Test creds 2");
+        credentialsDao.storeCredentials(credentials2);
+        final Credentials credentials3 = credentialsDao.getCredentials(uuid);
+        assertThat(credentials3.getName()).isEqualTo("Test creds 2");
+
+        // Update the secrets, then check again
+        secret2.setPassphrase("foobar");
+        credentialsDao.storeSecret(secret2);
+        final CredentialsSecret secret3 = credentialsDao.getSecret(uuid);
+        assertThat(secret3.getPassphrase()).isEqualTo("foobar");
 
         // Get all items out
-        final List<Credentials> list = credentialsDao.list();
+        final List<Credentials> list = credentialsDao.listCredentials();
         assertThat(list.size()).isEqualTo(1);
         final Credentials cl1 = list.getFirst();
-        assertThat(cl1.getName()).isEqualTo("Test creds");
+        assertThat(cl1.getName()).isEqualTo("Test creds 2");
         assertThat(cl1.getUuid()).isEqualTo(uuid);
         assertThat(cl1.getType()).isEqualTo(CredentialsType.USERNAME_PASSWORD);
         assertThat(cl1.isCredsExpire()).isEqualTo(false);
         assertThat(cl1.getExpires()).isEqualTo(expires);
-        assertThat(cl1.getSecret()).isEqualTo(secret);
+        final CredentialsSecret cl1Secret = credentialsDao.getSecret(cl1.getUuid());
+        assertThat(cl1Secret).isEqualTo(secret3);
 
         // Get all of type USERNAME_PASSWORD
-        final List<Credentials> listOfUP = credentialsDao.list(CredentialsType.USERNAME_PASSWORD);
+        final List<Credentials> listOfUP = credentialsDao.listCredentials(CredentialsType.USERNAME_PASSWORD);
         assertThat(listOfUP.size()).isEqualTo(1);
 
         // Try other types
-        final List<Credentials> listOfAT = credentialsDao.list(CredentialsType.ACCESS_TOKEN);
+        final List<Credentials> listOfAT = credentialsDao.listCredentials(CredentialsType.ACCESS_TOKEN);
         assertThat(listOfAT.size()).isEqualTo(0);
-        final List<Credentials> listOfPC = credentialsDao.list(CredentialsType.PRIVATE_CERT);
+        final List<Credentials> listOfPC = credentialsDao.listCredentials(CredentialsType.PRIVATE_CERT);
         assertThat(listOfPC.size()).isEqualTo(0);
     }
 

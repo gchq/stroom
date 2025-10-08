@@ -18,7 +18,7 @@
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
 --
--- Create the credentials table
+-- Create the credentials tables
 --
 CREATE TABLE IF NOT EXISTS credentials (
   uuid         varchar(255) NOT NULL,
@@ -26,8 +26,13 @@ CREATE TABLE IF NOT EXISTS credentials (
   type         varchar(255) NOT NULL,
   credsExpire  bool NOT NULL,
   expires      bigint NOT NULL,
-  secret       longtext NOT NULL,
   PRIMARY KEY  (uuid)
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+
+CREATE TABLE IF NOT EXISTS credentials_secret (
+  uuid         varchar(255) NOT NULL,
+  secret       longtext NOT NULL,
+  PRIMARY KEY (uuid)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;

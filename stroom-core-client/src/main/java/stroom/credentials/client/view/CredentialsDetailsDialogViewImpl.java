@@ -130,7 +130,9 @@ public class CredentialsDetailsDialogViewImpl
      *                    in which case empty values will be displayed.
      */
     @Override
-    public void setCredentials(final Credentials credentials) {
+    public void setCredentials(final Credentials credentials,
+                               final CredentialsSecret secret) {
+
         if (credentials == null) {
             uuid = null;
             txtName.setText(EMPTY);
@@ -150,12 +152,12 @@ public class CredentialsDetailsDialogViewImpl
             lstType.setSelectedIndex(credentials.getType().ordinal());
             chkCredsExpire.setValue(credentials.isCredsExpire());
             dtpExpires.setMilliseconds(credentials.getExpires());
-            txtUsername.setText(credentials.getSecret().getUsername());
-            pwdPassword.setText(credentials.getSecret().getPassword());
-            txtAccessToken.setText(credentials.getSecret().getAccessToken());
-            txtPassphrase.setText(credentials.getSecret().getPassphrase());
-            txtPrivateKey.setText(credentials.getSecret().getPrivateKey());
-            txtServerPublicKey.setText(credentials.getSecret().getServerPublicKey());
+            txtUsername.setText(secret.getUsername());
+            pwdPassword.setText(secret.getPassword());
+            txtAccessToken.setText(secret.getAccessToken());
+            txtPassphrase.setText(secret.getPassphrase());
+            txtPrivateKey.setText(secret.getPrivateKey());
+            txtServerPublicKey.setText(secret.getServerPublicKey());
         }
         updateState();
     }
@@ -163,17 +165,11 @@ public class CredentialsDetailsDialogViewImpl
     /**
      * Returns the credentials object held by this object,
      * updated with any changes.
-     * @return A new credentials object holding a new secrets object.
+     * @return A new credentials object.
      */
     @Override
     public Credentials getCredentials() {
-        final CredentialsSecret secret = new CredentialsSecret(
-                txtUsername.getText(),
-                pwdPassword.getText(),
-                txtAccessToken.getText(),
-                txtPassphrase.getText(),
-                txtPrivateKey.getText(),
-                txtServerPublicKey.getText());
+
         final Long expiresAsLong = dtpExpires.getMilliseconds();
         final long expires = expiresAsLong == null ? 0L : expiresAsLong;
         return new Credentials(
@@ -181,8 +177,23 @@ public class CredentialsDetailsDialogViewImpl
                 uuid,
                 getCredentialsType(),
                 chkCredsExpire.getValue(),
-                expires,
-                secret);
+                expires);
+    }
+
+    /**
+     * Returns the secrets object held by this object.
+     * @return A new secrets object updated with any changes.
+     */
+    @Override
+    public CredentialsSecret getSecret() {
+        return new CredentialsSecret(
+                uuid,
+                txtUsername.getText(),
+                pwdPassword.getText(),
+                txtAccessToken.getText(),
+                txtPassphrase.getText(),
+                txtPrivateKey.getText(),
+                txtServerPublicKey.getText());
     }
 
     /**

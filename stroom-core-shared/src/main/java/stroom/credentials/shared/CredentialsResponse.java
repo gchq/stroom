@@ -7,10 +7,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
 
+/**
+ * Class to wrap up the return values from the Credentials Resource.
+ */
 @JsonInclude(Include.NON_NULL)
 public class CredentialsResponse {
+
+    /** Did the method call work? */
     public enum Status {
+        /** Yes the call worked */
         OK,
+        /** No the call didn't work */
         GENERAL_ERR
     }
 
@@ -23,6 +30,9 @@ public class CredentialsResponse {
     @JsonProperty
     private final Credentials credentials;
 
+    @JsonProperty
+    private final CredentialsSecret secret;
+
     /**
      * Constructor that just takes the status. Default values for other parameters.
      * @param status If the API call worked. Must not be null.
@@ -32,6 +42,7 @@ public class CredentialsResponse {
         this.status = status;
         this.message = "";
         this.credentials = null;
+        this.secret = null;
     }
 
     /**
@@ -45,23 +56,44 @@ public class CredentialsResponse {
         this.status = status;
         this.message = message;
         this.credentials = null;
+        this.secret = null;
     }
 
     /**
-     * Constructor.
-     * @param status If the API call worked. Must not be null.
-     * @param message Any message. Must not be null.
+     * Constructor for successful getting of object.
      * @param credentials Optional credentials - can be null.
      */
+    public CredentialsResponse(final Credentials credentials) {
+        this.status = Status.OK;
+        this.message = "";
+        this.credentials = credentials;
+        this.secret = null;
+    }
+
+    /**
+     * Constructor for successful getting of object.
+     * @param secret Optional secret - can be null.
+     */
+    public CredentialsResponse(final CredentialsSecret secret) {
+        this.status = Status.OK;
+        this.message = "";
+        this.credentials = null;
+        this.secret = secret;
+    }
+
+    /**
+     * Constructor for deserialisation.
+     */
+    @SuppressWarnings("unused")
     @JsonCreator
-    public CredentialsResponse(@JsonProperty("status") final CredentialsResponse.Status status,
+    public CredentialsResponse(@JsonProperty("status") final Status status,
                                @JsonProperty("message") final String message,
-                               @JsonProperty("credentials") final Credentials credentials) {
-        Objects.requireNonNull(status);
-        Objects.requireNonNull(message);
+                               @JsonProperty("credentials") final Credentials credentials,
+                               @JsonProperty("secret") final CredentialsSecret secret) {
         this.status = status;
         this.message = message;
         this.credentials = credentials;
+        this.secret = secret;
     }
 
     /**
@@ -83,5 +115,12 @@ public class CredentialsResponse {
      */
     public Credentials getCredentials() {
         return credentials;
+    }
+
+    /**
+     * @return The secret, if any. Will return null if no secret present.
+     */
+    public CredentialsSecret getSecret() {
+        return secret;
     }
 }

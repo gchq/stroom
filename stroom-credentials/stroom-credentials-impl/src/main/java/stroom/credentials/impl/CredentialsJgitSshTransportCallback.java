@@ -71,10 +71,10 @@ public class CredentialsJgitSshTransportCallback implements TransportConfigCallb
 
             try {
                 // Create key pair from DB
-                final Credentials credentials = credentialsDao.get(credentialsId);
-                final CredentialsSecret secret = credentials.getSecret();
+                final Credentials credentials = credentialsDao.getCredentials(credentialsId);
+                final CredentialsSecret secret = credentialsDao.getSecret(credentialsId);
                 final CredentialsJgitSshServerKeyDatabase serverKeyDatabase =
-                        new CredentialsJgitSshServerKeyDatabase(credentials);
+                        new CredentialsJgitSshServerKeyDatabase(secret);
 
                 if (credentials.getType() == CredentialsType.PRIVATE_CERT) {
                     LOGGER.info("Configuring transport to use credentials: {}", credentials);

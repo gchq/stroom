@@ -12,6 +12,7 @@ import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
 import stroom.credentials.impl.db.jooq.tables.Credentials;
+import stroom.credentials.impl.db.jooq.tables.CredentialsSecret;
 
 
 /**
@@ -33,6 +34,11 @@ public class Stroom extends SchemaImpl {
     public final Credentials CREDENTIALS = Credentials.CREDENTIALS;
 
     /**
+     * The table <code>stroom.credentials_secret</code>.
+     */
+    public final CredentialsSecret CREDENTIALS_SECRET = CredentialsSecret.CREDENTIALS_SECRET;
+
+    /**
      * No further instances allowed
      */
     private Stroom() {
@@ -48,7 +54,8 @@ public class Stroom extends SchemaImpl {
     @Override
     public final List<Table<?>> getTables() {
         return Arrays.asList(
-            Credentials.CREDENTIALS
+            Credentials.CREDENTIALS,
+            CredentialsSecret.CREDENTIALS_SECRET
         );
     }
 }

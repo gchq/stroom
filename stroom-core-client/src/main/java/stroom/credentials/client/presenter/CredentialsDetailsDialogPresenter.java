@@ -2,6 +2,7 @@ package stroom.credentials.client.presenter;
 
 import stroom.credentials.client.presenter.CredentialsDetailsDialogPresenter.CredentialsDetailsDialogView;
 import stroom.credentials.shared.Credentials;
+import stroom.credentials.shared.CredentialsSecret;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -39,10 +40,11 @@ public class CredentialsDetailsDialogPresenter
      * @param builder The builder to show this popup.
      */
     public void setupDialog(final Credentials credentials,
+                            final CredentialsSecret secret,
                             final ShowPopupEvent.Builder builder) {
 
         // Populate the UI
-        this.getView().setCredentials(credentials);
+        this.getView().setCredentials(credentials, secret);
 
         // Configure the popup builder for this dialog
         builder.popupType(PopupType.OK_CANCEL_DIALOG)
@@ -72,14 +74,30 @@ public class CredentialsDetailsDialogPresenter
     public interface CredentialsDetailsDialogView extends View {
 
         /**
-         * @return The username entered by the user.
+         * @return The credentials object holding credentials metadata.
          */
         Credentials getCredentials();
 
-        void setCredentials(Credentials credentials);
+        /**
+         * @return The secrets associated with the credentials.
+         */
+        CredentialsSecret getSecret();
 
+        /**
+         * Sets the credentials displayed by this dialog.
+         * @param credentials The credentials meta-data.
+         * @param secret The secret stuff.
+         */
+        void setCredentials(Credentials credentials, CredentialsSecret secret);
+
+        /**
+         * @return true if the data in the dialog is valid.
+         */
         boolean isValid();
 
+        /**
+         * @return A message to display to the user if isValid() == false.
+         */
         String getValidationMessage();
 
     }
