@@ -2633,6 +2633,13 @@ button.main-menu svg {
     height: 150px;
 }
 
+/* Background and border on table */
+.credentials-manager-dialog {
+    background-color: var(--control__background-color);
+    border: solid 1px var(--control__border-color);
+    border-radius: .25rem;
+}
+
 /* --- */
 .multiChooser td {
     vertical-align: middle;
