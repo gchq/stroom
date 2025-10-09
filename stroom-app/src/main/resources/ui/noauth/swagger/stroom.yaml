@@ -4859,7 +4859,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ResultPagePathway"
+                $ref: "#/components/schemas/PathwayResultPage"
           description: default response
       summary: Find pathways
       tags:
@@ -14404,6 +14404,15 @@ components:
           $ref: "#/components/schemas/PathNode"
         updateTime:
           $ref: "#/components/schemas/NanoTime"
+    PathwayResultPage:
+      type: object
+      properties:
+        pageResponse:
+          $ref: "#/components/schemas/PageResponse"
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/Pathway"
     PathwaysDoc:
       type: object
       properties:
@@ -14430,6 +14439,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Pathway"
+        processingNode:
+          type: string
         temporalOrderingTolerance:
           $ref: "#/components/schemas/SimpleDuration"
         tracesDocRef:
@@ -15803,12 +15814,15 @@ components:
           type: string
         key:
           type: string
+          minLength: 1
         mapName:
           type: string
+          minLength: 1
         referenceLoaders:
           type: array
           items:
             $ref: "#/components/schemas/ReferenceLoader"
+          minItems: 1
       required:
       - key
       - mapName
@@ -16334,16 +16348,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MetaRow"
-    ResultPagePathway:
-      type: object
-      description: A page of results.
-      properties:
-        pageResponse:
-          $ref: "#/components/schemas/PageResponse"
-        values:
-          type: array
-          items:
-            $ref: "#/components/schemas/Pathway"
     ResultPageProcessorTask:
       type: object
       description: A page of results.
@@ -19320,10 +19324,8 @@ components:
       - type: object
         properties:
           bytes:
-            type: array
-            items:
-              type: string
-              format: byte
+            type: string
+            format: byte
     ValidateExpressionRequest:
       type: object
       properties:

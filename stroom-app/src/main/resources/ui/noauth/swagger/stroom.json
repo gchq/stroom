@@ -7086,7 +7086,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ResultPagePathway"
+                  "$ref" : "#/components/schemas/PathwayResultPage"
                 }
               }
             },
@@ -19759,6 +19759,20 @@
           }
         }
       },
+      "PathwayResultPage" : {
+        "type" : "object",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Pathway"
+            }
+          }
+        }
+      },
       "PathwaysDoc" : {
         "type" : "object",
         "properties" : {
@@ -19795,6 +19809,9 @@
             "items" : {
               "$ref" : "#/components/schemas/Pathway"
             }
+          },
+          "processingNode" : {
+            "type" : "string"
           },
           "temporalOrderingTolerance" : {
             "$ref" : "#/components/schemas/SimpleDuration"
@@ -21303,16 +21320,19 @@
             "type" : "string"
           },
           "key" : {
-            "type" : "string"
+            "type" : "string",
+            "minLength" : 1
           },
           "mapName" : {
-            "type" : "string"
+            "type" : "string",
+            "minLength" : 1
           },
           "referenceLoaders" : {
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/ReferenceLoader"
-            }
+            },
+            "minItems" : 1
           }
         },
         "required" : [ "key", "mapName", "referenceLoaders" ]
@@ -22057,21 +22077,6 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/MetaRow"
-            }
-          }
-        }
-      },
-      "ResultPagePathway" : {
-        "type" : "object",
-        "description" : "A page of results.",
-        "properties" : {
-          "pageResponse" : {
-            "$ref" : "#/components/schemas/PageResponse"
-          },
-          "values" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/Pathway"
             }
           }
         }
@@ -25930,11 +25935,8 @@
           "type" : "object",
           "properties" : {
             "bytes" : {
-              "type" : "array",
-              "items" : {
-                "type" : "string",
-                "format" : "byte"
-              }
+              "type" : "string",
+              "format" : "byte"
             }
           }
         } ]
