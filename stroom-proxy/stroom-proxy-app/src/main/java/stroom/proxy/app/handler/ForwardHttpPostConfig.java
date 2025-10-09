@@ -63,7 +63,7 @@ public final class ForwardHttpPostConfig
         forwardHeadersAdditionalAllowSet = Collections.emptySet();
     }
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "checkstyle:linelength"})
     @JsonCreator
     public ForwardHttpPostConfig(@JsonProperty("enabled") final Boolean enabled,
                                  @JsonProperty("instant") final Boolean instant,
