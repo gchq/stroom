@@ -99,36 +99,17 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
         this.dataGrid = new MyDataGrid<>(this);
         view.setDataWidget(dataGrid);
         dataGrid.setMultiLine(true);
+        dataGrid.setWidth("100%");
         this.gridSelectionModel = dataGrid.addDefaultSelectionModel(false);
 
         btnAdd = this.getView().addButton(SvgPresets.ADD);
         btnDelete = this.getView().addButton(SvgPresets.DELETE);
         btnEdit = this.getView().addButton(SvgPresets.EDIT);
-        btnAdd.addClickHandler(event -> handleAddButtonClick());
-        btnDelete.addClickHandler(event -> handleDeleteButtonClick());
-        btnEdit.addClickHandler(event -> handleEditButtonClick());
 
         this.initColumns(dataGrid);
 
         // Define a class for the CSS
         this.getWidget().addStyleName("credentials-list");
-
-        // Get notified when data has loaded and load up the first item
-        dataGrid.addLoadingStateChangeHandler(event -> {
-            if (event.getLoadingState() == LoadingState.LOADED
-                || event.getLoadingState() == LoadingState.PARTIALLY_LOADED) {
-                if (defaultSelection) {
-                    if (gridSelectionModel.getSelected() == null
-                        && dataGrid.getRowCount() > 0) {
-                        final Credentials credentials = dataGrid.getVisibleItem(FIRST_ITEM_INDEX);
-                        gridSelectionModel.setSelected(credentials);
-                    }
-                }
-            }
-        });
-
-        // Set the state of the UI
-        gridSelectionModel.addSelectionHandler(event -> updateState());
 
         // Hook up the data
         dataProvider = createDataProvider(super.getEventBus(),
@@ -215,11 +196,33 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     protected void onBind() {
         super.onBind();
 
+        btnAdd.addClickHandler(event -> handleAddButtonClick());
+        btnDelete.addClickHandler(event -> handleDeleteButtonClick());
+        btnEdit.addClickHandler(event -> handleEditButtonClick());
+
         registerHandler(gridSelectionModel.addSelectionHandler(event -> {
             if (event.getSelectionType().isDoubleSelect()) {
                 handleEditButtonClick();
             }
         }));
+
+        // Set the state of the UI
+        gridSelectionModel.addSelectionHandler(event -> updateState());
+
+        // Get notified when data has loaded and load up the first item
+        dataGrid.addLoadingStateChangeHandler(event -> {
+            if (event.getLoadingState() == LoadingState.LOADED
+                || event.getLoadingState() == LoadingState.PARTIALLY_LOADED) {
+                if (defaultSelection) {
+                    if (gridSelectionModel.getSelected() == null
+                        && dataGrid.getRowCount() > 0) {
+                        final Credentials credentials = dataGrid.getVisibleItem(FIRST_ITEM_INDEX);
+                        gridSelectionModel.setSelected(credentials);
+                    }
+                }
+            }
+        });
+
     }
 
     /**
