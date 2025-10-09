@@ -158,7 +158,7 @@ proxyConfig:
   forwardHttpDestinations:
     - enabled: true
       name: "downstream"
-      forwardUrl: "http://localhost:8080/datafeed"
+#      forwardUrl: "http://localhost:8080/datafeed"
 #      livenessCheckUrl: "http://localhost:8080/status"
       apiKey: ""
       queue:
