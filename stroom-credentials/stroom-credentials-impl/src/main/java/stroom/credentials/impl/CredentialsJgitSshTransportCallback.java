@@ -65,7 +65,7 @@ public class CredentialsJgitSshTransportCallback implements TransportConfigCallb
      */
     @Override
     public void configure(final Transport transport) {
-        LOGGER.info("Configuring transport");
+        LOGGER.info("Configuring transport ");
 
         if (transport instanceof final SshTransport sshTransport) {
 
