@@ -298,17 +298,30 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
 //                        GWT.log(response.toString());
 
                         if (search == currentSearch) {
-                            currentQueryKey = response.getQueryKey();
-                            currentNode = response.getNode();
+                            if (response != null) {
+                                currentQueryKey = response.getQueryKey();
+                                currentNode = response.getNode();
 
-                            try {
-                                update(response);
-                            } catch (final RuntimeException e) {
-                                GWT.log(e.getMessage());
-                            }
+                                try {
+                                    update(response);
+                                } catch (final RuntimeException e) {
+                                    GWT.log(e.getMessage());
+                                }
 
-                            if (polling) {
-                                poll(false);
+                                if (polling) {
+                                    poll(false);
+                                }
+                            } else {
+                                // Tell all components if we are complete.
+                                // Stop the spinner from spinning and tell components that they
+                                // no longer want data.
+                                resultComponents.values().forEach(ResultComponent::endSearch);
+
+                                // Let the query presenter know search is inactive.
+                                setSearching(false);
+
+                                // If we have completed search then stop the task spinner.
+                                polling = false;
                             }
                         } else {
                             deleteStore(response.getNode(), response.getQueryKey(), DestroyReason.NO_LONGER_NEEDED);
