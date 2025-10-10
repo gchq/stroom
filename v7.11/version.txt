@@ -1,1 +1,1 @@
-v7.11-beta.6
+v7.11-pathways-beta
