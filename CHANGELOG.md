@@ -13,6 +13,22 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11-pathways-beta] - 2025-10-10
+
+* Issue **#5175** : Fix zip handling.
+
+* Uplift dependency java-jwt 4.4.0 => 4.5.0.
+
+* Fix config validation not being run on config branches that are items in a list, e.g. `forwardHttpDestinations`.
+
+* Remove `NotNull` validation condition on `forwardHttpDestinations[n].apiKey` as proxy may use OAuth tokens to authenticate with the downstream destination.
+
+* Issue **#5175** : Add warning messages to stroom and proxy `/datafeed` to warn if a zip is received that contains paths that would unzip outside of a target directory. Only a warning as the paths in a zip sent to `/datafeed` are not used by stroom/proxy.
+
+* Uplift org.apache.commons:commons-csv from 1.10.0 to 1.14.1.
+
+* Uplift dependency org.apache.commons:commons-pool2 from 2.12.0 to 2.12.1.
+
 * Issue **#5146** : Fix use of not equals in annotation queries.
 
 * Issue **#5145** : Expand all now affects favourites.
@@ -1785,7 +1801,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.6...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-pathways-beta...HEAD
+[v7.11-pathways-beta]: https://github.com/gchq/stroom/compare/v7.11-beta.6...v7.11-pathways-beta
 [v7.11-beta.6]: https://github.com/gchq/stroom/compare/v7.11-beta.5...v7.11-beta.6
 [v7.11-beta.5]: https://github.com/gchq/stroom/compare/v7.11-beta.4...v7.11-beta.5
 [v7.11-beta.4]: https://github.com/gchq/stroom/compare/v7.11-beta.3...v7.11-beta.4
