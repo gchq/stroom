@@ -39,6 +39,23 @@ public class TestLmdbStreamBenchmark {
     private Env<ByteBuffer> env;
     private Dbi<ByteBuffer> dbi;
 
+    private final int min1 = 0;
+    private final int min2 = 0;
+    private final int max1 = 99999;
+    private final int max2 = 99;
+    private final int low1 = 42;
+    private final int low2 = 42;
+    private final int high1 = 90000;
+    private final int high2 = 42;
+    private final int total1 = max1 - min1 + 1;
+    private final int total2 = max2 - min2 + 1;
+    private final long totalRows = total1 * total2;
+
+    private final Point minPoint = new Point(min1, min2);
+    private final Point maxPoint = new Point(max1, max2);
+    private final Point lowPoint = new Point(low1, low2);
+    private final Point highPoint = new Point(high1, high2);
+
     // Used to perform profiling.
     @Disabled
     @Test
@@ -52,8 +69,8 @@ public class TestLmdbStreamBenchmark {
         final ByteBuffer key = ByteBuffer.allocateDirect(Integer.BYTES + Integer.BYTES);
         final ByteBuffer value = ByteBuffer.allocateDirect(0);
         try (final Txn<ByteBuffer> txn = env.txnWrite()) {
-            for (int i = 0; i < 1000000; i++) {
-                for (int j = 0; j < 100; j++) {
+            for (int i = min1; i <= max1; i++) {
+                for (int j = min2; j <= max2; j++) {
                     key.putInt(i);
                     key.putInt(j);
                     key.flip();
@@ -63,18 +80,18 @@ public class TestLmdbStreamBenchmark {
             txn.commit();
         }
 
-        final TimedCase testForwardRange = TimedCase.of(
+        final TimedCase testForwardRange = makeCase(
                 "Test forward range",
-                (round, iterations) -> {
-                    final ByteBuffer start = createTestBuffer(42, 42);
-                    final ByteBuffer stop = createTestBuffer(900000, 42);
+                () -> {
+                    final ByteBuffer start = createTestBuffer(low1, low2);
+                    final ByteBuffer stop = createTestBuffer(high1, low2);
                     testStream(LmdbKeyRange.builder()
                                     .start(start)
                                     .stop(stop)
                                     .build(),
                             89995801L,
-                            createTestBuffer(42, 42),
-                            createTestBuffer(900000, 42));
+                            createTestBuffer(low1, low2),
+                            createTestBuffer(high1, low2));
                 });
 
         TestUtil.comparePerformance(
@@ -95,33 +112,25 @@ public class TestLmdbStreamBenchmark {
         dbi = env.openDbi("test".getBytes(StandardCharsets.UTF_8), DbiFlags.MDB_CREATE);
         writeData();
 
-        final long totalRows = 10000000L;
-        final ByteBuffer minPoint = createTestBuffer(0, 0);
-        final ByteBuffer maxPoint = createTestBuffer(99999, 99);
-        final ByteBuffer lowPoint = createTestBuffer(42, 42);
-        final ByteBuffer highPoint = createTestBuffer(90000, 42);
-
         final List<TimedCase> cases = new ArrayList<>();
-        cases.add(TimedCase.of("Test utility iterator", (round, iterations) -> {
+        cases.add(makeCase("Test utility iterator", () -> {
             final AtomicInteger count = new AtomicInteger();
             try (final Txn<ByteBuffer> txn = env.txnRead()) {
-                LmdbIterable.iterate(txn, dbi, (key, val) -> {
-                    count.incrementAndGet();
-                });
+                LmdbIterable.iterate(txn, dbi, (key, val) -> count.incrementAndGet());
             }
-            assertThat(count.get()).isEqualTo(iterations);
+            assertThat(count.get()).isEqualTo(totalRows);
         }));
 
-        cases.add(TimedCase.of(
+        cases.add(makeCase(
                 "Test library iterator",
-                (round, iterations) -> {
+                () -> {
                     long count = 0;
                     try (final Txn<ByteBuffer> txn = env.txnRead()) {
-                        for (final KeyVal<ByteBuffer> kv : dbi.iterate(txn)) {
+                        for (final KeyVal<ByteBuffer> ignored : dbi.iterate(txn)) {
                             count++;
                         }
                     }
-                    assertThat(count).isEqualTo(iterations);
+                    assertThat(count).isEqualTo(totalRows);
                 }));
 
         // ALL FORWARD
@@ -145,175 +154,188 @@ public class TestLmdbStreamBenchmark {
         // AT LEAST
         addTestSet(cases,
                 "atLeast",
-                KeyRange.atLeast(lowPoint),
-                LmdbKeyRange.builder().start(lowPoint).build(),
-                9995758L,
+                KeyRange.atLeast(lowPoint.toBuffer()),
+                LmdbKeyRange.builder().start(lowPoint.toBuffer()).build(),
+                diff(lowPoint, maxPoint) + 1,
                 lowPoint,
                 maxPoint);
 
         // AT LEAST BACKWARD
         addTestSet(cases,
                 "atLeastBackward",
-                KeyRange.atLeastBackward(highPoint),
-                LmdbKeyRange.builder().start(highPoint).reverse().build(),
-                9000043L,
+                KeyRange.atLeastBackward(highPoint.toBuffer()),
+                LmdbKeyRange.builder().start(highPoint.toBuffer()).reverse().build(),
+                diff(minPoint, highPoint) + 1,
                 highPoint,
                 minPoint);
 
         // AT MOST
         addTestSet(cases,
                 "atMost",
-                KeyRange.atMost(highPoint),
-                LmdbKeyRange.builder().stop(highPoint).build(),
-                9000043L,
+                KeyRange.atMost(highPoint.toBuffer()),
+                LmdbKeyRange.builder().stop(highPoint.toBuffer()).build(),
+                diff(minPoint, highPoint) + 1,
                 minPoint,
                 highPoint);
 
         // AT MOST BACKWARD
         addTestSet(cases,
                 "atMostBackward",
-                KeyRange.atMostBackward(lowPoint),
-                LmdbKeyRange.builder().stop(lowPoint).reverse().build(),
-                9995758L,
+                KeyRange.atMostBackward(lowPoint.toBuffer()),
+                LmdbKeyRange.builder().stop(lowPoint.toBuffer()).reverse().build(),
+                diff(lowPoint, maxPoint) + 1,
                 maxPoint,
                 lowPoint);
 
         // FORWARD_CLOSED
         addTestSet(cases,
                 "closed",
-                KeyRange.closed(lowPoint, highPoint),
-                LmdbKeyRange.builder().start(lowPoint).stop(highPoint).build(),
-                8995801L,
+                KeyRange.closed(lowPoint.toBuffer(), highPoint.toBuffer()),
+                LmdbKeyRange.builder().start(lowPoint.toBuffer()).stop(highPoint.toBuffer()).build(),
+                diff(lowPoint, highPoint) + 1,
                 lowPoint,
                 highPoint);
 
         // BACKWARD_CLOSED
         addTestSet(cases,
                 "closedBackward",
-                KeyRange.closedBackward(highPoint, lowPoint),
-                LmdbKeyRange.builder().start(highPoint).stop(lowPoint).reverse().build(),
-                8995801L,
+                KeyRange.closedBackward(highPoint.toBuffer(), lowPoint.toBuffer()),
+                LmdbKeyRange.builder().start(highPoint.toBuffer()).stop(lowPoint.toBuffer()).reverse().build(),
+                diff(lowPoint, highPoint) + 1,
                 highPoint,
                 lowPoint);
 
         // FORWARD_CLOSED_OPEN
         addTestSet(cases,
                 "closedOpen",
-                KeyRange.closedOpen(lowPoint, highPoint),
-                LmdbKeyRange.builder().start(lowPoint).stop(highPoint, false).build(),
-                8995800L,
+                KeyRange.closedOpen(lowPoint.toBuffer(), highPoint.toBuffer()),
+                LmdbKeyRange.builder().start(lowPoint.toBuffer()).stop(highPoint.toBuffer(), false).build(),
+                diff(lowPoint, highPoint),
                 lowPoint,
-                createTestBuffer(90000, 41));
+                new Point(high1, low2 - 1));
 
         // BACKWARD_CLOSED_OPEN
         addTestSet(cases,
                 "closedOpenBackward",
-                KeyRange.closedOpenBackward(highPoint, lowPoint),
-                LmdbKeyRange.builder().start(highPoint).stop(lowPoint, false).reverse().build(),
-                8995800L,
+                KeyRange.closedOpenBackward(highPoint.toBuffer(), lowPoint.toBuffer()),
+                LmdbKeyRange.builder()
+                        .start(highPoint.toBuffer())
+                        .stop(lowPoint.toBuffer(), false)
+                        .reverse().build(),
+                diff(lowPoint, highPoint),
                 highPoint,
-                createTestBuffer(42, 43));
+                new Point(low1, low2 + 1));
 
         // FORWARD_GREATER_THAN
         addTestSet(cases,
                 "greaterThan",
-                KeyRange.greaterThan(lowPoint),
-                LmdbKeyRange.builder().start(lowPoint, false).build(),
-                9995757L,
-                createTestBuffer(42, 43),
+                KeyRange.greaterThan(lowPoint.toBuffer()),
+                LmdbKeyRange.builder().start(lowPoint.toBuffer(), false).build(),
+                diff(lowPoint, maxPoint),
+                new Point(low1, low2 + 1),
                 maxPoint);
 
         // BACKWARD_GREATER_THAN
         addTestSet(cases,
                 "greaterThanBackward",
-                KeyRange.greaterThanBackward(highPoint),
-                LmdbKeyRange.builder().start(highPoint, false).reverse().build(),
-                9000042L,
-                createTestBuffer(90000, 41),
+                KeyRange.greaterThanBackward(highPoint.toBuffer()),
+                LmdbKeyRange.builder().start(highPoint.toBuffer(), false).reverse().build(),
+                diff(minPoint, highPoint),
+                new Point(high1, low2 - 1),
                 minPoint);
 
         // FORWARD_LESS_THAN
         addTestSet(cases,
                 "lessThan",
-                KeyRange.lessThan(highPoint),
-                LmdbKeyRange.builder().stop(highPoint, false).build(),
-                9000042L,
+                KeyRange.lessThan(highPoint.toBuffer()),
+                LmdbKeyRange.builder().stop(highPoint.toBuffer(), false).build(),
+                diff(minPoint, highPoint),
                 minPoint,
-                createTestBuffer(90000, 41));
+                new Point(high1, low2 - 1));
 
         // BACKWARD_LESS_THAN
         addTestSet(cases,
                 "lessThanBackward",
-                KeyRange.lessThanBackward(lowPoint),
-                LmdbKeyRange.builder().stop(lowPoint, false).reverse().build(),
-                9995757L,
+                KeyRange.lessThanBackward(lowPoint.toBuffer()),
+                LmdbKeyRange.builder().stop(lowPoint.toBuffer(), false).reverse().build(),
+                diff(lowPoint, maxPoint),
                 maxPoint,
-                createTestBuffer(42, 43));
+                new Point(low1, low2 + 1));
 
         // FORWARD_OPEN
         addTestSet(cases,
                 "open",
-                KeyRange.open(lowPoint, highPoint),
-                LmdbKeyRange.builder().start(lowPoint, false).stop(highPoint, false).build(),
-                8995799L,
-                createTestBuffer(42, 43),
-                createTestBuffer(90000, 41));
+                KeyRange.open(lowPoint.toBuffer(), highPoint.toBuffer()),
+                LmdbKeyRange.builder()
+                        .start(lowPoint.toBuffer(), false)
+                        .stop(highPoint.toBuffer(), false)
+                        .build(),
+                diff(lowPoint, highPoint) - 1,
+                new Point(low1, low2 + 1),
+                new Point(high1, low2 - 1));
 
         // BACKWARD_OPEN
         addTestSet(cases,
                 "openBackward",
-                KeyRange.openBackward(highPoint, lowPoint),
+                KeyRange.openBackward(highPoint.toBuffer(), lowPoint.toBuffer()),
                 LmdbKeyRange.builder()
-                        .start(highPoint, false)
-                        .stop(lowPoint, false)
+                        .start(highPoint.toBuffer(), false)
+                        .stop(lowPoint.toBuffer(), false)
                         .reverse()
                         .build(),
-                8995799L,
-                createTestBuffer(90000, 41),
-                createTestBuffer(42, 43));
+                diff(lowPoint, highPoint) - 1,
+                new Point(high1, low2 - 1),
+                new Point(low1, low2 + 1));
 
         // FORWARD_OPEN_CLOSED
         addTestSet(cases,
                 "openClosed",
-                KeyRange.openClosed(lowPoint, highPoint),
-                LmdbKeyRange.builder().start(lowPoint, false).stop(highPoint).build(),
-                8995800L,
-                createTestBuffer(42, 43),
+                KeyRange.openClosed(lowPoint.toBuffer(), highPoint.toBuffer()),
+                LmdbKeyRange.builder()
+                        .start(lowPoint.toBuffer(), false)
+                        .stop(highPoint.toBuffer())
+                        .build(),
+                diff(lowPoint, highPoint),
+                new Point(low1, low2 + 1),
                 highPoint);
 
         // BACKWARD_OPEN_CLOSED
         addTestSet(cases,
                 "openClosedBackward",
-                KeyRange.openClosedBackward(highPoint, lowPoint),
-                LmdbKeyRange.builder().start(highPoint, false).stop(lowPoint).reverse().build(),
-                8995800L,
-                createTestBuffer(90000, 41),
+                KeyRange.openClosedBackward(highPoint.toBuffer(), lowPoint.toBuffer()),
+                LmdbKeyRange.builder()
+                        .start(highPoint.toBuffer(), false)
+                        .stop(lowPoint.toBuffer())
+                        .reverse()
+                        .build(),
+                diff(lowPoint, highPoint),
+                new Point(high1, low2 - 1),
                 lowPoint);
 
         // PREFIX
-        cases.add(TimedCase.of(
+        cases.add(makeCase(
                 "Test Stream prefix",
-                (round, iterations) -> {
-                    final ByteBuffer prefix = createTestBuffer(90000);
+                () -> {
+                    final ByteBuffer prefix = createTestBuffer(high1);
                     testStream(LmdbKeyRange.builder().prefix(prefix).build(),
-                            100,
-                            createTestBuffer(90000, 0),
-                            createTestBuffer(90000, 99));
+                            (max2 + 1) - min2,
+                            createTestBuffer(high1, min2),
+                            createTestBuffer(high1, max2));
                 }));
 
-        cases.add(TimedCase.of(
+        cases.add(makeCase(
                 "Test Stream prefix reversed",
-                (round, iterations) -> {
-                    final ByteBuffer prefix = createTestBuffer(90000);
+                () -> {
+                    final ByteBuffer prefix = createTestBuffer(high1);
                     testStream(LmdbKeyRange.builder().prefix(prefix).reverse().build(),
-                            100,
-                            createTestBuffer(90000, 99),
-                            createTestBuffer(90000, 0));
+                            (max2 + 1) - min2,
+                            createTestBuffer(high1, max2),
+                            createTestBuffer(high1, min2));
                 }));
 
         TestUtil.comparePerformance(
                 3,
-                10000000,
+                5,
                 LOGGER::info,
                 cases.toArray(new TimedCase[0]));
     }
@@ -323,19 +345,22 @@ public class TestLmdbStreamBenchmark {
                             final KeyRange<ByteBuffer> keyRange,
                             final LmdbKeyRange lmdbKeyRange,
                             final long expectedCount,
-                            final ByteBuffer expectedFirst,
-                            final ByteBuffer expectedLast) {
-        cases.add(TimedCase.of(
+                            final Point expectedFirst,
+                            final Point expectedLast) {
+        final ByteBuffer first = expectedFirst.toBuffer();
+        final ByteBuffer last = expectedLast.toBuffer();
+
+        cases.add(makeCase(
                 "Test library " + name,
-                (round, iterations) -> testKeyRange(keyRange, expectedCount, expectedFirst, expectedLast)));
+                () -> testKeyRange(keyRange, expectedCount, first, last)));
 
-        cases.add(TimedCase.of(
+        cases.add(makeCase(
                 "Test New Stream " + name,
-                (round, iterations) -> testStream(lmdbKeyRange, expectedCount, expectedFirst, expectedLast)));
+                () -> testStream(lmdbKeyRange, expectedCount, first, last)));
 
-        cases.add(TimedCase.of(
+        cases.add(makeCase(
                 "Test New Iterator " + name,
-                (round, iterations) -> testIterator(lmdbKeyRange, expectedCount, expectedFirst, expectedLast)));
+                () -> testIterator(lmdbKeyRange, expectedCount, first, last)));
     }
 
     private void testKeyRange(final KeyRange<ByteBuffer> keyRange,
@@ -455,8 +480,8 @@ public class TestLmdbStreamBenchmark {
         final ByteBuffer key = ByteBuffer.allocateDirect(Integer.BYTES + Integer.BYTES);
         final ByteBuffer value = ByteBuffer.allocateDirect(0);
         try (final Txn<ByteBuffer> txn = env.txnWrite()) {
-            for (int i = 0; i < 100000; i++) {
-                for (int j = 0; j < 100; j++) {
+            for (int i = min1; i <= max1; i++) {
+                for (int j = min2; j <= max2; j++) {
                     key.putInt(i);
                     key.putInt(j);
                     key.flip();
@@ -467,18 +492,43 @@ public class TestLmdbStreamBenchmark {
         }
     }
 
-    private ByteBuffer createTestBuffer(final int i1) {
+    private static ByteBuffer createTestBuffer(final int i1) {
         final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(Integer.BYTES);
         byteBuffer.putInt(i1);
         byteBuffer.flip();
         return byteBuffer;
     }
 
-    private ByteBuffer createTestBuffer(final int i1, final int i2) {
+    private static ByteBuffer createTestBuffer(final int i1, final int i2) {
         final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(Integer.BYTES + Integer.BYTES);
         byteBuffer.putInt(i1);
         byteBuffer.putInt(i2);
         byteBuffer.flip();
         return byteBuffer;
+    }
+
+    private long diff(final Point a, final Point b) {
+        final long diffX = b.x > a.x
+                ? b.x - a.x
+                : a.x - b.x;
+        final long diffY = b.y > a.y
+                ? b.y - a.y
+                : a.y - b.y;
+        return (diffX * total2) + diffY;
+    }
+
+    private record Point(int x, int y) {
+
+        ByteBuffer toBuffer() {
+            return createTestBuffer(x, y);
+        }
+    }
+
+    private TimedCase makeCase(final String name, final Runnable runnable) {
+        return TimedCase.of(name, (round, iterations) -> {
+            for (int i = 0; i < iterations; i++) {
+                runnable.run();
+            }
+        });
     }
 }
