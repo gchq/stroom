@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.10.7-gwt-sourcemaps2] - 2025-10-10
+
+* Issue **#5191** : Fix UI NPE.
+
+
 ## [v7.10.7-gwt-sourcemaps] - 2025-10-07
 
 * Issue **#5175** : Fix zip handling.
@@ -1731,7 +1736,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.7-gwt-sourcemaps...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.7-gwt-sourcemaps2...HEAD
+[v7.10.7-gwt-sourcemaps2]: https://github.com/gchq/stroom/compare/v7.10.7-gwt-sourcemaps...v7.10.7-gwt-sourcemaps2
 [v7.10.7-gwt-sourcemaps]: https://github.com/gchq/stroom/compare/v7.10.7...v7.10.7-gwt-sourcemaps
 [v7.10.7]: https://github.com/gchq/stroom/compare/v7.10.6...v7.10.7
 [v7.10.6]: https://github.com/gchq/stroom/compare/v7.10.5...v7.10.6
