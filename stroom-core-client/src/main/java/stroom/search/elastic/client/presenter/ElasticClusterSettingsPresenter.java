@@ -92,7 +92,7 @@ public class ElasticClusterSettingsPresenter
             getView().setUseAuthentication(connectionConfig.getUseAuthentication());
             getView().setApiKeyId(connectionConfig.getApiKeyId());
             getView().setApiKeySecret(connectionConfig.getApiKeySecret());
-            getView().setSocketTimeoutMillis(connectionConfig.getSocketTimeoutMillis());
+            getView().setConnectionTimeoutMillis(connectionConfig.getConnectionTimeoutMillis());
         }
     }
 
@@ -104,7 +104,7 @@ public class ElasticClusterSettingsPresenter
         connectionConfig.setUseAuthentication(getView().getUseAuthentication());
         connectionConfig.setApiKeyId(getView().getApiKeyId());
         connectionConfig.setApiKeySecret(getView().getApiKeySecret());
-        connectionConfig.setSocketTimeoutMillis(getView().getSocketTimeoutMillis());
+        connectionConfig.setConnectionTimeoutMillis(getView().getConnectionTimeoutMillis());
 
         cluster.setConnection(connectionConfig);
         return cluster;
@@ -133,8 +133,12 @@ public class ElasticClusterSettingsPresenter
 
         void setApiKeySecret(String apiKeySecret);
 
-        int getSocketTimeoutMillis();
+        int getConnectionTimeoutMillis();
 
-        void setSocketTimeoutMillis(int socketTimeoutMillis);
+        void setConnectionTimeoutMillis(int connectionTimeoutMillis);
+
+        int getResponseTimeoutMillis();
+
+        void setResponseTimeoutMillis(int responseTimeoutMillis);
     }
 }

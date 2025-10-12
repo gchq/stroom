@@ -11013,11 +11013,14 @@ components:
           type: string
         caCertificate:
           type: string
+        connectionTimeoutMillis:
+          type: integer
+          format: int32
         connectionUrls:
           type: array
           items:
             type: string
-        socketTimeoutMillis:
+        responseTimeoutMillis:
           type: integer
           format: int32
         useAuthentication:
@@ -13539,6 +13542,9 @@ components:
           format: int64
         processorUuid:
           type: string
+        reprocessedStreamId:
+          type: integer
+          format: int64
         status:
           type: string
           enum:
@@ -15251,12 +15257,15 @@ components:
           type: string
         key:
           type: string
+          minLength: 1
         mapName:
           type: string
+          minLength: 1
         referenceLoaders:
           type: array
           items:
             $ref: "#/components/schemas/ReferenceLoader"
+          minItems: 1
       required:
       - key
       - mapName
@@ -18504,10 +18513,8 @@ components:
       - type: object
         properties:
           bytes:
-            type: array
-            items:
-              type: string
-              format: byte
+            type: string
+            format: byte
     ValidateExpressionRequest:
       type: object
       properties:

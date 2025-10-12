@@ -15289,13 +15289,17 @@
           "caCertificate" : {
             "type" : "string"
           },
+          "connectionTimeoutMillis" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
           "connectionUrls" : {
             "type" : "array",
             "items" : {
               "type" : "string"
             }
           },
-          "socketTimeoutMillis" : {
+          "responseTimeoutMillis" : {
             "type" : "integer",
             "format" : "int32"
           },
@@ -18545,6 +18549,10 @@
           "processorUuid" : {
             "type" : "string"
           },
+          "reprocessedStreamId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
           "status" : {
             "type" : "string",
             "enum" : [ "UNLOCKED", "LOCKED", "DELETED" ]
@@ -20486,16 +20494,19 @@
             "type" : "string"
           },
           "key" : {
-            "type" : "string"
+            "type" : "string",
+            "minLength" : 1
           },
           "mapName" : {
-            "type" : "string"
+            "type" : "string",
+            "minLength" : 1
           },
           "referenceLoaders" : {
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/ReferenceLoader"
-            }
+            },
+            "minItems" : 1
           }
         },
         "required" : [ "key", "mapName", "referenceLoaders" ]
@@ -24739,11 +24750,8 @@
           "type" : "object",
           "properties" : {
             "bytes" : {
-              "type" : "array",
-              "items" : {
-                "type" : "string",
-                "format" : "byte"
-              }
+              "type" : "string",
+              "format" : "byte"
             }
           }
         } ]
