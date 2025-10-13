@@ -11,11 +11,11 @@ configurations {
 }
 
 dependencies {
-    implementation "org.apache.lucene:lucene-analyzers-common:5.5.3"
-    implementation "org.apache.lucene:lucene-backward-codecs:5.5.3"
-    implementation "org.apache.lucene:lucene-core:5.5.3"
-    implementation "org.apache.lucene:lucene-memory:5.5.3"
-    implementation "org.apache.lucene:lucene-queryparser:5.5.3"
+    implementation "org.apache.lucene:lucene-analyzers-common:10.3.1"
+    implementation "org.apache.lucene:lucene-backward-codecs:10.3.1"
+    implementation "org.apache.lucene:lucene-core:10.3.1"
+    implementation "org.apache.lucene:lucene-memory:10.3.1"
+    implementation "org.apache.lucene:lucene-queryparser:10.3.1"
 }
 
 tasks.register('lucene553ShadowJar', ShadowJar) {
