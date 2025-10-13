@@ -157,7 +157,7 @@ logback-core = { module = "ch.qos.logback:logback-core" } # version controlled b
 mbknor-jackson-jsonSchema = { module = "com.kjetland:mbknor-jackson-jsonschema_2.12", version = "1.0.39" }
 mockito-core = { module = "org.mockito:mockito-core" } # version controlled by dropwizard-dependencies
 mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter" } # version controlled by dropwizard-dependencies
-mysql-connector-java = { module = "com.mysql:mysql-connector-j", version = "9.2.0" }
+mysql-connector-java = { module = "com.mysql:mysql-connector-j", version = "9.4.0" }
 poi = { module = "org.apache.poi:poi", version.ref = "poi" }
 poi-ooxml = { module = "org.apache.poi:poi-ooxml", version.ref = "poi" }
 quartz = { module = "org.quartz-scheduler:quartz", version = "2.5.0-rc1" }
