@@ -137,8 +137,8 @@ public class ZipReceiver implements Receiver {
         final ReceiveResult receiveResult;
         try {
             receivingDir = receivingDirProvider.get();
-            final FileGroup fileGroup = new FileGroup(receivingDir);
-            final Path destZipFile = fileGroup.getZip();
+            final FileGroup destFileGroup = new FileGroup(receivingDir);
+            final Path destZipFile = destFileGroup.getZip();
             final long receivedBytes = Files.size(sourceZipFile);
             try {
                 receiveResult = receiveZipStream(
@@ -154,7 +154,7 @@ public class ZipReceiver implements Receiver {
                 throw StroomStreamException.create(e, attributeMap);
             }
 
-            handleReceiveResult(attributeMap, receiveResult, fileGroup, receivingDir, destZipFile);
+            handleReceiveResult(attributeMap, receiveResult, destFileGroup, receivingDir, destZipFile);
         } catch (final IOException e) {
             throw StroomStreamException.create(e, attributeMap);
         }
@@ -189,8 +189,8 @@ public class ZipReceiver implements Receiver {
         final ReceiveResult receiveResult;
         try {
             receivingDir = receivingDirProvider.get();
-            final FileGroup fileGroup = new FileGroup(receivingDir);
-            final Path destZipFile = fileGroup.getZip();
+            final FileGroup destFileGroup = new FileGroup(receivingDir);
+            final Path destZipFile = destFileGroup.getZip();
             try {
                 receiveResult = receiveZipStream(
                         inputStreamSupplier.get(),
@@ -204,7 +204,7 @@ public class ZipReceiver implements Receiver {
                 throw StroomStreamException.create(e, attributeMap);
             }
 
-            handleReceiveResult(attributeMap, receiveResult, fileGroup, receivingDir, destZipFile);
+            handleReceiveResult(attributeMap, receiveResult, destFileGroup, receivingDir, destZipFile);
         } catch (final IOException e) {
             throw StroomStreamException.create(e, attributeMap);
         }

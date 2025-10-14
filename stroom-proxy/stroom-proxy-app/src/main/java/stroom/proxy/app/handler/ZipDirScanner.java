@@ -15,18 +15,20 @@ import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
-import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+@Singleton // So we can synchronise
 public class ZipDirScanner {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ZipDirScanner.class);
@@ -52,32 +54,42 @@ public class ZipDirScanner {
         this.failureDirProvider = NestedNumberedDirProvider.create(failureDir);
     }
 
-    public void scan() {
+    public synchronized void scan() {
         try {
             final DirScannerConfig dirScannerConfig = dirScannerConfigProvider.get();
             if (dirScannerConfig.isEnabled()) {
                 final List<Path> dirs = getPathsToScan(dirScannerConfig);
                 if (NullSafe.hasItems(dirs)) {
+                    final ScanResult scanResult = new ScanResult();
                     for (final Path dir : dirs) {
-                        scanDir(dir);
+                        // This will log and swallow any exceptions to ensure we can keep processing
+                        scanDir(dir, scanResult);
                     }
+                    LOGGER.info("Completed scan for ZIP files to ingest, success: {}, failed: {}, ignored: {}",
+                            scanResult.successCount, scanResult.failCount, scanResult.ignoreCount);
+                } else {
+                    LOGGER.debug("scan() - No dirs to scan");
                 }
             } else {
                 LOGGER.debug("scan() - disabled");
             }
         } catch (final Exception e) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("scan() - Error during scan - {}",
-                        LogUtil.exceptionMessage(e), e);
-            } else {
-                LOGGER.error("scan() - Error during scan - {} (enable DEBUG for stack trace)",
-                        LogUtil.exceptionMessage(e));
-            }
+            logError(e);
             // We need to swallow the error so the scheduled executor can try again next time
         }
     }
 
-    private void processZipFile(final Path zipFile) {
+    private void logError(final Exception e) {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("scan() - Error during scan - {}",
+                    LogUtil.exceptionMessage(e), e);
+        } else {
+            LOGGER.error("scan() - Error during scan - {} (enable DEBUG for stack trace)",
+                    LogUtil.exceptionMessage(e));
+        }
+    }
+
+    private void processZipFile(final Path zipFile, final ScanResult scanResult) {
         LOGGER.debug("processZipFile() - {}", zipFile);
         // Need to swallow all exceptions, so we don't halt the dir walking
         try {
@@ -90,7 +102,9 @@ public class ZipDirScanner {
             // receive will have cloned our zip, so as there were no problems, we can now delete it
             LOGGER.debug("processZipFile() - Deleting {}", zipFile);
             Files.deleteIfExists(zipFile);
+            scanResult.incrementSuccessCount();
         } catch (final Exception e) {
+            scanResult.incrementFailCount();
             LOGGER.error("Error processing zipFile {} - {}", zipFile, LogUtil.exceptionMessage(e), e);
             if (Files.exists(zipFile)) {
                 final Path dir = failureDirProvider.createNumberedPath();
@@ -106,30 +120,29 @@ public class ZipDirScanner {
         }
     }
 
-    private void scanDir(final Path rootDir) {
+    private void scanDir(final Path rootDir, final ScanResult scanResult) {
         LOGGER.debug("scanDir() - {}", rootDir);
         final DurationTimer timer = DurationTimer.start();
 
         try {
-            Files.walkFileTree(rootDir, new FileVisitor<>() {
-                @Override
-                public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs)
-                        throws IOException {
-                    LOGGER.debug("scanDir() - preVisitDirectory {}", dir);
-                    return FileVisitResult.CONTINUE;
-                }
-
+            Files.walkFileTree(rootDir, new SimpleFileVisitor<>() {
                 @Override
                 public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
                     LOGGER.debug("scanDir() - visitFile {}", file);
                     if (isZipFile(file)) {
-                        processZipFile(file);
+                        // This will log and swallow, so we can carry on walking
+                        processZipFile(file, scanResult);
+                    } else {
+                        scanResult.incrementIgnoreCount();
+                        LOGGER.warn("Found file that is not a ZIP file in {}, it will be ignored. " +
+                                    "You should remove this file to stop seeing this message.", file);
                     }
                     return FileVisitResult.CONTINUE;
                 }
 
                 @Override
                 public FileVisitResult visitFileFailed(final Path path, final IOException exc) throws IOException {
+                    scanResult.incrementFailCount();
                     LOGGER.debug(() -> LogUtil.message(
                             "scanDir() - unable to read file/dir {}: {}",
                             path, LogUtil.exceptionMessage(exc), exc));
@@ -139,21 +152,16 @@ public class ZipDirScanner {
                     }
                     return FileVisitResult.CONTINUE;
                 }
-
-                @Override
-                public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) throws IOException {
-                    LOGGER.debug("scanDir() - postVisitDirectory {}", dir);
-                    deleteDirectoryIfEmpty(dir);
-                    return FileVisitResult.CONTINUE;
-                }
             });
-        } catch (final IOException e) {
+            LOGGER.debug("scanDir() - Scanned {} in {}", rootDir, timer);
+        } catch (final Exception e) {
             LOGGER.error("scanDir() - unable to read zip file {}: {}",
                     rootDir, LogUtil.exceptionMessage(e));
-            throw new RuntimeException(e);
+            // Just log and swallow, so we can move on to the next dir to scan
+        } finally {
+            // This will not throw
+            FileUtil.deleteEmptyDirs(rootDir);
         }
-
-        LOGGER.debug("scanDir() - Scanned {} in {}", rootDir, timer);
     }
 
     private void deleteDirectoryIfEmpty(final Path dir) {
@@ -179,7 +187,10 @@ public class ZipDirScanner {
     private boolean isZipFile(final Path path) {
         Objects.requireNonNull(path);
         return Files.isRegularFile(path)
-               && path.getFileName().toString().toLowerCase().endsWith(ZIP_EXTENSION);
+               && path.getFileName()
+                       .toString()
+                       .toLowerCase()
+                       .endsWith(ZIP_EXTENSION);
     }
 
     private List<Path> getPathsToScan(final DirScannerConfig dirScannerConfig) {
@@ -196,5 +207,41 @@ public class ZipDirScanner {
                     }
                 })
                 .toList();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class ScanResult {
+
+        private int successCount;
+        private int failCount;
+        private int ignoreCount;
+
+        int getTotalCount() {
+            return successCount + failCount;
+        }
+
+        void incrementSuccessCount() {
+            successCount += 1;
+        }
+
+        void incrementFailCount() {
+            failCount += 1;
+        }
+
+        void incrementIgnoreCount() {
+            ignoreCount += 1;
+        }
+
+        @Override
+        public String toString() {
+            return "ScanResult{" +
+                   "successCount=" + successCount +
+                   ", failCount=" + failCount +
+                   ", ignoreCount=" + ignoreCount +
+                   '}';
+        }
     }
 }

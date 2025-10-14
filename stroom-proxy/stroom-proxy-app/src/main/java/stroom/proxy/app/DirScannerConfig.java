@@ -14,6 +14,9 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Config to control the scanning of one or more directories to ingest data in proxy zip format
+ */
 @JsonPropertyOrder(alphabetic = true)
 public class DirScannerConfig extends AbstractConfig implements IsProxyConfig {
 
@@ -46,7 +49,9 @@ public class DirScannerConfig extends AbstractConfig implements IsProxyConfig {
     }
 
     @JsonProperty
-    @JsonPropertyDescription("The list of directories to scan for proxy format ZIP files.")
+    @JsonPropertyDescription("The list of directories to scan for proxy format ZIP files. " +
+                             "The dirs will be scanned in the order they appear in this list. No guarantee is " +
+                             "made about the order in which ZIP files are scanned within each dir.")
     public List<String> getDirs() {
         return NullSafe.list(dirs);
     }
