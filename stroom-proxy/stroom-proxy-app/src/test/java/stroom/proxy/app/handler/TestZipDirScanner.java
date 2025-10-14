@@ -205,14 +205,15 @@ class TestZipDirScanner {
                 file21, file22, file23, file24, file25, file26);
 
         final List<Path> zipFiles = new ArrayList<>();
-        Mockito.doAnswer(invocation -> {
-                    final Path zipFile = invocation.getArgument(0, Path.class);
-                    zipFiles.add(zipFile);
-                    if (zipFile.getFileName().toString().contains("bad")) {
-                        throw new RuntimeException("bad zip");
-                    }
-                    return null;
-                })
+        Mockito.doAnswer(
+                        invocation -> {
+                            final Path zipFile = invocation.getArgument(0, Path.class);
+                            zipFiles.add(zipFile);
+                            if (zipFile.getFileName().toString().contains("bad")) {
+                                throw new RuntimeException("bad zip");
+                            }
+                            return null;
+                        })
                 .when(mockZipReceiver)
                 .receive(Mockito.any(), Mockito.any());
 
