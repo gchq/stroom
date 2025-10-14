@@ -206,7 +206,7 @@ public class AnnotationManager implements HasHandlers {
                             eventIdList.add(new EventId(streamId, eventId));
                         }
                     } catch (final RuntimeException e) {
-                        Console.log(e::getMessage, e);
+                        Console.error(e::getMessage, e);
                     }
                 }
 

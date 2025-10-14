@@ -3,6 +3,7 @@ package stroom.test.common;
 import stroom.test.common.DynamicTestBuilder.InitialBuilder;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.io.FileUtil;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.AsciiTable.TableBuilder;
@@ -21,6 +22,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.mockito.Mockito;
 
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -49,6 +51,18 @@ public class TestUtil {
 
     private TestUtil() {
         // Static Utils only
+    }
+
+    public static List<Path> createPaths(final Path rootDir, final Path... paths) {
+        return NullSafe.stream(paths)
+                .map(aPath -> {
+                    final Path path = aPath.isAbsolute()
+                            ? aPath
+                            : rootDir.resolve(aPath);
+                    FileUtil.ensureDirExists(path);
+                    return path;
+                })
+                .toList();
     }
 
     /**

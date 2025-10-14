@@ -52,4 +52,21 @@ public class StringIdUtil {
             }
         }
     }
+
+    /**
+     * @return The number of digits when the ID is represented as a string, i.e.
+     * when the string has a length that is a multiple of 3.
+     * e.g. Returns 3 for ID 1, 6 for ID 1234.
+     */
+    public static int getDigitCountAsId(final long id) {
+        final int baseDigitCount = StringUtil.getDigitCount(id);
+        final int mod = baseDigitCount % 3;
+        return switch (mod) {
+            case 0 -> baseDigitCount;
+            case 1 -> baseDigitCount + 2;
+            case 2 -> baseDigitCount + 1;
+            default -> throw new IllegalStateException("Unexpected value: " + mod);
+        };
+    }
+
 }

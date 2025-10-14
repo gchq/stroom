@@ -168,7 +168,7 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
                         .getOrElse(error, RestError::getMethod, Method::getResponse, Response::getStatusCode, -1);
                 if (statusCode == Response.SC_UNAUTHORIZED) {
                     // Reload as we have been logged out.
-                    Console.log(() -> "Unauthorised request, assuming user session is invalid, reloading...");
+                    Console.info(() -> "Unauthorised request, assuming user session is invalid, reloading...");
                     Location.reload();
                 } else {
                     innerErrorHandler.onError(error);
@@ -217,29 +217,29 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         }
 
         @Override
-        public void onFailure(final Method method, final Throwable throwable) {
-            try {
-                errorHandler.onError(new RestError(method, throwable));
-            } catch (final Throwable t) {
-                new DefaultErrorHandler(hasHandlers, null).onError(new RestError(method, t));
-            } finally {
-                taskMonitor.onEnd(task);
-            }
-        }
-
-        @Override
         public void onSuccess(final Method method, final R response) {
             try {
                 if (resultConsumer != null) {
                     resultConsumer.accept(response);
                 }
             } catch (final Throwable t) {
-                GWT.log(t.toString());
+                Console.debug(t.toString());
                 if (method != null && method.getRequest() != null) {
-                    GWT.log(method.getRequest().toString());
+                    Console.debug(method.getRequest().toString());
                 }
-                GWT.log("Error processing successful response: " + response);
+                Console.error("Error processing successful response: " + response);
                 AlertEvent.fireErrorFromException(hasHandlers, t, null);
+            } finally {
+                taskMonitor.onEnd(task);
+            }
+        }
+
+        @Override
+        public void onFailure(final Method method, final Throwable throwable) {
+            try {
+                errorHandler.onError(new RestError(method, throwable));
+            } catch (final Throwable t) {
+                new DefaultErrorHandler(hasHandlers, null).onError(new RestError(method, t));
             } finally {
                 taskMonitor.onEnd(task);
             }
