@@ -12,10 +12,12 @@ import stroom.proxy.repo.LogStream;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.AttributeMapFilterFactory;
 import stroom.receive.common.ReceiveAllAttributeMapFilter;
+import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.common.StroomStreamException;
 import stroom.test.common.DirectorySnapshot;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.exception.ThrowingConsumer;
+import stroom.util.io.ByteSize;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -41,6 +43,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(MockitoExtension.class)
 public class TestZipReceiver extends StroomUnitTest {
@@ -63,6 +66,8 @@ public class TestZipReceiver extends StroomUnitTest {
     private LogStream mockLogStream;
     @Mock
     private ZipSplitter mockZipSplitter;
+    @Mock
+    private ReceiveDataConfig mockReceiveDataConfig;
 
     @TempDir
     private Path dataDir;
@@ -389,18 +394,38 @@ public class TestZipReceiver extends StroomUnitTest {
                 .isNull();
     }
 
+    @Test
+    void testReceiveContentTooLarge() throws IOException {
+        final String defaultFeedName = FEED_1;
+        final String defaultTypeName = null;
+
+        final AttributeMap attributeMap = new AttributeMap();
+        AttributeMapUtil.addFeedAndType(attributeMap, defaultFeedName, defaultTypeName);
+
+        final Path testZipFile = TestDataUtil.writeZip(new FeedKey(defaultFeedName, defaultTypeName));
+
+        LOGGER.info("testZipFile {}", testZipFile.toAbsolutePath());
+
+        Mockito.lenient().when(mockReceiveDataConfig.getMaxRequestSize()).thenReturn(ByteSize.ofBytes(10));
+
+        assertThatThrownBy(() -> doReceive(testZipFile, attributeMap, attrMap -> true))
+                .isInstanceOf(StroomStreamException.class)
+                .hasMessageContaining("Maximum request size exceeded");
+    }
+
     private List<Path> doReceive(final Path testZipFile,
                                  final AttributeMap attributeMap,
                                  final AttributeMapFilter attributeMapFilter) throws IOException {
 
-        Mockito.when(mockAttributeMapFilterFactory.create())
+        Mockito.lenient().when(mockAttributeMapFilterFactory.create())
                 .thenReturn(attributeMapFilter);
 
         final ZipReceiver zipReceiver = new ZipReceiver(
                 mockAttributeMapFilterFactory,
                 () -> dataDir,
                 mockLogStream,
-                mockZipSplitter);
+                mockZipSplitter,
+                () -> mockReceiveDataConfig);
 
         final List<Path> consumedPaths = new ArrayList<>();
         final AtomicLong counter = new AtomicLong();
