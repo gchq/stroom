@@ -24,6 +24,7 @@ public class CredentialsPresenter
      * Injected constructor.
      * @param eventBus Passed to superclass
      * @param view Passed to superclass
+     * @param credentialsListPresenter The list of credentials to show within this top-level tab.
      */
     @SuppressWarnings("unused")
     @Inject

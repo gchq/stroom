@@ -2,11 +2,12 @@ package stroom.credentials.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.credentials.client.CredentialsPlugin;
-import stroom.credentials.client.presenter.CredentialsDetailsDialogPresenter;
+import stroom.credentials.client.presenter.CredentialsSettingsPresenter;
 import stroom.credentials.client.presenter.CredentialsManagerDialogPresenter;
 import stroom.credentials.client.presenter.CredentialsPresenter;
 import stroom.credentials.client.presenter.CredentialsPresenter.CredentialsView;
-import stroom.credentials.client.view.CredentialsDetailsDialogViewImpl;
+import stroom.credentials.client.presenter.CredentialsSettingsPresenter.CredentialsSettingsView;
+import stroom.credentials.client.view.CredentialsSettingsViewImpl;
 import stroom.credentials.client.view.CredentialsManagerDialogViewImpl;
 import stroom.credentials.client.view.CredentialsViewImpl;
 
@@ -25,13 +26,14 @@ public class CredentialsModule extends PluginModule {
                 CredentialsView.class,
                 CredentialsViewImpl.class);
 
-        bindPresenterWidget(CredentialsDetailsDialogPresenter.class,
-                CredentialsDetailsDialogPresenter.CredentialsDetailsDialogView.class,
-                CredentialsDetailsDialogViewImpl.class);
+        bindPresenterWidget(CredentialsSettingsPresenter.class,
+                CredentialsSettingsView.class,
+                CredentialsSettingsViewImpl.class);
 
         bindPresenterWidget(CredentialsManagerDialogPresenter.class,
                 CredentialsManagerDialogPresenter.CredentialsManagerDialogView.class,
                 CredentialsManagerDialogViewImpl.class);
+
     }
 
 }

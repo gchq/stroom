@@ -49,7 +49,6 @@ import stroom.security.api.SecurityContext;
 import stroom.security.api.UserGroupsService;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
-import stroom.security.shared.SingleDocumentPermissionChangeRequest;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
@@ -84,7 +83,6 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
     private final Provider<DocumentPermissionService> documentPermissionServiceProvider;
     private final Provider<AnnotationConfig> annotationConfigProvider;
     private final Provider<ExpressionPredicateFactory> expressionPredicateFactoryProvider;
-    private final Provider<PermissionChangeService> permissionChangeServiceProvider;
     private final Provider<UserGroupsService> userGroupsServiceProvider;
     private final EntityEventBus entityEventBus;
 
@@ -96,7 +94,6 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
                       final Provider<DocumentPermissionService> documentPermissionServiceProvider,
                       final Provider<AnnotationConfig> annotationConfigProvider,
                       final Provider<ExpressionPredicateFactory> expressionPredicateFactoryProvider,
-                      final Provider<PermissionChangeService> permissionChangeServiceProvider,
                       final Provider<UserGroupsService> userGroupsServiceProvider,
                       final EntityEventBus entityEventBus) {
         this.annotationDao = annotationDao;
@@ -106,7 +103,6 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         this.documentPermissionServiceProvider = documentPermissionServiceProvider;
         this.annotationConfigProvider = annotationConfigProvider;
         this.expressionPredicateFactoryProvider = expressionPredicateFactoryProvider;
-        this.permissionChangeServiceProvider = permissionChangeServiceProvider;
         this.userGroupsServiceProvider = userGroupsServiceProvider;
         this.entityEventBus = entityEventBus;
     }
@@ -421,12 +417,6 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
 
     public List<String> getStandardComments(final String filter) {
         return filterValues(annotationConfigProvider.get().getStandardComments(), filter);
-    }
-
-    public Boolean changeDocumentPermissions(final SingleDocumentPermissionChangeRequest request) {
-        permissionChangeServiceProvider.get().changeDocumentPermissions(request);
-        fireGenericEntityChangeEvent();
-        return Boolean.TRUE;
     }
 
     public void performDataRetention() {

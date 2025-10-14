@@ -1,6 +1,6 @@
 package stroom.credentials.client.view;
 
-import stroom.credentials.client.presenter.CredentialsDetailsDialogPresenter.CredentialsDetailsDialogView;
+import stroom.credentials.client.presenter.CredentialsSettingsPresenter.CredentialsSettingsView;
 import stroom.credentials.client.presenter.CredentialsDetailsDialogUiHandlers;
 import stroom.credentials.shared.Credentials;
 import stroom.credentials.shared.CredentialsSecret;
@@ -25,9 +25,9 @@ import javax.inject.Inject;
  * or edit credentials.
  * Provides backing for CredentialsDetailsDialogView.ui.xml.
  */
-public class CredentialsDetailsDialogViewImpl
+public class CredentialsSettingsViewImpl
         extends ViewWithUiHandlers<CredentialsDetailsDialogUiHandlers>
-        implements CredentialsDetailsDialogView {
+        implements CredentialsSettingsView {
 
     /** Underlying Widget created by UiBinder */
     private final Widget widget;
@@ -105,7 +105,7 @@ public class CredentialsDetailsDialogViewImpl
      */
     @Inject
     @SuppressWarnings("unused")
-    public CredentialsDetailsDialogViewImpl(final Binder binder) {
+    public CredentialsSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         for (final CredentialsType type : CredentialsType.values()) {
             lstType.addItem(type.getDisplayName(), type.name());
@@ -299,7 +299,7 @@ public class CredentialsDetailsDialogViewImpl
     /**
      * Interface to keep GWT UiBinder happy.
      */
-    public interface Binder extends UiBinder<Widget, CredentialsDetailsDialogViewImpl> {
+    public interface Binder extends UiBinder<Widget, CredentialsSettingsViewImpl> {
         // No code
     }
 }

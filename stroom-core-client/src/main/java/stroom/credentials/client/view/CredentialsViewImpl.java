@@ -2,6 +2,7 @@ package stroom.credentials.client.view;
 
 import stroom.credentials.client.presenter.CredentialsListPresenter;
 import stroom.credentials.client.presenter.CredentialsPresenter.CredentialsView;
+import stroom.credentials.client.presenter.CredentialsDetailsTabDialogPresenter;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -46,6 +47,8 @@ public class CredentialsViewImpl extends ViewImpl implements CredentialsView {
     @Override
     public void setInSlot(final Object slot, final Widget content) {
         if (CredentialsListPresenter.CREDENTIALS_LIST.equals(slot)) {
+            credentialsList.setWidget(content);
+        } else if (CredentialsDetailsTabDialogPresenter.CREDENTIALS_TABS.equals(slot)) {
             credentialsList.setWidget(content);
         }
     }

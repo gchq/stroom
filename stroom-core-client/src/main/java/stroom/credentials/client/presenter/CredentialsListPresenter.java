@@ -2,7 +2,7 @@ package stroom.credentials.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.credentials.client.presenter.CredentialsDetailsDialogPresenter.CredentialsDetailsDialogView;
+import stroom.credentials.client.presenter.CredentialsSettingsPresenter.CredentialsSettingsView;
 import stroom.credentials.client.view.CredentialsViewImpl;
 import stroom.credentials.shared.Credentials;
 import stroom.credentials.shared.CredentialsResource;
@@ -66,7 +66,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     private final ButtonView btnEdit;
 
     /** Dialog to edit the credentials */
-    private final CredentialsDetailsDialogPresenter detailsDialog;
+    private final CredentialsDetailsTabDialogPresenter detailsDialog;
 
     /** Flag to set whether something is selected by default */
     private boolean defaultSelection = true;
@@ -89,7 +89,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     public CredentialsListPresenter(final EventBus eventBus,
                                     final PagerView view,
                                     final RestFactory restFactory,
-                                    final CredentialsDetailsDialogPresenter detailsDialog,
+                                    final CredentialsDetailsTabDialogPresenter detailsDialog,
                                     final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
         this.restFactory = restFactory;
@@ -391,7 +391,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
             builder.onHideRequest(e -> {
                 if (e.isOk()) {
                     if (detailsDialog.isValid()) {
-                        final CredentialsDetailsDialogView view = detailsDialog.getView();
+                        final CredentialsSettingsView view = detailsDialog.getCredentialsSettingsView();
                         final Credentials credsToSave = view.getCredentials();
                         final CredentialsSecret secretToSave = view.getSecret();
                         e.hide();

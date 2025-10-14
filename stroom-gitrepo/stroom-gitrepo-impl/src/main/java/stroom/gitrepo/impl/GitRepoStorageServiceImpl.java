@@ -575,9 +575,9 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
      * Returns the credentials to log into Git.
      *
      * @param gitRepoDoc Where we get the credential ID from. Must not be null.
-     * @param transportCommand Where to put the credentials.
+     * @param transportCommand Where to put the credentials. Accepts any kind of TransportCommand.
      */
-    private void setGitCreds(final GitRepoDoc gitRepoDoc, final TransportCommand transportCommand)
+    private void setGitCreds(final GitRepoDoc gitRepoDoc, final TransportCommand<?, ?> transportCommand)
             throws IOException {
         if (gitRepoDoc.needsCredentials()) {
             final String credentialsId = gitRepoDoc.getCredentialsId();

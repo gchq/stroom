@@ -49,6 +49,12 @@ public class Credentials {
     private static final String EMPTY_NAME = "";
 
     /**
+     * A sort-of type for this object. Not really a Document but handy to pretend it
+     * is sometimes, so it has a TYPE field.
+     */
+    public static final String TYPE = "Credentials";
+
+    /**
      * Creates a new, empty credentials object.
      */
     public Credentials() {
