@@ -1,7 +1,7 @@
 package stroom.credentials.client.view;
 
-import stroom.credentials.client.presenter.CredentialsSettingsPresenter.CredentialsSettingsView;
 import stroom.credentials.client.presenter.CredentialsDetailsDialogUiHandlers;
+import stroom.credentials.client.presenter.CredentialsSettingsPresenter.CredentialsSettingsView;
 import stroom.credentials.shared.Credentials;
 import stroom.credentials.shared.CredentialsSecret;
 import stroom.credentials.shared.CredentialsType;

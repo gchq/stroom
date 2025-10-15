@@ -24,17 +24,19 @@ public class PermissionChangeResourceImpl implements PermissionChangeResource {
     private final Provider<PermissionChangeService> permissionChangeServiceProvider;
 
     /** Event bus to notify of the change */
-    private final EntityEventBus entityEventBus;
+    private final Provider<EntityEventBus> entityEventBusProvider;
 
     /**
      * Injected constructor.
+     * entityEventBus must be injected to keep java/stroom/dropwizard/common/TestRestResources.java
+     * happy.
      */
     @SuppressWarnings("unused")
     @Inject
     PermissionChangeResourceImpl(final Provider<PermissionChangeService> permissionChangeServiceProvider,
-                                 final EntityEventBus entityEventBus) {
+                                 final Provider<EntityEventBus> entityEventBusProvider) {
         this.permissionChangeServiceProvider = permissionChangeServiceProvider;
-        this.entityEventBus = entityEventBus;
+        this.entityEventBusProvider = entityEventBusProvider;
     }
 
     @Override
@@ -47,7 +49,7 @@ public class PermissionChangeResourceImpl implements PermissionChangeResource {
     private void fireGenericEntityChangeEvent(final String type) {
         Objects.requireNonNull(type);
         EntityEvent.fire(
-                entityEventBus,
+                entityEventBusProvider.get(),
                 DocRef.builder().type(type).build(),
                 EntityAction.UPDATE);
     }

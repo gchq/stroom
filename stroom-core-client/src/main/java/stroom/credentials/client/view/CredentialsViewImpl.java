@@ -1,8 +1,8 @@
 package stroom.credentials.client.view;
 
+import stroom.credentials.client.presenter.CredentialsDetailsTabDialogPresenter;
 import stroom.credentials.client.presenter.CredentialsListPresenter;
 import stroom.credentials.client.presenter.CredentialsPresenter.CredentialsView;
-import stroom.credentials.client.presenter.CredentialsDetailsTabDialogPresenter;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;

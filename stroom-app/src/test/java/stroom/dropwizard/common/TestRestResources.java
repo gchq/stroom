@@ -535,7 +535,7 @@ class TestRestResources {
                 .collect(Collectors.toList());
 
         if (!nonProvidedFields.isEmpty()) {
-            LOGGER.warn("Non provided fields {}", nonProvidedFields);
+            LOGGER.error("Non provided fields {}", nonProvidedFields);
             softAssertions.assertThat(nonProvidedFields)
                     .withFailMessage("Resource implementations/classes must inject all objects " +
                                      "via Providers.")
