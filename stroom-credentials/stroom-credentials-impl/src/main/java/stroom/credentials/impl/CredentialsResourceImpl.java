@@ -22,8 +22,8 @@ import java.util.List;
 @AutoLogged
 public class CredentialsResourceImpl implements CredentialsResource {
 
-    /** DAO to talk to the DB */
-    private final Provider<CredentialsDao> credentialsDao;
+    /** Service to talk to the DB */
+    private final Provider<CredentialsService> credentialsServiceProvider;
 
     /** Logger */
     private static final Logger LOGGER = LoggerFactory.getLogger(CredentialsResourceImpl.class);
@@ -33,8 +33,8 @@ public class CredentialsResourceImpl implements CredentialsResource {
      */
     @SuppressWarnings("unused")
     @Inject
-    public CredentialsResourceImpl(final Provider<CredentialsDao> credentialsDao) {
-        this.credentialsDao = credentialsDao;
+    public CredentialsResourceImpl(final Provider<CredentialsService> credentialsServiceProvider) {
+        this.credentialsServiceProvider = credentialsServiceProvider;
     }
 
     /**
@@ -46,7 +46,7 @@ public class CredentialsResourceImpl implements CredentialsResource {
     public ResultPage<Credentials> listCredentials(final PageRequest pageRequest) {
         LOGGER.info("Request for list of credentials");
         try {
-            final List<Credentials> fullList = credentialsDao.get().listCredentials();
+            final List<Credentials> fullList = credentialsServiceProvider.get().listCredentials();
 
             final int start = Math.max(pageRequest.getOffset(), 0);
             final int end = Math.min(start + pageRequest.getLength(), fullList.size());
@@ -63,7 +63,7 @@ public class CredentialsResourceImpl implements CredentialsResource {
         LOGGER.info("Storing credentials '{}'", credentials);
         CredentialsResponse response;
         try {
-            credentialsDao.get().storeCredentials(credentials);
+            credentialsServiceProvider.get().storeCredentials(credentials);
 
             response = new CredentialsResponse(Status.OK);
 
@@ -78,7 +78,7 @@ public class CredentialsResourceImpl implements CredentialsResource {
         LOGGER.info("Getting credentials for '{}'", uuid);
         final Credentials credentials;
         try {
-            credentials = credentialsDao.get().getCredentials(uuid);
+            credentials = credentialsServiceProvider.get().getCredentials(uuid);
             return new CredentialsResponse(credentials);
         } catch (final IOException e) {
             return new CredentialsResponse(Status.GENERAL_ERR,
@@ -90,7 +90,7 @@ public class CredentialsResourceImpl implements CredentialsResource {
     public CredentialsResponse deleteCredentials(final String uuid) {
         LOGGER.info("Deleting credentials for '{}'", uuid);
         try {
-            credentialsDao.get().deleteCredentialsAndSecret(uuid);
+            credentialsServiceProvider.get().deleteCredentialsAndSecret(uuid);
             return new CredentialsResponse(Status.OK);
         } catch (final IOException e) {
             return new CredentialsResponse(Status.GENERAL_ERR,
@@ -103,7 +103,7 @@ public class CredentialsResourceImpl implements CredentialsResource {
     public CredentialsResponse storeSecret(final CredentialsSecret secret) {
         LOGGER.info("Storing credentials secret for '{}'", secret.getUuid());
         try {
-            credentialsDao.get().storeSecret(secret);
+            credentialsServiceProvider.get().storeSecret(secret);
             return new CredentialsResponse(Status.OK);
         } catch (final IOException e) {
             return new CredentialsResponse(Status.GENERAL_ERR,
@@ -116,7 +116,7 @@ public class CredentialsResourceImpl implements CredentialsResource {
     public CredentialsResponse getSecret(final String credentialsId) {
         LOGGER.info("Getting credentials secret for '{}'", credentialsId);
         try {
-            final CredentialsSecret secret = credentialsDao.get().getSecret(credentialsId);
+            final CredentialsSecret secret = credentialsServiceProvider.get().getSecret(credentialsId);
             return new CredentialsResponse(secret);
         } catch (final IOException e) {
             return new CredentialsResponse(Status.GENERAL_ERR,

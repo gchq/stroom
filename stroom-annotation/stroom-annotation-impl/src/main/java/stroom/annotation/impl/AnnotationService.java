@@ -32,7 +32,6 @@ import stroom.annotation.shared.MultiAnnotationChangeRequest;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.explorer.impl.PermissionChangeService;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.datasource.FindFieldCriteria;
