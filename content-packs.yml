@@ -5,17 +5,17 @@
     repo: {
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
-      branch: "7.10",
-      commit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
+      branch: "master",
+      commit: "aae2452752f6fea2d9701ee08a69038dbbfba834"
     }
   }, {
-    name : "event-logging-xml-schema",
-    path : "source/event-logging-xml-schema/stroomContent",
+    name : "event-logging-xml-schemas",
+    path : "source/event-logging-xml-schemas/stroomContent",
     repo: {
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
-      branch: "7.10",
-      commit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
+      branch: "master",
+      commit: "aae2452752f6fea2d9701ee08a69038dbbfba834"
     }
   }, {
     name: "example-index",
@@ -23,8 +23,8 @@
     repo: {
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
-      branch: "7.10",
-      commit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
+      branch: "master",
+      commit: "aae2452752f6fea2d9701ee08a69038dbbfba834"
     }
   }, {
     name: "internal-dashboards",
@@ -32,8 +32,8 @@
     repo: {
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
-      branch: "7.10",
-      commit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
+      branch: "master",
+      commit: "aae2452752f6fea2d9701ee08a69038dbbfba834"
     }
   }, {
     name: "internal-statistics-sql",
@@ -41,8 +41,8 @@
     repo: {
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
-      branch: "7.10",
-      commit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
+      branch: "master",
+      commit: "aae2452752f6fea2d9701ee08a69038dbbfba834"
     }
   }, {
     name: "internal-statistics-stroom-stats",
@@ -50,8 +50,8 @@
     repo: {
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
-      branch: "7.10",
-      commit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
+      branch: "master",
+      commit: "aae2452752f6fea2d9701ee08a69038dbbfba834"
     }
   }, {
     name: "standard-pipelines",
@@ -59,8 +59,8 @@
     repo: {
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
-      branch: "7.10",
-      commit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
+      branch: "master",
+      commit: "aae2452752f6fea2d9701ee08a69038dbbfba834"
     }
   }, {
     name: "stroom-101",
@@ -68,8 +68,8 @@
     repo: {
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
-      branch: "7.10",
-      commit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
+      branch: "master",
+      commit: "aae2452752f6fea2d9701ee08a69038dbbfba834"
     }
   }, {
     name: "stroom-logs",
@@ -77,8 +77,8 @@
     repo: {
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
-      branch: "7.10",
-      commit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
+      branch: "master",
+      commit: "aae2452752f6fea2d9701ee08a69038dbbfba834"
     }
   }, {
     name: "template-pipelines",
@@ -86,8 +86,8 @@
     repo: {
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
-      branch: "7.10",
-      commit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
+      branch: "master",
+      commit: "aae2452752f6fea2d9701ee08a69038dbbfba834"
     }
   }, {
     name: "state",
@@ -95,8 +95,8 @@
     repo: {
       name: "state",
       uri : "https://github.com/gchq/stroom-content.git",
-      branch: "7.10",
-      commit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
+      branch: "master",
+      commit: "aae2452752f6fea2d9701ee08a69038dbbfba834"
     }
   }, {
     name: "planb",
@@ -104,8 +104,8 @@
     repo: {
       name: "planb",
       uri : "https://github.com/gchq/stroom-content.git",
-      branch: "7.10",
-      commit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
+      branch: "master",
+      commit: "aae2452752f6fea2d9701ee08a69038dbbfba834"
     }
   }, {
     name: "stroom-visualisations",

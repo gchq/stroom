@@ -13,6 +13,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.10.7] - 2025-10-01
+
+* Issue **#5146** : Fix use of not equals in annotation queries.
+
+* Issue **#5145** : Expand all now affects favourites.
+
+* Issue **#5109** : Fix pipeline migration.
+
+
 ## [v7.10.6] - 2025-09-26
 
 * Issue **#5147** : Fix proxy omitting allowed headers (e.g. 'Feed') if the case does not match that in the allowed set.
@@ -1711,7 +1720,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.6...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.7...HEAD
+[v7.10.7]: https://github.com/gchq/stroom/compare/v7.10.6...v7.10.7
 [v7.10.6]: https://github.com/gchq/stroom/compare/v7.10.5...v7.10.6
 [v7.10.5]: https://github.com/gchq/stroom/compare/v7.10.4...v7.10.5
 [v7.10.4]: https://github.com/gchq/stroom/compare/v7.10.3...v7.10.4

@@ -115,14 +115,18 @@ public class AutoContentCreationConfig
             "The templated path to a folder in the Stroom explorer tree where Stroom will auto-create " +
             "content. If it doesn't exist it will be created. Content will be created in a sub-folder of this " +
             "folder with a name derived from the system name of the received data. By default this is " +
-            "'Feeds/${accountid}'.")
+            "'Feeds/${accountid}'. " +
+            "If this property is set in the YAML file, use single quotes to prevent the " +
+            "variables being expanded when the config file is loaded.")
     public String getDestinationExplorerPathTemplate() {
         return destinationExplorerPathTemplate;
     }
 
     @JsonPropertyDescription(
             "When Stroom auto-creates a feed, it will create a user group with a " +
-            "name derived from this template. Default value is 'grp-${accountid}'.")
+            "name derived from this template. Default value is 'grp-${accountid}'. " +
+            "If this property is set in the YAML file, use single quotes to prevent the " +
+            "variables being expanded when the config file is loaded.")
     public String getGroupTemplate() {
         return groupTemplate;
     }
@@ -130,7 +134,9 @@ public class AutoContentCreationConfig
     @JsonPropertyDescription(
             "If set, when Stroom auto-creates a feed, it will create an additional user group with a " +
             "name derived from this template. This is in addition to the user group defined by 'groupTemplate'." +
-            "If not set, only the latter user group will be created. Default value is 'grp-${accountid}-sandbox'.")
+            "If not set, only the latter user group will be created. Default value is 'grp-${accountid}-sandbox'. " +
+            "If this property is set in the YAML file, use single quotes to prevent the " +
+            "variables being expanded when the config file is loaded.")
     public String getAdditionalGroupTemplate() {
         return additionalGroupTemplate;
     }

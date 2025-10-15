@@ -269,7 +269,9 @@ public class ReceiveDataConfig
 
     @JsonPropertyDescription("A template for generating a feed name from a set of headers. The value of " +
                              "each header referenced in the template will have any unsuitable characters " +
-                             "replaced with '_'.")
+                             "replaced with '_'. " +
+                             "If this property is set in the YAML file, use single quotes to prevent the " +
+                             "variables being expanded when the config file is loaded.")
     public String getFeedNameTemplate() {
         return feedNameTemplate;
     }

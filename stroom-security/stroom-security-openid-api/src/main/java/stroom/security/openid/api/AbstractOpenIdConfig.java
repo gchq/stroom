@@ -388,7 +388,9 @@ public abstract class AbstractOpenIdConfig
     @Override
     @JsonProperty
     @JsonPropertyDescription("A template to build the user's full name using claim values as variables in the " +
-                             "template. E.g '${firstName} ${lastName}' or '${name}'.")
+                             "template. E.g '${firstName} ${lastName}' or '${name}'. " +
+                             "If this property is set in the YAML file, use single quotes to prevent the " +
+                             "variables being expanded when the config file is loaded.")
     public String getFullNameClaimTemplate() {
         return fullNameClaimTemplate;
     }
@@ -419,7 +421,9 @@ public abstract class AbstractOpenIdConfig
     @JsonProperty
     @JsonPropertyDescription("If the token is signed by AWS then use this pattern to form the URI to obtain the " +
                              "public key from. The pattern supports the variables '${awsRegion}' and '${keyId}'. " +
-                             "Multiple instances of a variable are also supported.")
+                             "Multiple instances of a variable are also supported. " +
+                             "If this property is set in the YAML file, use single quotes to prevent the " +
+                             "variables being expanded when the config file is loaded.")
     public String getPublicKeyUriPattern() {
         return publicKeyUriPattern;
     }
