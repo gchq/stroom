@@ -12,6 +12,7 @@
 <!--    <logger name="stroom.proxy.repo;" level="debug" />-->
 <!--    <logger name="stroom.proxy.app.handler" level="debug" />-->
 <!--    <logger name="stroom.proxy.app.handler.DirUtil" level="debug" />-->
+<!--        <logger name="stroom.proxy.app.handler.TestZipDirScanner" level="debug" />-->
 
     <root level="error">
         <appender-ref ref="STDOUT" />

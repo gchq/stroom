@@ -3,11 +3,12 @@ package stroom.proxy.app.handler;
 import stroom.meta.api.AttributeMap;
 import stroom.proxy.app.DirScannerConfig;
 import stroom.test.common.DirectorySnapshot;
-import stroom.test.common.DirectorySnapshot.PathFlag;
 import stroom.test.common.DirectorySnapshot.PathSnapshot;
 import stroom.test.common.DirectorySnapshot.Snapshot;
 import stroom.test.common.TestUtil;
 import stroom.util.io.SimplePathCreator;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.time.StroomDuration;
 
 import org.junit.jupiter.api.Test;
@@ -19,14 +20,18 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 class TestZipDirScanner {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestZipDirScanner.class);
 
     @Mock
     private ZipReceiver mockZipReceiver;
@@ -42,10 +47,10 @@ class TestZipDirScanner {
     @Test
     void testScan() {
         final Path ingestDir1 = testDir.resolve("ingest1");
-        final Path failureDir1 = testDir.resolve("failure1");
+        final Path failureDir = testDir.resolve("failure");
         final DirScannerConfig config = new DirScannerConfig(
                 List.of(ingestDir1.toString()),
-                failureDir1.toString(),
+                failureDir.toString(),
                 true,
                 StroomDuration.ofSeconds(1));
 
@@ -77,28 +82,35 @@ class TestZipDirScanner {
                         file3,
                         file6);
 
-        final Snapshot snapshot = DirectorySnapshot.of(ingestDir1);
+        assertThat(DirectorySnapshot.of(ingestDir1).pathSnapshots())
+                .isEmpty();
+
+        final Snapshot snapshot = DirectorySnapshot.of(failureDir);
+        LOGGER.debug("Snapshot of {}\n{}", failureDir, snapshot);
+
         assertThat(snapshot.stream()
                 .map(PathSnapshot::path)
-                .map(ingestDir1::resolve)
+                .map(failureDir::resolve)
+                .filter(Files::isRegularFile)
+                .map(Path::getFileName)
                 .toList())
-                .containsExactlyInAnyOrder(
-                        file1,
-                        file4,
-                        file5,
-                        file5.getParent(),
-                        file5.getParent().getParent());
+                .containsExactlyInAnyOrderElementsOf(Stream.of(
+                                file1,
+                                file4,
+                                file5)
+                        .map(Path::getFileName)
+                        .toList());
     }
 
     @Test
     void testScan_multipleDirs() {
         final Path ingestDir1 = testDir.resolve("ingest1");
         final Path ingestDir2 = testDir.resolve("ingest2");
-        final Path failureDir1 = testDir.resolve("failure1");
+        final Path failureDir = testDir.resolve("failure");
         final DirScannerConfig config = new DirScannerConfig(
                 List.of(ingestDir1.toString(),
                         ingestDir2.toString()),
-                failureDir1.toString(),
+                failureDir.toString(),
                 true,
                 StroomDuration.ofSeconds(1));
 
@@ -145,40 +157,42 @@ class TestZipDirScanner {
                         file23,
                         file26);
 
-        Snapshot snapshot = DirectorySnapshot.of(ingestDir1);
-        assertThat(snapshot.stream()
-                .map(PathSnapshot::path)
-                .map(ingestDir1::resolve)
-                .toList())
-                .containsExactlyInAnyOrder(
-                        file11,
-                        file14,
-                        file15,
-                        file15.getParent(),
-                        file15.getParent().getParent());
+        Snapshot snapshot;
+        snapshot = DirectorySnapshot.of(ingestDir1);
+        assertThat(snapshot.pathSnapshots())
+                .isEmpty();
 
         snapshot = DirectorySnapshot.of(ingestDir2);
+        assertThat(snapshot.pathSnapshots())
+                .isEmpty();
+
+        snapshot = DirectorySnapshot.of(failureDir);
         assertThat(snapshot.stream()
                 .map(PathSnapshot::path)
-                .map(ingestDir2::resolve)
+                .map(failureDir::resolve)
+                .filter(Files::isRegularFile)
+                .map(Path::getFileName)
                 .toList())
-                .containsExactlyInAnyOrder(
-                        file21,
-                        file24,
-                        file25,
-                        file25.getParent(),
-                        file25.getParent().getParent());
+                .containsExactlyInAnyOrderElementsOf(Stream.of(
+                                file11,
+                                file14,
+                                file15,
+                                file21,
+                                file24,
+                                file25)
+                        .map(Path::getFileName)
+                        .toList());
     }
 
     @Test
     void testScan_badZip() {
         final Path ingestDir1 = testDir.resolve("ingest1");
         final Path ingestDir2 = testDir.resolve("ingest2");
-        final Path failureDir1 = testDir.resolve("failure1");
+        final Path failureDir = testDir.resolve("failure");
         final DirScannerConfig config = new DirScannerConfig(
                 List.of(ingestDir1.toString(),
                         ingestDir2.toString()),
-                failureDir1.toString(),
+                failureDir.toString(),
                 true,
                 StroomDuration.ofSeconds(1));
 
@@ -236,36 +250,32 @@ class TestZipDirScanner {
                         file23,
                         file26);
 
-        Snapshot snapshot = DirectorySnapshot.of(ingestDir1);
-        assertThat(snapshot.stream()
-                .map(PathSnapshot::path)
-                .map(ingestDir1::resolve)
-                .toList())
-                .containsExactlyInAnyOrder(
-                        file11,
-                        file14,
-                        file15,
-                        file15.getParent(),
-                        file15.getParent().getParent());
+        Snapshot snapshot;
+        snapshot = DirectorySnapshot.of(ingestDir1);
+        assertThat(snapshot.pathSnapshots())
+                .isEmpty();
 
         snapshot = DirectorySnapshot.of(ingestDir2);
-        assertThat(snapshot.stream()
-                .map(PathSnapshot::path)
-                .map(ingestDir2::resolve)
-                .toList())
-                .containsExactlyInAnyOrder(
-                        file21,
-                        file24,
-                        file25,
-                        file25.getParent(),
-                        file25.getParent().getParent());
+        assertThat(snapshot.pathSnapshots())
+                .isEmpty();
 
-        snapshot = DirectorySnapshot.of(failureDir1);
+        snapshot = DirectorySnapshot.of(failureDir);
         assertThat(snapshot.stream()
-                .filter(pathSnapshot -> pathSnapshot.flags().contains(PathFlag.REGULAR_FILE))
                 .map(PathSnapshot::path)
+                .map(failureDir::resolve)
+                .filter(Files::isRegularFile)
+                .map(Path::getFileName)
                 .toList())
-                .containsExactlyInAnyOrder(Path.of("0/001/bad.zip"));
+                .containsExactlyInAnyOrderElementsOf(Stream.of(
+                                file11,
+                                file14,
+                                file15,
+                                file21,
+                                file24,
+                                file25,
+                                badFile)
+                        .map(Path::getFileName)
+                        .toList());
     }
 
     private ZipDirScanner createZipDirScanner(final DirScannerConfig config) {
