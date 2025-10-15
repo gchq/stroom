@@ -21,7 +21,7 @@ import java.util.Objects;
 public class DirScannerConfig extends AbstractConfig implements IsProxyConfig {
 
     public static final StroomDuration DEFAULT_SCAN_FREQUENCY = StroomDuration.ofMinutes(1);
-    public static final boolean DEFAULT_ENABLED_STATE = false;
+    public static final boolean DEFAULT_ENABLED_STATE = true;
     public static final List<String> DEFAULT_DIRS = List.of("zip_file_ingest");
     public static final String DEFAULT_FAILURE_DIR = "zip_file_ingest_failed";
 
