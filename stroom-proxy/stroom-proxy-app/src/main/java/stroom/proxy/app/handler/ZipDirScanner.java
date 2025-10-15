@@ -1,5 +1,6 @@
 package stroom.proxy.app.handler;
 
+import stroom.data.zip.StroomZipFileType;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.proxy.app.DirScannerConfig;
@@ -16,23 +17,34 @@ import stroom.util.shared.NullSafe;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import org.apache.commons.compress.utils.FileNameUtils;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Stream;
 
+/**
+ * Scans one or more configured directories in sequence looking for ZIP files to ingest as if they had
+ * been forwarded from another proxy.
+ * Will recurse into subdirectories. Once the scan is complete any empty directories inside the configured
+ * root directories will be deleted.
+ */
 @Singleton // So we can synchronise
 public class ZipDirScanner {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ZipDirScanner.class);
-    private static final String ZIP_EXTENSION = ".zip";
+    private static final Set<String> SIDECAR_EXTENSIONS = Set.of(
+            FileGroup.META_EXTENSION,
+            FileGroup.ENTRIES_FILE);
+    private static final Set<String> SIDECAR_FILENAMES = Set.of(
+            "error.log");
 
     private final Provider<DirScannerConfig> dirScannerConfigProvider;
     private final PathCreator pathCreator;
@@ -49,6 +61,7 @@ public class ZipDirScanner {
         this.pathCreator = pathCreator;
         this.zipReceiver = zipReceiver;
         this.receiptIdGenerator = receiptIdGenerator;
+
         final Path failureDir = pathCreator.toAppPath(dirScannerConfigProvider.get().getFailureDir());
         FileUtil.ensureDirExists(failureDir);
         this.failureDirProvider = NestedNumberedDirProvider.create(failureDir);
@@ -61,12 +74,20 @@ public class ZipDirScanner {
                 final List<Path> dirs = getPathsToScan(dirScannerConfig);
                 if (NullSafe.hasItems(dirs)) {
                     final ScanResult scanResult = new ScanResult();
+                    final DurationTimer timer = DurationTimer.start();
                     for (final Path dir : dirs) {
                         // This will log and swallow any exceptions to ensure we can keep processing
                         scanDir(dir, scanResult);
                     }
-                    LOGGER.info("Completed scan for ZIP files to ingest, success: {}, failed: {}, ignored: {}",
-                            scanResult.successCount, scanResult.failCount, scanResult.ignoreCount);
+                    if (!scanResult.isEmpty()) {
+                        LOGGER.info("Completed scan for ZIP files to ingest, success: {}, failed: {}, ignored: {}, " +
+                                    "duration: {}",
+                                scanResult.successCount, scanResult.failCount, scanResult.ignoreCount, timer);
+                    } else {
+                        LOGGER.debug("Completed scan for ZIP files to ingest, success: {}, failed: {}, ignored: {}, " +
+                                     "duration: {}",
+                                scanResult.successCount, scanResult.failCount, scanResult.ignoreCount, timer);
+                    }
                 } else {
                     LOGGER.debug("scan() - No dirs to scan");
                 }
@@ -91,33 +112,94 @@ public class ZipDirScanner {
 
     private void processZipFile(final Path zipFile, final ScanResult scanResult) {
         LOGGER.debug("processZipFile() - {}", zipFile);
+        final ZipGroup zipGroup = createZipGroup(zipFile);
         // Need to swallow all exceptions, so we don't halt the dir walking
         try {
-            // Create a receiptId for the zip and set the receipt time
-            final AttributeMap attributeMap = new AttributeMap();
-            final UniqueId receiptId = receiptIdGenerator.generateId();
-            AttributeMapUtil.addReceiptInfo(attributeMap, receiptId);
+            final AttributeMap attributeMap = createAttributeMap(zipGroup);
 
             zipReceiver.receive(zipFile, attributeMap);
             // receive will have cloned our zip, so as there were no problems, we can now delete it
-            LOGGER.debug("processZipFile() - Deleting {}", zipFile);
-            Files.deleteIfExists(zipFile);
+            // and the other files in the group
+            deleteZipGroup(zipGroup);
             scanResult.incrementSuccessCount();
         } catch (final Exception e) {
             scanResult.incrementFailCount();
-            LOGGER.error("Error processing zipFile {} - {}", zipFile, LogUtil.exceptionMessage(e), e);
+            final Path destDir = failureDirProvider.createNumberedPath();
             if (Files.exists(zipFile)) {
-                final Path dir = failureDirProvider.createNumberedPath();
-                final Path dest = dir.resolve(zipFile.getFileName());
-                try {
-                    Files.move(zipFile, dest, StandardCopyOption.ATOMIC_MOVE);
-                } catch (final IOException ex) {
-                    LOGGER.error("Error moving failed zip from {} to {}", zipFile, dest, e);
-                }
+                LOGGER.error("Error processing zipFile {}, moving it into {} - {}",
+                        zipFile, destDir, LogUtil.exceptionMessage(e), e);
+                // Move the zip and its associated sidecar files to a failure dir
+                zipGroup.streamPaths()
+                        .forEach(sourceFile -> {
+                            final Path destFile = destDir.resolve(sourceFile.getFileName());
+                            try {
+                                Files.move(sourceFile, destFile);
+                            } catch (final IOException ex) {
+                                LOGGER.error("Error moving failed file from {} to {}", sourceFile, destFile, e);
+                            }
+                        });
             } else {
+                LOGGER.error("Error processing zipFile {} - {}", zipFile, LogUtil.exceptionMessage(e), e);
                 LOGGER.debug("processZipFile() - zipFile {} doesn't exist", zipFile);
             }
         }
+    }
+
+    private void deleteZipGroup(final ZipGroup zipGroup) {
+        zipGroup.streamPaths()
+                .forEach(path -> {
+                    try {
+                        LOGGER.debug("deleteZipGroup() - Deleting file {}", path);
+                        Files.delete(path);
+                    } catch (final Exception e) {
+                        LOGGER.error("Error deleting file {}. This file needs to be manually deleted " +
+                                     "or it risks being re-ingested. - {}", path, LogUtil.exceptionMessage(e), e);
+                    }
+                });
+    }
+
+    private ZipGroup createZipGroup(final Path zipFile) {
+        // We may be dealing with just a zip file or a set of files moved in from the forward failure
+        // dir, e.g.
+        // ./03_failure/20251014/BAD_FEED/0/001/proxy.zip
+        // ./03_failure/20251014/BAD_FEED/0/001/proxy.meta
+        // ./03_failure/20251014/BAD_FEED/0/001/proxy.entries
+        // ./03_failure/20251014/BAD_FEED/0/001/error.log
+
+        final Path parentDir = zipFile.getParent();
+        final String baseName = FileNameUtils.getBaseName(zipFile);
+        Path metaFile = parentDir.resolve(baseName + "." + StroomZipFileType.META.getExtension());
+        if (!Files.isRegularFile(metaFile)) {
+            metaFile = null;
+        }
+        // This one has a specific name
+        Path errorFile = parentDir.resolve(RetryingForwardDestination.ERROR_LOG_FILENAME);
+        if (!Files.isRegularFile(errorFile)) {
+            errorFile = null;
+        }
+
+        Path entriesFile = parentDir.resolve(baseName + "." + FileGroup.ENTRIES_EXTENSION);
+        if (!Files.isRegularFile(entriesFile)) {
+            entriesFile = null;
+        }
+        final ZipGroup zipGroup = new ZipGroup(zipFile, metaFile, errorFile, entriesFile);
+        LOGGER.debug("createZipGroup() - zipGroup: {}", zipGroup);
+        return zipGroup;
+    }
+
+    private AttributeMap createAttributeMap(final ZipGroup zipGroup) throws IOException {
+        final AttributeMap attributeMap = new AttributeMap();
+        if (zipGroup.hasMetaFile() && Files.isRegularFile(zipGroup.metaFile)) {
+            AttributeMapUtil.read(zipGroup.metaFile, attributeMap);
+            LOGGER.debug("createAttributeMap() - Read attributes from {}, attributeMap: {}",
+                    zipGroup.metaFile, attributeMap);
+        } else {
+            LOGGER.debug("createAttributeMap() - File {} not found, creating minimal attributeMap",
+                    zipGroup.metaFile);
+            final UniqueId receiptId = receiptIdGenerator.generateId();
+            AttributeMapUtil.addReceiptInfo(attributeMap, receiptId);
+        }
+        return attributeMap;
     }
 
     private void scanDir(final Path rootDir, final ScanResult scanResult) {
@@ -132,9 +214,12 @@ public class ZipDirScanner {
                     if (isZipFile(file)) {
                         // This will log and swallow, so we can carry on walking
                         processZipFile(file, scanResult);
+                    } else if (isSidecarFile(file)) {
+                        // This will get handled by processZipFile()
+                        LOGGER.debug("scanDir() - Found sidecar file {}", file);
                     } else {
                         scanResult.incrementIgnoreCount();
-                        LOGGER.warn("Found file that is not a ZIP file in {}, it will be ignored. " +
+                        LOGGER.warn("Found file that is not a ZIP file ({}), it will be ignored. " +
                                     "You should remove this file to stop seeing this message.", file);
                     }
                     return FileVisitResult.CONTINUE;
@@ -142,20 +227,22 @@ public class ZipDirScanner {
 
                 @Override
                 public FileVisitResult visitFileFailed(final Path path, final IOException exc) throws IOException {
-                    scanResult.incrementFailCount();
-                    LOGGER.debug(() -> LogUtil.message(
-                            "scanDir() - unable to read file/dir {}: {}",
-                            path, LogUtil.exceptionMessage(exc), exc));
                     if (isZipFile(path)) {
+                        scanResult.incrementFailCount();
                         LOGGER.error("scanDir() - unable to read zip file {}: {}",
                                 path, LogUtil.exceptionMessage(exc));
+                    } else {
+                        LOGGER.debug(() -> LogUtil.message(
+                                "scanDir() - unable to read file/dir {}. This may be because the file has been " +
+                                "deleted after successful processing of the associated zip file.: {}",
+                                path, LogUtil.exceptionMessage(exc), exc));
                     }
                     return FileVisitResult.CONTINUE;
                 }
             });
-            LOGGER.debug("scanDir() - Scanned {} in {}", rootDir, timer);
+            LOGGER.debug("scanDir() - Scanned {} for ZIP files in {}", rootDir, timer);
         } catch (final Exception e) {
-            LOGGER.error("scanDir() - unable to read zip file {}: {}",
+            LOGGER.error("scanDir() - unable to read ZIP file {}: {}",
                     rootDir, LogUtil.exceptionMessage(e));
             // Just log and swallow, so we can move on to the next dir to scan
         } finally {
@@ -186,25 +273,59 @@ public class ZipDirScanner {
 
     private boolean isZipFile(final Path path) {
         Objects.requireNonNull(path);
-        return Files.isRegularFile(path)
-               && path.getFileName()
-                       .toString()
-                       .toLowerCase()
-                       .endsWith(ZIP_EXTENSION);
+        return FileGroup.ZIP_EXTENSION.equalsIgnoreCase(FileNameUtils.getExtension(path))
+               && Files.isRegularFile(path);
+    }
+
+    private boolean isSidecarFile(final Path path) throws IOException {
+        final Path parentDir = path.getParent();
+        final String baseName = FileNameUtils.getBaseName(path);
+        final String extension = FileNameUtils.getExtension(path);
+
+        if (SIDECAR_FILENAMES.contains(path.getFileName().toString())) {
+            // e.g. error.log
+            try (final Stream<Path> pathStream = Files.list(parentDir)) {
+                final boolean foundMatchingZip = pathStream.filter(Files::isRegularFile)
+                        .anyMatch(aPath -> {
+                            final String anExtension = FileNameUtils.getExtension(aPath);
+                            return FileGroup.ZIP_EXTENSION.equalsIgnoreCase(anExtension);
+                        });
+                LOGGER.debug("isSidecarFile() - path: {}, foundMatchingZip: {}", path, foundMatchingZip);
+                return foundMatchingZip;
+            }
+        } else if (SIDECAR_EXTENSIONS.contains(extension)) {
+            // e.g. proxy.meta, proxy.entries
+            try (final Stream<Path> pathStream = Files.list(parentDir)) {
+                final boolean foundMatchingZip = pathStream.filter(Files::isRegularFile)
+                        .filter(aPath -> {
+                            final String aBaseName = FileNameUtils.getBaseName(aPath);
+                            return Objects.equals(aBaseName, baseName);
+                        })
+                        .anyMatch(aPath -> {
+                            final String anExtension = FileNameUtils.getExtension(aPath);
+                            return FileGroup.ZIP_EXTENSION.equalsIgnoreCase(anExtension);
+                        });
+                LOGGER.debug("isSidecarFile() - path: {}, foundMatchingZip: {}", path, foundMatchingZip);
+                return foundMatchingZip;
+            }
+        } else {
+            return false;
+        }
     }
 
     private List<Path> getPathsToScan(final DirScannerConfig dirScannerConfig) {
+
         return NullSafe.stream(dirScannerConfig.getDirs())
                 .map(pathCreator::toAppPath)
                 .filter(path -> {
-                    final boolean isDir = Files.isDirectory(path);
-                    if (isDir) {
-                        return true;
-                    } else {
-                        LOGGER.warn("getPathsToScan() - path '{}' does not exist or is not a directory. " +
-                                    "It will be ignored.", path);
+                    try {
+                        FileUtil.ensureDirExists(path);
+                    } catch (final Exception e) {
+                        LOGGER.error("Error ensuring directory {} exists - {}",
+                                path, LogUtil.exceptionMessage(e), e);
                         return false;
                     }
+                    return true;
                 })
                 .toList();
     }
@@ -235,6 +356,12 @@ public class ZipDirScanner {
             ignoreCount += 1;
         }
 
+        boolean isEmpty() {
+            return successCount == 0
+                   && failCount == 0
+                   && ignoreCount == 0;
+        }
+
         @Override
         public String toString() {
             return "ScanResult{" +
@@ -242,6 +369,27 @@ public class ZipDirScanner {
                    ", failCount=" + failCount +
                    ", ignoreCount=" + ignoreCount +
                    '}';
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record ZipGroup(Path zipFile, Path metaFile, Path errorFile, Path entriesFile) {
+
+        private ZipGroup {
+            Objects.requireNonNull(zipFile);
+        }
+
+        boolean hasMetaFile() {
+            return metaFile != null;
+        }
+
+        Stream<Path> streamPaths() {
+            return Stream.of(zipFile, metaFile, errorFile, entriesFile)
+                    .filter(Objects::nonNull)
+                    .filter(Files::exists);
         }
     }
 }

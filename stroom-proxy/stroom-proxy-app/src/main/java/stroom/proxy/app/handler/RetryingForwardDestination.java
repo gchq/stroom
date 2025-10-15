@@ -44,7 +44,7 @@ public class RetryingForwardDestination implements ForwardDestination {
     /**
      * File to hold the log of all forwarding errors from all forward attempts for this {@link FileGroup}
      */
-    private static final String ERROR_LOG_FILENAME = "error.log";
+    static final String ERROR_LOG_FILENAME = "error.log";
     /**
      * Holds the state relating to retries. Held in binary form.
      */

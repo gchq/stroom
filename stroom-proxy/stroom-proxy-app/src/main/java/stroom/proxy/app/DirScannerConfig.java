@@ -20,10 +20,10 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class DirScannerConfig extends AbstractConfig implements IsProxyConfig {
 
-    public static final StroomDuration DEFAULT_SCAN_FREQUENCY = StroomDuration.ofSeconds(10);
+    public static final StroomDuration DEFAULT_SCAN_FREQUENCY = StroomDuration.ofMinutes(1);
     public static final boolean DEFAULT_ENABLED_STATE = false;
-    public static final List<String> DEFAULT_DIRS = List.of("file_ingest");
-    public static final String DEFAULT_FAILURE_DIR = "file_ingest_failed";
+    public static final List<String> DEFAULT_DIRS = List.of("zip_file_ingest");
+    public static final String DEFAULT_FAILURE_DIR = "zip_file_ingest_failed";
 
     private final List<String> dirs;
     private final String failureDir;
@@ -32,7 +32,7 @@ public class DirScannerConfig extends AbstractConfig implements IsProxyConfig {
 
     public DirScannerConfig() {
         this.enabled = DEFAULT_ENABLED_STATE;
-        this.dirs = null;
+        this.dirs = DEFAULT_DIRS;
         this.failureDir = DEFAULT_FAILURE_DIR;
         this.scanFrequency = DEFAULT_SCAN_FREQUENCY;
     }
@@ -56,6 +56,7 @@ public class DirScannerConfig extends AbstractConfig implements IsProxyConfig {
         return NullSafe.list(dirs);
     }
 
+    @RequiresProxyRestart
     @JsonProperty
     @JsonPropertyDescription("The directory where ZIPs will be moved to if they could not be ingested.")
     public String getFailureDir() {

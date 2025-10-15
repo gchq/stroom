@@ -119,6 +119,8 @@ public class ZipReceiver implements Receiver {
 
     /**
      * Receive a proxy zip file that is located on disk.
+     * Caller is responsible for deciding what to do with sourceZipFile after this method
+     * returns successfully, e.g. deleting it.
      *
      * @param sourceZipFile The zip file.
      * @param attributeMap  Additional attributes that are global to all entries in the zip.
