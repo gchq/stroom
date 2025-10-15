@@ -15,7 +15,7 @@ proxyConfig:
   dirScanner:
     dirs:
     - "zip_file_ingest"
-    enabled: false
+    enabled: true
     failureDir: "zip_file_ingest_failed"
     scanFrequency: "PT1M"
   eventStore:
