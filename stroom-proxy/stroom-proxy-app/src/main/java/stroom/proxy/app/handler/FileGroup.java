@@ -5,10 +5,13 @@ import java.util.List;
 
 public class FileGroup {
 
-    static final String META_FILE = "proxy.meta";
-    static final String ZIP_FILE = "proxy.zip";
+    static final String BASE_FILENAME = "proxy";
+    static final String META_EXTENSION = "meta";
+    static final String ZIP_EXTENSION = "zip";
     static final String ENTRIES_EXTENSION = "entries";
-    static final String ENTRIES_FILE = "proxy." + ENTRIES_EXTENSION;
+    static final String META_FILE = BASE_FILENAME + "." + META_EXTENSION;
+    static final String ZIP_FILE = BASE_FILENAME + "." + ZIP_EXTENSION;
+    static final String ENTRIES_FILE = BASE_FILENAME + "." + ENTRIES_EXTENSION;
 
     private final Path parentDir;
     private final Path zip;
