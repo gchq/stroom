@@ -128,6 +128,31 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
     }
 
     @Override
+    public void createCredentials(final Credentials newCredentials) throws IOException {
+        LOGGER.info("Creating credentials: {}", newCredentials);
+        try {
+            JooqUtil.context(credentialsDbConnProvider, context -> context
+                    .insertInto(CREDENTIALS)
+                    .columns(CREDENTIALS.UUID,
+                            CREDENTIALS.NAME,
+                            CREDENTIALS.TYPE,
+                            CREDENTIALS.CREDSEXPIRE,
+                            CREDENTIALS.EXPIRES)
+                    .values(newCredentials.getUuid(),
+                            newCredentials.getName(),
+                            newCredentials.getType().name(),
+                            (byte) (newCredentials.isCredsExpire()
+                                    ? 1
+                                    : 0),
+                            newCredentials.getExpires())
+                    .execute());
+        } catch (final DataAccessException e) {
+            LOGGER.error("Error creating credentials: {}", e.getMessage(), e);
+            throw new IOException("Error creating credentials: '" + e.getMessage() + "'", e);
+        }
+    }
+
+    @Override
     public Credentials getCredentials(final String uuid) throws IOException {
         try {
             final CredentialsRecord credRecord =
@@ -146,23 +171,12 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
     public void storeCredentials(final Credentials credentials) throws IOException {
         try {
             JooqUtil.context(credentialsDbConnProvider, context -> context
-                    .insertInto(CREDENTIALS)
-                    .columns(CREDENTIALS.UUID,
-                            CREDENTIALS.NAME,
-                            CREDENTIALS.TYPE,
-                            CREDENTIALS.CREDSEXPIRE,
-                            CREDENTIALS.EXPIRES)
-                    .values(credentials.getUuid(),
-                            credentials.getName(),
-                            credentials.getType().name(),
-                            (byte) (credentials.isCredsExpire() ? 1 : 0),
-                            credentials.getExpires())
-                    .onDuplicateKeyUpdate()
-                    .set(CREDENTIALS.UUID, credentials.getUuid())
+                    .update(CREDENTIALS)
                     .set(CREDENTIALS.NAME, credentials.getName())
                     .set(CREDENTIALS.TYPE, credentials.getType().name())
                     .set(CREDENTIALS.CREDSEXPIRE, (byte) (credentials.isCredsExpire() ? 1 : 0))
                     .set(CREDENTIALS.EXPIRES, credentials.getExpires())
+                    .where(CREDENTIALS.UUID.eq(credentials.getUuid()))
                     .execute());
         } catch (final DataAccessException e) {
             LOGGER.error("Error storing credentials: {}", e.getMessage(), e);

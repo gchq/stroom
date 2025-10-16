@@ -67,7 +67,7 @@ public class TestCredentialsDaoImpl {
                 false,
                 expires);
 
-        credentialsDao.storeCredentials(credentials1);
+        credentialsDao.createCredentials(credentials1);
         credentialsDao.storeSecret(secret);
 
         // Get one item out

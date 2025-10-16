@@ -1,6 +1,7 @@
 package stroom.credentials.impl;
 
 import stroom.credentials.shared.Credentials;
+import stroom.credentials.shared.CredentialsCreateRequest;
 import stroom.credentials.shared.CredentialsResource;
 import stroom.credentials.shared.CredentialsResponse;
 import stroom.credentials.shared.CredentialsResponse.Status;
@@ -56,6 +57,21 @@ public class CredentialsResourceImpl implements CredentialsResource {
             LOGGER.error("Error retrieving the list of credentials: {}", e.getMessage(), e);
             return new ResultPage<>(Collections.emptyList());
         }
+    }
+
+    @Override
+    public CredentialsResponse createCredentials(final CredentialsCreateRequest request) {
+        LOGGER.info("Creating credentials '{}'", request.getCredentials());
+        CredentialsResponse response;
+        try {
+            credentialsServiceProvider.get().createCredentials(request.getCredentials(), request.getSecret());
+            response = new CredentialsResponse(Status.OK);
+        } catch (final IOException e) {
+            LOGGER.error("Error creating credentials: {}", e.getMessage(), e);
+            response = new CredentialsResponse(Status.GENERAL_ERR, e.getMessage());
+        }
+
+        return response;
     }
 
     @Override

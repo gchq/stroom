@@ -24,6 +24,13 @@ public interface CredentialsDao {
     List<Credentials> listCredentials(CredentialsType type) throws IOException;
 
     /**
+     * Creates new credentials within the database.
+     * @param newCredentials The credentials to create.
+     * @throws IOException if something goes wrong.
+     */
+    void createCredentials(final Credentials newCredentials) throws IOException;
+
+    /**
      * Stores the given credential to the database.
      * @param credentials The credentials to store in the database.
      * @throws IOException if something goes wrong.

@@ -3,8 +3,10 @@ package stroom.credentials.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.credentials.client.presenter.CredentialsSettingsPresenter.CredentialsSettingsView;
+import stroom.credentials.client.view.CredentialsManagerDialogViewImpl;
 import stroom.credentials.client.view.CredentialsViewImpl;
 import stroom.credentials.shared.Credentials;
+import stroom.credentials.shared.CredentialsCreateRequest;
 import stroom.credentials.shared.CredentialsResource;
 import stroom.credentials.shared.CredentialsResponse.Status;
 import stroom.credentials.shared.CredentialsSecret;
@@ -80,6 +82,12 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
 
     /** ID of the presenter for the list of credentials */
     public static final String CREDENTIALS_LIST = "CREDENTIALS_LIST";
+
+    /** Indicates whether the credentials are new ones to be created or old ones to be stored */
+    enum CreationState {
+        NEW_CREDENTIALS,
+        OLD_CREDENTIALS
+    }
 
     /**
      * Injected constructor.
@@ -302,7 +310,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     private void handleAddButtonClick() {
         final Credentials newCredentials = new Credentials();
         final CredentialsSecret newSecret = new CredentialsSecret(newCredentials.getUuid());
-        showDetailsDialog(newCredentials, newSecret);
+        showDetailsDialog(newCredentials, newSecret, CreationState.NEW_CREDENTIALS);
     }
 
     /**
@@ -343,6 +351,12 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                                     null);
                         }
                     })
+                    .onFailure(error -> {
+                        AlertEvent.fireError(parentPresenter,
+                                "Delete Error",
+                                error.getMessage(),
+                                null);
+                    })
                     .taskMonitorFactory(CredentialsListPresenter.this)
                     .exec();
         }
@@ -365,7 +379,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                             secret = new CredentialsSecret(credentials.getUuid());
                         }
 
-                        showDetailsDialog(credentials, secret);
+                        showDetailsDialog(credentials, secret, CreationState.OLD_CREDENTIALS);
                     } else {
                         AlertEvent.fireError(parentPresenter,
                                 "Error getting credential's details",
@@ -373,7 +387,12 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                                 null);
                     }
                 })
-                .onFailure(error -> CredentialsViewImpl.console("onFailure: " + error))
+                .onFailure(error -> {
+                    AlertEvent.fireError(parentPresenter,
+                            "Error",
+                            error.getMessage(),
+                            null);
+                })
                 .taskMonitorFactory(CredentialsListPresenter.this)
                 .exec();
     }
@@ -382,9 +401,12 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      * Called when adding or editing credentials.
      * @param credentials The credentials to add or edit.
      * @param secret The secret to use to display the settings.
+     * @param creationState Whether these are new or old credentials.
      */
     private void showDetailsDialog(final Credentials credentials,
-                                   final CredentialsSecret secret) {
+                                   final CredentialsSecret secret,
+                                   final CreationState creationState) {
+
         if (credentials != null) {
             final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(detailsDialog);
             detailsDialog.setupDialog(credentials, secret, builder);
@@ -396,7 +418,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                         final CredentialsSecret secretToSave = view.getSecret();
                         e.hide();
 
-                        saveSecretAndCredentials(secretToSave, credsToSave);
+                        saveSecretAndCredentials(secretToSave, credsToSave, creationState);
                     } else {
                         final String validationMessage = detailsDialog.getValidationMessage();
 
@@ -418,25 +440,63 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      * Async save of secret, then credentials.
      * @param secret The secret to save.
      * @param creds The credentials to save.
+     * @param creationState Whether these are new or old credentials.
      */
     private void saveSecretAndCredentials(final CredentialsSecret secret,
-                                          final Credentials creds) {
-        restFactory.create(CREDENTIALS_RESOURCE)
-                .method(res -> res.storeSecret(secret))
-                .onSuccess(result -> {
-                    if (result.getStatus() == Status.OK) {
-                        saveCredentials(creds);
+                                          final Credentials creds,
+                                          final CreationState creationState) {
+        if (creationState == CreationState.NEW_CREDENTIALS) {
+            final CredentialsCreateRequest request = new CredentialsCreateRequest(creds, secret);
 
-                    } else {
+            CredentialsManagerDialogViewImpl.console("New credentials");
+            restFactory.create(CREDENTIALS_RESOURCE)
+                    .method(res -> res.createCredentials(request))
+                    .onSuccess(result -> {
+                        if (result.getStatus() == Status.OK) {
+                            // Reload the list & select it
+                            dataProvider.refresh();
+                            gridSelectionModel.setSelected(creds);
+
+                        } else {
+                            AlertEvent.fireError(parentPresenter,
+                                    "Add Credentials Error",
+                                    result.getMessage(),
+                                    null);
+                        }
+                    })
+                    .onFailure(error -> {
+                        AlertEvent.fireError(parentPresenter,
+                                "Add Credentials Error",
+                                error.getMessage(),
+                                null);
+                    })
+                    .taskMonitorFactory(CredentialsListPresenter.this)
+                    .exec();
+
+        } else {
+            restFactory.create(CREDENTIALS_RESOURCE)
+                    .method(res -> res.storeSecret(secret))
+                    .onSuccess(result -> {
+                        if (result.getStatus() == Status.OK) {
+                            saveCredentials(creds);
+
+                        } else {
+                            AlertEvent.fireError(parentPresenter,
+                                    "Save Error",
+                                    result.getMessage(),
+                                    null);
+                        }
+                    })
+                    .onFailure(error -> {
+                        CredentialsViewImpl.console("onFailure: " + error);
                         AlertEvent.fireError(parentPresenter,
                                 "Save Error",
-                                result.getMessage(),
+                                error.getMessage(),
                                 null);
-                    }
-                })
-                .onFailure(error -> CredentialsViewImpl.console("onFailure: " + error))
-                .taskMonitorFactory(CredentialsListPresenter.this)
-                .exec();
+                    })
+                    .taskMonitorFactory(CredentialsListPresenter.this)
+                    .exec();
+        }
     }
 
     /**
@@ -445,6 +505,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      */
     private void saveCredentials(final Credentials creds) {
 
+        CredentialsManagerDialogViewImpl.console("Saving existing credentials");
         restFactory.create(CREDENTIALS_RESOURCE)
                 .method(res -> res.storeCredentials(creds))
                 .onSuccess(result -> {
@@ -455,12 +516,17 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
 
                     } else {
                         AlertEvent.fireError(parentPresenter,
-                                "Save Error",
+                                "Save Credentials Error",
                                 result.getMessage(),
                                 null);
                     }
                 })
-                .onFailure(error -> CredentialsViewImpl.console("onFailure: " + error))
+                .onFailure(error -> {
+                    AlertEvent.fireError(parentPresenter,
+                            "Save Error",
+                            error.getMessage(),
+                            null);
+                })
                 .taskMonitorFactory(CredentialsListPresenter.this)
                 .exec();
     }

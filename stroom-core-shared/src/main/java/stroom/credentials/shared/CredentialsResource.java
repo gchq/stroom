@@ -30,7 +30,19 @@ public interface CredentialsResource extends RestResource, DirectRestService {
     ResultPage<Credentials> listCredentials(PageRequest pageRequest);
 
     /**
+     * Creates credential in the DB. Errors are indicated in the return value.
+     */
+    @POST
+    @Path("/create")
+    @Operation(
+            summary = "Creates the credential",
+            operationId = "createCredential")
+    CredentialsResponse createCredentials(CredentialsCreateRequest request);
+
+
+    /**
      * Stores a credential in the DB. Errors are indicated in the return value.
+     * Credential must already exist.
      */
     @POST
     @Path("/store")

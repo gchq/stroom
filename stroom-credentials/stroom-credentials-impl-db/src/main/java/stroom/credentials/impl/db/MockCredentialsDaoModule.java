@@ -42,6 +42,11 @@ public class MockCredentialsDaoModule extends AbstractModule {
         }
 
         @Override
+        public void createCredentials(final Credentials newCredentials) {
+            idToCred.put(newCredentials.getUuid(), newCredentials);
+        }
+
+        @Override
         public void storeCredentials(final Credentials credentials) {
             idToCred.put(credentials.getUuid(), credentials);
         }

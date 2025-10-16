@@ -4,18 +4,24 @@ import stroom.credentials.shared.Credentials;
 import stroom.credentials.shared.CredentialsSecret;
 import stroom.credentials.shared.CredentialsType;
 import stroom.docref.DocRef;
+import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserGroupsService;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class CredentialsService {
 
@@ -24,6 +30,12 @@ public class CredentialsService {
 
     /** Security checks */
     private final SecurityContext securityContext;
+
+    /** Permission service */
+    private final Provider<DocumentPermissionService> permissionServiceProvider;
+
+    /** Allows us to find the parent groups of the current group */
+    private final Provider<UserGroupsService> userGroupsServiceProvider;
 
     /** Logger */
     @SuppressWarnings("unused")
@@ -35,9 +47,13 @@ public class CredentialsService {
     @SuppressWarnings("unused")
     @Inject
     public CredentialsService(final CredentialsDao credentialsDao,
-                              final SecurityContext securityContext) {
+                              final SecurityContext securityContext,
+                              final Provider<DocumentPermissionService> permissionServiceProvider,
+                              final Provider<UserGroupsService> userGroupsServiceProvider) {
         this.credentialsDao = credentialsDao;
         this.securityContext = securityContext;
+        this.permissionServiceProvider = permissionServiceProvider;
+        this.userGroupsServiceProvider = userGroupsServiceProvider;
     }
 
     /**
@@ -78,6 +94,40 @@ public class CredentialsService {
     public List<Credentials> listCredentials(final CredentialsType type) throws IOException {
         checkAppPermission();
         return permissionFilterCredentials(credentialsDao.listCredentials(type));
+    }
+
+    /**
+     * Creates new credentials
+     * @param newCredentials The new credentials to create.
+     * @throws IOException if something goes wrong.
+     */
+    public void createCredentials(final Credentials newCredentials,
+                                  final CredentialsSecret newSecret) throws IOException {
+        LOGGER.info("Creating credentials: {}", newCredentials);
+        checkAppPermission();
+
+        credentialsDao.createCredentials(newCredentials);
+        credentialsDao.storeSecret(newSecret);
+
+        // Create a fake docRef for the security system
+        final DocRef docRef = new DocRef(newCredentials.getName(),
+                newCredentials.getUuid(),
+                Credentials.TYPE);
+        final UserRef userRef = securityContext.getUserRef();
+
+        securityContext.asProcessingUser(() -> {
+            final DocumentPermissionService permissionService = permissionServiceProvider.get();
+
+            // Add owner permission
+            permissionService.setPermission(docRef, userRef, DocumentPermission.OWNER);
+
+            // Add ownership perms to parent groups
+            final Set<UserRef> parentGroups = userGroupsServiceProvider.get().getGroups(userRef);
+            if (NullSafe.hasItems(parentGroups)) {
+                parentGroups.forEach(group ->
+                        permissionService.setPermission(docRef, group, DocumentPermission.OWNER));
+            }
+        });
     }
 
     /**
@@ -192,8 +242,10 @@ public class CredentialsService {
             throw new RuntimeException("Credentials not found");
         }
         final DocRef docRef = new DocRef(Credentials.TYPE, uuid);
-        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)
+        if (securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)
             || securityContext.hasDocumentPermission(docRef, DocumentPermission.OWNER)) {
+            // OK
+        } else {
             throw new PermissionException(securityContext.getUserRef(),
                     "You do not have permission to edit these credentials");
         }

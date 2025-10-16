@@ -7,6 +7,10 @@ dependencies {
     implementation project(':stroom-credentials:stroom-credentials-impl')
     implementation project(':stroom-credentials:stroom-credentials-impl-db-jooq')
     implementation project(':stroom-db-util')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-security:stroom-security-impl')
+    implementation project(':stroom-security:stroom-security-mock')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 

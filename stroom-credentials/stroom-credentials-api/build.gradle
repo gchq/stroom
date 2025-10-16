@@ -8,4 +8,8 @@ dependencies {
 
     implementation libs.jackson.annotations
     implementation libs.jakarta.validation.api
+
+    testImplementation project(':stroom-test-common')
+    testImplementation libs.bundles.common.test.implementation
+
 }
