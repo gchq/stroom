@@ -62,8 +62,8 @@ public class VariableValSerde implements ValSerde {
         ValSerdeUtil.write(val, byteBuffers, valueByteBuffer -> {
             if (valueByteBuffer.remaining() > USE_HASH_LOOKUP_THRESHOLD) {
                 // We are going to store as a lookup so take off the variable type prefix.
-                final ByteBuffer value = getValue(valueByteBuffer);
-                hashLookupDb.put(txn, value, idByteBuffer -> {
+                final ByteBuffer valueSlice = getValueSlice(valueByteBuffer);
+                hashLookupDb.put(txn, valueSlice, idByteBuffer -> {
                     byteBuffers.use(idByteBuffer.remaining() + 1, prefixedBuffer -> {
                         // Add the variable type prefix to the lookup id.
                         prefixedBuffer.put(VariableValType.HASH_LOOKUP.getPrimitiveValue());
@@ -75,8 +75,8 @@ public class VariableValSerde implements ValSerde {
                 });
             } else if (valueByteBuffer.remaining() > USE_UID_LOOKUP_THRESHOLD) {
                 // We are going to store as a lookup so take off the variable type prefix.
-                final ByteBuffer value = getValue(valueByteBuffer);
-                uidLookupDb.put(txn, value, idByteBuffer -> {
+                final ByteBuffer valueSlice = getValueSlice(valueByteBuffer);
+                uidLookupDb.put(txn, valueSlice, idByteBuffer -> {
                     byteBuffers.use(idByteBuffer.remaining() + 1, prefixedBuffer -> {
                         // Add the variable type prefix to the lookup id.
                         prefixedBuffer.put(VariableValType.UID_LOOKUP.getPrimitiveValue());
@@ -94,7 +94,7 @@ public class VariableValSerde implements ValSerde {
         }, prefix, suffix);
     }
 
-    private ByteBuffer getValue(final ByteBuffer byteBuffer) {
+    private ByteBuffer getValueSlice(final ByteBuffer byteBuffer) {
         return byteBuffer.slice(1, byteBuffer.remaining() - 1);
     }
 
