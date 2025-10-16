@@ -69,8 +69,8 @@ public class VariableKeySerde implements KeyPrefixSerde {
         ValSerdeUtil.write(key.getVal(), byteBuffers, valueByteBuffer -> {
             if (valueByteBuffer.remaining() > USE_HASH_LOOKUP_THRESHOLD) {
                 // We are going to store as a lookup so take off the variable type prefix.
-                final ByteBuffer slice = getName(valueByteBuffer);
-                hashLookupDb.put(txn, slice, idByteBuffer -> {
+                final ByteBuffer value = getValue(valueByteBuffer);
+                hashLookupDb.put(txn, value, idByteBuffer -> {
                     byteBuffers.use(idByteBuffer.remaining() + 1, prefixedBuffer -> {
                         // Add the variable type prefix to the lookup id.
                         prefixedBuffer.put(VariableValType.HASH_LOOKUP.getPrimitiveValue());
@@ -82,8 +82,8 @@ public class VariableKeySerde implements KeyPrefixSerde {
                 });
             } else if (valueByteBuffer.remaining() > uidLookupThreshold) {
                 // We are going to store as a lookup so take off the variable type prefix.
-                final ByteBuffer slice = getName(valueByteBuffer);
-                uidLookupDb.put(txn, slice, idByteBuffer -> {
+                final ByteBuffer value = getValue(valueByteBuffer);
+                uidLookupDb.put(txn, value, idByteBuffer -> {
                     byteBuffers.use(idByteBuffer.remaining() + 1, prefixedBuffer -> {
                         // Add the variable type prefix to the lookup id.
                         prefixedBuffer.put(VariableValType.UID_LOOKUP.getPrimitiveValue());
@@ -111,8 +111,8 @@ public class VariableKeySerde implements KeyPrefixSerde {
         return ValSerdeUtil.write(key.getVal(), byteBuffers, valueByteBuffer -> {
             if (valueByteBuffer.remaining() > USE_HASH_LOOKUP_THRESHOLD) {
                 // We are going to store as a lookup so take off the variable type prefix.
-                final ByteBuffer slice = getName(valueByteBuffer);
-                return hashLookupDb.get(txn, slice, optionalIdByteBuffer ->
+                final ByteBuffer value = getValue(valueByteBuffer);
+                return hashLookupDb.get(txn, value, optionalIdByteBuffer ->
                         optionalIdByteBuffer
                                 .map(idByteBuffer ->
                                         byteBuffers.use(idByteBuffer.remaining() + 1,
@@ -126,8 +126,8 @@ public class VariableKeySerde implements KeyPrefixSerde {
                                 .orElse(null));
             } else if (valueByteBuffer.remaining() > uidLookupThreshold) {
                 // We are going to store as a lookup so take off the variable type prefix.
-                final ByteBuffer slice = getName(valueByteBuffer);
-                return uidLookupDb.get(txn, slice, optionalIdByteBuffer ->
+                final ByteBuffer value = getValue(valueByteBuffer);
+                return uidLookupDb.get(txn, value, optionalIdByteBuffer ->
                         optionalIdByteBuffer
                                 .map(idByteBuffer ->
                                         byteBuffers.use(idByteBuffer.remaining() + 1,
@@ -146,7 +146,7 @@ public class VariableKeySerde implements KeyPrefixSerde {
         }, prefix, suffix);
     }
 
-    private ByteBuffer getName(final ByteBuffer byteBuffer) {
+    private ByteBuffer getValue(final ByteBuffer byteBuffer) {
         return byteBuffer.slice(1, byteBuffer.remaining() - 1);
     }
 

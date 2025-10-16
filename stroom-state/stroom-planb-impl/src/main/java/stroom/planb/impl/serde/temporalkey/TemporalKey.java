@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.time.Instant;
+import java.util.Objects;
 
 @JsonPropertyOrder({"prefix", "time"})
 @JsonInclude(Include.NON_NULL)
@@ -32,6 +33,20 @@ public class TemporalKey {
 
     public Instant getTime() {
         return time;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final TemporalKey that = (TemporalKey) o;
+        return Objects.equals(prefix, that.prefix) && Objects.equals(time, that.time);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(prefix, time);
     }
 
     @Override

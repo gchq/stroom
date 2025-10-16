@@ -1,5 +1,6 @@
 package stroom.planb.impl.serde.temporalkey;
 
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.HashLookupDb;
@@ -14,16 +15,21 @@ import stroom.planb.impl.serde.val.ValSerdeUtil;
 import stroom.planb.impl.serde.val.ValSerdeUtil.Addition;
 import stroom.planb.impl.serde.val.VariableValType;
 import stroom.query.language.functions.Val;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class VariableKeySerde implements TemporalKeySerde {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(VariableKeySerde.class);
 
     private static final int USE_HASH_LOOKUP_THRESHOLD = Db.MAX_KEY_LENGTH;
 
@@ -89,38 +95,56 @@ public class VariableKeySerde implements TemporalKeySerde {
         ValSerdeUtil.write(key.getPrefix().getVal(), byteBuffers, valueByteBuffer -> {
             if (valueByteBuffer.remaining() > USE_HASH_LOOKUP_THRESHOLD) {
                 // We are going to store as a lookup so take off the variable type prefix.
-                final ByteBuffer slice = getName(valueByteBuffer);
-                hashLookupDb.put(txn, slice, idByteBuffer -> {
-                    byteBuffers.use(idByteBuffer.remaining() + 1 + timeSerde.getSize(), prefixedBuffer -> {
+                final ByteBuffer value = getValue(valueByteBuffer);
+                hashLookupDb.put(txn, value, idByteBuffer -> {
+                    byteBuffers.use(1 + idByteBuffer.remaining() + timeSerde.getSize(), prefixedBuffer -> {
                         // Add the variable type prefix to the lookup id.
                         prefixedBuffer.put(VariableValType.HASH_LOOKUP.getPrimitiveValue());
                         prefixedBuffer.put(idByteBuffer);
                         timeSerde.write(prefixedBuffer, key.getTime());
                         prefixedBuffer.flip();
-                        consumer.accept(prefixedBuffer);
+                        consumer.accept(checkBuffer(prefixedBuffer));
                     });
                     return null;
                 });
             } else if (valueByteBuffer.remaining() > uidLookupThreshold) {
                 // We are going to store as a lookup so take off the variable type prefix.
-                final ByteBuffer slice = getName(valueByteBuffer);
-                uidLookupDb.put(txn, slice, idByteBuffer -> {
-                    byteBuffers.use(idByteBuffer.remaining() + 1 + timeSerde.getSize(), prefixedBuffer -> {
+                final ByteBuffer value = getValue(valueByteBuffer);
+                uidLookupDb.put(txn, value, idByteBuffer -> {
+                    byteBuffers.use(1 + idByteBuffer.remaining() + timeSerde.getSize(), prefixedBuffer -> {
                         // Add the variable type prefix to the lookup id.
                         prefixedBuffer.put(VariableValType.UID_LOOKUP.getPrimitiveValue());
                         prefixedBuffer.put(idByteBuffer);
                         timeSerde.write(prefixedBuffer, key.getTime());
                         prefixedBuffer.flip();
-                        consumer.accept(prefixedBuffer);
+                        consumer.accept(checkBuffer(prefixedBuffer));
                     });
                     return null;
                 });
             } else {
                 // We have already added the direct variable prefix so just use the byte buffer.
-                consumer.accept(valueByteBuffer);
+                consumer.accept(checkBuffer(valueByteBuffer));
             }
             return null;
         }, prefix, suffix);
+    }
+
+    private ByteBuffer checkBuffer(final ByteBuffer bb) {
+        // TODO : We can remove this code when we have diagnosed the issue.
+        if (bb.remaining() > 0) {
+            if (bb.get(0) == VariableValType.UID_LOOKUP.getPrimitiveValue()) {
+                if (bb.remaining() - 1 - timeSerde.getSize() > 8) {
+                    try {
+                        throw new IllegalStateException("Unexpected lookup value being inserted:" +
+                                                        Arrays.toString(ByteBufferUtils.toBytes(bb.duplicate())));
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e::getMessage, e);
+                        throw e;
+                    }
+                }
+            }
+        }
+        return bb;
     }
 
     @Override
@@ -133,8 +157,8 @@ public class VariableKeySerde implements TemporalKeySerde {
         return ValSerdeUtil.write(key.getPrefix().getVal(), byteBuffers, valueByteBuffer -> {
             if (valueByteBuffer.remaining() > USE_HASH_LOOKUP_THRESHOLD) {
                 // We are going to store as a lookup so take off the variable type prefix.
-                final ByteBuffer slice = getName(valueByteBuffer);
-                return hashLookupDb.get(txn, slice, optionalIdByteBuffer ->
+                final ByteBuffer value = getValue(valueByteBuffer);
+                return hashLookupDb.get(txn, value, optionalIdByteBuffer ->
                         optionalIdByteBuffer
                                 .map(idByteBuffer ->
                                         byteBuffers.use(idByteBuffer.remaining() + 1 + timeSerde.getSize(),
@@ -149,8 +173,8 @@ public class VariableKeySerde implements TemporalKeySerde {
                                 .orElse(null));
             } else if (valueByteBuffer.remaining() > uidLookupThreshold) {
                 // We are going to store as a lookup so take off the variable type prefix.
-                final ByteBuffer slice = getName(valueByteBuffer);
-                return uidLookupDb.get(txn, slice, optionalIdByteBuffer ->
+                final ByteBuffer value = getValue(valueByteBuffer);
+                return uidLookupDb.get(txn, value, optionalIdByteBuffer ->
                         optionalIdByteBuffer
                                 .map(idByteBuffer ->
                                         byteBuffers.use(idByteBuffer.remaining() + 1 + timeSerde.getSize(),
@@ -170,7 +194,7 @@ public class VariableKeySerde implements TemporalKeySerde {
         }, prefix, suffix);
     }
 
-    private ByteBuffer getName(final ByteBuffer byteBuffer) {
+    private ByteBuffer getValue(final ByteBuffer byteBuffer) {
         return byteBuffer.slice(1, byteBuffer.remaining() - 1 - timeSerde.getSize());
     }
 
