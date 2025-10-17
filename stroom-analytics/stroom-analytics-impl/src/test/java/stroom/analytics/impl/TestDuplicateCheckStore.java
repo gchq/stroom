@@ -20,7 +20,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.string.StringUtil;
 
-import org.junit.jupiter.api.Disabled;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -332,7 +333,6 @@ class TestDuplicateCheckStore {
         }
     }
 
-    @Disabled
     @Test
     void testColumnChange(@TempDir final Path tempDir) {
         final LmdbEnvDir lmdbEnvDir = new LmdbEnvDir(tempDir, true);
@@ -341,8 +341,10 @@ class TestDuplicateCheckStore {
 
         final DuplicateCheckStoreConfig duplicateCheckStoreConfig = new DuplicateCheckStoreConfig();
         final DuplicateCheckRowSerde serde = new DuplicateCheckRowSerde(byteBufferFactory);
+        final ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("duplicate-check-transfer-%d")
+                .build();
 
-        try (final ExecutorService executorService = Executors.newSingleThreadExecutor()) {
+        try (final ExecutorService executorService = Executors.newSingleThreadExecutor(threadFactory)) {
             DuplicateCheckStore duplicateCheckStore = null;
             try {
                 duplicateCheckStore = new DuplicateCheckStore(
@@ -360,16 +362,33 @@ class TestDuplicateCheckStore {
                         .isTrue();
                 assertThat(duplicateCheckStore.tryInsert(DuplicateCheckRow.of("cat", "bed")))
                         .isTrue();
+                duplicateCheckStore.flush();
+
+                assertThat(duplicateCheckStore.size())
+                        .isEqualTo(2);
 
                 assertThat(duplicateCheckStore.tryInsert(DuplicateCheckRow.of("lamb", "rolex")))
                         .isFalse();
                 assertThat(duplicateCheckStore.tryInsert(DuplicateCheckRow.of("cat", "bed")))
                         .isFalse();
+                duplicateCheckStore.flush();
+
+                assertThat(duplicateCheckStore.size())
+                        .isEqualTo(2);
 
                 duplicateCheckStore.writeColumnNames(List.of("favouriteFood", "favouriteThing"));
+                duplicateCheckStore.flush();
+
+                // Column change clears out all the data
+                assertThat(duplicateCheckStore.size())
+                        .isEqualTo(0);
 
                 assertThat(duplicateCheckStore.tryInsert(DuplicateCheckRow.of("lamb", "rolex")))
                         .isTrue();
+                duplicateCheckStore.flush();
+
+                assertThat(duplicateCheckStore.size())
+                        .isEqualTo(1);
 
                 // Will block until all the above are loaded in
                 duplicateCheckStore.flush();
@@ -385,11 +404,6 @@ class TestDuplicateCheckStore {
                 LOGGER.debug("values:\n{}", values.stream()
                         .map(duplicateCheckRow -> String.join(", ", duplicateCheckRow.getValues()))
                         .collect(Collectors.joining("\n")));
-//                assertThat(values)
-//                        .containsExactlyInAnyOrder(
-//                                ROW_A,
-//                                ROW_B,
-//                                ROW_C);
 
                 duplicateCheckStore.close();
             } catch (final Throwable e) {

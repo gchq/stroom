@@ -9,6 +9,7 @@ import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferPoolOutput;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.lmdb.LmdbConfig;
+import stroom.lmdb2.AbstractTxn;
 import stroom.lmdb2.LmdbDb;
 import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.LmdbEnvDir;
@@ -36,7 +37,10 @@ import org.lmdbjava.PutFlags;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -170,9 +174,77 @@ class DuplicateCheckStore {
         }, true);
     }
 
+//    synchronized void writeColumnNames(final List<String> columnNames) {
+//        final Optional<List<String>> optColumnNames = lmdbEnv.readResult(this::fetchColumnNames);
+//
+//        if (optColumnNames.isPresent()) {
+//            final List<String> currentColNames = optColumnNames.get();
+//            if (!Objects.equals(currentColNames, columnNames)) {
+//                LOGGER.info(() -> LogUtil.message(
+//                        """
+//                                Columns have changed. All data in duplicate store {} will be deleted.
+//                                Old: '{}'
+//                                New: '{}'""",
+//                        lmdbEnv.getDir(),
+//                        String.join(", ", currentColNames),
+//                        String.join(", ", columnNames)));
+//
+//                // Change of columns (added, removed, re-ordered) means any new data won't match the layout
+//                // of the existing data, so we have to clear it out.
+//                writer.write(writeTxn -> {
+//                    LOGGER.debug(() -> LogUtil.message("Deleting all data in {}", lmdbEnv.getDir()));
+//                    db.drop(writeTxn);
+//                });
+//                writer.flush();
+//
+//                // Write the new columns
+//                LOGGER.debug("writeColumnNames() - Writing column names {}", columnNames);
+//                writer.write(writeTxn ->
+//                                writeColumnNames(writeTxn, columnNames),
+//                        true);
+//            } else {
+//                LOGGER.debug("writeColumnNames() - Column names unchanged {}", columnNames);
+//            }
+//        } else {
+//            // None set so just write what we have and there should be no data to delete.
+//            writer.write(writeTxn ->
+//                            writeColumnNames(writeTxn, columnNames),
+//                    true);
+//        }
+//    }
+
     synchronized void writeColumnNames(final List<String> columnNames) {
-        LOGGER.debug("Writing column names {}", columnNames);
-        writer.write(writeTxn -> writeColumnNames(writeTxn, columnNames));
+        writer.write(writeTxn -> {
+            final Optional<List<String>> optColumnNames = fetchColumnNames(writeTxn);
+
+            if (optColumnNames.isPresent()) {
+                final List<String> currentColNames = optColumnNames.get();
+                if (!Objects.equals(currentColNames, columnNames)) {
+                    LOGGER.info(() -> LogUtil.message(
+                            """
+                                    Columns have changed. All data in duplicate store {} will be deleted.
+                                    Old: '{}'
+                                    New: '{}'""",
+                            lmdbEnv.getDir(),
+                            String.join(", ", currentColNames),
+                            String.join(", ", columnNames)));
+
+                    // Change of columns (added, removed, re-ordered) means any new data won't match the layout
+                    // of the existing data, so we have to clear it out.
+                    LOGGER.debug(() -> LogUtil.message("Deleting all data in {}", lmdbEnv.getDir()));
+                    db.drop(writeTxn);
+
+                    // Write the new columns
+                    LOGGER.debug("writeColumnNames() - Writing column names {}", columnNames);
+                    writeColumnNames(writeTxn, columnNames);
+                } else {
+                    LOGGER.debug("writeColumnNames() - Column names unchanged {}", columnNames);
+                }
+            } else {
+                // None set so just write what we have and there should be no data to delete.
+                writeColumnNames(writeTxn, columnNames);
+            }
+        }, true);
     }
 
     /**
@@ -338,7 +410,7 @@ class DuplicateCheckStore {
         }
     }
 
-    private void readColumnNames(final ReadTxn txn, final List<String> columnNames) {
+    private void readColumnNames(final AbstractTxn txn, final List<String> columnNames) {
         final ByteBuffer state = infoDb.get(txn, InfoKey.COLUMN_NAMES.getByteBuffer());
         if (state != null) {
             try (final Input input = new UnsafeByteBufferInput(state)) {
@@ -347,6 +419,41 @@ class DuplicateCheckStore {
                 }
             }
         }
+    }
+
+    private Optional<List<String>> fetchColumnNames(final AbstractTxn txn) {
+        final ByteBuffer state = infoDb.get(txn, InfoKey.COLUMN_NAMES.getByteBuffer());
+        final Optional<List<String>> result;
+        if (state != null) {
+            final ArrayList<String> columnNames = new ArrayList<>();
+            try (final Input input = new UnsafeByteBufferInput(state)) {
+                while (!input.end()) {
+                    columnNames.add(input.readString());
+                }
+            }
+            if (columnNames.isEmpty()) {
+                result = Optional.of(Collections.emptyList());
+            } else {
+                result = Optional.of(Collections.unmodifiableList(columnNames));
+            }
+        } else {
+            result = Optional.empty();
+        }
+        LOGGER.debug("fetchColumnNames() - Returning {}", result);
+        return result;
+    }
+
+    private boolean haveColumnNamesBeenSet(final AbstractTxn txn) {
+        // Don't care about the val
+        final ByteBuffer val = infoDb.get(txn, InfoKey.COLUMN_NAMES.getByteBuffer());
+        return val != null;
+    }
+
+    /**
+     * @return The number of entries in the main dup check db. I.e. the number of unique items.
+     */
+    public long size() {
+        return db.count();
     }
 
     public boolean delete(final DeleteDuplicateCheckRequest request) {
@@ -361,6 +468,15 @@ class DuplicateCheckStore {
         LOGGER.debug("Committing delete");
         commit();
         return true;
+    }
+
+    /**
+     * Delete all the data in the main db of the duplicate check store.
+     * Does not delete columns or schema info.
+     */
+    private void deleteAll(final WriteTxn writeTxn) {
+        LOGGER.debug(() -> LogUtil.message("Deleting all data in {}", lmdbEnv.getDir()));
+        db.drop(writeTxn);
     }
 
     private synchronized void delete(final LmdbKV lmdbKV) {
