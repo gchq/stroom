@@ -1,4 +1,3 @@
-import stroom.docref.DocRef;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
@@ -7,6 +6,7 @@ import stroom.query.api.datasource.FieldType;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.MockIndexFieldCache;
 import stroom.search.elastic.search.SearchExpressionQueryBuilder;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
 
 import co.elastic.clients.elasticsearch._types.mapping.Property.Kind;
@@ -22,13 +22,12 @@ import java.util.Optional;
 
 public class TestSearchExpressionQueryBuilder {
 
-
     @Test
     public void testBuildQuery() {
         final MockIndexFieldCache indexFieldCache = new MockIndexFieldCache();
         final ExpressionOperator.Builder expressionBuilder = ExpressionOperator.builder().op(Op.AND);
         final SearchExpressionQueryBuilder builder = new SearchExpressionQueryBuilder(
-                new DocRef("test", "test"),
+                new ElasticIndexDoc(),
                 indexFieldCache,
                 null,
                 DateTimeSettings.builder().build()

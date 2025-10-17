@@ -117,6 +117,8 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
         getView().setSearchSlices(index.getSearchSlices());
         getView().setSearchScrollSize(index.getSearchScrollSize());
         getView().setTimeField(index.getTimeField());
+        getView().setVectorEmbeddingsBaseUrl(index.getVectorEmbeddingsBaseUrl());
+        getView().setVectorEmbeddingsModelId(index.getVectorEmbeddingsModelId());
 
         if (index.getRetentionExpression() == null) {
             index.setRetentionExpression(ExpressionOperator.builder().op(Op.AND).build());
@@ -141,8 +143,9 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
 
         index.setSearchSlices(getView().getSearchSlices());
         index.setSearchScrollSize(getView().getSearchScrollSize());
-
         index.setTimeField(getView().getTimeField());
+        index.setVectorEmbeddingsBaseUrl(getView().getVectorEmbeddingsBaseUrl());
+        index.setVectorEmbeddingsModelId(getView().getVectorEmbeddingsModelId());
         index.setRetentionExpression(editExpressionPresenter.write());
         index.setDefaultExtractionPipeline(pipelinePresenter.getSelectedEntityReference());
         return index;
@@ -176,6 +179,14 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
         String getTimeField();
 
         void setTimeField(String partitionTimeField);
+
+        String getVectorEmbeddingsBaseUrl();
+
+        void setVectorEmbeddingsBaseUrl(final String vectorEmbeddingsBaseUrl);
+
+        String getVectorEmbeddingsModelId();
+
+        void setVectorEmbeddingsModelId(final String vectorEmbeddingsModelId);
 
         void setDefaultExtractionPipelineView(View view);
     }

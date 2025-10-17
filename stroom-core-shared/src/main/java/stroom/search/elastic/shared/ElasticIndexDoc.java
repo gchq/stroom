@@ -58,6 +58,8 @@ import java.util.Objects;
         "searchScrollSize",
         "fields",
         "timeField",
+        "vectorEmbeddingsBaseUrl",
+        "vectorEmbeddingsModelId",
         "defaultExtractionPipeline",
         "retentionExpression"
 })
@@ -97,6 +99,12 @@ public class ElasticIndexDoc extends Doc {
     @JsonProperty
     private Integer searchScrollSize;
 
+    @JsonProperty
+    private String vectorEmbeddingsBaseUrl;
+
+    @JsonProperty
+    private String vectorEmbeddingsModelId;
+
     /**
      * Array of fields, populated at query time
      */
@@ -123,7 +131,6 @@ public class ElasticIndexDoc extends Doc {
 
     @JsonCreator
     public ElasticIndexDoc(
-            @JsonProperty("type") final String type,
             @JsonProperty("uuid") final String uuid,
             @JsonProperty("name") final String name,
             @JsonProperty("version") final String version,
@@ -138,9 +145,11 @@ public class ElasticIndexDoc extends Doc {
             @JsonProperty("searchScrollSize") final Integer searchScrollSize,
             @JsonProperty("fields") final List<ElasticIndexField> fields,
             @JsonProperty("timeField") final String timeField,
+            @JsonProperty("vectorEmbeddingsBaseUrl") final String vectorEmbeddingsBaseUrl,
+            @JsonProperty("vectorEmbeddingsModelId") final String vectorEmbeddingsModelId,
             @JsonProperty("defaultExtractionPipeline") final DocRef defaultExtractionPipeline,
             @JsonProperty("retentionExpression") final ExpressionOperator retentionExpression) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.clusterRef = clusterRef;
         this.indexName = indexName;
@@ -148,6 +157,8 @@ public class ElasticIndexDoc extends Doc {
         this.searchScrollSize = searchScrollSize;
         this.fields = fields;
         this.timeField = timeField;
+        this.vectorEmbeddingsBaseUrl = vectorEmbeddingsBaseUrl;
+        this.vectorEmbeddingsModelId = vectorEmbeddingsModelId;
         this.defaultExtractionPipeline = defaultExtractionPipeline;
         this.retentionExpression = retentionExpression;
 
@@ -160,15 +171,6 @@ public class ElasticIndexDoc extends Doc {
         if (this.timeField == null || this.timeField.isEmpty()) {
             this.timeField = DEFAULT_TIME_FIELD;
         }
-    }
-
-    /**
-     * @return A new {@link DocRef} for this document's type with the supplied uuid.
-     */
-    public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(TYPE)
-                .uuid(uuid)
-                .build();
     }
 
     /**
@@ -238,6 +240,22 @@ public class ElasticIndexDoc extends Doc {
         this.timeField = timeField;
     }
 
+    public String getVectorEmbeddingsBaseUrl() {
+        return vectorEmbeddingsBaseUrl;
+    }
+
+    public void setVectorEmbeddingsBaseUrl(final String vectorEmbeddingsBaseUrl) {
+        this.vectorEmbeddingsBaseUrl = vectorEmbeddingsBaseUrl;
+    }
+
+    public String getVectorEmbeddingsModelId() {
+        return vectorEmbeddingsModelId;
+    }
+
+    public void setVectorEmbeddingsModelId(final String vectorEmbeddingsModelId) {
+        this.vectorEmbeddingsModelId = vectorEmbeddingsModelId;
+    }
+
     public DocRef getDefaultExtractionPipeline() {
         return defaultExtractionPipeline;
     }
@@ -252,12 +270,6 @@ public class ElasticIndexDoc extends Doc {
 
     public void setRetentionExpression(final ExpressionOperator retentionExpression) {
         this.retentionExpression = retentionExpression;
-    }
-
-    @JsonIgnore
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     @Override
@@ -279,6 +291,8 @@ public class ElasticIndexDoc extends Doc {
                Objects.equals(searchScrollSize, elasticIndex.searchScrollSize) &&
                Objects.equals(fields, elasticIndex.fields) &&
                Objects.equals(timeField, elasticIndex.timeField) &&
+               Objects.equals(vectorEmbeddingsBaseUrl, elasticIndex.vectorEmbeddingsBaseUrl) &&
+               Objects.equals(vectorEmbeddingsModelId, elasticIndex.vectorEmbeddingsModelId) &&
                Objects.equals(defaultExtractionPipeline, elasticIndex.defaultExtractionPipeline);
     }
 
@@ -293,6 +307,8 @@ public class ElasticIndexDoc extends Doc {
                 clusterRef,
                 fields,
                 timeField,
+                vectorEmbeddingsBaseUrl,
+                vectorEmbeddingsModelId,
                 defaultExtractionPipeline);
     }
 
@@ -306,6 +322,8 @@ public class ElasticIndexDoc extends Doc {
                ", searchScrollSize=" + searchScrollSize +
                ", fields=" + fields +
                ", timeField=" + timeField +
+               ", vectorEmbeddingsBaseUrl='" + vectorEmbeddingsBaseUrl + '\'' +
+               ", vectorEmbeddingsModelId='" + vectorEmbeddingsModelId + '\'' +
                ", defaultExtractionPipeline=" + defaultExtractionPipeline +
                '}';
     }

@@ -121,7 +121,7 @@ public class ElasticIndexRetentionExecutor {
                 final int termCount = ExpressionUtil.terms(elasticIndex.getRetentionExpression(), null).size();
                 if (termCount > 0) {
                     final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
-                            docRef,
+                            elasticIndex,
                             indexFieldCache,
                             dictionaryStore,
                             DateTimeSettings.builder().build());

@@ -1,7 +1,6 @@
 package stroom.search.elastic.search;
 
 import stroom.dictionary.api.WordListProvider;
-import stroom.docref.DocRef;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.Query;
@@ -86,7 +85,7 @@ public class ElasticSearchFactory {
                 taskContext -> elasticSearchTaskHandler.search(
                         taskContext,
                         index,
-                        getQuery(query.getDataSource(), indexFieldCache, expression, dateTimeSettings),
+                        getQuery(index, indexFieldCache, expression, dateTimeSettings),
                         getHighlighter(),
                         coprocessors,
                         resultStore,
@@ -110,12 +109,12 @@ public class ElasticSearchFactory {
                         }).run(), executor);
     }
 
-    private co.elastic.clients.elasticsearch._types.query_dsl.Query getQuery(final DocRef indexDocRef,
+    private co.elastic.clients.elasticsearch._types.query_dsl.Query getQuery(final ElasticIndexDoc index,
                                                                              final IndexFieldCache indexFieldCache,
                                                                              final ExpressionOperator expression,
                                                                              final DateTimeSettings dateTimeSettings) {
         final SearchExpressionQueryBuilder builder = new SearchExpressionQueryBuilder(
-                indexDocRef,
+                index,
                 indexFieldCache,
                 wordListProvider,
                 dateTimeSettings);

@@ -20,6 +20,13 @@
         <form:FormGroup identity="elasticIndexSettingsTimeField" label="Main Date Field">
             <g:TextBox ui:field="timeField" width="200px"/>
         </form:FormGroup>
+        <form:FormGroup identity="elasticIndexSettingsVectorEmbeddingsBaseUrl" label="Vector embeddings base URL">
+            <g:TextBox ui:field="vectorEmbeddingsBaseUrl" width="400px" />
+        </form:FormGroup>
+        <form:FormGroup identity="elasticIndexSettingsVectorEmbeddingsModelId" label="Vector embeddings model ID">
+            <g:TextBox ui:field="vectorEmbeddingsModelId" width="400px" />
+        </form:FormGroup>
+
         <form:FormGroup identity="elasticIndexSettingsDefaultExtractionPipeline" label="Default Extraction Pipeline">
             <g:SimplePanel ui:field="defaultExtractionPipeline"/>
         </form:FormGroup>

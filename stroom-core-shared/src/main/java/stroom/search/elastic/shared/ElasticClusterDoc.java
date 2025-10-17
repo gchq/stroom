@@ -62,8 +62,7 @@ public class ElasticClusterDoc extends Doc {
     }
 
     @JsonCreator
-    public ElasticClusterDoc(@JsonProperty("type") final String type,
-                             @JsonProperty("uuid") final String uuid,
+    public ElasticClusterDoc(@JsonProperty("uuid") final String uuid,
                              @JsonProperty("name") final String name,
                              @JsonProperty("version") final String version,
                              @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -72,18 +71,9 @@ public class ElasticClusterDoc extends Doc {
                              @JsonProperty("updateUser") final String updateUser,
                              @JsonProperty("description") final String description,
                              @JsonProperty("connection") final ElasticConnectionConfig connection) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.connection = connection;
-    }
-
-    /**
-     * @return A new {@link DocRef} for this document's type with the supplied uuid.
-     */
-    public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(TYPE)
-                .uuid(uuid)
-                .build();
     }
 
     /**
@@ -107,12 +97,6 @@ public class ElasticClusterDoc extends Doc {
 
     public void setConnection(final ElasticConnectionConfig connection) {
         this.connection = connection;
-    }
-
-    @JsonIgnore
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     @Override

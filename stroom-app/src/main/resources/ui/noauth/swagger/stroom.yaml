@@ -11066,6 +11066,10 @@ components:
           type: string
         uuid:
           type: string
+        vectorEmbeddingsBaseUrl:
+          type: string
+        vectorEmbeddingsModelId:
+          type: string
         version:
           type: string
     ElasticIndexField:
@@ -11090,6 +11094,7 @@ components:
           - IPV4_ADDRESS
           - DOC_REF
           - USER_REF
+          - DENSE_VECTOR
         fldName:
           type: string
         fldType:
@@ -11107,6 +11112,7 @@ components:
           - IPV4_ADDRESS
           - DOC_REF
           - USER_REF
+          - DENSE_VECTOR
         indexed:
           type: boolean
         nativeType:
@@ -12932,6 +12938,7 @@ components:
           - IPV4_ADDRESS
           - DOC_REF
           - USER_REF
+          - DENSE_VECTOR
         indexed:
           type: boolean
         stored:
@@ -13474,6 +13481,7 @@ components:
           - IPV4_ADDRESS
           - DOC_REF
           - USER_REF
+          - DENSE_VECTOR
         indexed:
           type: boolean
         stored:
@@ -13542,9 +13550,6 @@ components:
           format: int64
         processorUuid:
           type: string
-        reprocessedStreamId:
-          type: integer
-          format: int64
         status:
           type: string
           enum:
@@ -14872,6 +14877,7 @@ components:
           - "'=', '!='"
           - "'=', '!=', 'between', '>', '>=', '<', '<='"
           - "'=', '!=', 'in', 'in dictionary'"
+          - "'=', '!=', 'in', 'in dictionary'"
           - "'is', 'in folder'"
           - "'=', '!=', 'in', 'in dictionary'"
           - "'is', 'in folder', '=', '!=', 'in', 'in dictionary'"
@@ -14931,6 +14937,7 @@ components:
           - IPV4_ADDRESS
           - DOC_REF
           - USER_REF
+          - DENSE_VECTOR
         name:
           type: string
         queryable:
@@ -15257,15 +15264,12 @@ components:
           type: string
         key:
           type: string
-          minLength: 1
         mapName:
           type: string
-          minLength: 1
         referenceLoaders:
           type: array
           items:
             $ref: "#/components/schemas/ReferenceLoader"
-          minItems: 1
       required:
       - key
       - mapName
@@ -16830,6 +16834,7 @@ components:
           - IPV4_ADDRESS
           - DOC_REF
           - USER_REF
+          - DENSE_VECTOR
         indexed:
           type: boolean
         multiValued:
@@ -18513,8 +18518,10 @@ components:
       - type: object
         properties:
           bytes:
-            type: string
-            format: byte
+            type: array
+            items:
+              type: string
+              format: byte
     ValidateExpressionRequest:
       type: object
       properties:

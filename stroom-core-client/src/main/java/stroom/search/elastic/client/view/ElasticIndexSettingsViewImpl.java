@@ -56,6 +56,10 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     @UiField
     TextBox timeField;
     @UiField
+    TextBox vectorEmbeddingsBaseUrl;
+    @UiField
+    TextBox vectorEmbeddingsModelId;
+    @UiField
     SimplePanel defaultExtractionPipeline;
 
     @Inject
@@ -132,6 +136,26 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     }
 
     @Override
+    public String getVectorEmbeddingsBaseUrl() {
+        return vectorEmbeddingsBaseUrl.getValue();
+    }
+
+    @Override
+    public void setVectorEmbeddingsBaseUrl(final String vectorEmbeddingsBaseUrl) {
+        this.vectorEmbeddingsBaseUrl.setValue(vectorEmbeddingsBaseUrl);
+    }
+
+    @Override
+    public String getVectorEmbeddingsModelId() {
+        return vectorEmbeddingsModelId.getValue();
+    }
+
+    @Override
+    public void setVectorEmbeddingsModelId(final String vectorEmbeddingsModelId) {
+        this.vectorEmbeddingsModelId.setValue(vectorEmbeddingsModelId);
+    }
+
+    @Override
     public void setDefaultExtractionPipelineView(final View view) {
         this.defaultExtractionPipeline.setWidget(view.asWidget());
     }
@@ -160,6 +184,16 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
 
     @UiHandler("timeField")
     public void onTimeFieldKeyDown(final KeyDownEvent e) {
+        fireChange();
+    }
+
+    @UiHandler("vectorEmbeddingsBaseUrl")
+    public void onVectorEmbeddingsBaseUrlValueChange(final ValueChangeEvent<String> e) {
+        fireChange();
+    }
+
+    @UiHandler("vectorEmbeddingsModelId")
+    public void onVectorEmbeddingsModelIdValueChange(final ValueChangeEvent<String> e) {
         fireChange();
     }
 
