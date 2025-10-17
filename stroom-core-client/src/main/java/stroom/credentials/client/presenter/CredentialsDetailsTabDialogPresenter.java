@@ -51,7 +51,7 @@ public class CredentialsDetailsTabDialogPresenter
     private static final int DIALOG_WIDTH = 750;
 
     /** Height of dialog */
-    private static final int DIALOG_HEIGHT = 560;
+    private static final int DIALOG_HEIGHT = 750;
 
     /**
      * Injected constructor.
