@@ -66,7 +66,8 @@ public class VariableKeySerde implements TemporalKeySerde {
             final ByteBuffer nameSlice = getPrefixSlice(byteBuffer);
 
             // Read the variable type.
-            final VariableValType valType = VariableValType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(nameSlice.get());
+            final VariableValType valType =
+                    VariableValType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(nameSlice.get());
             final Val val = switch (valType) {
                 case DIRECT -> {
                     // Read direct.
