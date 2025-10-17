@@ -17,7 +17,7 @@ public class DocumentUserPermissionsReport {
     @JsonProperty
     private final Set<String> explicitCreatePermissions;
     @JsonProperty
-    private final Map<DocumentPermission, List<String>> inheritedPermissionPaths;
+    private final Map<String, List<String>> inheritedPermissionPaths;
     @JsonProperty
     private final Map<String, List<String>> inheritedCreatePermissionPaths;
 
@@ -25,7 +25,7 @@ public class DocumentUserPermissionsReport {
     public DocumentUserPermissionsReport(
             @JsonProperty("explicitPermission") final DocumentPermission explicitPermission,
             @JsonProperty("explicitCreatePermissions") final Set<String> explicitCreatePermissions,
-            @JsonProperty("inheritedPermissionPaths") final Map<DocumentPermission, List<String>>
+            @JsonProperty("inheritedPermissionPaths") final Map<String, List<String>>
                     inheritedPermissionPaths,
             @JsonProperty("inheritedCreatePermissionPaths") final Map<String, List<String>>
                     inheritedCreatePermissionPaths) {
@@ -43,7 +43,7 @@ public class DocumentUserPermissionsReport {
         return explicitCreatePermissions;
     }
 
-    public Map<DocumentPermission, List<String>> getInheritedPermissionPaths() {
+    public Map<String, List<String>> getInheritedPermissionPaths() {
         return inheritedPermissionPaths;
     }
 
