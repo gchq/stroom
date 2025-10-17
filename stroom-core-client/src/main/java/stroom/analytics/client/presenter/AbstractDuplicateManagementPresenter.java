@@ -31,6 +31,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public abstract class AbstractDuplicateManagementPresenter<D extends AbstractAnalyticRuleDoc>
         extends DocumentEditPresenter<AbstractDuplicateManagementPresenter.DuplicateManagementView, D>
@@ -70,7 +71,7 @@ public abstract class AbstractDuplicateManagementPresenter<D extends AbstractAna
         final List<String> columns = Arrays.stream(arr)
                 .map(String::trim)
                 .filter(NullSafe::isNonEmptyString)
-                .toList();
+                .collect(Collectors.toList());
         return new DuplicateNotificationConfig(getView().isRememberNotifications(),
                 getView().isSuppressDuplicateNotifications(),
                 getView().isChooseColumns(),
