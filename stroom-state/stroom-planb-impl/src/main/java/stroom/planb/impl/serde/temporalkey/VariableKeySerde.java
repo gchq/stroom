@@ -53,6 +53,10 @@ public class VariableKeySerde implements TemporalKeySerde {
     @Override
     public TemporalKey read(final Txn<ByteBuffer> txn, final ByteBuffer byteBuffer) {
         try {
+            // Make sure the buffer we are reading contains what we expect it to.
+            // TODO : We can remove this code when we have diagnosed the issue.
+            checkBuffer(byteBuffer.duplicate());
+
             // Slice off the end to get the effective time.
             final ByteBuffer timeSlice = byteBuffer.slice(byteBuffer.remaining() - timeSerde.getSize(),
                     timeSerde.getSize());
@@ -82,9 +86,8 @@ public class VariableKeySerde implements TemporalKeySerde {
 
             return new TemporalKey(KeyPrefix.create(val), time);
         } catch (final RuntimeException e) {
-            LOGGER.error("Unexpected " + e.getMessage() + " reading {}",
-                    Arrays.toString(ByteBufferUtils.getBytes(byteBuffer)), e);
-            throw e;
+            throw new RuntimeException("Unexpected " + e.getMessage() + " reading " +
+                                       Arrays.toString(ByteBufferUtils.getBytes(byteBuffer)), e);
         }
     }
 
@@ -141,7 +144,7 @@ public class VariableKeySerde implements TemporalKeySerde {
             if (bb.get(0) == VariableValType.UID_LOOKUP.getPrimitiveValue()) {
                 if (bb.remaining() - 1 - timeSerde.getSize() > 8) {
                     try {
-                        throw new IllegalStateException("Unexpected lookup value being inserted:" +
+                        throw new IllegalStateException("Unexpected lookup value: " +
                                                         Arrays.toString(ByteBufferUtils.toBytes(bb.duplicate())));
                     } catch (final RuntimeException e) {
                         LOGGER.error(e::getMessage, e);
