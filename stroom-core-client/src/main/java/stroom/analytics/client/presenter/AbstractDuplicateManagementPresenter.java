@@ -22,13 +22,14 @@ import stroom.analytics.shared.DuplicateNotificationConfig;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.util.shared.NullSafe;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public abstract class AbstractDuplicateManagementPresenter<D extends AbstractAnalyticRuleDoc>
@@ -64,19 +65,21 @@ public abstract class AbstractDuplicateManagementPresenter<D extends AbstractAna
     }
 
     protected DuplicateNotificationConfig writeDuplicateNotificationConfig() {
-        final String[] arr = getView().getColumns().split(",");
-        final List<String> columns = new ArrayList<>(arr.length);
-        for (final String col : arr) {
-            final String trimmed = col.trim();
-            if (trimmed.length() > 0) {
-                columns.add(trimmed);
-            }
-        }
+        final String[] arr = NullSafe.string(getView().getColumns())
+                .split(",");
+        final List<String> columns = Arrays.stream(arr)
+                .map(String::trim)
+                .filter(NullSafe::isNonEmptyString)
+                .toList();
         return new DuplicateNotificationConfig(getView().isRememberNotifications(),
                 getView().isSuppressDuplicateNotifications(),
                 getView().isChooseColumns(),
                 columns);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface DuplicateManagementView extends View, HasUiHandlers<DirtyUiHandlers> {
 

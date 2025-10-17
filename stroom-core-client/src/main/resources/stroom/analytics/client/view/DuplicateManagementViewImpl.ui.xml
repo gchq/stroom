@@ -5,16 +5,26 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
     <g:FlowPanel styleName="max dock-container-vertical">
         <g:FlowPanel styleName="dock-min form-padding form">
-            <form:FormGroup identity="rememberNotifications" label="Remember Notifications">
+            <form:FormGroup identity="rememberNotifications"
+                            label="Remember Notifications"
+                            helpText="xxxxx">
                 <tickbox:CustomCheckBox ui:field="rememberNotifications"/>
             </form:FormGroup>
-            <form:FormGroup identity="suppressDuplicateNotifications" label="Suppress Duplicate Notifications">
+            <form:FormGroup identity="suppressDuplicateNotifications"
+                            label="Suppress Duplicate Notifications"
+                            helpText="xxxxxxx">
                 <tickbox:CustomCheckBox ui:field="suppressDuplicateNotifications"/>
             </form:FormGroup>
-            <form:FormGroup identity="chooseColumns" label="Choose Columns">
+            <form:FormGroup identity="chooseColumns"
+                            label="Choose Columns"
+                            helpText="If ticked, enter the column names in the Columns field to define which
+                                columns will be used for de-duplication of notifications.">
                 <tickbox:CustomCheckBox ui:field="chooseColumns"/>
             </form:FormGroup>
-            <form:FormGroup identity="columns" label="Columns">
+            <form:FormGroup identity="columns"
+                            label="Columns"
+                            helpText="A comma delimited list of column names (case-sensitive) that should be
+                                used to de-duplicated notifications.">
                 <g:TextBox ui:field="columns" width="100%"/>
             </form:FormGroup>
         </g:FlowPanel>

@@ -8,6 +8,7 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferPoolOutput;
 import stroom.bytebuffer.impl6.ByteBuffers;
+import stroom.lmdb.LmdbConfig;
 import stroom.lmdb2.LmdbDb;
 import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.LmdbEnvDir;
@@ -19,6 +20,7 @@ import stroom.query.common.v2.DuplicateCheckStoreConfig;
 import stroom.query.common.v2.LmdbKV;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
@@ -42,8 +44,12 @@ import java.util.concurrent.atomic.AtomicLong;
 class DuplicateCheckStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DuplicateCheckStore.class);
-
-    private static final int CURRENT_SCHEMA_VERSION = 1;
+    static final int CURRENT_SCHEMA_VERSION = 1;
+    static final String INFO_DB_NAME = "info";
+    static final String DUPLICATE_CHECK_DB_NAME = "duplicate-check";
+    static final int MAX_DBS = 2;
+    static final int MAX_READERS = 1;
+    static final EnvFlags ENV_FLAGS = EnvFlags.MDB_NOTLS;
 
     private final ByteBufferFactory byteBufferFactory;
     private final ByteBuffers byteBuffers;
@@ -68,68 +74,112 @@ class DuplicateCheckStore {
         this.duplicateCheckRowSerde = duplicateCheckRowSerde;
         lmdbKeySequence = new LmdbKeySequence(byteBuffers);
         final LmdbEnvDir lmdbEnvDir = duplicateCheckDirs.getDir(analyticRuleUUID);
+        final LmdbConfig lmdbConfig = duplicateCheckStoreConfig.getLmdbConfig();
 
+        LmdbEnv anLmdbEnv = null;
         // See if the DB dir already exists.
         if (lmdbEnvDir.dbExists()) {
             // Find out the current schema version if any.
-            final int schemaVersion = readSchemaVersion(lmdbEnvDir, duplicateCheckStoreConfig);
-            // If there is no schema then delete and start again with a new DB.
-            if (schemaVersion == -1) {
+            anLmdbEnv = validateSchemaVersion(lmdbEnvDir, lmdbConfig);
+            // If there is no schema or it is an old version, then delete and start again with a new DB.
+            if (anLmdbEnv == null) {
                 lmdbEnvDir.delete();
             }
         }
 
-        this.lmdbEnv = LmdbEnv
-                .builder()
-                .config(duplicateCheckStoreConfig.getLmdbConfig())
-                .lmdbEnvDir(lmdbEnvDir)
-                .maxDbs(2)
-                .maxReaders(1)
-                .addEnvFlag(EnvFlags.MDB_NOTLS)
-                .build();
-
-        this.db = lmdbEnv.openDb("duplicate-check", DbiFlags.MDB_CREATE);
-        this.infoDb = lmdbEnv.openDb("info", DbiFlags.MDB_CREATE);
-        writer = new LmdbWriter(executorProvider, lmdbEnv);
+        if (anLmdbEnv == null) {
+            // Either it didn't exist or it was deleted for being not the right version, so
+            // re-create the env dir and a new env in it.
+            lmdbEnvDir.ensureExists();
+            anLmdbEnv = createEnv(duplicateCheckStoreConfig.getLmdbConfig(), lmdbEnvDir);
+        }
+        this.lmdbEnv = anLmdbEnv;
+        this.db = lmdbEnv.openDb(DUPLICATE_CHECK_DB_NAME, DbiFlags.MDB_CREATE);
+        this.infoDb = lmdbEnv.openDb(INFO_DB_NAME, DbiFlags.MDB_CREATE);
+        this.writer = new LmdbWriter(executorProvider, lmdbEnv);
         writeSchemaVersion();
     }
 
-    private int readSchemaVersion(final LmdbEnvDir lmdbEnvDir,
-                                  final DuplicateCheckStoreConfig duplicateCheckStoreConfig) {
-        int version = -1;
+    /**
+     * Caller is responsible for (auto-)closing.
+     * Pkg-private for testing
+     */
+    private LmdbEnv createEnv(final LmdbConfig lmdbConfig, final LmdbEnvDir lmdbEnvDir) {
         try {
             final LmdbEnv lmdbEnv = LmdbEnv
                     .builder()
-                    .config(duplicateCheckStoreConfig.getLmdbConfig())
+                    .config(lmdbConfig)
                     .lmdbEnvDir(lmdbEnvDir)
-                    .maxDbs(2)
-                    .maxReaders(1)
-                    .addEnvFlag(EnvFlags.MDB_NOTLS)
+                    .maxDbs(MAX_DBS)
+                    .maxReaders(MAX_READERS)
+                    .addEnvFlag(ENV_FLAGS)
                     .build();
-            final LmdbDb info = lmdbEnv.openDb("info");
-            final ByteBuffer valueBuffer = info.get(lmdbEnv.readTxn(), InfoKey.SCHEMA_VERSION.getByteBuffer());
-            version = valueBuffer.getInt();
-
+            LOGGER.debug("Opened/created LmdbEnv in {} with config {}", lmdbEnvDir, lmdbConfig);
+            return lmdbEnv;
         } catch (final Exception e) {
-            LOGGER.debug(e::getMessage, e);
+            throw new RuntimeException(LogUtil.message("Error creating/opening LMDB Env in {} with config {} - ",
+                    lmdbEnvDir, lmdbConfig, LogUtil.exceptionMessage(e)), e);
         }
-        return version;
+    }
+
+    /**
+     * Check that the {@link LmdbEnv} has the expected schema version in it.
+     *
+     * @return The opened {@link LmdbEnv} if the version is as expected, else
+     * the {@link LmdbEnv} will be closed and {@code null} will be returned.
+     */
+    private LmdbEnv validateSchemaVersion(final LmdbEnvDir lmdbEnvDir,
+                                          final LmdbConfig lmdbConfig) {
+        LmdbEnv lmdbEnv = null;
+        boolean isValid = false;
+        try {
+            lmdbEnv = createEnv(lmdbConfig, lmdbEnvDir);
+            if (lmdbEnv.hasDb(INFO_DB_NAME)) {
+                final LmdbDb info = lmdbEnv.openDb(INFO_DB_NAME);
+                try (final ReadTxn readTxn = lmdbEnv.readTxn()) {
+                    final ByteBuffer valueBuffer = info.get(readTxn, InfoKey.SCHEMA_VERSION.getByteBuffer());
+                    if (valueBuffer != null) {
+                        final int version = valueBuffer.getInt();
+                        isValid = version == CURRENT_SCHEMA_VERSION;
+                        LOGGER.debug("LmdbEnv {} has version {}, isValid: {}", lmdbEnvDir, version, isValid);
+                    } else {
+                        LOGGER.debug("No entry for key {} found in {} DB, lmdbEnvDir: {}",
+                                InfoKey.SCHEMA_VERSION, INFO_DB_NAME, lmdbEnvDir);
+                    }
+                }
+            } else {
+                LOGGER.debug("{} DB not present, lmdbEnvDir: {}", INFO_DB_NAME, lmdbEnvDir);
+            }
+        } catch (final Exception e) {
+            NullSafe.consume(lmdbEnv, LmdbEnv::close);
+            LOGGER.error(e::getMessage, e);
+            throw e;
+        }
+        if (!isValid) {
+            lmdbEnv.close();
+            lmdbEnv = null;
+        }
+        return lmdbEnv;
     }
 
     private synchronized void writeSchemaVersion() {
-        writer.write(writeTxn -> writeSchemaVersion(writeTxn, CURRENT_SCHEMA_VERSION));
-    }
-
-    private void writeSchemaVersion(final WriteTxn txn, final int schemaVersion) {
-        byteBuffers.useInt(schemaVersion, byteBuffer -> {
-            infoDb.put(txn, InfoKey.SCHEMA_VERSION.getByteBuffer(), byteBuffer);
-        });
+        writer.write(writeTxn -> {
+            byteBuffers.useInt(CURRENT_SCHEMA_VERSION, byteBuffer -> {
+                infoDb.put(writeTxn, InfoKey.SCHEMA_VERSION.getByteBuffer(), byteBuffer);
+            });
+        }, true);
     }
 
     synchronized void writeColumnNames(final List<String> columnNames) {
+        LOGGER.debug("Writing column names {}", columnNames);
         writer.write(writeTxn -> writeColumnNames(writeTxn, columnNames));
     }
 
+    /**
+     * @param duplicateCheckRow The row to check.
+     * @return True if duplicateCheckRow can be inserted, i.e. it is NOT a duplicate of
+     * any existing rows.
+     */
     synchronized boolean tryInsert(final DuplicateCheckRow duplicateCheckRow) {
         final LmdbKV lmdbKV = duplicateCheckRowSerde.createLmdbKV(duplicateCheckRow);
         final AtomicBoolean res = new AtomicBoolean();
@@ -254,7 +304,6 @@ class DuplicateCheckStore {
 
                 for (final KeyVal<ByteBuffer> kv : cursorIterable) {
                     if (count >= pageRequest.getOffset()) {
-                        final ByteBuffer keyBuffer = kv.key();
                         final ByteBuffer valBuffer = kv.val();
                         results.add(duplicateCheckRowSerde.createDuplicateCheckRow(valBuffer));
                     }
@@ -357,7 +406,14 @@ class DuplicateCheckStore {
         }
     }
 
-    private enum InfoKey implements HasPrimitiveValue {
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * Pkg-private for testing
+     */
+    enum InfoKey implements HasPrimitiveValue {
         SCHEMA_VERSION(0),
         COLUMN_NAMES(1);
 
@@ -366,9 +422,10 @@ class DuplicateCheckStore {
 
         InfoKey(final int primitiveValue) {
             this.primitiveValue = (byte) primitiveValue;
-            this.byteBuffer = ByteBuffer.allocateDirect(1);
-            byteBuffer.put((byte) primitiveValue);
-            byteBuffer.flip();
+            final ByteBuffer aByteBuffer = ByteBuffer.allocateDirect(1);
+            aByteBuffer.put((byte) primitiveValue);
+            aByteBuffer.flip();
+            this.byteBuffer = aByteBuffer.asReadOnlyBuffer();
         }
 
         @Override
