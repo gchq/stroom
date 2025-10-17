@@ -55,7 +55,7 @@ public class Credentials {
     public static final String TYPE = "Credentials";
 
     /**
-     * Creates a new, empty credentials object.
+     * Creates a new, empty credentials object with a new UUID.
      */
     public Credentials() {
         this.name = EMPTY_NAME;
