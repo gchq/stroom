@@ -103,6 +103,9 @@ public class ElasticIndexDoc extends Doc {
     private String vectorEmbeddingsBaseUrl;
 
     @JsonProperty
+    private String vectorEmbeddingsAuthToken;
+
+    @JsonProperty
     private String vectorEmbeddingsModelId;
 
     /**
@@ -146,6 +149,7 @@ public class ElasticIndexDoc extends Doc {
             @JsonProperty("fields") final List<ElasticIndexField> fields,
             @JsonProperty("timeField") final String timeField,
             @JsonProperty("vectorEmbeddingsBaseUrl") final String vectorEmbeddingsBaseUrl,
+            @JsonProperty("vectorEmbeddingsAuthToken") final String vectorEmbeddingsAuthToken,
             @JsonProperty("vectorEmbeddingsModelId") final String vectorEmbeddingsModelId,
             @JsonProperty("defaultExtractionPipeline") final DocRef defaultExtractionPipeline,
             @JsonProperty("retentionExpression") final ExpressionOperator retentionExpression) {
@@ -158,6 +162,7 @@ public class ElasticIndexDoc extends Doc {
         this.fields = fields;
         this.timeField = timeField;
         this.vectorEmbeddingsBaseUrl = vectorEmbeddingsBaseUrl;
+        this.vectorEmbeddingsAuthToken = vectorEmbeddingsAuthToken;
         this.vectorEmbeddingsModelId = vectorEmbeddingsModelId;
         this.defaultExtractionPipeline = defaultExtractionPipeline;
         this.retentionExpression = retentionExpression;
@@ -248,6 +253,14 @@ public class ElasticIndexDoc extends Doc {
         this.vectorEmbeddingsBaseUrl = vectorEmbeddingsBaseUrl;
     }
 
+    public String getVectorEmbeddingsAuthToken() {
+        return vectorEmbeddingsAuthToken;
+    }
+
+    public void setVectorEmbeddingsAuthToken(final String vectorEmbeddingsAuthToken) {
+        this.vectorEmbeddingsAuthToken = vectorEmbeddingsAuthToken;
+    }
+
     public String getVectorEmbeddingsModelId() {
         return vectorEmbeddingsModelId;
     }
@@ -292,6 +305,7 @@ public class ElasticIndexDoc extends Doc {
                Objects.equals(fields, elasticIndex.fields) &&
                Objects.equals(timeField, elasticIndex.timeField) &&
                Objects.equals(vectorEmbeddingsBaseUrl, elasticIndex.vectorEmbeddingsBaseUrl) &&
+               Objects.equals(vectorEmbeddingsAuthToken, elasticIndex.vectorEmbeddingsAuthToken) &&
                Objects.equals(vectorEmbeddingsModelId, elasticIndex.vectorEmbeddingsModelId) &&
                Objects.equals(defaultExtractionPipeline, elasticIndex.defaultExtractionPipeline);
     }
@@ -308,6 +322,7 @@ public class ElasticIndexDoc extends Doc {
                 fields,
                 timeField,
                 vectorEmbeddingsBaseUrl,
+                vectorEmbeddingsAuthToken,
                 vectorEmbeddingsModelId,
                 defaultExtractionPipeline);
     }
@@ -323,6 +338,7 @@ public class ElasticIndexDoc extends Doc {
                ", fields=" + fields +
                ", timeField=" + timeField +
                ", vectorEmbeddingsBaseUrl='" + vectorEmbeddingsBaseUrl + '\'' +
+               ", vectorEmbeddingsAuthToken='" + vectorEmbeddingsAuthToken + '\'' +
                ", vectorEmbeddingsModelId='" + vectorEmbeddingsModelId + '\'' +
                ", defaultExtractionPipeline=" + defaultExtractionPipeline +
                '}';

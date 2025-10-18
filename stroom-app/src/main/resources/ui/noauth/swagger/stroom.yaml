@@ -11066,6 +11066,8 @@ components:
           type: string
         uuid:
           type: string
+        vectorEmbeddingsAuthToken:
+          type: string
         vectorEmbeddingsBaseUrl:
           type: string
         vectorEmbeddingsModelId:

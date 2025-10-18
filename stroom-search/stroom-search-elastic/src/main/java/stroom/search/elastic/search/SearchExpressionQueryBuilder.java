@@ -269,10 +269,6 @@ public class SearchExpressionQueryBuilder {
     }
 
     private Query buildDenseVectorQuery(final String fieldName, final String expression) {
-        if (NullSafe.isEmptyString(indexDoc.getVectorEmbeddingsBaseUrl())) {
-            throw new IllegalArgumentException("Vector embeddings URL is not defined in data source " +
-                                               indexDoc.getName());
-        }
         if (NullSafe.isEmptyString(indexDoc.getVectorEmbeddingsModelId())) {
             throw new IllegalArgumentException("Vector embeddings model ID is not defined in data source " +
                                                indexDoc.getName());
@@ -286,17 +282,23 @@ public class SearchExpressionQueryBuilder {
     }
 
     private List<Float> getSearchExpressionAsVector(final String fieldName, final String expression) {
-        final OpenAIClient client = OpenAIOkHttpClient.builder()
-                .fromEnv()
-                .baseUrl(indexDoc.getVectorEmbeddingsBaseUrl())
-                .credential(BearerTokenCredential.create(""))
-                .build();
+        final OpenAIOkHttpClient.Builder clientBuilder = OpenAIOkHttpClient.builder()
+                .fromEnv();
+
+        if (NullSafe.isNonEmptyString(indexDoc.getVectorEmbeddingsBaseUrl())) {
+            // Override the embeddings URL
+            clientBuilder.baseUrl(indexDoc.getVectorEmbeddingsBaseUrl());
+        }
+        if (NullSafe.isNonEmptyString(indexDoc.getVectorEmbeddingsAuthToken())) {
+            // Provide a bearer token
+            clientBuilder.credential(BearerTokenCredential.create(indexDoc.getVectorEmbeddingsAuthToken()));
+        }
         final EmbeddingCreateParams params = EmbeddingCreateParams.builder()
                 .model(indexDoc.getVectorEmbeddingsModelId())
                 .input(expression)
                 .build();
         try {
-            final CreateEmbeddingResponse response = client.embeddings().create(params);
+            final CreateEmbeddingResponse response = clientBuilder.build().embeddings().create(params);
             return response.data().getFirst().embedding();
         } catch (final Exception e) {
             throw new RuntimeException("Failed to create vector embeddings for field " + fieldName + ". " +

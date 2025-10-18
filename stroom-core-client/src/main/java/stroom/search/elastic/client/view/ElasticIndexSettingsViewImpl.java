@@ -58,6 +58,8 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     @UiField
     TextBox vectorEmbeddingsBaseUrl;
     @UiField
+    TextBox vectorEmbeddingsAuthToken;
+    @UiField
     TextBox vectorEmbeddingsModelId;
     @UiField
     SimplePanel defaultExtractionPipeline;
@@ -146,6 +148,16 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     }
 
     @Override
+    public String getVectorEmbeddingsAuthToken() {
+        return vectorEmbeddingsAuthToken.getValue();
+    }
+
+    @Override
+    public void setVectorEmbeddingsAuthToken(final String vectorEmbeddingsAuthToken) {
+        this.vectorEmbeddingsAuthToken.setValue(vectorEmbeddingsAuthToken);
+    }
+
+    @Override
     public String getVectorEmbeddingsModelId() {
         return vectorEmbeddingsModelId.getValue();
     }
@@ -189,6 +201,11 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
 
     @UiHandler("vectorEmbeddingsBaseUrl")
     public void onVectorEmbeddingsBaseUrlValueChange(final ValueChangeEvent<String> e) {
+        fireChange();
+    }
+
+    @UiHandler("vectorEmbeddingsAuthToken")
+    public void onVectorEmbeddingsAuthTokenValueChange(final ValueChangeEvent<String> e) {
         fireChange();
     }
 

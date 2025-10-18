@@ -15366,6 +15366,9 @@
           "uuid" : {
             "type" : "string"
           },
+          "vectorEmbeddingsAuthToken" : {
+            "type" : "string"
+          },
           "vectorEmbeddingsBaseUrl" : {
             "type" : "string"
           },
