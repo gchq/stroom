@@ -27,12 +27,13 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.util.exception.ThrowingConsumer;
 import stroom.util.io.ByteCountInputStream;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.zip.ZipUtil;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -51,7 +52,7 @@ import java.util.function.Consumer;
 public class StroomStreamProcessor {
 
     private static final String ZERO_CONTENT = "0";
-    private static final Logger LOGGER = LoggerFactory.getLogger(StroomStreamProcessor.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomStreamProcessor.class);
 
     private final AttributeMap globalAttributeMap;
     private final StreamHandler handler;
@@ -227,6 +228,7 @@ public class StroomStreamProcessor {
                     LOGGER.debug("Skipping directory zip entry {}", entryName);
                     continue;
                 }
+                checkZipEntry(zipEntry);
 
                 final long uncompressedSize = zipEntry.getSize();
                 final StroomZipEntry stroomZipEntry = stroomZipEntries.addFile(entryName);
@@ -370,6 +372,16 @@ public class StroomStreamProcessor {
             }
         } catch (final IOException e) {
             throw StroomStreamException.create(e, globalAttributeMap);
+        }
+    }
+
+    private void checkZipEntry(final ZipArchiveEntry zipEntry) {
+        final String fileName = zipEntry.getName();
+        if (!ZipUtil.isSafeZipPath(Path.of(fileName))) {
+            // Only a warning as we do not use the zip entry name when extracting from the zip.
+            LOGGER.warn("Zip archive stream contains a path that would extract to outside the " +
+                        "target directory '{}'. Stroom will not use this path but this is " +
+                        "dangerous behaviour.", fileName);
         }
     }
 
