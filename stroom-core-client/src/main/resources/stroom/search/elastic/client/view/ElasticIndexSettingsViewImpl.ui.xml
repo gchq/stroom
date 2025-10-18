@@ -49,11 +49,5 @@
         </form:FormGroup>
 
         <b:Button ui:field="testConnection" text="Test Connection" width="200px" addStyleNames="allow-focus"/>
-
-        <form:FormGroup identity="elasticIndexSettingsRetentionExpression"
-                        label="Data Retention Expression (matching data will be deleted)"
-                        addStyleNames="default-min-sizes flex-grow-1">
-            <g:SimplePanel ui:field="retentionExpressionPanel" styleName="dock-max"/>
-        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

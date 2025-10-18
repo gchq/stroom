@@ -52,8 +52,6 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     @UiField
     Button testConnection;
     @UiField
-    SimplePanel retentionExpressionPanel;
-    @UiField
     TextBox timeField;
     @UiField
     TextBox vectorEmbeddingsBaseUrl;
@@ -120,11 +118,6 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     @Override
     public void setSearchScrollSize(final int searchScrollSize) {
         this.searchScrollSize.setValue(searchScrollSize);
-    }
-
-    @Override
-    public void setRetentionExpressionView(final View view) {
-        retentionExpressionPanel.setWidget(view.asWidget());
     }
 
     @Override

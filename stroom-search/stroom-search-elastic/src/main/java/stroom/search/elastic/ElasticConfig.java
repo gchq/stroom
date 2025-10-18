@@ -17,7 +17,6 @@ public class ElasticConfig extends AbstractConfig implements IsStroomConfig {
     public final ElasticClientConfig clientConfig;
     private final ElasticIndexingConfig indexingConfig;
     private final ElasticSearchConfig searchConfig;
-    private final ElasticRetentionConfig retentionConfig;
     private final CacheConfig indexClientCache;
     private final CacheConfig indexCache;
 
@@ -25,7 +24,6 @@ public class ElasticConfig extends AbstractConfig implements IsStroomConfig {
         clientConfig = new ElasticClientConfig();
         indexingConfig = new ElasticIndexingConfig();
         searchConfig = new ElasticSearchConfig();
-        retentionConfig = new ElasticRetentionConfig();
         indexClientCache = CacheConfig.builder()
                 .maximumSize(100L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
@@ -41,13 +39,11 @@ public class ElasticConfig extends AbstractConfig implements IsStroomConfig {
     public ElasticConfig(@JsonProperty("client") final ElasticClientConfig clientConfig,
                          @JsonProperty("indexing") final ElasticIndexingConfig indexingConfig,
                          @JsonProperty("search") final ElasticSearchConfig searchConfig,
-                         @JsonProperty("retention") final ElasticRetentionConfig retentionConfig,
                          @JsonProperty("indexClientCache") final CacheConfig indexClientCache,
                          @JsonProperty("indexCache") final CacheConfig indexCache) {
         this.clientConfig = clientConfig;
         this.indexingConfig = indexingConfig;
         this.searchConfig = searchConfig;
-        this.retentionConfig = retentionConfig;
         this.indexClientCache = indexClientCache;
         this.indexCache = indexCache;
     }
@@ -67,11 +63,6 @@ public class ElasticConfig extends AbstractConfig implements IsStroomConfig {
         return searchConfig;
     }
 
-    @JsonProperty("retention")
-    public ElasticRetentionConfig getRetentionConfig() {
-        return retentionConfig;
-    }
-
     public CacheConfig getIndexClientCache() {
         return indexClientCache;
     }
@@ -86,7 +77,6 @@ public class ElasticConfig extends AbstractConfig implements IsStroomConfig {
                 "clientConfig=" + clientConfig +
                 ", indexingConfig=" + indexingConfig +
                 ", searchConfig=" + searchConfig +
-                ", retentionConfig=" + retentionConfig +
                 ", indexClientCache=" + indexClientCache +
                 ", indexCache=" + indexCache +
                 '}';

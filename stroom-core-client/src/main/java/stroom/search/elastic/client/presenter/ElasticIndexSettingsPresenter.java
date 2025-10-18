@@ -24,8 +24,6 @@ import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.query.api.ExpressionOperator;
-import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.client.presenter.DynamicFieldSelectionListModel;
 import stroom.search.elastic.client.presenter.ElasticIndexSettingsPresenter.ElasticIndexSettingsView;
 import stroom.search.elastic.shared.ElasticClusterDoc;
@@ -77,7 +75,6 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
         view.setUiHandlers(this);
         view.setDefaultExtractionPipelineView(pipelinePresenter.getView());
         view.setClusterView(clusterPresenter.getView());
-        view.setRetentionExpressionView(editExpressionPresenter.getView());
     }
 
     @Override
@@ -121,13 +118,6 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
         getView().setVectorEmbeddingsAuthToken(index.getVectorEmbeddingsAuthToken());
         getView().setVectorEmbeddingsModelId(index.getVectorEmbeddingsModelId());
 
-        if (index.getRetentionExpression() == null) {
-            index.setRetentionExpression(ExpressionOperator.builder().op(Op.AND).build());
-        }
-
-        fieldSelectionBoxModel.setDataSourceRefConsumer(consumer -> consumer.accept(docRef));
-        editExpressionPresenter.init(restFactory, docRef, fieldSelectionBoxModel);
-        editExpressionPresenter.read(index.getRetentionExpression());
         pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline(), true);
     }
 
@@ -148,7 +138,6 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
         index.setVectorEmbeddingsBaseUrl(getView().getVectorEmbeddingsBaseUrl());
         index.setVectorEmbeddingsAuthToken(getView().getVectorEmbeddingsAuthToken());
         index.setVectorEmbeddingsModelId(getView().getVectorEmbeddingsModelId());
-        index.setRetentionExpression(editExpressionPresenter.write());
         index.setDefaultExtractionPipeline(pipelinePresenter.getSelectedEntityReference());
         return index;
     }
@@ -175,8 +164,6 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
         int getSearchScrollSize();
 
         void setSearchScrollSize(final int searchScrollSize);
-
-        void setRetentionExpressionView(final View view);
 
         String getTimeField();
 
