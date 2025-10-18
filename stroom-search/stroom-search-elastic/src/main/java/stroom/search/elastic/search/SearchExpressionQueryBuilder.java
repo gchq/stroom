@@ -42,10 +42,8 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import co.elastic.clients.elasticsearch._types.query_dsl.UntypedRangeQuery;
 import co.elastic.clients.json.JsonData;
-import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
 import com.openai.credential.BearerTokenCredential;
-import com.openai.credential.Credential;
 import com.openai.models.embeddings.CreateEmbeddingResponse;
 import com.openai.models.embeddings.EmbeddingCreateParams;
 
@@ -289,9 +287,11 @@ public class SearchExpressionQueryBuilder {
             // Override the embeddings URL
             clientBuilder.baseUrl(indexDoc.getVectorEmbeddingsBaseUrl());
         }
-        if (NullSafe.isNonEmptyString(indexDoc.getVectorEmbeddingsAuthToken())) {
+        if (indexDoc.getVectorEmbeddingsAuthToken() != null) {
             // Provide a bearer token
             clientBuilder.credential(BearerTokenCredential.create(indexDoc.getVectorEmbeddingsAuthToken()));
+        } else {
+            clientBuilder.credential(BearerTokenCredential.create(""));
         }
         final EmbeddingCreateParams params = EmbeddingCreateParams.builder()
                 .model(indexDoc.getVectorEmbeddingsModelId())
