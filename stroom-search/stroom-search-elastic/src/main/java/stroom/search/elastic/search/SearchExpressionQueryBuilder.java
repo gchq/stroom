@@ -282,9 +282,7 @@ public class SearchExpressionQueryBuilder {
         final List<Float> queryVector = getSearchExpressionAsVector(fieldName, expression);
         return QueryBuilders.knn(q -> q
                 .field(fieldName)
-                .queryVector(queryVector)
-                .k(100)
-                .numCandidates(1000));
+                .queryVector(queryVector));
     }
 
     private List<Float> getSearchExpressionAsVector(final String fieldName, final String expression) {
