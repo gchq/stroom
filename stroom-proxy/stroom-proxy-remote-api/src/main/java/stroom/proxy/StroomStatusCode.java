@@ -119,6 +119,11 @@ public enum StroomStatusCode {
             "The stream of data sent does not form a valid compressed file.  Maybe it terminated " +
             "unexpectedly or is corrupt."),
 
+    CONTENT_TOO_LARGE(HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE,
+            410,
+            "Content too large",
+            "The stream of data exceeded the configured max number of bytes."),
+
     UNKNOWN_ERROR(
             HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
             999,

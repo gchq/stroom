@@ -20,10 +20,13 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import org.apache.commons.lang3.mutable.MutableLong;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.channels.FileChannel;
+import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
@@ -120,6 +123,68 @@ public final class FileUtil {
         } else {
             return false;
         }
+    }
+
+    /**
+     * Attempts to delete any empty directories found while walking the tree starting from rootDir.
+     * Will not delete rootDir.
+     * No exceptions will be thrown. It will only log errors.
+     */
+    public static int deleteEmptyDirs(final Path rootDir) {
+        final MutableLong deleteCount = new MutableLong();
+        try {
+            Files.walkFileTree(rootDir, new SimpleFileVisitor<>() {
+                final Set<Path> dirsWithFiles = new HashSet<>();
+
+                //
+                @Override
+                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
+                    // Mark all parent directories as having files
+                    Path parent = file.getParent();
+                    while (parent != null && parent.startsWith(rootDir)) {
+                        dirsWithFiles.add(parent);
+                        parent = parent.getParent();
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFileFailed(final Path file, final IOException exc) throws IOException {
+                    // Sill an item in the dir even if we can't visit it
+                    // Mark all parent directories as having files
+                    Path parent = file.getParent();
+                    while (parent != null && parent.startsWith(rootDir)) {
+                        dirsWithFiles.add(parent);
+                        parent = parent.getParent();
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) throws IOException {
+                    if (!Files.isSameFile(rootDir, dir)) {
+                        if (!dirsWithFiles.contains(dir)) {
+                            try {
+                                Files.delete(dir);
+                                deleteCount.increment();
+                            } catch (final DirectoryNotEmptyException e) {
+                                LOGGER.debug("deleteEmptyDirs() - Directory {} is not empty so cannot be deleted.",
+                                        dir);
+                            } catch (final IOException e) {
+                                LOGGER.error("Error while trying to delete directory {} - {}",
+                                        dir, LogUtil.exceptionMessage(e));
+                            }
+                        }
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (final IOException e) {
+            // Swallow
+            LOGGER.error("Error walking directory {} - {}", rootDir, LogUtil.exceptionMessage(e), e);
+        }
+        LOGGER.debug("deleteEmptyDirs() - Deleted {} empty directories", deleteCount);
+        return deleteCount.intValue();
     }
 
     private static void recursiveDelete(final Path path, final AtomicBoolean success) {

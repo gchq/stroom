@@ -14890,6 +14890,12 @@
           },
           "sampleAtStartOfLine" : {
             "type" : "boolean"
+          },
+          "tags" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
           }
         }
       },
@@ -17302,7 +17308,7 @@
           },
           "stroomStatusCode" : {
             "type" : "string",
-            "enum" : [ "200 - 0 - OK", "406 - 100 - Feed must be specified", "406 - 101 - Feed is not defined", "406 - 102 - Data type is invalid", "406 - 103 - A mandatory header is missing", "406 - 104 - Data format is invalid", "406 - 110 - Feed is not set to receive data", "406 - 111 - Feed is not valid", "406 - 112 - Data Feed key and/or accountId is not valid", "406 - 113 - Data has been rejected by the receipt policy rules", "406 - 120 - Unexpected data type", "406 - 200 - Unknown compression", "401 - 300 - Client Certificate Required", "401 - 301 - Client Token Required", "401 - 302 - Client token or certificate required", "401 - 303 - Client data feed key required", "401 - 304 - Authentication of the client is required", "401 - 310 - Client Certificate failed authentication", "401 - 311 - Client Token failed authentication", "401 - 312 - Client Token or Certificate failed authentication", "401 - 313 - Data feed key failed authentication", "401 - 314 - Data feed key has expired", "500 - 400 - Compressed stream invalid", "500 - 999 - Unknown error" ]
+            "enum" : [ "200 - 0 - OK", "406 - 100 - Feed must be specified", "406 - 101 - Feed is not defined", "406 - 102 - Data type is invalid", "406 - 103 - A mandatory header is missing", "406 - 104 - Data format is invalid", "406 - 110 - Feed is not set to receive data", "406 - 111 - Feed is not valid", "406 - 112 - Data Feed key and/or accountId is not valid", "406 - 113 - Data has been rejected by the receipt policy rules", "406 - 120 - Unexpected data type", "406 - 200 - Unknown compression", "401 - 300 - Client Certificate Required", "401 - 301 - Client Token Required", "401 - 302 - Client token or certificate required", "401 - 303 - Client data feed key required", "401 - 304 - Authentication of the client is required", "401 - 310 - Client Certificate failed authentication", "401 - 311 - Client Token failed authentication", "401 - 312 - Client Token or Certificate failed authentication", "401 - 313 - Data feed key failed authentication", "401 - 314 - Data feed key has expired", "500 - 400 - Compressed stream invalid", "413 - 410 - Content too large", "500 - 999 - Unknown error" ]
           }
         }
       },
@@ -17724,10 +17730,22 @@
         "type" : "object",
         "description" : "A pair of regular expression filters (inclusion and exclusion) to apply to the field.  Either or both can be supplied",
         "properties" : {
+          "excludeDictionaries" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DocRef"
+            }
+          },
           "excludes" : {
             "type" : "string",
             "description" : "Only results NOT matching this filter will be included",
             "example" : "^[0-9]{3}$"
+          },
+          "includeDictionaries" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DocRef"
+            }
           },
           "includes" : {
             "type" : "string",
@@ -20499,16 +20517,19 @@
             "type" : "string"
           },
           "key" : {
-            "type" : "string"
+            "type" : "string",
+            "minLength" : 1
           },
           "mapName" : {
-            "type" : "string"
+            "type" : "string",
+            "minLength" : 1
           },
           "referenceLoaders" : {
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/ReferenceLoader"
-            }
+            },
+            "minItems" : 1
           }
         },
         "required" : [ "key", "mapName", "referenceLoaders" ]
@@ -24752,11 +24773,8 @@
           "type" : "object",
           "properties" : {
             "bytes" : {
-              "type" : "array",
-              "items" : {
-                "type" : "string",
-                "format" : "byte"
-              }
+              "type" : "string",
+              "format" : "byte"
             }
           }
         } ]

@@ -10511,6 +10511,10 @@ components:
           type: string
         sampleAtStartOfLine:
           type: boolean
+        tags:
+          type: array
+          items:
+            type: string
     DocRef:
       type: object
       description: A class for describing a unique reference to a 'document' in stroom.  A
@@ -12567,6 +12571,7 @@ components:
           - 401 - 313 - Data feed key failed authentication
           - 401 - 314 - Data feed key has expired
           - 500 - 400 - Compressed stream invalid
+          - 413 - 410 - Content too large
           - 500 - 999 - Unknown error
     GetPipelineForMetaRequest:
       type: object
@@ -12900,10 +12905,18 @@ components:
       description: A pair of regular expression filters (inclusion and exclusion)
         to apply to the field.  Either or both can be supplied
       properties:
+        excludeDictionaries:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocRef"
         excludes:
           type: string
           description: Only results NOT matching this filter will be included
           example: "^[0-9]{3}$"
+        includeDictionaries:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocRef"
         includes:
           type: string
           description: Only results matching this filter will be included
@@ -15266,12 +15279,15 @@ components:
           type: string
         key:
           type: string
+          minLength: 1
         mapName:
           type: string
+          minLength: 1
         referenceLoaders:
           type: array
           items:
             $ref: "#/components/schemas/ReferenceLoader"
+          minItems: 1
       required:
       - key
       - mapName
@@ -18520,10 +18536,8 @@ components:
       - type: object
         properties:
           bytes:
-            type: array
-            items:
-              type: string
-              format: byte
+            type: string
+            format: byte
     ValidateExpressionRequest:
       type: object
       properties:
