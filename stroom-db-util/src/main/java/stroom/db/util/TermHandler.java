@@ -81,8 +81,14 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
 //                    return getCondition(term, field::eq);
 //                }
             }
+            case NOT_EQUALS -> {
+                return neq(term);
+            }
             case EQUALS_CASE_SENSITIVE -> {
                 return getCondition(term, field::eq);
+            }
+            case NOT_EQUALS_CASE_SENSITIVE -> {
+                return getCondition(term, field::ne);
             }
             case CONTAINS -> {
                 if (fieldIsCaseSensitive) {
@@ -113,9 +119,6 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
             }
             case ENDS_WITH_CASE_SENSITIVE -> {
                 return getCondition(term, field::endsWith);
-            }
-            case NOT_EQUALS -> {
-                return neq(term);
             }
             case BETWEEN -> {
                 final String[] parts = term.getValue().split(LIST_DELIMITER);

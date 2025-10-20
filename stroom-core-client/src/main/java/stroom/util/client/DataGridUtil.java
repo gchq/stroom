@@ -16,10 +16,12 @@ import stroom.cell.valuespinner.client.ValueSpinnerCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CopyTextCell;
 import stroom.data.client.presenter.DocRefCell;
+import stroom.data.client.presenter.HasContextMenusCell;
 import stroom.data.client.presenter.UserRefCell;
 import stroom.data.grid.client.ColSpec;
 import stroom.data.grid.client.ColumnBuilder;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.HasContextMenus;
 import stroom.data.grid.client.HeadingBuilder;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.docref.DocRef;
@@ -584,6 +586,12 @@ public class DataGridUtil {
     public static <T_ROW> ColumnBuilder<T_ROW, SafeHtml, Cell<SafeHtml>> htmlColumnBuilder(
             final Function<T_ROW, SafeHtml> valueExtractor) {
         return new ColumnBuilder<T_ROW, SafeHtml, Cell<SafeHtml>>(valueExtractor, SafeHtmlCell::new);
+    }
+
+    public static <T_ROW> ColumnBuilder<
+            T_ROW, SafeHtml, HasContextMenusCell<SafeHtml>> hasContextMenusColumnBuilder(
+            final Function<T_ROW, SafeHtml> valueExtractor, final HasContextMenus<SafeHtml> hasContextMenus) {
+        return new ColumnBuilder<>(valueExtractor, () -> new HasContextMenusCell<>(hasContextMenus));
     }
 
     public static <T_ROW> ColumnBuilder<T_ROW, Preset, Cell<Preset>> svgPresetColumnBuilder(

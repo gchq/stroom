@@ -53,7 +53,7 @@ abstract class AnnotationPlugin extends NodeToolsContentPlugin<AnnotationTagPres
 
     @Override
     protected AppPermission getRequiredAppPermission() {
-        return AppPermission.ADMINISTRATOR;
+        return AppPermission.ANNOTATIONS;
     }
 
     @Override

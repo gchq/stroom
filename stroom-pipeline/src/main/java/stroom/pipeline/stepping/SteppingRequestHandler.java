@@ -384,7 +384,7 @@ class SteppingRequestHandler {
 
                 // Get the appropriate stream and source based on the type of
                 // translation.
-                taskContext.info(() -> "Opening source: " + metaId);
+                taskContext.info(() -> "Opening source. stream_id=" + metaId);
                 try (final Source source = streamStore.openSource(metaId)) {
                     if (source != null) {
                         // Load the feed.

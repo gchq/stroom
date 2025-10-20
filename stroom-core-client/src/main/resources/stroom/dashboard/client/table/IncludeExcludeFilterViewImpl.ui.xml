@@ -1,13 +1,50 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
-<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="filterInclude" label="Include" addStyleNames="dock-max">
-            <g:TextArea ui:field="includes" styleName="max"/>
-        </form:FormGroup>
-        <form:FormGroup identity="filterExclude" label="Exclude" addStyleNames="dock-max">
-            <g:TextArea ui:field="excludes" styleName="max"/>
-        </form:FormGroup>
-    </g:FlowPanel>
+
+    <ui:style>
+        .container {
+        max-width: 600px;
+        <!--            margin-bottom: 10px;-->
+        min-height: 24px;
+        line-height: 1.5;
+        display: flex;
+        align-items: center;
+        <!--        margin: 20px auto;-->
+        <!--        padding: 20px;-->
+        }
+        .dictButton {
+
+        }
+        .label {
+        font-weight: bold;
+        margin-bottom: 5px;
+        display: block;
+        }
+    </ui:style>
+
+    <g:DockLayoutPanel>
+        <g:west size="520">
+            <g:FlowPanel  styleName="max form">
+                <form:FormGroup identity="filterInclude" label="Include" addStyleNames="dock-max">
+                    <g:TextArea ui:field="includeText" styleName="max"/>
+                </form:FormGroup>
+                <form:FormGroup label="Include Dictionaries" addStyleNames=" default-min-sizes dock-max">
+                    <g:SimplePanel ui:field="includeDictionaryPanel" addStyleNames="max stroom-control"/>
+                </form:FormGroup>
+            </g:FlowPanel>
+        </g:west>
+
+        <g:east size="520">
+            <g:FlowPanel styleName="max form">
+                <form:FormGroup identity="filterExclude" label="Exclude" addStyleNames="dock-max">
+                    <g:TextArea ui:field="excludeText" styleName="max"/>
+                </form:FormGroup>
+                <form:FormGroup label="Exclude Dictionaries" addStyleNames="default-min-sizes dock-max">
+                    <g:SimplePanel ui:field="excludeDictionaryPanel" addStyleNames="max stroom-control"/>
+                </form:FormGroup>
+            </g:FlowPanel>
+        </g:east>
+    </g:DockLayoutPanel>
 </ui:UiBinder> 

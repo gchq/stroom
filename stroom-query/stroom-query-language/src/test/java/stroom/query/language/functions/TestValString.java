@@ -13,6 +13,11 @@ import java.util.stream.Stream;
 
 class TestValString {
 
+//    @Test
+//    void testSerDeser() {
+//        TestUtil.testSerialisation(ValString.create("foo"), ValString.class);
+//    }
+
     @TestFactory
     Stream<DynamicTest> testHasNumericValue() {
         return TestUtil.buildDynamicTestStream()
@@ -144,7 +149,7 @@ class TestValString {
                 // Duration parsed then returned as millis
                 .addCase(
                         ValString.create(duration.toString()),
-                         duration.toMillis())
+                        duration.toMillis())
                 .build();
     }
 

@@ -66,6 +66,7 @@ proxyConfig:
   - addOpenIdAccessToken: false
     apiKey: null
     enabled: true
+    forwardHeadersAdditionalAllowSet: []
     forwardUrl: null
     httpClient:
       connectionRequestTimeout: "PT1M"
@@ -141,6 +142,7 @@ proxyConfig:
     - "Format"
     - "Schema"
     feedNameTemplate: "${accountid}-${component}-${format}-${schema}"
+    maxRequestSize: null
     metaTypes:
     - "Context"
     - "Detections"

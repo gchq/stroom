@@ -44,7 +44,7 @@ public class VisSelectionModel
     }
 
     @Override
-    public List<ColumnRef> getColumns() {
+    public List<ColumnRef> getColumnRefs() {
         return COLUMNS;
     }
 

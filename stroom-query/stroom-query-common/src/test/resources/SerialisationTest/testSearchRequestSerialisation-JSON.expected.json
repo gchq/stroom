@@ -44,7 +44,9 @@
         },
         "filter" : {
           "includes" : "include1",
-          "excludes" : "exclude1"
+          "excludes" : "exclude1",
+          "includeDictionaries" : [ ],
+          "excludeDictionaries" : [ ]
         },
         "format" : {
           "type" : "NUMBER",
@@ -68,7 +70,9 @@
         },
         "filter" : {
           "includes" : "include2",
-          "excludes" : "exclude2"
+          "excludes" : "exclude2",
+          "includeDictionaries" : [ ],
+          "excludeDictionaries" : [ ]
         },
         "format" : {
           "type" : "DATE_TIME",

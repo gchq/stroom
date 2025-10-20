@@ -419,7 +419,13 @@ class SecurityContextImpl implements SecurityContext {
      */
     @Override
     public <T> T asProcessingUserResult(final Supplier<T> supplier) {
-        return asUserResult(userIdentityFactory.getServiceUserIdentity(), supplier);
+        final UserIdentity serviceUserIdentity;
+        try {
+            serviceUserIdentity = userIdentityFactory.getServiceUserIdentity();
+        } catch (final Exception e) {
+            throw new RuntimeException("Error running as processing user - " + LogUtil.exceptionMessage(e), e);
+        }
+        return asUserResult(serviceUserIdentity, supplier);
     }
 
     /**
@@ -427,7 +433,13 @@ class SecurityContextImpl implements SecurityContext {
      */
     @Override
     public void asProcessingUser(final Runnable runnable) {
-        asUser(userIdentityFactory.getServiceUserIdentity(), runnable);
+        final UserIdentity serviceUserIdentity;
+        try {
+            serviceUserIdentity = userIdentityFactory.getServiceUserIdentity();
+        } catch (final Exception e) {
+            throw new RuntimeException("Error running as processing user - " + LogUtil.exceptionMessage(e), e);
+        }
+        asUser(serviceUserIdentity, runnable);
     }
 
     /**

@@ -209,20 +209,20 @@ public class DataProcessorTaskHandler {
 
     private void log(final TaskContext taskContext, final Meta meta, final Processor destStreamProcessor) {
         if (destStreamProcessor.getPipelineUuid() != null) {
-            taskContext.info(() -> "Stream " +
+            taskContext.info(() -> "meta_id=" +
                     meta.getId() +
-                    " " +
+                    ", created=" +
                     DateUtil.createNormalDateTimeString(meta.getCreateMs()) +
-                    " " +
+                    ", processor type=" +
                     destStreamProcessor.getProcessorType() +
-                    " " +
+                    ", pipeline uuid=" +
                     destStreamProcessor.getPipelineUuid());
         } else {
-            taskContext.info(() -> "Stream " +
+            taskContext.info(() -> "meta_id=" +
                     meta.getId() +
-                    " " +
+                    ", created=" +
                     DateUtil.createNormalDateTimeString(meta.getCreateMs()) +
-                    " " +
+                    ", processor type=" +
                     destStreamProcessor.getProcessorType());
         }
     }

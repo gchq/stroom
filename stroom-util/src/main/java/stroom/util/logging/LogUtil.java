@@ -492,4 +492,12 @@ public final class LogUtil {
                 ? DurationTimer.start()
                 : null;
     }
+
+    public static String getSimpleClassName(final Object obj) {
+        return NullSafe.get(obj, Object::getClass, Class::getSimpleName);
+    }
+
+    public static String getClassName(final Object obj) {
+        return NullSafe.get(obj, Object::getClass, Class::getName);
+    }
 }

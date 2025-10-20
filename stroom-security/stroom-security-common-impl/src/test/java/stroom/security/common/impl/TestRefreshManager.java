@@ -149,6 +149,11 @@ class TestRefreshManager {
         }
 
         @Override
+        public Instant getExpireTime() {
+            return expiry;
+        }
+
+        @Override
         public long getExpireTimeEpochMs() {
             return expiry.toEpochMilli();
         }

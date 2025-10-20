@@ -3,12 +3,48 @@ package stroom.query.language.functions;
 import stroom.test.common.TestCase;
 import stroom.test.common.TestUtil;
 
+import io.vavr.Tuple;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.util.stream.Stream;
 
 public class TestVal {
+
+    @TestFactory
+    Stream<DynamicTest> testSerDeSer() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(Val.class, Class.class)
+                .withOutputType(Val.class)
+                .withTestFunction(testCase -> {
+                    final Val val = testCase.getInput()._1();
+                    final Class clazz = testCase.getInput()._2();
+                    final Val val2 = TestUtil.testSerialisation(val, clazz);
+                    return val2;
+                })
+                .withAssertions(tuple2ValTestOutcome -> {
+                    final Val input = tuple2ValTestOutcome.getInput()._1();
+                    final Val output = tuple2ValTestOutcome.getActualOutput();
+                    Assertions.assertThat(output)
+                            .isEqualTo(input);
+                })
+                .addCase(Tuple.of(ValByte.create((byte) 1), ValByte.class), null)
+                .addCase(Tuple.of(ValBoolean.create(true), ValBoolean.class), null)
+                .addCase(Tuple.of(ValFloat.create(0.1F), ValFloat.class), null)
+                .addCase(Tuple.of(ValDouble.create(0.1D), ValDouble.class), null)
+                .addCase(Tuple.of(ValShort.create((short) 123), ValShort.class), null)
+                .addCase(Tuple.of(ValInteger.create(123), ValInteger.class), null)
+                .addCase(Tuple.of(ValLong.create(123L), ValLong.class), null)
+                .addCase(Tuple.of(ValString.create("foo"), ValString.class), null)
+                .addCase(Tuple.of(ValDuration.create(123L), ValDuration.class), null)
+                .addCase(Tuple.of(ValDate.create(123L), ValDate.class), null)
+                .addCase(Tuple.of(ValXml.create("test".getBytes(StandardCharsets.UTF_8)), ValXml.class), null)
+                .addCase(Tuple.of(ValNull.INSTANCE, ValNull.class), null)
+                .addCase(Tuple.of(ValErr.create("test"), ValErr.class), null)
+                .build();
+    }
 
     @TestFactory
     Stream<DynamicTest> testNullSafeCreate() {

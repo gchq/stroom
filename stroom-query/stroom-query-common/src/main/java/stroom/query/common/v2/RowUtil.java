@@ -23,7 +23,7 @@ public class RowUtil {
         return formatters;
     }
 
-    static ValueFunctionFactories<Values> createColumnNameValExtractor(final List<Column> newColumns) {
+    public static ValueFunctionFactories<Values> createColumnNameValExtractor(final List<Column> newColumns) {
         // Create the field position map for the new columns.
         final Map<String, ValueFunctionFactory<Values>> fieldPositionMap = new HashMap<>();
         for (int i = 0; i < newColumns.size(); i++) {

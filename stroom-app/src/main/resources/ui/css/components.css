@@ -422,6 +422,7 @@
 .userRefLinkOpen,
 .docRefLinkCopy,
 .docRefLinkOpen,
+.docRefLinkInsert,
 .commandLinkOpen {
     cursor: pointer;
 }
@@ -1956,6 +1957,10 @@ button.main-menu svg {
     padding-bottom: 0.3em;
 }
 
+.infoTable td {
+    vertical-align: middle;
+}
+
 /* Make headers after the first add padding before */
 .infoTable tr:not(:first-of-type) th {
     padding-top: 1rem;
@@ -2253,6 +2258,7 @@ button.main-menu svg {
     padding: .1rem;
 }
 
+.findCell-tags,
 .findCell-path {
     display: flex;
     font-size: .7rem;
@@ -2508,10 +2514,6 @@ button.main-menu svg {
 }
 
 .ColumnValuesFilterViewImpl {
-    min-width: 200px;
-    max-width: 600px;
-    min-height: 200px;
-    max-height: 600px;
     display: flex;
     flex-direction: column;
     gap: var(--control__padding--vertical);
@@ -2530,7 +2532,7 @@ button.main-menu svg {
 }
 
 .ColumnValuesFilterViewImpl .listContainer {
-    height: 300px;
+    /*height: 300px;*/
 }
 
 .columnValueCell {
@@ -2543,6 +2545,7 @@ button.main-menu svg {
 
 .columnValueCell-text {
 	white-space: nowrap;
+	min-width: 200px;
 }
 
 .durationSetting {
@@ -2664,3 +2667,55 @@ button.main-menu svg {
     padding-bottom: 0.3em;
 }
 
+
+
+
+.table-filter-outer {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    overflow: auto;
+    flex-direction: column;
+    padding: 5px;
+    gap: 10px;
+}
+
+.table-filter-label {
+    color: var(--heading-color);
+    font-weight: bold;
+    font-size: 125%;
+    padding: 2px 5px;
+}
+
+.table-filter-panel {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    flex-basis: 0;
+    min-height: 200px;
+    overflow: hidden;
+}
+
+.table-filter-outer .ColumnValuesFilterViewImpl {
+    gap: 0;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.popupContent .ColumnValuesFilterViewImpl {
+    width: 400px;
+    height: 400px;
+}
+
+.ColumnValuesFilterViewImpl .cellTableOddRow {
+    background-color: var(--row__background-color--odd);
+}
+
+.ColumnValuesFilterViewImpl .cellTableEvenRow {
+    background-color: var(--row__background-color--even);
+}
+
+.ColumnValuesFilterViewImpl .cellTableOddRow:hover,
+.ColumnValuesFilterViewImpl .cellTableEvenRow:hover {
+    background-color: var(--row__background-color--hovered);
+}

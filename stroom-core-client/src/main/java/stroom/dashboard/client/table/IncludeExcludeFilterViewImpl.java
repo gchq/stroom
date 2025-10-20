@@ -20,22 +20,38 @@ import stroom.dashboard.client.table.IncludeExcludeFilterPresenter.IncludeExclud
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 public class IncludeExcludeFilterViewImpl extends ViewImpl implements IncludeExcludeFilterView {
 
     private final Widget widget;
     @UiField
-    TextArea includes;
+    TextArea includeText;
     @UiField
-    TextArea excludes;
+    TextArea excludeText;
+    @UiField
+    SimplePanel includeDictionaryPanel;
+    @UiField
+    SimplePanel excludeDictionaryPanel;
 
     @Inject
     public IncludeExcludeFilterViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+    }
+
+    @Override
+    public void setIncludeDictionaryPanel(final View view) {
+        includeDictionaryPanel.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setExcludeDictionaryPanel(final View view) {
+        excludeDictionaryPanel.setWidget(view.asWidget());
     }
 
     @Override
@@ -45,27 +61,27 @@ public class IncludeExcludeFilterViewImpl extends ViewImpl implements IncludeExc
 
     @Override
     public void focus() {
-        includes.setFocus(true);
+        includeText.setFocus(true);
     }
 
     @Override
     public String getIncludes() {
-        return this.includes.getText();
+        return this.includeText.getText();
     }
 
     @Override
     public void setIncludes(final String includes) {
-        this.includes.setText(includes);
+        this.includeText.setText(includes);
     }
 
     @Override
     public String getExcludes() {
-        return this.excludes.getText();
+        return this.excludeText.getText();
     }
 
     @Override
     public void setExcludes(final String excludes) {
-        this.excludes.setText(excludes);
+        this.excludeText.setText(excludes);
     }
 
     public interface Binder extends UiBinder<Widget, IncludeExcludeFilterViewImpl> {

@@ -242,7 +242,7 @@ public class VisPresenter
 
         builder.tableId(tableId);
 
-        final Component component = getDashboardContext().getComponents().get(getVisSettings().getTableId());
+        final Component component = getDashboardContext().getComponents().get(tableId);
         if (component instanceof final TablePresenter tablePresenter) {
             final TableComponentSettings tableComponentSettings = tablePresenter
                     .getTableComponentSettings();
@@ -709,8 +709,8 @@ public class VisPresenter
     }
 
     @Override
-    public List<ColumnRef> getColumns() {
-        return visSelectionModel.getColumns();
+    public List<ColumnRef> getColumnRefs() {
+        return visSelectionModel.getColumnRefs();
     }
 
     @Override

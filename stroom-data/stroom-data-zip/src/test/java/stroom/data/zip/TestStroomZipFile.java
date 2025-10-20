@@ -79,4 +79,35 @@ class TestStroomZipFile {
             Files.delete(file);
         }
     }
+
+    @Test
+    void testRealZip3() throws IOException {
+        final Path uniqueTestDir = Files.createTempDirectory("stroom");
+        assertThat(Files.isDirectory(uniqueTestDir))
+                .isTrue();
+        final Path file = Files.createTempFile(uniqueTestDir, "TestStroomZipFile", ".zip");
+        try {
+            System.out.println(file.toAbsolutePath());
+
+            try (final ZipArchiveOutputStream zipOutputStream =
+                    ZipUtil.createOutputStream(Files.newOutputStream(file))) {
+                zipOutputStream.putArchiveEntry(new ZipArchiveEntry("../test.dat"));
+                zipOutputStream.write("data".getBytes(CharsetConstants.DEFAULT_CHARSET));
+                zipOutputStream.closeArchiveEntry();
+            }
+
+            try (final StroomZipFile stroomZipFile = new StroomZipFile(file)) {
+                final Collection<StroomZipEntryGroup> groups = stroomZipFile.getGroups();
+                assertThat(groups.size()).isEqualTo(1);
+                final StroomZipEntryGroup group = groups.stream().findFirst().orElseThrow();
+                final StroomZipEntry entry = group.getByType(StroomZipFileType.DATA).orElseThrow();
+                assertThat("../test.dat").isEqualTo(entry.getFullName());
+
+                assertThat(stroomZipFile.getInputStream("../test", StroomZipFileType.DATA)).isNotNull();
+                assertThat(stroomZipFile.getInputStream("../test", StroomZipFileType.CONTEXT)).isNull();
+            }
+        } finally {
+            Files.delete(file);
+        }
+    }
 }

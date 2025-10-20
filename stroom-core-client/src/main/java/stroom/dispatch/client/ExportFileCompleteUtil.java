@@ -75,6 +75,8 @@ public final class ExportFileCompleteUtil {
 
     private static void download(final LocationManager locationManager, final ResourceGeneration result) {
         // Change the browser location to download the zip file.
+        // The name is needed so the browser has a default name for the download, but is not used
+        // by the servlet
         locationManager.replace(GWT.getHostPageBaseURL() +
                                 "resourcestore/" +
                                 result.getResourceKey().getName() +

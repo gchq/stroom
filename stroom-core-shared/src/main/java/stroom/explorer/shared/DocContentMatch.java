@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.List;
 import java.util.Objects;
 
 @JsonPropertyOrder({"docRef", "extension", "location", "sample"})
@@ -42,25 +43,30 @@ public class DocContentMatch {
     private final String sample;
     @JsonProperty
     private final boolean sampleAtStartOfLine;
+    @JsonProperty
+    private final List<String> tags;
 
     @JsonCreator
     public DocContentMatch(@JsonProperty("docRef") final DocRef docRef,
                            @JsonProperty("extension") final String extension,
                            @JsonProperty("location") final StringMatchLocation location,
                            @JsonProperty("sample") final String sample,
-                           @JsonProperty("sampleAtStartOfLine") final boolean sampleAtStartOfLine) {
+                           @JsonProperty("sampleAtStartOfLine") final boolean sampleAtStartOfLine,
+                           @JsonProperty("tags") final List<String> tags) {
         this.docRef = docRef;
         this.extension = extension;
         this.location = location;
         this.sample = sample;
         this.sampleAtStartOfLine = sampleAtStartOfLine;
+        this.tags = tags;
     }
 
     @SuppressWarnings("checkstyle:VariableDeclarationUsageDistance")
     public static DocContentMatch create(final DocRef docRef,
                                          final String extension,
                                          final String text,
-                                         final StringMatchLocation location) {
+                                         final StringMatchLocation location,
+                                         final List<String> tags) {
         int offset = location.getOffset();
         int length = location.getLength();
         final char[] chars = text.toCharArray();
@@ -124,6 +130,7 @@ public class DocContentMatch {
                 .location(match)
                 .sample(sample.toString())
                 .sampleAtStartOfLine(sampleAtStartOfLine)
+                .tags(tags)
                 .build();
     }
 
@@ -145,6 +152,10 @@ public class DocContentMatch {
 
     public boolean isSampleAtStartOfLine() {
         return sampleAtStartOfLine;
+    }
+
+    public List<String> getTags() {
+        return tags;
     }
 
     @Override
@@ -191,6 +202,7 @@ public class DocContentMatch {
         private StringMatchLocation location;
         private String sample;
         private boolean sampleAtStartOfLine = true;
+        private List<String> tags;
 
         private Builder() {
         }
@@ -228,8 +240,13 @@ public class DocContentMatch {
             return this;
         }
 
+        public Builder tags(final List<String> tags) {
+            this.tags = tags;
+            return this;
+        }
+
         public DocContentMatch build() {
-            return new DocContentMatch(docRef, extension, location, sample, sampleAtStartOfLine);
+            return new DocContentMatch(docRef, extension, location, sample, sampleAtStartOfLine, tags);
         }
     }
 }

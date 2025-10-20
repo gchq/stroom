@@ -485,7 +485,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     public void purge(final long refStreamId, final long partIndex) {
         final TaskContext taskContext = taskContextFactory.current();
         final Instant startTime = Instant.now();
-        taskContext.info(() -> LogUtil.message("Purging data for reference stream {}:{} in store '{}'",
+        taskContext.info(() -> LogUtil.message("Purging data for reference stream_id={}, part={}, in store '{}'",
                 refStreamId, partIndex, storeName));
 
         final AtomicReference<PurgeCounts> countsRef = new AtomicReference<>(PurgeCounts.zero());

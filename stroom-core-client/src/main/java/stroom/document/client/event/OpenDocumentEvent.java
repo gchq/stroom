@@ -23,9 +23,11 @@ import stroom.document.client.event.OpenDocumentEvent.Handler;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public class OpenDocumentEvent extends GwtEvent<Handler> {
 
@@ -34,28 +36,31 @@ public class OpenDocumentEvent extends GwtEvent<Handler> {
     private final boolean forceOpen;
     private final boolean fullScreen;
     private final CommonDocLinkTab selectedTab;
+    private final Consumer<MyPresenterWidget<?>> callbackOnOpen;
 
     private OpenDocumentEvent(final DocRef docRef,
                               final boolean forceOpen,
                               final boolean fullScreen,
-                              final CommonDocLinkTab selectedTab) {
+                              final CommonDocLinkTab selectedTab,
+                              final Consumer<MyPresenterWidget<?>> callbackOnOpen) {
         this.docRef = docRef;
         this.forceOpen = forceOpen;
         this.fullScreen = fullScreen;
         this.selectedTab = selectedTab;
+        this.callbackOnOpen = callbackOnOpen;
     }
 
     public static void fire(final HasHandlers handlers,
                             final DocRef docRef,
                             final boolean forceOpen) {
-        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, false, null));
+        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, false, null, null));
     }
 
     public static void fire(final HasHandlers handlers,
                             final DocRef docRef,
                             final boolean forceOpen,
                             final boolean fullScreen) {
-        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, fullScreen, null));
+        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, fullScreen, null, null));
     }
 
     public static void fire(final HasHandlers handlers,
@@ -63,7 +68,7 @@ public class OpenDocumentEvent extends GwtEvent<Handler> {
                             final boolean forceOpen,
                             final boolean fullScreen,
                             final CommonDocLinkTab selectedTab) {
-        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, fullScreen, selectedTab));
+        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, fullScreen, selectedTab, null));
     }
 
     public static Type<Handler> getType() {
@@ -99,6 +104,10 @@ public class OpenDocumentEvent extends GwtEvent<Handler> {
         return Optional.ofNullable(selectedTab);
     }
 
+    public Consumer<MyPresenterWidget<?>> getCallbackOnOpen() {
+        return callbackOnOpen;
+    }
+
     public static Builder builder(final HasHandlers handlers, final DocRef docRef) {
         return new Builder(handlers, docRef);
     }
@@ -122,8 +131,7 @@ public class OpenDocumentEvent extends GwtEvent<Handler> {
         /**
          * The Permissions tab
          */
-        PERMISSIONS,
-        ;
+        PERMISSIONS
     }
 
 
@@ -136,6 +144,7 @@ public class OpenDocumentEvent extends GwtEvent<Handler> {
         private boolean forceOpen = true;
         private boolean fullScreen = false;
         private CommonDocLinkTab selectedTab = null;
+        private Consumer<MyPresenterWidget<?>> callbackOnOpen;
 
         private Builder(final HasHandlers hasHandlers, final DocRef docRef) {
             this.hasHandlers = Objects.requireNonNull(hasHandlers);
@@ -152,6 +161,11 @@ public class OpenDocumentEvent extends GwtEvent<Handler> {
             return this;
         }
 
+        public Builder callbackOnOpen(final Consumer<MyPresenterWidget<?>> callbackOnOpen) {
+            this.callbackOnOpen = callbackOnOpen;
+            return this;
+        }
+
         /**
          * The sub/link tab to select on opening
          */
@@ -161,7 +175,7 @@ public class OpenDocumentEvent extends GwtEvent<Handler> {
         }
 
         public void fire() {
-            hasHandlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, fullScreen, selectedTab));
+            hasHandlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, fullScreen, selectedTab, callbackOnOpen));
         }
     }
 

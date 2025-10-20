@@ -20,6 +20,7 @@ import stroom.analytics.rule.impl.AnalyticRuleStore;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionTracker;
+import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.index.shared.IndexConstants;
@@ -97,6 +98,7 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
     private final ExpressionPredicateFactory expressionPredicateFactory;
     private final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider;
     private final DuplicateCheckDirs duplicateCheckDirs;
+    final WordListProvider wordListProvider;
 
     @Inject
     ScheduledQueryAnalyticExecutor(final AnalyticRuleStore analyticRuleStore,
@@ -116,7 +118,8 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
                                    final DuplicateCheckDirs duplicateCheckDirs,
                                    final Provider<DocRefInfoService> docRefInfoServiceProvider,
                                    final ExpressionPredicateFactory expressionPredicateFactory,
-                                   final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider) {
+                                   final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider,
+                                   final WordListProvider wordListProvider) {
         super(executorProvider,
                 analyticErrorWriterProvider,
                 taskContextFactory,
@@ -137,6 +140,7 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
         this.expressionPredicateFactory = expressionPredicateFactory;
         this.analyticUiDefaultConfigProvider = analyticUiDefaultConfigProvider;
         this.duplicateCheckDirs = duplicateCheckDirs;
+        this.wordListProvider = wordListProvider;
     }
 
     @Override
@@ -209,7 +213,7 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
                             compiledColumns,
                             modifiedRequest.getDateTimeSettings(),
                             expressionPredicateFactory,
-                            paramMap);
+                            paramMap, wordListProvider);
 
                     final Provider<DetectionConsumer> detectionConsumerProvider =
                             detectionConsumerFactory.create(analytic);

@@ -19,6 +19,7 @@ package stroom.analytics.impl;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.core.dataprocess.ProcessorTaskDecorator;
+import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.query.api.ParamUtil;
@@ -64,6 +65,7 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
     private final FieldListConsumerHolder fieldListConsumerHolder;
     private final FieldValueExtractorFactory fieldValueExtractorFactory;
     private final ExpressionPredicateFactory expressionPredicateFactory;
+    private final WordListProvider wordListProvider;
 
     private AnalyticFieldListConsumer fieldListConsumer;
 
@@ -77,7 +79,8 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
                                                    final DetectionConsumerProxy detectionConsumerProxy,
                                                    final FieldListConsumerHolder fieldListConsumerHolder,
                                                    final FieldValueExtractorFactory fieldValueExtractorFactory,
-                                                   final ExpressionPredicateFactory expressionPredicateFactory) {
+                                                   final ExpressionPredicateFactory expressionPredicateFactory,
+                                                   final WordListProvider wordListProvider) {
         this.streamingAnalyticCache = streamingAnalyticCache;
         this.expressionContextFactory = expressionContextFactory;
         this.memoryIndex = memoryIndex;
@@ -86,6 +89,7 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
         this.fieldListConsumerHolder = fieldListConsumerHolder;
         this.fieldValueExtractorFactory = fieldValueExtractorFactory;
         this.expressionPredicateFactory = expressionPredicateFactory;
+        this.wordListProvider = wordListProvider;
     }
 
     @Override
@@ -132,7 +136,7 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
                 compiledColumns,
                 searchRequest.getDateTimeSettings(),
                 expressionPredicateFactory,
-                paramMap);
+                paramMap, wordListProvider);
 
         try {
             final Provider<DetectionConsumer> detectionConsumerProvider =

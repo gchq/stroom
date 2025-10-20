@@ -47,6 +47,15 @@ public class ResourceKey {
         this.name = name;
     }
 
+    /**
+     * Creates a {@link ResourceKey} containing on the key UUID.
+     * Only for use as a map key as equals/hashcode only use key.
+     */
+    public static ResourceKey createSearchKey(final String key) {
+        // name is not used in the equals/hash
+        return new ResourceKey(key, null);
+    }
+
     public ResourceKey(final Map<String, String> map) {
         this.name = map.get(NAME);
         this.key = map.get(KEY);

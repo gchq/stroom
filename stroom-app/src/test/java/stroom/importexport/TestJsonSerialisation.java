@@ -2,6 +2,7 @@ package stroom.importexport;
 
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -9,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
@@ -39,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -115,6 +118,7 @@ class TestJsonSerialisation {
     @BeforeAll
     static void setup() {
         RESOURCE_RELATED_CLASSES = getResourceRelatedClasses();
+        Assertions.assertThat(RESOURCE_RELATED_CLASSES.size()).isGreaterThan(700);
         LOGGER.info("Found {} resource related classes", RESOURCE_RELATED_CLASSES.size());
     }
 
@@ -165,6 +169,93 @@ class TestJsonSerialisation {
             }
         });
 
+    }
+
+
+    /**
+     * Tests full serialisation.
+     */
+    @TestFactory
+    @Execution(ExecutionMode.SAME_THREAD)
+    Stream<DynamicTest> testFullSerialisation() {
+        final Map<Class<?>, Object> valueStrategies = initializeValueStrategies();
+        final ObjectMapper objectMapper = JsonUtil.getMapper();
+
+        return buildRelatedResourceTests(clazz -> {
+            if (!Modifier.isInterface(clazz.getModifiers())
+                && !Modifier.isAbstract(clazz.getModifiers())
+                && !clazz.isEnum()) {
+
+                final Constructor<?>[] constructors = clazz.getDeclaredConstructors();
+                final Constructor<?> test = findTestConstructor(constructors);
+                if (test != null) {
+                    construct(clazz, test, valueStrategies, objectMapper);
+                } else {
+                    final Constructor<?> creator = findJsonCreator(constructors);
+                    if (creator != null) {
+                        construct(clazz, creator, valueStrategies, objectMapper);
+                    } else {
+                        for (final Constructor<?> constructor : constructors) {
+                            construct(clazz, constructor, valueStrategies, objectMapper);
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    private static Constructor<?> findJsonCreator(final Constructor<?>[] constructors) {
+        for (final Constructor<?> constructor : constructors) {
+            final JsonCreator jsonCreator = constructor.getAnnotation(JsonCreator.class);
+            if (jsonCreator != null) {
+                return constructor;
+            }
+        }
+        return null;
+    }
+
+    private static Constructor<?> findTestConstructor(final Constructor<?>[] constructors) {
+        for (final Constructor<?> constructor : constructors) {
+            final SerialisationTestConstructor serialisationTestConstructor =
+                    constructor.getAnnotation(SerialisationTestConstructor.class);
+            if (serialisationTestConstructor != null) {
+                return constructor;
+            }
+        }
+        return null;
+    }
+
+    private void construct(final Class<?> clazz,
+                           final Constructor<?> constructor,
+                           final Map<Class<?>, Object> valueStrategies,
+                           final ObjectMapper objectMapper) {
+        final Class<?>[] paramTypes = constructor.getParameterTypes();
+        final Object[] params = new Object[paramTypes.length];
+        for (int i = 0; i < params.length; i++) {
+            final Class<?> paramType = paramTypes[i];
+            params[i] = valueStrategies.get(paramType);
+        }
+        try {
+            constructor.setAccessible(true);
+            final Object o = constructor.newInstance(params);
+            final String json1;
+            final String json2;
+            try {
+                json1 = objectMapper.writeValueAsString(o);
+                final Object o2 = objectMapper.readValue(json1, clazz);
+                json2 = objectMapper.writeValueAsString(o2);
+            } catch (final IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            Assertions.assertThat(json2)
+                    .describedAs(
+                            "%s - Checking default values on (de)serialisation", clazz.getName())
+                    .isEqualTo(json1);
+
+        } catch (final InstantiationException | InvocationTargetException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -609,7 +700,7 @@ class TestJsonSerialisation {
     private static void addFields(final Set<Class<?>> stroomClasses, final Class<?> parentClazz) {
         final Field[] fields = parentClazz.getDeclaredFields();
         for (final Field field : fields) {
-            if (!Modifier.isStatic(field.getModifiers())) {
+            if (!Modifier.isStatic(field.getModifiers()) && !Modifier.isTransient(field.getModifiers())) {
                 addType(stroomClasses, field.getGenericType());
 //                addClass(stroomClasses, field.getType(), field.getGenericType());
             }
@@ -634,7 +725,20 @@ class TestJsonSerialisation {
                 new ClassGraph()
                         .enableClassInfo()             // Scan classes, methods, fields, annotations
                         .acceptPackages(PACKAGE_NAME)  // Scan com.xyz and subpackages (omit to scan all packages)
-                        .scan()) {                   // Start the scan
+                        .enableAnnotationInfo()
+                        .scan()) {
+
+            // Start the scan
+            for (final ClassInfo routeClassInfo : scanResult.getClassesWithAnyAnnotation(
+                    JsonCreator.class,
+                    JsonInclude.class,
+                    JsonTypeInfo.class,
+                    JsonSubTypes.class,
+                    JsonProperty.class)) {
+                final Class<?> clazz = routeClassInfo.loadClass();
+                addJsonRelatedClasses(clazz, scanResult, stroomClasses);
+            }
+
             for (final ClassInfo routeClassInfo : scanResult.getClassesImplementing(
                     DirectRestService.class.getName())) {
 
@@ -651,6 +755,38 @@ class TestJsonSerialisation {
                 .stream()
                 .sorted(Comparator.comparing(Class::getName))
                 .collect(Collectors.toList());
+    }
+
+    private static void addJsonRelatedClasses(final Class<?> clazz,
+                                              final ScanResult scanResult,
+                                              final Set<Class<?>> stroomClasses) {
+        if (!Modifier.isAbstract(clazz.getModifiers()) || clazz.isInterface()) {
+            addClass(stroomClasses, clazz, null);
+        }
+
+        final Constructor<?>[] constructors = clazz.getDeclaredConstructors();
+        final Constructor<?> creator = findJsonCreator(constructors);
+        if (creator != null) {
+            addJsonRelatedClasses(scanResult, stroomClasses, creator);
+        } else {
+            for (final Constructor<?> constructor : constructors) {
+                addJsonRelatedClasses(scanResult, stroomClasses, constructor);
+            }
+        }
+    }
+
+    private static void addJsonRelatedClasses(final ScanResult scanResult,
+                                              final Set<Class<?>> stroomClasses,
+                                              final Constructor<?> constructor) {
+        final Type[] types = constructor.getGenericParameterTypes();
+        for (final Type type : types) {
+            addType(stroomClasses, type);
+
+            for (final ClassInfo routeClassInfo : scanResult.getSubclasses(type.getClass())) {
+                final Class<?> inner = routeClassInfo.loadClass();
+                addJsonRelatedClasses(inner, scanResult, stroomClasses);
+            }
+        }
     }
 
     private List<Class<?>> getSharedClasses() {
@@ -707,6 +843,43 @@ class TestJsonSerialisation {
             clazz2 = clazz2.getSuperclass();
         }
         return fields;
+    }
+
+    /**
+     * Initialize value strategies for common types
+     */
+    private Map<Class<?>, Object> initializeValueStrategies() {
+        final Map<Class<?>, Object> strategies = new HashMap<>();
+
+        // Primitives and their wrappers
+        strategies.put(boolean.class, false);
+        strategies.put(Boolean.class, false);
+
+        strategies.put(byte.class, (byte) 0);
+        strategies.put(Byte.class, (byte) 0);
+
+        strategies.put(short.class, (short) 0);
+        strategies.put(Short.class, (short) 0);
+
+        strategies.put(int.class, 0);
+        strategies.put(Integer.class, 0);
+
+        strategies.put(long.class, 0L);
+        strategies.put(Long.class, 0L);
+
+        strategies.put(float.class, 0.0f);
+        strategies.put(Float.class, 0.0f);
+
+        strategies.put(double.class, 0.0);
+        strategies.put(Double.class, 0.0);
+
+        strategies.put(char.class, 'a');
+        strategies.put(Character.class, 'a');
+
+        // String
+        strategies.put(String.class, "test");
+
+        return strategies;
     }
 }
 

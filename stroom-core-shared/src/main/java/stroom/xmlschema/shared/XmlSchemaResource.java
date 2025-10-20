@@ -25,6 +25,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -53,4 +54,13 @@ public interface XmlSchemaResource extends RestResource, DirectRestService, Fetc
             operationId = "updateXmlSchema")
     XmlSchemaDoc update(
             @PathParam("uuid") String uuid, @Parameter(description = "doc", required = true) XmlSchemaDoc doc);
+
+    @POST
+    @Path("/validate")
+    @Consumes(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Validate an XML schema",
+            operationId = "validateXmlSchema")
+    XmlSchemaValidationResponse validate(String schemaData);
 }

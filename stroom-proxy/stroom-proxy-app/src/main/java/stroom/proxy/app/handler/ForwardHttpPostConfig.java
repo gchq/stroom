@@ -3,11 +3,13 @@ package stroom.proxy.app.handler;
 import stroom.proxy.app.DownstreamHostConfig;
 import stroom.proxy.app.servlet.ProxyStatusServlet;
 import stroom.receive.common.ReceiveDataServlet;
+import stroom.util.collections.CollectionUtil;
 import stroom.util.http.HttpClientConfiguration;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
+import stroom.util.shared.NullSafe;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -16,7 +18,10 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 @NotInjectableConfig // Used in lists so not a unique thing
 @JsonPropertyOrder(alphabetic = true)
@@ -42,6 +47,7 @@ public final class ForwardHttpPostConfig
     private final boolean addOpenIdAccessToken;
     private final HttpClientConfiguration httpClient;
     private final ForwardHttpQueueConfig forwardQueueConfig;
+    private final Set<String> forwardHeadersAdditionalAllowSet;
 
     public ForwardHttpPostConfig() {
         enabled = DEFAULT_IS_ENABLED;
@@ -54,9 +60,10 @@ public final class ForwardHttpPostConfig
         addOpenIdAccessToken = DEFAULT_ADD_OPEN_ID_ACCESS_TOKEN;
         httpClient = createDefaultHttpClientConfiguration();
         forwardQueueConfig = new ForwardHttpQueueConfig();
+        forwardHeadersAdditionalAllowSet = Collections.emptySet();
     }
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "checkstyle:linelength"})
     @JsonCreator
     public ForwardHttpPostConfig(@JsonProperty("enabled") final Boolean enabled,
                                  @JsonProperty("instant") final Boolean instant,
@@ -67,7 +74,8 @@ public final class ForwardHttpPostConfig
                                  @JsonProperty("apiKey") final String apiKey,
                                  @JsonProperty("addOpenIdAccessToken") final Boolean addOpenIdAccessToken,
                                  @JsonProperty("httpClient") final HttpClientConfiguration httpClient,
-                                 @JsonProperty("queue") final ForwardHttpQueueConfig forwardQueueConfig) {
+                                 @JsonProperty("queue") final ForwardHttpQueueConfig forwardQueueConfig,
+                                 @JsonProperty("forwardHeadersAdditionalAllowSet") final Set<String> forwardHeadersAdditionalAllowSet) {
         this.enabled = Objects.requireNonNullElse(enabled, DEFAULT_IS_ENABLED);
         this.instant = Objects.requireNonNullElse(instant, DEFAULT_IS_INSTANT);
         this.name = name;
@@ -78,6 +86,7 @@ public final class ForwardHttpPostConfig
         this.addOpenIdAccessToken = Objects.requireNonNullElse(addOpenIdAccessToken, DEFAULT_ADD_OPEN_ID_ACCESS_TOKEN);
         this.httpClient = Objects.requireNonNullElseGet(httpClient, this::createDefaultHttpClientConfiguration);
         this.forwardQueueConfig = Objects.requireNonNullElseGet(forwardQueueConfig, ForwardHttpQueueConfig::new);
+        this.forwardHeadersAdditionalAllowSet = NullSafe.unmodifialbeSet(forwardHeadersAdditionalAllowSet);
     }
 
     private HttpClientConfiguration createDefaultHttpClientConfiguration() {
@@ -118,7 +127,6 @@ public final class ForwardHttpPostConfig
         return name;
     }
 
-    @NotNull
     @JsonProperty
     @JsonPropertyDescription(
             "The URL/path to forward on to. " +
@@ -156,7 +164,6 @@ public final class ForwardHttpPostConfig
         return livenessCheckEnabled;
     }
 
-    @NotNull
     @JsonProperty
     @JsonPropertyDescription("The API key to use when forwarding data if Stroom is configured to require an API key.")
     public String getApiKey() {
@@ -188,6 +195,13 @@ public final class ForwardHttpPostConfig
                              "This is required for a HTTP forwarder as requests may fail.")
     public ForwardHttpQueueConfig getForwardQueueConfig() {
         return forwardQueueConfig;
+    }
+
+    @JsonProperty
+    @JsonPropertyDescription("Set of HTTP headers that should be added to the request when proxy forwards data. " +
+                             "THis set is in addition to the base set of allowed headers.")
+    public Set<String> getForwardHeadersAdditionalAllowSet() {
+        return forwardHeadersAdditionalAllowSet;
     }
 
     @Override
@@ -263,6 +277,10 @@ public final class ForwardHttpPostConfig
                '}';
     }
 
+    private static Set<String> normaliseFields(final Set<String> fields) {
+        return CollectionUtil.cleanItems(fields, s -> s.trim().toLowerCase());
+    }
+
     // --------------------------------------------------------------------------------
 
 
@@ -278,6 +296,7 @@ public final class ForwardHttpPostConfig
         private Boolean addOpenIdAccessToken;
         private HttpClientConfiguration httpClient;
         private ForwardHttpQueueConfig forwardQueueConfig;
+        private Set<String> forwardHeadersAdditionalAllowSet;
 
         private Builder() {
             this(new ForwardHttpPostConfig());
@@ -295,6 +314,8 @@ public final class ForwardHttpPostConfig
             this.addOpenIdAccessToken = forwardHttpPostConfig.addOpenIdAccessToken;
             this.httpClient = forwardHttpPostConfig.httpClient;
             this.forwardQueueConfig = forwardHttpPostConfig.forwardQueueConfig;
+            this.forwardHeadersAdditionalAllowSet = NullSafe.mutableSet(
+                    forwardHttpPostConfig.forwardHeadersAdditionalAllowSet);
         }
 
         public Builder enabled(final boolean enabled) {
@@ -347,6 +368,17 @@ public final class ForwardHttpPostConfig
             return this;
         }
 
+        public Builder forwardHeadersAdditionalAllowSet(final Set<String> forwardHeadersAdditionalAllowSet) {
+            if (this.forwardHeadersAdditionalAllowSet == null) {
+                this.forwardHeadersAdditionalAllowSet = new HashSet<>();
+            }
+            NullSafe.stream(forwardHeadersAdditionalAllowSet)
+                    .filter(NullSafe::isNonBlankString)
+                    .forEach(header ->
+                            this.forwardHeadersAdditionalAllowSet.add(header));
+            return this;
+        }
+
         public ForwardHttpPostConfig build() {
             return new ForwardHttpPostConfig(
                     enabled,
@@ -358,7 +390,8 @@ public final class ForwardHttpPostConfig
                     apiKey,
                     addOpenIdAccessToken,
                     httpClient,
-                    forwardQueueConfig);
+                    forwardQueueConfig,
+                    forwardHeadersAdditionalAllowSet);
         }
     }
 }

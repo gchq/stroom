@@ -6861,25 +6861,6 @@ paths:
       summary: Logout of Stroom session
       tags:
       - Sessions
-  /session/v1/noauth/validateSession:
-    get:
-      operationId: validateStroomSession
-      parameters:
-      - in: query
-        name: redirect_uri
-        required: true
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ValidateSessionResponse"
-          description: default response
-      summary: "Validate the current session, return a redirect Uri if invalid."
-      tags:
-      - Sessions
   /sessionInfo/v1:
     get:
       operationId: getSessionInfo
@@ -8004,6 +7985,32 @@ paths:
       summary: Updates a user
       tags:
       - Authorisation
+  /users/v1/{toUserUuid}/copyPermissions:
+    post:
+      operationId: copyGroupsAndPermissions
+      parameters:
+      - in: path
+        name: toUserUuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+        description: fromUserUuid
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+          description: default response
+      summary: Copy user groups and permissions from one user to another
+      tags:
+      - Authorisation
   /users/v1/{userUuid}:
     delete:
       operationId: deleteUser
@@ -8223,6 +8230,24 @@ paths:
       summary: Fetch a list of words from a dictionary by its UUID
       tags:
       - Word List (v1)
+  /xmlSchema/v1/validate:
+    post:
+      operationId: validateXmlSchema
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/XmlSchemaValidationResponse"
+          description: default response
+      summary: Validate an XML schema
+      tags:
+      - XML Schemas
   /xmlSchema/v1/{uuid}:
     get:
       operationId: fetchXmlSchema
@@ -9649,6 +9674,13 @@ components:
           type: string
         name:
           type: string
+    ColumnValue:
+      type: object
+      properties:
+        matchingRule:
+          type: string
+        value:
+          type: string
     ColumnValueSelection:
       type: object
       properties:
@@ -9667,18 +9699,26 @@ components:
         values:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/ColumnValue"
     ColumnValuesRequest:
       type: object
       properties:
         column:
           $ref: "#/components/schemas/Column"
+        conditionalFormattingRules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConditionalFormattingRule"
         filter:
           type: string
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
         searchRequest:
           $ref: "#/components/schemas/DashboardSearchRequest"
+        selections:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/ColumnValueSelection"
     CompletionItem:
       type: object
       discriminator:
@@ -14911,12 +14951,20 @@ components:
       properties:
         column:
           $ref: "#/components/schemas/Column"
+        conditionalFormattingRules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConditionalFormattingRule"
         filter:
           type: string
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
         searchRequest:
           $ref: "#/components/schemas/QuerySearchRequest"
+        selections:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/ColumnValueSelection"
     QueryComponentSettings:
       type: object
       allOf:
@@ -15049,9 +15097,18 @@ components:
           - '''between'''
           - "'=', '!=', 'in'"
           - "'contains', '=', '!=', 'matches regex', 'in'"
+          - "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts\
+            \ with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches\
+            \ regex (CS)', 'in', 'in dictionary'"
           - "'=', '!=', 'in', 'in dictionary'"
           - "'=', '!=', 'in', 'in dictionary', 'is'"
+          - "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts\
+            \ with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches\
+            \ regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
           - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+          - "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts\
+            \ with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches\
+            \ regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
           - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
           - '''is'''
           - '''of'''
@@ -17776,6 +17833,24 @@ components:
               type: string
           tableSettings:
             $ref: "#/components/schemas/TableSettings"
+    TableFilterComponentSettings:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/ComponentSettings"
+      - type: object
+        properties:
+          columns:
+            type: array
+            items:
+              $ref: "#/components/schemas/ColumnRef"
+          conditionalFormattingRules:
+            type: object
+            additionalProperties:
+              type: array
+              items:
+                $ref: "#/components/schemas/ConditionalFormattingRule"
+          tableId:
+            type: string
     TableResult:
       type: object
       allOf:
@@ -18530,6 +18605,128 @@ components:
       - use
     Val:
       type: object
+      discriminator:
+        propertyName: type
+      properties:
+        type:
+          type: string
+      required:
+      - type
+    ValBoolean:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+      - type: object
+        properties:
+          value:
+            type: boolean
+    ValByte:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+      - type: object
+        properties:
+          value:
+            type: string
+            format: byte
+    ValDate:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+      - type: object
+        properties:
+          epochMs:
+            type: integer
+            format: int64
+    ValDouble:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+      - type: object
+        properties:
+          value:
+            type: number
+            format: double
+    ValDuration:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+      - type: object
+        properties:
+          milliseconds:
+            type: integer
+            format: int64
+    ValErr:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+      - type: object
+        properties:
+          message:
+            type: string
+    ValFloat:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+      - type: object
+        properties:
+          value:
+            type: number
+            format: float
+    ValInteger:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+      - type: object
+        properties:
+          value:
+            type: integer
+            format: int32
+    ValLong:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+      - type: object
+        properties:
+          value:
+            type: integer
+            format: int64
+    ValNull:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+    ValNumber:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+    ValShort:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+      - type: object
+        properties:
+          value:
+            type: integer
+            format: int32
+    ValString:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+      - type: object
+        properties:
+          value:
+            type: string
+    ValXml:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+      - type: object
+        properties:
+          bytes:
+            type: array
+            items:
+              type: string
+              format: byte
     ValidateExpressionRequest:
       type: object
       properties:
@@ -18550,15 +18747,6 @@ components:
           type: boolean
         string:
           type: string
-    ValidateSessionResponse:
-      type: object
-      properties:
-        redirectUri:
-          type: string
-        userId:
-          type: string
-        valid:
-          type: boolean
     ValidationResult:
       type: object
       properties:
@@ -18725,9 +18913,16 @@ components:
           - CONTAINS
           - EQUALS
           - NOT_EQUALS
+          - NOT_CONTAINS
+          - NOT_EXISTS
           - UNIQUE
         path:
           type: string
+        searchType:
+          type: string
+          enum:
+          - ALL
+          - XPATH
         uniqueValues:
           type: object
           additionalProperties:
@@ -18767,6 +18962,13 @@ components:
           type: string
         version:
           type: string
+    XmlSchemaValidationResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        ok:
+          type: boolean
     XsltDoc:
       type: object
       properties:

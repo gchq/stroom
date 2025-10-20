@@ -157,14 +157,14 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
         // Destroy the previous search and ready all components for a new search to begin.
         reset(DestroyReason.NO_LONGER_NEEDED);
 
-        // If we are resuming then set the node and query key.
-        currentNode = resumeNode;
-        currentQueryKey = resumeQueryKey;
-
         final Map<String, ComponentSettings> resultComponentMap = createComponentSettingsMap();
         if (resultComponentMap != null) {
             final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
             if (dataSourceRef != null && expression != null) {
+                // If we are resuming then set the node and query key.
+                currentNode = resumeNode;
+                currentQueryKey = resumeQueryKey;
+
                 // Copy the expression.
                 final ExpressionOperator currentExpression = ExpressionUtil.copyOperator(expression);
                 currentSearch = Search
@@ -348,19 +348,32 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
 //                        GWT.log(response.toString());
 
                         if (search == currentSearch) {
-                            currentQueryKey = response.getQueryKey();
-                            currentNode = response.getNode();
+                            if (response != null) {
+                                currentQueryKey = response.getQueryKey();
+                                currentNode = response.getNode();
 
-                            try {
-                                update(response);
-                            } catch (final RuntimeException e) {
-                                GWT.log(e.getMessage());
-                            }
+                                try {
+                                    update(response);
+                                } catch (final RuntimeException e) {
+                                    GWT.log(e.getMessage());
+                                }
 
-                            if (polling) {
-                                poll(Fetch.CHANGES, false);
+                                if (polling) {
+                                    poll(Fetch.CHANGES, false);
+                                }
+                            } else {
+                                // Tell all components if we are complete.
+                                // Stop the spinner from spinning and tell components that they
+                                // no longer want data.
+                                resultComponents.values().forEach(ResultComponent::endSearch);
+
+                                // Let the query presenter know search is inactive.
+                                setSearching(false);
+
+                                // If we have completed search then stop the task spinner.
+                                polling = false;
                             }
-                        } else {
+                        } else if (response != null) {
                             deleteStore(response.getNode(), response.getQueryKey(), DestroyReason.NO_LONGER_NEEDED);
                         }
                     })

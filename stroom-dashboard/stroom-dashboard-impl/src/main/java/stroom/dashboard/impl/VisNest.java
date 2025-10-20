@@ -16,8 +16,10 @@
 
 package stroom.dashboard.impl;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.io.Serializable;
@@ -26,9 +28,13 @@ import java.io.Serializable;
 @JsonInclude(Include.NON_NULL)
 public class VisNest implements Serializable {
 
+    @JsonProperty
     private VisField key;
+    @JsonProperty
     private VisLimit limit;
+    @JsonProperty
     private VisNest nest;
+    @JsonProperty
     private VisValues values;
 
     public VisNest() {
@@ -38,7 +44,11 @@ public class VisNest implements Serializable {
         this.key = key;
     }
 
-    public VisNest(final VisField key, final VisLimit limit, final VisNest nest, final VisValues values) {
+    @JsonCreator
+    public VisNest(@JsonProperty("key") final VisField key,
+                   @JsonProperty("limit") final VisLimit limit,
+                   @JsonProperty("nest") final VisNest nest,
+                   @JsonProperty("values") final VisValues values) {
         this.key = key;
         this.limit = limit;
         this.nest = nest;
@@ -128,10 +138,10 @@ public class VisNest implements Serializable {
     @Override
     public String toString() {
         return "VisNest{" +
-                "key=" + key +
-                ", limit=" + limit +
-                ", nest=" + nest +
-                ", values=" + values +
-                '}';
+               "key=" + key +
+               ", limit=" + limit +
+               ", nest=" + nest +
+               ", values=" + values +
+               '}';
     }
 }
