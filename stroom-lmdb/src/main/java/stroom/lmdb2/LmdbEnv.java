@@ -11,14 +11,14 @@ import org.lmdbjava.Env;
 import org.lmdbjava.EnvFlags;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
-import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class LmdbEnv implements AutoCloseable {
 
@@ -54,7 +54,7 @@ public class LmdbEnv implements AutoCloseable {
                     .setMaxReaders(maxReaders);
 
             LOGGER.debug("Creating LMDB environment in dir {}, maxSize: {}, maxDbs {}, maxReaders {}, "
-                            + "envFlags {}",
+                         + "envFlags {}",
                     lmdbEnvDir.toString(),
                     maxStoreSize,
                     maxDbs,
@@ -70,23 +70,58 @@ public class LmdbEnv implements AutoCloseable {
         }
     }
 
-    private List<String> getDBNames() {
-        return env.getDbiNames()
-                .stream()
-                .map(bytes -> new String(bytes, StandardCharsets.UTF_8))
-                .toList();
-    }
-
     public ByteSize getMaxStoreSize() {
         return maxStoreSize;
     }
 
+    /**
+     * Open the named DB, creating it if it doesn't exist.
+     * <p>
+     * Don't use the un-named DB if you are also using named DBs as the
+     * un-named DB is used internally by LMDB to store DB names.
+     * </p>
+     *
+     * @param dbName The name of the DB or null for the un-named DB.
+     */
     public LmdbDb openDb(final String dbName) {
         return openDb(dbName, DbiFlags.MDB_CREATE);
     }
 
+    /**
+     * Open the named DB. If flags does not contain {@link DbiFlags#MDB_CREATE} it will
+     * error if the DB does not already exist.
+     * <p>
+     * Don't use the un-named DB if you are also using named DBs as the
+     * un-named DB is used internally by LMDB to store DB names.
+     * </p>
+     *
+     * @param dbName The name of the DB or null for the un-named DB.
+     */
     public LmdbDb openDb(final String dbName, final DbiFlags... flags) {
         return new LmdbDb(env, dbName, Set.of(flags), errorHandler);
+    }
+
+    /**
+     * @param dbName The name of the DB or null for the un-named DB.
+     * @return True if a DB with the supplied name exists.
+     */
+    public boolean hasDb(final String dbName) {
+        Objects.requireNonNull(dbName);
+        final byte[] dbNameBytes = LmdbDb.convertDbName(dbName);
+        return env.getDbiNames()
+                .stream()
+                .anyMatch(bytes -> Arrays.equals(bytes, dbNameBytes));
+    }
+
+    /**
+     * @return The set of DB names in this {@link LmdbEnv}.
+     * Does not include the un-named DB.
+     */
+    public Set<String> getDbNames() {
+        return env.getDbiNames()
+                .stream()
+                .map(LmdbDb::convertDbName)
+                .collect(Collectors.toSet());
     }
 
     public synchronized WriteTxn writeTxn() {
@@ -173,12 +208,12 @@ public class LmdbEnv implements AutoCloseable {
     @Override
     public String toString() {
         return "Env{" +
-                "lmdbEnvDir=" + lmdbEnvDir +
-                ", maxStoreSize=" + maxStoreSize +
-                ", maxDbs=" + maxDbs +
-                ", maxReaders=" + maxReaders +
-                ", envFlags=" + envFlags +
-                '}';
+               "lmdbEnvDir=" + lmdbEnvDir +
+               ", maxStoreSize=" + maxStoreSize +
+               ", maxDbs=" + maxDbs +
+               ", maxReaders=" + maxReaders +
+               ", envFlags=" + envFlags +
+               '}';
     }
 
     public static Builder builder() {

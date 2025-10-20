@@ -25,10 +25,13 @@ import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.Message;
 import stroom.util.shared.string.StringWrapper;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+
+import java.util.List;
 
 @AutoLogged
 class AnalyticRuleResourceImpl implements AnalyticRuleResource {
@@ -53,10 +56,13 @@ class AnalyticRuleResourceImpl implements AnalyticRuleResource {
 
     @Override
     public AnalyticRuleDoc update(final String uuid, final AnalyticRuleDoc doc) {
-        if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
-            throw new EntityServiceException("The document UUID must match the update UUID");
-        }
+        checkUuidsMatch(uuid, doc);
         return documentResourceHelperProvider.get().update(analyticRuleStoreProvider.get(), doc);
+    }
+
+    @Override
+    public List<Message> validate(final AnalyticRuleDoc doc) {
+        return analyticsServiceProvider.get().validateChanges(doc);
     }
 
     @AutoLogged(OperationType.UNLOGGED) // Just a dry run
@@ -76,5 +82,11 @@ class AnalyticRuleResourceImpl implements AnalyticRuleResource {
                 .uuid(uuid)
                 .type(AnalyticRuleDoc.TYPE)
                 .build();
+    }
+
+    private void checkUuidsMatch(final String uuid, final AnalyticRuleDoc doc) {
+        if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
+            throw new EntityServiceException("The document UUID must match the update UUID");
+        }
     }
 }
