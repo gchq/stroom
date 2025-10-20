@@ -5,13 +5,24 @@
              xmlns:l="urn:import:stroom.item.client">
     <g:FlowPanel styleName="max dock-container-vertical">
         <g:FlowPanel styleName="dock-min form-padding form">
-            <form:FormGroup identity="analyticProcessingErrorFeed" label="Feed For Errors">
+            <form:FormGroup identity="analyticProcessingErrorFeed"
+                            label="Feed For Errors"
+                            helpText="The Feed to write any errors that occur during execution to.">
                 <g:SimplePanel ui:field="errorFeed"/>
             </form:FormGroup>
-            <form:FormGroup identity="analyticProcessingType" label="Processing Type">
+            <form:FormGroup identity="analyticProcessingType"
+                            label="Processing Type">
                 <l:SelectionBox ui:field="processingType"/>
+                <form:HelpHTML>
+                    <p>The type of rule execution.</p>
+                    <ul>
+                        <li><strong>Scheduled Query</strong>: The rule will be executed on a regular configured schedule.</li>
+                        <li><strong>Streaming</strong>: The rule will be executed against all streams that match the configured filter.</li>
+                        <li><strong>Table Builder</strong>: This is an experimental feature, do not use.</li>
+                    </ul>
+                </form:HelpHTML>
             </form:FormGroup>
         </g:FlowPanel>
         <g:SimplePanel ui:field="processSettings" styleName="dock-max"/>
     </g:FlowPanel>
-</ui:UiBinder> 
+</ui:UiBinder>

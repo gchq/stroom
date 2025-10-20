@@ -17,6 +17,7 @@
 package stroom.analytics.shared;
 
 import stroom.util.shared.FetchWithUuid;
+import stroom.util.shared.Message;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.string.StringWrapper;
@@ -33,6 +34,8 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.fusesource.restygwt.client.DirectRestService;
+
+import java.util.List;
 
 @Tag(name = "Queries")
 @Path("/analyticRule" + ResourcePaths.V1)
@@ -57,6 +60,13 @@ public interface AnalyticRuleResource
                            @Parameter(description = "doc", required = true) AnalyticRuleDoc doc);
 
     @POST
+    @Path("/validate")
+    @Operation(
+            summary = "Validates an analytic rule doc",
+            operationId = "validateAnalyticRule")
+    List<Message> validate(@Parameter(description = "doc", required = true) final AnalyticRuleDoc doc);
+
+    @POST
     @Path("/testTemplate")
     @Operation(
             summary = "Tests the email template using an example detection event.",
@@ -71,9 +81,4 @@ public interface AnalyticRuleResource
     void sendTestEmail(
             @Parameter(description = "emailDestination", required = true) final NotificationEmailDestination
                     analyticNotificationEmailDestination);
-
-
-    // --------------------------------------------------------------------------------
-
-
 }

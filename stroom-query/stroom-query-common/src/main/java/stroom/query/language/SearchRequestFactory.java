@@ -122,6 +122,10 @@ public class SearchRequestFactory {
                 .create(string, in, expressionContext);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class Builder {
 
         private final VisualisationTokenConsumer visualisationTokenConsumer;
