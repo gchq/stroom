@@ -638,6 +638,39 @@
         "tags" : [ "Queries" ]
       }
     },
+    "/analyticRule/v1/validate" : {
+      "post" : {
+        "operationId" : "validateAnalyticRule",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AnalyticRuleDoc"
+              }
+            }
+          },
+          "description" : "doc",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Message"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Validates an analytic rule doc",
+        "tags" : [ "Queries" ]
+      }
+    },
     "/analyticRule/v1/{uuid}" : {
       "get" : {
         "operationId" : "fetchAnalyticRule",
@@ -18476,8 +18509,7 @@
             "description" : "The start offset for this sub-set of data, where zero is the offset of the first record in the full result set",
             "example" : 0
           }
-        },
-        "required" : [ "length", "offset" ]
+        }
       },
       "OverrideValueString" : {
         "type" : "object",

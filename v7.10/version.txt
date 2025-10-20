@@ -1,1 +1,1 @@
-v7.10.7-gwt-sourcemaps2
+v7.10.8
