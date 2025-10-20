@@ -13,6 +13,35 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.10.8] - 2025-10-20
+
+* Add a proxy zip file ingest mechanism to proxy. Add property branch `proxyConfig.dirScanner` to the config.
+
+* Issue **#5175** : Fix zip handling.
+
+* Fix config validation not being run on config branches that are items in a list, e.g. `forwardHttpDestinations`.
+
+* Remove `NotNull` validation condition on `forwardHttpDestinations[n].apiKey` as proxy may use OAuth tokens to authenticate with the downstream destination.
+
+* Issue **#5175** : Add warning messages to stroom and proxy `/datafeed` to warn if a zip is received that contains paths that would unzip outside of a target directory. Only a warning as the paths in a zip sent to `/datafeed` are not used by stroom/proxy.
+
+* Uplift all the content packs that are included in the docker and zip distributions.
+
+* Issue **#5191** : Fix UI NPE.
+
+* Issue **#5189** : Change how the proxy directory queues are initialised. Now on initialisation, the min/max ids take into account incomplete paths, so if the largest path is `1/900` then the max id will be taken to be `900999`. When proxy is getting the next item off the queue it will delete any incomplete paths it finds en-route to the next valid item.
+
+* Issue **#5126** : Fix Plan B condense.
+
+* Issue **#5200** : Fix problem of duplicate check store failing to open due to its directory being deleted.
+
+* Issue **#5201** : Clear out the duplicate check store if the column names are changed. Add a confirm dialog to the Analytic Rule doc save action, to get the user to confirm that all dup check data will be deleted when there is a change to the derived/explicit dup check columns.
+
+* Issue **#5198** : Increase the maximum limit for `top()` to 10,000.
+
+* Issue **#5117** : Send Plan B data to all enabled target nodes regardless of active status.
+
+
 ## [v7.10.7] - 2025-10-01
 
 * Issue **#5146** : Fix use of not equals in annotation queries.
@@ -1720,7 +1749,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.7...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.8...HEAD
+[v7.10.8]: https://github.com/gchq/stroom/compare/v7.10.7...v7.10.8
 [v7.10.7]: https://github.com/gchq/stroom/compare/v7.10.6...v7.10.7
 [v7.10.6]: https://github.com/gchq/stroom/compare/v7.10.5...v7.10.6
 [v7.10.5]: https://github.com/gchq/stroom/compare/v7.10.4...v7.10.5
