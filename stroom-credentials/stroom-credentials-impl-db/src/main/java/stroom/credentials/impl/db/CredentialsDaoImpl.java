@@ -19,6 +19,7 @@ import org.jooq.exception.DataAccessException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static stroom.credentials.impl.db.jooq.tables.Credentials.CREDENTIALS;
 import static stroom.credentials.impl.db.jooq.tables.CredentialsSecret.CREDENTIALS_SECRET;
@@ -128,8 +129,12 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
     }
 
     @Override
-    public void createCredentials(final Credentials newCredentials) throws IOException {
-        LOGGER.info("Creating credentials: {}", newCredentials);
+    public Credentials createCredentials(final Credentials clientCredentials) throws IOException {
+        // New UUID for credentials
+        final String dbUuid = UUID.randomUUID().toString();
+        final Credentials dbCredentials = clientCredentials.copyWithUuid(dbUuid);
+
+        LOGGER.info("Creating credentials: {}", dbCredentials);
         try {
             JooqUtil.context(credentialsDbConnProvider, context -> context
                     .insertInto(CREDENTIALS)
@@ -138,18 +143,20 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
                             CREDENTIALS.TYPE,
                             CREDENTIALS.CREDSEXPIRE,
                             CREDENTIALS.EXPIRES)
-                    .values(newCredentials.getUuid(),
-                            newCredentials.getName(),
-                            newCredentials.getType().name(),
-                            (byte) (newCredentials.isCredsExpire()
+                    .values(dbCredentials.getUuid(),
+                            dbCredentials.getName(),
+                            dbCredentials.getType().name(),
+                            (byte) (dbCredentials.isCredsExpire()
                                     ? 1
                                     : 0),
-                            newCredentials.getExpires())
+                            dbCredentials.getExpires())
                     .execute());
         } catch (final DataAccessException e) {
             LOGGER.error("Error creating credentials: {}", e.getMessage(), e);
             throw new IOException("Error creating credentials: '" + e.getMessage() + "'", e);
         }
+
+        return dbCredentials;
     }
 
     @Override

@@ -7,7 +7,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
-import java.util.UUID;
 
 /**
  * Credentials as stored by the Credentials storage system.
@@ -55,11 +54,19 @@ public class Credentials {
     public static final String TYPE = "Credentials";
 
     /**
-     * Creates a new, empty credentials object with a new UUID.
+     * Default value of the UUID. Replaced by CredentialsDao.createCredentials()
+     * with a correct UUID.
+     */
+    private static final String DEFAULT_UUID = "";
+
+    /**
+     * Creates a new, empty credentials object with a dummy UUID.
+     * This object can then be used with the CredentialsDao.createCredentials()
+     * method to create an actual UUID.
      */
     public Credentials() {
         this.name = EMPTY_NAME;
-        this.uuid = UUID.randomUUID().toString();
+        this.uuid = DEFAULT_UUID;
         this.type = CredentialsType.USERNAME_PASSWORD;
         this.credsExpire = false;
         this.expires = System.currentTimeMillis();
@@ -68,7 +75,7 @@ public class Credentials {
     /**
      * Constructor.
      * @param name Name. If null then empty string is assigned.
-     * @param uuid UUID. Can be null in which case UUID will be assigned to a random value.
+     * @param uuid UUID. Can be null in which case UUID will be assigned the default (unusable) value.
      * @param type Type. If null then empty string is assigned.
      * @param expires Time in ms since epoch when this expires.
      */
@@ -81,7 +88,7 @@ public class Credentials {
             @JsonProperty("expires") final long expires) {
 
         this.name = name == null ? EMPTY_NAME : name;
-        this.uuid = uuid == null ? UUID.randomUUID().toString() : uuid;
+        this.uuid = uuid == null ? DEFAULT_UUID : uuid;
         this.type = type == null ? CredentialsType.USERNAME_PASSWORD : type;
         this.credsExpire = credsExpire;
         this.expires = expires;
@@ -160,14 +167,24 @@ public class Credentials {
                 this.expires);
     }
 
+    /**
+     * Returns a deep copy of this object with a new UUID.
+     */
+    public Credentials copyWithUuid(final String uuid) {
+        return new Credentials(
+                this.name,
+                uuid,
+                this.type,
+                this.credsExpire,
+                this.expires);
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
         final Credentials that = (Credentials) o;
-
-        //return Objects.equals(uuid, that.uuid);
 
         return Objects.equals(name, that.name)
                && Objects.equals(uuid, that.uuid)
@@ -178,7 +195,6 @@ public class Credentials {
 
     @Override
     public int hashCode() {
-        //return Objects.hash(uuid);
         return Objects.hash(name, uuid, type, credsExpire, expires);
     }
 

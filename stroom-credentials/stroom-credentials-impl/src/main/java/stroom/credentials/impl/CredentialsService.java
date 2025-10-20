@@ -84,6 +84,30 @@ public class CredentialsService {
     }
 
     /**
+     * Wraps the given credentials object with UI permissions.
+     * @param credentials The credentials to wrap. Can be null in which case null is returned.
+     * @return Credentials with permissions. Null if credentials are null or user doesn't have
+     * permission to view these credentials.
+     */
+    private CredentialsWithPerms permissionWrap(final Credentials credentials) {
+        CredentialsWithPerms retval = null;
+        if (credentials != null) {
+
+            final DocRef docRef = new DocRef(Credentials.TYPE, credentials.getUuid());
+            if (securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
+                final boolean canEdit = securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT);
+                final boolean canDelete = securityContext.hasDocumentPermission(docRef, DocumentPermission.DELETE);
+                final boolean owner = securityContext.hasDocumentPermission(docRef, DocumentPermission.OWNER);
+                retval = new CredentialsWithPerms(credentials,
+                        canEdit || owner,
+                        canDelete || owner);
+            }
+        }
+
+        return retval;
+    }
+
+    /**
      * Returns a list of all the credentials in the database.
      * Permissions: App, View|Edit|Owner (for all individual permissions)
      * @throws IOException if something goes wrong.
@@ -106,21 +130,25 @@ public class CredentialsService {
     }
 
     /**
-     * Creates new credentials
-     * @param newCredentials The new credentials to create.
+     * Creates new credentials given some credentials from the client.
+     * Note that the credentials WILL NOT have the same UUID as that given by the client
+     * as this could lead to security issues. Instead, we create a new UUID on the server
+     * and copy data across.
+     * @param clientCredentials The new credentials to create from the client
      * @throws IOException if something goes wrong.
      */
-    public void createCredentials(final Credentials newCredentials,
-                                  final CredentialsSecret newSecret) throws IOException {
-        LOGGER.info("Creating credentials: {}", newCredentials);
+    public CredentialsWithPerms createCredentials(final Credentials clientCredentials,
+                                                  final CredentialsSecret clientSecret) throws IOException {
+        LOGGER.info("Creating credentials: {}", clientCredentials);
         checkAppPermission();
 
-        credentialsDao.createCredentials(newCredentials);
-        credentialsDao.storeSecret(newSecret);
+        final Credentials dbCredentials = credentialsDao.createCredentials(clientCredentials);
+        final CredentialsSecret dbSecret = clientSecret.copyWithUuid(dbCredentials.getUuid());
+        credentialsDao.storeSecret(dbSecret);
 
         // Create a fake docRef for the security system
-        final DocRef docRef = new DocRef(newCredentials.getName(),
-                newCredentials.getUuid(),
+        final DocRef docRef = new DocRef(dbCredentials.getName(),
+                dbCredentials.getUuid(),
                 Credentials.TYPE);
         final UserRef userRef = securityContext.getUserRef();
 
@@ -137,6 +165,8 @@ public class CredentialsService {
                         permissionService.setPermission(docRef, group, DocumentPermission.OWNER));
             }
         });
+
+        return permissionWrap(dbCredentials);
     }
 
     /**
@@ -156,10 +186,10 @@ public class CredentialsService {
      * Permissions: App, View|Edit|Owner
      * @return The credential matching the UUID.
      */
-    public Credentials getCredentials(final String uuid) throws IOException {
+    public CredentialsWithPerms getCredentials(final String uuid) throws IOException {
         checkAppPermission();
         checkViewPermission(uuid);
-        return credentialsDao.getCredentials(uuid);
+        return permissionWrap(credentialsDao.getCredentials(uuid));
     }
 
     /**

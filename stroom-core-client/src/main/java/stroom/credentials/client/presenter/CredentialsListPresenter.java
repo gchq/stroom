@@ -273,8 +273,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                     .method(res -> res.getCredentials(uuid))
                     .onSuccess(res -> {
                         if (res.getStatus() == Status.OK) {
-                            final CredentialsWithPerms cwp =
-                                    new CredentialsWithPerms(res.getCredentials());
+                            final CredentialsWithPerms cwp = res.getCredentialsWithPerms();
                             setSelectedCredentials(cwp);
                         } else {
                             AlertEvent.fireError(parentPresenter,
@@ -428,7 +427,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
 
     /**
      * Called when adding or editing credentials.
-     * @param cwp The credentials to add or edit.
+     * @param cwp The credentials to add or edit. Can be null in which case nothing happens.
      * @param secret The secret to use to display the settings.
      * @param creationState Whether these are new or old credentials.
      */
@@ -482,9 +481,10 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                     .method(res -> res.createCredentials(request))
                     .onSuccess(result -> {
                         if (result.getStatus() == Status.OK) {
-                            // Reload the list & select it
+                            // Reload the list & select the value returned from the server
                             dataProvider.refresh();
-                            gridSelectionModel.setSelected(cwp);
+                            // Shouldn't this be async in a callback? Seems to work.
+                            gridSelectionModel.setSelected(result.getCredentialsWithPerms());
 
                         } else {
                             AlertEvent.fireError(parentPresenter,
@@ -503,6 +503,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                     .exec();
 
         } else {
+            // Store the secret
             restFactory.create(CREDENTIALS_RESOURCE)
                     .method(res -> res.storeSecret(secret))
                     .onSuccess(result -> {
@@ -541,6 +542,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                     if (result.getStatus() == Status.OK) {
                         // Reload the list & select it
                         dataProvider.refresh();
+                        // Shouldn't this be in an async callback? Seems to work though.
                         gridSelectionModel.setSelected(cwp);
 
                     } else {

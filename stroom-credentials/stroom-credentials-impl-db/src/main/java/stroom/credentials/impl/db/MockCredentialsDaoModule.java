@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Credentials DAO module used in tests.
@@ -42,8 +43,10 @@ public class MockCredentialsDaoModule extends AbstractModule {
         }
 
         @Override
-        public void createCredentials(final Credentials newCredentials) {
-            idToCred.put(newCredentials.getUuid(), newCredentials);
+        public Credentials createCredentials(final Credentials clientCredentials) {
+            final Credentials dbCredentials = clientCredentials.copyWithUuid(UUID.randomUUID().toString());
+            idToCred.put(clientCredentials.getUuid(), dbCredentials);
+            return dbCredentials;
         }
 
         @Override

@@ -144,6 +144,22 @@ public class CredentialsSecret {
                 this.serverPublicKey);
     }
 
+    /**
+     * Returns a copy of this object with a new ID.
+     * @param uuid The new UUID to use.
+     * @return A new object - full copy but with the given UUID.
+     */
+    public CredentialsSecret copyWithUuid(final String uuid) {
+        return new CredentialsSecret(
+                uuid,
+                this.username,
+                this.password,
+                this.accessToken,
+                this.passphrase,
+                this.privateKey,
+                this.serverPublicKey);
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (o == null || getClass() != o.getClass()) {

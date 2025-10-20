@@ -28,7 +28,7 @@ public class CredentialsResponse {
     private final String message;
 
     @JsonProperty
-    private final Credentials credentials;
+    private final CredentialsWithPerms credentialsWithPerms;
 
     @JsonProperty
     private final CredentialsSecret secret;
@@ -41,7 +41,7 @@ public class CredentialsResponse {
         Objects.requireNonNull(status);
         this.status = status;
         this.message = "";
-        this.credentials = null;
+        this.credentialsWithPerms = null;
         this.secret = null;
     }
 
@@ -55,18 +55,18 @@ public class CredentialsResponse {
         Objects.requireNonNull(message);
         this.status = status;
         this.message = message;
-        this.credentials = null;
+        this.credentialsWithPerms = null;
         this.secret = null;
     }
 
     /**
      * Constructor for successful getting of object.
-     * @param credentials Optional credentials - can be null.
+     * @param cwp Optional credentials - can be null.
      */
-    public CredentialsResponse(final Credentials credentials) {
+    public CredentialsResponse(final CredentialsWithPerms cwp) {
         this.status = Status.OK;
         this.message = "";
-        this.credentials = credentials;
+        this.credentialsWithPerms = cwp;
         this.secret = null;
     }
 
@@ -77,7 +77,7 @@ public class CredentialsResponse {
     public CredentialsResponse(final CredentialsSecret secret) {
         this.status = Status.OK;
         this.message = "";
-        this.credentials = null;
+        this.credentialsWithPerms = null;
         this.secret = secret;
     }
 
@@ -88,11 +88,11 @@ public class CredentialsResponse {
     @JsonCreator
     public CredentialsResponse(@JsonProperty("status") final Status status,
                                @JsonProperty("message") final String message,
-                               @JsonProperty("credentials") final Credentials credentials,
+                               @JsonProperty("credentialsWithPerms") final CredentialsWithPerms cwp,
                                @JsonProperty("secret") final CredentialsSecret secret) {
         this.status = status;
         this.message = message;
-        this.credentials = credentials;
+        this.credentialsWithPerms = cwp;
         this.secret = secret;
     }
 
@@ -111,10 +111,11 @@ public class CredentialsResponse {
     }
 
     /**
-     * @return The credentials, if any. Will return null if no credentials present.
+     * @return The credentials and permissions, if any.
+     * Will return null if no credentials present.
      */
-    public Credentials getCredentials() {
-        return credentials;
+    public CredentialsWithPerms getCredentialsWithPerms() {
+        return credentialsWithPerms;
     }
 
     /**

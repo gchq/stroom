@@ -31,6 +31,8 @@ public interface CredentialsResource extends RestResource, DirectRestService {
 
     /**
      * Creates credential in the DB. Errors are indicated in the return value.
+     * Note that the UUID of the created credential will be new - UUIDs must
+     * be created on the server for security.
      */
     @POST
     @Path("/create")

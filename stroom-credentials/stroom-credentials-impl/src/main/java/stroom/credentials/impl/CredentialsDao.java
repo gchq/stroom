@@ -25,10 +25,12 @@ public interface CredentialsDao {
 
     /**
      * Creates new credentials within the database.
-     * @param newCredentials The credentials to create.
+     * @param clientCredentials The credentials from the client to create.
+     * @return The created credentials. These WILL NOT have the same UUID as the clientCredentials
+     * parameter for security reasons.
      * @throws IOException if something goes wrong.
      */
-    void createCredentials(final Credentials newCredentials) throws IOException;
+    Credentials createCredentials(final Credentials clientCredentials) throws IOException;
 
     /**
      * Stores the given credential to the database.

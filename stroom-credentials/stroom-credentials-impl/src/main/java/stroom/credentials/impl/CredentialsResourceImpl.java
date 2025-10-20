@@ -65,8 +65,9 @@ public class CredentialsResourceImpl implements CredentialsResource {
         LOGGER.info("Creating credentials '{}'", request.getCredentials());
         CredentialsResponse response;
         try {
-            credentialsServiceProvider.get().createCredentials(request.getCredentials(), request.getSecret());
-            response = new CredentialsResponse(Status.OK);
+            final CredentialsWithPerms dbCwp =
+                    credentialsServiceProvider.get().createCredentials(request.getCredentials(), request.getSecret());
+            response = new CredentialsResponse(dbCwp);
         } catch (final IOException e) {
             LOGGER.error("Error creating credentials: {}", e.getMessage(), e);
             response = new CredentialsResponse(Status.GENERAL_ERR, e.getMessage());
@@ -93,10 +94,10 @@ public class CredentialsResourceImpl implements CredentialsResource {
     @Override
     public CredentialsResponse getCredentials(final String uuid) {
         LOGGER.info("Getting credentials for '{}'", uuid);
-        final Credentials credentials;
+        final CredentialsWithPerms cwp;
         try {
-            credentials = credentialsServiceProvider.get().getCredentials(uuid);
-            return new CredentialsResponse(credentials);
+            cwp = credentialsServiceProvider.get().getCredentials(uuid);
+            return new CredentialsResponse(cwp);
         } catch (final IOException e) {
             return new CredentialsResponse(Status.GENERAL_ERR,
                     "Error getting credentials: " + e.getMessage());
