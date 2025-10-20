@@ -7,6 +7,7 @@ import stroom.receive.rules.shared.ReceiveAction;
 import stroom.util.cache.CacheConfig;
 import stroom.util.cert.DNFormat;
 import stroom.util.collections.CollectionUtil;
+import stroom.util.io.ByteSize;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.IsStroomConfig;
@@ -105,6 +106,8 @@ public class ReceiveDataConfig
     private final ReceiptCheckMode receiptCheckMode;
     @JsonProperty
     private final ReceiveAction fallbackReceiveAction;
+    @JsonProperty
+    private final ByteSize maxRequestSize;
 
     public ReceiveDataConfig() {
         // Sort them to ensure consistent order on serialisation
@@ -123,6 +126,7 @@ public class ReceiveDataConfig
         feedNameGenerationMandatoryHeaders = DEFAULT_FEED_NAME_MANDATORY_HEADERS;
         receiptCheckMode = DEFAULT_RECEIPT_CHECK_MODE;
         fallbackReceiveAction = DEFAULT_FALLBACK_RECEIVE_ACTION;
+        maxRequestSize = null;
     }
 
     @SuppressWarnings("unused")
@@ -142,7 +146,8 @@ public class ReceiveDataConfig
             @JsonProperty("feedNameTemplate") final String feedNameTemplate,
             @JsonProperty("feedNameGenerationMandatoryHeaders") final Set<String> feedNameGenerationMandatoryHeaders,
             @JsonProperty("receiptCheckMode") final ReceiptCheckMode receiptCheckMode,
-            @JsonProperty("fallbackReceiveAction") final ReceiveAction fallbackReceiveAction) {
+            @JsonProperty("fallbackReceiveAction") final ReceiveAction fallbackReceiveAction,
+            @JsonProperty("maxRequestSize") final ByteSize maxRequestSize) {
 
         this.metaTypes = NullSafe.getOrElse(metaTypes, ReceiveDataConfig::cleanSet, DEFAULT_META_TYPES);
         this.enabledAuthenticationTypes = NullSafe.getOrElse(
@@ -169,6 +174,7 @@ public class ReceiveDataConfig
                 DEFAULT_FEED_NAME_MANDATORY_HEADERS);
         this.receiptCheckMode = Objects.requireNonNullElse(receiptCheckMode, DEFAULT_RECEIPT_CHECK_MODE);
         this.fallbackReceiveAction = Objects.requireNonNullElse(fallbackReceiveAction, DEFAULT_FALLBACK_RECEIVE_ACTION);
+        this.maxRequestSize = maxRequestSize;
     }
 
     private ReceiveDataConfig(final Builder builder) {
@@ -187,7 +193,8 @@ public class ReceiveDataConfig
                 builder.feedNameTemplate,
                 builder.feedNameGenerationMandatoryHeaders,
                 builder.receiptCheckMode,
-                builder.fallbackReceiveAction);
+                builder.fallbackReceiveAction,
+                builder.maxRequestSize);
     }
 
     @NotNull
@@ -327,6 +334,13 @@ public class ReceiveDataConfig
         return fallbackReceiveAction;
     }
 
+    @JsonPropertyDescription("If defined then states the maximum size of a request (uncompressed for gzip requests). " +
+                             "Will return a 413 Content Too Long response code for any requests exceeding this " +
+                             "value. If undefined then there is no limit to the size of the request.")
+    public ByteSize getMaxRequestSize() {
+        return maxRequestSize;
+    }
+
     @SuppressWarnings("unused")
     @JsonIgnore
     @ValidationMethod(message = "If authenticationRequired is true, then enabledAuthenticationTypes must " +
@@ -358,6 +372,7 @@ public class ReceiveDataConfig
                ", feedNameTemplate='" + feedNameTemplate + '\'' +
                ", feedNameGenerationMandatoryHeaders=" + feedNameGenerationMandatoryHeaders +
                ", receiptCheckMode=" + receiptCheckMode +
+               ", maxRequestSize=" + maxRequestSize +
                '}';
     }
 
@@ -382,6 +397,7 @@ public class ReceiveDataConfig
                && Objects.equals(allowedCertificateProviders, that.allowedCertificateProviders)
                && Objects.equals(feedNameTemplate, that.feedNameTemplate)
                && Objects.equals(feedNameGenerationMandatoryHeaders, that.feedNameGenerationMandatoryHeaders)
+               && Objects.equals(maxRequestSize, that.maxRequestSize)
                && receiptCheckMode == that.receiptCheckMode;
     }
 
@@ -400,7 +416,8 @@ public class ReceiveDataConfig
                 feedNameGenerationEnabled,
                 feedNameTemplate,
                 feedNameGenerationMandatoryHeaders,
-                receiptCheckMode);
+                receiptCheckMode,
+                maxRequestSize);
     }
 
     public static Builder copy(final ReceiveDataConfig receiveDataConfig) {
@@ -419,6 +436,7 @@ public class ReceiveDataConfig
         builder.feedNameGenerationMandatoryHeaders = receiveDataConfig.getFeedNameGenerationMandatoryHeaders();
         builder.receiptCheckMode = receiveDataConfig.getReceiptCheckMode();
         builder.fallbackReceiveAction = receiveDataConfig.fallbackReceiveAction;
+        builder.maxRequestSize = receiveDataConfig.maxRequestSize;
         return builder;
     }
 
@@ -460,6 +478,7 @@ public class ReceiveDataConfig
         private Set<String> feedNameGenerationMandatoryHeaders;
         private ReceiptCheckMode receiptCheckMode;
         private ReceiveAction fallbackReceiveAction;
+        private ByteSize maxRequestSize;
 
         private Builder() {
         }
@@ -552,6 +571,11 @@ public class ReceiveDataConfig
 
         public Builder withFallBackReceiveAction(final ReceiveAction fallBackReceiveAction) {
             this.fallbackReceiveAction = fallBackReceiveAction;
+            return this;
+        }
+
+        public Builder withMaxRequestSize(final ByteSize maxRequestSize) {
+            this.maxRequestSize = maxRequestSize;
             return this;
         }
 

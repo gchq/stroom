@@ -7,6 +7,7 @@ import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.FindAnalyticDataShardCriteria;
 import stroom.analytics.shared.GetAnalyticShardDataRequest;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.lmdb.LmdbConfig;
 import stroom.lmdb2.LmdbEnv;
@@ -90,6 +91,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
     private final ExpressionPredicateFactory expressionPredicateFactory;
     private final AnnotationMapperFactory annotationMapperFactory;
     private final AnalyticRuleStore analyticRuleStore;
+    final WordListProvider wordListProvider;
 
     @Inject
     public AnalyticDataStores(final LmdbEnvDirFactory lmdbEnvDirFactory,
@@ -103,7 +105,8 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                               final SecurityContext securityContext,
                               final ByteBufferFactory bufferFactory,
                               final ExpressionPredicateFactory expressionPredicateFactory,
-                              final AnnotationMapperFactory annotationMapperFactory) {
+                              final AnnotationMapperFactory annotationMapperFactory,
+                              final WordListProvider wordListProvider) {
         this.lmdbEnvDirFactory = lmdbEnvDirFactory;
         this.analyticRuleStore = analyticRuleStore;
         this.analyticStoreConfigProvider = analyticStoreConfigProvider;
@@ -115,6 +118,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         this.bufferFactory = bufferFactory;
         this.expressionPredicateFactory = expressionPredicateFactory;
         this.annotationMapperFactory = annotationMapperFactory;
+        this.wordListProvider = wordListProvider;
 
         this.analyticResultStoreDir = getLocalDir(analyticStoreConfigProvider.get(), pathCreator);
 
@@ -301,7 +305,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 errorConsumer,
                 bufferFactory,
                 expressionPredicateFactory,
-                annotationMapperFactory);
+                annotationMapperFactory, wordListProvider);
     }
 
     @Override

@@ -831,6 +831,7 @@ appConfig:
     - "Format"
     - "Schema"
     feedNameTemplate: "${accountid}-${component}-${format}-${schema}"
+    maxRequestSize: null
     metaTypes:
     - "Context"
     - "Detections"

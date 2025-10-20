@@ -27,9 +27,21 @@ import com.gwtplatform.mvp.client.View;
 
 public class IncludeExcludeFilterPresenter extends MyPresenterWidget<IncludeExcludeFilterView> {
 
+    private final IncludeExcludeFilterDictionaryPresenter includeFilterDictionaryPresenter;
+    private final IncludeExcludeFilterDictionaryPresenter excludeFilterDictionaryPresenter;
+
     @Inject
-    public IncludeExcludeFilterPresenter(final EventBus eventBus, final IncludeExcludeFilterView view) {
+    public IncludeExcludeFilterPresenter(final EventBus eventBus, final IncludeExcludeFilterView view,
+                                         final IncludeExcludeFilterDictionaryPresenter includeFilterDictionaryPresenter,
+                                         final IncludeExcludeFilterDictionaryPresenter excludeFilterDictionaryPresenter
+    ) {
         super(eventBus, view);
+
+        this.includeFilterDictionaryPresenter = includeFilterDictionaryPresenter;
+        this.excludeFilterDictionaryPresenter = excludeFilterDictionaryPresenter;
+
+        getView().setIncludeDictionaryPanel(includeFilterDictionaryPresenter.getView());
+        getView().setExcludeDictionaryPanel(excludeFilterDictionaryPresenter.getView());
     }
 
     public void setFilter(final IncludeExcludeFilter filter) {
@@ -44,6 +56,9 @@ public class IncludeExcludeFilterPresenter extends MyPresenterWidget<IncludeExcl
                 excludes = filter.getExcludes();
             }
         }
+
+        includeFilterDictionaryPresenter.setDictionaries(filter == null ? null : filter.getIncludeDictionaries());
+        excludeFilterDictionaryPresenter.setDictionaries(filter == null ? null : filter.getExcludeDictionaries());
 
         getView().setIncludes(includes);
         getView().setExcludes(excludes);
@@ -60,8 +75,12 @@ public class IncludeExcludeFilterPresenter extends MyPresenterWidget<IncludeExcl
         }
 
         IncludeExcludeFilter filter = null;
-        if (includes != null || excludes != null) {
-            filter = new IncludeExcludeFilter(includes, excludes);
+        if (includes != null || excludes != null
+            || !includeFilterDictionaryPresenter.getDictionaries().isEmpty()
+            || !excludeFilterDictionaryPresenter.getDictionaries().isEmpty()) {
+            filter = new IncludeExcludeFilter(includes, excludes,
+                    includeFilterDictionaryPresenter.getDictionaries(),
+                    excludeFilterDictionaryPresenter.getDictionaries());
         }
         return filter;
     }
@@ -75,5 +94,9 @@ public class IncludeExcludeFilterPresenter extends MyPresenterWidget<IncludeExcl
         String getExcludes();
 
         void setExcludes(String excludes);
+
+        void setIncludeDictionaryPanel(View view);
+
+        void setExcludeDictionaryPanel(View view);
     }
 }

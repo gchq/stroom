@@ -62,7 +62,7 @@ public class TableFilterPresenter
         columnFilterPresenter.setColumnFilter(column.getColumnFilter());
         includeExcludeFilterPresenter.setFilter(column.getFilter());
 
-        final PopupSize popupSize = PopupSize.resizable(400, 500);
+        final PopupSize popupSize = PopupSize.resizable(1085, 500, 1085, 500);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)

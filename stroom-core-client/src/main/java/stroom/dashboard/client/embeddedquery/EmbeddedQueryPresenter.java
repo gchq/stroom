@@ -20,11 +20,10 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.event.WindowCloseEvent;
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter.EmbeddedQueryView;
 import stroom.dashboard.client.input.FilterableTable;
-import stroom.dashboard.client.main.AbstractComponentPresenter;
+import stroom.dashboard.client.main.AbstractRefreshableComponentPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.DashboardContext;
-import stroom.dashboard.client.main.Queryable;
 import stroom.dashboard.client.query.QueryInfo;
 import stroom.dashboard.client.query.SelectionHandlerExpressionBuilder;
 import stroom.dashboard.client.table.ColumnValuesDataSupplier;
@@ -67,12 +66,10 @@ import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ErrorMessage;
-import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -88,8 +85,8 @@ import java.util.Objects;
 import java.util.Set;
 
 public class EmbeddedQueryPresenter
-        extends AbstractComponentPresenter<EmbeddedQueryView>
-        implements Queryable, SearchStateListener, SearchErrorListener, HasComponentSelection, FilterableTable {
+        extends AbstractRefreshableComponentPresenter<EmbeddedQueryView>
+        implements SearchStateListener, SearchErrorListener, HasComponentSelection, FilterableTable {
 
     public static final String TAB_TYPE = "embedded-query-component";
 
@@ -99,9 +96,6 @@ public class EmbeddedQueryPresenter
             "embedded-query",
             "Embedded Query",
             ComponentUse.PANEL);
-
-    static final int TEN_SECONDS = 10000;
-
 
     private final QueryClient queryClient;
     private final QueryModel queryModel;
@@ -121,7 +115,6 @@ public class EmbeddedQueryPresenter
 
     private List<ErrorMessage> currentErrors;
     private boolean initialised;
-    private Timer autoRefreshTimer;
     private ExpressionOperator currentSelectionQuery;
     private DocRef loadedQueryRef;
     private final EventBus tableEventBus = new SimpleEventBus();
@@ -559,10 +552,12 @@ public class EmbeddedQueryPresenter
 
     @Override
     public void stop() {
+        cancelRefresh();
         queryModel.stop();
     }
 
-    private void run(final boolean incremental,
+    @Override
+    public void run(final boolean incremental,
                      final boolean storeHistory) {
         // No point running the search if there is no query
         run(incremental, storeHistory, currentSelectionQuery);
@@ -695,6 +690,21 @@ public class EmbeddedQueryPresenter
         return super.write();
     }
 
+    @Override
+    public boolean isSearching() {
+        return queryModel.isSearching();
+    }
+
+    @Override
+    public boolean isInitialised() {
+        return initialised;
+    }
+
+    @Override
+    public Automate getAutomate() {
+        return getQuerySettings().getAutomate();
+    }
+
     private EmbeddedQueryComponentSettings getQuerySettings() {
         return (EmbeddedQueryComponentSettings) getSettings();
     }
@@ -775,43 +785,6 @@ public class EmbeddedQueryPresenter
             scheduleRefresh();
         }
     }
-
-    private void scheduleRefresh() {
-        // Schedule auto refresh after a query has finished.
-        if (autoRefreshTimer != null) {
-            autoRefreshTimer.cancel();
-        }
-        autoRefreshTimer = null;
-
-        final Automate automate = getQuerySettings().getAutomate();
-        if (initialised && automate.isRefresh()) {
-            try {
-                final String interval = automate.getRefreshInterval();
-                int millis = ModelStringUtil.parseDurationString(interval).intValue();
-
-                // Ensure that the refresh interval is not less than 10 seconds.
-                millis = Math.max(millis, TEN_SECONDS);
-
-                autoRefreshTimer = new Timer() {
-                    @Override
-                    public void run() {
-                        if (!initialised) {
-                            stop();
-                        } else {
-                            // Make sure search is currently inactive before we attempt to execute a new query.
-                            if (!queryModel.isSearching()) {
-                                EmbeddedQueryPresenter.this.run(false, false);
-                            }
-                        }
-                    }
-                };
-                autoRefreshTimer.schedule(millis);
-            } catch (final RuntimeException e) {
-                // Ignore as we cannot display this error now.
-            }
-        }
-    }
-
 
     @Override
     protected void changeSettings() {

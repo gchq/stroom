@@ -1220,6 +1220,19 @@ public class DashboardPresenter
     }
 
     public void onContentTabVisible(final boolean visible) {
+        components.getComponents().stream()
+                .filter(component -> component instanceof Refreshable)
+                .map(component -> (Refreshable) component)
+                .forEach(refreshable -> {
+                    refreshable.setAllowRefresh(visible);
+                    if (visible && refreshable.isRefreshScheduled()) {
+                        refreshable.cancelRefresh();
+                        if (!refreshable.isSearching()) {
+                            refreshable.run(false, false);
+                        }
+                    }
+                });
+
         components.getComponents().forEach(component -> component.onContentTabVisible(visible));
     }
 

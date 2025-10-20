@@ -41,9 +41,12 @@ import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.cellview.client.SortIcon;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -55,8 +58,9 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class ColumnsManager implements HeadingListener, FilterCellManager {
+public class ColumnsManager implements HeadingListener, FilterCellManager, HasHandlers {
 
+    private final EventBus eventBus;
     private final TablePresenter tablePresenter;
     private final Provider<RenameColumnPresenter> renameColumnPresenterProvider;
     private final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider;
@@ -69,12 +73,15 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
     private boolean moving;
     private final Map<String, String> currentQuickFilters = new HashMap<>();
 
-    public ColumnsManager(final TablePresenter tablePresenter,
+
+    public ColumnsManager(final EventBus eventBus,
+                          final TablePresenter tablePresenter,
                           final Provider<RenameColumnPresenter> renameColumnPresenterProvider,
                           final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider,
                           final FormatPresenter formatPresenter,
                           final TableFilterPresenter tableFilterPresenter,
                           final ColumnValuesFilterPresenter columnValuesFilterPresenter) {
+        this.eventBus = eventBus;
         this.tablePresenter = tablePresenter;
         this.renameColumnPresenterProvider = renameColumnPresenterProvider;
         this.expressionPresenterProvider = expressionPresenterProvider;
@@ -97,7 +104,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
                     if (currentMenuColIndex == colIndex) {
                         HideMenuEvent
                                 .builder()
-                                .fire(tablePresenter);
+                                .fire(this);
                     }
                     if (currentFilterColIndex == colIndex) {
                         columnValuesFilterPresenter.hide();
@@ -132,7 +139,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
             final Heading heading = headingSupplier.get();
             if (heading != null && heading.getColIndex() >= columnsStartIndex) {
                 final int colIndex = heading.getColIndex();
-
+                final HasHandlers columnsManager = this;
                 final Column column = getColumn(colIndex);
                 if (column != null) {
                     new Timer() {
@@ -167,7 +174,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
                             }
 
                             if (currentMenuColIndex == colIndex) {
-                                HideMenuEvent.builder().fire(tablePresenter);
+                                HideMenuEvent.builder().fire(columnsManager);
 
                             } else if (!isFilterButton) {
                                 currentMenuColIndex = colIndex;
@@ -184,7 +191,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
                                         .popupPosition(popupPosition)
                                         .addAutoHidePartner(th)
                                         .onHide(e2 -> resetMenuColIndex())
-                                        .fire(tablePresenter);
+                                        .fire(columnsManager);
                             }
                         }
                     }.schedule(0);
@@ -731,7 +738,10 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
                             && ((column.getFilter().getIncludes() != null
                                  && !column.getFilter().getIncludes().trim().isEmpty())
                                 || (column.getFilter().getExcludes() != null
-                                    && !column.getFilter().getExcludes().trim().isEmpty()))) ||
+                                    && !column.getFilter().getExcludes().trim().isEmpty())
+                                || !column.getFilter().getIncludeDictionaries().isEmpty()
+                                || !column.getFilter().getExcludeDictionaries().isEmpty())
+                           ) ||
                            (column.getColumnFilter() != null
                             && ((column.getColumnFilter().getFilter() != null
                                  && !column.getColumnFilter().getFilter().trim().isEmpty()))))
@@ -820,5 +830,10 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
                 .text("Remove")
                 .command(() -> deleteColumn(column))
                 .build();
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> event) {
+        eventBus.fireEvent(event);
     }
 }

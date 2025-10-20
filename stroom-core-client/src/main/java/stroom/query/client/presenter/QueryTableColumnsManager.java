@@ -49,17 +49,21 @@ import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.cellview.client.SortIcon;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public class QueryTableColumnsManager implements HeadingListener, FilterCellManager {
+public class QueryTableColumnsManager implements HeadingListener, FilterCellManager, HasHandlers {
 
+    private final EventBus eventBus;
     private final QueryResultTablePresenter tablePresenter;
     private final FormatPresenter formatPresenter;
     private final Provider<RulesPresenter> rulesPresenterProvider;
@@ -70,11 +74,13 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
     private int currentFilterColIndex = -1;
     private boolean moving;
 
-    public QueryTableColumnsManager(final QueryResultTablePresenter tablePresenter,
+    public QueryTableColumnsManager(final EventBus eventBus,
+                                    final QueryResultTablePresenter tablePresenter,
                                     final FormatPresenter formatPresenter,
                                     final Provider<RulesPresenter> rulesPresenterProvider,
                                     final ColumnFilterPresenter columnFilterPresenter,
                                     final ColumnValuesFilterPresenter columnValuesFilterPresenter) {
+        this.eventBus = eventBus;
         this.tablePresenter = tablePresenter;
         this.formatPresenter = formatPresenter;
         this.rulesPresenterProvider = rulesPresenterProvider;
@@ -96,7 +102,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                     if (currentMenuColIndex == colIndex) {
                         HideMenuEvent
                                 .builder()
-                                .fire(tablePresenter);
+                                .fire(this);
                     }
                     if (currentFilterColIndex == colIndex) {
                         columnValuesFilterPresenter.hide();
@@ -117,6 +123,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
             final Heading heading = headingSupplier.get();
             if (heading != null && heading.getColIndex() >= columnsStartIndex) {
                 final int colIndex = heading.getColIndex();
+                final HasHandlers queryTableColumnsManager = this;
 
                 final Column column = getColumn(colIndex);
                 if (column != null) {
@@ -146,7 +153,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                             }
 
                             if (currentMenuColIndex == colIndex) {
-                                HideMenuEvent.builder().fire(tablePresenter);
+                                HideMenuEvent.builder().fire(queryTableColumnsManager);
 
                             } else if (!isFilterButton) {
                                 currentMenuColIndex = colIndex;
@@ -163,7 +170,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                                         .popupPosition(popupPosition)
                                         .addAutoHidePartner(th)
                                         .onHide(e2 -> resetMenuColIndex())
-                                        .fire(tablePresenter);
+                                        .fire(queryTableColumnsManager);
                             }
                         }
                     }.schedule(0);
@@ -779,5 +786,10 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                             .fire();
                 })
                 .build();
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> event) {
+        eventBus.fireEvent(event);
     }
 }

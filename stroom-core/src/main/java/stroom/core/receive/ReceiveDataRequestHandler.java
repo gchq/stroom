@@ -24,6 +24,7 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.AttributeMapFilterFactory;
+import stroom.receive.common.InputStreamUtils;
 import stroom.receive.common.ReceiptIdGenerator;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.common.RequestAuthenticator;
@@ -81,7 +82,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
     private final ContentAutoCreationService contentAutoCreationService;
     private final FeedProperties feedProperties;
     private final Provider<AutoContentCreationConfig> autoContentCreationConfigProvider;
-    private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
+    private final ReceiveDataConfig receiveDataConfig;
 
     @Inject
     public ReceiveDataRequestHandler(final SecurityContext securityContext,
@@ -105,7 +106,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
         this.contentAutoCreationService = contentAutoCreationService;
         this.feedProperties = feedProperties;
         this.autoContentCreationConfigProvider = autoContentCreationConfigProvider;
-        this.receiveDataConfigProvider = receiveDataConfigProvider;
+        this.receiveDataConfig = receiveDataConfigProvider.get();
     }
 
     @Override
@@ -139,7 +140,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
                             "Receiving data - feed: '{}', type: {}, receiptId: {}, attributeMap: {}",
                             feedName, typeName, receiptId, attributeMapToString(attributeMap)));
 
-                    receiveData(request, feedName, typeName, attributeMap, receivedTime);
+                    receiveData(request, feedName, typeName, attributeMap);
                 } else {
                     // Drop the data.
                     final String feedName = getFeedName(attributeMap);
@@ -180,20 +181,21 @@ class ReceiveDataRequestHandler implements RequestHandler {
     private void receiveData(final HttpServletRequest request,
                              final String feedName,
                              final String typeName,
-                             final AttributeMap attributeMap,
-                             final Instant receivedTime) {
+                             final AttributeMap attributeMap) {
         taskContextFactory.context("Receiving Data", taskContext -> {
 
             final Consumer<Long> progressHandler = new TaskProgressHandler(
                     taskContext, "Receiving " + feedName + " - ");
 
-            try (final InputStream inputStream = request.getInputStream()) {
+            try (final InputStream boundedInputStream = InputStreamUtils.getBoundedInputStream(request.getInputStream(),
+                    receiveDataConfig.getMaxRequestSize())) {
                 streamTargetStreamHandlerProvider.handle(feedName, typeName, attributeMap, handler -> {
                     final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
                             attributeMap,
                             handler,
-                            progressHandler);
-                    stroomStreamProcessor.processInputStream(inputStream, "", receivedTime);
+                            progressHandler,
+                            receiveDataConfig);
+                    stroomStreamProcessor.processInputStream(boundedInputStream);
                 });
             } catch (final RuntimeException | IOException e) {
                 LOGGER.debug(e.getMessage(), e);

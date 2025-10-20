@@ -263,6 +263,39 @@ class TestDS3 extends StroomUnitTest {
     }
 
     @Test
+    void testLocation_singleLine2() throws IOException, SAXException {
+        final RootFactory rootFactory = new RootFactory();
+        final SplitFactory splitFactory = new SplitFactory(
+                rootFactory,
+                "split",
+                0,
+                -1,
+                null,
+                "=",
+                "\\",
+                null,
+                null);
+        new DataFactory(splitFactory, "rowData", "row", "$3");
+
+        rootFactory.compile();
+
+        final Root root = rootFactory.newInstance(new VarMap());
+
+        final String inputStr = "flexString1=test\\nmessage\\=123";
+
+        final LoggingContentHandler loggingContentHandler = doLocationTest(
+                root,
+                inputStr,
+                List.of(makeRange(1, 1, 1, 12),
+                        makeRange(1, 13, 1, 30)));
+
+        Assertions.assertThat(loggingContentHandler.getValues())
+                .containsExactly(
+                        "flexString1",
+                        "test\\nmessage=123");
+    }
+
+    @Test
     void testLocation_singleLine_contained_2charDelim() throws IOException, SAXException {
         final RootFactory rootFactory = new RootFactory();
         final SplitFactory splitFactory = new SplitFactory(
