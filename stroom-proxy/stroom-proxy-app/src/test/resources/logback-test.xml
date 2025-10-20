@@ -12,6 +12,8 @@
     <logger name="stroom.proxy.app" level="info" />
 <!--    <logger name="stroom.proxy.repo" level="debug" />-->
 <!--    <logger name="stroom.proxy.app.handler" level="debug" />-->
+<!--    <logger name="stroom.proxy.app.handler.TestZipDirScanner" level="debug" />-->
+<!--    <logger name="stroom.proxy.app.handler.DirUtil" level="debug" />-->
 <!--    <logger name="stroom.proxy.app.handler.DirUtil" level="trace" />-->
     <!--    <logger name="stroom.proxy.app.handler.DirQueue" level="trace" />-->
     <logger name="stroom.proxy.app.TestRemoteReceiveDataRuleSetServiceImpl" level="debug" />

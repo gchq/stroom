@@ -206,7 +206,49 @@ class TestModelStringUtil {
                 .addCase(10_240L, "10K")
                 .addCase(20_508_468_838L, "19G")
                 .addCase(9_878_424_780L, "9.2G")
+                .build();
+    }
 
+    @TestFactory
+    Stream<DynamicTest> testFormatIECByteSizeString2() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(Long.class)
+                .withOutputType(String.class)
+                .withTestFunction(testCase ->
+                        ModelStringUtil.formatIECByteSizeString(testCase.getInput(), true))
+                .withSimpleEqualityAssertion()
+                .addCase(1L, "1B")
+                .addCase(999L, "999B")
+                .addCase(1_024L, "1K")
+                .addCase(1_126L, "1.1K") // 1.099K
+                .addCase(1_127L, "1.1K")
+                .addCase(1_946L, "1.9K")
+                .addCase(10_240L, "10K")
+                .addCase(1024 * 1024L, "1M")
+                .addCase(20_508_468_838L, "19G")
+                .addCase(9_878_424_780L, "9.2G")
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testFormatIECByteSizeString3() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(Long.class)
+                .withOutputType(String.class)
+                .withTestFunction(testCase ->
+                        ModelStringUtil.formatIECByteSizeString(
+                                testCase.getInput(), false, 6))
+                .withSimpleEqualityAssertion()
+                .addCase(1L, "1.0B")
+                .addCase(999L, "999.0B")
+                .addCase(1_024L, "1.0K")
+                .addCase(1_126L, "1.09961K")
+                .addCase(1_127L, "1.10059K")
+                .addCase(1_946L, "1.90039K")
+                .addCase(10_240L, "10.0K")
+                .addCase(1024 * 1024L, "1.0M")
+                .addCase(20_508_468_838L, "19.1000G")
+                .addCase(9_878_424_780L, "9.20000G")
                 .build();
     }
 

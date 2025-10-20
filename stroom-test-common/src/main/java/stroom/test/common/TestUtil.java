@@ -22,6 +22,9 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.mockito.Mockito;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
@@ -420,6 +423,27 @@ public class TestUtil {
         outputConsumer.accept(LogUtil.message("Summary (iterations: {}, values in nanos):\n{}",
                 ModelStringUtil.formatCsv(iterations),
                 tableStr));
+    }
+
+    /**
+     * Will create the passed files as empty files, ensuring their parent directories exist first.
+     * Will throw if the file already exists.
+     */
+    public static void createFiles(final Path... files) {
+        NullSafe.stream(files)
+                .forEach(file -> {
+                    try {
+                        final Path parent = Objects.requireNonNull(
+                                file.getParent(),
+                                file + " has no parent");
+                        Files.createDirectories(parent);
+                        Files.createFile(file);
+                    } catch (final IOException e) {
+                        throw new UncheckedIOException(e);
+                    } catch (final Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                });
     }
 
 

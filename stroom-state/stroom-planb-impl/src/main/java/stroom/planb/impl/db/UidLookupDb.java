@@ -22,6 +22,13 @@ public class UidLookupDb {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UidLookupDb.class);
 
+    private static final ByteBuffer MAX_ID_KEY = ByteBuffer.allocateDirect(1);
+
+    static {
+        MAX_ID_KEY.put((byte) 0);
+        MAX_ID_KEY.flip();
+    }
+
     private final String name;
     private final ByteBuffers byteBuffers;
     private final Dbi<ByteBuffer> keyToUidDbi;
@@ -47,15 +54,10 @@ public class UidLookupDb {
     private long readMaxId(final Txn<ByteBuffer> txn) {
         long id = 0;
         try {
-            id = byteBuffers.useByte((byte) 0, keyByteBuffer -> {
-                final ByteBuffer valueBuffer = infoDbi.get(txn, keyByteBuffer);
-                if (valueBuffer != null) {
-                    return valueBuffer.getLong();
-                } else {
-                    return 0L;
-                }
-            });
-
+            final ByteBuffer valueBuffer = infoDbi.get(txn, MAX_ID_KEY);
+            if (valueBuffer != null) {
+                id = valueBuffer.getLong();
+            }
         } catch (final Exception e) {
             LOGGER.debug(e::getMessage, e);
         }
@@ -63,10 +65,8 @@ public class UidLookupDb {
     }
 
     private void writeMaxId(final Txn<ByteBuffer> txn, final long id) {
-        byteBuffers.useByte((byte) 0, keyByteBuffer -> {
-            byteBuffers.useLong(id, valueByteBuffer -> {
-                infoDbi.put(txn, keyByteBuffer, valueByteBuffer);
-            });
+        byteBuffers.useLong(id, valueByteBuffer -> {
+            infoDbi.put(txn, MAX_ID_KEY, valueByteBuffer);
         });
     }
 

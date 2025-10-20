@@ -47,6 +47,7 @@ import java.util.function.Supplier;
                                 @FunctionArg(
                                         name = "omitTrailingZeros",
                                         argType = ValBoolean.class,
+                                        defaultValue = "false",
                                         description = "Whether to omit trailing zeros (default false)")},
                         returnDescription = "A more human readable IEC representation of byte size.",
                         description = "Convert a number of bytes into a more human readable form."),
@@ -59,6 +60,7 @@ import java.util.function.Supplier;
                                 @FunctionArg(
                                         name = "omitTrailingZeros",
                                         argType = ValBoolean.class,
+                                        defaultValue = "false",
                                         description = "Whether to omit trailing zeros (default false)"),
                                 @FunctionArg(
                                         name = "significantFigures",

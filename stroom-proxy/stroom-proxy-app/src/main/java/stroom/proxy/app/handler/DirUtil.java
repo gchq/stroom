@@ -666,6 +666,19 @@ public class DirUtil {
         return sb.toString();
     }
 
+    /**
+     * Creates a provider of unique paths such that each directory never contains more than 999 items.
+     * <p>
+     * See also {@link NumberedDirProvider} for a non-nested directory structure.
+     * </p>
+     * <p>
+     * e.g. {@code root_path/2/333/555/333555777}
+     * </p>
+     */
+    public static NestedNumberedDirProvider createNestedNumberedDirProvider(final Path root) {
+        return new NestedNumberedDirProvider(root);
+    }
+
 
     // --------------------------------------------------------------------------------
 
