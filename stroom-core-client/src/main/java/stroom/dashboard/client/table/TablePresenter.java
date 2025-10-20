@@ -116,7 +116,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
@@ -125,7 +124,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.google.web.bindery.event.shared.SimpleEventBus;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
@@ -148,6 +146,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     public static final ComponentType TYPE = new ComponentType(1, "table", "Table", ComponentUse.PANEL);
     private static final Version CURRENT_MODEL_VERSION = new Version(6, 1, 26);
 
+    private final EventBus eventBus;
     private final PagerView pagerView;
     private final DataSourceClient dataSourceClient;
     private final LocationManager locationManager;
@@ -187,7 +186,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private boolean tableIsVisible = true;
     private boolean annotationChanged;
-    private final EventBus tableEventBus = new SimpleEventBus();
 
     @Inject
     public TablePresenter(final EventBus eventBus,
@@ -210,6 +208,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final DataSourceClient dataSourceClient,
                           final ColumnValuesFilterPresenter columnValuesFilterPresenter) {
         super(eventBus, view, settingsPresenterProvider);
+        this.eventBus = eventBus;
         this.pagerView = pagerView;
         this.locationManager = locationManager;
         this.downloadPresenter = downloadPresenter;
@@ -257,7 +256,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         annotateButton = pagerView.addButton(SvgPresets.ANNOTATE);
         annotateButton.setVisible(annotationManager.isEnabled());
 
-        columnsManager = new ColumnsManager(
+        columnsManager = new ColumnsManager(eventBus,
                 this,
                 renameColumnPresenterProvider,
                 expressionPresenterProvider,
@@ -1185,7 +1184,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                     true),
                             ParamUtil.replaceParameters(column.getFilter().getExcludes(),
                                     dashboardContext,
-                                    true)));
+                                    true),
+                            column.getFilter().getIncludeDictionaries(),
+                            column.getFilter().getExcludeDictionaries()));
                 }
                 if (column.getColumnFilter() != null) {
                     columnBuilder.columnFilter(new ColumnFilter(ParamUtil
@@ -1384,11 +1385,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     @Override
     public HandlerRegistration addUpdateHandler(final TableUpdateEvent.Handler handler) {
-        return tableEventBus.addHandler(TableUpdateEvent.getType(), handler);
-    }
-
-    @Override
-    public void fireEvent(final GwtEvent<?> event) {
-        tableEventBus.fireEvent(event);
+        return eventBus.addHandler(TableUpdateEvent.getType(), handler);
     }
 }

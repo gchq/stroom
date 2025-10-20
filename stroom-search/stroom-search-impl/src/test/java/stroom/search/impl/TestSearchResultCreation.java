@@ -125,7 +125,8 @@ class TestSearchResultCreation {
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
                 new ByteBufferFactoryImpl(),
                 new ExpressionPredicateFactory(),
-                AnnotationMapperFactory.NO_OP);
+                AnnotationMapperFactory.NO_OP,
+                null);
     }
 
     @AfterEach
