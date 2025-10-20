@@ -32,7 +32,7 @@ stroomStatsSchema = { module = "uk.gov.gchq.stroom.stats:stroom-stats-schema", v
 #------3rd Party-libs---------------
 assertj-core = { module = "org.assertj:assertj-core" } # version controlled by dropwizard-dependencies
 aws-bom = { module = "software.amazon.awssdk:bom", version.ref = "aws" }
-aws-crt = { module = "software.amazon.awssdk.crt:aws-crt", version = "0.29.22" }
+aws-crt = { module = "software.amazon.awssdk.crt:aws-crt", version = "0.39.3" }
 aws-s3-transfer-manager = { module = "software.amazon.awssdk:s3-transfer-manager" } # version controlled by AWS BOM
 aws-sqs = { module = "software.amazon.awssdk:sqs" } # version controlled by AWS BOM
 aws-sts = { module = "software.amazon.awssdk:sts" } # version controlled by AWS BOM
