@@ -13,6 +13,9 @@ import stroom.proxy.repo.LogStream;
 import stroom.proxy.repo.LogStream.EventType;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.AttributeMapFilterFactory;
+import stroom.receive.common.ContentTooLargeException;
+import stroom.receive.common.InputStreamUtils;
+import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.exception.ThrowingConsumer;
 import stroom.util.io.ByteCountInputStream;
@@ -26,6 +29,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.zip.ZipUtil;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
@@ -73,6 +77,7 @@ public class ZipReceiver implements Receiver {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ZipReceiver.class);
     private static final Logger RECEIVE_LOG = LoggerFactory.getLogger("receive");
 
+    private final ReceiveDataConfig receiveDataConfig;
     private final AttributeMapFilterFactory attributeMapFilterFactory;
     private final NumberedDirProvider receivingDirProvider;
     //    private final CommonSecurityContext commonSecurityContext;
@@ -85,7 +90,8 @@ public class ZipReceiver implements Receiver {
                        final DataDirProvider dataDirProvider,
 //                       final CommonSecurityContext commonSecurityContext,
                        final LogStream logStream,
-                       final ZipSplitter zipSplitter) {
+                       final ZipSplitter zipSplitter,
+                       final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
         this.attributeMapFilterFactory = attributeMapFilterFactory;
 //        this.commonSecurityContext = commonSecurityContext;
         this.logStream = logStream;
@@ -99,6 +105,8 @@ public class ZipReceiver implements Receiver {
 
 //        // Move any received data from previous proxy usage to the store.
 //        transferOldReceivedData(receivedDir);
+
+        this.receiveDataConfig = receiveDataConfigProvider.get();
 
         LOGGER.info("Initialised ZipReceiver, receivingDir base: {}", receivingDirProvider.getParentDir());
     }
@@ -127,9 +135,9 @@ public class ZipReceiver implements Receiver {
             receivingDir = receivingDirProvider.get();
             final FileGroup fileGroup = new FileGroup(receivingDir);
             final Path sourceZip = fileGroup.getZip();
-            try {
-                receiveResult = receiveZipStream(
-                        inputStreamSupplier.get(),
+            try (final InputStream boundedInputStream = InputStreamUtils.getBoundedInputStream(
+                    inputStreamSupplier.get(), receiveDataConfig.getMaxRequestSize())) {
+                receiveResult = receiveZipStream(boundedInputStream,
                         attributeMap,
                         sourceZip);
             } catch (final Exception e) {
@@ -158,7 +166,7 @@ public class ZipReceiver implements Receiver {
                 Files.delete(sourceZip);
                 deleteDir(receivingDir);
             }
-        } catch (final IOException e) {
+        } catch (final IOException | ContentTooLargeException e) {
             throw StroomStreamException.create(e, attributeMap);
         }
 
