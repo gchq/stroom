@@ -3,9 +3,10 @@ package stroom.credentials.client.presenter;
 import stroom.credentials.client.presenter.CredentialsSettingsPresenter.CredentialsSettingsView;
 import stroom.credentials.shared.Credentials;
 import stroom.credentials.shared.CredentialsSecret;
+import stroom.credentials.shared.CredentialsWithPerms;
 import stroom.docref.DocRef;
 import stroom.security.client.presenter.DocumentUserPermissionsPresenter;
-import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent.Builder;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
@@ -72,18 +73,20 @@ public class CredentialsDetailsTabDialogPresenter
 
     /**
      * Call with the builder to set up this dialog before calling .fire().
-     * @param credentials; provides information to display to the user.
+     * @param cwp; provides information to display to the user.
      * @param builder The builder to show this popup.
      */
-    public void setupDialog(final Credentials credentials,
+    public void setupDialog(final CredentialsWithPerms cwp,
                             final CredentialsSecret secret,
-                            final ShowPopupEvent.Builder builder) {
+                            final Builder builder) {
 
         // Populate the UI
-        this.getCredentialsSettingsView().setCredentials(credentials, secret);
+        this.getCredentialsSettingsView().setCredentials(cwp, secret);
 
         // Create a fake DocRef for the credentials
-        final DocRef docRef = new DocRef(Credentials.TYPE, credentials.getUuid(), credentials.getName());
+        final DocRef docRef = new DocRef(Credentials.TYPE,
+                cwp.getCredentials().getUuid(),
+                cwp.getCredentials().getName());
         permissionsPresenter.setDocRef(docRef);
 
         // Configure the popup builder for this dialog

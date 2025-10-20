@@ -6,6 +6,7 @@ import stroom.credentials.shared.CredentialsResource;
 import stroom.credentials.shared.CredentialsResponse;
 import stroom.credentials.shared.CredentialsResponse.Status;
 import stroom.credentials.shared.CredentialsSecret;
+import stroom.credentials.shared.CredentialsWithPerms;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
@@ -44,10 +45,10 @@ public class CredentialsResourceImpl implements CredentialsResource {
      * However, this isn't considered a big problem at this stage.
      */
     @Override
-    public ResultPage<Credentials> listCredentials(final PageRequest pageRequest) {
+    public ResultPage<CredentialsWithPerms> listCredentials(final PageRequest pageRequest) {
         LOGGER.info("Request for list of credentials");
         try {
-            final List<Credentials> fullList = credentialsServiceProvider.get().listCredentials();
+            final List<CredentialsWithPerms> fullList = credentialsServiceProvider.get().listCredentials();
 
             final int start = Math.max(pageRequest.getOffset(), 0);
             final int end = Math.min(start + pageRequest.getLength(), fullList.size());

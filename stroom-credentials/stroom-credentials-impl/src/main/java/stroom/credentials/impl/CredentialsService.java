@@ -3,6 +3,7 @@ package stroom.credentials.impl;
 import stroom.credentials.shared.Credentials;
 import stroom.credentials.shared.CredentialsSecret;
 import stroom.credentials.shared.CredentialsType;
+import stroom.credentials.shared.CredentialsWithPerms;
 import stroom.docref.DocRef;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
@@ -61,14 +62,22 @@ public class CredentialsService {
      * @param inputCredentials The credentials to filter
      * @return The filtered credentials.
      */
-    private List<Credentials> permissionFilterCredentials(final List<Credentials> inputCredentials) {
+    private List<CredentialsWithPerms> permissionFilterCredentials(final List<Credentials> inputCredentials) {
 
-        final List<Credentials> filteredCredentials = new ArrayList<>(inputCredentials.size());
+        final List<CredentialsWithPerms> filteredCredentials = new ArrayList<>(inputCredentials.size());
         for (final Credentials credentials : inputCredentials) {
-            if (hasViewPermission(credentials)) {
-                filteredCredentials.add(credentials);
-            } else {
-                LOGGER.info("User does not have permission to see credentials: {}", credentials);
+            if (credentials != null) {
+                final DocRef docRef = new DocRef(Credentials.TYPE, credentials.getUuid());
+                if (securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
+                    final boolean canEdit = securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT);
+                    final boolean canDelete = securityContext.hasDocumentPermission(docRef, DocumentPermission.DELETE);
+                    final boolean owner = securityContext.hasDocumentPermission(docRef, DocumentPermission.OWNER);
+                    filteredCredentials.add(new CredentialsWithPerms(credentials,
+                            canEdit || owner,
+                            canDelete || owner));
+                } else {
+                    LOGGER.info("User does not have permission to see credentials: {}", credentials);
+                }
             }
         }
         return filteredCredentials;
@@ -79,7 +88,7 @@ public class CredentialsService {
      * Permissions: App, View|Edit|Owner (for all individual permissions)
      * @throws IOException if something goes wrong.
      */
-    public List<Credentials> listCredentials() throws IOException {
+    public List<CredentialsWithPerms> listCredentials() throws IOException {
         checkAppPermission();
         return permissionFilterCredentials(credentialsDao.listCredentials());
     }
@@ -91,7 +100,7 @@ public class CredentialsService {
      * @return The credentials that match the type.
      * @throws IOException if something goes wrong.
      */
-    public List<Credentials> listCredentials(final CredentialsType type) throws IOException {
+    public List<CredentialsWithPerms> listCredentials(final CredentialsType type) throws IOException {
         checkAppPermission();
         return permissionFilterCredentials(credentialsDao.listCredentials(type));
     }
@@ -200,24 +209,10 @@ public class CredentialsService {
     }
 
     /**
-     * Returns false if the user does not have permission to view the given credentials.
-     * @param credentials The credentials to check.
-     */
-    private boolean hasViewPermission(final Credentials credentials) {
-        if (credentials == null) {
-            return false;
-        } else {
-            final DocRef docRef = new DocRef(Credentials.TYPE, credentials.getUuid());
-            return securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)
-                   || securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)
-                   || securityContext.hasDocumentPermission(docRef, DocumentPermission.OWNER);
-        }
-    }
-
-    /**
      * Throws exception if the user does not have permission to view the given credentials.
      * @param uuid ID of the credentials to check.
      */
+    @SuppressWarnings("StatementWithEmptyBody")
     private void checkViewPermission(final String uuid) {
         if (uuid == null) {
             throw new RuntimeException("Credentials not found");
@@ -237,6 +232,7 @@ public class CredentialsService {
      * Throws exception if the user does not have permission to edit the given credentials.
      * @param uuid ID of the credentials to check.
      */
+    @SuppressWarnings("StatementWithEmptyBody")
     private void checkEditPermission(final String uuid) {
         if (uuid == null) {
             throw new RuntimeException("Credentials not found");
@@ -255,6 +251,7 @@ public class CredentialsService {
      * Throws exception if the user does not have permission to delete the given credentials.
      * @param uuid ID of the credentials to check.
      */
+    @SuppressWarnings("StatementWithEmptyBody")
     private void checkDeletePermission(final String uuid) {
         if (uuid == null) {
             throw new RuntimeException("Credentials not found");

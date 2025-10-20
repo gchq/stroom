@@ -5,6 +5,7 @@ import stroom.credentials.client.presenter.CredentialsSettingsPresenter.Credenti
 import stroom.credentials.shared.Credentials;
 import stroom.credentials.shared.CredentialsSecret;
 import stroom.credentials.shared.CredentialsType;
+import stroom.credentials.shared.CredentialsWithPerms;
 import stroom.widget.customdatebox.client.MyDateBox;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
@@ -97,6 +98,11 @@ public class CredentialsSettingsViewImpl
     @UiField
     TextArea txtServerPublicKey;
 
+    /**
+     * Used to store the permissions associated with credentials.
+     */
+    private CredentialsWithPerms credentialsWithPerms;
+
     /** Used when we need an empty string */
     private static final String EMPTY = "";
 
@@ -126,14 +132,17 @@ public class CredentialsSettingsViewImpl
     /**
      * Set the credentials into the dialog. Copies all data out of the
      * credentials object so no danger of overwriting the data in place.
-     * @param credentials The credentials to display in the UI. Can be null
+     * @param cwp The credentials to display in the UI. Can be null
      *                    in which case empty values will be displayed.
      */
     @Override
-    public void setCredentials(final Credentials credentials,
+    public void setCredentials(final CredentialsWithPerms cwp,
                                final CredentialsSecret secret) {
 
-        if (credentials == null) {
+        // Store permissions for when we need to return them again
+        credentialsWithPerms = cwp;
+
+        if (cwp == null) {
             uuid = null;
             txtName.setText(EMPTY);
             lstType.setSelectedIndex(CredentialsType.USERNAME_PASSWORD.ordinal());
@@ -146,7 +155,7 @@ public class CredentialsSettingsViewImpl
             txtPrivateKey.setText(EMPTY);
             txtServerPublicKey.setText(EMPTY);
         } else {
-
+            final Credentials credentials = cwp.getCredentials();
             uuid = credentials.getUuid();
             txtName.setText(credentials.getName());
             lstType.setSelectedIndex(credentials.getType().ordinal());
@@ -163,21 +172,32 @@ public class CredentialsSettingsViewImpl
     }
 
     /**
-     * Returns the credentials object held by this object,
+     * Returns the credentialsWithPerms object held by this object,
      * updated with any changes.
-     * @return A new credentials object.
+     * @return A new credentialsWithPerms object containing a new Credentials object.
      */
     @Override
-    public Credentials getCredentials() {
+    public CredentialsWithPerms getCredentialsWithPerms() {
 
         final Long expiresAsLong = dtpExpires.getMilliseconds();
-        final long expires = expiresAsLong == null ? 0L : expiresAsLong;
-        return new Credentials(
+        final long expires = expiresAsLong == null
+                ? 0L
+                : expiresAsLong;
+        final Credentials credentials = new Credentials(
                 txtName.getText(),
                 uuid,
                 getCredentialsType(),
                 chkCredsExpire.getValue(),
                 expires);
+
+        if (credentialsWithPerms != null) {
+            return new CredentialsWithPerms(credentials,
+                    credentialsWithPerms.isEdit(),
+                    credentialsWithPerms.isDelete());
+        } else {
+            // Assume that we're allowed to do everything - enforced on the server anyway.
+            return new CredentialsWithPerms(credentials);
+        }
     }
 
     /**

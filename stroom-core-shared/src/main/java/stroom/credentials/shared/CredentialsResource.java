@@ -27,7 +27,7 @@ public interface CredentialsResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Lists credentials",
             operationId = "listCredentials")
-    ResultPage<Credentials> listCredentials(PageRequest pageRequest);
+    ResultPage<CredentialsWithPerms> listCredentials(PageRequest pageRequest);
 
     /**
      * Creates credential in the DB. Errors are indicated in the return value.

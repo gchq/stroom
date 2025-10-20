@@ -1,8 +1,8 @@
 package stroom.credentials.client.presenter;
 
 import stroom.credentials.client.presenter.CredentialsSettingsPresenter.CredentialsSettingsView;
-import stroom.credentials.shared.Credentials;
 import stroom.credentials.shared.CredentialsSecret;
+import stroom.credentials.shared.CredentialsWithPerms;
 
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -33,7 +33,7 @@ public class CredentialsSettingsPresenter
         /**
          * @return The credentials object holding credentials metadata.
          */
-        Credentials getCredentials();
+        CredentialsWithPerms getCredentialsWithPerms();
 
         /**
          * @return The secrets associated with the credentials.
@@ -42,10 +42,10 @@ public class CredentialsSettingsPresenter
 
         /**
          * Sets the credentials displayed by this dialog.
-         * @param credentials The credentials meta-data.
+         * @param cwp The credentials meta-data.
          * @param secret The secret stuff.
          */
-        void setCredentials(Credentials credentials, CredentialsSecret secret);
+        void setCredentials(CredentialsWithPerms cwp, CredentialsSecret secret);
 
         /**
          * @return true if the data in the dialog is valid.

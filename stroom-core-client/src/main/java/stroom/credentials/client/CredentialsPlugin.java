@@ -49,7 +49,10 @@ public class CredentialsPlugin extends ContentPlugin<CredentialsPresenter> {
      */
     @Override
     public void onReveal(final BeforeRevealMenubarEvent event) {
-        if (securityContext.hasAppPermission(AppPermission.IMPORT_DATA_PERMISSION)) {
+        if (securityContext.hasAppPermission(AppPermission.CREDENTIALS)) {
+            // Ensure the security menu is visible
+            MenuKeys.addSecurityMenu(event.getMenuItems());
+
             event.getMenuItems().addMenuItem(MenuKeys.SECURITY_MENU,
                     new IconMenuItem.Builder()
                             .priority(100)

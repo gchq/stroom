@@ -10,6 +10,7 @@ import stroom.credentials.shared.CredentialsCreateRequest;
 import stroom.credentials.shared.CredentialsResource;
 import stroom.credentials.shared.CredentialsResponse.Status;
 import stroom.credentials.shared.CredentialsSecret;
+import stroom.credentials.shared.CredentialsWithPerms;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
@@ -23,6 +24,7 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent.Builder;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.core.client.GWT;
@@ -50,13 +52,13 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     private final DateTimeFormatter dateTimeFormatter;
 
     /** Where the data grid gets its data from */
-    private final RestDataProvider<Credentials,  ResultPage<Credentials>> dataProvider;
+    private final RestDataProvider<CredentialsWithPerms,  ResultPage<CredentialsWithPerms>> dataProvider;
 
     /** List of credentials */
-    private final MyDataGrid<Credentials> dataGrid;
+    private final MyDataGrid<CredentialsWithPerms> dataGrid;
 
     /** What is selected in the list? */
-    private final MultiSelectionModel<Credentials> gridSelectionModel;
+    private final MultiSelectionModel<CredentialsWithPerms> gridSelectionModel;
 
     /** Button in view to add another credential */
     private final ButtonView btnAdd;
@@ -131,9 +133,9 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     /**
      * Initialise the columns in the data grid.
      */
-    private void initColumns(final MyDataGrid<Credentials> grid) {
+    private void initColumns(final MyDataGrid<CredentialsWithPerms> grid) {
         grid.addResizableColumn(
-                DataGridUtil.textColumnBuilder(Credentials::getName)
+                DataGridUtil.textColumnBuilder(this::getCredentialsName)
                         .build(),
                 DataGridUtil.headingBuilder("Name")
                         .withToolTip("Name of credentials")
@@ -141,13 +143,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                 280);
 
         grid.addResizableColumn(
-                DataGridUtil.textColumnBuilder((final Credentials c) -> {
-                    if (c.isCredsExpire()) {
-                        return dateTimeFormatter.format(c.getExpires());
-                    } else {
-                        return "";
-                    }
-                })
+                DataGridUtil.textColumnBuilder(this::getCredentialsExpires)
                         .build(),
                 DataGridUtil.headingBuilder("Expires")
                         .withToolTip("When these credentials expire")
@@ -155,7 +151,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                 190);
 
         grid.addResizableColumn(
-                DataGridUtil.textColumnBuilder((Credentials c) -> c.getType().getDisplayName())
+                DataGridUtil.textColumnBuilder(this::getCredentialsType)
                         .build(),
                 DataGridUtil.headingBuilder("Type")
                         .withToolTip("Type of credential")
@@ -166,16 +162,41 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     }
 
     /**
+     * Provides the name of the credentials to the data grid column.
+     */
+    private String getCredentialsName(final CredentialsWithPerms cwp) {
+        return cwp.getCredentials().getName();
+    }
+
+    /**
+     * Provides the expiry date of the credentials to the data grid column.
+     */
+    private String getCredentialsExpires(final CredentialsWithPerms cwp) {
+        if (cwp.getCredentials().isCredsExpire()) {
+            return dateTimeFormatter.format(cwp.getCredentials().getExpires());
+        } else {
+            return "";
+        }
+    }
+
+    /**
+     * Provides the type of the credentials to the data grid column.
+     */
+    private String getCredentialsType(final CredentialsWithPerms cwp) {
+        return cwp.getCredentials().getType().getDisplayName();
+    }
+
+    /**
      * Sets up the data provider for the list of credentials.
      */
-    private RestDataProvider<Credentials, ResultPage<Credentials>>
+    private RestDataProvider<CredentialsWithPerms, ResultPage<CredentialsWithPerms>>
         createDataProvider(final EventBus eventBus,
                            final PagerView view,
                            final RestFactory restFactory) {
         return new RestDataProvider<>(eventBus) {
             @Override
             protected void exec(final Range range,
-                                final Consumer<ResultPage<Credentials>> dataConsumer,
+                                final Consumer<ResultPage<CredentialsWithPerms>> dataConsumer,
                                 final RestErrorHandler restErrorHandler) {
                 final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
                 restFactory
@@ -224,8 +245,8 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                 if (defaultSelection) {
                     if (gridSelectionModel.getSelected() == null
                         && dataGrid.getRowCount() > 0) {
-                        final Credentials credentials = dataGrid.getVisibleItem(FIRST_ITEM_INDEX);
-                        gridSelectionModel.setSelected(credentials);
+                        final CredentialsWithPerms cwp = dataGrid.getVisibleItem(FIRST_ITEM_INDEX);
+                        gridSelectionModel.setSelected(cwp);
                     }
                 }
             }
@@ -252,7 +273,9 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                     .method(res -> res.getCredentials(uuid))
                     .onSuccess(res -> {
                         if (res.getStatus() == Status.OK) {
-                            setSelectedCredentials(res.getCredentials());
+                            final CredentialsWithPerms cwp =
+                                    new CredentialsWithPerms(res.getCredentials());
+                            setSelectedCredentials(cwp);
                         } else {
                             AlertEvent.fireError(parentPresenter,
                                     "Error finding selected credentials",
@@ -273,19 +296,19 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
 
     /**
      * Sets the selected credentials in the UI.
-     * @param credentials The credentials to show as selected. Can be null if nothing is selected.
+     * @param cwp The credentials to show as selected. Can be null if nothing is selected.
      */
-    private void setSelectedCredentials(final Credentials credentials) {
-        gridSelectionModel.setSelected(credentials);
+    private void setSelectedCredentials(final CredentialsWithPerms cwp) {
+        gridSelectionModel.setSelected(cwp);
     }
 
     /**
      * @return The ID of the currently selected credentials, or null if nothing is selected.
      */
     public String getSelectedCredentialsId() {
-        final Credentials selectedCredentials = gridSelectionModel.getSelected();
-        if (selectedCredentials != null) {
-            return selectedCredentials.getUuid();
+        final CredentialsWithPerms selectedCwp = gridSelectionModel.getSelected();
+        if (selectedCwp != null) {
+            return selectedCwp.getCredentials().getUuid();
         } else {
             return null;
         }
@@ -295,9 +318,10 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      * Updates the UI state.
      */
     private void updateState() {
-        if (gridSelectionModel.getSelected() != null) {
-            btnDelete.setEnabled(true);
-            btnEdit.setEnabled(true);
+        final CredentialsWithPerms cwp = gridSelectionModel.getSelected();
+        if (cwp != null) {
+            btnDelete.setEnabled(cwp.isDelete());
+            btnEdit.setEnabled(cwp.isEdit());
         } else {
             btnDelete.setEnabled(false);
             btnEdit.setEnabled(false);
@@ -310,37 +334,38 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     private void handleAddButtonClick() {
         final Credentials newCredentials = new Credentials();
         final CredentialsSecret newSecret = new CredentialsSecret(newCredentials.getUuid());
-        showDetailsDialog(newCredentials, newSecret, CreationState.NEW_CREDENTIALS);
+        final CredentialsWithPerms cwp = new CredentialsWithPerms(newCredentials);
+        showDetailsDialog(cwp, newSecret, CreationState.NEW_CREDENTIALS);
     }
 
     /**
      * Called when the delete button is clicked.
      */
     private void handleDeleteButtonClick() {
-        final Credentials selectedCredentials = gridSelectionModel.getSelected();
+        final CredentialsWithPerms selectedCwp = gridSelectionModel.getSelected();
 
         ConfirmEvent.fire(this, "Are you sure you want to delete the credentials '" +
-                                selectedCredentials.getName() + "' ?", ok -> {
+                                selectedCwp.getCredentials().getName() + "' ?", ok -> {
                 if (ok) {
-                    deleteCredentials(selectedCredentials);
+                    deleteCredentials(selectedCwp);
                 }
             });
     }
 
     /**
      * Performs the deletion in the database.
-     * @param selectedCredentials The currently selected credentials, which are to be deleted.
+     * @param selectedCwp The currently selected credentials, which are to be deleted.
      */
-    private void deleteCredentials(final Credentials selectedCredentials) {
+    private void deleteCredentials(final CredentialsWithPerms selectedCwp) {
 
-        if (selectedCredentials != null) {
+        if (selectedCwp != null) {
             restFactory.create(CREDENTIALS_RESOURCE)
-                    .method(res -> res.deleteCredentials(selectedCredentials.getUuid()))
+                    .method(res -> res.deleteCredentials(selectedCwp.getCredentials().getUuid()))
                     .onSuccess(result -> {
                         if (result.getStatus() == Status.OK) {
                             // Reload the list & select the first item
                             dataProvider.refresh();
-                            final Credentials firstItem = dataGrid.getVisibleItem(FIRST_ITEM_INDEX);
+                            final CredentialsWithPerms firstItem = dataGrid.getVisibleItem(FIRST_ITEM_INDEX);
                             if (firstItem != null) {
                                 gridSelectionModel.setSelected(firstItem);
                             }
@@ -366,59 +391,63 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      * When edit button is clicked
      */
     private void handleEditButtonClick() {
-        final Credentials credentials = gridSelectionModel.getSelected();
+        final CredentialsWithPerms cwp = gridSelectionModel.getSelected();
 
-        // Get the secret from the server, if they exist
-        restFactory.create(CREDENTIALS_RESOURCE)
-                .method(res -> res.getSecret(credentials.getUuid()))
-                .onSuccess(result -> {
-                    if (result.getStatus() == Status.OK) {
-                        CredentialsSecret secret = result.getSecret();
-                        if (secret == null) {
-                            // Secret doesn't exist yet, so create new one
-                            secret = new CredentialsSecret(credentials.getUuid());
+        // Check that the user can edit these credentials
+        if (cwp.isEdit()) {
+
+            // Get the secret from the server, if they exist
+            restFactory.create(CREDENTIALS_RESOURCE)
+                    .method(res -> res.getSecret(cwp.getCredentials().getUuid()))
+                    .onSuccess(result -> {
+                        if (result.getStatus() == Status.OK) {
+                            CredentialsSecret secret = result.getSecret();
+                            if (secret == null) {
+                                // Secret doesn't exist yet, so create new one
+                                secret = new CredentialsSecret(cwp.getCredentials().getUuid());
+                            }
+
+                            showDetailsDialog(cwp, secret, CreationState.OLD_CREDENTIALS);
+                        } else {
+                            AlertEvent.fireError(parentPresenter,
+                                    "Error getting credential's details",
+                                    result.getMessage(),
+                                    null);
                         }
-
-                        showDetailsDialog(credentials, secret, CreationState.OLD_CREDENTIALS);
-                    } else {
+                    })
+                    .onFailure(error -> {
                         AlertEvent.fireError(parentPresenter,
-                                "Error getting credential's details",
-                                result.getMessage(),
+                                "Error",
+                                error.getMessage(),
                                 null);
-                    }
-                })
-                .onFailure(error -> {
-                    AlertEvent.fireError(parentPresenter,
-                            "Error",
-                            error.getMessage(),
-                            null);
-                })
-                .taskMonitorFactory(CredentialsListPresenter.this)
-                .exec();
+                    })
+                    .taskMonitorFactory(CredentialsListPresenter.this)
+                    .exec();
+        }
     }
 
     /**
      * Called when adding or editing credentials.
-     * @param credentials The credentials to add or edit.
+     * @param cwp The credentials to add or edit.
      * @param secret The secret to use to display the settings.
      * @param creationState Whether these are new or old credentials.
      */
-    private void showDetailsDialog(final Credentials credentials,
+    private void showDetailsDialog(final CredentialsWithPerms cwp,
                                    final CredentialsSecret secret,
                                    final CreationState creationState) {
 
-        if (credentials != null) {
-            final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(detailsDialog);
-            detailsDialog.setupDialog(credentials, secret, builder);
+        if (cwp != null) {
+            final Builder builder = ShowPopupEvent.builder(detailsDialog);
+            detailsDialog.setupDialog(cwp, secret, builder);
             builder.onHideRequest(e -> {
                 if (e.isOk()) {
                     if (detailsDialog.isValid()) {
                         final CredentialsSettingsView view = detailsDialog.getCredentialsSettingsView();
-                        final Credentials credsToSave = view.getCredentials();
+                        final CredentialsWithPerms cwpToSave = view.getCredentialsWithPerms();
                         final CredentialsSecret secretToSave = view.getSecret();
                         e.hide();
 
-                        saveSecretAndCredentials(secretToSave, credsToSave, creationState);
+                        saveSecretAndCredentials(secretToSave, cwpToSave, creationState);
                     } else {
                         final String validationMessage = detailsDialog.getValidationMessage();
 
@@ -439,14 +468,14 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     /**
      * Async save of secret, then credentials.
      * @param secret The secret to save.
-     * @param creds The credentials to save.
+     * @param cwp The credentials to save.
      * @param creationState Whether these are new or old credentials.
      */
     private void saveSecretAndCredentials(final CredentialsSecret secret,
-                                          final Credentials creds,
+                                          final CredentialsWithPerms cwp,
                                           final CreationState creationState) {
         if (creationState == CreationState.NEW_CREDENTIALS) {
-            final CredentialsCreateRequest request = new CredentialsCreateRequest(creds, secret);
+            final CredentialsCreateRequest request = new CredentialsCreateRequest(cwp.getCredentials(), secret);
 
             CredentialsManagerDialogViewImpl.console("New credentials");
             restFactory.create(CREDENTIALS_RESOURCE)
@@ -455,7 +484,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                         if (result.getStatus() == Status.OK) {
                             // Reload the list & select it
                             dataProvider.refresh();
-                            gridSelectionModel.setSelected(creds);
+                            gridSelectionModel.setSelected(cwp);
 
                         } else {
                             AlertEvent.fireError(parentPresenter,
@@ -478,7 +507,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                     .method(res -> res.storeSecret(secret))
                     .onSuccess(result -> {
                         if (result.getStatus() == Status.OK) {
-                            saveCredentials(creds);
+                            saveCredentials(cwp);
 
                         } else {
                             AlertEvent.fireError(parentPresenter,
@@ -501,18 +530,18 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
 
     /**
      * Async save of credentials.
-     * @param creds The credentials to save.
+     * @param cwp The credentials to save.
      */
-    private void saveCredentials(final Credentials creds) {
+    private void saveCredentials(final CredentialsWithPerms cwp) {
 
         CredentialsManagerDialogViewImpl.console("Saving existing credentials");
         restFactory.create(CREDENTIALS_RESOURCE)
-                .method(res -> res.storeCredentials(creds))
+                .method(res -> res.storeCredentials(cwp.getCredentials()))
                 .onSuccess(result -> {
                     if (result.getStatus() == Status.OK) {
                         // Reload the list & select it
                         dataProvider.refresh();
-                        gridSelectionModel.setSelected(creds);
+                        gridSelectionModel.setSelected(cwp);
 
                     } else {
                         AlertEvent.fireError(parentPresenter,
