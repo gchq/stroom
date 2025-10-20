@@ -170,10 +170,6 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
         }
     }
 
-    public record RequestAndStore(SearchRequest searchRequest, ResultStore resultStore) {
-
-    }
-
     public RequestAndStore getResultStore(final SearchRequest searchRequest) {
         if (LOGGER.isDebugEnabled()) {
             final String json = JsonUtil.writeValueAsString(searchRequest);
@@ -620,5 +616,13 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
 
     public void put(final QueryKey queryKey, final ResultStore resultStore) {
         resultStoreMap.put(queryKey, resultStore);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public record RequestAndStore(SearchRequest searchRequest, ResultStore resultStore) {
+
     }
 }

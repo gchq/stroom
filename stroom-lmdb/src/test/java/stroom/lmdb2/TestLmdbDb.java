@@ -32,10 +32,10 @@ public class TestLmdbDb {
 
     @Mock
     private LmdbConfig mockLmdbConfig;
-    private ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
+    private final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
 
     @Test
-    void testDropDb(@TempDir Path tempDir) {
+    void testDropDb(@TempDir final Path tempDir) {
         Mockito.when(mockLmdbConfig.getMaxStoreSize())
                 .thenReturn(ByteSize.ofKibibytes(512));
         Mockito.when(mockLmdbConfig.getMaxReaders())

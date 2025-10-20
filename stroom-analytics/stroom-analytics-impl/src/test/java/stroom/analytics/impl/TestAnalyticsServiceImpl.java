@@ -28,7 +28,9 @@ class TestAnalyticsServiceImpl {
     void testExampleDetection() {
         final AnalyticsServiceImpl analyticsService = new AnalyticsServiceImpl(
                 mockEmailSender,
-                templatingService);
+                templatingService,
+                null,
+                null);
 
         final Detection exampleDetection = analyticsService.getExampleDetection();
         final String template = new AnalyticUiDefaultConfig().getDefaultBodyTemplate();
