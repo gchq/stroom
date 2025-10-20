@@ -20,6 +20,8 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.function.Predicate;
 
@@ -84,6 +86,13 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
                     RuleUtil.getRuleIdentity(analyticRuleDoc)), e);
             throw e;
         }
+    }
+
+    @Override
+    public Optional<List<String>> fetchColumnNames(final AbstractAnalyticRuleDoc analyticRuleDoc) {
+        return pool.use(
+                analyticRuleDoc.getUuid(),
+                DuplicateCheckStore::fetchColumnNames);
     }
 
     @NotNull

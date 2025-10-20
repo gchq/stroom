@@ -30,6 +30,7 @@ class TestAnalyticsServiceImpl {
                 mockEmailSender,
                 templatingService,
                 null,
+                null,
                 null);
 
         final Detection exampleDetection = analyticsService.getExampleDetection();

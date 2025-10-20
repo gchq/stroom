@@ -16,6 +16,7 @@ import jakarta.inject.Inject;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class AnalyticsServiceImpl implements AnalyticsService {
 
@@ -25,16 +26,19 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     private final RuleEmailTemplatingService ruleEmailTemplatingService;
     private final ScheduledQueryAnalyticExecutor scheduledQueryAnalyticExecutor;
     private final AnalyticRuleStore analyticRuleStore;
+    private final DuplicateCheckFactory duplicateCheckFactory;
+
 
     @Inject
     AnalyticsServiceImpl(final EmailSender emailSender,
                          final RuleEmailTemplatingService ruleEmailTemplatingService,
                          final ScheduledQueryAnalyticExecutor scheduledQueryAnalyticExecutor,
-                         final AnalyticRuleStore analyticRuleStore) {
+                         final AnalyticRuleStore analyticRuleStore, final DuplicateCheckFactory duplicateCheckFactory) {
         this.emailSender = emailSender;
         this.ruleEmailTemplatingService = ruleEmailTemplatingService;
         this.scheduledQueryAnalyticExecutor = scheduledQueryAnalyticExecutor;
         this.analyticRuleStore = analyticRuleStore;
+        this.duplicateCheckFactory = duplicateCheckFactory;
     }
 
     @Override
@@ -78,20 +82,29 @@ public class AnalyticsServiceImpl implements AnalyticsService {
             }
 
             // Something has changed, but it could just be a change to the query that does not
-            // alter the columns, so we need to derive the compiled columns to be sure.
-            final List<String> currentColNames = scheduledQueryAnalyticExecutor.extractColumnNames(currentAnalytic);
-            final List<String> newColNames = scheduledQueryAnalyticExecutor.extractColumnNames(analytic);
-            LOGGER.debug("""
-                    validateChanges() - {}
-                    currentColNames: {},
-                    newColNames:     {},
-                    """, analytic, currentColNames, newColNames);
+            // alter the columns, so we need to derive the compiled columns and compare them
+            // against the columns known to the dup store
+            final Optional<List<String>> optColNames = duplicateCheckFactory.fetchColumnNames(analytic);
+            if (optColNames.isPresent()) {
+                final List<String> currentColNames = optColNames.get();
+                final List<String> newColNames = scheduledQueryAnalyticExecutor.extractColumnNames(analytic);
+                LOGGER.debug("""
+                        validateChanges() - {}
+                        currentColNames: {},
+                        newColNames:     {},
+                        """, analytic, currentColNames, newColNames);
 
-            if (!Objects.equals(currentColNames, newColNames)) {
-                return Message.warning(
-                                "The columns used for duplicate checking have changed. " +
-                                "If you continue all stored duplicate check data for this analytic will be deleted")
-                        .asList();
+                if (!Objects.equals(currentColNames, newColNames)) {
+                    return Message.warning(
+                                    "The columns used to perform duplicate checks have changed. " +
+                                    "If you save this Analytic Rule, all stored duplicate check data for this " +
+                                    "analytic (as seen on the 'Duplicate Management' tab) " +
+                                    "will be deleted on next execution." +
+                                    "\nDo you wish to continue?")
+                            .asList();
+                }
+            } else {
+                LOGGER.debug("validateChanges() - Store is not initialised");
             }
         }
         return Collections.emptyList();

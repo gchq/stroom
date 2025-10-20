@@ -213,6 +213,10 @@ class DuplicateCheckStore {
 //        }
 //    }
 
+    synchronized Optional<List<String>> fetchColumnNames() {
+        return lmdbEnv.readResult(this::fetchColumnNames);
+    }
+
     synchronized void writeColumnNames(final List<String> columnNames) {
         writer.write(writeTxn -> {
             final Optional<List<String>> optColumnNames = fetchColumnNames(writeTxn);
@@ -221,8 +225,10 @@ class DuplicateCheckStore {
                 final List<String> currentColNames = optColumnNames.get();
                 if (!Objects.equals(currentColNames, columnNames)) {
                     LOGGER.info(() -> LogUtil.message(
+                            "Columns have changed. All data in duplicate store {} will be deleted.", lmdbEnv.getDir()));
+                    LOGGER.debug(() -> LogUtil.message(
                             """
-                                    Columns have changed. All data in duplicate store {} will be deleted.
+                                    writeColumnNames() - lmdbEnv: {}
                                     Old: '{}'
                                     New: '{}'""",
                             lmdbEnv.getDir(),
@@ -231,7 +237,6 @@ class DuplicateCheckStore {
 
                     // Change of columns (added, removed, re-ordered) means any new data won't match the layout
                     // of the existing data, so we have to clear it out.
-                    LOGGER.debug(() -> LogUtil.message("Deleting all data in {}", lmdbEnv.getDir()));
                     db.drop(writeTxn);
 
                     // Write the new columns
@@ -421,6 +426,10 @@ class DuplicateCheckStore {
         }
     }
 
+    /**
+     * Return {@link Optional} so we can distinguish between an uninitialised store and
+     * a rule with no columns.
+     */
     private Optional<List<String>> fetchColumnNames(final AbstractTxn txn) {
         final ByteBuffer state = infoDb.get(txn, InfoKey.COLUMN_NAMES.getByteBuffer());
         final Optional<List<String>> result;
