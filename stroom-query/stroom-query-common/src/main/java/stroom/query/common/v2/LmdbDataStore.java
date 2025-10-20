@@ -88,6 +88,7 @@ public class LmdbDataStore implements DataStore {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbDataStore.class);
 
     private static final long COMMIT_FREQUENCY_MS = 10000;
+    private static final int MAX_LIST_SIZE = 10_000;
     public static final ByteBuffer DB_STATE_VALUE = ByteBuffer
             .allocateDirect(Long.BYTES + Long.BYTES + Long.BYTES);
 
@@ -1258,17 +1259,22 @@ public class LmdbDataStore implements DataStore {
             fetchState.reachedRowLimit = false;
             fetchState.keepGoing = true;
 
+            // Constrain the absolute limit.
+            // In some rare cases we might want to examine more than 1000 rows (see gh-5198).
+            final int absoluteLimit = Math.min(limit, MAX_LIST_SIZE);
+            final OffsetRange offsetRange = new OffsetRange(0, absoluteLimit);
+
             final LmdbDataStore dataStore = readContext.dataStore;
             dataStore.getChildren(
                     readContext,
                     key,
                     key.getChildDepth(),
-                    limit,
+                    absoluteLimit,
                     trimTop,
                     OpenGroups.NONE, // Don't traverse any child rows.
                     readContext.timeFilter,
                     IdentityItemMapper.INSTANCE,
-                    OffsetRange.ZERO_1000, // Max 1000 child items.
+                    offsetRange,
                     fetchState,
                     item -> result.add(((ItemImpl) item).storedValues));
             return result;

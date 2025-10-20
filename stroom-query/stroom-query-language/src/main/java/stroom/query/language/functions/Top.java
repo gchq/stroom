@@ -26,8 +26,9 @@ import java.text.ParseException;
         commonReturnType = ValString.class,
         signatures = @FunctionSignature(
                 description = "Selects the top N values and returns them as a delimited string in the order they " +
-                        "are read. E.g. for values [1, 2, 3, 4, 5], " + Top.NAME + "(${field}, ',', 2) returns " +
-                        "'1,2'.",
+                              "are read. E.g. for values [1, 2, 3, 4, 5], " +
+                              Top.NAME +
+                              "(${field}, ',', 2) returns '1,2'.",
                 returnDescription = "The top N values as a delimited string.",
                 args = {
                         @FunctionArg(
@@ -47,11 +48,14 @@ public class Top extends AbstractSelectorFunction {
 
     static final String NAME = "top";
 
+    private final ExpressionContext context;
     private String delimiter = "";
     private int limit = 10;
 
-    public Top(final String name) {
+    public Top(final ExpressionContext context,
+               final String name) {
         super(name, 3, 3);
+        this.context = context;
     }
 
     @Override
@@ -67,18 +71,23 @@ public class Top extends AbstractSelectorFunction {
 
     @Override
     public Generator createGenerator() {
-        return new TopSelector(super.createGenerator(), delimiter, limit);
+        return new TopSelector(super.createGenerator(), delimiter, limit, context.getMaxStringLength());
     }
 
     static class TopSelector extends Selector {
 
         private final String delimiter;
         private final int limit;
+        private final int maxStringLength;
 
-        TopSelector(final Generator childGenerator, final String delimiter, final int limit) {
+        TopSelector(final Generator childGenerator,
+                    final String delimiter,
+                    final int limit,
+                    final int maxStringLength) {
             super(childGenerator);
             this.delimiter = delimiter;
             this.limit = limit;
+            this.maxStringLength = maxStringLength;
         }
 
         @Override
@@ -93,10 +102,13 @@ public class Top extends AbstractSelectorFunction {
             for (final StoredValues storedValues : values) {
                 final Val val = childGenerator.eval(storedValues, () -> childData);
                 if (val.type().isValue()) {
-                    if (sb.length() > 0) {
+                    if (!sb.isEmpty()) {
                         sb.append(delimiter);
                     }
                     sb.append(val);
+                    if (sb.length() >= maxStringLength) {
+                        break;
+                    }
                 }
             }
             return ValString.create(sb.toString());
