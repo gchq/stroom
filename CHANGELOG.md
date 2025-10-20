@@ -13,6 +13,34 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11-beta.7] - 2025-10-20
+
+* Issue **#656** : Allow table filters to use dictionaries.
+
+* Issue **#672** : Dashboards will only auto refresh when selected.
+
+* Issue **#5149** : Fix context menus not appearing on dashboard tables.
+
+* Issue **#2029** : Add OS memory stats to the node status stats.
+
+* Uplift dependency java-jwt 4.4.0 => 4.5.0.
+
+* Uplift org.apache.commons:commons-csv from 1.10.0 to 1.14.1.
+
+* Uplift dependency org.apache.commons:commons-pool2 from 2.12.0 to 2.12.1.
+
+* Issue **#3799** : Search for tags in Find In Content.
+
+* Issue **#3335** : Preserve escape chars not preceding delimiters.
+
+* Bumps jooq from 3.20.5 to 3.20.8.
+
+* Bumps com.mysql:mysql-connector-j from 9.2.0 to 9.4.0.
+
+* Bumps flyway from 11.9.1 to 11.14.0.
+
+* Issue **#1429** : Protect against large file ingests.
+
 * Add a proxy zip file ingest mechanism to proxy. Add property branch `proxyConfig.dirScanner` to the config.
 
 * Issue **#5175** : Fix zip handling.
@@ -1811,7 +1839,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.6...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.7...HEAD
+[v7.11-beta.7]: https://github.com/gchq/stroom/compare/v7.11-beta.6...v7.11-beta.7
 [v7.11-beta.6]: https://github.com/gchq/stroom/compare/v7.11-beta.5...v7.11-beta.6
 [v7.11-beta.5]: https://github.com/gchq/stroom/compare/v7.11-beta.4...v7.11-beta.5
 [v7.11-beta.4]: https://github.com/gchq/stroom/compare/v7.11-beta.3...v7.11-beta.4
