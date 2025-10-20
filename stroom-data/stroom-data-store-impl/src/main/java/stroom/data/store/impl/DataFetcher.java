@@ -202,11 +202,11 @@ public class DataFetcher {
 
     public AbstractFetchDataResult getData(final FetchDataRequest fetchDataRequest) {
         return taskContextFactory.contextResult("Data Fetcher", taskContext -> {
-            taskContext.info(() -> "Fetching data for " +
+            taskContext.info(() -> "Fetching data for stream_id=" +
                                    fetchDataRequest.getSourceLocation().getMetaId() +
-                                   ":" +
+                                   ", part=" +
                                    fetchDataRequest.getSourceLocation().getPartIndex() +
-                                   ":" +
+                                   ", record=" +
                                    fetchDataRequest.getSourceLocation().getRecordIndex());
 
             LOGGER.debug(() -> LogUtil.message("getData called for {}:{}:{}",

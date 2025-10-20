@@ -280,39 +280,24 @@ public class RulesPresenter
     }
 
     private void read(final TableComponentSettings settings) {
-//        final Predicate<Field> nonSpecialFieldsPredicate = field -> !field.isSpecial();
-
-//        final Function<Field, DataSourceField.DataSourceFieldType> typeMapper = field -> {
-//            switch (field.getFormat().getType()) {
-//                case NUMBER:
-//                    return DataSourceField.DataSourceFieldType.DOUBLE_FIELD;
-//                case DATE_TIME:
-//                    return DataSourceField.DataSourceFieldType.DATE_FIELD;
-//                default:
-//                    return DataSourceField.DataSourceFieldType.TEXT_FIELD;
-//            }
-//        };
-
         // We have to deal in field names (aka column names) here as all the
         // exp tree code only has a single field/term name so can't cope with working with
         // ids and mapping to col name for the ui.
-        this.fields = settings
+        read(settings
                 .getColumns()
                 .stream()
-//                .filter(nonSpecialFieldsPredicate) // ignore the special EventId/StreamId
-//                .map(field -> new DataSourceField.Builder()
-//                        .type(typeMapper.apply(field))
-//                        .name(field.getName())
-//                        .build())
                 .map(TablePresenter::buildDsField)
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()), settings.getConditionalFormattingRules());
+    }
 
-        if (settings.getConditionalFormattingRules() != null) {
-            this.rules = settings.getConditionalFormattingRules();
+    public void read(final List<QueryField> fields,
+                     final List<ConditionalFormattingRule> rules) {
+        this.fields = fields;
+        if (rules != null) {
+            this.rules = rules;
         } else {
             this.rules.clear();
         }
-
         listPresenter.getSelectionModel().clear();
         setDirty(false);
         update();
@@ -375,6 +360,10 @@ public class RulesPresenter
                 .copy(queryTablePreferences)
                 .conditionalFormattingRules(rules)
                 .build();
+    }
+
+    public List<ConditionalFormattingRule> write() {
+        return rules;
     }
 
     @Override

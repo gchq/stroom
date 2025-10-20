@@ -1,5 +1,6 @@
 package stroom.query.common.v2;
 
+import stroom.dictionary.api.WordListProvider;
 import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
@@ -27,7 +28,8 @@ public class ValFilter {
                                           final CompiledColumns compiledColumns,
                                           final DateTimeSettings dateTimeSettings,
                                           final ExpressionPredicateFactory expressionPredicateFactory,
-                                          final Map<String, String> paramMap) {
+                                          final Map<String, String> paramMap,
+                                          final WordListProvider wordListProvider) {
         final ValueFunctionFactories<Values> queryFieldIndex = RowUtil
                 .createColumnNameValExtractor(compiledColumns.getColumns());
         final Optional<Predicate<Values>> optionalRowExpressionMatcher =
@@ -39,7 +41,7 @@ public class ValFilter {
             final Column column = compiledColumn.getColumn();
             final boolean needsMapping = fieldsUsed.contains(column.getName());
             final Optional<Predicate<String>> optionalColumnIncludeExcludePredicate =
-                    CompiledIncludeExcludeFilter.create(column.getFilter(), paramMap);
+                    CompiledIncludeExcludeFilter.create(column.getFilter(), paramMap, wordListProvider);
 
             Generator generator = null;
             boolean required = false;

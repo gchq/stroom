@@ -295,7 +295,6 @@ dependencies {
     testImplementation libs.guice
     testImplementation libs.guice.extension
     testImplementation libs.guice.grapher
-    testImplementation libs.hibernate.jpa
     testImplementation libs.hikari
     testImplementation libs.jinjava
     testImplementation libs.lmdbjava

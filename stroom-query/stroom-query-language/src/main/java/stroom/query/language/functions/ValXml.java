@@ -3,15 +3,21 @@ package stroom.query.language.functions;
 import stroom.util.xml.XMLUtil;
 
 import com.esotericsoftware.kryo.io.ByteBufferInputStream;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.sun.xml.fastinfoset.sax.SAXDocumentParser;
 import org.xml.sax.InputSource;
 
 import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Comparator;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public final class ValXml implements Val {
 
     private static final Comparator<Val> CASE_SENSITIVE_COMPARATOR = ValComparators.asGenericComparator(
@@ -24,10 +30,13 @@ public final class ValXml implements Val {
             ValComparators.GENERIC_CASE_INSENSITIVE_COMPARATOR);
 
     public static final Type TYPE = Type.XML;
+    @JsonProperty
     private final byte[] bytes;
+    @JsonIgnore
     private String stringValue;
 
-    private ValXml(final byte[] bytes) {
+    @JsonCreator
+    private ValXml(@JsonProperty("bytes") final byte[] bytes) {
         this.bytes = bytes;
     }
 
@@ -84,7 +93,11 @@ public final class ValXml implements Val {
     @Override
     public String toString() {
         if (stringValue == null) {
-            stringValue = byteBufferToString(bytes);
+            try {
+                stringValue = byteBufferToString(bytes);
+            } catch (final RuntimeException e) {
+                stringValue = new String(bytes, StandardCharsets.UTF_8);
+            }
         }
         return stringValue;
     }

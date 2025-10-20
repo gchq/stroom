@@ -269,7 +269,8 @@ public class AppUserPermissionsListPresenter
                                                 appUsrPerms.getUserRef(),
                                                 isExternalIdp(),
                                                 UserScreen.allExcept(UserScreen.APP_PERMISSIONS),
-                                                this),
+                                                this,
+                                                null),
                                 this))
 //                .enabledWhen(User::isEnabled)
                 .build();

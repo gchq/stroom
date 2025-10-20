@@ -13,6 +13,99 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#5146** : Fix use of not equals in annotation queries.
+
+* Issue **#5145** : Expand all now affects favourites.
+
+* Issue **#5109** : Fix pipeline migration.
+
+* Issue **#5147** : Fix proxy omitting allowed headers (e.g. 'Feed') if the case does not match that in the allowed set.
+
+* Issue **#5148** : Allow annotation users to edit labels.
+
+
+## [v7.11-beta.6] - 2025-09-23
+
+* Issue **#4121** : Add rename option for pipeline elements.
+
+* Issue **#2374** : Add pipeline element descriptions.
+
+* Issue **#4099** : Add InRange function.
+
+* Issue **#2374** : Add description is now editable for pipeline elements.
+
+* Issue **#268** : Add not contains and not exists filters to pipeline stepping.
+
+* Issue **#844** : Add functions for hostname and hostaddress.
+
+* Issue **#4579** : Add table name/id to conditional formatting exceptions.
+
+* Issue **#4124** : Show severity of search error messages.
+
+* Issue **#4369** : Add new rerun scheduled execution icon.
+
+* Issue **#3207** : Add maxStringFieldLength table setting.
+
+* Issue **#1249** : Dashboard links can open in the same tab.
+
+* Issue **#1304** : Copy dashboard components between dashboards.
+
+* Issue **#4614** : Fix StroomQL highlight.
+
+* Issue **#2145** : New add-meta xslt function.
+
+* Issue **#370** : Perform schema validation on save.
+
+* Issue **#397** : Copy user permissions.
+
+* Issue **#5088** : Add table column filter dashboard component.
+
+* Issue **#2571** : Show Tasks for processor filter.
+
+* Issue **#4177** : Add stream id links.
+
+* Issue **#5137** : Fix how proxy adds HTTP headers when sending downstream. It now only adds received meta entries to the headers if they are on an allow list. This list is made up of a hard coded base list `accountId, accountName, classification, component, contextEncoding, contextFormat, encoding, environment, feed, format, guid, schema, schemaVersion, system, type` and is supplemented by the new config property `forwardHeadersAdditionalAllowSet` in the `forwardHttpDestinations` items.
+
+* Issue **#5135** : Fix proxy multi part gzip handling.
+
+* Uplift JDK to 21.0.8_9 in docker images and sdkmanrc.
+
+* Issue **#5130** : Fix raw size meta bug.
+
+* Issue **#5132** : Fix missing session when AWS ALB does the code flow.
+
+* Fix the OpenID code flow to stop the session being lost after redirection back to the initiating URL.
+
+* Issue **#5101** : Fix select-all filtering when doing a reprocess of everything in a folder. It no longer tries to re-process deleted items streams.
+
+* Issue **#5086** : Improve stream error handling.
+
+* Change the resource store to not rely on sessions. Resources are now linked to a user.
+
+* Issue **#5114** : Improve handling of loss of connection to IDP.
+
+* Change the way security filter decides whether to authenticate or not, e.g. how it determines what is a static resource that does not need authentication.
+
+* Issue **#5115** : Use correct  header during proxy forward requests.
+
+* Issue **#5121** : Proxy aggregation now keeps only common headers in aggregated data.
+
+* Fix exception handling of DistributedTaskFetcher so it will restart after failure.
+
+* Issue **#5127** : Maintain case for proxy meta attributes when logging.
+
+* Issue **#5091** : Stop reference data loads failing if there are no entries in the stream.
+
+* Add `ReceiptId` to the INFO message on data receipt.
+
+* Issue **#5095** : Lock the cluster to perform pipeline migration to prevent other nodes clashing.
+
+* Issue **#5099** : Fix Plan B session key serialisation.
+
+* Issue **#5090** : Fix Plan B getVal() serialisation.
+
+* Issue **#5106** : Fix ref loads with XML values where the `<value>` element name is not in lower case.
+
 * Issue **#5042** : Allow the import of processor filters when the existing processor filter is in a logically deleted state. Add validation to the import confirm dialog to ensure the parent doc is selected when a processor filter is selected.
 
 * Change DocRef Info Cache to evict entries on document creation to stop stroom saying that a document doesn't exist after import.
@@ -1692,7 +1785,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.5...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.6...HEAD
+[v7.11-beta.6]: https://github.com/gchq/stroom/compare/v7.11-beta.5...v7.11-beta.6
 [v7.11-beta.5]: https://github.com/gchq/stroom/compare/v7.11-beta.4...v7.11-beta.5
 [v7.11-beta.4]: https://github.com/gchq/stroom/compare/v7.11-beta.3...v7.11-beta.4
 [v7.11-beta.3]: https://github.com/gchq/stroom/compare/v7.11-beta.2...v7.11-beta.3

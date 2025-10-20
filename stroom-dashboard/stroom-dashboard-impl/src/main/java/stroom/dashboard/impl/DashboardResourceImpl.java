@@ -101,7 +101,7 @@ class DashboardResourceImpl implements DashboardResource {
                             ResourceGeneration.class,
                             () -> ResourcePaths.buildAuthenticatedApiPath(
                                     DashboardResource.BASE_PATH,
-                                    DashboardResource.DOWNLOAD_SEARCH_RESULTS_PATH_PATH,
+                                    DashboardResource.DOWNLOAD_SEARCH_RESULTS_PATH_PART,
                                     node),
                             () -> dashboardServiceProvider.get().downloadSearchResults(request),
                             builder -> builder.post(Entity.json(request)));

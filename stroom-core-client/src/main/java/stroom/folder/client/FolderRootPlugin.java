@@ -124,21 +124,23 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
 
     @Override
     protected void showDocument(final DocRef docRef,
-                                final MyPresenterWidget<?> documentEditPresenter,
+                                final MyPresenterWidget<?> myPresenterWidget,
                                 final Handler closeHandler,
                                 final DocumentTabData tabData,
                                 final boolean fullScreen,
-                                final CommonDocLinkTab selectedTab, final TaskMonitorFactory taskMonitorFactory) {
-        if (documentEditPresenter instanceof FolderRootPresenter) {
-            ((FolderRootPresenter) documentEditPresenter).read();
+                                final CommonDocLinkTab selectedTab,
+                                final Consumer<MyPresenterWidget<?>> callbackOnOpen,
+                                final TaskMonitorFactory taskMonitorFactory) {
+        if (myPresenterWidget instanceof FolderRootPresenter) {
+            ((FolderRootPresenter) myPresenterWidget).read();
         }
 
-        if (selectedTab != null && documentEditPresenter instanceof LinkTabPanelPresenter) {
-            ((LinkTabPanelPresenter) documentEditPresenter).selectCommonTab(selectedTab);
+        if (selectedTab != null && myPresenterWidget instanceof LinkTabPanelPresenter) {
+            ((LinkTabPanelPresenter) myPresenterWidget).selectCommonTab(selectedTab);
         }
 
         // Open the tab.
-        contentManager.open(closeHandler, tabData, documentEditPresenter);
+        contentManager.open(closeHandler, tabData, myPresenterWidget);
     }
 
     @Override

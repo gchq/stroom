@@ -3,6 +3,7 @@ package stroom.explorer.impl;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.servlet.SessionUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -28,11 +29,9 @@ class ExplorerSessionImpl implements ExplorerSession {
         try {
             return getSession().map(session -> {
                 final Long minModelId = (Long) session.getAttribute(MIN_EXPLORER_TREE_MODEL_ID);
-
                 LOGGER.debug(() ->
                         LogUtil.message("getMinExplorerTreeModelId - sessionId: {}, minModelId: {}",
                                 session.getId(), minModelId));
-
                 return minModelId;
             });
         } catch (final RuntimeException e) {
@@ -65,11 +64,10 @@ class ExplorerSessionImpl implements ExplorerSession {
                 } else {
                     // Need to create the session if there isn't one as the explorer tree model update process
                     // relies on having a session available, which there may not be if auth is disabled.
-                    final Optional<HttpSession> optSession = Optional.ofNullable(request.getSession(true));
-
-                    LOGGER.debug(() -> "session id: " + optSession.map(HttpSession::getId).orElse("null"));
-
-                    return optSession;
+                    final HttpSession session = SessionUtil.getOrCreateSession(request, newSession -> {
+                        LOGGER.info("getSession() - Created session {}", newSession.getId());
+                    });
+                    return Optional.of(session);
                 }
             }
         } catch (final RuntimeException e) {

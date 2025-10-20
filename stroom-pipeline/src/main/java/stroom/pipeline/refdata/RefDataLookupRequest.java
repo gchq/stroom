@@ -4,6 +4,7 @@ import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -16,6 +17,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -70,6 +72,11 @@ public class RefDataLookupRequest {
             this.effectiveTimeEpochMs = null;
         }
         this.referenceLoaders = referenceLoaders;
+    }
+
+    @SerialisationTestConstructor
+    private RefDataLookupRequest() {
+        this("test", "test", "2000-01-01T00:00:00.000Z", Collections.emptyList());
     }
 
     public String getMapName() {

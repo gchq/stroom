@@ -70,6 +70,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public class AnnotationService implements Searchable, AnnotationCreator, HasUserDependencies {
 
@@ -195,8 +196,16 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         expression = expressionFilter.copy(expression);
         criteria.setExpression(expression);
 
-        annotationDao.search(criteria, fieldIndex, consumer, uuid ->
-                securityContext.hasDocumentPermission(new DocRef(Annotation.TYPE, uuid), DocumentPermission.VIEW));
+        final Predicate<String> viewPermissionPredicate = getViewPermissionPredicate();
+        annotationDao.search(criteria, fieldIndex, consumer, viewPermissionPredicate);
+    }
+
+    private Predicate<String> getViewPermissionPredicate() {
+        if (securityContext.isAdmin()) {
+            return uuid -> true;
+        }
+        return uuid -> securityContext
+                .hasDocumentPermission(new DocRef(Annotation.TYPE, uuid), DocumentPermission.VIEW);
     }
 
     private UserRef getCurrentUser() {
@@ -447,15 +456,8 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
 
     public ResultPage<AnnotationTag> findAnnotationTags(final ExpressionCriteria request) {
         checkAppPermission();
-        if (securityContext.isAdmin()) {
-            return annotationTagDao.findAnnotationTags(request);
-        }
-        List<AnnotationTag> list = annotationTagDao.findAnnotationTags(request).getValues();
-        list = list.stream()
-                .filter(at -> securityContext.hasDocumentPermission(
-                        new DocRef(AnnotationTag.TYPE, at.getUuid()), DocumentPermission.VIEW))
-                .toList();
-        return ResultPage.createUnboundedList(list);
+        final Predicate<String> viewPermissionPredicate = getViewPermissionPredicate();
+        return annotationTagDao.findAnnotationTags(request, viewPermissionPredicate);
     }
 
     public AnnotationEntry fetchAnnotationEntry(final FetchAnnotationEntryRequest request) {

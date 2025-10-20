@@ -1,6 +1,8 @@
 package stroom.security.shared;
 
 import stroom.docref.DocRef;
+import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllPermissions;
+import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -25,6 +27,11 @@ public final class SingleDocumentPermissionChangeRequest implements PermissionCh
         Objects.requireNonNull(change, "Request is null");
         this.docRef = docRef;
         this.change = change;
+    }
+
+    @SerialisationTestConstructor
+    private SingleDocumentPermissionChangeRequest() {
+        this(new DocRef("test", "test"), new RemoveAllPermissions());
     }
 
     public DocRef getDocRef() {

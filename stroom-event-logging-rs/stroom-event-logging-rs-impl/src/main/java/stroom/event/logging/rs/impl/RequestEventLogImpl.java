@@ -64,7 +64,7 @@ class RequestEventLogImpl implements RequestEventLog {
     @Override
     public void log(final RequestInfo requestInfo, @Nullable final Object responseEntity, final Throwable error) {
         final ContainerResourceInfo containerResourceInfo = requestInfo.getContainerResourceInfo();
-        if (!containerResourceInfo.shouldLog(config)) {
+        if (!containerResourceInfo.shouldLog()) {
             return;
         }
 

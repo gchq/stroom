@@ -2,14 +2,17 @@ package stroom.query.shared;
 
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
 import stroom.query.api.datasource.QueryField;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -32,6 +35,11 @@ public class ValidateExpressionRequest {
         this.dateTimeSettings = Objects.requireNonNull(dateTimeSettings);
     }
 
+    @SerialisationTestConstructor
+    private ValidateExpressionRequest() {
+        this(ExpressionOperator.builder().build(), Collections.emptyList(), DateTimeSettings.builder().build());
+    }
+
     public ExpressionItem getExpressionItem() {
         return expressionItem;
     }
@@ -47,9 +55,9 @@ public class ValidateExpressionRequest {
     @Override
     public String toString() {
         return "ValidateExpressionRequest{" +
-                "expressionItem=" + expressionItem +
-                ", fields=" + fields +
-                ", dateTimeSettings=" + dateTimeSettings +
-                '}';
+               "expressionItem=" + expressionItem +
+               ", fields=" + fields +
+               ", dateTimeSettings=" + dateTimeSettings +
+               '}';
     }
 }

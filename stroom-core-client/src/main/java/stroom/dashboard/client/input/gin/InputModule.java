@@ -22,6 +22,9 @@ import stroom.dashboard.client.input.BasicKeyValueInputSettingsViewImpl;
 import stroom.dashboard.client.input.BasicListInputSettingsPresenter;
 import stroom.dashboard.client.input.BasicListInputSettingsPresenter.BasicListInputSettingsView;
 import stroom.dashboard.client.input.BasicListInputSettingsViewImpl;
+import stroom.dashboard.client.input.BasicTableFilterSettingsPresenter;
+import stroom.dashboard.client.input.BasicTableFilterSettingsPresenter.BasicTableFilterSettingsView;
+import stroom.dashboard.client.input.BasicTableFilterSettingsViewImpl;
 import stroom.dashboard.client.input.BasicTextInputSettingsPresenter;
 import stroom.dashboard.client.input.BasicTextInputSettingsPresenter.BasicTextInputSettingsView;
 import stroom.dashboard.client.input.BasicTextInputSettingsViewImpl;
@@ -33,6 +36,13 @@ import stroom.dashboard.client.input.ListInputPlugin;
 import stroom.dashboard.client.input.ListInputPresenter;
 import stroom.dashboard.client.input.ListInputPresenter.ListInputView;
 import stroom.dashboard.client.input.ListInputViewImpl;
+import stroom.dashboard.client.input.MultiRulesPresenter;
+import stroom.dashboard.client.input.MultiRulesPresenter.MultiRulesView;
+import stroom.dashboard.client.input.MultiRulesViewImpl;
+import stroom.dashboard.client.input.TableFilterPlugin;
+import stroom.dashboard.client.input.TableFilterPresenter;
+import stroom.dashboard.client.input.TableFilterPresenter.TableFilterView;
+import stroom.dashboard.client.input.TableFilterViewImpl;
 import stroom.dashboard.client.input.TextInputPlugin;
 import stroom.dashboard.client.input.TextInputPresenter;
 import stroom.dashboard.client.input.TextInputPresenter.TextInputView;
@@ -61,5 +71,15 @@ public class InputModule extends AbstractPresenterModule {
         bindPresenterWidget(BasicTextInputSettingsPresenter.class,
                 BasicTextInputSettingsView.class,
                 BasicTextInputSettingsViewImpl.class);
+
+
+        bind(TableFilterPlugin.class).asEagerSingleton();
+        bindPresenterWidget(TableFilterPresenter.class, TableFilterView.class, TableFilterViewImpl.class);
+        bindPresenterWidget(BasicTableFilterSettingsPresenter.class,
+                BasicTableFilterSettingsView.class,
+                BasicTableFilterSettingsViewImpl.class);
+        bindPresenterWidget(MultiRulesPresenter.class,
+                MultiRulesView.class,
+                MultiRulesViewImpl.class);
     }
 }

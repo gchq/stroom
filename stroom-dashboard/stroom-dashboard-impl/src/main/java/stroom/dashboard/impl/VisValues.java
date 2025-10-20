@@ -16,8 +16,10 @@
 
 package stroom.dashboard.impl;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.io.Serializable;
@@ -27,13 +29,17 @@ import java.util.Arrays;
 @JsonInclude(Include.NON_NULL)
 public class VisValues implements Serializable {
 
+    @JsonProperty
     private VisField[] fields;
+    @JsonProperty
     private VisLimit limit;
 
     public VisValues() {
     }
 
-    public VisValues(final VisField[] fields, final VisLimit limit) {
+    @JsonCreator
+    public VisValues(@JsonProperty("fields") final VisField[] fields,
+                     @JsonProperty("limit") final VisLimit limit) {
         this.fields = fields;
         this.limit = limit;
     }
@@ -86,8 +92,8 @@ public class VisValues implements Serializable {
     @Override
     public String toString() {
         return "VisValues{" +
-                "fields=" + Arrays.toString(fields) +
-                ", limit=" + limit +
-                '}';
+               "fields=" + Arrays.toString(fields) +
+               ", limit=" + limit +
+               '}';
     }
 }

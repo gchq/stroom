@@ -56,10 +56,10 @@ public class ContentResourceImpl implements ContentResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContentResourceImpl.class);
 
-    final Provider<StroomEventLoggingService> eventLoggingServiceProvider;
-    final Provider<ContentService> contentServiceProvider;
-    final Provider<ExplorerNodeService> explorerNodeServiceProvider;
-    final Provider<SecurityContext> securityContextProvider;
+    private final Provider<StroomEventLoggingService> eventLoggingServiceProvider;
+    private final Provider<ContentService> contentServiceProvider;
+    private final Provider<ExplorerNodeService> explorerNodeServiceProvider;
+    private final Provider<SecurityContext> securityContextProvider;
 
     @Inject
     ContentResourceImpl(final Provider<StroomEventLoggingService> eventLoggingServiceProvider,
@@ -245,4 +245,5 @@ public class ContentResourceImpl implements ContentResource {
                                  + "\"")
                         .build();
     }
+
 }

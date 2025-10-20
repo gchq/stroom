@@ -1,306 +1,290 @@
-/*
- * This class was copied from
- * https://bitbucket.org/atlassian/atlassian-util-concurrent/src/master/
- */
-
-/*
- * Copyright 2008 Atlassian Pty Ltd
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package stroom.util.shared.concurrent;
 
-import java.io.Serial;
+import stroom.util.shared.NullSafe;
+
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.IntFunction;
 
 /**
- * A thread-safe variant of {@link java.util.Map} in which all mutative
- * operations (the "destructive" operations described by {@link java.util.Map}
- * put, remove and so on) are implemented by making a fresh copy of the
- * underlying map.
- * <p>
- * This is ordinarily too costly, but may be <em>more</em> efficient than
- * alternatives when traversal operations vastly out-number mutations, and is
- * useful when you cannot or don't want to synchronize traversals, yet need to
- * preclude interference among concurrent threads. The "snapshot" style
- * iterators on the collections returned by {@link #entrySet()},
- * {@link #keySet()} and {@link #values()} use a reference to the internal map
- * at the point that the iterator was created. This map never changes during the
- * lifetime of the iterator, so interference is impossible and the iterator is
- * guaranteed not to throw <tt>ConcurrentModificationException</tt>. The
- * iterators will not reflect additions, removals, or changes to the list since
- * the iterator was created. Removing elements via these iterators is not
- * supported. The mutable operations on these collections (remove, retain etc.)
- * are supported but as with the {@link java.util.Map} interface, add and addAll
- * are not and throw {@link java.lang.UnsupportedOperationException}.
- * <p>
- * The actual copy is performed by an abstract {@link #copy(Map)} method. The
- * method is responsible for the underlying Map implementation (for instance a
- * {@link java.util.HashMap}, {@link java.util.TreeMap},
- * {@link java.util.LinkedHashMap} etc.) and therefore the semantics of what
- * this map will cope with as far as null keys and values, iteration ordering
- * etc. See the note below about suitable candidates for underlying Map
- * implementations
- * <p>
- * There are supplied implementations for the common j.u.c {@link java.util.Map}
- * implementations via the {@link CopyOnWriteMap}
- * static {@link CopyOnWriteMap.Builder}.
- * <p>
- * Collection views of the keys, values and entries are optionally
- * {@link View.Type#LIVE live} or {@link View.Type#STABLE stable}. Live views
- * are modifiable will cause a copy if a modifying method is called on them.
- * Methods on these will reflect the current state of the collection, although
- * iterators will be snapshot style. If the collection views are stable they are
- * unmodifiable, and will be a snapshot of the state of the map at the time the
- * collection was asked for.
- * <p>
- * <strong>Please note</strong> that the thread-safety guarantees are limited to
- * the thread-safety of the non-mutative (non-destructive) operations of the
- * underlying map implementation. For instance some implementations such as
- * {@link java.util.WeakHashMap} and {@link java.util.LinkedHashMap} with access
- * ordering are actually structurally modified by the {@link #get(Object)}
- * method and are therefore not suitable candidates as delegates for this class.
+ * A {@link ConcurrentMap} implementation that performs a copy of the underlying {@link Map}
+ * for every write operation. All read operations are delegated to the underlying {@link Map}
+ * with no locking or concurrency overhead at all.
+ * All concurrency overhead is on the write operations.
+ * All methods that directly mutate the map are synchronized, even ones like putIfAbsent.
+ * Intended for 'write once (or very few times) and read many' type use cases.
  *
- * @param <K> the key type
- * @param <V> the value type
- * @author Jed Wesley-Smith
+ * <p>
+ * Note: All read access to the underlying {@link Map} is via an unmodifiable view so methods like
+ * {@link ConcurrentMap#entrySet()} cannot be used to indirectly mutate the underlying map.
+ * </p>
+ *
+ * @param <K>
+ * @param <V>
  */
-public abstract class CopyOnWriteMap<K, V> extends AbstractCopyOnWriteMap<K, V, Map<K, V>> {
+public class CopyOnWriteMap<K, V> implements ConcurrentMap<K, V> {
 
-    @Serial
-    private static final long serialVersionUID = 7935514534647505917L;
+    private final IntFunction<Map<K, V>> mapSupplier;
+    private volatile Map<K, V> map;
 
     /**
-     * Get a {@link CopyOnWriteMap.Builder} for a
-     * {@link CopyOnWriteMap} instance.
-     *
-     * @param <K> key type
-     * @param <V> value type
-     * @return a fresh builder
+     * Creates a new {@link CopyOnWriteMap} that delegates to a {@link HashMap}.
      */
-    public static <K, V> Builder<K, V> builder() {
-        return new Builder<>();
+    public CopyOnWriteMap() {
+        this(HashMap::new, null);
     }
 
     /**
-     * Build a {@link CopyOnWriteMap} and specify all the options.
+     * Creates a new {@link CopyOnWriteMap} that delegates to the Map implementation supplied by mapSupplier.
      *
-     * @param <K> key type
-     * @param <V> value type
+     * @param mapSupplier An {@link IntFunction} that accepts a value for the initial size of the map
+     *                    and returns a new {@link Map} instance. The returned {@link Map} must be
+     *                    mutable and mapSupplier must NOT hold onto the supplied instance.
      */
-    public static class Builder<K, V> {
+    public CopyOnWriteMap(final IntFunction<Map<K, V>> mapSupplier) {
+        this(mapSupplier, null);
+    }
 
-        private View.Type viewType = View.Type.STABLE;
-        private final Map<K, V> initialValues = new HashMap<>();
+    /**
+     * Creates a new {@link CopyOnWriteMap} populated with the entries from map and
+     * that delegates to a {@link HashMap}
+     *
+     * @param map The map to copy values from.
+     */
+    public CopyOnWriteMap(final Map<K, V> map) {
+        this(HashMap::new, map);
+    }
 
-        Builder() {
-        }
+    /**
+     * @param mapSupplier An {@link IntFunction} that accepts a value for the initial size of the map
+     *                    and returns a new {@link Map} instance. The returned {@link Map} must be
+     *                    mutable and mapSupplier must NOT hold onto the supplied instance.
+     * @param map         The map to copy values from.
+     */
+    public CopyOnWriteMap(final IntFunction<Map<K, V>> mapSupplier,
+                          final Map<K, V> map) {
+        this.mapSupplier = mapSupplier != null
+                ? mapSupplier
+                : HashMap::new;
+        this.map = unmodifiableCopyOf(this.mapSupplier, map);
+    }
 
-        /**
-         * Views are stable (fixed in time) and unmodifiable.
-         */
-        public Builder<K, V> stableViews() {
-            viewType = View.Type.STABLE;
-            return this;
-        }
+    private Map<K, V> unmodifiableCopyOf(final Map<K, V> map) {
+        return unmodifiableCopyOf(this.mapSupplier, map);
+    }
 
-        /**
-         * Views are live (reflecting concurrent updates) and mutator methods are
-         * supported.
-         */
-        public Builder<K, V> addAll(final Map<? extends K, ? extends V> values) {
-            initialValues.putAll(values);
-            return this;
-        }
-
-        /**
-         * Views are live (reflecting concurrent updates) and mutator methods are
-         * supported.
-         */
-        public Builder<K, V> liveViews() {
-            viewType = View.Type.LIVE;
-            return this;
-        }
-
-        public CopyOnWriteMap<K, V> newHashMap() {
-            return new Hash<>(initialValues, viewType);
-        }
-
-        public CopyOnWriteMap<K, V> newLinkedMap() {
-            return new Linked<>(initialValues, viewType);
+    private static <K, V> Map<K, V> unmodifiableCopyOf(final IntFunction<Map<K, V>> mapSupplier,
+                                                       final Map<K, V> map) {
+        Objects.requireNonNull(mapSupplier);
+        if (NullSafe.isEmptyMap(map)) {
+            return Collections.emptyMap();
+        } else {
+            // Create a new map in case map is not the same impl as mapSupplier supplies.
+            final Map<K, V> copy = mapSupplier.apply(map.size());
+            copy.putAll(map);
+            return Collections.unmodifiableMap(copy);
         }
     }
 
-    /**
-     * Creates a new {@link CopyOnWriteMap} with an
-     * underlying {@link java.util.HashMap}.
-     * <p>
-     * This map has {@link View.Type#STABLE stable} views.
-     *
-     * @return a {@link CopyOnWriteMap}.
-     */
-    public static <K, V> CopyOnWriteMap<K, V> newHashMap() {
-        final Builder<K, V> builder = builder();
-        return builder.newHashMap();
+    @Override
+    public boolean containsKey(final Object k) {
+        return map.containsKey(k);
+    }
+
+    @Override
+    public boolean containsValue(final Object v) {
+        return map.containsValue(v);
     }
 
     /**
-     * Creates a new {@link CopyOnWriteMap} with an
-     * underlying {@link java.util.HashMap} using the supplied map as the initial
-     * values.
-     * <p>
-     * This map has {@link View.Type#STABLE stable} views.
-     *
-     * @param map a {@link java.util.Map} object.
-     * @return a {@link CopyOnWriteMap}.
-     */
-    public static <K, V> CopyOnWriteMap<K, V> newHashMap(final Map<? extends K, ? extends V> map) {
-        final Builder<K, V> builder = builder();
-        return builder.addAll(map).newHashMap();
-    }
-
-    /**
-     * Creates a new {@link CopyOnWriteMap} with an
-     * underlying {@link java.util.LinkedHashMap}. Iterators for this map will be
-     * return elements in insertion order.
-     * <p>
-     * This map has {@link View.Type#STABLE stable} views.
-     *
-     * @return a {@link CopyOnWriteMap}.
-     */
-    public static <K, V> CopyOnWriteMap<K, V> newLinkedMap() {
-        final Builder<K, V> builder = builder();
-        return builder.newLinkedMap();
-    }
-
-    /**
-     * Creates a new {@link CopyOnWriteMap} with an
-     * underlying {@link java.util.LinkedHashMap} using the supplied map as the
-     * initial values. Iterators for this map will be return elements in insertion
-     * order.
-     * <p>
-     * This map has {@link View.Type#STABLE stable} views.
-     *
-     * @param map a {@link java.util.Map} object.
-     * @return a {@link CopyOnWriteMap}.
-     */
-    public static <K, V> CopyOnWriteMap<K, V> newLinkedMap(final Map<? extends K, ? extends V> map) {
-        final Builder<K, V> builder = builder();
-        return builder.addAll(map).newLinkedMap();
-    }
-
-    //
-    // constructors
-    //
-
-    /**
-     * Create a new {@link CopyOnWriteMap} with the
-     * supplied {@link java.util.Map} to initialize the values.
-     *
-     * @param map the initial map to initialize with
-     * @deprecated since 0.0.12 use the versions that explicitly specify View.Type
-     */
-    @Deprecated
-    protected CopyOnWriteMap(final Map<? extends K, ? extends V> map) {
-        this(map, View.Type.LIVE);
-    }
-
-    /**
-     * Create a new empty {@link CopyOnWriteMap}.
-     *
-     * @deprecated since 0.0.12 use the versions that explicitly specify View.Type
-     */
-    @Deprecated
-    protected CopyOnWriteMap() {
-        this(Collections.emptyMap(), View.Type.LIVE);
-    }
-
-    /**
-     * Create a new {@link CopyOnWriteMap} with the
-     * supplied {@link java.util.Map} to initialize the values. This map may be
-     * optionally modified using any of the key, entry or value views
-     *
-     * @param map      the initial map to initialize with
-     * @param viewType a View.Type.
-     */
-    protected CopyOnWriteMap(final Map<? extends K, ? extends V> map, final View.Type viewType) {
-        super(map, viewType);
-    }
-
-    /**
-     * Create a new empty {@link CopyOnWriteMap}.
-     * This map may be optionally modified using any of the key, entry or value
-     * views
-     *
-     * @param viewType a View.Type.
-     */
-    protected CopyOnWriteMap(final View.Type viewType) {
-        super(Collections.emptyMap(), viewType);
-    }
-
-    /**
-     * {@inheritDoc}
+     * Unlink {@link Map#entrySet()} this does NOT allow mutation of the returned {@link Set}.
      */
     @Override
-    protected abstract <N extends Map<? extends K, ? extends V>> Map<K, V> copy(N map);
+    public Set<Entry<K, V>> entrySet() {
+        return map.entrySet();
+    }
 
-    //
-    // inner classes
-    //
+    @Override
+    public V get(final Object k) {
+        return map.get(k);
+    }
 
-
-    // --------------------------------------------------------------------------------
-
+    @Override
+    public boolean isEmpty() {
+        return map.isEmpty();
+    }
 
     /**
-     * Uses {@link HashMap} instances as its internal storage.
+     * Unlink {@link Map#keySet()} this does NOT allow mutation of the returned {@link Set}.
      */
-    static class Hash<K, V> extends CopyOnWriteMap<K, V> {
+    @Override
+    public Set<K> keySet() {
+        return map.keySet();
+    }
 
-        private static final long serialVersionUID = 5221824943734164497L;
+    @Override
+    public int size() {
+        return map.size();
+    }
 
-        Hash(final Map<? extends K, ? extends V> map, final View.Type viewType) {
-            super(map, viewType);
+    /**
+     * Unlink {@link Map#values()} this does NOT allow mutation of the returned {@link Set}.
+     */
+    @Override
+    public Collection<V> values() {
+        return map.values();
+    }
+
+    @Override
+    public synchronized void clear() {
+        this.map = Collections.emptyMap();
+    }
+
+    private synchronized Map<K, V> copyDelegateMap(final int additionalInitialSize) {
+        if (additionalInitialSize < 0) {
+            throw new IllegalArgumentException("additionalInitialSize must be >= 0");
         }
+        final Map<K, V> copy = mapSupplier.apply(map.size() + additionalInitialSize);
+        copy.putAll(map);
+        return copy;
+    }
 
-        @Override
-        public final <N extends Map<? extends K, ? extends V>> Map<K, V> copy(final N map) {
-            return new HashMap<K, V>(map);
+    @Override
+    public synchronized V put(final K k, final V v) {
+        // Assume that the copy will be size of delegate + 1 for this put
+        final Map<K, V> copy = copyDelegateMap(1);
+        final V prev = copy.put(k, v);
+        this.map = Collections.unmodifiableMap(copy);
+        return prev;
+    }
+
+    @Override
+    public synchronized void putAll(final Map<? extends K, ? extends V> map) {
+        // Assume that the copy will be size of delegate + size of map
+        final Map<K, V> copy = copyDelegateMap(map.size());
+        copy.putAll(map);
+        this.map = Collections.unmodifiableMap(copy);
+    }
+
+    @Override
+    public synchronized V remove(final Object key) {
+        final Map<K, V> copy = copyDelegateMap(0);
+        final V prev = copy.remove(key);
+        this.map = Collections.unmodifiableMap(copy);
+        return prev;
+    }
+
+    @Override
+    public synchronized V putIfAbsent(final K k, final V v) {
+        if (!containsKey(k)) {
+            return put(k, v);
+        } else {
+            return get(k);
         }
     }
 
+    @Override
+    public synchronized V computeIfAbsent(final K key,
+                                          final Function<? super K, ? extends V> mappingFunction) {
+        return getWithCopy(copy ->
+                copy.computeIfAbsent(key, mappingFunction));
+    }
 
-    // --------------------------------------------------------------------------------
+    @Override
+    public synchronized V computeIfPresent(final K key,
+                                           final BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+        return getWithCopy(copy ->
+                copy.computeIfPresent(key, remappingFunction));
+    }
 
+    @Override
+    public synchronized V compute(final K key,
+                                  final BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+        return getWithCopy(copy ->
+                copy.compute(key, remappingFunction));
+    }
+
+    @Override
+    public V merge(final K key,
+                   final V value,
+                   final BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+        return getWithCopy(copy ->
+                copy.merge(key, value, remappingFunction));
+    }
+
+    @Override
+    public synchronized boolean remove(final Object k, final Object v) {
+        if (containsKey(k) && get(k).equals(v)) {
+            remove(k);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public synchronized boolean replace(final K k, final V original, final V replacement) {
+        if (containsKey(k) && get(k).equals(original)) {
+            put(k, replacement);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public synchronized V replace(final K k, final V v) {
+        if (containsKey(k)) {
+            return put(k, v);
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public synchronized void replaceAll(final BiFunction<? super K, ? super V, ? extends V> function) {
+        getWithCopy(copy -> {
+            copy.replaceAll(function);
+            return null;
+        });
+    }
+
+    private synchronized <T> T getWithCopy(final Function<Map<K, V>, T> copyConsumer) {
+        Objects.requireNonNull(copyConsumer);
+        final Map<K, V> copy = copyDelegateMap(0);
+        final T result = copyConsumer.apply(copy);
+        // Re-copy in case the caller is holding the reference to the original copy
+        // such that they can mutate it.
+        //noinspection Java9CollectionFactory
+        this.map = Collections.unmodifiableMap(new HashMap<>(copy));
+        return result;
+    }
 
     /**
-     * Uses {@link LinkedHashMap} instances as its internal storage.
+     * Method for performing bulk write operations on the map that result in the underlying
+     * map only being copied once.
+     *
+     * @param writer A {@link Consumer} of a temporary copy of the underlying map.
+     *               This map can be mutated in any way the caller wishes, but the caller
+     *               must NOT try to use the map passed to the consumer outside the consumer
+     *               or hold onto a reference to it.
      */
-    static class Linked<K, V> extends CopyOnWriteMap<K, V> {
-
-        private static final long serialVersionUID = -8659999465009072124L;
-
-        Linked(final Map<? extends K, ? extends V> map, final View.Type viewType) {
-            super(map, viewType);
-        }
-
-        @Override
-        public final <N extends Map<? extends K, ? extends V>> Map<K, V> copy(final N map) {
-            return new LinkedHashMap<K, V>(map);
+    public synchronized void bulkWrite(final Consumer<Map<K, V>> writer) {
+        if (writer != null) {
+            // No way of knowing how big the map will get
+            final Map<K, V> copy = copyDelegateMap(0);
+            writer.accept(copy);
+            // Re-copy in case the caller is holding the reference to the original copy
+            // such that they can mutate it.
+            this.map = unmodifiableCopyOf(copy);
         }
     }
 }

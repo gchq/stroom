@@ -29,4 +29,5 @@ public interface JwtContextFactory {
      * like audience and subject only if doVerification is true.
      */
     Optional<JwtContext> getJwtContext(final String jwt, final boolean doVerification);
+
 }

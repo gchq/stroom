@@ -361,6 +361,10 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
             // enabledNodesByPriority may contain nodes that we can't ping so find the
             // first one that has been deemed active by checking in clusterState which
             // has been mutated in the background based on ping results
+            final long enabledAndActiveNodeCount = enabledNodesByPriority.stream()
+                    .filter(clusterState::isEnabledAndActive)
+                    .count();
+
             enabledNodesByPriority.stream()
                     .filter(clusterState::isEnabledAndActive)
                     .findFirst()
@@ -368,10 +372,11 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
                         final String oldMasterNodeName = clusterState.setMasterNodeName(newMasterNodeName);
                         if (!Objects.equals(oldMasterNodeName, newMasterNodeName)) {
                             if (oldMasterNodeName == null) {
-                                LOGGER.info("Master node is {}", newMasterNodeName);
+                                LOGGER.info("Master node is {}, enabledAndActiveNodeCount: {}",
+                                        newMasterNodeName, enabledAndActiveNodeCount);
                             } else {
-                                LOGGER.info("Master node has changed from {} to {}",
-                                        oldMasterNodeName, newMasterNodeName);
+                                LOGGER.info("Master node has changed from {} to {}, enabledAndActiveNodeCount: {}",
+                                        oldMasterNodeName, newMasterNodeName, enabledAndActiveNodeCount);
                             }
                         }
                     });

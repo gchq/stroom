@@ -22,6 +22,7 @@ import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogUtil;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
+import org.apache.commons.compress.archivers.examples.Expander;
 import org.apache.commons.compress.archivers.zip.Zip64Mode;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
@@ -32,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -45,12 +47,15 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.StreamSupport;
 
 public final class ZipUtil {
 
@@ -153,17 +158,45 @@ public final class ZipUtil {
         }
     }
 
-    public static void unzip(final Path zipFile, final Path dir) throws IOException {
-        unzip(Files.newInputStream(zipFile), dir);
+    /**
+     * Unzips zipFile into targetDir. targetDir will be created if it doesn't exist.
+     *
+     * @param zipFile   The ZIP file to unzip.
+     * @param targetDir The target directory to unzip into.
+     * @throws IOException
+     */
+    public static void unzip(final Path zipFile, final Path targetDir) throws IOException {
+        Objects.requireNonNull(targetDir);
+        if (Files.exists(targetDir) && !Files.isDirectory(targetDir)) {
+            throw new IOException(LogUtil.message("'{}' is not a directory.", targetDir.toAbsolutePath()));
+        }
+        try (ZipFile zipArchive = createZipFile(zipFile)) {
+            // This will check zip entry paths are not outside the targetDir
+            new Expander().expand(zipArchive, targetDir);
+        }
     }
 
-    public static void unzip(final InputStream inputStream, final Path dir) throws IOException {
-        try (final ZipArchiveInputStream zip =
-                new ZipArchiveInputStream(new BufferedInputStream(inputStream))) {
+    /**
+     * Unzipping from an {@link InputStream} means you may unzip entries that are not in the
+     * ZIP central directory. See ZipArchiveInputStream javadoc.
+     *
+     * @param inputStream The input stream to unzip.
+     * @param targetDir   The target directory to unzip into.
+     * @throws IOException
+     */
+    @Deprecated
+    public static void unzip(final InputStream inputStream, final Path targetDir) throws IOException {
+        Objects.requireNonNull(inputStream);
+        Objects.requireNonNull(targetDir);
+        if (Files.exists(targetDir) && !Files.isDirectory(targetDir)) {
+            throw new IOException(LogUtil.message("'{}' is not a directory.", targetDir.toAbsolutePath()));
+        }
+
+        try (final ZipArchiveInputStream zip = new ZipArchiveInputStream(new BufferedInputStream(inputStream))) {
             ZipArchiveEntry zipEntry;
             while ((zipEntry = zip.getNextEntry()) != null) {
-                // Get output file.
-                final Path file = dir.resolve(zipEntry.getName());
+                // Get output file. This will throw if the entry is outside targetDir
+                final Path file = zipEntry.resolveIn(targetDir);
 
                 if (zipEntry.isDirectory()) {
                     // Make sure output directories exist.
@@ -181,12 +214,35 @@ public final class ZipUtil {
         }
     }
 
-    public static List<String> pathList(final Path zipFilePath) throws IOException {
+    /**
+     * List the paths ({@link ZipArchiveEntry#getName()}) in the ZIP.
+     */
+    public static List<String> pathList(final Path zipFile) throws IOException {
+        return pathList(zipFile, true);
+    }
+
+    /**
+     * List the paths ({@link ZipArchiveEntry#getName()}) in the ZIP.
+     *
+     * @param zipFilePath   The zip file to list.
+     * @param validatePaths If true will throw an exception for any zip entries that have an
+     *                      absolute path or a path that would be outside a target directory,
+     *                      e.g. '../foo.txt'.
+     * @return The list of paths.
+     * @throws IOException
+     */
+    public static List<String> pathList(final Path zipFilePath, final boolean validatePaths) throws IOException {
+        Objects.requireNonNull(zipFilePath);
         final List<String> pathList = new ArrayList<>();
-        try (final ZipArchiveInputStream zip =
-                new ZipArchiveInputStream(new BufferedInputStream(Files.newInputStream(zipFilePath)))) {
-            ZipArchiveEntry zipEntry;
-            while ((zipEntry = zip.getNextEntry()) != null) {
+        try (ZipFile zipFile = createZipFile(zipFilePath)) {
+            final Iterator<ZipArchiveEntry> iterator = zipFile.getEntries().asIterator();
+            while (iterator.hasNext()) {
+                final ZipArchiveEntry zipEntry = iterator.next();
+                if (validatePaths && !isSafeZipPath(Path.of(zipEntry.getName()))) {
+                    throw new IOException(LogUtil.message(
+                            "Zip entry '{}' would extract outside of a target directory.",
+                            zipEntry.getName()));
+                }
                 pathList.add(zipEntry.getName());
             }
         }
@@ -215,15 +271,24 @@ public final class ZipUtil {
     }
 
     public static ZipFile createZipFile(final Path zipFilePath) {
+        if (!Files.isRegularFile(zipFilePath)) {
+            throw new UncheckedIOException(new IOException(
+                    LogUtil.message("ZIP file '{}' does not exist or is not a file", zipFilePath.toAbsolutePath())));
+        }
+        if (!Files.isReadable(zipFilePath)) {
+            throw new UncheckedIOException(new IOException(
+                    LogUtil.message("ZIP file '{}' is not readable", zipFilePath.toAbsolutePath())));
+        }
         try {
             // Not clear if we should be using setSeekableByteChannel or setFile ??
             return ZipFile.builder()
                     .setSeekableByteChannel(Files.newByteChannel(zipFilePath))
                     .get();
         } catch (final IOException e) {
+            // TODO change e.getMessage() => LogUtil.exceptionMessage(e) in later versions
             throw new UncheckedIOException(LogUtil.message(
                     "Error creating ZipFile object for zipFilePath {}: {}",
-                    zipFilePath, LogUtil.exceptionMessage(e)), e);
+                    zipFilePath, e.getMessage()), e);
         }
     }
 
@@ -239,18 +304,82 @@ public final class ZipUtil {
     /**
      * Iterate over each entry in the zip file.
      */
-    public static void forEachEntry(final Path zipFilePath,
+    public static void forEachEntry(final Path zipFile,
                                     final BiConsumer<ZipFile, ZipArchiveEntry> entryConsumer) {
         Objects.requireNonNull(entryConsumer);
-        try (final ZipFile zipFile = createZipFile(zipFilePath)) {
-            zipFile.getEntries()
-                    .asIterator()
-                    .forEachRemaining(entry ->
-                            entryConsumer.accept(zipFile, entry));
+        try (final ZipFile zipArchive = createZipFile(zipFile)) {
+            final Enumeration<ZipArchiveEntry> entries = zipArchive.getEntries();
+            ZipArchiveEntry zipEntry = entries.hasMoreElements()
+                    ? entries.nextElement()
+                    : null;
+            while (zipEntry != null && zipArchive.canReadEntryData(zipEntry)) {
+                entryConsumer.accept(zipArchive, zipEntry);
+                zipEntry = entries.hasMoreElements()
+                        ? entries.nextElement()
+                        : null;
+            }
         } catch (final IOException e) {
+            // TODO change e.getMessage() => LogUtil.exceptionMessage(e) in later versions
             throw new UncheckedIOException(LogUtil.message(
                     "Error iterating over entries in zipFilePath {}: {}",
-                    zipFilePath, LogUtil.exceptionMessage(e)), e);
+                    zipFile, e.getMessage()), e);
         }
+    }
+
+    /**
+     * Tests if a zip entry path is safe to use, i.e. when path is unzipped into
+     * any directory, it does not resolve to a path that is outside that directory.
+     *
+     * @param path The path to test, relative or absolute.
+     * @return True if the path is safe.
+     */
+    public static boolean isSafeZipPath(final Path path) {
+        Objects.requireNonNull(path);
+        final Path normalisedPath = path.normalize();
+
+        // We don't have a destination dir, so need to construct a base path to
+        // test normalisedPath against that has at least as many parts,
+        // e.g. if normalisedPath is ../../../foo basePath needs to be /0/1/2/3
+        // to give a fullPath of /0/foo when combined, which does not start
+        // with /0/1/2/3
+        final long partCount = StreamSupport.stream(normalisedPath.spliterator(), false)
+                .count();
+        final StringBuilder stringBuilder = new StringBuilder();
+        for (long i = 0; i < partCount; i++) {
+            stringBuilder.append(File.separatorChar)
+                    .append(i);
+        }
+        final Path basePath = Path.of(stringBuilder.toString());
+        final Path fullPath = basePath.resolve(normalisedPath)
+                .normalize();
+
+        LOGGER.trace("path: {}, normalisedPath: {}, basePath: {}, fullPath: {}",
+                path, normalisedPath, basePath, fullPath);
+
+        return fullPath.startsWith(basePath.normalize());
+    }
+
+    /**
+     * Tests if a zip entry path is safe to use, i.e. it does not resolve to a path
+     * that is outside destDir.
+     * <p>
+     * Consider using {@link ZipArchiveEntry#resolveIn(Path)} which does the same check.
+     * </p>
+     *
+     * @param path    The path to test, relative or absolute.
+     * @param destDir The directory that path will be resolved against.
+     * @return True if the path is safe.
+     */
+    public static boolean isSafeZipPath(final Path path, final Path destDir) {
+        Objects.requireNonNull(path);
+        Objects.requireNonNull(destDir);
+        final Path normalisedPath = path.normalize();
+        final Path fullPath = destDir.resolve(normalisedPath)
+                .normalize();
+
+        LOGGER.debug("path: {}, destDir: {}, normalisedPath: {}, fullPath: {}",
+                path, destDir, normalisedPath, fullPath);
+
+        return fullPath.startsWith(destDir.normalize());
     }
 }

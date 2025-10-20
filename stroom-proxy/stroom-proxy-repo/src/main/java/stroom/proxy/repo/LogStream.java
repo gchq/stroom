@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
@@ -32,8 +33,15 @@ public class LogStream {
         final List<String> metaKeys = logStreamConfigProvider.get().getMetaKeys();
         if (NullSafe.hasItems(metaKeys)) {
             final Map<String, String> map = new LinkedHashMap<>(metaKeys.size());
-            metaKeys.forEach(key ->
-                    map.put(key, attributeMap.get(key)));
+            final Map<String, String> keyMap = attributeMap.getKeyMap();
+            metaKeys.forEach(key -> {
+                final String originalKey = keyMap.get(key.toLowerCase(Locale.ROOT));
+                if (originalKey != null) {
+                    map.put(originalKey, attributeMap.get(originalKey));
+                } else {
+                    map.put(key, null);
+                }
+            });
             return map;
         } else {
             return Collections.emptyMap();

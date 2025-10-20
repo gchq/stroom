@@ -3,6 +3,7 @@ package stroom.data.client.presenter;
 import stroom.data.grid.client.EventCell;
 import stroom.util.client.ClipboardUtil;
 import stroom.widget.util.client.ElementUtil;
+import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
@@ -71,6 +72,6 @@ public class CopyTextCell extends AbstractCell<String> implements HasHandlers, E
 
     @Override
     public void render(final Context context, final String value, final SafeHtmlBuilder sb) {
-        CopyTextUtil.render(value, sb);
+        CopyTextUtil.render(value, new HtmlBuilder(sb), false);
     }
 }

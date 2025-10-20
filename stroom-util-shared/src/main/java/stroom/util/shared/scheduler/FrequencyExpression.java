@@ -28,13 +28,13 @@ import java.util.Objects;
 public class FrequencyExpression {
 
     @JsonProperty
-    private String name;
+    private final String name;
     @JsonProperty
-    private String expression;
+    private final String expression;
 
     @JsonCreator
     public FrequencyExpression(@JsonProperty("name") final String name,
-                               @JsonProperty("to") final String expression) {
+                               @JsonProperty("expression") final String expression) {
         this.name = name;
         this.expression = expression;
     }

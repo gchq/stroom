@@ -65,6 +65,7 @@ public class DashboardSearchResponse {
     /**
      * @deprecated Use {@link DashboardSearchResponse#errorMessages} instead.
      */
+    @Deprecated
     @JsonProperty
     private final List<String> errors;
 

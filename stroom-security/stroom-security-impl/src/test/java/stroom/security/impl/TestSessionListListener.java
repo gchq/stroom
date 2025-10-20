@@ -3,6 +3,7 @@ package stroom.security.impl;
 import stroom.node.api.FindNodeCriteria;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
+import stroom.security.mock.MockSecurityContext;
 import stroom.security.shared.SessionListResponse;
 import stroom.security.shared.SessionResource;
 import stroom.task.api.SimpleTaskContextFactory;
@@ -29,6 +30,7 @@ class TestSessionListListener extends AbstractMultiNodeResourceTest<SessionResou
     private final Map<String, SessionListService> sessionListServiceMap = new HashMap<>();
 
     private static final int BASE_PORT = 7030;
+
 
     public TestSessionListListener() {
         super(createNodeList(BASE_PORT));
@@ -119,7 +121,9 @@ class TestSessionListListener extends AbstractMultiNodeResourceTest<SessionResou
                 nodeInfo,
                 nodeService,
                 new SimpleTaskContextFactory(),
-                webTargetFactory());
+                webTargetFactory(),
+                Mockito.mock(StroomUserIdentityFactory.class),
+                new MockSecurityContext());
 
         sessionListServiceMap.put(node.getNodeName(), sessionListService);
 
@@ -128,6 +132,7 @@ class TestSessionListListener extends AbstractMultiNodeResourceTest<SessionResou
                 TestUtil.mockProvider(HttpServletRequest.class),
                 TestUtil.mockProvider(AuthenticationEventLog.class),
                 () -> sessionListService,
-                TestUtil.mockProvider(StroomUserIdentityFactory.class));
+                TestUtil.mockProvider(StroomUserIdentityFactory.class),
+                MockSecurityContext::new);
     }
 }

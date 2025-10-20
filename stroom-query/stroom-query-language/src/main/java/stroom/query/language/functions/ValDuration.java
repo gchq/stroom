@@ -18,19 +18,26 @@ package stroom.query.language.functions;
 
 import stroom.util.shared.ModelStringUtil;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.Objects;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public final class ValDuration implements ValNumber {
 
     private static final Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
             ValDuration.class, ValComparators.AS_LONG_COMPARATOR);
 
     public static final Type TYPE = Type.DURATION;
+    @JsonProperty
     private final long milliseconds;
 
-    private ValDuration(final long milliseconds) {
+    @JsonCreator
+    private ValDuration(@JsonProperty("milliseconds") final long milliseconds) {
         this.milliseconds = milliseconds;
     }
 

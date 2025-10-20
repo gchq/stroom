@@ -101,6 +101,17 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         addNewItem(new Term());
     }
 
+    public void insertValue(final String value) {
+        if (selectionModel != null) {
+            final Item selectedItem = selectionModel.getSelectedObject();
+            if (selectedItem instanceof final Term term) {
+                term.setValue(value);
+                fireDirty();
+                getView().refresh();
+            }
+        }
+    }
+
     public void copy() {
         if (selectionModel != null) {
             final Item selectedItem = selectionModel.getSelectedObject();
@@ -120,8 +131,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
     }
 
     private void copy(final Item parent, final Item item) {
-        if (item instanceof Operator) {
-            final Operator operator = (Operator) item;
+        if (item instanceof final Operator operator) {
             List<Item> children = tree.getChildren(operator);
             if (children != null) {
                 children = new ArrayList<>(children);
@@ -137,8 +147,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
                     copy(newOperator, child);
                 }
             }
-        } else if (item instanceof Term) {
-            final Term term = (Term) item;
+        } else if (item instanceof final Term term) {
             final Term newTerm = new Term();
             newTerm.setField(term.getField());
             newTerm.setCondition(term.getCondition());
@@ -184,7 +193,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         final Item parent = tree.getParent(selectedItem);
         if (parent != null) {
             final List<Item> children = tree.getChildren(parent);
-            if (children == null || children.size() == 0) {
+            if (children == null || children.isEmpty()) {
                 return null;
             }
 

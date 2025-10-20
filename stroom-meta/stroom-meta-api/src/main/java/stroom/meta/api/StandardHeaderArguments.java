@@ -16,6 +16,9 @@
 
 package stroom.meta.api;
 
+import stroom.util.shared.string.CIKey;
+import stroom.util.shared.string.CIKeys;
+
 import java.util.Set;
 
 public interface StandardHeaderArguments {
@@ -118,6 +121,7 @@ public interface StandardHeaderArguments {
     String SYSTEM = "System";
     String COMPONENT = "Component";
     String FEED = "Feed";
+    String HOST = "Host"; // Receiving host
     String TYPE = "Type";
     String ENVIRONMENT = "Environment";
     String FORMAT = "Format"; // The data format, e.g. XML, JSON, CSV, etc.
@@ -139,6 +143,27 @@ public interface StandardHeaderArguments {
             "transfer-encoding",
             "expect",
             COMPRESSION);
+
+    /**
+     * A base allow-set of meta keys for inclusion in the request when proxy forwards data downstream.
+     * This set represents the headers that stroom/proxy may make use of when ingesting data.
+     */
+    Set<CIKey> HTTP_POST_BASE_META_ALLOW_SET = Set.of(
+            CIKeys.ACCOUNT_ID,
+            CIKeys.ACCOUNT_NAME,
+            CIKeys.CLASSIFICATION,
+            CIKeys.COMPONENT,
+            CIKeys.CONTEXT_ENCODING,
+            CIKeys.CONTEXT_FORMAT,
+            CIKeys.ENCODING,
+            CIKeys.ENVIRONMENT,
+            CIKeys.FEED,
+            CIKeys.FORMAT,
+            CIKeys.GUID,
+            CIKeys.SCHEMA,
+            CIKeys.SCHEMA_VERSION,
+            CIKeys.SYSTEM,
+            CIKeys.TYPE);
 
     /**
      * Header keys for values that are date/time strings

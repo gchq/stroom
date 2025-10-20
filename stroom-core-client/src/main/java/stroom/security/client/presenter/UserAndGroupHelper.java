@@ -51,6 +51,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class UserAndGroupHelper {
 
@@ -238,7 +239,9 @@ public class UserAndGroupHelper {
     public static List<Item> buildUserActionMenu(final UserRef userRef,
                                                  final boolean isExternalIdp,
                                                  final Set<UserScreen> userScreens,
-                                                 final HasHandlers hasHandlers) {
+                                                 final HasHandlers hasHandlers,
+                                                 final Function<UserRef, UserRefPopupPresenter>
+                                                         copyPermissionsPopupFunction) {
         final Set<UserScreen> screens = NullSafe.set(userScreens);
         if (userRef == null) {
             return Collections.emptyList();
@@ -293,6 +296,17 @@ public class UserAndGroupHelper {
                         .command(() ->
                                 OpenApiKeysScreenEvent.fire(hasHandlers, userRef)));
             }
+            if (userRef.isUser() && copyPermissionsPopupFunction != null) {
+                builder.withSeparatorIf(builder.hasItems());
+
+                builder.withIconMenuItem(itemBuilder -> itemBuilder
+                        .icon(UserTabPlugin.USER_ICON)
+                        .text("Copy user groups and permissions from...")
+                        .command(() -> {
+                            copyPermissionsPopupFunction.apply(userRef).show("Select User");
+                        }));
+            }
+
             return builder.build();
         }
     }

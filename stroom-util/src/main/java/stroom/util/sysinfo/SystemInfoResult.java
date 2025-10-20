@@ -1,6 +1,7 @@
 package stroom.util.sysinfo;
 
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -14,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
 public class SystemInfoResult {
 
@@ -35,6 +36,11 @@ public class SystemInfoResult {
         this.name = name;
         this.description = description;
         this.details = Objects.requireNonNull(details);
+    }
+
+    @SerialisationTestConstructor
+    private SystemInfoResult() {
+        this("test", "test", Map.of("test", "test"));
     }
 
     public Map<String, Object> getDetails() {

@@ -18,6 +18,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
 
     @Override
     protected void configureFunctions() {
+        bindFunction(AddMetaFunction.class);
         bindFunction(CidrToNumericIPRangeFunction.class);
         bindFunction(ClassificationFunction.class);
         bindFunction(ColFromFunction.class);
@@ -66,6 +67,22 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(SearchIdFunction.class);
         bindFunction(SourceFunction.class);
         bindFunction(ToUnixTimeFunction.class);
+    }
+
+    private static class AddMetaFunction extends StroomExtensionFunctionDefinition<AddMeta> {
+
+        @Inject
+        AddMetaFunction(final Provider<AddMeta> functionCallProvider) {
+            super(
+                    AddMeta.FUNCTION_NAME,
+                    2,
+                    2,
+                    new SequenceType[]{
+                            SequenceType.SINGLE_STRING,
+                            SequenceType.SINGLE_STRING},
+                    SequenceType.EMPTY_SEQUENCE,
+                    functionCallProvider);
+        }
     }
 
     private static class CidrToNumericIPRangeFunction extends StroomExtensionFunctionDefinition<CidrToNumericIPRange> {

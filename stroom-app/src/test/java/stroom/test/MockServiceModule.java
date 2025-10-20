@@ -3,6 +3,7 @@ package stroom.test;
 import stroom.activity.mock.MockActivityModule;
 import stroom.cache.impl.CacheModule;
 import stroom.cache.service.impl.CacheServiceModule;
+import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.core.dataprocess.PipelineStreamTaskModule;
 import stroom.credentials.impl.db.MockCredentialsDaoModule;
 import stroom.data.store.mock.MockStreamStoreModule;
@@ -99,6 +100,7 @@ public class MockServiceModule extends AbstractModule {
         install(new MockXmlSchemaModule());
         install(new MockStateModule());
         install(new MockPlanBModule());
+        install(new MockClusterLockModule());
 
         bind(ContentPackUserService.class).to(MockSecurityContext.class);
         bind(HttpClientFactory.class).to(BasicHttpClientFactory.class);

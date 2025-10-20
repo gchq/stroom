@@ -21,6 +21,7 @@ import stroom.annotation.impl.AnnotationConfig;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.StroomCache;
 import stroom.db.util.JooqUtil;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.shared.Clearable;
 
 import jakarta.inject.Inject;
@@ -28,6 +29,8 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import static stroom.annotation.impl.db.jooq.tables.AnnotationFeed.ANNOTATION_FEED;
 
@@ -50,11 +53,17 @@ class AnnotationFeedIdToNameCache implements Clearable {
     }
 
     private Optional<String> load(final Integer id) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
-                .select(ANNOTATION_FEED.NAME)
-                .from(ANNOTATION_FEED)
-                .where(ANNOTATION_FEED.ID.eq(id))
-                .fetchOptional(ANNOTATION_FEED.NAME));
+        try {
+            return CompletableFuture.supplyAsync(() -> JooqUtil.contextResult(connectionProvider, context -> context
+                    .select(ANNOTATION_FEED.NAME)
+                    .from(ANNOTATION_FEED)
+                    .where(ANNOTATION_FEED.ID.eq(id))
+                    .fetchOptional(ANNOTATION_FEED.NAME))).get();
+        } catch (final InterruptedException e) {
+            throw new UncheckedInterruptedException(e);
+        } catch (final ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public Optional<String> getName(final Integer id) {

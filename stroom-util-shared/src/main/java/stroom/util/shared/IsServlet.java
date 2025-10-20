@@ -9,4 +9,12 @@ public interface IsServlet {
      * e.g. "/datafeed".
      */
     Set<String> getPathSpecs();
+
+    /**
+     * @return The name to use when registering this servlet. If not implemented, returns the simple name
+     * of this class.
+     */
+    default String getName() {
+        return getClass().getSimpleName();
+    }
 }
