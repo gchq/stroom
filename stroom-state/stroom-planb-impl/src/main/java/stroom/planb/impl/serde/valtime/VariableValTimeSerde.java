@@ -74,20 +74,20 @@ public class VariableValTimeSerde implements ValTimeSerde {
     }
 
     @Override
-    public void write(final Txn<ByteBuffer> txn, final ValTime value, final Consumer<ByteBuffer> consumer) {
+    public void write(final Txn<ByteBuffer> txn, final ValTime val, final Consumer<ByteBuffer> consumer) {
         final Addition prefix = new Addition(1, bb -> bb.put(VariableValType.DIRECT.getPrimitiveValue()));
         final Addition suffix = Addition.NONE;
 
-        ValSerdeUtil.write(value.val(), byteBuffers, valueByteBuffer -> {
+        ValSerdeUtil.write(val.val(), byteBuffers, valueByteBuffer -> {
             if (valueByteBuffer.remaining() > USE_HASH_LOOKUP_THRESHOLD) {
                 // We are going to store as a lookup so take off the variable type prefix.
-                final ByteBuffer slice = getName(valueByteBuffer);
-                hashLookupDb.put(txn, slice, idByteBuffer -> {
+                final ByteBuffer valueSlice = getValueSlice(valueByteBuffer);
+                hashLookupDb.put(txn, valueSlice, idByteBuffer -> {
                     byteBuffers.use(1 + idByteBuffer.remaining() + timeSerde.getSize(), prefixedBuffer -> {
                         // Add the variable type prefix to the lookup id.
                         prefixedBuffer.put(VariableValType.HASH_LOOKUP.getPrimitiveValue());
                         prefixedBuffer.put(idByteBuffer);
-                        timeSerde.write(prefixedBuffer, value.insertTime());
+                        timeSerde.write(prefixedBuffer, val.insertTime());
                         prefixedBuffer.flip();
                         consumer.accept(prefixedBuffer);
                     });
@@ -95,13 +95,13 @@ public class VariableValTimeSerde implements ValTimeSerde {
                 });
             } else if (valueByteBuffer.remaining() > USE_UID_LOOKUP_THRESHOLD) {
                 // We are going to store as a lookup so take off the variable type prefix.
-                final ByteBuffer slice = getName(valueByteBuffer);
-                uidLookupDb.put(txn, slice, idByteBuffer -> {
+                final ByteBuffer valueSlice = getValueSlice(valueByteBuffer);
+                uidLookupDb.put(txn, valueSlice, idByteBuffer -> {
                     byteBuffers.use(1 + idByteBuffer.remaining() + timeSerde.getSize(), prefixedBuffer -> {
                         // Add the variable type prefix to the lookup id.
                         prefixedBuffer.put(VariableValType.UID_LOOKUP.getPrimitiveValue());
                         prefixedBuffer.put(idByteBuffer);
-                        timeSerde.write(prefixedBuffer, value.insertTime());
+                        timeSerde.write(prefixedBuffer, val.insertTime());
                         prefixedBuffer.flip();
                         consumer.accept(prefixedBuffer);
                     });
@@ -111,7 +111,7 @@ public class VariableValTimeSerde implements ValTimeSerde {
                 // We have already added the direct variable prefix so just use the byte buffer.
                 byteBuffers.use(valueByteBuffer.remaining() + timeSerde.getSize(), prefixedBuffer -> {
                     prefixedBuffer.put(valueByteBuffer);
-                    timeSerde.write(prefixedBuffer, value.insertTime());
+                    timeSerde.write(prefixedBuffer, val.insertTime());
                     prefixedBuffer.flip();
                     consumer.accept(prefixedBuffer);
                 });
@@ -120,7 +120,7 @@ public class VariableValTimeSerde implements ValTimeSerde {
         }, prefix, suffix);
     }
 
-    private ByteBuffer getName(final ByteBuffer byteBuffer) {
+    private ByteBuffer getValueSlice(final ByteBuffer byteBuffer) {
         return byteBuffer.slice(1, byteBuffer.remaining() - 1);
     }
 
