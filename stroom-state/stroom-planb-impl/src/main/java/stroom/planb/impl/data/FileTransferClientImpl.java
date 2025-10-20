@@ -31,9 +31,12 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 @Singleton
 public class FileTransferClientImpl implements FileTransferClient {
@@ -70,66 +73,100 @@ public class FileTransferClientImpl implements FileTransferClient {
                           final Path path,
                           final boolean synchroniseMerge) {
         securityContext.asProcessingUser(() -> {
-            try {
-                final Set<String> targetNodes = new HashSet<>();
+            final Set<String> targetNodes = new HashSet<>();
 
-                // Now post to all nodes.
-                final PlanBConfig planBConfig = configProvider.get();
-                final List<String> configuredNodes = planBConfig.getNodeList();
-                if (configuredNodes == null || configuredNodes.isEmpty()) {
-                    LOGGER.warn("No node list configured for PlanB, assuming this is a single node test setup");
-                    if (nodeInfo != null) {
-                        targetNodes.add(nodeInfo.getThisNodeName());
-                    }
+            // Now post to all nodes.
+            final PlanBConfig planBConfig = configProvider.get();
+            final List<String> configuredNodes = planBConfig.getNodeList();
+            if (configuredNodes == null || configuredNodes.isEmpty()) {
+                LOGGER.warn("No node list configured for PlanB, assuming this is a single node test setup");
+                if (nodeInfo != null) {
+                    targetNodes.add(nodeInfo.getThisNodeName());
+                }
 
-                } else {
-                    try {
-                        if (targetNodeSetFactory != null) {
-                            final Set<String> enabledActiveNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
-                            for (final String node : configuredNodes) {
-                                if (enabledActiveNodes.contains(node)) {
-                                    targetNodes.add(node);
-                                } else {
-                                    throw new RuntimeException("Plan B target node '" +
-                                                               node +
-                                                               "' is not enabled or active");
-                                }
+            } else {
+                try {
+                    if (targetNodeSetFactory != null) {
+                        final Set<String> enabledNodes = targetNodeSetFactory.getEnabledTargetNodeSet();
+                        for (final String node : configuredNodes) {
+                            if (enabledNodes.contains(node)) {
+                                targetNodes.add(node);
+                            } else {
+                                throw new RuntimeException("Plan B target node '" +
+                                                           node +
+                                                           "' is not enabled");
                             }
                         }
-                    } catch (final Exception e) {
-                        LOGGER.error(e::getMessage, e);
-                        throw new RuntimeException(e.getMessage(), e);
                     }
+                } catch (final Exception e) {
+                    LOGGER.error(e::getMessage, e);
+                    throw new RuntimeException(e.getMessage(), e);
                 }
+            }
 
-                // Send the data to all nodes.
-                for (final String nodeName : targetNodes) {
-                    LOGGER.debug(() -> LogUtil.message(
-                            "Plan B sending data {} to {}",
-                            fileDescriptor.getInfo(path),
-                            nodeName));
+            // Send the data to all nodes.
+            final List<CompletableFuture<?>> futures = new ArrayList<>(targetNodes.size());
+            final List<RuntimeException> collectedExceptions = Collections.synchronizedList(new ArrayList<>());
+            for (final String nodeName : targetNodes) {
+                futures.add(CompletableFuture.runAsync(() ->
+                        securityContext.asProcessingUser(() -> {
+                            try {
+                                LOGGER.debug(() -> LogUtil.message(
+                                        "Plan B sending data {} to {}",
+                                        fileDescriptor.getInfo(path),
+                                        nodeName));
 
-                    if (nodeInfo == null || NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
-                        // Allow file move if the only target is the local node.
-                        final boolean allowMove = targetNodes.size() == 1;
-                        storePartLocally(
-                                fileDescriptor,
-                                path,
-                                allowMove,
-                                synchroniseMerge);
-                    } else {
-                        storePartRemotely(
-                                nodeName,
-                                fileDescriptor,
-                                path,
-                                synchroniseMerge);
-                    }
+                                if (nodeInfo == null || NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
+                                    // Allow file move if the only target is the local node.
+                                    final boolean allowMove = targetNodes.size() == 1;
+                                    storePartLocally(
+                                            fileDescriptor,
+                                            path,
+                                            allowMove,
+                                            synchroniseMerge);
+                                } else {
+                                    storePartRemotely(
+                                            nodeName,
+                                            fileDescriptor,
+                                            path,
+                                            synchroniseMerge);
+                                }
+                            } catch (final IOException e) {
+                                LOGGER.error(e::getMessage, e);
+                                final UncheckedIOException uncheckedIOException = new UncheckedIOException(e);
+                                collectedExceptions.add(uncheckedIOException);
+                                throw uncheckedIOException;
+                            }
+                        })));
+            }
+
+            // Wait for all futures to complete or cancel them all and throw an exception if one fails.
+            try {
+                allOfTerminateOnFailure(futures).join();
+            } catch (final RuntimeException e) {
+                // If we collected an exception then throw that or else throw the completion exception.
+                if (!collectedExceptions.isEmpty()) {
+                    throw collectedExceptions.getFirst();
+                } else {
+                    throw e;
                 }
-            } catch (final IOException e) {
-                LOGGER.error(e::getMessage, e);
-                throw new UncheckedIOException(e);
             }
         });
+    }
+
+    private static CompletableFuture<?> allOfTerminateOnFailure(final List<CompletableFuture<?>> futures) {
+        final CompletableFuture<Void> failure = new CompletableFuture<>();
+        for (final CompletableFuture<?> f : futures) {
+            f.exceptionally(ex -> {
+                failure.completeExceptionally(ex);
+                return null;
+            });
+        }
+        failure.exceptionally(ex -> {
+            futures.forEach(f -> f.cancel(true));
+            return null;
+        });
+        return CompletableFuture.anyOf(failure, CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])));
     }
 
     private void storePartLocally(final FileDescriptor fileDescriptor,
