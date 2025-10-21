@@ -4,6 +4,8 @@ import stroom.bytebuffer.ByteBufferPool;
 import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.PooledByteBufferPair;
 import stroom.lmdb.LmdbConfig;
+import stroom.lmdb.stream.LmdbEntry;
+import stroom.lmdb.stream.LmdbKeyRange;
 import stroom.util.io.ByteSize;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -21,6 +23,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -87,14 +90,11 @@ public class TestLmdbDb {
     private static int getCount(final LmdbEnv lmdbEnv, final LmdbDb db) {
         final AtomicInteger counter = new AtomicInteger();
         lmdbEnv.read(readTxn -> {
-            db.iterate(readTxn, keyVals -> {
-                keyVals.iterator().forEachRemaining(keyVal -> {
-                    counter.incrementAndGet();
-                });
-            });
+            try (final Stream<LmdbEntry> stream  = db.stream(readTxn)) {
+                counter.set((int) stream.count());
+            }
         });
-        final int count = counter.get();
-        return count;
+        return counter.get();
     }
 
     private LmdbEnv createEnv(final Path tempDir) {

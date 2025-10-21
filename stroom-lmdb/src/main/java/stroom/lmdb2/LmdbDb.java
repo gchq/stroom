@@ -4,6 +4,7 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.lmdb.stream.LmdbEntry;
 import stroom.lmdb.stream.LmdbIterable;
 import stroom.lmdb.stream.LmdbKeyRange;
+import stroom.lmdb.stream.LmdbStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -22,6 +23,7 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 
 public class LmdbDb {
@@ -124,6 +126,11 @@ public class LmdbDb {
     }
 
     public void iterate(final AbstractTxn txn,
+                        final Consumer<Iterator<LmdbEntry>> iteratorConsumer) {
+        iterate(txn, LmdbKeyRange.all(), iteratorConsumer);
+    }
+
+    public void iterate(final AbstractTxn txn,
                         final LmdbKeyRange keyRange,
                         final Consumer<Iterator<LmdbEntry>> iteratorConsumer) {
         try (final LmdbIterable iterable = LmdbIterable.create(txn.get(), dbi, keyRange)) {
@@ -136,6 +143,15 @@ public class LmdbDb {
         } catch (final Throwable e) {
             error(e);
         }
+    }
+
+    public Stream<LmdbEntry> stream(final AbstractTxn txn) {
+        return stream(txn, LmdbKeyRange.all());
+    }
+
+    public Stream<LmdbEntry> stream(final AbstractTxn txn,
+                                    final LmdbKeyRange keyRange) {
+        return LmdbStream.stream(txn.get(), dbi, keyRange);
     }
 
     public boolean delete(final WriteTxn txn, final ByteBuffer key) {

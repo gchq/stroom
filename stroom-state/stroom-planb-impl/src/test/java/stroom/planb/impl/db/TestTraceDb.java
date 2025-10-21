@@ -169,7 +169,7 @@ public class TestTraceDb {
                 DOC,
                 true)) {
             assertThat(db.count()).isEqualTo(166);
-            assertThat(db.getInfo().env().dbNames().size()).isEqualTo(8);
+            assertThat(db.getInfo().env().dbNames().size()).isEqualTo(9);
         }
 
         // Try deletion.
@@ -184,7 +184,7 @@ public class TestTraceDb {
                 true)) {
             assertThat(db.count()).isEqualTo(166);
             System.err.println(db.getInfoString());
-            assertThat(db.getInfo().env().dbNames().size()).isEqualTo(8);
+            assertThat(db.getInfo().env().dbNames().size()).isEqualTo(9);
         }
 
         // Try compaction.
@@ -199,7 +199,7 @@ public class TestTraceDb {
                 DOC,
                 true)) {
             assertThat(db.count()).isEqualTo(166);
-            assertThat(db.getInfo().env().stat().entries).isEqualTo(8);
+            assertThat(db.getInfo().env().stat().entries).isEqualTo(9);
         }
     }
 

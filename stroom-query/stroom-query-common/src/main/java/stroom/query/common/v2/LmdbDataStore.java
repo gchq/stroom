@@ -438,15 +438,14 @@ public class LmdbDataStore implements DataStore {
                         final DeleteCommand deleteCommand) {
         lmdbRowKeyFactory.createChildKeyRange(
                 deleteCommand.getParentKey(), deleteCommand.getTimeFilter(), keyRange -> {
-                    db.iterate(writeTxn, keyRange, iterator -> {
-                        while (iterator.hasNext()) {
-                            final LmdbEntry keyVal = iterator.next();
-                            final ByteBuffer keyBuffer = keyVal.getKey();
+                    try (final Stream<LmdbEntry> stream = db.stream(writeTxn, keyRange)) {
+                        stream.forEach(entry -> {
+                            final ByteBuffer keyBuffer = entry.getKey();
                             if (keyBuffer.limit() > 1) {
                                 db.delete(writeTxn, keyBuffer);
                             }
-                        }
-                    });
+                        });
+                    }
                     writeTxn.commit();
                 });
     }

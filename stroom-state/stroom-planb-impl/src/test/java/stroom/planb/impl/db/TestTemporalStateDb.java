@@ -191,8 +191,10 @@ class TestTemporalStateDb {
 
         final String path = rootDir.toAbsolutePath().toString();
         final PlanBConfig planBConfig = new PlanBConfig(path);
+        final ByteBufferFactoryImpl byteBufferFactory = new ByteBufferFactoryImpl();
         final ShardManager shardManager = new ShardManager(
-                new ByteBuffers(new ByteBufferFactoryImpl()),
+                new ByteBuffers(byteBufferFactory),
+                byteBufferFactory,
                 planBDocCache,
                 planBDocStore,
                 null,
