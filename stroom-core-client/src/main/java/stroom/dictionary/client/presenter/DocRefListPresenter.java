@@ -48,25 +48,27 @@ public class DocRefListPresenter extends MyPresenterWidget<PagerView> {
         dataGrid = new MyDataGrid<>(this);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
-
-        initTableColumns();
     }
 
     /**
      * Add the columns to the table.
      */
-    private void initTableColumns() {
-        // Name.
-        final Column<DocRef, CommandLink> nodeNameColumn = DataGridUtil.commandLinkColumnBuilder(
-                        buildOpenDocCommandLink())
-                .build();
-        DataGridUtil.addCommandLinkFieldUpdater(nodeNameColumn);
-        dataGrid.addAutoResizableColumn(
-                nodeNameColumn,
-                DataGridUtil.headingBuilder("Document Name")
-                        .build(),
-                500);
-
+    public void initTableColumns(final String columnName, final boolean hasOpenLink) {
+        if (hasOpenLink) {
+            final Column<DocRef, CommandLink> nodeNameColumn = DataGridUtil.commandLinkColumnBuilder(
+                            buildOpenDocCommandLink())
+                    .build();
+            DataGridUtil.addCommandLinkFieldUpdater(nodeNameColumn);
+            dataGrid.addAutoResizableColumn(
+                    nodeNameColumn,
+                    DataGridUtil.headingBuilder(columnName)
+                            .build(),
+                    500);
+        } else {
+            dataGrid.addAutoResizableColumn(DataGridUtil.textColumnBuilder(DocRef::getName).build(),
+                    DataGridUtil.headingBuilder(columnName).build(),
+                    500);
+        }
         dataGrid.addEndColumn(new EndColumn<>());
     }
 
@@ -77,8 +79,7 @@ public class DocRefListPresenter extends MyPresenterWidget<PagerView> {
                 return new CommandLink(
                         name,
                         "Open " + docRef.getType() + " '" + name + "'.",
-                        () ->
-                                OpenDocumentEvent.fire(DocRefListPresenter.this, docRef, true));
+                        () -> OpenDocumentEvent.fire(DocRefListPresenter.this, docRef, true));
             } else {
                 return null;
             }

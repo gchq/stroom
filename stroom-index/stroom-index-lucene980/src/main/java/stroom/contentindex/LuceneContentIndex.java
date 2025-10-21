@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.ContentIndex;
 import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.shared.DocRefUtil;
+import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.DocContentHighlights;
 import stroom.explorer.shared.DocContentMatch;
 import stroom.explorer.shared.FetchHighlightsRequest;
@@ -27,6 +28,7 @@ import stroom.explorer.shared.FindInContentRequest;
 import stroom.explorer.shared.StringMatch;
 import stroom.explorer.shared.StringMatch.MatchType;
 import stroom.explorer.shared.StringMatchLocation;
+import stroom.explorer.shared.TagsPatternParser;
 import stroom.index.lucene980.Lucene980LockFactory;
 import stroom.index.lucene980.analyser.AnalyzerFactory;
 import stroom.query.api.datasource.AnalyzerType;
@@ -74,10 +76,13 @@ import org.apache.lucene980.index.Term;
 import org.apache.lucene980.queryparser.classic.ParseException;
 import org.apache.lucene980.queryparser.classic.QueryParser;
 import org.apache.lucene980.queryparser.simple.SimpleQueryParser;
+import org.apache.lucene980.search.BooleanClause.Occur;
+import org.apache.lucene980.search.BooleanQuery;
 import org.apache.lucene980.search.IndexSearcher;
 import org.apache.lucene980.search.Query;
 import org.apache.lucene980.search.RegexpQuery;
 import org.apache.lucene980.search.ScoreDoc;
+import org.apache.lucene980.search.TermQuery;
 import org.apache.lucene980.store.Directory;
 import org.apache.lucene980.store.NIOFSDirectory;
 import org.apache.lucene980.util.automaton.RegExp;
@@ -131,9 +136,11 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
     private static final String DATA_NGRAM = "data_ngram";
     private static final String DATA_CS_NGRAM = "data_cs_ngram";
     private static final String TEXT = "text";
+    private static final String TAG = "tag";
 
     private final SecurityContext securityContext;
     private final TaskContextFactory taskContextFactory;
+    private final ExplorerNodeService explorerNodeService;
     private final Set<ContentIndexable> indexables;
     private final Path docIndexDir;
     private final CountDownLatch indexInitialisedLatch = new CountDownLatch(1);
@@ -151,11 +158,13 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
     public LuceneContentIndex(final TempDirProvider tempDirProvider,
                               final Set<ContentIndexable> indexables,
                               final SecurityContext securityContext,
-                              final TaskContextFactory taskContextFactory) {
+                              final TaskContextFactory taskContextFactory,
+                              final ExplorerNodeService explorerNodeService) {
         this.securityContext = securityContext;
         this.taskContextFactory = taskContextFactory;
         this.indexables = indexables;
         this.docIndexDir = tempDirProvider.get().resolve("doc-index");
+        this.explorerNodeService = explorerNodeService;
     }
 
     private boolean isIndexInitialised() {
@@ -199,7 +208,8 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
 //            DATA_CS, AnalyzerFactory.create(AnalyzerType.KEYWORD, true),
                         DATA_NGRAM, new NGramAnalyzer(),
                         DATA_CS_NGRAM, new NGramCSAnalyzer(),
-                        TEXT, AnalyzerFactory.create(AnalyzerType.KEYWORD, true));
+                        TEXT, AnalyzerFactory.create(AnalyzerType.KEYWORD, true),
+                        TAG, AnalyzerFactory.create(AnalyzerType.KEYWORD, false));
 
                 analyzer = new PerFieldAnalyzerWrapper(new KeywordAnalyzer(), analyzerMap);
 
@@ -391,6 +401,7 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
                     final Document doc = storedFields.document(docId);
                     final DocRef docRef = new DocRef(doc.get(TYPE), doc.get(UUID), doc.get(NAME));
                     final String text = doc.get(TEXT);
+                    final String[] tagsArray = doc.getValues(TAG);
                     final List<StringMatchLocation> highlights = highlighter.getHighlights(text, 1);
                     if (!highlights.isEmpty()) {
                         if (securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
@@ -401,7 +412,8 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
                                     matches.add(DocContentMatch.create(docRef,
                                             extension,
                                             text,
-                                            highlights.getFirst()));
+                                            highlights.getFirst(),
+                                            List.of(tagsArray)));
                                 } catch (final Exception e) {
                                     LOGGER.debug(e::getMessage, e);
                                 }
@@ -471,22 +483,26 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
     }
 
     private Query getQuery(final StringMatch stringMatch) throws ParseException {
+        final TagsPatternParser tagsPatternParser = new TagsPatternParser(stringMatch.getPattern());
+        final List<String> tags = tagsPatternParser.getTags();
+        final String text = tagsPatternParser.getText();
+
         // If we are going to do a regex then we'll just scan all content and do regex.
         if (MatchType.REGEX.equals(stringMatch.getMatchType())) {
             // Lucene matches on the whole line (^ & $ are not supported), so we need
             // to append .* to each end
-            final String pattern = ".*" + stringMatch.getPattern() + ".*";
+            final String pattern = ".*" + text + ".*";
             final Term term = new Term(TEXT, pattern);
             try {
                 if (stringMatch.isCaseSensitive()) {
-                    return new RegexpQuery(term);
+                    return addTagsQuery(new RegexpQuery(term), tags);
                 } else {
                     // The 10_000 came from looking at the other overloaded ctors in RegexpQuery
-                    return new RegexpQuery(
+                    return addTagsQuery(new RegexpQuery(
                             term,
                             RegExp.ALL,
                             RegExp.ASCII_CASE_INSENSITIVE,
-                            10_000);
+                            10_000), tags);
                 }
             } catch (final Exception e) {
                 LOGGER.debug(() -> LogUtil.message("Error constructing regex query with pattern '{}': {}",
@@ -494,10 +510,29 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
                 throw e;
             }
         } else {
-            final String nGramField = getNGramField(stringMatch);
-            final SimpleQueryParser simpleQueryParser = new SimpleQueryParser(analyzer, nGramField);
-            return simpleQueryParser.createPhraseQuery(nGramField, stringMatch.getPattern());
+            if (!text.isBlank()) {
+                final String nGramField = getNGramField(stringMatch);
+                final SimpleQueryParser simpleQueryParser = new SimpleQueryParser(analyzer, nGramField);
+                final Query query = simpleQueryParser.createPhraseQuery(nGramField, text);
+                return addTagsQuery(query, tags);
+            }
         }
+
+        return new BooleanQuery.Builder().build();
+    }
+
+    private Query addTagsQuery(final Query query, final List<String> tags) {
+        final BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        builder.add(query, Occur.MUST);
+
+        if (!tags.isEmpty()) {
+            tags.forEach(tag -> {
+                final Query tagQuery = new TermQuery(new Term(TAG, tag));
+                builder.add(tagQuery, Occur.MUST);
+            });
+        }
+
+        return builder.build();
     }
 
     private boolean isNGram(final String field) {
@@ -715,6 +750,13 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
 //        document.add(createField(DATA, data));
 //        document.add(createField(DATA_CS, data));
         document.add(new TextField(TEXT, data, Store.YES));
+        explorerNodeService.getNode(docRef).ifPresent(node -> {
+            if (node.getTags() != null) {
+                node.getTags().forEach(tag ->
+                    document.add(new TextField(TAG, tag, Store.YES))
+                );
+            }
+        });
         writer.addDocument(document);
     }
 

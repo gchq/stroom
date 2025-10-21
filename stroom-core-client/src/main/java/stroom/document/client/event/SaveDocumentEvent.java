@@ -58,6 +58,10 @@ public class SaveDocumentEvent extends GwtEvent<SaveDocumentEvent.Handler> {
         return tabData;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Handler extends EventHandler {
 
         void onSave(final SaveDocumentEvent event);

@@ -7,6 +7,7 @@ import stroom.lmdb.stream.LmdbKeyRange;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
@@ -15,16 +16,18 @@ import org.lmdbjava.PutFlags;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class LmdbDb {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbDb.class);
+    private static final Charset DB_NAME_CHARSET = StandardCharsets.UTF_8;
 
     private final Env<ByteBuffer> env;
     private final Dbi<ByteBuffer> dbi;
@@ -43,9 +46,7 @@ public class LmdbDb {
 
         try {
             final DbiFlags[] envFlagsArr = dbiFlags.toArray(new DbiFlags[0]);
-            final byte[] nameBytes = name == null
-                    ? null
-                    : name.getBytes(UTF_8);
+            final byte[] nameBytes = convertDbName(name);
             dbi = env.openDbi(nameBytes, envFlagsArr);
         } catch (final RuntimeException e) {
             errorHandler.error(e);
@@ -207,5 +208,26 @@ public class LmdbDb {
                ", name='" + name + '\'' +
                ", dbiFlags=" + dbiFlags +
                '}';
+    }
+
+    /**
+     * Converts a DB name {@link String} into byte[] form.
+     * Null safe to allow for the un-named DB.
+     */
+    static byte[] convertDbName(final String dbName) {
+        return NullSafe.get(dbName, str -> str.getBytes(DB_NAME_CHARSET));
+//        if (dbName == null) {
+//            return new byte[0];
+//        } else {
+//            return dbName.getBytes(DB_NAME_CHARSET);
+//        }
+    }
+
+    /**
+     * Converts a DB name byte[] into {@link String} form.
+     * Null safe to allow for the un-named DB.
+     */
+    static String convertDbName(final byte[] dbNameBytes) {
+        return NullSafe.get(dbNameBytes, bytes -> new String(bytes, DB_NAME_CHARSET));
     }
 }

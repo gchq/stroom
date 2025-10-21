@@ -259,7 +259,7 @@ class TestStateDb {
                 DOC,
                 true)) {
             assertThat(db.count()).isEqualTo(2);
-            assertThat(db.getInfo().env().dbNames().size()).isEqualTo(12);
+            assertThat(db.getInfo().env().dbNames().size()).isEqualTo(14);
         }
 
         // Try deletion.
@@ -273,7 +273,7 @@ class TestStateDb {
                 true)) {
             assertThat(db.count()).isEqualTo(0);
             System.err.println(db.getInfoString());
-            assertThat(db.getInfo().env().dbNames().size()).isEqualTo(12);
+            assertThat(db.getInfo().env().dbNames().size()).isEqualTo(14);
         }
 
         // Try compaction.
@@ -287,7 +287,7 @@ class TestStateDb {
                 DOC,
                 true)) {
             assertThat(db.count()).isEqualTo(0);
-            assertThat(db.getInfo().env().stat().entries).isEqualTo(12);
+            assertThat(db.getInfo().env().stat().entries).isEqualTo(14);
         }
     }
 

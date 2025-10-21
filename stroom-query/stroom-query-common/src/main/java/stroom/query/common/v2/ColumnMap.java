@@ -164,7 +164,12 @@ public class ColumnMap {
                 (column.getFilter().getIncludes() != null &&
                  !column.getFilter().getIncludes().isBlank()) ||
                 (column.getFilter().getExcludes() != null &&
-                 !column.getFilter().getExcludes().isBlank()));
+                 !column.getFilter().getExcludes().isBlank()) ||
+                (column.getFilter().getIncludeDictionaries() != null &&
+                 !column.getFilter().getIncludeDictionaries().isEmpty()) ||
+                (column.getFilter().getExcludeDictionaries() != null &&
+                 !column.getFilter().getExcludeDictionaries().isEmpty())
+            );
     }
 
     public Column getNewColumnFromOriginalColumn(final Column originalColumn) {

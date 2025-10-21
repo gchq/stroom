@@ -5,17 +5,38 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
     <g:FlowPanel styleName="max dock-container-vertical">
         <g:FlowPanel styleName="dock-min form-padding form">
-            <form:FormGroup identity="rememberNotifications" label="Remember Notifications">
+            <form:FormGroup identity="rememberNotifications"
+                            label="Remember Notifications"
+                            helpText="If ticked, the column values from de-duplicated notifications will be stored
+                                in the duplicated check store so they can be viewed.">
                 <tickbox:CustomCheckBox ui:field="rememberNotifications"/>
             </form:FormGroup>
-            <form:FormGroup identity="suppressDuplicateNotifications" label="Suppress Duplicate Notifications">
+            <form:FormGroup identity="suppressDuplicateNotifications"
+                            label="Suppress Duplicate Notifications"
+                            helpText="If ticked, notifications that are identical (across the configured columns)
+                            to ones previously sent will be suppressed. This relies on notification values being
+                            stored in the duplicate check store.">
                 <tickbox:CustomCheckBox ui:field="suppressDuplicateNotifications"/>
             </form:FormGroup>
-            <form:FormGroup identity="chooseColumns" label="Choose Columns">
+            <form:FormGroup identity="chooseColumns"
+                            label="Choose Columns">
                 <tickbox:CustomCheckBox ui:field="chooseColumns"/>
+                <form:HelpHTML>
+                    <p>If ticked, enter the column names in the Columns field to define which columns will be
+                        used for de-duplication of notifications.</p>
+                    <p><strong>Note</strong>: Any change to the columns used for de-duplication will require the
+                        duplication store to be cleared.</p>
+                </form:HelpHTML>
             </form:FormGroup>
-            <form:FormGroup identity="columns" label="Columns">
+            <form:FormGroup identity="columns"
+                            label="Columns">
                 <g:TextBox ui:field="columns" width="100%"/>
+                <form:HelpHTML>
+                    <p>A comma delimited list of column names (case-sensitive) that should be used to
+                        de-duplicated notifications.</p>
+                    <p><strong>Note</strong>: Any change to the columns used for de-duplication will require the
+                    duplication store to be cleared.</p>
+                </form:HelpHTML>
             </form:FormGroup>
         </g:FlowPanel>
         <g:SimplePanel ui:field="list"

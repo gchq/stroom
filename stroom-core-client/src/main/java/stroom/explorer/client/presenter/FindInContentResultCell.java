@@ -36,6 +36,7 @@ public class FindInContentResultCell extends AbstractCell<FindInContentResult> {
             final SafeHtmlBuilder row = new SafeHtmlBuilder();
             final SafeHtmlBuilder main = new SafeHtmlBuilder();
             final SafeHtmlBuilder sub = new SafeHtmlBuilder();
+            final SafeHtmlBuilder tags = new SafeHtmlBuilder();
 
             // Add icon
             final DocumentType documentType = DocumentTypeRegistry.get(
@@ -98,6 +99,12 @@ public class FindInContentResultCell extends AbstractCell<FindInContentResult> {
                     SafeHtmlUtil.from(match.getDocRef().getUuid())));
 
             row.append(Templates.div(getCellClassName() + "-sub", sub.toSafeHtml()));
+
+            if (!value.getDocContentMatch().getTags().isEmpty()) {
+                final String tagsString = "Tags: " + value.getDocContentMatch().getTags().toString();
+                tags.append(Templates.div(getCellClassName() + "-tags", SafeHtmlUtil.from(tagsString)));
+                row.append(Templates.div(getCellClassName() + "-sub", tags.toSafeHtml()));
+            }
 
             sb.append(Templates.div(getCellClassName() + "-row", row.toSafeHtml()));
         }

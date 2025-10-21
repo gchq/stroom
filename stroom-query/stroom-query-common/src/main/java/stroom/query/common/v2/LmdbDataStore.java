@@ -18,6 +18,7 @@
 package stroom.query.common.v2;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.dictionary.api.WordListProvider;
 import stroom.lmdb.stream.LmdbEntry;
 import stroom.lmdb.stream.LmdbKeyRange;
 import stroom.lmdb2.LmdbDb;
@@ -88,6 +89,7 @@ public class LmdbDataStore implements DataStore {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbDataStore.class);
 
     private static final long COMMIT_FREQUENCY_MS = 10000;
+    private static final int MAX_LIST_SIZE = 10_000;
     public static final ByteBuffer DB_STATE_VALUE = ByteBuffer
             .allocateDirect(Long.BYTES + Long.BYTES + Long.BYTES);
 
@@ -146,7 +148,8 @@ public class LmdbDataStore implements DataStore {
                          final ErrorConsumer errorConsumer,
                          final ByteBufferFactory bufferFactory,
                          final ExpressionPredicateFactory expressionPredicateFactory,
-                         final AnnotationMapperFactory annotationMapperFactory) {
+                         final AnnotationMapperFactory annotationMapperFactory,
+                         final WordListProvider wordListProvider) {
         this.bufferFactory = bufferFactory;
         this.queryKey = queryKey;
         this.componentId = componentId;
@@ -219,7 +222,7 @@ public class LmdbDataStore implements DataStore {
                 compiledColumns,
                 dateTimeSettings,
                 expressionPredicateFactory,
-                paramMap);
+                paramMap, wordListProvider);
 
         // Filter puts to the store if we need to. This filter has the effect of preventing addition of items if we have
         // reached the max result size if specified and aren't grouping or sorting.
@@ -343,8 +346,8 @@ public class LmdbDataStore implements DataStore {
                                         uncommittedCount++;
                                     }
                                     case final CurrentDbStateLmdbQueueItem currentDbStateLmdbQueueItem ->
-                                            currentDbState = currentDbStateLmdbQueueItem.getCurrentDbState()
-                                                    .mergeExisting(currentDbState);
+                                        currentDbState = currentDbStateLmdbQueueItem.getCurrentDbState()
+                                                .mergeExisting(currentDbState);
                                     case final Sync sync -> {
                                         commit(writeTxn, currentDbState);
                                         sync.sync();
@@ -1269,17 +1272,22 @@ public class LmdbDataStore implements DataStore {
             fetchState.reachedRowLimit = false;
             fetchState.keepGoing = true;
 
+            // Constrain the absolute limit.
+            // In some rare cases we might want to examine more than 1000 rows (see gh-5198).
+            final int absoluteLimit = Math.min(limit, MAX_LIST_SIZE);
+            final OffsetRange offsetRange = new OffsetRange(0, absoluteLimit);
+
             final LmdbDataStore dataStore = readContext.dataStore;
             dataStore.getChildren(
                     readContext,
                     key,
                     key.getChildDepth(),
-                    limit,
+                    absoluteLimit,
                     trimTop,
                     OpenGroups.NONE, // Don't traverse any child rows.
                     readContext.timeFilter,
                     IdentityItemMapper.INSTANCE,
-                    OffsetRange.ZERO_1000, // Max 1000 child items.
+                    offsetRange,
                     fetchState,
                     item -> result.add(((LmdbItem) item).storedValues));
             return result;

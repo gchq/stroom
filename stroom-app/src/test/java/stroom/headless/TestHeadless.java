@@ -58,6 +58,7 @@ class TestHeadless {
         final Path base = StroomHeadlessTestFileUtil.getTestResourcesDir();
         final Path testPath = base.resolve("TestHeadless");
         final Path tmpPath = testPath.resolve("tmp");
+        LOGGER.info("tmpPath: {}", tmpPath);
         FileUtil.deleteDir(tmpPath);
         Files.createDirectories(tmpPath);
 
@@ -74,26 +75,35 @@ class TestHeadless {
                 .normalize();
         final Path outputFilePath = outputDirPath.resolve("output");
         final Path expectedOutputFilePath = testPath.resolve("expectedOutput");
+        LOGGER.info("samplesPath: {}", samplesPath);
+        LOGGER.info("outputFilePath: {}", outputFilePath);
+        LOGGER.info("expectedOutputFilePath: {}", expectedOutputFilePath);
 
         // Create input zip file
         final Path rawInputPath = testPath.resolve("input");
+        LOGGER.info("rawInputPath: {}", rawInputPath);
         Files.createDirectories(rawInputPath);
         final Path inputFilePath = inputDirPath.resolve("001.zip");
+        LOGGER.info("inputFilePath: {}", inputFilePath);
         Files.deleteIfExists(inputFilePath);
         ZipUtil.zip(inputFilePath, rawInputPath);
 
         // Copy required config into the temp dir.
         final Path rawConfigPath = tmpPath.resolve("config");
+        LOGGER.info("rawConfigPath: {}", rawConfigPath);
         Files.createDirectories(rawConfigPath);
         final Path configUnzippedDirPath = samplesPath.resolve("config");
+        LOGGER.info("configUnzippedDirPath: {}", configUnzippedDirPath);
         FileUtils.copyDirectory(configUnzippedDirPath.toFile(), rawConfigPath.toFile());
 
         // Add XML schemas.
         final Path downloadedContentPacks = FileSystemTestUtil.getContentPackDownloadsDir();
+        LOGGER.info("downloadedContentPacks: {}", downloadedContentPacks);
         addXmlSchemas(downloadedContentPacks, rawConfigPath);
 
         // Build the config zip file.
         final Path configFilePath = tmpPath.resolve("config.zip");
+        LOGGER.info("configFilePath: {}", configFilePath);
         Files.deleteIfExists(configFilePath);
         ZipUtil.zip(configFilePath, rawConfigPath);
 

@@ -13,7 +13,7 @@ public class UsedLookupsDb {
 
     public UsedLookupsDb(final PlanBEnv env,
                          final String name) {
-        dbi = env.openDbi(name, DbiFlags.MDB_CREATE);
+        dbi = env.openDbi(name + "-used", DbiFlags.MDB_CREATE);
     }
 
     public void record(final LmdbWriter writer, final ByteBuffer key) {

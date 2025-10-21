@@ -20,7 +20,7 @@ Stroom provides a number of powerful capabilities:
 * **Statistics.** Record counts or values of items over time, providing answers to questions such as "how many times has
   a specific machine provided data in the last hour/day/month?"
 
-<img src="markdown_resources/v6.0.19/stroom-dashboard.png" width="270" height="auto"/> &emsp; <img src="markdown_resources/v6.0.19/stroom-data-view.png" width="270" height="auto"/> &emsp; <img src="markdown_resources/v6.0.19/stroom-stepping.png" width="270" height="auto"/>
+<img src="markdown_resources/v7.11/stroom-dashboard.png" width="270" height="auto"/> &emsp; <img src="markdown_resources/v7.11/stroom-dashboard_2.png" width="270" height="auto"/> &emsp; <img src="markdown_resources/v7.11/stroom-data-view.png" width="270" height="auto"/> &emsp; <img src="markdown_resources/v7.11/stroom-stepping.png" width="270" height="auto"/>
 
 ## Get Stroom
 

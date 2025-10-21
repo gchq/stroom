@@ -123,7 +123,9 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 errorConsumer,
                 new ByteBufferFactoryImpl(),
                 new ExpressionPredicateFactory(),
-                AnnotationMapperFactory.NO_OP);
+                AnnotationMapperFactory.NO_OP,
+                //TODO: DS
+                null);
     }
 
     @Test

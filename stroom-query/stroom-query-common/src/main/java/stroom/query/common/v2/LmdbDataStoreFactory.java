@@ -1,6 +1,7 @@
 package stroom.query.common.v2;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.dictionary.api.WordListProvider;
 import stroom.lmdb.LmdbConfig;
 import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.LmdbEnvDir;
@@ -47,6 +48,7 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
     private final ByteBufferFactory bufferFactory;
     private final ExpressionPredicateFactory expressionPredicateFactory;
     private final AnnotationMapperFactory annotationMapperFactory;
+    final WordListProvider wordListProvider;
 
     @Inject
     public LmdbDataStoreFactory(final LmdbEnvDirFactory lmdbEnvDirFactory,
@@ -56,7 +58,8 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                                 final MapDataStoreFactory mapDataStoreFactory,
                                 final ByteBufferFactory bufferFactory,
                                 final ExpressionPredicateFactory expressionPredicateFactory,
-                                final AnnotationMapperFactory annotationMapperFactory) {
+                                final AnnotationMapperFactory annotationMapperFactory,
+                                final WordListProvider wordListProvider) {
         this.lmdbEnvDirFactory = lmdbEnvDirFactory;
         this.resultStoreConfigProvider = resultStoreConfigProvider;
         this.executorProvider = executorProvider;
@@ -64,6 +67,7 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
         this.bufferFactory = bufferFactory;
         this.expressionPredicateFactory = expressionPredicateFactory;
         this.annotationMapperFactory = annotationMapperFactory;
+        this.wordListProvider = wordListProvider;
 
         // This config prop requires restart, so we can hold on to it
         this.searchResultStoreDir = getLocalDir(resultStoreConfigProvider.get(), pathCreator);
@@ -128,7 +132,7 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                     errorConsumer,
                     bufferFactory,
                     expressionPredicateFactory,
-                    annotationMapperFactory);
+                    annotationMapperFactory, wordListProvider);
         }
     }
 

@@ -68,6 +68,7 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
 
         addButton = docRefListPresenter.getView().addButton(SvgPresets.ADD);
         removeButton = docRefListPresenter.getView().addButton(SvgPresets.DELETE);
+        docRefListPresenter.initTableColumns("Document Name", true);
 
         enableButtons();
     }

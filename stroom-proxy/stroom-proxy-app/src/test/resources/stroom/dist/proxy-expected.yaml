@@ -7,6 +7,12 @@ proxyConfig:
     maxUncompressedByteSize: "1.0G"
     splitSources: true
   contentDir: "content"
+  dirScanner:
+    dirs:
+    - "zip_file_ingest"
+    enabled: true
+    failureDir: "zip_file_ingest_failed"
+    scanFrequency: "PT1M"
   downstreamHost:
     apiKey: null
     apiKeyVerificationUrl: null
@@ -142,6 +148,7 @@ proxyConfig:
     - "Format"
     - "Schema"
     feedNameTemplate: "${accountid}-${component}-${format}-${schema}"
+    maxRequestSize: null
     metaTypes:
     - "Context"
     - "Detections"
