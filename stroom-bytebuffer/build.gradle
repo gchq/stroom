@@ -1,7 +1,6 @@
 ext.moduleName = 'stroom.bytebuffer'
 
 dependencies {
-    implementation project(':stroom-hadoop')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 //

@@ -405,8 +405,7 @@ class TestByteBufferUtils {
         src.flip();
 
         final Map<String, BiConsumer<ByteBuffer, ByteBuffer>> funcMap = Map.of(
-                "Simple", this::doSimpleCopyTest,
-                "Hadoop", this::doHadoopCopyTest);
+                "Simple", this::doSimpleCopyTest);
 
         for (int j = 0; j < rounds; j++) {
             final int round = j;
@@ -431,10 +430,6 @@ class TestByteBufferUtils {
                         round, name, Duration.between(startTime, Instant.now()));
             });
         }
-    }
-
-    private void doHadoopCopyTest(final ByteBuffer src, final ByteBuffer dest) {
-        stroom.bytebuffer.hbase.ByteBufferUtils.copyFromBufferToBuffer(src, dest);
     }
 
     private void doSimpleCopyTest(final ByteBuffer src, final ByteBuffer dest) {

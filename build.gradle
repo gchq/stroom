@@ -58,7 +58,7 @@ plugins {
 
 apply plugin: 'de.undercouch.download'
 
-ext.javaLanguageVersion = 21
+ext.javaLanguageVersion = 25
 // Adoptium also covers Temurin
 ext.javaVendor = JvmVendorSpec.ADOPTIUM
 

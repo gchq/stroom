@@ -214,7 +214,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
 
             short lastKeyId = -1;
             while (isFound) {
-                if (ValueStoreKeySerde.compareValueHashCode(startKey, cursor.key()) != 0) {
+                if (!ValueStoreKeySerde.valueHashCodeEquals(startKey, cursor.key())) {
                     // cursor key has a different hashcode to ours so we can stop looping
                     break;
                 }
