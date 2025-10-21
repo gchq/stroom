@@ -11,7 +11,7 @@ public class UidLookupRecorder implements UsedLookupsRecorder {
 
     public UidLookupRecorder(final PlanBEnv env,
                              final UidLookupDb uidLookupDb) {
-        this.usedLookupsDb = new UsedLookupsDb(env, uidLookupDb.getName() + "_used");
+        this.usedLookupsDb = new UsedLookupsDb(env, uidLookupDb.getName() + "-UidLookupDb");
         this.uidLookupDb = uidLookupDb;
     }
 

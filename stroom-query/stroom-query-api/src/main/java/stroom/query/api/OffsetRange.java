@@ -34,15 +34,13 @@ public final class OffsetRange {
     public static final OffsetRange ZERO_1000 = new OffsetRange(0L, 1000L);
     public static final OffsetRange UNBOUNDED = new OffsetRange(0, Integer.MAX_VALUE);
     @Schema(description = "The start offset for this sub-set of data, where zero is the offset of the first record " +
-            "in the full result set",
-            example = "0",
-            required = true)
+                          "in the full result set",
+            example = "0")
     @JsonProperty
     private final long offset;
 
     @Schema(description = "The length in records of the sub-set of results",
-            example = "100",
-            required = true)
+            example = "100")
     @JsonProperty
     private final long length;
 
@@ -80,7 +78,7 @@ public final class OffsetRange {
         }
         final OffsetRange that = (OffsetRange) o;
         return offset == that.offset &&
-                length == that.length;
+               length == that.length;
     }
 
     @Override
@@ -91,9 +89,9 @@ public final class OffsetRange {
     @Override
     public String toString() {
         return "OffsetRange{" +
-                "offset=" + offset +
-                ", length=" + length +
-                '}';
+               "offset=" + offset +
+               ", length=" + length +
+               '}';
     }
 
     public static Builder builder() {

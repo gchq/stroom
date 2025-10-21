@@ -45,12 +45,13 @@ public class DuplicateNotificationConfig {
         columnNames = new ArrayList<>();
     }
 
-    @SuppressWarnings("checkstyle:linelength")
     @JsonCreator
-    public DuplicateNotificationConfig(@JsonProperty("rememberNotifications") final boolean rememberNotifications,
-                                       @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
-                                       @JsonProperty("chooseColumns") final boolean chooseColumns,
-                                       @JsonProperty("columnNames") final List<String> columnNames) {
+    public DuplicateNotificationConfig(
+            @JsonProperty("rememberNotifications") final boolean rememberNotifications,
+            @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
+            @JsonProperty("chooseColumns") final boolean chooseColumns,
+            @JsonProperty("columnNames") final List<String> columnNames) {
+
         this.rememberNotifications = rememberNotifications;
         this.suppressDuplicateNotifications = suppressDuplicateNotifications;
         this.chooseColumns = chooseColumns;

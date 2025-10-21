@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
@@ -46,6 +48,41 @@ public class Message {
         return message;
     }
 
+    /**
+     * @return A {@link Message} with {@link Severity#INFO}.
+     */
+    public static Message info(final String message) {
+        return new Message(Severity.INFO, message);
+    }
+
+    /**
+     * @return A {@link Message} with {@link Severity#WARNING}.
+     */
+    public static Message warning(final String message) {
+        return new Message(Severity.WARNING, message);
+    }
+
+    /**
+     * @return A {@link Message} with {@link Severity#ERROR}.
+     */
+    public static Message error(final String message) {
+        return new Message(Severity.ERROR, message);
+    }
+
+    /**
+     * @return A {@link Message} with {@link Severity#FATAL_ERROR}.
+     */
+    public static Message fatalError(final String message) {
+        return new Message(Severity.FATAL_ERROR, message);
+    }
+
+    /**
+     * @return An immutable list containing this {@link Message}
+     */
+    public List<Message> asList() {
+        return Collections.singletonList(this);
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -56,7 +93,7 @@ public class Message {
         }
         final Message message1 = (Message) o;
         return severity == message1.severity &&
-                Objects.equals(message, message1.message);
+               Objects.equals(message, message1.message);
     }
 
     @Override

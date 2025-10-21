@@ -16,12 +16,16 @@
 
 package stroom.query.api;
 
+import stroom.docref.DocRef;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @JsonPropertyOrder({"includes", "excludes"})
@@ -40,11 +44,21 @@ public final class IncludeExcludeFilter {
     @JsonProperty
     private final String excludes;
 
+    @JsonProperty
+    private final List<DocRef> includeDictionaries;
+
+    @JsonProperty
+    private final List<DocRef> excludeDictionaries;
+
     @JsonCreator
     public IncludeExcludeFilter(@JsonProperty("includes") final String includes,
-                                @JsonProperty("excludes") final String excludes) {
+                                @JsonProperty("excludes") final String excludes,
+                                @JsonProperty("includeDictionaries") final List<DocRef> includeDictionaries,
+                                @JsonProperty("excludeDictionaries") final List<DocRef> excludeDictionaries) {
         this.includes = includes;
         this.excludes = excludes;
+        this.includeDictionaries = includeDictionaries == null ? new ArrayList<>() : includeDictionaries;
+        this.excludeDictionaries = excludeDictionaries == null ? new ArrayList<>() : excludeDictionaries;
     }
 
     public String getIncludes() {
@@ -53,6 +67,14 @@ public final class IncludeExcludeFilter {
 
     public String getExcludes() {
         return excludes;
+    }
+
+    public List<DocRef> getIncludeDictionaries() {
+        return includeDictionaries;
+    }
+
+    public List<DocRef> getExcludeDictionaries() {
+        return excludeDictionaries;
     }
 
     @Override
@@ -65,12 +87,14 @@ public final class IncludeExcludeFilter {
         }
         final IncludeExcludeFilter filter = (IncludeExcludeFilter) o;
         return Objects.equals(includes, filter.includes) &&
-               Objects.equals(excludes, filter.excludes);
+               Objects.equals(excludes, filter.excludes) &&
+               Objects.equals(includeDictionaries, filter.includeDictionaries) &&
+               Objects.equals(excludeDictionaries, filter.excludeDictionaries);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(includes, excludes);
+        return Objects.hash(includes, excludes, includeDictionaries, excludeDictionaries);
     }
 
     @Override
@@ -78,6 +102,8 @@ public final class IncludeExcludeFilter {
         return "Filter{" +
                "includes='" + includes + '\'' +
                ", excludes='" + excludes + '\'' +
+               ", includeDictionaries=" + includeDictionaries +
+               ", excludeDictionaries=" + excludeDictionaries +
                '}';
     }
 
@@ -100,6 +126,8 @@ public final class IncludeExcludeFilter {
 
         private String includes;
         private String excludes;
+        private List<DocRef> includeDictionaries = new ArrayList<>();
+        private List<DocRef> excludeDictionaries = new ArrayList<>();
 
         private Builder() {
         }
@@ -107,6 +135,8 @@ public final class IncludeExcludeFilter {
         private Builder(final IncludeExcludeFilter filter) {
             this.includes = filter.includes;
             this.excludes = filter.excludes;
+            this.includeDictionaries = filter.includeDictionaries;
+            this.excludeDictionaries = filter.excludeDictionaries;
         }
 
         /**
@@ -131,8 +161,19 @@ public final class IncludeExcludeFilter {
             return this;
         }
 
+        public Builder excludeDictionaries(final List<DocRef> excludeDictionaries) {
+            this.excludeDictionaries = excludeDictionaries;
+            return this;
+        }
+
+        public Builder includeDictionaries(final List<DocRef> includeDictionaries) {
+            this.includeDictionaries = includeDictionaries;
+            return this;
+        }
+
         public IncludeExcludeFilter build() {
-            return new IncludeExcludeFilter(includes, excludes);
+            return new IncludeExcludeFilter(includes, excludes, new ArrayList<>(includeDictionaries),
+                    new ArrayList<>(excludeDictionaries));
         }
     }
 }

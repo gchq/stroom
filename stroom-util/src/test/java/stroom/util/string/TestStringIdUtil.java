@@ -1,6 +1,8 @@
 package stroom.util.string;
 
 import stroom.test.common.TestUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
@@ -8,6 +10,8 @@ import org.junit.jupiter.api.TestFactory;
 import java.util.stream.Stream;
 
 public class TestStringIdUtil {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestStringIdUtil.class);
 
     @TestFactory
     Stream<DynamicTest> testIdToString() {
@@ -51,6 +55,28 @@ public class TestStringIdUtil {
                 .addCase("1234", false)
                 .addCase("12345", false)
                 .addCase("123456", true)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testGetDigitCountAsId() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(long.class)
+                .withOutputType(int.class)
+                .withSingleArgTestFunction(StringIdUtil::getDigitCountAsId)
+                .withSimpleEqualityAssertion()
+                .addCase(1L, 3)
+                .addCase(9L, 3)
+                .addCase(10L, 3)
+                .addCase(99L, 3)
+                .addCase(100L, 3)
+                .addCase(999L, 3)
+                .addCase(1000L, 6)
+                .addCase(9999L, 6)
+                .addCase(10000L, 6)
+                .addCase(99999L, 6)
+                .addCase(100000L, 6)
+                .addCase(999999L, 6)
                 .build();
     }
 }

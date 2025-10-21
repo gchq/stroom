@@ -31,6 +31,9 @@ public class ProxyReceiptIdGenerator implements ReceiptIdGenerator {
         receiptIdGenerator = new UniqueIdGenerator(NODE_TYPE, proxyId.getId());
     }
 
+    /**
+     * For testing
+     */
     public ProxyReceiptIdGenerator(final Supplier<String> nodeIdSupplier) {
         final String nodeId = Objects.requireNonNull(nodeIdSupplier).get();
         LOGGER.info("Creating receiptIdGenerator for proxyId '{}'", nodeId);

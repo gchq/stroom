@@ -360,7 +360,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
 
             for (int i = 0; i < processCount; i++) {
                 try (final InputStream inputStream = Files.newInputStream(file)) {
-                    stroomStreamProcessor.processInputStream(inputStream, String.valueOf(i), receivedTime);
+                    stroomStreamProcessor.processInputStream(inputStream, String.valueOf(i));
                 } catch (final IOException e) {
                     throw new UncheckedIOException(e);
                 }

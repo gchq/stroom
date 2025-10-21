@@ -27,12 +27,14 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.util.exception.ThrowingConsumer;
 import stroom.util.io.ByteCountInputStream;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.zip.ZipUtil;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.io.input.BoundedInputStream;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -41,7 +43,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,19 +52,28 @@ import java.util.function.Consumer;
 public class StroomStreamProcessor {
 
     private static final String ZERO_CONTENT = "0";
-    private static final Logger LOGGER = LoggerFactory.getLogger(StroomStreamProcessor.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomStreamProcessor.class);
 
     private final AttributeMap globalAttributeMap;
     private final StreamHandler handler;
     private final Consumer<Long> progressHandler;
+    private final ReceiveDataConfig receiveDataConfig;
+
+    public StroomStreamProcessor(final AttributeMap attributeMap,
+                                 final StreamHandler handler,
+                                 final Consumer<Long> progressHandler) {
+        this(attributeMap, handler, progressHandler, null);
+    }
 
     @SuppressWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
     public StroomStreamProcessor(final AttributeMap attributeMap,
                                  final StreamHandler handler,
-                                 final Consumer<Long> progressHandler) {
+                                 final Consumer<Long> progressHandler,
+                                 final ReceiveDataConfig receiveDataConfig) {
         this.globalAttributeMap = attributeMap;
         this.handler = handler;
         this.progressHandler = progressHandler;
+        this.receiveDataConfig = receiveDataConfig;
     }
 
     public void processZipFile(final Path zipFilePath) {
@@ -103,14 +113,11 @@ public class StroomStreamProcessor {
         }
     }
 
-    public void processInputStream(final InputStream inputStream,
-                                   final String prefix) {
-        processInputStream(inputStream, prefix, Instant.now());
+    public void processInputStream(final InputStream inputStream) {
+        processInputStream(inputStream, "");
     }
 
-    public void processInputStream(final InputStream inputStream,
-                                   final String prefix,
-                                   final Instant receivedTime) {
+    public void processInputStream(final InputStream inputStream, final String prefix) {
 
         final String compression = AttributeMapUtil.validateAndNormaliseCompression(
                 globalAttributeMap,
@@ -122,33 +129,33 @@ public class StroomStreamProcessor {
             return;
         }
 
-        if (StandardHeaderArguments.COMPRESSION_ZIP.equalsIgnoreCase(compression)) {
-            // Handle a zip stream.
-            processZipStream(inputStream, prefix, receivedTime);
-        } else {
-            if (StandardHeaderArguments.COMPRESSION_GZIP.equalsIgnoreCase(compression)) {
-                // Handle a gzip stream.
-                processGZipStream(inputStream, prefix);
+        try {
+            if (StandardHeaderArguments.COMPRESSION_ZIP.equalsIgnoreCase(compression)) {
+                // Handle a zip stream.
+                processZipStream(inputStream, prefix);
             } else {
-                try {
+                if (StandardHeaderArguments.COMPRESSION_GZIP.equalsIgnoreCase(compression)) {
+                    // Handle a gzip stream.
+                    processGZipStream(inputStream);
+                } else {
                     // Handle an uncompressed stream.
-                    processStream(inputStream, prefix);
-                } catch (final IOException e) {
-                    throw StroomStreamException.create(e, globalAttributeMap);
+                    processStream(inputStream);
                 }
             }
+        } catch (final IOException e) {
+            throw StroomStreamException.create(e, globalAttributeMap);
         }
+
     }
 
-    private void processGZipStream(InputStream inputStream, final String prefix) {
+    private void processGZipStream(final InputStream inputStream) {
         // We have to wrap our stream reading code in a individual
         // try/catch so we can return to the client an error in the
         // case of a corrupt stream.
         try {
             // Use the APACHE GZIP de-compressor as it handles
             // nested compressed streams
-            inputStream = new GzipCompressorInputStream(inputStream, true);
-            processStream(inputStream, prefix);
+            processStream(new GzipCompressorInputStream(inputStream, true));
 
         } catch (final IOException e) {
             throw new StroomStreamException(
@@ -158,7 +165,7 @@ public class StroomStreamProcessor {
         }
     }
 
-    private void processStream(final InputStream inputStream, final String prefix) throws IOException {
+    private void processStream(final InputStream inputStream) throws IOException {
         try (final BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream)) {
             // Read an initial buffer full so we can see if there is any data
             bufferedInputStream.mark(1);
@@ -167,28 +174,32 @@ public class StroomStreamProcessor {
             } else {
                 bufferedInputStream.reset();
 
-                final long totalRead = handler.addEntry(
-                        StroomZipEntry.SINGLE_DATA_ENTRY.getFullName(),
-                        bufferedInputStream,
-                        progressHandler);
+                try (final BoundedInputStream boundedInputStream = InputStreamUtils.getBoundedInputStream(
+                        bufferedInputStream, receiveDataConfig == null ? null :
+                                receiveDataConfig.getMaxRequestSize())) {
+                    final long totalRead = handler.addEntry(
+                            StroomZipEntry.SINGLE_DATA_ENTRY.getFullName(),
+                            boundedInputStream,
+                            progressHandler);
 
-                final AttributeMap entryAttributeMap = AttributeMapUtil.cloneAllowable(globalAttributeMap);
-                entryAttributeMap.put(StandardHeaderArguments.STREAM_SIZE, String.valueOf(totalRead));
-                sendHeader(StroomZipEntry.SINGLE_META_ENTRY, entryAttributeMap);
+                    final AttributeMap entryAttributeMap = AttributeMapUtil.cloneAllowable(globalAttributeMap);
+                    entryAttributeMap.put(StandardHeaderArguments.STREAM_SIZE, String.valueOf(totalRead));
+                    sendHeader(StroomZipEntry.SINGLE_META_ENTRY, entryAttributeMap);
+                }
             }
         }
     }
 
     private void processZipStream(final InputStream inputStream,
-                                  final String prefix,
-                                  final Instant receivedTime) {
-        final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(inputStream);
+                                  final String prefix) throws IOException {
+        final BoundedInputStream boundedInputStream = InputStreamUtils.getBoundedInputStream(inputStream,
+                receiveDataConfig == null ? null : receiveDataConfig.getMaxRequestSize());
 
         final Map<String, AttributeMap> bufferedAttributeMap = new HashMap<>();
         final Map<String, Long> dataStreamSizeMap = new HashMap<>();
         final StroomZipEntries stroomZipEntries = new StroomZipEntries();
 
-        try (final ZipArchiveInputStream zipArchiveInputStream = new ZipArchiveInputStream(byteCountInputStream)) {
+        try (final ZipArchiveInputStream zipArchiveInputStream = new ZipArchiveInputStream(boundedInputStream)) {
             ZipArchiveEntry zipEntry;
             while (true) {
                 // We have to wrap our stream reading code in a individual try/catch
@@ -227,6 +238,7 @@ public class StroomStreamProcessor {
                     LOGGER.debug("Skipping directory zip entry {}", entryName);
                     continue;
                 }
+                checkZipEntry(zipEntry);
 
                 final long uncompressedSize = zipEntry.getSize();
                 final StroomZipEntry stroomZipEntry = stroomZipEntries.addFile(entryName);
@@ -339,7 +351,7 @@ public class StroomStreamProcessor {
 
             if (stroomZipEntries.getGroups().isEmpty()) {
                 // A zip stream with no entries is always 22 bytes in size.
-                if (byteCountInputStream.getCount() > 22) {
+                if (boundedInputStream.getCount() > 22) {
                     throw new StroomStreamException(
                             StroomStatusCode.COMPRESSED_STREAM_INVALID, globalAttributeMap, "No Zip Entries");
                 } else {
@@ -370,6 +382,16 @@ public class StroomStreamProcessor {
             }
         } catch (final IOException e) {
             throw StroomStreamException.create(e, globalAttributeMap);
+        }
+    }
+
+    private void checkZipEntry(final ZipArchiveEntry zipEntry) {
+        final String fileName = zipEntry.getName();
+        if (!ZipUtil.isSafeZipPath(Path.of(fileName))) {
+            // Only a warning as we do not use the zip entry name when extracting from the zip.
+            LOGGER.warn("Zip archive stream contains a path that would extract to outside the " +
+                        "target directory '{}'. Stroom will not use this path but this is " +
+                        "dangerous behaviour.", fileName);
         }
     }
 

@@ -17,21 +17,28 @@
 package stroom.util.string;
 
 import stroom.test.common.TestUtil;
+import stroom.test.common.TestUtil.TimedCase;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import com.google.inject.TypeLiteral;
 import io.vavr.Tuple;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStringUtil {
 
@@ -386,5 +393,89 @@ class TestStringUtil {
                 .addCase(",,,foo,,,bar,,,", "foo,bar")
                 .addCase(",,a,,b,,c,,", "a,b,c")
                 .build();
+    }
+
+    @Test
+    void testGetDigitCount1() {
+        final List<Long> values = List.of(
+                0L, 1L,
+                10L, 99L,
+                100L, 999L,
+                1000L, 9999L,
+                10000L, 99999L,
+                100000L, 999999L,
+                1000000L, 9999999L,
+                Long.MAX_VALUE);
+        values.forEach(i -> {
+            final int len1 = StringUtil.getDigitCount(i);
+            final int len2 = String.valueOf(i).length();
+            assertThat(len2)
+                    .isEqualTo(len1);
+        });
+    }
+
+    @Test
+    void testGetDigitCount2() {
+        // Test 1/5th of positive integers
+        final AtomicInteger atomicInteger = new AtomicInteger(1);
+        IntStream.generate(
+                        () -> atomicInteger.getAndAccumulate(
+                                99,
+                                (currVal, ignored) -> {
+                                    try {
+                                        return currVal * 5;
+                                    } catch (final Exception e) {
+                                        return -1;
+                                    }
+                                }))
+                .parallel()
+                .takeWhile(anInt -> anInt > -1)
+                .forEach(i -> {
+                    final int len1 = StringUtil.getDigitCount(i);
+                    final int len2 = String.valueOf(i).length();
+                    assertThat(len2)
+                            .isEqualTo(len1);
+                });
+    }
+
+    @Disabled // Too slow for CI, but proves every case
+    @Test
+    void testGetDigitCount3() {
+        IntStream.rangeClosed(0, Integer.MAX_VALUE)
+                .parallel()
+                .forEach(i -> {
+                    final int len1 = StringUtil.getDigitCount(i);
+                    final int len2 = String.valueOf(i).length();
+                    assertThat(len2)
+                            .isEqualTo(len1);
+                });
+    }
+
+    // getDigitCount is ~x10 faster, 0.62ns/op vs 8.64ns/op
+    @Disabled
+    @Test
+    void testGetDigitCountPerf() {
+        final int totalIterations = 100_000_000;
+        //noinspection MismatchedReadAndWriteOfArray
+        final int[] arr = new int[totalIterations];
+        TestUtil.comparePerformance(
+                5,
+                totalIterations,
+                LOGGER::info,
+                TimedCase.of(
+                        "String.valueOf",
+                        (round, iterations) -> {
+                            for (int i = 0; i < iterations; i++) {
+                                arr[i] = String.valueOf(i).length();
+                            }
+                        }),
+                TimedCase.of(
+                        "getDigitCount",
+                        (round, iterations) -> {
+                            for (int i = 0; i < iterations; i++) {
+                                arr[i] = StringUtil.getDigitCount(i);
+                            }
+                        })
+        );
     }
 }

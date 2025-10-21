@@ -4,9 +4,11 @@ import stroom.lmdb.LmdbEnv;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
@@ -33,6 +35,14 @@ public class LmdbEnvDir {
 
     public Path getEnvDir() {
         return envDir;
+    }
+
+    public void ensureExists() {
+        try {
+            Files.createDirectories(envDir);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(LogUtil.message("Error ensuring directory '{}' exists"), e);
+        }
     }
 
     /**
@@ -84,8 +94,8 @@ public class LmdbEnvDir {
                             try {
                                 final long fileSizeBytes = Files.size(file);
                                 return envDir.getFileName().resolve(file.getFileName())
-                                        + " - file size: "
-                                        + ModelStringUtil.formatIECByteSizeString(fileSizeBytes);
+                                       + " - file size: "
+                                       + ModelStringUtil.formatIECByteSizeString(fileSizeBytes);
                             } catch (final IOException e) {
                                 throw new RuntimeException(e);
                             }
@@ -106,6 +116,6 @@ public class LmdbEnvDir {
 
     public static boolean isLmdbDataFile(final Path file) {
         return file != null
-                && (file.endsWith(DATA_FILE_NAME) || file.endsWith(LOCK_FILE_NAME));
+               && (file.endsWith(DATA_FILE_NAME) || file.endsWith(LOCK_FILE_NAME));
     }
 }
