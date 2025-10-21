@@ -163,45 +163,50 @@ public class SpanValueSerde implements Serde<SpanValue> {
                                      final AnyValue anyValue,
                                      final ByteBuffer output) {
         ByteBuffer result = output;
-        if (anyValue.getStringValue() != null) {
-            result = ensure(output, 1);
-            result.put(ValueType.STRING.getPrimitiveValue());
-            result = writeString(txn, anyValue.getStringValue(), result);
-
-        } else if (anyValue.getBoolValue() != null) {
-            result = ensure(output, 1 + 1);
-            result.put(ValueType.BOOLEAN.getPrimitiveValue());
-            result.put((byte) (anyValue.getBoolValue()
-                    ? 1
-                    : 0));
-
-        } else if (anyValue.getIntValue() != null) {
-            result = ensure(output, 1 + Integer.BYTES);
-            result.put(ValueType.INTEGER.getPrimitiveValue());
-            result.putInt(anyValue.getIntValue());
-
-        } else if (anyValue.getDoubleValue() != null) {
-            result = ensure(output, 1 + Double.BYTES);
-            result.put(ValueType.DOUBLE.getPrimitiveValue());
-            result.putDouble(anyValue.getDoubleValue());
-
-        } else if (anyValue.getArrayValue() != null) {
-            result = ensure(output, 1);
-            result.put(ValueType.ARRAY_VALUE.getPrimitiveValue());
-            result = writeValueList(txn, anyValue.getArrayValue().getValues(), result);
-
-        } else if (anyValue.getKvlistValue() != null) {
-            result = ensure(output, 1);
-            result.put(ValueType.KEY_VALUE_LIST.getPrimitiveValue());
-            result = writeKvList(txn, anyValue.getKvlistValue().getValues(), result);
-
-        } else if (anyValue.getBytesValue() != null) {
-            result = ensure(output, 1);
-            result.put(ValueType.BYTES.getPrimitiveValue());
-            result = writeHexString(txn, anyValue.getBytesValue(), result);
+        if (anyValue == null) {
+            result.put((byte) 128);
 
         } else {
-            result.put((byte) 128);
+            if (anyValue.getStringValue() != null) {
+                result = ensure(output, 1);
+                result.put(ValueType.STRING.getPrimitiveValue());
+                result = writeString(txn, anyValue.getStringValue(), result);
+
+            } else if (anyValue.getBoolValue() != null) {
+                result = ensure(output, 1 + 1);
+                result.put(ValueType.BOOLEAN.getPrimitiveValue());
+                result.put((byte) (anyValue.getBoolValue()
+                        ? 1
+                        : 0));
+
+            } else if (anyValue.getIntValue() != null) {
+                result = ensure(output, 1 + Integer.BYTES);
+                result.put(ValueType.INTEGER.getPrimitiveValue());
+                result.putInt(anyValue.getIntValue());
+
+            } else if (anyValue.getDoubleValue() != null) {
+                result = ensure(output, 1 + Double.BYTES);
+                result.put(ValueType.DOUBLE.getPrimitiveValue());
+                result.putDouble(anyValue.getDoubleValue());
+
+            } else if (anyValue.getArrayValue() != null) {
+                result = ensure(output, 1);
+                result.put(ValueType.ARRAY_VALUE.getPrimitiveValue());
+                result = writeValueList(txn, anyValue.getArrayValue().getValues(), result);
+
+            } else if (anyValue.getKvlistValue() != null) {
+                result = ensure(output, 1);
+                result.put(ValueType.KEY_VALUE_LIST.getPrimitiveValue());
+                result = writeKvList(txn, anyValue.getKvlistValue().getValues(), result);
+
+            } else if (anyValue.getBytesValue() != null) {
+                result = ensure(output, 1);
+                result.put(ValueType.BYTES.getPrimitiveValue());
+                result = writeHexString(txn, anyValue.getBytesValue(), result);
+
+            } else {
+                result.put((byte) 128);
+            }
         }
         return result;
     }
