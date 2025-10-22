@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11-pathways-beta.2] - 2025-10-22
+
+* Pathways beta 2.
+
+
 ## [v7.11-beta.7] - 2025-10-20
 
 * Issue **#656** : Allow table filters to use dictionaries.
@@ -1839,7 +1844,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.7...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-pathways-beta.2...HEAD
+[v7.11-pathways-beta.2]: https://github.com/gchq/stroom/compare/v7.11-beta.7...v7.11-pathways-beta.2
 [v7.11-beta.7]: https://github.com/gchq/stroom/compare/v7.11-beta.6...v7.11-beta.7
 [v7.11-beta.6]: https://github.com/gchq/stroom/compare/v7.11-beta.5...v7.11-beta.6
 [v7.11-beta.5]: https://github.com/gchq/stroom/compare/v7.11-beta.4...v7.11-beta.5
