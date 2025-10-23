@@ -248,12 +248,19 @@ public final class DocRef implements Comparable<DocRef>, HasDisplayValue, HasTyp
         }
     }
 
+    /**
+     * Consider using {@code buildDocRef()} on the Document class that you want a {@link DocRef}
+     * for.
+     */
     public static Builder builder() {
         return new Builder();
     }
 
     /**
-     * Create a {@link DocRef} builder for a given type
+     * Consider using {@code buildDocRef()} on the Document class that you want a {@link DocRef}
+     * for.
+     * <p>
+     * Create a {@link DocRef} builder for a given type.
      *
      * @param type The document type
      */

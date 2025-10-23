@@ -16,6 +16,7 @@
 
 package stroom.planb.shared;
 
+import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
@@ -134,6 +135,13 @@ public class PlanBDoc extends Doc {
                '}';
     }
 
+    /**
+     * @return A new builder for creating a {@link DocRef} for this document's type.
+     */
+    public static DocRef.TypedBuilder buildDocRef() {
+        return DocRef.builder(TYPE);
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -141,6 +149,10 @@ public class PlanBDoc extends Doc {
     public Builder copy() {
         return new Builder(this);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder extends AbstractBuilder<PlanBDoc, PlanBDoc.Builder> {
 

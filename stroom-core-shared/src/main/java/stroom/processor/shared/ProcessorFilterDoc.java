@@ -1,5 +1,6 @@
 package stroom.processor.shared;
 
+import stroom.docref.DocRef;
 import stroom.util.shared.Document;
 
 /**
@@ -8,7 +9,7 @@ import stroom.util.shared.Document;
  */
 public class ProcessorFilterDoc implements Document {
 
-    public static final String DOCUMENT_TYPE = ProcessorFilter.ENTITY_TYPE;
+    public static final String TYPE = ProcessorFilter.ENTITY_TYPE;
 
     private final ProcessorFilter processorFilter;
     private String name = null;
@@ -84,5 +85,12 @@ public class ProcessorFilterDoc implements Document {
     @Override
     public void setUpdateUser(final String updateUser) {
         processorFilter.setUpdateUser(updateUser);
+    }
+
+    /**
+     * @return A new builder for creating a {@link DocRef} for this document's type.
+     */
+    public static DocRef.TypedBuilder buildDocRef() {
+        return DocRef.builder(TYPE);
     }
 }
