@@ -165,7 +165,7 @@ public class Annotation extends Doc {
 
     // --------------------------------------------------------------------------------
 
-   
+
     public static class Builder extends AbstractBuilder<Annotation, Annotation.Builder> {
 
         private Long id;

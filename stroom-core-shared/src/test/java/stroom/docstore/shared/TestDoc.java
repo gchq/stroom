@@ -26,7 +26,7 @@ public class TestDoc {
 
     @Test
     void test() {
-        try (ScanResult scanResult = new ClassGraph()
+        try (final ScanResult scanResult = new ClassGraph()
                 .acceptPackages(PACKAGE_NAME)  // Scan com.xyz and subpackages (omit to scan all packages)
                 .enableClassInfo()
                 .enableMethodInfo()
@@ -48,17 +48,17 @@ public class TestDoc {
             Assertions.assertThat(classNames)
                     .withFailMessage(() -> LogUtil.message("""
                                     Expecting the following classes to have a method like this:
-                                                        
+
                                     /**
                                      * @return A new builder for creating a {@link DocRef} for this document's type.
                                      */
                                     public static DocRef.TypedBuilder buildDocRef() {
                                         return DocRef.builder(TYPE);
                                     }
-                                                        
+
                                     Failing classes:
                                     {}
-                                                                
+
                                     Please add 'buildDocRef' to each.""",
                             LogUtil.toPaddedMultiLine("  ", classNames)))
                     .isEmpty();
