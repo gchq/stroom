@@ -1,5 +1,6 @@
 package stroom.annotation.shared;
 
+import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
@@ -126,6 +127,13 @@ public class Annotation extends Doc {
         return retainUntilTimeMs;
     }
 
+    /**
+     * @return A new builder for creating a {@link DocRef} for this document's type.
+     */
+    public static DocRef.TypedBuilder buildDocRef() {
+        return DocRef.builder(TYPE);
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -153,6 +161,10 @@ public class Annotation extends Doc {
     public int hashCode() {
         return Objects.hash(super.hashCode(), id);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder extends AbstractBuilder<Annotation, Annotation.Builder> {
 

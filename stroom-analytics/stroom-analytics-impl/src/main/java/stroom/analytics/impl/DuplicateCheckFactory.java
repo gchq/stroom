@@ -14,6 +14,6 @@ public interface DuplicateCheckFactory {
      * @return The list of column names or an empty {@link Optional} if the duplicate
      * store has not yet been initialised.
      */
-    Optional<List<String>> fetchColumnNames(AbstractAnalyticRuleDoc analyticRuleDoc);
+    Optional<List<String>> fetchColumnNames(String analyticUuid);
 
 }

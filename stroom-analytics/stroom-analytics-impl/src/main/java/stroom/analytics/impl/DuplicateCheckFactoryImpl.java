@@ -89,10 +89,8 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
     }
 
     @Override
-    public Optional<List<String>> fetchColumnNames(final AbstractAnalyticRuleDoc analyticRuleDoc) {
-        return pool.use(
-                analyticRuleDoc.getUuid(),
-                DuplicateCheckStore::fetchColumnNames);
+    public Optional<List<String>> fetchColumnNames(final String analyticUuid) {
+        return pool.use(analyticUuid, DuplicateCheckStore::fetchColumnNames);
     }
 
     @NotNull

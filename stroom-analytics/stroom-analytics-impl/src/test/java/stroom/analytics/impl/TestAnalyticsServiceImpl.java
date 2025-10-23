@@ -31,6 +31,7 @@ class TestAnalyticsServiceImpl {
                 templatingService,
                 null,
                 null,
+                null,
                 null);
 
         final Detection exampleDetection = analyticsService.getExampleDetection();
