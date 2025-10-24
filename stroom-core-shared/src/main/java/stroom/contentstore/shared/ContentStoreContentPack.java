@@ -2,6 +2,7 @@ package stroom.contentstore.shared;
 
 import stroom.docs.shared.Description;
 import stroom.gitrepo.shared.GitRepoDoc;
+import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -162,6 +163,32 @@ public class ContentStoreContentPack {
         this.gitCommit = gitCommit == null ? "" : gitCommit;
         this.gitNeedsAuth = gitNeedsAuth == null ? Boolean.FALSE : gitNeedsAuth;
         this.contentStoreMetadata = metadata;
+    }
+
+    /**
+     * For test purposes. Not for general use.
+     */
+    @SerialisationTestConstructor
+    public ContentStoreContentPack() {
+        this("test-id",
+                "Test Content Store Content Pack",
+                "https://server/icon-url.svg",
+                null,
+                "Apache 2.0",
+                "https://server/license.txt",
+                "/stroom-path",
+                "Details",
+                "Git Repo Name",
+                "https://git/git.git",
+                "master",
+                "/",
+                "",
+                false,
+                new ContentStoreMetadata("ownerId",
+                        "ownerName",
+                        "https://server/ownerUrl",
+                        "ownerDescription",
+                        "auth@auth.com"));
     }
 
     /**

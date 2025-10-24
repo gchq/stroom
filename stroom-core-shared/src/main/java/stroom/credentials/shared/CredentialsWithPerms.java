@@ -1,5 +1,7 @@
 package stroom.credentials.shared;
 
+import stroom.util.shared.SerialisationTestConstructor;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -54,6 +56,17 @@ public class CredentialsWithPerms {
         this.credentials = credentials;
         this.edit = edit;
         this.delete = delete;
+    }
+
+    /**
+     * For test purposes. Not for general use.
+     */
+    @SuppressWarnings("unused")
+    @SerialisationTestConstructor
+    public CredentialsWithPerms() {
+        this(new Credentials(),
+                false,
+                false);
     }
 
     /**

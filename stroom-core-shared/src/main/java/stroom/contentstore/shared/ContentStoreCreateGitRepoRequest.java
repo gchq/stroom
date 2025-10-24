@@ -1,6 +1,7 @@
 package stroom.contentstore.shared;
 
 import stroom.docs.shared.Description;
+import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -46,6 +47,15 @@ public class ContentStoreCreateGitRepoRequest {
         this.contentPack = contentPack;
         final boolean gitNeedsAuth = contentPack.getGitNeedsAuth();
         this.credentialsId = gitNeedsAuth && credentialsId != null ? credentialsId : "";
+    }
+
+    /**
+     * For test purposes. Not for general use.
+     */
+    @SerialisationTestConstructor
+    public ContentStoreCreateGitRepoRequest() {
+        this(new ContentStoreContentPack(),
+                "credentialsId");
     }
 
     /**

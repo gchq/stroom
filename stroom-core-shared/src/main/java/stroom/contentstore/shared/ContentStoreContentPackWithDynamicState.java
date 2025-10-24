@@ -2,6 +2,7 @@ package stroom.contentstore.shared;
 
 import stroom.docs.shared.Description;
 import stroom.gitrepo.shared.GitRepoDoc;
+import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -41,7 +42,7 @@ public class ContentStoreContentPackWithDynamicState {
      * @param contentPack The content store to wrap. Must not be null.
      */
     public ContentStoreContentPackWithDynamicState(
-            @JsonProperty("contentPack") ContentStoreContentPack contentPack) {
+            @JsonProperty("contentPack") final ContentStoreContentPack contentPack) {
         Objects.requireNonNull(contentPack);
         this.contentPack = contentPack;
         this.installationStatus = ContentStoreContentPackStatus.NOT_INSTALLED;
@@ -58,12 +59,20 @@ public class ContentStoreContentPackWithDynamicState {
     @SuppressWarnings("unused")
     @JsonCreator
     public ContentStoreContentPackWithDynamicState(
-            @JsonProperty("contentPack") ContentStoreContentPack contentPack,
-            @JsonProperty("installationStatus") ContentStoreContentPackStatus status) {
+            @JsonProperty("contentPack") final ContentStoreContentPack contentPack,
+            @JsonProperty("installationStatus") final ContentStoreContentPackStatus status) {
         Objects.requireNonNull(contentPack);
         this.contentPack = contentPack;
         this.installationStatus = status == null ? ContentStoreContentPackStatus.NOT_INSTALLED
                 : status;
+    }
+
+    /**
+     * For test purposes. Not for general use.
+     */
+    @SerialisationTestConstructor
+    public ContentStoreContentPackWithDynamicState() {
+        this(new ContentStoreContentPack());
     }
 
     /**
@@ -79,7 +88,7 @@ public class ContentStoreContentPackWithDynamicState {
      * Used by JSON serialization to set the value of the installation status.
      * @param status The status. Can be null in which case NOT_INSTALLED is assumed.
      */
-    public void setInstallationStatus(ContentStoreContentPackStatus status) {
+    public void setInstallationStatus(final ContentStoreContentPackStatus status) {
         this.installationStatus = status == null ? ContentStoreContentPackStatus.NOT_INSTALLED
                 : status;
     }
