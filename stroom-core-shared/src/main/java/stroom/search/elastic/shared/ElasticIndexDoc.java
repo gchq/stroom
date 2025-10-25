@@ -21,10 +21,8 @@ import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
-import stroom.query.api.ExpressionOperator;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -58,8 +56,7 @@ import java.util.Objects;
         "searchScrollSize",
         "fields",
         "timeField",
-        "vectorEmbeddingsBaseUrl",
-        "vectorEmbeddingsModelId",
+        "vectorGenerationModelRef",
         "defaultExtractionPipeline",
         "retentionExpression"
 })
@@ -99,14 +96,11 @@ public class ElasticIndexDoc extends Doc {
     @JsonProperty
     private Integer searchScrollSize;
 
+    /**
+     * Reference to the `OpenAIModel` used to generate vector embeddings
+     */
     @JsonProperty
-    private String vectorEmbeddingsBaseUrl;
-
-    @JsonProperty
-    private String vectorEmbeddingsAuthToken;
-
-    @JsonProperty
-    private String vectorEmbeddingsModelId;
+    private DocRef vectorGenerationModelRef;
 
     /**
      * Array of fields, populated at query time
@@ -117,13 +111,6 @@ public class ElasticIndexDoc extends Doc {
     private String timeField;
     @JsonProperty
     private DocRef defaultExtractionPipeline;
-
-    /**
-     * Criteria determining which documents should be deleted periodically by the `Elastic Index Retention`
-     * server task
-     */
-    @JsonProperty
-    private ExpressionOperator retentionExpression;
 
     public ElasticIndexDoc() {
         searchSlices = DEFAULT_SEARCH_SLICES;
@@ -148,11 +135,8 @@ public class ElasticIndexDoc extends Doc {
             @JsonProperty("searchScrollSize") final Integer searchScrollSize,
             @JsonProperty("fields") final List<ElasticIndexField> fields,
             @JsonProperty("timeField") final String timeField,
-            @JsonProperty("vectorEmbeddingsBaseUrl") final String vectorEmbeddingsBaseUrl,
-            @JsonProperty("vectorEmbeddingsAuthToken") final String vectorEmbeddingsAuthToken,
-            @JsonProperty("vectorEmbeddingsModelId") final String vectorEmbeddingsModelId,
-            @JsonProperty("defaultExtractionPipeline") final DocRef defaultExtractionPipeline,
-            @JsonProperty("retentionExpression") final ExpressionOperator retentionExpression) {
+            @JsonProperty("vectorGenerationModelRef") final DocRef vectorGenerationModelRef,
+            @JsonProperty("defaultExtractionPipeline") final DocRef defaultExtractionPipeline) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.clusterRef = clusterRef;
@@ -161,11 +145,8 @@ public class ElasticIndexDoc extends Doc {
         this.searchScrollSize = searchScrollSize;
         this.fields = fields;
         this.timeField = timeField;
-        this.vectorEmbeddingsBaseUrl = vectorEmbeddingsBaseUrl;
-        this.vectorEmbeddingsAuthToken = vectorEmbeddingsAuthToken;
-        this.vectorEmbeddingsModelId = vectorEmbeddingsModelId;
+        this.vectorGenerationModelRef = vectorGenerationModelRef;
         this.defaultExtractionPipeline = defaultExtractionPipeline;
-        this.retentionExpression = retentionExpression;
 
         if (this.searchSlices == null) {
             this.searchSlices = DEFAULT_SEARCH_SLICES;
@@ -245,28 +226,12 @@ public class ElasticIndexDoc extends Doc {
         this.timeField = timeField;
     }
 
-    public String getVectorEmbeddingsBaseUrl() {
-        return vectorEmbeddingsBaseUrl;
+    public DocRef getVectorGenerationModelRef() {
+        return vectorGenerationModelRef;
     }
 
-    public void setVectorEmbeddingsBaseUrl(final String vectorEmbeddingsBaseUrl) {
-        this.vectorEmbeddingsBaseUrl = vectorEmbeddingsBaseUrl;
-    }
-
-    public String getVectorEmbeddingsAuthToken() {
-        return vectorEmbeddingsAuthToken;
-    }
-
-    public void setVectorEmbeddingsAuthToken(final String vectorEmbeddingsAuthToken) {
-        this.vectorEmbeddingsAuthToken = vectorEmbeddingsAuthToken;
-    }
-
-    public String getVectorEmbeddingsModelId() {
-        return vectorEmbeddingsModelId;
-    }
-
-    public void setVectorEmbeddingsModelId(final String vectorEmbeddingsModelId) {
-        this.vectorEmbeddingsModelId = vectorEmbeddingsModelId;
+    public void setVectorGenerationModelRef(final DocRef vectorGenerationModelRef) {
+        this.vectorGenerationModelRef = vectorGenerationModelRef;
     }
 
     public DocRef getDefaultExtractionPipeline() {
@@ -275,14 +240,6 @@ public class ElasticIndexDoc extends Doc {
 
     public void setDefaultExtractionPipeline(final DocRef defaultExtractionPipeline) {
         this.defaultExtractionPipeline = defaultExtractionPipeline;
-    }
-
-    public ExpressionOperator getRetentionExpression() {
-        return retentionExpression;
-    }
-
-    public void setRetentionExpression(final ExpressionOperator retentionExpression) {
-        this.retentionExpression = retentionExpression;
     }
 
     @Override
@@ -304,9 +261,7 @@ public class ElasticIndexDoc extends Doc {
                Objects.equals(searchScrollSize, elasticIndex.searchScrollSize) &&
                Objects.equals(fields, elasticIndex.fields) &&
                Objects.equals(timeField, elasticIndex.timeField) &&
-               Objects.equals(vectorEmbeddingsBaseUrl, elasticIndex.vectorEmbeddingsBaseUrl) &&
-               Objects.equals(vectorEmbeddingsAuthToken, elasticIndex.vectorEmbeddingsAuthToken) &&
-               Objects.equals(vectorEmbeddingsModelId, elasticIndex.vectorEmbeddingsModelId) &&
+               Objects.equals(vectorGenerationModelRef, elasticIndex.vectorGenerationModelRef) &&
                Objects.equals(defaultExtractionPipeline, elasticIndex.defaultExtractionPipeline);
     }
 
@@ -321,9 +276,7 @@ public class ElasticIndexDoc extends Doc {
                 clusterRef,
                 fields,
                 timeField,
-                vectorEmbeddingsBaseUrl,
-                vectorEmbeddingsAuthToken,
-                vectorEmbeddingsModelId,
+                vectorGenerationModelRef,
                 defaultExtractionPipeline);
     }
 
@@ -333,14 +286,6 @@ public class ElasticIndexDoc extends Doc {
                "description='" + description + '\'' +
                ", clusterRef='" + clusterRef + '\'' +
                ", indexName='" + indexName + '\'' +
-               ", searchSlices=" + searchSlices +
-               ", searchScrollSize=" + searchScrollSize +
-               ", fields=" + fields +
-               ", timeField=" + timeField +
-               ", vectorEmbeddingsBaseUrl='" + vectorEmbeddingsBaseUrl + '\'' +
-               ", vectorEmbeddingsAuthToken='" + vectorEmbeddingsAuthToken + '\'' +
-               ", vectorEmbeddingsModelId='" + vectorEmbeddingsModelId + '\'' +
-               ", defaultExtractionPipeline=" + defaultExtractionPipeline +
                '}';
     }
 }

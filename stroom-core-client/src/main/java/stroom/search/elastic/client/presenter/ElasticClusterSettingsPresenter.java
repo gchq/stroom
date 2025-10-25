@@ -93,6 +93,7 @@ public class ElasticClusterSettingsPresenter
             getView().setApiKeyId(connectionConfig.getApiKeyId());
             getView().setApiKeySecret(connectionConfig.getApiKeySecret());
             getView().setConnectionTimeoutMillis(connectionConfig.getConnectionTimeoutMillis());
+            getView().setResponseTimeoutMillis(connectionConfig.getResponseTimeoutMillis());
         }
     }
 
@@ -105,6 +106,7 @@ public class ElasticClusterSettingsPresenter
         connectionConfig.setApiKeyId(getView().getApiKeyId());
         connectionConfig.setApiKeySecret(getView().getApiKeySecret());
         connectionConfig.setConnectionTimeoutMillis(getView().getConnectionTimeoutMillis());
+        connectionConfig.setResponseTimeoutMillis(getView().getResponseTimeoutMillis());
 
         cluster.setConnection(connectionConfig);
         return cluster;

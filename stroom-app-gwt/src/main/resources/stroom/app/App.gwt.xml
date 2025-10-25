@@ -102,6 +102,7 @@
     <inherits name="stroom.state.StateStore" />
     <inherits name="stroom.planb.PlanB" />
     <inherits name="stroom.gitrepo.GitRepo" />
+    <inherits name="stroom.openai.OpenAIModel" />
 
     <inherits name="stroom.query.Query" />
 

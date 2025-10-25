@@ -198,6 +198,9 @@ include 'stroom-node:stroom-node-mock'
 include 'stroom-node:stroom-node-impl-db'
 include 'stroom-node:stroom-node-impl-db-jooq'
 
+// OpenAI
+include 'stroom-openai:stroom-openai-impl'
+
 // Pipeline
 include 'stroom-pipeline'
 
@@ -292,3 +295,5 @@ include 'stroom-index:stroom-index-api'
 include 'stroom-cache:stroom-cache-service-impl'
 include 'stroom-gitrepo:stroom-gitrepo-impl'
 include 'stroom-gitrepo:stroom-gitrepo-api'
+
+include 'stroom-openai:stroom-openai-api'

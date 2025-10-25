@@ -17,12 +17,12 @@
 package stroom.search.elastic.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.openai.shared.OpenAIModelDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.client.presenter.DynamicFieldSelectionListModel;
 import stroom.search.elastic.client.presenter.ElasticIndexSettingsPresenter.ElasticIndexSettingsView;
@@ -44,7 +44,7 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
     private static final ElasticIndexResource ELASTIC_INDEX_RESOURCE = GWT.create(ElasticIndexResource.class);
 
     private final DocSelectionBoxPresenter clusterPresenter;
-    private final EditExpressionPresenter editExpressionPresenter;
+    private final DocSelectionBoxPresenter vectorModelPresenter;
     private final DocSelectionBoxPresenter pipelinePresenter;
     private final RestFactory restFactory;
     private final DynamicFieldSelectionListModel fieldSelectionBoxModel;
@@ -54,14 +54,14 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
             final EventBus eventBus,
             final ElasticIndexSettingsView view,
             final DocSelectionBoxPresenter clusterPresenter,
-            final EditExpressionPresenter editExpressionPresenter,
+            final DocSelectionBoxPresenter vectorModelPresenter,
             final DocSelectionBoxPresenter pipelinePresenter,
             final RestFactory restFactory,
             final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
         super(eventBus, view);
 
         this.clusterPresenter = clusterPresenter;
-        this.editExpressionPresenter = editExpressionPresenter;
+        this.vectorModelPresenter = vectorModelPresenter;
         this.pipelinePresenter = pipelinePresenter;
         this.restFactory = restFactory;
         this.fieldSelectionBoxModel = fieldSelectionBoxModel;
@@ -69,19 +69,23 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
         clusterPresenter.setIncludedTypes(ElasticClusterDoc.TYPE);
         clusterPresenter.setRequiredPermissions(DocumentPermission.USE);
 
+        vectorModelPresenter.setIncludedTypes(OpenAIModelDoc.TYPE);
+        vectorModelPresenter.setRequiredPermissions(DocumentPermission.USE);
+
         pipelinePresenter.setIncludedTypes(PipelineDoc.TYPE);
         pipelinePresenter.setRequiredPermissions(DocumentPermission.VIEW);
 
         view.setUiHandlers(this);
         view.setDefaultExtractionPipelineView(pipelinePresenter.getView());
         view.setClusterView(clusterPresenter.getView());
+        view.setVectorGenerationModelView(vectorModelPresenter.getView());
     }
 
     @Override
     protected void onBind() {
         // If the selected `ElasticCluster` changes, set the dirty flag to `true`
         registerHandler(clusterPresenter.addDataSelectionHandler(event -> setDirty(true)));
-        registerHandler(editExpressionPresenter.addDirtyHandler(dirty -> setDirty(true)));
+        registerHandler(vectorModelPresenter.addDataSelectionHandler(event -> setDirty(true)));
         registerHandler(pipelinePresenter.addDataSelectionHandler(selection -> setDirty(true)));
     }
 
@@ -110,13 +114,11 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
     @Override
     protected void onRead(final DocRef docRef, final ElasticIndexDoc index, final boolean readOnly) {
         clusterPresenter.setSelectedEntityReference(index.getClusterRef(), true);
+        vectorModelPresenter.setSelectedEntityReference(index.getVectorGenerationModelRef(), true);
         getView().setIndexName(index.getIndexName());
         getView().setSearchSlices(index.getSearchSlices());
         getView().setSearchScrollSize(index.getSearchScrollSize());
         getView().setTimeField(index.getTimeField());
-        getView().setVectorEmbeddingsBaseUrl(index.getVectorEmbeddingsBaseUrl());
-        getView().setVectorEmbeddingsAuthToken(index.getVectorEmbeddingsAuthToken());
-        getView().setVectorEmbeddingsModelId(index.getVectorEmbeddingsModelId());
 
         pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline(), true);
     }
@@ -124,6 +126,7 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
     @Override
     protected ElasticIndexDoc onWrite(final ElasticIndexDoc index) {
         index.setClusterRef(clusterPresenter.getSelectedEntityReference());
+        index.setVectorGenerationModelRef(vectorModelPresenter.getSelectedEntityReference());
 
         final String indexName = getView().getIndexName().trim();
         if (indexName.isEmpty()) {
@@ -135,9 +138,6 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
         index.setSearchSlices(getView().getSearchSlices());
         index.setSearchScrollSize(getView().getSearchScrollSize());
         index.setTimeField(getView().getTimeField());
-        index.setVectorEmbeddingsBaseUrl(getView().getVectorEmbeddingsBaseUrl());
-        index.setVectorEmbeddingsAuthToken(getView().getVectorEmbeddingsAuthToken());
-        index.setVectorEmbeddingsModelId(getView().getVectorEmbeddingsModelId());
         index.setDefaultExtractionPipeline(pipelinePresenter.getSelectedEntityReference());
         return index;
     }
@@ -169,17 +169,7 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
 
         void setTimeField(String partitionTimeField);
 
-        String getVectorEmbeddingsBaseUrl();
-
-        void setVectorEmbeddingsBaseUrl(final String vectorEmbeddingsBaseUrl);
-
-        String getVectorEmbeddingsAuthToken();
-
-        void setVectorEmbeddingsAuthToken(final String vectorEmbeddingsAuthToken);
-
-        String getVectorEmbeddingsModelId();
-
-        void setVectorEmbeddingsModelId(final String vectorEmbeddingsModelId);
+        void setVectorGenerationModelView(final View view);
 
         void setDefaultExtractionPipelineView(View view);
     }

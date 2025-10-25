@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.search.elastic.shared;
+package stroom.openai.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
@@ -31,8 +31,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 
 @Description(
-        "Defines the connection details for a single Elasticsearch cluster.\n" +
-        "This Elastic Cluster Document can then be used by one or more Elastic Index Documents.")
+        "Defines the settings required to connect to an OpenAI-compatible API and interact with a model.")
 @JsonPropertyOrder({
         "type",
         "uuid",
@@ -43,25 +42,32 @@ import java.util.Objects;
         "createUser",
         "updateUser",
         "description",
-        "connection"})
+        "baseUrl",
+        "authToken",
+        "modelId"})
 @JsonInclude(Include.NON_NULL)
-public class ElasticClusterDoc extends Doc {
+public class OpenAIModelDoc extends Doc {
 
-    public static final String TYPE = "ElasticCluster";
-    public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.ELASTIC_CLUSTER_DOCUMENT_TYPE;
+    public static final String TYPE = "OpenAIModel";
+    public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.OPENAI_MODEL_DOCUMENT_TYPE;
 
     @JsonProperty
     private String description;
 
     @JsonProperty
-    private ElasticConnectionConfig connection;
+    private String baseUrl;
 
-    public ElasticClusterDoc() {
-        this.connection = new ElasticConnectionConfig();
+    @JsonProperty
+    private String authToken;
+
+    @JsonProperty
+    private String modelId;
+
+    public OpenAIModelDoc() {
     }
 
     @JsonCreator
-    public ElasticClusterDoc(
+    public OpenAIModelDoc(
             @JsonProperty("uuid") final String uuid,
             @JsonProperty("name") final String name,
             @JsonProperty("version") final String version,
@@ -70,10 +76,14 @@ public class ElasticClusterDoc extends Doc {
             @JsonProperty("createUser") final String createUser,
             @JsonProperty("updateUser") final String updateUser,
             @JsonProperty("description") final String description,
-            @JsonProperty("connection") final ElasticConnectionConfig connection) {
+            @JsonProperty("baseUrl") final String baseUrl,
+            @JsonProperty("authToken") final String authToken,
+            @JsonProperty("modelId") final String modelId) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
-        this.connection = connection;
+        this.baseUrl = baseUrl;
+        this.authToken = authToken;
+        this.modelId = modelId;
     }
 
     /**
@@ -91,12 +101,28 @@ public class ElasticClusterDoc extends Doc {
         this.description = description;
     }
 
-    public ElasticConnectionConfig getConnection() {
-        return connection;
+    public String getBaseUrl() {
+        return baseUrl;
     }
 
-    public void setConnection(final ElasticConnectionConfig connection) {
-        this.connection = connection;
+    public void setBaseUrl(final String baseUrl) {
+        this.baseUrl = baseUrl;
+    }
+
+    public String getAuthToken() {
+        return authToken;
+    }
+
+    public void setAuthToken(final String authToken) {
+        this.authToken = authToken;
+    }
+
+    public String getModelId() {
+        return modelId;
+    }
+
+    public void setModelId(final String modelId) {
+        this.modelId = modelId;
     }
 
     @Override
@@ -104,27 +130,35 @@ public class ElasticClusterDoc extends Doc {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof ElasticClusterDoc)) {
+        if (!(o instanceof OpenAIModelDoc)) {
             return false;
         }
         if (!super.equals(o)) {
             return false;
         }
-        final ElasticClusterDoc elasticCluster = (ElasticClusterDoc) o;
-        return Objects.equals(description, elasticCluster.description) &&
-               Objects.equals(connection, elasticCluster.connection);
+        final OpenAIModelDoc model = (OpenAIModelDoc) o;
+        return Objects.equals(description, model.description) &&
+               Objects.equals(baseUrl, model.baseUrl) &&
+               Objects.equals(authToken, model.authToken) &&
+               Objects.equals(modelId, model.modelId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), description, connection);
+        return Objects.hash(
+                super.hashCode(),
+                description,
+                baseUrl,
+                authToken,
+                modelId);
     }
 
     @Override
     public String toString() {
-        return "ElasticCluster{" +
+        return "OpenAIModel{" +
                "description='" + description + '\'' +
-               ", connectionConfig=" + connection +
+               ", baseUrl='" + baseUrl + '\'' +
+               ", modelId='" + authToken + '\'' +
                '}';
     }
 }

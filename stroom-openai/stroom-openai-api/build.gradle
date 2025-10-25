@@ -1,0 +1,13 @@
+ext.moduleName = 'stroom.openai.api'
+
+dependencies {
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-util-shared')
+
+    implementation libs.jackson.annotations
+    implementation libs.openai
+    implementation libs.swagger.annotations
+
+    testRuntimeOnly libs.bundles.common.test.runtime
+}

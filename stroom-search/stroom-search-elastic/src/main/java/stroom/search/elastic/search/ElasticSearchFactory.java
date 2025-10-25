@@ -1,6 +1,7 @@
 package stroom.search.elastic.search;
 
 import stroom.dictionary.api.WordListProvider;
+import stroom.openai.api.OpenAIService;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.Query;
@@ -27,6 +28,7 @@ import co.elastic.clients.elasticsearch.core.search.Highlight;
 import co.elastic.clients.elasticsearch.core.search.HighlightField;
 import co.elastic.clients.util.NamedValue;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -41,6 +43,7 @@ public class ElasticSearchFactory {
     private final ElasticSearchTaskHandler elasticSearchTaskHandler;
     private final ElasticIndexCache elasticIndexCache;
     private final IndexFieldCache indexFieldCache;
+    private final Provider<OpenAIService> openAIServiceProvider;
     private final TaskContextFactory taskContextFactory;
     private final Executor executor;
 
@@ -49,12 +52,14 @@ public class ElasticSearchFactory {
                                 final ElasticSearchTaskHandler elasticSearchTaskHandler,
                                 final ElasticIndexCache elasticIndexCache,
                                 final IndexFieldCache indexFieldCache,
+                                final Provider<OpenAIService> openAIServiceProvider,
                                 final TaskContextFactory taskContextFactory,
                                 final ExecutorProvider executorProvider) {
         this.wordListProvider = wordListProvider;
         this.elasticSearchTaskHandler = elasticSearchTaskHandler;
         this.elasticIndexCache = elasticIndexCache;
         this.indexFieldCache = indexFieldCache;
+        this.openAIServiceProvider = openAIServiceProvider;
         this.taskContextFactory = taskContextFactory;
         this.executor = executorProvider.get(THREAD_POOL);
     }
@@ -114,6 +119,7 @@ public class ElasticSearchFactory {
                                                                              final ExpressionOperator expression,
                                                                              final DateTimeSettings dateTimeSettings) {
         final SearchExpressionQueryBuilder builder = new SearchExpressionQueryBuilder(
+                openAIServiceProvider,
                 index,
                 indexFieldCache,
                 wordListProvider,

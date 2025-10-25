@@ -27,6 +27,7 @@ public class TestSearchExpressionQueryBuilder {
         final MockIndexFieldCache indexFieldCache = new MockIndexFieldCache();
         final ExpressionOperator.Builder expressionBuilder = ExpressionOperator.builder().op(Op.AND);
         final SearchExpressionQueryBuilder builder = new SearchExpressionQueryBuilder(
+                null,
                 new ElasticIndexDoc(),
                 indexFieldCache,
                 null,

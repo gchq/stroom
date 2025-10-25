@@ -19,6 +19,8 @@ package stroom.search.elastic.search;
 
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
+import stroom.openai.api.OpenAIService;
+import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
@@ -32,7 +34,6 @@ import stroom.query.common.v2.IndexFieldCache;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.util.functions.TriFunction;
-import stroom.util.shared.NullSafe;
 
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.mapping.Property.Kind;
@@ -42,10 +43,8 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import co.elastic.clients.elasticsearch._types.query_dsl.UntypedRangeQuery;
 import co.elastic.clients.json.JsonData;
-import com.openai.client.okhttp.OpenAIOkHttpClient;
-import com.openai.credential.BearerTokenCredential;
-import com.openai.models.embeddings.CreateEmbeddingResponse;
-import com.openai.models.embeddings.EmbeddingCreateParams;
+import com.openai.client.OpenAIClient;
+import jakarta.inject.Provider;
 
 import java.net.InetAddress;
 import java.util.Arrays;
@@ -68,15 +67,19 @@ public class SearchExpressionQueryBuilder {
             Pattern.compile("^(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})(?:/\\d{1,2})?$");
     private static final Pattern IPV4_CIDR_PATTERN =
             Pattern.compile("^\\d+\\.\\d+\\.\\d+\\.\\d+/\\d{1,2}$");
+    private final Provider<OpenAIService> openAIServiceProvider;
     private final ElasticIndexDoc indexDoc;
     private final IndexFieldCache indexFieldCache;
     private final WordListProvider wordListProvider;
     private final DateTimeSettings dateTimeSettings;
 
-    public SearchExpressionQueryBuilder(final ElasticIndexDoc indexDoc,
-                                        final IndexFieldCache indexFieldCache,
-                                        final WordListProvider wordListProvider,
-                                        final DateTimeSettings dateTimeSettings) {
+    public SearchExpressionQueryBuilder(
+            final Provider<OpenAIService> openAIServiceProvider,
+            final ElasticIndexDoc indexDoc,
+            final IndexFieldCache indexFieldCache,
+            final WordListProvider wordListProvider,
+            final DateTimeSettings dateTimeSettings) {
+        this.openAIServiceProvider = openAIServiceProvider;
         this.indexDoc = indexDoc;
         this.indexFieldCache = indexFieldCache;
         this.wordListProvider = wordListProvider;
@@ -267,39 +270,21 @@ public class SearchExpressionQueryBuilder {
     }
 
     private Query buildDenseVectorQuery(final String fieldName, final String expression) {
-        if (NullSafe.isEmptyString(indexDoc.getVectorEmbeddingsModelId())) {
-            throw new IllegalArgumentException("Vector embeddings model ID is not defined in data source " +
+        if (indexDoc.getVectorGenerationModelRef() == null) {
+            throw new IllegalArgumentException("Vector embedding model is not defined in data source " +
                                                indexDoc.getName());
         }
 
         // Query the embeddings API for a vector representation of the query expression
-        final List<Float> queryVector = getSearchExpressionAsVector(fieldName, expression);
-        return QueryBuilders.knn(q -> q
-                .field(fieldName)
-                .queryVector(queryVector));
-    }
-
-    private List<Float> getSearchExpressionAsVector(final String fieldName, final String expression) {
-        final OpenAIOkHttpClient.Builder clientBuilder = OpenAIOkHttpClient.builder()
-                .fromEnv();
-
-        if (NullSafe.isNonEmptyString(indexDoc.getVectorEmbeddingsBaseUrl())) {
-            // Override the embeddings URL
-            clientBuilder.baseUrl(indexDoc.getVectorEmbeddingsBaseUrl());
-        }
-        if (indexDoc.getVectorEmbeddingsAuthToken() != null) {
-            // Provide a bearer token
-            clientBuilder.credential(BearerTokenCredential.create(indexDoc.getVectorEmbeddingsAuthToken()));
-        } else {
-            clientBuilder.credential(BearerTokenCredential.create(""));
-        }
-        final EmbeddingCreateParams params = EmbeddingCreateParams.builder()
-                .model(indexDoc.getVectorEmbeddingsModelId())
-                .input(expression)
-                .build();
+        final OpenAIModelDoc modelDoc = openAIServiceProvider.get().getOpenAIModelDoc(
+                indexDoc.getVectorGenerationModelRef());
+        final OpenAIClient client = openAIServiceProvider.get().createOpenAIClient(modelDoc);
         try {
-            final CreateEmbeddingResponse response = clientBuilder.build().embeddings().create(params);
-            return response.data().getFirst().embedding();
+            final List<Float> queryVector = openAIServiceProvider.get().getVectorEmbeddings(
+                    client, modelDoc, expression);
+            return QueryBuilders.knn(q -> q
+                    .field(fieldName)
+                    .queryVector(queryVector));
         } catch (final Exception e) {
             throw new RuntimeException("Failed to create vector embeddings for field " + fieldName + ". " +
                                        e.getMessage(), e);

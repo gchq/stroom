@@ -4804,6 +4804,70 @@ paths:
       summary: Get a token from an access code or refresh token
       tags:
       - Authentication
+  /openAIModel/v1/validate:
+    post:
+      operationId: validateOpenAIModel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OpenAIModelDoc"
+        description: openAIModelDoc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenAIModelTestResponse"
+          description: default response
+      summary: Validate OpenAI model
+      tags:
+      - OpenAI Model
+  /openAIModel/v1/{uuid}:
+    get:
+      operationId: fetchOpenAIModel
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenAIModelDoc"
+          description: default response
+      summary: Fetch an OpenAI model doc by its UUID
+      tags:
+      - OpenAI Model
+    put:
+      operationId: updateOpenAIModel
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OpenAIModelDoc"
+        description: doc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenAIModelDoc"
+          description: default response
+      summary: Update an OpenAI model doc
+      tags:
+      - OpenAI Model
   /permission/app/v1:
     get:
       operationId: getEffectiveAppPermissions
@@ -10633,6 +10697,7 @@ components:
           - DOCUMENT_GIT_REPO
           - DOCUMENT_INDEX
           - DOCUMENT_KAFKA_CONFIG
+          - DOCUMENT_OPEN_AI
           - DOCUMENT_PIPELINE
           - DOCUMENT_PLAN_B
           - DOCUMENT_QUERY
@@ -11051,8 +11116,6 @@ components:
           type: string
         name:
           type: string
-        retentionExpression:
-          $ref: "#/components/schemas/ExpressionOperator"
         searchScrollSize:
           type: integer
           format: int32
@@ -11070,12 +11133,8 @@ components:
           type: string
         uuid:
           type: string
-        vectorEmbeddingsAuthToken:
-          type: string
-        vectorEmbeddingsBaseUrl:
-          type: string
-        vectorEmbeddingsModelId:
-          type: string
+        vectorGenerationModelRef:
+          $ref: "#/components/schemas/DocRef"
         version:
           type: string
     ElasticIndexField:
@@ -13872,6 +13931,42 @@ components:
       required:
       - length
       - offset
+    OpenAIModelDoc:
+      type: object
+      properties:
+        authToken:
+          type: string
+        baseUrl:
+          type: string
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        description:
+          type: string
+        modelId:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        uuid:
+          type: string
+        version:
+          type: string
+    OpenAIModelTestResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        ok:
+          type: boolean
     OverrideValueString:
       type: object
       properties:
@@ -14037,6 +14132,7 @@ components:
           - DOCUMENT_GIT_REPO
           - DOCUMENT_INDEX
           - DOCUMENT_KAFKA_CONFIG
+          - DOCUMENT_OPEN_AI
           - DOCUMENT_PIPELINE
           - DOCUMENT_PLAN_B
           - DOCUMENT_QUERY

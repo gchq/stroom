@@ -8,7 +8,7 @@
         <g:HTML>
             <h2>General settings</h2>
         </g:HTML>
-        <form:FormGroup identity="elasticIndexSettingsClusterconfiguration" label="Cluster configuration">
+        <form:FormGroup identity="elasticIndexSettingsClusterConfiguration" label="Cluster configuration">
             <g:SimplePanel ui:field="cluster" />
         </form:FormGroup>
         <form:FormGroup identity="elasticIndexSettingsIndexNameOrPattern" label="Index name or pattern">
@@ -33,19 +33,10 @@
             <g:SimplePanel ui:field="defaultExtractionPipeline"/>
         </form:FormGroup>
         <g:HTML>
-            <h2>Vector embeddings</h2>
+            <h2>Vector search</h2>
         </g:HTML>
-        <form:FormGroup identity="elasticIndexSettingsVectorEmbeddingsModelId" label="Model ID">
-            <g:TextBox ui:field="vectorEmbeddingsModelId" width="400px"
-                       title="ID of the model to use to generate embeddings. Example: intfloat/e5-mistral-7b-instruct" />
-        </form:FormGroup>
-        <form:FormGroup identity="elasticIndexSettingsVectorEmbeddingsBaseUrl" label="Base URL (optional)">
-            <g:TextBox ui:field="vectorEmbeddingsBaseUrl" width="400px"
-                       title="Override the URL for the vector embeddings endpoint. Example: https://model-server.example.com/v1" />
-        </form:FormGroup>
-        <form:FormGroup identity="elasticIndexSettingsVectorEmbeddingsAuthToken" label="Bearer token (optional)">
-            <g:TextBox ui:field="vectorEmbeddingsAuthToken" width="400px"
-                       title="Client credential used to authenticate with the model server" />
+        <form:FormGroup identity="elasticIndexSettingsVectorGenerationModel" label="Vector generation model">
+            <g:SimplePanel ui:field="vectorGenerationModel" />
         </form:FormGroup>
 
         <b:Button ui:field="testConnection" text="Test Connection" width="200px" addStyleNames="allow-focus"/>

@@ -54,11 +54,7 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     @UiField
     TextBox timeField;
     @UiField
-    TextBox vectorEmbeddingsBaseUrl;
-    @UiField
-    TextBox vectorEmbeddingsAuthToken;
-    @UiField
-    TextBox vectorEmbeddingsModelId;
+    SimplePanel vectorGenerationModel;
     @UiField
     SimplePanel defaultExtractionPipeline;
 
@@ -131,33 +127,8 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     }
 
     @Override
-    public String getVectorEmbeddingsBaseUrl() {
-        return vectorEmbeddingsBaseUrl.getValue();
-    }
-
-    @Override
-    public void setVectorEmbeddingsBaseUrl(final String vectorEmbeddingsBaseUrl) {
-        this.vectorEmbeddingsBaseUrl.setValue(vectorEmbeddingsBaseUrl);
-    }
-
-    @Override
-    public String getVectorEmbeddingsAuthToken() {
-        return vectorEmbeddingsAuthToken.getValue();
-    }
-
-    @Override
-    public void setVectorEmbeddingsAuthToken(final String vectorEmbeddingsAuthToken) {
-        this.vectorEmbeddingsAuthToken.setValue(vectorEmbeddingsAuthToken);
-    }
-
-    @Override
-    public String getVectorEmbeddingsModelId() {
-        return vectorEmbeddingsModelId.getValue();
-    }
-
-    @Override
-    public void setVectorEmbeddingsModelId(final String vectorEmbeddingsModelId) {
-        this.vectorEmbeddingsModelId.setValue(vectorEmbeddingsModelId);
+    public void setVectorGenerationModelView(final View view) {
+        vectorGenerationModel.setWidget(view.asWidget());
     }
 
     @Override
@@ -189,21 +160,6 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
 
     @UiHandler("timeField")
     public void onTimeFieldKeyDown(final KeyDownEvent e) {
-        fireChange();
-    }
-
-    @UiHandler("vectorEmbeddingsBaseUrl")
-    public void onVectorEmbeddingsBaseUrlValueChange(final ValueChangeEvent<String> e) {
-        fireChange();
-    }
-
-    @UiHandler("vectorEmbeddingsAuthToken")
-    public void onVectorEmbeddingsAuthTokenValueChange(final ValueChangeEvent<String> e) {
-        fireChange();
-    }
-
-    @UiHandler("vectorEmbeddingsModelId")
-    public void onVectorEmbeddingsModelIdValueChange(final ValueChangeEvent<String> e) {
         fireChange();
     }
 
