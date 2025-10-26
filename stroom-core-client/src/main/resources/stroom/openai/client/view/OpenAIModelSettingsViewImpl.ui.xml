@@ -8,9 +8,9 @@
             <g:TextBox ui:field="baseUrl" width="400px"
                        title="Override the URL for the vector embeddings endpoint. Example: https://model-server.example.com/v1"/>
         </form:FormGroup>
-        <form:FormGroup identity="openAIModelAuthToken" label="Bearer token (optional)">
-            <g:TextBox ui:field="authToken" width="400px"
-                       title="Client credential used to authenticate with the model server"/>
+        <form:FormGroup identity="openAIModelApiKey" label="API Key (optional)">
+            <g:TextBox ui:field="apiKey" width="400px"
+                       title="Credential used to authenticate with the model server"/>
         </form:FormGroup>
         <form:FormGroup identity="openAIModelId" label="Model ID">
             <g:TextBox ui:field="modelId" width="400px"

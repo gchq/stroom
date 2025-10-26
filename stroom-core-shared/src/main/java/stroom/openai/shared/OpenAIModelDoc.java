@@ -43,7 +43,7 @@ import java.util.Objects;
         "updateUser",
         "description",
         "baseUrl",
-        "authToken",
+        "apiKey",
         "modelId"})
 @JsonInclude(Include.NON_NULL)
 public class OpenAIModelDoc extends Doc {
@@ -58,7 +58,7 @@ public class OpenAIModelDoc extends Doc {
     private String baseUrl;
 
     @JsonProperty
-    private String authToken;
+    private String apiKey;
 
     @JsonProperty
     private String modelId;
@@ -77,12 +77,12 @@ public class OpenAIModelDoc extends Doc {
             @JsonProperty("updateUser") final String updateUser,
             @JsonProperty("description") final String description,
             @JsonProperty("baseUrl") final String baseUrl,
-            @JsonProperty("authToken") final String authToken,
+            @JsonProperty("apiKey") final String apiKey,
             @JsonProperty("modelId") final String modelId) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.baseUrl = baseUrl;
-        this.authToken = authToken;
+        this.apiKey = apiKey;
         this.modelId = modelId;
     }
 
@@ -109,12 +109,12 @@ public class OpenAIModelDoc extends Doc {
         this.baseUrl = baseUrl;
     }
 
-    public String getAuthToken() {
-        return authToken;
+    public String getApiKey() {
+        return apiKey;
     }
 
-    public void setAuthToken(final String authToken) {
-        this.authToken = authToken;
+    public void setApiKey(final String apiKey) {
+        this.apiKey = apiKey;
     }
 
     public String getModelId() {
@@ -139,7 +139,7 @@ public class OpenAIModelDoc extends Doc {
         final OpenAIModelDoc model = (OpenAIModelDoc) o;
         return Objects.equals(description, model.description) &&
                Objects.equals(baseUrl, model.baseUrl) &&
-               Objects.equals(authToken, model.authToken) &&
+               Objects.equals(apiKey, model.apiKey) &&
                Objects.equals(modelId, model.modelId);
     }
 
@@ -149,7 +149,7 @@ public class OpenAIModelDoc extends Doc {
                 super.hashCode(),
                 description,
                 baseUrl,
-                authToken,
+                apiKey,
                 modelId);
     }
 
@@ -158,7 +158,7 @@ public class OpenAIModelDoc extends Doc {
         return "OpenAIModel{" +
                "description='" + description + '\'' +
                ", baseUrl='" + baseUrl + '\'' +
-               ", modelId='" + authToken + '\'' +
+               ", modelId='" + apiKey + '\'' +
                '}';
     }
 }

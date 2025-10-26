@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.openai.impl;
+package stroom.langchain.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;

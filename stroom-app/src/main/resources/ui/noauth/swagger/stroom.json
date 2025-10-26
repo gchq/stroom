@@ -19047,7 +19047,7 @@
       "OpenAIModelDoc" : {
         "type" : "object",
         "properties" : {
-          "authToken" : {
+          "apiKey" : {
             "type" : "string"
           },
           "baseUrl" : {

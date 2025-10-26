@@ -19,7 +19,7 @@ package stroom.search.elastic.search;
 
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
-import stroom.openai.api.OpenAIService;
+import stroom.langchain.api.OpenAIService;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionItem;
@@ -43,7 +43,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import co.elastic.clients.elasticsearch._types.query_dsl.UntypedRangeQuery;
 import co.elastic.clients.json.JsonData;
-import com.openai.client.OpenAIClient;
+import dev.langchain4j.model.embedding.EmbeddingModel;
 import jakarta.inject.Provider;
 
 import java.net.InetAddress;
@@ -278,10 +278,9 @@ public class SearchExpressionQueryBuilder {
         // Query the embeddings API for a vector representation of the query expression
         final OpenAIModelDoc modelDoc = openAIServiceProvider.get().getOpenAIModelDoc(
                 indexDoc.getVectorGenerationModelRef());
-        final OpenAIClient client = openAIServiceProvider.get().createOpenAIClient(modelDoc);
         try {
-            final List<Float> queryVector = openAIServiceProvider.get().getVectorEmbeddings(
-                    client, modelDoc, expression);
+            final EmbeddingModel embeddingModel = openAIServiceProvider.get().getEmbeddingModel(modelDoc);
+            final List<Float> queryVector = embeddingModel.embed(expression).content().vectorAsList();
             return QueryBuilders.knn(q -> q
                     .field(fieldName)
                     .queryVector(queryVector));

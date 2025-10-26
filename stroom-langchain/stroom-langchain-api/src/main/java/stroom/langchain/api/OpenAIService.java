@@ -14,20 +14,19 @@
  * limitations under the License.
  */
 
-package stroom.openai.api;
+package stroom.langchain.api;
 
 import stroom.docref.DocRef;
 import stroom.openai.shared.OpenAIModelDoc;
 
-import com.openai.client.OpenAIClient;
-
-import java.util.List;
+import com.openai.models.models.Model;
+import dev.langchain4j.model.embedding.EmbeddingModel;
 
 public interface OpenAIService {
 
     OpenAIModelDoc getOpenAIModelDoc(DocRef docRef);
 
-    OpenAIClient createOpenAIClient(OpenAIModelDoc modelDoc);
+    Model getModel(OpenAIModelDoc modelDoc);
 
-    List<Float> getVectorEmbeddings(OpenAIClient client, OpenAIModelDoc modelDoc, String text);
+    EmbeddingModel getEmbeddingModel(OpenAIModelDoc modelDoc);
 }

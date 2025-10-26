@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.openai.impl;
+package stroom.langchain.impl;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
-import stroom.openai.api.OpenAIService;
+import stroom.langchain.api.OpenAIService;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.openai.shared.OpenAIModelResource;
 import stroom.openai.shared.OpenAIModelTestResponse;
@@ -29,7 +29,6 @@ import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.NullSafe;
 
-import com.openai.client.OpenAIClient;
 import com.openai.models.models.Model;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -81,22 +80,18 @@ public class OpenAIModelResourceImpl implements OpenAIModelResource, FetchWithUu
                 throw new IllegalArgumentException("Model ID must not be empty");
             }
 
-            final OpenAIClient client = this.openAIServiceProvider.get().createOpenAIClient(modelDoc);
-            final Model foundModel = client.models().list().items().stream()
-                    .filter(model -> modelDoc.getModelId().equals(model.id()))
-                    .findFirst().orElseThrow();
-
+            final Model model = openAIServiceProvider.get().getModel(modelDoc);
             final StringBuilder sb = new StringBuilder()
                     .append("Model ID: ")
-                    .append(foundModel.id())
+                    .append(model.id())
                     .append("\nCreated: ")
-                    .append(DateUtil.createNormalDateTimeString(foundModel.created()))
+                    .append(DateUtil.createNormalDateTimeString(model.created()))
                     .append("\nOwner: ")
-                    .append(foundModel.ownedBy())
+                    .append(model.ownedBy())
                     .append("\nValid: ")
-                    .append(foundModel.isValid());
+                    .append(model.isValid());
 
-            return new OpenAIModelTestResponse(foundModel.isValid(), sb.toString());
+            return new OpenAIModelTestResponse(model.isValid(), sb.toString());
         } catch (final NoSuchElementException e) {
             return new OpenAIModelTestResponse(false, "Model " + modelDoc.getModelId() + " not found");
         }

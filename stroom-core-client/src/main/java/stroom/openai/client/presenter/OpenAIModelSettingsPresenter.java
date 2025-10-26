@@ -75,14 +75,14 @@ public class OpenAIModelSettingsPresenter extends DocumentEditPresenter<OpenAIMo
     @Override
     protected void onRead(final DocRef docRef, final OpenAIModelDoc model, final boolean readOnly) {
         getView().setBaseUrl(model.getBaseUrl());
-        getView().setAuthToken(model.getAuthToken());
+        getView().setApiKey(model.getApiKey());
         getView().setModelId(model.getModelId());
     }
 
     @Override
     protected OpenAIModelDoc onWrite(final OpenAIModelDoc model) {
         model.setBaseUrl(getView().getBaseUrl());
-        model.setAuthToken(getView().getAuthToken());
+        model.setApiKey(getView().getApiKey());
         model.setModelId(getView().getModelId());
 
         return model;
@@ -95,9 +95,9 @@ public class OpenAIModelSettingsPresenter extends DocumentEditPresenter<OpenAIMo
 
         void setBaseUrl(String baseUrl);
 
-        String getAuthToken();
+        String getApiKey();
 
-        void setAuthToken(String authToken);
+        void setApiKey(String authToken);
 
         String getModelId();
 

@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-package stroom.openai.impl;
+package stroom.langchain.impl;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
-import stroom.openai.api.OpenAIService;
+import stroom.langchain.api.OpenAIService;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.util.shared.NullSafe;
 
 import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
 import com.openai.credential.BearerTokenCredential;
-import com.openai.models.embeddings.CreateEmbeddingResponse;
-import com.openai.models.embeddings.EmbeddingCreateParams;
+import com.openai.models.models.Model;
+import dev.langchain4j.model.embedding.EmbeddingModel;
+import dev.langchain4j.model.openai.OpenAiEmbeddingModel;
+import dev.langchain4j.model.openai.OpenAiEmbeddingModel.OpenAiEmbeddingModelBuilder;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-
-import java.util.List;
 
 @Singleton
 public class OpenAIServiceImpl implements OpenAIService {
@@ -47,12 +47,7 @@ public class OpenAIServiceImpl implements OpenAIService {
     }
 
     @Override
-    public OpenAIModelDoc getOpenAIModelDoc(final DocRef docRef) {
-        return documentResourceHelperProvider.get().read(openAIModelStoreProvider.get(), docRef);
-    }
-
-    @Override
-    public OpenAIClient createOpenAIClient(final OpenAIModelDoc modelDoc) {
+    public Model getModel(final OpenAIModelDoc modelDoc) {
         final OpenAIOkHttpClient.Builder clientBuilder = OpenAIOkHttpClient.builder()
                 .fromEnv();
 
@@ -61,26 +56,37 @@ public class OpenAIServiceImpl implements OpenAIService {
             clientBuilder.baseUrl(modelDoc.getBaseUrl());
         }
 
-        if (modelDoc.getAuthToken() != null) {
+        if (modelDoc.getApiKey() != null) {
             // Provide a bearer token
-            clientBuilder.credential(BearerTokenCredential.create(modelDoc.getAuthToken()));
+            clientBuilder.credential(BearerTokenCredential.create(modelDoc.getApiKey()));
         } else {
             clientBuilder.credential(BearerTokenCredential.create(""));
         }
 
-        return clientBuilder.build();
+        final OpenAIClient client = clientBuilder.build();
+        return client.models().list().items().stream()
+                .filter(model -> modelDoc.getModelId().equals(model.id()))
+                .findFirst().orElseThrow();
     }
 
     @Override
-    public List<Float> getVectorEmbeddings(final OpenAIClient client,
-                                           final OpenAIModelDoc modelDoc,
-                                           final String expression) {
-        final EmbeddingCreateParams params = EmbeddingCreateParams.builder()
-                .model(modelDoc.getModelId())
-                .input(expression)
-                .build();
+    public OpenAIModelDoc getOpenAIModelDoc(final DocRef docRef) {
+        return documentResourceHelperProvider.get().read(openAIModelStoreProvider.get(), docRef);
+    }
 
-        final CreateEmbeddingResponse response = client.embeddings().create(params);
-        return response.data().getFirst().embedding();
+    @Override
+    public EmbeddingModel getEmbeddingModel(final OpenAIModelDoc modelDoc) {
+        final OpenAiEmbeddingModelBuilder modelBuilder = OpenAiEmbeddingModel.builder()
+                .modelName(modelDoc.getModelId());
+
+        if (NullSafe.isNonEmptyString(modelDoc.getBaseUrl())) {
+            // Override the base URL
+            modelBuilder.baseUrl(modelDoc.getBaseUrl());
+        }
+
+        // Provide a bearer token
+        modelBuilder.apiKey(modelDoc.getApiKey());
+
+        return modelBuilder.build();
     }
 }

@@ -17,6 +17,7 @@ jackson-swagger = "2.11.1" # Specific version of jackson for use with the swagge
 jmh = "1.37"
 jooq = "3.20.8"
 junit-jupiter = "5.13.1"
+langchain4j = "1.8.0"
 kafka = "3.9.0"
 openai = "4.3.0"
 poi = "5.4.1"
@@ -157,6 +158,7 @@ mbknor-jackson-jsonSchema = { module = "com.kjetland:mbknor-jackson-jsonschema_2
 mockito-core = { module = "org.mockito:mockito-core" } # version controlled by dropwizard-dependencies
 mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter" } # version controlled by dropwizard-dependencies
 mysql-connector-java = { module = "com.mysql:mysql-connector-j", version = "9.4.0" }
+langchain4j = { module = "dev.langchain4j:langchain4j-open-ai", version.ref = "langchain4j" }
 openai = { module = "com.openai:openai-java", version.ref = "openai" }
 poi = { module = "org.apache.poi:poi", version.ref = "poi" }
 poi-ooxml = { module = "org.apache.poi:poi-ooxml", version.ref = "poi" }

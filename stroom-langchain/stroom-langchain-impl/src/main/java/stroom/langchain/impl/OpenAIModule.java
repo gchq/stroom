@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.openai.impl;
+package stroom.langchain.impl;
 
 import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
-import stroom.openai.api.OpenAIService;
+import stroom.langchain.api.OpenAIService;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;

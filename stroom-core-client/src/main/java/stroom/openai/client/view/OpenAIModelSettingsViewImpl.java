@@ -40,7 +40,7 @@ public class OpenAIModelSettingsViewImpl extends ViewWithUiHandlers<OpenAIModelS
     @UiField
     TextBox baseUrl;
     @UiField
-    TextBox authToken;
+    TextBox apiKey;
     @UiField
     TextBox modelId;
     @UiField
@@ -68,13 +68,13 @@ public class OpenAIModelSettingsViewImpl extends ViewWithUiHandlers<OpenAIModelS
     }
 
     @Override
-    public String getAuthToken() {
-        return authToken.getValue();
+    public String getApiKey() {
+        return apiKey.getValue();
     }
 
     @Override
-    public void setAuthToken(final String authToken) {
-        this.authToken.setValue(authToken);
+    public void setApiKey(final String authToken) {
+        this.apiKey.setValue(authToken);
     }
 
     @Override
@@ -90,7 +90,7 @@ public class OpenAIModelSettingsViewImpl extends ViewWithUiHandlers<OpenAIModelS
     @Override
     public void onReadOnly(final boolean readOnly) {
         baseUrl.setEnabled(!readOnly);
-        authToken.setEnabled(!readOnly);
+        apiKey.setEnabled(!readOnly);
         modelId.setEnabled(!readOnly);
     }
 
@@ -105,8 +105,8 @@ public class OpenAIModelSettingsViewImpl extends ViewWithUiHandlers<OpenAIModelS
         fireChange();
     }
 
-    @UiHandler("authToken")
-    public void onAuthToken(final ValueChangeEvent<String> event) {
+    @UiHandler("apiKey")
+    public void onApiKey(final ValueChangeEvent<String> event) {
         fireChange();
     }
 

@@ -12,7 +12,7 @@ dependencies {
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
-    implementation project(':stroom-openai:stroom-openai-api')
+    implementation project(':stroom-langchain:stroom-langchain-api')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-query:stroom-query-language')
     implementation project(':stroom-query:stroom-query-api')
@@ -32,7 +32,7 @@ dependencies {
     implementation libs.jackson.annotations
     implementation libs.jakarta.inject
     implementation libs.jakarta.json.api
-    implementation libs.openai
+    implementation libs.langchain4j
     implementation libs.restygwt
     implementation libs.saxon.he
     implementation libs.slf4j.api
