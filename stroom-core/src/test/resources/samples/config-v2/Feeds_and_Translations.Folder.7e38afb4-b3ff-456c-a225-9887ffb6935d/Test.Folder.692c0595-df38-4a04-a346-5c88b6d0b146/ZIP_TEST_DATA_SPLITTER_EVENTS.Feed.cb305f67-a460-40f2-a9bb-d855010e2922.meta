@@ -1,0 +1,12 @@
+{
+  "type" : "Feed",
+  "uuid" : "cb305f67-a460-40f2-a9bb-d855010e2922",
+  "name" : "ZIP_TEST-DATA_SPLITTER-EVENTS",
+  "version" : "7d17452d-afb8-40f4-89c3-2f3e18203b9f",
+  "description" : "ZIP_TEST-DATA_SPLITTER-EVENTS",
+  "encoding" : "UTF-8",
+  "contextEncoding" : "UTF-8",
+  "reference" : false,
+  "streamType" : "Raw Events",
+  "status" : "RECEIVE"
+}

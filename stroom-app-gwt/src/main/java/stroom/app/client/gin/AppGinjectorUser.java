@@ -33,8 +33,10 @@ import stroom.aws.s3.client.gin.S3ConfigModule;
 import stroom.cache.client.gin.CacheGinjector;
 import stroom.cache.client.gin.CacheModule;
 import stroom.content.client.presenter.ContentTabPanePresenter;
+import stroom.contentstore.client.gin.ContentStoreModule;
 import stroom.core.client.presenter.CorePresenter;
 import stroom.core.client.presenter.FullScreenPresenter;
+import stroom.credentials.client.gin.CredentialsModule;
 import stroom.dashboard.client.embeddedquery.gin.EmbeddedQueryGinjector;
 import stroom.dashboard.client.embeddedquery.gin.EmbeddedQueryModule;
 import stroom.dashboard.client.gin.DashboardGinjector;
@@ -130,8 +132,10 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         AlertModule.class,
         AnnotationModule.class,
         AppModule.class,
+        ContentStoreModule.class,
         CacheModule.class,
         ContentTemplateModule.class,
+        CredentialsModule.class,
         RestModule.class,
         DashboardModule.class,
         DictionaryModule.class,
@@ -219,7 +223,8 @@ public interface AppGinjectorUser extends
         ScyllaDbGinjector,
         StateStoreGinjector,
         PlanBGinjector,
-        GitRepoGinjector {
+        GitRepoGinjector /*,
+        CredentialsGinjector*/ {
 
     // Default implementation of standard resources
     EventBus getEventBus();

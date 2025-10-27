@@ -1,11 +1,16 @@
 ext.moduleName = 'stroom.gitrepo.api'
 
 dependencies {
+    implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
-    implementation project(':stroom-util-shared')
+
+    implementation libs.jackson.annotations
+    implementation libs.jakarta.validation.api
+
 }

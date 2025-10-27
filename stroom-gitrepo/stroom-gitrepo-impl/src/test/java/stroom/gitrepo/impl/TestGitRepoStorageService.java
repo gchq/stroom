@@ -40,14 +40,14 @@ public class TestGitRepoStorageService {
 
         final Path parent = Paths.get("/tmp/TestGitRepoStorageService/one");
         final Path subdir = Paths.get("two/three");
-        Path resolved = GitRepoStorageService.addDirectoryToPath(parent, subdir);
+        Path resolved = GitRepoStorageServiceImpl.addDirectoryToPath(parent, subdir);
 
         // Ensure that the test is running
         assertThat(resolved).isEqualTo(fullPath);
 
         try {
             final Path badDir = Paths.get("..");
-            resolved = GitRepoStorageService.addDirectoryToPath(parent, badDir);
+            resolved = GitRepoStorageServiceImpl.addDirectoryToPath(parent, badDir);
             assertThat(resolved)
                     .as("Shouldn't get here - exception should be thrown")
                     .isEqualTo(fullPath);

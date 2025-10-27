@@ -169,20 +169,9 @@ public final class SetupSampleDataBean {
         // process
         final Path coreServerSamplesDir = StroomCoreServerTestFileUtil.getTestResourcesDir()
                 .resolve(ROOT_DIR_NAME);
-        final Path statisticsSamplesDir = Paths.get("./stroom-statistics/stroom-statistics-impl/src/test/resources")
-                .resolve(ROOT_DIR_NAME);
-
-        final Path[] rootDirs = new Path[]{
-                coreServerSamplesDir,
-                statisticsSamplesDir};
 
         // Load various streams that we generate on the fly
         sampleDataGenerator.generateData(coreServerSamplesDir.resolve("generated").resolve("input"));
-
-        // process each root dir in turn, importing content and loading data into feeds
-        for (final Path dir : rootDirs) {
-            loadDirectory(shutdown, dir);
-        }
 
         // Add volumes to all indexes.
         final List<DocRef> indexList = indexStore.list();
@@ -306,7 +295,10 @@ public final class SetupSampleDataBean {
 
         if (Files.exists(configDir)) {
             LOGGER.info("Loading config from {}", configDir.toAbsolutePath().normalize());
-            importExportSerializer.read(configDir, null, ImportSettings.auto());
+            importExportSerializer.read(
+                    configDir,
+                    null,
+                    ImportSettings.auto());
 
 //            // Enable all flags for all feeds.
 //            final List<FeedDoc> feeds = feedService.find(new FindFeedCriteria());

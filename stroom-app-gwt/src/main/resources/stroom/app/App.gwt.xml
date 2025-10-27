@@ -101,7 +101,9 @@
     <inherits name="stroom.state.ScyllaDb" />
     <inherits name="stroom.state.StateStore" />
     <inherits name="stroom.planb.PlanB" />
+    <inherits name="stroom.contentstore.ContentStore" />
     <inherits name="stroom.gitrepo.GitRepo" />
+    <inherits name="stroom.credentials.Credentials"/>
 
     <inherits name="stroom.query.Query" />
 

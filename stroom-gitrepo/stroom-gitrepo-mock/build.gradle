@@ -1,0 +1,25 @@
+ext.moduleName = 'stroom.gitrepo.mock'
+
+dependencies {
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-gitrepo:stroom-gitrepo-api')
+    implementation project(':stroom-gitrepo:stroom-gitrepo-impl')
+    implementation project(':stroom-gitrepo:stroom-gitrepo-impl-db')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-util-shared')
+    implementation libs.guice
+    implementation libs.jakarta.inject
+    implementation libs.jakarta.validation.api
+    implementation libs.jgit
+    implementation libs.jgitssh
+    implementation libs.restygwt
+    implementation libs.slf4j.api
+
+    testImplementation project(':stroom-credentials:stroom-credentials-impl-db')
+    testImplementation project(':stroom-gitrepo:stroom-gitrepo-impl-db')
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
+}

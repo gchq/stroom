@@ -7,6 +7,7 @@ import stroom.cell.info.client.CommandLinkCell;
 import stroom.cell.info.client.PercentBarCell;
 import stroom.cell.info.client.RedGreenTextCell;
 import stroom.cell.info.client.SvgCell;
+import stroom.cell.info.client.SvgStringCell;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.client.TickBoxCell.DefaultAppearance;
 import stroom.cell.tickbox.client.TickBoxCell.NoBorderAppearance;
@@ -142,6 +143,16 @@ public class DataGridUtil {
         final Column<T_ROW, Preset> column = column(cellValueExtractor, () -> new SvgCell(false));
         column.setCellStyleNames("statusIcon");
         return column;
+    }
+
+    /**
+     * Generates a data grid column from SVG embedded in a String.
+     * Not a safe way to generate content as the SVG might contain hostile
+     * content so use with care.
+     */
+    public static <T_ROW> Column<T_ROW, String> svgStringColumn(
+            final Function<T_ROW, String> cellValueExtractor) {
+        return column(cellValueExtractor, SvgStringCell::new);
     }
 
     public static <T_ROW> Column<T_ROW, SafeHtml> safeHtmlColumn(

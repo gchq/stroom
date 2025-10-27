@@ -1,0 +1,6 @@
+{
+  "type" : "Pipeline",
+  "uuid" : "dc3b6921-6602-4eeb-835f-01cbaea5024b",
+  "name" : "RAW_STREAMING_READER-EVENTS",
+  "version" : "1cb21fc0-0f25-423e-81b4-a3691944267f"
+}

@@ -1,0 +1,34 @@
+{
+  "uuid" : "69448907-8ba9-41b1-be8a-5c571dba7f7b",
+  "queryData" : {
+    "dataSource" : {
+      "type" : "StreamStore",
+      "uuid" : "0",
+      "name" : "StreamStore"
+    },
+    "expression" : {
+      "type" : "operator",
+      "children" : [ {
+        "type" : "term",
+        "field" : "Feed",
+        "condition" : "EQUALS",
+        "value" : "IMP_EXP_TEST_FEED"
+      }, {
+        "type" : "term",
+        "field" : "Type",
+        "condition" : "EQUALS",
+        "value" : "Raw Reference"
+      } ]
+    }
+  },
+  "priority" : 10,
+  "maxProcessingTasks" : 0,
+  "reprocess" : false,
+  "enabled" : true,
+  "deleted" : false,
+  "export" : true,
+  "processorType" : "PIPELINE",
+  "processorUuid" : "28227e52-e645-472a-8aee-6f71e5b86469",
+  "pipelineUuid" : "99dd2ba1-8a1f-4be1-9368-2ae67bfab970",
+  "pipelineName" : "Imp_exp_test_pipeline"
+}

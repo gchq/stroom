@@ -5,6 +5,7 @@ import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.impl.ProcessorFilterDao;
+import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterRecord;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFields;
 import stroom.processor.shared.ProcessorFilter;
@@ -30,6 +31,7 @@ import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
+import org.jooq.UpdateConditionStep;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
@@ -95,6 +97,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         expressionMapper.map(ProcessorFilterFields.PRIORITY, PROCESSOR_FILTER.PRIORITY, Integer::valueOf);
         expressionMapper.map(ProcessorFilterFields.ENABLED, PROCESSOR_FILTER.ENABLED, Boolean::valueOf);
         expressionMapper.map(ProcessorFilterFields.DELETED, PROCESSOR_FILTER.DELETED, Boolean::valueOf);
+        expressionMapper.map(ProcessorFilterFields.EXPORT, PROCESSOR_FILTER.EXPORT, Boolean::valueOf);
         expressionMapper.map(ProcessorFilterFields.UUID, PROCESSOR_FILTER.UUID, value -> value);
         expressionMapper.map(ProcessorFilterFields.RUN_AS_USER, PROCESSOR_FILTER.RUN_AS_USER_UUID, value -> value);
 
@@ -182,6 +185,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                         PROCESSOR_FILTER.REPROCESS,
                         PROCESSOR_FILTER.ENABLED,
                         PROCESSOR_FILTER.DELETED,
+                        PROCESSOR_FILTER.EXPORT,
                         PROCESSOR_FILTER.MIN_META_CREATE_TIME_MS,
                         PROCESSOR_FILTER.MAX_META_CREATE_TIME_MS,
                         PROCESSOR_FILTER.MAX_PROCESSING_TASKS,
@@ -199,6 +203,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                         filter.isReprocess(),
                         filter.isEnabled(),
                         filter.isDeleted(),
+                        filter.isExport(),
                         filter.getMinMetaCreateTimeMs(),
                         filter.getMaxMetaCreateTimeMs(),
                         filter.getMaxProcessingTasks(),
@@ -222,6 +227,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 .set(PROCESSOR_FILTER.REPROCESS, filter.isReprocess())
                 .set(PROCESSOR_FILTER.ENABLED, filter.isEnabled())
                 .set(PROCESSOR_FILTER.DELETED, filter.isDeleted())
+                .set(PROCESSOR_FILTER.EXPORT, filter.isExport())
                 .set(PROCESSOR_FILTER.MIN_META_CREATE_TIME_MS, filter.getMinMetaCreateTimeMs())
                 .set(PROCESSOR_FILTER.MAX_META_CREATE_TIME_MS, filter.getMaxMetaCreateTimeMs())
                 .set(PROCESSOR_FILTER.MAX_PROCESSING_TASKS, filter.getMaxProcessingTasks())
@@ -367,7 +373,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     }
 
     public int logicallyDeleteOldFilters(final Instant deleteThreshold, final DSLContext context) {
-        final var query = context
+        final UpdateConditionStep<ProcessorFilterRecord> query = context
                 .update(PROCESSOR_FILTER)
                 .set(PROCESSOR_FILTER.DELETED, true)
                 .set(PROCESSOR_FILTER.VERSION, PROCESSOR_FILTER.VERSION.plus(1))
