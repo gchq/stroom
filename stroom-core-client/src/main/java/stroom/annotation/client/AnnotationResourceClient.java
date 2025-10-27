@@ -19,7 +19,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.security.client.presenter.AbstractRestClient;
-import stroom.security.shared.SingleDocumentPermissionChangeRequest;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ResultPage;
 
@@ -139,18 +138,6 @@ public class AnnotationResourceClient extends AbstractRestClient {
                 .create(ANNOTATION_RESOURCE)
                 .method(res -> res.getLinkedEvents(annotationRef))
                 .onSuccess(consumer)
-                .taskMonitorFactory(taskMonitorFactory)
-                .exec();
-    }
-
-    public void changeDocumentPermissions(final SingleDocumentPermissionChangeRequest request,
-                                          final Consumer<Boolean> consumer,
-                                          final TaskMonitorFactory taskMonitorFactory) {
-        restFactory
-                .create(ANNOTATION_RESOURCE)
-                .method(res -> res.changeDocumentPermissions(request))
-                .onSuccess(consumer)
-                .onFailure(new DefaultErrorHandler(this, () -> consumer.accept(false)))
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }

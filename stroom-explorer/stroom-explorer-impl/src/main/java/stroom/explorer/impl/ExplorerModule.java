@@ -54,6 +54,8 @@ public class ExplorerModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(ExplorerResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bind(PermissionChangeResourceImpl.class);
 
         SuggestionsServiceBinder.create(binder())
                 .bind(ExplorerFields.EXPLORER_TYPE, ExplorerServiceImpl.class);

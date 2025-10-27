@@ -54,7 +54,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
 
     private static final boolean USE_S3 = false;
 
-    private final ContentImportService contentImportService;
+    private final ContentStoreTestSetup contentStoreTestSetup;
     private final IndexShardManager indexShardManager;
     private final IndexShardWriterCache indexShardWriterCache;
     private final VolumeCreator volumeCreator;
@@ -72,7 +72,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     private static final ThreadLocal<Boolean> NEEDS_CLEAN_UP_THREAD_LOCAL = ThreadLocal.withInitial(() -> false);
 
     @Inject
-    DatabaseCommonTestControl(final ContentImportService contentImportService,
+    DatabaseCommonTestControl(final ContentStoreTestSetup contentStoreTestSetup,
                               final IndexShardManager indexShardManager,
                               final IndexShardWriterCache indexShardWriterCache,
                               final VolumeCreator volumeCreator,
@@ -84,7 +84,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
                               final PathCreator pathCreator,
                               final ExplorerNodeService explorerNodeService,
                               final S3ExampleVolumes s3ExampleVolumes) {
-        this.contentImportService = contentImportService;
+        this.contentStoreTestSetup = contentStoreTestSetup;
         this.indexShardManager = indexShardManager;
         this.indexShardWriterCache = indexShardWriterCache;
         this.volumeCreator = volumeCreator;
@@ -197,7 +197,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
 
     @Override
     public void createRequiredXMLSchemas() {
-        contentImportService.importStandardPacks();
+        contentStoreTestSetup.installStandardPacks();
     }
 
     /**

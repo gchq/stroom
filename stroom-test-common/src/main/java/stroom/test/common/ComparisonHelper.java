@@ -195,6 +195,31 @@ public final class ComparisonHelper {
         final List<Path> inFiles = list(in);
         final List<Path> outFiles = list(out);
 
+        // Tell the tester what went wrong
+        if (outFiles.size() != inFiles.size()) {
+            final List<Path> inFilenames = inFiles.stream().map(Path::getFileName).toList();
+            final List<Path> outFilenames = outFiles.stream().map(Path::getFileName).toList();
+
+            final List<Path> extraFiles = new ArrayList<>(outFilenames);
+            extraFiles.removeAll(inFilenames);
+            final List<Path> missingFiles = new ArrayList<>(inFilenames);
+            missingFiles.removeAll(outFilenames);
+
+            if (!extraFiles.isEmpty()) {
+                System.err.println("New files added: ");
+                for (final Path p : extraFiles) {
+                    System.err.println("    " + p);
+                }
+            }
+            if (!missingFiles.isEmpty()) {
+                System.err.println("Missing files: ");
+                for (final Path p : missingFiles) {
+                    System.err.println("    " + p);
+                }
+            }
+        }
+
+        // Do the test
         assertThat(outFiles.size()).as(
                 "Dir " + FileUtil.getCanonicalPath(in) + " does not contain the same number of files as "
                         + FileUtil.getCanonicalPath(out)).isEqualTo(inFiles.size());

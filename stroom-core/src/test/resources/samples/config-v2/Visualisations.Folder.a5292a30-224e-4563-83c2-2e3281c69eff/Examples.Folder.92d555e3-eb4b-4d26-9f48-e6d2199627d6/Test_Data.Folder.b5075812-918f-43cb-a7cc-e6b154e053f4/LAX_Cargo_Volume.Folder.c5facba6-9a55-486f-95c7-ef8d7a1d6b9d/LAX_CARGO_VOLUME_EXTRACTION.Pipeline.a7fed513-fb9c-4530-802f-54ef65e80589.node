@@ -1,0 +1,5 @@
+name=LAX_CARGO_VOLUME-EXTRACTION
+path=/Visualisations/Examples/Test Data/LAX Cargo Volume/LAX_CARGO_VOLUME-EXTRACTION
+type=Pipeline
+uuid=a7fed513-fb9c-4530-802f-54ef65e80589
+version=V2

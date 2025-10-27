@@ -2556,6 +2556,94 @@ button.main-menu svg {
     position: absolute;
 }
 
+/* ==== Content store CSS ==== */
+.contentstore-details {
+    width: 100%;
+}
+/** Allows things to scroll in y-direction */
+.contentstore-scroll-y {
+    overflow-y: auto;
+}
+/* Details title */
+.contentstore-details .contentstore-details-heading {
+    font-size: 120%;
+    font-weight: bold;
+}
+/* Set the SVG to 100x100px */
+.contentstore-details-icon svg {
+    height: 100px;
+    width: 100px;
+    margin: 10px;
+}
+/* Padding in details table */
+.contentstore-details .contentstore-details-table th, .contentstore-details .contentstore-details-table td {
+    padding: 5px;
+}
+/* Overall width of details table */
+.contentstore-details table.contentstore-details-table, .contentstore-details .contentstore-details-vertical {
+    width: 100%;
+    padding-right: 15px;
+}
+/* The box that the markdown is displayed in, based on .form-control-border */
+.contentstore-details div.markdown {
+    border: solid 1px var(--control__border-color);
+    border-radius: .25rem;
+    overflow: hidden;padding: 4px;
+    height: 200px;
+    overflow-y: auto;
+}
+/* contentstore Markdown - make it a bit smaller */
+.contentstore-details .markdown {
+    font-size: 70%;
+}
+/* Buttons formatting */
+.contentstore-details-buttons {
+    margin-top: 15px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 10px;
+    width: 100%
+}
+.contentstore-details-buttons .gwt-CheckBox {
+    vertical-align: middle;
+}
+.contentstore-details-buttons .gwt-CheckBox label {
+    margin-left: 5px;
+}
+
+/* GitRepo stuff */
+/* Commit message dialog */
+.gitrepo-commit-message-dialog textarea {
+    width: 100%;
+    height: 220px;
+    resize: none;
+}
+.gitrepo-credentials-dialog input {
+    width: 100%;
+}
+/* Settings form */
+.gitrepo-settings-form button.Button {
+    width: 400px;
+}
+.gitrepo-settings-form input[type="text"] {
+    width: 400px;
+}
+
+/* Credentials Manager */
+/* Text area needs to be big enough to display certificates */
+.credentials-details-dialog textarea {
+    width: 650px;
+    height: 150px;
+}
+
+/* Background and border on table */
+.credentials-manager-dialog {
+    background-color: var(--control__background-color);
+    border: solid 1px var(--control__border-color);
+    border-radius: .25rem;
+}
+
+/* --- */
 .multiChooser td {
     vertical-align: middle;
 }

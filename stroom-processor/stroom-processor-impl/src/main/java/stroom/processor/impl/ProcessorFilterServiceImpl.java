@@ -192,6 +192,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         AuditUtil.stamp(securityContext, processorFilter);
         processorFilter.setReprocess(request.isReprocess());
         processorFilter.setEnabled(request.isEnabled());
+        processorFilter.setExport(request.isExport());
         processorFilter.setPriority(calculatedPriority);
         processorFilter.setMaxProcessingTasks(request.getMaxProcessingTasks());
         processorFilter.setProcessor(processor);

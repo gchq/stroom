@@ -4,12 +4,12 @@
 package stroom.processor.impl.db.jooq;
 
 
-import stroom.processor.impl.db.jooq.tables.ProcessorTask;
-
 import org.jooq.Index;
 import org.jooq.OrderField;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
+
+import stroom.processor.impl.db.jooq.tables.ProcessorTask;
 
 
 /**

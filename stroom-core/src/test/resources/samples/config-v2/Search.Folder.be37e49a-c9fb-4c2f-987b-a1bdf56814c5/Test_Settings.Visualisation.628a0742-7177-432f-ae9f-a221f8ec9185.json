@@ -1,0 +1,85 @@
+{
+   "tabs" :
+   [
+      {
+         "name" : "Data",
+         "controls" :
+         [
+            {
+               "id" : "x",
+               "type" :  "field",
+               "label" : "X Axis"
+            },
+            {
+               "id" : "y",
+               "type" :  "field",
+               "label" : "Y Axis"
+            },
+            {
+               "id" : "series",
+               "type" :  "field",
+               "label" : "Series"
+            }
+         ]
+      },
+      {
+         "name" : "Line",
+         "controls" :
+         [
+            {
+               "id" : "interpolationMode",
+               "type" :  "selection",
+               "label" : "Interpolation Mode",
+               "values" : [ "linear", "linear-closed", "step", "step-before", "step-after", "basis", "basis-open", "basis-closed", "bundle", "cardinal", "cardinal-open", "cardinal-closed", "monotone" ],
+               "defaultValue" : "basis-open"
+            }
+         ]
+      },
+      {
+         "name" : "Test",
+         "controls" :
+         [
+            {
+               "id" : "testField",
+               "type" :  "field",
+               "label" : "Test Field"
+            },
+            {
+               "id" : "testSelection",
+               "type" :  "selection",
+               "label" : "Test Selection",
+               "values" : [ "one", "two", "three" ],
+               "defaultValue" : "two"
+            },
+            {
+               "id" : "testText",
+               "type" :  "text",
+               "label" : "Test Text",
+               "defaultValue" : "This is a test"
+            },
+            {
+               "id" : "testDate",
+               "type" :  "date",
+               "label" : "Test Date",
+               "defaultValue" : "2005-06-07T10:11:12.013Z"
+            },
+            {
+               "id" : "testNumber",
+               "type" :  "number",
+               "label" : "Test Number",
+               "min" : "5",
+               "max" : "12",
+               "minStep" : "2",
+               "maxStep" : "3",
+               "defaultValue" : "11"
+            },
+            {
+               "id" : "testBoolean",
+               "type" :  "boolean",
+               "label" : "Test Boolean",
+               "defaultValue" : "true"
+            }
+         ]
+      }
+   ]
+}

@@ -22,10 +22,12 @@ public class DbConnectionsModule extends AbstractModule {
         install(new stroom.analytics.impl.db.AnalyticsDbModule());
         install(new stroom.annotation.impl.db.AnnotationDbModule());
         install(new stroom.cluster.lock.impl.db.ClusterLockDbModule());
+        install(new stroom.credentials.impl.db.CredentialsDbModule());
         install(new stroom.config.global.impl.db.GlobalConfigDbModule());
         install(new stroom.data.store.impl.fs.db.FsDataStoreDbModule());
         install(new stroom.docstore.impl.db.DocStoreDBPersistenceDbModule());
         install(new stroom.explorer.impl.db.ExplorerDbModule());
+        install(new stroom.gitrepo.impl.db.GitRepoDbModule());
         install(new stroom.index.impl.db.IndexDbModule());
         install(new stroom.job.impl.db.JobDbModule());
         install(new stroom.meta.impl.db.MetaDbModule());

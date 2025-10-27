@@ -58,14 +58,13 @@ import stroom.receive.common.StreamTargetStreamHandlers;
 import stroom.receive.common.StroomStreamProcessor;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTranslationTestHelper;
-import stroom.test.ContentImportService;
+import stroom.test.ContentStoreTestSetup;
 import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.DiffUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.ElementId;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
@@ -116,7 +115,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Inject
     private ImportExportSerializer importExportSerializer;
     @Inject
-    private ContentImportService contentImportService;
+    private ContentStoreTestSetup contentStoreTestSetup;
     @Inject
     private CommonTranslationTestHelper commonTranslationTestHelper;
     @Inject
@@ -193,9 +192,12 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final Path samplesDir = getSamplesDir();
         final Path configDir = samplesDir.resolve("config");
 
-        importExportSerializer.read(configDir, null, ImportSettings.auto());
+        importExportSerializer.read(
+                configDir,
+                null,
+                ImportSettings.auto());
 
-        contentImportService.importStandardPacks();
+        contentStoreTestSetup.installStandardPacks();
     }
 
     @NotNull

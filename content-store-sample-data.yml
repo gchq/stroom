@@ -1,0 +1,443 @@
+# Metadata about the content store
+meta:
+  # ID uniquely identifies this content store
+  ownerId: stroomworks.com
+
+  # Name of content store as displayed in UI
+  ownerName: Stroomworks Test
+
+  # URL for further information
+  ownerUrl: https://www.stroomworks.com/
+
+  # Description of the owner of this content store, in Markdown.
+  ownerDescription: |
+    Test Content Store
+
+  # If a content pack is marked gitNeedsAuth:true, this Markdown is displayed
+  # so users know where to get credentials from.
+  authContact:
+    Contact us at [contact@stroomworks.com](mailto:contact@stroomworks.com?subject=Content%20Store)
+    for authentication credentials.
+
+# List of content packs
+contentPacks:
+  -
+    # Unique ID within the content store
+    id: core-xml-schemas
+
+    # Name as shown in the UI
+    uiName: Core XML Schemas
+
+    # Where to get the icon. Must be SVG.
+    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-content/refs/heads/planb/source/core-xml-schemas/content-pack-icon.svg
+
+    # Name of the license
+    licenseName: Apache 2.0
+
+    # Link to the full license
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+
+    # Where this will be installed in Stroom
+    stroomPath: /XML Schemas/
+
+    # Name of the Git Repo item to create. Defaults to the uiName.
+    gitRepoName: core
+
+    # Markdown description of the content pack
+    details: |
+      # Core XML Schemas
+
+      The core XML Schemas required by Stroom for basic operation.
+
+    # Git repository URL
+    gitUrl: "https://github.com/gchq/stroom-content.git"
+
+    # Branch within repository
+    gitBranch: "7.10"
+
+    # Path within repository
+    gitPath: source/core-xml-schemas/stroomContent/
+
+    # Hash of commit to pull
+    gitCommit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
+
+    # Whether git needs authentication to pull this content pack. Default is false.
+    gitNeedsAuth: false
+
+  -
+    id: standard-pipelines
+    uiName: Standard Pipelines
+    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-content/refs/heads/planb/source/standard-pipelines/content-pack-icon.svg
+    licenseName: Apache 2.0
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    stroomPath: /
+    details: |
+      # Standard Pipelines
+
+      A set of standard data-format-agnostic pipelines for processing data.
+
+    gitRepoName: Standard Pipelines
+    gitUrl: "https://github.com/gchq/stroom-content.git"
+    gitBranch: "7.10"
+    gitPath: "source/standard-pipelines/stroomContent/"
+    gitCommit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
+
+  -
+    id: event-logging-xml-schema
+    uiName: Event Logging XML Schema
+    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-content/refs/heads/planb/source/event-logging-xml-schema/content-pack-icon.svg
+    licenseName: Apache 2.0
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    stroomPath: /XML Schemas
+    details: |
+      # Event Logging XML Schema
+
+      An XML Schema standard for describing audit events.
+    gitRepoName: event-logging
+    gitUrl: "https://github.com/gchq/stroom-content.git"
+    gitBranch: "7.10"
+    gitPath: source/event-logging-xml-schema/stroomContent/
+    gitCommit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
+
+  -
+    id: example-index
+    uiName: Example Index
+    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-content/refs/heads/planb/source/example-index/content-pack-icon.svg
+    licenseName: Apache 2.0
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    stroomPath: /
+    details: |
+      # Example Index
+
+      A basic Stroom index designed for event-logging XML.
+    gitRepoName: Indexes
+    gitUrl: "https://github.com/gchq/stroom-content.git"
+    gitBranch: "7.10"
+    gitPath: source/example-index/stroomContent/
+    gitCommit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
+
+  -
+    id: internal-dashboards
+    uiName: Internal Dashboards
+    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-content/refs/heads/planb/source/internal-dashboards/content-pack-icon.svg
+    licenseName: Apache 2.0
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    stroomPath: /
+    details: |
+      # Internal Dashboards
+
+      A set of Dashboard entities for displaying various metrics
+      about the state of the Stroom application and the underlying
+      hardware and file systems.
+    gitRepoName: Internal Dashboards
+    gitUrl: "https://github.com/gchq/stroom-content.git"
+    gitBranch: "7.10"
+    gitPath: source/internal-dashboards/stroomContent/
+    gitCommit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
+
+  -
+    id: internal-statistics-sql
+    uiName: Internal Statistics (SQL)
+    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-content/refs/heads/planb/source/internal-statistics-sql/content-pack-icon.svg
+    licenseName: Apache 2.0
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    stroomPath: /Internal Statistics
+    details: |
+      # Internal Statistics (SQL)
+
+      A set of StatisticStore entities for representing the internal
+      statistics generated by Stroom and recorded by the SQL Statistics
+      service.
+    gitRepoName: SQL
+    gitUrl: "https://github.com/gchq/stroom-content.git"
+    gitBranch: "7.10"
+    gitPath: source/internal-statistics-sql/stroomContent/
+    gitCommit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
+
+  -
+    id: internal-statistics-stroom-stats
+    uiName: Stroom-Stats
+    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-content/refs/heads/planb/source/internal-statistics-stroom-stats/content-pack-icon.svg
+    licenseName: Apache 2.0
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    stroomPath: /Internal Statistics
+    details: |
+      # Internal Statistics (Stroom)
+
+      A set of StroomStatsStore entities for representing the internal
+      statistics generated by Stroom and recorded by the Stroom-Stats service.
+    gitRepoName: Stroom-Stats
+    gitUrl: "https://github.com/gchq/stroom-content.git"
+    gitBranch: "7.10"
+    gitPath: source/internal-statistics-stroom-stats/stroomContent/
+    gitCommit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
+
+  -
+    id: stroom-101
+    uiName: Stroom 101
+    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-content/refs/heads/planb/source/stroom-101/content-pack-icon.svg
+    licenseName: Apache 2.0
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    stroomPath: /
+    details: |
+      # Quickstart Exercise for Stroom
+
+      Contains the example content for the Quickstart exercise:
+
+      - CSV_FEED
+      - CSV splitter
+      - CSV to XML pipeline
+      - XSLT
+    gitRepoName: Stroom 101
+    gitUrl: "https://github.com/gchq/stroom-content.git"
+    gitBranch: "7.10"
+    gitPath: source/stroom-101/stroomContent/
+    gitCommit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
+
+  -
+    id: stroom-logs
+    uiName: Internal Logs
+    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-content/refs/heads/planb/source/stroom-logs/content-pack-icon.svg
+    licenseName: Apache 2.0
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    stroomPath: /
+    details: |
+      # Internal Logs
+
+      This content pack contains feeds for receiving the logs from within the Stroom family of applications.
+    gitRepoName: Internal Logs
+    gitUrl: "https://github.com/gchq/stroom-content.git"
+    gitBranch: "7.10"
+    gitPath: source/stroom-logs/stroomContent/
+    gitCommit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
+
+  -
+    id: template-pipelines
+    uiName: Template Pipelines
+    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-content/refs/heads/planb/source/template-pipelines/content-pack-icon.svg
+    licenseName: Apache 2.0
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    stroomPath: /
+    details: |
+      # Template Pipelines
+
+      A set of template pipelines that other pipelines can inherit from.
+    gitRepoName: Template Pipelines
+    gitUrl: "https://github.com/gchq/stroom-content.git"
+    gitBranch: "7.10"
+    gitPath: source/template-pipelines/stroomContent/
+    gitCommit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
+
+  -
+    id: planb
+    uiName: Plan B
+    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-content/refs/heads/planb/source/planb/content-pack-icon.svg
+    licenseName: Apache 2.0
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    stroomPath: /
+    details: |
+      # Plan B
+    gitRepoName: Plan B
+    gitUrl: "https://github.com/gchq/stroom-content.git"
+    gitBranch: "7.10"
+    gitPath: source/planb/stroomContent/
+    gitCommit: "0c6da31bc3d1d2d87be3d681c859b9a015be4afb"
+
+  -
+    id: stroom-visualisations
+    uiName: Visualisations
+    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-appstore/refs/heads/main/stroom-visualisations.svg
+    licenseName: Apache 2.0
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-visualisations-dev/refs/heads/main/LICENCE.txt
+    stroomPath: /
+    details: |
+      # Visualisations
+
+      Stroom Visualisations Development is a test harness for working
+      with the custom data visualisations used within Stroom dashboards.
+      Stroom has the capability for custom JavaScript data visualisations
+      to be added in at run time by end users. To allow for quick and
+      easy development and testing of these visualisations this test
+      harness was built. It currently generates randomised test data for
+      each visualisation to enable development outside of Stroom. It also
+      servers as the master repository for the visualisation scripts
+      created for Stroom and the metadata files that accompany them.
+
+      The custom visualisation framework in Stroom provides a means of
+      adding any data visualisation that can be coded in JavaScript,
+      without having to re-deploy a version of Stroom. Visualisations
+      can be authored and managed by end users completely within the
+      front-end of Stroom.
+
+      The aim of the Stroom Visualisations is to provide a set of
+      visualisations with a consistent look and feel that conform to the
+      Stroom visualisations API. Stroom stores a lot of data and often you
+      need to visualise data at multiple levels of grouping. As a result
+      of this the concept of the gridded visualisation was created to
+      enable each visualisation to be displayed as grid of multiple
+      visualisations, with one group of data per grid cell.
+
+      While these visualisations have been built for Stroom they are not
+      tightly integrated with it and can easily be used in other
+      applications as long as the data contract and API are met.
+
+    gitRepoName: Visualisations
+    gitUrl: "https://github.com/gchq/stroom-visualisations-dev.git"
+    gitBranch: "main"
+    gitPath: war/stroom_content/
+    gitCommit: "5d650d01bd2839e5f89e9f897d2f0e7a733690f2"
+    gitNeedsAuth: false
+
+  -
+    id: sample-feeds-and-translations
+    uiName: Feeds and Translations
+    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-sample-content/refs/heads/main/src/sample-feeds-and-translations/content-pack-icon.svg
+    licenseName: Apache 2.0
+    licenseUrl: https://github.com/stroomworks4092/stroom-sample-content/blob/main/LICENSE
+    stroomPath: /
+    gitUrl: https://github.com/stroomworks4092/stroom-sample-content.git
+    gitBranch: main
+    gitPath: src/sample-feeds-and-translations/stroomContent/
+
+  -
+    id: sample-hdfs-file-appender
+    uiName: HDFS File Appender
+    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-sample-content/refs/heads/main/src/sample-hdfs-file-appender/content-pack-icon.svg
+    licenseName: Apache 2.0
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    stroomPath: /
+    gitUrl: https://github.com/stroomworks4092/stroom-sample-content.git
+    gitBranch: main
+    gitPath: src/sample-hdfs-file-appender/stroomContent/
+
+  -
+    id: sample-import-export-test
+    uiName: Import Export Test
+    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-sample-content/refs/heads/main/src/sample-import-export-test/content-pack-icon.svg
+    licenseName: Apache 2.0
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    stroomPath: /
+    gitUrl: https://github.com/stroomworks4092/stroom-sample-content.git
+    gitBranch: main
+    gitPath: src/sample-import-export-test/stroomContent/
+
+  -
+    id: sample-kafka-brokers
+    uiName: Kafka Brokers
+    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-sample-content/refs/heads/main/src/sample-kafka-brokers/content-pack-icon.svg
+    licenseName: Apache 2.0
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    stroomPath: /
+    gitUrl: https://github.com/stroomworks4092/stroom-sample-content.git
+    gitBranch: main
+    gitPath: src/sample-kafka-brokers/stroomContent/
+
+  -
+    id: sample-reference-data-store
+    uiName: Reference Data Store
+    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-sample-content/refs/heads/main/src/sample-reference-data-store/content-pack-icon.svg
+    licenseName: Apache 2.0
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    stroomPath: /
+    gitUrl: https://github.com/stroomworks4092/stroom-sample-content.git
+    gitBranch: main
+    gitPath: src/sample-reference-data-store/stroomContent/
+
+  -
+    id: sample-search
+    uiName: Search
+    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-sample-content/refs/heads/main/src/sample-search/content-pack-icon.svg
+    licenseName: Apache 2.0
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    stroomPath: /
+    gitUrl: https://github.com/stroomworks4092/stroom-sample-content.git
+    gitBranch: main
+    gitPath: src/sample-search/stroomContent/
+
+  -
+    id: sample-statistics
+    uiName: Statistics
+    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-sample-content/refs/heads/main/src/sample-statistics/content-pack-icon.svg
+    licenseName: Apache 2.0
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    stroomPath: /
+    gitUrl: https://github.com/stroomworks4092/stroom-sample-content.git
+    gitBranch: main
+    gitPath: src/sample-statistics/stroomContent/
+
+  -
+    id: sample-statistics-test-data
+    uiName: Statistics Test Data
+    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-sample-content/refs/heads/main/src/sample-statistics-test-data/content-pack-icon.svg
+    licenseName: Apache 2.0
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    stroomPath: /
+    gitUrl: https://github.com/stroomworks4092/stroom-sample-content.git
+    gitBranch: main
+    gitPath: src/sample-statistics-test-data/stroomContent/
+
+  -
+    id: sample-visualisation-examples
+    uiName: Visualisation Examples
+    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-sample-content/refs/heads/main/src/sample-visualisation-examples/content-pack-icon.svg
+    licenseName: Apache 2.0
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    stroomPath: /
+    gitUrl: https://github.com/stroomworks4092/stroom-sample-content.git
+    gitBranch: main
+    gitPath: src/sample-visualisation-examples/stroomContent/
+
+  -
+    id: test-feed
+    uiName: Test Feeds
+    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-sample-content/refs/heads/main/src/test-feed/content-pack-icon.svg
+    licenseName: Apache 2.0
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    stroomPath: /
+    gitUrl: https://github.com/stroomworks4092/stroom-sample-content.git
+    gitBranch: main
+    gitPath: src/test-feed/stroomContent/
+
+  -
+    id: test-pipeline
+    uiName: Test Pipeline
+    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-sample-content/refs/heads/main/src/test-pipeline/content-pack-icon.svg
+    licenseName: Apache 2.0
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    stroomPath: /
+    gitUrl: https://github.com/stroomworks4092/stroom-sample-content.git
+    gitBranch: main
+    gitPath: src/test-pipeline/stroomContent/
+
+  -
+    id: test-textconverter
+    uiName: Test Text Converter
+    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-sample-content/refs/heads/main/src/test-textconverter/content-pack-icon.svg
+    licenseName: Apache 2.0
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    stroomPath: /
+    gitUrl: https://github.com/stroomworks4092/stroom-sample-content.git
+    gitBranch: main
+    gitPath: src/test-textconverter/stroomContent/
+
+  -
+    id: test-xmlschema
+    uiName: Test XML Schema
+    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-sample-content/refs/heads/main/src/test-xmlschema/content-pack-icon.svg
+    licenseName: Apache 2.0
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    stroomPath: /
+    gitUrl: https://github.com/stroomworks4092/stroom-sample-content.git
+    gitBranch: main
+    gitPath: src/test-xmlschema/stroomContent/
+
+  -
+    id: test-xslt
+    uiName: Test XSLT
+    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-sample-content/refs/heads/main/src/test-xslt/content-pack-icon.svg
+    licenseName: Apache 2.0
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    stroomPath: /
+    gitUrl: https://github.com/stroomworks4092/stroom-sample-content.git
+    gitBranch: main
+    gitPath: src/test-xslt/stroomContent/

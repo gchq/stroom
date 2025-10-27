@@ -4,19 +4,19 @@
 package stroom.processor.impl.db.jooq;
 
 
+import java.util.Arrays;
+import java.util.List;
+
+import org.jooq.Catalog;
+import org.jooq.Table;
+import org.jooq.impl.SchemaImpl;
+
 import stroom.processor.impl.db.jooq.tables.Processor;
 import stroom.processor.impl.db.jooq.tables.ProcessorFeed;
 import stroom.processor.impl.db.jooq.tables.ProcessorFilter;
 import stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker;
 import stroom.processor.impl.db.jooq.tables.ProcessorNode;
 import stroom.processor.impl.db.jooq.tables.ProcessorTask;
-
-import org.jooq.Catalog;
-import org.jooq.Table;
-import org.jooq.impl.SchemaImpl;
-
-import java.util.Arrays;
-import java.util.List;
 
 
 /**

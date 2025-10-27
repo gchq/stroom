@@ -59,7 +59,7 @@ public class SchemaFilterFactory {
                     securityContext,
                     MockDocRefInfoService::new),
             serialiser);
-    private final XmlSchemaCache xmlSchemaCache = new XmlSchemaCache(xmlSchemaStore);
+    private final XmlSchemaCache xmlSchemaCache = new XmlSchemaCache(xmlSchemaStore, securityContext);
     private final SchemaLoaderImpl schemaLoader = new SchemaLoaderImpl(xmlSchemaCache);
 
     public SchemaFilterFactory() {
