@@ -18,6 +18,7 @@ package stroom.feed.shared;
 
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
+import stroom.docref.DocRef.TypedBuilder;
 import stroom.docref.HasDisplayValue;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
@@ -32,6 +33,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+import java.util.Objects;
 
 @Description(
         "The {{< glossary \"Feed\" >}} is Stroom's way of compartmentalising data that has been ingested or " +
@@ -142,6 +145,7 @@ public class FeedDoc extends Doc {
         this.volumeGroup = volumeGroup;
     }
 
+
     /**
      * @return A new {@link DocRef} for this document's type with the supplied uuid.
      */
@@ -154,7 +158,7 @@ public class FeedDoc extends Doc {
     /**
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
-    public static DocRef.TypedBuilder buildDocRef() {
+    public static TypedBuilder buildDocRef() {
         return DocRef.builder(TYPE);
     }
 
@@ -227,6 +231,7 @@ public class FeedDoc extends Doc {
         return retentionDayAge;
     }
 
+
     public void setRetentionDayAge(final Integer retentionDayAge) {
         this.retentionDayAge = retentionDayAge;
     }
@@ -279,6 +284,14 @@ public class FeedDoc extends Doc {
         this.volumeGroup = volumeGroup;
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
 
     // --------------------------------------------------------------------------------
 
@@ -306,6 +319,194 @@ public class FeedDoc extends Doc {
         @Override
         public byte getPrimitiveValue() {
             return primitiveValue;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static final class Builder extends AbstractBuilder<FeedDoc, FeedDoc.Builder> {
+
+        private String description;
+        private String classification;
+        private String encoding;
+        private String contextEncoding;
+        private Integer retentionDayAge;
+        private boolean reference;
+        private String streamType;
+        private String dataFormat;
+        private String contextFormat;
+        private String schema;
+        private String schemaVersion;
+        private FeedStatus status;
+        private String volumeGroup;
+
+        private Builder() {
+        }
+
+        private Builder(final FeedDoc copy) {
+            super(copy);
+            this.description = copy.getDescription();
+            this.classification = copy.getClassification();
+            this.encoding = copy.getEncoding();
+            this.contextEncoding = copy.getContextEncoding();
+            this.retentionDayAge = copy.getRetentionDayAge();
+            this.reference = copy.isReference();
+            this.streamType = copy.getStreamType();
+            this.dataFormat = copy.getDataFormat();
+            this.contextFormat = copy.getContextFormat();
+            this.schema = copy.getSchema();
+            this.schemaVersion = copy.getSchemaVersion();
+            this.status = copy.getStatus();
+            this.volumeGroup = copy.getVolumeGroup();
+        }
+
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public Builder withType(final String type) {
+            this.type = type;
+            return self();
+        }
+
+        public Builder withUuid(final String uuid) {
+            this.uuid = uuid;
+            return self();
+        }
+
+        public Builder withDocRef(final DocRef docRef) {
+            if (docRef != null) {
+                if (!Objects.equals(docRef.getType(), TYPE)) {
+                    throw new IllegalArgumentException("Invalid type for a FeedDoc: " + docRef.getType());
+                }
+                this.name = docRef.getName();
+                this.uuid = docRef.getUuid();
+            }
+            return self();
+        }
+
+        public Builder withName(final String name) {
+            this.name = name;
+            return self();
+        }
+
+        public Builder withVersion(final String version) {
+            this.version = version;
+            return self();
+        }
+
+        public Builder withCreateTimeMs(final Long createTimeMs) {
+            this.createTimeMs = createTimeMs;
+            return self();
+        }
+
+        public Builder withUpdateTimeMs(final Long updateTimeMs) {
+            this.updateTimeMs = updateTimeMs;
+            return self();
+        }
+
+        public Builder withCreateUser(final String createUser) {
+            this.createUser = createUser;
+            return self();
+        }
+
+        public Builder withUpdateUser(final String updateUser) {
+            this.updateUser = updateUser;
+            return self();
+        }
+
+        public Builder withDescription(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder withClassification(final String classification) {
+            this.classification = classification;
+            return self();
+        }
+
+        public Builder withEncoding(final String encoding) {
+            this.encoding = encoding;
+            return self();
+        }
+
+        public Builder withContextEncoding(final String contextEncoding) {
+            this.contextEncoding = contextEncoding;
+            return self();
+        }
+
+        public Builder withRetentionDayAge(final Integer retentionDayAge) {
+            this.retentionDayAge = retentionDayAge;
+            return self();
+        }
+
+        public Builder withReference(final boolean reference) {
+            this.reference = reference;
+            return self();
+        }
+
+        public Builder withStreamType(final String streamType) {
+            this.streamType = streamType;
+            return self();
+        }
+
+        public Builder withDataFormat(final String dataFormat) {
+            this.dataFormat = dataFormat;
+            return self();
+        }
+
+        public Builder withContextFormat(final String contextFormat) {
+            this.contextFormat = contextFormat;
+            return self();
+        }
+
+        public Builder withSchema(final String schema) {
+            this.schema = schema;
+            return self();
+        }
+
+        public Builder withSchemaVersion(final String schemaVersion) {
+            this.schemaVersion = schemaVersion;
+            return self();
+        }
+
+        public Builder withStatus(final FeedStatus status) {
+            this.status = status;
+            return self();
+        }
+
+        public Builder withVolumeGroup(final String volumeGroup) {
+            this.volumeGroup = volumeGroup;
+            return self();
+        }
+
+        public FeedDoc build() {
+            return new FeedDoc(
+                    type,
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    classification,
+                    encoding,
+                    contextEncoding,
+                    retentionDayAge,
+                    reference,
+                    streamType,
+                    dataFormat,
+                    contextFormat,
+                    schema,
+                    schemaVersion,
+                    status,
+                    volumeGroup);
         }
     }
 }
