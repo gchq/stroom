@@ -511,27 +511,6 @@ public enum SvgImage {
             "svg>\n" +
             ""),
 
-    CREDENTIALS("credentials.svg", "svg-image__credentials", "" +
-            "<!-- Created with Inkscape (http://www.inkscape.org/) --><svg width=\"82mm\" heigh" +
-            "t=\"82mm\" viewBox=\"0 0 82 82.000001\" version=\"1.1\" id=\"svg5\" xmlns=\"http://www.w3" +
-            ".org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\"><defs id=\"defs2\" /><g id=\"" +
-            "layer1\" transform=\"translate(-33.703152,-50.187084)\"><g id=\"g6232\"><path id=\"pat" +
-            "h111\" style=\"fill:var(--icon-colour__blue);fill-opacity:1;stroke:none;stroke-wid" +
-            "th:0.301984;stroke-opacity:1\" d=\"M 56.015485 89.490111 A 18.318985 18.318985 0 0" +
-            " 0 43.503071 94.24486 A 18.318985 18.318985 0 0 0 42.252501 120.12183 A 18.31898" +
-            "5 18.318985 0 0 0 68.129474 121.37189 A 18.318985 18.318985 0 0 0 69.379527 95.4" +
-            "94913 A 18.318985 18.318985 0 0 0 56.015485 89.490111 z M 48.491397 110.9255 A 4" +
-            ".1437071 3.8358509 47.765907 0 1 51.738227 112.35332 A 4.1437071 3.8358509 47.76" +
-            "5907 0 1 51.68345 117.99948 A 4.1437071 3.8358509 47.765907 0 1 46.057953 117.51" +
-            "011 A 4.1437071 3.8358509 47.765907 0 1 46.11273 111.86342 A 4.1437071 3.8358509" +
-            " 47.765907 0 1 48.491397 110.9255 z \" /><path style=\"fill:var(--icon-colour__blu" +
-            "e);fill-opacity:1;stroke:none;stroke-width:0.301984;stroke-opacity:1\" d=\"m 71.09" +
-            "6528,101.0691 40.812572,-37.050859 -0.61713,-6.57253 -6.8837,-1.198792 -6.174641" +
-            ",5.474956 -4.306236,-0.440496 -4.385505,4.008329 0.981986,7.495261 -6.667405,6.0" +
-            "01102 -3.5956,-0.639832 -6.576664,6.101057 -9.192327,8.187453\" id=\"path845\" /></" +
-            "g></g></svg> \n" +
-            ""),
-
     DATABASE("database.svg", "svg-image__database", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\"><path style=\"fill:currentColor\" d=\"M896 768q237 0 443-43t325-127v170q" +
@@ -2452,6 +2431,28 @@ public enum SvgImage {
             "802-161.802C163.108 213.814 160 195.271 160 176 160 78.798 238.797.001 335.999 0" +
             " 433.488-.001 512 78.511 512 176.001zM336 128c0 26.51 21.49 48 48 48s48-21.49 48" +
             "-48-21.49-48-48-48-48 21.49-48 48z\"></path></svg>\n" +
+            ""),
+
+    KEY_BLUE("key-blue.svg", "svg-image__key-blue", "" +
+            "<svg width=\"512\" height=\"512\" viewBox=\"0 0 512 512\" version=\"1.1\" id=\"svg1364\" s" +
+            "odipodi:docname=\"key-blue.svg\" inkscape:version=\"1.2.2 (b0a8486541, 2022-12-01)\"" +
+            " xmlns:inkscape=\"http://www.inkscape.org/namespaces/inkscape\" xmlns:sodipodi=\"ht" +
+            "tp://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd\" xmlns=\"http://www.w3.org/2000/" +
+            "svg\" xmlns:svg=\"http://www.w3.org/2000/svg\"><defs id=\"defs1368\" /><sodipodi:name" +
+            "dview id=\"namedview1366\" pagecolor=\"var(--icon-colour__white)\" bordercolor=\"var(" +
+            "--icon-colour__black)\" borderopacity=\"0.25\" inkscape:showpageshadow=\"2\" inkscape" +
+            ":pageopacity=\"0.0\" inkscape:pagecheckerboard=\"0\" inkscape:deskcolor=\"#d1d1d1\" sh" +
+            "owgrid=\"false\" inkscape:zoom=\"0.4609375\" inkscape:cx=\"184.40678\" inkscape:cy=\"25" +
+            "7.08475\" inkscape:window-width=\"3440\" inkscape:window-height=\"1412\" inkscape:win" +
+            "dow-x=\"1920\" inkscape:window-y=\"0\" inkscape:window-maximized=\"1\" inkscape:curren" +
+            "t-layer=\"svg1364\" /><path style=\"fill:var(--icon-colour__blue);fill-opacity:1\" d" +
+            "=\"M512 176.001C512 273.203 433.202 352 336 352c-11.22 0-22.19-1.062-32.827-3.069" +
+            "l-24.012 27.014A23.999 23.999 0 0 1 261.223 384H224v40c0 13.255-10.745 24-24 24h" +
+            "-40v40c0 13.255-10.745 24-24 24H24c-13.255 0-24-10.745-24-24v-78.059c0-6.365 2.5" +
+            "29-12.47 7.029-16.971l161.802-161.802C163.108 213.814 160 195.271 160 176 160 78" +
+            ".798 238.797.001 335.999 0 433.488-.001 512 78.511 512 176.001zM336 128c0 26.51 " +
+            "21.49 48 48 48s48-21.49 48-48-21.49-48-48-48-48 21.49-48 48z\" id=\"path1362\" /></" +
+            "svg> \n" +
             ""),
 
     LINK("link.svg", "svg-image__link", "" +
