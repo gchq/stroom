@@ -73,11 +73,15 @@ public class CredentialsDetailsTabDialogPresenter
 
     /**
      * Call with the builder to set up this dialog before calling .fire().
-     * @param cwp; provides information to display to the user.
+     *
+     * @param cwp     provides information to display to the user.
+     * @param secret  The secrets to show.
+     * @param caption The title to show on the dialog box.
      * @param builder The builder to show this popup.
      */
     public void setupDialog(final CredentialsWithPerms cwp,
                             final CredentialsSecret secret,
+                            final String caption,
                             final Builder builder) {
 
         // Populate the UI
@@ -92,7 +96,7 @@ public class CredentialsDetailsTabDialogPresenter
         // Configure the popup builder for this dialog
         builder.popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(PopupSize.resizable(DIALOG_WIDTH, DIALOG_HEIGHT))
-                .caption("Credentials")
+                .caption(caption)
                 .modal(true);
     }
 

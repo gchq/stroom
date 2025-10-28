@@ -3,8 +3,6 @@ package stroom.credentials.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.credentials.client.presenter.CredentialsSettingsPresenter.CredentialsSettingsView;
-import stroom.credentials.client.view.CredentialsManagerDialogViewImpl;
-import stroom.credentials.client.view.CredentialsViewImpl;
 import stroom.credentials.shared.Credentials;
 import stroom.credentials.shared.CredentialsCreateRequest;
 import stroom.credentials.shared.CredentialsResource;
@@ -75,6 +73,8 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     /** Flag to set whether something is selected by default */
     private boolean defaultSelection = true;
 
+    private DoubleClickAction doubleClickAction = DoubleClickAction.DOUBLE_CLICK_EDIT;
+
     /** Index of the first item in the list of credentials */
     private static final int FIRST_ITEM_INDEX = 0;
 
@@ -89,6 +89,12 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     enum CreationState {
         NEW_CREDENTIALS,
         OLD_CREDENTIALS
+    }
+
+    /** Indicates what the double click should do - edit or select */
+    public enum DoubleClickAction {
+        DOUBLE_CLICK_EDIT,
+        DOUBLE_CLICK_SELECT
     }
 
     /**
@@ -219,6 +225,13 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     }
 
     /**
+     * Sets what this component should do when double-clicked.
+     */
+    public void setDoubleClickAction(final DoubleClickAction action) {
+        this.doubleClickAction = action;
+    }
+
+    /**
      * Called when the presenter gets loaded into the UI. Sets up the event handlers.
      */
     @Override
@@ -231,7 +244,16 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
 
         registerHandler(gridSelectionModel.addSelectionHandler(event -> {
             if (event.getSelectionType().isDoubleSelect()) {
-                handleEditButtonClick();
+
+                switch (doubleClickAction) {
+                    case DOUBLE_CLICK_EDIT -> {
+                        handleEditButtonClick();
+                    }
+                    case DOUBLE_CLICK_SELECT -> {
+                        // TODO Hit OK button??
+                        //getEventBus().fireEventFromSource(okEvent, this);
+                    }
+                }
             }
         }));
 
@@ -437,7 +459,9 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
 
         if (cwp != null) {
             final Builder builder = ShowPopupEvent.builder(detailsDialog);
-            detailsDialog.setupDialog(cwp, secret, builder);
+            final String caption = creationState == CreationState.NEW_CREDENTIALS ?
+                    "New Credentials" : "Edit Credentials";
+            detailsDialog.setupDialog(cwp, secret, caption, builder);
             builder.onHideRequest(e -> {
                 if (e.isOk()) {
                     if (detailsDialog.isValid()) {
@@ -476,7 +500,6 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
         if (creationState == CreationState.NEW_CREDENTIALS) {
             final CredentialsCreateRequest request = new CredentialsCreateRequest(cwp.getCredentials(), secret);
 
-            CredentialsManagerDialogViewImpl.console("New credentials");
             restFactory.create(CREDENTIALS_RESOURCE)
                     .method(res -> res.createCredentials(request))
                     .onSuccess(result -> {
@@ -518,7 +541,6 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                         }
                     })
                     .onFailure(error -> {
-                        CredentialsViewImpl.console("onFailure: " + error);
                         AlertEvent.fireError(parentPresenter,
                                 "Save Error",
                                 error.getMessage(),
@@ -535,7 +557,6 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      */
     private void saveCredentials(final CredentialsWithPerms cwp) {
 
-        CredentialsManagerDialogViewImpl.console("Saving existing credentials");
         restFactory.create(CREDENTIALS_RESOURCE)
                 .method(res -> res.storeCredentials(cwp.getCredentials()))
                 .onSuccess(result -> {
