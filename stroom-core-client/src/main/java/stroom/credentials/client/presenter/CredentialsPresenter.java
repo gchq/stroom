@@ -49,7 +49,7 @@ public class CredentialsPresenter
      */
     @Override
     public SvgImage getIcon() {
-        return SvgImage.CREDENTIALS;
+        return SvgImage.KEY_BLUE;
     }
 
     /**
