@@ -2635,6 +2635,11 @@ button.main-menu svg {
     width: 650px;
     height: 150px;
 }
+/* Width of access token and passphrase */
+.credentials-details-dialog #accessToken,
+.credentials-details-dialog #passphrase {
+    width: 650px;
+}
 
 /* Background and border on table */
 .credentials-manager-dialog {
