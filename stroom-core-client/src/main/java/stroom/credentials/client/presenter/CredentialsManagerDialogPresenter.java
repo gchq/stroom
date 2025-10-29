@@ -1,5 +1,6 @@
 package stroom.credentials.client.presenter;
 
+import stroom.credentials.client.presenter.CredentialsListPresenter.DoubleClickAction;
 import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -38,6 +39,7 @@ public class CredentialsManagerDialogPresenter
         this.markdownConverter = markdownConverter;
         credentialsListPresenter.setParentPresenter(this);
         credentialsListPresenter.setDefaultSelection(false);
+        credentialsListPresenter.setDoubleClickAction(DoubleClickAction.DOUBLE_CLICK_SELECT);
         view.setCredentialsList(credentialsListPresenter);
         this.setInSlot(CredentialsListPresenter.CREDENTIALS_LIST, credentialsListPresenter);
     }

@@ -21,12 +21,12 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent.Builder;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.cellview.client.LoadingStateChangeEvent.LoadingState;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject; // Ordering
@@ -41,7 +41,7 @@ import java.util.function.Consumer;
 public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
 
     /** Reference to top level of page. Allows updating state */
-    private HasHandlers parentPresenter = null;
+    private MyPresenterWidget<?> parentPresenter = null;
 
     /** Used to talk to the server */
     private final RestFactory restFactory;
@@ -220,7 +220,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      * Called from CredentialsPresenter to hook UI elements together on initialisation.
      * Needed so that the spinner works when waiting for server.
      */
-    public void setParentPresenter(final HasHandlers parentPresenter) {
+    public void setParentPresenter(final MyPresenterWidget<?> parentPresenter) {
         this.parentPresenter = parentPresenter;
     }
 
@@ -247,11 +247,14 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
 
                 switch (doubleClickAction) {
                     case DOUBLE_CLICK_EDIT -> {
+                        // Edit the credentials
                         handleEditButtonClick();
                     }
                     case DOUBLE_CLICK_SELECT -> {
-                        // TODO Hit OK button??
-                        //getEventBus().fireEventFromSource(okEvent, this);
+                        // Hit OK button
+                        HidePopupRequestEvent.builder(this.parentPresenter)
+                                .ok(true)
+                                .fire();
                     }
                 }
             }
