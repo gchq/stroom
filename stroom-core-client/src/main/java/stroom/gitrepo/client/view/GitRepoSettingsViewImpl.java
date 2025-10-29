@@ -85,6 +85,15 @@ public class GitRepoSettingsViewImpl
     @UiField
     Button btnCheckForUpdates;
 
+    /** Prefix for text on 'Set Credentials' button */
+    private static final String SET_CREDENTIALS_BUTTON_LABEL_PREFIX = "Set Credentials";
+
+    /** Suffix for text on 'Set Credentials' button */
+    private static final String SET_CREDENTIALS_BUTTON_LABEL_SUFFIX = " ...";
+
+    /** Max length of credentials name to display before truncation */
+    private static final int CREDENTIALS_NAME_LIMIT = 30;
+
     @Inject
     public GitRepoSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -227,6 +236,28 @@ public class GitRepoSettingsViewImpl
             btnCheckForUpdates.setEnabled(false);
         }
 
+    }
+
+    /**
+     * Used to put the name of the credentials into the Settings tab.
+     * @param name The name of the credentials. Can be blank or null.
+     */
+    @Override
+    public void setCredentialsName(final String name) {
+        if (name == null || name.isBlank()) {
+            btnSetCredentials.setText(SET_CREDENTIALS_BUTTON_LABEL_PREFIX
+                                      + SET_CREDENTIALS_BUTTON_LABEL_SUFFIX);
+        } else {
+            final String truncName;
+            if (name.length() > CREDENTIALS_NAME_LIMIT) {
+                truncName = name.substring(0, CREDENTIALS_NAME_LIMIT) + "...";
+            } else {
+                truncName = name;
+            }
+            btnSetCredentials.setText(SET_CREDENTIALS_BUTTON_LABEL_PREFIX
+                                      + ": " + truncName
+                                      + SET_CREDENTIALS_BUTTON_LABEL_SUFFIX);
+        }
     }
 
     /**

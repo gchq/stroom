@@ -19,6 +19,8 @@ package stroom.gitrepo.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.credentials.client.presenter.CredentialsManagerDialogPresenter;
+import stroom.credentials.shared.CredentialsResource;
+import stroom.credentials.shared.CredentialsResponse.Status;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
@@ -60,9 +62,14 @@ public class GitRepoSettingsPresenter
     private final CredentialsManagerDialogPresenter credentialsManagerDialog;
 
     /**
-     * Server REST API.
+     * Server REST API for GitRepoDocs
      */
     private static final GitRepoResource GIT_REPO_RESOURCE = GWT.create(GitRepoResource.class);
+
+    /**
+     * Server REST API for Credentials
+     */
+    private static final CredentialsResource CREDENTIALS_RESOURCE = GWT.create(CredentialsResource.class);
 
     /**
      * Local copy of the gitRepoDoc, saved in the onRead() method.
@@ -126,6 +133,7 @@ public class GitRepoSettingsPresenter
 
         // Credentials - store locally
         credentialsId = doc.getCredentialsId();
+        grabCredentialsName();
 
         // Set the initial state of the UI
         view.setState();
@@ -325,12 +333,47 @@ public class GitRepoSettingsPresenter
                     credentialsId = credentialsManagerDialog.getCredentialsId();
                     this.setDirty(true);
                     console("Credentials ID is " + credentialsId);
+                    grabCredentialsName();
                 } else {
                     // Cancel pressed
                     e.hide();
                 }
             })
                     .fire();
+        }
+    }
+
+    /**
+     * Given the credentialsId as a member variable, gets the name of the credentials
+     * from REST and displays it in the view.
+     */
+    private void grabCredentialsName() {
+        if (credentialsId != null) {
+            restFactory.create(CREDENTIALS_RESOURCE)
+                    .method(res -> res.getCredentials(credentialsId))
+                    .onSuccess(res -> {
+                        if (res.getStatus() == Status.OK) {
+                            final String credentialsName = res.getCredentialsWithPerms().getCredentials().getName();
+                            getView().setCredentialsName(credentialsName);
+                        } else {
+                            getView().setCredentialsName(null);
+                            AlertEvent.fireError(this,
+                                    "Error finding selected credentials",
+                                    res.getMessage(),
+                                    null);
+                        }
+                    })
+                    .onFailure(error -> {
+                        getView().setCredentialsName(null);
+                        AlertEvent.fireError(this,
+                                "Error finding selected credentials",
+                                error.getMessage(),
+                                null);
+                    })
+                    .taskMonitorFactory(GitRepoSettingsPresenter.this)
+                    .exec();
+        } else {
+            getView().setCredentialsName(null);
         }
     }
 
@@ -345,6 +388,8 @@ public class GitRepoSettingsPresenter
 
     public interface GitRepoSettingsView
             extends View, HasUiHandlers<GitRepoSettingsUiHandlers> {
+
+        void setCredentialsName(final String name);
 
         void setContentStoreName(String contentStoreName);
 
