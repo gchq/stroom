@@ -19,8 +19,10 @@ package stroom.gitrepo.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.credentials.client.presenter.CredentialsManagerDialogPresenter;
+import stroom.credentials.shared.Credentials;
 import stroom.credentials.shared.CredentialsResource;
 import stroom.credentials.shared.CredentialsResponse.Status;
+import stroom.credentials.shared.CredentialsWithPerms;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
@@ -353,7 +355,14 @@ public class GitRepoSettingsPresenter
                     .method(res -> res.getCredentials(credentialsId))
                     .onSuccess(res -> {
                         if (res.getStatus() == Status.OK) {
-                            final String credentialsName = res.getCredentialsWithPerms().getCredentials().getName();
+                            String credentialsName = null;
+                            final CredentialsWithPerms cwp = res.getCredentialsWithPerms();
+                            if (cwp != null) {
+                                final Credentials credentials = cwp.getCredentials();
+                                if (credentials != null) {
+                                    credentialsName = credentials.getName();
+                                }
+                            }
                             getView().setCredentialsName(credentialsName);
                         } else {
                             getView().setCredentialsName(null);
