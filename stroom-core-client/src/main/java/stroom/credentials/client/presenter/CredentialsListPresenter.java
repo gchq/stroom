@@ -3,8 +3,6 @@ package stroom.credentials.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.credentials.client.presenter.CredentialsSettingsPresenter.CredentialsSettingsView;
-import stroom.credentials.client.view.CredentialsManagerDialogViewImpl;
-import stroom.credentials.client.view.CredentialsViewImpl;
 import stroom.credentials.shared.Credentials;
 import stroom.credentials.shared.CredentialsCreateRequest;
 import stroom.credentials.shared.CredentialsResource;
@@ -28,7 +26,6 @@ import stroom.widget.popup.client.event.ShowPopupEvent.Builder;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.cellview.client.LoadingStateChangeEvent.LoadingState;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject; // Ordering
@@ -43,7 +40,7 @@ import java.util.function.Consumer;
 public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
 
     /** Reference to top level of page. Allows updating state */
-    private HasHandlers parentPresenter = null;
+    private MyPresenterWidget<?> parentPresenter = null;
 
     /** Used to talk to the server */
     private final RestFactory restFactory;
@@ -214,7 +211,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      * Called from CredentialsPresenter to hook UI elements together on initialisation.
      * Needed so that the spinner works when waiting for server.
      */
-    public void setParentPresenter(final HasHandlers parentPresenter) {
+    public void setParentPresenter(final MyPresenterWidget<?> parentPresenter) {
         this.parentPresenter = parentPresenter;
     }
 
@@ -231,6 +228,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
 
         registerHandler(gridSelectionModel.addSelectionHandler(event -> {
             if (event.getSelectionType().isDoubleSelect()) {
+                // Edit the credentials
                 handleEditButtonClick();
             }
         }));
@@ -437,7 +435,9 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
 
         if (cwp != null) {
             final Builder builder = ShowPopupEvent.builder(detailsDialog);
-            detailsDialog.setupDialog(cwp, secret, builder);
+            final String caption = creationState == CreationState.NEW_CREDENTIALS ?
+                    "New Credentials" : "Edit Credentials";
+            detailsDialog.setupDialog(cwp, secret, caption, builder);
             builder.onHideRequest(e -> {
                 if (e.isOk()) {
                     if (detailsDialog.isValid()) {
@@ -476,7 +476,6 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
         if (creationState == CreationState.NEW_CREDENTIALS) {
             final CredentialsCreateRequest request = new CredentialsCreateRequest(cwp.getCredentials(), secret);
 
-            CredentialsManagerDialogViewImpl.console("New credentials");
             restFactory.create(CREDENTIALS_RESOURCE)
                     .method(res -> res.createCredentials(request))
                     .onSuccess(result -> {
@@ -518,7 +517,6 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                         }
                     })
                     .onFailure(error -> {
-                        CredentialsViewImpl.console("onFailure: " + error);
                         AlertEvent.fireError(parentPresenter,
                                 "Save Error",
                                 error.getMessage(),
@@ -535,7 +533,6 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      */
     private void saveCredentials(final CredentialsWithPerms cwp) {
 
-        CredentialsManagerDialogViewImpl.console("Saving existing credentials");
         restFactory.create(CREDENTIALS_RESOURCE)
                 .method(res -> res.storeCredentials(cwp.getCredentials()))
                 .onSuccess(result -> {

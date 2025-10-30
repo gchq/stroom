@@ -19,6 +19,9 @@ package stroom.gitrepo.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.credentials.client.presenter.CredentialsManagerDialogPresenter;
+import stroom.credentials.shared.Credentials;
+import stroom.credentials.shared.CredentialsResource;
+import stroom.credentials.shared.CredentialsWithPerms;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
@@ -27,6 +30,7 @@ import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.gitrepo.shared.GitRepoPushDto;
 import stroom.gitrepo.shared.GitRepoResource;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.PageRequest;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 
 import com.google.gwt.core.client.GWT;
@@ -34,6 +38,9 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Provides the main functionality on the client behind the GitRepo Settings tab.
@@ -55,14 +62,17 @@ public class GitRepoSettingsPresenter
     /**
      * Shows the credentials dialog box.
      */
-    //private final GitRepoCredentialsDialogPresenter credentialsDialog;
-
     private final CredentialsManagerDialogPresenter credentialsManagerDialog;
 
     /**
-     * Server REST API.
+     * Server REST API for GitRepoDocs
      */
     private static final GitRepoResource GIT_REPO_RESOURCE = GWT.create(GitRepoResource.class);
+
+    /**
+     * Server REST API for Credentials
+     */
+    private static final CredentialsResource CREDENTIALS_RESOURCE = GWT.create(CredentialsResource.class);
 
     /**
      * Local copy of the gitRepoDoc, saved in the onRead() method.
@@ -71,14 +81,14 @@ public class GitRepoSettingsPresenter
     private GitRepoDoc gitRepoDoc = null;
 
     /**
-     * Local copy of the credentials ID
-     */
-    private String credentialsId;
-
-    /**
      * Provides a label for the Credentials dialog that doesn't show anything.
      */
     private static final String EMPTY_LABEL = null;
+
+    /**
+     * How many credentials to get in one request.
+     */
+    private static final int MAX_NUMBER_OF_CREDENTIALS = 1000;
 
     /**
      * Injected constructor.
@@ -125,7 +135,7 @@ public class GitRepoSettingsPresenter
         view.setAutoPush(doc.isAutoPush());
 
         // Credentials - store locally
-        credentialsId = doc.getCredentialsId();
+        grabCredentialsList(doc.getCredentialsId());
 
         // Set the initial state of the UI
         view.setState();
@@ -152,7 +162,7 @@ public class GitRepoSettingsPresenter
         }
 
         // Credentials - store from local values
-        doc.setCredentialsId(credentialsId);
+        doc.setCredentialsId(view.getCredentialsId());
 
         return doc;
     }
@@ -318,13 +328,12 @@ public class GitRepoSettingsPresenter
             credentialsManagerDialog.setupDialog(
                     builder,
                     EMPTY_LABEL,
-                    credentialsId);
+                    getView().getCredentialsId());
             builder.onHideRequest(e -> {
                 if (e.isOk()) {
                     e.hide();
-                    credentialsId = credentialsManagerDialog.getCredentialsId();
+                    grabCredentialsList(credentialsManagerDialog.getCredentialsId());
                     this.setDirty(true);
-                    console("Credentials ID is " + credentialsId);
                 } else {
                     // Cancel pressed
                     e.hide();
@@ -332,6 +341,37 @@ public class GitRepoSettingsPresenter
             })
                     .fire();
         }
+    }
+
+    /**
+     * Gets the list of credentials and puts them into the selection list.
+     * @param credentialsId The ID of the currently selected credentials, or
+     *                      null if nothing is selected.
+     */
+    private void grabCredentialsList(final String credentialsId) {
+        final PageRequest pageRequest = new PageRequest(0, MAX_NUMBER_OF_CREDENTIALS);
+        restFactory.create(CREDENTIALS_RESOURCE)
+                .method(res -> res.listCredentials(pageRequest))
+                .onSuccess(res -> {
+                    final List<Credentials> creds = new ArrayList<>();
+                    for (final CredentialsWithPerms cwp : res.getValues()) {
+                        if (cwp != null) {
+                            final Credentials credentials = cwp.getCredentials();
+                            if (credentials != null) {
+                                creds.add(credentials);
+                            }
+                        }
+                    }
+                    getView().setCredentialsList(creds, credentialsId);
+                })
+                .onFailure(error -> {
+                    AlertEvent.fireError(this,
+                            "Error getting list of credentials",
+                            error.getMessage(),
+                            null);
+                })
+                .taskMonitorFactory(GitRepoSettingsPresenter.this)
+                .exec();
     }
 
     /**
@@ -345,6 +385,10 @@ public class GitRepoSettingsPresenter
 
     public interface GitRepoSettingsView
             extends View, HasUiHandlers<GitRepoSettingsUiHandlers> {
+
+        void setCredentialsList(final List<Credentials> credentialsList, final String selectedCredentialsId);
+
+        String getCredentialsId();
 
         void setContentStoreName(String contentStoreName);
 

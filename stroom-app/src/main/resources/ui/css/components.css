@@ -2628,12 +2628,26 @@ button.main-menu svg {
 .gitrepo-settings-form input[type="text"] {
     width: 400px;
 }
+.gitrepo-settings-form #credentials-group {
+    width: 400px;
+}
+.gitrepo-settings-form #credentials-group .SelectionBox {
+    width: 280px;
+}
+.gitrepo-settings-form button.credentials-button {
+    width: 120px;
+}
 
 /* Credentials Manager */
 /* Text area needs to be big enough to display certificates */
 .credentials-details-dialog textarea {
     width: 650px;
     height: 150px;
+}
+/* Width of access token and passphrase */
+.credentials-details-dialog #accessToken,
+.credentials-details-dialog #passphrase {
+    width: 650px;
 }
 
 /* Background and border on table */
