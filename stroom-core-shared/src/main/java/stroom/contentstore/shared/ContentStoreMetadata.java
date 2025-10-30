@@ -25,44 +25,58 @@ import java.util.Objects;
 })
 @JsonInclude(Include.NON_NULL)
 public class ContentStoreMetadata {
-    /** ID of this Content Store */
+
+    /**
+     * ID of this Content Store
+     */
     @JsonProperty("ownerId")
     private final String ownerId;
 
-    /** Name of this Content Store */
+    /**
+     * Name of this Content Store
+     */
     @JsonProperty("ownerName")
     private final String ownerName;
 
-    /** URL of the content store owner */
+    /**
+     * URL of the content store owner
+     */
     @JsonProperty("ownerUrl")
     private final String ownerUrl;
 
-    /** Description of this content store, in markdown */
+    /**
+     * Description of this content store, in markdown
+     */
     @JsonProperty("ownerDescription")
     private final String ownerDescription;
 
-    /** Markdown text describing how to get authentication credentials */
+    /**
+     * Markdown text describing how to get authentication credentials
+     */
     @JsonProperty("authContact")
     private final String authContact;
 
-    /** Length to truncate fields to in toString() */
+    /**
+     * Length to truncate fields to in toString()
+     */
     private static final int TRUNC = 10;
 
     private static final String ERR_OWNER_ID = "Error in Content Store specification: "
-        + "contentStore.meta.ownerId must be specified";
+                                               + "contentStore.meta.ownerId must be specified";
 
     private static final String ERR_OWNER_NAME = "Error in Content Store specification: "
-        + "contentStore.meta.ownerName must be specified";
+                                                 + "contentStore.meta.ownerName must be specified";
 
     /**
      * Called by YAML parser to construct the metadata associated with
      * a Content Store.
-     * @param ownerId The ID of the owner of the content store. Must be
-     *                globally unique so should probably be the domain
-     *                name of the owner.
-     * @param ownerName The name of the owner of the content store.
-     *                  Must not be null.
-     * @param ownerUrl The URL associated with the owner. Can be null.
+     *
+     * @param ownerId          The ID of the owner of the content store. Must be
+     *                         globally unique so should probably be the domain
+     *                         name of the owner.
+     * @param ownerName        The name of the owner of the content store.
+     *                         Must not be null.
+     * @param ownerUrl         The URL associated with the owner. Can be null.
      * @param ownerDescription The description of the content store in
      *                         markdown. Can be null.
      */
@@ -77,9 +91,15 @@ public class ContentStoreMetadata {
         Objects.requireNonNull(ownerName, ERR_OWNER_NAME);
         this.ownerId = ownerId;
         this.ownerName = ownerName;
-        this.ownerUrl = ownerUrl == null ? "" : ownerUrl;
-        this.ownerDescription = ownerUrl == null ? "" : ownerDescription;
-        this.authContact = authContact == null ? "" : authContact;
+        this.ownerUrl = ownerUrl == null
+                ? ""
+                : ownerUrl;
+        this.ownerDescription = ownerUrl == null
+                ? ""
+                : ownerDescription;
+        this.authContact = authContact == null
+                ? ""
+                : authContact;
     }
 
     /**
@@ -155,5 +175,4 @@ public class ContentStoreMetadata {
                "'\n  authContact='" + authContact.substring(0, Math.min(authContact.length(), TRUNC)) +
                "'\n}";
     }
-
 }

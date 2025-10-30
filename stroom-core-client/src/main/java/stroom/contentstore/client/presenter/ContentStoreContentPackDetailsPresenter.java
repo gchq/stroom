@@ -18,86 +18,129 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlexTable.FlexCellFormatter;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HasAutoHorizontalAlignment;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
 
 import javax.inject.Inject;
 
 public class ContentStoreContentPackDetailsPresenter
-    extends SimplePanel
-    implements HasHandlers {
+        extends FlowPanel
+        implements HasHandlers {
 
-    /** Points to top level of this page. Needed for Alert dialogs. */
+    /**
+     * Points to top level of this page. Needed for Alert dialogs.
+     */
     private ContentStorePresenter contentStorePresenter = null;
 
-    /** Converts markdown to HTML */
+    /**
+     * Converts markdown to HTML
+     */
     private final MarkdownConverter markdownConverter;
 
-    /** Connection to the server */
+    /**
+     * Connection to the server
+     */
     private final RestFactory restFactory;
 
-    /** Credentials dialog */
+    /**
+     * Credentials dialog
+     */
     private final CredentialsManagerDialogPresenter credentialsDialog;
 
-    /** Displays the icon of the content pack */
+    /**
+     * Displays the icon of the content pack
+     */
     private final HTML lblIcon = new HTML();
 
-    /** Displays the name of the content pack */
+    /**
+     * Displays the name of the content pack
+     */
     private final Label lblName = new Label();
 
-    /** Displays whether the content pack is installed */
+    /**
+     * Displays whether the content pack is installed
+     */
     private final Label lblIsInstalled = new Label();
 
-    /** Displays the basic license info */
+    /**
+     * Displays the basic licence info
+     */
     private final Label lblLicense = new Label();
 
-    /** Link to full license details */
+    /**
+     * Link to full licence details
+     */
     private final Anchor lnkLicense = new Anchor();
 
-    /** Displays where the content pack will be installed in Stroom */
+    /**
+     * Displays where the content pack will be installed in Stroom
+     */
     private final Label lblStroomPath = new Label();
 
-    /** Git URL */
+    /**
+     * Git URL
+     */
     private final Anchor lnkGitUrl = new Anchor();
 
-    /** Git branch */
+    /**
+     * Git branch
+     */
     private final Label lblGitBranch = new Label();
 
-    /** Git path */
+    /**
+     * Git path
+     */
     private final Label lblGitPath = new Label();
 
-    /** Git commit */
+    /**
+     * Git commit
+     */
     private final Label lblGitCommit = new Label();
 
-    /** Description of content pack */
+    /**
+     * Description of content pack
+     */
     private final HTML lblDetails = new HTML();
 
-    /** Button to create the GitRepo */
+    /**
+     * Button to create the GitRepo
+     */
     private final Button btnCreateGitRepo = new Button();
 
-    /** Button to upgrade the GitRepo to the latest content */
+    /**
+     * Button to upgrade the GitRepo to the latest content
+     */
     private final Button btnUpgradeGitRepo = new Button();
 
-    /** Current content pack selected. Might be null */
+    /**
+     * Current content pack selected. Might be null
+     */
     private ContentStoreContentPackWithDynamicState contentPackWithState = null;
 
-    /** Used when we need an empty string */
+    /**
+     * Used when we need an empty string
+     */
     private static final String EMPTY = "";
 
-    /** Target window of the licence URL */
+    /**
+     * Target window of the licence URL
+     */
     private static final String LICENCE_URL_TARGET = "stroom-content-pack-licence";
 
-    /** Title (hover-over) for the licence URL link */
+    /**
+     * Title (hover-over) for the licence URL link
+     */
     private static final String LICENCE_URL_TITLE = "Link to licence (opens in new window)";
 
-    /** Target window of the Git URL */
+    /**
+     * Target window of the Git URL
+     */
     private static final String GIT_URL_TARGET = "stroom-content-pack-git";
 
-    /** Title (hover-over) for the GIT URL link */
+    /**
+     * Title (hover-over) for the GIT URL link
+     */
     private static final String GIT_URL_TITLE = "Link to Git repository (opens in new window)";
 
     /**
@@ -113,33 +156,23 @@ public class ContentStoreContentPackDetailsPresenter
         this.restFactory = restFactory;
         this.credentialsDialog = credentialsDialog;
 
-        final HorizontalPanel pnlHorizontal = new HorizontalPanel();
-        pnlHorizontal.addStyleName("contentstore-details");
+        addStyleName("contentstore-details");
 
         // Icon
         lblIcon.addStyleName("contentstore-details-icon");
-        pnlHorizontal.add(lblIcon);
+        add(lblIcon);
 
         // Everything else is in a vertical stack
-        final VerticalPanel pnlVertical = new VerticalPanel();
+        final FlowPanel pnlVertical = new FlowPanel();
         pnlVertical.addStyleName("contentstore-details-vertical");
-        pnlHorizontal.add(pnlVertical);
-
-        // Main layout
-        final FlexTable detailsTable = new FlexTable();
-        detailsTable.addStyleName("contentstore-details-table");
-        final FlexCellFormatter detailsFormatter = detailsTable.getFlexCellFormatter();
+        add(pnlVertical);
 
         // Title - name of content pack
         lblName.addStyleName("contentstore-details-heading");
-        detailsTable.setWidget(0, 0, lblName);
-        detailsFormatter.setColSpan(0, 0, 2);
-        detailsFormatter.setHorizontalAlignment(0, 0, HasAutoHorizontalAlignment.ALIGN_CENTER);
 
         // Details
+        lblDetails.addStyleName("contentstore-details-markdown form-control-border form-control-background");
         lblDetails.setWordWrap(true);
-        detailsFormatter.setColSpan(1, 0, 2);
-        detailsTable.setWidget(1, 0, lblDetails);
 
         // Install button
         btnCreateGitRepo.setText("Install");
@@ -150,12 +183,15 @@ public class ContentStoreContentPackDetailsPresenter
         btnUpgradeGitRepo.addClickHandler(event -> btnUpgradeGitRepoClick());
 
         // Add buttons centrally into a row
-        final HorizontalPanel pnlButtons = new HorizontalPanel();
+        final FlowPanel pnlButtons = new FlowPanel();
+        pnlButtons.addStyleName("contentstore-buttons");
         pnlButtons.add(btnCreateGitRepo);
         pnlButtons.add(btnUpgradeGitRepo);
-        detailsFormatter.setColSpan(2, 0, 2);
-        detailsFormatter.setHorizontalAlignment(2, 0, HasAutoHorizontalAlignment.ALIGN_CENTER);
-        detailsTable.setWidget(2, 0, pnlButtons);
+
+        // Main layout
+        final FlexTable detailsTable = new FlexTable();
+        detailsTable.addStyleName("contentstore-details-table");
+        final FlexCellFormatter detailsFormatter = detailsTable.getFlexCellFormatter();
 
         // Whether installed
         detailsTable.setHTML(3, 0, "Installed status:");
@@ -188,18 +224,19 @@ public class ContentStoreContentPackDetailsPresenter
         detailsTable.setWidget(10, 1, lblGitCommit);
 
         // Add the panels into the structure
+        pnlVertical.add(lblName);
+        pnlVertical.add(lblDetails);
         pnlVertical.add(detailsTable);
-
-        // Add everything to the presenter's panel
-        this.add(pnlHorizontal);
+        pnlVertical.add(pnlButtons);
 
         // Ensure initial state is correct
-        this.setState();
+        setContentPack(null);
     }
 
     /**
      * Gives this component a reference to the top level of this page.
      * Must be called before UI is used.
+     *
      * @param contentStorePresenter The top level of this page. Must not be null.
      */
     void setContentStorePresenter(final ContentStorePresenter contentStorePresenter) {
@@ -215,6 +252,7 @@ public class ContentStoreContentPackDetailsPresenter
 
     /**
      * Displays all the details of the given content pack.
+     *
      * @param cpws The content pack and its state to display. Can be null
      *             in which case the display will be blank.
      */
@@ -258,11 +296,12 @@ public class ContentStoreContentPackDetailsPresenter
         }
 
         // Update state
-        this.setState();
+        setState();
     }
 
     /**
      * Utility to generate the installed location field.
+     *
      * @param cp The content pack with the info. Must not be null.
      * @return The string to display to the user.
      */
@@ -288,7 +327,7 @@ public class ContentStoreContentPackDetailsPresenter
                 btnCreateGitRepo.setEnabled(true);
                 btnUpgradeGitRepo.setEnabled(false);
             } else if (status.equals(ContentStoreContentPackStatus.PACK_UPGRADABLE)
-                || status.equals(ContentStoreContentPackStatus.CONTENT_UPGRADABLE)) {
+                       || status.equals(ContentStoreContentPackStatus.CONTENT_UPGRADABLE)) {
                 btnCreateGitRepo.setEnabled(false);
                 btnUpgradeGitRepo.setEnabled(true);
             } else {
@@ -319,26 +358,26 @@ public class ContentStoreContentPackDetailsPresenter
                         cpws.getContentPack().getContentStoreMetadata().getAuthContact(),
                         null);
                 builder.onHideRequest(e -> {
-                    if (e.isOk()) {
-                        final String credentialsId = credentialsDialog.getCredentialsId();
+                            if (e.isOk()) {
+                                final String credentialsId = credentialsDialog.getCredentialsId();
 
-                        if (credentialsId != null) {
-                            // Create the GitRepo with the given credentials
-                            e.hide();
-                            requestGitRepoCreation(cpws, credentialsId);
-                        } else {
-                            // Something is wrong
-                            AlertEvent.fireWarn(credentialsDialog,
-                                    "No credentials were selected; "
-                                    + "this content pack cannot be downloaded",
-                                    e::reset);
-                        }
-                    } else {
-                        // Cancel pressed
-                        e.hide();
-                    }
-                })
-                    .fire();
+                                if (credentialsId != null) {
+                                    // Create the GitRepo with the given credentials
+                                    e.hide();
+                                    requestGitRepoCreation(cpws, credentialsId);
+                                } else {
+                                    // Something is wrong
+                                    AlertEvent.fireWarn(credentialsDialog,
+                                            "No credentials were selected; "
+                                            + "this content pack cannot be downloaded",
+                                            e::reset);
+                                }
+                            } else {
+                                // Cancel pressed
+                                e.hide();
+                            }
+                        })
+                        .fire();
 
             } else {
                 // No authentication needed
@@ -349,7 +388,8 @@ public class ContentStoreContentPackDetailsPresenter
 
     /**
      * Performs the REST request to the server to create a GitRepo.
-     * @param cpws The content pack with state. Must not be null.
+     *
+     * @param cpws          The content pack with state. Must not be null.
      * @param credentialsId The credentials ID for authentication, if required.
      */
     private void requestGitRepoCreation(final ContentStoreContentPackWithDynamicState cpws,
@@ -377,12 +417,10 @@ public class ContentStoreContentPackDetailsPresenter
                                 () -> RefreshExplorerTreeEvent.fire(contentStorePresenter));
                     }
                 })
-                .onFailure(restError -> {
-                    AlertEvent.fireError(contentStorePresenter,
-                            "Create failed",
-                            restError.getMessage(),
-                            () -> RefreshExplorerTreeEvent.fire(contentStorePresenter));
-                })
+                .onFailure(restError -> AlertEvent.fireError(contentStorePresenter,
+                        "Create failed",
+                        restError.getMessage(),
+                        () -> RefreshExplorerTreeEvent.fire(contentStorePresenter)))
                 .taskMonitorFactory(btnCreateGitRepo)
                 .exec();
 
@@ -405,6 +443,7 @@ public class ContentStoreContentPackDetailsPresenter
     /**
      * Called when the Upgrade button is clicked and the content
      * can be upgraded.
+     *
      * @param cpws The current content pack and state. Must not be null.
      */
     private void doContentPackUpgrade(final ContentStoreContentPackWithDynamicState cpws) {
@@ -427,12 +466,10 @@ public class ContentStoreContentPackDetailsPresenter
                                 () -> RefreshExplorerTreeEvent.fire(contentStorePresenter));
                     }
                 })
-                .onFailure(restError -> {
-                    AlertEvent.fireError(contentStorePresenter,
-                            "Content pack upgrade failed",
-                            restError.getMessage(),
-                            () -> RefreshExplorerTreeEvent.fire(contentStorePresenter));
-                })
+                .onFailure(restError -> AlertEvent.fireError(contentStorePresenter,
+                        "Content pack upgrade failed",
+                        restError.getMessage(),
+                        () -> RefreshExplorerTreeEvent.fire(contentStorePresenter)))
                 .taskMonitorFactory(btnUpgradeGitRepo)
                 .exec();
     }
