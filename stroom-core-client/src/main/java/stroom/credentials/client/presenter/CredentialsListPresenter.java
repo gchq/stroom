@@ -21,7 +21,6 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent.Builder;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -73,8 +72,6 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     /** Flag to set whether something is selected by default */
     private boolean defaultSelection = true;
 
-    private DoubleClickAction doubleClickAction = DoubleClickAction.DOUBLE_CLICK_EDIT;
-
     /** Index of the first item in the list of credentials */
     private static final int FIRST_ITEM_INDEX = 0;
 
@@ -89,12 +86,6 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     enum CreationState {
         NEW_CREDENTIALS,
         OLD_CREDENTIALS
-    }
-
-    /** Indicates what the double click should do - edit or select */
-    public enum DoubleClickAction {
-        DOUBLE_CLICK_EDIT,
-        DOUBLE_CLICK_SELECT
     }
 
     /**
@@ -225,13 +216,6 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     }
 
     /**
-     * Sets what this component should do when double-clicked.
-     */
-    public void setDoubleClickAction(final DoubleClickAction action) {
-        this.doubleClickAction = action;
-    }
-
-    /**
      * Called when the presenter gets loaded into the UI. Sets up the event handlers.
      */
     @Override
@@ -244,19 +228,8 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
 
         registerHandler(gridSelectionModel.addSelectionHandler(event -> {
             if (event.getSelectionType().isDoubleSelect()) {
-
-                switch (doubleClickAction) {
-                    case DOUBLE_CLICK_EDIT -> {
-                        // Edit the credentials
-                        handleEditButtonClick();
-                    }
-                    case DOUBLE_CLICK_SELECT -> {
-                        // Hit OK button
-                        HidePopupRequestEvent.builder(this.parentPresenter)
-                                .ok(true)
-                                .fire();
-                    }
-                }
+                // Edit the credentials
+                handleEditButtonClick();
             }
         }));
 
