@@ -16,8 +16,10 @@
 
 package stroom.gitrepo.client.view;
 
+import stroom.credentials.shared.Credentials;
 import stroom.gitrepo.client.presenter.GitRepoSettingsPresenter.GitRepoSettingsView;
 import stroom.gitrepo.client.presenter.GitRepoSettingsUiHandlers;
+import stroom.item.client.SelectionBox;
 import stroom.widget.button.client.Button;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
@@ -32,6 +34,8 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+
+import java.util.List;
 
 /**
  * Backs up GitRepoSettingsViewImpl.ui.xml for the GitRepo Settings tab.
@@ -65,6 +69,9 @@ public class GitRepoSettingsViewImpl
     TextBox txtGitPath;
 
     @UiField
+    SelectionBox<Credentials> selCredentials;
+
+    @UiField
     Button btnSetCredentials;
 
     @UiField
@@ -85,9 +92,17 @@ public class GitRepoSettingsViewImpl
     @UiField
     Button btnCheckForUpdates;
 
+    /**
+     * Credentials to use when no credentials are selected.
+     */
+    private static final Credentials NULL_CREDENTIALS = new Credentials();
+
     @Inject
     public GitRepoSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+
+        // Selection list should display the name of the credentials
+        selCredentials.setDisplayValueFunction(Credentials::getName);
     }
 
     @Override
@@ -178,6 +193,7 @@ public class GitRepoSettingsViewImpl
             txtGitBranch.setEnabled(false);
             txtGitPath.setVisible(true);
             txtGitPath.setEnabled(false);
+            selCredentials.setVisible(true);
             btnSetCredentials.setVisible(true);
             txtGitCommitToPull.setVisible(true);
             txtGitCommitToPull.setEnabled(false);
@@ -194,6 +210,7 @@ public class GitRepoSettingsViewImpl
             txtGitBranch.setEnabled(true);
             txtGitPath.setVisible(true);
             txtGitPath.setEnabled(true);
+            selCredentials.setVisible(true);
             btnSetCredentials.setVisible(true);
             txtGitCommitToPull.setVisible(true);
             txtGitCommitToPull.setEnabled(true);
@@ -230,6 +247,54 @@ public class GitRepoSettingsViewImpl
     }
 
     /**
+     * Sets the list of credentials in the list that is displayed.
+     * @param credentialsList The list of credentials to display in the list.
+     * @param selectedCredentialsId The ID of the selected credentials. Can
+     *                              be null if nothing is selected.
+     */
+    @Override
+    public void setCredentialsList(final List<Credentials> credentialsList,
+                                   final String selectedCredentialsId) {
+        selCredentials.clear();
+
+        selCredentials.addItem(NULL_CREDENTIALS);
+        selCredentials.addItems(credentialsList);
+
+        // Find the selected credentials
+        if (selectedCredentialsId != null) {
+            for (final Credentials credentials : credentialsList) {
+                if (credentials.getUuid().equals(selectedCredentialsId)) {
+                    selCredentials.setValue(credentials);
+                    break;
+                }
+            }
+        } else {
+            // Nothing selected so select the null item
+            selCredentials.setValue(NULL_CREDENTIALS);
+        }
+    }
+
+    /**
+     * @return The currently selected credentials, or null if nothing is selected.
+     */
+    @Override
+    public String getCredentialsId() {
+        final String selectedCredentialsId;
+        final Credentials selectedCredentials = selCredentials.getValue();
+        if (selectedCredentials != null) {
+            if (!selectedCredentials.getUuid().equals(NULL_CREDENTIALS.getUuid())) {
+                selectedCredentialsId = selectedCredentials.getUuid();
+            } else {
+                selectedCredentialsId = null;
+            }
+        } else {
+            selectedCredentialsId = null;
+        }
+
+        return selectedCredentialsId;
+    }
+
+    /**
      * Sets the Dirty flag if any of the UI widget's content changes.
      * @param e Event from the UI widget. Ignored. Can be null.
      */
@@ -243,6 +308,18 @@ public class GitRepoSettingsViewImpl
             getUiHandlers().onDirty();
         }
         this.setState();
+    }
+
+    /**
+     * Sets the Dirty flag if the selected credentials change.
+     * @param e Ignored. Can be null.
+     */
+    @SuppressWarnings("unused")
+    @UiHandler({"selCredentials"})
+    public void onSelectionValueChange(@SuppressWarnings("unused") final ValueChangeEvent<Credentials> e) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onDirty();
+        }
     }
 
     /**

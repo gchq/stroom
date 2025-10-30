@@ -3,7 +3,8 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:b="urn:import:stroom.widget.button.client"
-             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:sel="urn:import:stroom.item.client">
     <g:FlowPanel styleName="max form-padding form gitrepo-settings-form">
 
         <!-- Content Store stuff -->
@@ -60,10 +61,17 @@
         </form:FormGroup>
 
         <!-- Button to set credentials -->
-        <b:Button ui:field="btnSetCredentials"
-                  text="Set Credentials"
-                  addStyleNames="allow-focus"
-                  title="Set username / password for access to this Git repository"/>
+        <form:FormGroup identity="credentials-group"
+                        label="Credentials"
+                        helpText="Select credentials to use with the Git repository">
+            <g:HorizontalPanel>
+                <sel:SelectionBox ui:field="selCredentials"/>
+                <b:Button ui:field="btnSetCredentials"
+                          text="..."
+                          addStyleNames="allow-focus credentials-button"
+                          title="Manage Credentials"/>
+            </g:HorizontalPanel>
+        </form:FormGroup>
 
         <!-- Button to push into Git -->
         <b:Button ui:field="btnGitRepoPush"
