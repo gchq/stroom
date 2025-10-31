@@ -439,15 +439,13 @@ class StoreShard implements Shard {
     private void open() {
         if (!open) {
             if (Files.exists(shardDir)) {
-                LOGGER.info(() -> "Found local shard for '" + doc + "'");
+                LOGGER.info(() -> "Found local shard for '" + doc.asDocRef() + "'");
                 db = PlanBDb.open(doc, shardDir, byteBuffers, false);
                 open = true;
 
             } else {
                 // If this node is supposed to be a node that stores shards, but it doesn't have it, then error.
-                final String message = "Local Plan B shard not found for '" +
-                                       doc +
-                                       "'";
+                final String message = "Local Plan B shard not found for '" + doc.asDocRef() + "'";
                 LOGGER.error(() -> message);
                 throw new RuntimeException(message);
             }

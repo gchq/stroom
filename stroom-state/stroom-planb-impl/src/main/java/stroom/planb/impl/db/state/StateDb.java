@@ -22,14 +22,8 @@ import stroom.planb.impl.serde.keyprefix.KeyPrefixSerdeFactory;
 import stroom.planb.impl.serde.valtime.ValTime;
 import stroom.planb.impl.serde.valtime.ValTimeSerde;
 import stroom.planb.impl.serde.valtime.ValTimeSerdeFactory;
-import stroom.planb.shared.AbstractPlanBSettings;
-import stroom.planb.shared.HashLength;
-import stroom.planb.shared.KeyType;
 import stroom.planb.shared.PlanBDoc;
-import stroom.planb.shared.StateKeySchema;
 import stroom.planb.shared.StateSettings;
-import stroom.planb.shared.StateValueSchema;
-import stroom.planb.shared.StateValueType;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
@@ -88,6 +82,7 @@ public class StateDb extends AbstractDb<KeyPrefix, Val> {
                                  final ByteBuffers byteBuffers,
                                  final PlanBDoc doc,
                                  final boolean readOnly) {
+        // Ensure all settings are non null.
         final StateSettings settings;
         if (doc.getSettings() instanceof final StateSettings stateSettings) {
             settings = stateSettings;
@@ -96,45 +91,21 @@ public class StateDb extends AbstractDb<KeyPrefix, Val> {
         }
 
         final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
-        final Long mapSize = NullSafe.getOrElse(
-                settings,
-                AbstractPlanBSettings::getMaxStoreSize,
-                AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE);
         final PlanBEnv env = new PlanBEnv(path,
-                mapSize,
+                settings.getMaxStoreSize(),
                 20,
                 readOnly,
                 hashClashCommitRunnable);
         try {
-            final KeyType keyType = NullSafe.getOrElse(
-                    settings,
-                    StateSettings::getKeySchema,
-                    StateKeySchema::getKeyType,
-                    StateKeySchema.DEFAULT_KEY_TYPE);
-            final HashLength keyHashLength = NullSafe.getOrElse(
-                    settings,
-                    StateSettings::getKeySchema,
-                    StateKeySchema::getHashLength,
-                    StateKeySchema.DEFAULT_HASH_LENGTH);
-            final StateValueType stateValueType = NullSafe.getOrElse(
-                    settings,
-                    StateSettings::getValueSchema,
-                    StateValueSchema::getStateValueType,
-                    StateValueSchema.DEFAULT_VALUE_TYPE);
-            final HashLength valueHashLength = NullSafe.getOrElse(
-                    settings,
-                    StateSettings::getValueSchema,
-                    StateValueSchema::getHashLength,
-                    StateValueSchema.DEFAULT_HASH_LENGTH);
             final KeyPrefixSerde keySerde = KeyPrefixSerdeFactory.createKeySerde(
-                    keyType,
-                    keyHashLength,
+                    settings.getKeySchema().getKeyType(),
+                    settings.getKeySchema().getHashLength(),
                     env,
                     byteBuffers,
                     hashClashCommitRunnable);
             final ValTimeSerde valueSerde = ValTimeSerdeFactory.createValueSerde(
-                    stateValueType,
-                    valueHashLength,
+                    settings.getValueSchema().getStateValueType(),
+                    settings.getValueSchema().getHashLength(),
                     env,
                     byteBuffers,
                     hashClashCommitRunnable);

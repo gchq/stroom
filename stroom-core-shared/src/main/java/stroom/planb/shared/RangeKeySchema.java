@@ -1,6 +1,7 @@
 package stroom.planb.shared;
 
 import stroom.util.shared.AbstractBuilder;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -16,14 +17,14 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class RangeKeySchema {
 
-    public static final RangeType DEFAULT_RANGE_TYPE = RangeType.LONG;
+    static final RangeType DEFAULT_RANGE_TYPE = RangeType.LONG;
 
     @JsonProperty
     final RangeType rangeType;
 
     @JsonCreator
     public RangeKeySchema(@JsonProperty("rangeType") final RangeType rangeType) {
-        this.rangeType = rangeType;
+        this.rangeType = NullSafe.requireNonNullElse(rangeType, DEFAULT_RANGE_TYPE);
     }
 
     public RangeType getRangeType() {
@@ -62,7 +63,9 @@ public class RangeKeySchema {
         }
 
         public Builder(final RangeKeySchema schema) {
-            this.rangeType = schema.rangeType;
+            if (schema != null) {
+                this.rangeType = schema.rangeType;
+            }
         }
 
         public Builder rangeType(final RangeType rangeType) {

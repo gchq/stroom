@@ -128,8 +128,11 @@ public class PlanBDoc extends Doc {
 
     @Override
     public String toString() {
-        return "StateDoc{" +
-               "description='" + description + '\'' +
+        return "PlanBDoc{" +
+               "type='" + getType() + '\'' +
+               ", uuid='" + getUuid() + '\'' +
+               ", name='" + getName() + '\'' +
+               ", description='" + description + '\'' +
                ", stateType=" + stateType +
                ", settings=" + settings +
                '}';
