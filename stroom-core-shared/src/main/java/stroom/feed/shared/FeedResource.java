@@ -61,4 +61,13 @@ public interface FeedResource extends RestResource, DirectRestService, FetchWith
             summary = "Fetch supported encodings",
             operationId = "fetchSupportedEncodings")
     List<String> fetchSupportedEncodings();
+
+    @GET
+    @Path("getUuid/{uuid}")
+    @Operation(
+            summary = "Fetch a feed UUID for a feed name",
+            operationId = "getUuid")
+    @Produces(MediaType.TEXT_PLAIN)
+    @Consumes(MediaType.TEXT_PLAIN)
+    String getUuid(@PathParam("name") String name);
 }

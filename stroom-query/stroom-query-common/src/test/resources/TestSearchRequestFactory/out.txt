@@ -10,6 +10,8 @@ select StreamId, EventId, EventTime, Status
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -121,6 +123,8 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -233,6 +237,8 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -350,6 +356,8 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -460,6 +468,8 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -570,6 +580,8 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -665,6 +677,8 @@ select StreamId
   },
   "query" : {
     "dataSource" : {
+      "type" : "index_view",
+      "uuid" : "index_view",
       "name" : "index_view"
     },
     "expression" : {
@@ -733,6 +747,8 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -829,6 +845,8 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -925,6 +943,8 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -1021,6 +1041,8 @@ select StreamId as "Stream Id", count as Count
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -1107,6 +1129,8 @@ select comp
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -1169,6 +1193,8 @@ select StreamId, EventTime
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -1219,6 +1245,8 @@ select ${Stream Id}, ${Event Time}
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -1270,6 +1298,8 @@ select ${Stream Id}, ${Event Time}
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -1330,6 +1360,8 @@ select ${Event Time}
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -1388,6 +1420,8 @@ select StreamId
   },
   "query" : {
     "dataSource" : {
+      "type" : "index_view",
+      "uuid" : "index_view",
       "name" : "index_view"
     },
     "expression" : {
@@ -1397,6 +1431,8 @@ select StreamId
         "field" : "StreamId",
         "condition" : "IN_DICTIONARY",
         "docRef" : {
+          "type" : "Dictionary",
+          "uuid" : "my_dictionary",
           "name" : "my_dictionary"
         }
       } ]
@@ -1457,6 +1493,8 @@ select StreamId
   },
   "query" : {
     "dataSource" : {
+      "type" : "index_view",
+      "uuid" : "index_view",
       "name" : "index_view"
     },
     "expression" : {
@@ -1534,6 +1572,8 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -1653,6 +1693,8 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -1773,6 +1815,8 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -1891,6 +1935,8 @@ select StreamId, EventId, EventTime, Status
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -2008,6 +2054,8 @@ select StreamId, EventId, EventTime, Status
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {

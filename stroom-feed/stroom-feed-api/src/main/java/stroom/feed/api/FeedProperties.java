@@ -28,4 +28,12 @@ public interface FeedProperties {
      */
     @Deprecated
     FeedStatus getStatus(String feedName);
+
+    /**
+     * Get the UUID for a feed doc by name.
+     *
+     * @param feedName The feed name to get the doc for.
+     * @return The UUID of the feed doc if found, else null.
+     */
+    String getUuid(final String feedName);
 }

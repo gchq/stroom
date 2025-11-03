@@ -87,7 +87,6 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -226,7 +225,7 @@ public final class StoreCreationTool {
             feedStore.writeDocument(feedDoc);
 
             // Setup the pipeline.
-            final DocRef pipelineRef = getReferencePipeline(feedName, textConverterType,
+            final DocRef pipelineRef = getReferencePipeline(docRef, textConverterType,
                     textConverterLocation, xsltLocation);
 
             // Setup the stream processor filter.
@@ -307,7 +306,7 @@ public final class StoreCreationTool {
         }
     }
 
-    private DocRef getReferencePipeline(final String feedName,
+    private DocRef getReferencePipeline(final DocRef feedRef,
                                         final TextConverterType textConverterType,
                                         final Path textConverterLocation,
                                         final Path xsltLocation) {
@@ -318,25 +317,25 @@ public final class StoreCreationTool {
 
         final Tuple2<DocRef, PipelineDoc> pipelineRefAndDoc = duplicatePipeline(
                 new DocRef(PipelineDoc.TYPE, REFERENCE_DATA_PIPELINE_UUID),
-                feedName);
+                feedRef.getName());
         final PipelineDoc pipelineDoc = pipelineRefAndDoc._2();
         PipelineData pipelineData = pipelineDoc.getPipelineData();
         final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
 
         // Setup the text converter.
-        final DocRef textConverterRef = getTextConverter(feedName, textConverterType, textConverterLocation);
+        final DocRef textConverterRef = getTextConverter(feedRef.getName(), textConverterType, textConverterLocation);
         if (textConverterRef != null) {
             builder.addProperty(PipelineDataUtil.createProperty(
                     CombinedParser.DEFAULT_NAME, "textConverter", textConverterRef));
         }
         // Setup the xslt.
-        final DocRef xslt = getXSLT(feedName, xsltLocation);
+        final DocRef xslt = getXSLT(feedRef.getName(), xsltLocation);
         builder.addProperty(PipelineDataUtil
                 .createProperty("translationFilter", "xslt", xslt));
         builder.addProperty(PipelineDataUtil.createProperty(
                 "storeAppender",
                 "feed",
-                new DocRef(null, null, feedName)));
+                feedRef));
         builder.addProperty(PipelineDataUtil.createProperty(
                 "storeAppender",
                 "streamType",
@@ -468,14 +467,14 @@ public final class StoreCreationTool {
         return docRef;
     }
 
-    public void createEventPipelineAndProcessors(final String feedName,
+    public void createEventPipelineAndProcessors(final DocRef feedRef,
                                                  final TextConverterType translationTextConverterType,
                                                  final Path translationTextConverterLocation,
                                                  final Path translationXsltLocation,
                                                  final Path flatteningXsltLocation,
                                                  final List<PipelineReference> pipelineReferences) {
         // Create the event pipeline.
-        final DocRef pipelineRef = getEventPipeline(feedName, translationTextConverterType,
+        final DocRef pipelineRef = getEventPipeline(feedRef, translationTextConverterType,
                 translationTextConverterLocation, translationXsltLocation, flatteningXsltLocation, pipelineReferences);
 
         final Processor streamProcessor = processorService
@@ -486,7 +485,7 @@ public final class StoreCreationTool {
             final QueryData findStreamQueryData = QueryData.builder()
                     .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                     .expression(ExpressionOperator.builder()
-                            .addTextTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName)
+                            .addTextTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedRef.getName())
                             .addTextTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                             .build())
                     .build();
@@ -535,7 +534,7 @@ public final class StoreCreationTool {
 
         // Create the event pipeline.
         createEventPipelineAndProcessors(
-                feedName,
+                docRef,
                 translationTextConverterType,
                 translationTextConverterLocation,
                 translationXsltLocation,
@@ -586,13 +585,13 @@ public final class StoreCreationTool {
                 .orElseThrow();
     }
 
-    private DocRef getEventPipeline(final String feedName,
+    private DocRef getEventPipeline(final DocRef feedRef,
                                     final TextConverterType textConverterType,
                                     final Path translationTextConverterLocation,
                                     final Path translationXsltLocation,
                                     final Path flatteningXsltLocation,
                                     final List<PipelineReference> pipelineReferences) {
-        final DocRef pipelineRef = getPipeline(feedName, EVENT_DATA_PIPELINE);
+        final DocRef pipelineRef = getPipeline(feedRef.getName(), EVENT_DATA_PIPELINE);
         final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
         final PipelineData pipelineData = pipelineDoc.getPipelineData();
         final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
@@ -603,12 +602,12 @@ public final class StoreCreationTool {
 //        final PipelineDoc pipelineDoc = pipelineRefAndDoc._2();
 
         // Setup the text converter.
-        final DocRef translationTextConverterRef = getTextConverter(feedName, textConverterType,
+        final DocRef translationTextConverterRef = getTextConverter(feedRef.getName(), textConverterType,
                 translationTextConverterLocation);
 
         // Setup the xslt.
-        final DocRef translationXSLT = getXSLT(feedName, translationXsltLocation);
-        final DocRef flatteningXSLT = getXSLT(feedName + "_FLATTENING", flatteningXsltLocation);
+        final DocRef translationXSLT = getXSLT(feedRef.getName(), translationXsltLocation);
+        final DocRef flatteningXSLT = getXSLT(feedRef.getName() + "_FLATTENING", flatteningXsltLocation);
 
         // Change some properties.
         if (translationTextConverterRef != null) {
@@ -649,7 +648,7 @@ public final class StoreCreationTool {
         // "feed", "Feed", false);
         builder.addProperty(PipelineDataUtil.createProperty("storeAppender",
                 "feed",
-                new DocRef(null, null, feedName)));
+                feedRef));
 
         // final PropertyType streamTypePropertyType = new PropertyType(
         // elementType, "streamType", "StreamType", false);
@@ -720,9 +719,9 @@ public final class StoreCreationTool {
         final List<DocRef> refs = textConverterStore.list().stream()
                 .filter(docRef ->
                         name.equals(docRef.getName()))
-                .collect(Collectors.toList());
-        if (refs != null && refs.size() > 0) {
-            return refs.get(0);
+                .toList();
+        if (!refs.isEmpty()) {
+            return refs.getFirst();
         }
 
         // Get the data to use.
@@ -754,9 +753,9 @@ public final class StoreCreationTool {
         final List<DocRef> refs = xsltStore.list().stream()
                 .filter(docRef ->
                         name.equals(docRef.getName()))
-                .collect(Collectors.toList());
-        if (refs != null && refs.size() > 0) {
-            return refs.get(0);
+                .toList();
+        if (!refs.isEmpty()) {
+            return refs.getFirst();
         }
 
         // Get the data to use.
@@ -864,8 +863,8 @@ public final class StoreCreationTool {
                 .filter(docRef ->
                         name.equals(docRef.getName()))
                 .toList();
-        if (refs.size() > 0) {
-            return refs.get(0);
+        if (!refs.isEmpty()) {
+            return refs.getFirst();
         }
 
         final DocRef indexRef = commonTestScenarioCreator.createIndex(

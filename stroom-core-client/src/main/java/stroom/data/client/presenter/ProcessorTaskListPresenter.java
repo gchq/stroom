@@ -159,15 +159,15 @@ public class ProcessorTaskListPresenter
                     }
                 }, "Node", ColumnSizeConstants.MEDIUM_COL);
 
-        final Function<ProcessorTask, DocRef> feedExtractionFunction = row -> {
+        final Function<ProcessorTask, String> feedExtractionFunction = row -> {
             if (row.getFeedName() != null) {
-                return new DocRef(FeedDoc.TYPE, null, row.getFeedName());
+                return row.getFeedName();
             } else {
                 return null;
             }
         };
 
-        DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Feed", feedExtractionFunction);
+        DataGridUtil.addFeedColumn(getEventBus(), dataGrid, "Feed", feedExtractionFunction);
 
         dataGrid.addResizableColumn(new OrderByColumn<ProcessorTask, String>(
                 new TextCell(), ProcessorTaskFields.FIELD_PRIORITY, false) {

@@ -18,6 +18,7 @@ package stroom.feed.impl;
 
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedResource;
@@ -35,12 +36,15 @@ class FeedResourceImpl implements FeedResource {
 
     private final Provider<FeedStore> feedStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
+    private final Provider<FeedProperties> feedProperties;
 
     @Inject
     FeedResourceImpl(final Provider<FeedStore> feedStoreProvider,
-                     final Provider<DocumentResourceHelper> documentResourceHelperProvider) {
+                     final Provider<DocumentResourceHelper> documentResourceHelperProvider,
+                     final Provider<FeedProperties> feedProperties) {
         this.feedStoreProvider = feedStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
+        this.feedProperties = feedProperties;
     }
 
     @Override
@@ -63,5 +67,10 @@ class FeedResourceImpl implements FeedResource {
         // Allow user to select no encoding
         encodings.add("");
         return Collections.unmodifiableList(encodings);
+    }
+
+    @Override
+    public String getUuid(final String name) {
+        return feedProperties.get().getUuid(name);
     }
 }

@@ -29,6 +29,7 @@ class SearchRequestFactoryTest {
                         .builder()
                         .dataSource(DocRef
                                 .builder()
+                                .type("Index")
                                 .uuid(dataSourceUuid)
                                 .build())
                         .build())

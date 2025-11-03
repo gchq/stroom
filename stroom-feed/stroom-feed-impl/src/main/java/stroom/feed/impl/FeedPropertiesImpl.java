@@ -122,4 +122,11 @@ public class FeedPropertiesImpl implements FeedProperties {
                 .map(FeedDoc::getStatus)
                 .orElse(null);
     }
+
+    @Override
+    public String getUuid(final String feedName) {
+        return feedDocCache.get(feedName)
+                .map(FeedDoc::getUuid)
+                .orElse(null);
+    }
 }
