@@ -13,6 +13,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.10.9] - 2025-11-03
+
+* Issue **#5186** : Remove error logging for expected Plan B snapshot checking behaviour.
+
+* Issue **#5220** : Fix duplicate check column list change confirm dialog not showing if the duplicate check store is on a remote node.
+
+* Issue **#5126** : Improve Plan B null handling.
+
+* Issue **#5225** : Fix NPE on DocRef.
+
+* Issue **#5237** : Fix Plan B lookup no content error.
+
+
 ## [v7.10.8] - 2025-10-20
 
 * Add a proxy zip file ingest mechanism to proxy. Add property branch `proxyConfig.dirScanner` to the config.
@@ -1749,7 +1762,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.8...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.9...HEAD
+[v7.10.9]: https://github.com/gchq/stroom/compare/v7.10.8...v7.10.9
 [v7.10.8]: https://github.com/gchq/stroom/compare/v7.10.7...v7.10.8
 [v7.10.7]: https://github.com/gchq/stroom/compare/v7.10.6...v7.10.7
 [v7.10.6]: https://github.com/gchq/stroom/compare/v7.10.5...v7.10.6
