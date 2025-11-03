@@ -638,6 +638,39 @@
         "tags" : [ "Queries" ]
       }
     },
+    "/analyticRule/v1/validate" : {
+      "post" : {
+        "operationId" : "validateAnalyticRule",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AnalyticRuleDoc"
+              }
+            }
+          },
+          "description" : "doc",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Message"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Validates an analytic rule doc",
+        "tags" : [ "Queries" ]
+      }
+    },
     "/analyticRule/v1/{uuid}" : {
       "get" : {
         "operationId" : "fetchAnalyticRule",
@@ -3470,6 +3503,34 @@
           }
         },
         "summary" : "Delete duplicate check rows",
+        "tags" : [ "DuplicateCheck" ]
+      }
+    },
+    "/duplicateCheck/v1/fetchColumnNames" : {
+      "post" : {
+        "operationId" : "fetchColumnNames",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FetchColumnNamesResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch the column names from the dup check store for this analytic.",
         "tags" : [ "DuplicateCheck" ]
       }
     },
@@ -16671,6 +16732,20 @@
           }
         }
       },
+      "FetchColumnNamesResponse" : {
+        "type" : "object",
+        "properties" : {
+          "columnNames" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "storeInitialised" : {
+            "type" : "boolean"
+          }
+        }
+      },
       "FetchDataRequest" : {
         "type" : "object",
         "properties" : {
@@ -19619,8 +19694,7 @@
             "description" : "The start offset for this sub-set of data, where zero is the offset of the first record in the full result set",
             "example" : 0
           }
-        },
-        "required" : [ "length", "offset" ]
+        }
       },
       "OverrideValueString" : {
         "type" : "object",

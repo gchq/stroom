@@ -77,7 +77,7 @@ public class ProcessorModule extends AbstractModule {
                 .addBinding(ProcessorFilterServiceImpl.class.getName(), ProcessorFilterServiceImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(ProcessorFilterDoc.DOCUMENT_TYPE, ProcessorFilterImportExportHandlerImpl.class);
+                .bind(ProcessorFilterDoc.TYPE, ProcessorFilterImportExportHandlerImpl.class);
 
         HasSystemInfoBinder.create(binder())
                 .bind(ProcessorTaskQueueManagerImpl.class);

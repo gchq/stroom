@@ -17,6 +17,7 @@
 package stroom.planb.shared;
 
 import stroom.docs.shared.Description;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -79,11 +80,11 @@ public abstract sealed class AbstractPlanBSettings permits
                                  final Boolean overwrite,
                                  final RetentionSettings retention,
                                  final SnapshotSettings snapshotSettings) {
-        this.maxStoreSize = maxStoreSize;
-        this.synchroniseMerge = synchroniseMerge;
-        this.overwrite = overwrite;
-        this.retention = retention;
-        this.snapshotSettings = snapshotSettings;
+        this.maxStoreSize = NullSafe.requireNonNullElse(maxStoreSize, DEFAULT_MAX_STORE_SIZE);
+        this.synchroniseMerge = NullSafe.requireNonNullElse(synchroniseMerge, false);
+        this.overwrite = NullSafe.requireNonNullElse(overwrite, true);
+        this.retention = NullSafe.requireNonNullElse(retention, new RetentionSettings.Builder().build());
+        this.snapshotSettings = NullSafe.requireNonNullElse(snapshotSettings, new SnapshotSettings());
     }
 
     public Long getMaxStoreSize() {
@@ -133,13 +134,11 @@ public abstract sealed class AbstractPlanBSettings permits
 
     @Override
     public String toString() {
-        return "AbstractPlanBSettings{" +
-               "maxStoreSize=" + maxStoreSize +
+        return "maxStoreSize=" + maxStoreSize +
                ", synchroniseMerge=" + synchroniseMerge +
                ", overwrite=" + overwrite +
                ", retention=" + retention +
-               ", snapshotSettings=" + snapshotSettings +
-               '}';
+               ", snapshotSettings=" + snapshotSettings;
     }
 
     public abstract static class AbstractBuilder<T extends AbstractPlanBSettings, B extends AbstractBuilder<T, ?>> {
@@ -154,11 +153,13 @@ public abstract sealed class AbstractPlanBSettings permits
         }
 
         public AbstractBuilder(final AbstractPlanBSettings settings) {
-            this.maxStoreSize = settings.maxStoreSize;
-            this.synchroniseMerge = settings.synchroniseMerge;
-            this.overwrite = settings.overwrite;
-            this.retention = settings.retention;
-            this.snapshotSettings = settings.snapshotSettings;
+            if (settings != null) {
+                this.maxStoreSize = settings.maxStoreSize;
+                this.synchroniseMerge = settings.synchroniseMerge;
+                this.overwrite = settings.overwrite;
+                this.retention = settings.retention;
+                this.snapshotSettings = settings.snapshotSettings;
+            }
         }
 
         public B maxStoreSize(final Long maxStoreSize) {

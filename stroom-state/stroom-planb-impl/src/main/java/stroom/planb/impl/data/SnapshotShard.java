@@ -216,7 +216,7 @@ class SnapshotShard implements Shard {
                         0L,
                         NullSafe.get(previousSnapshotTime, Instant::toEpochMilli));
                 for (final String node : configProvider.get().getNodeList()) {
-                    LOGGER.info(() -> "Fetching shard for '" + doc + "'");
+                    LOGGER.info(() -> "Fetching shard for '" + doc.asDocRef() + "'");
 
                     // Fetch snapshot.
                     currentSnapshotTime = fileTransferClient.fetchSnapshot(node, request, dbDir);
@@ -229,7 +229,7 @@ class SnapshotShard implements Shard {
                 }
 
                 if (!fetchComplete) {
-                    throw new RuntimeException("Unable to get snapshot shard for '" + doc + "'");
+                    throw new RuntimeException("Unable to get snapshot shard for '" + doc.asDocRef() + "'");
                 }
             } catch (final Exception e) {
                 LOGGER.debug(e::getMessage, e);
@@ -293,7 +293,7 @@ class SnapshotShard implements Shard {
                 if (!open && destroy) {
                     // Delete if this is an old snapshot.
                     try {
-                        LOGGER.info(() -> "Deleting snapshot for '" + doc + "'");
+                        LOGGER.info(() -> "Deleting snapshot for '" + doc.asDocRef() + "'");
                         FileUtil.deleteDir(dbDir);
                     } catch (final Exception e) {
                         LOGGER.error(e::getMessage, e);

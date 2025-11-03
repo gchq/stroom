@@ -23,7 +23,6 @@ import stroom.planb.shared.HistogramKeySchema;
 import stroom.planb.shared.KeyType;
 import stroom.planb.shared.TemporalResolution;
 import stroom.query.api.UserTimeZone;
-import stroom.util.shared.NullSafe;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -60,12 +59,10 @@ public class HistogramKeySchemaSettingsWidget
         this.timeZoneWidget = timeZoneWidget;
         widget = binder.createAndBindUi(this);
         keyType.addItems(KeyType.ORDERED_LIST);
-        keyType.setValue(HistogramKeySchema.DEFAULT_KEY_TYPE);
         hashLength.addItems(HashLength.ORDERED_LIST);
-        hashLength.setValue(HistogramKeySchema.DEFAULT_HASH_LENGTH);
         temporalResolution.addItems(TemporalResolution.ORDERED_LIST);
-        temporalResolution.setValue(HistogramKeySchema.DEFAULT_TEMPORAL_RESOLUTION);
         timeZone.setWidget(timeZoneWidget.asWidget());
+        setKeySchema(new HistogramKeySchema.Builder().build());
         onKeyTypeChange();
     }
 
@@ -83,23 +80,21 @@ public class HistogramKeySchemaSettingsWidget
     @Override
     public HistogramKeySchema getKeySchema() {
         final UserTimeZone userTimeZone = timeZoneWidget.getUserTimeZone();
-        return new HistogramKeySchema(
-                keyType.getValue(),
-                hashLength.getValue(),
-                temporalResolution.getValue(),
-                userTimeZone);
+        return new HistogramKeySchema.Builder()
+                .keyType(keyType.getValue())
+                .hashLength(hashLength.getValue())
+                .temporalResolution(temporalResolution.getValue())
+                .timeZone(userTimeZone)
+                .build();
     }
 
     @Override
     public void setKeySchema(final HistogramKeySchema keySchema) {
-        keyType.setValue(NullSafe.getOrElse(keySchema, HistogramKeySchema::getKeyType,
-                HistogramKeySchema.DEFAULT_KEY_TYPE));
-        hashLength.setValue(NullSafe.getOrElse(keySchema, HistogramKeySchema::getHashLength,
-                HistogramKeySchema.DEFAULT_HASH_LENGTH));
-        temporalResolution.setValue(NullSafe.getOrElse(keySchema, HistogramKeySchema::getTemporalResolution,
-                HistogramKeySchema.DEFAULT_TEMPORAL_RESOLUTION));
-        timeZoneWidget.setUserTimeZone(NullSafe.getOrElse(keySchema, HistogramKeySchema::getTimeZone,
-                HistogramKeySchema.DEFAULT_TIME_ZONE));
+        final HistogramKeySchema schema = new HistogramKeySchema.Builder(keySchema).build();
+        keyType.setValue(schema.getKeyType());
+        hashLength.setValue(schema.getHashLength());
+        temporalResolution.setValue(schema.getTemporalResolution());
+        timeZoneWidget.setUserTimeZone(schema.getTimeZone());
         onKeyTypeChange();
     }
 

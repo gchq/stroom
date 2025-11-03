@@ -1,5 +1,7 @@
 package stroom.planb.shared;
 
+import stroom.util.shared.NullSafe;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -34,8 +36,8 @@ public final class MetricSettings extends AbstractPlanBSettings {
                           @JsonProperty("keySchema") final MetricKeySchema keySchema,
                           @JsonProperty("valueSchema") final MetricValueSchema valueSchema) {
         super(maxStoreSize, synchroniseMerge, overwrite, retention, snapshotSettings);
-        this.keySchema = keySchema;
-        this.valueSchema = valueSchema;
+        this.keySchema = NullSafe.requireNonNullElse(keySchema, new MetricKeySchema.Builder().build());
+        this.valueSchema = NullSafe.requireNonNullElse(valueSchema, new MetricValueSchema.Builder().build());
     }
 
     public MetricKeySchema getKeySchema() {
@@ -69,8 +71,9 @@ public final class MetricSettings extends AbstractPlanBSettings {
 
     @Override
     public String toString() {
-        return "RangedStateSettings{" +
-               "keySchema=" + keySchema +
+        return "MetricSettings{" +
+               super.toString() +
+               ", keySchema=" + keySchema +
                ", valueSchema=" + valueSchema +
                '}';
     }
@@ -85,8 +88,10 @@ public final class MetricSettings extends AbstractPlanBSettings {
 
         public Builder(final MetricSettings settings) {
             super(settings);
-            this.keySchema = settings.keySchema;
-            this.valueSchema = settings.valueSchema;
+            if (settings != null) {
+                this.keySchema = settings.keySchema;
+                this.valueSchema = settings.valueSchema;
+            }
         }
 
         public Builder keySchema(final MetricKeySchema keySchema) {

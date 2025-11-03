@@ -48,11 +48,9 @@ import stroom.planb.impl.serde.time.SecondTimeSerde;
 import stroom.planb.impl.serde.time.TimeSerde;
 import stroom.planb.impl.serde.valtime.InsertTimeSerde;
 import stroom.planb.impl.serde.valtime.InstantSerde;
-import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.KeyType;
 import stroom.planb.shared.PlanBDoc;
-import stroom.planb.shared.SessionKeySchema;
 import stroom.planb.shared.SessionSettings;
 import stroom.planb.shared.TemporalPrecision;
 import stroom.query.api.DateTimeSettings;
@@ -68,7 +66,6 @@ import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.io.FileUtil;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.NullSafe;
 
 import org.lmdbjava.Txn;
 
@@ -120,6 +117,7 @@ public class SessionDb extends AbstractDb<Session, Session> {
                                    final ByteBuffers byteBuffers,
                                    final PlanBDoc doc,
                                    final boolean readOnly) {
+        // Ensure all settings are non null.
         final SessionSettings settings;
         if (doc.getSettings() instanceof final SessionSettings sessionSettings) {
             settings = sessionSettings;
@@ -128,34 +126,16 @@ public class SessionDb extends AbstractDb<Session, Session> {
         }
 
         final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
-        final Long mapSize = NullSafe.getOrElse(
-                settings,
-                AbstractPlanBSettings::getMaxStoreSize,
-                AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE);
         final PlanBEnv env = new PlanBEnv(path,
-                mapSize,
+                settings.getMaxStoreSize(),
                 20,
                 readOnly,
                 hashClashCommitRunnable);
         try {
-            final KeyType keyType = NullSafe.getOrElse(
-                    settings,
-                    SessionSettings::getKeySchema,
-                    SessionKeySchema::getKeyType,
-                    SessionKeySchema.DEFAULT_KEY_TYPE);
-            final HashLength valueHashLength = NullSafe.getOrElse(
-                    settings,
-                    SessionSettings::getKeySchema,
-                    SessionKeySchema::getHashLength,
-                    SessionKeySchema.DEFAULT_HASH_LENGTH);
-            final TimeSerde timeSerde = createTimeSerde(NullSafe.getOrElse(
-                    settings,
-                    SessionSettings::getKeySchema,
-                    SessionKeySchema::getTemporalPrecision,
-                    SessionKeySchema.DEFAULT_TEMPORAL_PRECISION));
+            final TimeSerde timeSerde = createTimeSerde(settings.getKeySchema().getTemporalPrecision());
             final SessionSerde keySerde = createKeySerde(
-                    keyType,
-                    valueHashLength,
+                    settings.getKeySchema().getKeyType(),
+                    settings.getKeySchema().getHashLength(),
                     env,
                     byteBuffers,
                     timeSerde,
