@@ -619,7 +619,8 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
 
     private DocRef getPipeline(final Meta meta) {
         if (meta.getPipelineUuid() != null) {
-            final Optional<DocRefInfo> optionalDocRefInfo = docRefInfoService.info(meta.getPipelineUuid());
+            final Optional<DocRefInfo> optionalDocRefInfo = docRefInfoService
+                    .info(new DocRef(PipelineDoc.TYPE, meta.getPipelineUuid()));
             return optionalDocRefInfo
                     .map(DocRefInfo::getDocRef)
                     .orElse(DocRef

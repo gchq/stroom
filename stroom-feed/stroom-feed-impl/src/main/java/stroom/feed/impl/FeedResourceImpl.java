@@ -16,6 +16,7 @@
 
 package stroom.feed.impl;
 
+import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.feed.api.FeedProperties;
@@ -70,7 +71,10 @@ class FeedResourceImpl implements FeedResource {
     }
 
     @Override
-    public String getUuid(final String name) {
-        return feedProperties.get().getUuid(name);
+    public DocRef getDocRefForName(final String name) {
+        if (name == null) {
+            return null;
+        }
+        return feedProperties.get().getDocRefForName(name);
     }
 }

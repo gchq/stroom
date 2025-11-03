@@ -72,10 +72,9 @@ public class FeedPlugin extends DocumentPlugin<FeedDoc> {
         registerHandler(getEventBus().addHandler(OpenFeedEvent.getType(), event ->
                 restFactory
                         .create(FEED_RESOURCE)
-                        .method(res -> res.getUuid(event.getName()))
-                        .onSuccess(uuid -> {
-                            if (uuid != null) {
-                                final DocRef docRef = new DocRef(FeedDoc.TYPE, uuid, event.getName());
+                        .method(res -> res.getDocRefForName(event.getName()))
+                        .onSuccess(docRef -> {
+                            if (docRef != null) {
                                 open(docRef, event.isForceOpen(),
                                         event.isFullScreen(),
                                         event.getSelectedTab().orElse(null),
@@ -88,10 +87,9 @@ public class FeedPlugin extends DocumentPlugin<FeedDoc> {
         registerHandler(getEventBus().addHandler(CopyFeedUrlEvent.getType(), event ->
                 restFactory
                         .create(FEED_RESOURCE)
-                        .method(res -> res.getUuid(event.getName()))
-                        .onSuccess(uuid -> {
-                            if (uuid != null) {
-                                final DocRef docRef = new DocRef(FeedDoc.TYPE, uuid, event.getName());
+                        .method(res -> res.getDocRefForName(event.getName()))
+                        .onSuccess(docRef -> {
+                            if (docRef != null) {
                                 // Generate a URL that can be used to open a new Stroom window with the target document
                                 // loaded
                                 final String docUrl = Window.Location.createUrlBuilder()

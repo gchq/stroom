@@ -16,6 +16,7 @@
 
 package stroom.feed.shared;
 
+import stroom.docref.DocRef;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -63,11 +64,9 @@ public interface FeedResource extends RestResource, DirectRestService, FetchWith
     List<String> fetchSupportedEncodings();
 
     @GET
-    @Path("getUuid/{uuid}")
+    @Path("getDocRefForName/{name}")
     @Operation(
-            summary = "Fetch a feed UUID for a feed name",
-            operationId = "getUuid")
-    @Produces(MediaType.TEXT_PLAIN)
-    @Consumes(MediaType.TEXT_PLAIN)
-    String getUuid(@PathParam("name") String name);
+            summary = "Fetch a feed DocRef for a feed name",
+            operationId = "getDocRefForName")
+    DocRef getDocRefForName(@PathParam("name") String name);
 }

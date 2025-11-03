@@ -71,7 +71,7 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
 
     @Override
     public Optional<DocRefInfo> info(final String uuid) {
-        return docRefInfoCache.get(DocRef.builder().uuid(uuid).build());
+        return docRefInfoCache.get(DocRef.builder().type(DocRefInfoCache.UNKNOWN_TYPE).uuid(uuid).build());
     }
 
     @Override
