@@ -37,7 +37,6 @@ import stroom.planb.impl.serde.trace.SpanKey;
 import stroom.planb.impl.serde.trace.SpanKeySerde;
 import stroom.planb.impl.serde.trace.SpanValue;
 import stroom.planb.impl.serde.trace.SpanValueSerde;
-import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateSettings;
 import stroom.query.api.DateTimeSettings;
@@ -136,12 +135,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         }
 
         final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
-        final Long mapSize = NullSafe.getOrElse(
-                settings,
-                AbstractPlanBSettings::getMaxStoreSize,
-                AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE);
         final PlanBEnv env = new PlanBEnv(path,
-                mapSize,
+                settings.getMaxStoreSize(),
                 20,
                 readOnly,
                 hashClashCommitRunnable);

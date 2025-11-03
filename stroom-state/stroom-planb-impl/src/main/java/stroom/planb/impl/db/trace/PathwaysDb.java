@@ -7,12 +7,10 @@ import stroom.planb.impl.db.AbstractDb;
 import stroom.planb.impl.db.HashClashCommitRunnable;
 import stroom.planb.impl.db.LmdbWriter;
 import stroom.planb.impl.db.PlanBEnv;
-import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.StateSettings;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.NullSafe;
 
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
@@ -65,12 +63,8 @@ public class PathwaysDb {
                                     final boolean readOnly) {
         final StateSettings settings = new StateSettings.Builder().build();
         final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
-        final Long mapSize = NullSafe.getOrElse(
-                settings,
-                AbstractPlanBSettings::getMaxStoreSize,
-                AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE);
         final PlanBEnv env = new PlanBEnv(path,
-                mapSize,
+                settings.getMaxStoreSize(),
                 20,
                 readOnly,
                 hashClashCommitRunnable);
