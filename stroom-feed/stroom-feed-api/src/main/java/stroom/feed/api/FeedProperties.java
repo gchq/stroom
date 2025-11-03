@@ -1,5 +1,6 @@
 package stroom.feed.api;
 
+import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc.FeedStatus;
 
 import java.io.UnsupportedEncodingException;
@@ -28,4 +29,12 @@ public interface FeedProperties {
      */
     @Deprecated
     FeedStatus getStatus(String feedName);
+
+    /**
+     * Get a DocRef for a feed doc by name.
+     *
+     * @param feedName The feed name to get the DocRef for.
+     * @return The DocRef of the feed doc if found, else null.
+     */
+    DocRef getDocRefForName(final String feedName);
 }

@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.docref;
+package stroom.docstore.impl.db.migration.v710.pipeline.legacy.xml;
+
+import stroom.docref.HasName;
 
 public interface HasNameMutable extends HasName {
     void setName(final String name);
