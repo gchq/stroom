@@ -105,9 +105,7 @@ select StreamId, EventId, EventTime, Status
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -218,9 +216,7 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -339,9 +335,7 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -451,9 +445,7 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -563,9 +555,7 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -661,9 +651,7 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -730,9 +718,7 @@ select StreamId
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -828,9 +814,7 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -926,9 +910,7 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -1024,9 +1006,7 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -1075,9 +1055,7 @@ select StreamId as "Stream Id", count as Count
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -1176,9 +1154,7 @@ select comp
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -1228,9 +1204,7 @@ select StreamId, EventTime
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -1280,9 +1254,7 @@ select ${Stream Id}, ${Event Time}
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -1342,9 +1314,7 @@ select ${Stream Id}, ${Event Time}
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -1404,9 +1374,7 @@ select ${Event Time}
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -1475,9 +1443,7 @@ select StreamId
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -1544,9 +1510,7 @@ select StreamId
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -1672,9 +1636,7 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -1793,9 +1755,7 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -1915,9 +1875,7 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -2033,9 +1991,7 @@ select StreamId, EventId, EventTime, Status
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -2160,9 +2116,7 @@ select StreamId, EventId, EventTime, Status
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----

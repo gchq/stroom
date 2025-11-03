@@ -30,7 +30,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder({"use", "id", "offsetHours", "offsetMinutes"})
 @Schema(description = "The timezone to apply to a date time value")
-@JsonInclude(Include.NON_NULL)
+@JsonInclude(Include.NON_DEFAULT)
 public final class UserTimeZone {
 
     @Schema(description = "How the time zone will be specified, e.g. " +
@@ -56,6 +56,15 @@ public final class UserTimeZone {
             example = "-30")
     @JsonProperty
     private final Integer offsetMinutes;
+
+    // Establish defaults for serialiser.
+    @SuppressWarnings("unused")
+    private UserTimeZone() {
+        use = Use.UTC;
+        id = "";
+        offsetHours = 0;
+        offsetMinutes = 0;
+    }
 
     @JsonCreator
     public UserTimeZone(@JsonProperty("use") final Use use,
