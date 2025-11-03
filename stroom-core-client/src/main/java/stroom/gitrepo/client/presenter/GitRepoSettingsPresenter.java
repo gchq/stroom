@@ -71,7 +71,7 @@ public class GitRepoSettingsPresenter
      * Checks for Credentials App Permissions.
      */
     private boolean hasCredentialsAppPermission = false;
-    
+
     /**
      * Server REST API for GitRepoDocs
      */
