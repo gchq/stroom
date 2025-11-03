@@ -30,12 +30,7 @@ import stroom.planb.impl.serde.time.ZonedDayTimeSerde;
 import stroom.planb.impl.serde.time.ZonedHourTimeSerde;
 import stroom.planb.impl.serde.time.ZonedYearTimeSerde;
 import stroom.planb.impl.serde.valtime.InsertTimeSerde;
-import stroom.planb.shared.AbstractPlanBSettings;
-import stroom.planb.shared.HashLength;
-import stroom.planb.shared.HistogramKeySchema;
 import stroom.planb.shared.HistogramSettings;
-import stroom.planb.shared.HistogramValueSchema;
-import stroom.planb.shared.KeyType;
 import stroom.planb.shared.MaxValueSize;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.TemporalResolution;
@@ -43,7 +38,6 @@ import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.api.Format;
-import stroom.query.api.UserTimeZone;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
 import stroom.query.common.v2.ValArrayFunctionFactory;
@@ -58,7 +52,6 @@ import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.io.FileUtil;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.NullSafe;
 
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
@@ -111,6 +104,7 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
                                      final ByteBuffers byteBuffers,
                                      final PlanBDoc doc,
                                      final boolean readOnly) {
+        // Ensure all settings are non null.
         final HistogramSettings settings;
         if (doc.getSettings() instanceof final HistogramSettings histogramSettings) {
             settings = histogramSettings;
@@ -119,50 +113,20 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
         }
 
         final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
-        final Long mapSize = NullSafe.getOrElse(
-                settings,
-                AbstractPlanBSettings::getMaxStoreSize,
-                AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE);
         final PlanBEnv env = new PlanBEnv(path,
-                mapSize,
+                settings.getMaxStoreSize(),
                 20,
                 readOnly,
                 hashClashCommitRunnable);
         try {
-            final KeyType keyType = NullSafe.getOrElse(
-                    settings,
-                    HistogramSettings::getKeySchema,
-                    HistogramKeySchema::getKeyType,
-                    HistogramKeySchema.DEFAULT_KEY_TYPE);
-            final HashLength keyHashLength = NullSafe.getOrElse(
-                    settings,
-                    HistogramSettings::getKeySchema,
-                    HistogramKeySchema::getHashLength,
-                    HistogramKeySchema.DEFAULT_HASH_LENGTH);
-            final TemporalResolution temporalResolution = NullSafe.getOrElse(
-                    settings,
-                    HistogramSettings::getKeySchema,
-                    HistogramKeySchema::getTemporalResolution,
-                    HistogramKeySchema.DEFAULT_TEMPORAL_RESOLUTION);
-            final UserTimeZone timeZone = NullSafe.getOrElse(
-                    settings,
-                    HistogramSettings::getKeySchema,
-                    HistogramKeySchema::getTimeZone,
-                    HistogramKeySchema.DEFAULT_TIME_ZONE);
-
-            final MaxValueSize valueType = NullSafe.getOrElse(
-                    settings,
-                    HistogramSettings::getValueSchema,
-                    HistogramValueSchema::getValueType,
-                    HistogramValueSchema.DEFAULT_VALUE_TYPE);
             // Rows will store hour precision.
-            final ZoneId zoneId = UserTimeZoneUtil.getZoneId(timeZone, null);
+            final ZoneId zoneId = UserTimeZoneUtil.getZoneId(settings.getKeySchema().getTimeZone(), null);
 
             // The key time is always a coarse grained time with rows having multiple values.
-            final TimeSerde keyTimeSerde = getKeyTimeSerde(temporalResolution, zoneId);
+            final TimeSerde keyTimeSerde = getKeyTimeSerde(settings.getKeySchema().getTemporalResolution(), zoneId);
             final InsertTimeSerde insertTimeSerde = new InsertTimeSerde();
-            final CountSerde<Long> countSerde = getCountSerde(valueType);
-            final TemporalIndex temporalIndex = getTemporalIndex(temporalResolution);
+            final CountSerde<Long> countSerde = getCountSerde(settings.getValueSchema().getValueType());
+            final TemporalIndex temporalIndex = getTemporalIndex(settings.getKeySchema().getTemporalResolution());
             final CountValuesSerde<Long> valueSerde = new CountValuesSerdeImpl<>(
                     byteBuffers,
                     countSerde,
@@ -171,8 +135,9 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
                     temporalIndex);
 
             final TemporalKeySerde keySerde = TemporalKeySerdeFactory.createKeySerde(
-                    keyType,
-                    keyHashLength,
+                    doc,
+                    settings.getKeySchema().getKeyType(),
+                    settings.getKeySchema().getHashLength(),
                     env,
                     byteBuffers,
                     keyTimeSerde,
@@ -183,7 +148,7 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
                     byteBuffers,
                     doc,
                     settings,
-                    temporalResolution,
+                    settings.getKeySchema().getTemporalResolution(),
                     keySerde,
                     valueSerde,
                     hashClashCommitRunnable);

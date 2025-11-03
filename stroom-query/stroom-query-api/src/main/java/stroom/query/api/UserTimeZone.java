@@ -17,6 +17,7 @@
 package stroom.query.api;
 
 import stroom.docref.HasDisplayValue;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -29,14 +30,14 @@ import java.util.Objects;
 
 @JsonPropertyOrder({"use", "id", "offsetHours", "offsetMinutes"})
 @Schema(description = "The timezone to apply to a date time value")
-@JsonInclude(Include.NON_NULL)
+@JsonInclude(Include.NON_DEFAULT)
 public final class UserTimeZone {
 
     @Schema(description = "How the time zone will be specified, e.g. " +
-            "from provided client 'Local' time, " +
-            "'UTC', " +
-            "a recognised timezone 'Id' " +
-            "or an 'Offset' from UTC in hours and minutes.",
+                          "from provided client 'Local' time, " +
+                          "'UTC', " +
+                          "a recognised timezone 'Id' " +
+                          "or an 'Offset' from UTC in hours and minutes.",
             required = true)
     @JsonProperty
     private final Use use;
@@ -56,15 +57,24 @@ public final class UserTimeZone {
     @JsonProperty
     private final Integer offsetMinutes;
 
+    // Establish defaults for serialiser.
+    @SuppressWarnings("unused")
+    private UserTimeZone() {
+        use = Use.UTC;
+        id = "";
+        offsetHours = 0;
+        offsetMinutes = 0;
+    }
+
     @JsonCreator
     public UserTimeZone(@JsonProperty("use") final Use use,
                         @JsonProperty("id") final String id,
                         @JsonProperty("offsetHours") final Integer offsetHours,
                         @JsonProperty("offsetMinutes") final Integer offsetMinutes) {
-        this.use = use;
-        this.id = id;
-        this.offsetHours = offsetHours;
-        this.offsetMinutes = offsetMinutes;
+        this.use = NullSafe.requireNonNullElse(use, Use.UTC);
+        this.id = NullSafe.requireNonNullElse(id, "");
+        this.offsetHours = NullSafe.requireNonNullElse(offsetHours, 0);
+        this.offsetMinutes = NullSafe.requireNonNullElse(offsetMinutes, 0);
     }
 
     public static UserTimeZone local() {
@@ -109,9 +119,9 @@ public final class UserTimeZone {
         }
         final UserTimeZone timeZone = (UserTimeZone) o;
         return use == timeZone.use &&
-                Objects.equals(id, timeZone.id) &&
-                Objects.equals(offsetHours, timeZone.offsetHours) &&
-                Objects.equals(offsetMinutes, timeZone.offsetMinutes);
+               Objects.equals(id, timeZone.id) &&
+               Objects.equals(offsetHours, timeZone.offsetHours) &&
+               Objects.equals(offsetMinutes, timeZone.offsetMinutes);
     }
 
     @Override
@@ -122,11 +132,11 @@ public final class UserTimeZone {
     @Override
     public String toString() {
         return "TimeZone{" +
-                "use=" + use +
-                ", id='" + id + '\'' +
-                ", offsetHours=" + offsetHours +
-                ", offsetMinutes=" + offsetMinutes +
-                '}';
+               "use=" + use +
+               ", id='" + id + '\'' +
+               ", offsetHours=" + offsetHours +
+               ", offsetMinutes=" + offsetMinutes +
+               '}';
     }
 
     public static Builder builder() {
@@ -182,10 +192,12 @@ public final class UserTimeZone {
         }
 
         private Builder(final UserTimeZone timeZone) {
-            this.use = timeZone.use;
-            this.id = timeZone.id;
-            this.offsetHours = timeZone.offsetHours;
-            this.offsetMinutes = timeZone.offsetMinutes;
+            if (timeZone != null) {
+                this.use = timeZone.use;
+                this.id = timeZone.id;
+                this.offsetHours = timeZone.offsetHours;
+                this.offsetMinutes = timeZone.offsetMinutes;
+            }
         }
 
         /**

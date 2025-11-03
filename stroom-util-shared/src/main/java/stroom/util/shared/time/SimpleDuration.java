@@ -22,7 +22,9 @@ public class SimpleDuration {
     @JsonCreator
     public SimpleDuration(@JsonProperty("time") final long time,
                           @JsonProperty("timeUnit") final TimeUnit timeUnit) {
-        this.time = time;
+        this.time = time < 0
+                ? 0
+                : time;
         this.timeUnit = timeUnit == null
                 ? TimeUnit.DAYS
                 : timeUnit;
@@ -79,8 +81,10 @@ public class SimpleDuration {
         }
 
         private Builder(final SimpleDuration simpleDuration) {
-            this.time = simpleDuration.time;
-            this.timeUnit = simpleDuration.timeUnit;
+            if (simpleDuration != null) {
+                this.time = simpleDuration.time;
+                this.timeUnit = simpleDuration.timeUnit;
+            }
         }
 
         public Builder time(final long time) {
@@ -94,9 +98,6 @@ public class SimpleDuration {
         }
 
         public SimpleDuration build() {
-            if (timeUnit == null) {
-                timeUnit = TimeUnit.DAYS;
-            }
             return new SimpleDuration(time, timeUnit);
         }
     }
