@@ -29,6 +29,8 @@ import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.gitrepo.shared.GitRepoPushDto;
 import stroom.gitrepo.shared.GitRepoResource;
+import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.shared.AppPermission;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.PageRequest;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -40,6 +42,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -64,6 +67,11 @@ public class GitRepoSettingsPresenter
      */
     private final CredentialsManagerDialogPresenter credentialsManagerDialog;
 
+    /**
+     * Checks for Credentials App Permissions.
+     */
+    private boolean hasCredentialsAppPermission = false;
+    
     /**
      * Server REST API for GitRepoDocs
      */
@@ -102,6 +110,7 @@ public class GitRepoSettingsPresenter
     public GitRepoSettingsPresenter(final EventBus eventBus,
                                     final GitRepoSettingsView view,
                                     final RestFactory restFactory,
+                                    final ClientSecurityContext securityContext,
                                     final GitRepoCommitDialogPresenter commitDialog,
                                     final CredentialsManagerDialogPresenter credentialsManagerDialog) {
         super(eventBus, view);
@@ -109,6 +118,8 @@ public class GitRepoSettingsPresenter
         view.setUiHandlers(this);
         this.commitDialog = commitDialog;
         this.credentialsManagerDialog = credentialsManagerDialog;
+        this.hasCredentialsAppPermission = securityContext.hasAppPermission(AppPermission.CREDENTIALS);
+        view.setHasCredentialsAppPermission(this.hasCredentialsAppPermission);
     }
 
     /**
@@ -349,29 +360,33 @@ public class GitRepoSettingsPresenter
      *                      null if nothing is selected.
      */
     private void grabCredentialsList(final String credentialsId) {
-        final PageRequest pageRequest = new PageRequest(0, MAX_NUMBER_OF_CREDENTIALS);
-        restFactory.create(CREDENTIALS_RESOURCE)
-                .method(res -> res.listCredentials(pageRequest))
-                .onSuccess(res -> {
-                    final List<Credentials> creds = new ArrayList<>();
-                    for (final CredentialsWithPerms cwp : res.getValues()) {
-                        if (cwp != null) {
-                            final Credentials credentials = cwp.getCredentials();
-                            if (credentials != null) {
-                                creds.add(credentials);
+        if (hasCredentialsAppPermission) {
+            final PageRequest pageRequest = new PageRequest(0, MAX_NUMBER_OF_CREDENTIALS);
+            restFactory.create(CREDENTIALS_RESOURCE)
+                    .method(res -> res.listCredentials(pageRequest))
+                    .onSuccess(res -> {
+                        final List<Credentials> creds = new ArrayList<>();
+                        for (final CredentialsWithPerms cwp : res.getValues()) {
+                            if (cwp != null) {
+                                final Credentials credentials = cwp.getCredentials();
+                                if (credentials != null) {
+                                    creds.add(credentials);
+                                }
                             }
                         }
-                    }
-                    getView().setCredentialsList(creds, credentialsId);
-                })
-                .onFailure(error -> {
-                    AlertEvent.fireError(this,
-                            "Error getting list of credentials",
-                            error.getMessage(),
-                            null);
-                })
-                .taskMonitorFactory(GitRepoSettingsPresenter.this)
-                .exec();
+                        getView().setCredentialsList(creds, credentialsId);
+                    })
+                    .onFailure(error -> {
+                        AlertEvent.fireError(this,
+                                "Error getting list of credentials",
+                                error.getMessage(),
+                                null);
+                    })
+                    .taskMonitorFactory(GitRepoSettingsPresenter.this)
+                    .exec();
+        } else {
+            getView().setCredentialsList(Collections.emptyList(), credentialsId);
+        }
     }
 
     /**
@@ -418,5 +433,7 @@ public class GitRepoSettingsPresenter
          * Called by presenter on startup to set the state of the UI.
          */
         void setState();
+
+        void setHasCredentialsAppPermission(final boolean hasCredentialsAppPermission);
     }
 }

@@ -47,6 +47,10 @@ public class GitRepoSettingsViewImpl
     /** The widget that this represents */
     private final Widget widget;
 
+    /** Checks App Permissions */
+    //private ClientSecurityContext securityContext = null;
+    private boolean hasCredentialsAppPermission = false;
+
     @UiField
     FormGroup fgContentStore;
 
@@ -93,6 +97,11 @@ public class GitRepoSettingsViewImpl
     Button btnCheckForUpdates;
 
     /**
+     * Credentials to use when credentials are selected but we don't have permission to see them.
+     */
+    private final Credentials noPermissionCredentials = new Credentials();
+
+    /**
      * Credentials to use when no credentials are selected.
      */
     private static final Credentials NULL_CREDENTIALS = new Credentials();
@@ -103,6 +112,10 @@ public class GitRepoSettingsViewImpl
 
         // Selection list should display the name of the credentials
         selCredentials.setDisplayValueFunction(Credentials::getName);
+
+        // Set up the credentials we use when credentials are selected but we don't have permission
+        // to see them
+        noPermissionCredentials.setName("HIDDEN");
     }
 
     @Override
@@ -184,7 +197,7 @@ public class GitRepoSettingsViewImpl
     public void setState() {
 
         if (!lblContentStore.getText().isEmpty()) {
-            // We've got a Content Pack so everything is readonly
+            // We've got a Content Pack so everything (except credentials and buttons) is readonly
             fgContentStore.setVisible(true);
             fgContentPack.setVisible(true);
             txtGitUrl.setVisible(true);
@@ -194,7 +207,9 @@ public class GitRepoSettingsViewImpl
             txtGitPath.setVisible(true);
             txtGitPath.setEnabled(false);
             selCredentials.setVisible(true);
+            selCredentials.setEnabled(hasCredentialsAppPermission);
             btnSetCredentials.setVisible(true);
+            btnSetCredentials.setEnabled(hasCredentialsAppPermission);
             txtGitCommitToPull.setVisible(true);
             txtGitCommitToPull.setEnabled(false);
             fgGitAutoPush.setVisible(false);
@@ -211,7 +226,9 @@ public class GitRepoSettingsViewImpl
             txtGitPath.setVisible(true);
             txtGitPath.setEnabled(true);
             selCredentials.setVisible(true);
+            selCredentials.setEnabled(hasCredentialsAppPermission);
             btnSetCredentials.setVisible(true);
+            btnSetCredentials.setEnabled(hasCredentialsAppPermission);
             txtGitCommitToPull.setVisible(true);
             txtGitCommitToPull.setEnabled(true);
 
@@ -247,7 +264,18 @@ public class GitRepoSettingsViewImpl
     }
 
     /**
+     * Called from Presenter to set whether the user has App Permissions.
+     */
+    @Override
+    public void setHasCredentialsAppPermission(final boolean hasCredentialsAppPermission) {
+        this.hasCredentialsAppPermission = hasCredentialsAppPermission;
+    }
+
+    /**
      * Sets the list of credentials in the list that is displayed.
+     * Due to permissions, the credentialsList might not contain the selected credentials as that
+     * user might not have permission to see those credentials. However, we still need to return
+     * that credentials ID when saving these creds without changing it.
      * @param credentialsList The list of credentials to display in the list.
      * @param selectedCredentialsId The ID of the selected credentials. Can
      *                              be null if nothing is selected.
@@ -261,12 +289,20 @@ public class GitRepoSettingsViewImpl
         selCredentials.addItems(credentialsList);
 
         // Find the selected credentials
+        boolean matchedCredentials = false;
         if (selectedCredentialsId != null) {
             for (final Credentials credentials : credentialsList) {
                 if (credentials.getUuid().equals(selectedCredentialsId)) {
                     selCredentials.setValue(credentials);
+                    matchedCredentials = true;
                     break;
                 }
+            }
+            if (!matchedCredentials) {
+                // Fudge credentials to match the ID of our non-matching ID
+                noPermissionCredentials.setUuid(selectedCredentialsId);
+                selCredentials.addItem(noPermissionCredentials);
+                selCredentials.setValue(noPermissionCredentials);
             }
         } else {
             // Nothing selected so select the null item
