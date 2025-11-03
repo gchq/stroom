@@ -327,25 +327,25 @@ public class ContentStoreContentPackDetailsPresenter
                             cpws.getContentPack().getContentStoreMetadata().getAuthContact(),
                             null);
                     builder.onHideRequest(e -> {
-                                if (e.isOk()) {
-                                    final String credentialsId = credentialsDialog.getCredentialsId();
+                        if (e.isOk()) {
+                            final String credentialsId = credentialsDialog.getCredentialsId();
 
-                                    if (credentialsId != null) {
-                                        // Create the GitRepo with the given credentials
-                                        e.hide();
-                                        requestGitRepoCreation(cpws, credentialsId);
-                                    } else {
-                                        // Something is wrong
-                                        AlertEvent.fireWarn(credentialsDialog,
-                                                "No credentials were selected; "
-                                                + "this content pack cannot be downloaded",
-                                                e::reset);
-                                    }
-                                } else {
-                                    // Cancel pressed
-                                    e.hide();
-                                }
-                            })
+                            if (credentialsId != null) {
+                                // Create the GitRepo with the given credentials
+                                e.hide();
+                                requestGitRepoCreation(cpws, credentialsId);
+                            } else {
+                                // Something is wrong
+                                AlertEvent.fireWarn(credentialsDialog,
+                                        "No credentials were selected; "
+                                        + "this content pack cannot be downloaded",
+                                        e::reset);
+                            }
+                        } else {
+                            // Cancel pressed
+                            e.hide();
+                        }
+                    })
                             .fire();
                 } else {
                     // We need credentials but don't have permission to access them
