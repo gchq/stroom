@@ -30,11 +30,7 @@ import stroom.planb.impl.serde.time.ZonedDayTimeSerde;
 import stroom.planb.impl.serde.time.ZonedHourTimeSerde;
 import stroom.planb.impl.serde.time.ZonedYearTimeSerde;
 import stroom.planb.impl.serde.valtime.InsertTimeSerde;
-import stroom.planb.shared.AbstractPlanBSettings;
-import stroom.planb.shared.HashLength;
-import stroom.planb.shared.KeyType;
 import stroom.planb.shared.MaxValueSize;
-import stroom.planb.shared.MetricKeySchema;
 import stroom.planb.shared.MetricSettings;
 import stroom.planb.shared.MetricValueSchema;
 import stroom.planb.shared.PlanBDoc;
@@ -43,7 +39,6 @@ import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.api.Format;
-import stroom.query.api.UserTimeZone;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
 import stroom.query.common.v2.ValuesFunctionFactory;
@@ -58,7 +53,6 @@ import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.io.FileUtil;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.NullSafe;
 
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
@@ -71,7 +65,6 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -112,6 +105,7 @@ public class MetricDb extends AbstractDb<TemporalKey, Long> {
                                   final ByteBuffers byteBuffers,
                                   final PlanBDoc doc,
                                   final boolean readOnly) {
+        // Ensure all settings are non null.
         final MetricSettings settings;
         if (doc.getSettings() instanceof final MetricSettings metricSettings) {
             settings = metricSettings;
@@ -120,53 +114,21 @@ public class MetricDb extends AbstractDb<TemporalKey, Long> {
         }
 
         final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
-        final Long mapSize = NullSafe.getOrElse(
-                settings,
-                AbstractPlanBSettings::getMaxStoreSize,
-                AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE);
         final PlanBEnv env = new PlanBEnv(path,
-                mapSize,
+                settings.getMaxStoreSize(),
                 20,
                 readOnly,
                 hashClashCommitRunnable);
         try {
-            final MetricKeySchema keySchema = NullSafe.getOrElse(
-                    settings,
-                    MetricSettings::getKeySchema,
-                    new MetricKeySchema.Builder().build());
-            final KeyType keyType = NullSafe.getOrElse(
-                    keySchema,
-                    MetricKeySchema::getKeyType,
-                    MetricKeySchema.DEFAULT_KEY_TYPE);
-            final HashLength keyHashLength = NullSafe.getOrElse(
-                    keySchema,
-                    MetricKeySchema::getHashLength,
-                    MetricKeySchema.DEFAULT_HASH_LENGTH);
-            final TemporalResolution temporalResolution = NullSafe.getOrElse(
-                    keySchema,
-                    MetricKeySchema::getTemporalResolution,
-                    MetricKeySchema.DEFAULT_TEMPORAL_RESOLUTION);
-            final UserTimeZone timeZone = NullSafe.getOrElse(
-                    keySchema,
-                    MetricKeySchema::getTimeZone,
-                    MetricKeySchema.DEFAULT_TIME_ZONE);
-
-            final MetricValueSchema valueSchema = NullSafe.getOrElse(
-                    settings,
-                    MetricSettings::getValueSchema,
-                    new MetricValueSchema.Builder().build());
-            final MaxValueSize valueType = NullSafe.getOrElse(
-                    valueSchema,
-                    MetricValueSchema::getValueType,
-                    MetricValueSchema.DEFAULT_MAX_VALUE_SIZE);
             // Rows will store hour precision.
-            final ZoneId zoneId = UserTimeZoneUtil.getZoneId(timeZone, null);
+            final ZoneId zoneId = UserTimeZoneUtil.getZoneId(settings.getKeySchema().getTimeZone(), null);
 
             // The key time is always a coarse grained time with rows having multiple values.
-            final TimeSerde keyTimeSerde = getKeyTimeSerde(temporalResolution, zoneId);
+            final TimeSerde keyTimeSerde = getKeyTimeSerde(settings.getKeySchema().getTemporalResolution(), zoneId);
             final InsertTimeSerde insertTimeSerde = new InsertTimeSerde();
-            final CountSerde<Metric> countSerde = getCountSerde(valueType, valueSchema);
-            final TemporalIndex temporalIndex = getTemporalIndex(temporalResolution);
+            final CountSerde<Metric> countSerde = getCountSerde(settings.getValueSchema().getValueType(),
+                    settings.getValueSchema());
+            final TemporalIndex temporalIndex = getTemporalIndex(settings.getKeySchema().getTemporalResolution());
             final CountValuesSerde<Metric> valueSerde = new CountValuesSerdeImpl<>(
                     byteBuffers,
                     countSerde,
@@ -175,8 +137,9 @@ public class MetricDb extends AbstractDb<TemporalKey, Long> {
                     temporalIndex);
 
             final TemporalKeySerde keySerde = TemporalKeySerdeFactory.createKeySerde(
-                    keyType,
-                    keyHashLength,
+                    doc,
+                    settings.getKeySchema().getKeyType(),
+                    settings.getKeySchema().getHashLength(),
                     env,
                     byteBuffers,
                     keyTimeSerde,
@@ -187,7 +150,7 @@ public class MetricDb extends AbstractDb<TemporalKey, Long> {
                     byteBuffers,
                     doc,
                     settings,
-                    temporalResolution,
+                    settings.getKeySchema().getTemporalResolution(),
                     keySerde,
                     valueSerde,
                     hashClashCommitRunnable);
@@ -235,12 +198,11 @@ public class MetricDb extends AbstractDb<TemporalKey, Long> {
         };
         return new MetricCountSerde(
                 unsignedBytes,
-                Objects.requireNonNullElse(valueSchema.getStoreLatestValue(),
-                        MetricValueSchema.DEFAULT_STORE_LATEST_VALUE),
-                Objects.requireNonNullElse(valueSchema.getStoreMin(), MetricValueSchema.DEFAULT_STORE_MIN),
-                Objects.requireNonNullElse(valueSchema.getStoreMax(), MetricValueSchema.DEFAULT_STORE_MAX),
-                Objects.requireNonNullElse(valueSchema.getStoreCount(), MetricValueSchema.DEFAULT_STORE_COUNT),
-                Objects.requireNonNullElse(valueSchema.getStoreSum(), MetricValueSchema.DEFAULT_STORE_SUM));
+                valueSchema.getStoreLatestValue(),
+                valueSchema.getStoreMin(),
+                valueSchema.getStoreMax(),
+                valueSchema.getStoreCount(),
+                valueSchema.getStoreSum());
     }
 
     @Override

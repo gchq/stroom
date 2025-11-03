@@ -24,14 +24,9 @@ import stroom.planb.impl.serde.rangestate.ShortRangeKeySerde;
 import stroom.planb.impl.serde.valtime.ValTime;
 import stroom.planb.impl.serde.valtime.ValTimeSerde;
 import stroom.planb.impl.serde.valtime.ValTimeSerdeFactory;
-import stroom.planb.shared.AbstractPlanBSettings;
-import stroom.planb.shared.HashLength;
 import stroom.planb.shared.PlanBDoc;
-import stroom.planb.shared.RangeKeySchema;
 import stroom.planb.shared.RangeStateSettings;
 import stroom.planb.shared.RangeType;
-import stroom.planb.shared.StateValueSchema;
-import stroom.planb.shared.StateValueType;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
@@ -93,6 +88,7 @@ public class RangeStateDb extends AbstractDb<Key, Val> {
                                       final ByteBuffers byteBuffers,
                                       final PlanBDoc doc,
                                       final boolean readOnly) {
+        // Ensure all settings are non null.
         final RangeStateSettings settings;
         if (doc.getSettings() instanceof final RangeStateSettings rangeStateSettings) {
             settings = rangeStateSettings;
@@ -101,37 +97,18 @@ public class RangeStateDb extends AbstractDb<Key, Val> {
         }
 
         final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
-        final Long mapSize = NullSafe.getOrElse(
-                settings,
-                AbstractPlanBSettings::getMaxStoreSize,
-                AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE);
         final PlanBEnv env = new PlanBEnv(path,
-                mapSize,
+                settings.getMaxStoreSize(),
                 20,
                 readOnly,
                 hashClashCommitRunnable);
         try {
-            final RangeType rangeType = NullSafe.getOrElse(
-                    settings,
-                    RangeStateSettings::getKeySchema,
-                    RangeKeySchema::getRangeType,
-                    RangeKeySchema.DEFAULT_RANGE_TYPE);
-            final StateValueType stateValueType = NullSafe.getOrElse(
-                    settings,
-                    RangeStateSettings::getValueSchema,
-                    StateValueSchema::getStateValueType,
-                    StateValueSchema.DEFAULT_VALUE_TYPE);
-            final HashLength valueHashLength = NullSafe.getOrElse(
-                    settings,
-                    RangeStateSettings::getValueSchema,
-                    StateValueSchema::getHashLength,
-                    StateValueSchema.DEFAULT_HASH_LENGTH);
             final RangeKeySerde keySerde = createKeySerde(
-                    rangeType,
+                    settings.getKeySchema().getRangeType(),
                     byteBuffers);
             final ValTimeSerde valueSerde = ValTimeSerdeFactory.createValueSerde(
-                    stateValueType,
-                    valueHashLength,
+                    settings.getValueSchema().getStateValueType(),
+                    settings.getValueSchema().getHashLength(),
                     env,
                     byteBuffers,
                     hashClashCommitRunnable);

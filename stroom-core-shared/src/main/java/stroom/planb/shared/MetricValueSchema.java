@@ -1,6 +1,7 @@
 package stroom.planb.shared;
 
 import stroom.util.shared.AbstractBuilder;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -21,12 +22,12 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class MetricValueSchema {
 
-    public static final MaxValueSize DEFAULT_MAX_VALUE_SIZE = MaxValueSize.TWO;
-    public static final Boolean DEFAULT_STORE_LATEST_VALUE = true;
-    public static final Boolean DEFAULT_STORE_MIN = false;
-    public static final Boolean DEFAULT_STORE_MAX = false;
-    public static final Boolean DEFAULT_STORE_COUNT = false;
-    public static final Boolean DEFAULT_STORE_SUM = false;
+    private static final MaxValueSize DEFAULT_MAX_VALUE_SIZE = MaxValueSize.TWO;
+    private static final Boolean DEFAULT_STORE_LATEST_VALUE = true;
+    private static final Boolean DEFAULT_STORE_MIN = false;
+    private static final Boolean DEFAULT_STORE_MAX = false;
+    private static final Boolean DEFAULT_STORE_COUNT = false;
+    private static final Boolean DEFAULT_STORE_SUM = false;
 
     @JsonProperty
     private final MaxValueSize valueType;
@@ -48,12 +49,12 @@ public class MetricValueSchema {
                              @JsonProperty("storeMax") final Boolean storeMax,
                              @JsonProperty("storeCount") final Boolean storeCount,
                              @JsonProperty("storeSum") final Boolean storeSum) {
-        this.valueType = valueType;
-        this.storeLatestValue = storeLatestValue;
-        this.storeMin = storeMin;
-        this.storeMax = storeMax;
-        this.storeCount = storeCount;
-        this.storeSum = storeSum;
+        this.valueType = NullSafe.requireNonNullElse(valueType, DEFAULT_MAX_VALUE_SIZE);
+        this.storeLatestValue = NullSafe.requireNonNullElse(storeLatestValue, DEFAULT_STORE_LATEST_VALUE);
+        this.storeMin = NullSafe.requireNonNullElse(storeMin, DEFAULT_STORE_MIN);
+        this.storeMax = NullSafe.requireNonNullElse(storeMax, DEFAULT_STORE_MAX);
+        this.storeCount = NullSafe.requireNonNullElse(storeCount, DEFAULT_STORE_COUNT);
+        this.storeSum = NullSafe.requireNonNullElse(storeSum, DEFAULT_STORE_SUM);
     }
 
     public MaxValueSize getValueType() {
@@ -116,7 +117,7 @@ public class MetricValueSchema {
 
     public static class Builder extends AbstractBuilder<MetricValueSchema, Builder> {
 
-        private MaxValueSize valueType = MaxValueSize.TWO;
+        private MaxValueSize valueType;
         private Boolean storeLatestValue;
         private Boolean storeMin;
         private Boolean storeMax;
@@ -127,7 +128,14 @@ public class MetricValueSchema {
         }
 
         public Builder(final MetricValueSchema schema) {
-            this.valueType = schema.valueType;
+            if (schema != null) {
+                this.valueType = schema.valueType;
+                this.storeLatestValue = schema.storeLatestValue;
+                this.storeMin = schema.storeMin;
+                this.storeMax = schema.storeMax;
+                this.storeCount = schema.storeCount;
+                this.storeSum = schema.storeSum;
+            }
         }
 
         public Builder valueType(final MaxValueSize valueType) {

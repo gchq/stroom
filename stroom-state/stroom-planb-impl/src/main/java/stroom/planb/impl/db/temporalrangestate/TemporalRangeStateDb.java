@@ -31,14 +31,9 @@ import stroom.planb.impl.serde.time.TimeSerde;
 import stroom.planb.impl.serde.valtime.ValTime;
 import stroom.planb.impl.serde.valtime.ValTimeSerde;
 import stroom.planb.impl.serde.valtime.ValTimeSerdeFactory;
-import stroom.planb.shared.AbstractPlanBSettings;
-import stroom.planb.shared.HashLength;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.RangeType;
-import stroom.planb.shared.StateValueSchema;
-import stroom.planb.shared.StateValueType;
 import stroom.planb.shared.TemporalPrecision;
-import stroom.planb.shared.TemporalRangeKeySchema;
 import stroom.planb.shared.TemporalRangeStateSettings;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -103,6 +98,7 @@ public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
                                               final ByteBuffers byteBuffers,
                                               final PlanBDoc doc,
                                               final boolean readOnly) {
+        // Ensure all settings are non null.
         final TemporalRangeStateSettings settings;
         if (doc.getSettings() instanceof final TemporalRangeStateSettings temporalRangeStateSettings) {
             settings = temporalRangeStateSettings;
@@ -111,43 +107,20 @@ public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
         }
 
         final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
-        final Long mapSize = NullSafe.getOrElse(
-                settings,
-                AbstractPlanBSettings::getMaxStoreSize,
-                AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE);
         final PlanBEnv env = new PlanBEnv(path,
-                mapSize,
+                settings.getMaxStoreSize(),
                 20,
                 readOnly,
                 hashClashCommitRunnable);
         try {
-            final RangeType rangeType = NullSafe.getOrElse(
-                    settings,
-                    TemporalRangeStateSettings::getKeySchema,
-                    TemporalRangeKeySchema::getRangeType,
-                    TemporalRangeKeySchema.DEFAULT_RANGE_TYPE);
-            final StateValueType stateValueType = NullSafe.getOrElse(
-                    settings,
-                    TemporalRangeStateSettings::getValueSchema,
-                    StateValueSchema::getStateValueType,
-                    StateValueSchema.DEFAULT_VALUE_TYPE);
-            final HashLength valueHashLength = NullSafe.getOrElse(
-                    settings,
-                    TemporalRangeStateSettings::getValueSchema,
-                    StateValueSchema::getHashLength,
-                    StateValueSchema.DEFAULT_HASH_LENGTH);
-            final TimeSerde timeSerde = createTimeSerde(NullSafe.getOrElse(
-                    settings,
-                    TemporalRangeStateSettings::getKeySchema,
-                    TemporalRangeKeySchema::getTemporalPrecision,
-                    TemporalRangeKeySchema.DEFAULT_TEMPORAL_PRECISION));
+            final TimeSerde timeSerde = createTimeSerde(settings.getKeySchema().getTemporalPrecision());
             final TemporalRangeKeySerde keySerde = createKeySerde(
-                    rangeType,
+                    settings.getKeySchema().getRangeType(),
                     byteBuffers,
                     timeSerde);
             final ValTimeSerde valueSerde = ValTimeSerdeFactory.createValueSerde(
-                    stateValueType,
-                    valueHashLength,
+                    settings.getValueSchema().getStateValueType(),
+                    settings.getValueSchema().getHashLength(),
                     env,
                     byteBuffers,
                     hashClashCommitRunnable);

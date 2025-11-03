@@ -44,7 +44,7 @@ public class SessionSettingsPresenter
 
     public void read(final AbstractPlanBSettings settings, final boolean readOnly) {
         if (settings instanceof final SessionSettings sessionSettings) {
-            read(sessionSettings, readOnly);
+            read(new SessionSettings.Builder(sessionSettings).build(), readOnly);
         } else {
             read(new SessionSettings.Builder().build(), readOnly);
         }
