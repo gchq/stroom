@@ -11116,6 +11116,13 @@ components:
           type: string
         name:
           type: string
+        rerankModelRef:
+          $ref: "#/components/schemas/DocRef"
+        rerankScoreMinimum:
+          type: number
+          format: float
+        rerankTextFieldSuffix:
+          type: string
         searchScrollSize:
           type: integer
           format: int32

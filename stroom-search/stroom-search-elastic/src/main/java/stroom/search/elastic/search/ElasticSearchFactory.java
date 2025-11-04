@@ -114,26 +114,19 @@ public class ElasticSearchFactory {
                         }).run(), executor);
     }
 
-    private co.elastic.clients.elasticsearch._types.query_dsl.Query getQuery(final ElasticIndexDoc index,
-                                                                             final IndexFieldCache indexFieldCache,
-                                                                             final ExpressionOperator expression,
-                                                                             final DateTimeSettings dateTimeSettings) {
+    private ElasticQueryParams getQuery(final ElasticIndexDoc index,
+                                        final IndexFieldCache indexFieldCache,
+                                        final ExpressionOperator expression,
+                                        final DateTimeSettings dateTimeSettings) {
         final SearchExpressionQueryBuilder builder = new SearchExpressionQueryBuilder(
                 openAIServiceProvider,
                 index,
                 indexFieldCache,
                 wordListProvider,
                 dateTimeSettings);
-        final co.elastic.clients.elasticsearch._types.query_dsl.Query query = builder.buildQuery(expression);
-
-        // Make sure the query was created successfully.
-        if (query == null) {
-            throw new SearchException("Failed to build query given expression");
-        } else {
-            LOGGER.debug(() -> "Query: " + query);
-        }
-
-        return query;
+        final ElasticQueryParams queryParams = builder.buildQuery(expression);
+        LOGGER.debug(() -> "Query: " + queryParams.getQuery());
+        return queryParams;
     }
 
     private Highlight getHighlighter() {

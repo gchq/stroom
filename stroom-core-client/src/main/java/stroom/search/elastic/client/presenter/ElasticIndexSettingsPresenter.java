@@ -44,7 +44,8 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
     private static final ElasticIndexResource ELASTIC_INDEX_RESOURCE = GWT.create(ElasticIndexResource.class);
 
     private final DocSelectionBoxPresenter clusterPresenter;
-    private final DocSelectionBoxPresenter vectorModelPresenter;
+    private final DocSelectionBoxPresenter vectorGenerationModelPresenter;
+    private final DocSelectionBoxPresenter rerankModelPresenter;
     private final DocSelectionBoxPresenter pipelinePresenter;
     private final RestFactory restFactory;
     private final DynamicFieldSelectionListModel fieldSelectionBoxModel;
@@ -54,38 +55,42 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
             final EventBus eventBus,
             final ElasticIndexSettingsView view,
             final DocSelectionBoxPresenter clusterPresenter,
-            final DocSelectionBoxPresenter vectorModelPresenter,
+            final DocSelectionBoxPresenter vectorGenerationModelPresenter,
+            final DocSelectionBoxPresenter rerankModelPresenter,
             final DocSelectionBoxPresenter pipelinePresenter,
             final RestFactory restFactory,
             final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
         super(eventBus, view);
 
         this.clusterPresenter = clusterPresenter;
-        this.vectorModelPresenter = vectorModelPresenter;
+        this.vectorGenerationModelPresenter = vectorGenerationModelPresenter;
+        this.rerankModelPresenter = rerankModelPresenter;
         this.pipelinePresenter = pipelinePresenter;
         this.restFactory = restFactory;
         this.fieldSelectionBoxModel = fieldSelectionBoxModel;
 
         clusterPresenter.setIncludedTypes(ElasticClusterDoc.TYPE);
         clusterPresenter.setRequiredPermissions(DocumentPermission.USE);
-
-        vectorModelPresenter.setIncludedTypes(OpenAIModelDoc.TYPE);
-        vectorModelPresenter.setRequiredPermissions(DocumentPermission.USE);
-
+        vectorGenerationModelPresenter.setIncludedTypes(OpenAIModelDoc.TYPE);
+        vectorGenerationModelPresenter.setRequiredPermissions(DocumentPermission.USE);
+        rerankModelPresenter.setIncludedTypes(OpenAIModelDoc.TYPE);
+        rerankModelPresenter.setRequiredPermissions(DocumentPermission.USE);
         pipelinePresenter.setIncludedTypes(PipelineDoc.TYPE);
         pipelinePresenter.setRequiredPermissions(DocumentPermission.VIEW);
 
         view.setUiHandlers(this);
         view.setDefaultExtractionPipelineView(pipelinePresenter.getView());
         view.setClusterView(clusterPresenter.getView());
-        view.setVectorGenerationModelView(vectorModelPresenter.getView());
+        view.setVectorGenerationModelView(vectorGenerationModelPresenter.getView());
+        view.setRerankModelView(rerankModelPresenter.getView());
     }
 
     @Override
     protected void onBind() {
         // If the selected `ElasticCluster` changes, set the dirty flag to `true`
         registerHandler(clusterPresenter.addDataSelectionHandler(event -> setDirty(true)));
-        registerHandler(vectorModelPresenter.addDataSelectionHandler(event -> setDirty(true)));
+        registerHandler(vectorGenerationModelPresenter.addDataSelectionHandler(event -> setDirty(true)));
+        registerHandler(rerankModelPresenter.addDataSelectionHandler(event -> setDirty(true)));
         registerHandler(pipelinePresenter.addDataSelectionHandler(selection -> setDirty(true)));
     }
 
@@ -114,11 +119,14 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
     @Override
     protected void onRead(final DocRef docRef, final ElasticIndexDoc index, final boolean readOnly) {
         clusterPresenter.setSelectedEntityReference(index.getClusterRef(), true);
-        vectorModelPresenter.setSelectedEntityReference(index.getVectorGenerationModelRef(), true);
+        vectorGenerationModelPresenter.setSelectedEntityReference(index.getVectorGenerationModelRef(), true);
+        rerankModelPresenter.setSelectedEntityReference(index.getRerankModelRef(), true);
         getView().setIndexName(index.getIndexName());
         getView().setSearchSlices(index.getSearchSlices());
         getView().setSearchScrollSize(index.getSearchScrollSize());
         getView().setTimeField(index.getTimeField());
+        getView().setRerankTextFieldSuffix(index.getRerankTextFieldSuffix());
+        getView().setRerankScoreMinimum(index.getRerankScoreMinimum());
 
         pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline(), true);
     }
@@ -126,7 +134,8 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
     @Override
     protected ElasticIndexDoc onWrite(final ElasticIndexDoc index) {
         index.setClusterRef(clusterPresenter.getSelectedEntityReference());
-        index.setVectorGenerationModelRef(vectorModelPresenter.getSelectedEntityReference());
+        index.setVectorGenerationModelRef(vectorGenerationModelPresenter.getSelectedEntityReference());
+        index.setRerankModelRef(rerankModelPresenter.getSelectedEntityReference());
 
         final String indexName = getView().getIndexName().trim();
         if (indexName.isEmpty()) {
@@ -138,6 +147,8 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
         index.setSearchSlices(getView().getSearchSlices());
         index.setSearchScrollSize(getView().getSearchScrollSize());
         index.setTimeField(getView().getTimeField());
+        index.setRerankTextFieldSuffix(getView().getRerankTextFieldSuffix());
+        index.setRerankScoreMinimum(getView().getRerankScoreMinimum());
         index.setDefaultExtractionPipeline(pipelinePresenter.getSelectedEntityReference());
         return index;
     }
@@ -169,7 +180,17 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
 
         void setTimeField(String partitionTimeField);
 
+        String getRerankTextFieldSuffix();
+
+        void setRerankTextFieldSuffix(String rerankTextFieldSuffix);
+
+        Float getRerankScoreMinimum();
+
+        void setRerankScoreMinimum(Float rerankScoreMinimum);
+
         void setVectorGenerationModelView(final View view);
+
+        void setRerankModelView(final View view);
 
         void setDefaultExtractionPipelineView(View view);
     }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.langchain.impl;
+package stroom.langchain.api;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentStore;

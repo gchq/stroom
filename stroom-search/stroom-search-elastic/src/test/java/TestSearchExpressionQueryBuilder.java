@@ -5,6 +5,7 @@ import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.MockIndexFieldCache;
+import stroom.search.elastic.search.ElasticQueryParams;
 import stroom.search.elastic.search.SearchExpressionQueryBuilder;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
@@ -47,10 +48,10 @@ public class TestSearchExpressionQueryBuilder {
         // Single numeric EQUALS condition contained within the default AND clause
 
         expressionBuilder.addTerm(answerField.getFldName(), Condition.EQUALS, answerFieldValue.toString());
-        Query queryBuilder = builder.buildQuery(expressionBuilder.build());
+        ElasticQueryParams queryBuilder = builder.buildQuery(expressionBuilder.build());
 
-        Assertions.assertTrue(queryBuilder.isBool(), "Is a `bool` query");
-        BoolQuery boolQuery = queryBuilder.bool();
+        Assertions.assertTrue(queryBuilder.getQuery().isBool(), "Is a `bool` query");
+        BoolQuery boolQuery = queryBuilder.getQuery().bool();
         Assertions.assertEquals(1, boolQuery.must().size(), "Bool query contains exactly one item");
 
         final TermQuery termQuery = boolQuery.must().getFirst().term();
@@ -91,7 +92,7 @@ public class TestSearchExpressionQueryBuilder {
         expressionBuilder.addOperator(notOperator);
         queryBuilder = builder.buildQuery(expressionBuilder.build());
 
-        boolQuery = queryBuilder.bool();
+        boolQuery = queryBuilder.getQuery().bool();
         Assertions.assertEquals(2, boolQuery.must().size(), "Bool query contains exactly two items");
         final BoolQuery innerBoolQuery = boolQuery.must().get(1).bool();
         Assertions.assertEquals(1, innerBoolQuery.mustNot().size(),

@@ -25,6 +25,7 @@ import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
+import stroom.langchain.api.OpenAIModelStore;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.util.shared.Message;
 

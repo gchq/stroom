@@ -57,6 +57,9 @@ import java.util.Objects;
         "fields",
         "timeField",
         "vectorGenerationModelRef",
+        "rerankModelRef",
+        "rerankTextFieldSuffix",
+        "rerankScoreMinimum",
         "defaultExtractionPipeline",
         "retentionExpression"
 })
@@ -68,6 +71,8 @@ public class ElasticIndexDoc extends Doc {
     public static final String TYPE = "ElasticIndex";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.ELASTIC_INDEX_DOCUMENT_TYPE;
     private static final String DEFAULT_TIME_FIELD = "@timestamp";
+    private static final String DEFAULT_TEXT_FIELD_SUFFIX = ".text";
+    private static final Float DEFAULT_RERANK_SCORE_MINIMUM = 0.8f;
 
     /**
      * Reference to the `ElasticCluster` containing common Elasticsearch cluster connection properties
@@ -97,10 +102,31 @@ public class ElasticIndexDoc extends Doc {
     private Integer searchScrollSize;
 
     /**
-     * Reference to the `OpenAIModel` used to generate vector embeddings
+     * Reference to the `OpenAIModel` used to generate vector embeddings from search query expressions
      */
     @JsonProperty
     private DocRef vectorGenerationModelRef;
+
+    /**
+     * Reference to the `OpenAIModel` used for reranking vector search results
+     */
+    @JsonProperty
+    private DocRef rerankModelRef;
+
+    /**
+     * Suffix used to identify the original text equivalent of dense_vector fields.
+     * This by convention allows us to determine the name of the text field by stripping the trailing .suffix from the
+     * vector field and replacing it with the specified suffix.
+     * Example: `.text`
+     */
+    @JsonProperty
+    private String rerankTextFieldSuffix;
+
+    /**
+     * Minimum rerank score for documents to be included in search hits
+     */
+    @JsonProperty
+    private Float rerankScoreMinimum;
 
     /**
      * Array of fields, populated at query time
@@ -117,6 +143,8 @@ public class ElasticIndexDoc extends Doc {
         searchScrollSize = DEFAULT_SEARCH_SCROLL_SIZE;
         fields = new ArrayList<>();
         timeField = DEFAULT_TIME_FIELD;
+        rerankTextFieldSuffix = DEFAULT_TEXT_FIELD_SUFFIX;
+        rerankScoreMinimum = DEFAULT_RERANK_SCORE_MINIMUM;
     }
 
     @JsonCreator
@@ -136,6 +164,9 @@ public class ElasticIndexDoc extends Doc {
             @JsonProperty("fields") final List<ElasticIndexField> fields,
             @JsonProperty("timeField") final String timeField,
             @JsonProperty("vectorGenerationModelRef") final DocRef vectorGenerationModelRef,
+            @JsonProperty("rerankModelRef") final DocRef rerankModelRef,
+            @JsonProperty("rerankTextFieldSuffix") final String rerankTextFieldSuffix,
+            @JsonProperty("rerankScoreMinimum") final Float rerankScoreMinimum,
             @JsonProperty("defaultExtractionPipeline") final DocRef defaultExtractionPipeline) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
@@ -146,6 +177,9 @@ public class ElasticIndexDoc extends Doc {
         this.fields = fields;
         this.timeField = timeField;
         this.vectorGenerationModelRef = vectorGenerationModelRef;
+        this.rerankModelRef = rerankModelRef;
+        this.rerankTextFieldSuffix = rerankTextFieldSuffix;
+        this.rerankScoreMinimum = rerankScoreMinimum;
         this.defaultExtractionPipeline = defaultExtractionPipeline;
 
         if (this.searchSlices == null) {
@@ -156,6 +190,12 @@ public class ElasticIndexDoc extends Doc {
         }
         if (this.timeField == null || this.timeField.isEmpty()) {
             this.timeField = DEFAULT_TIME_FIELD;
+        }
+        if (this.rerankTextFieldSuffix == null ||  this.rerankTextFieldSuffix.isEmpty()) {
+            this.rerankTextFieldSuffix = DEFAULT_TEXT_FIELD_SUFFIX;
+        }
+        if (this.rerankScoreMinimum == null) {
+            this.rerankScoreMinimum = DEFAULT_RERANK_SCORE_MINIMUM;
         }
     }
 
@@ -234,6 +274,30 @@ public class ElasticIndexDoc extends Doc {
         this.vectorGenerationModelRef = vectorGenerationModelRef;
     }
 
+    public DocRef getRerankModelRef() {
+        return rerankModelRef;
+    }
+
+    public void setRerankModelRef(final DocRef rerankModelRef) {
+        this.rerankModelRef = rerankModelRef;
+    }
+
+    public String getRerankTextFieldSuffix() {
+        return rerankTextFieldSuffix;
+    }
+
+    public void setRerankTextFieldSuffix(final String rerankTextFieldSuffix) {
+        this.rerankTextFieldSuffix = rerankTextFieldSuffix;
+    }
+
+    public Float getRerankScoreMinimum() {
+        return rerankScoreMinimum;
+    }
+
+    public void setRerankScoreMinimum(final Float rerankScoreMinimum) {
+        this.rerankScoreMinimum = rerankScoreMinimum;
+    }
+
     public DocRef getDefaultExtractionPipeline() {
         return defaultExtractionPipeline;
     }
@@ -262,6 +326,9 @@ public class ElasticIndexDoc extends Doc {
                Objects.equals(fields, elasticIndex.fields) &&
                Objects.equals(timeField, elasticIndex.timeField) &&
                Objects.equals(vectorGenerationModelRef, elasticIndex.vectorGenerationModelRef) &&
+               Objects.equals(rerankModelRef, elasticIndex.rerankModelRef) &&
+               Objects.equals(rerankTextFieldSuffix, elasticIndex.rerankTextFieldSuffix) &&
+               Objects.equals(rerankScoreMinimum, elasticIndex.rerankScoreMinimum) &&
                Objects.equals(defaultExtractionPipeline, elasticIndex.defaultExtractionPipeline);
     }
 
@@ -277,6 +344,9 @@ public class ElasticIndexDoc extends Doc {
                 fields,
                 timeField,
                 vectorGenerationModelRef,
+                rerankModelRef,
+                rerankTextFieldSuffix,
+                rerankScoreMinimum,
                 defaultExtractionPipeline);
     }
 

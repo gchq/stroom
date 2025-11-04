@@ -56,6 +56,12 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     @UiField
     SimplePanel vectorGenerationModel;
     @UiField
+    SimplePanel rerankModel;
+    @UiField
+    TextBox rerankTextFieldSuffix;
+    @UiField
+    TextBox rerankScoreMinimum;
+    @UiField
     SimplePanel defaultExtractionPipeline;
 
     @Inject
@@ -132,6 +138,31 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     }
 
     @Override
+    public String getRerankTextFieldSuffix() {
+        return rerankTextFieldSuffix.getValue();
+    }
+
+    @Override
+    public void setRerankTextFieldSuffix(final String rerankTextFieldSuffix) {
+        this.rerankTextFieldSuffix.setValue(rerankTextFieldSuffix);
+    }
+
+    @Override
+    public Float getRerankScoreMinimum() {
+        return Float.parseFloat(rerankScoreMinimum.getValue());
+    }
+
+    @Override
+    public void setRerankScoreMinimum(final Float rerankScoreMinimum) {
+        this.rerankScoreMinimum.setValue(rerankScoreMinimum.toString());
+    }
+
+    @Override
+    public void setRerankModelView(final View view) {
+        rerankModel.setWidget(view.asWidget());
+    }
+
+    @Override
     public void setDefaultExtractionPipelineView(final View view) {
         this.defaultExtractionPipeline.setWidget(view.asWidget());
     }
@@ -144,7 +175,7 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     }
 
     @UiHandler("indexName")
-    public void onIndexNameKeyDown(final KeyDownEvent e) {
+    public void onIndexNameValueChange(final ValueChangeEvent<String> e) {
         fireChange();
     }
 
@@ -159,7 +190,17 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     }
 
     @UiHandler("timeField")
-    public void onTimeFieldKeyDown(final KeyDownEvent e) {
+    public void onTimeFieldValueChange(final ValueChangeEvent<String> e) {
+        fireChange();
+    }
+
+    @UiHandler("rerankTextFieldSuffix")
+    public void onRerankTextFieldSuffixValueChange(final ValueChangeEvent<String> e) {
+        fireChange();
+    }
+
+    @UiHandler("rerankScoreMinimum")
+    public void onRerankScoreMinimumValueChange(final ValueChangeEvent<String> e) {
         fireChange();
     }
 

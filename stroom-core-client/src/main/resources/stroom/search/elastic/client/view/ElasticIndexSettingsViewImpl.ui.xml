@@ -38,6 +38,17 @@
         <form:FormGroup identity="elasticIndexSettingsVectorGenerationModel" label="Vector generation model">
             <g:SimplePanel ui:field="vectorGenerationModel" />
         </form:FormGroup>
+        <form:FormGroup identity="elasticIndexSettingsRerankModel" label="Rerank model">
+            <g:SimplePanel ui:field="rerankModel" />
+        </form:FormGroup>
+        <form:FormGroup identity="elasticIndexSettingsRerankTextFieldSuffix" label="Rerank text field suffix">
+            <g:TextBox ui:field="rerankTextFieldSuffix" width="200px"
+                       title="Suffix used to identify the text equivalent of dense_vector fields (e.g. `.text`). The original text field value is obtained by removing the vector field suffix (e.g. `.vector`) and replacing it with the supplied suffix (e.g. `.text`)." />
+        </form:FormGroup>
+        <form:FormGroup identity="elasticIndexSettingsRerankScoreMinimum" label="Minimum rerank score">
+            <g:TextBox ui:field="rerankScoreMinimum" width="80px"
+                       title="Only include results with a rerank score greater than or equal to this value (in the range 0.0 to 1.0)" />
+        </form:FormGroup>
 
         <b:Button ui:field="testConnection" text="Test Connection" width="200px" addStyleNames="allow-focus"/>
     </g:FlowPanel>

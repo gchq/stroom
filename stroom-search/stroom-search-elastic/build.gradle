@@ -32,7 +32,9 @@ dependencies {
     implementation libs.jackson.annotations
     implementation libs.jakarta.inject
     implementation libs.jakarta.json.api
-    implementation libs.langchain4j
+    implementation libs.langchain4j.open.ai
+    implementation libs.langchain4j.cohere
+    implementation libs.langchain4j.jina
     implementation libs.restygwt
     implementation libs.saxon.he
     implementation libs.slf4j.api

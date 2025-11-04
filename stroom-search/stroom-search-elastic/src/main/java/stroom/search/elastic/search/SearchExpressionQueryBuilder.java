@@ -72,6 +72,7 @@ public class SearchExpressionQueryBuilder {
     private final IndexFieldCache indexFieldCache;
     private final WordListProvider wordListProvider;
     private final DateTimeSettings dateTimeSettings;
+    private final ElasticQueryParams elasticQueryParams;
 
     public SearchExpressionQueryBuilder(
             final Provider<OpenAIService> openAIServiceProvider,
@@ -84,9 +85,10 @@ public class SearchExpressionQueryBuilder {
         this.indexFieldCache = indexFieldCache;
         this.wordListProvider = wordListProvider;
         this.dateTimeSettings = dateTimeSettings;
+        this.elasticQueryParams = new ElasticQueryParams();
     }
 
-    public Query buildQuery(final ExpressionOperator expression) {
+    public ElasticQueryParams buildQuery(final ExpressionOperator expression) {
         Query query = null;
         if (expression != null) {
             query = getQuery(expression);
@@ -94,7 +96,9 @@ public class SearchExpressionQueryBuilder {
         if (query == null) {
             query = MatchAllQuery.of(q -> q)._toQuery();
         }
-        return query;
+
+        elasticQueryParams.setQuery(query);
+        return elasticQueryParams;
     }
 
     private Query getQuery(final ExpressionItem item) {
@@ -281,6 +285,7 @@ public class SearchExpressionQueryBuilder {
         try {
             final EmbeddingModel embeddingModel = openAIServiceProvider.get().getEmbeddingModel(modelDoc);
             final List<Float> queryVector = embeddingModel.embed(expression).content().vectorAsList();
+            elasticQueryParams.addKnnFieldQuery(fieldName, expression);
             return QueryBuilders.knn(q -> q
                     .field(fieldName)
                     .queryVector(queryVector));

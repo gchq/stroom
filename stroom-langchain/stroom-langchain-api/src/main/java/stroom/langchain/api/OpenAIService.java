@@ -21,6 +21,7 @@ import stroom.openai.shared.OpenAIModelDoc;
 
 import com.openai.models.models.Model;
 import dev.langchain4j.model.embedding.EmbeddingModel;
+import dev.langchain4j.model.scoring.ScoringModel;
 
 public interface OpenAIService {
 
@@ -29,4 +30,8 @@ public interface OpenAIService {
     Model getModel(OpenAIModelDoc modelDoc);
 
     EmbeddingModel getEmbeddingModel(OpenAIModelDoc modelDoc);
+
+    ScoringModel getCohereScoringModel(OpenAIModelDoc modelDoc);
+
+    ScoringModel getJinaScoringModel(OpenAIModelDoc modelDoc);
 }
