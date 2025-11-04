@@ -16,6 +16,8 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.shared.AppPermission;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.PageRequest;
@@ -49,7 +51,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     private final DateTimeFormatter dateTimeFormatter;
 
     /** Where the data grid gets its data from */
-    private final RestDataProvider<CredentialsWithPerms,  ResultPage<CredentialsWithPerms>> dataProvider;
+    private RestDataProvider<CredentialsWithPerms,  ResultPage<CredentialsWithPerms>> dataProvider;
 
     /** List of credentials */
     private final MyDataGrid<CredentialsWithPerms> dataGrid;
@@ -68,6 +70,9 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
 
     /** Dialog to edit the credentials */
     private final CredentialsDetailsTabDialogPresenter detailsDialog;
+
+    /** Permissions client */
+    private final ClientSecurityContext securityContext;
 
     /** Flag to set whether something is selected by default */
     private boolean defaultSelection = true;
@@ -97,11 +102,13 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                                     final PagerView view,
                                     final RestFactory restFactory,
                                     final CredentialsDetailsTabDialogPresenter detailsDialog,
-                                    final DateTimeFormatter dateTimeFormatter) {
+                                    final DateTimeFormatter dateTimeFormatter,
+                                    final ClientSecurityContext securityContext) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.detailsDialog = detailsDialog;
         this.dateTimeFormatter = dateTimeFormatter;
+        this.securityContext = securityContext;
 
         this.dataGrid = new MyDataGrid<>(this);
         view.setDataWidget(dataGrid);
@@ -117,14 +124,6 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
 
         // Define a class for the CSS
         this.getWidget().addStyleName("credentials-list");
-
-        // Hook up the data
-        dataProvider = createDataProvider(super.getEventBus(),
-                super.getView(),
-                restFactory);
-        dataProvider.addDataDisplay(dataGrid);
-
-        updateState();
     }
 
     /**
@@ -198,7 +197,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                 final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
                 restFactory
                         .create(CREDENTIALS_RESOURCE)
-                        .method(r ->  r.listCredentials(pageRequest))
+                        .method(r -> r.listCredentials(pageRequest))
                         .onSuccess(dataConsumer)
                         .onFailure(restErrorHandler)
                         .taskMonitorFactory(view)
@@ -221,6 +220,14 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     @Override
     protected void onBind() {
         super.onBind();
+
+        // Avoid permissions issues if the user doesn't have the AppPermission to see the data
+        if (securityContext.hasAppPermission(AppPermission.CREDENTIALS)) {
+            dataProvider = createDataProvider(super.getEventBus(),
+                    super.getView(),
+                    restFactory);
+            dataProvider.addDataDisplay(dataGrid);
+        }
 
         btnAdd.addClickHandler(event -> handleAddButtonClick());
         btnDelete.addClickHandler(event -> handleDeleteButtonClick());
@@ -250,6 +257,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
             }
         });
 
+        updateState();
     }
 
     /**
