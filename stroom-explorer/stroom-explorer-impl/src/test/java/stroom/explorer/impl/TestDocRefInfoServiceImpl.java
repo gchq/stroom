@@ -148,42 +148,6 @@ class TestDocRefInfoServiceImpl {
     }
 
     @Test
-    void decorate_list_noUuid() {
-
-        initMockCache();
-
-        final List<DocRef> inputDocRefs = List.of(
-                DOC_REF1.withoutName(),
-                stripUuid(DOC_REF2),
-                DOC_REF3);
-
-        Assertions
-                .assertThatThrownBy(() -> {
-                    final List<DocRef> outputDocRefs = docRefInfoService.decorate(inputDocRefs);
-                })
-                .hasMessageContaining("UUID is not set")
-                .isInstanceOf(RuntimeException.class);
-    }
-
-    @Test
-    void decorate_list_noType() {
-
-        initMockCache();
-
-        final List<DocRef> inputDocRefs = List.of(
-                DOC_REF1.withoutName(),
-                stripType(DOC_REF2),
-                DOC_REF3);
-
-        Assertions
-                .assertThat(docRefInfoService.decorate(inputDocRefs))
-                .containsExactly(
-                        DOC_REF1,
-                        DOC_REF2,
-                        DOC_REF3);
-    }
-
-    @Test
     void decorate_null() {
 
         Assertions
@@ -245,23 +209,4 @@ class TestDocRefInfoServiceImpl {
         assertThat(docRef.getName())
                 .isEqualTo(DOC_REF3.getName());
     }
-
-    private static DocRef stripName(final DocRef docRef) {
-        return docRef.copy()
-                .name(null)
-                .build();
-    }
-
-    private static DocRef stripUuid(final DocRef docRef) {
-        return docRef.copy()
-                .uuid(null)
-                .build();
-    }
-
-    private static DocRef stripType(final DocRef docRef) {
-        return docRef.copy()
-                .type(null)
-                .build();
-    }
-
 }

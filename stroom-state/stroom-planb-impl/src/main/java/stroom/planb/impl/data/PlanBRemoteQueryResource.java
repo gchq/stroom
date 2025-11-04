@@ -47,7 +47,6 @@ public interface PlanBRemoteQueryResource extends RestResource {
             operationId = "planBQueryGetValue")
     PlanBValue getValue(GetRequest request);
 
-
     @POST
     @Path(GET_STORE_INFO)
     @Operation(

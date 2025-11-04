@@ -2,10 +2,14 @@ package stroom.planb.impl.db.temporalrangestate;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.lmdb.stream.LmdbEntry;
+import stroom.lmdb.stream.LmdbIterable;
+import stroom.lmdb.stream.LmdbKeyRange;
 import stroom.lmdb2.KV;
 import stroom.planb.impl.data.TemporalRangeState;
 import stroom.planb.impl.data.TemporalRangeState.Key;
 import stroom.planb.impl.db.AbstractDb;
+import stroom.planb.impl.db.Count;
 import stroom.planb.impl.db.HashClashCommitRunnable;
 import stroom.planb.impl.db.LmdbWriter;
 import stroom.planb.impl.db.PlanBEnv;
@@ -31,14 +35,9 @@ import stroom.planb.impl.serde.time.TimeSerde;
 import stroom.planb.impl.serde.valtime.ValTime;
 import stroom.planb.impl.serde.valtime.ValTimeSerde;
 import stroom.planb.impl.serde.valtime.ValTimeSerdeFactory;
-import stroom.planb.shared.AbstractPlanBSettings;
-import stroom.planb.shared.HashLength;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.RangeType;
-import stroom.planb.shared.StateValueSchema;
-import stroom.planb.shared.StateValueType;
 import stroom.planb.shared.TemporalPrecision;
-import stroom.planb.shared.TemporalRangeKeySchema;
 import stroom.planb.shared.TemporalRangeStateSettings;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -55,17 +54,12 @@ import stroom.util.json.JsonUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
-import org.lmdbjava.CursorIterable;
-import org.lmdbjava.CursorIterable.KeyVal;
-import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.Iterator;
 import java.util.Objects;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
@@ -103,6 +97,7 @@ public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
                                               final ByteBuffers byteBuffers,
                                               final PlanBDoc doc,
                                               final boolean readOnly) {
+        // Ensure all settings are non null.
         final TemporalRangeStateSettings settings;
         if (doc.getSettings() instanceof final TemporalRangeStateSettings temporalRangeStateSettings) {
             settings = temporalRangeStateSettings;
@@ -111,43 +106,20 @@ public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
         }
 
         final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
-        final Long mapSize = NullSafe.getOrElse(
-                settings,
-                AbstractPlanBSettings::getMaxStoreSize,
-                AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE);
         final PlanBEnv env = new PlanBEnv(path,
-                mapSize,
+                settings.getMaxStoreSize(),
                 20,
                 readOnly,
                 hashClashCommitRunnable);
         try {
-            final RangeType rangeType = NullSafe.getOrElse(
-                    settings,
-                    TemporalRangeStateSettings::getKeySchema,
-                    TemporalRangeKeySchema::getRangeType,
-                    TemporalRangeKeySchema.DEFAULT_RANGE_TYPE);
-            final StateValueType stateValueType = NullSafe.getOrElse(
-                    settings,
-                    TemporalRangeStateSettings::getValueSchema,
-                    StateValueSchema::getStateValueType,
-                    StateValueSchema.DEFAULT_VALUE_TYPE);
-            final HashLength valueHashLength = NullSafe.getOrElse(
-                    settings,
-                    TemporalRangeStateSettings::getValueSchema,
-                    StateValueSchema::getHashLength,
-                    StateValueSchema.DEFAULT_HASH_LENGTH);
-            final TimeSerde timeSerde = createTimeSerde(NullSafe.getOrElse(
-                    settings,
-                    TemporalRangeStateSettings::getKeySchema,
-                    TemporalRangeKeySchema::getTemporalPrecision,
-                    TemporalRangeKeySchema.DEFAULT_TEMPORAL_PRECISION));
+            final TimeSerde timeSerde = createTimeSerde(settings.getKeySchema().getTemporalPrecision());
             final TemporalRangeKeySerde keySerde = createKeySerde(
-                    rangeType,
+                    settings.getKeySchema().getRangeType(),
                     byteBuffers,
                     timeSerde);
             final ValTimeSerde valueSerde = ValTimeSerdeFactory.createValueSerde(
-                    stateValueType,
-                    valueHashLength,
+                    settings.getValueSchema().getStateValueType(),
+                    settings.getValueSchema().getHashLength(),
                     env,
                     byteBuffers,
                     hashClashCommitRunnable);
@@ -201,15 +173,6 @@ public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
         writer.tryCommit();
     }
 
-    private void iterate(final Txn<ByteBuffer> txn,
-                         final Consumer<KeyVal<ByteBuffer>> consumer) {
-        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(txn)) {
-            for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
-                consumer.accept(keyVal);
-            }
-        }
-    }
-
     @Override
     public void merge(final Path source) {
         env.write(writer -> {
@@ -222,15 +185,15 @@ public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
 
                 // Merge.
                 sourceDb.env.read(readTxn -> {
-                    sourceDb.iterate(readTxn, kv -> {
-                        if (sourceDb.keySerde.usesLookup(kv.key()) || sourceDb.valueSerde.usesLookup(kv.val())) {
+                    sourceDb.iterate(readTxn, (key, val) -> {
+                        if (sourceDb.keySerde.usesLookup(key) || sourceDb.valueSerde.usesLookup(val)) {
                             // We need to do a full read and merge.
-                            final Key key = sourceDb.keySerde.read(readTxn, kv.key());
-                            final Val value = sourceDb.valueSerde.read(readTxn, kv.val()).val();
-                            insert(writer, new TemporalRangeState(key, value));
+                            final Key k = sourceDb.keySerde.read(readTxn, key);
+                            final Val v = sourceDb.valueSerde.read(readTxn, val).val();
+                            insert(writer, new TemporalRangeState(k, v));
                         } else {
                             // Quick merge.
-                            if (dbi.put(writer.getWriteTxn(), kv.key(), kv.val(), putFlags)) {
+                            if (dbi.put(writer.getWriteTxn(), key, val, putFlags)) {
                                 writer.tryCommit();
                             }
                         }
@@ -281,31 +244,29 @@ public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
     }
 
     private Function<Context, Key> getKeyExtractionFunction(final Txn<ByteBuffer> readTxn) {
-        return context -> keySerde.read(readTxn, context.kv().key().duplicate());
+        return context -> keySerde.read(readTxn, context.key().duplicate());
     }
 
     private Function<Context, Val> getValExtractionFunction(final Txn<ByteBuffer> readTxn) {
-        return context -> NullSafe.get(valueSerde.read(readTxn, context.kv().val().duplicate()), ValTime::val);
+        return context -> NullSafe.get(valueSerde.read(readTxn, context.val().duplicate()), ValTime::val);
     }
 
     public TemporalRangeState getState(final TemporalRangeStateRequest request) {
         return env.read(readTxn ->
                 keySerde.toKeyStart(request.key(), start -> {
-                    final KeyRange<ByteBuffer> keyRange = KeyRange.atLeastBackward(start);
                     TemporalRangeState result = null;
-                    try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn, keyRange)) {
-                        final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-                        while (iterator.hasNext()
-                               && !Thread.currentThread().isInterrupted()) {
-                            final KeyVal<ByteBuffer> kv = iterator.next();
-                            final Key key = keySerde.read(readTxn, kv.key());
-                            if (key.getKeyEnd() < request.key()) {
+                    final LmdbKeyRange keyRange =
+                            LmdbKeyRange.builder().start(start).reverse().build();
+                    try (final LmdbIterable iterable = LmdbIterable.create(readTxn, dbi, keyRange)) {
+                        for (final LmdbEntry entry : iterable) {
+                            final Key k = keySerde.read(readTxn, entry.getKey());
+                            if (k.getKeyEnd() < request.key()) {
                                 return result;
-                            } else if ((key.getTime().isBefore(request.effectiveTime()) ||
-                                        key.getTime().equals(request.effectiveTime())) &&
-                                       key.getKeyStart() <= request.key()) {
-                                final Val value = valueSerde.read(readTxn, kv.val()).val();
-                                result = new TemporalRangeState(key, value);
+                            } else if ((k.getTime().isBefore(request.effectiveTime()) ||
+                                        k.getTime().equals(request.effectiveTime())) &&
+                                       k.getKeyStart() <= request.key()) {
+                                final Val value = valueSerde.read(readTxn, entry.getVal()).val();
+                                result = new TemporalRangeState(k, value);
                             }
                         }
                     }
@@ -335,35 +296,30 @@ public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
                                final Instant deleteBefore,
                                final boolean useStateTime) {
         return env.read(readTxn -> {
-            long changeCount = 0;
-            try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
-                final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-                while (iterator.hasNext()
-                       && !Thread.currentThread().isInterrupted()) {
-                    final KeyVal<ByteBuffer> kv = iterator.next();
-                    final Key key = keySerde.read(readTxn, kv.key().duplicate());
-                    final Instant time;
-                    if (useStateTime) {
-                        time = key.getTime();
-                    } else {
-                        final ValTime valTime = valueSerde.read(readTxn, kv.val().duplicate());
-                        time = valTime.insertTime();
-                    }
-
-                    if (time.isBefore(deleteBefore)) {
-                        // If this is data we no longer want to retain then delete it.
-                        dbi.delete(writer.getWriteTxn(), kv.key());
-                        changeCount++;
-                    } else {
-                        // Record used lookup keys.
-                        keyRecorder.recordUsed(writer, kv.key());
-                        valueRecorder.recordUsed(writer, kv.val());
-                    }
-                    writer.tryCommit();
+            final Count changeCount = new Count();
+            iterate(readTxn, (key, val) -> {
+                final Key k = keySerde.read(readTxn, key.duplicate());
+                final Instant time;
+                if (useStateTime) {
+                    time = k.getTime();
+                } else {
+                    final ValTime valTime = valueSerde.read(readTxn, val.duplicate());
+                    time = valTime.insertTime();
                 }
-            }
+
+                if (time.isBefore(deleteBefore)) {
+                    // If this is data we no longer want to retain then delete it.
+                    dbi.delete(writer.getWriteTxn(), key);
+                    changeCount.increment();
+                } else {
+                    // Record used lookup keys.
+                    keyRecorder.recordUsed(writer, key);
+                    valueRecorder.recordUsed(writer, val);
+                }
+                writer.tryCommit();
+            });
             writer.commit();
-            return changeCount;
+            return changeCount.get();
         });
     }
 
@@ -373,13 +329,10 @@ public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
             long changeCount = 0;
             TemporalRangeState lastState = null;
             TemporalRangeState newState = null;
-            try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
-                final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-                while (iterator.hasNext()
-                       && !Thread.currentThread().isInterrupted()) {
-                    final KeyVal<ByteBuffer> kv = iterator.next();
-                    final Key key = keySerde.read(readTxn, kv.key().duplicate());
-                    final ValTime valTime = valueSerde.read(readTxn, kv.val().duplicate());
+            try (final LmdbIterable iterable = LmdbIterable.create(readTxn, dbi)) {
+                for (final LmdbEntry entry : iterable) {
+                    final Key key = keySerde.read(readTxn, entry.getKey().duplicate());
+                    final ValTime valTime = valueSerde.read(readTxn, entry.getVal().duplicate());
                     TemporalRangeState state = new TemporalRangeState(key, valTime.val());
                     final Instant time = key.getTime();
 
@@ -460,8 +413,8 @@ public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
                 default -> kv -> ValNull.INSTANCE;
             };
         }
-        return (readTxn, kv) -> {
-            final Context context = new Context(readTxn, kv);
+        return (readTxn, key, val) -> {
+            final Context context = new Context(readTxn, key, val);
             final LazyKV<Key, Val> lazyKV = new LazyKV<>(context, keyFunction, valFunction);
             final Val[] values = new Val[fields.length];
             for (int i = 0; i < fields.length; i++) {

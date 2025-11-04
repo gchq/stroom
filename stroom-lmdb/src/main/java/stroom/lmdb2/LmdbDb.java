@@ -1,17 +1,18 @@
 package stroom.lmdb2;
 
 import stroom.bytebuffer.ByteBufferUtils;
+import stroom.lmdb.stream.LmdbEntry;
+import stroom.lmdb.stream.LmdbIterable;
+import stroom.lmdb.stream.LmdbKeyRange;
+import stroom.lmdb.stream.LmdbStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
-import org.lmdbjava.CursorIterable;
-import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
-import org.lmdbjava.KeyRange;
 import org.lmdbjava.PutFlags;
 import org.lmdbjava.Txn;
 
@@ -22,6 +23,7 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 
 public class LmdbDb {
@@ -108,13 +110,11 @@ public class LmdbDb {
     }
 
     public <R> R iterateResult(final AbstractTxn txn,
-                               final KeyRange<ByteBuffer> keyRange,
-                               final Function<Iterator<KeyVal<ByteBuffer>>, R> iteratorConsumer) {
-        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(
-                txn.get(),
-                keyRange)) {
+                               final LmdbKeyRange keyRange,
+                               final Function<Iterator<LmdbEntry>, R> iteratorConsumer) {
+        try (final LmdbIterable iterable = LmdbIterable.create(txn.get(), dbi, keyRange)) {
             try {
-                final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+                final Iterator<LmdbEntry> iterator = iterable.iterator();
                 return iteratorConsumer.apply(iterator);
             } catch (final Throwable e) {
                 error(e);
@@ -126,13 +126,16 @@ public class LmdbDb {
     }
 
     public void iterate(final AbstractTxn txn,
-                        final KeyRange<ByteBuffer> keyRange,
-                        final Consumer<Iterator<KeyVal<ByteBuffer>>> iteratorConsumer) {
-        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(
-                txn.get(),
-                keyRange)) {
+                        final Consumer<Iterator<LmdbEntry>> iteratorConsumer) {
+        iterate(txn, LmdbKeyRange.all(), iteratorConsumer);
+    }
+
+    public void iterate(final AbstractTxn txn,
+                        final LmdbKeyRange keyRange,
+                        final Consumer<Iterator<LmdbEntry>> iteratorConsumer) {
+        try (final LmdbIterable iterable = LmdbIterable.create(txn.get(), dbi, keyRange)) {
             try {
-                final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+                final Iterator<LmdbEntry> iterator = iterable.iterator();
                 iteratorConsumer.accept(iterator);
             } catch (final Throwable e) {
                 error(e);
@@ -142,18 +145,13 @@ public class LmdbDb {
         }
     }
 
-    public void iterate(final AbstractTxn txn,
-                        final Consumer<CursorIterable<ByteBuffer>> iteratorConsumer) {
-        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(
-                txn.get())) {
-            try {
-                iteratorConsumer.accept(cursorIterable);
-            } catch (final Throwable e) {
-                error(e);
-            }
-        } catch (final Throwable e) {
-            error(e);
-        }
+    public Stream<LmdbEntry> stream(final AbstractTxn txn) {
+        return stream(txn, LmdbKeyRange.all());
+    }
+
+    public Stream<LmdbEntry> stream(final AbstractTxn txn,
+                                    final LmdbKeyRange keyRange) {
+        return LmdbStream.stream(txn.get(), dbi, keyRange);
     }
 
     public boolean delete(final WriteTxn txn, final ByteBuffer key) {

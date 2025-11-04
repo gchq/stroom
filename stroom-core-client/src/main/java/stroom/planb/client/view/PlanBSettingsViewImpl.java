@@ -53,6 +53,7 @@ public class PlanBSettingsViewImpl
         stateType.addItem(StateType.SESSION);
         stateType.addItem(StateType.HISTOGRAM);
         stateType.addItem(StateType.METRIC);
+        stateType.addItem(StateType.TRACE);
         stateType.setValue(StateType.TEMPORAL_STATE);
     }
 

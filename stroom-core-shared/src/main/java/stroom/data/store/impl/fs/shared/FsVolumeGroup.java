@@ -1,6 +1,5 @@
 package stroom.data.store.impl.fs.shared;
 
-import stroom.docref.HasNameMutable;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasIntegerId;
 
@@ -12,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class FsVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMutable {
+public class FsVolumeGroup implements HasAuditInfo, HasIntegerId {
 
     @JsonProperty
     private Integer id;
@@ -102,7 +101,6 @@ public class FsVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMutable
         this.updateUser = updateUser;
     }
 
-    @Override
     public String getName() {
         return name;
     }

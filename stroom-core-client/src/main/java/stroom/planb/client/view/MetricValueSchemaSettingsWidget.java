@@ -19,7 +19,6 @@ package stroom.planb.client.view;
 import stroom.item.client.SelectionBox;
 import stroom.planb.shared.MaxValueSize;
 import stroom.planb.shared.MetricValueSchema;
-import stroom.util.shared.NullSafe;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -52,12 +51,7 @@ public class MetricValueSchemaSettingsWidget
     public MetricValueSchemaSettingsWidget(final Binder binder) {
         widget = binder.createAndBindUi(this);
         maxValue.addItems(MaxValueSize.ORDERED_LIST);
-        maxValue.setValue(MetricValueSchema.DEFAULT_MAX_VALUE_SIZE);
-        storeLatestValue.setValue(MetricValueSchema.DEFAULT_STORE_LATEST_VALUE);
-        storeMin.setValue(MetricValueSchema.DEFAULT_STORE_MIN);
-        storeMax.setValue(MetricValueSchema.DEFAULT_STORE_MAX);
-        storeCount.setValue(MetricValueSchema.DEFAULT_STORE_COUNT);
-        storeSum.setValue(MetricValueSchema.DEFAULT_STORE_SUM);
+        setValueSchema(new MetricValueSchema.Builder().build());
     }
 
     @Override
@@ -79,18 +73,13 @@ public class MetricValueSchemaSettingsWidget
 
     @Override
     public void setValueSchema(final MetricValueSchema valueSchema) {
-        maxValue.setValue(NullSafe.getOrElse(valueSchema,
-                MetricValueSchema::getValueType, MetricValueSchema.DEFAULT_MAX_VALUE_SIZE));
-        storeLatestValue.setValue(NullSafe.getOrElse(valueSchema,
-                MetricValueSchema::getStoreLatestValue, MetricValueSchema.DEFAULT_STORE_LATEST_VALUE));
-        storeMin.setValue(NullSafe.getOrElse(valueSchema,
-                MetricValueSchema::getStoreMin, MetricValueSchema.DEFAULT_STORE_MIN));
-        storeMax.setValue(NullSafe.getOrElse(valueSchema,
-                MetricValueSchema::getStoreMax, MetricValueSchema.DEFAULT_STORE_MAX));
-        storeCount.setValue(NullSafe.getOrElse(valueSchema,
-                MetricValueSchema::getStoreCount, MetricValueSchema.DEFAULT_STORE_COUNT));
-        storeSum.setValue(NullSafe.getOrElse(valueSchema,
-                MetricValueSchema::getStoreSum, MetricValueSchema.DEFAULT_STORE_SUM));
+        final MetricValueSchema schema = new MetricValueSchema.Builder(valueSchema).build();
+        maxValue.setValue(schema.getValueType());
+        storeLatestValue.setValue(schema.getStoreLatestValue());
+        storeMin.setValue(schema.getStoreMin());
+        storeMax.setValue(schema.getStoreMax());
+        storeCount.setValue(schema.getStoreCount());
+        storeSum.setValue(schema.getStoreSum());
     }
 
     public void onReadOnly(final boolean readOnly) {

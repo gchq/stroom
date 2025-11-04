@@ -2,6 +2,7 @@ package stroom.lmdb2;
 
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.lmdb.LmdbConfig;
+import stroom.lmdb.stream.LmdbEntry;
 import stroom.util.io.ByteSize;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -18,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -53,15 +55,17 @@ class TestLmdbEnv {
 
             // Un-named DB exists by default
             final LmdbDb unNamedDb = lmdbEnv.openDb(null, new DbiFlags[0]);
-            lmdbEnv.read(readTxn ->
-                    unNamedDb.iterate(readTxn, keyVals ->
-                            keyVals.iterator().forEachRemaining(keyVal -> {
-                                final ByteBuffer key = keyVal.key();
-                                final ByteBuffer val = keyVal.val();
-                                LOGGER.info("key: {}, val:{}",
-                                        ByteBufferUtils.byteBufferInfo(key),
-                                        ByteBufferUtils.byteBufferInfo(val));
-                            })));
+            lmdbEnv.read(readTxn -> {
+                try (final Stream<LmdbEntry> stream = unNamedDb.stream(readTxn)) {
+                    stream.forEach(entry -> {
+                        final ByteBuffer key = entry.getKey();
+                        final ByteBuffer val = entry.getVal();
+                        LOGGER.info("key: {}, val:{}",
+                                ByteBufferUtils.byteBufferInfo(key),
+                                ByteBufferUtils.byteBufferInfo(val));
+                    });
+                }
+            });
             assertThat(lmdbEnv.getDbNames())
                     .containsExactlyInAnyOrder("foo");
         }

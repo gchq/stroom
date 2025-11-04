@@ -98,6 +98,13 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
         this.reportSettings = reportSettings;
     }
 
+    /**
+     * @return A new builder for creating a {@link DocRef} for this document's type.
+     */
+    public static DocRef.TypedBuilder buildDocRef() {
+        return DocRef.builder(TYPE);
+    }
+
     public ReportSettings getReportSettings() {
         return reportSettings;
     }
@@ -136,6 +143,10 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
     public Builder copy() {
         return new Builder(this);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder extends AbstractAnalyticRuleDocBuilder<ReportDoc, Builder> {
 

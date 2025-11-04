@@ -101,7 +101,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexVolumeServiceImpl.class);
 
     static final String ENTITY_TYPE = "INDEX_VOLUME";
-    private static final DocRef EVENT_DOCREF = new DocRef(ENTITY_TYPE, null, null);
+    private static final DocRef EVENT_DOCREF = new DocRef(ENTITY_TYPE, ENTITY_TYPE, ENTITY_TYPE);
     private static final String CACHE_NAME = "Index Volume Selector Cache";
     protected static final String TEMP_FILE_PREFIX = "stroomIdxVolVal";
 

@@ -3,6 +3,7 @@ package stroom.core.meta;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.feed.api.FeedStore;
+import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.PipelineStore;
@@ -150,7 +151,7 @@ class TestMetaSuggestionsQueryHandler {
 
         Mockito.when(feedStore.list())
                 .thenReturn(storeFeedNames.stream()
-                        .map(name -> DocRef.builder().name(name).build())
+                        .map(name -> DocRef.builder().type(FeedDoc.TYPE).uuid(name).name(name).build())
                         .toList());
 
         return queryHandler.getSuggestions(request).getList();

@@ -2,6 +2,7 @@ package stroom.pipeline.refdata;
 
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
+import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.refdata.RefDataStoreHolder.MapAvailability;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataStore;
@@ -43,6 +44,8 @@ class TestRefDataStoreHolder {
         pipelineReference = new PipelineReference(
                 null,
                 DocRef.builder()
+                        .type(FeedDoc.TYPE)
+                        .uuid("MY_FEED")
                         .name("MY_FEED")
                         .build(),
                 StreamTypeNames.REFERENCE);

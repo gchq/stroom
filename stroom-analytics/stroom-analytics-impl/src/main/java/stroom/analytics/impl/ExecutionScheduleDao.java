@@ -5,13 +5,20 @@ import stroom.analytics.shared.ExecutionHistoryRequest;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionScheduleRequest;
 import stroom.analytics.shared.ExecutionTracker;
+import stroom.docref.DocRef;
 import stroom.util.shared.ResultPage;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface ExecutionScheduleDao {
+
+    /**
+     * Fetch the node(s) on which this analytic executes, whether enabled or not.
+     */
+    Set<ExecutionNode> fetchExecutionNodes(final DocRef analyticDocRef);
 
     ResultPage<ExecutionSchedule> fetchExecutionSchedule(ExecutionScheduleRequest request);
 

@@ -20,23 +20,14 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.SvgImageUtil;
+import stroom.widget.util.client.Templates;
 
 import com.google.gwt.cell.client.AbstractCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 public class SelectionItemCell<I extends SelectionItem> extends AbstractCell<I> {
-
-    private static Template template;
-
-    public SelectionItemCell() {
-        if (template == null) {
-            template = GWT.create(Template.class);
-        }
-    }
 
     private String getCellClassName() {
         return "selectionItemCell";
@@ -58,11 +49,11 @@ public class SelectionItemCell<I extends SelectionItem> extends AbstractCell<I> 
                 content.append(iconSafeHtml);
             }
             if (row.hasRenderedLabel()) {
-                content.append(template.div(
+                content.append(Templates.div(
                         getCellClassName() + "-content",
                         row.getRenderedLabel()));
             } else {
-                content.append(template.div(
+                content.append(Templates.div(
                         getCellClassName() + "-text",
                         SafeHtmlUtil.getSafeHtml(row.getLabel())));
             }
@@ -74,16 +65,10 @@ public class SelectionItemCell<I extends SelectionItem> extends AbstractCell<I> 
                 String className = getCellClassName() + "-expander";
                 className += " " + expanderIcon.getClassName();
                 expanderIconSafeHtml = SafeHtmlUtils.fromTrustedString(expanderIcon.getSvg());
-                content.append(template.div(className, expanderIconSafeHtml));
+                content.append(Templates.div(className, expanderIconSafeHtml));
             }
 
-            sb.append(template.div("explorerCell", content.toSafeHtml()));
+            sb.append(Templates.div("explorerCell", content.toSafeHtml()));
         }
-    }
-
-    interface Template extends SafeHtmlTemplates {
-
-        @Template("<div class=\"{0}\">{1}</div>")
-        SafeHtml div(String className, SafeHtml content);
     }
 }

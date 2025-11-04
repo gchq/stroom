@@ -13,6 +13,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#5186** : Remove error logging for expected Plan B snapshot checking behaviour.
+
+* Issue **#5220** : Fix duplicate check column list change confirm dialog not showing if the duplicate check store is on a remote node.
+
+* Issue **#5126** : Improve Plan B null handling.
+
+* Issue **#5225** : Fix NPE on DocRef.
+
+* Issue **#5237** : Fix Plan B lookup no content error.
+
+
 ## [v7.11-beta.7] - 2025-10-20
 
 * Issue **#656** : Allow table filters to use dictionaries.

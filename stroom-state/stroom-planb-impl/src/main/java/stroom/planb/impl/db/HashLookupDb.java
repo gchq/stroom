@@ -1,20 +1,18 @@
 package stroom.planb.impl.db;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
+import stroom.lmdb.stream.LmdbIterable;
 import stroom.lmdb2.LmdbKeySequence;
 import stroom.planb.impl.serde.hash.Hash;
 import stroom.planb.impl.serde.hash.HashClashCount;
 import stroom.planb.impl.serde.hash.HashFactory;
 
-import org.lmdbjava.CursorIterable;
-import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.PutFlags;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
-import java.util.Iterator;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -189,14 +187,7 @@ public class HashLookupDb {
     }
 
     public void forEachHash(final Txn<ByteBuffer> readTxn, final Consumer<ByteBuffer> keyConsumer) {
-        try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
-            final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-            while (iterator.hasNext()
-                   && !Thread.currentThread().isInterrupted()) {
-                final KeyVal<ByteBuffer> kv = iterator.next();
-                keyConsumer.accept(kv.key());
-            }
-        }
+        LmdbIterable.iterate(readTxn, dbi, (key, val) -> keyConsumer.accept(key));
     }
 
     public void deleteByHash(final Txn<ByteBuffer> writeTxn, final ByteBuffer key) {

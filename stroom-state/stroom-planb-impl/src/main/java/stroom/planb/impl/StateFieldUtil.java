@@ -7,6 +7,7 @@ import stroom.planb.impl.db.session.SessionFields;
 import stroom.planb.impl.db.state.StateFields;
 import stroom.planb.impl.db.temporalrangestate.TemporalRangeStateFields;
 import stroom.planb.impl.db.temporalstate.TemporalStateFields;
+import stroom.planb.impl.db.trace.TraceFields;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.MetricSettings;
 import stroom.planb.shared.MetricValueSchema;
@@ -31,6 +32,7 @@ public class StateFieldUtil {
             case SESSION -> SessionFields.FIELDS;
             case HISTOGRAM -> HistogramFields.FIELDS;
             case METRIC -> getMetricFields(doc);
+            case TRACE -> TraceFields.FIELDS;
         };
     }
 
@@ -83,6 +85,7 @@ public class StateFieldUtil {
             case METRIC -> getMetricFields(doc)
                     .stream()
                     .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
+            case TRACE -> TraceFields.FIELD_MAP;
         };
     }
 
@@ -94,6 +97,7 @@ public class StateFieldUtil {
             case SESSION -> SessionFields.START_FIELD;
             case HISTOGRAM -> HistogramFields.TIME_FIELD;
             case METRIC -> MetricFields.TIME_FIELD;
+            case TRACE -> TraceFields.START_TIME_FIELD;
         };
     }
 }

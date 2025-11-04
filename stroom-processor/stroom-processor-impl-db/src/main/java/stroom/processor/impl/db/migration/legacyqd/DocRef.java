@@ -17,7 +17,6 @@
 package stroom.processor.impl.db.migration.legacyqd;
 
 import stroom.docref.HasDisplayValue;
-import stroom.docref.HasNameMutable;
 import stroom.docref.HasType;
 import stroom.docref.HasUuid;
 

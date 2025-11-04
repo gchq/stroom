@@ -1,5 +1,6 @@
 package stroom.planb.impl.data;
 
+import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentNotFoundException;
@@ -42,6 +43,7 @@ public class ShardManager {
     public static final String SNAPSHOT_CREATOR_TASK_NAME = "Plan B Snapshot Creator";
 
     private final ByteBuffers byteBuffers;
+    private final ByteBufferFactory byteBufferFactory;
     private final PlanBDocCache planBDocCache;
     private final PlanBDocStore planBDocStore;
     private final Map<String, Shard> shardMap = new ConcurrentHashMap<>();
@@ -53,6 +55,7 @@ public class ShardManager {
 
     @Inject
     public ShardManager(final ByteBuffers byteBuffers,
+                        final ByteBufferFactory byteBufferFactory,
                         final PlanBDocCache planBDocCache,
                         final PlanBDocStore planBDocStore,
                         final NodeInfo nodeInfo,
@@ -61,6 +64,7 @@ public class ShardManager {
                         final FileTransferClient fileTransferClient,
                         final TaskContextFactory taskContextFactory) {
         this.byteBuffers = byteBuffers;
+        this.byteBufferFactory = byteBufferFactory;
         this.planBDocCache = planBDocCache;
         this.planBDocStore = planBDocStore;
         this.nodeInfo = nodeInfo;
@@ -173,7 +177,7 @@ public class ShardManager {
             final Shard shard = getShardForDocUuid(request.getPlanBDocRef().getUuid());
             shard.checkSnapshotStatus(request);
         } catch (final RuntimeException e) {
-            LOGGER.error(() -> LogUtil.message("Error checking snapshot status: {} {}",
+            LOGGER.debug(() -> LogUtil.message("Debug checking snapshot status: {} {}",
                     request.getPlanBDocRef(), e.getMessage()), e);
             throw e;
         }
@@ -252,7 +256,9 @@ public class ShardManager {
 
     private Shard createShard(final PlanBDoc doc) {
         if (isSnapshotNode()) {
-            return new SnapshotShard(byteBuffers,
+            return new SnapshotShard(
+                    byteBuffers,
+                    byteBufferFactory,
                     configProvider,
                     statePaths,
                     fileTransferClient,
@@ -260,6 +266,7 @@ public class ShardManager {
         }
         return new StoreShard(
                 byteBuffers,
+                byteBufferFactory,
                 configProvider,
                 statePaths,
                 doc);

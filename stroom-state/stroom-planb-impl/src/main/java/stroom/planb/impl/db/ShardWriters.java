@@ -1,5 +1,6 @@
 package stroom.planb.impl.db;
 
+import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.meta.shared.Meta;
 import stroom.planb.impl.PlanBDocCache;
@@ -10,6 +11,7 @@ import stroom.planb.impl.data.FileTransferClient;
 import stroom.planb.impl.data.RangeState;
 import stroom.planb.impl.data.SequentialFileStore;
 import stroom.planb.impl.data.Session;
+import stroom.planb.impl.data.SpanKV;
 import stroom.planb.impl.data.State;
 import stroom.planb.impl.data.TemporalRangeState;
 import stroom.planb.impl.data.TemporalState;
@@ -21,6 +23,7 @@ import stroom.planb.impl.db.session.SessionDb;
 import stroom.planb.impl.db.state.StateDb;
 import stroom.planb.impl.db.temporalrangestate.TemporalRangeStateDb;
 import stroom.planb.impl.db.temporalstate.TemporalStateDb;
+import stroom.planb.impl.db.trace.TraceDb;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.util.io.FileUtil;
@@ -52,16 +55,19 @@ public class ShardWriters {
 
     private final PlanBDocCache planBDocCache;
     private final ByteBuffers byteBuffers;
+    private final ByteBufferFactory byteBufferFactory;
     private final StatePaths statePaths;
     private final FileTransferClient fileTransferClient;
 
     @Inject
     ShardWriters(final PlanBDocCache planBDocCache,
                  final ByteBuffers byteBuffers,
+                 final ByteBufferFactory byteBufferFactory,
                  final StatePaths statePaths,
                  final FileTransferClient fileTransferClient) {
         this.planBDocCache = planBDocCache;
         this.byteBuffers = byteBuffers;
+        this.byteBufferFactory = byteBufferFactory;
         this.statePaths = statePaths;
         this.fileTransferClient = fileTransferClient;
 
@@ -81,13 +87,14 @@ public class ShardWriters {
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
-        return new ShardWriter(planBDocCache, byteBuffers, fileTransferClient, dir, meta);
+        return new ShardWriter(planBDocCache, byteBuffers, byteBufferFactory, fileTransferClient, dir, meta);
     }
 
     public static class ShardWriter implements AutoCloseable {
 
         private final PlanBDocCache planBDocCache;
         private final ByteBuffers byteBuffers;
+        private final ByteBufferFactory byteBufferFactory;
         private final FileTransferClient fileTransferClient;
         private final Path dir;
         private final Meta meta;
@@ -96,11 +103,13 @@ public class ShardWriters {
 
         public ShardWriter(final PlanBDocCache planBDocCache,
                            final ByteBuffers byteBuffers,
+                           final ByteBufferFactory byteBufferFactory,
                            final FileTransferClient fileTransferClient,
                            final Path dir,
                            final Meta meta) {
             this.planBDocCache = planBDocCache;
             this.byteBuffers = byteBuffers;
+            this.byteBufferFactory = byteBufferFactory;
             this.fileTransferClient = fileTransferClient;
             this.dir = dir;
             this.meta = meta;
@@ -188,6 +197,11 @@ public class ShardWriters {
                 db.insert(writer, temporalValue);
             }
 
+            public void addSpanValue(final SpanKV spanKV) {
+                final TraceDb db = (TraceDb) lmdb;
+                db.insert(writer, spanKV);
+            }
+
             public boolean isSynchroniseMerge() {
                 return synchroniseMerge;
             }
@@ -234,11 +248,17 @@ public class ShardWriters {
             getWriter(doc).addMetricValue(temporalValue);
         }
 
+        public void addSpanValue(final PlanBDoc doc,
+                                 final SpanKV spanKV) {
+            getWriter(doc).addSpanValue(spanKV);
+        }
+
         private WriterInstance getWriter(final PlanBDoc doc) {
             return writers.computeIfAbsent(doc, k ->
                     new WriterInstance(PlanBDb.open(doc,
                             getLmdbEnvDir(k),
                             byteBuffers,
+                            byteBufferFactory,
                             false),
                             NullSafe.getOrElse(
                                     doc,

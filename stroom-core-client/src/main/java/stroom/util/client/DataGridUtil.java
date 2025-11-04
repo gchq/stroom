@@ -15,6 +15,7 @@ import stroom.cell.valuespinner.client.ValueSpinnerCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CopyTextCell;
 import stroom.data.client.presenter.DocRefCell;
+import stroom.data.client.presenter.FeedRefCell;
 import stroom.data.client.presenter.HasContextMenusCell;
 import stroom.data.client.presenter.UserRefCell;
 import stroom.data.grid.client.ColSpec;
@@ -525,6 +526,27 @@ public class DataGridUtil {
         dataGrid.addColumn(colSpec);
     }
 
+    public static <T_ROW> void addFeedColumn(final EventBus eventBus,
+                                             final MyDataGrid<T_ROW> dataGrid,
+                                             final String name,
+                                             final Function<T_ROW, String> nameExtractionFunction) {
+        final Column<T_ROW, T_ROW> column = new ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>>(Function.identity(),
+                () -> new FeedRefCell.Builder<T_ROW>()
+                        .eventBus(eventBus)
+                        .nameFunction(nameExtractionFunction)
+                        .showIcon(true)
+                        .build())
+                .build();
+
+        final ColSpec<T_ROW> colSpec = new ColSpec.Builder<T_ROW>()
+                .column(column)
+                .resizable(true)
+                .name(name)
+                .width(ColumnSizeConstants.BIG_COL)
+                .build();
+        dataGrid.addColumn(colSpec);
+    }
+
     /**
      * A builder for creating a column for a {@link DocRef} with hover icons to copy the name of the doc
      * and to open the doc.
@@ -535,8 +557,7 @@ public class DataGridUtil {
     @SuppressWarnings("checkstyle:LineLength")
     public static <T_ROW> ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>> docRefColumnBuilder(
             final Function<T_ROW, DocRef> docRefExtractionFunction,
-            final EventBus eventBus,
-            final boolean allowLinkByName) {
+            final EventBus eventBus) {
 
         Objects.requireNonNull(docRefExtractionFunction);
 
@@ -546,7 +567,21 @@ public class DataGridUtil {
                         .Builder<T_ROW>()
                         .eventBus(eventBus)
                         .docRefFunction(docRefExtractionFunction)
-                        .allowLinkByName(allowLinkByName)
+                        .build());
+    }
+
+    public static <T_ROW> ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>> feedRefColumnBuilder(
+            final Function<T_ROW, String> nameExtractionFunction,
+            final EventBus eventBus) {
+
+        Objects.requireNonNull(nameExtractionFunction);
+
+        return new ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>>(
+                Function.identity(),
+                () -> new FeedRefCell
+                        .Builder<T_ROW>()
+                        .eventBus(eventBus)
+                        .nameFunction(nameExtractionFunction)
                         .build());
     }
 

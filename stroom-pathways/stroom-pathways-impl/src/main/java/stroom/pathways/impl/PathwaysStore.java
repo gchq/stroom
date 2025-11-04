@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,10 +12,19 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
-package stroom.docref;
+package stroom.pathways.impl;
 
-public interface HasNameMutable extends HasName {
-    void setName(final String name);
+import stroom.docref.DocRef;
+import stroom.docstore.api.DocumentStore;
+import stroom.index.shared.LuceneIndexDoc;
+import stroom.pathways.shared.PathwaysDoc;
+
+import java.util.List;
+
+public interface PathwaysStore extends DocumentStore<PathwaysDoc> {
+
+    List<DocRef> list();
 }

@@ -19,15 +19,11 @@ import stroom.planb.impl.serde.time.MinuteTimeSerde;
 import stroom.planb.impl.serde.time.NanoTimeSerde;
 import stroom.planb.impl.serde.time.SecondTimeSerde;
 import stroom.planb.impl.serde.time.TimeSerde;
-import stroom.planb.shared.AbstractPlanBSettings;
-import stroom.planb.shared.HashLength;
-import stroom.planb.shared.KeyType;
+import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.TemporalPrecision;
-import stroom.planb.shared.TemporalStateKeySchema;
 import stroom.planb.shared.TemporalStateSettings;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;
-import stroom.util.shared.NullSafe;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
@@ -62,31 +58,13 @@ public class TestVariableKeySerde {
         final ByteBuffers byteBuffers = new ByteBuffers(new ByteBufferFactoryImpl());
         final TemporalStateSettings settings = new TemporalStateSettings.Builder().build();
         final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
-        final Long mapSize = NullSafe.getOrElse(
-                settings,
-                AbstractPlanBSettings::getMaxStoreSize,
-                AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE);
         try (final PlanBEnv env = new PlanBEnv(dbPath,
-                mapSize,
+                settings.getMaxStoreSize(),
                 20,
                 false,
                 hashClashCommitRunnable)) {
-            final KeyType keyType = NullSafe.getOrElse(
-                    settings,
-                    TemporalStateSettings::getKeySchema,
-                    TemporalStateKeySchema::getKeyType,
-                    TemporalStateKeySchema.DEFAULT_KEY_TYPE);
-            final HashLength keyHashLength = NullSafe.getOrElse(
-                    settings,
-                    TemporalStateSettings::getKeySchema,
-                    TemporalStateKeySchema::getHashLength,
-                    TemporalStateKeySchema.DEFAULT_HASH_LENGTH);
-            final TimeSerde timeSerde = createTimeSerde(NullSafe.getOrElse(
-                    settings,
-                    TemporalStateSettings::getKeySchema,
-                    TemporalStateKeySchema::getTemporalPrecision,
-                    TemporalStateKeySchema.DEFAULT_TEMPORAL_PRECISION));
-            final HashFactory valueHashFactory = HashFactoryFactory.create(keyHashLength);
+            final TimeSerde timeSerde = createTimeSerde(settings.getKeySchema().getTemporalPrecision());
+            final HashFactory valueHashFactory = HashFactoryFactory.create(settings.getKeySchema().getHashLength());
             final UidLookupDb uidLookupDb = new UidLookupDb(
                     env,
                     byteBuffers,
@@ -98,6 +76,7 @@ public class TestVariableKeySerde {
                     hashClashCommitRunnable,
                     KEY_LOOKUP_DB_NAME);
             final VariableKeySerde variableKeySerde = new VariableKeySerde(
+                    new PlanBDoc(),
                     uidLookupDb,
                     hashLookupDb,
                     byteBuffers,
