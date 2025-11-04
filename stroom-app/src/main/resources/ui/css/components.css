@@ -2650,6 +2650,10 @@ button.main-menu svg {
 
 /* Background and border on table */
 .credentials-manager-dialog {
+    display: flex;
+    flex-direction: column;
+}
+.credentials-manager-dialog .credentials-manager {
     background-color: var(--control__background-color);
     border: solid 1px var(--control__border-color);
     border-radius: .25rem;
