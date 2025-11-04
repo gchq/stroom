@@ -4790,9 +4790,9 @@
         "tags" : [ "Feeds" ]
       }
     },
-    "/feed/v1/getUuid/{uuid}" : {
+    "/feed/v1/getDocRefForName/{name}" : {
       "get" : {
-        "operationId" : "getUuid",
+        "operationId" : "getDocRefForName",
         "parameters" : [ {
           "in" : "path",
           "name" : "name",
@@ -4804,16 +4804,16 @@
         "responses" : {
           "default" : {
             "content" : {
-              "text/plain" : {
+              "application/json" : {
                 "schema" : {
-                  "type" : "string"
+                  "$ref" : "#/components/schemas/DocRef"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "Fetch a feed UUID for a feed name",
+        "summary" : "Fetch a feed DocRef for a feed name",
         "tags" : [ "Feeds" ]
       }
     },
