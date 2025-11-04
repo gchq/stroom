@@ -10,6 +10,8 @@ import stroom.credentials.client.presenter.CredentialsManagerDialogPresenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
+import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.shared.AppPermission;
 import stroom.widget.button.client.Button;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 
@@ -47,6 +49,11 @@ public class ContentStoreContentPackDetailsPresenter
      * Credentials dialog
      */
     private final CredentialsManagerDialogPresenter credentialsDialog;
+
+    /**
+     * Tells the client what App Permissions the user has
+     */
+    private final ClientSecurityContext securityContext;
 
     /**
      * Displays the icon of the content pack
@@ -150,11 +157,13 @@ public class ContentStoreContentPackDetailsPresenter
     @Inject
     public ContentStoreContentPackDetailsPresenter(final MarkdownConverter markdownConverter,
                                                    final RestFactory restFactory,
-                                                   final CredentialsManagerDialogPresenter credentialsDialog) {
+                                                   final CredentialsManagerDialogPresenter credentialsDialog,
+                                                   final ClientSecurityContext securityContext) {
 
         this.markdownConverter = markdownConverter;
         this.restFactory = restFactory;
         this.credentialsDialog = credentialsDialog;
+        this.securityContext = securityContext;
 
         addStyleName("contentstore-details");
 
@@ -352,32 +361,40 @@ public class ContentStoreContentPackDetailsPresenter
 
             // Ask for credentials if (contentPack.getGitNeedsAuth())
             if (cpws.getContentPack().getGitNeedsAuth()) {
-                final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(credentialsDialog);
-                credentialsDialog.setupDialog(
-                        builder,
-                        cpws.getContentPack().getContentStoreMetadata().getAuthContact(),
-                        null);
-                builder.onHideRequest(e -> {
-                            if (e.isOk()) {
-                                final String credentialsId = credentialsDialog.getCredentialsId();
+                if (securityContext.hasAppPermission(AppPermission.CREDENTIALS)) {
+                    final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(credentialsDialog);
+                    credentialsDialog.setupDialog(
+                            builder,
+                            cpws.getContentPack().getContentStoreMetadata().getAuthContact(),
+                            null);
+                    builder.onHideRequest(e -> {
+                        if (e.isOk()) {
+                            final String credentialsId = credentialsDialog.getCredentialsId();
 
-                                if (credentialsId != null) {
-                                    // Create the GitRepo with the given credentials
-                                    e.hide();
-                                    requestGitRepoCreation(cpws, credentialsId);
-                                } else {
-                                    // Something is wrong
-                                    AlertEvent.fireWarn(credentialsDialog,
-                                            "No credentials were selected; "
-                                            + "this content pack cannot be downloaded",
-                                            e::reset);
-                                }
-                            } else {
-                                // Cancel pressed
+                            if (credentialsId != null) {
+                                // Create the GitRepo with the given credentials
                                 e.hide();
+                                requestGitRepoCreation(cpws, credentialsId);
+                            } else {
+                                // Something is wrong
+                                AlertEvent.fireWarn(credentialsDialog,
+                                        "No credentials were selected; "
+                                        + "this content pack cannot be downloaded",
+                                        e::reset);
                             }
-                        })
-                        .fire();
+                        } else {
+                            // Cancel pressed
+                            e.hide();
+                        }
+                    })
+                            .fire();
+                } else {
+                    // We need credentials but don't have permission to access them
+                    AlertEvent.fireError(credentialsDialog,
+                            "This content pack requires credentials, "
+                            + "but you don't have permission to access credentials",
+                            null);
+                }
 
             } else {
                 // No authentication needed
