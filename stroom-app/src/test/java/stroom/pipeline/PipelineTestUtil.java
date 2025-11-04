@@ -28,6 +28,8 @@ public final class PipelineTestUtil {
 
     public static PipelineDoc createBasicPipeline(final String data) {
         final PipelineDoc pipelineDoc = new PipelineDoc();
+        pipelineDoc.setType(PipelineDoc.TYPE);
+        pipelineDoc.setUuid("test");
         pipelineDoc.setName("test");
         pipelineDoc.setDescription("test");
         if (data != null) {

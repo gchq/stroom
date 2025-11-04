@@ -1,13 +1,10 @@
 package stroom.data.client.presenter;
 
-import stroom.core.client.UrlParameters;
 import stroom.data.grid.client.EventCell;
-import stroom.data.grid.client.HasContextMenus;
-import stroom.docref.DocRef;
-import stroom.docref.DocRef.DisplayType;
 import stroom.docstore.shared.DocumentType;
-import stroom.docstore.shared.DocumentTypeRegistry;
-import stroom.document.client.event.OpenDocumentEvent;
+import stroom.feed.client.CopyFeedUrlEvent;
+import stroom.feed.client.OpenFeedEvent;
+import stroom.feed.shared.FeedDoc;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.ClipboardUtil;
 import stroom.util.shared.NullSafe;
@@ -15,6 +12,8 @@ import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItem;
+import stroom.widget.menu.client.presenter.ShowMenuEvent;
+import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.SafeHtmlUtil;
@@ -31,7 +30,6 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -41,8 +39,8 @@ import java.util.function.Function;
 
 import static com.google.gwt.dom.client.BrowserEvents.MOUSEDOWN;
 
-public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
-        implements HasHandlers, EventCell, HasContextMenus<T_ROW> {
+public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
+        implements HasHandlers, EventCell {
 
     private static final String ICON_CLASS_NAME = "svgIcon";
     private static final String COPY_CLASS_NAME = "docRefLinkCopy";
@@ -53,7 +51,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
     private final EventBus eventBus;
     private final boolean showIcon;
     private final Function<T_ROW, SafeHtml> cellTextFunction;
-    private final Function<T_ROW, DocRef> docRefFunction;
+    private final Function<T_ROW, String> nameFunction;
     private final Function<T_ROW, String> cssClassFunction;
 
     private static volatile Template template;
@@ -61,19 +59,19 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
     /**
      * @param showIcon         Set to true to show the type icon next to the text
      * @param cellTextFunction Function to provide the cell 'text' in HTML form.
-     * @param docRefFunction   Function to provide a doc ref if the value can give us one.
+     * @param nameFunction     Function to provide a doc ref if the value can give us one.
      * @param cssClassFunction Function to provide additional css class names.
      */
-    private DocRefCell(final EventBus eventBus,
-                       final boolean showIcon,
-                       final Function<T_ROW, SafeHtml> cellTextFunction,
-                       final Function<T_ROW, DocRef> docRefFunction,
-                       final Function<T_ROW, String> cssClassFunction) {
+    private FeedRefCell(final EventBus eventBus,
+                        final boolean showIcon,
+                        final Function<T_ROW, SafeHtml> cellTextFunction,
+                        final Function<T_ROW, String> nameFunction,
+                        final Function<T_ROW, String> cssClassFunction) {
         super(MOUSEDOWN);
         this.eventBus = eventBus;
         this.showIcon = showIcon;
         this.cellTextFunction = cellTextFunction;
-        this.docRefFunction = docRefFunction;
+        this.nameFunction = nameFunction;
         this.cssClassFunction = cssClassFunction;
 
         if (template == null) {
@@ -99,36 +97,59 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                                final NativeEvent event,
                                final ValueUpdater<T_ROW> valueUpdater) {
         super.onBrowserEvent(context, parent, value, event, valueUpdater);
-        if (MOUSEDOWN.equals(event.getType())) {
-            if (MouseUtil.isPrimary(event)) {
-                onEnterKeyDown(context, parent, value, event, valueUpdater);
+        final String name = NullSafe.get(value, nameFunction);
+        if (name != null) {
+            if (MOUSEDOWN.equals(event.getType())) {
+                if (MouseUtil.isPrimary(event)) {
+                    onEnterKeyDown(context, parent, value, event, valueUpdater);
+                } else {
+                    final String type;
+                    final DocumentType documentType = FeedDoc.DOCUMENT_TYPE;
+                    type = documentType.getDisplayType();
+
+                    final List<Item> menuItems = new ArrayList<>();
+                    int priority = 1;
+                    menuItems.add(new IconMenuItem.Builder()
+                            .priority(priority++)
+                            .icon(SvgImage.OPEN)
+                            .text("Open " + type)
+                            .command(() -> OpenFeedEvent.fire(this, name, true))
+                            .build());
+                    menuItems.add(createCopyAsMenuItem(name, priority++));
+
+                    ShowMenuEvent
+                            .builder()
+                            .items(menuItems)
+                            .popupPosition(new PopupPosition(event.getClientX(), event.getClientY()))
+                            .fire(this);
+                }
+            }
+        } else {
+            final String text = cellTextFunction.apply(value).asString();
+            if (MOUSEDOWN.equals(event.getType())) {
+                if (MouseUtil.isPrimary(event)) {
+                    final Element element = event.getEventTarget().cast();
+                    if (ElementUtil.hasClassName(element, CopyTextUtil.COPY_CLASS_NAME, 5)) {
+                        if (text != null) {
+                            ClipboardUtil.copy(text);
+                        }
+                    }
+                } else if (NullSafe.isNonBlankString(text)) {
+                    final List<Item> menuItems = new ArrayList<>();
+                    menuItems.add(new IconMenuItem.Builder()
+                            .priority(1)
+                            .icon(SvgImage.COPY)
+                            .text("Copy")
+                            .command(() -> ClipboardUtil.copy(text))
+                            .build());
+                    ShowMenuEvent
+                            .builder()
+                            .items(menuItems)
+                            .popupPosition(new PopupPosition(event.getClientX(), event.getClientY()))
+                            .fire(this);
+                }
             }
         }
-    }
-
-    @Override
-    public List<Item> getContextMenuItems(final Context context, final T_ROW value) {
-        final List<Item> menuItems = new ArrayList<>();
-        final DocRef docRef = NullSafe.get(value, docRefFunction);
-
-        if (docRef != null) {
-            final String type;
-            final DocumentType documentType = DocumentTypeRegistry.get(docRef.getType());
-            type = NullSafe.getOrElse(documentType, DocumentType::getDisplayType, docRef.getType());
-
-            int priority = 1;
-            menuItems.add(new IconMenuItem.Builder()
-                    .priority(priority++)
-                    .icon(SvgImage.OPEN)
-                    .text("Open " + type)
-                    .command(() -> OpenDocumentEvent.fire(this, docRef, true))
-                    .build());
-            menuItems.add(createCopyAsMenuItem(docRef, priority++));
-
-        }
-        return menuItems.isEmpty()
-                ? null
-                : menuItems;
     }
 
     @Override
@@ -143,15 +164,15 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                                   final NativeEvent event,
                                   final ValueUpdater<T_ROW> valueUpdater) {
         final Element element = event.getEventTarget().cast();
-        final DocRef docRef = NullSafe.get(value, docRefFunction);
-        if (docRef != null) {
+        final String name = NullSafe.get(value, nameFunction);
+        if (name != null) {
             if (ElementUtil.hasClassName(element, COPY_CLASS_NAME, 5)) {
                 final String text = cellTextFunction.apply(value).asString();
                 if (text != null) {
                     ClipboardUtil.copy(text);
                 }
             } else if (ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 5)) {
-                OpenDocumentEvent.fire(this, docRef, true);
+                OpenFeedEvent.fire(this, name, true);
             }
         } else {
             final String text = cellTextFunction.apply(value).asString();
@@ -168,7 +189,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
         if (value == null) {
             sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else {
-            final DocRef docRef = NullSafe.get(value, docRefFunction);
+            final String name = NullSafe.get(value, nameFunction);
             final SafeHtml cellHtmlText = cellTextFunction.apply(value);
             String cssClasses = "docRefLinkText";
             final String additionalClasses = cssClassFunction.apply(value);
@@ -183,8 +204,8 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                     "docRefLinkContainer");
 
             sb.appendHtmlConstant("<div class=\"" + containerClasses + "\">");
-            if (docRef != null && showIcon) {
-                final DocumentType documentType = DocumentTypeRegistry.get(docRef.getType());
+            if (name != null && showIcon) {
+                final DocumentType documentType = FeedDoc.DOCUMENT_TYPE;
                 if (documentType != null) {
                     final SvgImage svgImage = documentType.getIcon();
                     final SafeHtml iconDiv = SvgImageUtil.toSafeHtml(
@@ -199,7 +220,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
             sb.append(textDiv);
 
             // Add copy and open links.
-            if (docRef != null) {
+            if (name != null) {
                 // This DocRefCell gets used for pipeline props which sometimes are a docRef
                 // and other times just a simple string
                 final SafeHtml copy = SvgImageUtil.toSafeHtml(
@@ -208,28 +229,26 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                         COPY_CLASS_NAME,
                         HOVER_ICON_CLASS_NAME);
                 sb.append(template.divWithToolTip(
-                        "Copy name '" + docRef.getName() + "' to clipboard",
+                        "Copy name '" + name + "' to clipboard",
                         copy));
 
-                if (docRef.getUuid() != null) {
-                    final SafeHtml open = SvgImageUtil.toSafeHtml(
-                            SvgImage.OPEN,
-                            ICON_CLASS_NAME,
-                            OPEN_CLASS_NAME,
-                            HOVER_ICON_CLASS_NAME);
-                    sb.append(template.divWithToolTip(
-                            "Open " + docRef.getType() + " " + docRef.getName() + " in new tab",
-                            open));
-                }
+                final SafeHtml open = SvgImageUtil.toSafeHtml(
+                        SvgImage.OPEN,
+                        ICON_CLASS_NAME,
+                        OPEN_CLASS_NAME,
+                        HOVER_ICON_CLASS_NAME);
+                sb.append(template.divWithToolTip(
+                        "Open " + FeedDoc.TYPE + " " + name + " in new tab",
+                        open));
             }
 
             sb.appendHtmlConstant("</div>");
         }
     }
 
-    private MenuItem createCopyAsMenuItem(final DocRef docRef,
+    private MenuItem createCopyAsMenuItem(final String name,
                                           final int priority) {
-        final List<Item> children = createCopyAsChildMenuItems(docRef);
+        final List<Item> children = createCopyAsChildMenuItems(name);
         return new IconParentMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.COPY)
@@ -239,48 +258,31 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                 .build();
     }
 
-    private List<Item> createCopyAsChildMenuItems(final DocRef docRef) {
+    private List<Item> createCopyAsChildMenuItems(final String name) {
         // If a user has VIEW on a doc they will also see (but not have VIEW) all ancestor
         // docs, so we need to only allow 'copy name' for these 'see but not view' cases.
         // Thus, totalCount may be bigger than readableCount
         final List<Item> childMenuItems = new ArrayList<>();
         int priority = 1;
-        if (NullSafe.isNonBlankString(docRef.getName())) {
+        if (NullSafe.isNonBlankString(name)) {
             childMenuItems.add(new IconMenuItem.Builder()
                     .priority(priority++)
                     .icon(SvgImage.COPY)
                     .text("Copy Name to Clipboard")
                     .enabled(true)
-                    .command(() -> ClipboardUtil.copy(docRef.getName()))
+                    .command(() -> ClipboardUtil.copy(name))
                     .build());
         }
-        if (NullSafe.isNonBlankString(docRef.getUuid())) {
-            childMenuItems.add(new IconMenuItem.Builder()
-                    .priority(priority++)
-                    .icon(SvgImage.COPY)
-                    .text("Copy UUID to Clipboard")
-                    .enabled(true)
-                    .command(() -> ClipboardUtil.copy(docRef.getUuid()))
-                    .build());
-        }
-        childMenuItems.add(createCopyLinkMenuItem(docRef, priority++));
+        childMenuItems.add(createCopyLinkMenuItem(name, priority++));
         return childMenuItems;
     }
 
-    private MenuItem createCopyLinkMenuItem(final DocRef docRef, final int priority) {
-        // Generate a URL that can be used to open a new Stroom window with the target document loaded
-        final String docUrl = Window.Location.createUrlBuilder()
-                .setPath("/")
-                .setParameter(UrlParameters.ACTION, UrlParameters.OPEN_DOC_ACTION)
-                .setParameter(UrlParameters.DOC_TYPE_QUERY_PARAM, docRef.getType())
-                .setParameter(UrlParameters.DOC_UUID_QUERY_PARAM, docRef.getUuid())
-                .buildString();
-
+    private MenuItem createCopyLinkMenuItem(final String name, final int priority) {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.SHARE)
                 .text("Copy Link to Clipboard")
-                .command(() -> ClipboardUtil.copy(docUrl))
+                .command(() -> CopyFeedUrlEvent.fire(this, name))
                 .build();
     }
 
@@ -309,9 +311,8 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
 
         private EventBus eventBus;
         private boolean showIcon = false;
-        private DocRef.DisplayType displayType = DisplayType.NAME;
         private Function<T, SafeHtml> cellTextFunction;
-        private Function<T, DocRef> docRefFunction;
+        private Function<T, String> nameFunction;
         private Function<T, String> cssClassFunction;
 
         public Builder<T> eventBus(final EventBus eventBus) {
@@ -324,18 +325,13 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
             return this;
         }
 
-        public Builder<T> displayType(final DisplayType displayType) {
-            this.displayType = displayType;
-            return this;
-        }
-
         public Builder<T> cellTextFunction(final Function<T, SafeHtml> cellTextFunction) {
             this.cellTextFunction = cellTextFunction;
             return this;
         }
 
-        public Builder<T> docRefFunction(final Function<T, DocRef> docRefFunction) {
-            this.docRefFunction = docRefFunction;
+        public Builder<T> nameFunction(final Function<T, String> nameFunction) {
+            this.nameFunction = nameFunction;
             return this;
         }
 
@@ -344,22 +340,17 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
             return this;
         }
 
-        public DocRefCell<T> build() {
-            if (docRefFunction == null) {
-                docRefFunction = v -> null;
+        public FeedRefCell<T> build() {
+            if (nameFunction == null) {
+                nameFunction = v -> null;
             }
             if (cellTextFunction == null) {
                 cellTextFunction = v -> {
-                    final DocRef docRef = docRefFunction.apply(v);
-                    if (docRef == null) {
+                    final String name = nameFunction.apply(v);
+                    if (name == null) {
                         return SafeHtmlUtils.EMPTY_SAFE_HTML;
                     } else {
-                        final String displayValue = docRef.getDisplayValue(NullSafe.requireNonNullElse(
-                                displayType,
-                                DisplayType.AUTO));
-                        return NullSafe.isNonBlankString(displayValue)
-                                ? SafeHtmlUtils.fromString(displayValue)
-                                : SafeHtmlUtils.EMPTY_SAFE_HTML;
+                        return SafeHtmlUtils.fromString(name);
                     }
                 };
             }
@@ -367,35 +358,11 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                 cssClassFunction = v -> null;
             }
 
-//
-//                public static String getTextFromDocRef(final DocRef docRef) {
-//                    return getTextFromDocRef(docRef, DisplayType.AUTO);
-//                }
-//
-//                public static String getTextFromDocRef(final DocRef docRef, final DisplayType displayType) {
-//                    if (docRef == null) {
-//                        return null;
-//                    } else {
-//                        return docRef.getDisplayValue(NullSafe.requireNonNullElse(displayType, DisplayType.AUTO));
-//                    }
-//                }
-//
-//            }
-//
-//
-//
-//        } else if (docRef != null) {
-//            cellHtmlText = SafeHtmlUtils.fromString(getTextFromDocRef(docRef, displayType));
-//        } else {
-//            cellHtmlText = SafeHtmlUtils.EMPTY_SAFE_HTML;
-//        }
-
-
-            return new DocRefCell<>(
+            return new FeedRefCell<>(
                     eventBus,
                     showIcon,
                     cellTextFunction,
-                    docRefFunction,
+                    nameFunction,
                     cssClassFunction);
         }
     }

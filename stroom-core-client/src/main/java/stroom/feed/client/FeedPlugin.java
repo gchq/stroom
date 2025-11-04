@@ -18,6 +18,7 @@
 package stroom.feed.client;
 
 import stroom.core.client.ContentManager;
+import stroom.core.client.UrlParameters;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -25,13 +26,17 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.explorer.client.event.ExplorerTaskMonitorFactory;
 import stroom.feed.client.presenter.FeedPresenter;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedResource;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.client.ClipboardUtil;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -57,6 +62,46 @@ public class FeedPlugin extends DocumentPlugin<FeedDoc> {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+
+        // Handle feed open events.
+        registerHandler(getEventBus().addHandler(OpenFeedEvent.getType(), event ->
+                restFactory
+                        .create(FEED_RESOURCE)
+                        .method(res -> res.getDocRefForName(event.getName()))
+                        .onSuccess(docRef -> {
+                            if (docRef != null) {
+                                open(docRef, event.isForceOpen(),
+                                        event.isFullScreen(),
+                                        new DefaultTaskMonitorFactory(this));
+                            }
+                        })
+                        .taskMonitorFactory(new ExplorerTaskMonitorFactory(this))
+                        .exec()));
+
+        registerHandler(getEventBus().addHandler(CopyFeedUrlEvent.getType(), event ->
+                restFactory
+                        .create(FEED_RESOURCE)
+                        .method(res -> res.getDocRefForName(event.getName()))
+                        .onSuccess(docRef -> {
+                            if (docRef != null) {
+                                // Generate a URL that can be used to open a new Stroom window with the target document
+                                // loaded
+                                final String docUrl = Window.Location.createUrlBuilder()
+                                        .setPath("/")
+                                        .setParameter(UrlParameters.ACTION, UrlParameters.OPEN_DOC_ACTION)
+                                        .setParameter(UrlParameters.DOC_TYPE_QUERY_PARAM, docRef.getType())
+                                        .setParameter(UrlParameters.DOC_UUID_QUERY_PARAM, docRef.getUuid())
+                                        .buildString();
+                                ClipboardUtil.copy(docUrl);
+                            }
+                        })
+                        .taskMonitorFactory(new ExplorerTaskMonitorFactory(this))
+                        .exec()));
     }
 
     @Override

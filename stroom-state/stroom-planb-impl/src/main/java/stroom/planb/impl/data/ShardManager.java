@@ -173,7 +173,7 @@ public class ShardManager {
             final Shard shard = getShardForDocUuid(request.getPlanBDocRef().getUuid());
             shard.checkSnapshotStatus(request);
         } catch (final RuntimeException e) {
-            LOGGER.error(() -> LogUtil.message("Error checking snapshot status: {} {}",
+            LOGGER.debug(() -> LogUtil.message("Debug checking snapshot status: {} {}",
                     request.getPlanBDocRef(), e.getMessage()), e);
             throw e;
         }

@@ -3268,6 +3268,25 @@ paths:
       summary: Fetch supported encodings
       tags:
       - Feeds
+  /feed/v1/getUuid/{uuid}:
+    get:
+      operationId: getUuid
+      parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: default response
+      summary: Fetch a feed UUID for a feed name
+      tags:
+      - Feeds
   /feed/v1/{uuid}:
     get:
       operationId: fetchFeed

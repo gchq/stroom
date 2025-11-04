@@ -141,7 +141,9 @@ public class PlanBQueryService {
                 final Response response = webTarget
                         .request(MediaType.APPLICATION_JSON)
                         .post(Entity.json(request));
-                if (response.getStatus() == Status.NOT_FOUND.getStatusCode()) {
+                if (response.getStatus() == Status.NO_CONTENT.getStatusCode()) {
+                    return null;
+                } else if (response.getStatus() == Status.NOT_FOUND.getStatusCode()) {
                     throw new NotFoundException(response);
                 } else if (response.getStatus() != Status.OK.getStatusCode()) {
                     throw new WebApplicationException(response);
