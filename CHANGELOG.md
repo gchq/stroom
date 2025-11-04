@@ -13,14 +13,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
-## [v7.11-pathways-beta.3] - 2025-10-22
+* Issue **#5186** : Remove error logging for expected Plan B snapshot checking behaviour.
 
-* Pathways beta 3.
+* Issue **#5220** : Fix duplicate check column list change confirm dialog not showing if the duplicate check store is on a remote node.
 
+* Issue **#5126** : Improve Plan B null handling.
 
-## [v7.11-pathways-beta.2] - 2025-10-22
+* Issue **#5225** : Fix NPE on DocRef.
 
-* Pathways beta 2.
+* Issue **#5237** : Fix Plan B lookup no content error.
 
 
 ## [v7.11-beta.7] - 2025-10-20
@@ -1849,9 +1850,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-pathways-beta.3...HEAD
-[v7.11-pathways-beta.3]: https://github.com/gchq/stroom/compare/v7.11-pathways-beta.2...v7.11-pathways-beta.3
-[v7.11-pathways-beta.2]: https://github.com/gchq/stroom/compare/v7.11-beta.7...v7.11-pathways-beta.2
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.7...HEAD
 [v7.11-beta.7]: https://github.com/gchq/stroom/compare/v7.11-beta.6...v7.11-beta.7
 [v7.11-beta.6]: https://github.com/gchq/stroom/compare/v7.11-beta.5...v7.11-beta.6
 [v7.11-beta.5]: https://github.com/gchq/stroom/compare/v7.11-beta.4...v7.11-beta.5

@@ -113,36 +113,6 @@ class TestDocRefInfoCache {
     }
 
     @Test
-    void testGet_noType() {
-        DocRef docRef = DOC_REF_1;
-        Optional<DocRefInfo> docRefInfo = docRefInfoCache.get(stripType(docRef));
-
-        assertThat(docRefInfo).isNotEmpty();
-        assertThat(docRefInfo.get().getDocRef()).isEqualTo(docRef);
-        assertThat(docRefInfoCache.get(docRef)).isEqualTo(docRefInfoCache.get(docRef));
-
-        docRef = DOC_REF_4;
-        docRefInfo = docRefInfoCache.get(stripType(docRef));
-
-        assertThat(docRefInfo).isNotEmpty();
-        assertThat(docRefInfo.get().getDocRef()).isEqualTo(docRef);
-        assertThat(docRefInfoCache.get(docRef)).isEqualTo(docRefInfoCache.get(docRef));
-    }
-
-    @Test
-    void testGet_noType_folder() {
-        final DocRef docRef = DOC_REF_FOLDER;
-        Mockito.when(mockExplorerActionHandlers.stream())
-                .thenReturn(Stream.of(new MyFolderExplorerActionHandler()));
-
-        final Optional<DocRefInfo> docRefInfo = docRefInfoCache.get(stripType(docRef));
-
-        assertThat(docRefInfo).isNotEmpty();
-        assertThat(docRefInfo.get().getDocRef()).isEqualTo(docRef);
-        assertThat(docRefInfoCache.get(docRef)).isEqualTo(docRefInfoCache.get(docRef));
-    }
-
-    @Test
     void testGet_noName() {
         final DocRef docRef = DOC_REF_1;
         final Optional<DocRefInfo> docRefInfo = docRefInfoCache.get(docRef.withoutName());
@@ -151,12 +121,6 @@ class TestDocRefInfoCache {
                 .isNotEmpty();
         assertThat(docRefInfo.get().getDocRef())
                 .isEqualTo(docRef);
-    }
-
-    private static DocRef stripType(final DocRef docRef) {
-        return docRef.copy()
-                .type(null)
-                .build();
     }
 
     private static DocRefInfo buildInfo(final DocRef docRef) {

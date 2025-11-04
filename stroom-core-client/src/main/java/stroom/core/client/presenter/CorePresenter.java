@@ -96,23 +96,22 @@ public class CorePresenter extends MyPresenter<CoreView, CoreProxy>
     @ProxyEvent
     @Override
     public void onCurrentUserChanged(final CurrentUserChangedEvent event) {
-        final DocRef docRef = DocRef.builder()
-                .type(urlParameters.getType())
-                .uuid(urlParameters.getUuid())
-                .build();
+        final String type = urlParameters.getType();
+        final String uuid = urlParameters.getUuid();
+
         if (UrlParameters.OPEN_DOC_ACTION.equals(urlParameters.getAction())) {
-            if (docRef.getType() == null) {
+            if (type == null) {
                 AlertEvent.fireError(this, "Error", "No document type specified", null);
-            } else if (docRef.getUuid() == null) {
+            } else if (uuid == null) {
                 AlertEvent.fireError(this, "Error", "No document UUID specified", null);
             } else {
-                ShowMainEvent.fire(this, docRef);
+                ShowMainEvent.fire(this, new DocRef(type, uuid));
             }
 
         } else {
             // See if we want to open document directly.
-            if (docRef.getType() != null && docRef.getUuid() != null) {
-                OpenDocumentEvent.fire(this, docRef, true, true);
+            if (type != null && uuid != null) {
+                OpenDocumentEvent.fire(this, new DocRef(type, uuid), true, true);
 
             } else {
                 // Show the main presenter without an initial document.

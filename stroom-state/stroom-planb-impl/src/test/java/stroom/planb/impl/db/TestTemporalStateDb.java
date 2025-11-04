@@ -606,6 +606,7 @@ class TestTemporalStateDb {
     private static PlanBDoc getDoc(final TemporalStateSettings settings) {
         return PlanBDoc
                 .builder()
+                .type(PlanBDoc.TYPE)
                 .uuid(MAP_UUID)
                 .name(MAP_NAME)
                 .stateType(StateType.TEMPORAL_STATE)
