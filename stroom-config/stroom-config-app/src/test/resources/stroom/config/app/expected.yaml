@@ -174,7 +174,7 @@ appConfig:
     importDirectory: "content_pack_import"
   contentStore:
     urls:
-    - "https://raw.githubusercontent.com/stroomworks4092/stroom-content/refs/heads/7.10/stroom-contentstore.yml"
+    - "https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/stroom-contentstore.yml"
   credentials:
     db:
       connection:

@@ -6,7 +6,6 @@ import stroom.contentstore.shared.ContentStoreContentPackWithDynamicState;
 import stroom.contentstore.shared.ContentStoreCreateGitRepoRequest;
 import stroom.contentstore.shared.ContentStoreResponse;
 import stroom.contentstore.shared.ContentStoreResponse.Status;
-import stroom.test.common.ProjectPathUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
@@ -68,9 +67,10 @@ public class ContentStoreTestSetup {
 
             // Hack to force the content store config to use our content store config file
             contentStoreResource = contentStoreResourceProvider.get();
-            contentStoreResource.resetContentStoreUrlsToFile(
-                    ProjectPathUtil.getRepoRoot(),
-                    "content-store-sample-data.yml");
+            contentStoreResource.addTestUriContentStoreUrl(
+                    "https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/stroom-contentstore.yml");
+            contentStoreResource.addTestUriContentStoreUrl(
+                    "https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/sample-source/stroom-sample-contentstore.yml");
 
             // Get all the items in one go
             final PageRequest pageRequest = new PageRequest(0, Integer.MAX_VALUE);
