@@ -15,6 +15,7 @@ flyway = "11.14.0"
 guice = "7.0.0"
 gwt = "2.12.2"
 jackson-swagger = "2.11.1" # Specific version of jackson for use with the swagger plugin
+jgit = "7.3.0.202506031305-r"
 jmh = "1.37"
 jooq = "3.20.8"
 junit-jupiter = "5.13.1"
@@ -126,8 +127,8 @@ jetty-http = { module = "org.eclipse.jetty:jetty-http" } # version controlled by
 jetty-server = { module = "org.eclipse.jetty:jetty-server" } # version controlled by dropwizard-dependencies
 jetty-servlet = { module = "org.eclipse.jetty:jetty-servlet" } # version controlled by dropwizard-dependencies
 jetty-servlets = { module = "org.eclipse.jetty:jetty-servlets" } # version controlled by dropwizard-dependencies
-jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version = "7.3.0.202506031305-r" }
-jgitssh = { module = "org.eclipse.jgit:org.eclipse.jgit.ssh.apache", version = "7.3.0.202506031305-r" }
+jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version.ref = "jgit" }
+jgitssh = { module = "org.eclipse.jgit:org.eclipse.jgit.ssh.apache", version.ref = "jgit" }
 jinjava = { module = "com.hubspot.jinjava:jinjava", version = "2.7.2" }
 jmh-core = { module = "org.openjdk.jmh:jmh-core", version.ref = "jmh" }
 jmh-generator-annprocess = { module = "org.openjdk.jmh:jmh-generator-annprocess", version.ref = "jmh" }
