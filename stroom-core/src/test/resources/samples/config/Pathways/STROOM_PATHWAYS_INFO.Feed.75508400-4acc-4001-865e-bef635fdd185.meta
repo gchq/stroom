@@ -1,0 +1,9 @@
+{
+  "type" : "Feed",
+  "uuid" : "75508400-4acc-4001-865e-bef635fdd185",
+  "name" : "STROOM_PATHWAYS-INFO",
+  "version" : "6f9a6c7a-7b09-43f1-b8a1-fbe8e0512e58",
+  "reference" : false,
+  "streamType" : "Raw Events",
+  "status" : "RECEIVE"
+}

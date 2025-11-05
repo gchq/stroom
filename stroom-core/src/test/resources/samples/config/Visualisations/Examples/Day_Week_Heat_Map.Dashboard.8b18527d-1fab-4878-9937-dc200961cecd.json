@@ -19,7 +19,6 @@
             "type" : "date",
             "pattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
             "timeZone" : {
-              "use" : "UTC",
               "id" : "Europe/London"
             },
             "usePreferences" : false

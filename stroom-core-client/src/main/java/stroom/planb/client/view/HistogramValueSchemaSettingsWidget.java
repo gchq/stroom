@@ -19,7 +19,6 @@ package stroom.planb.client.view;
 import stroom.item.client.SelectionBox;
 import stroom.planb.shared.HistogramValueSchema;
 import stroom.planb.shared.MaxValueSize;
-import stroom.util.shared.NullSafe;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -41,7 +40,7 @@ public class HistogramValueSchemaSettingsWidget
     public HistogramValueSchemaSettingsWidget(final Binder binder) {
         widget = binder.createAndBindUi(this);
         maxValue.addItems(MaxValueSize.ORDERED_LIST);
-        maxValue.setValue(HistogramValueSchema.DEFAULT_VALUE_TYPE);
+        setValueSchema(new HistogramValueSchema.Builder().build());
     }
 
     @Override
@@ -51,13 +50,15 @@ public class HistogramValueSchemaSettingsWidget
 
     @Override
     public HistogramValueSchema getValueSchema() {
-        return new HistogramValueSchema(maxValue.getValue());
+        return new HistogramValueSchema.Builder()
+                .valueType(maxValue.getValue())
+                .build();
     }
 
     @Override
     public void setValueSchema(final HistogramValueSchema valueSchema) {
-        maxValue.setValue(NullSafe.getOrElse(valueSchema,
-                HistogramValueSchema::getValueType, HistogramValueSchema.DEFAULT_VALUE_TYPE));
+        final HistogramValueSchema schema = new HistogramValueSchema.Builder(valueSchema).build();
+        maxValue.setValue(schema.getValueType());
     }
 
     public void onReadOnly(final boolean readOnly) {

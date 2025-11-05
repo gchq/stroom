@@ -1,5 +1,6 @@
 package stroom.analytics.impl.db;
 
+import stroom.analytics.impl.ExecutionNode;
 import stroom.analytics.impl.ExecutionScheduleDao;
 import stroom.analytics.impl.db.jooq.tables.records.ExecutionScheduleRecord;
 import stroom.analytics.shared.ExecutionHistory;
@@ -35,6 +36,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import static stroom.analytics.impl.db.jooq.tables.ExecutionHistory.EXECUTION_HISTORY;
 import static stroom.analytics.impl.db.jooq.tables.ExecutionSchedule.EXECUTION_SCHEDULE;
@@ -53,6 +55,22 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
         this.analyticsDbConnProvider = analyticsDbConnProvider;
         this.userRefLookupProvider = userRefLookupProvider;
         this.securityContext = securityContext;
+    }
+
+    @Override
+    public Set<ExecutionNode> fetchExecutionNodes(final DocRef analyticDocRef) {
+        return Set.copyOf(JooqUtil.contextResult(analyticsDbConnProvider, context -> context
+                        .selectDistinct(
+                                EXECUTION_SCHEDULE.NODE_NAME,
+                                EXECUTION_SCHEDULE.ENABLED)
+                        .from(EXECUTION_SCHEDULE)
+                        .where(EXECUTION_SCHEDULE.DOC_UUID.eq(analyticDocRef.getUuid()))
+                        .and(EXECUTION_SCHEDULE.DOC_TYPE.eq(analyticDocRef.getType()))
+                        .and(EXECUTION_SCHEDULE.ENABLED.eq(true))
+                        .fetch())
+                .map(record -> new ExecutionNode(
+                        record.get(EXECUTION_SCHEDULE.NODE_NAME),
+                        record.get(EXECUTION_SCHEDULE.ENABLED))));
     }
 
     @Override

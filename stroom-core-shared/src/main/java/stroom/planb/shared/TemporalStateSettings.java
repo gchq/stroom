@@ -1,5 +1,7 @@
 package stroom.planb.shared;
 
+import stroom.util.shared.NullSafe;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -38,9 +40,9 @@ public final class TemporalStateSettings extends AbstractPlanBSettings {
                                  @JsonProperty("keySchema") final TemporalStateKeySchema keySchema,
                                  @JsonProperty("valueSchema") final StateValueSchema valueSchema) {
         super(maxStoreSize, synchroniseMerge, overwrite, retention, snapshotSettings);
-        this.condense = condense;
-        this.keySchema = keySchema;
-        this.valueSchema = valueSchema;
+        this.condense = NullSafe.requireNonNullElse(condense, new DurationSetting.Builder().build());
+        this.keySchema = NullSafe.requireNonNullElse(keySchema, new TemporalStateKeySchema.Builder().build());
+        this.valueSchema = NullSafe.requireNonNullElse(valueSchema, new StateValueSchema.Builder().build());
     }
 
     public DurationSetting getCondense() {
@@ -84,7 +86,8 @@ public final class TemporalStateSettings extends AbstractPlanBSettings {
     @Override
     public String toString() {
         return "TemporalStateSettings{" +
-               "condense=" + condense +
+               super.toString() +
+               ", condense=" + condense +
                ", keySchema=" + keySchema +
                ", valueSchema=" + valueSchema +
                '}';
@@ -101,9 +104,11 @@ public final class TemporalStateSettings extends AbstractPlanBSettings {
 
         public Builder(final TemporalStateSettings settings) {
             super(settings);
-            this.condense = settings.condense;
-            this.keySchema = settings.keySchema;
-            this.valueSchema = settings.valueSchema;
+            if (settings != null) {
+                this.condense = settings.condense;
+                this.keySchema = settings.keySchema;
+                this.valueSchema = settings.valueSchema;
+            }
         }
 
         public Builder condense(final DurationSetting condense) {

@@ -94,6 +94,13 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
                 duplicateNotificationConfig);
     }
 
+    /**
+     * @return A new builder for creating a {@link DocRef} for this document's type.
+     */
+    public static DocRef.TypedBuilder buildDocRef() {
+        return DocRef.builder(TYPE);
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -101,6 +108,10 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
     public Builder copy() {
         return new Builder(this);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder extends AbstractAnalyticRuleDocBuilder<AnalyticRuleDoc, Builder> {
 

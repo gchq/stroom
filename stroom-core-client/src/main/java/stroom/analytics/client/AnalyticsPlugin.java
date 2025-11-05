@@ -17,6 +17,7 @@
 
 package stroom.analytics.client;
 
+import stroom.alert.client.event.ConfirmEvent;
 import stroom.analytics.client.presenter.AnalyticRulePresenter;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleResource;
@@ -30,8 +31,12 @@ import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.NullSafe;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -86,7 +91,37 @@ public class AnalyticsPlugin extends DocumentPlugin<AnalyticRuleDoc> {
                      final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(ANALYTIC_RULE_RESOURCE)
-                .method(res -> res.update(document.getUuid(), document))
+                .method(resource ->
+                        resource.validate(document))
+                .onSuccess(messages -> {
+                    if (NullSafe.hasItems(messages)) {
+                        final HtmlBuilder htmlBuilder = HtmlBuilder.builder();
+                        messages.forEach(message ->
+                                htmlBuilder.append(SafeHtmlUtil.toParagraphs(message.getMessage())));
+                        htmlBuilder.para(aBuilder -> aBuilder.append("Do you wish to continue?"));
+                        final SafeHtml safeHtml = htmlBuilder.toSafeHtml();
+                        ConfirmEvent.fire(this, safeHtml, ok -> {
+                            if (ok) {
+                                doSave(document, resultConsumer, errorHandler, taskMonitorFactory);
+                            }
+                        });
+                    } else {
+                        doSave(document, resultConsumer, errorHandler, taskMonitorFactory);
+                    }
+                })
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    private void doSave(final AnalyticRuleDoc document,
+                        final Consumer<AnalyticRuleDoc> resultConsumer,
+                        final RestErrorHandler errorHandler,
+                        final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(ANALYTIC_RULE_RESOURCE)
+                .method(resource ->
+                        resource.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)

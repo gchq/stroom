@@ -34,8 +34,21 @@ public class LmdbWriter {
         executorProvider.get().execute(this::transfer);
     }
 
+    /**
+     * Performs the write operation, but does not flush (i.e. commit).
+     */
     public synchronized void write(final Consumer<WriteTxn> consumer) {
         put(consumer, false);
+    }
+
+    /**
+     * Performs the write operation, and optionally flushes (i.e. commits).
+     */
+    public synchronized void write(final Consumer<WriteTxn> consumer, final boolean flush) {
+        put(consumer, false);
+        if (flush) {
+            flush();
+        }
     }
 
     public synchronized void flush() {

@@ -19,6 +19,7 @@ package stroom.planb.impl.pipeline;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferPoolOutput;
+import stroom.pathways.shared.otel.trace.Span;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -28,6 +29,7 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
 import stroom.planb.impl.data.RangeState;
 import stroom.planb.impl.data.Session;
+import stroom.planb.impl.data.SpanKV;
 import stroom.planb.impl.data.State;
 import stroom.planb.impl.data.TemporalRangeState;
 import stroom.planb.impl.data.TemporalState;
@@ -37,6 +39,8 @@ import stroom.planb.impl.db.ShardWriters.ShardWriter;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 import stroom.planb.impl.serde.keyprefix.Tag;
 import stroom.planb.impl.serde.temporalkey.TemporalKey;
+import stroom.planb.impl.serde.trace.SpanKey;
+import stroom.planb.impl.serde.trace.SpanValue;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateType;
 import stroom.query.language.functions.Type;
@@ -47,6 +51,7 @@ import stroom.query.language.functions.ValXml;
 import stroom.svg.shared.SvgImage;
 import stroom.util.CharBuffer;
 import stroom.util.date.DateUtil;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -191,6 +196,7 @@ public class PlanBFilter extends AbstractXMLFilter {
     private static final String VALUE_ELEMENT = "value";
     private static final String TIME_ELEMENT = "time";
     private static final String TIMEOUT_ELEMENT = "timeout";
+    private static final String SPAN_ELEMENT = "span";
 
     private final ErrorReceiverProxy errorReceiverProxy;
 
@@ -506,13 +512,15 @@ public class PlanBFilter extends AbstractXMLFilter {
                 add(StateType.TEMPORAL_STATE);
             } else if (TEMPORAL_RANGE_STATE_ELEMENT.equalsIgnoreCase(localName)) {
                 add(StateType.TEMPORAL_RANGED_STATE);
+            } else if (SPAN_ELEMENT.equalsIgnoreCase(localName)) {
+                add(StateType.TRACE);
             } else if (TIME_ELEMENT.equalsIgnoreCase(localName)) {
                 time = DateUtil.parseNormalDateTimeStringToInstant(contentBuffer.toString());
             } else if (TIMEOUT_ELEMENT.equalsIgnoreCase(localName)) {
                 timeout = StroomDuration.parse(contentBuffer.toString());
             } else if ("name".equalsIgnoreCase(localName)) {
                 currentName = contentBuffer.toString();
-            } else if ("value".equalsIgnoreCase(localName)) {
+            } else if (VALUE_ELEMENT.equalsIgnoreCase(localName)) {
                 currentValue = contentBuffer.toString();
             } else if ("tag".equalsIgnoreCase(localName)) {
                 if (currentName == null) {
@@ -606,6 +614,7 @@ public class PlanBFilter extends AbstractXMLFilter {
                     case SESSION -> addSession(doc);
                     case HISTOGRAM -> addHistogramValue(doc);
                     case METRIC -> addMetricValue(doc);
+                    case TRACE -> addSpanValue(doc);
                     default -> error("Unexpected Plan B store type: " + doc.getStateType());
                 }
             } else {
@@ -855,6 +864,24 @@ public class PlanBFilter extends AbstractXMLFilter {
                 LOGGER.trace("Putting metric value {} into table {}", temporalKey, mapName);
                 catchLmdbError(() -> writer.addMetricValue(doc, temporalValue));
             }
+        }
+    }
+
+    private void addSpanValue(final PlanBDoc doc) {
+        if (NullSafe.isBlankString(currentValue)) {
+            error(LogUtil.message("No span data for {}", mapName));
+        } else {
+            try {
+                final Span span = JsonUtil.readValue(currentValue, Span.class);
+                final SpanKey spanKey = SpanKey.create(span);
+                final SpanValue spanValue = SpanValue.create(span);
+                LOGGER.trace("Putting span value {} into table {}", span, mapName);
+                catchLmdbError(() -> writer.addSpanValue(doc, new SpanKV(spanKey, spanValue)));
+            } catch (final RuntimeException e) {
+                log(Severity.ERROR, e.getMessage(), e);
+            }
+
+            currentValue = null;
         }
     }
 

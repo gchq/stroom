@@ -89,22 +89,45 @@ public class ConfigValidator<T> {
     private void validateProp(final Prop prop, final List<Result<T>> resultList) {
 
         if (Collection.class.isAssignableFrom(prop.getValueClass())) {
+            // e.g. prop: forwardHttpDestinations
             ((Collection<?>) prop.getValueFromConfigObject()).forEach(item -> {
-                // we already know the items in the collection are config objects
-                // so recurse into each one.
-                PropertyUtil.walkObjectTree(
-                        item,
-                        childProp ->
-                                canValidateProp(configSuperType, childProp),
-                        childProp ->
-                                validateProp(childProp, resultList));
+                if (item != null && configSuperType.isAssignableFrom(item.getClass())) {
+                    // Validate this list item which is a Stroom/Proxy config class
+                    doValidate(configSuperType.cast(item), resultList);
+
+                    // Now recurse into its child props to see if we need to validate any of them.
+                    PropertyUtil.walkObjectTree(
+                            item,
+                            childProp -> {
+                                final boolean canValidate = canValidateProp(configSuperType, childProp);
+                                if (!canValidate) {
+                                    LOGGER.debug("Not validating childProp: {}, prop: {}", childProp, prop);
+                                }
+                                return canValidate;
+                            },
+                            childProp ->
+                                    validateProp(childProp, resultList));
+                }
             });
         } else {
-            final T configObject = (T) prop.getValueFromConfigObject();
-            final Result<T> result = validate(configObject, configSuperType);
-            if (result.hasErrorsOrWarnings()) {
-                resultList.add(result);
-            }
+            doValidate(prop, resultList);
+        }
+    }
+
+    private void doValidate(final Prop prop, final List<Result<T>> resultList) {
+        LOGGER.debug("Validating prop: {}", prop);
+        final T configObject = (T) prop.getValueFromConfigObject();
+        final Result<T> result = validate(configObject, configSuperType);
+        if (result.hasErrorsOrWarnings()) {
+            resultList.add(result);
+        }
+    }
+
+    private void doValidate(final T configObject, final List<Result<T>> resultList) {
+        LOGGER.debug("Validating configObject: {}", configObject);
+        final Result<T> result = validate(configObject, configSuperType);
+        if (result.hasErrorsOrWarnings()) {
+            resultList.add(result);
         }
     }
 

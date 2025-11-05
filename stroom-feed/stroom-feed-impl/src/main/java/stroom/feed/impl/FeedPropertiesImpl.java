@@ -1,6 +1,7 @@
 package stroom.feed.impl;
 
 import stroom.data.shared.StreamTypeNames;
+import stroom.docref.DocRef;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
@@ -126,6 +127,13 @@ public class FeedPropertiesImpl implements FeedProperties {
     public FeedStatus getStatus(final String feedName) {
         return feedDocCache.get(feedName)
                 .map(FeedDoc::getStatus)
+                .orElse(null);
+    }
+
+    @Override
+    public DocRef getDocRefForName(final String feedName) {
+        return feedDocCache.get(feedName)
+                .map(FeedDoc::asDocRef)
                 .orElse(null);
     }
 }

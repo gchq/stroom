@@ -142,6 +142,7 @@ dependencies {
     implementation project(':stroom-node:stroom-node-impl')
     implementation project(':stroom-node:stroom-node-impl-db')
     implementation project(':stroom-node:stroom-node-impl-db-jooq')
+    implementation project(':stroom-pathways:stroom-pathways-impl')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-processor:stroom-processor-api')
     implementation project(':stroom-processor:stroom-processor-impl')
@@ -284,7 +285,6 @@ dependencies {
     testImplementation libs.guice
     testImplementation libs.guice.extension
     testImplementation libs.guice.grapher
-    testImplementation libs.hibernate.jpa
     testImplementation libs.hikari
     testImplementation libs.jinjava
     testImplementation libs.lmdbjava

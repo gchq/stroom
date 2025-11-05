@@ -14,7 +14,7 @@ public class ReadTxn extends AbstractTxn {
     }
 
     @Override
-    synchronized Txn<ByteBuffer> get() {
+    public synchronized Txn<ByteBuffer> get() {
         check();
         try {
             if (txn == null) {

@@ -74,6 +74,8 @@ import stroom.kafka.client.gin.KafkaConfigModule;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.monitoring.client.gin.MonitoringGinjector;
 import stroom.monitoring.client.gin.MonitoringModule;
+import stroom.pathways.client.gin.PathwaysGinjector;
+import stroom.pathways.client.gin.PathwaysModule;
 import stroom.pipeline.client.gin.PipelineGinjector;
 import stroom.pipeline.client.gin.PipelineModule;
 import stroom.planb.client.gin.PlanBGinjector;
@@ -144,6 +146,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         IndexModule.class,
         KafkaConfigModule.class,
         MonitoringModule.class,
+        PathwaysModule.class,
         PipelineModule.class,
         PluginsModule.class,
         PolicyModule.class,
@@ -192,6 +195,7 @@ public interface AppGinjectorUser extends
         IndexGinjector,
         KafkaConfigGinjector,
         MonitoringGinjector,
+        PathwaysGinjector,
         PipelineGinjector,
         PluginsGinjector,
         PopupGinjector,

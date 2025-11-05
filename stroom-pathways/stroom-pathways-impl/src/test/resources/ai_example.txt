@@ -1,0 +1,30 @@
+I'll create a sample OpenTelemetry trace log showing the hierarchical relationship between spans with parent-child relationships.Sample OpenTelemetry Trace LogCode {
+  "resourceSpans": [
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "user-service"
+            }
+          },
+          {
+            "key": "servThis sample OpenTelemetry trace log demonstrates a hierarchical span structure for a user API request. Here's how the parent-child relationships work:
+Trace Hierarchy:
+GET /api/users/{id} (root span: 1234567890abcdef)
+├── cache.check (0123456789abcdef)
+├── validate_user_request (abcdef1234567890)
+├── database.query (fedcba0987654321)
+│   ├── connection.acquire (987654321fedcba0)
+│   └── sql.execute (456789abcdef0123)
+└── response.serialize (def0123456789abc)
+Key Elements:
+
+traceId: Same across all spans (a1b2c3d4e5f6789012345678901234ab)
+spanId: Unique identifier for each span
+parentSpanId: References the parent span's ID (missing for root span)
+Timing: Start/end times show the chronological flow and nesting
+Attributes: Contextual information specific to each operation
+
+The root span represents the HTTP request, with child spans for validation, caching, database operations, and response serialization. The database query span has its own children for connection management and SQL execution, showing how operations can be nested multiple levels deep.

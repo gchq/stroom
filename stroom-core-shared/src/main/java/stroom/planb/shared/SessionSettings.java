@@ -1,5 +1,7 @@
 package stroom.planb.shared;
 
+import stroom.util.shared.NullSafe;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -34,8 +36,8 @@ public final class SessionSettings extends AbstractPlanBSettings {
                            @JsonProperty("condense") final DurationSetting condense,
                            @JsonProperty("keySchema") final SessionKeySchema keySchema) {
         super(maxStoreSize, synchroniseMerge, overwrite, retention, snapshotSettings);
-        this.condense = condense;
-        this.keySchema = keySchema;
+        this.condense = NullSafe.requireNonNullElse(condense, new DurationSetting.Builder().build());
+        this.keySchema = NullSafe.requireNonNullElse(keySchema, new SessionKeySchema.Builder().build());
     }
 
     public DurationSetting getCondense() {
@@ -72,7 +74,8 @@ public final class SessionSettings extends AbstractPlanBSettings {
     @Override
     public String toString() {
         return "SessionSettings{" +
-               "condense=" + condense +
+               super.toString() +
+               ", condense=" + condense +
                ", keySchema=" + keySchema +
                '}';
     }
@@ -87,8 +90,10 @@ public final class SessionSettings extends AbstractPlanBSettings {
 
         public Builder(final SessionSettings settings) {
             super(settings);
-            this.condense = settings.condense;
-            this.keySchema = settings.keySchema;
+            if (settings != null) {
+                this.condense = settings.condense;
+                this.keySchema = settings.keySchema;
+            }
         }
 
         public Builder condense(final DurationSetting condense) {

@@ -353,7 +353,7 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
                 if (!Files.exists(source)) {
                     throw e;
                 }
-                DirUtil.ensureDirExists(target.getParent());
+                Files.createDirectories(target.getParent());
             }
         }
         if (!success) {

@@ -1,5 +1,7 @@
 package stroom.analytics.shared;
 
+import stroom.util.shared.NullSafe;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -19,6 +21,10 @@ public class DuplicateCheckRow {
     @JsonCreator
     public DuplicateCheckRow(@JsonProperty("values") final List<String> values) {
         this.values = values;
+    }
+
+    public static DuplicateCheckRow of(final String... values) {
+        return new DuplicateCheckRow(NullSafe.asList(values));
     }
 
     public List<String> getValues() {

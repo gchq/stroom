@@ -1,0 +1,9 @@
+{
+  "type" : "Feed",
+  "uuid" : "26420bd2-cb53-46e3-ba22-1445cc0c1993",
+  "name" : "OTEL_TRACES",
+  "version" : "3d4e1e58-b8dd-41fb-a4e0-de221697370d",
+  "reference" : false,
+  "streamType" : "Raw Events",
+  "status" : "RECEIVE"
+}

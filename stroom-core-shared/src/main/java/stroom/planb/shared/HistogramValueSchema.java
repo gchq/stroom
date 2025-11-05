@@ -1,6 +1,7 @@
 package stroom.planb.shared;
 
 import stroom.util.shared.AbstractBuilder;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -16,14 +17,14 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class HistogramValueSchema {
 
-    public static final MaxValueSize DEFAULT_VALUE_TYPE = MaxValueSize.TWO;
+    private static final MaxValueSize DEFAULT_VALUE_TYPE = MaxValueSize.TWO;
 
     @JsonProperty
     private final MaxValueSize valueType;
 
     @JsonCreator
     public HistogramValueSchema(@JsonProperty("valueType") final MaxValueSize valueType) {
-        this.valueType = valueType;
+        this.valueType = NullSafe.requireNonNullElse(valueType, DEFAULT_VALUE_TYPE);
     }
 
     public MaxValueSize getValueType() {
@@ -56,13 +57,15 @@ public class HistogramValueSchema {
 
     public static class Builder extends AbstractBuilder<HistogramValueSchema, Builder> {
 
-        private MaxValueSize valueType = MaxValueSize.TWO;
+        private MaxValueSize valueType;
 
         public Builder() {
         }
 
         public Builder(final HistogramValueSchema schema) {
-            this.valueType = schema.valueType;
+            if (schema != null) {
+                this.valueType = schema.valueType;
+            }
         }
 
         public Builder valueType(final MaxValueSize valueType) {
@@ -77,8 +80,7 @@ public class HistogramValueSchema {
 
         @Override
         public HistogramValueSchema build() {
-            return new HistogramValueSchema(
-                    valueType);
+            return new HistogramValueSchema(valueType);
         }
     }
 }

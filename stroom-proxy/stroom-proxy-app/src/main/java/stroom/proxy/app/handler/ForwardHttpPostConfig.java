@@ -63,7 +63,7 @@ public final class ForwardHttpPostConfig
         forwardHeadersAdditionalAllowSet = Collections.emptySet();
     }
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "checkstyle:linelength"})
     @JsonCreator
     public ForwardHttpPostConfig(@JsonProperty("enabled") final Boolean enabled,
                                  @JsonProperty("instant") final Boolean instant,
@@ -75,7 +75,7 @@ public final class ForwardHttpPostConfig
                                  @JsonProperty("addOpenIdAccessToken") final Boolean addOpenIdAccessToken,
                                  @JsonProperty("httpClient") final HttpClientConfiguration httpClient,
                                  @JsonProperty("queue") final ForwardHttpQueueConfig forwardQueueConfig,
-        @JsonProperty("forwardHeadersAdditionalAllowSet") final Set<String> forwardHeadersAdditionalAllowSet) {
+                                 @JsonProperty("forwardHeadersAdditionalAllowSet") final Set<String> forwardHeadersAdditionalAllowSet) {
         this.enabled = Objects.requireNonNullElse(enabled, DEFAULT_IS_ENABLED);
         this.instant = Objects.requireNonNullElse(instant, DEFAULT_IS_INSTANT);
         this.name = name;
@@ -127,7 +127,6 @@ public final class ForwardHttpPostConfig
         return name;
     }
 
-    @NotNull
     @JsonProperty
     @JsonPropertyDescription(
             "The URL/path to forward on to. " +
@@ -165,7 +164,6 @@ public final class ForwardHttpPostConfig
         return livenessCheckEnabled;
     }
 
-    @NotNull
     @JsonProperty
     @JsonPropertyDescription("The API key to use when forwarding data if Stroom is configured to require an API key.")
     public String getApiKey() {

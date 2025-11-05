@@ -1,5 +1,6 @@
 package stroom.query.client.presenter;
 
+import stroom.docref.DocRef;
 import stroom.query.api.Column;
 import stroom.query.api.IncludeExcludeFilter;
 import stroom.query.api.Sort;
@@ -12,6 +13,7 @@ import stroom.widget.util.client.SvgImageUtil;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.SortIcon;
 
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ColumnHeaderHtmlUtil {
@@ -57,7 +59,9 @@ public class ColumnHeaderHtmlUtil {
         final IncludeExcludeFilter filter = column.getFilter();
         if (filter != null) {
             if ((filter.getIncludes() != null && !filter.getIncludes().trim().isEmpty()) ||
-                (filter.getExcludes() != null && !filter.getExcludes().trim().isEmpty())) {
+                (filter.getExcludes() != null && !filter.getExcludes().trim().isEmpty()) ||
+                !filter.getIncludeDictionaries().isEmpty() || !filter.getExcludeDictionaries().isEmpty()
+            ) {
                 hb.append(getSafeHtml(SvgImage.FIELDS_FILTER));
             }
         }
@@ -103,6 +107,16 @@ public class ColumnHeaderHtmlUtil {
             }
             if (column.getFilter().getExcludes() != null && !column.getFilter().getExcludes().isBlank()) {
                 hb.append("Filter Excludes: ").append(column.getFilter().getExcludes()).append('\n');
+            }
+            if (!column.getFilter().getIncludeDictionaries().isEmpty()) {
+                final Set<String> dictionaryNames = column.getFilter().getIncludeDictionaries().stream()
+                        .map(DocRef::getDisplayValue).collect(Collectors.toSet());
+                hb.append("Includes Dictionaries: ").append(dictionaryNames.toString()).append("\n");
+            }
+            if (!column.getFilter().getExcludeDictionaries().isEmpty()) {
+                final Set<String> dictionaryNames = column.getFilter().getExcludeDictionaries().stream()
+                        .map(DocRef::getDisplayValue).collect(Collectors.toSet());
+                hb.append("Excludes Dictionaries: ").append(dictionaryNames.toString()).append("\n");
             }
         }
 

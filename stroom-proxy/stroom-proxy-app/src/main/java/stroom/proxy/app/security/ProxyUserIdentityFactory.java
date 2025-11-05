@@ -9,7 +9,6 @@ import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.JwtUtil;
 import stroom.security.common.impl.RefreshManager;
 import stroom.security.openid.api.IdpType;
-import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.TokenResponse;
 import stroom.security.shared.VerifyApiKeyRequest;

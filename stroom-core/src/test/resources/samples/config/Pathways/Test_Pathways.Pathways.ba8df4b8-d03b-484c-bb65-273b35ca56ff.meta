@@ -1,0 +1,19 @@
+{
+  "type" : "Pathways",
+  "uuid" : "ba8df4b8-d03b-484c-bb65-273b35ca56ff",
+  "name" : "Test Pathways",
+  "version" : "ad06cbe0-afaf-4c39-8cd4-0bb7b3b169d4",
+  "temporalOrderingTolerance" : {
+    "time" : 0,
+    "timeUnit" : "NANOSECONDS"
+  },
+  "allowPathwayCreation" : false,
+  "allowPathwayMutation" : false,
+  "allowConstraintCreation" : false,
+  "allowConstraintMutation" : false,
+  "infoFeed" : {
+    "type" : "Feed",
+    "uuid" : "a72b5157-7168-481c-94d0-945ae91d93c9",
+    "name" : "PATHWAY_INFO"
+  }
+}

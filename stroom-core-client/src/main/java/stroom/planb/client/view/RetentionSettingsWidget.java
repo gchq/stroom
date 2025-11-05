@@ -83,16 +83,15 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
 
     @Override
     public void setRetention(final RetentionSettings retention) {
+        final RetentionSettings settings = new RetentionSettings.Builder(retention).build();
         this.retentionAge.setValue(1);
         this.retentionTimeUnit.setValue(TimeUnit.YEARS);
-        if (retention != null) {
-            this.retentionEnabled.setValue(retention.isEnabled());
-            if (retention.getDuration() != null) {
-                this.retentionAge.setValue(retention.getDuration().getTime());
-                this.retentionTimeUnit.setValue(retention.getDuration().getTimeUnit());
-            }
-            this.useStateTime.setValue(retention.useStateTime());
+        this.retentionEnabled.setValue(settings.isEnabled());
+        if (settings.getDuration() != null) {
+            this.retentionAge.setValue(settings.getDuration().getTime());
+            this.retentionTimeUnit.setValue(settings.getDuration().getTimeUnit());
         }
+        this.useStateTime.setValue(settings.useStateTime());
         setRetentionEnabled(retentionEnabled.getValue());
     }
 

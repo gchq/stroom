@@ -11,7 +11,7 @@ public class HashLookupRecorder implements UsedLookupsRecorder {
 
     public HashLookupRecorder(final PlanBEnv env,
                               final HashLookupDb hashLookupDb) {
-        this.usedLookupsDb = new UsedLookupsDb(env, hashLookupDb.getName() + "_used");
+        this.usedLookupsDb = new UsedLookupsDb(env, hashLookupDb.getName() + "-HashLookupDb");
         this.hashLookupDb = hashLookupDb;
     }
 
@@ -23,7 +23,7 @@ public class HashLookupRecorder implements UsedLookupsRecorder {
     @Override
     public void deleteUnused(final Txn<ByteBuffer> readTxn, final LmdbWriter writer) {
         hashLookupDb.forEachHash(readTxn, hash -> {
-            if (usedLookupsDb.isUnused(readTxn, hash)) {
+            if (usedLookupsDb.isUnused(writer.getWriteTxn(), hash)) {
                 hashLookupDb.deleteByHash(writer.getWriteTxn(), hash);
                 writer.tryCommit();
             }

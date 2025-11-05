@@ -31,6 +31,7 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.svg.client.SvgPresets;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MouseUtil;
@@ -76,6 +77,7 @@ public class DuplicateManagementListPresenter
         deleteButton = view.addButton(SvgPresets.DELETE);
 
         criteria = new FindDuplicateCheckCriteria();
+        //noinspection Convert2Diamond // cos GWT
         dataProvider = new RestDataProvider<DuplicateCheckRow, ResultPage<DuplicateCheckRow>>(eventBus) {
             @Override
             protected void exec(final Range range,
@@ -107,12 +109,13 @@ public class DuplicateManagementListPresenter
             for (int i = 0; i < columnNames.size(); i++) {
                 final int pos = i;
                 final String columnName = columnNames.get(pos);
+                //noinspection Convert2Diamond // cos GWT
                 final Column<DuplicateCheckRow, String> column = new Column<DuplicateCheckRow, String>(new TextCell()) {
                     @Override
                     public String getValue(final DuplicateCheckRow duplicateCheckRow) {
                         if (duplicateCheckRow != null &&
-                                duplicateCheckRow.getValues() != null &&
-                                duplicateCheckRow.getValues().size() > pos) {
+                            duplicateCheckRow.getValues() != null &&
+                            duplicateCheckRow.getValues().size() > pos) {
                             return duplicateCheckRow.getValues().get(pos);
                         }
                         return null;
@@ -127,8 +130,7 @@ public class DuplicateManagementListPresenter
     }
 
     private void enableButtons() {
-        final List<DuplicateCheckRow> selected = selectionModel.getSelectedItems();
-        final boolean enabled = selected != null && selected.size() > 0;
+        final boolean enabled = NullSafe.hasItems(selectionModel.getSelectedItems());
         deleteButton.setEnabled(enabled);
     }
 
@@ -164,12 +166,12 @@ public class DuplicateManagementListPresenter
 
     private void onDelete() {
         final List<DuplicateCheckRow> selected = selectionModel.getSelectedItems();
-        if (selected != null && selected.size() > 0) {
+        if (NullSafe.hasItems(selected)) {
             ConfirmEvent.fire(this, "Are you sure you want to delete the selected row" +
-                            (selected.size() > 1
-                                    ? "s"
-                                    : "") +
-                            "?",
+                                    (selected.size() > 1
+                                            ? "s"
+                                            : "") +
+                                    "?",
                     result -> {
                         if (result) {
                             final DeleteDuplicateCheckRequest request =

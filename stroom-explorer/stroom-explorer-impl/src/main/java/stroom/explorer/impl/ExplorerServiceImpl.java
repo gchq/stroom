@@ -181,6 +181,9 @@ class ExplorerServiceImpl
                         OpenItemsImpl.create(criteria.getEnsureVisible()));
             }
 
+            // Add favourites nodes to the master tree model.
+            buildFavouritesNode(masterTreeModelClone);
+
             // See if we need to open any more folders to see nodes we want to ensure are visible.
             final Set<ExplorerNodeKey> forcedOpenItems = getForcedOpenItems(masterTreeModelClone, criteria);
 
@@ -217,7 +220,6 @@ class ExplorerServiceImpl
                 .stream()
                 .map(DocRef::getUuid)
                 .collect(Collectors.toSet());
-        buildFavouritesNode(masterTreeModelClone);
 
         final FilteredTreeModel filteredModel = new FilteredTreeModel(
                 masterTreeModelClone.getId(),
@@ -599,7 +601,6 @@ class ExplorerServiceImpl
         if (criteria.getMinDepth() != null && criteria.getMinDepth() > 0) {
             forceMinDepthOpen(masterTreeModel, forcedOpen, null, null,
                     criteria.getMinDepth(), 1);
-            forcedOpen.add(ExplorerConstants.FAVOURITES_NODE.getUniqueKey());
         }
 
         return forcedOpen;

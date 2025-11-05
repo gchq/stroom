@@ -120,6 +120,10 @@ public class HtmlBuilder {
         return elem(textContent, ELEMENT_P, attributes);
     }
 
+    public HtmlBuilder span(final String textContent, final Attribute... attributes) {
+        return elem(textContent, ELEMENT_SPAN, attributes);
+    }
+
     public HtmlBuilder span(final Consumer<HtmlBuilder> content, final Attribute... attributes) {
         return elem(content, ELEMENT_SPAN, attributes);
     }
@@ -156,20 +160,27 @@ public class HtmlBuilder {
     // END ELEMENTS
     // -----------------------------------------------
 
-    private HtmlBuilder elem(final String textContent,
-                             final SafeHtml elementName,
-                             final Attribute... attributes) {
+    public HtmlBuilder elem(final String textContent,
+                            final SafeHtml elementName,
+                            final Attribute... attributes) {
         return elem(htmlBuilder -> htmlBuilder.append(textContent), elementName, attributes);
     }
 
-    private HtmlBuilder elem(final Consumer<HtmlBuilder> content,
-                             final SafeHtml elementName,
-                             final Attribute... attributes) {
+    public HtmlBuilder elem(final Consumer<HtmlBuilder> content,
+                            final SafeHtml elementName,
+                            final Attribute... attributes) {
         openElement(elementName, attributes);
         // Allow for empty elements
         if (content != null) {
             content.accept(this);
         }
+        closeElement(elementName);
+        return this;
+    }
+
+    public HtmlBuilder elem(final SafeHtml elementName,
+                            final Attribute... attributes) {
+        openElement(elementName, attributes);
         closeElement(elementName);
         return this;
     }
@@ -308,6 +319,10 @@ public class HtmlBuilder {
 
         public static Attribute title(final String name) {
             return new Attribute("title", name);
+        }
+
+        public static Attribute id(final String name) {
+            return new Attribute("id", name);
         }
     }
 }

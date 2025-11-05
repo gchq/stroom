@@ -137,6 +137,24 @@ class TestDuplicateCheckFactoryImpl {
         assertThat(rows.getResultPage().getPageResponse().getTotal()).isEqualTo(223);
     }
 
+    @Test
+    void testFetchColumnNames() {
+        final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
+        final String analyticRuleUuid = "test";
+        final AnalyticRuleDoc analytic = createAnalytic(analyticRuleUuid);
+        assertThat(duplicateCheckFactory.fetchColumnNames(analytic.getUuid()))
+                .isEmpty();
+
+        try (final DuplicateCheck ignored = createDuplicateCheck(duplicateCheckFactory, "test")) {
+            assertThat(duplicateCheckFactory.fetchColumnNames(analytic.getUuid()).get())
+                    .containsExactly("test");
+        }
+
+        // Now removed from the pool
+        assertThat(duplicateCheckFactory.fetchColumnNames(analytic.getUuid()).get())
+                .containsExactly("test");
+    }
+
     private DuplicateCheckFactoryImpl createDuplicateCheckFactory() {
         final TempDirProvider tempDirProvider = () -> tempDir;
         final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
@@ -159,21 +177,7 @@ class TestDuplicateCheckFactoryImpl {
 
     private DuplicateCheck createDuplicateCheck(final DuplicateCheckFactoryImpl duplicateCheckFactory,
                                                 final String ruleUUID) {
-        final DuplicateNotificationConfig duplicateNotificationConfig = new DuplicateNotificationConfig(
-                true,
-                true,
-                false,
-                Collections.emptyList());
-
-        final AnalyticRuleDoc analyticRuleDoc = AnalyticRuleDoc.builder()
-                .uuid(ruleUUID)
-                .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
-                .query("test")
-                .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
-                .notifications(createNotificationConfig())
-                .errorFeed(new DocRef("Feed", "error"))
-                .duplicateNotificationConfig(duplicateNotificationConfig)
-                .build();
+        final AnalyticRuleDoc analyticRuleDoc = createAnalytic(ruleUUID);
 
         final Column column = Column
                 .builder()
@@ -186,6 +190,24 @@ class TestDuplicateCheckFactoryImpl {
         final CompiledColumns compiledColumns = CompiledColumns
                 .create(new ExpressionContext(), columns, fieldIndex, Collections.emptyMap());
         return duplicateCheckFactory.create(analyticRuleDoc, compiledColumns);
+    }
+
+    private AnalyticRuleDoc createAnalytic(final String ruleUuid) {
+        final DuplicateNotificationConfig duplicateNotificationConfig = new DuplicateNotificationConfig(
+                true,
+                true,
+                false,
+                Collections.emptyList());
+
+        return AnalyticRuleDoc.builder()
+                .uuid(ruleUuid)
+                .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
+                .query("test")
+                .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
+                .notifications(createNotificationConfig())
+                .errorFeed(new DocRef("Feed", "error"))
+                .duplicateNotificationConfig(duplicateNotificationConfig)
+                .build();
     }
 
     protected List<NotificationConfig> createNotificationConfig() {

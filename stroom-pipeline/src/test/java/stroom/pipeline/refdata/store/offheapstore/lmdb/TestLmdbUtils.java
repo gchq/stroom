@@ -44,5 +44,4 @@ class TestLmdbUtils {
         assertThat(refDataProcessingInfo2).isEqualTo(refDataProcessingInfo);
 
     }
-
 }
