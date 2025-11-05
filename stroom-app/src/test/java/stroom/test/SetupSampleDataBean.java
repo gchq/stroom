@@ -26,7 +26,6 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
 import stroom.importexport.api.ImportExportSerializer;
-import stroom.importexport.shared.ImportSettings;
 import stroom.index.api.IndexVolumeGroupService;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.IndexVolumeService;
@@ -304,7 +303,7 @@ public final class SetupSampleDataBean {
 
 //        createStreamAttributes();
 
-        if (Files.exists(configDir)) {
+        /*if (Files.exists(configDir)) {
             LOGGER.info("Loading config from {}", configDir.toAbsolutePath().normalize());
             importExportSerializer.read(
                     configDir,
@@ -328,7 +327,7 @@ public final class SetupSampleDataBean {
 
         } else {
             LOGGER.info("Directory {} doesn't exist so skipping", configDir.toAbsolutePath().normalize());
-        }
+        }*/
 
         LOGGER.info("Checking data dir {}", dataDir.toAbsolutePath().normalize());
         if (Files.exists(dataDir)) {

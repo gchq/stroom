@@ -1,23 +1,22 @@
 # Metadata about the content store
 meta:
   # ID uniquely identifies this content store
-  ownerId: stroomworks.com
+  ownerId: gchq.gov.uk
 
   # Name of content store as displayed in UI
-  ownerName: Stroomworks Test
+  ownerName: GCHQ
 
   # URL for further information
-  ownerUrl: https://www.stroomworks.com/
+  ownerUrl: https://www.gchq.gov.uk/
 
   # Description of the owner of this content store, in Markdown.
   ownerDescription: |
-    Test Content Store
+    We are the UK's intelligence, security and cyber agency. Our mission is to help keep the country safe.
 
   # If a content pack is marked gitNeedsAuth:true, this Markdown is displayed
   # so users know where to get credentials from.
   authContact:
-    Contact us at [contact@stroomworks.com](mailto:contact@stroomworks.com?subject=Content%20Store)
-    for authentication credentials.
+    Contact us at [GCHQ](https://www.gchq.gov.uk/section/about-this-website/contact).
 
 # List of content packs
 contentPacks:
@@ -29,13 +28,13 @@ contentPacks:
     uiName: Core XML Schemas
 
     # Where to get the icon. Must be SVG.
-    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-content/refs/heads/planb/source/core-xml-schemas/content-pack-icon.svg
+    iconUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/source/core-xml-schemas/docs/content-pack-icon.svg
 
     # Name of the license
     licenseName: Apache 2.0
 
     # Link to the full license
-    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/7.10/LICENCE.txt
 
     # Where this will be installed in Stroom
     stroomPath: /XML Schemas/
@@ -67,9 +66,9 @@ contentPacks:
   -
     id: standard-pipelines
     uiName: Standard Pipelines
-    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-content/refs/heads/planb/source/standard-pipelines/content-pack-icon.svg
+    iconUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/source/standard-pipelines/docs/content-pack-icon.svg
     licenseName: Apache 2.0
-    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/7.10/LICENCE.txt
     stroomPath: /
     details: |
       # Standard Pipelines
@@ -85,9 +84,9 @@ contentPacks:
   -
     id: event-logging-xml-schema
     uiName: Event Logging XML Schema
-    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-content/refs/heads/planb/source/event-logging-xml-schema/content-pack-icon.svg
+    iconUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/source/event-logging-xml-schemas/docs/content-pack-icon.svg
     licenseName: Apache 2.0
-    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/7.10/LICENCE.txt
     stroomPath: /XML Schemas
     details: |
       # Event Logging XML Schema
@@ -102,9 +101,9 @@ contentPacks:
   -
     id: example-index
     uiName: Example Index
-    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-content/refs/heads/planb/source/example-index/content-pack-icon.svg
+    iconUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/source/example-index/docs/content-pack-icon.svg
     licenseName: Apache 2.0
-    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/7.10/LICENCE.txt
     stroomPath: /
     details: |
       # Example Index
@@ -119,9 +118,9 @@ contentPacks:
   -
     id: internal-dashboards
     uiName: Internal Dashboards
-    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-content/refs/heads/planb/source/internal-dashboards/content-pack-icon.svg
+    iconUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/source/internal-dashboards/docs/content-pack-icon.svg
     licenseName: Apache 2.0
-    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/7.10/LICENCE.txt
     stroomPath: /
     details: |
       # Internal Dashboards
@@ -138,9 +137,9 @@ contentPacks:
   -
     id: internal-statistics-sql
     uiName: Internal Statistics (SQL)
-    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-content/refs/heads/planb/source/internal-statistics-sql/content-pack-icon.svg
+    iconUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/source/internal-statistics-sql/docs/content-pack-icon.svg
     licenseName: Apache 2.0
-    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/7.10/LICENCE.txt
     stroomPath: /Internal Statistics
     details: |
       # Internal Statistics (SQL)
@@ -157,9 +156,9 @@ contentPacks:
   -
     id: internal-statistics-stroom-stats
     uiName: Stroom-Stats
-    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-content/refs/heads/planb/source/internal-statistics-stroom-stats/content-pack-icon.svg
+    iconUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/source/internal-statistics-stroom-stats/docs/content-pack-icon.svg
     licenseName: Apache 2.0
-    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/7.10/LICENCE.txt
     stroomPath: /Internal Statistics
     details: |
       # Internal Statistics (Stroom)
@@ -175,9 +174,9 @@ contentPacks:
   -
     id: stroom-101
     uiName: Stroom 101
-    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-content/refs/heads/planb/source/stroom-101/content-pack-icon.svg
+    iconUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/source/stroom-101/docs/content-pack-icon.svg
     licenseName: Apache 2.0
-    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/7.10/LICENCE.txt
     stroomPath: /
     details: |
       # Quickstart Exercise for Stroom
@@ -197,9 +196,9 @@ contentPacks:
   -
     id: stroom-logs
     uiName: Internal Logs
-    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-content/refs/heads/planb/source/stroom-logs/content-pack-icon.svg
+    iconUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/source/stroom-logs/docs/content-pack-icon.svg
     licenseName: Apache 2.0
-    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/7.10/LICENCE.txt
     stroomPath: /
     details: |
       # Internal Logs
@@ -214,9 +213,9 @@ contentPacks:
   -
     id: template-pipelines
     uiName: Template Pipelines
-    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-content/refs/heads/planb/source/template-pipelines/content-pack-icon.svg
+    iconUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/source/template-pipelines/docs/content-pack-icon.svg
     licenseName: Apache 2.0
-    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/7.10/LICENCE.txt
     stroomPath: /
     details: |
       # Template Pipelines
@@ -231,9 +230,9 @@ contentPacks:
   -
     id: planb
     uiName: Plan B
-    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-content/refs/heads/planb/source/planb/content-pack-icon.svg
+    iconUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/source/planb/docs/content-pack-icon.svg
     licenseName: Apache 2.0
-    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/LICENCE.txt
+    licenseUrl: https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/7.10/LICENCE.txt
     stroomPath: /
     details: |
       # Plan B
@@ -246,7 +245,7 @@ contentPacks:
   -
     id: stroom-visualisations
     uiName: Visualisations
-    iconUrl: https://raw.githubusercontent.com/stroomworks4092/stroom-appstore/refs/heads/main/stroom-visualisations.svg
+    iconUrl: https://raw.githubusercontent.com/gchq/stroom-visualisations-dev/refs/heads/main/docs/content-pack-icon.svg
     licenseName: Apache 2.0
     licenseUrl: https://raw.githubusercontent.com/gchq/stroom-visualisations-dev/refs/heads/main/LICENCE.txt
     stroomPath: /
@@ -287,6 +286,7 @@ contentPacks:
     gitPath: war/stroom_content/
     gitCommit: "5d650d01bd2839e5f89e9f897d2f0e7a733690f2"
     gitNeedsAuth: false
+
 
   -
     id: sample-feeds-and-translations
