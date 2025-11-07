@@ -14,6 +14,7 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.user.cellview.client.LoadingStateChangeEvent;
 import com.google.gwt.user.cellview.client.LoadingStateChangeEvent.Handler;
@@ -198,10 +199,13 @@ public class ContentStoreContentPackListPresenter
      */
     private void initColumns(final MyDataGrid<ContentStoreContentPackWithDynamicState> dataGrid) {
 
-        // Icon for content pack, pulled from String in content pack
+        // Icon for content pack, pulled via passthrough servlet
         dataGrid.addResizableColumn(
-                DataGridUtil.svgStringColumn(cpws
-                        -> cpws.getContentPack().getIconSvg()),
+                DataGridUtil.safeHtmlColumn(
+                        cpws
+                                -> SafeHtmlUtil.getSafeHtmlFromTrustedString(
+                                ImageTagUtil.getImageTag(16, 16, cpws.getContentPack().getId()))
+                ),
                 DataGridUtil.headingBuilder("")
                         .withToolTip("Content Pack Icon")
                         .build(),

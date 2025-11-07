@@ -30,16 +30,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * REST server-side implementation for the ContentStore stuff.
@@ -62,6 +62,9 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
 
     /** Allows test code to set a test content store file to use */
     private List<String> overrideContentStoreUrls = null;
+
+    /** Cache of IDs to icon URLs to resolve */
+    private static final Map<String, String> ID_TO_ICON_URL_MAP = new HashMap<>();
 
     /** The size of the buffer used to copy stuff around */
     private static final int IO_BUF_SIZE = 4096;
@@ -97,7 +100,7 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
      * @param filename The name of the file that holds the content store,
      *                 relative to the configFile. Must not be null.
      */
-    public void addTestFileContentStoreUrl(final Path rootDir, final String filename) {
+    public synchronized void addTestFileContentStoreUrl(final Path rootDir, final String filename) {
         final URI fileUri = rootDir.resolve(filename).toUri();
         if (overrideContentStoreUrls == null) {
             overrideContentStoreUrls = new ArrayList<>();
@@ -110,7 +113,7 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
      * Ignores the configured or default URLs and adds the given URL.
      * @param contentStoreUri The URL to add to any other test URLs. Must not be null.
      */
-    public void addTestUriContentStoreUrl(final String contentStoreUri) {
+    public synchronized void addTestUriContentStoreUrl(final String contentStoreUri) {
         if (overrideContentStoreUrls == null) {
             overrideContentStoreUrls = new ArrayList<>();
         }
@@ -140,10 +143,12 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
 
         // Allow tests to override the URLs used for the content store
         final List<String> contentStoreUrls;
-        if (!overrideContentStoreUrls.isEmpty()) {
-            contentStoreUrls = overrideContentStoreUrls;
-        } else {
-            contentStoreUrls = config.get().getContentStoreUrls();
+        synchronized (this) {
+            if (overrideContentStoreUrls != null && !overrideContentStoreUrls.isEmpty()) {
+                contentStoreUrls = overrideContentStoreUrls;
+            } else {
+                contentStoreUrls = config.get().getContentStoreUrls();
+            }
         }
 
         // Grab YAML describing the content store
@@ -162,8 +167,9 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
                 // Fill in any extra data needed by the content packs
                 final List<ContentStoreContentPack> listOfContentPacks = cs.getContentPacks();
                 for (final ContentStoreContentPack cp : listOfContentPacks) {
-                    // Resolve icon link to SVG text
-                    this.resolveSvgIcon(cp);
+                    // Store the icon URL for access later
+                    LOGGER.info("ID {} -> URL {}", cp.getId(), cp.getIconUrl());
+                    IconPassthroughServlet.addIdToUrl(cp.getId(), cp.getIconUrl());
 
                     // Add the content store metadata
                     cp.setContentStoreMetadata(cs.getMeta());
@@ -186,44 +192,6 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
 
 
         return ResultPage.createPageLimitedList(contentPacksWithState, pageRequest);
-    }
-
-    /**
-     * Looks at the content pack. If there isn't an SVG icon set and
-     * there is a URL for the icon, then download that icon and put it
-     * into the content pack.
-     * If something goes wrong then log an error.
-     *
-     * @param contentPack The thing to update with an icon if necessary
-     *                    and available.
-     */
-    private void resolveSvgIcon(final ContentStoreContentPack contentPack) {
-        if (contentPack.getIconSvg() == null) {
-            try {
-                final byte[] buffer = new byte[IO_BUF_SIZE];
-                final URI uri = new URI(contentPack.getIconUrl());
-                final InputStream istr = new BufferedInputStream(uri.toURL().openStream());
-                final ByteArrayOutputStream ostr = new ByteArrayOutputStream();
-
-                for (int length; (length = istr.read(buffer)) != -1; ) {
-                    ostr.write(buffer, 0, length);
-                }
-
-                contentPack.setIconSvg(ostr.toString(StandardCharsets.UTF_8));
-
-            } catch (final URISyntaxException e) {
-                LOGGER.error("Cannot parse the icon URL for content pack '{}': {}",
-                        contentPack.getUiName(),
-                        e.getMessage(),
-                        e);
-            } catch (final IOException e) {
-                LOGGER.error("Error downloading icon for content pack '{}' from '{}': {}",
-                        contentPack.getUiName(),
-                        contentPack.getIconUrl(),
-                        e.getMessage(),
-                        e);
-            }
-        }
     }
 
     /**
