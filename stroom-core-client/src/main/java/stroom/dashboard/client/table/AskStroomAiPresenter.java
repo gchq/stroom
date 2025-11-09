@@ -116,7 +116,7 @@ public class AskStroomAiPresenter extends MyPresenterWidget<AskStroomAiPresenter
         renderMarkdown(message);
 
         // Scroll down a little, to display the start of the response message
-        markdownContainer.setScrollTop(oldScrollHeight + 100);
+        markdownContainer.setScrollTop(oldScrollHeight + 50);
     }
 
     private void renderMarkdown(final String message) {
