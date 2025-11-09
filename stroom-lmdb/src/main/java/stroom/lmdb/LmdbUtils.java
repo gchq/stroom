@@ -20,16 +20,14 @@ package stroom.lmdb;
 import stroom.bytebuffer.ByteBufferPool;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.lmdb.serde.Serde;
+import stroom.lmdb.stream.LmdbIterable;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import jakarta.xml.bind.DatatypeConverter;
-import org.lmdbjava.CursorIterable;
-import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.Env;
-import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 
 import java.nio.BufferOverflowException;
@@ -262,13 +260,10 @@ public class LmdbUtils {
                 getEntryCount(env, txn, dbi), new String(dbi.getName())));
 
         // loop over all DB entries
-        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(txn, KeyRange.all())) {
-            for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
+        LmdbIterable.iterate(txn, dbi, (key, val) ->
                 stringBuilder.append(LogUtil.message("\n  key: [{}] - value [{}]",
-                        keyToStringFunc.apply(keyVal.key()),
-                        valueToStringFunc.apply(keyVal.val())));
-            }
-        }
+                        keyToStringFunc.apply(key),
+                        valueToStringFunc.apply(val))));
         logEntryConsumer.accept(stringBuilder.toString());
 //        LOGGER.debug(stringBuilder.toString());
     }
@@ -319,61 +314,61 @@ public class LmdbUtils {
                 logEntryConsumer);
     }
 
-    /**
-     * Only intended for use in tests as the DB could be massive and thus produce a LOT of logging
-     */
-    public static void logContentsInRange(final LmdbEnv env,
-                                          final Dbi<ByteBuffer> dbi,
-                                          final Txn<ByteBuffer> txn,
-                                          final KeyRange<ByteBuffer> keyRange,
-                                          final Function<ByteBuffer, String> keyToStringFunc,
-                                          final Function<ByteBuffer, String> valueToStringFunc,
-                                          final Consumer<String> logEntryConsumer) {
-
-        final StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(LogUtil.message("Dumping entries in range {} [[{}] to [{}]] for database [{}]",
-                keyRange.getType().toString(),
-                ByteBufferUtils.byteBufferToHex(keyRange.getStart()),
-                ByteBufferUtils.byteBufferToHex(keyRange.getStop()),
-                new String(dbi.getName())));
-
-        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(txn, keyRange)) {
-            for (final CursorIterable.KeyVal<ByteBuffer> keyVal : cursorIterable) {
-                stringBuilder.append(LogUtil.message("\n  key: [{}] - value [{}]",
-                        keyToStringFunc.apply(keyVal.key()),
-                        valueToStringFunc.apply(keyVal.val())));
-            }
-        }
-        logEntryConsumer.accept(stringBuilder.toString());
-    }
-
-    public static void logContentsInRange(final LmdbEnv env,
-                                          final Dbi<ByteBuffer> dbi,
-                                          final KeyRange<ByteBuffer> keyRange,
-                                          final Function<ByteBuffer, String> keyToStringFunc,
-                                          final Function<ByteBuffer, String> valueToStringFunc,
-                                          final Consumer<String> logEntryConsumer) {
-        env.doWithReadTxn(txn ->
-                logContentsInRange(env, dbi, txn, keyRange, keyToStringFunc, valueToStringFunc, logEntryConsumer)
-        );
-    }
-
-    public static void logRawContentsInRange(final LmdbEnv env,
-                                             final Dbi<ByteBuffer> dbi,
-                                             final Txn<ByteBuffer> txn,
-                                             final KeyRange<ByteBuffer> keyRange,
-                                             final Consumer<String> logEntryConsumer) {
-        logContentsInRange(env, dbi, txn, keyRange, ByteBufferUtils::byteBufferToHex,
-                ByteBufferUtils::byteBufferToHex, logEntryConsumer);
-    }
-
-    public static void logRawContentsInRange(final LmdbEnv env,
-                                             final Dbi<ByteBuffer> dbi,
-                                             final KeyRange<ByteBuffer> keyRange,
-                                             final Consumer<String> logEntryConsumer) {
-        env.doWithReadTxn(txn ->
-                logContentsInRange(env, dbi, txn, keyRange, ByteBufferUtils::byteBufferToHex,
-                        ByteBufferUtils::byteBufferToHex, logEntryConsumer)
-        );
-    }
+//    /**
+//     * Only intended for use in tests as the DB could be massive and thus produce a LOT of logging
+//     */
+//    public static void logContentsInRange(final LmdbEnv env,
+//                                          final Dbi<ByteBuffer> dbi,
+//                                          final Txn<ByteBuffer> txn,
+//                                          final KeyRange<ByteBuffer> keyRange,
+//                                          final Function<ByteBuffer, String> keyToStringFunc,
+//                                          final Function<ByteBuffer, String> valueToStringFunc,
+//                                          final Consumer<String> logEntryConsumer) {
+//
+//        final StringBuilder stringBuilder = new StringBuilder();
+//        stringBuilder.append(LogUtil.message("Dumping entries in range {} [[{}] to [{}]] for database [{}]",
+//                keyRange.getType().toString(),
+//                ByteBufferUtils.byteBufferToHex(keyRange.getStart()),
+//                ByteBufferUtils.byteBufferToHex(keyRange.getStop()),
+//                new String(dbi.getName())));
+//
+//        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(txn, keyRange)) {
+//            for (final CursorIterable.KeyVal<ByteBuffer> keyVal : cursorIterable) {
+//                stringBuilder.append(LogUtil.message("\n  key: [{}] - value [{}]",
+//                        keyToStringFunc.apply(keyVal.key()),
+//                        valueToStringFunc.apply(keyVal.val())));
+//            }
+//        }
+//        logEntryConsumer.accept(stringBuilder.toString());
+//    }
+//
+//    public static void logContentsInRange(final LmdbEnv env,
+//                                          final Dbi<ByteBuffer> dbi,
+//                                          final KeyRange<ByteBuffer> keyRange,
+//                                          final Function<ByteBuffer, String> keyToStringFunc,
+//                                          final Function<ByteBuffer, String> valueToStringFunc,
+//                                          final Consumer<String> logEntryConsumer) {
+//        env.doWithReadTxn(txn ->
+//                logContentsInRange(env, dbi, txn, keyRange, keyToStringFunc, valueToStringFunc, logEntryConsumer)
+//        );
+//    }
+//
+//    public static void logRawContentsInRange(final LmdbEnv env,
+//                                             final Dbi<ByteBuffer> dbi,
+//                                             final Txn<ByteBuffer> txn,
+//                                             final KeyRange<ByteBuffer> keyRange,
+//                                             final Consumer<String> logEntryConsumer) {
+//        logContentsInRange(env, dbi, txn, keyRange, ByteBufferUtils::byteBufferToHex,
+//                ByteBufferUtils::byteBufferToHex, logEntryConsumer);
+//    }
+//
+//    public static void logRawContentsInRange(final LmdbEnv env,
+//                                             final Dbi<ByteBuffer> dbi,
+//                                             final KeyRange<ByteBuffer> keyRange,
+//                                             final Consumer<String> logEntryConsumer) {
+//        env.doWithReadTxn(txn ->
+//                logContentsInRange(env, dbi, txn, keyRange, ByteBufferUtils::byteBufferToHex,
+//                        ByteBufferUtils::byteBufferToHex, logEntryConsumer)
+//        );
+//    }
 }

@@ -15,6 +15,10 @@ import org.jose4j.jwt.consumer.JwtContext;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * {@link UserIdentity} that is created for API requests (that have JWT in the Authorisation header)
+ * and UI requests that have come via an AWS ALB (i.e. using the x-amzn-oidc-data header).
+ */
 class ApiUserIdentity implements UserIdentity, HasSessionId, HasUserRef, HasJwtClaims, HasJwt {
 
     private final UserRef userRef;
@@ -22,9 +26,8 @@ class ApiUserIdentity implements UserIdentity, HasSessionId, HasUserRef, HasJwtC
     private final JwtContext jwtContext;
 
     /**
-     * @param userUuid    The stroom_user UUID
-     * @param subjectId   The unique ID on the IDP, i.e. the 'sub' claim
-     * @param displayName
+     * @param userUuid  The stroom_user UUID
+     * @param subjectId The unique ID on the IDP, i.e. the 'sub' claim
      */
     ApiUserIdentity(final String userUuid,
                     final String subjectId,

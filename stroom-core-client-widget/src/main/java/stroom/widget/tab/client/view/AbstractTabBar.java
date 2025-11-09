@@ -122,8 +122,8 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
     public void removeTab(final TabData tabData, final boolean resize) {
         final Widget tab = tabWidgetMap.get(tabData);
         if (tab != null) {
-            final int minVisibleTab = indexOf(visibleTabs.get(0));
-            final int maxVisibleTab = indexOf(visibleTabs.get(visibleTabs.size() - 1));
+            final int minVisibleTab = visibleTabs.isEmpty() ? -1 : indexOf(visibleTabs.get(0));
+            final int maxVisibleTab = visibleTabs.isEmpty() ? -1 : indexOf(visibleTabs.get(visibleTabs.size() - 1));
             final int tabsSize = tabs.size() - 1;
             final int tabIndex = tabs.indexOf(tabData);
 

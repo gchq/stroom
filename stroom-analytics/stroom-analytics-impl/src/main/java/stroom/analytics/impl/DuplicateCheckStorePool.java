@@ -4,9 +4,10 @@ import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -14,7 +15,7 @@ class DuplicateCheckStorePool<K, V> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DuplicateCheckStorePool.class);
 
-    private final Map<K, References<V>> map = new ConcurrentHashMap<>();
+    private final ConcurrentMap<K, References<V>> map = new ConcurrentHashMap<>();
     private final Function<K, V> objectFactory;
     private final Consumer<V> borrowHandler;
     private final Consumer<V> releaseHandler;
@@ -40,10 +41,14 @@ class DuplicateCheckStorePool<K, V> {
     }
 
     public V borrow(final K key) {
+        return borrow(key, true);
+    }
+
+    private V borrow(final K key, final boolean createIfNotExists) {
         final References<V> refs = map.compute(key,
                 (k, v) -> {
                     References<V> references = v;
-                    if (v == null) {
+                    if (v == null && createIfNotExists) {
                         try {
                             final V newValue = objectFactory.apply(k);
                             references = new References<>(newValue);
@@ -53,19 +58,21 @@ class DuplicateCheckStorePool<K, V> {
                         }
                     }
 
-                    references.borrow();
-                    if (borrowHandler != null) {
-                        try {
-                            borrowHandler.accept(references.object);
-                        } catch (final UncheckedInterruptedException e) {
-                            LOGGER.debug(e::getMessage, e);
-                        } catch (final RuntimeException e) {
-                            LOGGER.error(e::getMessage, e);
+                    if (references != null) {
+                        references.borrow();
+                        if (borrowHandler != null) {
+                            try {
+                                borrowHandler.accept(references.object);
+                            } catch (final UncheckedInterruptedException e) {
+                                LOGGER.debug(e::getMessage, e);
+                            } catch (final RuntimeException e) {
+                                LOGGER.error(e::getMessage, e);
+                            }
                         }
                     }
                     return references;
                 });
-        return refs.object;
+        return NullSafe.get(refs, References::getObject);
     }
 
     public void release(final K key) {
@@ -103,6 +110,10 @@ class DuplicateCheckStorePool<K, V> {
                 });
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class References<V> {
 
         private final V object;
@@ -122,6 +133,10 @@ class DuplicateCheckStorePool<K, V> {
                 throw new RuntimeException("referenceCount < 0");
             }
             return referenceCount;
+        }
+
+        private V getObject() {
+            return object;
         }
     }
 }

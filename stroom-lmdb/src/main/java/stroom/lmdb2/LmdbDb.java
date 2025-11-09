@@ -1,30 +1,35 @@
 package stroom.lmdb2;
 
 import stroom.bytebuffer.ByteBufferUtils;
+import stroom.lmdb.stream.LmdbEntry;
+import stroom.lmdb.stream.LmdbIterable;
+import stroom.lmdb.stream.LmdbKeyRange;
+import stroom.lmdb.stream.LmdbStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
-import org.lmdbjava.CursorIterable;
-import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
-import org.lmdbjava.KeyRange;
 import org.lmdbjava.PutFlags;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class LmdbDb {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbDb.class);
+    private static final Charset DB_NAME_CHARSET = StandardCharsets.UTF_8;
 
     private final Env<ByteBuffer> env;
     private final Dbi<ByteBuffer> dbi;
@@ -43,9 +48,7 @@ public class LmdbDb {
 
         try {
             final DbiFlags[] envFlagsArr = dbiFlags.toArray(new DbiFlags[0]);
-            final byte[] nameBytes = name == null
-                    ? null
-                    : name.getBytes(UTF_8);
+            final byte[] nameBytes = convertDbName(name);
             dbi = env.openDbi(nameBytes, envFlagsArr);
         } catch (final RuntimeException e) {
             errorHandler.error(e);
@@ -107,13 +110,11 @@ public class LmdbDb {
     }
 
     public <R> R iterateResult(final AbstractTxn txn,
-                               final KeyRange<ByteBuffer> keyRange,
-                               final Function<Iterator<KeyVal<ByteBuffer>>, R> iteratorConsumer) {
-        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(
-                txn.get(),
-                keyRange)) {
+                               final LmdbKeyRange keyRange,
+                               final Function<Iterator<LmdbEntry>, R> iteratorConsumer) {
+        try (final LmdbIterable iterable = LmdbIterable.create(txn.get(), dbi, keyRange)) {
             try {
-                final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+                final Iterator<LmdbEntry> iterator = iterable.iterator();
                 return iteratorConsumer.apply(iterator);
             } catch (final Throwable e) {
                 error(e);
@@ -125,13 +126,16 @@ public class LmdbDb {
     }
 
     public void iterate(final AbstractTxn txn,
-                        final KeyRange<ByteBuffer> keyRange,
-                        final Consumer<Iterator<KeyVal<ByteBuffer>>> iteratorConsumer) {
-        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(
-                txn.get(),
-                keyRange)) {
+                        final Consumer<Iterator<LmdbEntry>> iteratorConsumer) {
+        iterate(txn, LmdbKeyRange.all(), iteratorConsumer);
+    }
+
+    public void iterate(final AbstractTxn txn,
+                        final LmdbKeyRange keyRange,
+                        final Consumer<Iterator<LmdbEntry>> iteratorConsumer) {
+        try (final LmdbIterable iterable = LmdbIterable.create(txn.get(), dbi, keyRange)) {
             try {
-                final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+                final Iterator<LmdbEntry> iterator = iterable.iterator();
                 iteratorConsumer.accept(iterator);
             } catch (final Throwable e) {
                 error(e);
@@ -141,18 +145,13 @@ public class LmdbDb {
         }
     }
 
-    public void iterate(final AbstractTxn txn,
-                        final Consumer<CursorIterable<ByteBuffer>> iteratorConsumer) {
-        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(
-                txn.get())) {
-            try {
-                iteratorConsumer.accept(cursorIterable);
-            } catch (final Throwable e) {
-                error(e);
-            }
-        } catch (final Throwable e) {
-            error(e);
-        }
+    public Stream<LmdbEntry> stream(final AbstractTxn txn) {
+        return stream(txn, LmdbKeyRange.all());
+    }
+
+    public Stream<LmdbEntry> stream(final AbstractTxn txn,
+                                    final LmdbKeyRange keyRange) {
+        return LmdbStream.stream(txn.get(), dbi, keyRange);
     }
 
     public boolean delete(final WriteTxn txn, final ByteBuffer key) {
@@ -225,5 +224,26 @@ public class LmdbDb {
                ", name='" + name + '\'' +
                ", dbiFlags=" + dbiFlags +
                '}';
+    }
+
+    /**
+     * Converts a DB name {@link String} into byte[] form.
+     * Null safe to allow for the un-named DB.
+     */
+    static byte[] convertDbName(final String dbName) {
+        return NullSafe.get(dbName, str -> str.getBytes(DB_NAME_CHARSET));
+//        if (dbName == null) {
+//            return new byte[0];
+//        } else {
+//            return dbName.getBytes(DB_NAME_CHARSET);
+//        }
+    }
+
+    /**
+     * Converts a DB name byte[] into {@link String} form.
+     * Null safe to allow for the un-named DB.
+     */
+    static String convertDbName(final byte[] dbNameBytes) {
+        return NullSafe.get(dbNameBytes, bytes -> new String(bytes, DB_NAME_CHARSET));
     }
 }

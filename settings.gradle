@@ -220,6 +220,9 @@ include 'stroom-proxy:stroom-proxy-app'
 include 'stroom-proxy:stroom-proxy-repo'
 include 'stroom-proxy:stroom-proxy-remote-api'
 
+// Pathways
+include 'stroom-pathways:stroom-pathways-impl'
+
 // Query
 include 'stroom-query:stroom-query-api'
 include 'stroom-query:stroom-query-common'

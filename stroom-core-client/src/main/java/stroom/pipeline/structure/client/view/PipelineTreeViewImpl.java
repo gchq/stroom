@@ -22,7 +22,6 @@ import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter.PipelineTreeView;
 import stroom.pipeline.structure.client.presenter.PipelineTreeUiHandlers;
 import stroom.pipeline.structure.client.presenter.StructureValidationUtil;
-import stroom.util.shared.ElementId;
 import stroom.util.shared.Severity;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;

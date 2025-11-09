@@ -1,6 +1,7 @@
 package stroom.planb.impl.db;
 
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.lmdb.stream.LmdbIterable;
 import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionUtil;
@@ -13,8 +14,6 @@ import stroom.query.language.functions.Val;
 import stroom.query.language.functions.Values;
 import stroom.query.language.functions.ValuesConsumer;
 
-import org.lmdbjava.CursorIterable;
-import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.Txn;
 
@@ -44,14 +43,12 @@ public class PlanBSearchHelper {
         final Predicate<Values> predicate = optionalPredicate.orElse(vals -> true);
 
         // TODO : It would be faster if we limit the iteration to keys based on the criteria.
-        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(readTxn)) {
-            for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
-                final Values vals = valuesExtractor.apply(readTxn, keyVal);
-                if (predicate.test(vals)) {
-                    consumer.accept(vals.toArray());
-                }
+        LmdbIterable.iterate(readTxn, dbi, (key, val) -> {
+            final Values vals = valuesExtractor.apply(readTxn, key, val);
+            if (predicate.test(vals)) {
+                consumer.accept(vals.toArray());
             }
-        }
+        });
     }
 
     public static ValueFunctionFactories<Values> createValueFunctionFactories(final FieldIndex fieldIndex) {
@@ -64,7 +61,7 @@ public class PlanBSearchHelper {
         };
     }
 
-    public record Context(Txn<ByteBuffer> readTxn, KeyVal<ByteBuffer> kv) {
+    public record Context(Txn<ByteBuffer> readTxn, ByteBuffer key, ByteBuffer val) {
 
     }
 
@@ -106,6 +103,6 @@ public class PlanBSearchHelper {
 
     public interface ValuesExtractor {
 
-        Values apply(Txn<ByteBuffer> readTxn, KeyVal<ByteBuffer> kv);
+        Values apply(Txn<ByteBuffer> readTxn, ByteBuffer key, ByteBuffer value);
     }
 }

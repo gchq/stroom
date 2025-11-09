@@ -87,7 +87,7 @@ public class StringUtil {
         } else {
             final String trimmedStr = userText.trim();
             if (trimmedStr.startsWith("\"")
-                    && trimmedStr.endsWith("\"")) {
+                && trimmedStr.endsWith("\"")) {
 
                 final int openQuoteIdx = trimmedStr.indexOf("\"");
                 final int endQuoteIdx = trimmedStr.lastIndexOf("\"");
@@ -119,14 +119,14 @@ public class StringUtil {
         } else {
             final String escapedText = storedText.replace("\"", "\\\"");
             if (storedText.startsWith(" ")
-                    || storedText.startsWith("\t")
-                    || storedText.endsWith(" ")
-                    || storedText.endsWith("\t")) {
+                || storedText.startsWith("\t")
+                || storedText.endsWith(" ")
+                || storedText.endsWith("\t")) {
                 // leading/trailing whitespace so dbl quote the whole thing
                 // ' he said "hello" ' => '" he said \"hello\" "'
                 userText = "\""
-                        + escapedText
-                        + "\"";
+                           + escapedText
+                           + "\"";
             } else {
                 userText = escapedText;
             }
@@ -263,5 +263,28 @@ public class StringUtil {
         return bool != null && bool
                 ? "Yes"
                 : "No";
+    }
+
+    public static String formatDouble(final double d) {
+        final double rounded = Math.round(d * 100D) / 100D;
+        final String string = Double.toString(rounded);
+        final int index = string.indexOf(".");
+        if (index == -1) {
+            return string;
+        }
+
+        final char[] chars = string.toCharArray();
+        int end = chars.length - 1;
+        for (; end >= index; end--) {
+            if (chars[end] != '0') {
+                break;
+            }
+        }
+        if (end == index) {
+            return string.substring(0, index);
+        } else if (end < chars.length - 1) {
+            return string.substring(0, end + 1);
+        }
+        return string;
     }
 }

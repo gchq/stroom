@@ -1,5 +1,6 @@
 package stroom.analytics.impl;
 
+import stroom.analytics.impl.DuplicateCheckStore.InfoKey;
 import stroom.analytics.shared.DeleteDuplicateCheckRequest;
 import stroom.analytics.shared.DuplicateCheckRow;
 import stroom.analytics.shared.DuplicateCheckRows;
@@ -7,13 +8,19 @@ import stroom.analytics.shared.FindDuplicateCheckCriteria;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
+import stroom.lmdb.LmdbConfig;
+import stroom.lmdb2.LmdbDb;
+import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.LmdbEnvDir;
 import stroom.query.common.v2.DuplicateCheckStoreConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.string.StringUtil;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -21,12 +28,15 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -285,43 +295,277 @@ class TestDuplicateCheckStore {
                     serde,
                     () -> executorService,
                     UUID);
-            duplicateCheckStore.writeColumnNames(List.of("col1", "col2", "col3"));
+            try {
+                duplicateCheckStore.writeColumnNames(List.of("col1", "col2", "col3"));
 
-            assertThat(duplicateCheckStore.tryInsert(ROW_A))
-                    .isTrue();
-            assertThat(duplicateCheckStore.tryInsert(ROW_B))
-                    .isTrue();
-            assertThat(duplicateCheckStore.tryInsert(ROW_B))
-                    .isFalse();
-            assertThat(duplicateCheckStore.tryInsert(ROW_C))
-                    .isTrue();
-            assertThat(duplicateCheckStore.tryInsert(ROW_A))
-                    .isFalse();
-            assertThat(duplicateCheckStore.tryInsert(ROW_C))
-                    .isFalse();
+                assertThat(duplicateCheckStore.tryInsert(ROW_A))
+                        .isTrue();
+                assertThat(duplicateCheckStore.tryInsert(ROW_B))
+                        .isTrue();
+                assertThat(duplicateCheckStore.tryInsert(ROW_B))
+                        .isFalse();
+                assertThat(duplicateCheckStore.tryInsert(ROW_C))
+                        .isTrue();
+                assertThat(duplicateCheckStore.tryInsert(ROW_A))
+                        .isFalse();
+                assertThat(duplicateCheckStore.tryInsert(ROW_C))
+                        .isFalse();
 
-            // Will block until all the above are loaded in
-            duplicateCheckStore.flush();
+                // Will block until all the above are loaded in
+                duplicateCheckStore.flush();
 
-            assertThat(delete(duplicateCheckStore, List.of(ROW_A)))
-                    .isTrue();
-            assertThat(delete(duplicateCheckStore, List.of(ROW_A)))
-                    .isTrue();
-            assertThat(duplicateCheckStore.tryInsert(ROW_A))
-                    .isTrue();
+                assertThat(delete(duplicateCheckStore, List.of(ROW_A)))
+                        .isTrue();
+                assertThat(delete(duplicateCheckStore, List.of(ROW_A)))
+                        .isTrue();
+                assertThat(duplicateCheckStore.tryInsert(ROW_A))
+                        .isTrue();
 
-            assertThat(delete(duplicateCheckStore, List.of(ROW_B)))
-                    .isTrue();
-            assertThat(delete(duplicateCheckStore, List.of(ROW_B)))
-                    .isTrue();
-            assertThat(duplicateCheckStore.tryInsert(ROW_B))
-                    .isTrue();
+                assertThat(delete(duplicateCheckStore, List.of(ROW_B)))
+                        .isTrue();
+                assertThat(delete(duplicateCheckStore, List.of(ROW_B)))
+                        .isTrue();
+                assertThat(duplicateCheckStore.tryInsert(ROW_B))
+                        .isTrue();
 
-            duplicateCheckStore.flush();
+                duplicateCheckStore.flush();
 
-            duplicateCheckStore.close();
+            } finally {
+                duplicateCheckStore.close();
+            }
         }
     }
+
+    @Test
+    void testColumnChange(@TempDir final Path tempDir) {
+        final LmdbEnvDir lmdbEnvDir = new LmdbEnvDir(tempDir, true);
+        Mockito.when(mockDuplicateCheckDirs.getDir(UUID))
+                .thenReturn(lmdbEnvDir);
+
+        final DuplicateCheckStoreConfig duplicateCheckStoreConfig = new DuplicateCheckStoreConfig();
+        final DuplicateCheckRowSerde serde = new DuplicateCheckRowSerde(byteBufferFactory);
+        final ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("duplicate-check-transfer-%d")
+                .build();
+
+        try (final ExecutorService executorService = Executors.newSingleThreadExecutor(threadFactory)) {
+            DuplicateCheckStore duplicateCheckStore = null;
+            try {
+                duplicateCheckStore = new DuplicateCheckStore(
+                        mockDuplicateCheckDirs,
+                        byteBufferFactory,
+                        byteBuffers,
+                        duplicateCheckStoreConfig,
+                        serde,
+                        () -> executorService,
+                        UUID);
+
+                duplicateCheckStore.writeColumnNames(List.of("favouriteAnimal", "favouriteThing"));
+
+                assertThat(duplicateCheckStore.tryInsert(DuplicateCheckRow.of("lamb", "rolex")))
+                        .isTrue();
+                assertThat(duplicateCheckStore.tryInsert(DuplicateCheckRow.of("cat", "bed")))
+                        .isTrue();
+                duplicateCheckStore.flush();
+
+                assertThat(duplicateCheckStore.size())
+                        .isEqualTo(2);
+
+                assertThat(duplicateCheckStore.tryInsert(DuplicateCheckRow.of("lamb", "rolex")))
+                        .isFalse();
+                assertThat(duplicateCheckStore.tryInsert(DuplicateCheckRow.of("cat", "bed")))
+                        .isFalse();
+                duplicateCheckStore.flush();
+
+                assertThat(duplicateCheckStore.size())
+                        .isEqualTo(2);
+
+                duplicateCheckStore.writeColumnNames(List.of("favouriteFood", "favouriteThing"));
+                duplicateCheckStore.flush();
+
+                // Column change clears out all the data
+                assertThat(duplicateCheckStore.size())
+                        .isEqualTo(0);
+
+                assertThat(duplicateCheckStore.tryInsert(DuplicateCheckRow.of("lamb", "rolex")))
+                        .isTrue();
+                duplicateCheckStore.flush();
+
+                assertThat(duplicateCheckStore.size())
+                        .isEqualTo(1);
+
+                // Will block until all the above are loaded in
+                duplicateCheckStore.flush();
+
+                final DuplicateCheckRows rows = duplicateCheckStore.fetchData(new FindDuplicateCheckCriteria(
+                        PageRequest.unlimited(),
+                        null,
+                        null,
+                        null));
+
+                final List<DuplicateCheckRow> values = rows.getResultPage().getValues();
+
+                LOGGER.debug("values:\n{}", values.stream()
+                        .map(duplicateCheckRow -> String.join(", ", duplicateCheckRow.getValues()))
+                        .collect(Collectors.joining("\n")));
+
+                duplicateCheckStore.close();
+            } catch (final Throwable e) {
+                NullSafe.consume(duplicateCheckStore, dupCheckStore -> {
+                    dupCheckStore.flush();
+                    dupCheckStore.close();
+                });
+                throw e;
+            }
+        }
+    }
+
+    @Test
+    void testOldVersion(@TempDir final Path tempDir) {
+        final LmdbEnvDir lmdbEnvDir = new LmdbEnvDir(tempDir, true);
+        Mockito.when(mockDuplicateCheckDirs.getDir(UUID))
+                .thenReturn(lmdbEnvDir);
+
+        final DuplicateCheckStoreConfig duplicateCheckStoreConfig = new DuplicateCheckStoreConfig();
+        final DuplicateCheckRowSerde serde = new DuplicateCheckRowSerde(byteBufferFactory);
+
+        try (final ExecutorService executorService = Executors.newSingleThreadExecutor()) {
+            DuplicateCheckStore duplicateCheckStore = null;
+            try {
+                // This will create the env
+                duplicateCheckStore = new DuplicateCheckStore(
+                        mockDuplicateCheckDirs,
+                        byteBufferFactory,
+                        byteBuffers,
+                        duplicateCheckStoreConfig,
+                        serde,
+                        () -> executorService,
+                        UUID);
+                duplicateCheckStore.writeColumnNames(List.of("foo", "bar"));
+                duplicateCheckStore.flush();
+                assertThat(duplicateCheckStore.fetchData(new FindDuplicateCheckCriteria())
+                        .getColumnNames())
+                        .containsExactly("foo", "bar");
+                duplicateCheckStore.close();
+
+                // Remove the version entry from the info db
+                LmdbEnv lmdbEnv = createEnv(duplicateCheckStoreConfig.getLmdbConfig(), lmdbEnvDir);
+                final LmdbDb infoDb = lmdbEnv.openDb(DuplicateCheckStore.INFO_DB_NAME);
+                lmdbEnv.write(writeTxn -> {
+                    infoDb.delete(writeTxn, InfoKey.SCHEMA_VERSION.getByteBuffer());
+                    writeTxn.commit();
+                });
+                lmdbEnv.close();
+
+                // Now re-create the store which should delete and re-create the env
+                duplicateCheckStore = new DuplicateCheckStore(
+                        mockDuplicateCheckDirs,
+                        byteBufferFactory,
+                        byteBuffers,
+                        duplicateCheckStoreConfig,
+                        serde,
+                        () -> executorService,
+                        UUID);
+
+                // New env so no cols
+                assertThat(duplicateCheckStore.fetchData(new FindDuplicateCheckCriteria())
+                        .getColumnNames())
+                        .isEmpty();
+
+                lmdbEnv = createEnv(duplicateCheckStoreConfig.getLmdbConfig(), lmdbEnvDir);
+                final LmdbDb infoDb2 = lmdbEnv.openDb(DuplicateCheckStore.INFO_DB_NAME);
+                lmdbEnv.read(readTxn -> {
+                    final ByteBuffer byteBuffer = infoDb2.get(readTxn, InfoKey.SCHEMA_VERSION.getByteBuffer());
+                    final int version = byteBuffer.getInt();
+                    assertThat(version)
+                            .isEqualTo(DuplicateCheckStore.CURRENT_SCHEMA_VERSION);
+                });
+                lmdbEnv.close();
+                duplicateCheckStore.flush();
+                duplicateCheckStore.close();
+            } catch (final Throwable e) {
+                NullSafe.consume(duplicateCheckStore, dupCheckStore -> {
+                    dupCheckStore.flush();
+                    dupCheckStore.close();
+                });
+                throw e;
+            }
+        }
+    }
+
+    @Test
+    void testValidVersion(@TempDir final Path tempDir) {
+        final LmdbEnvDir lmdbEnvDir = new LmdbEnvDir(tempDir, true);
+        Mockito.when(mockDuplicateCheckDirs.getDir(UUID))
+                .thenReturn(lmdbEnvDir);
+
+        final DuplicateCheckStoreConfig duplicateCheckStoreConfig = new DuplicateCheckStoreConfig();
+        final DuplicateCheckRowSerde serde = new DuplicateCheckRowSerde(byteBufferFactory);
+
+        try (final ExecutorService executorService = Executors.newSingleThreadExecutor()) {
+            DuplicateCheckStore duplicateCheckStore = null;
+            try {
+                // This will create the env with the right schma version
+                duplicateCheckStore = new DuplicateCheckStore(
+                        mockDuplicateCheckDirs,
+                        byteBufferFactory,
+                        byteBuffers,
+                        duplicateCheckStoreConfig,
+                        serde,
+                        () -> executorService,
+                        UUID);
+                // Add some cols
+                duplicateCheckStore.writeColumnNames(List.of("foo", "bar"));
+                duplicateCheckStore.flush();
+                assertThat(duplicateCheckStore.fetchData(new FindDuplicateCheckCriteria())
+                        .getColumnNames())
+                        .containsExactly("foo", "bar");
+                duplicateCheckStore.close();
+
+                // Now re-open the store
+                duplicateCheckStore = new DuplicateCheckStore(
+                        mockDuplicateCheckDirs,
+                        byteBufferFactory,
+                        byteBuffers,
+                        duplicateCheckStoreConfig,
+                        serde,
+                        () -> executorService,
+                        UUID);
+
+                // Cols still there
+                assertThat(duplicateCheckStore.fetchData(new FindDuplicateCheckCriteria())
+                        .getColumnNames())
+                        .containsExactly("foo", "bar");
+
+                duplicateCheckStore.flush();
+                duplicateCheckStore.close();
+            } catch (final Throwable e) {
+                NullSafe.consume(duplicateCheckStore, dupCheckStore -> {
+                    dupCheckStore.flush();
+                    dupCheckStore.close();
+                });
+                throw e;
+            }
+        }
+    }
+
+    private LmdbEnv createEnv(final LmdbConfig lmdbConfig, final LmdbEnvDir lmdbEnvDir) {
+        try {
+            final LmdbEnv lmdbEnv = LmdbEnv
+                    .builder()
+                    .config(lmdbConfig)
+                    .lmdbEnvDir(lmdbEnvDir)
+                    .maxDbs(DuplicateCheckStore.MAX_DBS)
+                    .maxReaders(DuplicateCheckStore.MAX_READERS)
+                    .addEnvFlag(DuplicateCheckStore.ENV_FLAGS)
+                    .build();
+            LOGGER.debug("Created LmdbEnv in {} with config {}", lmdbEnvDir, lmdbConfig);
+            return lmdbEnv;
+        } catch (final Exception e) {
+            throw new RuntimeException(LogUtil.message("Error creating/opening LMDB Env in {} with config {} - ",
+                    lmdbEnvDir, lmdbConfig, LogUtil.exceptionMessage(e)), e);
+        }
+    }
+
 
     private boolean delete(final DuplicateCheckStore duplicateCheckStore,
                            final List<DuplicateCheckRow> rows) {

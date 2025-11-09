@@ -1,0 +1,378 @@
+.pathway {
+    position: relative;
+    overflow: auto;
+    width: 100%;
+    height: 100%;
+}
+
+.pathway-curves {
+    position: absolute;
+    left: 0;
+    top: 0;
+    padding: 5px;
+}
+
+.pathway-nodes {
+    position: absolute;
+    left: 0;
+    top: 0;
+    padding: 5px;
+}
+
+.pathway-curves svg {
+
+}
+
+.pathway-curves svg path {
+    stroke: white;
+    fill: transparent;
+}
+
+.pathway-terminal {
+    color: red;
+}
+
+.pathway-node {
+    display: flex;
+    gap: 4px;
+    white-space: nowrap;
+    height: 22px;
+}
+
+.pathway-nodeName {
+    padding: 4px;
+    margin: -4px;
+    height: 24px;
+    cursor: pointer;
+}
+
+.pathway-nodeName--selected {
+    background-color: var(--navigation__background-color--selected);
+    color: var(--navigation__text-color--selected);
+    box-shadow: var(--row__box-shadow--selected--focussed);
+}
+
+.pathway-targets-outer {
+    display: flex;
+    padding-left: 20px;
+    gap: 4px;
+}
+
+.pathway-targets-inner {
+    /*padding-left: 20px;*/
+}
+
+.pathway-target-outer {
+    display: flex;
+}
+
+.pathway-target-inner {
+    padding-left: 20px;
+}
+
+.pathway-target {
+    display: flex;
+    gap: 4px;
+    padding-left: 20px;
+}
+
+.pathway-targetName {
+    opacity: 0;
+}
+
+.pathway-constraints {
+    padding: 5px;
+    overflow: auto;
+    width: 100%;
+    height: 100%;
+}
+
+.pathway-spans {
+    padding: 5px;
+    overflow: auto;
+    width: 100%;
+    height: 100%;
+}
+
+.pathway-attributes {
+    padding-left: 10px;
+}
+
+.pathway-attributes-optional {
+    opacity: 0.8;
+}
+
+.pathway-attribute {
+    display: flex;
+    gap: 5px;
+}
+
+.pathway-attributeKey {
+    font-weight: 600;
+}
+
+
+
+
+
+
+
+.timeline-container {
+    padding: 5px 30px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.timeline-header {
+    position: relative;
+}
+
+.timeline-header span {
+    position: absolute;
+    font-size: 10px;
+    color: #888;
+    padding: 5px 0;
+    transform: translate(-50%, 0%);
+}
+
+.timeline-controls {
+    position: relative;
+}
+
+.timeline-bar {
+    min-height: 40px;
+    background-color: #2d2d2d;
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #404040;
+    background-image:
+       linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),
+       linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%;
+    background-position: 0 0, 0 0;
+}
+
+.time-slider-container {
+    position: absolute;
+    top: 0px;
+    left: 0;
+    right: 0;
+    height: 40px;
+}
+
+.time-dim-overlay {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+}
+
+.time-slider {
+    position: absolute;
+    width: 8px;
+    height: 40px;
+    background-color: rgb(0, 101, 167);
+    border: 1px solid #7771cb;
+    border-radius: 6px;
+    cursor: ew-resize;
+    top: 0;
+    transition: background-color 0.2s ease;
+    margin-left: -4px;
+}
+
+.time-slider#startSlider {
+
+}
+
+.time-slider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 2px;
+    height: 20px;
+    background-color: #9e97ff;
+    border-radius: 1px;
+}
+
+.time-slider .slider-label {
+    position: absolute;
+    left: 4px;
+    top: -19px;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: #fff;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    white-space: nowrap;
+    border: 1px solid #555;
+}
+
+/*
+.time-slider#startSlider .slider-label {
+    left: 4px;
+}
+
+.time-slider#endSlider .slider-label {
+    right: -26px;
+}
+*/
+.time-range-overlay {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-radius: 2px;
+    pointer-events: auto;
+    cursor: grab;
+    background: transparent;
+}
+
+.timeline-buttons {
+    display: flex;
+    justify-content: space-between;
+}
+
+.reset-range-btn {
+    background-color: #404040;
+    color: #e0e0e0;
+    border: 1px solid #555;
+    border-radius: 3px;
+    padding: 4px 8px;
+    font-size: 10px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.time-range-info {
+    color: #ccc;
+    padding: 4px 8px;
+    font-size: 10px;
+}
+
+
+
+
+
+
+
+
+.service-operations {
+    background-color: var(--row__background-color--even);
+    position: relative;
+}
+
+.grid-lines {
+    position: absolute;
+    top: 0;
+    left: 400px;
+    right: 50px;
+    bottom: 0;
+    background-image:
+       linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),
+       linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%;
+    background-position: 0 0, 0 0;
+}
+
+.section-header {
+    background-color: #2d2d2d;
+    padding: 8px 20px;
+    border-bottom: 1px solid #404040;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.operation-list {
+    padding: 8px 0;
+}
+
+.operation-item {
+    display: flex;
+    align-items: center;
+    padding: 2px 2px;
+    position: relative;
+    min-height: 26px;
+    border-bottom: 1px solid #333;
+    padding-right: 50px;
+}
+
+.operation-content {
+    display: flex;
+    align-items: center;
+    width: 400px;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.expand-icon {
+    width: 12px;
+    height: 12px;
+    margin-right: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #888;
+}
+
+.service-name {
+    color: #ff8c42;
+    font-weight: 500;
+    margin-right: 8px;
+}
+
+.operation-name {
+    color: #b0b0b0;
+    flex: 1;
+}
+
+.waterfall-container {
+    position: relative;
+    flex-grow: 1;
+}
+
+.span-bar {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 6px;
+    border-radius: 2px;
+    min-width: 2px;
+}
+
+.span-http {
+    background: linear-gradient(90deg, #ff8c42 0%, #ff6b1a 100%);
+}
+
+.duration {
+    color: #888;
+    font-size: 11px;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 2px;
+}
+
+.children {
+    transition: all 0.2s ease;
+}
+
+.indent-0 {
+    padding-left: 0px;
+}
+.indent-1 {
+    padding-left: 30px;
+}
+.indent-2 {
+    padding-left: 60px;
+}
+.indent-3 {
+    padding-left: 90px;
+}

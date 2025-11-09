@@ -143,6 +143,7 @@ dependencies {
     implementation project(':stroom-node:stroom-node-impl')
     implementation project(':stroom-node:stroom-node-impl-db')
     implementation project(':stroom-node:stroom-node-impl-db-jooq')
+    implementation project(':stroom-pathways:stroom-pathways-impl')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-processor:stroom-processor-api')
     implementation project(':stroom-processor:stroom-processor-impl')

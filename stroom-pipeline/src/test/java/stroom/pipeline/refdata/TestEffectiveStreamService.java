@@ -48,8 +48,9 @@ class TestEffectiveStreamService {
         pipelineReference = new PipelineReference(
                 null,
                 DocRef.builder()
-                        .name(FEED_NAME)
                         .type(FeedDoc.TYPE)
+                        .uuid(FEED_NAME)
+                        .name(FEED_NAME)
                         .build(),
                 StreamTypeNames.REFERENCE);
     }

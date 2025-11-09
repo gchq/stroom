@@ -290,6 +290,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                 D document = presenter.getEntity();
                 document = presenter.write(document);
                 final D finalDocument = document;
+
                 save(getDocRef(document), document,
                         doc -> presenter.read(getDocRef(doc), doc, presenter.isReadOnly()),
                         throwable -> AlertEvent.fireError(
@@ -299,6 +300,17 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                         presenter);
             }
         }
+    }
+
+    /**
+     * Called when saving a document, just prior to it being saved.
+     * Subclasses should override this to implement custom save validation/confirmation.
+     *
+     * @param doc The doc after onWrite() has been called.
+     * @return True to continue with the save, else the save will be aborted.
+     */
+    public boolean validateBeforeSave(final D doc) {
+        return true;
     }
 
     @SuppressWarnings("unchecked")

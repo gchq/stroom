@@ -1,0 +1,22 @@
+This format now uses end_time_unix_nano along with start_time_unix_nano, which is common in many tracing systems. Here are the key timing fields in this format:
+Timestamp Fields:
+
+start_time_unix_nano: When the span started (nanoseconds since Unix epoch)
+end_time_unix_nano: When the span ended (nanoseconds since Unix epoch)
+duration_ns: Calculated duration in nanoseconds (end - start)
+time_unix_nano: For events within spans
+
+Example timestamp breakdown:
+
+Root span: 1704067200000000000 to 1704067200250000000 (250ms duration)
+Cache check: 1704067200005000000 to 1704067200008000000 (3ms duration)
+DB query: 1704067200030000000 to 1704067200180000000 (150ms duration)
+
+Nanosecond precision benefits:
+
+High-resolution timing for performance analysis
+Precise ordering of concurrent operations
+Microsecond-level latency measurements
+Compatible with high-frequency trading and real-time systems
+
+This format combines the readable snake_case naming (parent_span_id) with the precision of nanosecond timestamps, making it suitable for both human readability and high-precision performance monitoring systems.

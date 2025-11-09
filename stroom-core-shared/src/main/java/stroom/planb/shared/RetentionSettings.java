@@ -16,7 +16,9 @@
 
 package stroom.planb.shared;
 
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.time.TimeUnit;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -34,6 +36,11 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class RetentionSettings extends DurationSetting {
 
+    private static final SimpleDuration DEFAULT_DURATION = SimpleDuration.builder()
+            .time(1)
+            .timeUnit(TimeUnit.YEARS)
+            .build();
+
     @JsonProperty
     private final Boolean useStateTime;
 
@@ -41,8 +48,8 @@ public class RetentionSettings extends DurationSetting {
     public RetentionSettings(@JsonProperty("enabled") final boolean enabled,
                              @JsonProperty("duration") final SimpleDuration duration,
                              @JsonProperty("useStateTime") final Boolean useStateTime) {
-        super(enabled, duration);
-        this.useStateTime = useStateTime;
+        super(enabled, NullSafe.requireNonNullElse(duration, DEFAULT_DURATION));
+        this.useStateTime = NullSafe.requireNonNullElse(useStateTime, false);
     }
 
     public boolean useStateTime() {
@@ -76,7 +83,9 @@ public class RetentionSettings extends DurationSetting {
     @Override
     public String toString() {
         return "RetentionSettings{" +
-               "useStateTime=" + useStateTime +
+               "enabled=" + enabled +
+               ", duration=" + duration +
+               ", useStateTime=" + useStateTime +
                '}';
     }
 
@@ -90,9 +99,11 @@ public class RetentionSettings extends DurationSetting {
         }
 
         public Builder(final RetentionSettings retentionSettings) {
-            this.enabled = retentionSettings.enabled;
-            this.duration = retentionSettings.duration;
-            this.useStateTime = retentionSettings.useStateTime;
+            if (retentionSettings != null) {
+                this.enabled = retentionSettings.enabled;
+                this.duration = retentionSettings.duration;
+                this.useStateTime = retentionSettings.useStateTime;
+            }
         }
 
         public Builder enabled(final boolean enabled) {

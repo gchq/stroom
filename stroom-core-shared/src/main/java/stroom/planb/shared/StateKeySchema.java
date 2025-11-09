@@ -1,6 +1,7 @@
 package stroom.planb.shared;
 
 import stroom.util.shared.AbstractBuilder;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -18,8 +19,8 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class StateKeySchema {
 
-    public static final KeyType DEFAULT_KEY_TYPE = KeyType.VARIABLE;
-    public static final HashLength DEFAULT_HASH_LENGTH = HashLength.INTEGER;
+    static final KeyType DEFAULT_KEY_TYPE = KeyType.VARIABLE;
+    static final HashLength DEFAULT_HASH_LENGTH = HashLength.INTEGER;
 
     @JsonProperty
     final KeyType keyType;
@@ -31,8 +32,8 @@ public class StateKeySchema {
     @JsonCreator
     public StateKeySchema(@JsonProperty("keyType") final KeyType keyType,
                           @JsonProperty("hashLength") final HashLength hashLength) {
-        this.keyType = keyType;
-        this.hashLength = hashLength;
+        this.keyType = NullSafe.requireNonNullElse(keyType, DEFAULT_KEY_TYPE);
+        this.hashLength = NullSafe.requireNonNullElse(hashLength, DEFAULT_HASH_LENGTH);
     }
 
     public KeyType getKeyType() {
@@ -71,15 +72,17 @@ public class StateKeySchema {
 
     public static class Builder extends AbstractBuilder<StateKeySchema, Builder> {
 
-        private KeyType keyType = KeyType.VARIABLE;
-        private HashLength hashLength = HashLength.INTEGER;
+        private KeyType keyType;
+        private HashLength hashLength;
 
         public Builder() {
         }
 
         public Builder(final StateKeySchema schema) {
-            this.keyType = schema.keyType;
-            this.hashLength = schema.hashLength;
+            if (schema != null) {
+                this.keyType = schema.keyType;
+                this.hashLength = schema.hashLength;
+            }
         }
 
         public Builder keyType(final KeyType keyType) {
@@ -99,9 +102,7 @@ public class StateKeySchema {
 
         @Override
         public StateKeySchema build() {
-            return new StateKeySchema(
-                    keyType,
-                    hashLength);
+            return new StateKeySchema(keyType, hashLength);
         }
     }
 }

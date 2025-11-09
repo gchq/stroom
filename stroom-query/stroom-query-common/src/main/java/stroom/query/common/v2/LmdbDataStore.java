@@ -19,6 +19,8 @@ package stroom.query.common.v2;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.dictionary.api.WordListProvider;
+import stroom.lmdb.stream.LmdbEntry;
+import stroom.lmdb.stream.LmdbKeyRange;
 import stroom.lmdb2.LmdbDb;
 import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.ReadTxn;
@@ -57,10 +59,8 @@ import com.esotericsoftware.kryo.io.ByteBufferInput;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import jakarta.inject.Provider;
-import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Env.MapFullException;
 import org.lmdbjava.EnvFlags;
-import org.lmdbjava.KeyRange;
 import org.lmdbjava.LmdbException;
 import org.lmdbjava.PutFlags;
 
@@ -89,6 +89,7 @@ public class LmdbDataStore implements DataStore {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbDataStore.class);
 
     private static final long COMMIT_FREQUENCY_MS = 10000;
+    private static final int MAX_LIST_SIZE = 10_000;
     public static final ByteBuffer DB_STATE_VALUE = ByteBuffer
             .allocateDirect(Long.BYTES + Long.BYTES + Long.BYTES);
 
@@ -179,8 +180,10 @@ public class LmdbDataStore implements DataStore {
         compiledDepths = new CompiledDepths(this.compiledColumnArray, tableSettings.showDetail());
         compiledSorters = new CompiledSorters<>(compiledDepths, columns);
         final int maxStringFieldLength = tableSettings.overrideMaxStringFieldLength() &&
-                                         tableSettings.getMaxStringFieldLength() != null ?
-                tableSettings.getMaxStringFieldLength() : resultStoreConfig.getMaxStringFieldLength();
+                                         tableSettings.getMaxStringFieldLength() != null
+                ?
+                tableSettings.getMaxStringFieldLength()
+                : resultStoreConfig.getMaxStringFieldLength();
         writerFactory = new DataWriterFactory(errorConsumer, maxStringFieldLength);
         keyFactoryConfig = new KeyFactoryConfigImpl(sourceType, this.compiledColumnArray, compiledDepths);
         keyFactory = KeyFactoryFactory.create(keyFactoryConfig, compiledDepths);
@@ -435,15 +438,14 @@ public class LmdbDataStore implements DataStore {
                         final DeleteCommand deleteCommand) {
         lmdbRowKeyFactory.createChildKeyRange(
                 deleteCommand.getParentKey(), deleteCommand.getTimeFilter(), keyRange -> {
-                    db.iterate(writeTxn, keyRange, iterator -> {
-                        while (iterator.hasNext()) {
-                            final KeyVal<ByteBuffer> keyVal = iterator.next();
-                            final ByteBuffer keyBuffer = keyVal.key();
+                    try (final Stream<LmdbEntry> stream = db.stream(writeTxn, keyRange)) {
+                        stream.forEach(entry -> {
+                            final ByteBuffer keyBuffer = entry.getKey();
                             if (keyBuffer.limit() > 1) {
                                 db.delete(writeTxn, keyBuffer);
                             }
-                        }
-                    });
+                        });
+                    }
                     writeTxn.commit();
                 });
     }
@@ -912,9 +914,9 @@ public class LmdbDataStore implements DataStore {
                            iterator.hasNext() &&
                            !Thread.currentThread().isInterrupted()) {
 
-                        final KeyVal<ByteBuffer> keyVal = iterator.next();
-                        final ByteBuffer keyBuffer = keyVal.key();
-                        final ByteBuffer valueBuffer = keyVal.val();
+                        final LmdbEntry keyVal = iterator.next();
+                        final ByteBuffer keyBuffer = keyVal.getKey();
+                        final ByteBuffer valueBuffer = keyVal.getVal();
 
                         // If we are just counting the total results from this point then we don't need to
                         // deserialise unless we are hiding rows.
@@ -1065,10 +1067,10 @@ public class LmdbDataStore implements DataStore {
                 final AtomicLong totalRowCount = new AtomicLong();
                 while (iterator.hasNext()
                        && !Thread.currentThread().isInterrupted()) {
-                    final KeyVal<ByteBuffer> keyVal = iterator.next();
+                    final LmdbEntry keyVal = iterator.next();
 
-                    final ByteBuffer keyBuffer = keyVal.key();
-                    final ByteBuffer valueBuffer = keyVal.val();
+                    final ByteBuffer keyBuffer = keyVal.getKey();
+                    final ByteBuffer valueBuffer = keyVal.getVal();
                     boolean isFirstValue = true;
                     // It is possible to have no actual values, e.g. if you have just one col of
                     // 'currentUser()' so we still need to create and add an empty storedValues
@@ -1168,13 +1170,13 @@ public class LmdbDataStore implements DataStore {
             this.timeFilter = timeFilter;
         }
 
-        public <R> R readResult(final KeyRange<ByteBuffer> keyRange,
-                                final Function<Iterator<KeyVal<ByteBuffer>>, R> iteratorConsumer) {
+        public <R> R readResult(final LmdbKeyRange keyRange,
+                                final Function<Iterator<LmdbEntry>, R> iteratorConsumer) {
             return db.iterateResult(readTxn, keyRange, iteratorConsumer);
         }
 
-        public void read(final KeyRange<ByteBuffer> keyRange,
-                         final Consumer<Iterator<KeyVal<ByteBuffer>>> iteratorConsumer) {
+        public void read(final LmdbKeyRange keyRange,
+                         final Consumer<Iterator<LmdbEntry>> iteratorConsumer) {
             db.iterate(readTxn, keyRange, iteratorConsumer);
         }
 
@@ -1269,17 +1271,22 @@ public class LmdbDataStore implements DataStore {
             fetchState.reachedRowLimit = false;
             fetchState.keepGoing = true;
 
+            // Constrain the absolute limit.
+            // In some rare cases we might want to examine more than 1000 rows (see gh-5198).
+            final int absoluteLimit = Math.min(limit, MAX_LIST_SIZE);
+            final OffsetRange offsetRange = new OffsetRange(0, absoluteLimit);
+
             final LmdbDataStore dataStore = readContext.dataStore;
             dataStore.getChildren(
                     readContext,
                     key,
                     key.getChildDepth(),
-                    limit,
+                    absoluteLimit,
                     trimTop,
                     OpenGroups.NONE, // Don't traverse any child rows.
                     readContext.timeFilter,
                     IdentityItemMapper.INSTANCE,
-                    OffsetRange.ZERO_1000, // Max 1000 child items.
+                    offsetRange,
                     fetchState,
                     item -> result.add(((LmdbItem) item).storedValues));
             return result;

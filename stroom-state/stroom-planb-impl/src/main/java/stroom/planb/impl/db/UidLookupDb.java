@@ -3,17 +3,15 @@ package stroom.planb.impl.db;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.lmdb.serde.UnsignedBytes;
 import stroom.lmdb.serde.UnsignedBytesInstances;
+import stroom.lmdb.stream.LmdbIterable;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import org.lmdbjava.CursorIterable;
-import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
-import java.util.Iterator;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -35,12 +33,21 @@ public class UidLookupDb {
     private final Dbi<ByteBuffer> uidToKeyDbi;
     private final Dbi<ByteBuffer> infoDbi;
     private long maxId;
+    private final UnsignedBytesFactory unsignedBytesFactory;
 
     public UidLookupDb(final PlanBEnv env,
                        final ByteBuffers byteBuffers,
                        final String name) {
+        this(env, byteBuffers, name, new VariableUnsignedBytesFactory());
+    }
+
+    public UidLookupDb(final PlanBEnv env,
+                       final ByteBuffers byteBuffers,
+                       final String name,
+                       final UnsignedBytesFactory unsignedBytesFactory) {
         this.name = name;
         this.byteBuffers = byteBuffers;
+        this.unsignedBytesFactory = unsignedBytesFactory;
         keyToUidDbi = env.openDbi(name + "-keyToUid", DbiFlags.MDB_CREATE);
         uidToKeyDbi = env.openDbi(name + "-uidToKey", DbiFlags.MDB_CREATE);
         infoDbi = env.openDbi(name + "-info", DbiFlags.MDB_CREATE);
@@ -90,7 +97,7 @@ public class UidLookupDb {
     }
 
     public <R> R uidToByteBuffer(final long uid, final Function<ByteBuffer, R> function) {
-        final UnsignedBytes unsignedBytes = UnsignedBytesInstances.forValue(uid);
+        final UnsignedBytes unsignedBytes = unsignedBytesFactory.forValue(uid);
         return byteBuffers.use(unsignedBytes.length(), byteBuffer -> {
             unsignedBytes.put(byteBuffer, uid);
             byteBuffer.flip();
@@ -99,7 +106,7 @@ public class UidLookupDb {
     }
 
     private long byteBufferToUid(final ByteBuffer byteBuffer) {
-        final UnsignedBytes unsignedBytes = UnsignedBytesInstances.ofLength(byteBuffer.remaining());
+        final UnsignedBytes unsignedBytes = unsignedBytesFactory.ofLength(byteBuffer.remaining());
         return unsignedBytes.get(byteBuffer);
     }
 
@@ -122,7 +129,7 @@ public class UidLookupDb {
 
         } else {
             final long uid = ++maxId;
-            final UnsignedBytes unsignedBytes = UnsignedBytesInstances.forValue(uid);
+            final UnsignedBytes unsignedBytes = unsignedBytesFactory.forValue(uid);
             return byteBuffers.use(unsignedBytes.length(), uidByteBuffer -> {
                 unsignedBytes.put(uidByteBuffer, uid);
                 uidByteBuffer.flip();
@@ -137,19 +144,51 @@ public class UidLookupDb {
     }
 
     public void forEachUid(final Txn<ByteBuffer> readTxn, final Consumer<ByteBuffer> keyConsumer) {
-        try (final CursorIterable<ByteBuffer> cursor = uidToKeyDbi.iterate(readTxn)) {
-            final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-            while (iterator.hasNext()
-                   && !Thread.currentThread().isInterrupted()) {
-                final KeyVal<ByteBuffer> kv = iterator.next();
-                keyConsumer.accept(kv.key());
-            }
-        }
+        LmdbIterable.iterate(readTxn, uidToKeyDbi, (key, val) -> keyConsumer.accept(key));
     }
 
     public void deleteByUid(final Txn<ByteBuffer> writeTxn, final ByteBuffer uid) {
         final ByteBuffer key = uidToKeyDbi.get(writeTxn, uid);
         keyToUidDbi.delete(writeTxn, key);
         uidToKeyDbi.delete(writeTxn, uid);
+    }
+
+    public interface UnsignedBytesFactory {
+
+        UnsignedBytes ofLength(int length);
+
+        UnsignedBytes forValue(long value);
+    }
+
+    public static class VariableUnsignedBytesFactory implements UnsignedBytesFactory {
+
+        @Override
+        public UnsignedBytes ofLength(final int length) {
+            return UnsignedBytesInstances.ofLength(length);
+        }
+
+        @Override
+        public UnsignedBytes forValue(final long value) {
+            return UnsignedBytesInstances.forValue(value);
+        }
+    }
+
+    public static class StaticUnsignedBytesFactory implements UnsignedBytesFactory {
+
+        private final UnsignedBytes unsignedBytes;
+
+        public StaticUnsignedBytesFactory(final UnsignedBytes unsignedBytes) {
+            this.unsignedBytes = unsignedBytes;
+        }
+
+        @Override
+        public UnsignedBytes ofLength(final int length) {
+            return unsignedBytes;
+        }
+
+        @Override
+        public UnsignedBytes forValue(final long value) {
+            return unsignedBytes;
+        }
     }
 }

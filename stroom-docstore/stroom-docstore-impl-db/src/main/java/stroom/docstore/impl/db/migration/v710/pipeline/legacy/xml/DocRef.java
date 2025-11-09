@@ -17,7 +17,6 @@
 package stroom.docstore.impl.db.migration.v710.pipeline.legacy.xml;
 
 import stroom.docref.HasDisplayValue;
-import stroom.docref.HasNameMutable;
 import stroom.docref.HasType;
 import stroom.docref.HasUuid;
 

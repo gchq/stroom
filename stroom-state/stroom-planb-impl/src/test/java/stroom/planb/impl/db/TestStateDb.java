@@ -17,6 +17,7 @@
 
 package stroom.planb.impl.db;
 
+import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.docref.DocRef;
@@ -191,6 +192,7 @@ class TestStateDb {
         final PlanBDocStore planBDocStore = Mockito.mock(PlanBDocStore.class);
         final PlanBDoc doc = PlanBDoc
                 .builder()
+                .type(PlanBDoc.TYPE)
                 .uuid(MAP_UUID)
                 .name(MAP_NAME)
                 .stateType(StateType.STATE)
@@ -206,8 +208,10 @@ class TestStateDb {
 
         final String path = rootDir.toAbsolutePath().toString();
         final PlanBConfig planBConfig = new PlanBConfig(path);
+        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
         final ShardManager shardManager = new ShardManager(
-                new ByteBuffers(new ByteBufferFactoryImpl()),
+                new ByteBuffers(byteBufferFactory),
+                byteBufferFactory,
                 planBDocCache,
                 planBDocStore,
                 null,

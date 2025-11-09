@@ -349,12 +349,11 @@ public abstract class AbstractMetaListPresenter
 
     void addFeedColumn() {
         dataGrid.addResizableColumn(
-                DataGridUtil.docRefColumnBuilder((MetaRow metaRow) ->
+                DataGridUtil.feedRefColumnBuilder((MetaRow metaRow) ->
                                         Optional.ofNullable(metaRow)
                                                 .map(this::getFeed)
                                                 .orElse(null),
-                                getEventBus(),
-                                true)
+                                getEventBus())
                         .withSorting(MetaFields.FEED)
                         .build(),
                 "Feed",
@@ -375,12 +374,9 @@ public abstract class AbstractMetaListPresenter
                 80);
     }
 
-    private DocRef getFeed(final MetaRow metaRow) {
+    private String getFeed(final MetaRow metaRow) {
         if (metaRow.getMeta() != null && metaRow.getMeta().getFeedName() != null) {
-            return new DocRef(
-                    FeedDoc.TYPE,
-                    null,
-                    metaRow.getMeta().getFeedName());
+            return metaRow.getMeta().getFeedName();
         }
         return null;
     }
@@ -389,8 +385,6 @@ public abstract class AbstractMetaListPresenter
         if (metaRow.getMeta().getProcessorUuid() != null) {
             if (metaRow.getPipeline() != null) {
                 return metaRow.getPipeline();
-            } else {
-                return new DocRef(null, null, null);
             }
         }
         return null;
@@ -402,8 +396,7 @@ public abstract class AbstractMetaListPresenter
                                         Optional.ofNullable(metaRow)
                                                 .map(this::getPipeline)
                                                 .orElse(null),
-                                getEventBus(),
-                                false)
+                                getEventBus())
                         .withSorting(MetaFields.PIPELINE_NAME)
                         .build(),
                 "Pipeline",

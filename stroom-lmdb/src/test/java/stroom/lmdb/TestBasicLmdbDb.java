@@ -1200,11 +1200,23 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
      * This is more of a manual performance test for comparing the difference between
      * puts in integer order vs in random order. Also compares the impact of the INTEGER_KEY
      * dbi flag, which seems to slow things down a fair bit.
+     * <p>
+     * The following test output was for 10_000_000 entries.
+     * </p>
+     * <pre>
+     * Completed [Puts: Ascending] in PT3.056630567S
+     * Completed [Puts: Random] in PT9.910205266S
+     * Completed [Puts: Ascending (INTEGER_KEY)] in PT2.41477686S
+     * Completed [Puts: Random (INTEGER_KEY)] in PT9.109282535S
+     * Completed [Iteration] in PT3.5032606S
+     * Completed [Iteration (INTEGER_KEY)] in PT3.531630825S
+     * </pre>
      */
     @Test
     void testLoadOrderAndIntKeyPerformance() {
 
 //        final int iterations = 1_000_000;
+//        final int iterations = 10_000_000;
         final int iterations = 10;
 
         LOGGER.info("info {}", basicLmdbDb3.getDbInfo());
@@ -1235,7 +1247,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                     basicLmdbDb3.put(writeTxn, tuple._1(), tuple._2(), false);
                 });
             });
-        }, "Ascending");
+        }, "Puts: Ascending");
 
         LOGGER.logDurationIfInfoEnabled(() -> {
             lmdbEnv.doWithWriteTxn(writeTxn -> {
@@ -1243,7 +1255,8 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                     basicLmdbDb3.put(writeTxn, tuple._1(), tuple._2(), false);
                 });
             });
-        }, "Random");
+        }, "Puts: Random");
+
 
         // If you want to use MDB_INTEGERKEY then you MUST set the byte buffer to nativeOrder before
         // writing/reading. See https://github.com/lmdbjava/lmdbjava/issues/51
@@ -1253,7 +1266,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                     basicLmdbDb4.put(writeTxn, tuple._1(), tuple._2(), false);
                 });
             });
-        }, "Ascending (INTEGER_KEY)");
+        }, "Puts: Ascending (INTEGER_KEY)");
 
         LOGGER.logDurationIfInfoEnabled(() -> {
             lmdbEnv.doWithWriteTxn(writeTxn -> {
@@ -1261,7 +1274,41 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                     basicLmdbDb4.put(writeTxn, tuple._1(), tuple._2(), false);
                 });
             });
-        }, "Random (INTEGER_KEY)");
+        }, "Puts: Random (INTEGER_KEY)");
+
+        final int iterationRounds = 5;
+
+        LOGGER.logDurationIfInfoEnabled(() -> {
+            lmdbEnv.doWithReadTxn(readTxn -> {
+                for (int i = 0; i < iterationRounds; i++) {
+                    try (final CursorIterable<ByteBuffer> cursorIterable = basicLmdbDb3.iterate(readTxn)) {
+                        final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+                        long sum = 0;
+                        while (iterator.hasNext()) {
+                            final KeyVal<ByteBuffer> keyVal = iterator.next();
+                            final int key = basicLmdbDb3.deserializeKey(keyVal.key());
+                            sum += key;
+                        }
+                    }
+                }
+            });
+        }, "Iteration");
+
+        LOGGER.logDurationIfInfoEnabled(() -> {
+            lmdbEnv.doWithReadTxn(readTxn -> {
+                for (int i = 0; i < iterationRounds; i++) {
+                    try (final CursorIterable<ByteBuffer> cursorIterable = basicLmdbDb4.iterate(readTxn)) {
+                        final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+                        long sum = 0;
+                        while (iterator.hasNext()) {
+                            final KeyVal<ByteBuffer> keyVal = iterator.next();
+                            final int key = basicLmdbDb4.deserializeKey(keyVal.key());
+                            sum += key;
+                        }
+                    }
+                }
+            });
+        }, "Iteration (INTEGER_KEY)");
 
         if (iterations < 50) {
             basicLmdbDb3.logDatabaseContents(LOGGER::info);

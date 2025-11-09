@@ -16,6 +16,7 @@ dependencies {
 
     testImplementation project(':stroom-test-common')
 
+    testImplementation libs.classgraph
     testImplementation libs.guice // For TypeLiteral in DynamicTestBuilder
     testImplementation libs.jackson.core
     testImplementation libs.slf4j.api

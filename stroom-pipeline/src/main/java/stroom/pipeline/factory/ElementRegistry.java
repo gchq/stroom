@@ -174,7 +174,7 @@ public class ElementRegistry {
         final Class<?> paramType = method.getParameterTypes()[0];
         String typeName = paramType.getSimpleName();
 
-        if (HasType.class.isAssignableFrom(paramType)) {
+        if (HasType.class.isAssignableFrom(paramType) && !DocRef.class.isAssignableFrom(paramType)) {
             try {
                 typeName = ((HasType) paramType.getDeclaredConstructor(new Class[0]).newInstance()).getType();
             } catch (final InstantiationException

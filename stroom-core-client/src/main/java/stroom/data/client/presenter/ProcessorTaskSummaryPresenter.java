@@ -118,9 +118,8 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
         final Function<ProcessorTaskSummary, DocRef> pipelineExtractionFunction = ProcessorTaskSummary::getPipeline;
         DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Pipeline", pipelineExtractionFunction);
 
-        final Function<ProcessorTaskSummary, DocRef> feedExtractionFunction = row ->
-                new DocRef(FeedDoc.TYPE, null, row.getFeed());
-        DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Feed", feedExtractionFunction);
+        final Function<ProcessorTaskSummary, String> feedExtractionFunction = ProcessorTaskSummary::getFeed;
+        DataGridUtil.addFeedColumn(getEventBus(), dataGrid, "Feed", feedExtractionFunction);
 
         dataGrid.addResizableColumn(
                 new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(),

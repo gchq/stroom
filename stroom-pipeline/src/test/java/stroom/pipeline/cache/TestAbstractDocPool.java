@@ -198,6 +198,8 @@ class TestAbstractDocPool {
 
         private MyDoc(final String content) {
             this.content = content;
+            setType("test");
+            setUuid("test");
         }
 
         public String getContent() {

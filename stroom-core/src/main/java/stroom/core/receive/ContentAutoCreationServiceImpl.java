@@ -200,18 +200,34 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         LOGGER.debug("tryCreateFeed - feedName: {}, userRef: {}, attributeMap: {}",
                 feedName, userDesc, attributeMap);
 
-        return getMatchingTemplate(attributeMap)
-                .flatMap(contentTemplate -> {
-                    // Content gets created as the configured user
-                    final UserRef runAsUserRef = getRunAsUser();
+        // If the feed exists we assume that either auto creation has happened or
+        // this feed is not subject to auto creation. Either way we don't bother
+        // trying to match on the templates
+        Optional<FeedDoc> optFeedDoc = Optional.empty();
+        if (NullSafe.isNonBlankString(feedName)) {
+            // Should only ever be one
+            optFeedDoc = NullSafe.stream(feedStore.findByName(feedName))
+                    .findFirst()
+                    .map(feedStore::readDocument);
+            LOGGER.debug("tryCreateFeed - feedName: {}, feedDoc: {}",
+                    feedName, optFeedDoc);
+        }
 
-                    final Optional<FeedDoc> optFeedDoc = securityContext.asUserResult(runAsUserRef, () ->
-                            ensureFeed(feedName, userDesc, attributeMap, contentTemplate));
+        if (optFeedDoc.isEmpty()) {
+            optFeedDoc = getMatchingTemplate(attributeMap)
+                    .flatMap(contentTemplate -> {
+                        // Content gets created as the configured user
+                        final UserRef runAsUserRef = getRunAsUser();
 
-                    LOGGER.debug("feedName: '{}', userDesc: '{}', optFeedDoc: {}",
-                            feedName, userDesc, optFeedDoc);
-                    return optFeedDoc;
-                });
+                        final Optional<FeedDoc> optFeedDoc2 = securityContext.asUserResult(runAsUserRef, () ->
+                                ensureFeed(feedName, userDesc, attributeMap, contentTemplate));
+
+                        LOGGER.debug("feedName: '{}', userDesc: '{}', optFeedDoc: {}",
+                                feedName, userDesc, optFeedDoc2);
+                        return optFeedDoc2;
+                    });
+        }
+        return optFeedDoc;
     }
 
     private UserRef getRunAsUser() {

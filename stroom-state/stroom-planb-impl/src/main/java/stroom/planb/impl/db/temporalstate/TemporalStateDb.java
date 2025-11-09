@@ -3,9 +3,13 @@ package stroom.planb.impl.db.temporalstate;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.lmdb.stream.LmdbEntry;
+import stroom.lmdb.stream.LmdbIterable;
+import stroom.lmdb.stream.LmdbKeyRange;
 import stroom.lmdb2.KV;
 import stroom.planb.impl.data.TemporalState;
 import stroom.planb.impl.db.AbstractDb;
+import stroom.planb.impl.db.Count;
 import stroom.planb.impl.db.HashClashCommitRunnable;
 import stroom.planb.impl.db.LmdbWriter;
 import stroom.planb.impl.db.PlanBEnv;
@@ -29,14 +33,8 @@ import stroom.planb.impl.serde.time.TimeSerde;
 import stroom.planb.impl.serde.valtime.ValTime;
 import stroom.planb.impl.serde.valtime.ValTimeSerde;
 import stroom.planb.impl.serde.valtime.ValTimeSerdeFactory;
-import stroom.planb.shared.AbstractPlanBSettings;
-import stroom.planb.shared.HashLength;
-import stroom.planb.shared.KeyType;
 import stroom.planb.shared.PlanBDoc;
-import stroom.planb.shared.StateValueSchema;
-import stroom.planb.shared.StateValueType;
 import stroom.planb.shared.TemporalPrecision;
-import stroom.planb.shared.TemporalStateKeySchema;
 import stroom.planb.shared.TemporalStateSettings;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -52,17 +50,12 @@ import stroom.util.json.JsonUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
-import org.lmdbjava.CursorIterable;
-import org.lmdbjava.CursorIterable.KeyVal;
-import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.Iterator;
 import java.util.Objects;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
@@ -103,6 +96,7 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
                                          final ByteBuffers byteBuffers,
                                          final PlanBDoc doc,
                                          final boolean readOnly) {
+        // Ensure all settings are non null.
         final TemporalStateSettings settings;
         if (doc.getSettings() instanceof final TemporalStateSettings temporalStateSettings) {
             settings = temporalStateSettings;
@@ -111,51 +105,24 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
         }
 
         final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
-        final Long mapSize = NullSafe.getOrElse(
-                settings,
-                AbstractPlanBSettings::getMaxStoreSize,
-                AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE);
         final PlanBEnv env = new PlanBEnv(path,
-                mapSize,
+                settings.getMaxStoreSize(),
                 20,
                 readOnly,
                 hashClashCommitRunnable);
         try {
-            final KeyType keyType = NullSafe.getOrElse(
-                    settings,
-                    TemporalStateSettings::getKeySchema,
-                    TemporalStateKeySchema::getKeyType,
-                    TemporalStateKeySchema.DEFAULT_KEY_TYPE);
-            final HashLength keyHashLength = NullSafe.getOrElse(
-                    settings,
-                    TemporalStateSettings::getKeySchema,
-                    TemporalStateKeySchema::getHashLength,
-                    TemporalStateKeySchema.DEFAULT_HASH_LENGTH);
-            final TimeSerde timeSerde = createTimeSerde(NullSafe.getOrElse(
-                    settings,
-                    TemporalStateSettings::getKeySchema,
-                    TemporalStateKeySchema::getTemporalPrecision,
-                    TemporalStateKeySchema.DEFAULT_TEMPORAL_PRECISION));
-            final StateValueType stateValueType = NullSafe.getOrElse(
-                    settings,
-                    TemporalStateSettings::getValueSchema,
-                    StateValueSchema::getStateValueType,
-                    StateValueSchema.DEFAULT_VALUE_TYPE);
-            final HashLength valueHashLength = NullSafe.getOrElse(
-                    settings,
-                    TemporalStateSettings::getValueSchema,
-                    StateValueSchema::getHashLength,
-                    StateValueSchema.DEFAULT_HASH_LENGTH);
+            final TimeSerde timeSerde = createTimeSerde(settings.getKeySchema().getTemporalPrecision());
             final TemporalKeySerde keySerde = TemporalKeySerdeFactory.createKeySerde(
-                    keyType,
-                    keyHashLength,
+                    doc,
+                    settings.getKeySchema().getKeyType(),
+                    settings.getKeySchema().getHashLength(),
                     env,
                     byteBuffers,
                     timeSerde,
                     hashClashCommitRunnable);
             final ValTimeSerde valueSerde = ValTimeSerdeFactory.createValueSerde(
-                    stateValueType,
-                    valueHashLength,
+                    settings.getValueSchema().getStateValueType(),
+                    settings.getValueSchema().getHashLength(),
                     env,
                     byteBuffers,
                     hashClashCommitRunnable);
@@ -199,15 +166,6 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
         writer.tryCommit();
     }
 
-    private void iterate(final Txn<ByteBuffer> txn,
-                         final Consumer<KeyVal<ByteBuffer>> consumer) {
-        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(txn)) {
-            for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
-                consumer.accept(keyVal);
-            }
-        }
-    }
-
     @Override
     public void merge(final Path source) {
         env.write(writer -> {
@@ -217,15 +175,15 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
 
                 // Merge.
                 sourceDb.env.read(readTxn -> {
-                    sourceDb.iterate(readTxn, kv -> {
-                        if (sourceDb.keySerde.usesLookup(kv.key()) || sourceDb.valueSerde.usesLookup(kv.val())) {
+                    sourceDb.iterate(readTxn, (key, val) -> {
+                        if (sourceDb.keySerde.usesLookup(key) || sourceDb.valueSerde.usesLookup(val)) {
                             // We need to do a full read and merge.
-                            final TemporalKey key = sourceDb.keySerde.read(readTxn, kv.key());
-                            final Val value = sourceDb.valueSerde.read(readTxn, kv.val()).val();
-                            insert(writer, new TemporalState(key, value));
+                            final TemporalKey temporalKey = sourceDb.keySerde.read(readTxn, key);
+                            final Val value = sourceDb.valueSerde.read(readTxn, val).val();
+                            insert(writer, new TemporalState(temporalKey, value));
                         } else {
                             // Quick merge.
-                            if (dbi.put(writer.getWriteTxn(), kv.key(), kv.val(), putFlags)) {
+                            if (dbi.put(writer.getWriteTxn(), key, val, putFlags)) {
                                 writer.tryCommit();
                             }
                         }
@@ -276,11 +234,11 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
     }
 
     private Function<Context, TemporalKey> getKeyExtractionFunction(final Txn<ByteBuffer> readTxn) {
-        return context -> keySerde.read(readTxn, context.kv().key().duplicate());
+        return context -> keySerde.read(readTxn, context.key().duplicate());
     }
 
     private Function<Context, Val> getValExtractionFunction(final Txn<ByteBuffer> readTxn) {
-        return context -> NullSafe.get(valueSerde.read(readTxn, context.kv().val().duplicate()), ValTime::val);
+        return context -> NullSafe.get(valueSerde.read(readTxn, context.val().duplicate()), ValTime::val);
     }
 
     public TemporalState getState(final TemporalStateRequest request) {
@@ -289,17 +247,16 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
                         optionalKeyByteBuffer.map(keyByteBuffer -> {
                             final ByteBuffer prefix = keyByteBuffer.slice(0,
                                     keyByteBuffer.remaining() - timeSerde.getSize());
-                            final KeyRange<ByteBuffer> keyRange = KeyRange.atLeastBackward(keyByteBuffer);
-                            try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn, keyRange)) {
-                                final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-                                if (iterator.hasNext() && !Thread.currentThread().isInterrupted()) {
-                                    final KeyVal<ByteBuffer> kv = iterator.next();
-                                    if (!ByteBufferUtils.containsPrefix(kv.key(), prefix)) {
+                            final LmdbKeyRange keyRange =
+                                    LmdbKeyRange.builder().start(keyByteBuffer).reverse().build();
+                            try (final LmdbIterable iterable = LmdbIterable.create(readTxn, dbi, keyRange)) {
+                                for (final LmdbEntry entry : iterable) {
+                                    if (!ByteBufferUtils.containsPrefix(entry.getKey(), prefix)) {
                                         return null;
                                     }
 
-                                    final TemporalKey key = keySerde.read(readTxn, kv.key());
-                                    final Val val = valueSerde.read(readTxn, kv.val()).val();
+                                    final TemporalKey key = keySerde.read(readTxn, entry.getKey());
+                                    final Val val = valueSerde.read(readTxn, entry.getVal()).val();
                                     return new TemporalState(key, val);
                                 }
                             }
@@ -322,8 +279,8 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
                 default -> kv -> ValNull.INSTANCE;
             };
         }
-        return (readTxn, kv) -> {
-            final Context context = new Context(readTxn, kv);
+        return (readTxn, key, val) -> {
+            final Context context = new Context(readTxn, key, val);
             final LazyKV<TemporalKey, Val> lazyKV = new LazyKV<>(context, keyFunction, valFunction);
             final Val[] values = new Val[fields.length];
             for (int i = 0; i < fields.length; i++) {
@@ -355,35 +312,30 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
                                final Instant deleteBefore,
                                final boolean useStateTime) {
         return env.read(readTxn -> {
-            long changeCount = 0;
-            try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
-                final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-                while (iterator.hasNext()
-                       && !Thread.currentThread().isInterrupted()) {
-                    final KeyVal<ByteBuffer> kv = iterator.next();
-                    final TemporalKey key = keySerde.read(readTxn, kv.key().duplicate());
-                    final Instant time;
-                    if (useStateTime) {
-                        time = key.getTime();
-                    } else {
-                        final ValTime valTime = valueSerde.read(readTxn, kv.val().duplicate());
-                        time = valTime.insertTime();
-                    }
-
-                    if (time.isBefore(deleteBefore)) {
-                        // If this is data we no longer want to retain then delete it.
-                        dbi.delete(writer.getWriteTxn(), kv.key());
-                        changeCount++;
-                    } else {
-                        // Record used lookup keys.
-                        keyRecorder.recordUsed(writer, kv.key());
-                        valueRecorder.recordUsed(writer, kv.val());
-                    }
-                    writer.tryCommit();
+            final Count changeCount = new Count();
+            iterate(readTxn, (key, val) -> {
+                final TemporalKey temporalKey = keySerde.read(readTxn, key.duplicate());
+                final Instant time;
+                if (useStateTime) {
+                    time = temporalKey.getTime();
+                } else {
+                    final ValTime valTime = valueSerde.read(readTxn, val.duplicate());
+                    time = valTime.insertTime();
                 }
-            }
+
+                if (time.isBefore(deleteBefore)) {
+                    // If this is data we no longer want to retain then delete it.
+                    dbi.delete(writer.getWriteTxn(), key);
+                    changeCount.increment();
+                } else {
+                    // Record used lookup keys.
+                    keyRecorder.recordUsed(writer, key);
+                    valueRecorder.recordUsed(writer, val);
+                }
+                writer.tryCommit();
+            });
             writer.commit();
-            return changeCount;
+            return changeCount.get();
         });
     }
 
@@ -393,13 +345,10 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
             long changeCount = 0;
             TemporalState lastState = null;
             TemporalState newState = null;
-            try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
-                final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-                while (iterator.hasNext()
-                       && !Thread.currentThread().isInterrupted()) {
-                    final KeyVal<ByteBuffer> kv = iterator.next();
-                    final TemporalKey key = keySerde.read(readTxn, kv.key().duplicate());
-                    final ValTime valTime = valueSerde.read(readTxn, kv.val().duplicate());
+            try (final LmdbIterable iterable = LmdbIterable.create(readTxn, dbi)) {
+                for (final LmdbEntry entry : iterable) {
+                    final TemporalKey key = keySerde.read(readTxn, entry.getKey().duplicate());
+                    final ValTime valTime = valueSerde.read(readTxn, entry.getVal().duplicate());
                     TemporalState state = new TemporalState(key, valTime.val());
                     final Instant time = key.getTime();
 

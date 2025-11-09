@@ -1,0 +1,10 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <g:FlowPanel addStyleNames="max dock-container-vertical">
+        <g:FlowPanel ui:field="pagerContainer" styleName="pager dock-container-horizontal dock-min align-center">
+            <g:FlowPanel ui:field="toolbarWidgets" addStyleNames="pager-toolbar"/>
+        </g:FlowPanel>
+        <g:FlowPanel ui:field="listContainer" addStyleNames="listContainer dock-max"/>
+    </g:FlowPanel>
+</ui:UiBinder>

@@ -1,0 +1,4 @@
+name=OTEL_TRACES_TO_PATHWAYS ProcessorFilter 046a518
+path=Pathways
+type=ProcessorFilter
+uuid=046a5180-857a-4f20-abea-7bd477da7360

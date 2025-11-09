@@ -46,6 +46,7 @@ public class PlanBSettingsPresenter
     private final Provider<SessionSettingsPresenter> sessionSettingsPresenterProvider;
     private final Provider<HistogramSettingsPresenter> histogramSettingsPresenterProvider;
     private final Provider<MetricSettingsPresenter> metricSettingsPresenterProvider;
+    private final Provider<TraceSettingsPresenter> traceSettingsPresenterProvider;
 
     private AbstractPlanBSettingsPresenter<?> settingsPresenter;
     private StateType currentStateType;
@@ -66,7 +67,8 @@ public class PlanBSettingsPresenter
             final Provider<TemporalRangeStateSettingsPresenter> temporalRangeStateSettingsPresenterProvider,
             final Provider<SessionSettingsPresenter> sessionSettingsPresenterProvider,
             final Provider<HistogramSettingsPresenter> histogramSettingsPresenterProvider,
-            final Provider<MetricSettingsPresenter> metricSettingsPresenterProvider) {
+            final Provider<MetricSettingsPresenter> metricSettingsPresenterProvider,
+            final Provider<TraceSettingsPresenter> traceSettingsPresenterProvider) {
         super(eventBus, view);
         this.stateSettingsPresenterProvider = stateSettingsPresenterProvider;
         this.temporalStateSettingsPresenterProvider = temporalStateSettingsPresenterProvider;
@@ -75,6 +77,7 @@ public class PlanBSettingsPresenter
         this.sessionSettingsPresenterProvider = sessionSettingsPresenterProvider;
         this.histogramSettingsPresenterProvider = histogramSettingsPresenterProvider;
         this.metricSettingsPresenterProvider = metricSettingsPresenterProvider;
+        this.traceSettingsPresenterProvider = traceSettingsPresenterProvider;
         view.setUiHandlers(this);
     }
 
@@ -178,6 +181,16 @@ public class PlanBSettingsPresenter
             case METRIC: {
                 final MetricSettingsPresenter presenter =
                         metricSettingsPresenterProvider.get();
+                presenter.getView().setMaxStoreSize(maxStoreSize);
+                presenter.getView().setSynchroniseMerge(synchroniseMerge);
+                presenter.getView().setOverwrite(overwrite);
+                presenter.getView().setRetention(retention);
+                settingsPresenter = presenter;
+                break;
+            }
+            case TRACE: {
+                final TraceSettingsPresenter presenter =
+                        traceSettingsPresenterProvider.get();
                 presenter.getView().setMaxStoreSize(maxStoreSize);
                 presenter.getView().setSynchroniseMerge(synchroniseMerge);
                 presenter.getView().setOverwrite(overwrite);

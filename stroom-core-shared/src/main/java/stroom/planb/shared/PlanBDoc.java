@@ -16,6 +16,7 @@
 
 package stroom.planb.shared;
 
+import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
@@ -127,11 +128,21 @@ public class PlanBDoc extends Doc {
 
     @Override
     public String toString() {
-        return "StateDoc{" +
-               "description='" + description + '\'' +
+        return "PlanBDoc{" +
+               "type='" + getType() + '\'' +
+               ", uuid='" + getUuid() + '\'' +
+               ", name='" + getName() + '\'' +
+               ", description='" + description + '\'' +
                ", stateType=" + stateType +
                ", settings=" + settings +
                '}';
+    }
+
+    /**
+     * @return A new builder for creating a {@link DocRef} for this document's type.
+     */
+    public static DocRef.TypedBuilder buildDocRef() {
+        return DocRef.builder(TYPE);
     }
 
     public static Builder builder() {
@@ -141,6 +152,10 @@ public class PlanBDoc extends Doc {
     public Builder copy() {
         return new Builder(this);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder extends AbstractBuilder<PlanBDoc, PlanBDoc.Builder> {
 

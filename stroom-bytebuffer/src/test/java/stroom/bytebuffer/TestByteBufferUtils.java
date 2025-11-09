@@ -149,6 +149,17 @@ class TestByteBufferUtils {
         assertThat(result).isFalse();
     }
 
+    @Test
+    void testContainsPrefix_exactMatch() {
+
+        final ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[]{0, 1, 2, 3});
+        final ByteBuffer prefixByteBuffer = ByteBuffer.wrap(new byte[]{0, 1, 2, 3});
+
+        final boolean result = ByteBufferUtils.containsPrefix(byteBuffer, prefixByteBuffer);
+
+        assertThat(result).isTrue();
+    }
+
     private void doLongCompareTest(final long val1, final long val2, final ByteBuffer buf1, final ByteBuffer buf2) {
         buf1.clear();
         buf1.putLong(val1);

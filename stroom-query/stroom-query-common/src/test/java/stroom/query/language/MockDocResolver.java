@@ -16,11 +16,11 @@ public class MockDocResolver extends DocResolver {
 
     @Override
     public DocRef resolveDataSourceRef(final String name) {
-        return new DocRef(null, null, name);
+        return new DocRef(name, name, name);
     }
 
     @Override
     public DocRef resolveDocRef(final String type, final String name) {
-        return new DocRef(null, null, name);
+        return new DocRef(type, name, name);
     }
 }

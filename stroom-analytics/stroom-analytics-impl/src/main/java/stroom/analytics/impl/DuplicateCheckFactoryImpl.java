@@ -18,8 +18,12 @@ import stroom.util.logging.LogUtil;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Executor;
+import java.util.function.Predicate;
 
 @Singleton
 public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
@@ -38,14 +42,15 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
                                      final Provider<Executor> executorProvider) {
         this.analyticResultStoreConfig = duplicateCheckStoreConfig;
 
-        pool = new DuplicateCheckStorePool<>(k -> new DuplicateCheckStore(
-                duplicateCheckDirs,
-                byteBufferFactory,
-                byteBuffers,
-                analyticResultStoreConfig,
-                duplicateCheckRowSerde,
-                executorProvider,
-                k),
+        pool = new DuplicateCheckStorePool<>(
+                k -> new DuplicateCheckStore(
+                        duplicateCheckDirs,
+                        byteBufferFactory,
+                        byteBuffers,
+                        analyticResultStoreConfig,
+                        duplicateCheckRowSerde,
+                        executorProvider,
+                        k),
                 null,
                 DuplicateCheckStore::flush,
                 DuplicateCheckStore::close);
@@ -57,40 +62,71 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
         try {
             final DuplicateNotificationConfig duplicateNotificationConfig =
                     analyticRuleDoc.getDuplicateNotificationConfig();
+
+            final DuplicateCheck duplicateCheck;
             if (!duplicateNotificationConfig.isRememberNotifications() &&
                 !duplicateNotificationConfig.isSuppressDuplicateNotifications()) {
-                return new NoOpDuplicateCheck();
+                duplicateCheck = NoOpDuplicateCheck.INSTANCE;
+            } else {
+                final DuplicateCheckStore store = pool.borrow(analyticRuleDoc.getUuid());
+                final DuplicateCheckRowFactory duplicateCheckRowFactory =
+                        new DuplicateCheckRowFactory(duplicateNotificationConfig, compiledColumns);
+                store.writeColumnNames(duplicateCheckRowFactory.getColumnNames());
+
+                duplicateCheck = buildDuplicateCheck(
+                        analyticRuleDoc,
+                        duplicateCheckRowFactory,
+                        store,
+                        duplicateNotificationConfig);
             }
-
-            final DuplicateCheckStore store = pool.borrow(analyticRuleDoc.getUuid());
-            final DuplicateCheckRowFactory duplicateCheckRowFactory =
-                    new DuplicateCheckRowFactory(duplicateNotificationConfig, compiledColumns);
-            store.writeColumnNames(duplicateCheckRowFactory.getColumnNames());
-
-            return new DuplicateCheck() {
-                @Override
-                public boolean check(final Values values) {
-                    final DuplicateCheckRow duplicateCheckRow =
-                            duplicateCheckRowFactory.createDuplicateCheckRow(values);
-                    final boolean success = store.tryInsert(duplicateCheckRow);
-                    if (duplicateNotificationConfig.isSuppressDuplicateNotifications()) {
-                        return success;
-                    } else {
-                        return true;
-                    }
-                }
-
-                @Override
-                public void close() {
-                    pool.release(analyticRuleDoc.getUuid());
-                }
-            };
+            return duplicateCheck;
         } catch (final RuntimeException e) {
             LOGGER.error(() -> LogUtil.message(
                     "Error creating duplicate check for {}",
                     RuleUtil.getRuleIdentity(analyticRuleDoc)), e);
             throw e;
         }
+    }
+
+    @Override
+    public Optional<List<String>> fetchColumnNames(final String analyticUuid) {
+        return pool.use(analyticUuid, DuplicateCheckStore::fetchColumnNames);
+    }
+
+    @NotNull
+    private DuplicateCheck buildDuplicateCheck(final AbstractAnalyticRuleDoc analyticRuleDoc,
+                                               final DuplicateCheckRowFactory duplicateCheckRowFactory,
+                                               final DuplicateCheckStore store,
+                                               final DuplicateNotificationConfig duplicateNotificationConfig) {
+
+        // No point doing this test on every row, so bake it in.
+        final Predicate<Boolean> sendNotificationCheck = duplicateNotificationConfig.isSuppressDuplicateNotifications()
+                ? this::sendNonDuplicatesOnly
+                : this::sendAllNotifications;
+
+        return new DuplicateCheck() {
+            @Override
+            public boolean check(final Values values) {
+                final DuplicateCheckRow duplicateCheckRow = duplicateCheckRowFactory.createDuplicateCheckRow(values);
+                // Even if we are not suppressing notifications, we need to store the non-dups because
+                // isRememberNotifications was true.
+                final boolean isNonDuplicate = store.tryInsert(duplicateCheckRow);
+                return sendNotificationCheck.test(isNonDuplicate);
+            }
+
+            @Override
+            public void close() {
+                pool.release(analyticRuleDoc.getUuid());
+            }
+        };
+    }
+
+    private boolean sendAllNotifications(final boolean ignored) {
+        return true;
+    }
+
+    private boolean sendNonDuplicatesOnly(final boolean isNonDuplicate) {
+        return isNonDuplicate;
     }
 
     public synchronized DuplicateCheckRows fetchData(final FindDuplicateCheckCriteria criteria) {
@@ -106,6 +142,8 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
 
 
     private static class NoOpDuplicateCheck implements DuplicateCheck {
+
+        public static final NoOpDuplicateCheck INSTANCE = new NoOpDuplicateCheck();
 
         @Override
         public boolean check(final Values values) {

@@ -6,7 +6,8 @@
     "settings" : {
       "type" : "query",
       "dataSource" : {
-        "type" : "Index"
+        "type" : "Index",
+        "uuid" : "X"
       },
       "expression" : {
         "type" : "operator",

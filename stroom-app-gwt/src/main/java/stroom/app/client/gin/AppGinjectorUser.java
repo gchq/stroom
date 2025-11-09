@@ -76,6 +76,8 @@ import stroom.monitoring.client.gin.MonitoringGinjector;
 import stroom.monitoring.client.gin.MonitoringModule;
 import stroom.openai.client.gin.OpenAIModelGinjector;
 import stroom.openai.client.gin.OpenAIModelModule;
+import stroom.pathways.client.gin.PathwaysGinjector;
+import stroom.pathways.client.gin.PathwaysModule;
 import stroom.pipeline.client.gin.PipelineGinjector;
 import stroom.pipeline.client.gin.PipelineModule;
 import stroom.planb.client.gin.PlanBGinjector;
@@ -147,6 +149,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         KafkaConfigModule.class,
         MonitoringModule.class,
         OpenAIModelModule.class,
+        PathwaysModule.class,
         PipelineModule.class,
         PluginsModule.class,
         PolicyModule.class,
@@ -196,6 +199,7 @@ public interface AppGinjectorUser extends
         KafkaConfigGinjector,
         MonitoringGinjector,
         OpenAIModelGinjector,
+        PathwaysGinjector,
         PipelineGinjector,
         PluginsGinjector,
         PopupGinjector,

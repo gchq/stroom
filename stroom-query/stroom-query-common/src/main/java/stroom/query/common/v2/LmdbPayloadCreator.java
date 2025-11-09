@@ -13,7 +13,7 @@ import stroom.util.logging.SimpleMetrics;
 import com.esotericsoftware.kryo.KryoException;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.lmdbjava.CursorIterable.KeyVal;
+import org.lmdbjava.Cursor;
 
 import java.io.ByteArrayInputStream;
 import java.nio.ByteBuffer;
@@ -162,13 +162,14 @@ public class LmdbPayloadCreator {
             if (maxPayloadSize > 0) {
                 final PayloadOutput payloadOutput = new PayloadOutput(minPayloadSize);
                 final AtomicBoolean finalPayload = new AtomicBoolean(complete);
-                db.iterate(writeTxn, cursorIterable -> {
-                    long size = 0;
-                    long count = 0;
+                long size = 0;
+                long count = 0;
 
-                    for (final KeyVal<ByteBuffer> kv : cursorIterable) {
-                        final ByteBuffer keyBuffer = kv.key();
-                        final ByteBuffer valBuffer = kv.val();
+                try (final Cursor<ByteBuffer> cursor = db.getDbi().openCursor(writeTxn.get())) {
+                    boolean isFound = cursor.first();
+                    while (isFound) {
+                        final ByteBuffer keyBuffer = cursor.key();
+                        final ByteBuffer valBuffer = cursor.val();
 
                         // Add to the size of the current payload.
                         size += 4;
@@ -191,8 +192,10 @@ public class LmdbPayloadCreator {
                             finalPayload.set(false);
                             break;
                         }
+
+                        isFound = cursor.next();
                     }
-                });
+                }
 
                 writeTxn.commit();
                 payloadOutput.close();
@@ -200,17 +203,20 @@ public class LmdbPayloadCreator {
 
             } else {
                 final PayloadOutput payloadOutput = new PayloadOutput(minPayloadSize);
-                db.iterate(writeTxn, cursorIterable -> {
-                    for (final KeyVal<ByteBuffer> kv : cursorIterable) {
-                        final ByteBuffer keyBuffer = kv.key();
-                        final ByteBuffer valBuffer = kv.val();
+                try (final Cursor<ByteBuffer> cursor = db.getDbi().openCursor(writeTxn.get())) {
+                    boolean isFound = cursor.first();
+                    while (isFound) {
+                        final ByteBuffer keyBuffer = cursor.key();
+                        final ByteBuffer valBuffer = cursor.val();
 
                         payloadOutput.writeInt(keyBuffer.remaining());
                         payloadOutput.writeByteBuffer(keyBuffer);
                         payloadOutput.writeInt(valBuffer.remaining());
                         payloadOutput.writeByteBuffer(valBuffer);
+
+                        isFound = cursor.next();
                     }
-                });
+                }
 
                 db.drop(writeTxn);
                 writeTxn.commit();

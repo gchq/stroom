@@ -25,7 +25,7 @@ import java.util.Optional;
 public interface IndexVolumeGroupService {
 
     String ENTITY_TYPE = "INDEX_VOLUME_GROUP";
-    DocRef EVENT_DOCREF = new DocRef(ENTITY_TYPE, null, null);
+    DocRef EVENT_DOCREF = new DocRef(ENTITY_TYPE, ENTITY_TYPE, ENTITY_TYPE);
 
     List<String> getNames();
 

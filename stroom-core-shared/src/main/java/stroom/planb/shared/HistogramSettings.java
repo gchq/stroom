@@ -1,5 +1,7 @@
 package stroom.planb.shared;
 
+import stroom.util.shared.NullSafe;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -34,8 +36,8 @@ public final class HistogramSettings extends AbstractPlanBSettings {
                              @JsonProperty("keySchema") final HistogramKeySchema keySchema,
                              @JsonProperty("valueSchema") final HistogramValueSchema valueSchema) {
         super(maxStoreSize, synchroniseMerge, overwrite, retention, snapshotSettings);
-        this.keySchema = keySchema;
-        this.valueSchema = valueSchema;
+        this.keySchema = NullSafe.requireNonNullElse(keySchema, new HistogramKeySchema.Builder().build());
+        this.valueSchema = NullSafe.requireNonNullElse(valueSchema, new HistogramValueSchema.Builder().build());
     }
 
     public HistogramKeySchema getKeySchema() {
@@ -69,8 +71,9 @@ public final class HistogramSettings extends AbstractPlanBSettings {
 
     @Override
     public String toString() {
-        return "RangedStateSettings{" +
-               "keySchema=" + keySchema +
+        return "HistogramSettings{" +
+               super.toString() +
+               ", keySchema=" + keySchema +
                ", valueSchema=" + valueSchema +
                '}';
     }
@@ -85,8 +88,10 @@ public final class HistogramSettings extends AbstractPlanBSettings {
 
         public Builder(final HistogramSettings settings) {
             super(settings);
-            this.keySchema = settings.keySchema;
-            this.valueSchema = settings.valueSchema;
+            if (settings != null) {
+                this.keySchema = settings.keySchema;
+                this.valueSchema = settings.valueSchema;
+            }
         }
 
         public Builder keySchema(final HistogramKeySchema keySchema) {
