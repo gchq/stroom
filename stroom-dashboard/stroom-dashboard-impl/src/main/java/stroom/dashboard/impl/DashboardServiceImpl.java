@@ -20,6 +20,8 @@ import stroom.dashboard.impl.download.DelimitedTarget;
 import stroom.dashboard.impl.download.ExcelTarget;
 import stroom.dashboard.impl.download.SearchResultWriter;
 import stroom.dashboard.impl.logging.SearchEventLog;
+import stroom.dashboard.shared.AskStroomAiRequest;
+import stroom.dashboard.shared.AskStroomAiResponse;
 import stroom.dashboard.shared.ColumnValue;
 import stroom.dashboard.shared.ColumnValues;
 import stroom.dashboard.shared.ColumnValuesRequest;
@@ -37,7 +39,14 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.langchain.api.ChatMemoryConfig;
+import stroom.langchain.api.ChatMemoryService;
+import stroom.langchain.api.OpenAIService;
+import stroom.langchain.api.SimpleTokenCountEstimator;
+import stroom.langchain.api.SummaryReducer;
+import stroom.langchain.api.TableQuery;
 import stroom.node.api.NodeInfo;
+import stroom.openai.shared.OpenAIModelConfig;
 import stroom.query.api.Column;
 import stroom.query.api.ConditionalFormattingRule;
 import stroom.query.api.DateTimeSettings;
@@ -51,11 +60,11 @@ import stroom.query.api.ResultRequest.ResultStyle;
 import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.api.SearchResponse;
+import stroom.query.api.TableResult;
 import stroom.query.api.TableResultBuilder;
 import stroom.query.api.TimeFilter;
 import stroom.query.common.v2.ConditionalFormattingMapper.RuleAndMatcher;
 import stroom.query.common.v2.DataStore;
-import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
 import stroom.query.common.v2.Item;
@@ -97,7 +106,11 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
 import stroom.util.string.ExceptionStringUtil;
 
+import dev.langchain4j.memory.chat.TokenWindowChatMemory;
+import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.service.AiServices;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.io.BufferedOutputStream;
@@ -130,7 +143,13 @@ class DashboardServiceImpl implements DashboardService {
 
     private static final Pattern NON_BASIC_CHARS = Pattern.compile("[^A-Za-z0-9-_ ]");
     private static final Pattern MULTIPLE_SPACE = Pattern.compile(" +");
+    private static final String TABLE_CHAT_MEMORY_KEY = "table";
+    private static final String SUMMARY_CHAT_MEMORY_KEY = "summary";
 
+    private final Provider<OpenAIModelConfig> openAiModelConfigProvider;
+    private final Provider<ChatMemoryConfig> chatMemoryConfigProvider;
+    private final OpenAIService openAIService;
+    private final ChatMemoryService chatMemoryService;
     private final DashboardStore dashboardStore;
     private final StoredQueryService queryService;
     private final DocumentResourceHelper documentResourceHelper;
@@ -148,7 +167,11 @@ class DashboardServiceImpl implements DashboardService {
     private final QueryNodeResolver queryNodeResolver;
 
     @Inject
-    DashboardServiceImpl(final DashboardStore dashboardStore,
+    DashboardServiceImpl(final Provider<OpenAIModelConfig> openAiModelConfigProvider,
+                         final Provider<ChatMemoryConfig> chatMemoryConfigProvider,
+                         final OpenAIService openAIService,
+                         final ChatMemoryService chatMemoryService,
+                         final DashboardStore dashboardStore,
                          final StoredQueryService queryService,
                          final DocumentResourceHelper documentResourceHelper,
                          final SearchRequestMapper searchRequestMapper,
@@ -163,6 +186,10 @@ class DashboardServiceImpl implements DashboardService {
                          final ExpressionPredicateFactory expressionPredicateFactory,
                          final ValPredicateFactory valPredicateFactory,
                          final QueryNodeResolver queryNodeResolver) {
+        this.openAiModelConfigProvider = openAiModelConfigProvider;
+        this.chatMemoryConfigProvider = chatMemoryConfigProvider;
+        this.openAIService = openAIService;
+        this.chatMemoryService = chatMemoryService;
         this.dashboardStore = dashboardStore;
         this.queryService = queryService;
         this.documentResourceHelper = documentResourceHelper;
@@ -379,6 +406,73 @@ class DashboardServiceImpl implements DashboardService {
 
             return new ResourceGeneration(resourceKey, new ArrayList<>());
         });
+    }
+
+    /**
+     * Passes the table rows in batches to the configured LLM chat completion endpoint, along with the user's query.
+     * The user is provided with an aggregated response from all batches once compiled.
+     */
+    @Override
+    public AskStroomAiResponse askStroomAi(final AskStroomAiRequest request) {
+        final OpenAIModelConfig modelConfig = openAiModelConfigProvider.get();
+        if (modelConfig == null || NullSafe.isEmptyString(modelConfig.getModelId())) {
+            throw new RuntimeException("OpenAI model ID not specified");
+        }
+
+        final ChatModel chatModel = openAIService.getChatModel(modelConfig.getModelId(),
+                modelConfig.getBaseUrl(), modelConfig.getApiKey());
+        final DashboardSearchResponse searchResponse = search(request.getSearchRequest());
+        final String chatMemoryId = request.getSearchRequest().getQueryKey().toString();
+        final String tableChatMemoryId = TABLE_CHAT_MEMORY_KEY + "/" + chatMemoryId;
+        final String summaryChatMemoryId = SUMMARY_CHAT_MEMORY_KEY + "/" + chatMemoryId;
+        final int maxTokens = chatMemoryConfigProvider.get().getTokenLimit();
+
+        final TableQuery tableQueryService = AiServices.builder(TableQuery.class)
+                .chatModel(chatModel)
+                .chatMemoryProvider(memoryId -> TokenWindowChatMemory.builder()
+                        .chatMemoryStore(chatMemoryService.getChatMemoryStore())
+                        .id(tableChatMemoryId)
+                        .maxTokens(maxTokens, new SimpleTokenCountEstimator())
+                        .build())
+                .build();
+        final SummaryReducer summaryReducerService = AiServices.builder(SummaryReducer.class)
+                .chatModel(chatModel)
+                .chatMemoryProvider(memoryId -> TokenWindowChatMemory.builder()
+                        .chatMemoryStore(chatMemoryService.getChatMemoryStore())
+                        .id(summaryChatMemoryId)
+                        .maxTokens(maxTokens, new SimpleTokenCountEstimator())
+                        .build())
+                .build();
+        String cumulativeSummary = "";
+        final TableResult result = (TableResult) searchResponse.getResults().getFirst();
+        final String columns = result.getColumns().stream().map(Column::getName)
+                .collect(Collectors.joining(" | "));
+        final String columnDiv = result.getColumns().stream().map(col -> "---")
+                .collect(Collectors.joining(" | "));
+
+        // Batch and summarise user message responses into a combined summary
+        final int batchSize = modelConfig.getTableBatchSize();
+        final int maximumRowCount = modelConfig.getMaximumTableInputRows();
+        final int rowsToProcess = Math.min(maximumRowCount, result.getRows().size());
+        for (int i = 0; i < rowsToProcess; i += batchSize) {
+            final StringBuilder sb = new StringBuilder();
+            sb.append("| ").append(columns).append(" |");
+            sb.append("| ").append(columnDiv).append(" |");
+            final String batch = result.getRows().subList(i, Math.min(result.getRows().size(), i + batchSize))
+                    .stream().map(row -> String.join(" | ", row.getValues()))
+                    .collect(Collectors.joining("\n"));
+            sb.append(batch);
+            final String batchAnswer = tableQueryService.answerChunk(
+                    tableChatMemoryId, request.getMessage(), sb.toString());
+            if (cumulativeSummary.isEmpty()) {
+                cumulativeSummary = batchAnswer;
+            } else {
+                cumulativeSummary = summaryReducerService.merge(
+                        summaryChatMemoryId, cumulativeSummary, batchAnswer);
+            }
+        }
+
+        return new AskStroomAiResponse(cumulativeSummary);
     }
 
     private String getResultsFilename(final DownloadSearchResultsRequest request) {

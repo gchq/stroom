@@ -14,6 +14,7 @@ dependencies {
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-langchain:stroom-langchain-api')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-query:stroom-query-language')
     implementation project(':stroom-query:stroom-query-api')
@@ -36,6 +37,8 @@ dependencies {
     implementation libs.jakarta.inject
     implementation libs.jersey.client
     implementation libs.jersey.common
+    implementation libs.langchain4j
+    implementation libs.langchain4j.open.ai
     implementation libs.poi
     implementation libs.poi.ooxml
     implementation libs.restygwt

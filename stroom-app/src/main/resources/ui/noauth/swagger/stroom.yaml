@@ -1698,6 +1698,52 @@ paths:
       summary: Get the list of fields for use in the match expression.
       tags:
       - Content Templates
+  /dashboard/v1/askStroomAi:
+    post:
+      operationId: askStroomAi
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AskStroomAiRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AskStroomAiResponse"
+          description: default response
+      summary: Ask Stroom AI a question relating to the current search context
+      tags:
+      - Dashboards
+  /dashboard/v1/askStroomAi/{nodeName}:
+    post:
+      operationId: askStroomAi_1
+      parameters:
+      - in: path
+        name: nodeName
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AskStroomAiRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AskStroomAiResponse"
+          description: default response
+      summary: Ask Stroom AI a question relating to the current search context
+      tags:
+      - Dashboards
   /dashboard/v1/columnValues:
     post:
       operationId: getColumnValues
@@ -9162,6 +9208,18 @@ components:
           type: boolean
         varargs:
           type: boolean
+    AskStroomAiRequest:
+      type: object
+      properties:
+        message:
+          type: string
+        searchRequest:
+          $ref: "#/components/schemas/DashboardSearchRequest"
+    AskStroomAiResponse:
+      type: object
+      properties:
+        message:
+          type: string
     AssignTasksRequest:
       type: object
       properties:
@@ -10660,6 +10718,7 @@ components:
           - ADD_ABOVE
           - ADD_BELOW
           - ADD_MULTIPLE
+          - AI
           - ALERT
           - ALERT_SIMPLE
           - ARROW_DOWN
@@ -14102,6 +14161,7 @@ components:
           - ADD_ABOVE
           - ADD_BELOW
           - ADD_MULTIPLE
+          - AI
           - ALERT
           - ALERT_SIMPLE
           - ARROW_DOWN

@@ -52,6 +52,7 @@ import stroom.index.impl.IndexFieldDbConfig;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.job.impl.JobSystemConfig;
 import stroom.kafka.impl.KafkaConfig;
+import stroom.langchain.api.ChatMemoryConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.lmdb.LmdbConfig;
 import stroom.lmdb.LmdbLibraryConfig;
@@ -937,6 +938,7 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_ANNOTATION) final AnnotationConfig annotationConfig,
                 @JsonProperty(PROP_NAME_AUTO_CONTENT_CREATION) final AutoContentCreationConfig autoContentCreationConfig,
                 @JsonProperty(PROP_NAME_BYTE_BUFFER_POOL) final ByteBufferPoolConfig byteBufferPoolConfig,
+                @JsonProperty(PROP_NAME_CHAT_MEMORY) final ChatMemoryConfig chatMemoryConfig,
                 @JsonProperty(PROP_NAME_CLUSTER) final ClusterConfig clusterConfig,
                 @JsonProperty(PROP_NAME_CLUSTER_LOCK) final ClusterLockConfig clusterLockConfig,
                 @JsonProperty(PROP_NAME_COMMON_DB_DETAILS) final CommonDbConfig commonDbConfig,
@@ -1000,6 +1002,7 @@ class TestConfigMapper {
                     annotationConfig,
                     autoContentCreationConfig,
                     byteBufferPoolConfig,
+                    chatMemoryConfig,
                     clusterConfig,
                     clusterLockConfig,
                     commonDbConfig,

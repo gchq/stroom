@@ -1,5 +1,7 @@
 package stroom.dashboard.impl;
 
+import stroom.dashboard.shared.AskStroomAiRequest;
+import stroom.dashboard.shared.AskStroomAiResponse;
 import stroom.dashboard.shared.ColumnValues;
 import stroom.dashboard.shared.ColumnValuesRequest;
 import stroom.dashboard.shared.DashboardDoc;
@@ -8,7 +10,6 @@ import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
-import stroom.query.shared.QuerySearchRequest;
 import stroom.util.shared.ResourceGeneration;
 
 public interface DashboardService {
@@ -22,6 +23,8 @@ public interface DashboardService {
     ResourceGeneration downloadQuery(DashboardSearchRequest request);
 
     ResourceGeneration downloadSearchResults(DownloadSearchResultsRequest request);
+
+    AskStroomAiResponse askStroomAi(AskStroomAiRequest request);
 
     DashboardSearchResponse search(DashboardSearchRequest request);
 

@@ -20,13 +20,18 @@ import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.job.api.ScheduledJobsBinder;
+import stroom.langchain.api.ChatMemoryService;
 import stroom.langchain.api.OpenAIModelStore;
 import stroom.langchain.api.OpenAIService;
 import stroom.openai.shared.OpenAIModelDoc;
+import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
+import stroom.util.shared.scheduler.CronExpressions;
 
 import com.google.inject.AbstractModule;
+import jakarta.inject.Inject;
 
 public class OpenAIModule extends AbstractModule {
 
@@ -35,6 +40,15 @@ public class OpenAIModule extends AbstractModule {
         // Services
 
         bind(OpenAIService.class).to(OpenAIServiceImpl.class);
+        bind(ChatMemoryService.class).to(ChatMemoryServiceImpl.class);
+
+        // Jobs
+
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(ChatMemoryPrune.class, builder -> builder
+                        .name("Chat Memory Prune")
+                        .description("Job to remove old LLM chat memory entries")
+                        .cronSchedule(CronExpressions.EVERY_HOUR.getExpression()));
 
         // OpenAI Model
 
@@ -52,5 +66,15 @@ public class OpenAIModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(OpenAIModelResourceImpl.class);
+    }
+
+    // --------------------------------------------------------------------------------
+
+    private static class ChatMemoryPrune extends RunnableWrapper {
+
+        @Inject
+        ChatMemoryPrune(final ChatMemoryService chatMemoryService) {
+            super(chatMemoryService::pruneChatMemory);
+        }
     }
 }
