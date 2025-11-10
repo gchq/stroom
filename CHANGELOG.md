@@ -13,6 +13,12 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11-beta.8] - 2025-11-10
+
+* Issue **#5218** : When `autoContentCreation` is enabled, don't attempt to find a content template if the `Feed` header has been provided and the feed exists.
+
+* Issue **#5244** : Fix proxy throwing an error when attempting to do a feed status check.
+
 * Issue **#5186** : Remove error logging for expected Plan B snapshot checking behaviour.
 
 * Issue **#5220** : Fix duplicate check column list change confirm dialog not showing if the duplicate check store is on a remote node.
@@ -1850,7 +1856,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.7...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.8...HEAD
+[v7.11-beta.8]: https://github.com/gchq/stroom/compare/v7.11-beta.7...v7.11-beta.8
 [v7.11-beta.7]: https://github.com/gchq/stroom/compare/v7.11-beta.6...v7.11-beta.7
 [v7.11-beta.6]: https://github.com/gchq/stroom/compare/v7.11-beta.5...v7.11-beta.6
 [v7.11-beta.5]: https://github.com/gchq/stroom/compare/v7.11-beta.4...v7.11-beta.5
