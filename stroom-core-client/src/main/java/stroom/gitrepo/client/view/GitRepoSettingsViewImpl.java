@@ -290,7 +290,7 @@ public class GitRepoSettingsViewImpl
 
         // Find the selected credentials
         boolean matchedCredentials = false;
-        if (selectedCredentialsId != null) {
+        if (selectedCredentialsId != null && !selectedCredentialsId.isBlank()) {
             for (final Credentials credentials : credentialsList) {
                 if (credentials.getUuid().equals(selectedCredentialsId)) {
                     selCredentials.setValue(credentials);
