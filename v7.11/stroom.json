@@ -3506,6 +3506,34 @@
         "tags" : [ "DuplicateCheck" ]
       }
     },
+    "/duplicateCheck/v1/fetchColumnNames" : {
+      "post" : {
+        "operationId" : "fetchColumnNames",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FetchColumnNamesResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch the column names from the dup check store for this analytic.",
+        "tags" : [ "DuplicateCheck" ]
+      }
+    },
     "/duplicateCheck/v1/find" : {
       "post" : {
         "operationId" : "findDuplicateCheckRows",
@@ -4759,6 +4787,33 @@
           }
         },
         "summary" : "Fetch supported encodings",
+        "tags" : [ "Feeds" ]
+      }
+    },
+    "/feed/v1/getDocRefForName/{name}" : {
+      "get" : {
+        "operationId" : "getDocRefForName",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "name",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DocRef"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch a feed DocRef for a feed name",
         "tags" : [ "Feeds" ]
       }
     },
@@ -16701,6 +16756,20 @@
           },
           "userRef" : {
             "$ref" : "#/components/schemas/UserRef"
+          }
+        }
+      },
+      "FetchColumnNamesResponse" : {
+        "type" : "object",
+        "properties" : {
+          "columnNames" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "storeInitialised" : {
+            "type" : "boolean"
           }
         }
       },
