@@ -93,10 +93,10 @@ public class IconPassthroughServlet extends HttpServlet implements IsServlet {
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 } catch (final IOException e) {
                     LOGGER.error("Error downloading icon for content pack with ID '{}' from '{}': {}",
-                    id,
-                    url,
-                    e.getMessage(),
-                    e);
+                            id,
+                            url,
+                            e.getMessage(),
+                            e);
                     response.setStatus(HttpServletResponse.SC_BAD_GATEWAY);
                 } finally {
                     if (istr != null) {
