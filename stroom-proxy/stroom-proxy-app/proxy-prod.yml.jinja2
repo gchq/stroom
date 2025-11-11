@@ -207,8 +207,11 @@ proxyConfig:
     url: "{{ 'http://stroom:8080/api/feedStatus/v2' | envVar('FEED_STATUS_URL') }}"
     apiKey: ""
 
-
   {% if distribution == "docker" %}
+  receive:
+    # Whether authentication is required for requests sent to /datafeed
+    authenticationRequired: {{ true | envVar('RECEIVE_AUTH_REQUIRED') }}
+
   security:
     authentication:
       openId:

@@ -202,6 +202,10 @@ appConfig:
     {% endif %}
 
   {% if distribution == "docker" %}
+  receive:
+    # Whether authentication is required for requests sent to /datafeed
+    authenticationRequired: {{ true | envVar('RECEIVE_AUTH_REQUIRED') }}
+
   security:
     authentication:
       openId:
