@@ -71,7 +71,7 @@ public class PlanBModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
                 .addBinding(PlanBShardInfoServiceImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), Searchable.class)
+        GuiceUtil.buildMapBinder(binder(), Searchable.class)
                 .addBinding(PlanBShardInfoServiceImpl.class);
 
         // State

@@ -79,7 +79,9 @@ public class IndexModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
                 .addBinding(IndexShardServiceImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), Searchable.class)
+//        GuiceUtil.buildMultiBinder(binder(), Searchable.class)
+//                .addBinding(IndexShardServiceImpl.class);
+        GuiceUtil.buildMapBinder(binder(), Searchable.class)
                 .addBinding(IndexShardServiceImpl.class);
 
         RestResourcesBinder.create(binder())
@@ -101,7 +103,7 @@ public class IndexModule extends AbstractModule {
                 .bindJobTo(IndexShardRetention.class, builder -> builder
                         .name("Index Shard Retention")
                         .description("Job to set index shards to have a status of deleted that have past their " +
-                                "retention period")
+                                     "retention period")
                         .frequencySchedule("10m"))
                 .bindJobTo(IndexWriterCacheSweep.class, builder -> builder
                         .name("Index Writer Cache Sweep")

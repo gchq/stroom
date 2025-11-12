@@ -3,6 +3,7 @@ package stroom.explorer.impl;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerDecorator;
 import stroom.explorer.api.IsSpecialExplorerDataSource;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
@@ -22,9 +23,9 @@ public class ExplorerDecoratorImpl implements ExplorerDecorator {
 
     @Override
     public List<DocRef> list() {
-        return set
-                .stream()
-                .flatMap(hasDataSourceDocRefs -> hasDataSourceDocRefs.getDataSourceDocRefs().stream())
+        return set.stream()
+                .flatMap(hasDataSourceDocRefs ->
+                        NullSafe.stream(hasDataSourceDocRefs.getDataSourceDocRefs()))
                 .filter(Objects::nonNull)
                 .sorted()
                 .collect(Collectors.toList());

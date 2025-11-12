@@ -53,7 +53,8 @@ public class TaskModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
                 .addBinding(SearchableTaskProgress.class)
                 .addBinding(SearchableDual.class);
-        GuiceUtil.buildMultiBinder(binder(), Searchable.class)
+
+        GuiceUtil.buildMapBinder(binder(), Searchable.class)
                 .addBinding(SearchableTaskProgress.class)
                 .addBinding(SearchableDual.class);
 
