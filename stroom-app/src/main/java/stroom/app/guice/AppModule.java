@@ -1,5 +1,6 @@
 package stroom.app.guice;
 
+import stroom.app.AdminAccountBootstrap;
 import stroom.app.uri.UriFactoryModule;
 import stroom.cluster.impl.ClusterModule;
 import stroom.dropwizard.common.FilteredHealthCheckServlet;
@@ -9,10 +10,12 @@ import stroom.meta.statistics.impl.MetaStatisticsModule;
 import stroom.resource.impl.ResourceModule;
 import stroom.security.impl.SecurityContextModule;
 import stroom.statistics.impl.sql.search.SQLStatisticSearchModule;
+import stroom.util.RunnableWrapper;
 import stroom.util.guice.AdminServletBinder;
 import stroom.util.guice.HasSystemInfoBinder;
 
 import com.google.inject.AbstractModule;
+import jakarta.inject.Inject;
 
 public class AppModule extends AbstractModule {
 
@@ -36,5 +39,17 @@ public class AppModule extends AbstractModule {
         // Servlets on the admin path/port
         AdminServletBinder.create(binder())
                 .bind(FilteredHealthCheckServlet.class);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class AdminAccountBootstrapStartup extends RunnableWrapper {
+
+        @Inject
+        AdminAccountBootstrapStartup(final AdminAccountBootstrap adminAccountBootstrap) {
+            super(adminAccountBootstrap::startup);
+        }
     }
 }

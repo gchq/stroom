@@ -214,6 +214,9 @@ appConfig:
         #            authentication on data receipt.
         # EXTERNAL_IDP - Usa an external IDP for receipt token auth and for outbound HTTP connections
         identityProviderType: "{{ 'INTERNAL_IDP' | envVar('IDENTITY_PROVIDER_TYPE') }}"
+    identity:
+      # Enable this for test environments using INTERNAL_IDP
+      autoCreateAdminAccountOnBoot: {{ false | envVar('AUTO_CREATE_ADMIN_ACCOUNT') }}
   {% endif %}
 
   statistics:
