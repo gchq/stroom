@@ -49,7 +49,9 @@ public class AnnotationModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
                 .addBinding(AnnotationService.class);
-        GuiceUtil.buildMultiBinder(binder(), Searchable.class)
+//        GuiceUtil.buildMultiBinder(binder(), Searchable.class)
+//                .addBinding(AnnotationService.class);
+        GuiceUtil.buildMapBinder(binder(), Searchable.class)
                 .addBinding(AnnotationService.class);
 
         GuiceUtil.buildMapBinder(binder(), String.class, HasUserDependencies.class)

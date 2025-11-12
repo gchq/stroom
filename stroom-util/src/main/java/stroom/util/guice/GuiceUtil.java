@@ -10,6 +10,7 @@ import com.google.inject.util.Types;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public class GuiceUtil {
@@ -28,6 +29,16 @@ public class GuiceUtil {
             final Class<K> keyType,
             final Class<V> valueType) {
         return new MapBinderBuilder<>(binder, keyType, valueType);
+    }
+
+    /**
+     * Build a MapBinder that is keyed on the fully qualified class name of the
+     * value type.
+     */
+    public static <T> StringMapBinderBuilder<T> buildMapBinder(
+            final Binder binder,
+            final Class<T> valueType) {
+        return new StringMapBinderBuilder<>(binder, valueType);
     }
 
     @SuppressWarnings("unchecked")
@@ -102,6 +113,38 @@ public class GuiceUtil {
         }
 
         public MapBinder<K, V> getMapBinder() {
+            return mapBinder;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class StringMapBinderBuilder<V> {
+
+        private final MapBinder<String, V> mapBinder;
+
+        StringMapBinderBuilder(final Binder binder,
+                               final Class<V> valueType) {
+            this.mapBinder = MapBinder.newMapBinder(binder, String.class, valueType);
+        }
+
+        public StringMapBinderBuilder<V> addBinding(
+                final Class<? extends V> valueType) {
+            Objects.requireNonNull(valueType);
+            mapBinder.addBinding(valueType.getName()).to(valueType);
+            return this;
+        }
+
+        public StringMapBinderBuilder<V> addProviderBinding(
+                final Class<? extends Provider<? extends V>> valueProviderType) {
+            Objects.requireNonNull(valueProviderType);
+            mapBinder.addBinding(valueProviderType.getName()).toProvider(valueProviderType);
+            return this;
+        }
+
+        public MapBinder<String, V> getMapBinder() {
             return mapBinder;
         }
     }

@@ -2,7 +2,14 @@ package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.entity.shared.ExpressionCriteria;
+import stroom.explorer.api.IsSpecialExplorerDataSource;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.QueryField;
+import stroom.searchable.api.Searchable;
 import stroom.security.mock.MockSecurityContext;
+import stroom.util.shared.ResultPage;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -61,6 +69,8 @@ class TestDocRefInfoServiceImpl {
     private DocRefInfoCache mockDocRefInfoCache;
     @Mock
     private ExplorerActionHandlers mockExplorerActionHandlers;
+    @Mock
+    private Set<IsSpecialExplorerDataSource> mockSpecialDataSources;
 
     private MockSecurityContext mockSecurityContext = new MockSecurityContext();
 
@@ -71,7 +81,8 @@ class TestDocRefInfoServiceImpl {
         docRefInfoService = new DocRefInfoServiceImpl(
                 mockDocRefInfoCache,
                 () -> mockSecurityContext,
-                mockExplorerActionHandlers);
+                mockExplorerActionHandlers,
+                mockSpecialDataSources);
     }
 
     private void initMockCache() {
@@ -208,5 +219,36 @@ class TestDocRefInfoServiceImpl {
 
         assertThat(docRef.getName())
                 .isEqualTo(DOC_REF3.getName());
+    }
+
+    private static class MySearchable implements Searchable {
+
+        @Override
+        public String getDataSourceType() {
+            return null;
+        }
+
+        @Override
+        public List<DocRef> getDataSourceDocRefs() {
+            return null;
+        }
+
+        @Override
+        public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
+            return null;
+        }
+
+        @Override
+        public int getFieldCount(final DocRef docRef) {
+            return 0;
+        }
+
+        @Override
+        public void search(final ExpressionCriteria criteria,
+                           final stroom.query.language.functions.FieldIndex fieldIndex,
+                           final DateTimeSettings dateTimeSettings,
+                           final stroom.query.language.functions.ValuesConsumer consumer) {
+
+        }
     }
 }

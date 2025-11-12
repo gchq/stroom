@@ -21,6 +21,7 @@ import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.explorer.api.ExplorerActionHandler;
+import stroom.explorer.api.IsSpecialExplorerDataSource;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.api.SecurityContext;
@@ -30,28 +31,37 @@ import stroom.util.shared.PermissionException;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Singleton
 class DocRefInfoServiceImpl implements DocRefInfoService {
 
     private final DocRefInfoCache docRefInfoCache;
     private final Provider<SecurityContext> securityContextProvider;
     private final ExplorerActionHandlers explorerActionHandlers;
+    private final Set<IsSpecialExplorerDataSource> specialExplorerDataSources;
+
+    // Cache these special types keyed by DocRef type.
+    private volatile Map<String, Set<DocRef>> specialDocRefsByType = null;
 
     @Inject
     DocRefInfoServiceImpl(final DocRefInfoCache docRefInfoCache,
                           final Provider<SecurityContext> securityContextProvider,
-                          final ExplorerActionHandlers explorerActionHandlers) {
+                          final ExplorerActionHandlers explorerActionHandlers,
+                          final Set<IsSpecialExplorerDataSource> specialExplorerDataSources) {
         this.docRefInfoCache = docRefInfoCache;
         this.securityContextProvider = securityContextProvider;
         this.explorerActionHandlers = explorerActionHandlers;
+        this.specialExplorerDataSources = specialExplorerDataSources;
     }
 
     @Override
@@ -59,8 +69,17 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
         Objects.requireNonNull(type);
         return securityContextProvider.get().asProcessingUserResult(() -> {
             final ExplorerActionHandler handler = explorerActionHandlers.getHandler(type);
-            Objects.requireNonNull(handler, () -> "No handler for type " + type);
-            return new ArrayList<>(handler.listDocuments());
+            if (handler != null) {
+                return NullSafe.stream(handler.listDocuments())
+                        .toList();
+            } else {
+                if (specialDocRefsByType.containsKey(type)) {
+                    final Set<DocRef> specialDocRefs = getSpecialDocRefs(type);
+                    return NullSafe.stream(specialDocRefs).toList();
+                } else {
+                    throw new RuntimeException("No handler for type " + type);
+                }
+            }
         });
     }
 
@@ -187,4 +206,17 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
         }
     }
 
+    private Set<DocRef> getSpecialDocRefs(final String type) {
+        if (NullSafe.isNonEmptyString(type)) {
+            if (specialDocRefsByType == null) {
+                specialDocRefsByType = specialExplorerDataSources.stream()
+                        .map(IsSpecialExplorerDataSource::getDataSourceDocRefs)
+                        .flatMap(NullSafe::stream)
+                        .collect(Collectors.groupingBy(DocRef::getType, Collectors.toSet()));
+            }
+            return specialDocRefsByType.get(type);
+        } else {
+            return Collections.emptySet();
+        }
+    }
 }
