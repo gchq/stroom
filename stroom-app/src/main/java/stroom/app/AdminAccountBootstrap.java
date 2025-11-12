@@ -27,6 +27,7 @@ import event.logging.Group;
 import event.logging.Outcome;
 import event.logging.RemoveGroups;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.EnumSet;
 import java.util.Objects;
@@ -54,10 +55,10 @@ public class AdminAccountBootstrap {
     private final AppPermissionService appPermissionService;
     private final AppPermissionService userAppPermissionService;
     private final ClusterLockService clusterLockService;
-    private final IdentityConfig identityConfig;
+    private final Provider<IdentityConfig> identityConfigProvider;
     private final SecurityContext securityContext;
     private final StroomEventLoggingService stroomEventLoggingService;
-    private final StroomOpenIdConfig stroomOpenIdConfig;
+    private final Provider<StroomOpenIdConfig> stroomOpenIdConfigProvider;
     private final UserService userService;
 
     @Inject
@@ -65,27 +66,29 @@ public class AdminAccountBootstrap {
                                  final AppPermissionService appPermissionService,
                                  final AppPermissionService userAppPermissionService,
                                  final ClusterLockService clusterLockService,
-                                 final IdentityConfig identityConfig,
+                                 final Provider<IdentityConfig> identityConfigProvider,
                                  final SecurityContext securityContext,
                                  final StroomEventLoggingService stroomEventLoggingService,
-                                 final StroomOpenIdConfig stroomOpenIdConfig,
+                                 final Provider<StroomOpenIdConfig> stroomOpenIdConfigProvider,
                                  final UserService userService) {
         this.accountService = accountService;
         this.appPermissionService = appPermissionService;
         this.userAppPermissionService = userAppPermissionService;
         this.clusterLockService = clusterLockService;
-        this.identityConfig = identityConfig;
+        this.identityConfigProvider = identityConfigProvider;
         this.securityContext = securityContext;
         this.stroomEventLoggingService = stroomEventLoggingService;
-        this.stroomOpenIdConfig = stroomOpenIdConfig;
+        this.stroomOpenIdConfigProvider = stroomOpenIdConfigProvider;
         this.userService = userService;
     }
 
     public void startup() {
+        LOGGER.debug("startup() - Called");
         if (isEnabled()) {
             final Set<Item> allItems = Item.allItems();
             if (!checkItemsPresent().containsAll(allItems)) {
                 clusterLockService.tryLock(LOCK_NAME, () -> {
+                    LOGGER.debug("startup() - acquired lock");
                     // Re-check under lock
                     final Set<Item> itemsPresent = checkItemsPresent();
                     if (!itemsPresent.containsAll(allItems)) {
@@ -110,8 +113,13 @@ public class AdminAccountBootstrap {
                         LOGGER.info("Completed bootstrapping the default administrator account. " +
                                     "Login with admin/admin.");
                     }
+                    LOGGER.debug("startup() - releasing lock");
                 });
+            } else {
+                LOGGER.debug("startup() - All items present");
             }
+        } else {
+            LOGGER.debug("startup() - Disabled");
         }
     }
 
@@ -180,12 +188,12 @@ public class AdminAccountBootstrap {
     }
 
     private boolean isEnabled() {
-        final IdpType idpType = stroomOpenIdConfig.getIdentityProviderType();
-        final boolean isAutoCreateAdminAccountOnBoot = identityConfig.isAutoCreateAdminAccountOnBoot();
+        final IdpType idpType = stroomOpenIdConfigProvider.get().getIdentityProviderType();
+        final boolean isAutoCreateAdminAccountOnBoot = identityConfigProvider.get().isAutoCreateAdminAccountOnBoot();
         final boolean isEnabled = isAutoCreateAdminAccountOnBoot
                                   && (idpType == IdpType.INTERNAL_IDP || idpType == IdpType.TEST_CREDENTIALS);
-        LOGGER.debug("isEnabled: {}, isAutoCreateAdminAccountOnBoot: {}, idpType: {}",
-                isEnabled, isAutoCreateAdminAccountOnBoot, idpType);
+        LOGGER.debug("isEnabled() - isAutoCreateAdminAccountOnBoot: {}, idpType: {}, returning: {}",
+                isAutoCreateAdminAccountOnBoot, idpType, isEnabled);
         return isEnabled;
     }
 
@@ -357,7 +365,7 @@ public class AdminAccountBootstrap {
                 userOrGroupName);
 
         stroomEventLoggingService.log(
-                "CliAddToGroup",
+                buildTypeId("addPermissionToGroup"),
                 description,
                 authoriseBuilder
                         .withOutcome(Outcome.builder()

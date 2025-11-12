@@ -28,6 +28,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @ExtendWith(MockitoExtension.class)
 class TestAdminAccountBootstrap {
 
@@ -62,12 +64,11 @@ class TestAdminAccountBootstrap {
                 appPermissionService,
                 userAppPermissionService,
                 clusterLockService,
-                identityConfig,
+                () -> identityConfig,
                 securityContext,
                 stroomEventLoggingService,
-                stroomOpenIdConfig,
+                () -> stroomOpenIdConfig,
                 userService);
-
     }
 
     @Test
@@ -158,6 +159,11 @@ class TestAdminAccountBootstrap {
         adminAccountBootstrap.startup();
 
         Mockito.verify(stroomEventLoggingService, Mockito.times(4))
-                .log(Mockito.anyString(), Mockito.anyString(), Mockito.any(EventAction.class));
+                .log(typeIdCaptor.capture(), Mockito.anyString(), Mockito.any(EventAction.class));
+        assertThat(typeIdCaptor.getAllValues())
+                .containsExactly("AdminAccountBootstrap.createAccount",
+                        "AdminAccountBootstrap.createUser",
+                        "AdminAccountBootstrap.createGroup",
+                        "AdminAccountBootstrap.addPermissionToGroup");
     }
 }

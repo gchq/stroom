@@ -5,6 +5,7 @@ import stroom.app.uri.UriFactoryModule;
 import stroom.cluster.impl.ClusterModule;
 import stroom.dropwizard.common.FilteredHealthCheckServlet;
 import stroom.dropwizard.common.LogLevelInspector;
+import stroom.lifecycle.api.LifecycleBinder;
 import stroom.lifecycle.impl.LifecycleServiceModule;
 import stroom.meta.statistics.impl.MetaStatisticsModule;
 import stroom.resource.impl.ResourceModule;
@@ -39,6 +40,9 @@ public class AppModule extends AbstractModule {
         // Servlets on the admin path/port
         AdminServletBinder.create(binder())
                 .bind(FilteredHealthCheckServlet.class);
+
+        LifecycleBinder.create(binder())
+                .bindStartupTaskTo(AdminAccountBootstrapStartup.class, 10);
     }
 
 
