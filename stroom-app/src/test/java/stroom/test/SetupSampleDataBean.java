@@ -26,7 +26,6 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
 import stroom.importexport.api.ImportExportSerializer;
-import stroom.importexport.shared.ImportSettings;
 import stroom.index.api.IndexVolumeGroupService;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.IndexVolumeService;
@@ -296,39 +295,10 @@ public final class SetupSampleDataBean {
     public void loadDirectory(final boolean shutdown, final Path importRootDir) {
         LOGGER.info("Loading sample data for directory: " + FileUtil.getCanonicalPath(importRootDir));
 
-        final Path configDir = importRootDir.resolve("config");
         final Path dataDir = importRootDir.resolve("input");
         final Path generatedDataDir = importRootDir.resolve("generated").resolve("input");
 
         final Path exampleDataDir = importRootDir.resolve("example_data");
-
-//        createStreamAttributes();
-
-        if (Files.exists(configDir)) {
-            LOGGER.info("Loading config from {}", configDir.toAbsolutePath().normalize());
-            importExportSerializer.read(
-                    configDir,
-                    null,
-                    ImportSettings.auto());
-
-//            // Enable all flags for all feeds.
-//            final List<FeedDoc> feeds = feedService.find(new FindFeedCriteria());
-//            for (final FeedDoc feed : feeds) {
-//                feed.setStatus(FeedStatus.RECEIVE);
-//                feedService.save(feed);
-//            }
-
-//            LOGGER.info("Volume count = " + commonTestControl.countEntity(VolumeEntity.TABLE_NAME));
-            LOGGER.info("Feed count = " + feedStore.list().size());
-//            LOGGER.info("StreamAttributeKey count = " + commonTestControl.countEntity(StreamAttributeKey.class));
-            LOGGER.info("Dashboard count = " + dashboardStore.list().size());
-            LOGGER.info("Pipeline count = " + pipelineStore.list().size());
-            LOGGER.info("Index count = " + indexStore.list().size());
-            LOGGER.info("StatisticDataSource count = " + statisticStoreStore.list().size());
-
-        } else {
-            LOGGER.info("Directory {} doesn't exist so skipping", configDir.toAbsolutePath().normalize());
-        }
 
         LOGGER.info("Checking data dir {}", dataDir.toAbsolutePath().normalize());
         if (Files.exists(dataDir)) {

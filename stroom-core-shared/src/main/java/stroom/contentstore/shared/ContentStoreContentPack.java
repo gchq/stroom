@@ -23,7 +23,6 @@ import java.util.Objects;
         "id",
         "uiName",
         "iconUrl",
-        "iconSvg",
         "licenseName",
         "licenseUrl",
         "gitRepoName",
@@ -50,10 +49,6 @@ public class ContentStoreContentPack {
     /** URL of the icon to display */
     @JsonProperty
     private final String iconUrl;
-
-    /** SVG content of the icon. Not final as resolved outside this class. */
-    @JsonProperty
-    private String iconSvg;
 
     /** Display name of the license */
     @JsonProperty
@@ -108,8 +103,6 @@ public class ContentStoreContentPack {
      * @param uiName Name as shown in the UI. Must not be null.
      * @param iconUrl Icon URL. Can be null in which case null will
      *                be returned.
-     * @param iconSvg SVG content of the icon. Can be null in which
-     *                case null will be stored for later resolution.
      * @param licenseName Name of license for UI. Can be null.
      * @param licenseUrl URL of full license info. Can be null.
      * @param stroomPath Where the pack will be installed in Stroom.
@@ -132,7 +125,6 @@ public class ContentStoreContentPack {
     public ContentStoreContentPack(@JsonProperty("id") final String id,
                                    @JsonProperty("uiName") final String uiName,
                                    @JsonProperty("iconUrl") final String iconUrl,
-                                   @JsonProperty("iconSvg") final String iconSvg,
                                    @JsonProperty("licenseName") final String licenseName,
                                    @JsonProperty("licenseUrl") final String licenseUrl,
                                    @JsonProperty("stroomPath") final String stroomPath,
@@ -151,7 +143,6 @@ public class ContentStoreContentPack {
         this.id = Objects.requireNonNull(id);
         this.uiName = Objects.requireNonNull(uiName);
         this.iconUrl = iconUrl;
-        this.iconSvg = iconSvg;
         this.licenseName = licenseName == null ? "" : licenseName;
         this.licenseUrl = licenseUrl == null ? "" : licenseUrl;
         this.stroomPath = stroomPath == null || stroomPath.isEmpty() ? "/" : stroomPath;
@@ -173,7 +164,6 @@ public class ContentStoreContentPack {
         this("test-id",
                 "Test Content Store Content Pack",
                 "https://server/icon-url.svg",
-                null,
                 "Apache 2.0",
                 "https://server/license.txt",
                 "/stroom-path",
@@ -212,22 +202,6 @@ public class ContentStoreContentPack {
      */
     public String getIconUrl() {
         return iconUrl;
-    }
-
-    /**
-     * Sets the icon SVG content. Used so that something else
-     * can resolve the icon if it hasn't been set yet.
-     * @param iconSvg The SVG content for the icon.
-     */
-    public void setIconSvg(final String iconSvg) {
-        this.iconSvg = iconSvg;
-    }
-
-    /**
-     * @return null, or the SVG representing the icon.
-     */
-    public String getIconSvg() {
-        return iconSvg;
     }
 
     /**
@@ -400,7 +374,6 @@ public class ContentStoreContentPack {
                && Objects.equals(id, that.id)
                && Objects.equals(uiName, that.uiName)
                && Objects.equals(iconUrl, that.iconUrl)
-               && Objects.equals(iconSvg, that.iconSvg)
                && Objects.equals(licenseName, that.licenseName)
                && Objects.equals(licenseUrl, that.licenseUrl)
                && Objects.equals(stroomPath, that.stroomPath)
@@ -419,7 +392,6 @@ public class ContentStoreContentPack {
                 id,
                 uiName,
                 iconUrl,
-                iconSvg,
                 licenseName,
                 licenseUrl,
                 stroomPath,
@@ -434,13 +406,11 @@ public class ContentStoreContentPack {
 
     @Override
     public String toString() {
-        final String svgContent = (iconSvg == null ? "null" : "<svg content>");
         return "ContentStoreContentPack{"
                + "\n  contentStoreMetadata='" + contentStoreMetadata
                + "'\n  ID='" + id
                + "'\n  uiName='" + uiName
                + "'\n  iconUrl='" + iconUrl
-               + "'\n  iconSvg='" + svgContent
                + "'\n  licenseName='" + licenseName
                + "'\n  licenseUrl='" + licenseUrl
                + "'\n  stroomPath='" + stroomPath

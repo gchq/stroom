@@ -18,6 +18,7 @@ package stroom.contentstore.impl;
 
 import stroom.contentstore.shared.ContentStoreResource;
 import stroom.util.guice.RestResourcesBinder;
+import stroom.util.guice.ServletBinder;
 
 import com.google.inject.AbstractModule;
 
@@ -28,5 +29,8 @@ public class ContentStoreModule extends AbstractModule {
         // Bind the Resource implementation to the REST service
         bind(ContentStoreResource.class).to(ContentStoreResourceImpl.class);
         RestResourcesBinder.create(binder()).bind(ContentStoreResource.class);
+
+        // Servlet for icon passthrough
+        ServletBinder.create(binder()).bind(IconPassthroughServlet.class);
     }
 }

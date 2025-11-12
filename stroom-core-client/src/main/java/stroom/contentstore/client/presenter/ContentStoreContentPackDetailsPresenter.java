@@ -285,7 +285,7 @@ public class ContentStoreContentPackDetailsPresenter
             this.lblGitCommit.setText(EMPTY);
             this.lblDetails.setHTML(EMPTY);
         } else {
-            this.lblIcon.setHTML(cpws.getContentPack().getIconSvg());
+            this.lblIcon.setHTML(ImageTagUtil.getImageTag(120, 120, cpws.getContentPack().getId()));
             this.lblName.setText(cpws.getContentPack().getUiName());
             this.lblIsInstalled.setText(cpws.getInstallationStatus().toString());
             this.lblLicense.setText(cpws.getContentPack().getLicenseName());
