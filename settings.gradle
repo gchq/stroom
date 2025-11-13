@@ -38,6 +38,9 @@ include 'stroom-annotation:stroom-annotation-impl-db'
 include 'stroom-annotation:stroom-annotation-impl-db-jooq'
 include 'stroom-annotation:stroom-annotation-pipeline'
 
+include 'stroom-contentstore:stroom-contentstore-api'
+include 'stroom-contentstore:stroom-contentstore-impl'
+
 // AWS
 include 'stroom-aws:stroom-aws-s3-impl'
 
@@ -75,6 +78,10 @@ include 'stroom-core-client'
 include 'stroom-core-client-widget'
 include 'stroom-core'
 include 'stroom-core-shared'
+
+// Credentials Store
+include 'stroom-credentials:stroom-credentials-api'
+include 'stroom-credentials:stroom-credentials-impl-db'
 
 // Dashboard
 include 'stroom-dashboard-gwt'
@@ -295,3 +302,12 @@ include 'stroom-index:stroom-index-api'
 include 'stroom-cache:stroom-cache-service-impl'
 include 'stroom-gitrepo:stroom-gitrepo-impl'
 include 'stroom-gitrepo:stroom-gitrepo-api'
+
+include 'stroom-contentstore:stroom-contentstore-api'
+include 'stroom-contentstore'
+include 'stroom-gitrepo:stroom-gitrepo-impl-db'
+include 'stroom-gitrepo:stroom-gitrepo-impl-db-jooq'
+include 'stroom-gitrepo:stroom-gitrepo-mock'
+
+include 'stroom-credentials:stroom-credentials-impl'
+include 'stroom-credentials:stroom-credentials-impl-db-jooq'

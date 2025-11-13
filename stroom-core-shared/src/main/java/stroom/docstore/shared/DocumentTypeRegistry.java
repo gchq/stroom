@@ -151,7 +151,7 @@ public class DocumentTypeRegistry {
             DocumentTypeGroup.CONFIGURATION,
             "GitRepo",
             "Git Repo",
-            SvgImage.DOCUMENT_GIT_REPO);
+            SvgImage.DOCUMENT_GIT_REPO_FOLDER);
     public static final DocumentType SCRIPT_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.CONFIGURATION,
             "Script",

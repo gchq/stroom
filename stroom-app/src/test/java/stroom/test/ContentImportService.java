@@ -67,7 +67,10 @@ public class ContentImportService {
 
         final Path subPath = repoPath.resolve(pack.getPath());
 
-        importExportSerializer.read(subPath, new ArrayList<>(), ImportSettings.auto());
+        importExportSerializer.read(
+                subPath,
+                new ArrayList<>(),
+                ImportSettings.auto());
     }
 
     public void importFromDefinitionYaml(final Path definitionYaml) {

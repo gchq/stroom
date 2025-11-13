@@ -201,6 +201,7 @@ public class ProcessorFilterImportExportHandlerImpl
                             .autoPriority(false)
                             .reprocess(processorFilter.isReprocess())
                             .enabled(enableFilters)
+                            .export(processorFilter.isExport())
                             .minMetaCreateTimeMs(minMetaCreateTimeMs)
                             .maxMetaCreateTimeMs(processorFilter.getMaxMetaCreateTimeMs())
                             .build();

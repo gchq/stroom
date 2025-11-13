@@ -30,7 +30,7 @@ public class ImportExportModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(ImportExportService.class).to(ImportExportServiceImpl.class);
-        bind(ImportExportSerializer.class).to(ImportExportSerializerImpl.class);
+        bind(ImportExportSerializer.class).to(ImportExportSerializerImplV2.class);
         bind(ImportExportDocumentEventLog.class).to(ImportExportDocumentEventLogImpl.class);
         bind(ImportExportActionHandlers.class).to(ImportExportActionHandlersImpl.class);
 

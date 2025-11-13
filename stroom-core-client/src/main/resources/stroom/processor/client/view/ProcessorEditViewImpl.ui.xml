@@ -3,6 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:c="urn:import:stroom.widget.customdatebox.client"
              xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
 >
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="processorEditExpression" label="Expression" addStyleNames="dock-max">
@@ -13,6 +14,9 @@
         </form:FormGroup>
         <form:FormGroup identity="processorEditMaxMetaCreateTimeMs" label="Max Create Time">
             <c:MyDateBox ui:field="maxMetaCreateTimeMs"/>
+        </form:FormGroup>
+        <form:FormGroup identity="processorEditExport" label="Include in Export">
+            <tickbox:CustomCheckBox ui:field="export"/>
         </form:FormGroup>
         <form:FormGroup identity="runAsUser" label="Run As User">
             <g:SimplePanel ui:field="runAsUser"/>

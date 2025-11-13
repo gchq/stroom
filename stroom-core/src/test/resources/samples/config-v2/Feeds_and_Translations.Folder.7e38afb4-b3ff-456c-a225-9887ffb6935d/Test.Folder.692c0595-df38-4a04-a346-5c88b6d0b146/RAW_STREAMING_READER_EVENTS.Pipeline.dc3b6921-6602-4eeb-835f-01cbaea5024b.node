@@ -1,0 +1,5 @@
+name=RAW_STREAMING_READER-EVENTS
+path=/Feeds and Translations/Test/RAW_STREAMING_READER-EVENTS
+type=Pipeline
+uuid=dc3b6921-6602-4eeb-835f-01cbaea5024b
+version=V2

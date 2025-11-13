@@ -1,0 +1,12 @@
+{
+  "type" : "Feed",
+  "uuid" : "0b549ba1-ad19-446a-9fff-40160c7c1d25",
+  "name" : "TEST_REFERENCE_DATA_EFF_DATE-EVENTS",
+  "version" : "100f6124-4750-4e34-9d29-29ef07f9a505",
+  "description" : "TEST_REFERENCE_DATA_EFF_DATE-EVENTS",
+  "encoding" : "UTF-8",
+  "contextEncoding" : "UTF-8",
+  "reference" : false,
+  "streamType" : "Raw Events",
+  "status" : "RECEIVE"
+}

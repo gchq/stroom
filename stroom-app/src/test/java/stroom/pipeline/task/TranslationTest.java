@@ -58,12 +58,14 @@ import stroom.receive.common.StreamTargetStreamHandlers;
 import stroom.receive.common.StroomStreamProcessor;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTranslationTestHelper;
-import stroom.test.ContentImportService;
+import stroom.test.ContentStoreTestSetup;
 import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.DiffUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.NullSafe;
@@ -71,8 +73,6 @@ import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -96,7 +96,7 @@ import static org.assertj.core.api.Assertions.fail;
 
 public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TranslationTest.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TranslationTest.class);
 
     @Inject
     private ProcessorTaskTestHelper processorTaskTestHelper;
@@ -115,7 +115,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Inject
     private ImportExportSerializer importExportSerializer;
     @Inject
-    private ContentImportService contentImportService;
+    private ContentStoreTestSetup contentStoreTestSetup;
     @Inject
     private CommonTranslationTestHelper commonTranslationTestHelper;
     @Inject
@@ -192,9 +192,12 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final Path samplesDir = getSamplesDir();
         final Path configDir = samplesDir.resolve("config");
 
-        importExportSerializer.read(configDir, null, ImportSettings.auto());
+        importExportSerializer.read(
+                configDir,
+                null,
+                ImportSettings.auto());
 
-        contentImportService.importStandardPacks();
+        contentStoreTestSetup.installStandardPacks();
     }
 
     @NotNull

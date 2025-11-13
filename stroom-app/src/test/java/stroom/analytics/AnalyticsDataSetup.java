@@ -28,7 +28,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.CommonTranslationTestHelper;
-import stroom.test.ContentImportService;
+import stroom.test.ContentStoreTestSetup;
 import stroom.test.StoreCreationTool;
 import stroom.test.common.ProjectPathUtil;
 import stroom.util.io.StreamUtil;
@@ -58,7 +58,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Singleton
 public class AnalyticsDataSetup {
 
-    private final ContentImportService contentImportService;
+    private final ContentStoreTestSetup contentStoreTestSetup;
     private final CommonTranslationTestHelper commonTranslationTestHelper;
     private final StoreCreationTool storeCreationTool;
     private final ViewStore viewStore;
@@ -73,7 +73,7 @@ public class AnalyticsDataSetup {
     private DocRef detections;
 
     @Inject
-    public AnalyticsDataSetup(final ContentImportService contentImportService,
+    public AnalyticsDataSetup(final ContentStoreTestSetup contentStoreTestSetup,
                               final CommonTranslationTestHelper commonTranslationTestHelper,
                               final StoreCreationTool storeCreationTool,
                               final ViewStore viewStore,
@@ -84,7 +84,7 @@ public class AnalyticsDataSetup {
                               final ProcessorService processorService,
                               final ProcessorFilterService processorFilterService,
                               final IndexShardManager indexShardManager) {
-        this.contentImportService = contentImportService;
+        this.contentStoreTestSetup = contentStoreTestSetup;
         this.commonTranslationTestHelper = commonTranslationTestHelper;
         this.storeCreationTool = storeCreationTool;
         this.viewStore = viewStore;
@@ -98,7 +98,7 @@ public class AnalyticsDataSetup {
     }
 
     final void setup() {
-        contentImportService.importStandardPacks();
+        contentStoreTestSetup.installStandardPacks();
 
         final Path resourcePath = ProjectPathUtil.resolveDir("stroom-app")
                 .resolve("src")

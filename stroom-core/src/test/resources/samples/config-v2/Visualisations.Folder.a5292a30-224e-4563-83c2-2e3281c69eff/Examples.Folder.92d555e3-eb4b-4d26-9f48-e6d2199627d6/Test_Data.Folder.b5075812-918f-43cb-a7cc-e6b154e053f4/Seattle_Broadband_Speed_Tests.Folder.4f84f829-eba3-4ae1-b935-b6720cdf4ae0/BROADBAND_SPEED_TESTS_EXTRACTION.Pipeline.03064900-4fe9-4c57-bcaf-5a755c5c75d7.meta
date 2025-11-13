@@ -1,0 +1,11 @@
+{
+  "type" : "Pipeline",
+  "uuid" : "03064900-4fe9-4c57-bcaf-5a755c5c75d7",
+  "name" : "BROADBAND_SPEED_TESTS-EXTRACTION",
+  "version" : "22cf05d0-10f1-47df-8b88-513936f9a2b8",
+  "parentPipeline" : {
+    "type" : "Pipeline",
+    "uuid" : "3d9d60e9-61c2-4c88-a57b-7bc584dd970e",
+    "name" : "Search Extraction"
+  }
+}

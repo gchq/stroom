@@ -6,18 +6,23 @@ package stroom.processor.impl.db.jooq.tables;
 
 import stroom.processor.impl.db.jooq.Keys;
 import stroom.processor.impl.db.jooq.Stroom;
+import stroom.processor.impl.db.jooq.tables.ProcessorFilter.ProcessorFilterPath;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterTrackerRecord;
 
+import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function13;
 import org.jooq.Identity;
+import org.jooq.InverseForeignKey;
 import org.jooq.Name;
+import org.jooq.Path;
+import org.jooq.PlainSQL;
+import org.jooq.QueryPart;
 import org.jooq.Record;
-import org.jooq.Records;
-import org.jooq.Row13;
+import org.jooq.SQL;
 import org.jooq.Schema;
-import org.jooq.SelectField;
+import org.jooq.Select;
+import org.jooq.Stringly;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.TableOptions;
@@ -26,7 +31,7 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import java.util.function.Function;
+import java.util.Collection;
 
 
 /**
@@ -119,11 +124,11 @@ public class ProcessorFilterTracker extends TableImpl<ProcessorFilterTrackerReco
     public final TableField<ProcessorFilterTrackerRecord, Byte> STATUS = createField(DSL.name("status"), SQLDataType.TINYINT.nullable(false).defaultValue(DSL.inline("0", SQLDataType.TINYINT)), this, "");
 
     private ProcessorFilterTracker(Name alias, Table<ProcessorFilterTrackerRecord> aliased) {
-        this(alias, aliased, null);
+        this(alias, aliased, (Field<?>[]) null, null);
     }
 
-    private ProcessorFilterTracker(Name alias, Table<ProcessorFilterTrackerRecord> aliased, Field<?>[] parameters) {
-        super(alias, null, aliased, parameters, DSL.comment(""), TableOptions.table());
+    private ProcessorFilterTracker(Name alias, Table<ProcessorFilterTrackerRecord> aliased, Field<?>[] parameters, Condition where) {
+        super(alias, null, aliased, parameters, DSL.comment(""), TableOptions.table(), where);
     }
 
     /**
@@ -149,8 +154,35 @@ public class ProcessorFilterTracker extends TableImpl<ProcessorFilterTrackerReco
         this(DSL.name("processor_filter_tracker"), null);
     }
 
-    public <O extends Record> ProcessorFilterTracker(Table<O> child, ForeignKey<O, ProcessorFilterTrackerRecord> key) {
-        super(child, key, PROCESSOR_FILTER_TRACKER);
+    public <O extends Record> ProcessorFilterTracker(Table<O> path, ForeignKey<O, ProcessorFilterTrackerRecord> childPath, InverseForeignKey<O, ProcessorFilterTrackerRecord> parentPath) {
+        super(path, childPath, parentPath, PROCESSOR_FILTER_TRACKER);
+    }
+
+    /**
+     * A subtype implementing {@link Path} for simplified path-based joins.
+     */
+    public static class ProcessorFilterTrackerPath extends ProcessorFilterTracker implements Path<ProcessorFilterTrackerRecord> {
+        public <O extends Record> ProcessorFilterTrackerPath(Table<O> path, ForeignKey<O, ProcessorFilterTrackerRecord> childPath, InverseForeignKey<O, ProcessorFilterTrackerRecord> parentPath) {
+            super(path, childPath, parentPath);
+        }
+        private ProcessorFilterTrackerPath(Name alias, Table<ProcessorFilterTrackerRecord> aliased) {
+            super(alias, aliased);
+        }
+
+        @Override
+        public ProcessorFilterTrackerPath as(String alias) {
+            return new ProcessorFilterTrackerPath(DSL.name(alias), this);
+        }
+
+        @Override
+        public ProcessorFilterTrackerPath as(Name alias) {
+            return new ProcessorFilterTrackerPath(alias, this);
+        }
+
+        @Override
+        public ProcessorFilterTrackerPath as(Table<?> alias) {
+            return new ProcessorFilterTrackerPath(alias.getQualifiedName(), this);
+        }
     }
 
     @Override
@@ -166,6 +198,19 @@ public class ProcessorFilterTracker extends TableImpl<ProcessorFilterTrackerReco
     @Override
     public UniqueKey<ProcessorFilterTrackerRecord> getPrimaryKey() {
         return Keys.KEY_PROCESSOR_FILTER_TRACKER_PRIMARY;
+    }
+
+    private transient ProcessorFilterPath _processorFilter;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>stroom.processor_filter</code> table
+     */
+    public ProcessorFilterPath processorFilter() {
+        if (_processorFilter == null)
+            _processorFilter = new ProcessorFilterPath(this, null, Keys.PROCESSOR_FILTER_FK_PROCESSOR_FILTER_TRACKER_ID.getInverseKey());
+
+        return _processorFilter;
     }
 
     @Override
@@ -212,27 +257,87 @@ public class ProcessorFilterTracker extends TableImpl<ProcessorFilterTrackerReco
         return new ProcessorFilterTracker(name.getQualifiedName(), null);
     }
 
-    // -------------------------------------------------------------------------
-    // Row13 type methods
-    // -------------------------------------------------------------------------
-
+    /**
+     * Create an inline derived table from this table
+     */
     @Override
-    public Row13<Integer, Integer, Long, Long, Long, Long, Long, Long, Integer, String, Long, Long, Byte> fieldsRow() {
-        return (Row13) super.fieldsRow();
+    public ProcessorFilterTracker where(Condition condition) {
+        return new ProcessorFilterTracker(getQualifiedName(), aliased() ? this : null, null, condition);
     }
 
     /**
-     * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
+     * Create an inline derived table from this table
      */
-    public <U> SelectField<U> mapping(Function13<? super Integer, ? super Integer, ? super Long, ? super Long, ? super Long, ? super Long, ? super Long, ? super Long, ? super Integer, ? super String, ? super Long, ? super Long, ? super Byte, ? extends U> from) {
-        return convertFrom(Records.mapping(from));
+    @Override
+    public ProcessorFilterTracker where(Collection<? extends Condition> conditions) {
+        return where(DSL.and(conditions));
     }
 
     /**
-     * Convenience mapping calling {@link SelectField#convertFrom(Class,
-     * Function)}.
+     * Create an inline derived table from this table
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function13<? super Integer, ? super Integer, ? super Long, ? super Long, ? super Long, ? super Long, ? super Long, ? super Long, ? super Integer, ? super String, ? super Long, ? super Long, ? super Byte, ? extends U> from) {
-        return convertFrom(toType, Records.mapping(from));
+    @Override
+    public ProcessorFilterTracker where(Condition... conditions) {
+        return where(DSL.and(conditions));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public ProcessorFilterTracker where(Field<Boolean> condition) {
+        return where(DSL.condition(condition));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    @PlainSQL
+    public ProcessorFilterTracker where(SQL condition) {
+        return where(DSL.condition(condition));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    @PlainSQL
+    public ProcessorFilterTracker where(@Stringly.SQL String condition) {
+        return where(DSL.condition(condition));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    @PlainSQL
+    public ProcessorFilterTracker where(@Stringly.SQL String condition, Object... binds) {
+        return where(DSL.condition(condition, binds));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    @PlainSQL
+    public ProcessorFilterTracker where(@Stringly.SQL String condition, QueryPart... parts) {
+        return where(DSL.condition(condition, parts));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public ProcessorFilterTracker whereExists(Select<?> select) {
+        return where(DSL.exists(select));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public ProcessorFilterTracker whereNotExists(Select<?> select) {
+        return where(DSL.notExists(select));
     }
 }

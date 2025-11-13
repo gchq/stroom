@@ -102,7 +102,9 @@
     <inherits name="stroom.state.StateStore" />
     <inherits name="stroom.pathways.Pathways" />
     <inherits name="stroom.planb.PlanB" />
+    <inherits name="stroom.contentstore.ContentStore" />
     <inherits name="stroom.gitrepo.GitRepo" />
+    <inherits name="stroom.credentials.Credentials"/>
 
     <inherits name="stroom.query.Query" />
 

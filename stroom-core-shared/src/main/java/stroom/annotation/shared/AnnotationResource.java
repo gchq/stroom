@@ -18,7 +18,6 @@ package stroom.annotation.shared;
 
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.security.shared.SingleDocumentPermissionChangeRequest;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
@@ -121,14 +120,6 @@ public interface AnnotationResource extends RestResource, DirectRestService {
             summary = "Gets a list of events linked to this annotation",
             operationId = "getAnnotationLinkedEvents")
     List<EventId> getLinkedEvents(@Parameter(description = "annotationRef", required = true) DocRef annotationRef);
-
-    @POST
-    @Path("/changeDocumentPermissions")
-    @Operation(
-            summary = "Change document permissions",
-            operationId = "changeDocumentPermissions")
-    Boolean changeDocumentPermissions(
-            @Parameter(description = "request", required = true) SingleDocumentPermissionChangeRequest request);
 
     @POST
     @Path("createAnnotationTag")

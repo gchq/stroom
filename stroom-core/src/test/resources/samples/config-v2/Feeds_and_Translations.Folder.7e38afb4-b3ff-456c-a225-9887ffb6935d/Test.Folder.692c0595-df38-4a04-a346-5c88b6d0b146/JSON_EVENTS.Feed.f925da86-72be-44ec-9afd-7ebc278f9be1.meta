@@ -1,0 +1,12 @@
+{
+  "type" : "Feed",
+  "uuid" : "f925da86-72be-44ec-9afd-7ebc278f9be1",
+  "name" : "JSON-EVENTS",
+  "version" : "4a82f8b4-9a65-4364-849c-e0a74197c6e7",
+  "description" : "JSON-EVENTS",
+  "encoding" : "UTF-8",
+  "contextEncoding" : "UTF-8",
+  "reference" : false,
+  "streamType" : "Raw Events",
+  "status" : "RECEIVE"
+}

@@ -1,5 +1,6 @@
 package stroom.gitrepo.impl;
 
+import stroom.gitrepo.api.GitRepoStorageService;
 import stroom.gitrepo.api.GitRepoStore;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.util.logging.DurationTimer;

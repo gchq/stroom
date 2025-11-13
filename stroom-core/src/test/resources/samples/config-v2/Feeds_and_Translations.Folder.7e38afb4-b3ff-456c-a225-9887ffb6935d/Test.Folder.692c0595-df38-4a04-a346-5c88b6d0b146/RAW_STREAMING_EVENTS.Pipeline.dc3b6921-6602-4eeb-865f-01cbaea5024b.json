@@ -1,0 +1,26 @@
+{
+  "elements" : {
+    "add" : [ {
+      "id" : "Source",
+      "type" : "Source"
+    }, {
+      "id" : "streamAppender",
+      "type" : "StreamAppender"
+    } ]
+  },
+  "properties" : {
+    "add" : [ {
+      "element" : "streamAppender",
+      "name" : "streamType",
+      "value" : {
+        "string" : "Test Events"
+      }
+    } ]
+  },
+  "links" : {
+    "add" : [ {
+      "from" : "Source",
+      "to" : "streamAppender"
+    } ]
+  }
+}

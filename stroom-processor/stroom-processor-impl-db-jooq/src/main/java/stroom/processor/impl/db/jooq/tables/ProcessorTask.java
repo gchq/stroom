@@ -7,19 +7,26 @@ package stroom.processor.impl.db.jooq.tables;
 import stroom.processor.impl.db.jooq.Indexes;
 import stroom.processor.impl.db.jooq.Keys;
 import stroom.processor.impl.db.jooq.Stroom;
+import stroom.processor.impl.db.jooq.tables.ProcessorFeed.ProcessorFeedPath;
+import stroom.processor.impl.db.jooq.tables.ProcessorFilter.ProcessorFilterPath;
+import stroom.processor.impl.db.jooq.tables.ProcessorNode.ProcessorNodePath;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorTaskRecord;
 
+import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function12;
 import org.jooq.Identity;
 import org.jooq.Index;
+import org.jooq.InverseForeignKey;
 import org.jooq.Name;
+import org.jooq.Path;
+import org.jooq.PlainSQL;
+import org.jooq.QueryPart;
 import org.jooq.Record;
-import org.jooq.Records;
-import org.jooq.Row12;
+import org.jooq.SQL;
 import org.jooq.Schema;
-import org.jooq.SelectField;
+import org.jooq.Select;
+import org.jooq.Stringly;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.TableOptions;
@@ -29,8 +36,8 @@ import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
-import java.util.function.Function;
 
 
 /**
@@ -115,11 +122,11 @@ public class ProcessorTask extends TableImpl<ProcessorTaskRecord> {
     public final TableField<ProcessorTaskRecord, String> DATA = createField(DSL.name("data"), SQLDataType.CLOB, this, "");
 
     private ProcessorTask(Name alias, Table<ProcessorTaskRecord> aliased) {
-        this(alias, aliased, null);
+        this(alias, aliased, (Field<?>[]) null, null);
     }
 
-    private ProcessorTask(Name alias, Table<ProcessorTaskRecord> aliased, Field<?>[] parameters) {
-        super(alias, null, aliased, parameters, DSL.comment(""), TableOptions.table());
+    private ProcessorTask(Name alias, Table<ProcessorTaskRecord> aliased, Field<?>[] parameters, Condition where) {
+        super(alias, null, aliased, parameters, DSL.comment(""), TableOptions.table(), where);
     }
 
     /**
@@ -143,8 +150,35 @@ public class ProcessorTask extends TableImpl<ProcessorTaskRecord> {
         this(DSL.name("processor_task"), null);
     }
 
-    public <O extends Record> ProcessorTask(Table<O> child, ForeignKey<O, ProcessorTaskRecord> key) {
-        super(child, key, PROCESSOR_TASK);
+    public <O extends Record> ProcessorTask(Table<O> path, ForeignKey<O, ProcessorTaskRecord> childPath, InverseForeignKey<O, ProcessorTaskRecord> parentPath) {
+        super(path, childPath, parentPath, PROCESSOR_TASK);
+    }
+
+    /**
+     * A subtype implementing {@link Path} for simplified path-based joins.
+     */
+    public static class ProcessorTaskPath extends ProcessorTask implements Path<ProcessorTaskRecord> {
+        public <O extends Record> ProcessorTaskPath(Table<O> path, ForeignKey<O, ProcessorTaskRecord> childPath, InverseForeignKey<O, ProcessorTaskRecord> parentPath) {
+            super(path, childPath, parentPath);
+        }
+        private ProcessorTaskPath(Name alias, Table<ProcessorTaskRecord> aliased) {
+            super(alias, aliased);
+        }
+
+        @Override
+        public ProcessorTaskPath as(String alias) {
+            return new ProcessorTaskPath(DSL.name(alias), this);
+        }
+
+        @Override
+        public ProcessorTaskPath as(Name alias) {
+            return new ProcessorTaskPath(alias, this);
+        }
+
+        @Override
+        public ProcessorTaskPath as(Table<?> alias) {
+            return new ProcessorTaskPath(alias.getQualifiedName(), this);
+        }
     }
 
     @Override
@@ -172,39 +206,41 @@ public class ProcessorTask extends TableImpl<ProcessorTaskRecord> {
         return Arrays.asList(Keys.PROCESSOR_TASK_FK_PROCESSOR_FILTER_ID, Keys.PROCESSOR_TASK_FK_PROCESSOR_NODE_ID, Keys.PROCESSOR_TASK_FK_PROCESSOR_FEED_ID);
     }
 
-    private transient ProcessorFilter _processorFilter;
-    private transient ProcessorNode _processorNode;
-    private transient ProcessorFeed _processorFeed;
+    private transient ProcessorFilterPath _processorFilter;
 
     /**
      * Get the implicit join path to the <code>stroom.processor_filter</code>
      * table.
      */
-    public ProcessorFilter processorFilter() {
+    public ProcessorFilterPath processorFilter() {
         if (_processorFilter == null)
-            _processorFilter = new ProcessorFilter(this, Keys.PROCESSOR_TASK_FK_PROCESSOR_FILTER_ID);
+            _processorFilter = new ProcessorFilterPath(this, Keys.PROCESSOR_TASK_FK_PROCESSOR_FILTER_ID, null);
 
         return _processorFilter;
     }
+
+    private transient ProcessorNodePath _processorNode;
 
     /**
      * Get the implicit join path to the <code>stroom.processor_node</code>
      * table.
      */
-    public ProcessorNode processorNode() {
+    public ProcessorNodePath processorNode() {
         if (_processorNode == null)
-            _processorNode = new ProcessorNode(this, Keys.PROCESSOR_TASK_FK_PROCESSOR_NODE_ID);
+            _processorNode = new ProcessorNodePath(this, Keys.PROCESSOR_TASK_FK_PROCESSOR_NODE_ID, null);
 
         return _processorNode;
     }
+
+    private transient ProcessorFeedPath _processorFeed;
 
     /**
      * Get the implicit join path to the <code>stroom.processor_feed</code>
      * table.
      */
-    public ProcessorFeed processorFeed() {
+    public ProcessorFeedPath processorFeed() {
         if (_processorFeed == null)
-            _processorFeed = new ProcessorFeed(this, Keys.PROCESSOR_TASK_FK_PROCESSOR_FEED_ID);
+            _processorFeed = new ProcessorFeedPath(this, Keys.PROCESSOR_TASK_FK_PROCESSOR_FEED_ID, null);
 
         return _processorFeed;
     }
@@ -253,27 +289,87 @@ public class ProcessorTask extends TableImpl<ProcessorTaskRecord> {
         return new ProcessorTask(name.getQualifiedName(), null);
     }
 
-    // -------------------------------------------------------------------------
-    // Row12 type methods
-    // -------------------------------------------------------------------------
-
+    /**
+     * Create an inline derived table from this table
+     */
     @Override
-    public Row12<Long, Integer, Integer, Integer, Integer, Long, Long, Long, Byte, Long, Long, String> fieldsRow() {
-        return (Row12) super.fieldsRow();
+    public ProcessorTask where(Condition condition) {
+        return new ProcessorTask(getQualifiedName(), aliased() ? this : null, null, condition);
     }
 
     /**
-     * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
+     * Create an inline derived table from this table
      */
-    public <U> SelectField<U> mapping(Function12<? super Long, ? super Integer, ? super Integer, ? super Integer, ? super Integer, ? super Long, ? super Long, ? super Long, ? super Byte, ? super Long, ? super Long, ? super String, ? extends U> from) {
-        return convertFrom(Records.mapping(from));
+    @Override
+    public ProcessorTask where(Collection<? extends Condition> conditions) {
+        return where(DSL.and(conditions));
     }
 
     /**
-     * Convenience mapping calling {@link SelectField#convertFrom(Class,
-     * Function)}.
+     * Create an inline derived table from this table
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function12<? super Long, ? super Integer, ? super Integer, ? super Integer, ? super Integer, ? super Long, ? super Long, ? super Long, ? super Byte, ? super Long, ? super Long, ? super String, ? extends U> from) {
-        return convertFrom(toType, Records.mapping(from));
+    @Override
+    public ProcessorTask where(Condition... conditions) {
+        return where(DSL.and(conditions));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public ProcessorTask where(Field<Boolean> condition) {
+        return where(DSL.condition(condition));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    @PlainSQL
+    public ProcessorTask where(SQL condition) {
+        return where(DSL.condition(condition));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    @PlainSQL
+    public ProcessorTask where(@Stringly.SQL String condition) {
+        return where(DSL.condition(condition));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    @PlainSQL
+    public ProcessorTask where(@Stringly.SQL String condition, Object... binds) {
+        return where(DSL.condition(condition, binds));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    @PlainSQL
+    public ProcessorTask where(@Stringly.SQL String condition, QueryPart... parts) {
+        return where(DSL.condition(condition, parts));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public ProcessorTask whereExists(Select<?> select) {
+        return where(DSL.exists(select));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public ProcessorTask whereNotExists(Select<?> select) {
+        return where(DSL.notExists(select));
     }
 }

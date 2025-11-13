@@ -43,6 +43,9 @@ cd -
 cd stroom-explorer/stroom-explorer-impl-db-jooq
 ../../gradlew generateJooq
 cd -
+cd stroom-gitrepo/stroom-gitrepo-impl-db-jooq
+../../gradlew generateJooq
+cd -
 cd stroom-index/stroom-index-impl-db-jooq
 ../../gradlew generateJooq
 cd -
@@ -55,4 +58,6 @@ cd -
 cd stroom-query/stroom-query-datasource-impl-db-jooq
 ../../gradlew generateJooq
 cd -
-
+cd stroom-credentials/stroom-credentials-impl-db-jooq
+../../gradlew generateJooq
+cd -

@@ -267,7 +267,7 @@ public class DocumentUserPermissionsListPresenter
                         .build(),
                 160);
 
-        if (DocumentTypes.isFolder(docRef)) {
+        if (docRef != null && DocumentTypes.isFolder(docRef)) {
             final int docTypeCount = documentTypes.getTypes().size();
 
             // Explicit doc create types

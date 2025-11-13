@@ -1,0 +1,28 @@
+ext.moduleName = 'stroom.gitrepo.impl.db'
+
+dependencies {
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-db-util')
+    implementation project(':stroom-gitrepo:stroom-gitrepo-api')
+    implementation project(':stroom-gitrepo:stroom-gitrepo-impl')
+    implementation project(':stroom-gitrepo:stroom-gitrepo-impl-db-jooq')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+
+    implementation libs.flyway.core
+    implementation libs.flyway.mysql
+    implementation libs.guice
+    implementation libs.jackson.annotations
+    implementation libs.jackson.core
+    implementation libs.jackson.databind
+    implementation libs.jakarta.inject
+    implementation libs.jooq
+    implementation libs.slf4j.api
+
+    runtimeOnly libs.mysql.connector.java
+
+    testImplementation project(':stroom-test-common')
+    testImplementation project(':stroom-security:stroom-security-api')
+    testImplementation project(':stroom-security:stroom-security-mock')
+
+}
