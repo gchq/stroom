@@ -78,8 +78,18 @@ public final class DocRef implements Comparable<DocRef>, HasDisplayValue, HasTyp
     public DocRef(@JsonProperty("type") final String type,
                   @JsonProperty("uuid") final String uuid,
                   @JsonProperty("name") final String name) {
-        Objects.requireNonNull(type);
-        Objects.requireNonNull(uuid);
+        try {
+            Objects.requireNonNull(type);
+            Objects.requireNonNull(uuid);
+        } catch (final RuntimeException e) {
+            try {
+                // FIXME: Temporary fix for now - we can't use LOGGER as this is used in GWT.
+                e.printStackTrace();
+            } catch (final RuntimeException e2) {
+                // Ignore.
+            }
+        }
+
         this.type = type;
         this.uuid = uuid;
         this.name = name;
