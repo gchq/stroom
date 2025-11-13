@@ -84,43 +84,54 @@ public class AdminAccountBootstrap {
 
     public void startup() {
         LOGGER.debug("startup() - Called");
-        if (isEnabled()) {
-            final Set<Item> allItems = Item.allItems();
-            if (!checkItemsPresent().containsAll(allItems)) {
-                clusterLockService.tryLock(LOCK_NAME, () -> {
-                    LOGGER.debug("startup() - acquired lock");
-                    // Re-check under lock
-                    final Set<Item> itemsPresent = checkItemsPresent();
-                    if (!itemsPresent.containsAll(allItems)) {
-                        LOGGER.info(
-                                "Bootstrapping the default administrator account under lock. Login with admin/admin.");
-                        securityContext.asProcessingUser(() -> {
-                            if (!itemsPresent.contains(Item.ACCOUNT)) {
-                                createAccount();
-                            }
-                            User user = null;
-                            User group = null;
-                            if (!itemsPresent.contains(Item.USER)) {
-                                user = createUser();
-                            }
-                            if (!itemsPresent.contains(Item.GROUP)) {
-                                group = createGroup(user);
-                            }
-                            if (!itemsPresent.contains(Item.PERMISSIONS)) {
-                                ensurePermissions(group);
-                            }
-                        });
-                        LOGGER.info("Completed bootstrapping the default administrator account. " +
-                                    "Login with admin/admin.");
-                    }
-                    LOGGER.debug("startup() - releasing lock");
-                });
+        securityContext.asProcessingUser(() -> {
+            if (isEnabled()) {
+                final Set<Item> allItems = Item.allItems();
+                if (!checkItemsPresent().containsAll(allItems)) {
+                    // We will likely only come in here once per node, so future reboots will not
+                    // be impacted.
+
+                    // TODO We ought to be using tryLock, but on 7.10 that is using ClusterLockClusterHandler
+                    //  rather than DB record locking. I got errors maybe due to trying to lock
+                    //  before the cluster is fully established. tryLock() has changed in 7.11 so switch to
+                    //  that in 7.11+.
+                    clusterLockService.lock(LOCK_NAME, () -> {
+                        LOGGER.debug("startup() - acquired lock");
+                        // Re-check under lock
+                        final Set<Item> itemsPresent = checkItemsPresent();
+                        if (!itemsPresent.containsAll(allItems)) {
+                            ensureItemsArePresent(itemsPresent);
+                        }
+                        LOGGER.debug("startup() - releasing lock");
+                    });
+                } else {
+                    LOGGER.debug("startup() - All items present");
+                }
             } else {
-                LOGGER.debug("startup() - All items present");
+                LOGGER.debug("startup() - Disabled");
             }
-        } else {
-            LOGGER.debug("startup() - Disabled");
+        });
+    }
+
+    private void ensureItemsArePresent(final Set<Item> itemsPresent) {
+        LOGGER.info(
+                "Bootstrapping the default administrator account under lock. Login with admin/admin.");
+        if (!itemsPresent.contains(Item.ACCOUNT)) {
+            createAccount();
         }
+        User user = null;
+        User group = null;
+        if (!itemsPresent.contains(Item.USER)) {
+            user = createUser();
+        }
+        if (!itemsPresent.contains(Item.GROUP)) {
+            group = createGroup(user);
+        }
+        if (!itemsPresent.contains(Item.PERMISSIONS)) {
+            ensurePermissions(group);
+        }
+        LOGGER.info("Completed bootstrapping the default administrator account. " +
+                    "Login with admin/admin.");
     }
 
     private void createAccount() {
