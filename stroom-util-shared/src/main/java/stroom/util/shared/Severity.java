@@ -31,8 +31,7 @@ public enum Severity implements HasDisplayValue {
     INFO(1, "INFO", "Information"),
     WARNING(2, "WARN", "Warnings"),
     ERROR(3, "ERROR", "Errors"),
-    FATAL_ERROR(4, "FATAL", "Fatal Errors"),
-    ;
+    FATAL_ERROR(4, "FATAL", "Fatal Errors");
 
     /**
      * Comparator for comparing severities with nulls first then lowest to highest severity

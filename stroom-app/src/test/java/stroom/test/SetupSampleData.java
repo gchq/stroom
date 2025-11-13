@@ -76,13 +76,13 @@ public final class SetupSampleData {
         // Setup the DB ready to load content and data.
         commonTestControl.setup(null);
 
-        // Load the sample data and content from the 'samples' dirs
-        final SetupSampleDataBean setupSampleDataBean = injector.getInstance(SetupSampleDataBean.class);
-        setupSampleDataBean.run(true);
-
         // Pull in content packs from the content store
         final ContentStoreTestSetup devSetup = injector.getInstance(ContentStoreTestSetup.class);
         devSetup.installSampleDataPacks();
+
+        // Load the sample data and content from the 'samples' dirs
+        final SetupSampleDataBean setupSampleDataBean = injector.getInstance(SetupSampleDataBean.class);
+        setupSampleDataBean.run(true);
 
         // Stop task manager
         injector.getInstance(TaskManager.class).shutdown();

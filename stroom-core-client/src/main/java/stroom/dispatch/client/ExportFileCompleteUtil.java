@@ -16,10 +16,13 @@
 
 package stroom.dispatch.client;
 
+import stroom.alert.client.event.AlertCallback;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.LocationManager;
 import stroom.util.shared.Message;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceGeneration;
+import stroom.util.shared.Severity;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HasHandlers;
@@ -36,10 +39,22 @@ public final class ExportFileCompleteUtil {
         if (result != null) {
             final String message = getMessage(result);
             if (message != null) {
-                AlertEvent.fireWarn(hasHandlers, message, () -> {
+                Severity severity = getSeverity(result);
+                if (severity == null) {
+                    severity = Severity.INFO;
+                }
+
+                final AlertCallback callback = () -> {
                     // Change the browser location to download the zip file.
                     download(locationManager, result);
-                });
+                };
+
+                switch (severity) {
+                    case INFO -> AlertEvent.fireInfo(hasHandlers, "Export Complete", message, callback);
+                    case WARNING -> AlertEvent.fireWarn(hasHandlers, "Export Complete", message, callback);
+                    case ERROR, FATAL_ERROR -> AlertEvent
+                            .fireError(hasHandlers, "Export Complete", message, callback);
+                }
 
             } else {
                 // Change the browser location to download the zip file.
@@ -48,18 +63,8 @@ public final class ExportFileCompleteUtil {
         }
     }
 
-//    public static void onFailure(final PresenterWidget<?> parent, final RestError restError) {
-//        if (parent != null) {
-//            if (restError != null) {
-//                AlertEvent.fireError(parent, restError.getMessage(), () -> EnablePopupEvent.builder(parent).fire());
-//            } else {
-//                EnablePopupEvent.builder(parent).fire();
-//            }
-//        }
-//    }
-
     private static String getMessage(final ResourceGeneration result) {
-        if (result.getMessageList() == null || result.getMessageList().size() == 0) {
+        if (NullSafe.isEmptyCollection(result.getMessageList())) {
             return null;
         }
 
@@ -71,6 +76,20 @@ public final class ExportFileCompleteUtil {
             stringBuilder.append("\n");
         }
         return stringBuilder.toString();
+    }
+
+    private static Severity getSeverity(final ResourceGeneration result) {
+        Severity severity = null;
+        if (result.getMessageList() != null) {
+            for (final Message msg : result.getMessageList()) {
+                if (msg.getSeverity() != null) {
+                    if (severity == null || severity.lessThan(msg.getSeverity())) {
+                        severity = msg.getSeverity();
+                    }
+                }
+            }
+        }
+        return severity;
     }
 
     private static void download(final LocationManager locationManager, final ResourceGeneration result) {
