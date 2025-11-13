@@ -16,6 +16,7 @@
 
 package stroom.cluster.lock.impl.db;
 
+import stroom.cluster.lock.impl.db.jooq.tables.records.ClusterLockRecord;
 import stroom.db.util.JooqUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -30,6 +31,7 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.jooq.DSLContext;
 import org.jooq.Record;
+import org.jooq.SelectForUpdateOfStep;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -45,6 +47,7 @@ import static stroom.cluster.lock.impl.db.jooq.tables.ClusterLock.CLUSTER_LOCK;
 class DbClusterLock implements Clearable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DbClusterLock.class);
+    public static final int VERSION = 0;
     private final Set<String> registeredLockSet = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private final ClusterLockDbConnProvider clusterLockDbConnProvider;
@@ -58,13 +61,24 @@ class DbClusterLock implements Clearable {
     }
 
     public void lock(final String lockName, final Runnable runnable) {
-        lockResult(lockName, () -> {
+        lockResult(lockName, true, () -> {
+            runnable.run();
+            return null;
+        });
+    }
+
+    public void tryLock(final String lockName, final Runnable runnable) {
+        lockResult(lockName, false, () -> {
             runnable.run();
             return null;
         });
     }
 
     public <T> T lockResult(final String lockName, final Supplier<T> supplier) {
+        return lockResult(lockName, true, supplier);
+    }
+
+    private <T> T lockResult(final String lockName, final boolean waitForLock, final Supplier<T> supplier) {
         LOGGER.debug("lock({}) - >>>", lockName);
 
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
@@ -78,11 +92,10 @@ class DbClusterLock implements Clearable {
             // This is not exact as we are at the mercy of the db timeout once we have passed this value,
             // so could be 30s after this.
             final Instant timeoutTime = startTime.plus(lockTimeout);
-            boolean acquiredLock = false;
             Optional<Record> optional = Optional.empty();
             int loopCount = 0;
 
-            while (!acquiredLock && !Thread.currentThread().isInterrupted()) {
+            while (!Thread.currentThread().isInterrupted()) {
                 if (Instant.now().isAfter(timeoutTime)) {
                     throw new RuntimeException(LogUtil.message(
                             "Gave up waiting for lock {} after {}. Current configured lockTimeout is {}",
@@ -91,17 +104,23 @@ class DbClusterLock implements Clearable {
                 loopCount++;
                 try {
                     // This may timeout on the DB
-                    optional = getRecordLock(lockName, context);
+                    optional = getRecordLock(lockName, context, waitForLock);
 
                     // Show info if we go beyond the db timeout, else a debug msg.
-                    if (loopCount > 1) {
-                        LOGGER.info("Acquired lock {}, waited {}",
-                                lockName, Duration.between(startTime, Instant.now()));
+                    if (optional.isPresent()) {
+                        if (loopCount > 1) {
+                            LOGGER.info("Acquired lock {}, waited {}",
+                                    lockName, Duration.between(startTime, Instant.now()));
+                        } else {
+                            LOGGER.debug("Acquired lock {}, waited {}",
+                                    lockName, Duration.between(startTime, Instant.now()));
+                        }
                     } else {
-                        LOGGER.debug("Acquired lock {}, waited {}",
+                        LOGGER.debug("Did not acquire lock {}, waited {}",
                                 lockName, Duration.between(startTime, Instant.now()));
                     }
-                    acquiredLock = true;
+                    // We have the lock OR (waitForLock==false AND we didn't get the lock)
+                    break;
                 } catch (final Exception e) {
                     // If the supplier takes a long time to run, especially if it has to run on multiple nodes
                     // than we will get a lock timeout error from the DB so need to handle that and keep
@@ -120,26 +139,42 @@ class DbClusterLock implements Clearable {
                 }
             }
 
-            if (optional.isEmpty()) {
-                throw new IllegalStateException("No cluster lock has been found or created: " + lockName);
-            }
-
             LOGGER.debug("lock({}) - <<< {}", lockName, logExecutionTime);
-
-            return supplier.get();
+            if (optional.isEmpty()) {
+                if (waitForLock) {
+                    // This should never happen as checkLockCreated() is called at the top of this method
+                    // and will ensure the lock record is present. We never delete them.
+                    throw new IllegalStateException("No cluster lock has been found or created: " + lockName);
+                } else {
+                    // This is a tryLock that didn't get the lock, so just return
+                    return null;
+                }
+            } else {
+                return supplier.get();
+            }
         });
     }
 
-    private Optional<Record> getRecordLock(final String lockName, final DSLContext context) {
-        final Optional<Record> optional;
+    private Optional<Record> getRecordLock(final String lockName,
+                                           final DSLContext context,
+                                           final boolean waitForLock) {
+        final Optional<Record> optRecord;
         // Get the lock, waiting if not available, but this may time out
-        optional = context
+        final SelectForUpdateOfStep<Record> selectStep = context
                 .select()
                 .from(CLUSTER_LOCK)
                 .where(CLUSTER_LOCK.NAME.eq(lockName))
-                .forUpdate()
-                .fetchOptional();
-        return optional;
+                .forUpdate();
+
+        if (waitForLock) {
+            optRecord = selectStep.fetchOptional();
+        } else {
+            optRecord = selectStep.skipLocked()
+                    .fetchOptional();
+        }
+
+        LOGGER.debug("getRecordLock() - optRecord: {}", optRecord);
+        return optRecord;
     }
 
     private void checkLockCreated(final String name) {
@@ -172,12 +207,9 @@ class DbClusterLock implements Clearable {
     }
 
     private void create(final String name) {
-        JooqUtil.onDuplicateKeyIgnore(() ->
-                JooqUtil.context(clusterLockDbConnProvider, context -> context
-                        .insertInto(CLUSTER_LOCK, CLUSTER_LOCK.NAME, CLUSTER_LOCK.VERSION)
-                        .values(name, 0)
-                        .returning(CLUSTER_LOCK.ID)
-                        .fetchOptional()));
+        // Another node may also be doing this
+        final ClusterLockRecord record = new ClusterLockRecord(null, VERSION, name);
+        JooqUtil.tryCreate(clusterLockDbConnProvider, record);
     }
 
     @Override
