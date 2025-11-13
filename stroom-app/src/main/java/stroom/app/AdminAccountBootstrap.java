@@ -7,6 +7,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.api.UserService;
 import stroom.security.identity.account.AccountService;
 import stroom.security.identity.config.IdentityConfig;
+import stroom.security.identity.config.PasswordPolicyConfig;
 import stroom.security.identity.shared.Account;
 import stroom.security.identity.shared.CreateAccountRequest;
 import stroom.security.impl.StroomOpenIdConfig;
@@ -16,6 +17,7 @@ import stroom.security.shared.User;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserDesc;
 import stroom.util.shared.UserRef;
 
@@ -135,6 +137,10 @@ public class AdminAccountBootstrap {
     }
 
     private void createAccount() {
+        final boolean forcePasswordChange = NullSafe.get(identityConfigProvider.get(),
+                IdentityConfig::getPasswordPolicyConfig,
+                PasswordPolicyConfig::isForcePasswordChangeOnFirstLogin);
+
         final CreateAccountRequest createAccountRequest = new CreateAccountRequest(
                 null,
                 null,
@@ -143,7 +149,7 @@ public class AdminAccountBootstrap {
                 "Auto created by Stroom",
                 ADMIN_ACCOUNT_PASSWORD,
                 ADMIN_ACCOUNT_PASSWORD,
-                true,
+                forcePasswordChange,
                 true);
         // This will also create the stroom user for the account
         accountService.create(createAccountRequest);
