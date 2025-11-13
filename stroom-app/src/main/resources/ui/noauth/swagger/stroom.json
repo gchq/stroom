@@ -5809,7 +5809,7 @@
             "description" : "default response"
           }
         },
-        "summary" : "Fetch a GIT repo doc by its UUID",
+        "summary" : "Fetch a Git repo doc by its UUID",
         "tags" : [ "GitRepos" ]
       },
       "put" : {
@@ -5845,7 +5845,7 @@
             "description" : "default response"
           }
         },
-        "summary" : "Update a GIT repo doc",
+        "summary" : "Update a Git repo doc",
         "tags" : [ "GitRepos" ]
       }
     },

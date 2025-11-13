@@ -168,17 +168,14 @@ public final class SetupSampleDataBean {
         // process
         final Path coreServerSamplesDir = StroomCoreServerTestFileUtil.getTestResourcesDir()
                 .resolve(ROOT_DIR_NAME);
-        final Path statisticsSamplesDir = Paths.get("./stroom-statistics/stroom-statistics-impl/src/test/resources")
-                .resolve(ROOT_DIR_NAME);
 
         final Path[] rootDirs = new Path[]{
-                coreServerSamplesDir,
-                statisticsSamplesDir};
+                coreServerSamplesDir};
 
         // Load various streams that we generate on the fly
         sampleDataGenerator.generateData(coreServerSamplesDir.resolve("generated").resolve("input"));
 
-       // process each root dir in turn, importing content and loading data into feeds
+        // process each root dir in turn, importing content and loading data into feeds
         for (final Path dir : rootDirs) {
             loadDirectory(shutdown, dir);
         }
@@ -600,7 +597,6 @@ public final class SetupSampleDataBean {
     //
     // searchExpressionService.save(expression);
     // }
-
 
 
     private void createSampleUsers() {

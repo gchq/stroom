@@ -52,7 +52,7 @@ import static org.assertj.core.api.Assertions.fail;
 public final class ComparisonHelper {
 
     public static final String OUTPUT_EXTENSION = ".out";
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ComparisonHelper .class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ComparisonHelper.class);
 
     private ComparisonHelper() {
         // Hidden constructor as utility class.
