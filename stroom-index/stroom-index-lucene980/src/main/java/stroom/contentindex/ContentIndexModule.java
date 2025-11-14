@@ -38,8 +38,9 @@ public class ContentIndexModule extends AbstractModule {
                 .bindJobTo(IndexContent.class, builder -> builder
                         .name(LuceneContentIndex.RE_INDEX_JOB_NAME)
                         .description("Reindex Stroom content to improve \"Find in Content\" results. " +
-                                "This only needs to run on nodes serving the user interface.")
+                                     "This only needs to run on nodes serving the user interface.")
                         .managed(true)
+                        .enabledOnBootstrap(true)
                         .enabled(false)
                         .advanced(true)
                         .frequencySchedule("1h"));
