@@ -1,10 +1,9 @@
 package stroom.data.client.presenter;
 
-import stroom.docref.DocRef;
-import stroom.document.client.event.OpenDocumentEvent;
-import stroom.feed.shared.FeedDoc;
+import stroom.feed.client.OpenFeedEvent;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.SvgImageUtil;
 
@@ -72,21 +71,28 @@ public class OpenLinkUtil {
                 if (parent != null) {
                     final String linkId = parent.getAttribute(LINK_ID_ATTRIBUTE);
                     final String linkType = parent.getAttribute(LINK_TYPE_ATTRIBUTE);
-                    if (linkId != null && linkType != null) {
 
-                        switch (LinkType.valueOf(linkType.toUpperCase())) {
+                    if (NullSafe.isNonBlankString(linkId) && NullSafe.isNonBlankString(linkType)) {
+                        LinkType type = null;
+                        try {
+                            type = LinkType.valueOf(linkType.toUpperCase());
+                        } catch (final IllegalArgumentException e) {
+                            // Unknown type.
+                        }
 
-                            case STREAM:
-                                final SourceLocation location = SourceLocation
-                                        .builder(Long.parseLong(linkId))
-                                        .build();
-                                ShowDataEvent.fire(handlers, location, DataViewType.INFO, DisplayMode.STROOM_TAB);
-                                break;
+                        if (type != null) {
+                            switch (type) {
+                                case STREAM:
+                                    final SourceLocation location = SourceLocation
+                                            .builder(Long.parseLong(linkId))
+                                            .build();
+                                    ShowDataEvent.fire(handlers, location, DataViewType.INFO, DisplayMode.STROOM_TAB);
+                                    break;
 
-                            case FEED:
-                                final DocRef docRef = new DocRef(FeedDoc.TYPE, null, linkId);
-                                OpenDocumentEvent.fire(handlers, docRef, true);
-                                break;
+                                case FEED:
+                                    OpenFeedEvent.fire(handlers, linkId, true);
+                                    break;
+                            }
                         }
                     }
                 }
