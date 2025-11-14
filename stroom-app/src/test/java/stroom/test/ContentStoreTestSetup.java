@@ -68,9 +68,9 @@ public class ContentStoreTestSetup {
             // Hack to force the content store config to use our content store config file
             contentStoreResource = contentStoreResourceProvider.get();
             contentStoreResource.addTestUriContentStoreUrl(
-                    "https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/stroom-contentstore.yml");
+                    "https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/source/content-store.yml");
             contentStoreResource.addTestUriContentStoreUrl(
-                    "https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/sample-source/stroom-sample-contentstore.yml");
+                    "https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/sample-source/content-store.yml");
 
             // Get all the items in one go
             final PageRequest pageRequest = new PageRequest(0, Integer.MAX_VALUE);

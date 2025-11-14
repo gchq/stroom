@@ -23,7 +23,7 @@ import stroom.query.shared.ValidateExpressionRequest;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.security.shared.FindUserContext;
-import stroom.util.shared.UserRef;
+import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -78,17 +78,12 @@ public class ProcessorEditPresenter
                      final List<QueryField> fields,
                      final Long minMetaCreateTimeMs,
                      final Long maxMetaCreateTimeMs,
-                     final Boolean export) {
+                     final boolean export) {
 
         final SimpleFieldSelectionListModel selectionBoxModel = new SimpleFieldSelectionListModel();
         selectionBoxModel.addItems(fields);
         editExpressionPresenter.init(restFactory, dataSource, selectionBoxModel);
-
-        if (expression != null) {
-            editExpressionPresenter.read(expression);
-        } else {
-            editExpressionPresenter.read(ExpressionOperator.builder().build());
-        }
+        editExpressionPresenter.read(NullSafe.requireNonNullElse(expression, ExpressionOperator.builder().build()));
 
         getView().setMinMetaCreateTimeMs(minMetaCreateTimeMs);
         getView().setMaxMetaCreateTimeMs(maxMetaCreateTimeMs);
@@ -132,7 +127,7 @@ public class ProcessorEditPresenter
         final boolean existingFilter = filter != null && filter.getId() != null;
         final QueryData queryData = getOrCreateQueryData(filter, defaultExpression);
         final List<QueryField> fields = MetaFields.getProcessorFilterFields();
-        final Boolean export = filter == null ? Boolean.FALSE : filter.isExport();
+        final boolean export = NullSafe.getOrElse(filter, ProcessorFilter::isExport, false);
         read(
                 queryData.getExpression(),
                 MetaFields.STREAM_STORE_DOC_REF,
@@ -156,8 +151,7 @@ public class ProcessorEditPresenter
                         final ExpressionOperator expression = editExpressionPresenter.write();
                         final Long minMetaCreateTime = getView().getMinMetaCreateTimeMs();
                         final Long maxMetaCreateTime = getView().getMaxMetaCreateTimeMs();
-                        final Boolean exportRead = getView().getExport();
-                        final UserRef userRef = userRefSelectionBoxPresenter.getSelected();
+                        final boolean exportRead = getView().isExport();
 
                         validateExpression(fields, expression, () -> {
                             try {
@@ -221,9 +215,8 @@ public class ProcessorEditPresenter
                         AlertEvent.fireError(ProcessorEditPresenter.this, result.getString(), null);
                     }
                 })
-                .onFailure(throwable -> {
-                    AlertEvent.fireError(ProcessorEditPresenter.this, throwable.getMessage(), null);
-                })
+                .onFailure(throwable ->
+                        AlertEvent.fireError(ProcessorEditPresenter.this, throwable.getMessage(), null))
                 .taskMonitorFactory(this)
                 .exec();
     }
@@ -245,7 +238,7 @@ public class ProcessorEditPresenter
                               final QueryData queryData,
                               final Long minMetaCreateTimeMs,
                               final Long maxMetaCreateTimeMs,
-                              final Boolean export,
+                              final boolean export,
                               final HidePopupRequestEvent event) {
 
         final int feedCount = termCount(queryData, MetaFields.FEED);
@@ -278,7 +271,7 @@ public class ProcessorEditPresenter
                                     final QueryData queryData,
                                     final Long minMetaCreateTimeMs,
                                     final Long maxMetaCreateTimeMs,
-                                    final Boolean export,
+                                    final boolean export,
                                     final HidePopupRequestEvent event) {
         final int streamTypeCount = termCount(queryData, MetaFields.TYPE);
         final int streamIdCount = termCount(queryData, MetaFields.ID);
@@ -318,7 +311,7 @@ public class ProcessorEditPresenter
                                          final QueryData queryData,
                                          final Long minMetaCreateTimeMs,
                                          final Long maxMetaCreateTimeMs,
-                                         final Boolean export,
+                                         final boolean export,
                                          final HidePopupRequestEvent event) {
         if (filter != null) {
             // Now update the processor filter using the find stream criteria.
@@ -375,9 +368,9 @@ public class ProcessorEditPresenter
 
         void setMaxMetaCreateTimeMs(Long maxMetaCreateTimeMs);
 
-        Boolean getExport();
+        boolean isExport();
 
-        void setExport(Boolean export);
+        void setExport(boolean export);
 
         void setRunAsUserView(View view);
     }

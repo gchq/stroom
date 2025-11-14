@@ -84,12 +84,12 @@ public class ProcessorEditViewImpl extends ViewImpl implements ProcessorEditView
     }
 
     @Override
-    public Boolean getExport() {
+    public boolean isExport() {
         return this.export.getValue();
     }
 
     @Override
-    public void setExport(final Boolean export) {
+    public void setExport(final boolean export) {
         this.export.setValue(export);
     }
 

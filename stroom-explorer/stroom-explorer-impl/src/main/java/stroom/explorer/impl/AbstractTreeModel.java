@@ -1,12 +1,12 @@
 package stroom.explorer.impl;
 
+import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNode.NodeInfo;
 import stroom.util.shared.NullSafe;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -299,14 +299,42 @@ public abstract class AbstractTreeModel<K> {
         return parentKeyToChildNodesMap.get(parentKey);
     }
 
+    private boolean isFolderOrGitRepo(final String type) {
+        return DocumentTypeRegistry.FOLDER_DOCUMENT_TYPE.getType().equals(type) ||
+               DocumentTypeRegistry.GIT_REPO_DOCUMENT_TYPE.getType().equals(type);
+    }
+
     public void sort(final ToIntFunction<ExplorerNode> priorityExtractor) {
         final Map<K, Set<ExplorerNode>> newChildMap = new HashMap<>();
         parentKeyToChildNodesMap.forEach((key, children) -> newChildMap.put(key, children
                 .stream()
-                .sorted(Comparator
-                        .comparingInt(priorityExtractor)
-                        .thenComparing(ExplorerNode::getType)
-                        .thenComparing(ExplorerNode::getName))
+                .sorted((o1, o2) -> {
+                    // If the types are the same then just compare by name.
+                    if (o1.getType().equals(o2.getType())) {
+                        return o1.getName().compareTo(o2.getName());
+                    }
+
+                    // If both types are folders or git repos then just compare by name.
+                    if (isFolderOrGitRepo(o1.getType())) {
+                        if (isFolderOrGitRepo(o2.getType())) {
+                            return o1.getName().compareTo(o2.getName());
+                        } else {
+                            return 1;
+                        }
+                    } else if (isFolderOrGitRepo(o2.getType())) {
+                        return -1;
+                    }
+
+                    // Compare by type priority.
+                    final int p1 = priorityExtractor.applyAsInt(o1);
+                    final int p2 = priorityExtractor.applyAsInt(o2);
+                    if (p1 != p2) {
+                        return Integer.compare(p1, p2);
+                    }
+
+                    // If type priority is the same then compare by name.
+                    return o1.getName().compareTo(o2.getName());
+                })
                 .collect(Collectors.toCollection(LinkedHashSet::new))));
 
         parentKeyToChildNodesMap = newChildMap;

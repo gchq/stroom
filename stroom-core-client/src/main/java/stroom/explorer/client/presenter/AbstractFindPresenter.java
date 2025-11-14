@@ -27,6 +27,8 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
         super(eventBus, view, proxy);
         this.findResultListPresenter = findResultListPresenter;
 
+        // Ensure list has a border in the popup view.
+        findResultListPresenter.getView().asWidget().addStyleName("form-control-border form-control-background");
         view.setResultView(findResultListPresenter.getView());
         view.setUiHandlers(this);
         findResultListPresenter.setFindResultListHandler(this);

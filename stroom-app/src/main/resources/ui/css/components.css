@@ -2129,12 +2129,6 @@ button.main-menu svg {
     overflow: hidden;
 }
 
-.FindViewImpl--dialog .FindViewImpl-bottom {
-    background-color: var(--control__background-color);
-    border: solid 1px var(--control__border-color);
-    border-radius: .25rem;
-}
-
 .find-buttons {
     display: flex;
     position: absolute;

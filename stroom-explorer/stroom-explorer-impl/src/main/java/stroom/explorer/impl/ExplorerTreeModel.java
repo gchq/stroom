@@ -56,8 +56,6 @@ class ExplorerTreeModel implements EntityEvent.Handler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExplorerTreeModel.class);
 
-    static final String BRANCH_NODE_INFO = "Descendants have issues";
-
     private static final long ONE_HOUR = 60 * 60 * 1000;
     private static final long TEN_MINUTES = 10 * 60 * 1000;
 

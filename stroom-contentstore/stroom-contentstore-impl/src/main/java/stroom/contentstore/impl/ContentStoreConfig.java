@@ -23,7 +23,7 @@ public class ContentStoreConfig extends AbstractConfig implements IsStroomConfig
      * Default location where the ContentStore config is stored.
      */
     static final String DEFAULT_URL =
-            "https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/stroom-contentstore.yml";
+            "https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/source/content-store.yml";
 
     /**
      * List of App Store URLS

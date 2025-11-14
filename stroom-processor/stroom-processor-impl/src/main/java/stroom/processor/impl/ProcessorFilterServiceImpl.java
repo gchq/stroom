@@ -142,6 +142,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         // Blank tracker
         processorFilter.setReprocess(request.isReprocess());
         processorFilter.setEnabled(request.isEnabled());
+        processorFilter.setExport(request.isExport());
         processorFilter.setPriority(calculatedPriority);
         processorFilter.setMaxProcessingTasks(request.getMaxProcessingTasks());
         processorFilter.setProcessor(processor);
