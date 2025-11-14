@@ -64,6 +64,7 @@ import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
 import co.elastic.clients.transport.rest5_client.low_level.ResponseException;
 import co.elastic.clients.util.BinaryData;
 import co.elastic.clients.util.ContentType;
+import co.elastic.clients.util.NamedValue;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import jakarta.inject.Inject;
@@ -555,7 +556,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         final String indicesAggregationKey = "indices";
         final String indexNameSourceKey = "index_name";
 
-        final Map<String, CompositeAggregationSource> compositeAggregationSource = Map.of(
+        final NamedValue<CompositeAggregationSource> compositeAggregationSource = NamedValue.of(
                 indexNameSourceKey,
                 CompositeAggregationSource.of(source -> source
                         .terms(t -> t.field(ElasticIndexConstants.INDEX_NAME))
