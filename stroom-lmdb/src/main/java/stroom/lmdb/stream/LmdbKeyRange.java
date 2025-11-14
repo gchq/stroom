@@ -20,7 +20,7 @@ public abstract class LmdbKeyRange {
         return new AllBuilder();
     }
 
-    private static abstract class BaseBuilder<B extends BaseBuilder<?>> {
+    private abstract static class BaseBuilder<B extends BaseBuilder<?>> {
 
         boolean reverse;
 
