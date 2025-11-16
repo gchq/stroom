@@ -44,7 +44,8 @@ import java.util.Objects;
         "description",
         "baseUrl",
         "apiKey",
-        "modelId"})
+        "modelId",
+        "maxContextWindowTokens"})
 @JsonInclude(Include.NON_NULL)
 public class OpenAIModelDoc extends Doc {
 
@@ -63,6 +64,9 @@ public class OpenAIModelDoc extends Doc {
     @JsonProperty
     private String modelId;
 
+    @JsonProperty
+    private int maxContextWindowTokens;
+
     public OpenAIModelDoc() {
     }
 
@@ -78,12 +82,14 @@ public class OpenAIModelDoc extends Doc {
             @JsonProperty("description") final String description,
             @JsonProperty("baseUrl") final String baseUrl,
             @JsonProperty("apiKey") final String apiKey,
-            @JsonProperty("modelId") final String modelId) {
+            @JsonProperty("modelId") final String modelId,
+            @JsonProperty("maxContextWindowTokens") final int maxContextWindowTokens) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.baseUrl = baseUrl;
         this.apiKey = apiKey;
         this.modelId = modelId;
+        this.maxContextWindowTokens = maxContextWindowTokens;
     }
 
     /**
@@ -125,6 +131,14 @@ public class OpenAIModelDoc extends Doc {
         this.modelId = modelId;
     }
 
+    public int getMaxContextWindowTokens() {
+        return maxContextWindowTokens;
+    }
+
+    public void setMaxContextWindowTokens(final int maxContextWindowTokens) {
+        this.maxContextWindowTokens = maxContextWindowTokens;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -140,7 +154,8 @@ public class OpenAIModelDoc extends Doc {
         return Objects.equals(description, model.description) &&
                Objects.equals(baseUrl, model.baseUrl) &&
                Objects.equals(apiKey, model.apiKey) &&
-               Objects.equals(modelId, model.modelId);
+               Objects.equals(modelId, model.modelId) &&
+               Objects.equals(maxContextWindowTokens, model.maxContextWindowTokens);
     }
 
     @Override
@@ -150,7 +165,8 @@ public class OpenAIModelDoc extends Doc {
                 description,
                 baseUrl,
                 apiKey,
-                modelId);
+                modelId,
+                maxContextWindowTokens);
     }
 
     @Override
@@ -159,6 +175,7 @@ public class OpenAIModelDoc extends Doc {
                "description='" + description + '\'' +
                ", baseUrl='" + baseUrl + '\'' +
                ", modelId='" + apiKey + '\'' +
+               ", maxContextWindowTokens=" + maxContextWindowTokens +
                '}';
     }
 }

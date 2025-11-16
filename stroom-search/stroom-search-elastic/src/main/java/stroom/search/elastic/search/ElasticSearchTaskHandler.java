@@ -422,6 +422,7 @@ public class ElasticSearchTaskHandler {
         }
 
         final ScoringModel scoringModel = openAIServiceProvider.get().getJinaScoringModel(rerankModel);
+        final int maxContextWindowTokens = rerankModel.getMaxContextWindowTokens();
         final ReRankingContentAggregator rerankAggregator = ReRankingContentAggregator.builder()
                 .scoringModel(scoringModel)
                 .minScore(elasticIndex.getRerankScoreMinimum().doubleValue())
@@ -444,7 +445,12 @@ public class ElasticSearchTaskHandler {
                     final JsonData rawFieldValue = mapSearchHit.get(denseVectorTextField);
                     if (rawFieldValue != null && searchHit.id() != null) {
                         try {
-                            final String fieldValue = (String) rawFieldValue.to(ArrayList.class).getFirst();
+                            String fieldValue = (String) rawFieldValue.to(ArrayList.class).getFirst();
+                            if (maxContextWindowTokens > 0) {
+                                // Model context window limit is specified, so truncate the field value to fit
+                                final int charLimit = Math.min(fieldValue.length(), maxContextWindowTokens);
+                                fieldValue = fieldValue.substring(0, charLimit);
+                            }
                             fieldValueToDocIdMap.computeIfAbsent(fieldValue,
                                     k -> new ArrayList<>()).add(searchHit.id());
                             fieldValues.add(Content.from(TextSegment.from(fieldValue)));

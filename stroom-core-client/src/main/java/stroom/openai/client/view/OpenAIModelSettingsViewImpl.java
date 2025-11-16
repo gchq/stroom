@@ -21,6 +21,7 @@ import stroom.openai.client.presenter.OpenAIModelSettingsPresenter.OpenAIModelSe
 import stroom.openai.client.presenter.OpenAIModelSettingsUiHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
+import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -44,12 +45,17 @@ public class OpenAIModelSettingsViewImpl extends ViewWithUiHandlers<OpenAIModelS
     @UiField
     TextBox modelId;
     @UiField
+    ValueSpinner maxContextWindowTokens;
+    @UiField
     Button testModel;
 
     @Inject
     public OpenAIModelSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         testModel.setIcon(SvgImage.OK);
+
+        maxContextWindowTokens.setMin(0L);
+        maxContextWindowTokens.setMax(Integer.MAX_VALUE);
     }
 
     @Override
@@ -88,10 +94,21 @@ public class OpenAIModelSettingsViewImpl extends ViewWithUiHandlers<OpenAIModelS
     }
 
     @Override
+    public int getMaxContextWindowTokens() {
+        return maxContextWindowTokens.getIntValue();
+    }
+
+    @Override
+    public void setMaxContextWindowTokens(final int maxContextWindowTokens) {
+        this.maxContextWindowTokens.setValue(maxContextWindowTokens);
+    }
+
+    @Override
     public void onReadOnly(final boolean readOnly) {
         baseUrl.setEnabled(!readOnly);
         apiKey.setEnabled(!readOnly);
         modelId.setEnabled(!readOnly);
+        maxContextWindowTokens.setEnabled(!readOnly);
     }
 
     private void fireChange() {
@@ -112,6 +129,11 @@ public class OpenAIModelSettingsViewImpl extends ViewWithUiHandlers<OpenAIModelS
 
     @UiHandler("modelId")
     public void onModelId(final ValueChangeEvent<String> event) {
+        fireChange();
+    }
+
+    @UiHandler("maxContextWindowTokens")
+    public void onMaxContextWindowTokensValueChange(final ValueChangeEvent<Long> event) {
         fireChange();
     }
 
