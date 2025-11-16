@@ -14,6 +14,7 @@ dependencies {
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-feed:stroom-feed-api')
     implementation project(':stroom-hadoop')
+    implementation project(':stroom-langchain:stroom-langchain-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-lmdb')
     implementation project(':stroom-node:stroom-node-api')
@@ -56,6 +57,7 @@ dependencies {
     implementation libs.jersey.client
     implementation libs.jetty.http
     implementation libs.kryo
+    implementation libs.langchain4j
     implementation libs.lmdbjava
     implementation libs.restygwt
     implementation libs.saxon.he
