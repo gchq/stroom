@@ -57,6 +57,7 @@ import stroom.query.api.QueryNodeResolver;
 import stroom.query.api.ResultRequest;
 import stroom.query.api.ResultRequest.Fetch;
 import stroom.query.api.ResultRequest.ResultStyle;
+import stroom.query.api.Row;
 import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.api.SearchResponse;
@@ -443,7 +444,6 @@ class DashboardServiceImpl implements DashboardService {
                         .maxTokens(maxTokens, new SimpleTokenCountEstimator())
                         .build())
                 .build();
-        String cumulativeSummary = "";
         final TableResult result = (TableResult) searchResponse.getResults().getFirst();
         final String columns = result.getColumns().stream().map(Column::getName)
                 .collect(Collectors.joining(" | "));
@@ -451,19 +451,54 @@ class DashboardServiceImpl implements DashboardService {
                 .collect(Collectors.joining(" | "));
 
         // Batch and summarise user message responses into a combined summary
-        final int batchSize = modelConfig.getTableBatchSize();
+        final int maxBatchSize = modelConfig.getMaximumBatchSize();
         final int maximumRowCount = modelConfig.getMaximumTableInputRows();
         final int rowsToProcess = Math.min(maximumRowCount, result.getRows().size());
-        for (int i = 0; i < rowsToProcess; i += batchSize) {
-            final StringBuilder sb = new StringBuilder();
-            sb.append("| ").append(columns).append(" |");
-            sb.append("| ").append(columnDiv).append(" |");
-            final String batch = result.getRows().subList(i, Math.min(result.getRows().size(), i + batchSize))
-                    .stream().map(row -> String.join(" | ", row.getValues()))
-                    .collect(Collectors.joining("\n"));
-            sb.append(batch);
+        StringBuilder batch = new StringBuilder();
+        int rowsInBatch = 0;
+        String cumulativeSummary = "";
+        for (int i = 0; i < rowsToProcess; i++) {
+            if (rowsInBatch == 0) {
+                // Write a new Markdown table header
+                batch.append("| ").append(columns).append(" |\n");
+                batch.append("| ").append(columnDiv).append(" |\n");
+            }
+            final Row dataRow = result.getRows().get(i);
+            final StringBuilder row = new StringBuilder();
+            row.append("| ");
+            final List<String> rowValues = dataRow.getValues().stream().map(cell -> {
+                if (cell != null) {
+                    return cell.replace("\n", "<br>");
+                } else {
+                    return "";
+                }
+            }).toList();
+            row.append(String.join(" | ", rowValues));
+            row.append(" |\n");
+            final int newBatchSize = SummaryReducer.USER_MESSAGE.length() + batch.length() + row.length();
+            if (rowsInBatch > 0 && newBatchSize > maxBatchSize) {
+                // Batch message plus the new row would exceed the maximum batch size, so send the batch to the
+                // model as-is
+                final String batchAnswer = tableQueryService.answerChunk(
+                        tableChatMemoryId, request.getMessage(), batch.toString());
+                batch = new StringBuilder();
+                rowsInBatch = 0;
+                if (cumulativeSummary.isEmpty()) {
+                    cumulativeSummary = batchAnswer;
+                } else {
+                    cumulativeSummary = summaryReducerService.merge(
+                            summaryChatMemoryId, cumulativeSummary, batchAnswer);
+                }
+            } else {
+                batch.append(row);
+                rowsInBatch++;
+            }
+        }
+
+        if (!batch.isEmpty()) {
+            // Process any remaining batch content
             final String batchAnswer = tableQueryService.answerChunk(
-                    tableChatMemoryId, request.getMessage(), sb.toString());
+                    tableChatMemoryId, request.getMessage(), batch.toString());
             if (cumulativeSummary.isEmpty()) {
                 cumulativeSummary = batchAnswer;
             } else {

@@ -24,8 +24,7 @@ import dev.langchain4j.service.memory.ChatMemoryAccess;
 
 public interface SummaryReducer extends ChatMemoryAccess {
 
-    @SystemMessage("You merge partial answers into a unified, concise summary.")
-    @UserMessage("""
+    public static final String USER_MESSAGE = """
                 Merge the following TWO summaries into a single improved summary.
                 Preserve important details and remove duplicates.
 
@@ -34,6 +33,9 @@ public interface SummaryReducer extends ChatMemoryAccess {
 
                 SUMMARY B:
                 {{b}}
-            """)
+            """;
+
+    @SystemMessage("You merge partial answers into a unified, concise summary.")
+    @UserMessage(USER_MESSAGE)
     String merge(@MemoryId String memoryId, @V("a") String a, @V("b") String b);
 }

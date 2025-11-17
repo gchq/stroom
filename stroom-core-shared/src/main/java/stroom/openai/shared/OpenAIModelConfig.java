@@ -27,20 +27,20 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder(alphabetic = true)
 public class OpenAIModelConfig extends AbstractConfig implements IsStroomConfig {
 
-    private static final int DEFAULT_TABLE_BATCH_SIZE = 100;
+    private static final int DEFAULT_MAXIMUM_BATCH_SIZE = 1024;
     private static final int DEFAULT_MAXIMUM_TABLE_INPUT_ROWS = 100;
 
     private final String baseUrl;
     private final String apiKey;
     private final String modelId;
-    private final int tableBatchSize;
+    private final int maximumBatchSize;
     private final int maximumTableInputRows;
 
     public OpenAIModelConfig() {
         baseUrl = null;
         apiKey = null;
         modelId = null;
-        tableBatchSize = DEFAULT_TABLE_BATCH_SIZE;
+        maximumBatchSize = DEFAULT_MAXIMUM_BATCH_SIZE;
         maximumTableInputRows = DEFAULT_MAXIMUM_TABLE_INPUT_ROWS;
     }
 
@@ -48,12 +48,12 @@ public class OpenAIModelConfig extends AbstractConfig implements IsStroomConfig 
     public OpenAIModelConfig(@JsonProperty("baseUrl") final String baseUrl,
                              @JsonProperty("apiKey") final String apiKey,
                              @JsonProperty("modelId") final String modelId,
-                             @JsonProperty("tableBatchSize") final int tableBatchSize,
+                             @JsonProperty("maximumBatchSize") final int maximumBatchSize,
                              @JsonProperty("maximumTableInputRows") final int maximumTableInputRows) {
         this.baseUrl = baseUrl;
         this.apiKey = apiKey;
         this.modelId = modelId;
-        this.tableBatchSize = tableBatchSize;
+        this.maximumBatchSize = maximumBatchSize;
         this.maximumTableInputRows = maximumTableInputRows;
     }
 
@@ -72,9 +72,9 @@ public class OpenAIModelConfig extends AbstractConfig implements IsStroomConfig 
         return modelId;
     }
 
-    @JsonPropertyDescription("Number of table result rows to pass to the AI service at a time")
-    public int getTableBatchSize() {
-        return tableBatchSize;
+    @JsonPropertyDescription("Maximum number of tokens to pass the AI service at a time")
+    public int getMaximumBatchSize() {
+        return maximumBatchSize;
     }
 
     @JsonPropertyDescription("Maximum number of table result rows to pass to the AI when making requests")
@@ -87,7 +87,7 @@ public class OpenAIModelConfig extends AbstractConfig implements IsStroomConfig 
         return "OpenAIModelConfig{" +
                "baseUrl='" + baseUrl + "'" +
                ", modelId='" + modelId + "'" +
-               ", tableBatchSize=" + tableBatchSize +
+               ", maximumBatchSize=" + maximumBatchSize +
                ", maximumTableInputRows=" + maximumTableInputRows +
                '}';
     }
