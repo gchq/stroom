@@ -468,7 +468,10 @@ class DashboardServiceImpl implements DashboardService {
             row.append("| ");
             final List<String> rowValues = dataRow.getValues().stream().map(cell -> {
                 if (cell != null) {
-                    return cell.replace("\n", "<br>");
+                    // Replace characters that can cause issues with Markdown tables
+                    return cell
+                            .replace("\n", "<br>")
+                            .replace('|', ' ');
                 } else {
                     return "";
                 }
