@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.10.10] - 2025-11-17
+
+* Change default for `.receive.enabledAuthenticationTypes` to `[CERTIFICATE,TOKEN]` and add `.receive.authenticationRequired` to the default docker config yml files for both stroom and proxy.
+
+
 ## [v7.10.9] - 2025-11-03
 
 * Issue **#5186** : Remove error logging for expected Plan B snapshot checking behaviour.
@@ -1762,7 +1767,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.9...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.10...HEAD
+[v7.10.10]: https://github.com/gchq/stroom/compare/v7.10.9...v7.10.10
 [v7.10.9]: https://github.com/gchq/stroom/compare/v7.10.8...v7.10.9
 [v7.10.8]: https://github.com/gchq/stroom/compare/v7.10.7...v7.10.8
 [v7.10.7]: https://github.com/gchq/stroom/compare/v7.10.6...v7.10.7
