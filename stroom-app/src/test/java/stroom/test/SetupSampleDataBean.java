@@ -252,6 +252,7 @@ public final class SetupSampleDataBean {
                                         .builder()
                                         .pipeline(pipeline)
                                         .queryData(criteria)
+                                        .export(true)
                                         .build());
                         LOGGER.debug(processorFilter.toString());
                     }

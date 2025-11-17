@@ -18,6 +18,7 @@ package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 
@@ -80,7 +81,7 @@ public class MockExplorerNodeService implements ExplorerNodeService {
 
     @Override
     public ExplorerNode getRoot() {
-        return createTestNode();
+        return ExplorerConstants.SYSTEM_NODE;
     }
 
     @Override
@@ -90,20 +91,26 @@ public class MockExplorerNodeService implements ExplorerNodeService {
 
     @Override
     public Optional<ExplorerNode> getNode(final DocRef docRef) {
-        return Optional.of(createTestNode());
+        return Optional.of(ExplorerNode
+                .builder()
+                .type(docRef.getType())
+                .uuid(docRef.getUuid())
+                .name(docRef.getName())
+                .tags(Set.of("test"))
+                .build());
     }
 
     @Override
     public List<ExplorerNode> getPath(final DocRef docRef) {
         // Make sure returned list is mutable
         final ArrayList<ExplorerNode> path = new ArrayList<>(1);
-        path.add(createTestNode());
+        path.add(getRoot());
         return path;
     }
 
     @Override
     public Optional<ExplorerNode> getParent(final DocRef docRef) {
-        return Optional.empty();
+        return Optional.of(getRoot());
     }
 
     @Override
@@ -133,15 +140,5 @@ public class MockExplorerNodeService implements ExplorerNodeService {
     @Override
     public void deleteAllNodes() {
 
-    }
-
-    private ExplorerNode createTestNode() {
-        return ExplorerNode
-                .builder()
-                .type("test")
-                .uuid("test")
-                .name("test")
-                .tags(Set.of("test"))
-                .build();
     }
 }

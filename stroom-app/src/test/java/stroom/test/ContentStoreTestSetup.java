@@ -24,16 +24,24 @@ import java.util.List;
  */
 public class ContentStoreTestSetup {
 
-    /** Provider of the Thing to do the actual import */
+    /**
+     * Provider of the Thing to do the actual import
+     */
     private final Provider<ContentStoreResourceImpl> contentStoreResourceProvider;
 
-    /** Thing to do the actual work */
+    /**
+     * Thing to do the actual work
+     */
     private ContentStoreResourceImpl contentStoreResource;
 
-    /** Stuff in the Content Store */
+    /**
+     * Stuff in the Content Store
+     */
     private List<ContentStoreContentPackWithDynamicState> contentStoreContents;
 
-    /** Every ID in the content store - SetupSampleData installs all of them */
+    /**
+     * Every ID in the content store - SetupSampleData installs all of them
+     */
     private final List<String> samplePackIds = new ArrayList<>();
 
     /**
@@ -43,12 +51,12 @@ public class ContentStoreTestSetup {
             "core-xml-schemas",
             "event-logging-xml-schema",
             "standard-pipelines",
-            "template-pipelines",
-            "planb"
+            "template-pipelines"
     );
 
     /**
      * Constructor - injected.
+     *
      * @param contentStoreResourceProvider Injected service for managing content stores and packs.
      */
     @Inject
@@ -88,6 +96,7 @@ public class ContentStoreTestSetup {
 
     /**
      * Installs the content pack with the given ID.
+     *
      * @param contentPackId The ID of the content pack.
      * @throws RuntimeException If something goes wrong.
      */
@@ -109,8 +118,8 @@ public class ContentStoreTestSetup {
 
         if (contentPack.getGitNeedsAuth()) {
             throw new RuntimeException("Cannot import content pack with ID '"
-                                  + contentPackId
-                                  + "': authentication is required");
+                                       + contentPackId
+                                       + "': authentication is required");
         }
 
         // Install the pack
@@ -120,13 +129,14 @@ public class ContentStoreTestSetup {
         final ContentStoreResponse.Status status = response.getStatus();
         if (!(status.equals(Status.OK) || status.equals(Status.ALREADY_EXISTS))) {
             throw new RuntimeException("Couldn't create content pack with ID '"
-                + contentPackId + "': " + response.getMessage());
+                                       + contentPackId + "': " + response.getMessage());
         }
 
     }
 
     /**
      * Installs a number of content packs.
+     *
      * @param contentPackIds Collection of content pack IDs.
      * @throws RuntimeException If something goes wrong.
      */
@@ -138,6 +148,7 @@ public class ContentStoreTestSetup {
 
     /**
      * Installs all the content packs for SetupSampleData.
+     *
      * @throws RuntimeException if something goes wrong.
      */
     public void installSampleDataPacks() throws RuntimeException {

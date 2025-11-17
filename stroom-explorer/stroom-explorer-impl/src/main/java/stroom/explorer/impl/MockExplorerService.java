@@ -25,6 +25,7 @@ import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocContentHighlights;
 import stroom.explorer.shared.DocumentFindRequest;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource.TagFetchMode;
 import stroom.explorer.shared.FetchExplorerNodeResult;
@@ -61,14 +62,14 @@ class MockExplorerService implements ExplorerService {
 
     @Override
     public ExplorerNode ensureFolderPath(final DocPath docPath, final PermissionInheritance permissionInheritance) {
-        return null;
+        return ExplorerConstants.SYSTEM_NODE;
     }
 
     @Override
     public ExplorerNode ensureFolderPath(final DocPath docPath,
                                          final ExplorerNode baseNode,
                                          final PermissionInheritance permissionInheritance) {
-        return null;
+        return ExplorerConstants.SYSTEM_NODE;
     }
 
     @Override
