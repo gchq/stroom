@@ -8,6 +8,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.api.UserService;
 import stroom.security.identity.account.AccountService;
 import stroom.security.identity.config.IdentityConfig;
+import stroom.security.identity.config.PasswordPolicyConfig;
 import stroom.security.identity.shared.Account;
 import stroom.security.impl.StroomOpenIdConfig;
 import stroom.security.mock.MockSecurityContext;
@@ -41,6 +42,8 @@ class TestAdminAccountBootstrap {
     private AppPermissionService userAppPermissionService;
     @Mock
     private IdentityConfig identityConfig;
+    @Mock
+    private PasswordPolicyConfig passwordPolicyConfig;
     @Mock
     private StroomEventLoggingService stroomEventLoggingService;
     @Mock
@@ -127,6 +130,10 @@ class TestAdminAccountBootstrap {
     void testEnabled_createAll() {
         Mockito.when(identityConfig.isAutoCreateAdminAccountOnBoot())
                 .thenReturn(true);
+        Mockito.when(identityConfig.getPasswordPolicyConfig())
+                .thenReturn(passwordPolicyConfig);
+        Mockito.when(passwordPolicyConfig.isForcePasswordChangeOnFirstLogin())
+                .thenReturn(false);
         Mockito.when(stroomOpenIdConfig.getIdentityProviderType())
                 .thenReturn(IdpType.INTERNAL_IDP);
         Mockito.when(accountService.read(Mockito.eq(AdminAccountBootstrap.ADMIN_ACCOUNT_NAME)))
