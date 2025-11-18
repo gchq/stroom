@@ -82,9 +82,9 @@ import java.util.stream.Collectors;
 /**
  * Script to create some base data for testing.
  */
-public final class SetupSampleDataBean {
+public final class SetupSampleDataProcess {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SetupSampleDataBean.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SetupSampleDataProcess.class);
 
     public static final String ROOT_DIR_NAME = "samples";
 
@@ -121,23 +121,23 @@ public final class SetupSampleDataBean {
     private final AppPermissionDao appPermissionDao;
 
     @Inject
-    SetupSampleDataBean(final FeedStore feedStore,
-                        final FeedProperties feedProperties,
-                        final ImportExportSerializer importExportSerializer,
-                        final ProcessorService processorService,
-                        final ProcessorFilterService processorFilterService,
-                        final PipelineStore pipelineStore,
-                        final DashboardStore dashboardStore,
-                        final IndexStore indexStore,
-                        final IndexVolumeService indexVolumeService,
-                        final IndexVolumeGroupService indexVolumeGroupService,
-                        final FsVolumeService fsVolumeService,
-                        final StatisticStoreStore statisticStoreStore,
-                        final StroomStatsStoreStore stroomStatsStoreStore,
-                        final SampleDataGenerator sampleDataGenerator,
-                        final StreamTargetStreamHandlers streamTargetStreamHandlers,
-                        final UserDao userDao,
-                        final AppPermissionDao appPermissionDao) {
+    SetupSampleDataProcess(final FeedStore feedStore,
+                           final FeedProperties feedProperties,
+                           final ImportExportSerializer importExportSerializer,
+                           final ProcessorService processorService,
+                           final ProcessorFilterService processorFilterService,
+                           final PipelineStore pipelineStore,
+                           final DashboardStore dashboardStore,
+                           final IndexStore indexStore,
+                           final IndexVolumeService indexVolumeService,
+                           final IndexVolumeGroupService indexVolumeGroupService,
+                           final FsVolumeService fsVolumeService,
+                           final StatisticStoreStore statisticStoreStore,
+                           final StroomStatsStoreStore stroomStatsStoreStore,
+                           final SampleDataGenerator sampleDataGenerator,
+                           final StreamTargetStreamHandlers streamTargetStreamHandlers,
+                           final UserDao userDao,
+                           final AppPermissionDao appPermissionDao) {
         this.feedStore = feedStore;
         this.feedProperties = feedProperties;
         this.importExportSerializer = importExportSerializer;
@@ -190,15 +190,19 @@ public final class SetupSampleDataBean {
 
         generateSampleStatisticsData();
 
-        // code to check that the statisticsDataSource objects are stored
-        // correctly
-        final List<DocRef> statisticsDataSources = getSortedDocRefs(statisticStoreStore::list);
-        logDocRefs(statisticsDataSources, "statisticStores");
+        // Enable all processing filters.
+        processorFilterService.find(new ExpressionCriteria()).forEach(filter ->
+                processorFilterService.update(filter.copy().enabled(true).build()));
 
-        final List<DocRef> stroomStatsStoreEntities = getSortedDocRefs(stroomStatsStoreStore::list);
-        logDocRefs(stroomStatsStoreEntities, "stroomStatsStores");
+//        // code to check that the statisticsDataSource objects are stored
+//        // correctly
+//        final List<DocRef> statisticsDataSources = getSortedDocRefs(statisticStoreStore::list);
+//        logDocRefs(statisticsDataSources, "statisticStores");
+//
+//        final List<DocRef> stroomStatsStoreEntities = getSortedDocRefs(stroomStatsStoreStore::list);
+//        logDocRefs(stroomStatsStoreEntities, "stroomStatsStores");
 
-        createProcessorFilters(feeds);
+//        createProcessorFilters(feeds);
 
 //        if (shutdown) {
 //            commonTestControl.shutdown();
