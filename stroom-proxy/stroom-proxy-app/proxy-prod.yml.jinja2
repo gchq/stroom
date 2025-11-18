@@ -70,8 +70,8 @@ logging:
     # Logs useful information about dropwizard when booting stroom
     io.dropwizard: INFO
     # Logs useful information about the jetty server when booting stroom
-    # Logs REST request/responses with headers/payloads. Set this to OFF to turn disable that logging.
-    org.glassfish.jersey.logging.LoggingFeature: INFO
+    # Set this to INFO if you want to log all REST request/responses with headers/payloads.
+    org.glassfish.jersey.logging.LoggingFeature: OFF
     # Logger and appender for proxy receipt audit logs
     "receive":
       level: INFO

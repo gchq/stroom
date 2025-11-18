@@ -23,7 +23,7 @@
 # jstat/jmap/jcmd/etc.
 # Using 'openjdk' on Alpine is not fully supported so using Eclipse Temurin JDK to ensure we have a known jdk version
 # See https://github.com/docker-library/docs/blob/master/openjdk/README.md#openjdkversion-alpine
-FROM eclipse-temurin:21.0.8_9-jdk-alpine as stroom-base-stage
+FROM eclipse-temurin:21.0.8_9-jdk-alpine AS stroom-base-stage
 
 # bash and jq are required for Kubernetes lifecycle scripts, which interact with the API
 # curl is required for the docker healthcheck
@@ -50,7 +50,7 @@ FROM stroom-base-stage
 ENV IN_DOCKER="true"
 ENV STROOM_CONTENT_PACK_IMPORT_ENABLE="true"
 # Needed to fix 'Fontconfig warning: ignoring C.UTF-8: not a valid language tag'
-ENV LANG en_GB.UTF-8
+ENV LANG=en_GB.UTF-8
 
 # This is where stroom will run from and any local data will be
 WORKDIR /stroom
