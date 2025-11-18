@@ -45,7 +45,7 @@ class VisualisationStoreImpl implements VisualisationStore {
     @Inject
     VisualisationStoreImpl(final StoreFactory storeFactory,
                            final VisualisationSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, VisualisationDoc.TYPE, VisualisationDoc.class);
+        this.store = storeFactory.createStore(serialiser, VisualisationDoc.TYPE, VisualisationDoc::builder);
     }
 
     ////////////////////////////////////////////////////////////////////////

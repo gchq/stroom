@@ -16,7 +16,6 @@
 
 package stroom.analytics.shared;
 
-import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.DocumentType;
@@ -46,14 +45,9 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
     @JsonProperty
     private final ReportSettings reportSettings;
 
-    public ReportDoc() {
-        reportSettings = new ReportSettings(DownloadSearchResultFileType.EXCEL);
-    }
-
     @SuppressWarnings("checkstyle:linelength")
     @JsonCreator
-    public ReportDoc(@JsonProperty("type") final String type,
-                     @JsonProperty("uuid") final String uuid,
+    public ReportDoc(@JsonProperty("uuid") final String uuid,
                      @JsonProperty("name") final String name,
                      @JsonProperty("version") final String version,
                      @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -74,8 +68,7 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                      @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
                      @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig,
                      @JsonProperty("reportSettings") final ReportSettings reportSettings) {
-        super(type,
-                uuid,
+        super(uuid,
                 name,
                 version,
                 createTimeMs,
@@ -96,6 +89,12 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                 suppressDuplicateNotifications,
                 duplicateNotificationConfig);
         this.reportSettings = reportSettings;
+    }
+
+    @JsonProperty
+    @Override
+    public final String getType() {
+        return TYPE;
     }
 
     /**
@@ -136,17 +135,13 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                '}';
     }
 
-    public static Builder builder() {
-        return new Builder();
-    }
-
     public Builder copy() {
         return new Builder(this);
     }
 
-
-    // --------------------------------------------------------------------------------
-
+    public static Builder builder() {
+        return new Builder();
+    }
 
     public static class Builder extends AbstractAnalyticRuleDocBuilder<ReportDoc, Builder> {
 
@@ -173,7 +168,6 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
         @Override
         public ReportDoc build() {
             return new ReportDoc(
-                    type,
                     uuid,
                     name,
                     version,

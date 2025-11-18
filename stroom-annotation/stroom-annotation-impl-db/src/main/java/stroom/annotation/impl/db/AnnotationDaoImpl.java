@@ -595,7 +595,6 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         final String history = getHistory(id);
 
         return Annotation.builder()
-                .type(Annotation.TYPE)
                 .uuid(record.get(ANNOTATION.UUID))
                 .name(record.get(ANNOTATION.TITLE))
                 .version("" + record.get(ANNOTATION.VERSION))
@@ -654,7 +653,6 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         validateAssignedToUser(assignedToUuid);
 
         Annotation annotation = Annotation.builder()
-                .type(Annotation.TYPE)
                 .uuid(UUID.randomUUID().toString())
                 .createTimeMs(nowMs)
                 .createUser(userName)

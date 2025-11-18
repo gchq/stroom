@@ -132,7 +132,6 @@ public class BasicEmbeddedQuerySettingsPresenter
             if (embeddedQueryDoc == null) {
                 final long now = System.currentTimeMillis();
                 embeddedQueryDoc = new QueryDoc(
-                        QueryDoc.TYPE,
                         "embedded",
                         "embedded",
                         "embedded",

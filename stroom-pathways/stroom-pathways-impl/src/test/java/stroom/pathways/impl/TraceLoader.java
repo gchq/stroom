@@ -51,7 +51,7 @@ public class TraceLoader {
     private static final ObjectMapper MAPPER = createMapper(true);
 
     private static final DocRef TRACE_STORE_DOC_REF = DocRef.builder().type(PlanBDoc.TYPE).uuid("traces").build();
-    private static final PathwaysDoc PATHWAYS_DOC = new PathwaysDoc();
+    private static final PathwaysDoc PATHWAYS_DOC = PathwaysDoc.builder().uuid("1").build();
 
     public void load(final TracePersistence persistence) {
         try (final TraceWriter writer = persistence.createWriter()) {

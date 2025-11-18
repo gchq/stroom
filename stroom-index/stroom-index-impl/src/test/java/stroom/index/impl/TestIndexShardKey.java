@@ -30,9 +30,10 @@ class TestIndexShardKey {
 
     @Test
     void testMultishard() {
-        final LuceneIndexDoc index = new LuceneIndexDoc();
-        index.setUuid(UUID.randomUUID().toString());
-        index.setShardsPerPartition(5);
+        final LuceneIndexDoc index = LuceneIndexDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .shardsPerPartition(5)
+                .build();
         final IndexShardKey indexShardKey = IndexShardKey.createKey(index);
 
         assertThat(indexShardKey.getIndexUuid()).isEqualTo(index.getUuid());

@@ -1,7 +1,7 @@
 package stroom.proxy.app;
 
 import stroom.dictionary.shared.DictionaryDoc;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMap.Builder;
 import stroom.meta.api.AttributeMapper;
@@ -152,7 +152,7 @@ class TestRemoteReceiveDataRuleSetServiceImpl {
                     .build();
 
             final Map<String, DictionaryDoc> uuidToFlattenedDictMap = CollectionUtil.mapBy(
-                    Doc::getUuid,
+                    AbstractDoc::getUuid,
                     DuplicateMode.THROW,
                     feedDict,
                     systemDict);
@@ -333,12 +333,11 @@ class TestRemoteReceiveDataRuleSetServiceImpl {
 
     private DictionaryDoc createDict(final String name,
                                      final String... lines) {
-        final DictionaryDoc dict = new DictionaryDoc();
-        dict.setUuid(UUID.randomUUID().toString());
-        dict.setName(name);
-        dict.setType(DictionaryDoc.TYPE);
-        dict.setData(String.join("\n", lines));
-        return dict;
+        return DictionaryDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .name(name)
+                .data(String.join("\n", lines))
+                .build();
     }
 
     private AttributeMap createAttrMap(final String feed,

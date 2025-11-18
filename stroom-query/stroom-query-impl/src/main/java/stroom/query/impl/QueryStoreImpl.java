@@ -61,7 +61,7 @@ class QueryStoreImpl implements QueryStore {
                    final SecurityContext securityContext,
                    final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
                    final SearchRequestFactory searchRequestFactory) {
-        this.store = storeFactory.createStore(serialiser, QueryDoc.TYPE, QueryDoc.class);
+        this.store = storeFactory.createStore(serialiser, QueryDoc.TYPE, QueryDoc::builder);
         this.securityContext = securityContext;
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
         this.searchRequestFactory = searchRequestFactory;

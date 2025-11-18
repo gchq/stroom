@@ -39,6 +39,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -57,11 +58,11 @@ class TestSQLStatisticEventStore extends StroomUnitTest {
     private final StatisticStoreCache mockStatisticsDataSourceCache = new StatisticStoreCache() {
         @Override
         public StatisticStoreDoc getStatisticsDataSource(final String statisticName) {
-            final StatisticStoreDoc statisticsDataSource = new StatisticStoreDoc();
-            statisticsDataSource.setName(statisticName);
-            statisticsDataSource.setPrecision(1_000L);
-
-            return statisticsDataSource;
+            return StatisticStoreDoc.builder()
+                    .uuid(UUID.randomUUID().toString())
+                    .name(statisticName)
+                    .precision(1_000L)
+                    .build();
         }
 
         @Override
@@ -215,7 +216,7 @@ class TestSQLStatisticEventStore extends StroomUnitTest {
         // add 10secs to ensure give the test time to run, otherwise it only
         // does 74
         final long firstEventTimeMs = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(100)
-                + TimeUnit.SECONDS.toMillis(10);
+                                      + TimeUnit.SECONDS.toMillis(10);
 
         // only process stuff younger than 25days
         sqlStatisticsConfig = sqlStatisticsConfig.withMaxProcessingAge(StroomDuration.ofDays(25));

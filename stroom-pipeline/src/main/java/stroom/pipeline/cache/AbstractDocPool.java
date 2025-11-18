@@ -18,7 +18,7 @@ package stroom.pipeline.cache;
 
 import stroom.cache.api.CacheManager;
 import stroom.docref.DocRef;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.security.api.SecurityContext;
 import stroom.util.cache.CacheConfig;
 import stroom.util.entityevent.EntityEvent;
@@ -32,7 +32,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public abstract class AbstractDocPool<K extends Doc, V>
+public abstract class AbstractDocPool<K extends AbstractDoc, V>
         extends AbstractPoolCache<K, V>
         implements Pool<K, V>, HasSystemInfo, EntityEvent.Handler {
 

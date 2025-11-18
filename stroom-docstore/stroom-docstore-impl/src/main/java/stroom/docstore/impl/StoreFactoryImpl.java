@@ -4,12 +4,15 @@ import stroom.docrefinfo.api.DocRefDecorator;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
+import stroom.docstore.shared.AbstractDoc.AbstractBuilder;
 import stroom.security.api.SecurityContext;
 import stroom.util.entityevent.EntityEventBus;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+
+import java.util.function.Supplier;
 
 public class StoreFactoryImpl implements StoreFactory {
 
@@ -30,9 +33,9 @@ public class StoreFactoryImpl implements StoreFactory {
     }
 
     @Override
-    public <D extends Doc> Store<D> createStore(final DocumentSerialiser2<D> serialiser,
-                                                final String type,
-                                                final Class<D> clazz) {
+    public <D extends AbstractDoc> Store<D> createStore(final DocumentSerialiser2<D> serialiser,
+                                                        final String type,
+                                                        final Supplier<AbstractBuilder<D, ?>> builderSupplier) {
         return new StoreImpl<>(
                 persistence,
                 entityEventBus,
@@ -40,6 +43,6 @@ public class StoreFactoryImpl implements StoreFactory {
                 docRefInfoServiceProvider,
                 serialiser,
                 type,
-                clazz);
+                builderSupplier);
     }
 }

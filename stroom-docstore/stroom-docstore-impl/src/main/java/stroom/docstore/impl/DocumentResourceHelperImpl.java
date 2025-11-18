@@ -19,7 +19,7 @@ package stroom.docstore.impl;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentActionHandler;
 import stroom.docstore.api.DocumentResourceHelper;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.PermissionException;
 
@@ -35,8 +35,8 @@ public class DocumentResourceHelperImpl implements DocumentResourceHelper {
     }
 
     @Override
-    public <D extends Doc> D read(final DocumentActionHandler<D> documentActionHandler,
-                                  final DocRef docRef) {
+    public <D extends AbstractDoc> D read(final DocumentActionHandler<D> documentActionHandler,
+                                          final DocRef docRef) {
         return securityContext.secureResult(() ->
                 securityContext.useAsReadResult(() -> {
                     try {
@@ -52,7 +52,7 @@ public class DocumentResourceHelperImpl implements DocumentResourceHelper {
     }
 
     @Override
-    public <D extends Doc> D update(final DocumentActionHandler<D> documentActionHandler, final D doc) {
+    public <D extends AbstractDoc> D update(final DocumentActionHandler<D> documentActionHandler, final D doc) {
         return securityContext.secureResult(() -> {
             try {
                 return documentActionHandler.writeDocument(doc);

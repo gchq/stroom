@@ -50,7 +50,7 @@ class ScriptStoreImpl implements ScriptStore {
     ScriptStoreImpl(final StoreFactory storeFactory,
                     final ScriptSerialiser serialiser,
                     final SecurityContext securityContext) {
-        this.store = storeFactory.createStore(serialiser, ScriptDoc.TYPE, ScriptDoc.class);
+        this.store = storeFactory.createStore(serialiser, ScriptDoc.TYPE, ScriptDoc::builder);
         this.securityContext = securityContext;
     }
 

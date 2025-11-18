@@ -49,7 +49,7 @@ public class PlanBDocStoreImpl implements PlanBDocStore {
             final StoreFactory storeFactory,
             final PlanBDocSerialiser serialiser,
             final SecurityContext securityContext) {
-        this.store = storeFactory.createStore(serialiser, PlanBDoc.TYPE, PlanBDoc.class);
+        this.store = storeFactory.createStore(serialiser, PlanBDoc.TYPE, PlanBDoc::builder);
         this.securityContext = securityContext;
     }
 

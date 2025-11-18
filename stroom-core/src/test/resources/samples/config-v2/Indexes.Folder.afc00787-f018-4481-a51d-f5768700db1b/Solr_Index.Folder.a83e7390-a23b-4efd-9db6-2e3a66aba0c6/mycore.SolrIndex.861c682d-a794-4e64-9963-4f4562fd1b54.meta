@@ -1,4 +1,5 @@
 {
+  "type" : "SolrIndex",
   "uuid" : "861c682d-a794-4e64-9963-4f4562fd1b54",
   "name" : "mycore",
   "version" : "3b3810d9-c186-4ed9-8ec1-86c1b9ede08b",

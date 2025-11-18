@@ -26,6 +26,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -58,8 +59,8 @@ class TestContentAutoCreationServiceImpl {
                 .name(feedName)
                 .build();
         final FeedDoc feedDoc = FeedDoc.builder()
-                .withName(feedName)
-                .withDocRef(docRef)
+                .uuid(docRef.getUuid())
+                .name(feedName)
                 .build();
         final UserDesc userDesc = UserDesc.forSubjectId("user1");
         final AttributeMap attributeMap = new AttributeMap();
@@ -85,7 +86,8 @@ class TestContentAutoCreationServiceImpl {
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put(StandardHeaderArguments.FEED, feedName);
         final ContentTemplates contentTemplates = ContentTemplates.builder()
-                .withName("Templates")
+                .uuid(UUID.randomUUID().toString())
+                .name("Templates")
                 .build();
         Mockito.when(mockFeedStore.findByName(Mockito.eq(feedName)))
                 .thenReturn(List.of());
@@ -106,8 +108,9 @@ class TestContentAutoCreationServiceImpl {
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put(StandardHeaderArguments.FEED, feedName);
         final ContentTemplates contentTemplates = ContentTemplates.builder()
-                .withName("Templates")
-                .withContentTemplates(List.of(ContentTemplate.builder()
+                .uuid(UUID.randomUUID().toString())
+                .name("Templates")
+                .contentTemplates(List.of(ContentTemplate.builder()
                         .withEnabled(false)
                         .withExpression(ExpressionOperator.builder()
                                 .addTerm(ExpressionTerm.builder()
@@ -138,8 +141,9 @@ class TestContentAutoCreationServiceImpl {
         attributeMap.put(StandardHeaderArguments.FEED, feedName);
 
         final ContentTemplates contentTemplates = ContentTemplates.builder()
-                .withName("Templates")
-                .withContentTemplates(List.of(ContentTemplate.builder()
+                .uuid(UUID.randomUUID().toString())
+                .name("Templates")
+                .contentTemplates(List.of(ContentTemplate.builder()
                         .withEnabled(true)
                         .withExpression(ExpressionOperator.builder()
                                 .addTerm(ExpressionTerm.builder()

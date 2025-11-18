@@ -43,7 +43,7 @@ public class StatisticStoreStoreImpl implements StatisticStoreStore {
     @Inject
     public StatisticStoreStoreImpl(final StoreFactory storeFactory,
                                    final StatisticStoreSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, StatisticStoreDoc.TYPE, StatisticStoreDoc.class);
+        this.store = storeFactory.createStore(serialiser, StatisticStoreDoc.TYPE, StatisticStoreDoc::builder);
     }
 
     ////////////////////////////////////////////////////////////////////////

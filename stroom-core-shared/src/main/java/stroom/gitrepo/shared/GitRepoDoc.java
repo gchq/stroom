@@ -19,7 +19,7 @@ package stroom.gitrepo.shared;
 import stroom.contentstore.shared.ContentStoreMetadata;
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 
@@ -54,7 +54,7 @@ import java.util.Objects;
         "autoPush"
 })
 @JsonInclude(Include.NON_NULL)
-public class GitRepoDoc extends Doc {
+public class GitRepoDoc extends AbstractDoc {
 
     public static final String TYPE = "GitRepo";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.GIT_REPO_DOCUMENT_TYPE;
@@ -96,16 +96,8 @@ public class GitRepoDoc extends Doc {
     @JsonProperty
     private Boolean autoPush = Boolean.FALSE;
 
-    /**
-     * No-args constructor; needed by some code.
-     */
-    public GitRepoDoc() {
-        // No code
-    }
-
     @JsonCreator
-    public GitRepoDoc(@JsonProperty("type") final String type,
-                      @JsonProperty("uuid") final String uuid,
+    public GitRepoDoc(@JsonProperty("uuid") final String uuid,
                       @JsonProperty("name") final String name,
                       @JsonProperty("version") final String version,
                       @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -121,7 +113,7 @@ public class GitRepoDoc extends Doc {
                       @JsonProperty("path") final String path,
                       @JsonProperty("commit") final String commit,
                       @JsonProperty("autoPush") final Boolean autoPush) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
 
         // Content Pack stuff, if any
@@ -155,6 +147,12 @@ public class GitRepoDoc extends Doc {
         if (this.autoPush == null) {
             this.autoPush = Boolean.FALSE;
         }
+    }
+
+    @JsonProperty
+    @Override
+    public final String getType() {
+        return TYPE;
     }
 
     /**
@@ -242,6 +240,7 @@ public class GitRepoDoc extends Doc {
     /**
      * Sets the ID associated with the content pack. Set to null if not
      * derived from a content store content pack.
+     *
      * @param id The Content Pack ID.
      */
     public void setContentStoreContentPackId(final String id) {
@@ -324,5 +323,112 @@ public class GitRepoDoc extends Doc {
                + path + "\n  "
                + commit + "\n  "
                + autoPush + "\n}";
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder extends AbstractDoc.AbstractBuilder<GitRepoDoc, GitRepoDoc.Builder> {
+
+        private String description = "";
+        private ContentStoreMetadata contentStoreMetadata;
+        private String contentStoreContentPackId;
+        private String url = "";
+        private String credentialsId = "";
+        private String branch = "";
+        private String path = "";
+        private String commit = "";
+        private Boolean autoPush = Boolean.FALSE;
+
+        private Builder() {
+        }
+
+        private Builder(final GitRepoDoc gitRepoDoc) {
+            super(gitRepoDoc);
+            this.description = gitRepoDoc.description;
+            this.contentStoreMetadata = gitRepoDoc.contentStoreMetadata;
+            this.contentStoreContentPackId = gitRepoDoc.contentStoreContentPackId;
+            this.url = gitRepoDoc.url;
+            this.credentialsId = gitRepoDoc.credentialsId;
+            this.branch = gitRepoDoc.branch;
+            this.path = gitRepoDoc.path;
+            this.commit = gitRepoDoc.commit;
+            this.autoPush = gitRepoDoc.autoPush;
+        }
+
+        public Builder contentStoreMetadata(final ContentStoreMetadata contentStoreMetadata) {
+            this.contentStoreMetadata = contentStoreMetadata;
+            return self();
+        }
+
+        public Builder contentStoreContentPackId(final String contentStoreContentPackId) {
+            this.contentStoreContentPackId = contentStoreContentPackId;
+            return self();
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder url(final String url) {
+            this.url = url;
+            return self();
+        }
+
+        public Builder credentialsId(final String credentialsId) {
+            this.credentialsId = credentialsId;
+            return self();
+        }
+
+        public Builder branch(final String branch) {
+            this.branch = branch;
+            return self();
+        }
+
+        public Builder path(final String path) {
+            this.path = path;
+            return self();
+        }
+
+        public Builder commit(final String commit) {
+            this.commit = commit;
+            return self();
+        }
+
+        public Builder autoPush(final Boolean autoPush) {
+            this.autoPush = autoPush;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public GitRepoDoc build() {
+            return new GitRepoDoc(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    contentStoreMetadata,
+                    contentStoreContentPackId,
+                    url,
+                    credentialsId,
+                    branch,
+                    path,
+                    commit,
+                    autoPush);
+        }
     }
 }

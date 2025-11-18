@@ -45,7 +45,7 @@ public class ElasticClusterStoreImpl implements ElasticClusterStore {
             final StoreFactory storeFactory,
             final ElasticClusterSerialiser serialiser
     ) {
-        this.store = storeFactory.createStore(serialiser, ElasticClusterDoc.TYPE, ElasticClusterDoc.class);
+        this.store = storeFactory.createStore(serialiser, ElasticClusterDoc.TYPE, ElasticClusterDoc::builder);
     }
 
     ////////////////////////////////////////////////////////////////////////

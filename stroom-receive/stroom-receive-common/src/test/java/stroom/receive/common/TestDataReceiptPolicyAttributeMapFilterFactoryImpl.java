@@ -542,12 +542,11 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
 
     private DictionaryDoc createDict(final String name,
                                      final String... lines) {
-        final DictionaryDoc dict = new DictionaryDoc();
-        dict.setUuid(UUID.randomUUID().toString());
-        dict.setName(name);
-        dict.setType(DictionaryDoc.TYPE);
-        dict.setData(String.join("\n", lines));
-        return dict;
+        return DictionaryDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .name(name)
+                .data(String.join("\n", lines))
+                .build();
     }
 
     private ReceiveDataRule createReceiveAllRule() {

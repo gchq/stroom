@@ -66,16 +66,13 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
     private static final Pattern VALID_FIELD_NAME_PATTERN = Pattern.compile(SolrIndexField.VALID_FIELD_NAME_PATTERN);
 
     private final Store<SolrIndexDoc> store;
-    private final SecurityContext securityContext;
     private final SolrIndexClientCache solrIndexClientCache;
 
     @Inject
     SolrIndexStoreImpl(final StoreFactory storeFactory,
-                       final SecurityContext securityContext,
                        final SolrIndexClientCache solrIndexClientCache,
                        final SolrIndexSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, SolrIndexDoc.TYPE, SolrIndexDoc.class);
-        this.securityContext = securityContext;
+        this.store = storeFactory.createStore(serialiser, SolrIndexDoc.TYPE, SolrIndexDoc::builder);
         this.solrIndexClientCache = solrIndexClientCache;
     }
 

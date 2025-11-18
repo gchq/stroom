@@ -46,7 +46,7 @@ public class ContentTemplateStoreImpl implements ContentTemplateStore {
         this.securityContext = securityContext;
         final DocumentSerialiser2<ContentTemplates> serialiser = serialiser2Factory.createSerialiser(
                 ContentTemplates.class);
-        this.store = storeFactory.createStore(serialiser, ContentTemplates.TYPE, ContentTemplates.class);
+        this.store = storeFactory.createStore(serialiser, ContentTemplates.TYPE, ContentTemplates::builder);
     }
 
     @Override

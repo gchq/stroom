@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.UUID;
 import java.util.concurrent.atomic.LongAdder;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,6 +38,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 
 class TestSQLStatisticAggregateMap extends StroomUnitTest {
+
     private static final long timeMs = 101_000L;
     private static final String statName = "MyStat";
     private static final long precision = 1_000L;
@@ -172,7 +174,7 @@ class TestSQLStatisticAggregateMap extends StroomUnitTest {
 
             System.out.println(
                     entry.getKey() + "  val: " + entry.getValue().longValue()
-                            + " markerCount: " + markerCount);
+                    + " markerCount: " + markerCount);
             assertThat(entry.getKey().getMs())
                     .isEqualTo(expectedKeyTime);
 
@@ -215,7 +217,7 @@ class TestSQLStatisticAggregateMap extends StroomUnitTest {
 
             System.out.println(
                     entry.getKey() + "  val: " + entry.getValue()
-                            + " markerCount: " + markerCount);
+                    + " markerCount: " + markerCount);
             assertThat(entry.getKey().getMs())
                     .isEqualTo(expectedKeyTime);
 
@@ -505,8 +507,6 @@ class TestSQLStatisticAggregateMap extends StroomUnitTest {
     }
 
     private StatisticStoreDoc buildStatisticDataSource(final StatisticRollUpType statisticRollUpType) {
-        final StatisticStoreDoc statisticsDataSource = new StatisticStoreDoc();
-
         final StatisticsDataSourceData statisticFields = new StatisticsDataSourceData();
 
         final List<StatisticField> fields = new ArrayList<>();
@@ -517,9 +517,10 @@ class TestSQLStatisticAggregateMap extends StroomUnitTest {
 
         statisticFields.setFields(fields);
 
-        statisticsDataSource.setConfig(statisticFields);
-        statisticsDataSource.setRollUpType(statisticRollUpType);
-
-        return statisticsDataSource;
+        return StatisticStoreDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .config(statisticFields)
+                .rollUpType(statisticRollUpType)
+                .build();
     }
 }

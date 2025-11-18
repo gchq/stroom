@@ -21,7 +21,7 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRef.TypedBuilder;
 import stroom.docref.HasDisplayValue;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.util.shared.HasPrimitiveValue;
@@ -33,8 +33,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
-import java.util.Objects;
 
 @Description(
         "The {{< glossary \"Feed\" >}} is Stroom's way of compartmentalising data that has been ingested or " +
@@ -68,7 +66,7 @@ import java.util.Objects;
         "status",
         "volumeGroup"})
 @JsonInclude(Include.NON_NULL)
-public class FeedDoc extends Doc {
+public class FeedDoc extends AbstractDoc {
 
     public static final String TYPE = "Feed";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.FEED_DOCUMENT_TYPE;
@@ -100,16 +98,8 @@ public class FeedDoc extends Doc {
     @JsonProperty
     private String volumeGroup;
 
-    public FeedDoc() {
-    }
-
-    public FeedDoc(final String name) {
-        setName(name);
-    }
-
     @JsonCreator
-    public FeedDoc(@JsonProperty("type") final String type,
-                   @JsonProperty("uuid") final String uuid,
+    public FeedDoc(@JsonProperty("uuid") final String uuid,
                    @JsonProperty("name") final String name,
                    @JsonProperty("version") final String version,
                    @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -129,7 +119,7 @@ public class FeedDoc extends Doc {
                    @JsonProperty("schemaVersion") final String schemaVersion,
                    @JsonProperty("status") final FeedStatus status,
                    @JsonProperty("volumeGroup") final String volumeGroup) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.classification = classification;
         this.encoding = encoding;
@@ -145,6 +135,11 @@ public class FeedDoc extends Doc {
         this.volumeGroup = volumeGroup;
     }
 
+    @JsonProperty
+    @Override
+    public final String getType() {
+        return TYPE;
+    }
 
     /**
      * @return A new {@link DocRef} for this document's type with the supplied uuid.
@@ -284,18 +279,6 @@ public class FeedDoc extends Doc {
         this.volumeGroup = volumeGroup;
     }
 
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public Builder copy() {
-        return new Builder(this);
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
     public enum FeedStatus implements HasDisplayValue, HasPrimitiveValue {
         RECEIVE("Receive", 1),
         REJECT("Reject", 2),
@@ -322,9 +305,13 @@ public class FeedDoc extends Doc {
         }
     }
 
+    public Builder copy() {
+        return new Builder(this);
+    }
 
-    // --------------------------------------------------------------------------------
-
+    public static Builder builder() {
+        return new Builder();
+    }
 
     public static final class Builder extends AbstractBuilder<FeedDoc, FeedDoc.Builder> {
 
@@ -362,131 +349,78 @@ public class FeedDoc extends Doc {
             this.volumeGroup = copy.getVolumeGroup();
         }
 
-
         @Override
         protected Builder self() {
             return this;
         }
 
-        public Builder withType(final String type) {
-            this.type = type;
-            return self();
-        }
-
-        public Builder withUuid(final String uuid) {
-            this.uuid = uuid;
-            return self();
-        }
-
-        public Builder withDocRef(final DocRef docRef) {
-            if (docRef != null) {
-                if (!Objects.equals(docRef.getType(), TYPE)) {
-                    throw new IllegalArgumentException("Invalid type for a FeedDoc: " + docRef.getType());
-                }
-                this.name = docRef.getName();
-                this.uuid = docRef.getUuid();
-            }
-            return self();
-        }
-
-        public Builder withName(final String name) {
-            this.name = name;
-            return self();
-        }
-
-        public Builder withVersion(final String version) {
-            this.version = version;
-            return self();
-        }
-
-        public Builder withCreateTimeMs(final Long createTimeMs) {
-            this.createTimeMs = createTimeMs;
-            return self();
-        }
-
-        public Builder withUpdateTimeMs(final Long updateTimeMs) {
-            this.updateTimeMs = updateTimeMs;
-            return self();
-        }
-
-        public Builder withCreateUser(final String createUser) {
-            this.createUser = createUser;
-            return self();
-        }
-
-        public Builder withUpdateUser(final String updateUser) {
-            this.updateUser = updateUser;
-            return self();
-        }
-
-        public Builder withDescription(final String description) {
+        public Builder description(final String description) {
             this.description = description;
             return self();
         }
 
-        public Builder withClassification(final String classification) {
+        public Builder classification(final String classification) {
             this.classification = classification;
             return self();
         }
 
-        public Builder withEncoding(final String encoding) {
+        public Builder encoding(final String encoding) {
             this.encoding = encoding;
             return self();
         }
 
-        public Builder withContextEncoding(final String contextEncoding) {
+        public Builder contextEncoding(final String contextEncoding) {
             this.contextEncoding = contextEncoding;
             return self();
         }
 
-        public Builder withRetentionDayAge(final Integer retentionDayAge) {
+        public Builder retentionDayAge(final Integer retentionDayAge) {
             this.retentionDayAge = retentionDayAge;
             return self();
         }
 
-        public Builder withReference(final boolean reference) {
+        public Builder reference(final boolean reference) {
             this.reference = reference;
             return self();
         }
 
-        public Builder withStreamType(final String streamType) {
+        public Builder streamType(final String streamType) {
             this.streamType = streamType;
             return self();
         }
 
-        public Builder withDataFormat(final String dataFormat) {
+        public Builder dataFormat(final String dataFormat) {
             this.dataFormat = dataFormat;
             return self();
         }
 
-        public Builder withContextFormat(final String contextFormat) {
+        public Builder contextFormat(final String contextFormat) {
             this.contextFormat = contextFormat;
             return self();
         }
 
-        public Builder withSchema(final String schema) {
+        public Builder schema(final String schema) {
             this.schema = schema;
             return self();
         }
 
-        public Builder withSchemaVersion(final String schemaVersion) {
+        public Builder schemaVersion(final String schemaVersion) {
             this.schemaVersion = schemaVersion;
             return self();
         }
 
-        public Builder withStatus(final FeedStatus status) {
+        public Builder status(final FeedStatus status) {
             this.status = status;
             return self();
         }
 
-        public Builder withVolumeGroup(final String volumeGroup) {
+        public Builder volumeGroup(final String volumeGroup) {
             this.volumeGroup = volumeGroup;
             return self();
         }
 
         public FeedDoc build() {
             return new FeedDoc(
-                    type,
                     uuid,
                     name,
                     version,

@@ -43,7 +43,7 @@ class StroomStatsStoreStoreImpl implements StroomStatsStoreStore {
     @Inject
     StroomStatsStoreStoreImpl(final StoreFactory storeFactory,
                               final StroomStatsStoreSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, StroomStatsStoreDoc.TYPE, StroomStatsStoreDoc.class);
+        this.store = storeFactory.createStore(serialiser, StroomStatsStoreDoc.TYPE, StroomStatsStoreDoc::builder);
     }
 
     ////////////////////////////////////////////////////////////////////////

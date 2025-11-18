@@ -199,9 +199,10 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
         }
 
         // There is no point sending over the full list of fields if they are not used in the terms
-        final ReceiveDataRules receiveDataRulesCopy = ReceiveDataRules.copy(receiveDataRules)
-                .withRules(ruleCopies)
-                .withFields(new ArrayList<>(usedFields))
+        final ReceiveDataRules receiveDataRulesCopy = receiveDataRules
+                .copy()
+                .rules(ruleCopies)
+                .fields(new ArrayList<>(usedFields))
                 .build();
 
         return new HashedReceiveDataRules(
@@ -347,7 +348,6 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
 
         final Long timeMs = System.currentTimeMillis();
         return new DictionaryDoc(
-                DictionaryDoc.TYPE,
                 docRef.getUuid(),
                 docRef.getName(),
                 UUID.randomUUID().toString(), // The version doesn't matter

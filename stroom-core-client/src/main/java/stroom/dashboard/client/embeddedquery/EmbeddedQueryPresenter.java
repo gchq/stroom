@@ -382,8 +382,7 @@ public class EmbeddedQueryPresenter
     private QueryDoc getQueryDoc() {
         QueryDoc doc = getQuerySettings().getEmbeddedQueryDoc();
         if (doc == null) {
-            doc = new QueryDoc();
-            doc.setUuid("Embedded Query");
+            doc = QueryDoc.builder().uuid("Embedded Query").build();
         }
         doc.setName(getDashboardContext().getDashboardDocRef().getName() + " - " + getComponentConfig().getName());
         return doc;

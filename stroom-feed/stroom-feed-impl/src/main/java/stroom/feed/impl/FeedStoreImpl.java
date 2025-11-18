@@ -79,7 +79,7 @@ public class FeedStoreImpl implements FeedStore {
                          final SecurityContext securityContext,
                          final Provider<FsVolumeGroupService> fsVolumeGroupServiceProvider) {
         this.fsVolumeGroupServiceProvider = fsVolumeGroupServiceProvider;
-        this.store = storeFactory.createStore(serialiser, FeedDoc.TYPE, FeedDoc.class);
+        this.store = storeFactory.createStore(serialiser, FeedDoc.TYPE, FeedDoc::builder);
         this.feedNameValidator = feedNameValidator;
         this.securityContext = securityContext;
         this.serialiser = serialiser;

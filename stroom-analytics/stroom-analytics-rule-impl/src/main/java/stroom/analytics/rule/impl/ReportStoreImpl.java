@@ -65,7 +65,7 @@ class ReportStoreImpl implements ReportStore {
                     final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider,
                     final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
                     final SearchRequestFactory searchRequestFactory) {
-        this.store = storeFactory.createStore(serialiser, ReportDoc.TYPE, ReportDoc.class);
+        this.store = storeFactory.createStore(serialiser, ReportDoc.TYPE, ReportDoc::builder);
         this.securityContext = securityContext;
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
         this.searchRequestFactory = searchRequestFactory;
@@ -97,10 +97,9 @@ class ReportStoreImpl implements ReportStore {
         final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
         final ReportDoc document = store.readDocument(docRef);
         return store.createDocument(newName,
-                (type, uuid, docName, version, createTime, updateTime, createUser, updateUser) -> {
+                (uuid, docName, version, createTime, updateTime, createUser, updateUser) -> {
                     final Builder builder = document
                             .copy()
-                            .type(type)
                             .uuid(uuid)
                             .name(docName)
                             .version(version)

@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -381,7 +382,7 @@ class TestDataRetentionPolicyExecutor {
         trackers = trackers.stream()
                 .filter(tracker ->
                         !(tracker.getRuleAge().toLowerCase().contains("1 month")
-                                || tracker.getRuleAge().toLowerCase().contains("1 year")))
+                          || tracker.getRuleAge().toLowerCase().contains("1 year")))
                 .collect(Collectors.toList());
 
         Assertions.assertThat(trackers)
@@ -633,7 +634,11 @@ class TestDataRetentionPolicyExecutor {
     }
 
     private DataRetentionRules buildRules(final List<DataRetentionRule> rules) {
-        final DataRetentionRules dataRetentionRules = new DataRetentionRules(rules);
+        final DataRetentionRules dataRetentionRules = DataRetentionRules
+                .builder()
+                .uuid(UUID.randomUUID().toString())
+                .rules(rules)
+                .build();
         dataRetentionRules.setVersion(RULES_VERSION);
         return dataRetentionRules;
     }

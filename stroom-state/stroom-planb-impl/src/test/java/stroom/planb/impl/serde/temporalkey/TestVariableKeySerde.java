@@ -37,6 +37,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.UUID;
 import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -76,7 +77,7 @@ public class TestVariableKeySerde {
                     hashClashCommitRunnable,
                     KEY_LOOKUP_DB_NAME);
             final VariableKeySerde variableKeySerde = new VariableKeySerde(
-                    new PlanBDoc(),
+                    PlanBDoc.builder().uuid(UUID.randomUUID().toString()).build(),
                     uidLookupDb,
                     hashLookupDb,
                     byteBuffers,

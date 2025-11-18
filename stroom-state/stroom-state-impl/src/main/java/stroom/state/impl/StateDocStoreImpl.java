@@ -57,7 +57,7 @@ public class StateDocStoreImpl implements StateDocStore {
             final StateDocSerialiser serialiser,
             final Provider<CqlSessionCache> cqlSessionCacheProvider,
             final SecurityContext securityContext) {
-        this.store = storeFactory.createStore(serialiser, StateDoc.TYPE, StateDoc.class);
+        this.store = storeFactory.createStore(serialiser, StateDoc.TYPE, StateDoc::builder);
         this.cqlSessionCacheProvider = cqlSessionCacheProvider;
         this.securityContext = securityContext;
     }

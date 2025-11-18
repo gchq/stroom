@@ -66,7 +66,7 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
                           final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider,
                           final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
                           final SearchRequestFactory searchRequestFactory) {
-        this.store = storeFactory.createStore(serialiser, AnalyticRuleDoc.TYPE, AnalyticRuleDoc.class);
+        this.store = storeFactory.createStore(serialiser, AnalyticRuleDoc.TYPE, AnalyticRuleDoc::builder);
         this.securityContext = securityContext;
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
         this.searchRequestFactory = searchRequestFactory;
@@ -98,10 +98,9 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
         final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
         final AnalyticRuleDoc document = store.readDocument(docRef);
         return store.createDocument(newName,
-                (type, uuid, docName, version, createTime, updateTime, createUser, updateUser) -> {
+                (uuid, docName, version, createTime, updateTime, createUser, updateUser) -> {
                     final Builder builder = document
                             .copy()
-                            .type(type)
                             .uuid(uuid)
                             .name(docName)
                             .version(version)
@@ -199,13 +198,13 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
                                     if (remapped != null) {
                                         String query = doc.getQuery();
                                         if (remapped.getName() != null &&
-                                                !remapped.getName().isBlank() &&
-                                                !Objects.equals(remapped.getName(), docRef.getName())) {
+                                            !remapped.getName().isBlank() &&
+                                            !Objects.equals(remapped.getName(), docRef.getName())) {
                                             query = query.replaceFirst(docRef.getName(), remapped.getName());
                                         }
                                         if (remapped.getUuid() != null &&
-                                                !remapped.getUuid().isBlank() &&
-                                                !Objects.equals(remapped.getUuid(), docRef.getUuid())) {
+                                            !remapped.getUuid().isBlank() &&
+                                            !Objects.equals(remapped.getUuid(), docRef.getUuid())) {
                                             query = query.replaceFirst(docRef.getUuid(), remapped.getUuid());
                                         }
                                         doc.setQuery(query);

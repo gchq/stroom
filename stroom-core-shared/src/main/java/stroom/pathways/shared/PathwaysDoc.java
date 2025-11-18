@@ -17,7 +17,7 @@
 package stroom.pathways.shared;
 
 import stroom.docref.DocRef;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.pathways.shared.pathway.Pathway;
@@ -45,7 +45,7 @@ import java.util.Objects;
         "description",
         "pathways"})
 @JsonInclude(Include.NON_NULL)
-public class PathwaysDoc extends Doc {
+public class PathwaysDoc extends AbstractDoc {
 
     public static final String TYPE = "Pathways";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.PATHWAYS_DOCUMENT_TYPE;
@@ -71,13 +71,8 @@ public class PathwaysDoc extends Doc {
     @JsonProperty
     private String processingNode;
 
-    public PathwaysDoc() {
-        temporalOrderingTolerance = new SimpleDuration(0, TimeUnit.NANOSECONDS);
-    }
-
     @JsonCreator
-    public PathwaysDoc(@JsonProperty("type") final String type,
-                       @JsonProperty("uuid") final String uuid,
+    public PathwaysDoc(@JsonProperty("uuid") final String uuid,
                        @JsonProperty("name") final String name,
                        @JsonProperty("version") final String version,
                        @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -94,7 +89,7 @@ public class PathwaysDoc extends Doc {
                        @JsonProperty("tracesDocRef") final DocRef tracesDocRef,
                        @JsonProperty("infoFeed") final DocRef infoFeed,
                        @JsonProperty("processingNode") final String processingNode) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.temporalOrderingTolerance = temporalOrderingTolerance;
         this.pathways = pathways;
@@ -105,6 +100,12 @@ public class PathwaysDoc extends Doc {
         this.tracesDocRef = tracesDocRef;
         this.infoFeed = infoFeed;
         this.processingNode = processingNode;
+    }
+
+    @JsonProperty
+    @Override
+    public final String getType() {
+        return TYPE;
     }
 
     /**
@@ -256,5 +257,121 @@ public class PathwaysDoc extends Doc {
                ", infoFeed=" + infoFeed +
                ", processingNode=" + processingNode +
                '}';
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder
+            extends AbstractDoc.AbstractBuilder<PathwaysDoc, PathwaysDoc.Builder> {
+
+        private String description;
+        private SimpleDuration temporalOrderingTolerance = new SimpleDuration(0, TimeUnit.NANOSECONDS);
+        private List<Pathway> pathways;
+        private boolean allowPathwayCreation = true;
+        private boolean allowPathwayMutation = true;
+        private boolean allowConstraintCreation = true;
+        private boolean allowConstraintMutation = true;
+        private DocRef tracesDocRef;
+        private DocRef infoFeed;
+        private String processingNode;
+
+        private Builder() {
+        }
+
+        private Builder(final PathwaysDoc pathwaysDoc) {
+            super(pathwaysDoc);
+            this.description = pathwaysDoc.description;
+            this.temporalOrderingTolerance = pathwaysDoc.temporalOrderingTolerance;
+            this.pathways = pathwaysDoc.pathways;
+            this.allowPathwayCreation = pathwaysDoc.allowPathwayCreation;
+            this.allowPathwayMutation = pathwaysDoc.allowPathwayMutation;
+            this.allowConstraintCreation = pathwaysDoc.allowConstraintCreation;
+            this.allowConstraintMutation = pathwaysDoc.allowConstraintMutation;
+            this.tracesDocRef = pathwaysDoc.tracesDocRef;
+            this.infoFeed = pathwaysDoc.infoFeed;
+            this.processingNode = pathwaysDoc.processingNode;
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder temporalOrderingTolerance(final SimpleDuration temporalOrderingTolerance) {
+            this.temporalOrderingTolerance = temporalOrderingTolerance;
+            return self();
+        }
+
+        public Builder pathways(final List<Pathway> pathways) {
+            this.pathways = pathways;
+            return self();
+        }
+
+        public Builder allowPathwayCreation(final boolean allowPathwayCreation) {
+            this.allowPathwayCreation = allowPathwayCreation;
+            return self();
+        }
+
+        public Builder allowPathwayMutation(final boolean allowPathwayMutation) {
+            this.allowPathwayMutation = allowPathwayMutation;
+            return self();
+        }
+
+        public Builder allowConstraintCreation(final boolean allowConstraintCreation) {
+            this.allowConstraintCreation = allowConstraintCreation;
+            return self();
+        }
+
+        public Builder allowConstraintMutation(final boolean allowConstraintMutation) {
+            this.allowConstraintMutation = allowConstraintMutation;
+            return self();
+        }
+
+        public Builder tracesDocRef(final DocRef tracesDocRef) {
+            this.tracesDocRef = tracesDocRef;
+            return self();
+        }
+
+        public Builder infoFeed(final DocRef infoFeed) {
+            this.infoFeed = infoFeed;
+            return self();
+        }
+
+        public Builder processingNode(final String processingNode) {
+            this.processingNode = processingNode;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public PathwaysDoc build() {
+            return new PathwaysDoc(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    temporalOrderingTolerance,
+                    pathways,
+                    allowPathwayCreation = true,
+                    allowPathwayMutation = true,
+                    allowConstraintCreation = true,
+                    allowConstraintMutation = true,
+                    tracesDocRef,
+                    infoFeed,
+                    processingNode);
+        }
     }
 }

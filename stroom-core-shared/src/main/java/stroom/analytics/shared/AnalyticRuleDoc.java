@@ -45,13 +45,9 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
     public static final String TYPE = "AnalyticRule";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.ANALYTIC_RULE_DOCUMENT_TYPE;
 
-    public AnalyticRuleDoc() {
-    }
-
     @SuppressWarnings("checkstyle:linelength")
     @JsonCreator
-    public AnalyticRuleDoc(@JsonProperty("type") final String type,
-                           @JsonProperty("uuid") final String uuid,
+    public AnalyticRuleDoc(@JsonProperty("uuid") final String uuid,
                            @JsonProperty("name") final String name,
                            @JsonProperty("version") final String version,
                            @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -71,8 +67,7 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
                            @JsonProperty("rememberNotifications") final boolean rememberNotifications,
                            @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
                            @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig) {
-        super(type,
-                uuid,
+        super(uuid,
                 name,
                 version,
                 createTimeMs,
@@ -94,6 +89,12 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
                 duplicateNotificationConfig);
     }
 
+    @JsonProperty
+    @Override
+    public final String getType() {
+        return TYPE;
+    }
+
     /**
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
@@ -101,17 +102,13 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
         return DocRef.builder(TYPE);
     }
 
-    public static Builder builder() {
-        return new Builder();
-    }
-
     public Builder copy() {
         return new Builder(this);
     }
 
-
-    // --------------------------------------------------------------------------------
-
+    public static Builder builder() {
+        return new Builder();
+    }
 
     public static class Builder extends AbstractAnalyticRuleDocBuilder<AnalyticRuleDoc, Builder> {
 
@@ -130,7 +127,6 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
         @Override
         public AnalyticRuleDoc build() {
             return new AnalyticRuleDoc(
-                    type,
                     uuid,
                     name,
                     version,

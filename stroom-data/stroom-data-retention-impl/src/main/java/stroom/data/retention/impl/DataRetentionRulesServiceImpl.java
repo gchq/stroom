@@ -61,7 +61,7 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
         this.securityContext = securityContext;
         final DocumentSerialiser2<DataRetentionRules> serialiser = serialiser2Factory.createSerialiser(
                 DataRetentionRules.class);
-        this.store = storeFactory.createStore(serialiser, DataRetentionRules.TYPE, DataRetentionRules.class);
+        this.store = storeFactory.createStore(serialiser, DataRetentionRules.TYPE, DataRetentionRules::builder);
     }
 
     ////////////////////////////////////////////////////////////////////////

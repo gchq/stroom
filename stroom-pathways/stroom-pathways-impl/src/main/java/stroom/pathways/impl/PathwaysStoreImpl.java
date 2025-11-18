@@ -47,7 +47,7 @@ public class PathwaysStoreImpl implements PathwaysStore {
     @Inject
     PathwaysStoreImpl(final StoreFactory storeFactory,
                       final PathwaysSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, PathwaysDoc.TYPE, PathwaysDoc.class);
+        this.store = storeFactory.createStore(serialiser, PathwaysDoc.TYPE, PathwaysDoc::builder);
         this.serialiser = serialiser;
     }
 

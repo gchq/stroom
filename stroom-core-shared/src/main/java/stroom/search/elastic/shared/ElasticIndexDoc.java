@@ -18,13 +18,12 @@ package stroom.search.elastic.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.query.api.ExpressionOperator;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -43,7 +42,6 @@ import java.util.Objects;
         "[Elasticsearch]({{< relref \"docs/user-guide/indexing/elasticsearch\" >}})" +
         "{{% /see-also %}}")
 @JsonPropertyOrder({
-        "type",
         "uuid",
         "name",
         "version",
@@ -62,13 +60,13 @@ import java.util.Objects;
         "retentionExpression"
 })
 @JsonInclude(Include.NON_NULL)
-public class ElasticIndexDoc extends Doc {
+public class ElasticIndexDoc extends AbstractDoc {
 
     public static final int DEFAULT_SEARCH_SLICES = 1;
     public static final int DEFAULT_SEARCH_SCROLL_SIZE = 1000;
     public static final String TYPE = "ElasticIndex";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.ELASTIC_INDEX_DOCUMENT_TYPE;
-    private static final String DEFAULT_TIME_FIELD = "@timestamp";
+    public static final String DEFAULT_TIME_FIELD = "@timestamp";
 
     /**
      * Reference to the `ElasticCluster` containing common Elasticsearch cluster connection properties
@@ -114,16 +112,8 @@ public class ElasticIndexDoc extends Doc {
     @JsonProperty
     private ExpressionOperator retentionExpression;
 
-    public ElasticIndexDoc() {
-        searchSlices = DEFAULT_SEARCH_SLICES;
-        searchScrollSize = DEFAULT_SEARCH_SCROLL_SIZE;
-        fields = new ArrayList<>();
-        timeField = DEFAULT_TIME_FIELD;
-    }
-
     @JsonCreator
     public ElasticIndexDoc(
-            @JsonProperty("type") final String type,
             @JsonProperty("uuid") final String uuid,
             @JsonProperty("name") final String name,
             @JsonProperty("version") final String version,
@@ -140,7 +130,7 @@ public class ElasticIndexDoc extends Doc {
             @JsonProperty("timeField") final String timeField,
             @JsonProperty("defaultExtractionPipeline") final DocRef defaultExtractionPipeline,
             @JsonProperty("retentionExpression") final ExpressionOperator retentionExpression) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.clusterRef = clusterRef;
         this.indexName = indexName;
@@ -160,6 +150,12 @@ public class ElasticIndexDoc extends Doc {
         if (this.timeField == null || this.timeField.isEmpty()) {
             this.timeField = DEFAULT_TIME_FIELD;
         }
+    }
+
+    @JsonProperty
+    @Override
+    public final String getType() {
+        return TYPE;
     }
 
     /**
@@ -254,12 +250,6 @@ public class ElasticIndexDoc extends Doc {
         this.retentionExpression = retentionExpression;
     }
 
-    @JsonIgnore
-    @Override
-    public final String getType() {
-        return TYPE;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -308,5 +298,112 @@ public class ElasticIndexDoc extends Doc {
                ", timeField=" + timeField +
                ", defaultExtractionPipeline=" + defaultExtractionPipeline +
                '}';
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder extends AbstractDoc.AbstractBuilder<ElasticIndexDoc, ElasticIndexDoc.Builder> {
+
+        private DocRef clusterRef;
+        private String description;
+        private String indexName;
+        private Integer searchSlices = ElasticIndexDoc.DEFAULT_SEARCH_SLICES;
+        private Integer searchScrollSize = ElasticIndexDoc.DEFAULT_SEARCH_SCROLL_SIZE;
+        private List<ElasticIndexField> fields = new ArrayList<>();
+        private String timeField = ElasticIndexDoc.DEFAULT_TIME_FIELD;
+        private DocRef defaultExtractionPipeline;
+        private ExpressionOperator retentionExpression;
+
+        private Builder() {
+        }
+
+        private Builder(final ElasticIndexDoc elasticIndexDoc) {
+            super(elasticIndexDoc);
+            this.clusterRef = elasticIndexDoc.clusterRef;
+            this.description = elasticIndexDoc.description;
+            this.indexName = elasticIndexDoc.indexName;
+            this.searchSlices = elasticIndexDoc.searchSlices;
+            this.searchScrollSize = elasticIndexDoc.searchScrollSize;
+            this.fields = elasticIndexDoc.fields;
+            this.timeField = elasticIndexDoc.timeField;
+            this.defaultExtractionPipeline = elasticIndexDoc.defaultExtractionPipeline;
+            this.retentionExpression = elasticIndexDoc.retentionExpression;
+        }
+
+        public Builder clusterRef(final DocRef clusterRef) {
+            this.clusterRef = clusterRef;
+            return self();
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder indexName(final String indexName) {
+            this.indexName = indexName;
+            return self();
+        }
+
+        public Builder searchSlices(final Integer searchSlices) {
+            this.searchSlices = searchSlices;
+            return self();
+        }
+
+        public Builder searchScrollSize(final Integer searchScrollSize) {
+            this.searchScrollSize = searchScrollSize;
+            return self();
+        }
+
+        public Builder fields(final List<ElasticIndexField> fields) {
+            this.fields = fields;
+            return self();
+        }
+
+        public Builder timeField(final String timeField) {
+            this.timeField = timeField;
+            return self();
+        }
+
+        public Builder defaultExtractionPipeline(final DocRef defaultExtractionPipeline) {
+            this.defaultExtractionPipeline = defaultExtractionPipeline;
+            return self();
+        }
+
+        public Builder retentionExpression(final ExpressionOperator retentionExpression) {
+            this.retentionExpression = retentionExpression;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public ElasticIndexDoc build() {
+            return new ElasticIndexDoc(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    clusterRef,
+                    indexName,
+                    searchSlices,
+                    searchScrollSize,
+                    fields,
+                    timeField,
+                    defaultExtractionPipeline,
+                    retentionExpression);
+        }
     }
 }

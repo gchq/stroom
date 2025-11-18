@@ -46,7 +46,7 @@ public class GitRepoStoreImpl implements GitRepoStore {
     @Inject
     GitRepoStoreImpl(final StoreFactory storeFactory,
                      final GitRepoSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, GitRepoDoc.TYPE, GitRepoDoc.class);
+        this.store = storeFactory.createStore(serialiser, GitRepoDoc.TYPE, GitRepoDoc::builder);
     }
 
     ////////////////////////////////////////////////////////////////////////

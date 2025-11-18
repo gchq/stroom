@@ -35,6 +35,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
+import java.util.UUID;
 
 public class ElasticClusterSettingsPresenter
         extends DocumentEditPresenter<ElasticClusterSettingsView, ElasticClusterDoc>
@@ -67,7 +68,10 @@ public class ElasticClusterSettingsPresenter
 
     @Override
     public void onTestConnection(final TaskMonitorFactory taskMonitorFactory) {
-        final ElasticClusterDoc cluster = onWrite(new ElasticClusterDoc());
+        final ElasticClusterDoc cluster = onWrite(ElasticClusterDoc
+                .builder()
+                .uuid(UUID.randomUUID().toString())
+                .build());
         restFactory
                 .create(ELASTIC_CLUSTER_RESOURCE)
                 .method(res -> res.testCluster(cluster))

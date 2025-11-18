@@ -27,16 +27,15 @@ public final class PipelineTestUtil {
     }
 
     public static PipelineDoc createBasicPipeline(final String data) {
-        final PipelineDoc pipelineDoc = new PipelineDoc();
-        pipelineDoc.setType(PipelineDoc.TYPE);
-        pipelineDoc.setUuid("test");
-        pipelineDoc.setName("test");
-        pipelineDoc.setDescription("test");
+        final PipelineDoc.Builder builder = PipelineDoc.builder()
+                .uuid("test")
+                .name("test")
+                .description("test");
         if (data != null) {
             final PipelineData pipelineData = JsonUtil.readValue(data, PipelineData.class);
-            pipelineDoc.setPipelineData(pipelineData);
+            builder.pipelineData(pipelineData);
         }
-        return pipelineDoc;
+        return builder.build();
     }
 
     public static DocRef createTestPipeline(final PipelineStore pipelineStore, final String data) {

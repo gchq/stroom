@@ -49,7 +49,7 @@ class ViewStoreImpl implements ViewStore {
     ViewStoreImpl(final StoreFactory storeFactory,
                   final ViewSerialiser serialiser,
                   final SecurityContext securityContext) {
-        this.store = storeFactory.createStore(serialiser, ViewDoc.TYPE, ViewDoc.class);
+        this.store = storeFactory.createStore(serialiser, ViewDoc.TYPE, ViewDoc::builder);
         this.securityContext = securityContext;
     }
 

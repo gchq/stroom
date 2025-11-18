@@ -64,7 +64,7 @@ public class ReceiveDataRuleSetStoreImpl implements ReceiveDataRuleSetStore {
         this.clusterLockService = clusterLockService;
         final DocumentSerialiser2<ReceiveDataRules> serialiser = serialiser2Factory.createSerialiser(
                 ReceiveDataRules.class);
-        this.store = storeFactory.createStore(serialiser, ReceiveDataRules.TYPE, ReceiveDataRules.class);
+        this.store = storeFactory.createStore(serialiser, ReceiveDataRules.TYPE, ReceiveDataRules::builder);
     }
 
     @Override

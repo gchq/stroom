@@ -47,7 +47,7 @@ public class ScyllaDbDocStoreImpl implements ScyllaDbDocStore {
     public ScyllaDbDocStoreImpl(
             final StoreFactory storeFactory,
             final ScyllaDbSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, ScyllaDbDoc.TYPE, ScyllaDbDoc.class);
+        this.store = storeFactory.createStore(serialiser, ScyllaDbDoc.TYPE, ScyllaDbDoc::builder);
     }
 
     ////////////////////////////////////////////////////////////////////////

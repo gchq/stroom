@@ -27,12 +27,16 @@ public class DocumentationStoreImpl implements DocumentationStore {
     @Inject
     public DocumentationStoreImpl(final StoreFactory storeFactory,
                                   final DocumentationSerialiser documentationSerialiser) {
-        this.store = storeFactory.createStore(documentationSerialiser, DocumentationDoc.TYPE, DocumentationDoc.class);
+        this.store = storeFactory.createStore(
+                documentationSerialiser,
+                DocumentationDoc.TYPE,
+                DocumentationDoc::builder);
     }
 
     ////////////////////////////////////////////////////////////////////////
     // START OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+
+    /// /////////////////////////////////////////////////////////////////////
 
     @Override
     public DocRef createDocument(final String name) {
@@ -74,7 +78,8 @@ public class DocumentationStoreImpl implements DocumentationStore {
 
     ////////////////////////////////////////////////////////////////////////
     // START OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+
+    /// /////////////////////////////////////////////////////////////////////
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
@@ -100,7 +105,8 @@ public class DocumentationStoreImpl implements DocumentationStore {
 
     ////////////////////////////////////////////////////////////////////////
     // START OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+
+    /// /////////////////////////////////////////////////////////////////////
 
     @Override
     public DocumentationDoc readDocument(final DocRef docRef) {
@@ -118,7 +124,8 @@ public class DocumentationStoreImpl implements DocumentationStore {
 
     ////////////////////////////////////////////////////////////////////////
     // START OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+
+    /// /////////////////////////////////////////////////////////////////////
 
     @Override
     public Set<DocRef> listDocuments() {
@@ -155,7 +162,8 @@ public class DocumentationStoreImpl implements DocumentationStore {
 
     ////////////////////////////////////////////////////////////////////////
     // END OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+
+    /// /////////////////////////////////////////////////////////////////////
 
     @Override
     public List<DocRef> findByNames(final List<String> names, final boolean allowWildCards) {

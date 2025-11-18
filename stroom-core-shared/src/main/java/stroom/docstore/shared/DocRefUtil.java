@@ -33,7 +33,7 @@ public final class DocRefUtil {
         // Utility class.
     }
 
-    public static DocRef create(final Doc doc) {
+    public static DocRef create(final AbstractDoc doc) {
         return doc != null
                 ? new DocRef(doc.getType(), doc.getUuid(), doc.getName())
                 : null;
@@ -75,7 +75,7 @@ public final class DocRefUtil {
      * Return true if the docRef and doc have the same UUID and type.
      * If either is null, returns false.
      */
-    public static boolean isSameDocument(final Doc doc, final DocRef docRef) {
+    public static boolean isSameDocument(final AbstractDoc doc, final DocRef docRef) {
         return isSameDocument(docRef, doc);
     }
 
@@ -83,7 +83,7 @@ public final class DocRefUtil {
      * Return true if the docRef and doc have the same UUID and type.
      * If either is null, returns false.
      */
-    public static boolean isSameDocument(final DocRef docRef, final Doc doc) {
+    public static boolean isSameDocument(final DocRef docRef, final AbstractDoc doc) {
         if (docRef == null || doc == null) {
             return false;
         } else {

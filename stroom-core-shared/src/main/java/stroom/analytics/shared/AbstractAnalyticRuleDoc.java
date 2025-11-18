@@ -17,7 +17,7 @@
 package stroom.analytics.shared;
 
 import stroom.docref.DocRef;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.query.api.Param;
 import stroom.query.api.TimeRange;
 
@@ -34,7 +34,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public abstract class AbstractAnalyticRuleDoc extends Doc {
+public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
 
     @JsonProperty
     private final String description;
@@ -66,30 +66,9 @@ public abstract class AbstractAnalyticRuleDoc extends Doc {
     @JsonProperty
     private final DuplicateNotificationConfig duplicateNotificationConfig;
 
-    public AbstractAnalyticRuleDoc() {
-        description = null;
-        languageVersion = null;
-        parameters = null;
-        timeRange = null;
-        query = null;
-        analyticProcessType = null;
-        analyticProcessConfig = null;
-        analyticNotificationConfig = null;
-        notifications = new ArrayList<>();
-        errorFeed = null;
-        rememberNotifications = false;
-        suppressDuplicateNotifications = false;
-        duplicateNotificationConfig = new DuplicateNotificationConfig(
-                false,
-                false,
-                false,
-                Collections.emptyList());
-    }
-
     @SuppressWarnings("checkstyle:linelength")
     @JsonCreator
-    public AbstractAnalyticRuleDoc(@JsonProperty("type") final String type,
-                                   @JsonProperty("uuid") final String uuid,
+    public AbstractAnalyticRuleDoc(@JsonProperty("uuid") final String uuid,
                                    @JsonProperty("name") final String name,
                                    @JsonProperty("version") final String version,
                                    @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -109,7 +88,7 @@ public abstract class AbstractAnalyticRuleDoc extends Doc {
                                    @JsonProperty("rememberNotifications") final boolean rememberNotifications,
                                    @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
                                    @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.languageVersion = languageVersion;
         this.parameters = parameters;
@@ -263,7 +242,7 @@ public abstract class AbstractAnalyticRuleDoc extends Doc {
 
     public abstract static class AbstractAnalyticRuleDocBuilder
             <T extends AbstractAnalyticRuleDoc, B extends AbstractAnalyticRuleDocBuilder<T, ?>>
-            extends AbstractBuilder<AbstractAnalyticRuleDoc, B> {
+            extends AbstractBuilder<T, B> {
 
         String description;
         QueryLanguageVersion languageVersion;

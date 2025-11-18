@@ -43,7 +43,7 @@ class XsltStoreImpl implements XsltStore {
     @Inject
     XsltStoreImpl(final StoreFactory storeFactory,
                   final XsltSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, XsltDoc.TYPE, XsltDoc.class);
+        this.store = storeFactory.createStore(serialiser, XsltDoc.TYPE, XsltDoc::builder);
     }
 
     ////////////////////////////////////////////////////////////////////////

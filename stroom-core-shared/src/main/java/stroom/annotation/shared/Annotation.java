@@ -1,7 +1,7 @@
 package stroom.annotation.shared;
 
 import stroom.docref.DocRef;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.util.shared.UserRef;
@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class Annotation extends Doc {
+public class Annotation extends AbstractDoc {
 
     public static final String TYPE = "Annotation";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.ANNOTATION_DOCUMENT_TYPE;
@@ -45,8 +45,7 @@ public class Annotation extends Doc {
     private final Long retainUntilTimeMs;
 
     @JsonCreator
-    public Annotation(@JsonProperty("type") final String type,
-                      @JsonProperty("uuid") final String uuid,
+    public Annotation(@JsonProperty("uuid") final String uuid,
                       @JsonProperty("name") final String name,
                       @JsonProperty("version") final String version,
                       @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -64,7 +63,7 @@ public class Annotation extends Doc {
                       @JsonProperty("description") final String description,
                       @JsonProperty("retentionPeriod") final SimpleDuration retentionPeriod,
                       @JsonProperty("retainUntilTimeMs") final Long retainUntilTimeMs) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.id = id;
         this.subject = subject;
         this.status = status;
@@ -76,6 +75,12 @@ public class Annotation extends Doc {
         this.description = description;
         this.retentionPeriod = retentionPeriod;
         this.retainUntilTimeMs = retainUntilTimeMs;
+    }
+
+    @JsonProperty
+    @Override
+    public final String getType() {
+        return TYPE;
     }
 
     public Long getId() {
@@ -129,14 +134,6 @@ public class Annotation extends Doc {
         return DocRef.builder(TYPE);
     }
 
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public Builder copy() {
-        return new Builder(this);
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -157,9 +154,13 @@ public class Annotation extends Doc {
         return Objects.hash(super.hashCode(), id);
     }
 
+    public Builder copy() {
+        return new Builder(this);
+    }
 
-    // --------------------------------------------------------------------------------
-
+    public static Builder builder() {
+        return new Builder();
+    }
 
     public static class Builder extends AbstractBuilder<Annotation, Annotation.Builder> {
 
@@ -256,7 +257,6 @@ public class Annotation extends Doc {
         @Override
         public Annotation build() {
             return new Annotation(
-                    type,
                     uuid,
                     name,
                     version,

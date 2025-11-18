@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
+import java.util.UUID;
 
 public class TestPathwayProcessor {
 
@@ -94,7 +95,7 @@ public class TestPathwayProcessor {
                             pathwaysDb,
                             traceId,
                             function,
-                            new PathwaysDoc(),
+                            PathwaysDoc.builder().uuid(UUID.randomUUID().toString()).build(),
                             messageReceiver));
             writer.commit();
         }

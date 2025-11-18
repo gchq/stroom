@@ -47,15 +47,15 @@ class TestDictionaryStoreImpl {
 
         // Unix line ends
         final DocRef docRef = createDoc("""
-
+                
                 one
                   two
-
-
+                
+                
                    three   \s
                 four
-
-                   """, "foo");
+                
+                """, "foo");
 
         final String[] words = getDictionaryStore().getWords(docRef);
         assertThat(words)
@@ -198,7 +198,7 @@ class TestDictionaryStoreImpl {
     void blankDict() {
         final DocRef docRef1 = createDoc("""
                      \t
-
+                
                 \t
                 """, "doc1");
 
@@ -220,10 +220,11 @@ class TestDictionaryStoreImpl {
                 .randomUuid()
                 .name(name)
                 .build();
-        final DictionaryDoc dictionaryDoc = new DictionaryDoc();
-        dictionaryDoc.setUuid(docRef.getUuid());
-        dictionaryDoc.setName(docRef.getName());
-        dictionaryDoc.setData(data);
+        final DictionaryDoc dictionaryDoc = DictionaryDoc.builder()
+                .uuid(docRef.getUuid())
+                .name(docRef.getName())
+                .data(data)
+                .build();
         if (imports != null && imports.length > 0) {
             dictionaryDoc.setImports(Arrays.asList(imports));
         }
@@ -235,11 +236,11 @@ class TestDictionaryStoreImpl {
     }
 
     private DictionaryStoreImpl getDictionaryStore() {
-        Mockito.when(mockStoreFactory.createStore(
-                        Mockito.any(),
-                        Mockito.any(),
-                        Mockito.eq(DictionaryDoc.class)))
-                .thenReturn(mockStore);
+        final Store<DictionaryDoc> store = mockStoreFactory.createStore(
+                Mockito.any(),
+                Mockito.eq(DictionaryDoc.TYPE),
+                Mockito.any());
+        Mockito.when(store).thenReturn(mockStore);
 
         return new DictionaryStoreImpl(
                 mockStoreFactory,

@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -211,8 +212,9 @@ class TestStatisticsDataSource {
             statisticsDataSourceData.addCustomRollUpMask(new CustomRollUpMask(Collections.emptyList()));
         }
 
-        final StatisticStoreDoc sds = new StatisticStoreDoc();
-        sds.setConfig(statisticsDataSourceData);
-        return sds;
+        return StatisticStoreDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .config(statisticsDataSourceData)
+                .build();
     }
 }

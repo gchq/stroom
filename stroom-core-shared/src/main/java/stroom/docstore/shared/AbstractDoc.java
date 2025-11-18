@@ -17,10 +17,10 @@
 
 package stroom.docstore.shared;
 
-import stroom.docref.DocRef;
 import stroom.util.shared.Document;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -38,11 +38,9 @@ import java.util.Objects;
         "createUser",
         "updateUser"})
 @JsonInclude(Include.NON_NULL)
-// TODO Ought to be renamed AbstractDoc, job for master branch
-public abstract class Doc implements Document {
+@JsonIgnoreProperties(value = {"type"}) // We write type but do not read it.
+public abstract class AbstractDoc implements Document {
 
-    @JsonProperty
-    private String type;
     @JsonProperty
     private String uuid;
     @JsonProperty
@@ -58,25 +56,15 @@ public abstract class Doc implements Document {
     @JsonProperty
     private String updateUser;
 
-    public Doc() {
-    }
-
-    public Doc(final String type, final String uuid, final String name) {
-        this.type = type;
-        this.uuid = uuid;
-        this.name = name;
-    }
-
     @JsonCreator
-    public Doc(@JsonProperty("type") final String type,
-               @JsonProperty("uuid") final String uuid,
-               @JsonProperty("name") final String name,
-               @JsonProperty("version") final String version,
-               @JsonProperty("createTimeMs") final Long createTimeMs,
-               @JsonProperty("updateTimeMs") final Long updateTimeMs,
-               @JsonProperty("createUser") final String createUser,
-               @JsonProperty("updateUser") final String updateUser) {
-        this.type = type;
+    public AbstractDoc(@JsonProperty("uuid") final String uuid,
+                       @JsonProperty("name") final String name,
+                       @JsonProperty("version") final String version,
+                       @JsonProperty("createTimeMs") final Long createTimeMs,
+                       @JsonProperty("updateTimeMs") final Long updateTimeMs,
+                       @JsonProperty("createUser") final String createUser,
+                       @JsonProperty("updateUser") final String updateUser) {
+        Objects.requireNonNull(uuid, "Null UUID");
         this.uuid = uuid;
         this.name = name;
         this.version = version;
@@ -86,21 +74,12 @@ public abstract class Doc implements Document {
         this.updateUser = updateUser;
     }
 
-    public DocRef asDocRef() {
-        return DocRef.builder()
-                .type(type)
-                .name(name)
-                .uuid(uuid)
-                .build();
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(final String type) {
-        this.type = type;
-    }
+    /**
+     * Return the static type name for this document.
+     *
+     * @return The static type name for this document.
+     */
+    public abstract String getType();
 
     @Override
     public String getUuid() {
@@ -172,41 +151,40 @@ public abstract class Doc implements Document {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof Doc)) {
+        if (!(o instanceof AbstractDoc)) {
             return false;
         }
-        final Doc doc = (Doc) o;
-        return Objects.equals(type, doc.type) &&
-                Objects.equals(uuid, doc.uuid) &&
-                Objects.equals(name, doc.name) &&
-                Objects.equals(version, doc.version) &&
-                Objects.equals(createTimeMs, doc.createTimeMs) &&
-                Objects.equals(updateTimeMs, doc.updateTimeMs) &&
-                Objects.equals(createUser, doc.createUser) &&
-                Objects.equals(updateUser, doc.updateUser);
+        final AbstractDoc doc = (AbstractDoc) o;
+        return Objects.equals(getType(), doc.getType()) &&
+               Objects.equals(uuid, doc.uuid) &&
+               Objects.equals(name, doc.name) &&
+               Objects.equals(version, doc.version) &&
+               Objects.equals(createTimeMs, doc.createTimeMs) &&
+               Objects.equals(updateTimeMs, doc.updateTimeMs) &&
+               Objects.equals(createUser, doc.createUser) &&
+               Objects.equals(updateUser, doc.updateUser);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        return Objects.hash(getType(), uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
     }
 
     @Override
     public String toString() {
         return "DocRef{" +
-                "type='" + type + '\'' +
-                ", uuid='" + uuid + '\'' +
-                ", name='" + name + '\'' +
-                '}';
+               "type='" + getType() + '\'' +
+               ", uuid='" + uuid + '\'' +
+               ", name='" + name + '\'' +
+               '}';
     }
 
 
     // --------------------------------------------------------------------------------
 
 
-    public abstract static class AbstractBuilder<T extends Doc, B extends AbstractBuilder<T, ?>> {
+    public abstract static class AbstractBuilder<T extends AbstractDoc, B extends AbstractBuilder<T, ?>> {
 
-        protected String type;
         protected String uuid;
         protected String name;
         protected String version;
@@ -218,8 +196,7 @@ public abstract class Doc implements Document {
         public AbstractBuilder() {
         }
 
-        public AbstractBuilder(final Doc doc) {
-            this.type = doc.type;
+        public AbstractBuilder(final AbstractDoc doc) {
             this.uuid = doc.uuid;
             this.name = doc.name;
             this.version = doc.version;
@@ -227,11 +204,6 @@ public abstract class Doc implements Document {
             this.updateTimeMs = doc.updateTimeMs;
             this.createUser = doc.createUser;
             this.updateUser = doc.updateUser;
-        }
-
-        public B type(final String type) {
-            this.type = type;
-            return self();
         }
 
         public B uuid(final String uuid) {

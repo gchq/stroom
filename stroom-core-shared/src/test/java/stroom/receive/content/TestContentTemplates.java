@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -23,36 +24,39 @@ class TestContentTemplates {
     void testSerde() throws IOException {
 
         int templateNumber = 0;
-        final ContentTemplates contentTemplates = new ContentTemplates(List.of(
-                new ContentTemplate(
-                        true,
-                        ++templateNumber,
-                        ExpressionOperator.builder().build(),
-                        TemplateType.PROCESSOR_FILTER,
-                        false,
-                        PipelineDoc.buildDocRef()
-                                .name("MyPipe1")
-                                .uuid("uuid123")
-                                .build(),
-                        null,
-                        null,
-                        ProcessorFilter.DEFAULT_PRIORITY,
-                        ProcessorFilter.DEFAULT_MAX_PROCESSING_TASKS),
-                new ContentTemplate(
-                        true,
-                        ++templateNumber,
-                        ExpressionOperator.builder().build(),
-                        TemplateType.INHERIT_PIPELINE,
-                        true,
-                        PipelineDoc.buildDocRef()
-                                .name("MyPipe2")
-                                .uuid("uuid456")
-                                .build(),
-                        null,
-                        null,
-                        ProcessorFilter.DEFAULT_PRIORITY,
-                        ProcessorFilter.DEFAULT_MAX_PROCESSING_TASKS)
-        ));
+        final ContentTemplates contentTemplates = ContentTemplates
+                .builder()
+                .uuid(UUID.randomUUID().toString())
+                .contentTemplates(List.of(
+                        new ContentTemplate(
+                                true,
+                                ++templateNumber,
+                                ExpressionOperator.builder().build(),
+                                TemplateType.PROCESSOR_FILTER,
+                                false,
+                                PipelineDoc.buildDocRef()
+                                        .name("MyPipe1")
+                                        .uuid("uuid123")
+                                        .build(),
+                                null,
+                                null,
+                                ProcessorFilter.DEFAULT_PRIORITY,
+                                ProcessorFilter.DEFAULT_MAX_PROCESSING_TASKS),
+                        new ContentTemplate(
+                                true,
+                                ++templateNumber,
+                                ExpressionOperator.builder().build(),
+                                TemplateType.INHERIT_PIPELINE,
+                                true,
+                                PipelineDoc.buildDocRef()
+                                        .name("MyPipe2")
+                                        .uuid("uuid456")
+                                        .build(),
+                                null,
+                                null,
+                                ProcessorFilter.DEFAULT_PRIORITY,
+                                ProcessorFilter.DEFAULT_MAX_PROCESSING_TASKS)
+                )).build();
 
         doSerdeTest(contentTemplates, ContentTemplates.class);
     }

@@ -336,6 +336,8 @@ class TestJsonSerialisation {
                 final Set<String> additionalSetters = new HashSet<>(setters);
                 additionalSetters.removeAll(fieldNames);
 
+                // Ignore type
+                additionalGetters.remove("type");
                 SoftAssertions.assertSoftly(softly -> {
                     softly.assertThat(additionalGetters)
                             .describedAs(
@@ -469,6 +471,9 @@ class TestJsonSerialisation {
                                     "%s - Fields without annotations: %s",
                                     clazz.getName(), fieldsWithoutAnnotations)
                             .isEmpty();
+
+                    // We allow getType()
+                    methodsWithAnnotations.remove("getType");
                     softly.assertThat(methodsWithAnnotations)
                             .withFailMessage(
                                     "%s - Methods with annotations: %s",

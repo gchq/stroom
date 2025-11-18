@@ -40,6 +40,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -104,7 +105,8 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
             for (int i = 0; i < event.getTagList().size(); i++) {
                 assertThat(eventPerm.getTagList().get(i).getTag()).isEqualTo(event.getTagList().get(i).getTag());
                 assertThat(event.getTagList().get(i).getValue().equals(eventPerm.getTagList().get(i).getValue())
-                        || RollUpBitMask.ROLL_UP_TAG_VALUE.equals(eventPerm.getTagList().get(i).getValue())).isTrue();
+                           || RollUpBitMask.ROLL_UP_TAG_VALUE
+                                   .equals(eventPerm.getTagList().get(i).getValue())).isTrue();
             }
         }
     }
@@ -159,7 +161,8 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
             for (int i = 0; i < event.getTagList().size(); i++) {
                 assertThat(eventPerm.getTagList().get(i).getTag()).isEqualTo(event.getTagList().get(i).getTag());
                 assertThat(event.getTagList().get(i).getValue().equals(eventPerm.getTagList().get(i).getValue())
-                        || RollUpBitMask.ROLL_UP_TAG_VALUE.equals(eventPerm.getTagList().get(i).getValue())).isTrue();
+                           || RollUpBitMask.ROLL_UP_TAG_VALUE
+                                   .equals(eventPerm.getTagList().get(i).getValue())).isTrue();
             }
         }
     }
@@ -184,7 +187,8 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
             for (int i = 0; i < event.getTagList().size(); i++) {
                 assertThat(eventPerm.getTagList().get(i).getTag()).isEqualTo(event.getTagList().get(i).getTag());
                 assertThat(event.getTagList().get(i).getValue().equals(eventPerm.getTagList().get(i).getValue())
-                        || RollUpBitMask.ROLL_UP_TAG_VALUE.equals(eventPerm.getTagList().get(i).getValue())).isTrue();
+                           || RollUpBitMask.ROLL_UP_TAG_VALUE
+                                   .equals(eventPerm.getTagList().get(i).getValue())).isTrue();
             }
         }
 
@@ -210,7 +214,8 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
             for (int i = 0; i < event.getTagList().size(); i++) {
                 assertThat(eventPerm.getTagList().get(i).getTag()).isEqualTo(event.getTagList().get(i).getTag());
                 assertThat(event.getTagList().get(i).getValue().equals(eventPerm.getTagList().get(i).getValue())
-                        || RollUpBitMask.ROLL_UP_TAG_VALUE.equals(eventPerm.getTagList().get(i).getValue())).isTrue();
+                           || RollUpBitMask.ROLL_UP_TAG_VALUE
+                                   .equals(eventPerm.getTagList().get(i).getValue())).isTrue();
             }
         }
     }
@@ -233,7 +238,10 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
     }
 
     private StatisticStoreDoc buildStatisticDataSource(final StatisticRollUpType statisticRollUpType) {
-        final StatisticStoreDoc statisticsDataSource = new StatisticStoreDoc();
+        final StatisticStoreDoc statisticsDataSource = StatisticStoreDoc
+                .builder()
+                .uuid(UUID.randomUUID().toString())
+                .build();
 
         final StatisticsDataSourceData statisticsDataSourceData = new StatisticsDataSourceData();
 
@@ -269,8 +277,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
             rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME,
                     Condition.IN_DICTIONARY, dateTerm);
 
-            final StatisticStoreDoc dataSource = new StatisticStoreDoc();
-            dataSource.setName("MyDataSource");
+            final StatisticStoreDoc dataSource = getDoc();
 
             StatStoreCriteriaBuilder.buildCriteria(dataSource, rootOperator.build(), null);
         }).isInstanceOf(BadRequestException.class);
@@ -289,8 +296,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
         rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
 
-        final StatisticStoreDoc dataSource = new StatisticStoreDoc();
-        dataSource.setName("MyDataSource");
+        final StatisticStoreDoc dataSource = getDoc();
 
         final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(dataSource,
                 rootOperator.build(),
@@ -317,8 +323,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
             rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
 
-            final StatisticStoreDoc dataSource = new StatisticStoreDoc();
-            dataSource.setName("MyDataSource");
+            final StatisticStoreDoc dataSource = getDoc();
 
             StatStoreCriteriaBuilder.buildCriteria(dataSource, rootOperator.build(), null);
         }).isInstanceOf(RuntimeException.class);
@@ -339,11 +344,18 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
             rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
             rootOperator.addTextTerm(QueryField.createText(null), Condition.EQUALS, "xxx");
 
-            final StatisticStoreDoc dataSource = new StatisticStoreDoc();
-            dataSource.setName("MyDataSource");
+            final StatisticStoreDoc dataSource = getDoc();
 
             StatStoreCriteriaBuilder.buildCriteria(dataSource, rootOperator.build(), null);
         }).isInstanceOf(BadRequestException.class);
+    }
+
+    private StatisticStoreDoc getDoc() {
+        return StatisticStoreDoc
+                .builder()
+                .uuid(UUID.randomUUID().toString())
+                .name("MyDataSource")
+                .build();
     }
 
     @Test
@@ -360,8 +372,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
         rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
         rootOperator.addTerm("MyField", Condition.EQUALS, "");
 
-        final StatisticStoreDoc dataSource = new StatisticStoreDoc();
-        dataSource.setName("MyDataSource");
+        final StatisticStoreDoc dataSource = getDoc();
 
         final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(dataSource,
                 rootOperator.build(),
@@ -386,8 +397,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
         rootOperator.addTerm("MyField", Condition.EQUALS, "xxx");
 
-        final StatisticStoreDoc dataSource = new StatisticStoreDoc();
-        dataSource.setName("MyDataSource");
+        final StatisticStoreDoc dataSource = getDoc();
 
         final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(dataSource,
                 rootOperator.build(),
