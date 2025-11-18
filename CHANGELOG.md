@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.10.11] - 2025-11-18
+
+* Issue **#5250** : Add a new property `stroom.security.identity.autoCreateAdminAccountOnBoot` to control auto-creation of the default administrator account `admin` when stroom is running with an identity provider type of `INTERNAL_IDP` or `TEST_CREDENTIALS`. Enabling this property will create the `admin` account and stroom user. It will create the group `Administrators`, grant the app permission `Administrator` to it and add the `admin` user to the group. The auto-creation of the admin account/user was erroneously removed in a previous version of stroom.
+
+
 ## [v7.10.10] - 2025-11-17
 
 * Change default for `.receive.enabledAuthenticationTypes` to `[CERTIFICATE,TOKEN]` and add `.receive.authenticationRequired` to the default docker config yml files for both stroom and proxy.
@@ -1767,7 +1772,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.10...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.11...HEAD
+[v7.10.11]: https://github.com/gchq/stroom/compare/v7.10.10...v7.10.11
 [v7.10.10]: https://github.com/gchq/stroom/compare/v7.10.9...v7.10.10
 [v7.10.9]: https://github.com/gchq/stroom/compare/v7.10.8...v7.10.9
 [v7.10.8]: https://github.com/gchq/stroom/compare/v7.10.7...v7.10.8
