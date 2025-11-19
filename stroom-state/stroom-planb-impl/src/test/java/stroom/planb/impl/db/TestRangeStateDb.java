@@ -52,6 +52,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -270,6 +271,6 @@ class TestRangeStateDb {
     }
 
     private static PlanBDoc getDoc(final RangeStateSettings settings) {
-        return PlanBDoc.builder().name("test").settings(settings).build();
+        return PlanBDoc.builder().uuid(UUID.randomUUID().toString()).name("test").settings(settings).build();
     }
 }

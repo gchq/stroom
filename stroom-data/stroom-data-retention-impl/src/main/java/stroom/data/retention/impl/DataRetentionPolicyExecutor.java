@@ -20,6 +20,7 @@ import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.retention.api.DataRetentionConfig;
 import stroom.data.retention.api.DataRetentionCreationTimeUtil;
 import stroom.data.retention.api.DataRetentionRuleAction;
+import stroom.data.retention.api.DataRetentionRulesProvider;
 import stroom.data.retention.api.DataRetentionTracker;
 import stroom.data.retention.api.RetentionRuleOutcome;
 import stroom.data.retention.shared.DataRetentionRule;
@@ -39,7 +40,6 @@ import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -94,7 +94,7 @@ public class DataRetentionPolicyExecutor {
     private static final String LOCK_NAME = "DataRetentionExecutor";
 
     private final ClusterLockService clusterLockService;
-    private final Provider<DataRetentionRules> dataRetentionRulesProvider;
+    private final DataRetentionRulesProvider dataRetentionRulesProvider;
     private final DataRetentionConfig policyConfig;
     private final MetaService metaService;
     private final TaskContextFactory taskContextFactory;
@@ -102,7 +102,7 @@ public class DataRetentionPolicyExecutor {
 
     @Inject
     DataRetentionPolicyExecutor(final ClusterLockService clusterLockService,
-                                final Provider<DataRetentionRules> dataRetentionRulesProvider,
+                                final DataRetentionRulesProvider dataRetentionRulesProvider,
                                 final DataRetentionConfig policyConfig,
                                 final MetaService metaService,
                                 final TaskContextFactory taskContextFactory) {
@@ -140,7 +140,7 @@ public class DataRetentionPolicyExecutor {
     }
 
     private synchronized void process(final Instant now) {
-        final DataRetentionRules dataRetentionRules = dataRetentionRulesProvider.get();
+        final DataRetentionRules dataRetentionRules = dataRetentionRulesProvider.getOrCreate();
         LOGGER.info("All retention time calculations based on now()={}", now);
         if (dataRetentionRules != null) {
             final List<DataRetentionRule> activeRules = getActiveRules(dataRetentionRules.getRules());

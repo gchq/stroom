@@ -15,12 +15,11 @@
  *
  */
 
-package stroom.data.retention.impl;
+package stroom.data.retention.api;
 
-import stroom.data.retention.api.DataRetentionRulesProvider;
 import stroom.data.retention.shared.DataRetentionRules;
-import stroom.docstore.api.DocumentStore;
 
-public interface DataRetentionRulesService extends DocumentStore<DataRetentionRules>, DataRetentionRulesProvider {
+public interface DataRetentionRulesProvider {
 
+    DataRetentionRules getOrCreate();
 }

@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
+import java.util.UUID;
 
 public class TestTraceLoad {
 
@@ -29,7 +30,10 @@ public class TestTraceLoad {
     @Test
     void testLmdb(@TempDir final Path tempDir) {
         // Read in sample data and create a map of traces.
-        final PlanBDoc planBDoc = PlanBDoc.builder().settings(new TraceSettings.Builder().build()).build();
+        final PlanBDoc planBDoc = PlanBDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .settings(new TraceSettings.Builder().build())
+                .build();
         try (final TraceDb traceDb = TraceDb
                 .create(tempDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, planBDoc, false)) {
             final TracePersistence tracesStore = new TracePersistence() {

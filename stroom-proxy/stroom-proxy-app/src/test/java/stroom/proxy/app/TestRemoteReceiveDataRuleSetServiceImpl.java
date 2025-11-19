@@ -112,6 +112,7 @@ class TestRemoteReceiveDataRuleSetServiceImpl {
 
             int ruleNo = 0;
             final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
+                    .uuid(UUID.randomUUID().toString())
                     .addRule(ReceiveDataRule.builder()
                             .withRuleNumber(++ruleNo)
                             .withEnabled(true)
@@ -254,6 +255,7 @@ class TestRemoteReceiveDataRuleSetServiceImpl {
 
             int ruleNo = 0;
             final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
+                    .uuid(UUID.randomUUID().toString())
                     .addRule(ReceiveDataRule.builder()
                             .withRuleNumber(++ruleNo)
                             .withEnabled(true)

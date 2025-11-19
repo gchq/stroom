@@ -47,15 +47,15 @@ class TestDictionaryStoreImpl {
 
         // Unix line ends
         final DocRef docRef = createDoc("""
-                
+
                 one
                   two
-                
-                
+
+
                    three   \s
                 four
-                
-                """, "foo");
+
+                   """, "foo");
 
         final String[] words = getDictionaryStore().getWords(docRef);
         assertThat(words)
@@ -198,7 +198,7 @@ class TestDictionaryStoreImpl {
     void blankDict() {
         final DocRef docRef1 = createDoc("""
                      \t
-                
+
                 \t
                 """, "doc1");
 

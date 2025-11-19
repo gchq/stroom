@@ -13191,9 +13191,6 @@
           "timeRange" : {
             "$ref" : "#/components/schemas/TimeRange"
           },
-          "type" : {
-            "type" : "string"
-          },
           "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -13307,9 +13304,6 @@
             "$ref" : "#/components/schemas/AnnotationTag"
           },
           "subject" : {
-            "type" : "string"
-          },
-          "type" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -14865,9 +14859,6 @@
           "name" : {
             "type" : "string"
           },
-          "type" : {
-            "type" : "string"
-          },
           "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -15330,9 +15321,6 @@
           "name" : {
             "type" : "string"
           },
-          "type" : {
-            "type" : "string"
-          },
           "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -15571,9 +15559,6 @@
               "$ref" : "#/components/schemas/DataRetentionRule"
             }
           },
-          "type" : {
-            "type" : "string"
-          },
           "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -15782,9 +15767,6 @@
             }
           },
           "name" : {
-            "type" : "string"
-          },
-          "type" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -16063,9 +16045,6 @@
           "name" : {
             "type" : "string"
           },
-          "type" : {
-            "type" : "string"
-          },
           "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -16250,9 +16229,6 @@
           "name" : {
             "type" : "string"
           },
-          "type" : {
-            "type" : "string"
-          },
           "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -16349,9 +16325,6 @@
             "format" : "int32"
           },
           "timeField" : {
-            "type" : "string"
-          },
-          "type" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -17143,9 +17116,6 @@
             "enum" : [ "RECEIVE", "REJECT", "DROP" ]
           },
           "streamType" : {
-            "type" : "string"
-          },
-          "type" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -18472,9 +18442,6 @@
           "path" : {
             "type" : "string"
           },
-          "type" : {
-            "type" : "string"
-          },
           "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -19272,9 +19239,6 @@
           "name" : {
             "type" : "string"
           },
-          "type" : {
-            "type" : "string"
-          },
           "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -19592,9 +19556,6 @@
             "format" : "int32"
           },
           "timeField" : {
-            "type" : "string"
-          },
-          "type" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -20394,9 +20355,6 @@
           "tracesDocRef" : {
             "$ref" : "#/components/schemas/DocRef"
           },
-          "type" : {
-            "type" : "string"
-          },
           "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -20461,9 +20419,6 @@
           },
           "pipelineData" : {
             "$ref" : "#/components/schemas/PipelineData"
-          },
-          "type" : {
-            "type" : "string"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -20764,9 +20719,6 @@
           "stateType" : {
             "type" : "string",
             "enum" : [ "STATE", "TEMPORAL_STATE", "RANGED_STATE", "TEMPORAL_RANGED_STATE", "SESSION", "HISTOGRAM", "METRIC", "TRACE" ]
-          },
-          "type" : {
-            "type" : "string"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -21440,9 +21392,6 @@
           "timeRange" : {
             "$ref" : "#/components/schemas/TimeRange"
           },
-          "type" : {
-            "type" : "string"
-          },
           "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -21873,9 +21822,6 @@
               "$ref" : "#/components/schemas/ReceiveDataRule"
             }
           },
-          "type" : {
-            "type" : "string"
-          },
           "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -22136,9 +22082,6 @@
           },
           "timeRange" : {
             "$ref" : "#/components/schemas/TimeRange"
-          },
-          "type" : {
-            "type" : "string"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -23064,9 +23007,6 @@
           "name" : {
             "type" : "string"
           },
-          "type" : {
-            "type" : "string"
-          },
           "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -23227,9 +23167,6 @@
           "name" : {
             "type" : "string"
           },
-          "type" : {
-            "type" : "string"
-          },
           "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -23268,9 +23205,6 @@
             "type" : "string"
           },
           "name" : {
-            "type" : "string"
-          },
-          "type" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -23991,9 +23925,6 @@
           "timeField" : {
             "type" : "string"
           },
-          "type" : {
-            "type" : "string"
-          },
           "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -24483,9 +24414,6 @@
             "type" : "string",
             "enum" : [ "STATE", "TEMPORAL_STATE", "RANGED_STATE", "TEMPORAL_RANGED_STATE", "SESSION" ]
           },
-          "type" : {
-            "type" : "string"
-          },
           "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -24584,9 +24512,6 @@
           "statisticType" : {
             "type" : "string",
             "enum" : [ "COUNT", "VALUE" ]
-          },
-          "type" : {
-            "type" : "string"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -24971,9 +24896,6 @@
           "statisticType" : {
             "type" : "string",
             "enum" : [ "COUNT", "VALUE" ]
-          },
-          "type" : {
-            "type" : "string"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -25731,9 +25653,6 @@
             "type" : "string"
           },
           "name" : {
-            "type" : "string"
-          },
-          "type" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -26628,9 +26547,6 @@
           "pipeline" : {
             "$ref" : "#/components/schemas/DocRef"
           },
-          "type" : {
-            "type" : "string"
-          },
           "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -26729,9 +26645,6 @@
             "$ref" : "#/components/schemas/DocRef"
           },
           "settings" : {
-            "type" : "string"
-          },
-          "type" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -26862,9 +26775,6 @@
           "systemId" : {
             "type" : "string"
           },
-          "type" : {
-            "type" : "string"
-          },
           "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -26908,9 +26818,6 @@
             "type" : "string"
           },
           "name" : {
-            "type" : "string"
-          },
-          "type" : {
             "type" : "string"
           },
           "updateTimeMs" : {

@@ -89,6 +89,7 @@ class TestReceiveDataRuleSetServiceImpl {
 
         Mockito.when(mockReceiveDataRuleSetStore.getOrCreate())
                 .thenReturn(ReceiveDataRules.builder()
+                        .uuid(UUID.randomUUID().toString())
                         .updateTimeMs(Instant.now().toEpochMilli())
                         .build());
 
@@ -127,6 +128,7 @@ class TestReceiveDataRuleSetServiceImpl {
         int ruleNo = 0;
         Mockito.when(mockReceiveDataRuleSetStore.getOrCreate())
                 .thenReturn(ReceiveDataRules.builder()
+                        .uuid(UUID.randomUUID().toString())
                         .updateTimeMs(Instant.now().toEpochMilli())
                         .addRule(ReceiveDataRule.builder()
                                 .withRuleNumber(++ruleNo)
@@ -254,6 +256,7 @@ class TestReceiveDataRuleSetServiceImpl {
         int ruleNo = 0;
         Mockito.when(mockReceiveDataRuleSetStore.getOrCreate())
                 .thenReturn(ReceiveDataRules.builder()
+                        .uuid(UUID.randomUUID().toString())
                         .updateTimeMs(Instant.now().toEpochMilli())
                         .addRule(ReceiveDataRule.builder()
                                 .withRuleNumber(++ruleNo)

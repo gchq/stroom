@@ -36,7 +36,10 @@ public class TestPathwayProcessor {
     void test(@TempDir final Path traceDir,
               @TempDir final Path pathwaysDir) {
         // Read in sample data and create a map of traces.
-        final PlanBDoc planBDoc = PlanBDoc.builder().settings(new TraceSettings.Builder().build()).build();
+        final PlanBDoc planBDoc = PlanBDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .settings(new TraceSettings.Builder().build())
+                .build();
         try (final TraceDb traceDb = TraceDb
                 .create(traceDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, planBDoc, false)) {
             final TracePersistence tracesStore = new TracePersistence() {
