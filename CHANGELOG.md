@@ -13,6 +13,14 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11-beta.9] - 2025-11-19
+
+* Issue **#5192** : Support Elasticsearch kNN search on dense_vector fields.
+
+* Issue **#5124** : Change cluster lock `tryLock` to use the database record locks rather than the inter-node lock handler.
+
+* Issue **#5254** : Fix document NPE.
+
 * Issue **#5250** : Add a new property `stroom.security.identity.autoCreateAdminAccountOnBoot` to control auto-creation of the default administrator account `admin` when stroom is running with an identity provider type of `INTERNAL_IDP` or `TEST_CREDENTIALS`. Enabling this property will create the `admin` account and stroom user. It will create the group `Administrators`, grant the app permission `Administrator` to it and add the `admin` user to the group. The auto-creation of the admin account/user was erroneously removed in a previous version of stroom.
 
 * Change default for `.receive.enabledAuthenticationTypes` to `[CERTIFICATE,TOKEN]` and add `.receive.authenticationRequired` to the default docker config yml files for both stroom and proxy.
@@ -1861,7 +1869,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.8...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.9...HEAD
+[v7.11-beta.9]: https://github.com/gchq/stroom/compare/v7.11-beta.8...v7.11-beta.9
 [v7.11-beta.8]: https://github.com/gchq/stroom/compare/v7.11-beta.7...v7.11-beta.8
 [v7.11-beta.7]: https://github.com/gchq/stroom/compare/v7.11-beta.6...v7.11-beta.7
 [v7.11-beta.6]: https://github.com/gchq/stroom/compare/v7.11-beta.5...v7.11-beta.6
