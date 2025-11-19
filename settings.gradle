@@ -164,7 +164,7 @@ include 'stroom-importexport:stroom-importexport-impl'
 
 // Index
 include 'stroom-index:lucene553-shaded'
-include 'stroom-index:lucene980-shaded'
+//include 'stroom-index:lucene980-shaded'
 include 'stroom-index:stroom-index-impl'
 include 'stroom-index:stroom-index-lucene553'
 include 'stroom-index:stroom-index-lucene980'

@@ -1,6 +1,6 @@
 package stroom.contentindex;
 
-import org.apache.lucene980.search.highlight.TextFragment;
+import org.apache.lucene.search.highlight.TextFragment;
 
 public class TextFragImpl extends TextFragment {
 

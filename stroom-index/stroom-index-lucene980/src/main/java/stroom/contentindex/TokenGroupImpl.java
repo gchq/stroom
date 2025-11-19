@@ -1,9 +1,9 @@
 package stroom.contentindex;
 
-import org.apache.lucene980.analysis.TokenStream;
-import org.apache.lucene980.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene980.analysis.tokenattributes.OffsetAttribute;
-import org.apache.lucene980.search.highlight.TokenGroup;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
+import org.apache.lucene.search.highlight.TokenGroup;
 
 public class TokenGroupImpl extends TokenGroup {
 

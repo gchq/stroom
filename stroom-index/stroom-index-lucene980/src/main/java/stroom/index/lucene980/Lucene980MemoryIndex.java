@@ -13,11 +13,11 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
-import org.apache.lucene980.analysis.Analyzer;
-import org.apache.lucene980.index.IndexableField;
-import org.apache.lucene980.index.memory.MemoryIndex;
-import org.apache.lucene980.search.IndexSearcher;
-import org.apache.lucene980.search.TopDocs;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.index.memory.MemoryIndex;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.TopDocs;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -101,9 +101,9 @@ class Lucene980MemoryIndex implements stroom.search.extraction.MemoryIndex {
             final IndexSearcher indexSearcher = memoryIndex.createSearcher();
             final TopDocs docs = indexSearcher.search(query.getQuery(), 100);
 
-            if (docs.totalHits.value == 0) {
+            if (docs.totalHits.value() == 0) {
                 return false;
-            } else if (docs.totalHits.value == 1) {
+            } else if (docs.totalHits.value() == 1) {
                 return true;
             } else {
                 LOGGER.error("Unexpected number of documents {}  found by rule, should be 1 or 0.", docs.totalHits);

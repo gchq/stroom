@@ -10,7 +10,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
-import org.apache.lucene980.search.IndexSearcher;
+import org.apache.lucene.search.IndexSearcher;
 
 class SearchExpressionQueryBuilderFactory {
 

@@ -16,9 +16,9 @@
 
 package stroom.index.lucene980.analyser;
 
-import org.apache.lucene980.analysis.Analyzer;
-import org.apache.lucene980.analysis.LowerCaseFilter;
-import org.apache.lucene980.analysis.TokenStream;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.LowerCaseFilter;
+import org.apache.lucene.analysis.TokenStream;
 
 class AlphaNumericAnalyzer extends Analyzer {
 

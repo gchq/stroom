@@ -18,9 +18,9 @@ package stroom.index.lucene980;
 
 import stroom.search.impl.SearchException;
 
-import org.apache.lucene980.index.LeafReaderContext;
-import org.apache.lucene980.search.ScoreMode;
-import org.apache.lucene980.search.SimpleCollector;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.search.ScoreMode;
+import org.apache.lucene.search.SimpleCollector;
 
 import java.io.IOException;
 import java.util.ArrayList;

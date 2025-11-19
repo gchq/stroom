@@ -47,12 +47,12 @@ import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import org.apache.lucene980.document.Document;
-import org.apache.lucene980.index.IndexWriter;
-import org.apache.lucene980.index.IndexableField;
-import org.apache.lucene980.search.IndexSearcher;
-import org.apache.lucene980.search.Query;
-import org.apache.lucene980.search.SearcherManager;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.SearcherManager;
 
 import java.io.IOException;
 import java.util.Optional;

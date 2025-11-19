@@ -19,7 +19,7 @@ package stroom.index.lucene980;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import org.apache.lucene980.store.LockFactory;
+import org.apache.lucene.store.LockFactory;
 
 public final class Lucene980LockFactory {
 

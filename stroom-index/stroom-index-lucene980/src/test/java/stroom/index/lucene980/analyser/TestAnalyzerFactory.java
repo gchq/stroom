@@ -6,9 +6,9 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import io.vavr.Tuple;
-import org.apache.lucene980.analysis.Analyzer;
-import org.apache.lucene980.analysis.TokenStream;
-import org.apache.lucene980.analysis.tokenattributes.CharTermAttribute;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;

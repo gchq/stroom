@@ -32,23 +32,23 @@ import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.IndexFieldCache;
 import stroom.search.impl.SearchException;
 
-import org.apache.lucene980.analysis.Analyzer;
-import org.apache.lucene980.document.DoubleField;
-import org.apache.lucene980.document.FloatField;
-import org.apache.lucene980.document.IntField;
-import org.apache.lucene980.document.LongField;
-import org.apache.lucene980.index.Term;
-import org.apache.lucene980.queryparser.flexible.core.QueryNodeException;
-import org.apache.lucene980.queryparser.flexible.standard.StandardQueryParser;
-import org.apache.lucene980.search.BooleanClause;
-import org.apache.lucene980.search.BooleanClause.Occur;
-import org.apache.lucene980.search.BooleanQuery;
-import org.apache.lucene980.search.BooleanQuery.Builder;
-import org.apache.lucene980.search.MatchAllDocsQuery;
-import org.apache.lucene980.search.MatchNoDocsQuery;
-import org.apache.lucene980.search.Query;
-import org.apache.lucene980.search.TermQuery;
-import org.apache.lucene980.search.WildcardQuery;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.document.DoubleField;
+import org.apache.lucene.document.FloatField;
+import org.apache.lucene.document.IntField;
+import org.apache.lucene.document.LongField;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
+import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.BooleanQuery.Builder;
+import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.MatchNoDocsQuery;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.WildcardQuery;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -110,10 +110,10 @@ class SearchExpressionQueryBuilder {
     private boolean hasInclusiveClauses(final Query query) {
         if (query instanceof final BooleanQuery booleanQuery) {
             for (final BooleanClause booleanClause : booleanQuery.clauses()) {
-                if (!Occur.MUST_NOT.equals(booleanClause.getOccur())) {
+                if (!Occur.MUST_NOT.equals(booleanClause.occur())) {
                     return true;
                 }
-                final Query subQuery = booleanClause.getQuery();
+                final Query subQuery = booleanClause.query();
                 if (hasInclusiveClauses(subQuery)) {
                     return true;
                 }
@@ -164,10 +164,10 @@ class SearchExpressionQueryBuilder {
                                     if (child instanceof final BooleanQuery innerBoolean) {
                                         final Builder orTermsBuilder = new Builder();
                                         for (final BooleanClause clause : innerBoolean.clauses()) {
-                                            if (Occur.MUST_NOT.equals(clause.getOccur())) {
-                                                builder.add(clause.getQuery(), Occur.MUST_NOT);
-                                            } else if (Occur.MUST.equals(clause.getOccur())) {
-                                                builder.add(clause.getQuery(), Occur.MUST);
+                                            if (Occur.MUST_NOT.equals(clause.occur())) {
+                                                builder.add(clause.query(), Occur.MUST_NOT);
+                                            } else if (Occur.MUST.equals(clause.occur())) {
+                                                builder.add(clause.query(), Occur.MUST);
                                             } else {
                                                 orTermsBuilder.add(clause);
                                             }
@@ -177,7 +177,7 @@ class SearchExpressionQueryBuilder {
                                         if (!orTerms.clauses().isEmpty()) {
                                             if (orTerms.clauses().size() == 1) {
                                                 // Collapse single term.
-                                                builder.add(orTerms.clauses().getFirst().getQuery(), occur);
+                                                builder.add(orTerms.clauses().getFirst().query(), occur);
                                             } else {
                                                 builder.add(orTerms, occur);
                                             }
@@ -191,10 +191,10 @@ class SearchExpressionQueryBuilder {
                                     if (child instanceof final BooleanQuery innerBoolean) {
                                         final Builder orTermsBuilder = new Builder();
                                         for (final BooleanClause clause : innerBoolean.clauses()) {
-                                            if (Occur.MUST_NOT.equals(clause.getOccur())) {
-                                                builder.add(clause.getQuery(), Occur.MUST);
-                                            } else if (Occur.MUST.equals(clause.getOccur())) {
-                                                builder.add(clause.getQuery(), Occur.MUST_NOT);
+                                            if (Occur.MUST_NOT.equals(clause.occur())) {
+                                                builder.add(clause.query(), Occur.MUST);
+                                            } else if (Occur.MUST.equals(clause.occur())) {
+                                                builder.add(clause.query(), Occur.MUST_NOT);
                                             } else {
                                                 orTermsBuilder.add(clause);
                                             }
@@ -204,7 +204,7 @@ class SearchExpressionQueryBuilder {
                                         if (!orTerms.clauses().isEmpty()) {
                                             if (orTerms.clauses().size() == 1) {
                                                 // Collapse single term.
-                                                builder.add(orTerms.clauses().getFirst().getQuery(), occur);
+                                                builder.add(orTerms.clauses().getFirst().query(), occur);
                                             } else {
                                                 builder.add(orTerms, occur);
                                             }
@@ -662,7 +662,7 @@ class SearchExpressionQueryBuilder {
         if (query instanceof final BooleanQuery bq) {
             final Builder builder = new Builder();
             for (final BooleanClause bc : bq.clauses()) {
-                builder.add(bc.getQuery(), occur);
+                builder.add(bc.query(), occur);
             }
             return builder.build();
         }

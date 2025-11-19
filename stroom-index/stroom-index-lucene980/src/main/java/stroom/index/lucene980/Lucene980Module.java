@@ -30,5 +30,6 @@ public class Lucene980Module extends AbstractModule {
 
         // Bind this provider.
         GuiceUtil.buildMultiBinder(binder(), LuceneProvider.class).addBinding(Lucene980Provider.class);
+        GuiceUtil.buildMultiBinder(binder(), LuceneProvider.class).addBinding(Lucene1031Provider.class);
     }
 }

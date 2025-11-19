@@ -20,17 +20,17 @@ import stroom.explorer.shared.StringMatchLocation;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import org.apache.lucene980.index.IndexReader;
-import org.apache.lucene980.search.Query;
-import org.apache.lucene980.search.vectorhighlight.BaseFragListBuilder;
-import org.apache.lucene980.search.vectorhighlight.FastVectorHighlighter;
-import org.apache.lucene980.search.vectorhighlight.FieldFragList;
-import org.apache.lucene980.search.vectorhighlight.FieldPhraseList;
-import org.apache.lucene980.search.vectorhighlight.FieldPhraseList.WeightedPhraseInfo;
-import org.apache.lucene980.search.vectorhighlight.FieldPhraseList.WeightedPhraseInfo.Toffs;
-import org.apache.lucene980.search.vectorhighlight.FieldQuery;
-import org.apache.lucene980.search.vectorhighlight.SimpleFieldFragList;
-import org.apache.lucene980.search.vectorhighlight.SimpleFragmentsBuilder;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.vectorhighlight.BaseFragListBuilder;
+import org.apache.lucene.search.vectorhighlight.FastVectorHighlighter;
+import org.apache.lucene.search.vectorhighlight.FieldFragList;
+import org.apache.lucene.search.vectorhighlight.FieldPhraseList;
+import org.apache.lucene.search.vectorhighlight.FieldPhraseList.WeightedPhraseInfo;
+import org.apache.lucene.search.vectorhighlight.FieldPhraseList.WeightedPhraseInfo.Toffs;
+import org.apache.lucene.search.vectorhighlight.FieldQuery;
+import org.apache.lucene.search.vectorhighlight.SimpleFieldFragList;
+import org.apache.lucene.search.vectorhighlight.SimpleFragmentsBuilder;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -16,7 +16,7 @@
 
 package stroom.index.lucene980.analyser;
 
-import org.apache.lucene980.analysis.Analyzer;
+import org.apache.lucene.analysis.Analyzer;
 
 class NumericAnalyzer extends Analyzer {
 

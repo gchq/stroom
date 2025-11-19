@@ -3,8 +3,8 @@ package stroom.index.lucene980;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import org.apache.lucene980.store.AlreadyClosedException;
-import org.apache.lucene980.store.Lock;
+import org.apache.lucene.store.AlreadyClosedException;
+import org.apache.lucene.store.Lock;
 
 class ShardLock extends Lock {
 

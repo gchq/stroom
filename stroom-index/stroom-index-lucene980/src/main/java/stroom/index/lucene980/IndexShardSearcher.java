@@ -23,13 +23,13 @@ import stroom.search.impl.SearchException;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 
-import org.apache.lucene980.index.CorruptIndexException;
-import org.apache.lucene980.index.IndexWriter;
-import org.apache.lucene980.search.IndexSearcher;
-import org.apache.lucene980.search.SearcherFactory;
-import org.apache.lucene980.search.SearcherManager;
-import org.apache.lucene980.store.Directory;
-import org.apache.lucene980.store.NIOFSDirectory;
+import org.apache.lucene.index.CorruptIndexException;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.SearcherFactory;
+import org.apache.lucene.search.SearcherManager;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.NIOFSDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

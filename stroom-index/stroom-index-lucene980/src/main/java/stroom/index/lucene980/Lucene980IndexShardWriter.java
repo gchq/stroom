@@ -39,15 +39,15 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.time.StroomDuration;
 
-import org.apache.lucene980.analysis.Analyzer;
-import org.apache.lucene980.analysis.miscellaneous.PerFieldAnalyzerWrapper;
-import org.apache.lucene980.document.Document;
-import org.apache.lucene980.index.IndexWriter;
-import org.apache.lucene980.index.IndexWriterConfig;
-import org.apache.lucene980.index.LiveIndexWriterConfig;
-import org.apache.lucene980.store.Directory;
-import org.apache.lucene980.store.LockObtainFailedException;
-import org.apache.lucene980.store.NIOFSDirectory;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.LiveIndexWriterConfig;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.LockObtainFailedException;
+import org.apache.lucene.store.NIOFSDirectory;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -250,7 +250,7 @@ class Lucene980IndexShardWriter implements IndexShardWriter {
                 fieldAnalyzers.put(indexField.getFldName(), analyzer);
             }
 
-            final org.apache.lucene980.document.Field field = FieldFactory.create(fieldValue);
+            final org.apache.lucene.document.Field field = FieldFactory.create(fieldValue);
 
             // Add the current field to the document if it is not null.
             if (field != null) {

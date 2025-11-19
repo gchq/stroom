@@ -16,8 +16,8 @@
 
 package stroom.index.lucene980.analyser;
 
-import org.apache.lucene980.analysis.util.CharTokenizer;
-import org.apache.lucene980.util.AttributeFactory;
+import org.apache.lucene.analysis.util.CharTokenizer;
+import org.apache.lucene.util.AttributeFactory;
 
 class NumericTokenizer extends CharTokenizer {
 

@@ -22,17 +22,18 @@ import stroom.util.sysinfo.SystemInfoResult;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import jakarta.inject.Inject;
-import org.apache.lucene980.document.Document;
-import org.apache.lucene980.document.LongField;
-import org.apache.lucene980.index.IndexWriter;
-import org.apache.lucene980.index.Term;
-import org.apache.lucene980.search.IndexSearcher;
-import org.apache.lucene980.search.MatchAllDocsQuery;
-import org.apache.lucene980.search.Query;
-import org.apache.lucene980.search.ScoreDoc;
-import org.apache.lucene980.search.SearcherManager;
-import org.apache.lucene980.search.TermQuery;
-import org.apache.lucene980.search.TopDocs;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.LongField;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.StoredFields;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.SearcherManager;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.TopDocs;
 
 import java.io.IOException;
 import java.util.Map;
@@ -91,13 +92,14 @@ class Lucene980SystemInfoProvider implements IndexSystemInfoProvider {
         IndexSearcher indexSearcher = null;
         try {
             indexSearcher = searcherManager.acquire();
+            final StoredFields storedFields = indexSearcher.storedFields();
             final Query query = buildQuery(indexShard, streamId);
 
             final TopDocs topDocs = indexSearcher.search(query, limit);
 
             final Map<Long, Tuple2<String, LongAdder>> streamIdDocCounts = new TreeMap<>();
             for (final ScoreDoc scoreDoc : topDocs.scoreDocs) {
-                consumeDocument(indexSearcher, streamIdDocCounts, scoreDoc);
+                consumeDocument(indexSearcher, storedFields, streamIdDocCounts, scoreDoc);
             }
 
             final Map<Long, Map<String, Object>> detailMap = streamIdDocCounts
@@ -169,9 +171,10 @@ class Lucene980SystemInfoProvider implements IndexSystemInfoProvider {
     }
 
     private void consumeDocument(final IndexSearcher indexSearcher,
+                                 final StoredFields storedFields,
                                  final Map<Long, Tuple2<String, LongAdder>> streamIdDocCounts,
                                  final ScoreDoc scoreDoc) throws IOException {
-        final Document doc = indexSearcher.doc(scoreDoc.doc);
+        final Document doc = storedFields.document(scoreDoc.doc);
         final String streamIdStr = doc.get(IndexConstants.STREAM_ID);
         if (streamIdStr != null) {
             final long streamId = Long.parseLong(streamIdStr);

@@ -26,10 +26,10 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 
-import org.apache.lucene980.index.LeafReaderContext;
-import org.apache.lucene980.search.Query;
-import org.apache.lucene980.search.ScoreMode;
-import org.apache.lucene980.search.SimpleCollector;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreMode;
+import org.apache.lucene.search.SimpleCollector;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.LongAdder;

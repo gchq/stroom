@@ -18,10 +18,10 @@ package stroom.index.lucene980.analyser;
 
 import stroom.query.api.datasource.AnalyzerType;
 
-import org.apache.lucene980.analysis.Analyzer;
-import org.apache.lucene980.analysis.core.WhitespaceAnalyzer;
-import org.apache.lucene980.analysis.en.EnglishAnalyzer;
-import org.apache.lucene980.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
+import org.apache.lucene.analysis.en.EnglishAnalyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 
 public final class AnalyzerFactory {
 

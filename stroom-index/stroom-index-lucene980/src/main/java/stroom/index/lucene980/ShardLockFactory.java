@@ -4,11 +4,11 @@ import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import org.apache.lucene980.store.Directory;
-import org.apache.lucene980.store.FSDirectory;
-import org.apache.lucene980.store.Lock;
-import org.apache.lucene980.store.LockFactory;
-import org.apache.lucene980.store.LockObtainFailedException;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.store.Lock;
+import org.apache.lucene.store.LockFactory;
+import org.apache.lucene.store.LockObtainFailedException;
 
 import java.io.IOException;
 import java.util.Map;

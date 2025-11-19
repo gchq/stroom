@@ -18,8 +18,8 @@ package stroom.index.lucene980;
 
 import stroom.index.shared.LuceneIndexField;
 
-import org.apache.lucene980.document.FieldType;
-import org.apache.lucene980.index.IndexOptions;
+import org.apache.lucene.document.FieldType;
+import org.apache.lucene.index.IndexOptions;
 
 final class FieldTypeFactory {
 

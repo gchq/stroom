@@ -28,13 +28,13 @@ import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValString;
 import stroom.search.extraction.FieldValue;
 
-import org.apache.lucene980.document.DoubleField;
-import org.apache.lucene980.document.Field;
-import org.apache.lucene980.document.Field.Store;
-import org.apache.lucene980.document.FloatField;
-import org.apache.lucene980.document.IntField;
-import org.apache.lucene980.document.LongField;
-import org.apache.lucene980.index.IndexableField;
+import org.apache.lucene.document.DoubleField;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.Field.Store;
+import org.apache.lucene.document.FloatField;
+import org.apache.lucene.document.IntField;
+import org.apache.lucene.document.LongField;
+import org.apache.lucene.index.IndexableField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,7 +85,7 @@ class FieldFactory {
 
         final Val value = fieldValue.value();
 
-        org.apache.lucene980.document.Field field = null;
+        org.apache.lucene.document.Field field = null;
         switch (indexField.getFldType()) {
             case LONG, ID -> {
                 try {

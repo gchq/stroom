@@ -23,7 +23,13 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
-    implementation project(path: ":stroom-index:lucene980-shaded", configuration: 'shadow') // Use shadow JAR
+    implementation "org.apache.lucene:lucene-analyzers-common:8.11.4"
+    implementation "org.apache.lucene:lucene-backward-codecs:10.3.2"
+    implementation "org.apache.lucene:lucene-core:10.3.1"
+    implementation "org.apache.lucene:lucene-memory:10.3.1"
+    implementation "org.apache.lucene:lucene-queryparser:10.3.2"
+    implementation "org.apache.lucene:lucene-highlighter:10.3.1"
+
     implementation libs.jackson.annotations
     implementation libs.guice
     implementation libs.slf4j.api
