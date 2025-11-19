@@ -15,63 +15,82 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.Objects;
+
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class PasswordPolicyConfig extends AbstractConfig implements IsStroomConfig {
 
+    public static final boolean DEFAULT_ALLOW_PASSWORD_RESETS = true;
+    public static final StroomDuration DEFAULT_NEVER_USED_ACCOUNT_DEACTIVATION_THRESHOLD = StroomDuration.ofDays(30);
+    public static final StroomDuration DEFAULT_UNUSED_ACCOUNT_DEACTIVATION_THRESHOLD = StroomDuration.ofDays(90);
+    public static final StroomDuration DEFAULT_MANDATORY_PASSWORD_CHANGE_DURATION = StroomDuration.ofDays(90);
+    public static final boolean DEFAULT_FORCE_PASSWORD_CHANGE_ON_FIRST_LOGIN = true;
+    public static final String DEFAULT_PASSWORD_COMPLEXITY_REGEX = ".*";
+    public static final int DEFAULT_MINIMUM_PASSWORD_STRENGTH = 3;
+    public static final int DEFAULT_MINIMUM_PASSWORD_LENGTH = 8;
+
     @JsonProperty
     @JsonPropertyDescription("Will the UI allow password resets")
-    private Boolean allowPasswordResets;
+    private final boolean allowPasswordResets;
 
     @NotNull
     @JsonProperty
     @JsonPropertyDescription("Unused user accounts with a duration since account creation greater than this " +
-            "value will be locked. The frequency of checks is " +
-            "controlled by the job 'Account Maintenance'.")
-    private StroomDuration neverUsedAccountDeactivationThreshold;
+                             "value will be locked. The frequency of checks is " +
+                             "controlled by the job 'Account Maintenance'.")
+    private final StroomDuration neverUsedAccountDeactivationThreshold;
 
     @NotNull
     @JsonProperty
     @JsonPropertyDescription("User accounts with a duration since last login greater than this " +
-            "value will be locked. The frequency of checks is " +
-            "controlled by the job 'Account Maintenance'.")
-    private StroomDuration unusedAccountDeactivationThreshold;
+                             "value will be locked. The frequency of checks is " +
+                             "controlled by the job 'Account Maintenance'.")
+    private final StroomDuration unusedAccountDeactivationThreshold;
 
     @NotNull
     @JsonProperty
     @JsonPropertyDescription("The age after which a password will have to be changed. The frequency of checks is " +
-            "controlled by the job 'Account Maintenance'.")
-    private StroomDuration mandatoryPasswordChangeDuration;
+                             "controlled by the job 'Account Maintenance'.")
+    private final StroomDuration mandatoryPasswordChangeDuration;
 
     @JsonProperty
     @JsonPropertyDescription("If true, on first login the user will be forced to change their password.")
-    private Boolean forcePasswordChangeOnFirstLogin;
+    private final boolean forcePasswordChangeOnFirstLogin;
 
     @ValidRegex
     @JsonProperty
     @JsonPropertyDescription("A regex pattern that new passwords must match")
     // The default is to let everything through
-    private String passwordComplexityRegex;
+    private final String passwordComplexityRegex;
 
     @Min(0)
     @Max(5)
     @NotNull
     @JsonProperty
     @JsonPropertyDescription("The minimum strength password that is allowed.")
-    private Integer minimumPasswordStrength;
+    private final Integer minimumPasswordStrength;
 
     @Min(0)
     @NotNull
     @JsonProperty
     @JsonPropertyDescription("The minimum number of characters that new passwords need to contain.")
-    private Integer minimumPasswordLength;
+    private final Integer minimumPasswordLength;
 
     @JsonProperty
     @JsonPropertyDescription("A message informing users of the password policy")
-    private String passwordPolicyMessage;
+    private final String passwordPolicyMessage;
 
     public PasswordPolicyConfig() {
-        setDefaults();
+        allowPasswordResets = DEFAULT_ALLOW_PASSWORD_RESETS;
+        neverUsedAccountDeactivationThreshold = DEFAULT_NEVER_USED_ACCOUNT_DEACTIVATION_THRESHOLD;
+        unusedAccountDeactivationThreshold = DEFAULT_UNUSED_ACCOUNT_DEACTIVATION_THRESHOLD;
+        mandatoryPasswordChangeDuration = DEFAULT_MANDATORY_PASSWORD_CHANGE_DURATION;
+        forcePasswordChangeOnFirstLogin = DEFAULT_FORCE_PASSWORD_CHANGE_ON_FIRST_LOGIN;
+        passwordComplexityRegex = DEFAULT_PASSWORD_COMPLEXITY_REGEX;
+        minimumPasswordStrength = DEFAULT_MINIMUM_PASSWORD_STRENGTH;
+        minimumPasswordLength = DEFAULT_MINIMUM_PASSWORD_LENGTH;
+        passwordPolicyMessage = buildDefaultPolicyMessage(minimumPasswordLength);
     }
 
     @JsonCreator
@@ -87,127 +106,124 @@ public class PasswordPolicyConfig extends AbstractConfig implements IsStroomConf
             @JsonProperty("minimumPasswordLength") final Integer minimumPasswordLength,
             @JsonProperty("passwordPolicyMessage") final String passwordPolicyMessage) {
 
-        this.allowPasswordResets = allowPasswordResets;
-        this.neverUsedAccountDeactivationThreshold = neverUsedAccountDeactivationThreshold;
-        this.unusedAccountDeactivationThreshold = unusedAccountDeactivationThreshold;
-        this.mandatoryPasswordChangeDuration = mandatoryPasswordChangeDuration;
-        this.forcePasswordChangeOnFirstLogin = forcePasswordChangeOnFirstLogin;
-        this.passwordComplexityRegex = passwordComplexityRegex;
-        this.minimumPasswordStrength = minimumPasswordStrength;
-        this.minimumPasswordLength = minimumPasswordLength;
-        this.passwordPolicyMessage = passwordPolicyMessage;
-
-        setDefaults();
-    }
-
-    private void setDefaults() {
-        if (allowPasswordResets == null) {
-            allowPasswordResets = true;
-        }
-        if (neverUsedAccountDeactivationThreshold == null) {
-            neverUsedAccountDeactivationThreshold = StroomDuration.ofDays(30);
-        }
-        if (unusedAccountDeactivationThreshold == null) {
-            unusedAccountDeactivationThreshold = StroomDuration.ofDays(90);
-        }
-        if (mandatoryPasswordChangeDuration == null) {
-            mandatoryPasswordChangeDuration = StroomDuration.ofDays(90);
-        }
-        if (forcePasswordChangeOnFirstLogin == null) {
-            forcePasswordChangeOnFirstLogin = true;
-        }
-        if (passwordComplexityRegex == null) {
-            passwordComplexityRegex = ".*";
-        }
-        if (minimumPasswordStrength == null) {
-            minimumPasswordStrength = 3;
-        }
-        if (minimumPasswordLength == null) {
-            minimumPasswordLength = 8;
-        }
-        if (passwordPolicyMessage == null) {
-            passwordPolicyMessage = "To conform with our Strong Password policy, you are required to use" +
-                    " a sufficiently strong password. Password must be more than " +
-                    minimumPasswordLength +
-                    " characters.";
-        }
+        this.allowPasswordResets = Objects.requireNonNullElse(
+                allowPasswordResets,
+                DEFAULT_ALLOW_PASSWORD_RESETS);
+        this.neverUsedAccountDeactivationThreshold = Objects.requireNonNullElse(
+                neverUsedAccountDeactivationThreshold,
+                DEFAULT_NEVER_USED_ACCOUNT_DEACTIVATION_THRESHOLD);
+        this.unusedAccountDeactivationThreshold = Objects.requireNonNullElse(
+                unusedAccountDeactivationThreshold,
+                DEFAULT_UNUSED_ACCOUNT_DEACTIVATION_THRESHOLD);
+        this.mandatoryPasswordChangeDuration = Objects.requireNonNullElse(
+                mandatoryPasswordChangeDuration,
+                DEFAULT_MANDATORY_PASSWORD_CHANGE_DURATION);
+        this.forcePasswordChangeOnFirstLogin = Objects.requireNonNullElse(
+                forcePasswordChangeOnFirstLogin,
+                DEFAULT_FORCE_PASSWORD_CHANGE_ON_FIRST_LOGIN);
+        this.passwordComplexityRegex = Objects.requireNonNullElse(
+                passwordComplexityRegex,
+                DEFAULT_PASSWORD_COMPLEXITY_REGEX);
+        this.minimumPasswordStrength = Objects.requireNonNullElse(
+                minimumPasswordStrength,
+                DEFAULT_MINIMUM_PASSWORD_STRENGTH);
+        this.minimumPasswordLength = Objects.requireNonNullElse(
+                minimumPasswordLength,
+                DEFAULT_MINIMUM_PASSWORD_LENGTH);
+        this.passwordPolicyMessage = Objects.requireNonNullElseGet(
+                passwordPolicyMessage,
+                () -> buildDefaultPolicyMessage(this.minimumPasswordLength));
     }
 
     public boolean isAllowPasswordResets() {
         return allowPasswordResets;
     }
 
-    public void setAllowPasswordResets(final boolean allowPasswordResets) {
-        this.allowPasswordResets = allowPasswordResets;
-    }
-
     public StroomDuration getNeverUsedAccountDeactivationThreshold() {
         return neverUsedAccountDeactivationThreshold;
-    }
-
-    @SuppressWarnings("unused")
-    public void setNeverUsedAccountDeactivationThreshold(final StroomDuration neverUsedAccountDeactivationThreshold) {
-        this.neverUsedAccountDeactivationThreshold = neverUsedAccountDeactivationThreshold;
     }
 
     public StroomDuration getUnusedAccountDeactivationThreshold() {
         return unusedAccountDeactivationThreshold;
     }
 
-    @SuppressWarnings("unused")
-    public void setUnusedAccountDeactivationThreshold(final StroomDuration unusedAccountDeactivationThreshold) {
-        this.unusedAccountDeactivationThreshold = unusedAccountDeactivationThreshold;
-    }
-
     public StroomDuration getMandatoryPasswordChangeDuration() {
         return mandatoryPasswordChangeDuration;
-    }
-
-    @SuppressWarnings("unused")
-    public void setMandatoryPasswordChangeDuration(final StroomDuration mandatoryPasswordChangeDuration) {
-        this.mandatoryPasswordChangeDuration = mandatoryPasswordChangeDuration;
     }
 
     public boolean isForcePasswordChangeOnFirstLogin() {
         return forcePasswordChangeOnFirstLogin;
     }
 
-    @SuppressWarnings("unused")
-    public void setForcePasswordChangeOnFirstLogin(final boolean forcePasswordChangeOnFirstLogin) {
-        this.forcePasswordChangeOnFirstLogin = forcePasswordChangeOnFirstLogin;
-    }
-
     public String getPasswordComplexityRegex() {
         return passwordComplexityRegex;
-    }
-
-    @SuppressWarnings("unused")
-    public void setPasswordComplexityRegex(final String passwordComplexityRegex) {
-        this.passwordComplexityRegex = passwordComplexityRegex;
     }
 
     public Integer getMinimumPasswordStrength() {
         return minimumPasswordStrength;
     }
 
-    public void setMinimumPasswordStrength(final Integer minimumPasswordStrength) {
-        this.minimumPasswordStrength = minimumPasswordStrength;
-    }
-
     public int getMinimumPasswordLength() {
         return minimumPasswordLength;
-    }
-
-    @SuppressWarnings("unused")
-    public void setMinimumPasswordLength(final int minimumPasswordLength) {
-        this.minimumPasswordLength = minimumPasswordLength;
     }
 
     public String getPasswordPolicyMessage() {
         return passwordPolicyMessage;
     }
 
-    public void setPasswordPolicyMessage(final String passwordPolicyMessage) {
-        this.passwordPolicyMessage = passwordPolicyMessage;
+    private static String buildDefaultPolicyMessage(final int minimumPasswordLength) {
+        return "To conform with our Strong Password policy, " +
+               "you are required to use" +
+               " a sufficiently strong password. Password must be more than " +
+               minimumPasswordLength + " characters.";
+    }
+
+    @Override
+    public String toString() {
+        return "PasswordPolicyConfig{" +
+               "allowPasswordResets=" + allowPasswordResets +
+               ", neverUsedAccountDeactivationThreshold=" + neverUsedAccountDeactivationThreshold +
+               ", unusedAccountDeactivationThreshold=" + unusedAccountDeactivationThreshold +
+               ", mandatoryPasswordChangeDuration=" + mandatoryPasswordChangeDuration +
+               ", forcePasswordChangeOnFirstLogin=" + forcePasswordChangeOnFirstLogin +
+               ", passwordComplexityRegex='" + passwordComplexityRegex + '\'' +
+               ", minimumPasswordStrength=" + minimumPasswordStrength +
+               ", minimumPasswordLength=" + minimumPasswordLength +
+               ", passwordPolicyMessage='" + passwordPolicyMessage + '\'' +
+               '}';
+    }
+
+    @Override
+    public boolean equals(final Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (object == null || getClass() != object.getClass()) {
+            return false;
+        }
+        final PasswordPolicyConfig that = (PasswordPolicyConfig) object;
+        return allowPasswordResets == that.allowPasswordResets
+               && forcePasswordChangeOnFirstLogin == that.forcePasswordChangeOnFirstLogin
+               && Objects.equals(neverUsedAccountDeactivationThreshold, that.neverUsedAccountDeactivationThreshold)
+               && Objects.equals(unusedAccountDeactivationThreshold, that.unusedAccountDeactivationThreshold)
+               && Objects.equals(mandatoryPasswordChangeDuration, that.mandatoryPasswordChangeDuration)
+               && Objects.equals(passwordComplexityRegex, that.passwordComplexityRegex)
+               && Objects.equals(minimumPasswordStrength, that.minimumPasswordStrength)
+               && Objects.equals(minimumPasswordLength, that.minimumPasswordLength)
+               && Objects.equals(passwordPolicyMessage, that.passwordPolicyMessage);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+                allowPasswordResets,
+                neverUsedAccountDeactivationThreshold,
+                unusedAccountDeactivationThreshold,
+                mandatoryPasswordChangeDuration,
+                forcePasswordChangeOnFirstLogin,
+                passwordComplexityRegex,
+                minimumPasswordStrength,
+                minimumPasswordLength,
+                passwordPolicyMessage);
     }
 }

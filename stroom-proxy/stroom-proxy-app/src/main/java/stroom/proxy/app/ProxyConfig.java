@@ -246,34 +246,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return sqsConnectors;
     }
 
-    // TOKEN id Oauth or API key, so this validation is wrong
-//    @JsonIgnore
-//    @SuppressWarnings("unused")
-//    @ValidationMethod(message = "identityProviderType must be set to EXTERNAL_IDP if enabledAuthenticationTypes " +
-//                                "contains 'TOKEN'")
-//    public boolean isTokenAuthenticationEnabledValid() {
-//        LOGGER.info("enabledAuthenticationTypes: {}, idpType: {}",
-//                NullSafe.get(receiveDataConfig, ReceiveDataConfig::getEnabledAuthenticationTypes),
-//                NullSafe.get(proxySecurityConfig,
-//                        ProxySecurityConfig::getAuthenticationConfig,
-//                        ProxyAuthenticationConfig::getOpenIdConfig,
-//                        AbstractOpenIdConfig::getIdentityProviderType));
-//
-//        if (NullSafe.test(
-//                receiveDataConfig,
-//                config -> config.isAuthenticationTypeEnabled(AuthenticationType.TOKEN))) {
-//
-//            return NullSafe.test(
-//                    proxySecurityConfig,
-//                    ProxySecurityConfig::getAuthenticationConfig,
-//                    ProxyAuthenticationConfig::getOpenIdConfig,
-//                    AbstractOpenIdConfig::getIdentityProviderType,
-//                    idpType -> idpType == IdpType.EXTERNAL_IDP);
-//        } else {
-//            return true;
-//        }
-//    }
-
     @JsonIgnore
     @SuppressWarnings("unused")
     @ValidationMethod(message = "All forwarders must have unique names, ignoring case.")

@@ -36,6 +36,8 @@ dependencies {
     testImplementation libs.commons.lang
     testImplementation libs.dropwizard.validation
     testImplementation libs.guice.extension
+    testImplementation libs.jmh.core
+    testImplementation libs.jmh.generator.annprocess
     testImplementation libs.vavr
 
     testImplementation libs.bundles.common.test.implementation

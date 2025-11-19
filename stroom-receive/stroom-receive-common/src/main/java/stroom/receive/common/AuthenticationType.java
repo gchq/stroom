@@ -3,8 +3,18 @@ package stroom.receive.common;
 import stroom.docref.HasDisplayValue;
 
 public enum AuthenticationType implements HasDisplayValue {
+    /**
+     * Authenticates using a Stroom Data Feed Key.
+     */
     DATA_FEED_KEY("Data feed key"),
-    TOKEN("OAuth Token or API Key"),
+    /**
+     * An OAuth token or a Stroom API Key
+     */
+    TOKEN("OAuth Token"),
+    /**
+     * Either authenticates the X509 certificate on the request
+     * or authenticates the DN from a header if .receive.x509CertificateDnHeader is set.
+     */
     CERTIFICATE("Client certificate"),
     ;
 

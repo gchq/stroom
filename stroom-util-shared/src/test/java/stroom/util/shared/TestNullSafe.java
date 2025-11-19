@@ -652,6 +652,24 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testIsEmptyResultPage() {
+        final ResultPage<String> emptyList = ResultPage.empty();
+        final ResultPage<String> nonEmptyList = ResultPage.createUnboundedList(List.of("foo", "bar"));
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<ResultPage<String>>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase ->
+                        NullSafe.isEmptyResultPage(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, true)
+                .addCase(emptyList, true)
+                .addCase(nonEmptyList, false)
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testIsEmptyArray() {
         final String[] emptyArr = new String[0];
         final String[] nonEmptyArr = new String[]{"foo", "bar"};
@@ -676,6 +694,24 @@ class TestNullSafe {
 
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputType(new TypeLiteral<List<String>>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase ->
+                        NullSafe.hasItems(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, false)
+                .addCase(emptyList, false)
+                .addCase(nonEmptyList, true)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testHasItems_resultPage() {
+        final ResultPage<String> emptyList = ResultPage.empty();
+        final ResultPage<String> nonEmptyList = ResultPage.createUnboundedList(List.of("foo", "bar"));
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<ResultPage<String>>() {
                 })
                 .withOutputType(boolean.class)
                 .withTestFunction(testCase ->

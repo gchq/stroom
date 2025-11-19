@@ -20,6 +20,11 @@ import java.nio.file.Path;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+/**
+ * This is a special module to bind only the parts of the application needed
+ * to perform the DB migrations and without all the lifecycle services or resources
+ * being bound.
+ */
 public class BootStrapModule extends AbstractModule {
 
     private final Config configuration;

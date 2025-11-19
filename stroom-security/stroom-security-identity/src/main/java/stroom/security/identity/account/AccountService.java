@@ -19,7 +19,7 @@ public interface AccountService {
 
     Optional<Account> read(int accountId);
 
-    Optional<Account> read(String email);
+    Optional<Account> read(String userId);
 
     void update(UpdateAccountRequest request, int accountId);
 

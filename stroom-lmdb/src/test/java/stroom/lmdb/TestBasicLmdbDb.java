@@ -22,7 +22,6 @@ import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.bytebuffer.PooledByteBufferPair;
-import stroom.lmdb.LmdbEnv.WriteTxn;
 import stroom.lmdb.UnSortedDupKey.UnsortedDupKeyFactory;
 import stroom.lmdb.serde.IntegerSerde;
 import stroom.lmdb.serde.Serde;
@@ -35,6 +34,7 @@ import stroom.lmdb.serde.UnsignedLongSerde;
 import stroom.test.common.TemporaryPathCreator;
 import stroom.test.common.TestUtil;
 import stroom.test.common.TestUtil.TimedCase;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.exception.ThrowingConsumer;
 import stroom.util.functions.TriConsumer;
 import stroom.util.io.ByteSize;
@@ -1443,54 +1443,40 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
             };
             LOGGER.info("baseDir: {}", temporaryPathCreator.getBaseTempDir().toAbsolutePath().normalize());
 
-            final BasicLmdbDb<String, String> basicLmdb1 = createDb(temporaryPathCreator, envFlags, "1");
-            final BasicLmdbDb<String, String> basicLmdb2 = createDb(temporaryPathCreator, envFlags, "2");
-
-            final LmdbEnv lmdbEnv1 = basicLmdb1.getLmdbEnvironment();
-            final LmdbEnv lmdbEnv2 = basicLmdb2.getLmdbEnvironment();
-
+            final BasicLmdbDb<String, String> basicLmdb1 = createEnvAndDb(temporaryPathCreator, envFlags, "1");
+            final BasicLmdbDb<String, String> basicLmdb2 = createEnvAndDb(temporaryPathCreator, envFlags, "2");
             final CountDownLatch countDownLatch = new CountDownLatch(2);
 
             final CompletableFuture<Void> future1 = CompletableFuture.runAsync(() -> {
                 LOGGER.info("Opening writeTxn1");
-                final WriteTxn writeTxn1 = lmdbEnv1.openWriteTxn();
-                LOGGER.info("writeTxn1 open");
-                basicLmdb1.put(writeTxn1.getTxn(), "1", "one", true);
-                countDownLatch.countDown();
-                try {
-                    countDownLatch.await();
-                } catch (final InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-
-                try {
+                basicLmdb1.getLmdbEnvironment().doWithWriteTxn(writeTxn1 -> {
+                    LOGGER.info("writeTxn1 open");
+                    basicLmdb1.put(writeTxn1, "1", "one", true);
+                    LOGGER.info("put 1");
+                    countDownLatch.countDown();
+                    try {
+                        countDownLatch.await();
+                    } catch (final InterruptedException e) {
+                        throw new UncheckedInterruptedException(e);
+                    }
                     LOGGER.info("Closing writeTxn1");
-                    writeTxn1.commit();
-                    writeTxn1.close();
-                } catch (final Exception e) {
-                    throw new RuntimeException(e);
-                }
+                });
             });
 
             final CompletableFuture<Void> future2 = CompletableFuture.runAsync(() -> {
                 LOGGER.info("Opening writeTxn2");
-                final WriteTxn writeTxn2 = lmdbEnv2.openWriteTxn();
-                LOGGER.info("writeTxn2 open");
-                basicLmdb1.put(writeTxn2.getTxn(), "2", "two", true);
-                countDownLatch.countDown();
-                try {
-                    countDownLatch.await();
-                } catch (final InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-
-                try {
+                basicLmdb2.getLmdbEnvironment().doWithWriteTxn(writeTxn2 -> {
+                    LOGGER.info("writeTxn2 open");
+                    basicLmdb2.put(writeTxn2, "2", "two", true);
+                    LOGGER.info("put 2");
+                    countDownLatch.countDown();
+                    try {
+                        countDownLatch.await();
+                    } catch (final InterruptedException e) {
+                        throw new UncheckedInterruptedException(e);
+                    }
                     LOGGER.info("Closing writeTxn2");
-                    writeTxn2.commit();
-                    writeTxn2.close();
-                } catch (final Exception e) {
-                    throw new RuntimeException(e);
-                }
+                });
             });
 
             future1.get();
@@ -1580,7 +1566,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
     @Test
     void testPutsWithConcurrentReadTxn() throws ExecutionException, InterruptedException {
         try (final TemporaryPathCreator temporaryPathCreator = new TemporaryPathCreator()) {
-            final BasicLmdbDb<String, String> basicLmdb1 = createDb(
+            final BasicLmdbDb<String, String> basicLmdb1 = createEnvAndDb(
                     temporaryPathCreator,
                     new EnvFlags[]{EnvFlags.MDB_NOTLS},
                     false,
@@ -1663,17 +1649,17 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         }
     }
 
-    private BasicLmdbDb<String, String> createDb(final TemporaryPathCreator temporaryPathCreator,
-                                                 final EnvFlags[] envFlags,
-                                                 final String id) {
-        return createDb(temporaryPathCreator, envFlags, true, id);
+    private BasicLmdbDb<String, String> createEnvAndDb(final TemporaryPathCreator temporaryPathCreator,
+                                                       final EnvFlags[] envFlags,
+                                                       final String id) {
+        return createEnvAndDb(temporaryPathCreator, envFlags, true, id);
 
     }
 
-    private BasicLmdbDb<String, String> createDb(final TemporaryPathCreator temporaryPathCreator,
-                                                 final EnvFlags[] envFlags,
-                                                 final boolean isReadBlockedByWrite,
-                                                 final String id) {
+    private BasicLmdbDb<String, String> createEnvAndDb(final TemporaryPathCreator temporaryPathCreator,
+                                                       final EnvFlags[] envFlags,
+                                                       final boolean isReadBlockedByWrite,
+                                                       final String id) {
         final LmdbEnv lmdbEnv = new LmdbEnvFactory(
                 temporaryPathCreator,
                 new LmdbLibrary(temporaryPathCreator,
