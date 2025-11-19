@@ -128,6 +128,9 @@ appConfig:
       100000: 10
       1000000: 3
     warningThresholdPercentage: 90
+  chatMemory:
+    timeToLive: "PT1H"
+    tokenLimit: 1024
   cluster:
     clusterCallIgnoreSSLHostnameVerifier: true
     clusterCallReadTimeout: "PT30S"
@@ -210,6 +213,12 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
   dashboard:
+    openAIModel:
+      apiKey: null
+      baseUrl: null
+      maximumBatchSize: 1024
+      maximumTableInputRows: 100
+      modelId: null
     visualisationDocCache:
       expireAfterAccess: null
       expireAfterWrite: "PT10M"
@@ -390,8 +399,6 @@ appConfig:
       initialRetryBackoffPeriodMs: 1000
       maxNestedElementDepth: 10
       retryCount: 5
-    retention:
-      scrollSize: 10000
     search:
       highlight: true
       scrollDuration: "PT1M"

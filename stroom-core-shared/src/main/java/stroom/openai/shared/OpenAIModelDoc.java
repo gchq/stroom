@@ -44,7 +44,8 @@ import java.util.Objects;
         "description",
         "baseUrl",
         "apiKey",
-        "modelId"})
+        "modelId",
+        "maxContextWindowTokens"})
 @JsonInclude(Include.NON_NULL)
 public class OpenAIModelDoc extends AbstractDoc {
 
@@ -53,15 +54,14 @@ public class OpenAIModelDoc extends AbstractDoc {
 
     @JsonProperty
     private String description;
-
     @JsonProperty
     private String baseUrl;
-
     @JsonProperty
     private String apiKey;
-
     @JsonProperty
     private String modelId;
+    @JsonProperty
+    private int maxContextWindowTokens;
 
     @JsonCreator
     public OpenAIModelDoc(
@@ -75,12 +75,14 @@ public class OpenAIModelDoc extends AbstractDoc {
             @JsonProperty("description") final String description,
             @JsonProperty("baseUrl") final String baseUrl,
             @JsonProperty("apiKey") final String apiKey,
-            @JsonProperty("modelId") final String modelId) {
+            @JsonProperty("modelId") final String modelId,
+            @JsonProperty("maxContextWindowTokens") final int maxContextWindowTokens) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.baseUrl = baseUrl;
         this.apiKey = apiKey;
         this.modelId = modelId;
+        this.maxContextWindowTokens = maxContextWindowTokens;
     }
 
     /**
@@ -122,6 +124,14 @@ public class OpenAIModelDoc extends AbstractDoc {
         this.modelId = modelId;
     }
 
+    public int getMaxContextWindowTokens() {
+        return maxContextWindowTokens;
+    }
+
+    public void setMaxContextWindowTokens(final int maxContextWindowTokens) {
+        this.maxContextWindowTokens = maxContextWindowTokens;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -137,7 +147,8 @@ public class OpenAIModelDoc extends AbstractDoc {
         return Objects.equals(description, model.description) &&
                Objects.equals(baseUrl, model.baseUrl) &&
                Objects.equals(apiKey, model.apiKey) &&
-               Objects.equals(modelId, model.modelId);
+               Objects.equals(modelId, model.modelId) &&
+               Objects.equals(maxContextWindowTokens, model.maxContextWindowTokens);
     }
 
     @Override
@@ -147,7 +158,8 @@ public class OpenAIModelDoc extends AbstractDoc {
                 description,
                 baseUrl,
                 apiKey,
-                modelId);
+                modelId,
+                maxContextWindowTokens);
     }
 
     @Override
@@ -156,6 +168,7 @@ public class OpenAIModelDoc extends AbstractDoc {
                "description='" + description + '\'' +
                ", baseUrl='" + baseUrl + '\'' +
                ", modelId='" + apiKey + '\'' +
+               ", maxContextWindowTokens=" + maxContextWindowTokens +
                '}';
     }
 
@@ -173,6 +186,7 @@ public class OpenAIModelDoc extends AbstractDoc {
         private String baseUrl;
         private String apiKey;
         private String modelId;
+        private int maxContextWindowTokens;
 
         private Builder() {
         }
@@ -183,6 +197,7 @@ public class OpenAIModelDoc extends AbstractDoc {
             this.baseUrl = openAIModelDoc.baseUrl;
             this.apiKey = openAIModelDoc.apiKey;
             this.modelId = openAIModelDoc.modelId;
+            this.maxContextWindowTokens = openAIModelDoc.maxContextWindowTokens;
         }
 
         public Builder description(final String description) {
@@ -205,6 +220,11 @@ public class OpenAIModelDoc extends AbstractDoc {
             return self();
         }
 
+        public Builder maxContextWindowTokens(final int maxContextWindowTokens) {
+            this.maxContextWindowTokens = maxContextWindowTokens;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -222,7 +242,8 @@ public class OpenAIModelDoc extends AbstractDoc {
                     description,
                     baseUrl,
                     apiKey,
-                    modelId);
+                    modelId,
+                    maxContextWindowTokens);
         }
     }
 }

@@ -6,6 +6,5 @@ public enum FeedStatus {
     // old versions of proxy.
     Receive,
     Reject,
-    Drop,
-    ;
+    Drop
 }

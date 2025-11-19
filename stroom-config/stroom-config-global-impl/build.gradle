@@ -31,6 +31,7 @@ dependencies {
     implementation project(':stroom-importexport:stroom-importexport-impl')
     implementation project(':stroom-job:stroom-job-impl')
     implementation project(':stroom-kafka:stroom-kafka-impl')
+    implementation project(':stroom-langchain:stroom-langchain-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-impl')
     implementation project(':stroom-lmdb')
     implementation project(':stroom-meta:stroom-meta-impl')

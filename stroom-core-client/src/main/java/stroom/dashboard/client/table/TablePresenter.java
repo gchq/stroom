@@ -105,6 +105,7 @@ import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
@@ -162,6 +163,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final ButtonView downloadButton;
     private final InlineSvgToggleButton valueFilterButton;
     private final ButtonView annotateButton;
+    private final ButtonView askAiButton;
+    private final AskStroomAiPresenter askAiPresenter;
     private final DownloadPresenter downloadPresenter;
     private final AnnotationManager annotationManager;
     private final RestFactory restFactory;
@@ -198,6 +201,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final FormatPresenter formatPresenter,
                           final TableFilterPresenter tableFilterPresenter,
                           final Provider<TableSettingsPresenter> settingsPresenterProvider,
+                          final AskStroomAiPresenter askAiPresenter,
                           final DownloadPresenter downloadPresenter,
                           final AnnotationManager annotationManager,
                           final RestFactory restFactory,
@@ -211,6 +215,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         this.eventBus = eventBus;
         this.pagerView = pagerView;
         this.locationManager = locationManager;
+        this.askAiPresenter = askAiPresenter;
         this.downloadPresenter = downloadPresenter;
         this.annotationManager = annotationManager;
         this.restFactory = restFactory;
@@ -255,6 +260,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         // Annotate
         annotateButton = pagerView.addButton(SvgPresets.ANNOTATE);
         annotateButton.setVisible(annotationManager.isEnabled());
+
+        // Ask AI
+        askAiButton = pagerView.addButton(SvgPresets.AI);
+        askAiButton.setTitle("Ask Stroom AI");
+        pagerView.addButton(askAiButton);
 
         columnsManager = new ColumnsManager(eventBus,
                 this,
@@ -383,6 +393,23 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         registerHandler(annotateButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
                 annotationManager.showAnnotationMenu(event.getNativeEvent(), selectionModel.getSelectedItems());
+            }
+        }));
+
+        registerHandler(askAiButton.addClickHandler(event -> {
+            if (currentSearchModel != null) {
+                if (currentSearchModel.isPolling()) {
+                    ConfirmEvent.fire(TablePresenter.this,
+                            "Search still in progress. AI response may be based on incomplete data. " +
+                            "Do you wish to continue? ",
+                            ok -> {
+                                if (ok) {
+                                    askStroomAi();
+                                }
+                            });
+                } else {
+                    askStroomAi();
+                }
             }
         }));
 
@@ -542,38 +569,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         .onShow(e -> downloadPresenter.getView().focus())
                         .onHideRequest(e -> {
                             if (e.isOk()) {
-                                final List<ComponentResultRequest> requests = new ArrayList<>();
-                                currentSearch.getComponentSettingsMap().entrySet()
-                                        .stream()
-                                        .filter(settings -> settings.getValue() instanceof TableComponentSettings)
-                                        .forEach(tableSettings -> requests.add(TableResultRequest
-                                                .builder()
-                                                .componentId(tableSettings.getKey())
-                                                .requestedRange(OffsetRange.UNBOUNDED)
-                                                .tableName(getTableName(tableSettings.getKey()))
-                                                .tableSettings(resolveTableSettings())
-                                                .fetch(Fetch.ALL)
-                                                .build()));
-
-                                final Search search = Search
-                                        .builder()
-                                        .dataSourceRef(currentSearch.getDataSourceRef())
-                                        .expression(currentSearch.getExpression())
-                                        .componentSettingsMap(currentSearch.getComponentSettingsMap())
-                                        .params(currentSearch.getParams())
-                                        .timeRange(currentSearch.getTimeRange())
-                                        .incremental(true)
-                                        .queryInfo(currentSearch.getQueryInfo())
-                                        .build();
-
-                                final DashboardSearchRequest searchRequest = DashboardSearchRequest
-                                        .builder()
-                                        .searchRequestSource(currentSearchModel.getSearchRequestSource())
-                                        .queryKey(queryKey)
-                                        .search(search)
-                                        .componentResultRequests(requests)
-                                        .dateTimeSettings(getDateTimeSettings())
-                                        .build();
+                                final DashboardSearchRequest searchRequest = getDashboardSearchRequest(currentSearch,
+                                        queryKey);
 
                                 final DownloadSearchResultsRequest downloadSearchResultsRequest =
                                         new DownloadSearchResultsRequest(
@@ -599,6 +596,60 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         .fire();
             }
         }
+    }
+
+    private void askStroomAi() {
+        if (currentSearchModel != null) {
+            final QueryKey queryKey = currentSearchModel.getCurrentQueryKey();
+            final Search currentSearch = currentSearchModel.getCurrentSearch();
+            if (queryKey != null && currentSearch != null) {
+                ShowPopupEvent.builder(askAiPresenter)
+                        .popupType(PopupType.CLOSE_DIALOG)
+                        .popupSize(PopupSize.resizable(700, 500))
+                        .caption("Ask Stroom AI")
+                        .onShow(e -> {
+                            askAiPresenter.setSearchContext(currentSearchModel, getDashboardSearchRequest(
+                                    currentSearch, queryKey));
+                            askAiPresenter.getView().focus();
+                        })
+                        .fire();
+            }
+        }
+    }
+
+    private DashboardSearchRequest getDashboardSearchRequest(final Search currentSearch, final QueryKey queryKey) {
+        final List<ComponentResultRequest> requests = new ArrayList<>();
+        currentSearch.getComponentSettingsMap().entrySet()
+                .stream()
+                .filter(settings -> settings.getValue() instanceof TableComponentSettings)
+                .forEach(tableSettings -> requests.add(TableResultRequest
+                        .builder()
+                        .componentId(tableSettings.getKey())
+                        .requestedRange(OffsetRange.UNBOUNDED)
+                        .tableName(getTableName(tableSettings.getKey()))
+                        .tableSettings(resolveTableSettings())
+                        .fetch(Fetch.ALL)
+                        .build()));
+
+        final Search search = Search
+                .builder()
+                .dataSourceRef(currentSearch.getDataSourceRef())
+                .expression(currentSearch.getExpression())
+                .componentSettingsMap(currentSearch.getComponentSettingsMap())
+                .params(currentSearch.getParams())
+                .timeRange(currentSearch.getTimeRange())
+                .incremental(true)
+                .queryInfo(currentSearch.getQueryInfo())
+                .build();
+
+        return DashboardSearchRequest
+                .builder()
+                .searchRequestSource(currentSearchModel.getSearchRequestSource())
+                .queryKey(queryKey)
+                .search(search)
+                .componentResultRequests(requests)
+                .dateTimeSettings(getDateTimeSettings())
+                .build();
     }
 
     private String getTableName(final String componentId) {
@@ -683,12 +734,18 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 // Enable download of current results.
                 downloadButton.setEnabled(true);
 
+                // Enable `Ask Stroom AI` button
+                askAiButton.setEnabled(true);
+
                 // Show errors if there are any.
                 messagePanel.showMessage(tableResult.getErrorMessages());
 
             } else {
                 // Disable download of current results.
                 downloadButton.setEnabled(false);
+
+                // Disable `Ask Stroom AI` button
+                askAiButton.setEnabled(false);
 
                 dataGrid.setRowData(0, new ArrayList<>());
                 dataGrid.setRowCount(0, true);

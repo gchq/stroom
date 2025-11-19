@@ -79,6 +79,7 @@ public class OpenAIModelSettingsPresenter extends DocumentEditPresenter<OpenAIMo
         getView().setBaseUrl(model.getBaseUrl());
         getView().setApiKey(model.getApiKey());
         getView().setModelId(model.getModelId());
+        getView().setMaxContextWindowTokens(model.getMaxContextWindowTokens());
     }
 
     @Override
@@ -86,6 +87,7 @@ public class OpenAIModelSettingsPresenter extends DocumentEditPresenter<OpenAIMo
         model.setBaseUrl(getView().getBaseUrl());
         model.setApiKey(getView().getApiKey());
         model.setModelId(getView().getModelId());
+        model.setMaxContextWindowTokens(getView().getMaxContextWindowTokens());
 
         return model;
     }
@@ -104,5 +106,9 @@ public class OpenAIModelSettingsPresenter extends DocumentEditPresenter<OpenAIMo
         String getModelId();
 
         void setModelId(String modelId);
+
+        int getMaxContextWindowTokens();
+
+        void setMaxContextWindowTokens(int maxContextWindowTokens);
     }
 }

@@ -29,11 +29,14 @@ import com.openai.credential.BearerTokenCredential;
 import com.openai.models.models.Model;
 import dev.langchain4j.http.client.jdk.JdkHttpClient;
 import dev.langchain4j.http.client.jdk.JdkHttpClientBuilder;
+import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.cohere.CohereScoringModel;
 import dev.langchain4j.model.cohere.CohereScoringModel.CohereScoringModelBuilder;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.jina.JinaScoringModel;
 import dev.langchain4j.model.jina.JinaScoringModel.JinaScoringModelBuilder;
+import dev.langchain4j.model.openai.OpenAiChatModel;
+import dev.langchain4j.model.openai.OpenAiChatModel.OpenAiChatModelBuilder;
 import dev.langchain4j.model.openai.OpenAiEmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiEmbeddingModel.OpenAiEmbeddingModelBuilder;
 import dev.langchain4j.model.scoring.ScoringModel;
@@ -82,6 +85,29 @@ public class OpenAIServiceImpl implements OpenAIService {
     @Override
     public OpenAIModelDoc getOpenAIModelDoc(final DocRef docRef) {
         return documentResourceHelperProvider.get().read(openAIModelStoreProvider.get(), docRef);
+    }
+
+    @Override
+    public ChatModel getChatModel(final OpenAIModelDoc modelDoc) {
+        return getChatModel(modelDoc.getModelId(), modelDoc.getBaseUrl(), modelDoc.getApiKey());
+    }
+
+    @Override
+    public ChatModel getChatModel(final String modelId, final String baseUrl, final String apiKey) {
+        // Need to specify HTTP 1.1 for vLLM interoperability
+        // Ref: https://github.com/langchain4j/langchain4j/issues/3682
+        final HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1);
+        final JdkHttpClientBuilder jdkHttpClientBuilder = JdkHttpClient.builder()
+                .httpClientBuilder(httpClientBuilder);
+
+        final OpenAiChatModelBuilder modelBuilder = OpenAiChatModel.builder()
+                .modelName(modelId)
+                .baseUrl(baseUrl)
+                .apiKey(apiKey)
+                .httpClientBuilder(jdkHttpClientBuilder);
+
+        return modelBuilder.build();
     }
 
     @Override

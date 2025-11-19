@@ -43,6 +43,7 @@ import stroom.index.impl.IndexFieldDbConfig;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.job.impl.JobSystemConfig;
 import stroom.kafka.impl.KafkaConfig;
+import stroom.langchain.api.ChatMemoryConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.lmdb.LmdbLibraryConfig;
 import stroom.node.impl.NodeConfig;
@@ -87,6 +88,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_AUTO_CONTENT_CREATION = "autoContentCreation";
     public static final String PROP_NAME_BENCHMARK = "benchmark";
     public static final String PROP_NAME_BYTE_BUFFER_POOL = "byteBufferPool";
+    public static final String PROP_NAME_CHAT_MEMORY = "chatMemory";
     public static final String PROP_NAME_CLUSTER = "cluster";
     public static final String PROP_NAME_CLUSTER_LOCK = "clusterLock";
     public static final String PROP_NAME_CLUSTER_TASK = "clusterTask";
@@ -142,6 +144,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final ContentStoreConfig contentStoreConfig;
     private final AutoContentCreationConfig autoContentCreationConfig;
     private final ByteBufferPoolConfig byteBufferPoolConfig;
+    private final ChatMemoryConfig chatMemoryConfig;
     private final ClusterConfig clusterConfig;
     private final ClusterLockConfig clusterLockConfig;
     private final CommonDbConfig commonDbConfig;
@@ -197,6 +200,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                 new ContentStoreConfig(),
                 new AutoContentCreationConfig(),
                 new ByteBufferPoolConfig(),
+                new ChatMemoryConfig(),
                 new ClusterConfig(),
                 new ClusterLockConfig(),
                 new CommonDbConfig(),
@@ -251,6 +255,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_CONTENT_STORE) final ContentStoreConfig contentStoreConfig,
                      @JsonProperty(PROP_NAME_AUTO_CONTENT_CREATION) final AutoContentCreationConfig autoContentCreationConfig,
                      @JsonProperty(PROP_NAME_BYTE_BUFFER_POOL) final ByteBufferPoolConfig byteBufferPoolConfig,
+                     @JsonProperty(PROP_NAME_CHAT_MEMORY) final ChatMemoryConfig chatMemoryConfig,
                      @JsonProperty(PROP_NAME_CLUSTER) final ClusterConfig clusterConfig,
                      @JsonProperty(PROP_NAME_CLUSTER_LOCK) final ClusterLockConfig clusterLockConfig,
                      @JsonProperty(PROP_NAME_COMMON_DB_DETAILS) final CommonDbConfig commonDbConfig,
@@ -301,6 +306,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.contentStoreConfig = contentStoreConfig;
         this.autoContentCreationConfig = autoContentCreationConfig;
         this.byteBufferPoolConfig = byteBufferPoolConfig;
+        this.chatMemoryConfig = chatMemoryConfig;
         this.clusterConfig = clusterConfig;
         this.clusterLockConfig = clusterLockConfig;
         this.commonDbConfig = commonDbConfig;
@@ -395,6 +401,11 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty(PROP_NAME_BYTE_BUFFER_POOL)
     public ByteBufferPoolConfig getByteBufferPoolConfig() {
         return byteBufferPoolConfig;
+    }
+
+    @JsonProperty(PROP_NAME_CHAT_MEMORY)
+    public ChatMemoryConfig getChatMemoryConfig() {
+        return chatMemoryConfig;
     }
 
     @JsonProperty(PROP_NAME_CLUSTER)

@@ -822,14 +822,14 @@
         "tags" : [ "Annotations" ]
       }
     },
-    "/annotation/v1/changeDocumentPermissions" : {
+    "/annotation/v1/changeAnnotationEntry" : {
       "post" : {
-        "operationId" : "changeDocumentPermissions",
+        "operationId" : "changeAnnotationEntry",
         "requestBody" : {
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/SingleDocumentPermissionChangeRequest"
+                "$ref" : "#/components/schemas/ChangeAnnotationEntryRequest"
               }
             }
           },
@@ -848,7 +848,7 @@
             "description" : "default response"
           }
         },
-        "summary" : "Change document permissions",
+        "summary" : "Change an annotation entry",
         "tags" : [ "Annotations" ]
       }
     },
@@ -940,6 +940,36 @@
         "tags" : [ "Annotations" ]
       }
     },
+    "/annotation/v1/deleteAnnotationEntry" : {
+      "post" : {
+        "operationId" : "deleteAnnotationEntry",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DeleteAnnotationEntryRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Delete an annotation entry",
+        "tags" : [ "Annotations" ]
+      }
+    },
     "/annotation/v1/deleteAnnotationTag" : {
       "delete" : {
         "operationId" : "deleteAnnotationTag",
@@ -965,6 +995,36 @@
           }
         },
         "summary" : "Delete an annotation tag",
+        "tags" : [ "Annotations" ]
+      }
+    },
+    "/annotation/v1/fetchAnnotationEntry" : {
+      "post" : {
+        "operationId" : "fetchAnnotationEntry",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FetchAnnotationEntryRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AnnotationEntry"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch an annotation entry",
         "tags" : [ "Annotations" ]
       }
     },
@@ -998,18 +1058,18 @@
         "tags" : [ "Annotations" ]
       }
     },
-    "/annotation/v1/getAnnotationByRef" : {
+    "/annotation/v1/findAnnotations" : {
       "post" : {
-        "operationId" : "getAnnotationByRef",
+        "operationId" : "findAnnotations",
         "requestBody" : {
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/DocRef"
+                "$ref" : "#/components/schemas/FindAnnotationRequest"
               }
             }
           },
-          "description" : "annotationRef",
+          "description" : "request",
           "required" : true
         },
         "responses" : {
@@ -1017,14 +1077,14 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Annotation"
+                  "$ref" : "#/components/schemas/ResultPageAnnotation"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "Gets an annotation by ref",
+        "summary" : "Finds annotations",
         "tags" : [ "Annotations" ]
       }
     },
@@ -1497,6 +1557,36 @@
         "tags" : [ "API Key" ]
       }
     },
+    "/apikey/v2/verifyApiKey" : {
+      "post" : {
+        "operationId" : "findApiKeysByCriteria_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VerifyApiKeyRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserDesc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Check if the passed API key is valid",
+        "tags" : [ "API Key" ]
+      }
+    },
     "/apikey/v2/{id}" : {
       "delete" : {
         "operationId" : "deleteApiKey_1",
@@ -1873,120 +1963,6 @@
         },
         "summary" : "Lists caches",
         "tags" : [ "Caches" ]
-      }
-    },
-    "/cluster/lock/v1/keepALive/{nodeName}" : {
-      "put" : {
-        "operationId" : "keepClusterLockAlive",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "nodeName",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ClusterLockKey"
-              }
-            }
-          },
-          "description" : "key",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Keep a lock alive",
-        "tags" : [ "Cluster lock" ]
-      }
-    },
-    "/cluster/lock/v1/release/{nodeName}" : {
-      "put" : {
-        "operationId" : "releaseClusterLock",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "nodeName",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ClusterLockKey"
-              }
-            }
-          },
-          "description" : "key",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Release a lock",
-        "tags" : [ "Cluster lock" ]
-      }
-    },
-    "/cluster/lock/v1/try/{nodeName}" : {
-      "put" : {
-        "operationId" : "tryClusterLock",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "nodeName",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ClusterLockKey"
-              }
-            }
-          },
-          "description" : "key",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Try to lock",
-        "tags" : [ "Cluster lock" ]
       }
     },
     "/config/v1" : {
@@ -2389,6 +2365,410 @@
         },
         "summary" : "Get the list of fields for use in the match expression.",
         "tags" : [ "Content Templates" ]
+      }
+    },
+    "/contentstore/checkContentUpgradeAvailable" : {
+      "post" : {
+        "operationId" : "checkContentUpgradeAvailable",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ContentStoreContentPack"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ContentStoreValueResponseBoolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Checks if updated content is available",
+        "tags" : [ "ContentStoreContentPacks" ]
+      }
+    },
+    "/contentstore/create" : {
+      "post" : {
+        "operationId" : "createGitRepoFromContentPack",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ContentStoreCreateGitRepoRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ContentStoreResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Creates a GitRepoDoc from a Content Pack",
+        "tags" : [ "ContentStoreContentPacks" ]
+      }
+    },
+    "/contentstore/exists" : {
+      "post" : {
+        "operationId" : "GitRepoDocExistsForContentPack",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ContentStoreContentPack"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Checks to see if a GitRepoDoc exists for the Content Pack",
+        "tags" : [ "ContentStoreContentPacks" ]
+      }
+    },
+    "/contentstore/list" : {
+      "post" : {
+        "operationId" : "listContentStoreContentPacks",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PageRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageContentStoreContentPackWithDynamicState"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Lists Content Store Content Packs",
+        "tags" : [ "ContentStoreContentPacks" ]
+      }
+    },
+    "/contentstore/upgradeContentPack" : {
+      "post" : {
+        "operationId" : "upgradeContentPack",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ContentStoreContentPack"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ContentStoreResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Upgrades the content pack and its content",
+        "tags" : [ "ContentStoreContentPacks" ]
+      }
+    },
+    "/credentials/create" : {
+      "post" : {
+        "operationId" : "createCredential",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CredentialsCreateRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CredentialsResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Creates the credential",
+        "tags" : [ "Credentials" ]
+      }
+    },
+    "/credentials/delete" : {
+      "post" : {
+        "operationId" : "deleteCredential",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CredentialsResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Deletes the credentials and secret with the given UUID",
+        "tags" : [ "Credentials" ]
+      }
+    },
+    "/credentials/get" : {
+      "post" : {
+        "operationId" : "getCredentialsWithUuid",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CredentialsResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Returns the credentials with the given UUID, if it exists, or null if it does not exist",
+        "tags" : [ "Credentials" ]
+      }
+    },
+    "/credentials/getSecret" : {
+      "post" : {
+        "operationId" : "getSecret",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CredentialsResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Gets a secret from the database given the ID",
+        "tags" : [ "Credentials" ]
+      }
+    },
+    "/credentials/list" : {
+      "post" : {
+        "operationId" : "listCredentials",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PageRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageCredentialsWithPerms"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Lists credentials",
+        "tags" : [ "Credentials" ]
+      }
+    },
+    "/credentials/store" : {
+      "post" : {
+        "operationId" : "storeCredential",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Credentials"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CredentialsResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Stores the credential",
+        "tags" : [ "Credentials" ]
+      }
+    },
+    "/credentials/storeSecret" : {
+      "post" : {
+        "operationId" : "storeSecret",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CredentialsSecret"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CredentialsResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Stores the secret in the database under the given ID",
+        "tags" : [ "Credentials" ]
+      }
+    },
+    "/dashboard/v1/askStroomAi" : {
+      "post" : {
+        "operationId" : "askStroomAi",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AskStroomAiRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AskStroomAiResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Ask Stroom AI a question relating to the current search context",
+        "tags" : [ "Dashboards" ]
+      }
+    },
+    "/dashboard/v1/askStroomAi/{nodeName}" : {
+      "post" : {
+        "operationId" : "askStroomAi_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "nodeName",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AskStroomAiRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AskStroomAiResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Ask Stroom AI a question relating to the current search context",
+        "tags" : [ "Dashboards" ]
       }
     },
     "/dashboard/v1/columnValues" : {
@@ -3936,7 +4316,7 @@
     },
     "/explorer/v2/changeDocumentPermissions" : {
       "post" : {
-        "operationId" : "changeDocumentPermissions_1",
+        "operationId" : "changeDocumentPermissions",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -5270,6 +5650,36 @@
         "tags" : [ "Data Volume Groups" ]
       }
     },
+    "/gitRepo/v1/areUpdatesAvailable" : {
+      "post" : {
+        "operationId" : "areUpdatesAvailable",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/GitRepoDoc"
+              }
+            }
+          },
+          "description" : "gitRepoDoc",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/GitRepoResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Check if any content has changed",
+        "tags" : [ "GitRepos" ]
+      }
+    },
     "/gitRepo/v1/pullFromGit" : {
       "post" : {
         "operationId" : "pullFromGit",
@@ -5353,7 +5763,7 @@
             "description" : "default response"
           }
         },
-        "summary" : "Fetch a GIT repo doc by its UUID",
+        "summary" : "Fetch a Git repo doc by its UUID",
         "tags" : [ "GitRepos" ]
       },
       "put" : {
@@ -5389,7 +5799,7 @@
             "description" : "default response"
           }
         },
-        "summary" : "Update a GIT repo doc",
+        "summary" : "Update a Git repo doc",
         "tags" : [ "GitRepos" ]
       }
     },
@@ -6975,6 +7385,282 @@
         "tags" : [ "Authentication" ]
       }
     },
+    "/openAIModel/v1/validate" : {
+      "post" : {
+        "operationId" : "validateOpenAIModel",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/OpenAIModelDoc"
+              }
+            }
+          },
+          "description" : "openAIModelDoc",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/OpenAIModelTestResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Validate OpenAI model",
+        "tags" : [ "OpenAI Model" ]
+      }
+    },
+    "/openAIModel/v1/{uuid}" : {
+      "get" : {
+        "operationId" : "fetchOpenAIModel",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "uuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/OpenAIModelDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch an OpenAI model doc by its UUID",
+        "tags" : [ "OpenAI Model" ]
+      },
+      "put" : {
+        "operationId" : "updateOpenAIModel",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "uuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/OpenAIModelDoc"
+              }
+            }
+          },
+          "description" : "doc",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/OpenAIModelDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Update an OpenAI model doc",
+        "tags" : [ "OpenAI Model" ]
+      }
+    },
+    "/pathways/v2/addPathway" : {
+      "post" : {
+        "operationId" : "addPathway",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AddPathway"
+              }
+            }
+          },
+          "description" : "change",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Add pathway",
+        "tags" : [ "Pathways" ]
+      }
+    },
+    "/pathways/v2/deletePathway" : {
+      "delete" : {
+        "operationId" : "deletePathway",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DeletePathway"
+              }
+            }
+          },
+          "description" : "change",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Delete pathway",
+        "tags" : [ "Pathways" ]
+      }
+    },
+    "/pathways/v2/findPathways" : {
+      "post" : {
+        "operationId" : "findPathways",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FindPathwayCriteria"
+              }
+            }
+          },
+          "description" : "criteria",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PathwayResultPage"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find pathways",
+        "tags" : [ "Pathways" ]
+      }
+    },
+    "/pathways/v2/updatePathway" : {
+      "put" : {
+        "operationId" : "updatePathway",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdatePathway"
+              }
+            }
+          },
+          "description" : "change",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Update pathway",
+        "tags" : [ "Pathways" ]
+      }
+    },
+    "/pathways/v2/{uuid}" : {
+      "get" : {
+        "operationId" : "fetchPathways",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "uuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PathwaysDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch pathways doc by its UUID",
+        "tags" : [ "Pathways" ]
+      },
+      "put" : {
+        "operationId" : "updatePathways",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "uuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PathwaysDoc"
+              }
+            }
+          },
+          "description" : "doc",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PathwaysDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Update an pathways doc",
+        "tags" : [ "Pathways" ]
+      }
+    },
     "/permission/app/v1" : {
       "get" : {
         "operationId" : "getEffectiveAppPermissions",
@@ -7082,6 +7768,36 @@
         },
         "summary" : "Get a detailed report of app permissions for the specified user",
         "tags" : [ "Application Permissions" ]
+      }
+    },
+    "/permission/changeDocumentPermissions" : {
+      "post" : {
+        "operationId" : "changeDocumentPermissions_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SingleDocumentPermissionChangeRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Change document permissions",
+        "tags" : [ "PermissionChange" ]
       }
     },
     "/permission/changeEvent/v1/fireChange/{nodeName}" : {
@@ -8223,6 +8939,47 @@
         "tags" : [ "Queries" ]
       }
     },
+    "/query/v1/csv/search" : {
+      "get" : {
+        "operationId" : "queryCsv",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "query",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "offset",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "in" : "query",
+          "name" : "length",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 100
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Perform a csv query",
+        "tags" : [ "Queries" ]
+      }
+    },
     "/query/v1/downloadSearchResults" : {
       "post" : {
         "operationId" : "downloadQuerySearchResultsLocal",
@@ -9277,100 +10034,9 @@
         "tags" : [ "ResultStore" ]
       }
     },
-    "/ruleset/v2/export" : {
-      "post" : {
-        "operationId" : "exportReceiveDataRules",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/DocRef"
-              }
-            }
-          },
-          "description" : "DocRef",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Base64EncodedDocumentData"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Submit an export request",
-        "tags" : [ "Rule Set" ]
-      }
-    },
-    "/ruleset/v2/import" : {
-      "post" : {
-        "operationId" : "importReceiveDataRules",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/Base64EncodedDocumentData"
-              }
-            }
-          },
-          "description" : "DocumentData",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/DocRef"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Submit an import request",
-        "tags" : [ "Rule Set" ]
-      }
-    },
-    "/ruleset/v2/list" : {
-      "get" : {
-        "operationId" : "listReceiveDataRules",
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/DocRef"
-                  },
-                  "uniqueItems" : true
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Submit a request for a list of doc refs held by this service",
-        "tags" : [ "Rule Set" ]
-      }
-    },
-    "/ruleset/v2/{uuid}" : {
+    "/ruleset/v2" : {
       "get" : {
         "operationId" : "fetchReceiveDataRules",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "uuid",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
         "responses" : {
           "default" : {
             "content" : {
@@ -9383,19 +10049,11 @@
             "description" : "default response"
           }
         },
-        "summary" : "Fetch a rules doc by its UUID",
+        "summary" : "Fetch receipt rules",
         "tags" : [ "Rule Set" ]
       },
       "put" : {
         "operationId" : "updateReceiveDataRules",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "uuid",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -9419,7 +10077,26 @@
             "description" : "default response"
           }
         },
-        "summary" : "Update a rules doc",
+        "summary" : "Update receipt rules",
+        "tags" : [ "Rule Set" ]
+      }
+    },
+    "/ruleset/v2/fetchHashedRules" : {
+      "get" : {
+        "operationId" : "fetchHashedReceiveDataRules",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/HashedReceiveDataRules"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch hashed receipt rules",
         "tags" : [ "Rule Set" ]
       }
     },
@@ -11203,6 +11880,122 @@
         "tags" : [ "Text Converters" ]
       }
     },
+    "/traces/v1/getTrace" : {
+      "post" : {
+        "operationId" : "tracesGetTrace",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/GetTraceRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Trace"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Gets trace from a remote Plan B store.",
+        "tags" : [ "Traces Query" ]
+      }
+    },
+    "/traces/v1/getTraces" : {
+      "post" : {
+        "operationId" : "tracesGetTraces",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FindTraceCriteria"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TracesResultPage"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Gets traces from a remote Plan B store.",
+        "tags" : [ "Traces Query" ]
+      }
+    },
+    "/traces/v2/findTrace" : {
+      "post" : {
+        "operationId" : "findTrace",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/GetTraceRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Trace"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find trace",
+        "tags" : [ "Traces" ]
+      }
+    },
+    "/traces/v2/findTraces" : {
+      "post" : {
+        "operationId" : "findTraces",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FindTraceCriteria"
+              }
+            }
+          },
+          "description" : "criteria",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageTraceRoot"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find traces",
+        "tags" : [ "Traces" ]
+      }
+    },
     "/userInfo/v1/{userUuid}" : {
       "get" : {
         "operationId" : "fetchUser",
@@ -11496,6 +12289,44 @@
           }
         },
         "summary" : "Updates a user",
+        "tags" : [ "Authorisation" ]
+      }
+    },
+    "/users/v1/{toUserUuid}/copyPermissions" : {
+      "post" : {
+        "operationId" : "copyGroupsAndPermissions",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "toUserUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          },
+          "description" : "fromUserUuid",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/User"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Copy user groups and permissions from one user to another",
         "tags" : [ "Authorisation" ]
       }
     },
@@ -11811,6 +12642,34 @@
         "tags" : [ "Word List (v1)" ]
       }
     },
+    "/xmlSchema/v1/validate" : {
+      "post" : {
+        "operationId" : "validateXmlSchema",
+        "requestBody" : {
+          "content" : {
+            "text/plain" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/XmlSchemaValidationResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Validate an XML schema",
+        "tags" : [ "XML Schemas" ]
+      }
+    },
     "/xmlSchema/v1/{uuid}" : {
       "get" : {
         "operationId" : "fetchXmlSchema",
@@ -11960,7 +12819,7 @@
         "properties" : {
           "permission" : {
             "type" : "string",
-            "enum" : [ "ADMINISTRATOR", "ANNOTATIONS", "MANAGE_CACHE_PERMISSION", "MANAGE_CONTENT_TEMPLATES_PERMISSION", "VIEW_DATA_PERMISSION", "VIEW_DATA_WITH_PIPELINE_PERMISSION", "DELETE_DATA_PERMISSION", "IMPORT_DATA_PERMISSION", "EXPORT_DATA_PERMISSION", "MANAGE_USERS_PERMISSION", "CHANGE_OWNER_PERMISSION", "STEPPING_PERMISSION", "MANAGE_PROCESSORS_PERMISSION", "MANAGE_TASKS_PERMISSION", "DOWNLOAD_SEARCH_RESULTS_PERMISSION", "MANAGE_API_KEYS", "MANAGE_JOBS_PERMISSION", "MANAGE_PROPERTIES_PERMISSION", "MANAGE_POLICIES_PERMISSION", "MANAGE_NODES_PERMISSION", "MANAGE_INDEX_SHARDS_PERMISSION", "MANAGE_VOLUMES_PERMISSION", "MANAGE_DB_PERMISSION", "IMPORT_CONFIGURATION", "EXPORT_CONFIGURATION", "VIEW_SYSTEM_INFO_PERMISSION", "CHECK_RECEIPT_STATUS" ]
+            "enum" : [ "ADMINISTRATOR", "ANNOTATIONS", "CREDENTIALS", "MANAGE_CACHE_PERMISSION", "VIEW_DATA_PERMISSION", "VIEW_DATA_WITH_PIPELINE_PERMISSION", "DELETE_DATA_PERMISSION", "IMPORT_DATA_PERMISSION", "EXPORT_DATA_PERMISSION", "MANAGE_USERS_PERMISSION", "CHANGE_OWNER_PERMISSION", "STEPPING_PERMISSION", "MANAGE_PROCESSORS_PERMISSION", "MANAGE_TASKS_PERMISSION", "DOWNLOAD_SEARCH_RESULTS_PERMISSION", "MANAGE_API_KEYS", "MANAGE_CONTENT_TEMPLATES_PERMISSION", "MANAGE_DATA_RECEIPT_RULES_PERMISSION", "MANAGE_JOBS_PERMISSION", "MANAGE_PROPERTIES_PERMISSION", "MANAGE_POLICIES_PERMISSION", "MANAGE_NODES_PERMISSION", "MANAGE_INDEX_SHARDS_PERMISSION", "MANAGE_VOLUMES_PERMISSION", "MANAGE_DB_PERMISSION", "IMPORT_CONFIGURATION", "EXPORT_CONFIGURATION", "VIEW_SYSTEM_INFO_PERMISSION", "CHECK_RECEIPT_STATUS", "FETCH_HASHED_RECEIPT_POLICY_RULES", "VERIFY_API_KEY", "STROOM_PROXY" ]
           },
           "type" : {
             "type" : "string"
@@ -12249,6 +13108,19 @@
           }
         } ]
       },
+      "AddAnnotationTable" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractAnnotationChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "table" : {
+              "$ref" : "#/components/schemas/AnnotationTable"
+            }
+          }
+        } ]
+      },
       "AddAppPermission" : {
         "type" : "object",
         "allOf" : [ {
@@ -12279,6 +13151,17 @@
           },
           "indexField" : {
             "$ref" : "#/components/schemas/IndexFieldImpl"
+          }
+        }
+      },
+      "AddPathway" : {
+        "type" : "object",
+        "properties" : {
+          "docRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "pathway" : {
+            "$ref" : "#/components/schemas/Pathway"
           }
         }
       },
@@ -12608,13 +13491,16 @@
       "AnnotationEntry" : {
         "type" : "object",
         "properties" : {
+          "deleted" : {
+            "type" : "boolean"
+          },
           "entryTime" : {
             "type" : "integer",
             "format" : "int64"
           },
           "entryType" : {
             "type" : "string",
-            "enum" : [ "TITLE", "SUBJECT", "STATUS", "ASSIGNED", "COMMENT", "LINK", "UNLINK", "RETENTION_PERIOD", "DESCRIPTION", "ADD_TO_COLLECTION", "REMOVE_FROM_COLLECTION", "ADD_LABEL", "REMOVE_LABEL", "DELETE" ]
+            "enum" : [ "TITLE", "SUBJECT", "STATUS", "ASSIGNED", "COMMENT", "LINK_EVENT", "UNLINK_EVENT", "RETENTION_PERIOD", "DESCRIPTION", "ADD_TO_COLLECTION", "REMOVE_FROM_COLLECTION", "ADD_LABEL", "REMOVE_LABEL", "ADD_TABLE_DATA", "LINK_ANNOTATION", "UNLINK_ANNOTATION", "DELETE" ]
           },
           "entryUser" : {
             "$ref" : "#/components/schemas/UserRef"
@@ -12625,8 +13511,43 @@
           "id" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "previousValue" : {
+            "$ref" : "#/components/schemas/EntryValue"
+          },
+          "updateTime" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "updateUser" : {
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
+      },
+      "AnnotationTable" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/EntryValue"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "columns" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            },
+            "values" : {
+              "type" : "array",
+              "items" : {
+                "type" : "array",
+                "items" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        } ]
       },
       "AnnotationTag" : {
         "type" : "object",
@@ -12647,6 +13568,46 @@
             "enum" : [ "STATUS", "LABEL", "COLLECTION" ]
           },
           "uuid" : {
+            "type" : "string"
+          }
+        }
+      },
+      "AnyBoolean" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ConstraintValue"
+        } ]
+      },
+      "AnyTypeValue" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ConstraintValue"
+        } ]
+      },
+      "AnyValue" : {
+        "type" : "object",
+        "properties" : {
+          "arrayValue" : {
+            "$ref" : "#/components/schemas/ArrayValue"
+          },
+          "boolValue" : {
+            "type" : "boolean"
+          },
+          "bytesValue" : {
+            "type" : "string"
+          },
+          "doubleValue" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "intValue" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "kvlistValue" : {
+            "$ref" : "#/components/schemas/KeyValueList"
+          },
+          "stringValue" : {
             "type" : "string"
           }
         }
@@ -12714,6 +13675,40 @@
           }
         }
       },
+      "AppPermissionSet" : {
+        "type" : "object",
+        "discriminator" : {
+          "propertyName" : "type"
+        },
+        "properties" : {
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "type" ]
+      },
+      "AppPermissionSetImpl" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AppPermissionSet"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "appPermissions" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string",
+                "enum" : [ "ADMINISTRATOR", "ANNOTATIONS", "CREDENTIALS", "MANAGE_CACHE_PERMISSION", "VIEW_DATA_PERMISSION", "VIEW_DATA_WITH_PIPELINE_PERMISSION", "DELETE_DATA_PERMISSION", "IMPORT_DATA_PERMISSION", "EXPORT_DATA_PERMISSION", "MANAGE_USERS_PERMISSION", "CHANGE_OWNER_PERMISSION", "STEPPING_PERMISSION", "MANAGE_PROCESSORS_PERMISSION", "MANAGE_TASKS_PERMISSION", "DOWNLOAD_SEARCH_RESULTS_PERMISSION", "MANAGE_API_KEYS", "MANAGE_CONTENT_TEMPLATES_PERMISSION", "MANAGE_DATA_RECEIPT_RULES_PERMISSION", "MANAGE_JOBS_PERMISSION", "MANAGE_PROPERTIES_PERMISSION", "MANAGE_POLICIES_PERMISSION", "MANAGE_NODES_PERMISSION", "MANAGE_INDEX_SHARDS_PERMISSION", "MANAGE_VOLUMES_PERMISSION", "MANAGE_DB_PERMISSION", "IMPORT_CONFIGURATION", "EXPORT_CONFIGURATION", "VIEW_SYSTEM_INFO_PERMISSION", "CHECK_RECEIPT_STATUS", "FETCH_HASHED_RECEIPT_POLICY_RULES", "VERIFY_API_KEY", "STROOM_PROXY" ]
+              },
+              "uniqueItems" : true
+            },
+            "operator" : {
+              "type" : "string",
+              "enum" : [ "ALL_OF", "ONE_OF", "SINGLE", "EMPTY" ]
+            }
+          }
+        } ]
+      },
       "AppUserPermissions" : {
         "type" : "object",
         "properties" : {
@@ -12721,7 +13716,7 @@
             "type" : "array",
             "items" : {
               "type" : "string",
-              "enum" : [ "ADMINISTRATOR", "ANNOTATIONS", "MANAGE_CACHE_PERMISSION", "MANAGE_CONTENT_TEMPLATES_PERMISSION", "VIEW_DATA_PERMISSION", "VIEW_DATA_WITH_PIPELINE_PERMISSION", "DELETE_DATA_PERMISSION", "IMPORT_DATA_PERMISSION", "EXPORT_DATA_PERMISSION", "MANAGE_USERS_PERMISSION", "CHANGE_OWNER_PERMISSION", "STEPPING_PERMISSION", "MANAGE_PROCESSORS_PERMISSION", "MANAGE_TASKS_PERMISSION", "DOWNLOAD_SEARCH_RESULTS_PERMISSION", "MANAGE_API_KEYS", "MANAGE_JOBS_PERMISSION", "MANAGE_PROPERTIES_PERMISSION", "MANAGE_POLICIES_PERMISSION", "MANAGE_NODES_PERMISSION", "MANAGE_INDEX_SHARDS_PERMISSION", "MANAGE_VOLUMES_PERMISSION", "MANAGE_DB_PERMISSION", "IMPORT_CONFIGURATION", "EXPORT_CONFIGURATION", "VIEW_SYSTEM_INFO_PERMISSION", "CHECK_RECEIPT_STATUS" ]
+              "enum" : [ "ADMINISTRATOR", "ANNOTATIONS", "CREDENTIALS", "MANAGE_CACHE_PERMISSION", "VIEW_DATA_PERMISSION", "VIEW_DATA_WITH_PIPELINE_PERMISSION", "DELETE_DATA_PERMISSION", "IMPORT_DATA_PERMISSION", "EXPORT_DATA_PERMISSION", "MANAGE_USERS_PERMISSION", "CHANGE_OWNER_PERMISSION", "STEPPING_PERMISSION", "MANAGE_PROCESSORS_PERMISSION", "MANAGE_TASKS_PERMISSION", "DOWNLOAD_SEARCH_RESULTS_PERMISSION", "MANAGE_API_KEYS", "MANAGE_CONTENT_TEMPLATES_PERMISSION", "MANAGE_DATA_RECEIPT_RULES_PERMISSION", "MANAGE_JOBS_PERMISSION", "MANAGE_PROPERTIES_PERMISSION", "MANAGE_POLICIES_PERMISSION", "MANAGE_NODES_PERMISSION", "MANAGE_INDEX_SHARDS_PERMISSION", "MANAGE_VOLUMES_PERMISSION", "MANAGE_DB_PERMISSION", "IMPORT_CONFIGURATION", "EXPORT_CONFIGURATION", "VIEW_SYSTEM_INFO_PERMISSION", "CHECK_RECEIPT_STATUS", "FETCH_HASHED_RECEIPT_POLICY_RULES", "VERIFY_API_KEY", "STROOM_PROXY" ]
             },
             "uniqueItems" : true
           },
@@ -12729,7 +13724,7 @@
             "type" : "array",
             "items" : {
               "type" : "string",
-              "enum" : [ "ADMINISTRATOR", "ANNOTATIONS", "MANAGE_CACHE_PERMISSION", "MANAGE_CONTENT_TEMPLATES_PERMISSION", "VIEW_DATA_PERMISSION", "VIEW_DATA_WITH_PIPELINE_PERMISSION", "DELETE_DATA_PERMISSION", "IMPORT_DATA_PERMISSION", "EXPORT_DATA_PERMISSION", "MANAGE_USERS_PERMISSION", "CHANGE_OWNER_PERMISSION", "STEPPING_PERMISSION", "MANAGE_PROCESSORS_PERMISSION", "MANAGE_TASKS_PERMISSION", "DOWNLOAD_SEARCH_RESULTS_PERMISSION", "MANAGE_API_KEYS", "MANAGE_JOBS_PERMISSION", "MANAGE_PROPERTIES_PERMISSION", "MANAGE_POLICIES_PERMISSION", "MANAGE_NODES_PERMISSION", "MANAGE_INDEX_SHARDS_PERMISSION", "MANAGE_VOLUMES_PERMISSION", "MANAGE_DB_PERMISSION", "IMPORT_CONFIGURATION", "EXPORT_CONFIGURATION", "VIEW_SYSTEM_INFO_PERMISSION", "CHECK_RECEIPT_STATUS" ]
+              "enum" : [ "ADMINISTRATOR", "ANNOTATIONS", "CREDENTIALS", "MANAGE_CACHE_PERMISSION", "VIEW_DATA_PERMISSION", "VIEW_DATA_WITH_PIPELINE_PERMISSION", "DELETE_DATA_PERMISSION", "IMPORT_DATA_PERMISSION", "EXPORT_DATA_PERMISSION", "MANAGE_USERS_PERMISSION", "CHANGE_OWNER_PERMISSION", "STEPPING_PERMISSION", "MANAGE_PROCESSORS_PERMISSION", "MANAGE_TASKS_PERMISSION", "DOWNLOAD_SEARCH_RESULTS_PERMISSION", "MANAGE_API_KEYS", "MANAGE_CONTENT_TEMPLATES_PERMISSION", "MANAGE_DATA_RECEIPT_RULES_PERMISSION", "MANAGE_JOBS_PERMISSION", "MANAGE_PROPERTIES_PERMISSION", "MANAGE_POLICIES_PERMISSION", "MANAGE_NODES_PERMISSION", "MANAGE_INDEX_SHARDS_PERMISSION", "MANAGE_VOLUMES_PERMISSION", "MANAGE_DB_PERMISSION", "IMPORT_CONFIGURATION", "EXPORT_CONFIGURATION", "VIEW_SYSTEM_INFO_PERMISSION", "CHECK_RECEIPT_STATUS", "FETCH_HASHED_RECEIPT_POLICY_RULES", "VERIFY_API_KEY", "STROOM_PROXY" ]
             },
             "uniqueItems" : true
           },
@@ -12745,7 +13740,7 @@
             "type" : "array",
             "items" : {
               "type" : "string",
-              "enum" : [ "ADMINISTRATOR", "ANNOTATIONS", "MANAGE_CACHE_PERMISSION", "MANAGE_CONTENT_TEMPLATES_PERMISSION", "VIEW_DATA_PERMISSION", "VIEW_DATA_WITH_PIPELINE_PERMISSION", "DELETE_DATA_PERMISSION", "IMPORT_DATA_PERMISSION", "EXPORT_DATA_PERMISSION", "MANAGE_USERS_PERMISSION", "CHANGE_OWNER_PERMISSION", "STEPPING_PERMISSION", "MANAGE_PROCESSORS_PERMISSION", "MANAGE_TASKS_PERMISSION", "DOWNLOAD_SEARCH_RESULTS_PERMISSION", "MANAGE_API_KEYS", "MANAGE_JOBS_PERMISSION", "MANAGE_PROPERTIES_PERMISSION", "MANAGE_POLICIES_PERMISSION", "MANAGE_NODES_PERMISSION", "MANAGE_INDEX_SHARDS_PERMISSION", "MANAGE_VOLUMES_PERMISSION", "MANAGE_DB_PERMISSION", "IMPORT_CONFIGURATION", "EXPORT_CONFIGURATION", "VIEW_SYSTEM_INFO_PERMISSION", "CHECK_RECEIPT_STATUS" ]
+              "enum" : [ "ADMINISTRATOR", "ANNOTATIONS", "CREDENTIALS", "MANAGE_CACHE_PERMISSION", "VIEW_DATA_PERMISSION", "VIEW_DATA_WITH_PIPELINE_PERMISSION", "DELETE_DATA_PERMISSION", "IMPORT_DATA_PERMISSION", "EXPORT_DATA_PERMISSION", "MANAGE_USERS_PERMISSION", "CHANGE_OWNER_PERMISSION", "STEPPING_PERMISSION", "MANAGE_PROCESSORS_PERMISSION", "MANAGE_TASKS_PERMISSION", "DOWNLOAD_SEARCH_RESULTS_PERMISSION", "MANAGE_API_KEYS", "MANAGE_CONTENT_TEMPLATES_PERMISSION", "MANAGE_DATA_RECEIPT_RULES_PERMISSION", "MANAGE_JOBS_PERMISSION", "MANAGE_PROPERTIES_PERMISSION", "MANAGE_POLICIES_PERMISSION", "MANAGE_NODES_PERMISSION", "MANAGE_INDEX_SHARDS_PERMISSION", "MANAGE_VOLUMES_PERMISSION", "MANAGE_DB_PERMISSION", "IMPORT_CONFIGURATION", "EXPORT_CONFIGURATION", "VIEW_SYSTEM_INFO_PERMISSION", "CHECK_RECEIPT_STATUS", "FETCH_HASHED_RECEIPT_POLICY_RULES", "VERIFY_API_KEY", "STROOM_PROXY" ]
             },
             "uniqueItems" : true
           },
@@ -12791,6 +13786,36 @@
           },
           "varargs" : {
             "type" : "boolean"
+          }
+        }
+      },
+      "ArrayValue" : {
+        "type" : "object",
+        "properties" : {
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AnyValue"
+            }
+          }
+        }
+      },
+      "AskStroomAiRequest" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "type" : "string"
+          },
+          "searchRequest" : {
+            "$ref" : "#/components/schemas/DashboardSearchRequest"
+          }
+        }
+      },
+      "AskStroomAiResponse" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "type" : "string"
           }
         }
       },
@@ -13088,20 +14113,6 @@
           }
         } ]
       },
-      "Base64EncodedDocumentData" : {
-        "type" : "object",
-        "properties" : {
-          "dataMap" : {
-            "type" : "object",
-            "additionalProperties" : {
-              "type" : "string"
-            }
-          },
-          "docRef" : {
-            "$ref" : "#/components/schemas/DocRef"
-          }
-        }
-      },
       "BatchScheduleRequest" : {
         "type" : "object",
         "properties" : {
@@ -13121,6 +14132,19 @@
             "$ref" : "#/components/schemas/Schedule"
           }
         }
+      },
+      "BooleanValue" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ConstraintValue"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "value" : {
+              "type" : "boolean"
+            }
+          }
+        } ]
       },
       "BuildInfo" : {
         "type" : "object",
@@ -13234,6 +14258,21 @@
             "items" : {
               "$ref" : "#/components/schemas/CacheIdentity"
             }
+          }
+        }
+      },
+      "ChangeAnnotationEntryRequest" : {
+        "type" : "object",
+        "properties" : {
+          "annotationEntryId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "annotationRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "data" : {
+            "type" : "string"
           }
         }
       },
@@ -13369,21 +14408,6 @@
           }
         }
       },
-      "ClusterLockKey" : {
-        "type" : "object",
-        "properties" : {
-          "creationTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "nodeName" : {
-            "type" : "string"
-          }
-        }
-      },
       "ClusterNodeInfo" : {
         "type" : "object",
         "properties" : {
@@ -13484,6 +14508,17 @@
           }
         }
       },
+      "ColumnValue" : {
+        "type" : "object",
+        "properties" : {
+          "matchingRule" : {
+            "type" : "string"
+          },
+          "value" : {
+            "type" : "string"
+          }
+        }
+      },
       "ColumnValueSelection" : {
         "type" : "object",
         "properties" : {
@@ -13508,7 +14543,7 @@
           "values" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/ColumnValue"
             }
           }
         }
@@ -13519,6 +14554,12 @@
           "column" : {
             "$ref" : "#/components/schemas/Column"
           },
+          "conditionalFormattingRules" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ConditionalFormattingRule"
+            }
+          },
           "filter" : {
             "type" : "string"
           },
@@ -13527,6 +14568,12 @@
           },
           "searchRequest" : {
             "$ref" : "#/components/schemas/DashboardSearchRequest"
+          },
+          "selections" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "$ref" : "#/components/schemas/ColumnValueSelection"
+            }
           }
         }
       },
@@ -13798,6 +14845,148 @@
           }
         }
       },
+      "Constraint" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "optional" : {
+            "type" : "boolean"
+          },
+          "value" : {
+            "$ref" : "#/components/schemas/ConstraintValue"
+          }
+        }
+      },
+      "ConstraintValue" : {
+        "type" : "object",
+        "discriminator" : {
+          "propertyName" : "type"
+        },
+        "properties" : {
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "type" ]
+      },
+      "ContentStoreContentPack" : {
+        "type" : "object",
+        "properties" : {
+          "contentStoreMetadata" : {
+            "$ref" : "#/components/schemas/ContentStoreMetadata"
+          },
+          "details" : {
+            "type" : "string"
+          },
+          "gitBranch" : {
+            "type" : "string"
+          },
+          "gitCommit" : {
+            "type" : "string"
+          },
+          "gitNeedsAuth" : {
+            "type" : "boolean"
+          },
+          "gitPath" : {
+            "type" : "string"
+          },
+          "gitRepoName" : {
+            "type" : "string"
+          },
+          "gitUrl" : {
+            "type" : "string"
+          },
+          "iconUrl" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "licenseName" : {
+            "type" : "string"
+          },
+          "licenseUrl" : {
+            "type" : "string"
+          },
+          "stroomPath" : {
+            "type" : "string"
+          },
+          "uiName" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ContentStoreContentPackWithDynamicState" : {
+        "type" : "object",
+        "properties" : {
+          "contentPack" : {
+            "$ref" : "#/components/schemas/ContentStoreContentPack"
+          },
+          "installationStatus" : {
+            "type" : "string",
+            "enum" : [ "-", "Installed", "Pack upgradable", "Content upgradable" ]
+          }
+        }
+      },
+      "ContentStoreCreateGitRepoRequest" : {
+        "type" : "object",
+        "properties" : {
+          "contentPack" : {
+            "$ref" : "#/components/schemas/ContentStoreContentPack"
+          },
+          "credentialsId" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ContentStoreMetadata" : {
+        "type" : "object",
+        "properties" : {
+          "authContact" : {
+            "type" : "string"
+          },
+          "ownerDescription" : {
+            "type" : "string"
+          },
+          "ownerId" : {
+            "type" : "string"
+          },
+          "ownerName" : {
+            "type" : "string"
+          },
+          "ownerUrl" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ContentStoreResponse" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "OK", "GENERAL_ERR", "ALREADY_EXISTS" ]
+          }
+        }
+      },
+      "ContentStoreValueResponseBoolean" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "type" : "string"
+          },
+          "ok" : {
+            "type" : "boolean"
+          },
+          "value" : {
+            "type" : "boolean"
+          }
+        }
+      },
       "ContentTemplate" : {
         "type" : "object",
         "properties" : {
@@ -13943,6 +15132,13 @@
           "comment" : {
             "type" : "string"
           },
+          "linkedAnnotations" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          },
           "linkedEvents" : {
             "type" : "array",
             "items" : {
@@ -13954,6 +15150,9 @@
           },
           "subject" : {
             "type" : "string"
+          },
+          "table" : {
+            "$ref" : "#/components/schemas/AnnotationTable"
           },
           "title" : {
             "type" : "string"
@@ -14010,7 +15209,7 @@
           },
           "hashAlgorithm" : {
             "type" : "string",
-            "enum" : [ "SHA3_256", "SHA2_256", "BCRYPT", "ARGON_2" ]
+            "enum" : [ "SHA3_256", "SHA2_256", "BCRYPT", "ARGON_2", "SHA2_512" ]
           },
           "name" : {
             "type" : "string"
@@ -14038,6 +15237,9 @@
             "type" : "boolean"
           },
           "enabled" : {
+            "type" : "boolean"
+          },
+          "export" : {
             "type" : "boolean"
           },
           "maxMetaCreateTimeMs" : {
@@ -14071,6 +15273,97 @@
           },
           "runAsUser" : {
             "$ref" : "#/components/schemas/UserRef"
+          }
+        }
+      },
+      "Credentials" : {
+        "type" : "object",
+        "properties" : {
+          "credsExpire" : {
+            "type" : "boolean"
+          },
+          "expires" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "USERNAME_PASSWORD", "ACCESS_TOKEN", "PRIVATE_CERT" ]
+          },
+          "uuid" : {
+            "type" : "string"
+          }
+        }
+      },
+      "CredentialsCreateRequest" : {
+        "type" : "object",
+        "properties" : {
+          "credentials" : {
+            "$ref" : "#/components/schemas/Credentials"
+          },
+          "secret" : {
+            "$ref" : "#/components/schemas/CredentialsSecret"
+          }
+        }
+      },
+      "CredentialsResponse" : {
+        "type" : "object",
+        "properties" : {
+          "credentialsWithPerms" : {
+            "$ref" : "#/components/schemas/CredentialsWithPerms"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "secret" : {
+            "$ref" : "#/components/schemas/CredentialsSecret"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "OK", "GENERAL_ERR" ]
+          }
+        }
+      },
+      "CredentialsSecret" : {
+        "type" : "object",
+        "properties" : {
+          "accessToken" : {
+            "type" : "string"
+          },
+          "passphrase" : {
+            "type" : "string"
+          },
+          "password" : {
+            "type" : "string"
+          },
+          "privateKey" : {
+            "type" : "string"
+          },
+          "serverPublicKey" : {
+            "type" : "string"
+          },
+          "username" : {
+            "type" : "string"
+          },
+          "uuid" : {
+            "type" : "string"
+          }
+        }
+      },
+      "CredentialsWithPerms" : {
+        "type" : "object",
+        "properties" : {
+          "credentials" : {
+            "$ref" : "#/components/schemas/Credentials"
+          },
+          "delete" : {
+            "type" : "boolean"
+          },
+          "edit" : {
+            "type" : "boolean"
           }
         }
       },
@@ -14271,6 +15564,12 @@
         "properties" : {
           "complete" : {
             "type" : "boolean"
+          },
+          "errorMessages" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ErrorMessage"
+            }
           },
           "errors" : {
             "type" : "array",
@@ -14545,6 +15844,18 @@
           }
         }
       },
+      "DeleteAnnotationEntryRequest" : {
+        "type" : "object",
+        "properties" : {
+          "annotationEntryId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "annotationRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          }
+        }
+      },
       "DeleteDuplicateCheckRequest" : {
         "type" : "object",
         "properties" : {
@@ -14567,6 +15878,17 @@
           },
           "indexDocRef" : {
             "$ref" : "#/components/schemas/DocRef"
+          }
+        }
+      },
+      "DeletePathway" : {
+        "type" : "object",
+        "properties" : {
+          "docRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "name" : {
+            "type" : "string"
           }
         }
       },
@@ -14694,6 +16016,12 @@
           },
           "sampleAtStartOfLine" : {
             "type" : "boolean"
+          },
+          "tags" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
           }
         }
       },
@@ -14789,7 +16117,7 @@
           },
           "icon" : {
             "type" : "string",
-            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_GIT_REPO", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_PLAN_B", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_REPORT", "DOCUMENT_S3", "DOCUMENT_SCRIPT", "DOCUMENT_SCYLLA_DB", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATE_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORT_ASCENDING", "FIELDS_SORT_DESCENDING", "FIELDS_SORT_NONE", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "LINK", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_MERGE", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SELECTION", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STAMP", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLINK", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VALUE_FILTER", "VOLUMES", "WARNING" ]
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "AI", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "CONTENT_STORE", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_GIT_REPO", "DOCUMENT_GIT_REPO_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_OPEN_AI", "DOCUMENT_PATHWAYS", "DOCUMENT_PIPELINE", "DOCUMENT_PLAN_B", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_REPORT", "DOCUMENT_S3", "DOCUMENT_SCRIPT", "DOCUMENT_SCYLLA_DB", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATE_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_TRACES", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORT_ASCENDING", "FIELDS_SORT_DESCENDING", "FIELDS_SORT_NONE", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HELP_OUTLINE", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "KEY_BLUE", "LINK", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MAXIMISE", "MENU", "MINIMISE", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PATHWAYS_CHOICE", "PATHWAYS_NODE", "PATHWAYS_SEQUENCE", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_MERGE", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RERUN", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SELECTION", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STAMP", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLINK", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VALUE_FILTER", "VOLUMES", "WARNING" ]
           },
           "type" : {
             "type" : "string"
@@ -14932,6 +16260,56 @@
             "type" : "string"
           }
         }
+      },
+      "DoubleRange" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ConstraintValue"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "max" : {
+              "type" : "number",
+              "format" : "double"
+            },
+            "min" : {
+              "type" : "number",
+              "format" : "double"
+            }
+          }
+        } ]
+      },
+      "DoubleSet" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ConstraintValue"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "set" : {
+              "type" : "array",
+              "items" : {
+                "type" : "number",
+                "format" : "double"
+              },
+              "uniqueItems" : true
+            }
+          }
+        } ]
+      },
+      "DoubleValue" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ConstraintValue"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "value" : {
+              "type" : "number",
+              "format" : "double"
+            }
+          }
+        } ]
       },
       "DownloadQueryResultsRequest" : {
         "type" : "object",
@@ -15093,13 +16471,17 @@
           "caCertificate" : {
             "type" : "string"
           },
+          "connectionTimeoutMillis" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
           "connectionUrls" : {
             "type" : "array",
             "items" : {
               "type" : "string"
             }
           },
-          "socketTimeoutMillis" : {
+          "responseTimeoutMillis" : {
             "type" : "integer",
             "format" : "int32"
           },
@@ -15139,8 +16521,15 @@
           "name" : {
             "type" : "string"
           },
-          "retentionExpression" : {
-            "$ref" : "#/components/schemas/ExpressionOperator"
+          "rerankModelRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "rerankScoreMinimum" : {
+            "type" : "number",
+            "format" : "float"
+          },
+          "rerankTextFieldSuffix" : {
+            "type" : "string"
           },
           "searchScrollSize" : {
             "type" : "integer",
@@ -15166,6 +16555,9 @@
           "uuid" : {
             "type" : "string"
           },
+          "vectorGenerationModelRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
           "version" : {
             "type" : "string"
           }
@@ -15182,14 +16574,14 @@
           },
           "fieldUse" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR" ]
           },
           "fldName" : {
             "type" : "string"
           },
           "fldType" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR" ]
           },
           "indexed" : {
             "type" : "boolean"
@@ -15207,6 +16599,17 @@
           },
           "ok" : {
             "type" : "boolean"
+          }
+        }
+      },
+      "ElementId" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
           }
         }
       },
@@ -15252,6 +16655,20 @@
             },
             "showTable" : {
               "type" : "boolean"
+            }
+          }
+        } ]
+      },
+      "EmptyAppPermissionSet" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AppPermissionSet"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "operator" : {
+              "type" : "string",
+              "enum" : [ "ALL_OF", "ONE_OF", "SINGLE", "EMPTY" ]
             }
           }
         } ]
@@ -15306,6 +16723,18 @@
           }
         },
         "required" : [ "type" ]
+      },
+      "ErrorMessage" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "type" : "string"
+          },
+          "severity" : {
+            "type" : "string",
+            "enum" : [ "INFO", "WARN", "ERROR", "FATAL" ]
+          }
+        }
       },
       "EventCoprocessorSettings" : {
         "type" : "object",
@@ -15809,7 +17238,7 @@
             "condition" : {
               "type" : "string",
               "description" : "The condition of the predicate term",
-              "enum" : [ "CONTAINS", "EQUALS", "STARTS_WITH", "ENDS_WITH", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_USER_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX", "WORD_BOUNDARY", "CONTAINS_CASE_SENSITIVE", "EQUALS_CASE_SENSITIVE", "STARTS_WITH_CASE_SENSITIVE", "ENDS_WITH_CASE_SENSITIVE", "MATCHES_REGEX_CASE_SENSITIVE", "OF_DOC_REF", "USER_HAS_PERM", "USER_HAS_OWNER", "USER_HAS_DELETE", "USER_HAS_EDIT", "USER_HAS_VIEW", "USER_HAS_USE" ]
+              "enum" : [ "CONTAINS", "EQUALS", "STARTS_WITH", "ENDS_WITH", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_USER_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX", "WORD_BOUNDARY", "CONTAINS_CASE_SENSITIVE", "EQUALS_CASE_SENSITIVE", "NOT_EQUALS_CASE_SENSITIVE", "STARTS_WITH_CASE_SENSITIVE", "ENDS_WITH_CASE_SENSITIVE", "MATCHES_REGEX_CASE_SENSITIVE", "OF_DOC_REF", "USER_HAS_PERM", "USER_HAS_OWNER", "USER_HAS_DELETE", "USER_HAS_EDIT", "USER_HAS_VIEW", "USER_HAS_USE" ]
             },
             "docRef" : {
               "$ref" : "#/components/schemas/DocRef"
@@ -15835,9 +17264,24 @@
           "externalIdentityProvider" : {
             "type" : "boolean"
           },
+          "lastAnnotationChangeTime" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
           "maxApiKeyExpiryAgeMs" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "obfuscatedFields" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          },
+          "receiptCheckMode" : {
+            "type" : "string",
+            "enum" : [ "FEED_STATUS", "RECEIPT_POLICY", "RECEIVE_ALL", "DROP_ALL", "REJECT_ALL" ]
           },
           "uiConfig" : {
             "$ref" : "#/components/schemas/UiConfig"
@@ -15913,6 +17357,18 @@
           },
           "volumeGroup" : {
             "type" : "string"
+          }
+        }
+      },
+      "FetchAnnotationEntryRequest" : {
+        "type" : "object",
+        "properties" : {
+          "annotationEntryId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "annotationRef" : {
+            "$ref" : "#/components/schemas/DocRef"
           }
         }
       },
@@ -16278,6 +17734,39 @@
           }
         }
       },
+      "FindAnnotationRequest" : {
+        "type" : "object",
+        "properties" : {
+          "destinationId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "filter" : {
+            "type" : "string"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "requiredPermission" : {
+            "type" : "string",
+            "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          },
+          "sourceId" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
       "FindApiKeyCriteria" : {
         "type" : "object",
         "properties" : {
@@ -16582,6 +18071,33 @@
           }
         }
       },
+      "FindPathwayCriteria" : {
+        "type" : "object",
+        "properties" : {
+          "dataSourceRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "filter" : {
+            "type" : "string"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "queryable" : {
+            "type" : "boolean"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          }
+        }
+      },
       "FindResult" : {
         "type" : "object",
         "properties" : {
@@ -16719,6 +18235,36 @@
         "properties" : {
           "criteria" : {
             "$ref" : "#/components/schemas/FindTaskProgressCriteria"
+          }
+        }
+      },
+      "FindTraceCriteria" : {
+        "type" : "object",
+        "properties" : {
+          "dataSourceRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "filter" : {
+            "type" : "string"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "pathway" : {
+            "$ref" : "#/components/schemas/Pathway"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          },
+          "temporalOrderingTolerance" : {
+            "$ref" : "#/components/schemas/SimpleDuration"
           }
         }
       },
@@ -17010,7 +18556,7 @@
           },
           "stroomStatusCode" : {
             "type" : "string",
-            "enum" : [ "200 - 0 - OK", "406 - 100 - Feed must be specified", "406 - 101 - Feed is not defined", "406 - 102 - Data type is invalid", "406 - 103 - A mandatory header is missing", "406 - 104 - Data format is invalid", "406 - 110 - Feed is not set to receive data", "406 - 111 - Feed is not valid", "406 - 112 - Data Feed key and/or accountId is not valid", "406 - 120 - Unexpected data type", "406 - 200 - Unknown compression", "401 - 300 - Client Certificate Required", "401 - 301 - Client Token Required", "401 - 302 - Client token or certificate required", "401 - 303 - Client data feed key required", "401 - 304 - Authentication of the client is required", "401 - 310 - Client Certificate failed authentication", "401 - 311 - Client Token failed authentication", "401 - 312 - Client Token or Certificate failed authentication", "401 - 313 - Data feed key failed authentication", "401 - 314 - Data feed key has expired", "500 - 400 - Compressed stream invalid", "500 - 999 - Unknown error" ]
+            "enum" : [ "200 - 0 - OK", "406 - 100 - Feed must be specified", "406 - 101 - Feed is not defined", "406 - 102 - Data type is invalid", "406 - 103 - A mandatory header is missing", "406 - 104 - Data format is invalid", "406 - 110 - Feed is not set to receive data", "406 - 111 - Feed is not valid", "406 - 112 - Data Feed key and/or accountId is not valid", "406 - 113 - Data has been rejected by the receipt policy rules", "406 - 120 - Unexpected data type", "406 - 200 - Unknown compression", "401 - 300 - Client Certificate Required", "401 - 301 - Client Token Required", "401 - 302 - Client token or certificate required", "401 - 303 - Client data feed key required", "401 - 304 - Authentication of the client is required", "401 - 310 - Client Certificate failed authentication", "401 - 311 - Client Token failed authentication", "401 - 312 - Client Token or Certificate failed authentication", "401 - 313 - Data feed key failed authentication", "401 - 314 - Data feed key has expired", "500 - 400 - Compressed stream invalid", "413 - 410 - Content too large", "500 - 999 - Unknown error" ]
           }
         }
       },
@@ -17057,6 +18603,20 @@
           }
         }
       },
+      "GetTraceRequest" : {
+        "type" : "object",
+        "properties" : {
+          "dataSourceRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "temporalOrderingTolerance" : {
+            "$ref" : "#/components/schemas/SimpleDuration"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        }
+      },
       "GetUserRequest" : {
         "type" : "object",
         "properties" : {
@@ -17078,6 +18638,15 @@
           "branch" : {
             "type" : "string"
           },
+          "commit" : {
+            "type" : "string"
+          },
+          "contentStoreContentPackId" : {
+            "type" : "string"
+          },
+          "contentStoreMetadata" : {
+            "$ref" : "#/components/schemas/ContentStoreMetadata"
+          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -17085,13 +18654,13 @@
           "createUser" : {
             "type" : "string"
           },
+          "credentialsId" : {
+            "type" : "string"
+          },
           "description" : {
             "type" : "string"
           },
           "name" : {
-            "type" : "string"
-          },
-          "password" : {
             "type" : "string"
           },
           "path" : {
@@ -17108,9 +18677,6 @@
             "type" : "string"
           },
           "url" : {
-            "type" : "string"
-          },
-          "username" : {
             "type" : "string"
           },
           "uuid" : {
@@ -17164,6 +18730,30 @@
           }
         }
       },
+      "GroupSelection" : {
+        "type" : "object",
+        "description" : "Contains a set of group keys of parent rows we want to show (or not show) children for",
+        "properties" : {
+          "closedGroups" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          },
+          "expandedDepth" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "openGroups" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          }
+        }
+      },
       "HashedApiKey" : {
         "type" : "object",
         "properties" : {
@@ -17192,7 +18782,7 @@
           },
           "hashAlgorithm" : {
             "type" : "string",
-            "enum" : [ "SHA3_256", "SHA2_256", "BCRYPT", "ARGON_2" ]
+            "enum" : [ "SHA3_256", "SHA2_256", "BCRYPT", "ARGON_2", "SHA2_512" ]
           },
           "id" : {
             "type" : "integer",
@@ -17214,6 +18804,34 @@
           "version" : {
             "type" : "integer",
             "format" : "int32"
+          }
+        }
+      },
+      "HashedReceiveDataRules" : {
+        "type" : "object",
+        "properties" : {
+          "fieldNameToSaltMap" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          },
+          "hashAlgorithm" : {
+            "type" : "string",
+            "enum" : [ "SHA3_256", "SHA2_256", "BCRYPT", "ARGON_2", "SHA2_512" ]
+          },
+          "receiveDataRules" : {
+            "$ref" : "#/components/schemas/ReceiveDataRules"
+          },
+          "snapshotTimeEpochMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "uuidToFlattenedDictMap" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "$ref" : "#/components/schemas/DictionaryDoc"
+            }
           }
         }
       },
@@ -17329,6 +18947,9 @@
             "type" : "string",
             "enum" : [ "CREATE_CONFIRMATION", "ACTION_CONFIRMATION", "IGNORE_CONFIRMATION" ]
           },
+          "mockEnvironment" : {
+            "type" : "boolean"
+          },
           "rootDocRef" : {
             "$ref" : "#/components/schemas/DocRef"
           },
@@ -17380,10 +19001,22 @@
         "type" : "object",
         "description" : "A pair of regular expression filters (inclusion and exclusion) to apply to the field.  Either or both can be supplied",
         "properties" : {
+          "excludeDictionaries" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DocRef"
+            }
+          },
           "excludes" : {
             "type" : "string",
             "description" : "Only results NOT matching this filter will be included",
             "example" : "^[0-9]{3}$"
+          },
+          "includeDictionaries" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DocRef"
+            }
           },
           "includes" : {
             "type" : "string",
@@ -17407,7 +19040,7 @@
           },
           "fldType" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR" ]
           },
           "indexed" : {
             "type" : "boolean"
@@ -17605,6 +19238,56 @@
             "type" : "string"
           }
         }
+      },
+      "IntegerRange" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ConstraintValue"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "max" : {
+              "type" : "integer",
+              "format" : "int32"
+            },
+            "min" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          }
+        } ]
+      },
+      "IntegerSet" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ConstraintValue"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "set" : {
+              "type" : "array",
+              "items" : {
+                "type" : "integer",
+                "format" : "int32"
+              },
+              "uniqueItems" : true
+            }
+          }
+        } ]
+      },
+      "IntegerValue" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ConstraintValue"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "value" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          }
+        } ]
       },
       "InternalIdpPasswordPolicyConfig" : {
         "type" : "object",
@@ -17832,6 +19515,17 @@
           }
         }
       },
+      "KeyValue" : {
+        "type" : "object",
+        "properties" : {
+          "key" : {
+            "type" : "string"
+          },
+          "value" : {
+            "$ref" : "#/components/schemas/AnyValue"
+          }
+        }
+      },
       "KeyValueInputComponentSettings" : {
         "type" : "object",
         "allOf" : [ {
@@ -17844,6 +19538,17 @@
             }
           }
         } ]
+      },
+      "KeyValueList" : {
+        "type" : "object",
+        "properties" : {
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/KeyValue"
+            }
+          }
+        }
       },
       "LayoutConfig" : {
         "type" : "object",
@@ -17904,6 +19609,23 @@
             "format" : "int64"
           }
         }
+      },
+      "LinkAnnotations" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractAnnotationChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "annotations" : {
+              "type" : "array",
+              "items" : {
+                "type" : "integer",
+                "format" : "int64"
+              }
+            }
+          }
+        } ]
       },
       "LinkEvents" : {
         "type" : "object",
@@ -18109,7 +19831,7 @@
           },
           "fldType" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR" ]
           },
           "indexed" : {
             "type" : "boolean"
@@ -18301,6 +20023,77 @@
             "$ref" : "#/components/schemas/AbstractAnnotationChange"
           }
         }
+      },
+      "NamePathKey" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/PathKey"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "name" : {
+              "type" : "string"
+            }
+          }
+        } ]
+      },
+      "NamesPathKey" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/PathKey"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "names" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            }
+          }
+        } ]
+      },
+      "NanoTime" : {
+        "type" : "object",
+        "properties" : {
+          "nanos" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "seconds" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "NanoTimeRange" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ConstraintValue"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "max" : {
+              "$ref" : "#/components/schemas/NanoTime"
+            },
+            "min" : {
+              "$ref" : "#/components/schemas/NanoTime"
+            }
+          }
+        } ]
+      },
+      "NanoTimeValue" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ConstraintValue"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "value" : {
+              "$ref" : "#/components/schemas/NanoTime"
+            }
+          }
+        } ]
       },
       "Node" : {
         "type" : "object",
@@ -18580,6 +20373,64 @@
           }
         }
       },
+      "OpenAIModelDoc" : {
+        "type" : "object",
+        "properties" : {
+          "apiKey" : {
+            "type" : "string"
+          },
+          "baseUrl" : {
+            "type" : "string"
+          },
+          "createTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createUser" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "maxContextWindowTokens" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "modelId" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "updateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "updateUser" : {
+            "type" : "string"
+          },
+          "uuid" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
+          }
+        }
+      },
+      "OpenAIModelTestResponse" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "type" : "string"
+          },
+          "ok" : {
+            "type" : "boolean"
+          }
+        }
+      },
       "OverrideValueString" : {
         "type" : "object",
         "properties" : {
@@ -18654,6 +20505,165 @@
           }
         }
       },
+      "PathKey" : {
+        "type" : "object",
+        "discriminator" : {
+          "propertyName" : "type"
+        },
+        "properties" : {
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "type" ]
+      },
+      "PathNode" : {
+        "type" : "object",
+        "properties" : {
+          "constraints" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "$ref" : "#/components/schemas/Constraint"
+            }
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "path" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "targets" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PathNodeSequence"
+            }
+          },
+          "uuid" : {
+            "type" : "string"
+          }
+        }
+      },
+      "PathNodeSequence" : {
+        "type" : "object",
+        "properties" : {
+          "nodes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PathNode"
+            }
+          },
+          "pathKey" : {
+            "$ref" : "#/components/schemas/PathKey"
+          },
+          "uuid" : {
+            "type" : "string"
+          }
+        }
+      },
+      "Pathway" : {
+        "type" : "object",
+        "properties" : {
+          "createTime" : {
+            "$ref" : "#/components/schemas/NanoTime"
+          },
+          "lastUsedTime" : {
+            "$ref" : "#/components/schemas/NanoTime"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "pathKey" : {
+            "$ref" : "#/components/schemas/PathKey"
+          },
+          "root" : {
+            "$ref" : "#/components/schemas/PathNode"
+          },
+          "updateTime" : {
+            "$ref" : "#/components/schemas/NanoTime"
+          }
+        }
+      },
+      "PathwayResultPage" : {
+        "type" : "object",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Pathway"
+            }
+          }
+        }
+      },
+      "PathwaysDoc" : {
+        "type" : "object",
+        "properties" : {
+          "allowConstraintCreation" : {
+            "type" : "boolean"
+          },
+          "allowConstraintMutation" : {
+            "type" : "boolean"
+          },
+          "allowPathwayCreation" : {
+            "type" : "boolean"
+          },
+          "allowPathwayMutation" : {
+            "type" : "boolean"
+          },
+          "createTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createUser" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "infoFeed" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "pathways" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Pathway"
+            }
+          },
+          "processingNode" : {
+            "type" : "string"
+          },
+          "temporalOrderingTolerance" : {
+            "$ref" : "#/components/schemas/SimpleDuration"
+          },
+          "tracesDocRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "updateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "updateUser" : {
+            "type" : "string"
+          },
+          "uuid" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
+          }
+        }
+      },
       "PermissionChangeEvent" : {
         "type" : "object",
         "properties" : {
@@ -18725,7 +20735,13 @@
       "PipelineElement" : {
         "type" : "object",
         "properties" : {
+          "description" : {
+            "type" : "string"
+          },
           "id" : {
+            "type" : "string"
+          },
+          "name" : {
             "type" : "string"
           },
           "type" : {
@@ -18742,7 +20758,7 @@
           },
           "icon" : {
             "type" : "string",
-            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_GIT_REPO", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_PLAN_B", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_REPORT", "DOCUMENT_S3", "DOCUMENT_SCRIPT", "DOCUMENT_SCYLLA_DB", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATE_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORT_ASCENDING", "FIELDS_SORT_DESCENDING", "FIELDS_SORT_NONE", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "LINK", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_MERGE", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SELECTION", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STAMP", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLINK", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VALUE_FILTER", "VOLUMES", "WARNING" ]
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "AI", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "CONTENT_STORE", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_GIT_REPO", "DOCUMENT_GIT_REPO_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_OPEN_AI", "DOCUMENT_PATHWAYS", "DOCUMENT_PIPELINE", "DOCUMENT_PLAN_B", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_REPORT", "DOCUMENT_S3", "DOCUMENT_SCRIPT", "DOCUMENT_SCYLLA_DB", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATE_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_TRACES", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORT_ASCENDING", "FIELDS_SORT_DESCENDING", "FIELDS_SORT_NONE", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HELP_OUTLINE", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "KEY_BLUE", "LINK", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MAXIMISE", "MENU", "MINIMISE", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PATHWAYS_CHOICE", "PATHWAYS_NODE", "PATHWAYS_SEQUENCE", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_MERGE", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RERUN", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SELECTION", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STAMP", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLINK", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VALUE_FILTER", "VOLUMES", "WARNING" ]
           },
           "roles" : {
             "type" : "array",
@@ -18999,7 +21015,7 @@
           },
           "stateType" : {
             "type" : "string",
-            "enum" : [ "STATE", "TEMPORAL_STATE", "RANGED_STATE", "TEMPORAL_RANGED_STATE", "SESSION", "HISTOGRAM", "METRIC" ]
+            "enum" : [ "STATE", "TEMPORAL_STATE", "RANGED_STATE", "TEMPORAL_RANGED_STATE", "SESSION", "HISTOGRAM", "METRIC", "TRACE" ]
           },
           "type" : {
             "type" : "string"
@@ -19156,6 +21172,9 @@
             "type" : "boolean"
           },
           "enabled" : {
+            "type" : "boolean"
+          },
+          "export" : {
             "type" : "boolean"
           },
           "id" : {
@@ -19519,6 +21538,12 @@
           "column" : {
             "$ref" : "#/components/schemas/Column"
           },
+          "conditionalFormattingRules" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ConditionalFormattingRule"
+            }
+          },
           "filter" : {
             "type" : "string"
           },
@@ -19527,6 +21552,12 @@
           },
           "searchRequest" : {
             "$ref" : "#/components/schemas/QuerySearchRequest"
+          },
+          "selections" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "$ref" : "#/components/schemas/ColumnValueSelection"
+            }
           }
         }
       },
@@ -19684,7 +21715,7 @@
         "properties" : {
           "conditionSet" : {
             "type" : "string",
-            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'contains', '=', '!=', 'matches regex', 'in'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'is'", "'of'", "'has permissions', 'has owner permission', 'has delete permission', 'has edit permission', 'has view permission', 'has use permission'", "'is'" ]
+            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '==', '!==', 'in', 'in dictionary'", "'==', '!==', 'between', 'in', 'in dictionary'", "'==', '!==', 'in', 'in dictionary', '=', '!=', 'between', 'contains', 'contains (CS)', '>', '>=', '<', '<=', 'is null', 'is not null', 'matches regex', 'matches regex (CS)', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'contains', '=', '!=', 'matches regex', 'in'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'is'", "'of'", "'has permissions', 'has owner permission', 'has delete permission', 'has edit permission', 'has view permission', 'has use permission'", "'is'" ]
           },
           "docRefType" : {
             "type" : "string"
@@ -19694,7 +21725,7 @@
           },
           "fldType" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR" ]
           },
           "name" : {
             "type" : "string"
@@ -19887,6 +21918,9 @@
       "QuerySearchRequest" : {
         "type" : "object",
         "properties" : {
+          "groupSelection" : {
+            "$ref" : "#/components/schemas/GroupSelection"
+          },
           "incremental" : {
             "type" : "boolean"
           },
@@ -20116,16 +22150,19 @@
             "type" : "string"
           },
           "key" : {
-            "type" : "string"
+            "type" : "string",
+            "minLength" : 1
           },
           "mapName" : {
-            "type" : "string"
+            "type" : "string",
+            "minLength" : 1
           },
           "referenceLoaders" : {
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/ReferenceLoader"
-            }
+            },
+            "minItems" : 1
           }
         },
         "required" : [ "key", "mapName", "referenceLoaders" ]
@@ -20208,6 +22245,19 @@
           }
         },
         "required" : [ "loaderPipeline", "referenceFeed" ]
+      },
+      "Regex" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ConstraintValue"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "value" : {
+              "type" : "string"
+            }
+          }
+        } ]
       },
       "RemoveAllDocumentUserCreatePermissions" : {
         "type" : "object",
@@ -20437,12 +22487,17 @@
             "type" : "string",
             "description" : "The ID of the component that this result set was requested for. See ResultRequest in SearchRequest"
           },
+          "errorMessages" : {
+            "type" : "array",
+            "description" : "If an error has occurred producing this result set then this will have the details of the error",
+            "items" : {
+              "$ref" : "#/components/schemas/ErrorMessage"
+            }
+          },
           "errors" : {
             "type" : "array",
-            "description" : "If an error has occurred producing this result set then this will have details of the error",
             "items" : {
-              "type" : "string",
-              "description" : "If an error has occurred producing this result set then this will have details of the error"
+              "type" : "string"
             }
           },
           "type" : {
@@ -20496,6 +22551,21 @@
           }
         }
       },
+      "ResultPageAnnotation" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Annotation"
+            }
+          }
+        }
+      },
       "ResultPageAnnotationTag" : {
         "type" : "object",
         "description" : "A page of results.",
@@ -20537,6 +22607,36 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/CompletionItem"
+            }
+          }
+        }
+      },
+      "ResultPageContentStoreContentPackWithDynamicState" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ContentStoreContentPackWithDynamicState"
+            }
+          }
+        }
+      },
+      "ResultPageCredentialsWithPerms" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CredentialsWithPerms"
             }
           }
         }
@@ -20916,6 +23016,21 @@
           }
         }
       },
+      "ResultPageTraceRoot" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TraceRoot"
+            }
+          }
+        }
+      },
       "ResultPageUser" : {
         "type" : "object",
         "description" : "A page of results.",
@@ -20973,6 +23088,9 @@
             "type" : "string",
             "enum" : [ "NONE", "CHANGES", "ALL" ]
           },
+          "groupSelection" : {
+            "$ref" : "#/components/schemas/GroupSelection"
+          },
           "mappings" : {
             "type" : "array",
             "items" : {
@@ -20995,6 +23113,12 @@
             "type" : "string",
             "description" : "The style of results required. FLAT will provide a FlatResult object, while TABLE will provide a TableResult object",
             "enum" : [ "FLAT", "TABLE", "VIS", "QL_VIS" ]
+          },
+          "searchRequestSource" : {
+            "$ref" : "#/components/schemas/SearchRequestSource"
+          },
+          "tableName" : {
+            "type" : "string"
           },
           "timeFilter" : {
             "$ref" : "#/components/schemas/TimeFilter"
@@ -21076,6 +23200,10 @@
         "type" : "object",
         "description" : "A row of data in a result set",
         "properties" : {
+          "annotationId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
           "depth" : {
             "type" : "integer",
             "format" : "int32",
@@ -21515,6 +23643,9 @@
           "componentId" : {
             "type" : "string"
           },
+          "componentName" : {
+            "type" : "string"
+          },
           "ownerDocRef" : {
             "$ref" : "#/components/schemas/DocRef"
           },
@@ -21530,6 +23661,12 @@
         "properties" : {
           "complete" : {
             "type" : "boolean"
+          },
+          "errorMessages" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ErrorMessage"
+            }
           },
           "errors" : {
             "type" : "array",
@@ -21965,6 +24102,20 @@
           }
         }
       },
+      "SingletonAppPermissionSet" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AppPermissionSet"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "appPermission" : {
+              "type" : "string",
+              "enum" : [ "ADMINISTRATOR", "ANNOTATIONS", "CREDENTIALS", "MANAGE_CACHE_PERMISSION", "VIEW_DATA_PERMISSION", "VIEW_DATA_WITH_PIPELINE_PERMISSION", "DELETE_DATA_PERMISSION", "IMPORT_DATA_PERMISSION", "EXPORT_DATA_PERMISSION", "MANAGE_USERS_PERMISSION", "CHANGE_OWNER_PERMISSION", "STEPPING_PERMISSION", "MANAGE_PROCESSORS_PERMISSION", "MANAGE_TASKS_PERMISSION", "DOWNLOAD_SEARCH_RESULTS_PERMISSION", "MANAGE_API_KEYS", "MANAGE_CONTENT_TEMPLATES_PERMISSION", "MANAGE_DATA_RECEIPT_RULES_PERMISSION", "MANAGE_JOBS_PERMISSION", "MANAGE_PROPERTIES_PERMISSION", "MANAGE_POLICIES_PERMISSION", "MANAGE_NODES_PERMISSION", "MANAGE_INDEX_SHARDS_PERMISSION", "MANAGE_VOLUMES_PERMISSION", "MANAGE_DB_PERMISSION", "IMPORT_CONFIGURATION", "EXPORT_CONFIGURATION", "VIEW_SYSTEM_INFO_PERMISSION", "CHECK_RECEIPT_STATUS", "FETCH_HASHED_RECEIPT_POLICY_RULES", "VERIFY_API_KEY", "STROOM_PROXY" ]
+            }
+          }
+        } ]
+      },
       "Size" : {
         "type" : "object",
         "properties" : {
@@ -22134,7 +24285,7 @@
           },
           "fldType" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR" ]
           },
           "indexed" : {
             "type" : "boolean"
@@ -22268,6 +24419,221 @@
           "recordIndex" : {
             "type" : "integer",
             "format" : "int64"
+          }
+        }
+      },
+      "Span" : {
+        "type" : "object",
+        "properties" : {
+          "attributes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/KeyValue"
+            }
+          },
+          "droppedAttributesCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "droppedEventsCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "droppedLinksCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "endTimeUnixNano" : {
+            "type" : "string"
+          },
+          "events" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SpanEvent"
+            }
+          },
+          "flags" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "SPAN_KIND_UNSPECIFIED", "SPAN_KIND_INTERNAL", "SPAN_KIND_SERVER", "SPAN_KIND_CLIENT", "SPAN_KIND_PRODUCER", "SPAN_KIND_CONSUMER" ]
+          },
+          "links" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SpanLink"
+            }
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "parentSpanId" : {
+            "type" : "string"
+          },
+          "spanId" : {
+            "type" : "string"
+          },
+          "startTimeUnixNano" : {
+            "type" : "string"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/SpanStatus"
+          },
+          "traceId" : {
+            "type" : "string"
+          },
+          "traceState" : {
+            "type" : "string"
+          }
+        }
+      },
+      "SpanEvent" : {
+        "type" : "object",
+        "properties" : {
+          "attributes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/KeyValue"
+            }
+          },
+          "droppedAttributesCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "timeUnixNano" : {
+            "type" : "string"
+          }
+        }
+      },
+      "SpanKV" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/PlanBValue"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "key" : {
+              "$ref" : "#/components/schemas/SpanKey"
+            },
+            "value" : {
+              "$ref" : "#/components/schemas/SpanValue"
+            }
+          }
+        } ]
+      },
+      "SpanKey" : {
+        "type" : "object",
+        "properties" : {
+          "parentSpanId" : {
+            "type" : "string"
+          },
+          "spanId" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        }
+      },
+      "SpanLink" : {
+        "type" : "object",
+        "properties" : {
+          "attributes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/KeyValue"
+            }
+          },
+          "droppedAttributesCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "spanId" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          },
+          "traceState" : {
+            "type" : "string"
+          }
+        }
+      },
+      "SpanStatus" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string",
+            "enum" : [ "STATUS_CODE_UNSET", "STATUS_CODE_OK", "STATUS_CODE_ERROR" ]
+          },
+          "message" : {
+            "type" : "string"
+          }
+        }
+      },
+      "SpanValue" : {
+        "type" : "object",
+        "properties" : {
+          "attributes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/KeyValue"
+            }
+          },
+          "droppedAttributesCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "droppedEventsCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "droppedLinksCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "endTimeUnixNano" : {
+            "type" : "string"
+          },
+          "events" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SpanEvent"
+            }
+          },
+          "flags" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "insertTime" : {
+            "$ref" : "#/components/schemas/NanoTime"
+          },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "SPAN_KIND_UNSPECIFIED", "SPAN_KIND_INTERNAL", "SPAN_KIND_SERVER", "SPAN_KIND_CLIENT", "SPAN_KIND_PRODUCER", "SPAN_KIND_CONSUMER" ]
+          },
+          "links" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SpanLink"
+            }
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "startTimeUnixNano" : {
+            "type" : "string"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/SpanStatus"
+          },
+          "traceState" : {
+            "type" : "string"
           }
         }
       },
@@ -22601,7 +24967,7 @@
         "type" : "object",
         "properties" : {
           "elementId" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/ElementId"
           },
           "errorType" : {
             "type" : "string",
@@ -22785,6 +25151,36 @@
             "format" : "int32"
           }
         }
+      },
+      "StringSet" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ConstraintValue"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "set" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              },
+              "uniqueItems" : true
+            }
+          }
+        } ]
+      },
+      "StringValue" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ConstraintValue"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "value" : {
+              "type" : "string"
+            }
+          }
+        } ]
       },
       "StringWrapper" : {
         "type" : "object",
@@ -23088,6 +25484,13 @@
                 "description" : "Defines the maximum number of results to return at each grouping level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level 1 and 1 at level 2. In the absence of this field system defaults will apply"
               }
             },
+            "maxStringFieldLength" : {
+              "type" : "integer",
+              "format" : "int32"
+            },
+            "overrideMaxStringFieldLength" : {
+              "type" : "boolean"
+            },
             "pageSize" : {
               "type" : "integer",
               "format" : "int32",
@@ -23132,6 +25535,34 @@
           }
         } ]
       },
+      "TableFilterComponentSettings" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ComponentSettings"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "columns" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/ColumnRef"
+              }
+            },
+            "conditionalFormattingRules" : {
+              "type" : "object",
+              "additionalProperties" : {
+                "type" : "array",
+                "items" : {
+                  "$ref" : "#/components/schemas/ConditionalFormattingRule"
+                }
+              }
+            },
+            "tableId" : {
+              "type" : "string"
+            }
+          }
+        } ]
+      },
       "TableResult" : {
         "type" : "object",
         "allOf" : [ {
@@ -23170,6 +25601,9 @@
         }, {
           "type" : "object",
           "properties" : {
+            "groupSelection" : {
+              "$ref" : "#/components/schemas/GroupSelection"
+            },
             "openGroups" : {
               "type" : "array",
               "items" : {
@@ -23221,6 +25655,13 @@
               "format" : "int64",
               "description" : "Defines the maximum number of results to return at each grouping level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level 1 and 1 at level 2. In the absence of this field system defaults will apply"
             }
+          },
+          "maxStringFieldLength" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "overrideMaxStringFieldLength" : {
+            "type" : "boolean"
           },
           "queryId" : {
             "type" : "string",
@@ -23450,6 +25891,12 @@
           }
         } ]
       },
+      "TerminalPathKey" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/PathKey"
+        } ]
+      },
       "TerminateTaskProgressRequest" : {
         "type" : "object",
         "properties" : {
@@ -23580,6 +26027,9 @@
           },
           "pageBorder" : {
             "type" : "string"
+          },
+          "selectedTabColour" : {
+            "type" : "string"
           }
         }
       },
@@ -23602,7 +26052,7 @@
         "properties" : {
           "condition" : {
             "type" : "string",
-            "enum" : [ "CONTAINS", "EQUALS", "STARTS_WITH", "ENDS_WITH", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_USER_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX", "WORD_BOUNDARY", "CONTAINS_CASE_SENSITIVE", "EQUALS_CASE_SENSITIVE", "STARTS_WITH_CASE_SENSITIVE", "ENDS_WITH_CASE_SENSITIVE", "MATCHES_REGEX_CASE_SENSITIVE", "OF_DOC_REF", "USER_HAS_PERM", "USER_HAS_OWNER", "USER_HAS_DELETE", "USER_HAS_EDIT", "USER_HAS_VIEW", "USER_HAS_USE" ]
+            "enum" : [ "CONTAINS", "EQUALS", "STARTS_WITH", "ENDS_WITH", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_USER_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX", "WORD_BOUNDARY", "CONTAINS_CASE_SENSITIVE", "EQUALS_CASE_SENSITIVE", "NOT_EQUALS_CASE_SENSITIVE", "STARTS_WITH_CASE_SENSITIVE", "ENDS_WITH_CASE_SENSITIVE", "MATCHES_REGEX_CASE_SENSITIVE", "OF_DOC_REF", "USER_HAS_PERM", "USER_HAS_OWNER", "USER_HAS_DELETE", "USER_HAS_EDIT", "USER_HAS_VIEW", "USER_HAS_USE" ]
           },
           "from" : {
             "type" : "string"
@@ -23658,6 +26108,72 @@
           }
         }
       },
+      "Trace" : {
+        "type" : "object",
+        "properties" : {
+          "parentSpanIdMap" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/Span"
+              }
+            }
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        }
+      },
+      "TraceRoot" : {
+        "type" : "object",
+        "properties" : {
+          "depth" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "endTime" : {
+            "$ref" : "#/components/schemas/NanoTime"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "services" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "startTime" : {
+            "$ref" : "#/components/schemas/NanoTime"
+          },
+          "totalSpans" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        }
+      },
+      "TraceSettings" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractPlanBSettings"
+        } ]
+      },
+      "TracesResultPage" : {
+        "type" : "object",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TraceRoot"
+            }
+          }
+        }
+      },
       "UiConfig" : {
         "type" : "object",
         "properties" : {
@@ -23675,7 +26191,7 @@
           },
           "defaultApiKeyHashAlgorithm" : {
             "type" : "string",
-            "enum" : [ "SHA3_256", "SHA2_256", "BCRYPT", "ARGON_2" ]
+            "enum" : [ "SHA3_256", "SHA2_256", "BCRYPT", "ARGON_2", "SHA2_512" ]
           },
           "defaultMaxResults" : {
             "type" : "string"
@@ -23754,6 +26270,23 @@
           }
         }
       },
+      "UnlinkAnnotations" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractAnnotationChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "annotations" : {
+              "type" : "array",
+              "items" : {
+                "type" : "integer",
+                "format" : "int64"
+              }
+            }
+          }
+        } ]
+      },
       "UnlinkEvents" : {
         "type" : "object",
         "allOf" : [ {
@@ -23795,6 +26328,20 @@
           },
           "indexField" : {
             "$ref" : "#/components/schemas/IndexFieldImpl"
+          }
+        }
+      },
+      "UpdatePathway" : {
+        "type" : "object",
+        "properties" : {
+          "docRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "pathway" : {
+            "$ref" : "#/components/schemas/Pathway"
           }
         }
       },
@@ -24248,11 +26795,8 @@
           "type" : "object",
           "properties" : {
             "bytes" : {
-              "type" : "array",
-              "items" : {
-                "type" : "string",
-                "format" : "byte"
-              }
+              "type" : "string",
+              "format" : "byte"
             }
           }
         } ]
@@ -24297,6 +26841,17 @@
           "severity" : {
             "type" : "string",
             "enum" : [ "INFO", "WARN", "ERROR", "FATAL" ]
+          }
+        }
+      },
+      "VerifyApiKeyRequest" : {
+        "type" : "object",
+        "properties" : {
+          "apiKey" : {
+            "type" : "string"
+          },
+          "requiredAppPermissions" : {
+            "$ref" : "#/components/schemas/AppPermissionSet"
           }
         }
       },
@@ -24508,10 +27063,14 @@
           },
           "matchType" : {
             "type" : "string",
-            "enum" : [ "EXISTS", "CONTAINS", "EQUALS", "NOT_EQUALS", "UNIQUE" ]
+            "enum" : [ "EXISTS", "CONTAINS", "EQUALS", "NOT_EQUALS", "NOT_CONTAINS", "NOT_EXISTS", "UNIQUE" ]
           },
           "path" : {
             "type" : "string"
+          },
+          "searchType" : {
+            "type" : "string",
+            "enum" : [ "ALL", "XPATH" ]
           },
           "uniqueValues" : {
             "type" : "object",
@@ -24570,6 +27129,17 @@
           },
           "version" : {
             "type" : "string"
+          }
+        }
+      },
+      "XmlSchemaValidationResponse" : {
+        "type" : "object",
+        "properties" : {
+          "error" : {
+            "type" : "string"
+          },
+          "ok" : {
+            "type" : "boolean"
           }
         }
       },
