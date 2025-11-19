@@ -61,6 +61,7 @@ import co.elastic.clients.elasticsearch.core.DeleteByQueryResponse;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
+import co.elastic.clients.transport.rest5_client.low_level.ResponseException;
 import co.elastic.clients.util.BinaryData;
 import co.elastic.clients.util.ContentType;
 import com.fasterxml.jackson.core.JsonFactory;
@@ -68,7 +69,6 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.ws.rs.NotFoundException;
-import org.elasticsearch.client.ResponseException;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
@@ -682,7 +682,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                             handleElasticsearchException(e);
                         }
                     } catch (final ResponseException e) {
-                        if (e.getResponse().getStatusLine().getStatusCode() == ES_TOO_MANY_REQUESTS_STATUS) {
+                        if (e.getResponse().getStatusCode() == ES_TOO_MANY_REQUESTS_STATUS) {
                             handleElasticsearchOverloadedException(e);
                         } else {
                             handleElasticsearchException(e);

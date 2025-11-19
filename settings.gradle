@@ -182,6 +182,10 @@ include 'stroom-job:stroom-job-impl-db-jooq'
 include 'stroom-kafka:stroom-kafka-api'
 include 'stroom-kafka:stroom-kafka-impl'
 
+// LangChain (LLM integration)
+include 'stroom-langchain:stroom-langchain-api'
+include 'stroom-langchain:stroom-langchain-impl'
+
 // Lifecycle
 include 'stroom-lifecycle:stroom-lifecycle-api'
 include 'stroom-lifecycle:stroom-lifecycle-impl'

@@ -1,7 +1,7 @@
 package stroom.search.elastic.search;
 
 import stroom.dictionary.api.WordListProvider;
-import stroom.docref.DocRef;
+import stroom.langchain.api.OpenAIService;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.Query;
@@ -25,7 +25,10 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import co.elastic.clients.elasticsearch.core.search.BoundaryScanner;
 import co.elastic.clients.elasticsearch.core.search.Highlight;
+import co.elastic.clients.elasticsearch.core.search.HighlightField;
+import co.elastic.clients.util.NamedValue;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -40,6 +43,7 @@ public class ElasticSearchFactory {
     private final ElasticSearchTaskHandler elasticSearchTaskHandler;
     private final ElasticIndexCache elasticIndexCache;
     private final IndexFieldCache indexFieldCache;
+    private final Provider<OpenAIService> openAIServiceProvider;
     private final TaskContextFactory taskContextFactory;
     private final Executor executor;
 
@@ -48,12 +52,14 @@ public class ElasticSearchFactory {
                                 final ElasticSearchTaskHandler elasticSearchTaskHandler,
                                 final ElasticIndexCache elasticIndexCache,
                                 final IndexFieldCache indexFieldCache,
+                                final Provider<OpenAIService> openAIServiceProvider,
                                 final TaskContextFactory taskContextFactory,
                                 final ExecutorProvider executorProvider) {
         this.wordListProvider = wordListProvider;
         this.elasticSearchTaskHandler = elasticSearchTaskHandler;
         this.elasticIndexCache = elasticIndexCache;
         this.indexFieldCache = indexFieldCache;
+        this.openAIServiceProvider = openAIServiceProvider;
         this.taskContextFactory = taskContextFactory;
         this.executor = executorProvider.get(THREAD_POOL);
     }
@@ -84,7 +90,7 @@ public class ElasticSearchFactory {
                 taskContext -> elasticSearchTaskHandler.search(
                         taskContext,
                         index,
-                        getQuery(query.getDataSource(), indexFieldCache, expression, dateTimeSettings),
+                        getQuery(index, indexFieldCache, expression, dateTimeSettings),
                         getHighlighter(),
                         coprocessors,
                         resultStore,
@@ -108,34 +114,28 @@ public class ElasticSearchFactory {
                         }).run(), executor);
     }
 
-    private co.elastic.clients.elasticsearch._types.query_dsl.Query getQuery(final DocRef indexDocRef,
-                                                                             final IndexFieldCache indexFieldCache,
-                                                                             final ExpressionOperator expression,
-                                                                             final DateTimeSettings dateTimeSettings) {
+    private ElasticQueryParams getQuery(final ElasticIndexDoc index,
+                                        final IndexFieldCache indexFieldCache,
+                                        final ExpressionOperator expression,
+                                        final DateTimeSettings dateTimeSettings) {
         final SearchExpressionQueryBuilder builder = new SearchExpressionQueryBuilder(
-                indexDocRef,
+                openAIServiceProvider,
+                index,
                 indexFieldCache,
                 wordListProvider,
                 dateTimeSettings);
-        final co.elastic.clients.elasticsearch._types.query_dsl.Query query = builder.buildQuery(expression);
-
-        // Make sure the query was created successfully.
-        if (query == null) {
-            throw new SearchException("Failed to build query given expression");
-        } else {
-            LOGGER.debug(() -> "Query: " + query);
-        }
-
-        return query;
+        final ElasticQueryParams queryParams = builder.buildQuery(expression);
+        LOGGER.debug(() -> "Query: " + queryParams.getQuery());
+        return queryParams;
     }
 
     private Highlight getHighlighter() {
         return Highlight.of(h -> h
-                .fields("*", f -> f
+                .fields(NamedValue.of("*", HighlightField.of(f -> f
                         .preTags("")
                         .postTags("")
                         .boundaryScanner(BoundaryScanner.Word)
-                )
+                )))
         );
     }
 }

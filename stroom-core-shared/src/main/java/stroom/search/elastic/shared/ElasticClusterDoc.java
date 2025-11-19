@@ -57,27 +57,19 @@ public class ElasticClusterDoc extends AbstractDoc {
     private ElasticConnectionConfig connection;
 
     @JsonCreator
-    public ElasticClusterDoc(@JsonProperty("uuid") final String uuid,
-                             @JsonProperty("name") final String name,
-                             @JsonProperty("version") final String version,
-                             @JsonProperty("createTimeMs") final Long createTimeMs,
-                             @JsonProperty("updateTimeMs") final Long updateTimeMs,
-                             @JsonProperty("createUser") final String createUser,
-                             @JsonProperty("updateUser") final String updateUser,
-                             @JsonProperty("description") final String description,
-                             @JsonProperty("connection") final ElasticConnectionConfig connection) {
+    public ElasticClusterDoc(
+            @JsonProperty("uuid") final String uuid,
+            @JsonProperty("name") final String name,
+            @JsonProperty("version") final String version,
+            @JsonProperty("createTimeMs") final Long createTimeMs,
+            @JsonProperty("updateTimeMs") final Long updateTimeMs,
+            @JsonProperty("createUser") final String createUser,
+            @JsonProperty("updateUser") final String updateUser,
+            @JsonProperty("description") final String description,
+            @JsonProperty("connection") final ElasticConnectionConfig connection) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.connection = connection;
-    }
-
-    /**
-     * @return A new {@link DocRef} for this document's type with the supplied uuid.
-     */
-    public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(TYPE)
-                .uuid(uuid)
-                .build();
     }
 
     /**

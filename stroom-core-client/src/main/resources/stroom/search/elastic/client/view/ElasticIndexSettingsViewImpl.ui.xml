@@ -5,31 +5,51 @@
              xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="elasticIndexSettingsClusterconfiguration" label="Cluster Configuration">
-            <g:SimplePanel ui:field="cluster"/>
+        <g:HTML>
+            <h2>General settings</h2>
+        </g:HTML>
+        <form:FormGroup identity="elasticIndexSettingsClusterConfiguration" label="Cluster configuration">
+            <g:SimplePanel ui:field="cluster" />
         </form:FormGroup>
-        <form:FormGroup identity="elasticIndexSettingsIndexNameOrPattern" label="Index Name Or Pattern">
-            <g:TextBox ui:field="indexName" width="400px"/>
+        <form:FormGroup identity="elasticIndexSettingsIndexNameOrPattern" label="Index name or pattern">
+            <g:TextBox ui:field="indexName" width="400px" />
         </form:FormGroup>
-        <form:FormGroup identity="elasticIndexSettingsSearchSlices" label="Search Slices">
-            <valuespinner:ValueSpinner ui:field="searchSlices" width="80px"/>
+        <form:FormGroup identity="elasticIndexSettingsTimeField" label="Main date field">
+            <g:TextBox ui:field="timeField" width="200px"
+                       title="Usually @timestamp, especially for data streams" />
         </form:FormGroup>
-        <form:FormGroup identity="elasticIndexSettingsSearchScrollSize" label="Search Scroll Size">
-            <valuespinner:ValueSpinner ui:field="searchScrollSize" width="80px"/>
+        <g:HTML>
+            <h2>Search settings</h2>
+        </g:HTML>
+        <form:FormGroup identity="elasticIndexSettingsSearchSlices" label="Number of slices">
+            <valuespinner:ValueSpinner ui:field="searchSlices" width="80px"
+                                       title="Number of concurrent threads to use to retrieve search results. Can speed up retrieval for larger indices."/>
         </form:FormGroup>
-        <form:FormGroup identity="elasticIndexSettingsTimeField" label="Main Date Field">
-            <g:TextBox ui:field="timeField" width="200px"/>
+        <form:FormGroup identity="elasticIndexSettingsSearchScrollSize" label="Scroll size">
+            <valuespinner:ValueSpinner ui:field="searchScrollSize" width="80px"
+                                       title="How many results to retrieve each batch" />
         </form:FormGroup>
-        <form:FormGroup identity="elasticIndexSettingsDefaultExtractionPipeline" label="Default Extraction Pipeline">
+        <form:FormGroup identity="elasticIndexSettingsDefaultExtractionPipeline" label="Default extraction pipeline">
             <g:SimplePanel ui:field="defaultExtractionPipeline"/>
+        </form:FormGroup>
+        <g:HTML>
+            <h2>Vector search</h2>
+        </g:HTML>
+        <form:FormGroup identity="elasticIndexSettingsVectorGenerationModel" label="Vector generation model">
+            <g:SimplePanel ui:field="vectorGenerationModel" />
+        </form:FormGroup>
+        <form:FormGroup identity="elasticIndexSettingsRerankModel" label="Rerank model">
+            <g:SimplePanel ui:field="rerankModel" />
+        </form:FormGroup>
+        <form:FormGroup identity="elasticIndexSettingsRerankTextFieldSuffix" label="Rerank text field suffix">
+            <g:TextBox ui:field="rerankTextFieldSuffix" width="200px"
+                       title="Suffix used to identify the text equivalent of dense_vector fields (e.g. `.text`). The original text field value is obtained by removing the vector field suffix (e.g. `.vector`) and replacing it with the supplied suffix (e.g. `.text`)." />
+        </form:FormGroup>
+        <form:FormGroup identity="elasticIndexSettingsRerankScoreMinimum" label="Minimum rerank score">
+            <g:TextBox ui:field="rerankScoreMinimum" width="80px"
+                       title="Only include results with a rerank score greater than or equal to this value (in the range 0.0 to 1.0)" />
         </form:FormGroup>
 
         <b:Button ui:field="testConnection" text="Test Connection" width="200px" addStyleNames="allow-focus"/>
-
-        <form:FormGroup identity="elasticIndexSettingsRetentionExpression"
-                        label="Data Retention Expression (matching data will be deleted)"
-                        addStyleNames="default-min-sizes flex-grow-1">
-            <g:SimplePanel ui:field="retentionExpressionPanel" styleName="dock-max"/>
-        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

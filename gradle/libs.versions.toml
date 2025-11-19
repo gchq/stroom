@@ -9,8 +9,7 @@ stroomTestData = "0.2.3"
 aws = "2.31.68"
 commons-io = "2.19.0"
 dropwizard = "4.0.14" # used to set the dropwizard-bom version, that controls lots of dependency versions
-elasticsearch = "8.12.2"
-httpcore = "4.4.16" # Transient dependency of Elasticsearch
+elasticsearch = "9.1.5"
 flyway = "11.14.0"
 guice = "7.0.0"
 gwt = "2.12.2"
@@ -19,7 +18,11 @@ jgit = "7.3.0.202506031305-r"
 jmh = "1.37"
 jooq = "3.20.8"
 junit-jupiter = "5.13.1"
+langchain4j = "1.8.0"
+langchain4j-cohere = "1.8.0-beta15"
+langchain4j-jina = "1.8.0-beta15"
 kafka = "3.9.0"
+openai = "4.3.0"
 poi = "5.4.1"
 scylladb = "4.19.0.1"
 simple-java-mail = "8.8.0"
@@ -91,7 +94,6 @@ hbase-shaded-netty = { module = "org.apache.hbase.thirdparty:hbase-shaded-netty"
 hessian = { module = "com.caucho:hessian", version = "4.0.65" }
 hikari = { module = "com.zaxxer:HikariCP", version = "5.1.0" }
 http-client = { module = "org.apache.httpcomponents.client5:httpclient5" } # version controlled by dropwizard-dependencies
-httpcore = { module = "org.apache.httpcomponents.core5:httpcore5", version.ref = "httpcore" }
 jBCrypt = { module = "de.svenkubiak:jBCrypt", version = "0.4.3" }
 jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations" } # version controlled by dropwizard-dependencies
 #jackson-core = { module = "com.fasterxml.jackson.core:jackson-core", version = "2.9.10" } # version controlled by dropwizard-dependencies
@@ -160,6 +162,11 @@ mbknor-jackson-jsonSchema = { module = "com.kjetland:mbknor-jackson-jsonschema_2
 mockito-core = { module = "org.mockito:mockito-core" } # version controlled by dropwizard-dependencies
 mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter" } # version controlled by dropwizard-dependencies
 mysql-connector-java = { module = "com.mysql:mysql-connector-j", version = "9.4.0" }
+langchain4j-http-client-jdk = { module = "dev.langchain4j:langchain4j-http-client-jdk", version.ref = "langchain4j" }
+langchain4j-open-ai = { module = "dev.langchain4j:langchain4j-open-ai", version.ref = "langchain4j" }
+langchain4j-cohere = { module = "dev.langchain4j:langchain4j-cohere", version.ref = "langchain4j-cohere" }
+langchain4j-jina = { module = "dev.langchain4j:langchain4j-jina", version.ref = "langchain4j-jina" }
+openai = { module = "com.openai:openai-java", version.ref = "openai" }
 poi = { module = "org.apache.poi:poi", version.ref = "poi" }
 poi-ooxml = { module = "org.apache.poi:poi-ooxml", version.ref = "poi" }
 quartz = { module = "org.quartz-scheduler:quartz", version = "2.5.0-rc1" }
