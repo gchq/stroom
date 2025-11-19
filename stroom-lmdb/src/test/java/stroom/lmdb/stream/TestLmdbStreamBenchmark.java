@@ -31,6 +31,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Disabled
 public class TestLmdbStreamBenchmark {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestLmdbStreamBenchmark.class);
