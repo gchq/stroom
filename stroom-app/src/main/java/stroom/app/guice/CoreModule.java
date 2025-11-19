@@ -1,5 +1,7 @@
 package stroom.app.guice;
 
+import stroom.index.lucene.LuceneModule;
+
 import com.google.inject.AbstractModule;
 
 public class CoreModule extends AbstractModule {
@@ -68,7 +70,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.index.impl.IndexModule());
         install(new stroom.index.impl.db.IndexDaoModule());
         install(new stroom.index.lucene553.Lucene553Module());
-        install(new stroom.index.lucene980.Lucene980Module());
+        install(new LuceneModule());
         install(new stroom.job.impl.JobSystemModule());
         install(new stroom.job.impl.db.JobDaoModule());
         install(new stroom.kafka.impl.KafkaConfigHandlerModule());
