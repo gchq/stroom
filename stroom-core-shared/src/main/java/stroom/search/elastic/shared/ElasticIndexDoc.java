@@ -130,7 +130,7 @@ public class ElasticIndexDoc extends AbstractDoc {
             @JsonProperty("timeField") final String timeField,
             @JsonProperty("defaultExtractionPipeline") final DocRef defaultExtractionPipeline,
             @JsonProperty("retentionExpression") final ExpressionOperator retentionExpression) {
-        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.clusterRef = clusterRef;
         this.indexName = indexName;
@@ -150,12 +150,6 @@ public class ElasticIndexDoc extends AbstractDoc {
         if (this.timeField == null || this.timeField.isEmpty()) {
             this.timeField = DEFAULT_TIME_FIELD;
         }
-    }
-
-    @JsonProperty
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     /**

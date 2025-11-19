@@ -4,7 +4,6 @@ import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.test.common.TestUtil;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -122,12 +121,8 @@ class TestDocRefUtil {
     }
 
     private AbstractDoc buildDoc(final String uuid, final String type) {
-        return new AbstractDoc(uuid, null, null, null, null, null, null) {
-            @JsonProperty
-            @Override
-            public String getType() {
-                return type;
-            }
+        return new AbstractDoc(type, uuid, null, null, null, null, null, null) {
+
         };
     }
 }

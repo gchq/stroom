@@ -77,17 +77,11 @@ public class VisualisationDoc extends AbstractDoc {
                             @JsonProperty("functionName") final String functionName,
                             @JsonProperty("scriptRef") final DocRef scriptRef,
                             @JsonProperty("settings") final String settings) {
-        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.functionName = functionName;
         this.scriptRef = scriptRef;
         this.settings = settings;
-    }
-
-    @JsonProperty
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     /**

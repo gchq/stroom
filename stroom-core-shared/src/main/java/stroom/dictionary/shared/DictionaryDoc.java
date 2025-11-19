@@ -73,16 +73,10 @@ public class DictionaryDoc extends AbstractDoc {
                          @JsonProperty("description") final String description,
                          @JsonProperty("data") final String data,
                          @JsonProperty("imports") final List<DocRef> imports) {
-        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.data = data;
         this.imports = imports;
-    }
-
-    @JsonProperty
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     /**

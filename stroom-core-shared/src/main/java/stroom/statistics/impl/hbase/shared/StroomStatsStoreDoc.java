@@ -87,7 +87,7 @@ public class StroomStatsStoreDoc extends AbstractDoc {
                                @JsonProperty("precision") final EventStoreTimeIntervalEnum precision,
                                @JsonProperty("enabled") final boolean enabled,
                                @JsonProperty("config") final StroomStatsStoreEntityData config) {
-        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.statisticType = statisticType;
         this.rollUpType = rollUpType;
@@ -104,12 +104,6 @@ public class StroomStatsStoreDoc extends AbstractDoc {
         if (this.precision == null) {
             this.precision = DEFAULT_PRECISION_INTERVAL;
         }
-    }
-
-    @JsonProperty
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     /**

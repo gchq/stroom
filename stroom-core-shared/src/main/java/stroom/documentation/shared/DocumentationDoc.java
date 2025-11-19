@@ -39,15 +39,9 @@ public class DocumentationDoc extends AbstractDoc implements HasData {
                             @JsonProperty("updateUser") final String updateUser,
                             @JsonProperty("documentation") final String documentation,
                             @JsonProperty("data") final String data) {
-        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.documentation = documentation;
         this.data = data;
-    }
-
-    @JsonProperty
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     /**

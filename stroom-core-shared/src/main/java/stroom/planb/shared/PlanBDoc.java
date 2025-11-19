@@ -69,16 +69,10 @@ public class PlanBDoc extends AbstractDoc {
             @JsonProperty("description") final String description,
             @JsonProperty("stateType") final StateType stateType,
             @JsonProperty("settings") final AbstractPlanBSettings settings) {
-        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.stateType = stateType;
         this.settings = settings;
-    }
-
-    @JsonProperty
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     public String getDescription() {

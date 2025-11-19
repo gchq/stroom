@@ -38,9 +38,10 @@ import java.util.Objects;
         "createUser",
         "updateUser"})
 @JsonInclude(Include.NON_NULL)
-@JsonIgnoreProperties(value = {"type"}) // We write type but do not read it.
 public abstract class AbstractDoc implements Document {
 
+    @JsonProperty
+    private final String type;
     @JsonProperty
     private String uuid;
     @JsonProperty
@@ -57,14 +58,17 @@ public abstract class AbstractDoc implements Document {
     private String updateUser;
 
     @JsonCreator
-    public AbstractDoc(@JsonProperty("uuid") final String uuid,
+    public AbstractDoc(@JsonProperty("type") final String type,
+                       @JsonProperty("uuid") final String uuid,
                        @JsonProperty("name") final String name,
                        @JsonProperty("version") final String version,
                        @JsonProperty("createTimeMs") final Long createTimeMs,
                        @JsonProperty("updateTimeMs") final Long updateTimeMs,
                        @JsonProperty("createUser") final String createUser,
                        @JsonProperty("updateUser") final String updateUser) {
+        Objects.requireNonNull(type, "Null Type");
         Objects.requireNonNull(uuid, "Null UUID");
+        this.type = type;
         this.uuid = uuid;
         this.name = name;
         this.version = version;
@@ -74,12 +78,10 @@ public abstract class AbstractDoc implements Document {
         this.updateUser = updateUser;
     }
 
-    /**
-     * Return the static type name for this document.
-     *
-     * @return The static type name for this document.
-     */
-    public abstract String getType();
+    @Override
+    public final String getType() {
+        return type;
+    }
 
     @Override
     public String getUuid() {
@@ -155,7 +157,7 @@ public abstract class AbstractDoc implements Document {
             return false;
         }
         final AbstractDoc doc = (AbstractDoc) o;
-        return Objects.equals(getType(), doc.getType()) &&
+        return Objects.equals(type, type) &&
                Objects.equals(uuid, doc.uuid) &&
                Objects.equals(name, doc.name) &&
                Objects.equals(version, doc.version) &&
@@ -167,13 +169,13 @@ public abstract class AbstractDoc implements Document {
 
     @Override
     public int hashCode() {
-        return Objects.hash(getType(), uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        return Objects.hash(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
     }
 
     @Override
     public String toString() {
         return "DocRef{" +
-               "type='" + getType() + '\'' +
+               "type='" + type + '\'' +
                ", uuid='" + uuid + '\'' +
                ", name='" + name + '\'' +
                '}';

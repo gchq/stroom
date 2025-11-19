@@ -84,16 +84,10 @@ public class PipelineDoc extends AbstractDoc {
                        @JsonProperty("description") final String description,
                        @JsonProperty("parentPipeline") final DocRef parentPipeline,
                        @JsonProperty("pipelineData") final PipelineData pipelineData) {
-        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.parentPipeline = parentPipeline;
         this.pipelineData = pipelineData;
-    }
-
-    @JsonProperty
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     /**

@@ -105,7 +105,7 @@ public class StatisticStoreDoc extends AbstractDoc implements StatisticStore {
                              @JsonProperty("precision") final Long precision,
                              @JsonProperty("enabled") final Boolean enabled,
                              @JsonProperty("config") final StatisticsDataSourceData config) {
-        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.statisticType = statisticType;
         this.rollUpType = rollUpType;
@@ -122,12 +122,6 @@ public class StatisticStoreDoc extends AbstractDoc implements StatisticStore {
         if (this.precision == null) {
             this.precision = DEFAULT_PRECISION;
         }
-    }
-
-    @JsonProperty
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     /**

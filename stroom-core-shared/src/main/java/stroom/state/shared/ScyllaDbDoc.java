@@ -73,17 +73,11 @@ public class ScyllaDbDoc extends AbstractDoc {
                        @JsonProperty("connection") final String connection,
                        @JsonProperty("keyspace") final String keyspace,
                        @JsonProperty("keyspaceCql") final String keyspaceCql) {
-        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.connection = connection;
         this.keyspace = keyspace;
         this.keyspaceCql = keyspaceCql;
-    }
-
-    @JsonProperty
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     /**

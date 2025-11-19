@@ -89,7 +89,7 @@ public class PathwaysDoc extends AbstractDoc {
                        @JsonProperty("tracesDocRef") final DocRef tracesDocRef,
                        @JsonProperty("infoFeed") final DocRef infoFeed,
                        @JsonProperty("processingNode") final String processingNode) {
-        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.temporalOrderingTolerance = temporalOrderingTolerance;
         this.pathways = pathways;
@@ -100,12 +100,6 @@ public class PathwaysDoc extends AbstractDoc {
         this.tracesDocRef = tracesDocRef;
         this.infoFeed = infoFeed;
         this.processingNode = processingNode;
-    }
-
-    @JsonProperty
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     /**

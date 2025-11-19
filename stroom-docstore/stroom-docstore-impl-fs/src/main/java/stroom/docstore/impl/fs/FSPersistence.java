@@ -232,13 +232,7 @@ public class FSPersistence implements Persistence, Clearable {
                           @JsonProperty("updateTimeMs") final Long updateTimeMs,
                           @JsonProperty("createUser") final String createUser,
                           @JsonProperty("updateUser") final String updateUser) {
-            super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
-        }
-
-        @JsonProperty
-        @Override
-        public final String getType() {
-            return "GenericDoc";
+            super("GenericDoc", uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         }
     }
 }

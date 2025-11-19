@@ -63,7 +63,7 @@ public class Annotation extends AbstractDoc {
                       @JsonProperty("description") final String description,
                       @JsonProperty("retentionPeriod") final SimpleDuration retentionPeriod,
                       @JsonProperty("retainUntilTimeMs") final Long retainUntilTimeMs) {
-        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.id = id;
         this.subject = subject;
         this.status = status;
@@ -75,12 +75,6 @@ public class Annotation extends AbstractDoc {
         this.description = description;
         this.retentionPeriod = retentionPeriod;
         this.retainUntilTimeMs = retainUntilTimeMs;
-    }
-
-    @JsonProperty
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     public Long getId() {

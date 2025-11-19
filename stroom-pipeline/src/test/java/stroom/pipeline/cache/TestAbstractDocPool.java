@@ -205,14 +205,8 @@ class TestAbstractDocPool {
                      @JsonProperty("createUser") final String createUser,
                      @JsonProperty("updateUser") final String updateUser,
                      final String content) {
-            super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+            super("MyDoc", uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
             this.content = content;
-        }
-
-        @JsonProperty
-        @Override
-        public final String getType() {
-            return "MyDoc";
         }
 
         public String getContent() {

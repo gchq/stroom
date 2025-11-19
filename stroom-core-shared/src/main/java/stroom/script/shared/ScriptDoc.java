@@ -72,16 +72,10 @@ public class ScriptDoc extends AbstractDoc implements HasData {
                      @JsonProperty("description") final String description,
                      @JsonProperty("dependencies") final List<DocRef> dependencies,
                      @JsonProperty("data") final String data) {
-        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.dependencies = dependencies;
         this.data = data;
-    }
-
-    @JsonProperty
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     /**

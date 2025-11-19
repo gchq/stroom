@@ -79,17 +79,11 @@ public class QueryDoc extends AbstractDoc {
                     @JsonProperty("timeRange") final TimeRange timeRange,
                     @JsonProperty("query") final String query,
                     @JsonProperty("queryTablePreferences") final QueryTablePreferences queryTablePreferences) {
-        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.timeRange = timeRange;
         this.query = query;
         this.queryTablePreferences = queryTablePreferences;
-    }
-
-    @JsonProperty
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     /**

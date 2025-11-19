@@ -113,7 +113,7 @@ public class GitRepoDoc extends AbstractDoc {
                       @JsonProperty("path") final String path,
                       @JsonProperty("commit") final String commit,
                       @JsonProperty("autoPush") final Boolean autoPush) {
-        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
 
         // Content Pack stuff, if any
@@ -147,12 +147,6 @@ public class GitRepoDoc extends AbstractDoc {
         if (this.autoPush == null) {
             this.autoPush = Boolean.FALSE;
         }
-    }
-
-    @JsonProperty
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     /**

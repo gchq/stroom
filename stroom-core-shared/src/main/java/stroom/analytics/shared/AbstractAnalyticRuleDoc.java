@@ -68,7 +68,8 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
 
     @SuppressWarnings("checkstyle:linelength")
     @JsonCreator
-    public AbstractAnalyticRuleDoc(@JsonProperty("uuid") final String uuid,
+    public AbstractAnalyticRuleDoc(@JsonProperty("type") final String type,
+                                   @JsonProperty("uuid") final String uuid,
                                    @JsonProperty("name") final String name,
                                    @JsonProperty("version") final String version,
                                    @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -88,7 +89,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                                    @JsonProperty("rememberNotifications") final boolean rememberNotifications,
                                    @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
                                    @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig) {
-        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.languageVersion = languageVersion;
         this.parameters = parameters;

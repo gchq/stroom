@@ -73,16 +73,10 @@ public class ReceiveDataRules extends AbstractDoc {
                             @JsonProperty("description") final String description,
                             @JsonProperty("fields") final List<QueryField> fields,
                             @JsonProperty("rules") final List<ReceiveDataRule> rules) {
-        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.fields = fields;
         this.rules = rules;
-    }
-
-    @JsonProperty
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     /**

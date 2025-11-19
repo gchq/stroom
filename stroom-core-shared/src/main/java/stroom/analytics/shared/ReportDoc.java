@@ -68,7 +68,7 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                      @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
                      @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig,
                      @JsonProperty("reportSettings") final ReportSettings reportSettings) {
-        super(uuid,
+        super(TYPE, uuid,
                 name,
                 version,
                 createTimeMs,
@@ -89,12 +89,6 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                 suppressDuplicateNotifications,
                 duplicateNotificationConfig);
         this.reportSettings = reportSettings;
-    }
-
-    @JsonProperty
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     /**

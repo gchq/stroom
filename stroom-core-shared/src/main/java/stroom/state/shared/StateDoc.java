@@ -98,7 +98,7 @@ public class StateDoc extends AbstractDoc {
             @JsonProperty("retainForever") final boolean retainForever,
             @JsonProperty("retainAge") final int retainAge,
             @JsonProperty("retainTimeUnit") final TimeUnit retainTimeUnit) {
-        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.scyllaDbRef = scyllaDbRef;
         this.stateType = stateType;
@@ -108,12 +108,6 @@ public class StateDoc extends AbstractDoc {
         this.retainForever = retainForever;
         this.retainAge = retainAge;
         this.retainTimeUnit = retainTimeUnit;
-    }
-
-    @JsonProperty
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     /**

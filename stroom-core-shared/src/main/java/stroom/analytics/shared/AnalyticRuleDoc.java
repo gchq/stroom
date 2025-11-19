@@ -67,7 +67,7 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
                            @JsonProperty("rememberNotifications") final boolean rememberNotifications,
                            @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
                            @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig) {
-        super(uuid,
+        super(TYPE, uuid,
                 name,
                 version,
                 createTimeMs,
@@ -87,12 +87,6 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
                 rememberNotifications,
                 suppressDuplicateNotifications,
                 duplicateNotificationConfig);
-    }
-
-    @JsonProperty
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     /**

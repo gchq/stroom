@@ -66,14 +66,8 @@ public class DataRetentionRules extends AbstractDoc {
                               @JsonProperty("createUser") final String createUser,
                               @JsonProperty("updateUser") final String updateUser,
                               @JsonProperty("rules") final List<DataRetentionRule> rules) {
-        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.rules = rules;
-    }
-
-    @JsonProperty
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     /**

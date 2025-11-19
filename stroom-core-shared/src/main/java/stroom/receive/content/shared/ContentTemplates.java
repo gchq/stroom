@@ -49,14 +49,8 @@ public class ContentTemplates extends AbstractDoc {
             @JsonProperty("createUser") final String createUser,
             @JsonProperty("updateUser") final String updateUser,
             @JsonProperty("contentTemplates") final List<ContentTemplate> contentTemplates) {
-        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.contentTemplates = resetTemplateNumbers(contentTemplates);
-    }
-
-    @JsonProperty
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     /**

@@ -122,7 +122,7 @@ public class LuceneIndexDoc extends AbstractDoc {
                           @JsonProperty("timeField") final String timeField,
                           @JsonProperty("volumeGroupName") final String volumeGroupName,
                           @JsonProperty("defaultExtractionPipeline") final DocRef defaultExtractionPipeline) {
-        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.maxDocsPerShard = maxDocsPerShard;
         this.partitionBy = partitionBy;
@@ -146,12 +146,6 @@ public class LuceneIndexDoc extends AbstractDoc {
         if (this.shardsPerPartition == null) {
             this.shardsPerPartition = DEFAULT_SHARDS_PER_PARTITION;
         }
-    }
-
-    @JsonProperty
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     /**

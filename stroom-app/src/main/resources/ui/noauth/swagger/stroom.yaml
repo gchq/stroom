@@ -9077,6 +9077,8 @@ components:
           type: boolean
         timeRange:
           $ref: "#/components/schemas/TimeRange"
+        type:
+          type: string
         updateTimeMs:
           type: integer
           format: int64
@@ -9154,6 +9156,8 @@ components:
         status:
           $ref: "#/components/schemas/AnnotationTag"
         subject:
+          type: string
+        type:
           type: string
         updateTimeMs:
           type: integer
@@ -10432,6 +10436,8 @@ components:
           type: string
         name:
           type: string
+        type:
+          type: string
         updateTimeMs:
           type: integer
           format: int64
@@ -10760,6 +10766,8 @@ components:
           type: string
         name:
           type: string
+        type:
+          type: string
         updateTimeMs:
           type: integer
           format: int64
@@ -10941,6 +10949,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/DataRetentionRule"
+        type:
+          type: string
         updateTimeMs:
           type: integer
           format: int64
@@ -11102,6 +11112,8 @@ components:
           items:
             $ref: "#/components/schemas/DocRef"
         name:
+          type: string
+        type:
           type: string
         updateTimeMs:
           type: integer
@@ -11526,6 +11538,8 @@ components:
           type: string
         name:
           type: string
+        type:
+          type: string
         updateTimeMs:
           type: integer
           format: int64
@@ -11654,6 +11668,8 @@ components:
           type: string
         name:
           type: string
+        type:
+          type: string
         updateTimeMs:
           type: integer
           format: int64
@@ -11719,6 +11735,8 @@ components:
           type: integer
           format: int32
         timeField:
+          type: string
+        type:
           type: string
         updateTimeMs:
           type: integer
@@ -12383,6 +12401,8 @@ components:
           - REJECT
           - DROP
         streamType:
+          type: string
+        type:
           type: string
         updateTimeMs:
           type: integer
@@ -13342,6 +13362,8 @@ components:
           type: string
         path:
           type: string
+        type:
+          type: string
         updateTimeMs:
           type: integer
           format: int64
@@ -13970,6 +13992,8 @@ components:
           type: string
         name:
           type: string
+        type:
+          type: string
         updateTimeMs:
           type: integer
           format: int64
@@ -14187,6 +14211,8 @@ components:
           type: integer
           format: int32
         timeField:
+          type: string
+        type:
           type: string
         updateTimeMs:
           type: integer
@@ -14810,6 +14836,8 @@ components:
           $ref: "#/components/schemas/SimpleDuration"
         tracesDocRef:
           $ref: "#/components/schemas/DocRef"
+        type:
+          type: string
         updateTimeMs:
           type: integer
           format: int64
@@ -14853,6 +14881,8 @@ components:
           $ref: "#/components/schemas/DocRef"
         pipelineData:
           $ref: "#/components/schemas/PipelineData"
+        type:
+          type: string
         updateTimeMs:
           type: integer
           format: int64
@@ -15282,6 +15312,8 @@ components:
           - HISTOGRAM
           - METRIC
           - TRACE
+        type:
+          type: string
         updateTimeMs:
           type: integer
           format: int64
@@ -15771,6 +15803,8 @@ components:
           $ref: "#/components/schemas/QueryTablePreferences"
         timeRange:
           $ref: "#/components/schemas/TimeRange"
+        type:
+          type: string
         updateTimeMs:
           type: integer
           format: int64
@@ -16158,6 +16192,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ReceiveDataRule"
+        type:
+          type: string
         updateTimeMs:
           type: integer
           format: int64
@@ -16350,6 +16386,8 @@ components:
           type: boolean
         timeRange:
           $ref: "#/components/schemas/TimeRange"
+        type:
+          type: string
         updateTimeMs:
           type: integer
           format: int64
@@ -16998,6 +17036,8 @@ components:
           type: string
         name:
           type: string
+        type:
+          type: string
         updateTimeMs:
           type: integer
           format: int64
@@ -17108,6 +17148,8 @@ components:
           type: string
         name:
           type: string
+        type:
+          type: string
         updateTimeMs:
           type: integer
           format: int64
@@ -17134,6 +17176,8 @@ components:
         keyspaceCql:
           type: string
         name:
+          type: string
+        type:
           type: string
         updateTimeMs:
           type: integer
@@ -17727,6 +17771,8 @@ components:
           $ref: "#/components/schemas/SolrSynchState"
         timeField:
           type: string
+        type:
+          type: string
         updateTimeMs:
           type: integer
           format: int64
@@ -18125,6 +18171,8 @@ components:
           - RANGED_STATE
           - TEMPORAL_RANGED_STATE
           - SESSION
+        type:
+          type: string
         updateTimeMs:
           type: integer
           format: int64
@@ -18224,6 +18272,8 @@ components:
           enum:
           - COUNT
           - VALUE
+        type:
+          type: string
         updateTimeMs:
           type: integer
           format: int64
@@ -18527,6 +18577,8 @@ components:
           enum:
           - COUNT
           - VALUE
+        type:
+          type: string
         updateTimeMs:
           type: integer
           format: int64
@@ -19093,6 +19145,8 @@ components:
         description:
           type: string
         name:
+          type: string
+        type:
           type: string
         updateTimeMs:
           type: integer
@@ -19746,6 +19800,8 @@ components:
           type: string
         pipeline:
           $ref: "#/components/schemas/DocRef"
+        type:
+          type: string
         updateTimeMs:
           type: integer
           format: int64
@@ -19813,6 +19869,8 @@ components:
         scriptRef:
           $ref: "#/components/schemas/DocRef"
         settings:
+          type: string
+        type:
           type: string
         updateTimeMs:
           type: integer
@@ -19909,6 +19967,8 @@ components:
           type: string
         systemId:
           type: string
+        type:
+          type: string
         updateTimeMs:
           type: integer
           format: int64
@@ -19938,6 +19998,8 @@ components:
         description:
           type: string
         name:
+          type: string
+        type:
           type: string
         updateTimeMs:
           type: integer

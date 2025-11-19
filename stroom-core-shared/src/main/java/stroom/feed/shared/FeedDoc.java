@@ -119,7 +119,7 @@ public class FeedDoc extends AbstractDoc {
                    @JsonProperty("schemaVersion") final String schemaVersion,
                    @JsonProperty("status") final FeedStatus status,
                    @JsonProperty("volumeGroup") final String volumeGroup) {
-        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.classification = classification;
         this.encoding = encoding;
@@ -133,12 +133,6 @@ public class FeedDoc extends AbstractDoc {
         this.schema = schema;
         this.schemaVersion = schemaVersion;
         this.volumeGroup = volumeGroup;
-    }
-
-    @JsonProperty
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     /**

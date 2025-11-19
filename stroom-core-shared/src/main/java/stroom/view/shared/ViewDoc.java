@@ -77,17 +77,11 @@ public class ViewDoc extends AbstractDoc {
                    @JsonProperty("dataSource") final DocRef dataSource,
                    @JsonProperty("filter") final ExpressionOperator filter,
                    @JsonProperty("pipeline") final DocRef pipeline) {
-        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.dataSource = dataSource;
         this.filter = filter;
         this.pipeline = pipeline;
-    }
-
-    @JsonProperty
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     /**

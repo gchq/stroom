@@ -66,15 +66,9 @@ public class ElasticClusterDoc extends AbstractDoc {
                              @JsonProperty("updateUser") final String updateUser,
                              @JsonProperty("description") final String description,
                              @JsonProperty("connection") final ElasticConnectionConfig connection) {
-        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.connection = connection;
-    }
-
-    @JsonProperty
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     /**

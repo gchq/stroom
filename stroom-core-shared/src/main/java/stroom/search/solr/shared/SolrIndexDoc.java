@@ -108,7 +108,7 @@ public class SolrIndexDoc extends AbstractDoc {
                         @JsonProperty("deletedFields") final List<SolrIndexField> deletedFields,
                         @JsonProperty("solrSynchState") final SolrSynchState solrSynchState,
                         @JsonProperty("retentionExpression") final ExpressionOperator retentionExpression) {
-        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.collection = collection;
         this.solrConnectionConfig = solrConnectionConfig;
@@ -128,12 +128,6 @@ public class SolrIndexDoc extends AbstractDoc {
             this.fields.add(SolrIndexField.createIdField(SolrIndexConstants.STREAM_ID));
             this.fields.add(SolrIndexField.createIdField(SolrIndexConstants.EVENT_ID));
         }
-    }
-
-    @JsonProperty
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     /**

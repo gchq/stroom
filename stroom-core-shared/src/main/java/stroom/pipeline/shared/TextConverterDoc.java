@@ -83,7 +83,7 @@ public class TextConverterDoc extends AbstractDoc implements HasData {
                             @JsonProperty("description") final String description,
                             @JsonProperty("data") final String data,
                             @JsonProperty("converterType") final TextConverterType converterType) {
-        super(uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.data = data;
         this.converterType = converterType;
@@ -91,12 +91,6 @@ public class TextConverterDoc extends AbstractDoc implements HasData {
         if (converterType == null) {
             this.converterType = TextConverterType.NONE;
         }
-    }
-
-    @JsonProperty
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     /**
