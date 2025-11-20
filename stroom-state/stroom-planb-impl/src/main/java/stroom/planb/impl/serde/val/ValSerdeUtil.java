@@ -17,6 +17,7 @@ import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValShort;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValXml;
+import stroom.util.shared.NullSafe;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -26,24 +27,12 @@ import java.util.function.Function;
 
 public class ValSerdeUtil {
 
-//    public static int getLength(final Val val) {
-//        return switch (val.type()) {
-//            case NULL -> 1;
-//            case BOOLEAN -> 2;
-//            case BYTE -> 1 + Byte.BYTES;
-//            case SHORT -> 1 + Short.BYTES;
-//            case INTEGER -> 1 + Integer.BYTES;
-//            case LONG -> 1 + Long.BYTES;
-//            case FLOAT -> 1 + Float.BYTES;
-//            case DOUBLE -> 1 + Double.BYTES;
-//            case DATE -> 1 + Long.BYTES;
-//            case STRING -> 1 + val.toString().getBytes(StandardCharsets.UTF_8).length;
-//            case ERR -> 1 + val.toString().getBytes(StandardCharsets.UTF_8).length;
-//            case DURATION -> 1 + Long.BYTES;
-//            case XML -> 1 + ((ValXml) val).getByteBuffer().limit();
-//        };
-//    }
+    private static final byte[] EMPTY_BYTES = new byte[0];
 
+    public static byte[] getBytes(final Val val) {
+        final String string = val.toString();
+        return NullSafe.getOrElse(string, str -> str.getBytes(StandardCharsets.UTF_8), EMPTY_BYTES);
+    }
 
     public static <R> R write(final Val val,
                               final ByteBuffers byteBuffers,

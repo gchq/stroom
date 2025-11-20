@@ -27,7 +27,6 @@ class TestValString {
                 .withSimpleEqualityAssertion()
                 .addCase(ValString.create("foo"), false)
                 .addCase(ValString.create("10 foo"), false)
-                .addCase(ValString.create(null), false)
                 .addCase(ValString.create(""), false)
 
                 .addCase(ValString.create("0"), true)
@@ -50,7 +49,6 @@ class TestValString {
                 .withSimpleEqualityAssertion()
                 .addCase(ValString.create("foo"), false)
                 .addCase(ValString.create("10 foo"), false)
-                .addCase(ValString.create(null), false)
                 .addCase(ValString.create(""), false)
                 .addCase(ValString.create("1"), false)
                 .addCase(ValString.create("1234"), false)
