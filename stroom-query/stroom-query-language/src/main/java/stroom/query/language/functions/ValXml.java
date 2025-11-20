@@ -16,6 +16,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Objects;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public final class ValXml implements Val {
@@ -37,6 +38,7 @@ public final class ValXml implements Val {
 
     @JsonCreator
     private ValXml(@JsonProperty("bytes") final byte[] bytes) {
+        Objects.requireNonNull(bytes);
         this.bytes = bytes;
     }
 

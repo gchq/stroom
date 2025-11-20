@@ -6,13 +6,13 @@ import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.KeyLength;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 import stroom.planb.impl.serde.time.TimeSerde;
+import stroom.planb.impl.serde.val.ValSerdeUtil;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;
 
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -51,7 +51,7 @@ public class LimitedStringKeySerde implements TemporalKeySerde {
 
     @Override
     public void write(final Txn<ByteBuffer> txn, final TemporalKey key, final Consumer<ByteBuffer> consumer) {
-        final byte[] bytes = key.getPrefix().getVal().toString().getBytes(StandardCharsets.UTF_8);
+        final byte[] bytes = ValSerdeUtil.getBytes(key.getPrefix().getVal());
         KeyLength.check(bytes.length, limit);
 
         // We are in a single write transaction so should be able to reuse the same buffer again and again.
@@ -66,7 +66,7 @@ public class LimitedStringKeySerde implements TemporalKeySerde {
     public <R> R toBufferForGet(final Txn<ByteBuffer> txn,
                                 final TemporalKey key,
                                 final Function<Optional<ByteBuffer>, R> function) {
-        final byte[] bytes = key.getPrefix().getVal().toString().getBytes(StandardCharsets.UTF_8);
+        final byte[] bytes = ValSerdeUtil.getBytes(key.getPrefix().getVal());
         KeyLength.check(bytes.length, limit);
         return byteBuffers.use(bytes.length + timeSerde.getSize(), byteBuffer -> {
             byteBuffer.put(bytes);

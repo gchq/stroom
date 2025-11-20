@@ -3,13 +3,13 @@ package stroom.planb.impl.serde.valtime;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.serde.time.TimeSerde;
+import stroom.planb.impl.serde.val.ValSerdeUtil;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;
 
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.function.Consumer;
 
@@ -36,7 +36,7 @@ public class StringValTimeSerde implements ValTimeSerde {
 
     @Override
     public void write(final Txn<ByteBuffer> txn, final ValTime value, final Consumer<ByteBuffer> consumer) {
-        final byte[] bytes = value.val().toString().getBytes(StandardCharsets.UTF_8);
+        final byte[] bytes = ValSerdeUtil.getBytes(value.val());
         byteBuffers.use(bytes.length + timeSerde.getSize(), byteBuffer -> {
             byteBuffer.put(bytes);
             timeSerde.write(byteBuffer, value.insertTime());
