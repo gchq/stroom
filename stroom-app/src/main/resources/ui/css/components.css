@@ -1117,19 +1117,18 @@
     padding-left: 5px;
 }
 
-.askStroomAiViewImpl-messageContainer {
+.askStroomAiViewImpl {
     display: flex;
-    flex-direction: row;
-    align-items: start;
+    gap: var(--control__padding--vertical);
 }
 
-.askStroomAiViewImpl-messageContainer button.Button {
+.askStroomAiViewImpl-bottom {
+    display: flex;
+    gap: var(--control__padding--horizontal);
+}
+
+.askStroomAiViewImpl-bottom button.Button {
     min-width: 80px;
-}
-
-.askStroomAiViewImpl-markdownPreview {
-    border: 1px solid var(--control__border-color);
-    background-color: var(--dashboard-panel__background-color);
 }
 
 .columnFunctionEditorViewImpl {
