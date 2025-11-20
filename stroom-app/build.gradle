@@ -127,7 +127,7 @@ dependencies {
     implementation project(':stroom-index:stroom-index-api')
     implementation project(':stroom-index:stroom-index-impl')
     implementation project(':stroom-index:stroom-index-lucene553')
-    implementation project(':stroom-index:stroom-index-lucene980')
+    implementation project(':stroom-index:stroom-index-lucene')
     implementation project(':stroom-index:stroom-index-impl-db')
     implementation project(':stroom-index:stroom-index-impl-db-jooq')
     implementation project(':stroom-job:stroom-job-api')
