@@ -6,6 +6,8 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume.VolumeUseState;
+import stroom.index.shared.LuceneVersion;
+import stroom.index.shared.LuceneVersionUtil;
 import stroom.node.api.NodeInfo;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -221,11 +223,22 @@ public class ActiveShards {
             final IndexShardStatus status = indexShard.getStatus();
             final boolean isVolumeFull = indexShard.getVolume().getCapacityInfo().isFull();
             final VolumeUseState volumeUseState = indexShard.getVolume().getState();
+
+            // Get the lucene version for the shard.
+            LuceneVersion luceneVersion = null;
+            try {
+                luceneVersion = LuceneVersionUtil.getLuceneVersion(indexShard.getIndexVersion());
+            } catch (final RuntimeException e) {
+                // Ignore not supported version exception.
+                LOGGER.debug(e::getMessage, e);
+            }
+
             if (status != null
                 && REQUIRED_SHARD_STATES.contains(status)
                 && indexShard.getDocumentCount() < maxDocsPerShard
                 && !isVolumeFull
-                && VolumeUseState.ACTIVE.equals(volumeUseState)) {
+                && VolumeUseState.ACTIVE.equals(volumeUseState)
+                && LuceneVersionUtil.CURRENT_LUCENE_VERSION.equals(luceneVersion)) {
                 indexShards.add(indexShard);
             } else {
                 LOGGER.debug(() -> LogUtil.message(

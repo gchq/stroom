@@ -8,6 +8,7 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolume.VolumeUseState;
+import stroom.index.shared.LuceneVersionUtil;
 import stroom.node.mock.MockNodeInfo;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -103,7 +104,10 @@ class TestActiveShards {
         // given we have an existing shard
         final IndexVolume indexVolume = indexVolumeBuilder.state(volumeUseState).build();
         final IndexShard myIndexShard = indexShardDao.create(
-                indexShardKey, indexVolume, nodeInfo.getThisNodeName(), "1.0");
+                indexShardKey,
+                indexVolume,
+                nodeInfo.getThisNodeName(),
+                LuceneVersionUtil.CURRENT_LUCENE_VERSION.getDisplayValue());
         myIndexShard.setStatus(status);
         myIndexShard.setDocumentCount(documentCount);
 
