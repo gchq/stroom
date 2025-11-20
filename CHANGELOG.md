@@ -13,6 +13,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11-beta.10] - 2025-11-20
+
+* Issue **#5257** : Upgrade Lucene to 10.3.1.
+
+* Issue **#5263** : Add copy for selected rows.
+
+* Remove default value for `feedStatus.url` in the proxy config yaml as downstream host should now be used instead.
+
+
 ## [v7.11-beta.9] - 2025-11-19
 
 * Issue **#5192** : Support Elasticsearch kNN search on dense_vector fields.
@@ -1869,7 +1878,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.9...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.10...HEAD
+[v7.11-beta.10]: https://github.com/gchq/stroom/compare/v7.11-beta.9...v7.11-beta.10
 [v7.11-beta.9]: https://github.com/gchq/stroom/compare/v7.11-beta.8...v7.11-beta.9
 [v7.11-beta.8]: https://github.com/gchq/stroom/compare/v7.11-beta.7...v7.11-beta.8
 [v7.11-beta.7]: https://github.com/gchq/stroom/compare/v7.11-beta.6...v7.11-beta.7

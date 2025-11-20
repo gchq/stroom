@@ -245,7 +245,8 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                         : null;
                 final Context context = new Context(rowIndex, colIndex, key);
 
-                @SuppressWarnings("unchecked") final HasContextMenus<Object> hasContextMenus = (HasContextMenus<Object>) cell;
+                @SuppressWarnings("unchecked") final HasContextMenus<Object> hasContextMenus =
+                        (HasContextMenus<Object>) cell;
                 final List<Item> cellMenuItems = hasContextMenus.getContextMenuItems(context, cellValue);
 
                 if (cellMenuItems != null && !cellMenuItems.isEmpty()) {
@@ -343,7 +344,8 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                         : null;
                 final Context context = new Context(rowIndex, colIndex, key);
 
-                @SuppressWarnings("unchecked") final HasContextMenus<Object> hasContextMenus = (HasContextMenus<Object>) cell;
+                @SuppressWarnings("unchecked") final HasContextMenus<Object> hasContextMenus =
+                        (HasContextMenus<Object>) cell;
                 final List<Item> cellMenuItems = hasContextMenus.getContextMenuItems(context, cellValue);
 
                 if (cellMenuItems != null && !cellMenuItems.isEmpty()) {

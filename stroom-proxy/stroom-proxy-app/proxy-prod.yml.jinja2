@@ -211,7 +211,10 @@ proxyConfig:
   #    apiKey: ""
 
   feedStatus:
-    url: "{{ 'http://stroom:8080/api/feedStatus/v2' | envVar('FEED_STATUS_URL') }}"
+    # Only set this to the FULL url of the feed status endpoint if it differs
+    # from where the downstreamHost config points to. Under normal circumstances
+    # the url is derived using downstreamHost.
+    url: "{{ '' | envVar('FEED_STATUS_URL') }}"
 
   # (FEED_STATUS|RECEIPT_POLICY|RECEIVE_ALL|DROP_ALL|REJECT_ALL)
   receive:
