@@ -15,6 +15,7 @@ import java.io.Writer;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Comparator;
 import java.util.Objects;
 
@@ -32,22 +33,36 @@ public final class ValXml implements Val {
 
     public static final Type TYPE = Type.XML;
     @JsonProperty
+    private final String data;
+    @JsonIgnore
     private final byte[] bytes;
     @JsonIgnore
     private String stringValue;
 
     @JsonCreator
-    private ValXml(@JsonProperty("bytes") final byte[] bytes) {
-        Objects.requireNonNull(bytes);
-        this.bytes = bytes;
+    private ValXml(@JsonProperty("data") final String data) {
+        Objects.requireNonNull(data);
+        this.data = data;
+        this.bytes = Base64.getDecoder().decode(data);
     }
 
-    public byte[] getBytes() {
-        return bytes;
+    private ValXml(final byte[] bytes) {
+        Objects.requireNonNull(bytes);
+        this.data = Base64.getEncoder().encodeToString(bytes);
+        this.bytes = bytes;
     }
 
     public static ValXml create(final byte[] bytes) {
         return new ValXml(bytes);
+    }
+
+    public String getData() {
+        return data;
+    }
+
+    @JsonIgnore
+    public byte[] getBytes() {
+        return bytes;
     }
 
     @Override
