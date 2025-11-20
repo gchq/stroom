@@ -36,7 +36,7 @@ stroomStatsSchema = { module = "uk.gov.gchq.stroom.stats:stroom-stats-schema", v
 #------3rd Party-libs---------------
 assertj-core = { module = "org.assertj:assertj-core" } # version controlled by dropwizard-dependencies
 aws-bom = { module = "software.amazon.awssdk:bom", version.ref = "aws" }
-aws-crt = { module = "software.amazon.awssdk.crt:aws-crt", version = "0.29.22" }
+aws-crt = { module = "software.amazon.awssdk.crt:aws-crt", version = "0.39.4" }
 aws-s3-transfer-manager = { module = "software.amazon.awssdk:s3-transfer-manager" } # version controlled by AWS BOM
 aws-sqs = { module = "software.amazon.awssdk:sqs" } # version controlled by AWS BOM
 aws-sts = { module = "software.amazon.awssdk:sts" } # version controlled by AWS BOM
@@ -92,7 +92,7 @@ gwtp-mvp-client = { module = "com.gwtplatform:gwtp-mvp-client", version = "0.7" 
 gson = { module = "com.google.code.gson:gson", version = "2.6.2" }
 hbase-shaded-netty = { module = "org.apache.hbase.thirdparty:hbase-shaded-netty", version = "4.1.12" } # Needed by our copied HBase classes in stroom.bytebuffer.hbase
 hessian = { module = "com.caucho:hessian", version = "4.0.65" }
-hikari = { module = "com.zaxxer:HikariCP", version = "5.1.0" }
+hikari = { module = "com.zaxxer:HikariCP", version = "7.0.2" }
 http-client = { module = "org.apache.httpcomponents.client5:httpclient5" } # version controlled by dropwizard-dependencies
 jBCrypt = { module = "de.svenkubiak:jBCrypt", version = "0.4.3" }
 jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations" } # version controlled by dropwizard-dependencies
