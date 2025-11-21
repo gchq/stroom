@@ -17,6 +17,8 @@
 
 package stroom.dashboard.client.table;
 
+import stroom.ai.client.AskStroomAiPresenter;
+import stroom.ai.shared.DashboardTableData;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.client.AnnotationChangeEvent;
 import stroom.annotation.shared.AnnotationDecorationFields;
@@ -608,8 +610,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         .popupSize(PopupSize.resizable(700, 500))
                         .caption("Ask Stroom AI")
                         .onShow(e -> {
-                            askAiPresenter.setSearchContext(currentSearchModel, getDashboardSearchRequest(
-                                    currentSearch, queryKey));
+                            askAiPresenter.setContext(currentSearchModel.getCurrentNode(),
+                                    new DashboardTableData(getDashboardSearchRequest(currentSearch, queryKey)));
                             askAiPresenter.getView().focus();
                         })
                         .fire();

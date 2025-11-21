@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.shared;
+package stroom.ai.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

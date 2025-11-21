@@ -97,6 +97,7 @@
     <inherits name="stroom.search.elastic.ElasticCluster" />
     <inherits name="stroom.search.elastic.ElasticIndex" />
     <inherits name="stroom.search.solr.SolrIndex" />
+    <inherits name="stroom.ai.AI" />
     <inherits name="stroom.dashboard.Dashboard" />
     <inherits name="stroom.state.ScyllaDb" />
     <inherits name="stroom.state.StateStore" />

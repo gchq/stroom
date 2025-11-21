@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.table;
+package stroom.ai.client;
 
+import stroom.ai.shared.AskStroomAiData;
+import stroom.ai.shared.AskStroomAiRequest;
+import stroom.ai.shared.AskStroomAiResource;
 import stroom.alert.client.event.AlertCallback;
 import stroom.alert.client.event.AlertEvent;
-import stroom.dashboard.client.main.SearchModel;
-import stroom.dashboard.shared.AskStroomAiRequest;
-import stroom.dashboard.shared.DashboardResource;
-import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.MarkdownConverter;
@@ -42,11 +41,11 @@ public class AskStroomAiPresenter extends MyPresenterWidget<AskStroomAiPresenter
         implements AskStroomAiUiHandlers {
 
     private static final String MARKDOWN_SECTION_BREAK = "\n\n---\n\n";
-    private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
+    private static final AskStroomAiResource RESOURCE = GWT.create(AskStroomAiResource.class);
     private final MarkdownConverter markdownConverter;
     private final RestFactory restFactory;
-    private SearchModel searchModel;
-    private DashboardSearchRequest dashboardSearchRequest;
+    private String node;
+    private AskStroomAiData data;
 
     @Inject
     public AskStroomAiPresenter(final EventBus eventBus,
@@ -61,10 +60,9 @@ public class AskStroomAiPresenter extends MyPresenterWidget<AskStroomAiPresenter
     }
 
     @Override
-    public void setSearchContext(final SearchModel searchModel,
-                                 final DashboardSearchRequest request) {
-        this.searchModel = searchModel;
-        this.dashboardSearchRequest = request;
+    public void setContext(final String node, final AskStroomAiData data) {
+        this.node = node;
+        this.data = data;
     }
 
     @Override
@@ -76,11 +74,11 @@ public class AskStroomAiPresenter extends MyPresenterWidget<AskStroomAiPresenter
         final Element markdownContainer = getView().getMarkdownContainer();
         markdownContainer.setScrollTop(markdownContainer.getScrollHeight());
 
-        final AskStroomAiRequest request = new AskStroomAiRequest(dashboardSearchRequest, message);
+        final AskStroomAiRequest request = new AskStroomAiRequest(data, message);
         restFactory
-                .create(DASHBOARD_RESOURCE)
+                .create(RESOURCE)
                 .method(res -> res.askStroomAi(
-                        searchModel.getCurrentNode(),
+                        node,
                         request))
                 .onSuccess(response -> {
                     onMessageReceived(response.getMessage());

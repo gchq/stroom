@@ -20,6 +20,8 @@ package stroom.app.client.gin;
 import stroom.about.client.gin.AboutGinjector;
 import stroom.about.client.gin.AboutModule;
 import stroom.activity.client.ActivityModule;
+import stroom.ai.client.gin.AskStroomAIGinjector;
+import stroom.ai.client.gin.AskStroomAIModule;
 import stroom.alert.client.gin.AlertGinjector;
 import stroom.alert.client.gin.AlertModule;
 import stroom.analytics.client.gin.AnalyticsGinjector;
@@ -136,6 +138,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         AlertModule.class,
         AnnotationModule.class,
         AppModule.class,
+        AskStroomAIModule.class,
         ContentStoreModule.class,
         CacheModule.class,
         ContentTemplateModule.class,
@@ -188,6 +191,7 @@ public interface AppGinjectorUser extends
         AboutGinjector,
         AlertGinjector,
         AnnotationGinjector,
+        AskStroomAIGinjector,
         CacheGinjector,
         ContentTemplateGinjector,
         DashboardGinjector,

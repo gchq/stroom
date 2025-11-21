@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.table;
+package stroom.ai.client.gin;
 
-import stroom.dashboard.client.main.SearchModel;
-import stroom.dashboard.shared.DashboardSearchRequest;
+import stroom.ai.client.AskStroomAiPresenter;
+import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
+import stroom.ai.client.AskStroomAiViewImpl;
 
-import com.gwtplatform.mvp.client.UiHandlers;
+import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
 
-public interface AskStroomAiUiHandlers extends UiHandlers {
+public class AskStroomAIModule extends AbstractPresenterModule {
 
-    void setSearchContext(SearchModel searchModel, DashboardSearchRequest request);
-
-    void onSendMessage(final String message);
-
-    void clearHistory();
+    @Override
+    protected void configure() {
+        bindPresenterWidget(AskStroomAiPresenter.class, AskStroomAiView.class, AskStroomAiViewImpl.class);
+    }
 }

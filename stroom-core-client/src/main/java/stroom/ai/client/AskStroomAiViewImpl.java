@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.table;
+package stroom.ai.client;
 
-import stroom.dashboard.client.table.AskStroomAiPresenter.AskStroomAiView;
+import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
 import stroom.widget.button.client.Button;
 
 import com.google.gwt.dom.client.Element;
@@ -52,6 +52,7 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     public AskStroomAiViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
 
+        message.getElement().setAttribute("placeholder", "How can I help?");
         sendMessage.setText(SEND_BUTTON_NORMAL_TEXT);
         sendMessage.setEnabled(false);
     }
@@ -78,7 +79,7 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
 
     @Override
     public void setSendButtonLoadingState(final boolean loading) {
-        sendMessage.setEnabled(!loading);
+        sendMessage.setEnabled(!loading && !message.getText().isEmpty());
         sendMessage.setLoading(loading);
         sendMessage.setText(loading ? SEND_BUTTON_BUSY_TEXT : SEND_BUTTON_NORMAL_TEXT);
     }

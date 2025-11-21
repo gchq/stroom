@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.shared;
+package stroom.ai.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -25,19 +25,19 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class AskStroomAiRequest {
 
     @JsonProperty
-    private final DashboardSearchRequest searchRequest;
+    private final AskStroomAiData data;
     @JsonProperty
     private final String message;
 
     @JsonCreator
-    public AskStroomAiRequest(@JsonProperty("searchRequest") final DashboardSearchRequest searchRequest,
-                              @JsonProperty("message") final String message)  {
-        this.searchRequest = searchRequest;
+    public AskStroomAiRequest(@JsonProperty("data") final AskStroomAiData data,
+                              @JsonProperty("message") final String message) {
+        this.data = data;
         this.message = message;
     }
 
-    public DashboardSearchRequest getSearchRequest() {
-        return searchRequest;
+    public AskStroomAiData getData() {
+        return data;
     }
 
     public String getMessage() {

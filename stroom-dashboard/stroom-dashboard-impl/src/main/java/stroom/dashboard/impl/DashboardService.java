@@ -1,7 +1,5 @@
 package stroom.dashboard.impl;
 
-import stroom.dashboard.shared.AskStroomAiRequest;
-import stroom.dashboard.shared.AskStroomAiResponse;
 import stroom.dashboard.shared.ColumnValues;
 import stroom.dashboard.shared.ColumnValuesRequest;
 import stroom.dashboard.shared.DashboardDoc;
@@ -23,8 +21,6 @@ public interface DashboardService {
     ResourceGeneration downloadQuery(DashboardSearchRequest request);
 
     ResourceGeneration downloadSearchResults(DownloadSearchResultsRequest request);
-
-    AskStroomAiResponse askStroomAi(AskStroomAiRequest request);
 
     DashboardSearchResponse search(DashboardSearchRequest request);
 

@@ -1,0 +1,24 @@
+package stroom.ai.shared;
+
+import stroom.query.shared.QuerySearchRequest;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@JsonInclude(Include.NON_NULL)
+public final class QueryTableData implements AskStroomAiData {
+
+    @JsonProperty
+    private final QuerySearchRequest searchRequest;
+
+    @JsonCreator
+    public QueryTableData(@JsonProperty("searchRequest") final QuerySearchRequest searchRequest) {
+        this.searchRequest = searchRequest;
+    }
+
+    public QuerySearchRequest getSearchRequest() {
+        return searchRequest;
+    }
+}

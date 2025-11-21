@@ -16,6 +16,7 @@
 
 package stroom.openai.shared;
 
+import stroom.docref.DocRef;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 
@@ -30,46 +31,31 @@ public class OpenAIModelConfig extends AbstractConfig implements IsStroomConfig 
     private static final int DEFAULT_MAXIMUM_BATCH_SIZE = 1024;
     private static final int DEFAULT_MAXIMUM_TABLE_INPUT_ROWS = 100;
 
-    private final String baseUrl;
-    private final String apiKey;
-    private final String modelId;
+    @JsonProperty
+    private final DocRef defaultApiConfig;
+    @JsonProperty
     private final int maximumBatchSize;
+    @JsonProperty
     private final int maximumTableInputRows;
 
     public OpenAIModelConfig() {
-        baseUrl = null;
-        apiKey = null;
-        modelId = null;
+        defaultApiConfig = null;
         maximumBatchSize = DEFAULT_MAXIMUM_BATCH_SIZE;
         maximumTableInputRows = DEFAULT_MAXIMUM_TABLE_INPUT_ROWS;
     }
 
     @JsonCreator
-    public OpenAIModelConfig(@JsonProperty("baseUrl") final String baseUrl,
-                             @JsonProperty("apiKey") final String apiKey,
-                             @JsonProperty("modelId") final String modelId,
+    public OpenAIModelConfig(@JsonProperty("defaultApiConfig") final DocRef defaultApiConfig,
                              @JsonProperty("maximumBatchSize") final int maximumBatchSize,
                              @JsonProperty("maximumTableInputRows") final int maximumTableInputRows) {
-        this.baseUrl = baseUrl;
-        this.apiKey = apiKey;
-        this.modelId = modelId;
+        this.defaultApiConfig = defaultApiConfig;
         this.maximumBatchSize = maximumBatchSize;
         this.maximumTableInputRows = maximumTableInputRows;
     }
 
-    @JsonPropertyDescription("Override the base URL for the OpenAI API endpoint. Example: https://api.example.com/v1")
-    public String getBaseUrl() {
-        return baseUrl;
-    }
-
-    @JsonPropertyDescription("Optional API key for authenticating with the OpenAI API")
-    public String getApiKey() {
-        return apiKey;
-    }
-
-    @JsonPropertyDescription("ID of the OpenAI model. Example: meta-llama/Llama-3.1-8B-Instruct")
-    public String getModelId() {
-        return modelId;
+    @JsonPropertyDescription("The default API to use.")
+    public DocRef getDefaultApiConfig() {
+        return defaultApiConfig;
     }
 
     @JsonPropertyDescription("Maximum number of tokens to pass the AI service at a time")
@@ -85,8 +71,7 @@ public class OpenAIModelConfig extends AbstractConfig implements IsStroomConfig 
     @Override
     public String toString() {
         return "OpenAIModelConfig{" +
-               "baseUrl='" + baseUrl + "'" +
-               ", modelId='" + modelId + "'" +
+               "defaultApiConfig='" + defaultApiConfig + "'" +
                ", maximumBatchSize=" + maximumBatchSize +
                ", maximumTableInputRows=" + maximumTableInputRows +
                '}';

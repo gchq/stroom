@@ -880,7 +880,7 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                 lastKeywordSequence.add(tokenType);
 
                 LOGGER.debug("""
-
+                                
                                 token: {}
                                 endIdx: {}
                                 lastKeyword: {}
