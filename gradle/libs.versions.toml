@@ -210,7 +210,7 @@ jooq = { id = "nu.studer.jooq", version = "8.2.3" }
 
 flyway = { id = "org.flywaydb.flyway", version = "11.9.1" }
 
-jdeps = { id = "org.kordamp.gradle.jdeps", version = "0.16.0" }
+jdeps = { id = "org.kordamp.gradle.jdeps", version = "0.20.0" }
 
 # moduleplugin = { id = "org.javamodularity.moduleplugin", version = "1.8.10" }
 
