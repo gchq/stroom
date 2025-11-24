@@ -21,6 +21,7 @@ import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -59,6 +60,16 @@ public class PlanBDoc extends Doc {
     private final AbstractPlanBSettings settings;
 
     public PlanBDoc() {
+        // A temporary fix to address 5254 in 7.10, knowing it has been addressed in 7.11 already.
+        //
+        super(TYPE,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
         description = null;
         stateType = null;
         settings = null;
@@ -77,7 +88,15 @@ public class PlanBDoc extends Doc {
             @JsonProperty("description") final String description,
             @JsonProperty("stateType") final StateType stateType,
             @JsonProperty("settings") final AbstractPlanBSettings settings) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        // A temporary fix to address 5254 in 7.10, knowing it has been addressed in 7.11 already.
+        super(NullSafe.requireNonNullElse(type, TYPE),
+                uuid,
+                name,
+                version,
+                createTimeMs,
+                updateTimeMs,
+                createUser,
+                updateUser);
         this.description = description;
         this.stateType = stateType;
         this.settings = settings;
