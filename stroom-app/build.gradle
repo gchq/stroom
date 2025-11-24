@@ -5,7 +5,7 @@ buildscript {
     }
     dependencies {
         classpath libs.mysql.connector.java
-        classpath 'org.reflections:reflections:0.9.12'
+        classpath 'org.reflections:reflections:0.10.2'
     }
 }
 
