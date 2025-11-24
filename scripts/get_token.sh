@@ -60,6 +60,11 @@ main() {
   setup_echo_colours
 
   if ! command -v jq 1>/dev/null; then
+    echo "jq is not installed, please install it." >&2
+    exit 1
+  fi
+
+  if ! command -v yq 1>/dev/null; then
     echo "yq is not installed, please install it." >&2
     exit 1
   fi
