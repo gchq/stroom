@@ -15,6 +15,7 @@ import jakarta.inject.Inject;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -26,22 +27,22 @@ public class TestSearchable extends AbstractCoreIntegrationTest {
     private static final String STROOM_PACKAGE_NAME = "stroom";
 
     @Inject
-    Set<Searchable> searchables;
+    Map<String, Searchable> searchables;
 
     /**
-     * Make sure all classes that implement {@link Searchable} also have a MultiBinding to Set&lt;Searchable&gt;
+     * Make sure all classes that implement {@link Searchable} also have a MapBinding to Set&lt;Searchable&gt;
      */
     @Test
     void test() {
         Assertions.assertThat(searchables)
                 .isNotNull();
 
-        LOGGER.debug("Searchables: {}", searchables.stream()
+        LOGGER.debug("Searchables: {}", searchables.values().stream()
                 .map(searchable -> searchable.getClass() + " - " + searchable.getDataSourceType())
                 .sorted()
                 .collect(Collectors.joining("\n")));
 
-        final long docRefCount = searchables.stream()
+        final long docRefCount = searchables.values().stream()
                 .flatMap(searchable -> NullSafe.stream(searchable.getDataSourceDocRefs()))
                 .count();
         LOGGER.info("docRefCount: {}", docRefCount);
@@ -53,7 +54,7 @@ public class TestSearchable extends AbstractCoreIntegrationTest {
                     .peek(classInfo -> LOGGER.debug("classInfo: {}", classInfo))
                     .filter(Predicate.not(ClassInfo::isInterface))
                     .map(ClassInfo::loadClass)
-                    .filter(clazz -> searchables.stream()
+                    .filter(clazz -> searchables.values().stream()
                             .noneMatch(searchable -> Objects.equals(searchable.getClass(), clazz)))
                     .collect(Collectors.toSet());
 

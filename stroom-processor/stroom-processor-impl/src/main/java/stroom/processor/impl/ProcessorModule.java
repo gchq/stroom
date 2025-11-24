@@ -67,6 +67,7 @@ public class ProcessorModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
                 .addBinding(ProcessorTaskServiceImpl.class);
+
         GuiceUtil.buildMapBinder(binder(), Searchable.class)
                 .addBinding(ProcessorTaskServiceImpl.class);
 

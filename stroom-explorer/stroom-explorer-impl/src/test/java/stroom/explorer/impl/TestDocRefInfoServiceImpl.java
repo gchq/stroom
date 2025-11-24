@@ -221,6 +221,10 @@ class TestDocRefInfoServiceImpl {
                 .isEqualTo(DOC_REF3.getName());
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class MySearchable implements Searchable {
 
         @Override
