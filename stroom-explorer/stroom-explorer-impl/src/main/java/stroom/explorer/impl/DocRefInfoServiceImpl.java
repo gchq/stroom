@@ -76,7 +76,7 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
                 return NullSafe.stream(handler.listDocuments())
                         .toList();
             } else {
-                if (specialDocRefsByType.containsKey(type)) {
+                if (isSpecialDocRefType(type)) {
                     final Set<DocRef> specialDocRefs = getSpecialDocRefs(type);
                     return NullSafe.stream(specialDocRefs).toList();
                 } else {
@@ -102,7 +102,7 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
         return docRefInfoCache.get(docRef)
                 .or(() -> {
                     // No type so have to loop through all searchable providers
-                    return specialDocRefsByType.values()
+                    return getSpecialDocRefsByType().values()
                             .stream()
                             .flatMap(Collection::stream)
                             .filter(docRef::equals)
@@ -141,7 +141,7 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
                             true,
                             true);
 
-                    specialDocRefsByType.values()
+                    getSpecialDocRefsByType().values()
                             .stream()
                             .flatMap(Collection::stream)
                             .filter(predicate)
@@ -152,7 +152,7 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
                     if (handler != null) {
                         return handler.findByName(nameFilter, allowWildCards);
                     } else {
-                        final Set<DocRef> specialDocRefs = specialDocRefsByType.get(type);
+                        final Set<DocRef> specialDocRefs = getSpecialDocRefs(type);
                         if (specialDocRefs != null) {
                             final Predicate<DocRef> predicate = PatternUtil.createPredicate(
                                     List.of(nameFilter),
@@ -185,7 +185,7 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
                 if (handler != null) {
                     return handler.findByNames(nameFilters, allowWildCards);
                 } else {
-                    final Set<DocRef> specialDocRefs = specialDocRefsByType.get(type);
+                    final Set<DocRef> specialDocRefs = getSpecialDocRefs(type);
                     if (specialDocRefs != null) {
                         final Predicate<DocRef> predicate = PatternUtil.createPredicate(
                                 nameFilters,
@@ -265,7 +265,7 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
             return docRefInfoCache.get(docRef)
                     .map(DocRefInfo::getDocRef)
                     .or(() ->
-                            NullSafe.stream(specialDocRefsByType.get(docRef.getType()))
+                            NullSafe.stream(getSpecialDocRefs(docRef.getType()))
                                     .filter(docRef::equals)
                                     .findAny())
                     .orElseThrow(() ->
@@ -275,17 +275,29 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
         }
     }
 
+    private Map<String, Set<DocRef>> getSpecialDocRefsByType() {
+        if (specialDocRefsByType == null) {
+            specialDocRefsByType = specialExplorerDataSources.stream()
+                    .map(IsSpecialExplorerDataSource::getDataSourceDocRefs)
+                    .flatMap(NullSafe::stream)
+                    .collect(Collectors.groupingBy(DocRef::getType, Collectors.toSet()));
+        }
+        return specialDocRefsByType;
+    }
+
     private Set<DocRef> getSpecialDocRefs(final String type) {
         if (NullSafe.isNonEmptyString(type)) {
-            if (specialDocRefsByType == null) {
-                specialDocRefsByType = specialExplorerDataSources.stream()
-                        .map(IsSpecialExplorerDataSource::getDataSourceDocRefs)
-                        .flatMap(NullSafe::stream)
-                        .collect(Collectors.groupingBy(DocRef::getType, Collectors.toSet()));
-            }
-            return specialDocRefsByType.get(type);
+            return getSpecialDocRefsByType().get(type);
         } else {
             return Collections.emptySet();
+        }
+    }
+
+    private boolean isSpecialDocRefType(final String type) {
+        if (NullSafe.isNonEmptyString(type)) {
+            return getSpecialDocRefsByType().containsKey(type);
+        } else {
+            return false;
         }
     }
 
