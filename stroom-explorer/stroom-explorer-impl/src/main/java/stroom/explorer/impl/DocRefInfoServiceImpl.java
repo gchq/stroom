@@ -136,7 +136,7 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
 
                     final Predicate<DocRef> predicate = PatternUtil.createPredicate(
                             List.of(nameFilter),
-                            DocRef::toString,
+                            DocRef::getName,
                             allowWildCards,
                             true,
                             true);
@@ -156,7 +156,7 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
                         if (specialDocRefs != null) {
                             final Predicate<DocRef> predicate = PatternUtil.createPredicate(
                                     List.of(nameFilter),
-                                    DocRef::toString,
+                                    DocRef::getName,
                                     allowWildCards,
                                     true,
                                     true);
@@ -189,7 +189,7 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
                     if (specialDocRefs != null) {
                         final Predicate<DocRef> predicate = PatternUtil.createPredicate(
                                 nameFilters,
-                                DocRef::toString,
+                                DocRef::getName,
                                 allowWildCards,
                                 true,
                                 true);
@@ -277,7 +277,7 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
 
     private Map<String, Set<DocRef>> getSpecialDocRefsByType() {
         if (specialDocRefsByType == null) {
-            specialDocRefsByType = specialExplorerDataSources.stream()
+            specialDocRefsByType = NullSafe.stream(specialExplorerDataSources)
                     .map(IsSpecialExplorerDataSource::getDataSourceDocRefs)
                     .flatMap(NullSafe::stream)
                     .collect(Collectors.groupingBy(DocRef::getType, Collectors.toSet()));

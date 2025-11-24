@@ -2,14 +2,8 @@ package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.api.IsSpecialExplorerDataSource;
-import stroom.query.api.DateTimeSettings;
-import stroom.query.api.datasource.FindFieldCriteria;
-import stroom.query.api.datasource.QueryField;
-import stroom.searchable.api.Searchable;
 import stroom.security.mock.MockSecurityContext;
-import stroom.util.shared.ResultPage;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +20,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -94,6 +89,12 @@ class TestDocRefInfoServiceImpl {
                 .when(mockDocRefInfoCache).get(Mockito.any(DocRef.class));
     }
 
+    private void initSearchables() {
+        Mockito.doAnswer(invocation ->
+                        Stream.of(new MySpecialDataSource1(), new MySpecialDataSource2()))
+                .when(mockSpecialDataSources).stream();
+    }
+
     @Test
     void decorate_list_null() {
 
@@ -122,7 +123,6 @@ class TestDocRefInfoServiceImpl {
         assertThat(outputDocRefs)
                 .containsExactlyElementsOf(inputDocRefs);
     }
-
 
     @Test
     void decorate_list_twoDecorated() {
@@ -221,38 +221,99 @@ class TestDocRefInfoServiceImpl {
                 .isEqualTo(DOC_REF3.getName());
     }
 
+    @Test
+    void decorateSearchable() {
+        initMockCache();
+        initSearchables();
+
+        final DocRef input = MySpecialDataSource1.DUAL_DOC_REF.copy()
+                .name(MySpecialDataSource1.DUAL_DOC_REF.getName() + "XXX")
+                .build();
+        final DocRef docRef = docRefInfoService.decorate(input, true);
+
+        assertThat(docRef.getName())
+                .isEqualTo(MySpecialDataSource1.DUAL_DOC_REF.getName());
+    }
+
+    @Test
+    void findSearchableByName() {
+//        initMockCache();
+        initSearchables();
+
+//        final DocRef input = MySpecialDataSource1.DUAL_DOC_REF.copy()
+//                .name(MySpecialDataSource1.DUAL_DOC_REF.getName() + "XXX")
+//                .build();
+
+        final List<DocRef> docRefs = docRefInfoService.findByName(MySpecialDataSource1.TYPE, "*", true);
+
+        assertThat(docRefs)
+                .containsExactly(MySpecialDataSource1.DUAL_DOC_REF);
+    }
+
+    @Test
+    void findSearchableByName_nullTypeExact() {
+        initSearchables();
+
+        final List<DocRef> docRefs = docRefInfoService.findByName(null, "Dual", false);
+
+        assertThat(docRefs)
+                .containsExactly(MySpecialDataSource1.DUAL_DOC_REF);
+    }
+
+    @Test
+    void findSearchableByName_nullTypeWild() {
+        initSearchables();
+
+        final List<DocRef> docRefs = docRefInfoService.findByName(null, "Du*", true);
+
+        assertThat(docRefs)
+                .containsExactly(MySpecialDataSource1.DUAL_DOC_REF);
+    }
+
+    @Test
+    void findByType() {
+        initSearchables();
+        final List<DocRef> docRefs = docRefInfoService.findByType(MySpecialDataSource1.TYPE);
+        assertThat(docRefs)
+                .containsExactly(MySpecialDataSource1.DUAL_DOC_REF);
+    }
+
 
     // --------------------------------------------------------------------------------
 
 
-    private static class MySearchable implements Searchable {
+    private static class MySpecialDataSource1 implements IsSpecialExplorerDataSource {
 
-        @Override
-        public String getDataSourceType() {
-            return null;
-        }
+        public static final String TYPE = "Dual";
+        public static final DocRef DUAL_DOC_REF = DocRef.builder()
+                .type(TYPE)
+                .randomUuid()
+                .name(TYPE)
+                .build();
 
         @Override
         public List<DocRef> getDataSourceDocRefs() {
-            return null;
-        }
-
-        @Override
-        public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
-            return null;
-        }
-
-        @Override
-        public int getFieldCount(final DocRef docRef) {
-            return 0;
-        }
-
-        @Override
-        public void search(final ExpressionCriteria criteria,
-                           final stroom.query.language.functions.FieldIndex fieldIndex,
-                           final DateTimeSettings dateTimeSettings,
-                           final stroom.query.language.functions.ValuesConsumer consumer) {
-
+            return List.of(DUAL_DOC_REF);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class MySpecialDataSource2 implements IsSpecialExplorerDataSource {
+
+        public static final String TYPE = "Tasks";
+        public static final DocRef TASKS_DOC_REF = DocRef.builder()
+                .type(TYPE)
+                .randomUuid()
+                .name(TYPE)
+                .build();
+
+        @Override
+        public List<DocRef> getDataSourceDocRefs() {
+            return List.of(TASKS_DOC_REF);
+        }
+    }
+
 }
