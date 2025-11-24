@@ -779,6 +779,7 @@ appConfig:
     dataFeedKeyOwnerMetaKey: "AccountId"
     dataFeedKeysDir: "data_feed_keys"
     enabledAuthenticationTypes:
+    - "TOKEN"
     - "CERTIFICATE"
     feedNameGenerationEnabled: false
     feedNameGenerationMandatoryHeaders:
@@ -963,6 +964,7 @@ appConfig:
       secretEncryptionKey: ""
     identity:
       allowCertificateAuthentication: false
+      autoCreateAdminAccountOnBoot: false
       certificateCnCaptureGroupIndex: 1
       certificateCnPattern: ".*\\((.*)\\)"
       db:

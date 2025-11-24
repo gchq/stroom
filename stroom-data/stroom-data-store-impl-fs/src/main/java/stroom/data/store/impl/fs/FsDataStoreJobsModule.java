@@ -33,20 +33,26 @@ public class FsDataStoreJobsModule extends AbstractModule {
                 .bindJobTo(DataDelete.class, builder -> builder
                         .name(PhysicalDeleteExecutor.TASK_NAME)
                         .description("Physically delete meta data and associated files that have been logically " +
-                                "deleted based on age of delete (stroom.data.store.deletePurgeAge)")
+                                     "deleted based on age of delete (stroom.data.store.deletePurgeAge)")
                         .cronSchedule(CronExpressions.EVERY_DAY_AT_MIDNIGHT.getExpression())
                         .advanced(false))
                 .bindJobTo(OrphanFileFinder.class, builder -> builder
                         .name(FsOrphanFileFinderExecutor.TASK_NAME)
                         .description("Job to find files that do not exist in the meta store")
                         .cronSchedule(CronExpressions.EVERY_DAY_AT_MIDNIGHT.getExpression())
+                        .enabledOnBootstrap(false)
                         .enabled(false))
                 .bindJobTo(OrphanMetaFinder.class, builder -> builder
                         .name(FsOrphanMetaFinderExecutor.TASK_NAME)
                         .description("Job to find items in the meta store that have no associated data")
                         .cronSchedule(CronExpressions.EVERY_DAY_AT_MIDNIGHT.getExpression())
+                        .enabledOnBootstrap(false)
                         .enabled(false));
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class DataDelete extends RunnableWrapper {
 
@@ -56,6 +62,10 @@ public class FsDataStoreJobsModule extends AbstractModule {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class OrphanFileFinder extends RunnableWrapper {
 
         @Inject
@@ -63,6 +73,10 @@ public class FsDataStoreJobsModule extends AbstractModule {
             super(() -> clusterLockService.tryLock(FsOrphanFileFinderExecutor.TASK_NAME, executor::scan));
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class OrphanMetaFinder extends RunnableWrapper {
 

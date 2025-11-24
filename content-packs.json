@@ -4,7 +4,7 @@
     "name" : "core-xml-schemas",
     "version" : "3.0"
   }, {
-    "url" : "https://github.com/gchq/stroom-content/releases/download/event-logging-xml-schema-v5.0/event-logging-xml-schema-v5.0.zip",
+    "url" : "https://github.com/gchq/stroom-content/releases/download/event-logging-xml-schemas-v5.0/event-logging-xml-schemas-v5.0.zip",
     "name" : "event-logging-xml-schemas",
     "version" : "5.0"
   }, {
@@ -16,9 +16,9 @@
     "name" : "internal-dashboards",
     "version" : "2.0"
   }, {
-    "url" : "https://github.com/gchq/stroom-content/releases/download/internal-statistics-sql-v2.2/internal-statistics-sql-v2.2.zip",
+    "url" : "https://github.com/gchq/stroom-content/releases/download/internal-statistics-sql-v3.0/internal-statistics-sql-v3.0.zip",
     "name" : "internal-statistics-sql",
-    "version" : "2.2"
+    "version" : "3.0"
   }, {
     "url" : "https://github.com/gchq/stroom-content/releases/download/standard-pipelines-v0.5/standard-pipelines-v0.5.zip",
     "name" : "standard-pipelines",

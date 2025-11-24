@@ -31,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
+import java.util.function.Function;
 
 @JsonInclude(Include.NON_NULL)
 public class JobNode implements HasAuditInfo, HasIntegerId {
@@ -216,6 +217,20 @@ public class JobNode implements HasAuditInfo, HasIntegerId {
 
     public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
+    }
+
+    /**
+     * @return The state of the {@link Job} and {@link JobNode},
+     * e.g. ENABLED:DISABLED
+     */
+    @JsonIgnore
+    public String getCombinedStateAsString() {
+        final Function<Boolean, String> enableStateFunc = isEnabled -> isEnabled
+                ? "ENABLED"
+                : "DISABLED";
+        return enableStateFunc.apply(job.isEnabled())
+               + ":"
+               + enableStateFunc.apply(enabled);
     }
 
     @Override

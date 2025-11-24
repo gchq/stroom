@@ -75,7 +75,7 @@ public class ReceiveDataConfig
         receiptPolicyUuid = null;
         // Sort them to ensure consistent order on serialisation
         metaTypes = CollectionUtil.asUnmodifiabledConsistentOrderSet(StreamTypeNames.ALL_HARD_CODED_STREAM_TYPE_NAMES);
-        enabledAuthenticationTypes = EnumSet.of(AuthenticationType.CERTIFICATE);
+        enabledAuthenticationTypes = EnumSet.of(AuthenticationType.CERTIFICATE, AuthenticationType.TOKEN);
         authenticationRequired = true;
         dataFeedKeysDir = "data_feed_keys";
         dataFeedKeyOwnerMetaKey = DEFAULT_OWNER_META_KEY;

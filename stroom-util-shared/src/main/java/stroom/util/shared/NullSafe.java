@@ -504,6 +504,13 @@ public class NullSafe {
     }
 
     /**
+     * @return True if the collection is null or empty
+     */
+    public static <T> boolean isEmptyResultPage(final ResultPage<T> resultPage) {
+        return resultPage == null || resultPage.isEmpty();
+    }
+
+    /**
      * @return True if value is null or the collection is null or empty
      */
     public static <T1, T2 extends Collection<E>, E> boolean isEmptyCollection(final T1 value,
@@ -566,6 +573,13 @@ public class NullSafe {
      */
     public static <T> boolean hasItems(final Collection<T> collection) {
         return collection != null && !collection.isEmpty();
+    }
+
+    /**
+     * @return True if the collection is non-null and not empty
+     */
+    public static <T> boolean hasItems(final ResultPage<T> resultPage) {
+        return resultPage != null && !resultPage.isEmpty();
     }
 
     /**

@@ -9,10 +9,7 @@ import stroom.proxy.app.handler.ProxyId;
 import stroom.proxy.app.handler.ThreadConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.LogStreamConfig;
-import stroom.receive.common.AuthenticationType;
 import stroom.receive.common.ReceiveDataConfig;
-import stroom.security.openid.api.AbstractOpenIdConfig;
-import stroom.security.openid.api.IdpType;
 import stroom.util.config.annotations.RequiresProxyRestart;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -235,33 +232,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     @JsonProperty
     public List<SqsConnectorConfig> getSqsConnectors() {
         return sqsConnectors;
-    }
-
-    @JsonIgnore
-    @SuppressWarnings("unused")
-    @ValidationMethod(message = "identityProviderType must be set to EXTERNAL_IDP if enabledAuthenticationTypes " +
-                                "contains 'TOKEN'")
-    public boolean isTokenAuthenticationEnabledValid() {
-        LOGGER.info("enabledAuthenticationTypes: {}, idpType: {}",
-                NullSafe.get(receiveDataConfig, ReceiveDataConfig::getEnabledAuthenticationTypes),
-                NullSafe.get(proxySecurityConfig,
-                        ProxySecurityConfig::getAuthenticationConfig,
-                        ProxyAuthenticationConfig::getOpenIdConfig,
-                        AbstractOpenIdConfig::getIdentityProviderType));
-
-        if (NullSafe.test(
-                receiveDataConfig,
-                config -> config.isAuthenticationTypeEnabled(AuthenticationType.TOKEN))) {
-
-            return NullSafe.test(
-                    proxySecurityConfig,
-                    ProxySecurityConfig::getAuthenticationConfig,
-                    ProxyAuthenticationConfig::getOpenIdConfig,
-                    AbstractOpenIdConfig::getIdentityProviderType,
-                    idpType -> idpType == IdpType.EXTERNAL_IDP);
-        } else {
-            return true;
-        }
     }
 
     @JsonIgnore

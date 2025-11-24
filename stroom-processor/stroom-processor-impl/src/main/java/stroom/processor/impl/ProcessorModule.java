@@ -106,6 +106,7 @@ public class ProcessorModule extends AbstractModule {
                         .name("Processor Task Creator")
                         .description("Create Processor Tasks from Processor Filters")
                         .frequencySchedule("10s")
+                        .enabledOnBootstrap(true) // We want processing to start in a test env
                         .enabled(false)
                         .advanced(false));
 
