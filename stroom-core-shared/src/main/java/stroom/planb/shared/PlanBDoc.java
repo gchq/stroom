@@ -60,6 +60,16 @@ public class PlanBDoc extends Doc {
     private final AbstractPlanBSettings settings;
 
     public PlanBDoc() {
+        // A temporary fix to address 5254 in 7.10, knowing it has been addressed in 7.11 already.
+        //
+        super(TYPE,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
         description = null;
         stateType = null;
         settings = null;
