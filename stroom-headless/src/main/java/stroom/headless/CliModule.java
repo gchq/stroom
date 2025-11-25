@@ -23,6 +23,7 @@ import stroom.data.store.mock.MockFsVolumeGroupService;
 import stroom.data.store.mock.MockStreamStoreModule;
 import stroom.dictionary.impl.DictionaryModule;
 import stroom.docstore.impl.DocStoreModule;
+import stroom.explorer.api.IsSpecialExplorerDataSource;
 import stroom.explorer.impl.DocRefInfoModule;
 import stroom.explorer.impl.MockExplorerModule;
 import stroom.feed.impl.FeedModule;
@@ -38,6 +39,7 @@ import stroom.security.mock.MockSecurityContextModule;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.impl.TaskContextModule;
 import stroom.util.entityevent.EntityEventBus;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.http.BasicHttpClientFactory;
 import stroom.util.http.HttpClientFactory;
 import stroom.util.io.BasicStreamCloser;
@@ -110,6 +112,8 @@ public class CliModule extends AbstractModule {
         install(new TaskContextModule());
 
         bind(InternalStatisticsReceiver.class).to(HeadlessInternalStatisticsReceiver.class);
+        GuiceUtil.buildMultiBinder(binder(), IsSpecialExplorerDataSource.class)
+                .addBinding(HeadlessIsSpecialExplorerDataSource.class);
         bind(StreamCloser.class).to(BasicStreamCloser.class).in(PipelineScoped.class);
 
         bind(PathConfig.class).to(StroomPathConfig.class);
