@@ -207,10 +207,10 @@ public class PlanBQueryService {
                              final Supplier<Val> otherwise) {
         return switch (planBValue) {
             case null -> otherwise.get();
-            case final State state -> ValString.create(state.val().toString());
-            case final TemporalState temporalState -> ValString.create(temporalState.val().toString());
-            case final RangeState rangeState -> ValString.create(rangeState.val().toString());
-            case final TemporalRangeState temporalRangeState -> ValString.create(temporalRangeState.val().toString());
+            case final State state -> state.val();
+            case final TemporalState temporalState -> temporalState.val();
+            case final RangeState rangeState -> rangeState.val();
+            case final TemporalRangeState temporalRangeState -> temporalRangeState.val();
             case final Session ignored -> ValBoolean.create(true);
             default -> throw new IllegalStateException("Unexpected value: " + planBValue);
         };
