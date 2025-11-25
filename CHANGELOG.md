@@ -13,6 +13,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.10.12] - 2025-11-25
+
+* Issue **#5254** : Fix NPE with PlanBDocs. This is a temporary fix pending another fix for this issue in v7.11.
+
+* Issue **#5272** : Fix NoSuchElementException when opening the Duplicate Management tab on a new Rule.
+
+* Issue **#5248** : Fix warning showing when using a Searchable as a data source.
+
+
 ## [v7.10.11] - 2025-11-18
 
 * Issue **#5250** : Add a new property `stroom.security.identity.autoCreateAdminAccountOnBoot` to control auto-creation of the default administrator account `admin` when stroom is running with an identity provider type of `INTERNAL_IDP` or `TEST_CREDENTIALS`. Enabling this property will create the `admin` account and stroom user. It will create the group `Administrators`, grant the app permission `Administrator` to it and add the `admin` user to the group. The auto-creation of the admin account/user was erroneously removed in a previous version of stroom.
@@ -1772,7 +1781,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.11...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.12...HEAD
+[v7.10.12]: https://github.com/gchq/stroom/compare/v7.10.11...v7.10.12
 [v7.10.11]: https://github.com/gchq/stroom/compare/v7.10.10...v7.10.11
 [v7.10.10]: https://github.com/gchq/stroom/compare/v7.10.9...v7.10.10
 [v7.10.9]: https://github.com/gchq/stroom/compare/v7.10.8...v7.10.9
