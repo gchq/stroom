@@ -23,7 +23,7 @@ public class ExplorerDecoratorImpl implements ExplorerDecorator {
 
     @Override
     public List<DocRef> list() {
-        return set.stream()
+        return NullSafe.stream(set)
                 .flatMap(hasDataSourceDocRefs ->
                         NullSafe.stream(hasDataSourceDocRefs.getDataSourceDocRefs()))
                 .filter(Objects::nonNull)

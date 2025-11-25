@@ -305,8 +305,7 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
         if (docRef == null) {
             return Optional.empty();
         } else {
-            return getSpecialDocRefs(docRef.getType())
-                    .stream()
+            return NullSafe.stream(getSpecialDocRefs(docRef.getType()))
                     .filter(docRef::equals)
                     .map(aDocRef -> DocRefInfo.builder()
                             .docRef(aDocRef)
