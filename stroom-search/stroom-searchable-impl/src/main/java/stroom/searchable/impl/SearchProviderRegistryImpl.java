@@ -36,12 +36,12 @@ public class SearchProviderRegistryImpl implements SearchProviderRegistry {
                                final ResultStoreFactory resultStoreFactory,
                                final SecurityContext securityContext,
                                final Set<SearchProvider> providers,
-                               final Set<Searchable> searchables) {
+                               final Map<String, Searchable> searchables) {
         for (final SearchProvider provider : providers) {
             searchProviderMap.put(provider.getDataSourceType(), provider);
         }
 
-        for (final Searchable searchable : searchables) {
+        for (final Searchable searchable : searchables.values()) {
             final SearchableSearchProvider searchableSearchProvider =
                     new SearchableSearchProvider(executor,
                             taskManager,
