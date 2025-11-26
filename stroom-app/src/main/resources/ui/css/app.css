@@ -43,6 +43,7 @@
 @import url("ScheduleBox.css");
 @import url("SelectionBox.css");
 @import url("QuickFilter.css");
+@import url("QueryBar.css");
 @import url("ExpressionItemBox.css");
 @import url("CommandLinkCell.css");
 @import url("TermEditor.css");

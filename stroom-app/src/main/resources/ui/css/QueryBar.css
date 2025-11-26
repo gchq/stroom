@@ -1,0 +1,82 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.queryBar {
+    display: flex;
+	align-items: center;
+	position: relative;
+}
+
+.queryBar-container {
+    gap: var(--control__padding--vertical);
+}
+
+.queryBar-textBox {
+    flex-grow: 1;
+	margin: 0;
+	padding: var(--input__padding--vertical) 22px var(--input__padding--vertical) var(--input__padding--horizontal);
+	cursor: text;
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+.queryBar-buttonPanel {
+    display: inline-grid;
+    flex-grow: 0;
+    border: solid 1px var(--control__border-color);
+    border-radius: 0;
+    border-left: none;
+    align-items: center;
+    margin: 0 !important;
+    align-self: stretch;
+    border-top-right-radius: .25rem;
+    border-bottom-right-radius: .25rem;
+    padding: 2px;
+    background-color: var(--button__background-color);
+}
+
+.queryBar-buttonPanel .icon-button .face {
+    color: var(--navigation__text-color);
+}
+
+/* queryBar-tooltip is also used by the HelpManager so bear that in mind.
+   Probably ought to be moved to a common css */
+.queryBar-tooltip {
+	background-color: var(--tooltip__background-color);
+	color: var(--tooltip__text-color);
+	padding: 1px 3px;
+	-moz-user-focus: initial;
+	-moz-user-input: initial;
+	-webkit-user-focus: initial;
+	-webkit-user-input: initial;
+	user-focus: initial;
+	user-input: initial;
+
+  	-webkit-user-select: text;
+  	-moz-user-select: text;
+  	user-select: text;
+
+  	/* All the above was copied form Tooltip.css */
+  	box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
+
+  	/* ensure it is above the glass used on some modals, e.g. EntityTreeViewImpl */
+  	z-index: 1000
+}
+
+/* Style any tables in the tooltip */
+.queryBar-tooltip th, .queryBar-tooltip td {
+    padding-right: 1em;
+}

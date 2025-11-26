@@ -4,9 +4,9 @@
              xmlns:view="urn:import:stroom.widget.dropdowntree.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max dock-container-vertical">
-        <form:FormGroup ui:field="formGroup" addStyleNames="dock-min form-padding">
-            <view:QuickFilter ui:field="quickFilter"/>
-        </form:FormGroup>
+        <g:SimplePanel addStyleNames="dock-min form-padding">
+            <view:QueryBar ui:field="queryBar"/>
+        </g:SimplePanel>
         <g:ThinSplitLayoutPanel styleName="dock-max overflow-hidden">
             <g:north size="200">
                 <g:SimplePanel ui:field="streamList" styleName="max"/>

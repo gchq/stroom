@@ -18,7 +18,7 @@ package stroom.data.client.view;
 
 import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.MetaPresenter.MetaView;
-import stroom.widget.dropdowntree.client.view.QuickFilter;
+import stroom.widget.dropdowntree.client.view.QueryBar;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -37,7 +37,7 @@ public class MetaViewImpl extends ViewWithUiHandlers<QuickFilterUiHandlers> impl
     private final Widget widget;
 
     @UiField
-    QuickFilter quickFilter;
+    QueryBar queryBar;
     @UiField
     SimplePanel streamList;
     @UiField
@@ -69,21 +69,21 @@ public class MetaViewImpl extends ViewWithUiHandlers<QuickFilterUiHandlers> impl
 
     @Override
     public void focus() {
-        quickFilter.focus();
+        queryBar.focus();
     }
 
     @Override
     public void setQuickFilterText(final String quickFilterText) {
-        final String currVal = quickFilter.getText();
-        quickFilter.setText(quickFilterText);
+        final String currVal = queryBar.getText();
+        queryBar.setText(quickFilterText);
         if (!Objects.equals(currVal, quickFilterText)) {
             getUiHandlers().onFilterChange(quickFilterText);
         }
     }
 
-    @UiHandler("quickFilter")
+    @UiHandler("queryBar")
     void onFilterChange(final ValueChangeEvent<String> event) {
-        getUiHandlers().onFilterChange(quickFilter.getText());
+        getUiHandlers().onFilterChange(queryBar.getText());
     }
 
     public interface Binder extends UiBinder<Widget, MetaViewImpl> {

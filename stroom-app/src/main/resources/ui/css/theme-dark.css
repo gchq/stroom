@@ -83,13 +83,13 @@
     --icon-button__border-color--on: var(--black);
     --icon-button__color--on: var(--app__background);
     --icon-button__background-color--hover: rgb(55, 58, 67);
-    --icon-button__border-color--hover: rgb(29, 31, 35);
+    --icon-button__border-color--hover: #505050;
     --icon-button__color: var(--blue-300);
     --navigation-icon-button__color: var(--navigation__text-color);
     --navigation-icon-button__background-color--on: var(--blue-500);
     --navigation-icon-button__border-color--on: var(--black);
     --navigation-icon-button__background-color--hover: rgb(52, 53, 55);
-    --navigation-icon-button__border-color--hover: rgb(18, 19, 21);
+    --navigation-icon-button__border-color--hover: var(--icon-button__border-color--hover);
 
     --expression-item-box__background-color--selected: var(--row__background-color--selected);/*#454545;*/
     --expression-item-box__background-color--hover: var(--row__background-color--hovered);/*#555;*/
