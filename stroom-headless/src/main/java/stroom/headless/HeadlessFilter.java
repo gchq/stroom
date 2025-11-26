@@ -23,6 +23,7 @@ import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.xml.event.simple.StartElement;
 import stroom.pipeline.xml.event.simple.StartPrefixMapping;
 import stroom.util.shared.Location;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 
@@ -34,10 +35,16 @@ import org.xml.sax.helpers.AttributesImpl;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 
+/**
+ * Writes the content of the passed {@link AttributeMap} into a {@code MetaData} element
+ * under the root element.
+ * <p>
+ * Any errors during processing are written into the XML in a {@code Errors} element
+ * under the root element.
+ */
 public class HeadlessFilter extends AbstractXMLFilter implements ErrorWriter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HeadlessFilter.class);
@@ -117,9 +124,11 @@ public class HeadlessFilter extends AbstractXMLFilter implements ErrorWriter {
             try {
                 super.startElement(URI, META_DATA, META_DATA, new AttributesImpl());
 
-                final List<String> keys = new ArrayList<>(metaData.keySet());
                 // Make sure the metadata keys are in a consistent order
-                Collections.sort(keys);
+                final List<String> keys = metaData.keySet()
+                        .stream()
+                        .sorted()
+                        .toList();
 
                 for (final String key : keys) {
                     final AttributesImpl atts = new AttributesImpl();
@@ -234,7 +243,7 @@ public class HeadlessFilter extends AbstractXMLFilter implements ErrorWriter {
     }
 
     private void writeErrors() {
-        if (errors.size() > 0) {
+        if (!errors.isEmpty()) {
             for (final StoredError error : errors) {
                 try {
                     final AttributesImpl atts = new AttributesImpl();
@@ -248,10 +257,7 @@ public class HeadlessFilter extends AbstractXMLFilter implements ErrorWriter {
                         atts.addAttribute(BLANK, ELEMENT_ID, ELEMENT_ID, STRING, error.getElementId());
                     }
 
-                    String message = error.getMessage();
-                    if (message == null) {
-                        message = "";
-                    }
+                    String message = NullSafe.string(error.getMessage());
                     if (error.getElementId() != null) {
                         message = error.getElementId() + COLON + SPACE + message;
                     }
