@@ -17,11 +17,8 @@
 package stroom.importexport.impl;
 
 import stroom.importexport.api.ImportExportDocumentEventLog;
-import stroom.lifecycle.api.LifecycleBinder;
-import stroom.util.RunnableWrapper;
 
 import com.google.inject.AbstractModule;
-import jakarta.inject.Inject;
 
 public class ImportExportModule extends AbstractModule {
 
@@ -30,18 +27,6 @@ public class ImportExportModule extends AbstractModule {
         bind(ImportExportService.class).to(ImportExportServiceImpl.class);
         bind(ImportExportSerializer.class).to(ImportExportSerializerImpl.class);
         bind(ImportExportDocumentEventLog.class).to(ImportExportDocumentEventLogImpl.class);
-
-        //Startup with very low priority to ensure it starts after everything else
-        //in particular
-        LifecycleBinder.create(binder())
-                .bindStartupTaskTo(ContentPackImportStartup.class, 6);
     }
 
-    private static class ContentPackImportStartup extends RunnableWrapper {
-
-        @Inject
-        ContentPackImportStartup(final ContentPackImport contentPackImport) {
-            super(contentPackImport::startup);
-        }
-    }
 }

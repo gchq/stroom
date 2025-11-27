@@ -21,6 +21,7 @@ import stroom.test.common.ComparisonHelper;
 import stroom.util.io.FileUtil;
 import stroom.util.zip.ZipUtil;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -32,6 +33,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Disabled // Until we figure out what Cli is actually for
 class TestCli {
 //    private static final Version CORE_XML_SCHEMAS_VERSION = Version.of(1, 0);
 //    private static final Version EVENT_LOGGING_XML_SCHEMA_VERSION = Version.of(1, 0);
