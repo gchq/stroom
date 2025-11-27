@@ -28,8 +28,14 @@ dependencies {
     implementation libs.restygwt
     implementation libs.slf4j.api
 
+    testImplementation project(':stroom-test-common')
+
+    testImplementation libs.zstd.jni
+    testImplementation libs.data.faker
+    testImplementation libs.eventLogging
     testImplementation libs.mbknor.jackson.jsonSchema
 
     testImplementation libs.bundles.common.test.implementation
+
     testRuntimeOnly libs.bundles.common.test.runtime
 }

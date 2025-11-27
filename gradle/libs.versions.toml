@@ -193,6 +193,7 @@ ws-rs-api = { module = "jakarta.ws.rs:jakarta.ws.rs-api" } # version controlled 
 ws-rs-api-gwt = { module = "javax.ws.rs:javax.ws.rs-api", version = "2.1.1" } # For GWT compilation
 xerces = { module = "xerces:xercesImpl", version = "2.12.2" }
 zero-allocation-hashing = { module = "net.openhft:zero-allocation-hashing", version = "0.16" }
+zstd-jni = { module =  "com.github.luben:zstd-jni", version = "1.5.7-6" }
 
 [plugins]
 
