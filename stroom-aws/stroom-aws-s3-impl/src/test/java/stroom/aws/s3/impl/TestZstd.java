@@ -17,7 +17,9 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -71,6 +73,7 @@ public class TestZstd {
         final long dictId = Zstd.getDictIdFromDict(dict);
         LOGGER.info("dictId: {}", dictId);
         final long[] eventOffsets = new long[iterations];
+        final int[] cumulativeCompressedSizes = new int[iterations];
         long startIdx = 0;
         long byteSum = 0;
 
@@ -89,14 +92,18 @@ public class TestZstd {
                 zstdOutputStream.write(bytes);
                 zstdOutputStream.flush();
 
-                final long streamCount = countingOutputStream.getCount();
-                final long len = streamCount - lastCount;
+                final long compressedByteCount = countingOutputStream.getCount();
+                cumulativeCompressedSizes[i] = (int) countingOutputStream.getCount();
+
+                final long len = compressedByteCount - lastCount;
                 eventOffsets[i] = startIdx;
                 LOGGER.debug("i: {}, bytes len: {}, startIdx: {}, lastCount: {}, count: {}, len: {}",
-                        i, bytes.length, startIdx, lastCount, streamCount, len);
+                        i, bytes.length, startIdx, lastCount, compressedByteCount, len);
                 startIdx = startIdx + len;
-                lastCount = streamCount;
+                lastCount = compressedByteCount;
             }
+
+            writeOffsetsData(eventOffsets, countingOutputStream);
         }
         final byte[] compressedBytes = byteArrayOutputStream.toByteArray();
 
@@ -126,7 +133,7 @@ public class TestZstd {
                 final String expected = data.get(i);
                 final String actual = getQuote(
                         compressedBuffer,
-                        eventOffsets,
+                        cumulativeCompressedSizes,
                         i,
                         zstdDecompressCtx,
                         decompressedBuffer);
@@ -136,15 +143,41 @@ public class TestZstd {
         }
     }
 
+    private void writeOffsetsData(final long[] eventOffsets,
+                                  final OutputStream outputStream) throws IOException {
+        // See https://github.com/facebook/zstd/blob/dev/contrib/seekable_format/zstd_seekable_compression_format.md
+        // and https://github.com/facebook/zstd/blob/release/doc/zstd_compression_format.md#skippable-frames
+        final byte[] skippableHeader = new byte[]{0x18, 0x4D, 0x2A, 0x5E};
+        outputStream.write(skippableHeader);
+
+        final byte[] payloadBytes = "hello world".getBytes(StandardCharsets.UTF_8);
+
+        final byte[] payloadSizeBytes = new byte[Integer.BYTES];
+        final ByteBuffer payloadSizeBuffer = ByteBuffer.wrap(payloadSizeBytes);
+        // payload size must be little endian
+        payloadSizeBuffer.order(ByteOrder.LITTLE_ENDIAN);
+        payloadSizeBuffer.putInt(payloadBytes.length);
+        outputStream.write(payloadSizeBytes);
+
+        outputStream.write(payloadBytes);
+    }
+
     private String getQuote(final ByteBuffer compressedBuffer,
-                            final long[] eventOffsets,
+                            final int[] cumulativeCompressedSizes,
                             final int eventIdx,
                             final ZstdDecompressCtx zstdDecompressCtx,
                             final ByteBuffer decompressedBuffer) {
-        final long startByteOffset = eventOffsets[eventIdx];
-        final long len = eventIdx == (eventOffsets.length - 1)
-                ? compressedBuffer.capacity() - startByteOffset
-                : eventOffsets[eventIdx + 1] - startByteOffset;
+
+        final long startByteOffset;
+        final long len;
+        if (eventIdx == 0) {
+            startByteOffset = 0;
+            len = cumulativeCompressedSizes[eventIdx];
+        } else {
+            final int prevSize = cumulativeCompressedSizes[eventIdx - 1];
+            startByteOffset = prevSize;
+            len = cumulativeCompressedSizes[eventIdx] - prevSize;
+        }
 
         final ByteBuffer compressedBufferSlice = compressedBuffer.slice((int) startByteOffset, (int) len);
 
@@ -152,15 +185,17 @@ public class TestZstd {
         LOGGER.debug("eventIdx: {}, startByteOffset: {}, len: {}, originalSize: {}",
                 eventIdx, startByteOffset, len, originalSize);
 
-        decompressedBuffer.clear();
-        LOGGER.debug("decompressedBuffer: {}", ByteBufferUtils.byteBufferInfo(decompressedBuffer));
-        LOGGER.debug("compressedBufferSlice: {}", ByteBufferUtils.byteBufferInfo(compressedBufferSlice));
+        LOGGER.debug("compressedBufferSlice: {}",
+                ByteBufferUtils.byteBufferInfo(compressedBufferSlice, false));
 
+        decompressedBuffer.clear();
         final int uncompressedCount = zstdDecompressCtx.decompress(decompressedBuffer, compressedBufferSlice);
         decompressedBuffer.flip();
+        LOGGER.debug("decompressedBuffer: {}",
+                ByteBufferUtils.byteBufferInfo(decompressedBuffer, false));
 
         final String str = StandardCharsets.UTF_8.decode(decompressedBuffer).toString();
-        LOGGER.debug("str: {}, count: {}", str, uncompressedCount);
+        LOGGER.debug("str: '{}', count: {}", str, uncompressedCount);
         return str;
     }
 }

@@ -331,16 +331,17 @@ public class ZstdComparison {
         private void writeSummaryFile() {
             final Path dir = getIndividualFilesDir();
             try (final Stream<Path> pathStream = Files.list(dir)) {
-                final Map<String, Long> totals = pathStream.map(path -> {
-                            final String ext = BASE_NAME_PATTERN.matcher(path.getFileName().toString())
-                                    .replaceAll("");
-                            try {
-                                final long size = Files.size(path);
-                                return Map.entry(ext, size);
-                            } catch (final IOException e) {
-                                throw new UncheckedIOException(e);
-                            }
-                        })
+                final Map<String, Long> totals = pathStream.map(
+                                path -> {
+                                    final String ext = BASE_NAME_PATTERN.matcher(path.getFileName().toString())
+                                            .replaceAll("");
+                                    try {
+                                        final long size = Files.size(path);
+                                        return Map.entry(ext, size);
+                                    } catch (final IOException e) {
+                                        throw new UncheckedIOException(e);
+                                    }
+                                })
                         .collect(Collectors.groupingBy(Entry::getKey, Collectors.summingLong(Entry::getValue)));
 
                 final Path totalsFile = dir.resolve("_totals.txt");
@@ -362,7 +363,8 @@ public class ZstdComparison {
                 final Path compressedIndividualFile = appendExtension(uncompressedIndividualFile, ".gz");
                 try (final GzipCompressorOutputStream outputStream = new GzipCompressorOutputStream(
                         new FileOutputStream(compressedIndividualFile.toFile()))) {
-                    try (final FileInputStream fileInputStream = new FileInputStream(uncompressedIndividualFile.toFile())) {
+                    try (final FileInputStream fileInputStream = new FileInputStream(
+                            uncompressedIndividualFile.toFile())) {
                         IOUtils.copy(fileInputStream, outputStream);
                     }
                 }
@@ -374,8 +376,8 @@ public class ZstdComparison {
         private void writeGzipFile(final Path uncompressedIndividualFile, final byte[] bytes) {
             try {
                 final Path compressedIndividualFile = appendExtension(uncompressedIndividualFile, ".gz");
-                try (final GzipCompressorOutputStream outputStream = new GzipCompressorOutputStream(new FileOutputStream(
-                        compressedIndividualFile.toFile()))) {
+                try (final GzipCompressorOutputStream outputStream = new GzipCompressorOutputStream(
+                        new FileOutputStream(compressedIndividualFile.toFile()))) {
                     outputStream.write(bytes);
                     outputStream.flush();
                     outputStream.finish();
