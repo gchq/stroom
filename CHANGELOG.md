@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.9.3] - 2025-11-28
+
+* Issue **#5175** : Fix zip handling.
+
+* Issue **#5229** : Change the default main method for the stroom-headless jar to be Headless rather than Cli. Fix errors when running stroom-headless.
+
+
 ## [v7.9.2] - 2025-08-14
 
 * Issue **#5065** : Make public key URI configurable.
@@ -1506,7 +1513,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.9.2...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.9.3...HEAD
+[v7.9.3]: https://github.com/gchq/stroom/compare/v7.9.2...v7.9.3
 [v7.9.2]: https://github.com/gchq/stroom/compare/v7.9.1...v7.9.2
 [v7.9.1]: https://github.com/gchq/stroom/compare/v7.9.0...v7.9.1
 [v7.9.0]: https://github.com/gchq/stroom/compare/v7.9-beta.13...v7.9.0
