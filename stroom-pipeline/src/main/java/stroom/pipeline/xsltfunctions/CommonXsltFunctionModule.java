@@ -616,7 +616,8 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
                     MetaStream.FUNCTION_NAME_FOR_ID,
                     2,
                     2,
-                    new SequenceType[]{SequenceType.SINGLE_STRING,
+                    new SequenceType[]{
+                            SequenceType.SINGLE_STRING,
                             SequenceType.SINGLE_INTEGER},
                     SequenceType.NODE_SEQUENCE,
                     functionCallProvider);
@@ -724,7 +725,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         RandomFunction(final Provider<Random> functionCallProvider) {
             super(
-                    "random",
+                    Random.FUNCTION_NAME,
                     0,
                     0,
                     new SequenceType[]{},
