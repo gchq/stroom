@@ -1,6 +1,5 @@
 package stroom.pathways.shared.otel.trace;
 
-import stroom.pathways.shared.otel.trace.Span.Builder;
 import stroom.util.shared.AbstractBuilder;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
