@@ -30,6 +30,7 @@ dependencies {
 
     testImplementation project(':stroom-test-common')
     testImplementation project(':stroom-bytebuffer')
+    testImplementation project(':stroom-lmdb') // For UnsignedBytes
 
     testImplementation libs.zstd.jni
     testImplementation libs.data.faker
