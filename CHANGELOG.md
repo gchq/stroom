@@ -13,188 +13,24 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
-## [v7.10.12] - 2025-11-25
-
-* Issue **#5254** : Fix NPE with PlanBDocs. This is a temporary fix pending another fix for this issue in v7.11.
-
-* Issue **#5272** : Fix NoSuchElementException when opening the Duplicate Management tab on a new Rule.
-
-* Issue **#5248** : Fix warning showing when using a Searchable as a data source.
-
-
-## [v7.10.11] - 2025-11-18
-
-* Issue **#5250** : Add a new property `stroom.security.identity.autoCreateAdminAccountOnBoot` to control auto-creation of the default administrator account `admin` when stroom is running with an identity provider type of `INTERNAL_IDP` or `TEST_CREDENTIALS`. Enabling this property will create the `admin` account and stroom user. It will create the group `Administrators`, grant the app permission `Administrator` to it and add the `admin` user to the group. The auto-creation of the admin account/user was erroneously removed in a previous version of stroom.
-
-
-## [v7.10.10] - 2025-11-17
-
-* Change default for `.receive.enabledAuthenticationTypes` to `[CERTIFICATE,TOKEN]` and add `.receive.authenticationRequired` to the default docker config yml files for both stroom and proxy.
-
-
-## [v7.10.9] - 2025-11-03
-
-* Issue **#5186** : Remove error logging for expected Plan B snapshot checking behaviour.
-
-* Issue **#5220** : Fix duplicate check column list change confirm dialog not showing if the duplicate check store is on a remote node.
-
-* Issue **#5126** : Improve Plan B null handling.
-
-* Issue **#5225** : Fix NPE on DocRef.
-
-* Issue **#5237** : Fix Plan B lookup no content error.
-
-
-## [v7.10.8] - 2025-10-20
-
-* Add a proxy zip file ingest mechanism to proxy. Add property branch `proxyConfig.dirScanner` to the config.
+## [v7.9.3] - 2025-11-28
 
 * Issue **#5175** : Fix zip handling.
 
-* Fix config validation not being run on config branches that are items in a list, e.g. `forwardHttpDestinations`.
+* Issue **#5229** : Change the default main method for the stroom-headless jar to be Headless rather than Cli. Fix errors when running stroom-headless.
 
-* Remove `NotNull` validation condition on `forwardHttpDestinations[n].apiKey` as proxy may use OAuth tokens to authenticate with the downstream destination.
 
-* Issue **#5175** : Add warning messages to stroom and proxy `/datafeed` to warn if a zip is received that contains paths that would unzip outside of a target directory. Only a warning as the paths in a zip sent to `/datafeed` are not used by stroom/proxy.
-
-* Uplift all the content packs that are included in the docker and zip distributions.
-
-* Issue **#5191** : Fix UI NPE.
-
-* Issue **#5189** : Change how the proxy directory queues are initialised. Now on initialisation, the min/max ids take into account incomplete paths, so if the largest path is `1/900` then the max id will be taken to be `900999`. When proxy is getting the next item off the queue it will delete any incomplete paths it finds en-route to the next valid item.
-
-* Issue **#5126** : Fix Plan B condense.
-
-* Issue **#5200** : Fix problem of duplicate check store failing to open due to its directory being deleted.
-
-* Issue **#5201** : Clear out the duplicate check store if the column names are changed. Add a confirm dialog to the Analytic Rule doc save action, to get the user to confirm that all dup check data will be deleted when there is a change to the derived/explicit dup check columns.
-
-* Issue **#5198** : Increase the maximum limit for `top()` to 10,000.
-
-* Issue **#5117** : Send Plan B data to all enabled target nodes regardless of active status.
-
-
-## [v7.10.7] - 2025-10-01
-
-* Issue **#5146** : Fix use of not equals in annotation queries.
-
-* Issue **#5145** : Expand all now affects favourites.
-
-* Issue **#5109** : Fix pipeline migration.
-
-
-## [v7.10.6] - 2025-09-26
-
-* Issue **#5147** : Fix proxy omitting allowed headers (e.g. 'Feed') if the case does not match that in the allowed set.
-
-* Issue **#5148** : Allow annotation users to edit labels.
-
-
-## [v7.10.5] - 2025-09-22
-
-* Issue **#5137** : Fix how proxy adds HTTP headers when sending downstream. It now only adds received meta entries to the headers if they are on an allow list. This list is made up of a hard coded base list `accountId, accountName, classification, component, contextEncoding, contextFormat, encoding, environment, feed, format, guid, schema, schemaVersion, system, type` and is supplemented by the new config property `forwardHeadersAdditionalAllowSet` in the `forwardHttpDestinations` items.
-
-
-## [v7.10.4] - 2025-09-22
-
-* Issue **#5135** : Fix proxy multi part gzip handling.
-
-
-## [v7.10.3] - 2025-09-19
-
-* Uplift JDK to 21.0.8_9 in docker images and sdkmanrc.
-
-* Issue **#5130** : Fix raw size meta bug.
-
-* Issue **#5132** : Fix missing session when AWS ALB does the code flow.
-
-
-## [v7.10.2] - 2025-09-18
-
-* Fix the OpenID code flow to stop the session being lost after redirection back to the initiating URL.
-
-* Issue **#5101** : Fix select-all filtering when doing a reprocess of everything in a folder. It no longer tries to re-process deleted items streams.
-
-* Issue **#5086** : Improve stream error handling.
-
-* Change the resource store to not rely on sessions. Resources are now linked to a user.
-
-* Issue **#5114** : Improve handling of loss of connection to IDP.
-
-* Change the way security filter decides whether to authenticate or not, e.g. how it determines what is a static resource that does not need authentication.
-
-* Issue **#5115** : Use correct  header during proxy forward requests.
-
-* Issue **#5121** : Proxy aggregation now keeps only common headers in aggregated data.
-
-* Fix exception handling of DistributedTaskFetcher so it will restart after failure.
-
-* Issue **#5127** : Maintain case for proxy meta attributes when logging.
-
-
-## [v7.10.1] - 2025-09-09
-
-* Issue **#5091** : Stop reference data loads failing if there are no entries in the stream.
-
-* Add `ReceiptId` to the INFO message on data receipt.
-
-* Issue **#5095** : Lock the cluster to perform pipeline migration to prevent other nodes clashing.
-
-* Issue **#5099** : Fix Plan B session key serialisation.
-
-* Issue **#5090** : Fix Plan B getVal() serialisation.
-
-* Issue **#5106** : Fix ref loads with XML values where the `<value>` element name is not in lower case.
-
-
-## [v7.10.0] - 2025-08-28
-
-* Issue **#5042** : Allow the import of processor filters when the existing processor filter is in a logically deleted state. Add validation to the import confirm dialog to ensure the parent doc is selected when a processor filter is selected.
-
-* Change DocRef Info Cache to evict entries on document creation to stop stroom saying that a document doesn't exist after import.
-
-
-## [v7.10-beta.14] - 2025-08-27
-
-* Issue **#5077** : Fix bug in user full name templating where it is always re-using the first value, i.e. setting every user to have the full name of the first user to log in.
-
-
-## [v7.10-beta.13] - 2025-08-26
-
-* Issue **#5047** : Replace the property `stroom.security.authentication.openid.validateAudience` with `stroom.security.authentication.openid.allowedAudiences` (defaults to empty) and `stroom.security.authentication.openid.audienceClaimRequired` (defaults to false). If the IDP is known to provide the `aud` claim (often populated with the `clientId`) then set `allowedAudiences` to contain that value and set `audienceClaimRequired` to `true`.
-
-* Issue **#5068** : Add the config prop `stroom.security.authentication.openId.fullNameClaimTemplate` to allow the user's full name to be formed from a template containing a mixture of static text and claim variables, e.g. `${firstName} ${lastName}`. Unknown variables are replaced with an empty string. Default is `${name}`.
-
-* Issue **#5066** : Change template syntax of `openid.publicKeyUriPattern` prop from positional variables (`{}`) to named variables (`${awsRegion}`). Default value has changed to `https://public-keys.auth.elb.${awsRegion}.amazonaws.com/${keyId}`. If this prop has been explicitly set, its value will need to be changed to named variables.
-
-* Issue **#5073** : Trim the unique identity, display name and full name values for a user to ensure no leading/trailing spaces are stored. Includes DB migration `V07_10_00_005__trim_user_identities.sql` that trims existing values in the `name`, `display_name` and `full_name` columns of the `stroom_user` table.
-
-
-## [v7.10-beta.12] - 2025-08-14
+## [v7.9.2] - 2025-08-14
 
 * Issue **#5065** : Make public key URI configurable.
 
 
-## [v7.10-beta.11] - 2025-08-14
+## [v7.9.1] - 2025-08-14
 
 * Issue **#5065** : Make public key URI configurable.
 
 
-## [v7.10-beta.10] - 2025-08-08
-
-* Issue **#5046** : Stop feeds being auto-created when there is no content template match.
-
-* Issue **#5062** : Fix permissions issue loading scheduled executors.
-
-
-## [v7.10-beta.9] - 2025-07-22
-
-* Allow clientSecret to be null/empty for mTLS auth.
-
-
-## [v7.10-beta.8] - 2025-07-21
-
-* Issue **#5027** : Allow users to choose run as user for processing.
+## [v7.9.0] - 2025-07-21
 
 * Issue **#4959** : Remove terms with field `Status` from re-process filter expressions.
 
@@ -203,17 +39,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#5016** : Fix sort state visibility on query table.
 
 * Issue **#5034** : Fix query field help refresh.
-
-
-## [v7.10-beta.7] - 2025-07-15
-
-* Issue **#5016** : Fix sort state visibility on query table.
-
-* Issue **#5017** : Fix stuck spinner copying embedded query.
-
-* Issue **#4974** : Fix Plan B condense job.
-
-* Issue **#5030** : Add new property `.receive.x509CertificateDnFormat` to stroom and proxy to allow extraction of CNs from DNs in legacy `OPEN_SSL` format. The new property defaults to `LDAP`, which means no change to behaviour if left as is.
 
 * Issue **#5025** : Fix parsing of hyperlinks in dashboard cells.
 
@@ -228,53 +53,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Fix behaviour in reference data loading of XML values where attributes with no explicit namespace would be given the unnamed namespace of the parent `referenceData` document, i.e. `<ci:data xmlns="reference-data:2" name="name" value="001" />`.
 
 
-## [v7.10-beta.6] - 2025-06-26
-
-* Issue **#5007** : Add ceilingTime() and floorTime().
-
-* Issue **#4977** : Limit user visibility in annotations.
-
-* Issue **#4976** : Exclude deleted annotations.
-
-
-## [v7.10-beta.5] - 2025-06-25
-
-* Issue **#5002** : Fix Plan B env staying open after error.
-
-* Issue **#5003** : Fix query date time formatting.
-
-* Issue **#4974** : Improve logging.
-
-
-## [v7.10-beta.4] - 2025-06-23
-
-* Issue **#3083** : Allow data() table function to show the Info pane.
-
-* Issue **#4959** : Remove terms with field `Status` from re-process filter expressions.
-
-* Issue **#4974** : NPE debug.
-
-* Issue **#4965** : Add dashboard screen to show current selection parameters.
-
-* Issue **#4943** : Fix annotation creation to set provided assigned and status.
-
-* Issue **#4496** : Add parse-dateTime xslt function.
-
-* Issue **#4496** : Add format-dateTime xslt function.
-
-* Issue **#4983** : Upgrade Flyway to work with newer version of MySQL.
-
-* Issue **#3122** : Make date/time rounding functions time zone sensitive.
-
-* Issue **#4984** : Add debug for Plan B tagged keys.
-
-* Issue **#4969** : Add a checkbox to Content Templates edit screen to make it copy (and re-map) any xslt/textConverter docs in the inherited pipeline.
-
-* Issue **#4991** : Add Plan B schema validation to ensure stores remain compatible especially when merging parts.
-
-* Issue **#4854** : Maintain scrollbar position on datagrid.
-
-* Issue **#4726** : Get meta for parent stream.
+## [v7.9-beta.13] - 2025-06-09
 
 * Fix primitive value conversion of query field types.
 
@@ -287,53 +66,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#4956** : Add error handling to duplicate check deletion.
 
 * Issue **#4967** : Fix SQL deadlock.
-
-
-## [v7.10-beta.3] - 2025-06-05
-
-* Issue **#4900** : Add histogram and metric stores to Plan B.
-
-
-## [v7.10-beta.2] - 2025-06-05
-
-* Issue **#4940** : Fix duplicate store error log.
-
-* Issue **#4941** : Fix annotation data retention.
-
-* Issue **#4957** : Default vis settings are not added to Query pane visualisations.
-
-* Issue **#3861** : Add Shard Id, Index Version to Index Shards searchable.
-
-* Issue **#4112** : Allow use of Capture groups in the decode() function result.
-
-* Issue **#3955** : Add case expression function.
-
-
-## [v7.10-beta.1] - 2025-05-27
-
-* Issue **#4484** : Change selection handling to use fully qualified keys.
-
-* Issue **#4456** : Fix selection handling across multiple components by uniquely namespacing selections.
-
-* Issue **#4886** : Fix ctrl+enter query execution for rules and reports.
-
-* Issue **#4884** : Suggest only queryable fields in StroomQL where clause.
-
-* Issue **#4742** : Allow embedded queries to be copies rather than references.
-
-* Issue **#4894** : Plan B query without snapshots.
-
-* Issue **#4896** : Plan B option to synchronise writes.
-
-* Issue **#4720** : Add Plan B shards data source.
-
-* Issue **#4919** : Add functions to format byte size strings.
-
-* Issue **#4901** : Add advanced schema selection to Plan B to improve performance and reduce storage requirements.
-
-* Fix primitive value conversion of query field types.
-
-* Issue **#4945** : Increase index field name length.
 
 
 ## [v7.9-beta.12] - 2025-05-07
@@ -1781,34 +1513,12 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.12...HEAD
-[v7.10.12]: https://github.com/gchq/stroom/compare/v7.10.11...v7.10.12
-[v7.10.11]: https://github.com/gchq/stroom/compare/v7.10.10...v7.10.11
-[v7.10.10]: https://github.com/gchq/stroom/compare/v7.10.9...v7.10.10
-[v7.10.9]: https://github.com/gchq/stroom/compare/v7.10.8...v7.10.9
-[v7.10.8]: https://github.com/gchq/stroom/compare/v7.10.7...v7.10.8
-[v7.10.7]: https://github.com/gchq/stroom/compare/v7.10.6...v7.10.7
-[v7.10.6]: https://github.com/gchq/stroom/compare/v7.10.5...v7.10.6
-[v7.10.5]: https://github.com/gchq/stroom/compare/v7.10.4...v7.10.5
-[v7.10.4]: https://github.com/gchq/stroom/compare/v7.10.3...v7.10.4
-[v7.10.3]: https://github.com/gchq/stroom/compare/v7.10.2...v7.10.3
-[v7.10.2]: https://github.com/gchq/stroom/compare/v7.10.1...v7.10.2
-[v7.10.1]: https://github.com/gchq/stroom/compare/v7.10.0...v7.10.1
-[v7.10.0]: https://github.com/gchq/stroom/compare/v7.10-beta.14...v7.10.0
-[v7.10-beta.14]: https://github.com/gchq/stroom/compare/v7.10-beta.13...v7.10-beta.14
-[v7.10-beta.13]: https://github.com/gchq/stroom/compare/v7.10-beta.12...v7.10-beta.13
-[v7.10-beta.12]: https://github.com/gchq/stroom/compare/v7.10-beta.11...v7.10-beta.12
-[v7.10-beta.11]: https://github.com/gchq/stroom/compare/v7.10-beta.10...v7.10-beta.11
-[v7.10-beta.10]: https://github.com/gchq/stroom/compare/v7.10-beta.9...v7.10-beta.10
-[v7.10-beta.9]: https://github.com/gchq/stroom/compare/v7.10-beta.8...v7.10-beta.9
-[v7.10-beta.8]: https://github.com/gchq/stroom/compare/v7.10-beta.7...v7.10-beta.8
-[v7.10-beta.7]: https://github.com/gchq/stroom/compare/v7.10-beta.6...v7.10-beta.7
-[v7.10-beta.6]: https://github.com/gchq/stroom/compare/v7.10-beta.5...v7.10-beta.6
-[v7.10-beta.5]: https://github.com/gchq/stroom/compare/v7.10-beta.4...v7.10-beta.5
-[v7.10-beta.4]: https://github.com/gchq/stroom/compare/v7.10-beta.3...v7.10-beta.4
-[v7.10-beta.3]: https://github.com/gchq/stroom/compare/v7.10-beta.2...v7.10-beta.3
-[v7.10-beta.2]: https://github.com/gchq/stroom/compare/v7.10-beta.1...v7.10-beta.2
-[v7.10-beta.1]: https://github.com/gchq/stroom/compare/v7.9-beta.12...v7.10-beta.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.9.3...HEAD
+[v7.9.3]: https://github.com/gchq/stroom/compare/v7.9.2...v7.9.3
+[v7.9.2]: https://github.com/gchq/stroom/compare/v7.9.1...v7.9.2
+[v7.9.1]: https://github.com/gchq/stroom/compare/v7.9.0...v7.9.1
+[v7.9.0]: https://github.com/gchq/stroom/compare/v7.9-beta.13...v7.9.0
+[v7.9-beta.13]: https://github.com/gchq/stroom/compare/v7.9-beta.12...v7.9-beta.13
 [v7.9-beta.12]: https://github.com/gchq/stroom/compare/v7.9-beta.11...v7.9-beta.12
 [v7.9-beta.11]: https://github.com/gchq/stroom/compare/v7.9-beta.10...v7.9-beta.11
 [v7.9-beta.10]: https://github.com/gchq/stroom/compare/v7.9-beta.9...v7.9-beta.10
