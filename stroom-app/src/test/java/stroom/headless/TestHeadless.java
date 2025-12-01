@@ -27,7 +27,6 @@ import stroom.util.zip.ZipUtil;
 
 import org.apache.commons.io.FileUtils;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
@@ -44,7 +43,6 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Disabled
 class TestHeadless {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestHeadless.class);
