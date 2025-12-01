@@ -47,41 +47,63 @@ public class TestZstd {
     @Test
     void test(@TempDir final Path dir) throws IOException {
 
-
-        final Random random = new Random(RANDOM_SEED);
-        final Faker faker = new Faker(random);
         final int iterations = 200;
-        final ZstdDictTrainer zstdDictTrainer = new ZstdDictTrainer(
-                10000,
-                1000,
-                COMPRESSION_LEVEL);
 
         final List<String> data = new ArrayList<>(iterations);
         final List<byte[]> dataBytes = new ArrayList<>(iterations);
 
-        for (int i = 0; i < iterations; i++) {
-            String str;
-            final int remainder = i % 3;
-            if (remainder == 0) {
-                str = faker.backToTheFuture().quote();
-            } else if (remainder == 1) {
-                str = faker.simpsons().quote();
-            } else {
-                str = faker.southPark().quotes();
-            }
-            str = "<quote>" + str + "</quote>";
-            final byte[] bytes = str.getBytes(StandardCharsets.UTF_8);
-//            LOGGER.info("str: {}", str);
-            data.add(str);
-            dataBytes.add(bytes);
-            zstdDictTrainer.addSample(bytes);
-        }
+        final byte[] dict = buildTestDataAndDictionary(iterations, data, dataBytes);
 
-        final byte[] dict = zstdDictTrainer.trainSamples();
-        final long dictId = Zstd.getDictIdFromDict(dict);
-        LOGGER.info("dictId: {}", dictId);
-//        final long[] eventOffsets = new long[iterations];
-//        final long[] cumulativeCompressedSizes = new long[iterations];
+        final CompressResult compressResult = compressData(iterations, dict, dataBytes);
+        final byte[] compressedBytes = compressResult.compressedBytes;
+
+
+        final Path dictFile = dir.resolve("dict");
+        Files.write(dictFile, dict, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+        LOGGER.debug("Written dict {} to {}", Zstd.getDictIdFromDict(dict), dictFile.toAbsolutePath());
+
+        final Path file = dir.resolve("file.zst");
+        Files.write(file, compressedBytes, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+        LOGGER.debug("Written file to {}", file.toAbsolutePath());
+
+        LOGGER.info("dir: {}", dir.toAbsolutePath());
+
+
+        try (final ZstdDictDecompress zstdDictDecompress = new ZstdDictDecompress(dict);
+                final ZstdDecompressCtx zstdDecompressCtx = new ZstdDecompressCtx()) {
+
+            zstdDecompressCtx.loadDict(zstdDictDecompress);
+
+            // Make sure we can decompress the whole thing as if it were just one frame
+            final byte[] decompressed = zstdDecompressCtx.decompress(compressedBytes, (int) compressResult.byteSum());
+            final String decompressedStr = new String(decompressed, StandardCharsets.UTF_8);
+
+            for (final String line : data) {
+                assertThat(decompressedStr)
+                        .contains(line);
+            }
+
+            final ByteBuffer decompressedBuffer = ByteBuffer.allocateDirect(500);
+
+            final ByteBuffer compressedBuffer = ByteBuffer.allocateDirect(compressedBytes.length);
+            ByteBufferUtils.copy(ByteBuffer.wrap(compressedBytes), compressedBuffer);
+
+            assertThat(isSeekable(compressedBuffer))
+                    .isTrue();
+
+            // Try and retrieve each event individually and check it matches what we expect
+            for (int i = 0; i < data.size(); i++) {
+                LOGGER.debug("i: {}, len: {}", i, dataBytes.get(i).length);
+                final String expected = data.get(i);
+                final String actual = getEvent(compressedBuffer, i, zstdDecompressCtx, decompressedBuffer);
+                assertThat(actual)
+                        .isEqualTo(expected);
+            }
+        }
+    }
+
+    private CompressResult compressData(final int iterations, final byte[] dict, final List<byte[]> dataBytes)
+            throws IOException {
         final List<FrameInfo> frameInfoList = new ArrayList<>(iterations);
         long startIdx = 0;
         long byteSum = 0;
@@ -118,62 +140,43 @@ public class TestZstd {
         }
         final byte[] compressedBytes = byteArrayOutputStream.toByteArray();
 
-
-        final Path dictFile = dir.resolve("dict");
-        Files.write(dictFile, dict, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-        LOGGER.debug("Written dict {} to {}", Zstd.getDictIdFromDict(dict), dictFile.toAbsolutePath());
-
-        final Path file = dir.resolve("file.zst");
-        Files.write(file, compressedBytes, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-        LOGGER.debug("Written file to {}", file.toAbsolutePath());
-
-        LOGGER.info("dir: {}", dir.toAbsolutePath());
-
         LOGGER.info("Compressed bytes: {}, uncompressed bytes: {}",
                 ModelStringUtil.formatCsv(compressedBytes.length),
                 ModelStringUtil.formatCsv(byteSum));
+        return new CompressResult(byteSum, compressedBytes);
+    }
 
-        try (final ZstdDictDecompress zstdDictDecompress = new ZstdDictDecompress(dict);
-                final ZstdDecompressCtx zstdDecompressCtx = new ZstdDecompressCtx()) {
+    private static byte[] buildTestDataAndDictionary(final int iterations,
+                                                     final List<String> data,
+                                                     final List<byte[]> dataBytes) {
+        final Faker faker = new Faker(new Random(RANDOM_SEED));
+        final ZstdDictTrainer zstdDictTrainer = new ZstdDictTrainer(
+                10000,
+                1000,
+                COMPRESSION_LEVEL);
 
-            zstdDecompressCtx.loadDict(zstdDictDecompress);
-
-            // Make sure we can decompress the whole thing as if it were just one frame
-            final byte[] decompressed = zstdDecompressCtx.decompress(compressedBytes, (int) byteSum);
-            final String decompressedStr = new String(decompressed, StandardCharsets.UTF_8);
-
-            for (final String line : data) {
-                assertThat(decompressedStr)
-                        .contains(line);
+        for (int i = 0; i < iterations; i++) {
+            String str;
+            final int remainder = i % 3;
+            if (remainder == 0) {
+                str = faker.backToTheFuture().quote();
+            } else if (remainder == 1) {
+                str = faker.simpsons().quote();
+            } else {
+                str = faker.southPark().quotes();
             }
-
-            final ByteBuffer decompressedBuffer = ByteBuffer.allocateDirect(500);
-
-            final ByteBuffer compressedBuffer = ByteBuffer.allocateDirect(compressedBytes.length);
-            ByteBufferUtils.copy(ByteBuffer.wrap(compressedBytes), compressedBuffer);
-
-            assertThat(isSeekable(compressedBuffer))
-                    .isTrue();
-
-            // Try and retrieve each event individually and check it matches what we expect
-            for (int i = 0; i < data.size(); i++) {
-                LOGGER.debug("i: {}, len: {}", i, dataBytes.get(i).length);
-                final String expected = data.get(i);
-//                final String actual = getQuote(
-//                        compressedBuffer,
-//                        cumulativeCompressedSizes,
-//                        i,
-//                        zstdDecompressCtx,
-//                        decompressedBuffer);
-                final String actual = getQuote(
-                        compressedBuffer,
-                        i,
-                        zstdDecompressCtx,
-                        decompressedBuffer);
-                assertThat(actual)
-                        .isEqualTo(expected);
-            }
+            str = "<quote>" + str + "</quote>";
+            final byte[] bytes = str.getBytes(StandardCharsets.UTF_8);
+//            LOGGER.info("str: {}", str);
+            data.add(str);
+            dataBytes.add(bytes);
+            zstdDictTrainer.addSample(bytes);
         }
+
+        final byte[] dict = zstdDictTrainer.trainSamples();
+        final long dictId = Zstd.getDictIdFromDict(dict);
+        LOGGER.info("dictId: {}", dictId);
+        return dict;
     }
 
     private void writeOffsetsData(final List<FrameInfo> frameInfoList,
@@ -234,44 +237,44 @@ public class TestZstd {
         byteBuffer.putInt((int) (value & 0xFFFFFFFFL));
     }
 
-    private String getQuote(final ByteBuffer compressedBuffer,
-                            final long[] cumulativeCompressedSizes,
-                            final int eventIdx,
-                            final ZstdDecompressCtx zstdDecompressCtx,
-                            final ByteBuffer decompressedBuffer) {
+//    private String getQuote(final ByteBuffer compressedBuffer,
+//                            final long[] cumulativeCompressedSizes,
+//                            final int eventIdx,
+//                            final ZstdDecompressCtx zstdDecompressCtx,
+//                            final ByteBuffer decompressedBuffer) {
+//
+//        final long startByteOffset;
+//        final long len;
+//        if (eventIdx == 0) {
+//            startByteOffset = 0;
+//            len = cumulativeCompressedSizes[eventIdx];
+//        } else {
+//            final long prevSize = cumulativeCompressedSizes[eventIdx - 1];
+//            startByteOffset = prevSize;
+//            len = cumulativeCompressedSizes[eventIdx] - prevSize;
+//        }
+//
+//        final ByteBuffer compressedBufferSlice = compressedBuffer.slice((int) startByteOffset, (int) len);
+//
+//        final long originalSize = Zstd.getFrameContentSize(compressedBufferSlice);
+//        LOGGER.debug("eventIdx: {}, startByteOffset: {}, len: {}, originalSize: {}",
+//                eventIdx, startByteOffset, len, originalSize);
+//
+//        LOGGER.debug("compressedBufferSlice: {}",
+//                ByteBufferUtils.byteBufferInfo(compressedBufferSlice, false));
+//
+//        decompressedBuffer.clear();
+//        final int uncompressedCount = zstdDecompressCtx.decompress(decompressedBuffer, compressedBufferSlice);
+//        decompressedBuffer.flip();
+//        LOGGER.debug("decompressedBuffer: {}",
+//                ByteBufferUtils.byteBufferInfo(decompressedBuffer, false));
+//
+//        final String str = StandardCharsets.UTF_8.decode(decompressedBuffer).toString();
+//        LOGGER.debug("str: '{}', count: {}", str, uncompressedCount);
+//        return str;
+//    }
 
-        final long startByteOffset;
-        final long len;
-        if (eventIdx == 0) {
-            startByteOffset = 0;
-            len = cumulativeCompressedSizes[eventIdx];
-        } else {
-            final long prevSize = cumulativeCompressedSizes[eventIdx - 1];
-            startByteOffset = prevSize;
-            len = cumulativeCompressedSizes[eventIdx] - prevSize;
-        }
-
-        final ByteBuffer compressedBufferSlice = compressedBuffer.slice((int) startByteOffset, (int) len);
-
-        final long originalSize = Zstd.getFrameContentSize(compressedBufferSlice);
-        LOGGER.debug("eventIdx: {}, startByteOffset: {}, len: {}, originalSize: {}",
-                eventIdx, startByteOffset, len, originalSize);
-
-        LOGGER.debug("compressedBufferSlice: {}",
-                ByteBufferUtils.byteBufferInfo(compressedBufferSlice, false));
-
-        decompressedBuffer.clear();
-        final int uncompressedCount = zstdDecompressCtx.decompress(decompressedBuffer, compressedBufferSlice);
-        decompressedBuffer.flip();
-        LOGGER.debug("decompressedBuffer: {}",
-                ByteBufferUtils.byteBufferInfo(decompressedBuffer, false));
-
-        final String str = StandardCharsets.UTF_8.decode(decompressedBuffer).toString();
-        LOGGER.debug("str: '{}', count: {}", str, uncompressedCount);
-        return str;
-    }
-
-    private String getQuote(final ByteBuffer compressedBuffer,
+    private String getEvent(final ByteBuffer compressedBuffer,
                             final int eventIdx,
                             final ZstdDecompressCtx zstdDecompressCtx,
                             final ByteBuffer decompressedBuffer) {
@@ -359,6 +362,14 @@ public class TestZstd {
         return compressedBuffer.capacity()
                - FrameInfo.FOOTER_BYTES
                - ((frameCount - frameIdx) * (long) FrameInfo.getEntrySize(false));
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record CompressResult(long byteSum, byte[] compressedBytes) {
+
     }
 
 

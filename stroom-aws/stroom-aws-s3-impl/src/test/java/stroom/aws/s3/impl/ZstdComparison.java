@@ -193,6 +193,7 @@ public class ZstdComparison {
         // Docs suggest that the training sample size should be ~100x the dict size
         private static final int SAMPLE_SIZE_BYTES = DICT_SIZE_BYTES * 100;
         private static final int COMPRESSION_LEVEL = 10; // Level 10 seems similar to gzip in time taken
+        private static final int EVENTS_PER_FRAME = 1;
 
         private Path streamFile = null;
         private Path framedZstdFile = null;
@@ -204,6 +205,8 @@ public class ZstdComparison {
         private boolean createdDict = false;
         private byte[] dict = null;
         private ZstdOutputStream framedZstdOutputStream;
+        private int frameEventsCnt = 0;
+        private boolean flushRequired = false;
 
         public FileLogReceiver() {
             zstdDictTrainer = new ZstdDictTrainer(SAMPLE_SIZE_BYTES, DICT_SIZE_BYTES, COMPRESSION_LEVEL);
@@ -281,6 +284,10 @@ public class ZstdComparison {
                     "writeZstdFile (no dict)");
 
             try {
+                if (flushRequired) {
+                    framedZstdOutputStream.flush();
+                    flushRequired = false;
+                }
                 framedZstdOutputStream.close();
                 framedZstdOutputStream = null;
             } catch (final IOException e) {
@@ -304,7 +311,13 @@ public class ZstdComparison {
 
                 // Write the event as a frame
                 framedZstdOutputStream.write(bytes);
-                framedZstdOutputStream.flush();
+                flushRequired = true;
+                frameEventsCnt++;
+                if (frameEventsCnt >= EVENTS_PER_FRAME) {
+                    framedZstdOutputStream.flush();
+                    flushRequired = false;
+                    frameEventsCnt = 0;
+                }
                 // Write the individual file
                 final Path uncompressedIndividualFile = getIndividualFile();
                 Files.writeString(
