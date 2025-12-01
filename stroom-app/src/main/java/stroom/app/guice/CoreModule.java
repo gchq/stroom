@@ -64,6 +64,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.explorer.impl.db.ExplorerDaoModule());
         install(new stroom.feed.impl.FeedModule());
         install(new stroom.importexport.impl.ExportConfigResourceModule());
+        install(new stroom.importexport.impl.ContentPackModule());
         install(new stroom.importexport.impl.ImportExportHandlerModule());
         install(new stroom.importexport.impl.ImportExportModule());
         install(new stroom.index.impl.IndexElementModule());
