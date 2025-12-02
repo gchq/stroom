@@ -29,7 +29,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestPipelineSerialisation {
 
-    private static final PipelineElementType ELEM_TYPE = new PipelineElementType("TestElement", null,
+    private static final PipelineElementType ELEM_TYPE = new PipelineElementType(
+            "TestElement",
+            "Test Element",
+            null,
             new String[]{PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS}, null);
 
     @Test
