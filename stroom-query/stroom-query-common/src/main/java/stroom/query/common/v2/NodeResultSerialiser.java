@@ -4,6 +4,7 @@ import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ErrorMessage;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import com.esotericsoftware.kryo.io.Input;
@@ -17,6 +18,7 @@ import java.util.stream.Stream;
 public class NodeResultSerialiser {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(NodeResultSerialiser.class);
+    private static final Pattern ERROR_MESSAGE_PATTERN = getErrorMessagePattern();
 
     public static boolean read(final Input input,
                                final Coprocessors coprocessors,
@@ -28,19 +30,36 @@ public class NodeResultSerialiser {
         // Read payloads for each coprocessor.
         coprocessors.readPayloads(input);
 
-        final Pattern pattern = getErrorMessagePattern();
+        consumeErrors(input, errorConsumer);
 
+        return complete;
+    }
+
+    private static void consumeErrors(final Input input, final ErrorConsumer errorConsumer) {
         // Read all errors.
         final int length = input.readInt();
         for (int i = 0; i < length; i++) {
             final String error = input.readString();
-            final Matcher matcher = pattern.matcher(error);
-            final Severity severity = Severity.valueOf(matcher.group(0));
-            final String message = matcher.group(1);
-            errorConsumer.add(severity, () -> message);
+            if (NullSafe.isNonBlankString(error)) {
+                // error is like:
+                // 'WARN:Truncating string to 10 characters: fuga bland'
+                final Matcher matcher = ERROR_MESSAGE_PATTERN.matcher(error);
+                if (matcher.matches()) {
+                    final String message = matcher.group(2);
+                    try {
+                        final Severity severity = Severity.valueOf(matcher.group(1));
+                        errorConsumer.add(severity, () -> message);
+                    } catch (final Exception e) {
+                        // Can't establish severity
+                        errorConsumer.add(() -> message);
+                    }
+                } else {
+                    errorConsumer.add(() -> error);
+                }
+            } else {
+                errorConsumer.add(Severity.ERROR, () -> "Blank error");
+            }
         }
-
-        return complete;
     }
 
     public static void write(final Output output,
@@ -57,8 +76,16 @@ public class NodeResultSerialiser {
         if (errorsSnapshot != null) {
             output.writeInt(errorsSnapshot.size());
             for (final ErrorMessage error : errorsSnapshot) {
-                LOGGER.debug(error::toString);
-                output.writeString(error.getSeverity() + ":" + error.getMessage());
+                LOGGER.debug("write() - error: {}", error);
+                final String errorStr;
+                if (error.getSeverity() != null) {
+                    errorStr = String.join(":",
+                            error.getSeverity().name(),
+                            NullSafe.string(error.getMessage()));
+                } else {
+                    errorStr = NullSafe.string(error.getMessage());
+                }
+                output.writeString(errorStr);
             }
         } else {
             output.writeInt(0);
@@ -66,7 +93,10 @@ public class NodeResultSerialiser {
     }
 
     private static Pattern getErrorMessagePattern() {
-        final List<String> severityValues = Stream.of(Severity.values()).map(Severity::toString).toList();
+        final List<String> severityValues = Stream.of(Severity.values())
+                .map(Severity::name) // Must be consistent with the serialisation used in write()
+                .map(Pattern::quote)
+                .toList();
         return Pattern.compile("^(" + String.join("|", severityValues) + "):(.*)$");
     }
 

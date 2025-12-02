@@ -149,7 +149,7 @@ class DashboardResourceImpl implements DashboardResource {
                 return dashboardServiceProvider.get().search(request);
             }
 
-            return nodeServiceProvider.get()
+            final DashboardSearchResponse dashboardSearchResponse = nodeServiceProvider.get()
                     .remoteRestResult(
                             node,
                             DashboardSearchResponse.class,
@@ -159,6 +159,7 @@ class DashboardResourceImpl implements DashboardResource {
                                     node),
                             () -> dashboardServiceProvider.get().search(request),
                             builder -> builder.post(Entity.json(request)));
+            return dashboardSearchResponse;
         } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
             throw e;

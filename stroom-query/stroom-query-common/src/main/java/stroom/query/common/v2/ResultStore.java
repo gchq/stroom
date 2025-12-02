@@ -200,6 +200,9 @@ public class ResultStore {
             final List<ErrorMessage> errors = errorConsumer.getErrorMessages();
 
             if (!errors.isEmpty()) {
+                // TODO this is wrong. ErrorMessage should contain the node name.
+                //  We should not be adding a tab char, the ui code should decide how to render it.
+                //  If errors is full of WARNING, why are we making an ERROR.
                 err.add(new ErrorMessage(Severity.ERROR, "Node: " + nodeName));
                 for (final ErrorMessage error : errors) {
                     err.add(new ErrorMessage(error.getSeverity(), "\t" + error.getMessage()));
