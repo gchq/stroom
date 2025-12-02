@@ -15092,6 +15092,8 @@ components:
           - FILTER
           - WRITER
           - DESTINATION
+        displayValue:
+          type: string
         icon:
           type: string
           enum:
@@ -19922,9 +19924,8 @@ components:
       - $ref: "#/components/schemas/Val"
       - type: object
         properties:
-          bytes:
+          data:
             type: string
-            format: byte
     ValidateExpressionRequest:
       type: object
       properties:
