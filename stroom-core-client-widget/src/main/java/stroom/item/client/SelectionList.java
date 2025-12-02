@@ -18,6 +18,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
@@ -37,6 +38,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 public class SelectionList<T, I extends SelectionItem> extends Composite {
 
@@ -145,6 +147,10 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         layout.add(elementChooser);
 
         initWidget(layout);
+    }
+
+    public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
+        quickFilter.registerPopupTextProvider(popupTextSupplier);
     }
 
     public void setKeyboardSelectionPolicy(final KeyboardSelectionPolicy policy) {
@@ -376,6 +382,10 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private void setKeyboardSelection(final I value, final boolean stealFocus) {
         final int row = cellTable.getVisibleItems().indexOf(value);
         if (row >= 0) {
@@ -460,6 +470,10 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         }
         refresh(getCurrentParent(), selection, filterChange, range, stealFocus);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class NavigationState<I extends SelectionItem> {
 

@@ -34,6 +34,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
+import java.util.function.Supplier;
+
 public class QueryHelpViewImpl extends ViewWithUiHandlers<QueryHelpUiHandlers> implements QueryHelpView {
 
     private final Widget widget;
@@ -79,6 +81,11 @@ public class QueryHelpViewImpl extends ViewWithUiHandlers<QueryHelpUiHandlers> i
         insertButton.setEnabled(enable);
     }
 
+    @Override
+    public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
+        selectionList.registerPopupTextProvider(popupTextSupplier);
+    }
+
     @UiHandler("copyButton")
     public void onCopyClick(final ClickEvent event) {
         getUiHandlers().onCopy();
@@ -88,6 +95,10 @@ public class QueryHelpViewImpl extends ViewWithUiHandlers<QueryHelpUiHandlers> i
     public void onInsertClick(final ClickEvent event) {
         getUiHandlers().onInsert();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, QueryHelpViewImpl> {
 
