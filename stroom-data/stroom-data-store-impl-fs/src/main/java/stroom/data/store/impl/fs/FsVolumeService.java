@@ -700,7 +700,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                     .getDefaultStreamVolumeFilesystemUtilisation()));
         } catch (final IOException e) {
             LOGGER.warn(() -> LogUtil.message("Unable to determine the total space on the filesystem for path: {}." +
-                                              " Please manually set limit for index volume. {}",
+                                              " Please manually set limit for volume. {}",
                     FileUtil.getCanonicalPath(path), e.getMessage()));
             return OptionalLong.empty();
         }
@@ -803,13 +803,13 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                     msg = e.getMessage();
                 }
                 return ValidationResult.error(LogUtil.message(
-                        "Error creating index volume path '{}': {}",
+                        "Error creating volume path '{}': {}",
                         absPath,
                         msg));
             }
         } else if (!Files.isDirectory(absPath)) {
             return ValidationResult.error(LogUtil.message(
-                    "Error creating index volume path '{}': The path exists but is not a directory.",
+                    "Error creating volume path '{}': The path exists but is not a directory.",
                     absPath));
         }
 
