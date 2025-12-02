@@ -45,20 +45,12 @@ debug() {
 
 main() {
   IS_DEBUG=false
-  #SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+  SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
   setup_echo_colours
 
-  docker \
-    run \
-    --detach \
-    -p 9000:9000 \
-    -p 9001:9001 \
-    quay.io/minio/minio server \
-    /data --console-address ":9001"
-
-  echo -e "In Stroom set the Volume config to something like:"
-  echo -e "${BLUE}"
+  echo -e "${GREEN}In Stroom set the Volume config to something like:${NC}"
+  echo -en "${BLUE}"
   echo -e '{'
   echo -e '  "region" : "us-east-1",'
   echo -e '  "endpointOverride" : "127.0.0.1:9000",'
@@ -67,6 +59,7 @@ main() {
   echo -e '  "multipart" : true,'
   echo -e '  "createBuckets" : true,'
   echo -e '  "bucketName" : "bkt1",'
+  # shellcheck disable=SC2016
   echo -e '  "keyPattern" : "${feed}/${type}/${year}/${idPath}",'
   echo -e '  "credentials" : {'
   echo -e '    "type" : "basic",'
@@ -74,7 +67,25 @@ main() {
   echo -e '    "secretAccessKey" : "minioadmin"'
   echo -e '  },'
   echo -e '}'
-  echo -e "${NC}"
+  echo -en "${NC}"
+
+  echo
+  echo -e "${GREEN}Data is persisted to docker managed volume ${BLUE}minio-data${GREEN}:${NC}"
+  echo -e "${YELLOW}/var/lib/docker/volumes/minio-s3_minio-data/_data/${NC}"
+  echo
+
+  #docker \
+    #run \
+    #--name minio-s3 \
+    #-p 9000:9000 \
+    #-p 9001:9001 \
+    #quay.io/minio/minio \
+    #server /data --console-address ":9001"
+
+  docker compose \
+    --file "${SCRIPT_DIR}/start_s3.yml" \
+    --project-name "minio-s3" \
+    up
 }
 
 main "$@"
