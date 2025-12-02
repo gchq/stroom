@@ -77,7 +77,7 @@ public class QuickFilter extends FlowPanel
         clearButton = new InlineSvgButton();
         clearButton.setSvg(SvgImage.CLEAR);
         clearButton.setTitle("Clear Filter");
-        clearButton.addStyleName("clear info");
+        clearButton.addStyleName("clear");
 
         helpButton = new InlineSvgButton();
         helpButton.setSvg(SvgImage.HELP_OUTLINE);
