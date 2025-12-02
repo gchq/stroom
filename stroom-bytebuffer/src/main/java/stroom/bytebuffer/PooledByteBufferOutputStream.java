@@ -125,6 +125,12 @@ public class PooledByteBufferOutputStream extends OutputStream implements AutoCl
         }
     }
 
+    public void writeLong(final long l) throws IOException {
+        checkWriteableState();
+        checkSizeAndGrow(Long.BYTES);
+        getCurrentPooledBuffer().getByteBuffer().putLong(l);
+    }
+
     /**
      * Writes byteBuffer into the outputStream. Respects the position/limit of byteBuffer.
      * After reading, byteBuffer is rewound to return it to its passed state.
