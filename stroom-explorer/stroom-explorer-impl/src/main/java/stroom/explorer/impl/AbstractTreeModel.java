@@ -300,7 +300,7 @@ public abstract class AbstractTreeModel<K> {
         return parentKeyToChildNodesMap.get(parentKey);
     }
 
-    public void sort(final ToIntFunction<ExplorerNode> priorityExtractor) {
+    public void sort() {
         final Map<K, Set<ExplorerNode>> newChildMap = new HashMap<>();
         parentKeyToChildNodesMap.forEach((key, children) -> newChildMap.put(key, children
                 .stream()
@@ -334,13 +334,6 @@ public abstract class AbstractTreeModel<K> {
                     } else if (ExplorerConstants.isSystemNode(o2)) {
                         return 1;
                     }
-
-//                    // Compare by type priority.
-//                    final int p1 = priorityExtractor.applyAsInt(o1);
-//                    final int p2 = priorityExtractor.applyAsInt(o2);
-//                    if (p1 != p2) {
-//                        return Integer.compare(p1, p2);
-//                    }
 
                     // If type priority is the same then compare by name.
                     return o1.getName().compareToIgnoreCase(o2.getName());
