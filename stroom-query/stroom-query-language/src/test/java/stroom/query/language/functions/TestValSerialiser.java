@@ -68,7 +68,6 @@ class TestValSerialiser {
                 .addCase(ValDate.create(nowMs), ValDate.create(nowMs))
                 .addCase(ValDate.create(nowDateStr), ValDate.create(nowDateStr))
                 .addCase(ValString.create("hello world!"), ValString.create("hello world!"))
-                .addCase(ValString.create(null), ValString.create(null)) // TODO is this right?
                 .addCase(ValString.create(""), ValString.EMPTY)
                 .addCase(ValErr.create("Bad things happened"), ValErr.create("Bad things happened"))
                 .addCase(ValDuration.create(123), ValDuration.create(123))
@@ -97,7 +96,6 @@ class TestValSerialiser {
                 ValLong.create(-123L), ValLong.create(123L), ValDate.create(nowMs),
                 ValDate.create(nowDateStr),
                 ValString.create("hello world!"),
-                ValString.create(null),
                 ValString.create(""),
                 ValErr.create("Bad things happened"),
                 ValDuration.create(123));

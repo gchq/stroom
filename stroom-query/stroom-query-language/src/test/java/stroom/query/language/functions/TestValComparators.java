@@ -178,7 +178,6 @@ class TestValComparators {
                         Vals.of("-1", false, true), // -1, 0, 1
                         Vals.of("1", 2, null),
                         Vals.of("3", 20d, "foo"),
-                        Vals.of("1", 2, ValString.create(null)),
                         Vals.of(1, "D", ValErr.create("a")) // "Err: a", hence comes last
                 )
                 .map(vals ->
@@ -199,8 +198,7 @@ class TestValComparators {
                         Vals.of("1", 2, "a"),
                         Vals.of(Duration.ofMillis(1), 2, "3"),
                         Vals.of(Instant.ofEpochMilli(1), 2, "3"),
-                        Vals.of("1", 2, null),
-                        Vals.of("1", 2, ValString.create(null))
+                        Vals.of("1", 2, null)
                )
                 .map(vals ->
                         DynamicTest.dynamicTest(
@@ -222,8 +220,7 @@ class TestValComparators {
                         Vals.of("1", 2d, "a"),
                         Vals.of(Duration.ofMillis(1), 2d, "3"),
                         Vals.of(Instant.ofEpochMilli(1), 2d, "3"),
-                        Vals.of("1", 2, null),
-                        Vals.of("1", 2, ValString.create(null)) // We shouldn't have null ValStrings really
+                        Vals.of("1", 2, null)
                 )
                 .map(vals ->
                         DynamicTest.dynamicTest(
@@ -258,7 +255,6 @@ class TestValComparators {
                     }
                 })
                 .addCase(twoVals("a", null), -1)
-                .addCase(twoVals("a", ValString.create(null)), -1)  // This should not be used
                 .addCase(twoVals("1", "a"), -1)
                 .addCase(twoVals("a", "a"), 0)
                 .addCase(twoVals("A", "a"), -1)
@@ -329,7 +325,7 @@ class TestValComparators {
                                         vals.get(j),
                                         vals.get(k))
                                 .sorted(comparator)
-                                .collect(Collectors.toList());
+                                .toList();
 
                         // Now see if the trio meet the transitive contract
                         doTestContract(
