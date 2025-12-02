@@ -44,7 +44,10 @@ import java.util.stream.Collectors;
 public class PipelineDataMerger {
 
     private static final String SOURCE = "Source";
-    private static final PipelineElementType SOURCE_ELEMENT_TYPE = new PipelineElementType(SOURCE, null,
+    private static final PipelineElementType SOURCE_ELEMENT_TYPE = new PipelineElementType(
+            SOURCE,
+            SOURCE,
+            null,
             new String[]{
                     PipelineElementType.ROLE_SOURCE, PipelineElementType.ROLE_HAS_TARGETS,
                     PipelineElementType.VISABILITY_SIMPLE},
