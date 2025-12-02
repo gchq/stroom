@@ -62,6 +62,7 @@ import static stroom.index.shared.IndexConstants.STREAM_ID;
 
 @ConfigurableElement(
         type = "XPathExtractionOutputFilter",
+        displayValue = "XPath Extraction Output Filter",
         category = Category.FILTER,
         roles = {
                 PipelineElementType.ROLE_TARGET},

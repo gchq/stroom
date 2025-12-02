@@ -22,6 +22,7 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.NullSafe;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -34,6 +35,7 @@ public class ElementRegistry {
 
     private static final String SOURCE = "Source";
     private static final PipelineElementType SOURCE_ELEMENT_TYPE = new PipelineElementType(
+            SOURCE,
             SOURCE,
             null,
             new String[]{
@@ -162,7 +164,16 @@ public class ElementRegistry {
     }
 
     private PipelineElementType createElementType(final ConfigurableElement element) {
-        return new PipelineElementType(element.type(), element.category(), element.roles(), element.icon());
+        String displayValue = element.displayValue();
+        if (NullSafe.isBlankString(displayValue)) {
+            displayValue = element.type().replaceAll("([A-Z][a-z])", " $1");
+        }
+        return new PipelineElementType(
+                element.type(),
+                displayValue,
+                element.category(),
+                element.roles(),
+                element.icon());
     }
 
     private PipelinePropertyType createPropertyType(final PipelineElementType elementType,
