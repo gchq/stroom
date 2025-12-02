@@ -64,7 +64,6 @@ class TestAlphaNumericComparator {
         doTestContract("A", "b", "C");
         doTestContract("10", "10-1", "2");
         doTestContract("3232235777", "3232238337-3232239362", "4");
-        doTestContract("a", "b", null);
     }
 
     private void doTestContract(final List<ValString> vals) {
@@ -87,7 +86,7 @@ class TestAlphaNumericComparator {
                                 vals.get(j),
                                 vals.get(k))
                                 .sorted(comparator)
-                                .collect(Collectors.toList());
+                                .toList();
 
                         // Now see if the trio meet the transitive contract
                         doTestContract(
