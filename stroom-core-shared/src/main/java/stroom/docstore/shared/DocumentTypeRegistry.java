@@ -127,6 +127,11 @@ public class DocumentTypeRegistry {
             "Feed",
             "Feed",
             SvgImage.DOCUMENT_FEED);
+    public static final DocumentType OPENAI_MODEL_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            "OpenAIModel",
+            "OpenAI Model",
+            SvgImage.DOCUMENT_OPEN_AI);
     public static final DocumentType PIPELINE_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.DATA_PROCESSING,
             "Pipeline",
@@ -151,7 +156,7 @@ public class DocumentTypeRegistry {
             DocumentTypeGroup.CONFIGURATION,
             "GitRepo",
             "Git Repo",
-            SvgImage.DOCUMENT_GIT_REPO);
+            SvgImage.DOCUMENT_GIT_REPO_FOLDER);
     public static final DocumentType SCRIPT_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.CONFIGURATION,
             "Script",
@@ -177,6 +182,11 @@ public class DocumentTypeRegistry {
             "XSLT",
             "XSL Translation",
             SvgImage.DOCUMENT_XSLT);
+    public static final DocumentType PATHWAYS_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            "Pathways",
+            "Pathways",
+            SvgImage.DOCUMENT_PATHWAYS);
 
 
     public static final DocumentType DUAL_DOCUMENT_TYPE = new DocumentType(
@@ -245,6 +255,7 @@ public class DocumentTypeRegistry {
         put(FOLDER_DOCUMENT_TYPE);
         put(KAFKA_CONFIG_DOCUMENT_TYPE);
         put(LUCENE_DOCUMENT_TYPE);
+        put(OPENAI_MODEL_DOCUMENT_TYPE);
         put(PIPELINE_DOCUMENT_TYPE);
         put(PROCESSOR_DOCUMENT_TYPE);
         put(PROCESSOR_FILTER_DOCUMENT_TYPE);
@@ -266,6 +277,7 @@ public class DocumentTypeRegistry {
         put(VISUALISATION_DOCUMENT_TYPE);
         put(XML_SCHEMA_DOCUMENT_TYPE);
         put(XSLT_DOCUMENT_TYPE);
+        put(PATHWAYS_DOCUMENT_TYPE);
 
         // Searchables
         put(DUAL_DOCUMENT_TYPE);

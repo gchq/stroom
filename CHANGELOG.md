@@ -12,6 +12,47 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+* Issue **#5229** : Change the default main method for the stroom-headless jar to be Headless rather than Cli. Fix errors when running stroom-headless.
+
+
+## [v7.11-beta.10] - 2025-11-20
+
+* Issue **#5257** : Upgrade Lucene to 10.3.1.
+
+* Issue **#5263** : Add copy for selected rows.
+
+* Remove default value for `feedStatus.url` in the proxy config yaml as downstream host should now be used instead.
+
+
+## [v7.11-beta.9] - 2025-11-19
+
+* Issue **#5192** : Support Elasticsearch kNN search on dense_vector fields.
+
+* Issue **#5124** : Change cluster lock `tryLock` to use the database record locks rather than the inter-node lock handler.
+
+* Issue **#5254** : Fix document NPE.
+
+* Issue **#5250** : Add a new property `stroom.security.identity.autoCreateAdminAccountOnBoot` to control auto-creation of the default administrator account `admin` when stroom is running with an identity provider type of `INTERNAL_IDP` or `TEST_CREDENTIALS`. Enabling this property will create the `admin` account and stroom user. It will create the group `Administrators`, grant the app permission `Administrator` to it and add the `admin` user to the group. The auto-creation of the admin account/user was erroneously removed in a previous version of stroom.
+
+* Change default for `.receive.enabledAuthenticationTypes` to `[CERTIFICATE,TOKEN]` and add `.receive.authenticationRequired` to the default docker config yml files for both stroom and proxy.
+
+
+## [v7.11-beta.8] - 2025-11-10
+
+* Issue **#5218** : When `autoContentCreation` is enabled, don't attempt to find a content template if the `Feed` header has been provided and the feed exists.
+
+* Issue **#5244** : Fix proxy throwing an error when attempting to do a feed status check.
+
+* Issue **#5186** : Remove error logging for expected Plan B snapshot checking behaviour.
+
+* Issue **#5220** : Fix duplicate check column list change confirm dialog not showing if the duplicate check store is on a remote node.
+
+* Issue **#5126** : Improve Plan B null handling.
+
+* Issue **#5225** : Fix NPE on DocRef.
+
+* Issue **#5237** : Fix Plan B lookup no content error.
+
 
 ## [v7.11-beta.7] - 2025-10-20
 
@@ -345,53 +386,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#4956** : Add error handling to duplicate check deletion.
 
 * Issue **#4967** : Fix SQL deadlock.
-
-
-## [v7.10-beta.3] - 2025-06-05
-
-* Issue **#4900** : Add histogram and metric stores to Plan B.
-
-
-## [v7.10-beta.2] - 2025-06-05
-
-* Issue **#4940** : Fix duplicate store error log.
-
-* Issue **#4941** : Fix annotation data retention.
-
-* Issue **#4957** : Default vis settings are not added to Query pane visualisations.
-
-* Issue **#3861** : Add Shard Id, Index Version to Index Shards searchable.
-
-* Issue **#4112** : Allow use of Capture groups in the decode() function result.
-
-* Issue **#3955** : Add case expression function.
-
-
-## [v7.10-beta.1] - 2025-05-27
-
-* Issue **#4484** : Change selection handling to use fully qualified keys.
-
-* Issue **#4456** : Fix selection handling across multiple components by uniquely namespacing selections.
-
-* Issue **#4886** : Fix ctrl+enter query execution for rules and reports.
-
-* Issue **#4884** : Suggest only queryable fields in StroomQL where clause.
-
-* Issue **#4742** : Allow embedded queries to be copies rather than references.
-
-* Issue **#4894** : Plan B query without snapshots.
-
-* Issue **#4896** : Plan B option to synchronise writes.
-
-* Issue **#4720** : Add Plan B shards data source.
-
-* Issue **#4919** : Add functions to format byte size strings.
-
-* Issue **#4901** : Add advanced schema selection to Plan B to improve performance and reduce storage requirements.
-
-* Fix primitive value conversion of query field types.
-
-* Issue **#4945** : Increase index field name length.
 
 
 ## [v7.9-beta.12] - 2025-05-07
@@ -1839,7 +1833,10 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.7...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.10...HEAD
+[v7.11-beta.10]: https://github.com/gchq/stroom/compare/v7.11-beta.9...v7.11-beta.10
+[v7.11-beta.9]: https://github.com/gchq/stroom/compare/v7.11-beta.8...v7.11-beta.9
+[v7.11-beta.8]: https://github.com/gchq/stroom/compare/v7.11-beta.7...v7.11-beta.8
 [v7.11-beta.7]: https://github.com/gchq/stroom/compare/v7.11-beta.6...v7.11-beta.7
 [v7.11-beta.6]: https://github.com/gchq/stroom/compare/v7.11-beta.5...v7.11-beta.6
 [v7.11-beta.5]: https://github.com/gchq/stroom/compare/v7.11-beta.4...v7.11-beta.5

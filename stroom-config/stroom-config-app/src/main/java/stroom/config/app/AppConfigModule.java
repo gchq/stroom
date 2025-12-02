@@ -14,8 +14,6 @@ import stroom.docstore.impl.db.DocStoreConfig;
 import stroom.docstore.impl.db.DocStoreConfig.DocStoreDbConfig;
 import stroom.explorer.impl.ExplorerConfig;
 import stroom.explorer.impl.ExplorerConfig.ExplorerDbConfig;
-import stroom.gitrepo.api.GitRepoConfig;
-import stroom.gitrepo.impl.GitRepoConfigImpl;
 import stroom.index.impl.IndexConfig;
 import stroom.index.impl.IndexConfig.IndexDbConfig;
 import stroom.job.impl.JobSystemConfig;
@@ -149,12 +147,6 @@ public class AppConfigModule extends AbstractModule {
                                 AppConfig::getExplorerConfig,
                                 ExplorerConfig::getDbConfig)
                         .orElseGet(ExplorerDbConfig::new));
-
-        bind(GitRepoConfig.class)
-                .toInstance(NullSafe.getAsOptional(
-                                bootStrapConfig,
-                                AppConfig::getGitRepoConfig)
-                        .orElseGet(GitRepoConfigImpl::new));
 
         bind(IdentityDbConfig.class)
                 .toInstance(NullSafe.getAsOptional(

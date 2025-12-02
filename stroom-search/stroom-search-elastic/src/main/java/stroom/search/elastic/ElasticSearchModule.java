@@ -20,7 +20,6 @@ import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
-import stroom.job.api.ScheduledJobsBinder;
 import stroom.query.api.datasource.DataSourceProvider;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.SearchProvider;
@@ -32,15 +31,12 @@ import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.suggest.ElasticSuggestionsQueryHandler;
 import stroom.search.elastic.suggest.ElasticSuggestionsQueryHandlerImpl;
 import stroom.suggestions.api.SuggestionsServiceBinder;
-import stroom.util.RunnableWrapper;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
-import stroom.util.shared.scheduler.CronExpressions;
 
 import com.google.inject.AbstractModule;
-import jakarta.inject.Inject;
 
 public class ElasticSearchModule extends AbstractModule {
 
@@ -109,22 +105,5 @@ public class ElasticSearchModule extends AbstractModule {
                 .addBinding(ElasticSearchProvider.class);
         GuiceUtil.buildMultiBinder(binder(), IndexFieldProvider.class)
                 .addBinding(ElasticSearchProvider.class);
-
-        // Server tasks
-
-        ScheduledJobsBinder.create(binder())
-                .bindJobTo(DataRetention.class, builder -> builder
-                        .name("Elastic Index Retention")
-                        .description("Logically delete indexed documents in Elasticsearch indexes based on the " +
-                                "specified deletion query")
-                        .cronSchedule(CronExpressions.EVERY_DAY_AT_2AM.getExpression()));
-    }
-
-    private static class DataRetention extends RunnableWrapper {
-
-        @Inject
-        DataRetention(final ElasticIndexRetentionExecutor dataRetentionExecutor) {
-            super(dataRetentionExecutor::exec);
-        }
     }
 }

@@ -7,6 +7,7 @@ dependencies {
     implementation project(':stroom-cluster:stroom-cluster-impl')
     implementation project(':stroom-cluster:stroom-cluster-lock-mock')
     implementation project(':stroom-core-shared')
+    implementation project(':stroom-data:stroom-data-retention-api')
     implementation project(':stroom-data:stroom-data-store-api')
     implementation project(':stroom-data:stroom-data-store-impl')
     implementation project(':stroom-data:stroom-data-store-impl-fs')

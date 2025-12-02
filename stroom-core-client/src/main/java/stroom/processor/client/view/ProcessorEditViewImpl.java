@@ -20,6 +20,7 @@ package stroom.processor.client.view;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
 import stroom.widget.customdatebox.client.MyDateBox;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -39,6 +40,8 @@ public class ProcessorEditViewImpl extends ViewImpl implements ProcessorEditView
     MyDateBox minMetaCreateTimeMs;
     @UiField
     MyDateBox maxMetaCreateTimeMs;
+    @UiField
+    CustomCheckBox export;
     @UiField
     SimplePanel runAsUser;
 
@@ -78,6 +81,16 @@ public class ProcessorEditViewImpl extends ViewImpl implements ProcessorEditView
     @Override
     public void setMaxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
         this.maxMetaCreateTimeMs.setMilliseconds(maxMetaCreateTimeMs);
+    }
+
+    @Override
+    public boolean isExport() {
+        return this.export.getValue();
+    }
+
+    @Override
+    public void setExport(final boolean export) {
+        this.export.setValue(export);
     }
 
     @Override

@@ -125,6 +125,19 @@ public enum FieldType implements HasDisplayValue, HasPrimitiveValue {
             "\n" +
             "This is a reference to a Stroom user.\n" +
             "Click in the selection box to select the desired user.",
+            false),
+    DENSE_VECTOR(12,
+                 CIKey.internStaticKey("DenseVector"),
+            "denseVector",
+            "Dense vector embedding field type\n" +
+            "\n" +
+            "Supports vector search using algorithms such as k nearest neighbour.\n" +
+            "Documents are considered if they are semantically relevant to your search query.\n" +
+            "\n" +
+            "Examples (omit quotes):\n" +
+            " * 'messages relating to Blockchain technology'\n" +
+            " * 'recreational activity'\n" +
+            " * 'medical facilities'",
             false);
 
     public static final List<FieldType> TYPES = Arrays.stream(values())

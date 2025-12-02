@@ -1117,6 +1117,20 @@
     padding-left: 5px;
 }
 
+.askStroomAiViewImpl {
+    display: flex;
+    gap: var(--control__padding--vertical);
+}
+
+.askStroomAiViewImpl-bottom {
+    display: flex;
+    gap: var(--control__padding--horizontal);
+}
+
+.askStroomAiViewImpl-bottom button.Button {
+    min-width: 80px;
+}
+
 .columnFunctionEditorViewImpl {
 
 }
@@ -2129,12 +2143,6 @@ button.main-menu svg {
     overflow: hidden;
 }
 
-.FindViewImpl--dialog .FindViewImpl-bottom {
-    background-color: var(--control__background-color);
-    border: solid 1px var(--control__border-color);
-    border-radius: .25rem;
-}
-
 .find-buttons {
     display: flex;
     position: absolute;
@@ -2556,6 +2564,110 @@ button.main-menu svg {
     position: absolute;
 }
 
+/* ==== Content store CSS ==== */
+.contentstore-details {
+    display: flex;
+}
+/** Allows things to scroll in y-direction */
+.contentstore-scroll-y {
+    overflow-y: auto;
+}
+/* Details title */
+.contentstore-details .contentstore-details-heading {
+    font-size: 120%;
+    font-weight: bold;
+}
+.contentstore-details .contentstore-details-markdown {
+    height: 300px;
+}
+/* Set the SVG to 100x100px */
+.contentstore-details-icon {
+    padding: 15px;
+    width: 130px;
+}
+.contentstore-details-icon svg {
+    height: 100px;
+    width: 100px;
+}
+/* Padding in details table */
+.contentstore-details .contentstore-details-table th, .contentstore-details .contentstore-details-table td {
+    padding: 5px;
+}
+/* Overall width of details table */
+.contentstore-details .contentstore-details-vertical {
+    width: 100%;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+/* The box that the markdown is displayed in, based on .form-control-border */
+.contentstore-details .markdown {
+    padding: 5px;
+    height: 300px;
+    overflow: auto;
+}
+/* contentstore Markdown - make it a bit smaller */
+.contentstore-details .markdown h1 {
+    font-size: 1.3em;
+}
+/* Buttons formatting */
+.contentstore-buttons {
+    display: flex;
+    gap: var(--control__gap--horizontal);
+}
+
+/* GitRepo stuff */
+/* Commit message dialog */
+.gitrepo-commit-message-dialog textarea {
+    width: 100%;
+    height: 220px;
+    resize: none;
+}
+.gitrepo-credentials-dialog input {
+    width: 100%;
+}
+/* Settings form */
+.gitrepo-settings-form button.Button {
+    width: 400px;
+}
+.gitrepo-settings-form input[type="text"] {
+    width: 400px;
+}
+.gitrepo-settings-form #credentials-group {
+    width: 400px;
+}
+.gitrepo-settings-form #credentials-group .SelectionBox {
+    width: 280px;
+}
+.gitrepo-settings-form button.credentials-button {
+    width: 120px;
+}
+
+/* Credentials Manager */
+/* Text area needs to be big enough to display certificates */
+.credentials-details-dialog textarea {
+    width: 650px;
+    height: 150px;
+}
+/* Width of access token and passphrase */
+.credentials-details-dialog #accessToken,
+.credentials-details-dialog #passphrase {
+    width: 650px;
+}
+
+/* Background and border on table */
+.credentials-manager-dialog {
+    display: flex;
+    flex-direction: column;
+}
+.credentials-manager-dialog .credentials-manager {
+    background-color: var(--control__background-color);
+    border: solid 1px var(--control__border-color);
+    border-radius: .25rem;
+}
+
+/* --- */
 .multiChooser td {
     vertical-align: middle;
 }

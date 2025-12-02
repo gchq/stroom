@@ -5,6 +5,8 @@ import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.event.logging.rs.impl.AnnotationUtil;
 import stroom.security.api.SecurityContext;
 import stroom.util.ConsoleColour;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.FetchWithLongId;
 import stroom.util.shared.FetchWithTemplate;
@@ -37,8 +39,6 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -62,7 +62,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestRestResources {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestRestResources.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestRestResources.class);
 
 
     //    @Disabled // Temp while REST resource refactoring / annotation work is ongoing.
@@ -535,7 +535,7 @@ class TestRestResources {
                 .collect(Collectors.toList());
 
         if (!nonProvidedFields.isEmpty()) {
-            LOGGER.warn("Non provided fields {}", nonProvidedFields);
+            LOGGER.error("Non provided fields {}", nonProvidedFields);
             softAssertions.assertThat(nonProvidedFields)
                     .withFailMessage("Resource implementations/classes must inject all objects " +
                                      "via Providers.")

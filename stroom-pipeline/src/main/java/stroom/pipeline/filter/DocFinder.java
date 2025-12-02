@@ -4,7 +4,7 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docref.HasFindDocsByName;
 import stroom.docrefinfo.api.DocRefInfoService;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LogUtil;
@@ -18,7 +18,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class DocFinder<D extends Doc> {
+public class DocFinder<D extends AbstractDoc> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DocFinder.class);
 

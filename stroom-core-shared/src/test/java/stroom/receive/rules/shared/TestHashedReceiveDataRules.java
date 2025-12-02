@@ -28,7 +28,8 @@ class TestHashedReceiveDataRules {
 
     private HashedReceiveDataRules createHashedReceiveDataRules() {
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
-                .withRules(List.of(
+                .uuid(UUID.randomUUID().toString())
+                .rules(List.of(
                         ReceiveDataRule.builder()
                                 .withRuleNumber(1)
                                 .withAction(ReceiveAction.RECEIVE)
@@ -43,7 +44,7 @@ class TestHashedReceiveDataRules {
                                         .addTerm("field2", Condition.EQUALS, "foo")
                                         .build())
                                 .build()))
-                .withFields(List.of(
+                .fields(List.of(
                         QueryField.builder()
                                 .fldName("field1")
                                 .fldType(FieldType.TEXT)
@@ -58,27 +59,27 @@ class TestHashedReceiveDataRules {
                                 .build()))
                 .build();
 
-        final DictionaryDoc dict1 = new DictionaryDoc();
+        final DictionaryDoc dict1 = DictionaryDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .name("dic1")
+                .data("""
+                        Orange
+                        Lemon
+                        Apple
+                        """)
+                .build();
         HasAuditInfoSetters.set(dict1, "user1");
-        dict1.setData("""
-                Orange
-                Lemon
-                Apple
-                """);
-        dict1.setName("dic1");
-        dict1.setUuid(UUID.randomUUID().toString());
-        dict1.setType(DictionaryDoc.TYPE);
 
-        final DictionaryDoc dict2 = new DictionaryDoc();
+        final DictionaryDoc dict2 = DictionaryDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .name("dic2")
+                .data("""
+                        Horse
+                        Badger
+                        Cow
+                        """)
+                .build();
         HasAuditInfoSetters.set(dict2, "user2");
-        dict2.setData("""
-                Horse
-                Badger
-                Cow
-                """);
-        dict2.setName("dic2");
-        dict2.setUuid(UUID.randomUUID().toString());
-        dict2.setType(DictionaryDoc.TYPE);
 
         final Map<String, DictionaryDoc> uuidToDictMap = DocRefUtil.toMapByUuid(dict1, dict2);
 

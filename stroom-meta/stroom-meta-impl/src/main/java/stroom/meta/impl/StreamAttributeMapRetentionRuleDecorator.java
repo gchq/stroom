@@ -17,6 +17,7 @@
 
 package stroom.meta.impl;
 
+import stroom.data.retention.api.DataRetentionRulesProvider;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.expression.matcher.ExpressionMatcher;
@@ -48,11 +49,11 @@ class StreamAttributeMapRetentionRuleDecorator {
 
     @Inject
     public StreamAttributeMapRetentionRuleDecorator(final ExpressionMatcherFactory expressionMatcherFactory,
-                                                    final Provider<DataRetentionRules> dataRetentionRulesProvider) {
+                                                    final DataRetentionRulesProvider dataRetentionRulesProvider) {
         expressionMatcher = expressionMatcherFactory.create(MetaFields.getFieldMap());
 
         rules = Optional.ofNullable(dataRetentionRulesProvider)
-                .map(Provider::get)
+                .map(DataRetentionRulesProvider::getOrCreate)
                 .map(DataRetentionRules::getRules)
                 .orElse(Collections.emptyList());
     }

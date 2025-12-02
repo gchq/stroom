@@ -2,6 +2,7 @@ package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.explorer.api.IsSpecialExplorerDataSource;
 import stroom.security.mock.MockSecurityContext;
 
 import org.assertj.core.api.Assertions;
@@ -16,8 +17,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -61,6 +64,8 @@ class TestDocRefInfoServiceImpl {
     private DocRefInfoCache mockDocRefInfoCache;
     @Mock
     private ExplorerActionHandlers mockExplorerActionHandlers;
+    @Mock
+    private Set<IsSpecialExplorerDataSource> mockSpecialDataSources;
 
     private MockSecurityContext mockSecurityContext = new MockSecurityContext();
 
@@ -71,7 +76,8 @@ class TestDocRefInfoServiceImpl {
         docRefInfoService = new DocRefInfoServiceImpl(
                 mockDocRefInfoCache,
                 () -> mockSecurityContext,
-                mockExplorerActionHandlers);
+                mockExplorerActionHandlers,
+                mockSpecialDataSources);
     }
 
     private void initMockCache() {
@@ -81,6 +87,12 @@ class TestDocRefInfoServiceImpl {
                     return Optional.ofNullable(CACHE_DATA.get(docRef.getUuid()));
                 })
                 .when(mockDocRefInfoCache).get(Mockito.any(DocRef.class));
+    }
+
+    private void initSearchables() {
+        Mockito.doAnswer(invocation ->
+                        Stream.of(new MySpecialDataSource1(), new MySpecialDataSource2()))
+                .when(mockSpecialDataSources).stream();
     }
 
     @Test
@@ -111,7 +123,6 @@ class TestDocRefInfoServiceImpl {
         assertThat(outputDocRefs)
                 .containsExactlyElementsOf(inputDocRefs);
     }
-
 
     @Test
     void decorate_list_twoDecorated() {
@@ -145,42 +156,6 @@ class TestDocRefInfoServiceImpl {
                 .containsExactlyElementsOf(DOC_REFS.stream()
                         .map(DocRef::getName)
                         .toList());
-    }
-
-    @Test
-    void decorate_list_noUuid() {
-
-        initMockCache();
-
-        final List<DocRef> inputDocRefs = List.of(
-                DOC_REF1.withoutName(),
-                stripUuid(DOC_REF2),
-                DOC_REF3);
-
-        Assertions
-                .assertThatThrownBy(() -> {
-                    final List<DocRef> outputDocRefs = docRefInfoService.decorate(inputDocRefs);
-                })
-                .hasMessageContaining("UUID is not set")
-                .isInstanceOf(RuntimeException.class);
-    }
-
-    @Test
-    void decorate_list_noType() {
-
-        initMockCache();
-
-        final List<DocRef> inputDocRefs = List.of(
-                DOC_REF1.withoutName(),
-                stripType(DOC_REF2),
-                DOC_REF3);
-
-        Assertions
-                .assertThat(docRefInfoService.decorate(inputDocRefs))
-                .containsExactly(
-                        DOC_REF1,
-                        DOC_REF2,
-                        DOC_REF3);
     }
 
     @Test
@@ -246,22 +221,99 @@ class TestDocRefInfoServiceImpl {
                 .isEqualTo(DOC_REF3.getName());
     }
 
-    private static DocRef stripName(final DocRef docRef) {
-        return docRef.copy()
-                .name(null)
+    @Test
+    void decorateSearchable() {
+        initMockCache();
+        initSearchables();
+
+        final DocRef input = MySpecialDataSource1.DUAL_DOC_REF.copy()
+                .name(MySpecialDataSource1.DUAL_DOC_REF.getName() + "XXX")
                 .build();
+        final DocRef docRef = docRefInfoService.decorate(input, true);
+
+        assertThat(docRef.getName())
+                .isEqualTo(MySpecialDataSource1.DUAL_DOC_REF.getName());
     }
 
-    private static DocRef stripUuid(final DocRef docRef) {
-        return docRef.copy()
-                .uuid(null)
-                .build();
+    @Test
+    void findSearchableByName() {
+//        initMockCache();
+        initSearchables();
+
+//        final DocRef input = MySpecialDataSource1.DUAL_DOC_REF.copy()
+//                .name(MySpecialDataSource1.DUAL_DOC_REF.getName() + "XXX")
+//                .build();
+
+        final List<DocRef> docRefs = docRefInfoService.findByName(MySpecialDataSource1.TYPE, "*", true);
+
+        assertThat(docRefs)
+                .containsExactly(MySpecialDataSource1.DUAL_DOC_REF);
     }
 
-    private static DocRef stripType(final DocRef docRef) {
-        return docRef.copy()
-                .type(null)
+    @Test
+    void findSearchableByName_nullTypeExact() {
+        initSearchables();
+
+        final List<DocRef> docRefs = docRefInfoService.findByName(null, "Dual", false);
+
+        assertThat(docRefs)
+                .containsExactly(MySpecialDataSource1.DUAL_DOC_REF);
+    }
+
+    @Test
+    void findSearchableByName_nullTypeWild() {
+        initSearchables();
+
+        final List<DocRef> docRefs = docRefInfoService.findByName(null, "Du*", true);
+
+        assertThat(docRefs)
+                .containsExactly(MySpecialDataSource1.DUAL_DOC_REF);
+    }
+
+    @Test
+    void findByType() {
+        initSearchables();
+        final List<DocRef> docRefs = docRefInfoService.findByType(MySpecialDataSource1.TYPE);
+        assertThat(docRefs)
+                .containsExactly(MySpecialDataSource1.DUAL_DOC_REF);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class MySpecialDataSource1 implements IsSpecialExplorerDataSource {
+
+        public static final String TYPE = "Dual";
+        public static final DocRef DUAL_DOC_REF = DocRef.builder()
+                .type(TYPE)
+                .randomUuid()
+                .name(TYPE)
                 .build();
+
+        @Override
+        public List<DocRef> getDataSourceDocRefs() {
+            return List.of(DUAL_DOC_REF);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class MySpecialDataSource2 implements IsSpecialExplorerDataSource {
+
+        public static final String TYPE = "Tasks";
+        public static final DocRef TASKS_DOC_REF = DocRef.builder()
+                .type(TYPE)
+                .randomUuid()
+                .name(TYPE)
+                .build();
+
+        @Override
+        public List<DocRef> getDataSourceDocRefs() {
+            return List.of(TASKS_DOC_REF);
+        }
     }
 
 }

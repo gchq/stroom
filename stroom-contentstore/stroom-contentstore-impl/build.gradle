@@ -1,0 +1,25 @@
+ext.moduleName = 'stroom.contentstore.impl'
+
+dependencies {
+    implementation project(':stroom-contentstore:stroom-contentstore-api')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-event-logging:stroom-event-logging-api')
+    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-gitrepo:stroom-gitrepo-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+
+    implementation libs.guice
+    implementation libs.jackson.annotations
+    implementation libs.restygwt
+    implementation libs.slf4j.api
+    implementation libs.jakarta.servlet.api
+
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
+
+}

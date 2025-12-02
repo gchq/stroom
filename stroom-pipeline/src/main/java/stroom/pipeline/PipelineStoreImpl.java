@@ -64,7 +64,7 @@ public class PipelineStoreImpl implements PipelineStore {
                              final Provider<ProcessorService> processorServiceProvider,
                              final PipelineDataMigration pipelineDataMigration) {
         this.processorServiceProvider = processorServiceProvider;
-        this.store = storeFactory.createStore(serialiser, PipelineDoc.TYPE, PipelineDoc.class);
+        this.store = storeFactory.createStore(serialiser, PipelineDoc.TYPE, PipelineDoc::builder);
         this.processorFilterServiceProvider = processorFilterServiceProvider;
         this.pipelineDataMigration = pipelineDataMigration;
     }

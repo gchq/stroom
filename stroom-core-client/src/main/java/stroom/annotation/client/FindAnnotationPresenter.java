@@ -56,6 +56,9 @@ public class FindAnnotationPresenter
             // Refresh the results.
             findResultListPresenter.refresh();
 
+            // Ensure list has a border in the popup view.
+            findResultListPresenter.getView().asWidget().addStyleName("form-control-border form-control-background");
+
             getView().setDialogMode(true);
             final PopupSize popupSize = PopupSize.resizable(800, 600);
             ShowPopupEvent.builder(this)

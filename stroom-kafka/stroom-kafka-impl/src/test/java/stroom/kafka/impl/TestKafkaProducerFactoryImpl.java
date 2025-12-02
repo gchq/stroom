@@ -222,12 +222,11 @@ public class TestKafkaProducerFactoryImpl {
 
     @NotNull
     private KafkaConfigDoc createKafkaConfigDoc(final String name, final String version) {
-        final KafkaConfigDoc kafkaConfigDoc = new KafkaConfigDoc(
-                KafkaConfigDoc.TYPE,
-                UUID.randomUUID().toString(),
-                name);
-        kafkaConfigDoc.setVersion(version);
-        kafkaConfigDoc.setData("bootstrap.servers=localhost:9092");
-        return kafkaConfigDoc;
+        return KafkaConfigDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .name(name)
+                .version(version)
+                .data("bootstrap.servers=localhost:9092")
+                .build();
     }
 }

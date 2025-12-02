@@ -9,7 +9,6 @@ import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.JwtUtil;
 import stroom.security.common.impl.RefreshManager;
 import stroom.security.openid.api.IdpType;
-import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.TokenResponse;
 import stroom.security.shared.VerifyApiKeyRequest;
@@ -24,6 +23,7 @@ import stroom.util.shared.UserDesc;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.HttpHeaders;
 import org.jose4j.jwt.JwtClaims;
@@ -32,6 +32,7 @@ import org.jose4j.jwt.consumer.JwtContext;
 import java.util.Objects;
 import java.util.Optional;
 
+@Singleton
 public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxyUserIdentityFactory.class);

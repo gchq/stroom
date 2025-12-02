@@ -1,0 +1,33 @@
+ext.moduleName = 'stroom.stroom-credentials.impl.db'
+
+dependencies {
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-credentials:stroom-credentials-api')
+    implementation project(':stroom-credentials:stroom-credentials-impl')
+    implementation project(':stroom-credentials:stroom-credentials-impl-db-jooq')
+    implementation project(':stroom-db-util')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-security:stroom-security-impl')
+    implementation project(':stroom-security:stroom-security-mock')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+
+    implementation libs.flyway.core
+    implementation libs.flyway.mysql
+    implementation libs.guice
+    implementation libs.jackson.annotations
+    implementation libs.jackson.core
+    implementation libs.jackson.databind
+    implementation libs.jakarta.inject
+    implementation libs.jooq
+    implementation libs.slf4j.api
+
+    runtimeOnly libs.mysql.connector.java
+
+    testImplementation project(':stroom-test-common')
+    testImplementation libs.flyway.core
+    testImplementation libs.bundles.common.test.implementation
+
+}

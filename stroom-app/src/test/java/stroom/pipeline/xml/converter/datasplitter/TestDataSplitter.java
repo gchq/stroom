@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -77,9 +78,13 @@ class TestDataSplitter extends AbstractProcessIntegrationTest {
      */
     @Test
     void testNetworkMonitoringSampleWithXSL() {
-        runFullTest(new FeedDoc("NetworkMonitoring-EVENTS"), TextConverterType.DATA_SPLITTER,
+        runFullTest(createFeed("NetworkMonitoring-EVENTS"), TextConverterType.DATA_SPLITTER,
                 "TestDataSplitter/SimpleCSVSplitter.ds", "TestDataSplitter/NetworkMonitoring.xsl",
                 "TestDataSplitter/NetworkMonitoringSample.in", 0);
+    }
+
+    private FeedDoc createFeed(final String name) {
+        return FeedDoc.builder().uuid(UUID.randomUUID().toString()).name(name).build();
     }
 
     /**
@@ -90,7 +95,7 @@ class TestDataSplitter extends AbstractProcessIntegrationTest {
      */
     @Test
     void testDS3NetworkMonitoringSampleWithXSL() {
-        runFullTest(new FeedDoc("NetworkMonitoring-EVENTS"), TextConverterType.DATA_SPLITTER,
+        runFullTest(createFeed("NetworkMonitoring-EVENTS"), TextConverterType.DATA_SPLITTER,
                 "TestDataSplitter/CSVWithHeading.ds", "TestDataSplitter/DS3NetworkMonitoring.xsl",
                 "TestDataSplitter/NetworkMonitoringSample.in", 0);
     }
@@ -111,7 +116,7 @@ class TestDataSplitter extends AbstractProcessIntegrationTest {
      */
     @Test
     void testRefDataCSVWithXSL() {
-        final FeedDoc refFeed = new FeedDoc("HostNameToIP-REFERENCE");
+        final FeedDoc refFeed = createFeed("HostNameToIP-REFERENCE");
         refFeed.setReference(true);
         runFullTest(refFeed, TextConverterType.DATA_SPLITTER, "TestDataSplitter/SimpleCSVSplitter.ds",
                 "TestDataSplitter/SampleRefData-HostNameToIP.xsl", "TestDataSplitter/SampleRefData-HostNameToIP.in", 0);

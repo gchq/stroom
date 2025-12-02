@@ -16,14 +16,13 @@
 
 package stroom.data.retention.impl;
 
-import stroom.data.retention.shared.DataRetentionRules;
+import stroom.data.retention.api.DataRetentionRulesProvider;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.scheduler.CronExpressions;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
 import jakarta.inject.Inject;
 
 public class DataRetentionModule extends AbstractModule {
@@ -31,6 +30,7 @@ public class DataRetentionModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(DataRetentionRulesService.class).to(DataRetentionRulesServiceImpl.class);
+        bind(DataRetentionRulesProvider.class).to(DataRetentionRulesServiceImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(DataRetentionRulesResourceImpl.class);
@@ -39,14 +39,8 @@ public class DataRetentionModule extends AbstractModule {
                 .bindJobTo(DataRetention.class, builder -> builder
                         .name(DataRetentionPolicyExecutor.JOB_NAME)
                         .description("Delete data that exceeds the retention period " +
-                                "specified by data retention policy")
+                                     "specified by data retention policy")
                         .cronSchedule(CronExpressions.EVERY_DAY_AT_MIDNIGHT.getExpression()));
-    }
-
-    @SuppressWarnings("unused") // called by guice
-    @Provides
-    DataRetentionRules getRules(final DataRetentionRulesService dataRetentionRulesService) {
-        return dataRetentionRulesService.getOrCreate();
     }
 
     private static class DataRetention extends RunnableWrapper {

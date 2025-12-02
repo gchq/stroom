@@ -3,7 +3,8 @@ package stroom.docstore.api;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docref.HasFindDocsByName;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
+import stroom.docstore.shared.AbstractDoc.AbstractBuilder;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.util.shared.Message;
@@ -14,7 +15,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-public interface Store<D extends Doc>
+public interface Store<D extends AbstractDoc>
         extends DocumentActionHandler<D>, HasFindDocsByName, ContentIndexable {
     ////////////////////////////////////////////////////////////////////////
     // START OF ExplorerActionHandler
@@ -75,10 +76,9 @@ public interface Store<D extends Doc>
      */
     List<DocRef> list();
 
-    interface DocumentCreator<D extends Doc> {
+    interface DocumentCreator<D extends AbstractDoc> {
 
-        D create(final String type,
-                 final String uuid,
+        D create(final String uuid,
                  final String name,
                  final String version,
                  final Long createTime,

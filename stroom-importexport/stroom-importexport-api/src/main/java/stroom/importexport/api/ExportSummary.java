@@ -50,4 +50,14 @@ public class ExportSummary {
                 .mapToInt(i -> i)
                 .sum();
     }
+
+    @Override
+    public String toString() {
+        return "ExportSummary {" +
+               "\n  successCountsByType=" + successCountsByType +
+               "\n  failedCountsByType=" + failedCountsByType +
+               "\n  messages=" + messages +
+               "\n}";
+    }
+
 }

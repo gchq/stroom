@@ -1,7 +1,7 @@
 ext.moduleName = 'stroom.hadoop'
 
 dependencies {
-    api("org.apache.hadoop:hadoop-common:3.4.1") {
+    api("org.apache.hadoop:hadoop-common:3.4.2") {
         transitive = false
 
 //        // Exclude all logging so we can use our own SLF4J/Logback and its bridging pkgs
@@ -17,7 +17,7 @@ dependencies {
 //        exclude group: "com.sun.xml.bind", module: "jaxb-impl"
 //        exclude group: "org.bouncycastle", module: "bcprov-jdk18on"
     }
-    api("org.apache.hadoop:hadoop-hdfs:3.4.1") {
+    api("org.apache.hadoop:hadoop-hdfs:3.4.2") {
         transitive = false
 
 //        //exclude(module: 'slf4j-api')
@@ -35,7 +35,7 @@ dependencies {
 //        // see https://stackoverflow.com/questions/11677572/dealing-with-xerces-hell-in-java-maven
 //        exclude module: 'xercesImpl'
     }
-    api ("org.apache.hadoop:hadoop-hdfs-client:3.4.1") {
+    api ("org.apache.hadoop:hadoop-hdfs-client:3.4.2") {
         transitive = false
     }
 }

@@ -23,6 +23,8 @@ import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.resource.api.ResourceStore;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.IsServlet;
 import stroom.util.shared.PropertyMap;
 import stroom.util.shared.ResourceKey;
@@ -35,8 +37,6 @@ import org.apache.commons.fileupload2.core.DiskFileItem;
 import org.apache.commons.fileupload2.core.DiskFileItemFactory;
 import org.apache.commons.fileupload2.core.FileUploadException;
 import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -56,7 +56,7 @@ import java.util.Set;
 public final class AutoImport extends HttpServlet implements IsServlet {
 
     private static final String FILE_UPLOAD_PROP_NAME = "fileUpload";
-    private static final Logger LOGGER = LoggerFactory.getLogger(AutoImport.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AutoImport.class);
     @Serial
     private static final long serialVersionUID = 487567988479000995L;
 
@@ -108,7 +108,12 @@ public final class AutoImport extends HttpServlet implements IsServlet {
             }
 
             final ImportSettings importSettings = new ImportSettings(ImportMode.IGNORE_CONFIRMATION,
-                    false, null, false, false, null);
+                    false,
+                    null,
+                    false,
+                    false,
+                    null,
+                    false);
             final ImportConfigRequest importRequest = new ImportConfigRequest(resourceKey, importSettings, List.of());
             final ImportConfigResponse result = contentService.importContent(importRequest);
 

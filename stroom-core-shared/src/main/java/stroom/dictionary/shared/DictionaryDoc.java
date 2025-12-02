@@ -18,7 +18,7 @@ package stroom.dictionary.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 
@@ -50,7 +50,7 @@ import java.util.Objects;
         "data",
         "imports"})
 @JsonInclude(Include.NON_NULL)
-public class DictionaryDoc extends Doc {
+public class DictionaryDoc extends AbstractDoc {
 
     public static final String TYPE = "Dictionary";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.DICTIONARY_DOCUMENT_TYPE;
@@ -62,12 +62,8 @@ public class DictionaryDoc extends Doc {
     @JsonProperty
     private List<DocRef> imports;
 
-    public DictionaryDoc() {
-    }
-
     @JsonCreator
-    public DictionaryDoc(@JsonProperty("type") final String type,
-                         @JsonProperty("uuid") final String uuid,
+    public DictionaryDoc(@JsonProperty("uuid") final String uuid,
                          @JsonProperty("name") final String name,
                          @JsonProperty("version") final String version,
                          @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -77,7 +73,7 @@ public class DictionaryDoc extends Doc {
                          @JsonProperty("description") final String description,
                          @JsonProperty("data") final String data,
                          @JsonProperty("imports") final List<DocRef> imports) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.data = data;
         this.imports = imports;
@@ -143,5 +139,65 @@ public class DictionaryDoc extends Doc {
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), description, data, imports);
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder
+            extends AbstractDoc.AbstractBuilder<DictionaryDoc, DictionaryDoc.Builder> {
+
+        private String description;
+        private String data;
+        private List<DocRef> imports;
+
+        private Builder() {
+        }
+
+        private Builder(final DictionaryDoc dictionaryDoc) {
+            super(dictionaryDoc);
+            this.description = dictionaryDoc.description;
+            this.data = dictionaryDoc.data;
+            this.imports = dictionaryDoc.imports;
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder data(final String data) {
+            this.data = data;
+            return self();
+        }
+
+        public Builder imports(final List<DocRef> imports) {
+            this.imports = imports;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public DictionaryDoc build() {
+            return new DictionaryDoc(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    data,
+                    imports);
+        }
     }
 }

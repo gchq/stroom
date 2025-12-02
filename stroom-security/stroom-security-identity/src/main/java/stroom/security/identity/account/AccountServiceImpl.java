@@ -198,9 +198,9 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public Optional<Account> read(final String email) {
+    public Optional<Account> read(final String userId) {
         checkPermission();
-        return accountDao.get(email);
+        return accountDao.get(userId);
     }
 
     @Override

@@ -48,24 +48,24 @@ class S3ConfigStoreImpl implements S3ConfigStore {
                       final Provider<S3Config> s3ConfigProvider,
                       final S3ConfigSerialiser serialiser) {
         this.s3ConfigProvider = s3ConfigProvider;
-        this.store = storeFactory.createStore(serialiser, S3ConfigDoc.TYPE, S3ConfigDoc.class);
+        this.store = storeFactory.createStore(serialiser, S3ConfigDoc.TYPE, S3ConfigDoc::builder);
     }
 
     ////////////////////////////////////////////////////////////////////////
     // START OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+
+    /// /////////////////////////////////////////////////////////////////////
 
     @Override
     public DocRef createDocument(final String name) {
         // create the document with some configurable skeleton content
         return store.createDocument(
                 name,
-                (type, uuid, docName, version, createTime, updateTime, createUser, updateUser) -> {
+                (uuid, docName, version, createTime, updateTime, createUser, updateUser) -> {
 
                     final String skeletonConfigText = s3ConfigProvider.get().getSkeletonConfigContent();
 
                     return new S3ConfigDoc(
-                            type,
                             uuid,
                             docName,
                             version,
@@ -113,7 +113,8 @@ class S3ConfigStoreImpl implements S3ConfigStore {
 
     ////////////////////////////////////////////////////////////////////////
     // START OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+
+    /// /////////////////////////////////////////////////////////////////////
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
@@ -137,7 +138,8 @@ class S3ConfigStoreImpl implements S3ConfigStore {
 
     ////////////////////////////////////////////////////////////////////////
     // START OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+
+    /// /////////////////////////////////////////////////////////////////////
 
     @Override
     public S3ConfigDoc readDocument(final DocRef docRef) {
@@ -158,7 +160,8 @@ class S3ConfigStoreImpl implements S3ConfigStore {
 
     ////////////////////////////////////////////////////////////////////////
     // START OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+
+    /// /////////////////////////////////////////////////////////////////////
 
     @Override
     public Set<DocRef> listDocuments() {
@@ -194,7 +197,8 @@ class S3ConfigStoreImpl implements S3ConfigStore {
     }
     ////////////////////////////////////////////////////////////////////////
     // END OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+
+    /// /////////////////////////////////////////////////////////////////////
 
     @Override
     public List<DocRef> list() {

@@ -17,10 +17,10 @@
 
 package stroom.data.retention.impl;
 
+import stroom.data.retention.api.DataRetentionRulesProvider;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.docstore.api.DocumentStore;
 
-public interface DataRetentionRulesService extends DocumentStore<DataRetentionRules> {
+public interface DataRetentionRulesService extends DocumentStore<DataRetentionRules>, DataRetentionRulesProvider {
 
-    DataRetentionRules getOrCreate();
 }

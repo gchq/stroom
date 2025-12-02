@@ -19,7 +19,7 @@ package stroom.pipeline.shared;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.util.shared.HasData;
@@ -60,7 +60,7 @@ import java.util.Objects;
         "data",
         "converterType"})
 @JsonInclude(Include.NON_NULL)
-public class TextConverterDoc extends Doc implements HasData {
+public class TextConverterDoc extends AbstractDoc implements HasData {
 
     public static final String TYPE = "TextConverter";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.TEXT_CONVERTER_DOCUMENT_TYPE;
@@ -72,13 +72,8 @@ public class TextConverterDoc extends Doc implements HasData {
     @JsonProperty
     private TextConverterType converterType;
 
-    public TextConverterDoc() {
-        converterType = TextConverterType.NONE;
-    }
-
     @JsonCreator
-    public TextConverterDoc(@JsonProperty("type") final String type,
-                            @JsonProperty("uuid") final String uuid,
+    public TextConverterDoc(@JsonProperty("uuid") final String uuid,
                             @JsonProperty("name") final String name,
                             @JsonProperty("version") final String version,
                             @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -88,7 +83,7 @@ public class TextConverterDoc extends Doc implements HasData {
                             @JsonProperty("description") final String description,
                             @JsonProperty("data") final String data,
                             @JsonProperty("converterType") final TextConverterType converterType) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.data = data;
         this.converterType = converterType;
@@ -162,10 +157,6 @@ public class TextConverterDoc extends Doc implements HasData {
         return Objects.hash(super.hashCode(), description, data, converterType);
     }
 
-
-    // --------------------------------------------------------------------------------
-
-
     public enum TextConverterType implements HasDisplayValue {
         NONE("None"),
         DATA_SPLITTER("Data Splitter"),
@@ -180,6 +171,65 @@ public class TextConverterDoc extends Doc implements HasData {
         @Override
         public String getDisplayValue() {
             return displayValue;
+        }
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder extends AbstractDoc.AbstractBuilder<TextConverterDoc, TextConverterDoc.Builder> {
+
+        private String description;
+        private String data;
+        private TextConverterType converterType;
+
+        private Builder() {
+        }
+
+        private Builder(final TextConverterDoc textConverterDoc) {
+            super(textConverterDoc);
+            this.description = textConverterDoc.description;
+            this.data = textConverterDoc.data;
+            this.converterType = textConverterDoc.converterType;
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder data(final String data) {
+            this.data = data;
+            return self();
+        }
+
+        public Builder converterType(final TextConverterType converterType) {
+            this.converterType = converterType;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public TextConverterDoc build() {
+            return new TextConverterDoc(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    data,
+                    converterType);
         }
     }
 }

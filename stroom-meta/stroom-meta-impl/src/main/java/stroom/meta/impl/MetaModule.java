@@ -33,7 +33,9 @@ public class MetaModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
                 .addBinding(MetaServiceImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), Searchable.class)
+//        GuiceUtil.buildMultiBinder(binder(), Searchable.class)
+//                .addBinding(MetaServiceImpl.class);
+        GuiceUtil.buildMapBinder(binder(), Searchable.class)
                 .addBinding(MetaServiceImpl.class);
 
         RestResourcesBinder.create(binder())

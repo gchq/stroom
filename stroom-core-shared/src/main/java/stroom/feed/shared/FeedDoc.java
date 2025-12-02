@@ -18,9 +18,10 @@ package stroom.feed.shared;
 
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
+import stroom.docref.DocRef.TypedBuilder;
 import stroom.docref.HasDisplayValue;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.util.shared.HasPrimitiveValue;
@@ -65,7 +66,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
         "status",
         "volumeGroup"})
 @JsonInclude(Include.NON_NULL)
-public class FeedDoc extends Doc {
+public class FeedDoc extends AbstractDoc {
 
     public static final String TYPE = "Feed";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.FEED_DOCUMENT_TYPE;
@@ -97,16 +98,8 @@ public class FeedDoc extends Doc {
     @JsonProperty
     private String volumeGroup;
 
-    public FeedDoc() {
-    }
-
-    public FeedDoc(final String name) {
-        setName(name);
-    }
-
     @JsonCreator
-    public FeedDoc(@JsonProperty("type") final String type,
-                   @JsonProperty("uuid") final String uuid,
+    public FeedDoc(@JsonProperty("uuid") final String uuid,
                    @JsonProperty("name") final String name,
                    @JsonProperty("version") final String version,
                    @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -126,7 +119,7 @@ public class FeedDoc extends Doc {
                    @JsonProperty("schemaVersion") final String schemaVersion,
                    @JsonProperty("status") final FeedStatus status,
                    @JsonProperty("volumeGroup") final String volumeGroup) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.classification = classification;
         this.encoding = encoding;
@@ -154,7 +147,7 @@ public class FeedDoc extends Doc {
     /**
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
-    public static DocRef.TypedBuilder buildDocRef() {
+    public static TypedBuilder buildDocRef() {
         return DocRef.builder(TYPE);
     }
 
@@ -227,6 +220,7 @@ public class FeedDoc extends Doc {
         return retentionDayAge;
     }
 
+
     public void setRetentionDayAge(final Integer retentionDayAge) {
         this.retentionDayAge = retentionDayAge;
     }
@@ -279,10 +273,6 @@ public class FeedDoc extends Doc {
         this.volumeGroup = volumeGroup;
     }
 
-
-    // --------------------------------------------------------------------------------
-
-
     public enum FeedStatus implements HasDisplayValue, HasPrimitiveValue {
         RECEIVE("Receive", 1),
         REJECT("Reject", 2),
@@ -306,6 +296,145 @@ public class FeedDoc extends Doc {
         @Override
         public byte getPrimitiveValue() {
             return primitiveValue;
+        }
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder extends AbstractBuilder<FeedDoc, FeedDoc.Builder> {
+
+        private String description;
+        private String classification;
+        private String encoding;
+        private String contextEncoding;
+        private Integer retentionDayAge;
+        private boolean reference;
+        private String streamType;
+        private String dataFormat;
+        private String contextFormat;
+        private String schema;
+        private String schemaVersion;
+        private FeedStatus status;
+        private String volumeGroup;
+
+        private Builder() {
+        }
+
+        private Builder(final FeedDoc copy) {
+            super(copy);
+            this.description = copy.getDescription();
+            this.classification = copy.getClassification();
+            this.encoding = copy.getEncoding();
+            this.contextEncoding = copy.getContextEncoding();
+            this.retentionDayAge = copy.getRetentionDayAge();
+            this.reference = copy.isReference();
+            this.streamType = copy.getStreamType();
+            this.dataFormat = copy.getDataFormat();
+            this.contextFormat = copy.getContextFormat();
+            this.schema = copy.getSchema();
+            this.schemaVersion = copy.getSchemaVersion();
+            this.status = copy.getStatus();
+            this.volumeGroup = copy.getVolumeGroup();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder classification(final String classification) {
+            this.classification = classification;
+            return self();
+        }
+
+        public Builder encoding(final String encoding) {
+            this.encoding = encoding;
+            return self();
+        }
+
+        public Builder contextEncoding(final String contextEncoding) {
+            this.contextEncoding = contextEncoding;
+            return self();
+        }
+
+        public Builder retentionDayAge(final Integer retentionDayAge) {
+            this.retentionDayAge = retentionDayAge;
+            return self();
+        }
+
+        public Builder reference(final boolean reference) {
+            this.reference = reference;
+            return self();
+        }
+
+        public Builder streamType(final String streamType) {
+            this.streamType = streamType;
+            return self();
+        }
+
+        public Builder dataFormat(final String dataFormat) {
+            this.dataFormat = dataFormat;
+            return self();
+        }
+
+        public Builder contextFormat(final String contextFormat) {
+            this.contextFormat = contextFormat;
+            return self();
+        }
+
+        public Builder schema(final String schema) {
+            this.schema = schema;
+            return self();
+        }
+
+        public Builder schemaVersion(final String schemaVersion) {
+            this.schemaVersion = schemaVersion;
+            return self();
+        }
+
+        public Builder status(final FeedStatus status) {
+            this.status = status;
+            return self();
+        }
+
+        public Builder volumeGroup(final String volumeGroup) {
+            this.volumeGroup = volumeGroup;
+            return self();
+        }
+
+        public FeedDoc build() {
+            return new FeedDoc(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    classification,
+                    encoding,
+                    contextEncoding,
+                    retentionDayAge,
+                    reference,
+                    streamType,
+                    dataFormat,
+                    contextFormat,
+                    schema,
+                    schemaVersion,
+                    status,
+                    volumeGroup);
         }
     }
 }

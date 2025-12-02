@@ -22,7 +22,6 @@ import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.bytebuffer.PooledByteBufferPair;
-import stroom.lmdb.LmdbEnv.WriteTxn;
 import stroom.lmdb.UnSortedDupKey.UnsortedDupKeyFactory;
 import stroom.lmdb.serde.IntegerSerde;
 import stroom.lmdb.serde.Serde;
@@ -35,6 +34,7 @@ import stroom.lmdb.serde.UnsignedLongSerde;
 import stroom.test.common.TemporaryPathCreator;
 import stroom.test.common.TestUtil;
 import stroom.test.common.TestUtil.TimedCase;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.exception.ThrowingConsumer;
 import stroom.util.functions.TriConsumer;
 import stroom.util.io.ByteSize;
@@ -1200,11 +1200,23 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
      * This is more of a manual performance test for comparing the difference between
      * puts in integer order vs in random order. Also compares the impact of the INTEGER_KEY
      * dbi flag, which seems to slow things down a fair bit.
+     * <p>
+     * The following test output was for 10_000_000 entries.
+     * </p>
+     * <pre>
+     * Completed [Puts: Ascending] in PT3.056630567S
+     * Completed [Puts: Random] in PT9.910205266S
+     * Completed [Puts: Ascending (INTEGER_KEY)] in PT2.41477686S
+     * Completed [Puts: Random (INTEGER_KEY)] in PT9.109282535S
+     * Completed [Iteration] in PT3.5032606S
+     * Completed [Iteration (INTEGER_KEY)] in PT3.531630825S
+     * </pre>
      */
     @Test
     void testLoadOrderAndIntKeyPerformance() {
 
 //        final int iterations = 1_000_000;
+//        final int iterations = 10_000_000;
         final int iterations = 10;
 
         LOGGER.info("info {}", basicLmdbDb3.getDbInfo());
@@ -1235,7 +1247,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                     basicLmdbDb3.put(writeTxn, tuple._1(), tuple._2(), false);
                 });
             });
-        }, "Ascending");
+        }, "Puts: Ascending");
 
         LOGGER.logDurationIfInfoEnabled(() -> {
             lmdbEnv.doWithWriteTxn(writeTxn -> {
@@ -1243,7 +1255,8 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                     basicLmdbDb3.put(writeTxn, tuple._1(), tuple._2(), false);
                 });
             });
-        }, "Random");
+        }, "Puts: Random");
+
 
         // If you want to use MDB_INTEGERKEY then you MUST set the byte buffer to nativeOrder before
         // writing/reading. See https://github.com/lmdbjava/lmdbjava/issues/51
@@ -1253,7 +1266,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                     basicLmdbDb4.put(writeTxn, tuple._1(), tuple._2(), false);
                 });
             });
-        }, "Ascending (INTEGER_KEY)");
+        }, "Puts: Ascending (INTEGER_KEY)");
 
         LOGGER.logDurationIfInfoEnabled(() -> {
             lmdbEnv.doWithWriteTxn(writeTxn -> {
@@ -1261,7 +1274,41 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                     basicLmdbDb4.put(writeTxn, tuple._1(), tuple._2(), false);
                 });
             });
-        }, "Random (INTEGER_KEY)");
+        }, "Puts: Random (INTEGER_KEY)");
+
+        final int iterationRounds = 5;
+
+        LOGGER.logDurationIfInfoEnabled(() -> {
+            lmdbEnv.doWithReadTxn(readTxn -> {
+                for (int i = 0; i < iterationRounds; i++) {
+                    try (final CursorIterable<ByteBuffer> cursorIterable = basicLmdbDb3.iterate(readTxn)) {
+                        final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+                        long sum = 0;
+                        while (iterator.hasNext()) {
+                            final KeyVal<ByteBuffer> keyVal = iterator.next();
+                            final int key = basicLmdbDb3.deserializeKey(keyVal.key());
+                            sum += key;
+                        }
+                    }
+                }
+            });
+        }, "Iteration");
+
+        LOGGER.logDurationIfInfoEnabled(() -> {
+            lmdbEnv.doWithReadTxn(readTxn -> {
+                for (int i = 0; i < iterationRounds; i++) {
+                    try (final CursorIterable<ByteBuffer> cursorIterable = basicLmdbDb4.iterate(readTxn)) {
+                        final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+                        long sum = 0;
+                        while (iterator.hasNext()) {
+                            final KeyVal<ByteBuffer> keyVal = iterator.next();
+                            final int key = basicLmdbDb4.deserializeKey(keyVal.key());
+                            sum += key;
+                        }
+                    }
+                }
+            });
+        }, "Iteration (INTEGER_KEY)");
 
         if (iterations < 50) {
             basicLmdbDb3.logDatabaseContents(LOGGER::info);
@@ -1396,54 +1443,40 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
             };
             LOGGER.info("baseDir: {}", temporaryPathCreator.getBaseTempDir().toAbsolutePath().normalize());
 
-            final BasicLmdbDb<String, String> basicLmdb1 = createDb(temporaryPathCreator, envFlags, "1");
-            final BasicLmdbDb<String, String> basicLmdb2 = createDb(temporaryPathCreator, envFlags, "2");
-
-            final LmdbEnv lmdbEnv1 = basicLmdb1.getLmdbEnvironment();
-            final LmdbEnv lmdbEnv2 = basicLmdb2.getLmdbEnvironment();
-
+            final BasicLmdbDb<String, String> basicLmdb1 = createEnvAndDb(temporaryPathCreator, envFlags, "1");
+            final BasicLmdbDb<String, String> basicLmdb2 = createEnvAndDb(temporaryPathCreator, envFlags, "2");
             final CountDownLatch countDownLatch = new CountDownLatch(2);
 
             final CompletableFuture<Void> future1 = CompletableFuture.runAsync(() -> {
                 LOGGER.info("Opening writeTxn1");
-                final WriteTxn writeTxn1 = lmdbEnv1.openWriteTxn();
-                LOGGER.info("writeTxn1 open");
-                basicLmdb1.put(writeTxn1.getTxn(), "1", "one", true);
-                countDownLatch.countDown();
-                try {
-                    countDownLatch.await();
-                } catch (final InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-
-                try {
+                basicLmdb1.getLmdbEnvironment().doWithWriteTxn(writeTxn1 -> {
+                    LOGGER.info("writeTxn1 open");
+                    basicLmdb1.put(writeTxn1, "1", "one", true);
+                    LOGGER.info("put 1");
+                    countDownLatch.countDown();
+                    try {
+                        countDownLatch.await();
+                    } catch (final InterruptedException e) {
+                        throw new UncheckedInterruptedException(e);
+                    }
                     LOGGER.info("Closing writeTxn1");
-                    writeTxn1.commit();
-                    writeTxn1.close();
-                } catch (final Exception e) {
-                    throw new RuntimeException(e);
-                }
+                });
             });
 
             final CompletableFuture<Void> future2 = CompletableFuture.runAsync(() -> {
                 LOGGER.info("Opening writeTxn2");
-                final WriteTxn writeTxn2 = lmdbEnv2.openWriteTxn();
-                LOGGER.info("writeTxn2 open");
-                basicLmdb1.put(writeTxn2.getTxn(), "2", "two", true);
-                countDownLatch.countDown();
-                try {
-                    countDownLatch.await();
-                } catch (final InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-
-                try {
+                basicLmdb2.getLmdbEnvironment().doWithWriteTxn(writeTxn2 -> {
+                    LOGGER.info("writeTxn2 open");
+                    basicLmdb2.put(writeTxn2, "2", "two", true);
+                    LOGGER.info("put 2");
+                    countDownLatch.countDown();
+                    try {
+                        countDownLatch.await();
+                    } catch (final InterruptedException e) {
+                        throw new UncheckedInterruptedException(e);
+                    }
                     LOGGER.info("Closing writeTxn2");
-                    writeTxn2.commit();
-                    writeTxn2.close();
-                } catch (final Exception e) {
-                    throw new RuntimeException(e);
-                }
+                });
             });
 
             future1.get();
@@ -1533,7 +1566,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
     @Test
     void testPutsWithConcurrentReadTxn() throws ExecutionException, InterruptedException {
         try (final TemporaryPathCreator temporaryPathCreator = new TemporaryPathCreator()) {
-            final BasicLmdbDb<String, String> basicLmdb1 = createDb(
+            final BasicLmdbDb<String, String> basicLmdb1 = createEnvAndDb(
                     temporaryPathCreator,
                     new EnvFlags[]{EnvFlags.MDB_NOTLS},
                     false,
@@ -1616,17 +1649,17 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         }
     }
 
-    private BasicLmdbDb<String, String> createDb(final TemporaryPathCreator temporaryPathCreator,
-                                                 final EnvFlags[] envFlags,
-                                                 final String id) {
-        return createDb(temporaryPathCreator, envFlags, true, id);
+    private BasicLmdbDb<String, String> createEnvAndDb(final TemporaryPathCreator temporaryPathCreator,
+                                                       final EnvFlags[] envFlags,
+                                                       final String id) {
+        return createEnvAndDb(temporaryPathCreator, envFlags, true, id);
 
     }
 
-    private BasicLmdbDb<String, String> createDb(final TemporaryPathCreator temporaryPathCreator,
-                                                 final EnvFlags[] envFlags,
-                                                 final boolean isReadBlockedByWrite,
-                                                 final String id) {
+    private BasicLmdbDb<String, String> createEnvAndDb(final TemporaryPathCreator temporaryPathCreator,
+                                                       final EnvFlags[] envFlags,
+                                                       final boolean isReadBlockedByWrite,
+                                                       final String id) {
         final LmdbEnv lmdbEnv = new LmdbEnvFactory(
                 temporaryPathCreator,
                 new LmdbLibrary(temporaryPathCreator,

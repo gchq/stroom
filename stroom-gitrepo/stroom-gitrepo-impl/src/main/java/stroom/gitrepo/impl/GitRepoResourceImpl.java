@@ -19,6 +19,7 @@ package stroom.gitrepo.impl;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.gitrepo.api.GitRepoStorageService;
 import stroom.gitrepo.api.GitRepoStore;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.gitrepo.shared.GitRepoPushDto;
@@ -32,6 +33,7 @@ import stroom.util.shared.Message;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -41,15 +43,15 @@ import java.util.Objects;
 @AutoLogged
 class GitRepoResourceImpl implements GitRepoResource {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GitRepoResourceImpl.class);
+
     private final Provider<GitRepoStore> gitRepoStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
     private final Provider<GitRepoStorageService> gitRepoStorageServiceProvider;
 
     /**
-     * Logger so we can follow what is going on.
+     * Injected constructor.
      */
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GitRepoResourceImpl.class);
-
     @Inject
     GitRepoResourceImpl(final Provider<GitRepoStore> gitRepoStoreProvider,
                         final Provider<DocumentResourceHelper> documentResourceHelperProvider,
@@ -85,13 +87,17 @@ class GitRepoResourceImpl implements GitRepoResource {
         Objects.requireNonNull(gitRepoPushDto);
         GitRepoResponse response;
         try {
-            LOGGER.info("Pushing to Git repo: '{}'", gitRepoPushDto.getGitRepoDoc().getUrl());
+            LOGGER.debug("Pushing to Git repo: '{}'", gitRepoPushDto.getGitRepoDoc().getUrl());
             final List<Message> messages = gitRepoStorageServiceProvider.get()
                     .exportDoc(gitRepoPushDto.getGitRepoDoc(),
                             gitRepoPushDto.getCommitMessage(),
                             true);
-            response = this.createResponse(messages);
+            response = this.createResponse("Success:", messages);
         } catch (final Exception e) {
+            LOGGER.error("Error pushing to Git URL '{}': {}",
+                    gitRepoPushDto.getGitRepoDoc().getUrl(),
+                    e.getMessage(),
+                    e);
             response = new GitRepoResponse(false, e.getMessage());
         }
         return response;
@@ -112,11 +118,36 @@ class GitRepoResourceImpl implements GitRepoResource {
         try {
             LOGGER.info("Pulling from Git repo: {}", gitRepoDoc.getUrl());
             final List<Message> messages = gitRepoStorageServiceProvider.get()
-                    .importDoc(gitRepoDoc);
-            response = this.createResponse(messages);
+                    .importDoc(gitRepoDoc, false);
+            response = this.createResponse("Success: ", messages);
         } catch (final Exception e) {
             response = new GitRepoResponse(false, e.getMessage());
         }
+        return response;
+    }
+
+    /**
+     * Called to determine whether updates are available for a Git repository.
+     * @param gitRepoDoc The git repository to check.
+     * @return A response with a message in it saying whether updates
+     * could be applied, plus diffs.
+     */
+    @Override
+    public GitRepoResponse areUpdatesAvailable(final GitRepoDoc gitRepoDoc) {
+        Objects.requireNonNull(gitRepoDoc);
+
+        GitRepoResponse response;
+        try {
+            final List<String> messages = new ArrayList<>();
+            if (gitRepoStorageServiceProvider.get().areUpdatesAvailable(messages, gitRepoDoc)) {
+                response = this.createResponseForUpdates("Updates are available:\n", messages);
+            } else {
+                response = new GitRepoResponse(true, "No updates available");
+            }
+        } catch (final Exception e) {
+            response = new GitRepoResponse(false, e.getMessage());
+        }
+
         return response;
     }
 
@@ -131,12 +162,15 @@ class GitRepoResourceImpl implements GitRepoResource {
      * Converts the response from the exportDoc method into something we can
      * send back to the UI and show to the user.
      *
+     * @param message The message to show at the top of list of messages.
      * @param messages The collection of messages for the export process.
      * @return the response for the UI. Never returns null.
      */
-    private GitRepoResponse createResponse(final List<Message> messages) {
+    private GitRepoResponse createResponse(final String message,
+                                           final List<Message> messages) {
         Objects.requireNonNull(messages);
-        final StringBuilder buf = new StringBuilder("Success:\n");
+        final StringBuilder buf = new StringBuilder(message);
+        buf.append("\n");
         for (final Message m : messages) {
             buf.append(m);
             buf.append("\n");
@@ -144,4 +178,25 @@ class GitRepoResourceImpl implements GitRepoResource {
 
         return new GitRepoResponse(true, buf.toString());
     }
+
+    /**
+     * Converts the response from the exportDoc method into something we can
+     * send back to the UI and show to the user.
+     * @param message The message to show at the top of list of messages.
+     * @param messages The collection of messages for the export process.
+     * @return the response for the UI. Never returns null.
+     */
+    private GitRepoResponse createResponseForUpdates(final String message,
+                                                     final List<String> messages) {
+        Objects.requireNonNull(messages);
+        final StringBuilder buf = new StringBuilder(message);
+        buf.append("\n");
+        for (final String s : messages) {
+            buf.append(s);
+            buf.append("\n");
+        }
+
+        return new GitRepoResponse(true, buf.toString());
+    }
+
 }

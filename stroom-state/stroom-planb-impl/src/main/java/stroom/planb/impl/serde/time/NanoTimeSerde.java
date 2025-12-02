@@ -23,7 +23,7 @@ public class NanoTimeSerde implements TimeSerde {
     public Instant read(final ByteBuffer byteBuffer) {
         final long nanos = byteBuffer.getLong();
         final long seconds = nanos / NANOS_PER_SECOND;
-        final long remainingNanos = nanos - (seconds * NANOS_PER_SECOND);
+        final long remainingNanos = nanos % NANOS_PER_SECOND;
         return Instant.ofEpochSecond(seconds + YEAR_2000_EPOCH_SECONDS, remainingNanos);
     }
 

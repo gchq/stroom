@@ -25,7 +25,8 @@ import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Store;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
+import stroom.docstore.shared.AbstractDoc.AbstractBuilder;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportSettings.ImportMode;
@@ -65,7 +66,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class StoreImpl<D extends Doc> implements Store<D> {
+public class StoreImpl<D extends AbstractDoc> implements Store<D> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StoreImpl.class);
 
@@ -76,7 +77,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     private final DocumentSerialiser2<D> serialiser;
     private final String type;
-    private final Class<D> clazz;
+    private final Supplier<AbstractBuilder<D, ?>> builderSupplier;
 
     @Inject
     StoreImpl(final Persistence persistence,
@@ -85,29 +86,36 @@ public class StoreImpl<D extends Doc> implements Store<D> {
               final Provider<DocRefDecorator> docRefInfoServiceProvider,
               final DocumentSerialiser2<D> serialiser,
               final String type,
-              final Class<D> clazz) {
+              final Supplier<AbstractBuilder<D, ?>> builderSupplier) {
         this.persistence = persistence;
         this.entityEventBus = entityEventBus;
         this.securityContext = securityContext;
         this.docRefInfoServiceProvider = docRefInfoServiceProvider;
         this.serialiser = serialiser;
         this.type = type;
-        this.clazz = clazz;
+        this.builderSupplier = builderSupplier;
     }
 
     ////////////////////////////////////////////////////////////////////////
     // START OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+
+    /// /////////////////////////////////////////////////////////////////////
 
     @Override
     public final DocRef createDocument(final String name) {
         Objects.requireNonNull(name);
 
-        final D document = create(type, UUID.randomUUID().toString(), name);
-        document.setVersion(UUID.randomUUID().toString());
+        // Get a doc builder.
+        final AbstractBuilder<D, ?> builder = builderSupplier.get();
 
         // Add audit data.
-        stampAuditData(document);
+        stampAuditData(builder);
+
+        final D document = builder
+                .uuid(UUID.randomUUID().toString())
+                .name(name)
+                .version(UUID.randomUUID().toString())
+                .build();
 
         final D created = create(document);
         return createDocRef(created);
@@ -120,7 +128,6 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         final String userId = securityContext.getUserIdentityForAudit();
 
         final D document = documentCreator.create(
-                type,
                 UUID.randomUUID().toString(),
                 name,
                 UUID.randomUUID().toString(),
@@ -140,7 +147,6 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         Objects.requireNonNull(newName);
 
         final D document = read(originalUuid);
-        document.setType(type);
         document.setUuid(UUID.randomUUID().toString());
         document.setName(newName);
         document.setVersion(UUID.randomUUID().toString());
@@ -226,7 +232,8 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     ////////////////////////////////////////////////////////////////////////
     // START OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+
+    /// /////////////////////////////////////////////////////////////////////
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies(final BiConsumer<D, DependencyRemapper> mapper) {
@@ -281,7 +288,8 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     ////////////////////////////////////////////////////////////////////////
     // START OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+
+    /// /////////////////////////////////////////////////////////////////////
 
     @Override
     public D readDocument(final DocRef docRef) {
@@ -306,7 +314,8 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     ////////////////////////////////////////////////////////////////////////
     // START OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+
+    /// /////////////////////////////////////////////////////////////////////
 
 
     @Override
@@ -495,7 +504,8 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     ////////////////////////////////////////////////////////////////////////
     // END OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+
+    /// /////////////////////////////////////////////////////////////////////
 
     private DocRef createDocRef(final D document) {
         if (document == null) {
@@ -523,21 +533,6 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         }
 
         return document;
-    }
-
-    private D create(final String type, final String uuid, final String name) {
-        try {
-            final D document = clazz.getDeclaredConstructor(new Class[0]).newInstance();
-            document.setType(type);
-            document.setUuid(uuid);
-            document.setName(name);
-            return document;
-        } catch (final InstantiationException
-                       | IllegalAccessException
-                       | NoSuchMethodException
-                       | InvocationTargetException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
     }
 
     private D read(final String uuid) {
@@ -751,5 +746,15 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     private void stampAuditData(final D document) {
         AuditUtil.stamp(securityContext, document);
+    }
+
+    private void stampAuditData(final AbstractBuilder<D, ?> builder) {
+        final long now = System.currentTimeMillis();
+        final String userIdentityForAudit = securityContext.getUserIdentityForAudit();
+
+        builder.createTimeMs(now);
+        builder.createUser(userIdentityForAudit);
+        builder.updateTimeMs(now);
+        builder.updateUser(userIdentityForAudit);
     }
 }

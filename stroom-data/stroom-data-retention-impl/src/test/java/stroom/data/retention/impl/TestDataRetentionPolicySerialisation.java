@@ -33,6 +33,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 class TestDataRetentionPolicySerialisation {
 
@@ -53,7 +54,10 @@ class TestDataRetentionPolicySerialisation {
         list.add(createRule(2, expression, 1, TimeUnit.MONTHS));
         list.add(createRule(3, expression, 2, TimeUnit.WEEKS));
 
-        final DataRetentionRules policies = new DataRetentionRules(list);
+        final DataRetentionRules policies = DataRetentionRules.builder()
+                .uuid(UUID.randomUUID().toString())
+                .rules(list)
+                .build();
 
         final String json = JsonUtil.getMapper().writeValueAsString(policies);
 

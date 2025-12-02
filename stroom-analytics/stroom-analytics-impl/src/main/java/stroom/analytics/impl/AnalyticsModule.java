@@ -17,6 +17,7 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.api.AnalyticsService;
+import stroom.analytics.shared.DuplicateCheckResource;
 import stroom.explorer.api.IsSpecialExplorerDataSource;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.processor.api.ProcessorTaskExecutorBinder;
@@ -46,6 +47,7 @@ public class AnalyticsModule extends AbstractModule {
                         .description("Run table building analytics periodically")
                         .frequencySchedule("10m")
                         .enabled(false)
+                        .enabledOnBootstrap(false)
                         .advanced(true))
 //                .bindJobTo(StreamingAnalyticExecutorRunnable.class, builder -> builder
 //                        .name("Analytic Executor: Streaming")
@@ -58,18 +60,21 @@ public class AnalyticsModule extends AbstractModule {
                         .description("Run scheduled index query analytics periodically")
                         .frequencySchedule("10m")
                         .enabled(false)
+                        .enabledOnBootstrap(false)
                         .advanced(true))
                 .bindJobTo(ExecutionHistoryRetentionRunnable.class, builder -> builder
                         .name("Analytic Execution History Retention")
                         .description("Delete analytic execution history older than configured retention period")
                         .cronSchedule(CronExpressions.EVERY_DAY_AT_3AM.getExpression())
                         .enabled(false)
+                        .enabledOnBootstrap(false)
                         .advanced(true))
                 .bindJobTo(ReportExecutorRunnable.class, builder -> builder
                         .name("Reports")
                         .description("Run scheduled reports")
                         .frequencySchedule("10m")
                         .enabled(false)
+                        .enabledOnBootstrap(false)
                         .advanced(true));
         GuiceUtil.buildMultiBinder(binder(), HasResultStoreInfo.class).addBinding(AnalyticDataStores.class);
 
@@ -78,6 +83,7 @@ public class AnalyticsModule extends AbstractModule {
                 .bind(AnalyticDataShardResourceImpl.class)
                 .bind(DuplicateCheckResourceImpl.class)
                 .bind(ExecutionScheduleResourceImpl.class);
+        bind(DuplicateCheckResource.class).to(DuplicateCheckResourceImpl.class);
 
         bind(AnalyticsService.class).to(AnalyticsServiceImpl.class);
         bind(DuplicateCheckFactory.class).to(DuplicateCheckFactoryImpl.class);

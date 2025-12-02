@@ -18,7 +18,7 @@ package stroom.view.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.query.api.ExpressionOperator;
@@ -51,7 +51,7 @@ import java.util.Objects;
         "filter",
         "pipeline"})
 @JsonInclude(Include.NON_NULL)
-public class ViewDoc extends Doc {
+public class ViewDoc extends AbstractDoc {
 
     public static final String TYPE = "View";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.VIEW_DOCUMENT_TYPE;
@@ -65,12 +65,8 @@ public class ViewDoc extends Doc {
     @JsonProperty
     private DocRef pipeline;
 
-    public ViewDoc() {
-    }
-
     @JsonCreator
-    public ViewDoc(@JsonProperty("type") final String type,
-                   @JsonProperty("uuid") final String uuid,
+    public ViewDoc(@JsonProperty("uuid") final String uuid,
                    @JsonProperty("name") final String name,
                    @JsonProperty("version") final String version,
                    @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -81,7 +77,7 @@ public class ViewDoc extends Doc {
                    @JsonProperty("dataSource") final DocRef dataSource,
                    @JsonProperty("filter") final ExpressionOperator filter,
                    @JsonProperty("pipeline") final DocRef pipeline) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.dataSource = dataSource;
         this.filter = filter;
@@ -157,5 +153,72 @@ public class ViewDoc extends Doc {
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), description, dataSource, filter, pipeline);
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder extends AbstractDoc.AbstractBuilder<ViewDoc, ViewDoc.Builder> {
+
+        private String description;
+        private DocRef dataSource;
+        private ExpressionOperator filter;
+        private DocRef pipeline;
+
+        private Builder() {
+        }
+
+        private Builder(final ViewDoc viewDoc) {
+            super(viewDoc);
+            this.description = viewDoc.description;
+            this.dataSource = viewDoc.dataSource;
+            this.filter = viewDoc.filter;
+            this.pipeline = viewDoc.pipeline;
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder dataSource(final DocRef dataSource) {
+            this.dataSource = dataSource;
+            return self();
+        }
+
+        public Builder filter(final ExpressionOperator filter) {
+            this.filter = filter;
+            return self();
+        }
+
+        public Builder pipeline(final DocRef pipeline) {
+            this.pipeline = pipeline;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public ViewDoc build() {
+            return new ViewDoc(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    dataSource,
+                    filter,
+                    pipeline);
+        }
     }
 }

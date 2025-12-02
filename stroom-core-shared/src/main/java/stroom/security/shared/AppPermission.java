@@ -25,6 +25,9 @@ public enum AppPermission implements HasDisplayValue {
     ANNOTATIONS(
             "Annotations",
             "Create and view annotations in query results."),
+    CREDENTIALS(
+            "Credentials",
+            "Create and view credentials"),
     MANAGE_CACHE_PERMISSION(
             "Manage Cache",
             "Access the Caches screen to view and clear system caches."),

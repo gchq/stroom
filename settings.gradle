@@ -38,6 +38,9 @@ include 'stroom-annotation:stroom-annotation-impl-db'
 include 'stroom-annotation:stroom-annotation-impl-db-jooq'
 include 'stroom-annotation:stroom-annotation-pipeline'
 
+include 'stroom-contentstore:stroom-contentstore-api'
+include 'stroom-contentstore:stroom-contentstore-impl'
+
 // AWS
 include 'stroom-aws:stroom-aws-s3-impl'
 
@@ -75,6 +78,10 @@ include 'stroom-core-client'
 include 'stroom-core-client-widget'
 include 'stroom-core'
 include 'stroom-core-shared'
+
+// Credentials Store
+include 'stroom-credentials:stroom-credentials-api'
+include 'stroom-credentials:stroom-credentials-impl-db'
 
 // Dashboard
 include 'stroom-dashboard-gwt'
@@ -157,10 +164,10 @@ include 'stroom-importexport:stroom-importexport-impl'
 
 // Index
 include 'stroom-index:lucene553-shaded'
-include 'stroom-index:lucene980-shaded'
+//include 'stroom-index:lucene980-shaded'
 include 'stroom-index:stroom-index-impl'
 include 'stroom-index:stroom-index-lucene553'
-include 'stroom-index:stroom-index-lucene980'
+include 'stroom-index:stroom-index-lucene'
 include 'stroom-index:stroom-index-mock'
 include 'stroom-index:stroom-index-impl-db'
 include 'stroom-index:stroom-index-impl-db-jooq'
@@ -174,6 +181,10 @@ include 'stroom-job:stroom-job-impl-db-jooq'
 // Kafka
 include 'stroom-kafka:stroom-kafka-api'
 include 'stroom-kafka:stroom-kafka-impl'
+
+// LangChain (LLM integration)
+include 'stroom-langchain:stroom-langchain-api'
+include 'stroom-langchain:stroom-langchain-impl'
 
 // Lifecycle
 include 'stroom-lifecycle:stroom-lifecycle-api'
@@ -215,6 +226,9 @@ include 'stroom-processor:stroom-processor-mock'
 include 'stroom-proxy:stroom-proxy-app'
 include 'stroom-proxy:stroom-proxy-repo'
 include 'stroom-proxy:stroom-proxy-remote-api'
+
+// Pathways
+include 'stroom-pathways:stroom-pathways-impl'
 
 // Query
 include 'stroom-query:stroom-query-api'
@@ -292,3 +306,12 @@ include 'stroom-index:stroom-index-api'
 include 'stroom-cache:stroom-cache-service-impl'
 include 'stroom-gitrepo:stroom-gitrepo-impl'
 include 'stroom-gitrepo:stroom-gitrepo-api'
+
+include 'stroom-contentstore:stroom-contentstore-api'
+include 'stroom-contentstore'
+include 'stroom-gitrepo:stroom-gitrepo-impl-db'
+include 'stroom-gitrepo:stroom-gitrepo-impl-db-jooq'
+include 'stroom-gitrepo:stroom-gitrepo-mock'
+
+include 'stroom-credentials:stroom-credentials-impl'
+include 'stroom-credentials:stroom-credentials-impl-db-jooq'

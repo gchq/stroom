@@ -54,6 +54,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -370,7 +371,7 @@ class TestMetricDb {
     }
 
     private static PlanBDoc getDoc(final MetricSettings settings) {
-        return PlanBDoc.builder().name("test").settings(settings).build();
+        return PlanBDoc.builder().uuid(UUID.randomUUID().toString()).name("test").settings(settings).build();
     }
 
     private record KeyFunction(String description,

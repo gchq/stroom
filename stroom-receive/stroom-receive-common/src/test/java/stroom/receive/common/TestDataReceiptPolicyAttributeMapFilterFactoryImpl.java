@@ -80,6 +80,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                         () -> mockReceiveActionMetricsRecorder);
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
+                .uuid(UUID.randomUUID().toString())
                 .build();
 
         final Map<String, DictionaryDoc> uuidToDictMap = Map.of();
@@ -107,6 +108,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                         () -> mockReceiveActionMetricsRecorder);
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
+                .uuid(UUID.randomUUID().toString())
                 .addRule(ReceiveDataRule.builder()
                         .withRuleNumber(1)
                         .withExpression(ExpressionOperator.builder()
@@ -151,6 +153,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
 
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
+                .uuid(UUID.randomUUID().toString())
                 .addRule(ReceiveDataRule.builder()
                         .withRuleNumber(1)
                         .withAction(ReceiveAction.REJECT)
@@ -200,6 +203,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                         () -> mockReceiveActionMetricsRecorder);
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
+                .uuid(UUID.randomUUID().toString())
                 .addRule(ReceiveDataRule.builder()
                         .withRuleNumber(1)
                         .withAction(ReceiveAction.DROP)
@@ -252,6 +256,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
 
         int ruleNo = 0;
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
+                .uuid(UUID.randomUUID().toString())
                 .addRule(ReceiveDataRule.builder()
                         .withRuleNumber(++ruleNo)
                         .withAction(ReceiveAction.RECEIVE)
@@ -326,6 +331,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                         () -> mockReceiveActionMetricsRecorder);
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
+                .uuid(UUID.randomUUID().toString())
                 .addRule(ReceiveDataRule.builder()
                         .withRuleNumber(1)
                         .withAction(ReceiveAction.DROP)
@@ -380,6 +386,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                         () -> mockReceiveActionMetricsRecorder);
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
+                .uuid(UUID.randomUUID().toString())
                 .addRule(ReceiveDataRule.builder()
                         .withRuleNumber(1)
                         .withAction(ReceiveAction.DROP)
@@ -450,6 +457,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                 FEED_5);
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
+                .uuid(UUID.randomUUID().toString())
                 .addRule(ReceiveDataRule.builder()
                         .withRuleNumber(1)
                         .withAction(ReceiveAction.DROP)
@@ -542,12 +550,11 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
 
     private DictionaryDoc createDict(final String name,
                                      final String... lines) {
-        final DictionaryDoc dict = new DictionaryDoc();
-        dict.setUuid(UUID.randomUUID().toString());
-        dict.setName(name);
-        dict.setType(DictionaryDoc.TYPE);
-        dict.setData(String.join("\n", lines));
-        return dict;
+        return DictionaryDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .name(name)
+                .data(String.join("\n", lines))
+                .build();
     }
 
     private ReceiveDataRule createReceiveAllRule() {

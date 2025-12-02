@@ -18,7 +18,7 @@ package stroom.pipeline.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.util.shared.HasData;
@@ -48,7 +48,7 @@ import java.util.Objects;
         "description",
         "data"})
 @JsonInclude(Include.NON_NULL)
-public class XsltDoc extends Doc implements HasData {
+public class XsltDoc extends AbstractDoc implements HasData {
 
     public static final String TYPE = "XSLT";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.XSLT_DOCUMENT_TYPE;
@@ -58,12 +58,8 @@ public class XsltDoc extends Doc implements HasData {
     @JsonProperty
     private String data;
 
-    public XsltDoc() {
-    }
-
     @JsonCreator
-    public XsltDoc(@JsonProperty("type") final String type,
-                   @JsonProperty("uuid") final String uuid,
+    public XsltDoc(@JsonProperty("uuid") final String uuid,
                    @JsonProperty("name") final String name,
                    @JsonProperty("version") final String version,
                    @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -72,7 +68,7 @@ public class XsltDoc extends Doc implements HasData {
                    @JsonProperty("updateUser") final String updateUser,
                    @JsonProperty("description") final String description,
                    @JsonProperty("data") final String data) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.data = data;
     }
@@ -130,5 +126,56 @@ public class XsltDoc extends Doc implements HasData {
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), description, data);
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder extends AbstractDoc.AbstractBuilder<XsltDoc, XsltDoc.Builder> {
+
+        private String description;
+        private String data;
+
+        private Builder() {
+        }
+
+        private Builder(final XsltDoc xsltDoc) {
+            super(xsltDoc);
+            this.description = xsltDoc.description;
+            this.data = xsltDoc.data;
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder data(final String data) {
+            this.data = data;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public XsltDoc build() {
+            return new XsltDoc(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    data);
+        }
     }
 }

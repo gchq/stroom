@@ -39,14 +39,14 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 
 @Singleton
-class GitRepoStoreImpl implements GitRepoStore {
+public class GitRepoStoreImpl implements GitRepoStore {
 
     private final Store<GitRepoDoc> store;
 
     @Inject
     GitRepoStoreImpl(final StoreFactory storeFactory,
                      final GitRepoSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, GitRepoDoc.TYPE, GitRepoDoc.class);
+        this.store = storeFactory.createStore(serialiser, GitRepoDoc.TYPE, GitRepoDoc::builder);
     }
 
     ////////////////////////////////////////////////////////////////////////

@@ -295,41 +295,44 @@ class TestDuplicateCheckStore {
                     serde,
                     () -> executorService,
                     UUID);
-            duplicateCheckStore.writeColumnNames(List.of("col1", "col2", "col3"));
+            try {
+                duplicateCheckStore.writeColumnNames(List.of("col1", "col2", "col3"));
 
-            assertThat(duplicateCheckStore.tryInsert(ROW_A))
-                    .isTrue();
-            assertThat(duplicateCheckStore.tryInsert(ROW_B))
-                    .isTrue();
-            assertThat(duplicateCheckStore.tryInsert(ROW_B))
-                    .isFalse();
-            assertThat(duplicateCheckStore.tryInsert(ROW_C))
-                    .isTrue();
-            assertThat(duplicateCheckStore.tryInsert(ROW_A))
-                    .isFalse();
-            assertThat(duplicateCheckStore.tryInsert(ROW_C))
-                    .isFalse();
+                assertThat(duplicateCheckStore.tryInsert(ROW_A))
+                        .isTrue();
+                assertThat(duplicateCheckStore.tryInsert(ROW_B))
+                        .isTrue();
+                assertThat(duplicateCheckStore.tryInsert(ROW_B))
+                        .isFalse();
+                assertThat(duplicateCheckStore.tryInsert(ROW_C))
+                        .isTrue();
+                assertThat(duplicateCheckStore.tryInsert(ROW_A))
+                        .isFalse();
+                assertThat(duplicateCheckStore.tryInsert(ROW_C))
+                        .isFalse();
 
-            // Will block until all the above are loaded in
-            duplicateCheckStore.flush();
+                // Will block until all the above are loaded in
+                duplicateCheckStore.flush();
 
-            assertThat(delete(duplicateCheckStore, List.of(ROW_A)))
-                    .isTrue();
-            assertThat(delete(duplicateCheckStore, List.of(ROW_A)))
-                    .isTrue();
-            assertThat(duplicateCheckStore.tryInsert(ROW_A))
-                    .isTrue();
+                assertThat(delete(duplicateCheckStore, List.of(ROW_A)))
+                        .isTrue();
+                assertThat(delete(duplicateCheckStore, List.of(ROW_A)))
+                        .isTrue();
+                assertThat(duplicateCheckStore.tryInsert(ROW_A))
+                        .isTrue();
 
-            assertThat(delete(duplicateCheckStore, List.of(ROW_B)))
-                    .isTrue();
-            assertThat(delete(duplicateCheckStore, List.of(ROW_B)))
-                    .isTrue();
-            assertThat(duplicateCheckStore.tryInsert(ROW_B))
-                    .isTrue();
+                assertThat(delete(duplicateCheckStore, List.of(ROW_B)))
+                        .isTrue();
+                assertThat(delete(duplicateCheckStore, List.of(ROW_B)))
+                        .isTrue();
+                assertThat(duplicateCheckStore.tryInsert(ROW_B))
+                        .isTrue();
 
-            duplicateCheckStore.flush();
+                duplicateCheckStore.flush();
 
-            duplicateCheckStore.close();
+            } finally {
+                duplicateCheckStore.close();
+            }
         }
     }
 

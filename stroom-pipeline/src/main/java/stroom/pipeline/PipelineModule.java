@@ -19,7 +19,7 @@ package stroom.pipeline;
 import stroom.docref.DocRef;
 import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
@@ -64,7 +64,7 @@ public class PipelineModule extends AbstractModule {
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())
-                .bind(Doc.class, DocObjectInfoProvider.class)
+                .bind(AbstractDoc.class, DocObjectInfoProvider.class)
                 .bind(DocRef.class, DocRefObjectInfoProvider.class)
                 .bind(PipelineDoc.class, PipelineDocObjectInfoProvider.class);
 

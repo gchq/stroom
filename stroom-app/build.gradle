@@ -5,7 +5,7 @@ buildscript {
     }
     dependencies {
         classpath libs.mysql.connector.java
-        classpath 'org.reflections:reflections:0.9.12'
+        //classpath 'org.reflections:reflections:0.9.12'
     }
 }
 
@@ -55,6 +55,7 @@ dependencies {
     implementation project(':stroom-annotation:stroom-annotation-impl-db')
     implementation project(':stroom-annotation:stroom-annotation-impl-db-jooq')
     implementation project(':stroom-annotation:stroom-annotation-pipeline')
+    implementation project(':stroom-contentstore:stroom-contentstore-impl')
     implementation project(':stroom-aws:stroom-aws-s3-impl')
     implementation project(':stroom-bytebuffer')
     implementation project(':stroom-cache:stroom-cache-api')
@@ -74,6 +75,10 @@ dependencies {
     implementation project(':stroom-config:stroom-config-global-impl-db-jooq')
     implementation project(':stroom-core')
     implementation project(':stroom-core-shared')
+    implementation project(':stroom-credentials:stroom-credentials-api')
+    implementation project(':stroom-credentials:stroom-credentials-impl')
+    implementation project(':stroom-credentials:stroom-credentials-impl-db')
+    implementation project(':stroom-credentials:stroom-credentials-impl-db-jooq')
     implementation project(':stroom-dashboard:stroom-dashboard-impl')
     implementation project(':stroom-dashboard:stroom-storedquery-api')
     implementation project(':stroom-dashboard:stroom-storedquery-impl')
@@ -115,12 +120,14 @@ dependencies {
     implementation project(':stroom-feed:stroom-feed-impl')
     implementation project(':stroom-gitrepo:stroom-gitrepo-api')
     implementation project(':stroom-gitrepo:stroom-gitrepo-impl')
+    implementation project(':stroom-gitrepo:stroom-gitrepo-impl-db')
+    implementation project(':stroom-gitrepo:stroom-gitrepo-impl-db-jooq')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-importexport:stroom-importexport-impl')
     implementation project(':stroom-index:stroom-index-api')
     implementation project(':stroom-index:stroom-index-impl')
     implementation project(':stroom-index:stroom-index-lucene553')
-    implementation project(':stroom-index:stroom-index-lucene980')
+    implementation project(':stroom-index:stroom-index-lucene')
     implementation project(':stroom-index:stroom-index-impl-db')
     implementation project(':stroom-index:stroom-index-impl-db-jooq')
     implementation project(':stroom-job:stroom-job-api')
@@ -129,6 +136,7 @@ dependencies {
     implementation project(':stroom-job:stroom-job-impl-db-jooq')
     implementation project(':stroom-kafka:stroom-kafka-api')
     implementation project(':stroom-kafka:stroom-kafka-impl')
+    implementation project(':stroom-langchain:stroom-langchain-impl')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-impl')
     implementation project(':stroom-lmdb')
@@ -142,6 +150,7 @@ dependencies {
     implementation project(':stroom-node:stroom-node-impl')
     implementation project(':stroom-node:stroom-node-impl-db')
     implementation project(':stroom-node:stroom-node-impl-db-jooq')
+    implementation project(':stroom-pathways:stroom-pathways-impl')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-processor:stroom-processor-api')
     implementation project(':stroom-processor:stroom-processor-impl')
@@ -238,6 +247,7 @@ dependencies {
     testImplementation project(':stroom-config:stroom-config-global-impl')
     testImplementation project(':stroom-core')
     testImplementation project(':stroom-core-shared')
+    testImplementation project(':stroom-credentials:stroom-credentials-impl-db')
     testImplementation project(':stroom-dashboard:stroom-dashboard-impl')
     testImplementation project(':stroom-data:stroom-data-store-api')
     testImplementation project(':stroom-data:stroom-data-store-impl-fs')
@@ -254,6 +264,9 @@ dependencies {
     testImplementation project(':stroom-explorer:stroom-explorer-api')
     testImplementation project(':stroom-explorer:stroom-explorer-impl')
     testImplementation project(':stroom-explorer:stroom-explorer-impl-db')
+    testImplementation project(':stroom-gitrepo:stroom-gitrepo-impl')
+    testImplementation project(':stroom-gitrepo:stroom-gitrepo-impl-db')
+    testImplementation project(':stroom-gitrepo:stroom-gitrepo-mock')
     testImplementation project(':stroom-headless')
     testImplementation project(':stroom-importexport:stroom-importexport-api')
     testImplementation project(':stroom-index:stroom-index-mock')

@@ -1,0 +1,39 @@
+{
+  "uuid" : "0b0c6a62-b9ac-43a6-ad66-ce32133af664",
+  "queryData" : {
+    "dataSource" : {
+      "type" : "StreamStore",
+      "uuid" : "StreamStore",
+      "name" : "Stream Store"
+    },
+    "expression" : {
+      "type" : "operator",
+      "children" : [ {
+        "type" : "term",
+        "field" : "Feed",
+        "condition" : "IS_DOC_REF",
+        "value" : "TEST_TRACES",
+        "docRef" : {
+          "type" : "Feed",
+          "uuid" : "d5153e2b-01df-4ac7-a727-fcd84d6e716f",
+          "name" : "TEST_TRACES"
+        }
+      }, {
+        "type" : "term",
+        "field" : "Type",
+        "condition" : "EQUALS",
+        "value" : "Raw Events"
+      } ]
+    }
+  },
+  "priority" : 10,
+  "maxProcessingTasks" : 0,
+  "reprocess" : false,
+  "enabled" : true,
+  "deleted" : false,
+  "export" : false,
+  "processorType" : "PIPELINE",
+  "processorUuid" : "cc1418de-a250-4099-817d-71b8118aba0e",
+  "pipelineUuid" : "fe0d1871-f791-4874-a10d-c7ed7b05382f",
+  "pipelineName" : "TEST_TRACES"
+}

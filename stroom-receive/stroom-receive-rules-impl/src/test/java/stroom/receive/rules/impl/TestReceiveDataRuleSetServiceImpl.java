@@ -89,7 +89,8 @@ class TestReceiveDataRuleSetServiceImpl {
 
         Mockito.when(mockReceiveDataRuleSetStore.getOrCreate())
                 .thenReturn(ReceiveDataRules.builder()
-                        .withUpdateTimeMs(Instant.now().toEpochMilli())
+                        .uuid(UUID.randomUUID().toString())
+                        .updateTimeMs(Instant.now().toEpochMilli())
                         .build());
 
         final HashedReceiveDataRules hashedReceiveDataRules = service.getHashedReceiveDataRules();
@@ -127,7 +128,8 @@ class TestReceiveDataRuleSetServiceImpl {
         int ruleNo = 0;
         Mockito.when(mockReceiveDataRuleSetStore.getOrCreate())
                 .thenReturn(ReceiveDataRules.builder()
-                        .withUpdateTimeMs(Instant.now().toEpochMilli())
+                        .uuid(UUID.randomUUID().toString())
+                        .updateTimeMs(Instant.now().toEpochMilli())
                         .addRule(ReceiveDataRule.builder()
                                 .withRuleNumber(++ruleNo)
                                 .withEnabled(true)
@@ -254,7 +256,8 @@ class TestReceiveDataRuleSetServiceImpl {
         int ruleNo = 0;
         Mockito.when(mockReceiveDataRuleSetStore.getOrCreate())
                 .thenReturn(ReceiveDataRules.builder()
-                        .withUpdateTimeMs(Instant.now().toEpochMilli())
+                        .uuid(UUID.randomUUID().toString())
+                        .updateTimeMs(Instant.now().toEpochMilli())
                         .addRule(ReceiveDataRule.builder()
                                 .withRuleNumber(++ruleNo)
                                 .withEnabled(true)
@@ -358,10 +361,10 @@ class TestReceiveDataRuleSetServiceImpl {
     private DictionaryDoc createDict(final String name,
                                      final DictionaryDoc importedDoc,
                                      final String... lines) {
-        final DictionaryDoc dict = new DictionaryDoc();
-        dict.setUuid(UUID.randomUUID().toString());
-        dict.setName(name);
-        dict.setType(DictionaryDoc.TYPE);
+        final DictionaryDoc dict = DictionaryDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .name(name)
+                .build();
         if (importedDoc != null) {
             dict.setImports(List.of(importedDoc.asDocRef()));
         }

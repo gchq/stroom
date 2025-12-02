@@ -3,6 +3,8 @@ package stroom.widget.util.client;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 
+import java.util.function.Predicate;
+
 public class ElementUtil {
 
     public static boolean hasClassName(final Element element,
@@ -26,6 +28,25 @@ public class ElementUtil {
                     final Node node = element.getChildNodes().getItem(i);
                     if (Element.is(node)) {
                         final Element child = findChild(Element.as(node), className);
+                        if (child != null) {
+                            return child;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    public static Element findChild(final Element element, final Predicate<Element> predicate) {
+        if (element != null) {
+            if (predicate.test(element)) {
+                return element;
+            } else if (element.getChildNodes() != null) {
+                for (int i = 0; i < element.getChildNodes().getLength(); i++) {
+                    final Node node = element.getChildNodes().getItem(i);
+                    if (Element.is(node)) {
+                        final Element child = findChild(Element.as(node), predicate);
                         if (child != null) {
                             return child;
                         }
@@ -66,6 +87,31 @@ public class ElementUtil {
 
         if (depth < maxDepth) {
             return findParent(element.getParentElement(), className, depth + 1, maxDepth);
+        }
+
+        return null;
+    }
+
+    public static Element findParent(final Element element,
+                                     final Predicate<Element> predicate,
+                                     final int maxDepth) {
+        return findParent(element, predicate, 0, maxDepth);
+    }
+
+    private static Element findParent(final Element element,
+                                      final Predicate<Element> predicate,
+                                      final int depth,
+                                      final int maxDepth) {
+        if (element == null) {
+            return null;
+        }
+
+        if (predicate.test(element)) {
+            return element;
+        }
+
+        if (depth < maxDepth) {
+            return findParent(element.getParentElement(), predicate, depth + 1, maxDepth);
         }
 
         return null;

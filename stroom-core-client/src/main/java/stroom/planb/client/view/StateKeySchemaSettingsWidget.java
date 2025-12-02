@@ -20,7 +20,6 @@ import stroom.item.client.SelectionBox;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.KeyType;
 import stroom.planb.shared.StateKeySchema;
-import stroom.util.shared.NullSafe;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -46,9 +45,8 @@ public class StateKeySchemaSettingsWidget extends AbstractSettingsWidget impleme
     public StateKeySchemaSettingsWidget(final Binder binder) {
         widget = binder.createAndBindUi(this);
         keyType.addItems(KeyType.ORDERED_LIST);
-        keyType.setValue(StateKeySchema.DEFAULT_KEY_TYPE);
         hashLength.addItems(HashLength.ORDERED_LIST);
-        hashLength.setValue(StateKeySchema.DEFAULT_HASH_LENGTH);
+        setKeySchema(new StateKeySchema.Builder().build());
         onStateKeyTypeChange();
     }
 
@@ -59,15 +57,17 @@ public class StateKeySchemaSettingsWidget extends AbstractSettingsWidget impleme
 
     @Override
     public StateKeySchema getKeySchema() {
-        return new StateKeySchema(keyType.getValue(), hashLength.getValue());
+        return new StateKeySchema.Builder()
+                .keyType(keyType.getValue())
+                .hashLength(hashLength.getValue())
+                .build();
     }
 
     @Override
     public void setKeySchema(final StateKeySchema keySchema) {
-        keyType.setValue(NullSafe.getOrElse(keySchema,
-                StateKeySchema::getKeyType, StateKeySchema.DEFAULT_KEY_TYPE));
-        hashLength.setValue(NullSafe.getOrElse(keySchema,
-                StateKeySchema::getHashLength, StateKeySchema.DEFAULT_HASH_LENGTH));
+        final StateKeySchema schema = new StateKeySchema.Builder(keySchema).build();
+        keyType.setValue(schema.getKeyType());
+        hashLength.setValue(schema.getHashLength());
         onStateKeyTypeChange();
     }
 

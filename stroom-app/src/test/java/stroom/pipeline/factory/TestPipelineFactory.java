@@ -38,6 +38,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -110,8 +111,11 @@ class TestPipelineFactory extends AbstractProcessIntegrationTest {
         pipelineData3 = PipelineDataUtil.normalise(pipelineData3);
 
         // Take a look at the merged config.
-        final PipelineDoc pipeline3 = new PipelineDoc();
-        pipeline3.setPipelineData(pipelineData3);
+        final PipelineDoc pipeline3 = PipelineDoc
+                .builder()
+                .uuid(UUID.randomUUID().toString())
+                .pipelineData(pipelineData3)
+                .build();
 
         assertThat(pipelineSerialiser.getJsonFromPipelineData(pipeline3.getPipelineData())).isEqualTo(data3);
 
@@ -154,8 +158,11 @@ class TestPipelineFactory extends AbstractProcessIntegrationTest {
         pipelineData3 = PipelineDataUtil.normalise(pipelineData3);
 
         // Take a look at the merged config.
-        final PipelineDoc pipeline3 = new PipelineDoc();
-        pipeline3.setPipelineData(pipelineData3);
+        final PipelineDoc pipeline3 = PipelineDoc
+                .builder()
+                .uuid(UUID.randomUUID().toString())
+                .pipelineData(pipelineData3)
+                .build();
 
         assertThat(pipelineSerialiser.getJsonFromPipelineData(pipeline3.getPipelineData())).isEqualTo(data3);
 

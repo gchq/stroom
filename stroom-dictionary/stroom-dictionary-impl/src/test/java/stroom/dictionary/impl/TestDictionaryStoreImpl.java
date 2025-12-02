@@ -220,10 +220,11 @@ class TestDictionaryStoreImpl {
                 .randomUuid()
                 .name(name)
                 .build();
-        final DictionaryDoc dictionaryDoc = new DictionaryDoc();
-        dictionaryDoc.setUuid(docRef.getUuid());
-        dictionaryDoc.setName(docRef.getName());
-        dictionaryDoc.setData(data);
+        final DictionaryDoc dictionaryDoc = DictionaryDoc.builder()
+                .uuid(docRef.getUuid())
+                .name(docRef.getName())
+                .data(data)
+                .build();
         if (imports != null && imports.length > 0) {
             dictionaryDoc.setImports(Arrays.asList(imports));
         }
@@ -235,11 +236,11 @@ class TestDictionaryStoreImpl {
     }
 
     private DictionaryStoreImpl getDictionaryStore() {
-        Mockito.when(mockStoreFactory.createStore(
-                        Mockito.any(),
-                        Mockito.any(),
-                        Mockito.eq(DictionaryDoc.class)))
-                .thenReturn(mockStore);
+        final Store<DictionaryDoc> store = mockStoreFactory.createStore(
+                Mockito.any(),
+                Mockito.eq(DictionaryDoc.TYPE),
+                Mockito.any());
+        Mockito.when(store).thenReturn(mockStore);
 
         return new DictionaryStoreImpl(
                 mockStoreFactory,

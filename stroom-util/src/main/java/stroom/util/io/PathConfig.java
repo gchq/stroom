@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-// Can be injected either as PathConfig or one of its sub-classes
+// Can be injected either as PathConfig or one of its subclasses
 @JsonPropertyOrder(alphabetic = true)
 public abstract class PathConfig extends AbstractConfig implements IsProxyConfig, IsStroomConfig {
 
@@ -44,8 +44,8 @@ public abstract class PathConfig extends AbstractConfig implements IsProxyConfig
     @Override
     public String toString() {
         return "PathConfig{" +
-                "home='" + home + '\'' +
-                ", temp='" + temp + '\'' +
-                '}';
+               "home='" + home + '\'' +
+               ", temp='" + temp + '\'' +
+               '}';
     }
 }

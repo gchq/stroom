@@ -1,0 +1,19 @@
+ext.moduleName = 'stroom.langchain.api'
+
+dependencies {
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+
+    implementation libs.jackson.annotations
+    implementation libs.langchain4j
+    implementation libs.langchain4j.open.ai
+    implementation libs.openai
+    implementation libs.swagger.annotations
+
+    testRuntimeOnly libs.bundles.common.test.runtime
+}

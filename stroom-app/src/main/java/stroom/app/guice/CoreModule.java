@@ -1,5 +1,7 @@
 package stroom.app.guice;
 
+import stroom.index.lucene.LuceneModule;
+
 import com.google.inject.AbstractModule;
 
 public class CoreModule extends AbstractModule {
@@ -13,6 +15,9 @@ public class CoreModule extends AbstractModule {
         install(new stroom.annotation.impl.AnnotationModule());
         install(new stroom.annotation.impl.db.AnnotationDaoModule());
         install(new stroom.annotation.pipeline.AnnotationPipelineModule());
+        install(new stroom.contentstore.impl.ContentStoreModule());
+        install(new stroom.credentials.impl.CredentialsModule());
+        install(new stroom.credentials.impl.db.CredentialsDaoModule());
         install(new stroom.aws.s3.impl.S3ConfigHandlerModule());
         install(new stroom.aws.s3.impl.S3ConfigModule());
         install(new stroom.cache.impl.CacheModule());
@@ -37,6 +42,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.dashboard.impl.logging.LoggingModule());
         install(new stroom.dashboard.impl.script.ScriptModule());
         install(new stroom.gitrepo.impl.GitRepoModule());
+        install(new stroom.gitrepo.impl.db.GitRepoDaoModule());
         install(new stroom.dashboard.impl.visualisation.VisualisationModule());
         install(new stroom.data.retention.impl.DataRetentionModule());
         install(new stroom.data.store.impl.DataStoreModule());
@@ -58,13 +64,14 @@ public class CoreModule extends AbstractModule {
         install(new stroom.explorer.impl.db.ExplorerDaoModule());
         install(new stroom.feed.impl.FeedModule());
         install(new stroom.importexport.impl.ExportConfigResourceModule());
+        install(new stroom.importexport.impl.ContentPackModule());
         install(new stroom.importexport.impl.ImportExportHandlerModule());
         install(new stroom.importexport.impl.ImportExportModule());
         install(new stroom.index.impl.IndexElementModule());
         install(new stroom.index.impl.IndexModule());
         install(new stroom.index.impl.db.IndexDaoModule());
         install(new stroom.index.lucene553.Lucene553Module());
-        install(new stroom.index.lucene980.Lucene980Module());
+        install(new LuceneModule());
         install(new stroom.job.impl.JobSystemModule());
         install(new stroom.job.impl.db.JobDaoModule());
         install(new stroom.kafka.impl.KafkaConfigHandlerModule());
@@ -74,6 +81,8 @@ public class CoreModule extends AbstractModule {
         install(new stroom.meta.impl.db.MetaDaoModule());
         install(new stroom.node.impl.NodeModule());
         install(new stroom.node.impl.db.NodeDaoModule());
+        install(new stroom.langchain.impl.OpenAIModule());
+        install(new stroom.pathways.impl.PathwaysModule());
         install(new stroom.pipeline.PipelineModule());
         install(new stroom.pipeline.cache.PipelineCacheModule());
         install(new stroom.pipeline.factory.CommonPipelineElementModule());

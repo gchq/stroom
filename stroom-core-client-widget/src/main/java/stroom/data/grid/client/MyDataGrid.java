@@ -245,8 +245,8 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                         : null;
                 final Context context = new Context(rowIndex, colIndex, key);
 
-                @SuppressWarnings("unchecked")
-                final HasContextMenus<Object> hasContextMenus = (HasContextMenus<Object>) cell;
+                @SuppressWarnings("unchecked") final HasContextMenus<Object> hasContextMenus =
+                        (HasContextMenus<Object>) cell;
                 final List<Item> cellMenuItems = hasContextMenus.getContextMenuItems(context, cellValue);
 
                 if (cellMenuItems != null && !cellMenuItems.isEmpty()) {
@@ -344,8 +344,8 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                         : null;
                 final Context context = new Context(rowIndex, colIndex, key);
 
-                @SuppressWarnings("unchecked")
-                final HasContextMenus<Object> hasContextMenus = (HasContextMenus<Object>) cell;
+                @SuppressWarnings("unchecked") final HasContextMenus<Object> hasContextMenus =
+                        (HasContextMenus<Object>) cell;
                 final List<Item> cellMenuItems = hasContextMenus.getContextMenuItems(context, cellValue);
 
                 if (cellMenuItems != null && !cellMenuItems.isEmpty()) {
@@ -369,26 +369,38 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
             menuItems.add(new IconMenuItem.Builder()
                     .icon(SvgImage.COPY)
-                    .text("Copy Row (CSV)")
+                    .text("Copy Row")
                     .command(() -> exportRow(rowIndex))
                     .build());
 
             menuItems.add(new IconMenuItem.Builder()
                     .icon(SvgImage.COPY)
-                    .text("Copy Column (LSV)")
+                    .text("Copy Selected Rows")
+                    .command(this::exportSelectedRows)
+                    .build());
+
+            menuItems.add(new IconMenuItem.Builder()
+                    .icon(SvgImage.COPY)
+                    .text("Copy Column")
                     .command(() -> exportColumn(colIndex))
+                    .build());
+
+            menuItems.add(new IconMenuItem.Builder()
+                    .icon(SvgImage.COPY)
+                    .text("Copy Column For Selected Rows")
+                    .command(() -> exportColumnForSelectedRows(colIndex))
                     .build());
         }
 
         menuItems.add(new IconMenuItem.Builder()
                 .icon(SvgImage.COPY)
-                .text("Copy Page (CSV)")
+                .text("Copy Page")
                 .command(this::copyTableAsCSV)
                 .build());
 
         menuItems.add(new IconMenuItem.Builder()
                 .icon(SvgImage.DOWNLOAD)
-                .text("Export Page (CSV)")
+                .text("Export Page")
                 .command(this::exportTableAsCSV)
                 .build());
 
@@ -430,27 +442,56 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
     private void exportRow(final int rowIndex) {
         final int columnOffset = getColumnOffset();
-
         if (rowIndex >= 0) {
             final StringBuilder sb = new StringBuilder();
             for (int col = columnOffset; col < getColumnCount(); col++) {
-                if (col > columnOffset) {
-                    sb.append(",");
-                }
+                addDelimiter(sb, col, columnOffset);
                 sb.append(escapeCsv(getCellText(rowIndex, col)));
             }
             copyToClipboard(sb.toString());
         }
     }
 
+    private void exportSelectedRows() {
+        final StringBuilder sb = new StringBuilder();
+        final int columnOffset = getColumnOffset();
+        for (int rowNum = 0; rowNum < getVisibleItemCount(); rowNum++) {
+            final R item = getVisibleItem(rowNum);
+            if (item != null) {
+                if (getSelectionModel().isSelected(item)) {
+                    addNewLine(sb);
+                    for (int col = columnOffset; col < getColumnCount(); col++) {
+                        addDelimiter(sb, col, columnOffset);
+                        sb.append(escapeCsv(getCellText(rowNum, col)));
+                    }
+                }
+            }
+        }
+        copyToClipboard(sb.toString());
+    }
+
     private void exportColumn(final int colIndex) {
         if (colIndex >= 0) {
             final StringBuilder sb = new StringBuilder();
             for (int row = 0; row < getVisibleItemCount(); row++) {
-                if (row > 0) {
-                    sb.append("\n");
-                }
+                addNewLine(sb);
                 sb.append(getCellText(row, colIndex));
+            }
+            copyToClipboard(sb.toString());
+        }
+    }
+
+    private void exportColumnForSelectedRows(final int colIndex) {
+        if (colIndex >= 0) {
+            final StringBuilder sb = new StringBuilder();
+            for (int rowNum = 0; rowNum < getVisibleItemCount(); rowNum++) {
+                final R item = getVisibleItem(rowNum);
+                if (item != null) {
+                    if (getSelectionModel().isSelected(item)) {
+                        addNewLine(sb);
+                        sb.append(getCellText(rowNum, colIndex));
+                    }
+                }
             }
             copyToClipboard(sb.toString());
         }
@@ -469,30 +510,44 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         final TableSectionElement head = getTableHeadElement();
         final int columnOffset = getColumnOffset();
 
-        //headers
+        // Headers
         if (head != null && head.getRows().getLength() > 0) {
+            addNewLine(sb);
             final TableRowElement headerRow = head.getRows().getItem(0);
             for (int col = columnOffset; col < getColumnCount(); col++) {
-                if (col > columnOffset) {
-                    sb.append(",");
-                }
+                addDelimiter(sb, col, columnOffset);
                 final TableCellElement th = headerRow.getCells().getItem(col);
                 sb.append(escapeCsv(normalizeWhitespace(th.getInnerText())));
             }
-            sb.append("\n");
         }
 
-        //rows
+        // Rows
         for (int row = 0; row < getVisibleItemCount(); row++) {
+            addNewLine(sb);
             for (int col = columnOffset; col < getColumnCount(); col++) {
-                if (col > columnOffset) {
-                    sb.append(",");
-                }
+                addDelimiter(sb, col, columnOffset);
                 sb.append(escapeCsv(getCellText(row, col)));
             }
-            sb.append("\n");
         }
         command.execute(sb.toString());
+    }
+
+    /**
+     * Add new line between rows if we have written output.
+     *
+     * @param sb The StringBuilder to append to.
+     */
+    private void addNewLine(final StringBuilder sb) {
+        // GWT does not allow isEmpty()
+        if (sb.length() > 0) {
+            sb.append("\n");
+        }
+    }
+
+    private void addDelimiter(final StringBuilder sb, final int col, final int columnOffset) {
+        if (col > columnOffset) {
+            sb.append(",");
+        }
     }
 
     private interface CommandWithCsv {

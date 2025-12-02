@@ -44,6 +44,11 @@ public enum ConditionSet {
             Condition.NOT_EQUALS,
             Condition.IN,
             Condition.IN_DICTIONARY),
+    DEFAULT_DENSE_VECTOR(
+            Condition.EQUALS,
+            Condition.NOT_EQUALS,
+            Condition.IN,
+            Condition.IN_DICTIONARY),
     DOC_REF_UUID(
             Condition.IS_DOC_REF,
             Condition.IN_FOLDER),
@@ -322,6 +327,9 @@ public enum ConditionSet {
             case IPV4_ADDRESS: {
                 return ConditionSet.DEFAULT_NUMERIC;
             }
+            case DENSE_VECTOR: {
+                return ConditionSet.DEFAULT_DENSE_VECTOR;
+            }
             case DOC_REF: {
                 return ConditionSet.DOC_REF_ALL;
             }
@@ -375,8 +383,11 @@ public enum ConditionSet {
             FieldType.LONG.equals(elasticIndexFieldType) ||
             FieldType.INTEGER.equals(elasticIndexFieldType)) {
             return ConditionSet.ELASTIC_NUMERIC;
+        } else if (FieldType.DENSE_VECTOR.equals(elasticIndexFieldType)) {
+            return ConditionSet.DEFAULT_DENSE_VECTOR;
+        } else {
+            return ConditionSet.ELASTIC_TEXT;
         }
-        return ConditionSet.ELASTIC_TEXT;
     }
 
     public static ConditionSet getUiDefaultConditions(final FieldType fieldType) {

@@ -42,19 +42,9 @@ public interface ImportExportSerializer {
                      ImportSettings importSettings);
 
     /**
-     * Walk the supplied tree of DocRefs and export all to the given path
-     *  @param dir             Where to serialize the DocRef items to.
-     * @param docRefs         Set of the DocRefs and root folder DocRefs (as per that returned by
-     *                        ImportExportSerializer.read()
-     * @param omitAuditFields do not export audit fields (e.g. last update time / last update user)
-     * @return summary of the export.
-     */
-    ExportSummary write(final Path dir,
-                        final Set<DocRef> docRefs,
-                        final boolean omitAuditFields);
-
-    /**
-     * Variant of the write() method to be used when exporting to Git.
+     * Exports data using the latest version of the export format
+     * (assuming Guice is set up correctly and you get the right
+     * implementation).
      * @param rootNode         Path to root node of the export. If null then
      *                         performs the same as the other write() method.
      *                         Otherwise removes these path elements from the start of
@@ -72,4 +62,28 @@ public interface ImportExportSerializer {
                         final Set<DocRef> docRefs,
                         final Set<String> typesToIgnore,
                         final boolean omitAuditFields);
+
+    /**
+     * Exports data using the given version of the export format
+     * (assuming Guice is set up correctly and you get the right
+     * implementation).
+     * @param rootNodePath     Path to root node of the export. If null then
+     *                         performs the same as the other write() method.
+     *                         Otherwise removes these path elements from the start of
+     *                         the exported path. Normally this should be the path to the
+     *                         GitRepo node, including that node.
+     * @param dir              Where to serialize the DocRef items to on disk.
+     * @param docRefs          Set of the DocRefs to serialize.
+     * @param typesToIgnore    Set of the Doc types that shouldn't be exported, nor
+     *                         their children. Must not be null.
+     * @param omitAuditFields  Do not export audit fields.
+     * @param version          Version of the export format to use.
+     * @return summary of the export.
+     */
+    ExportSummary write(List<ExplorerNode> rootNodePath,
+                        Path dir,
+                        Set<DocRef> docRefs,
+                        Set<String> typesToIgnore,
+                        boolean omitAuditFields,
+                        ImportExportVersion version);
 }

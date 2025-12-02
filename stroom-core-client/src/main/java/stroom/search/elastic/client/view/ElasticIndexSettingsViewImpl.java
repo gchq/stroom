@@ -24,7 +24,6 @@ import stroom.widget.button.client.Button;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -52,9 +51,15 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     @UiField
     Button testConnection;
     @UiField
-    SimplePanel retentionExpressionPanel;
-    @UiField
     TextBox timeField;
+    @UiField
+    SimplePanel vectorGenerationModel;
+    @UiField
+    SimplePanel rerankModel;
+    @UiField
+    TextBox rerankTextFieldSuffix;
+    @UiField
+    TextBox rerankScoreMinimum;
     @UiField
     SimplePanel defaultExtractionPipeline;
 
@@ -117,11 +122,6 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     }
 
     @Override
-    public void setRetentionExpressionView(final View view) {
-        retentionExpressionPanel.setWidget(view.asWidget());
-    }
-
-    @Override
     public String getTimeField() {
         return timeField.getValue();
     }
@@ -129,6 +129,36 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     @Override
     public void setTimeField(final String partitionTimeField) {
         this.timeField.setValue(partitionTimeField);
+    }
+
+    @Override
+    public void setVectorGenerationModelView(final View view) {
+        vectorGenerationModel.setWidget(view.asWidget());
+    }
+
+    @Override
+    public String getRerankTextFieldSuffix() {
+        return rerankTextFieldSuffix.getValue();
+    }
+
+    @Override
+    public void setRerankTextFieldSuffix(final String rerankTextFieldSuffix) {
+        this.rerankTextFieldSuffix.setValue(rerankTextFieldSuffix);
+    }
+
+    @Override
+    public Float getRerankScoreMinimum() {
+        return Float.parseFloat(rerankScoreMinimum.getValue());
+    }
+
+    @Override
+    public void setRerankScoreMinimum(final Float rerankScoreMinimum) {
+        this.rerankScoreMinimum.setValue(rerankScoreMinimum.toString());
+    }
+
+    @Override
+    public void setRerankModelView(final View view) {
+        rerankModel.setWidget(view.asWidget());
     }
 
     @Override
@@ -144,7 +174,7 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     }
 
     @UiHandler("indexName")
-    public void onIndexNameKeyDown(final KeyDownEvent e) {
+    public void onIndexNameValueChange(final ValueChangeEvent<String> e) {
         fireChange();
     }
 
@@ -159,7 +189,17 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     }
 
     @UiHandler("timeField")
-    public void onTimeFieldKeyDown(final KeyDownEvent e) {
+    public void onTimeFieldValueChange(final ValueChangeEvent<String> e) {
+        fireChange();
+    }
+
+    @UiHandler("rerankTextFieldSuffix")
+    public void onRerankTextFieldSuffixValueChange(final ValueChangeEvent<String> e) {
+        fireChange();
+    }
+
+    @UiHandler("rerankScoreMinimum")
+    public void onRerankScoreMinimumValueChange(final ValueChangeEvent<String> e) {
         fireChange();
     }
 

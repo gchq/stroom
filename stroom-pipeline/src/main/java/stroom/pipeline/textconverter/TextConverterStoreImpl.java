@@ -43,7 +43,7 @@ class TextConverterStoreImpl implements TextConverterStore {
     @Inject
     TextConverterStoreImpl(final StoreFactory storeFactory,
                            final TextConverterSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, TextConverterDoc.TYPE, TextConverterDoc.class);
+        this.store = storeFactory.createStore(serialiser, TextConverterDoc.TYPE, TextConverterDoc::builder);
     }
 
     ////////////////////////////////////////////////////////////////////////

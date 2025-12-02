@@ -38,6 +38,7 @@ class RecordToProcessorFilterMapper implements Function<Record, ProcessorFilter>
         processorFilter.setReprocess(record.get(PROCESSOR_FILTER.REPROCESS));
         processorFilter.setEnabled(record.get(PROCESSOR_FILTER.ENABLED));
         processorFilter.setDeleted(record.get(PROCESSOR_FILTER.DELETED));
+        processorFilter.setExport(record.get(PROCESSOR_FILTER.EXPORT));
         processorFilter.setMinMetaCreateTimeMs(record.get(PROCESSOR_FILTER.MIN_META_CREATE_TIME_MS));
         processorFilter.setMaxMetaCreateTimeMs(record.get(PROCESSOR_FILTER.MAX_META_CREATE_TIME_MS));
         processorFilter.setRunAsUser(userRefLookupProvider

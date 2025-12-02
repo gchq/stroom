@@ -18,7 +18,7 @@ package stroom.xmlschema.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.util.shared.HasData;
@@ -33,20 +33,20 @@ import java.util.Objects;
 
 @Description(
         "This Document defines an {{< glossary \"XML Schema\" >}} that can be used within Stroom for validation " +
-                "of XML documents.\n" +
-                "The XML Schema Document content is the XMLSchema text.\n" +
-                "This Document also defines the following:\n" +
-                "* Namespace URI - The XML namespace of the XMLSchema and the XML document that the schema " +
-                "will validate.\n" +
-                "* System Id - An ID (that is unique in Stroom) that can be used in the `xsi:schemaLocation` " +
-                "attribute, e.g. `xsi:schemaLocation=\"event-logging:3 file://event-logging-v3.4.2.xsd\"`.\n" +
-                "* Schema Group - A name to group multiple versions of the same schema.\n" +
-                "  The SchemaFilter can be configured to only use schemas matching a configured group.\n" +
-                "\n" +
-                "The XML Schema Document also provides a handy interactive viewer for viewing and navigating the " +
-                "XMLSchema in a graphical representation.\n" +
-                "\n" +
-                "This Document is used by the {{< pipe-elm \"SchemaFilter\" >}} pipeline element."
+        "of XML documents.\n" +
+        "The XML Schema Document content is the XMLSchema text.\n" +
+        "This Document also defines the following:\n" +
+        "* Namespace URI - The XML namespace of the XMLSchema and the XML document that the schema " +
+        "will validate.\n" +
+        "* System Id - An ID (that is unique in Stroom) that can be used in the `xsi:schemaLocation` " +
+        "attribute, e.g. `xsi:schemaLocation=\"event-logging:3 file://event-logging-v3.4.2.xsd\"`.\n" +
+        "* Schema Group - A name to group multiple versions of the same schema.\n" +
+        "  The SchemaFilter can be configured to only use schemas matching a configured group.\n" +
+        "\n" +
+        "The XML Schema Document also provides a handy interactive viewer for viewing and navigating the " +
+        "XMLSchema in a graphical representation.\n" +
+        "\n" +
+        "This Document is used by the {{< pipe-elm \"SchemaFilter\" >}} pipeline element."
 )
 @JsonPropertyOrder({
         "type",
@@ -64,7 +64,7 @@ import java.util.Objects;
         "deprecated",
         "schemaGroup"})
 @JsonInclude(Include.NON_NULL)
-public class XmlSchemaDoc extends Doc implements HasData {
+public class XmlSchemaDoc extends AbstractDoc implements HasData {
 
     public static final String TYPE = "XMLSchema";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.XML_SCHEMA_DOCUMENT_TYPE;
@@ -82,12 +82,8 @@ public class XmlSchemaDoc extends Doc implements HasData {
     @JsonProperty
     private String schemaGroup;
 
-    public XmlSchemaDoc() {
-    }
-
     @JsonCreator
-    public XmlSchemaDoc(@JsonProperty("type") final String type,
-                        @JsonProperty("uuid") final String uuid,
+    public XmlSchemaDoc(@JsonProperty("uuid") final String uuid,
                         @JsonProperty("name") final String name,
                         @JsonProperty("version") final String version,
                         @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -100,7 +96,7 @@ public class XmlSchemaDoc extends Doc implements HasData {
                         @JsonProperty("data") final String data,
                         @JsonProperty("deprecated") final boolean deprecated,
                         @JsonProperty("schemaGroup") final String schemaGroup) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.namespaceURI = namespaceURI;
         this.systemId = systemId;
@@ -188,15 +184,99 @@ public class XmlSchemaDoc extends Doc implements HasData {
         }
         final XmlSchemaDoc that = (XmlSchemaDoc) o;
         return deprecated == that.deprecated &&
-                Objects.equals(description, that.description) &&
-                Objects.equals(namespaceURI, that.namespaceURI) &&
-                Objects.equals(systemId, that.systemId) &&
-                Objects.equals(data, that.data) &&
-                Objects.equals(schemaGroup, that.schemaGroup);
+               Objects.equals(description, that.description) &&
+               Objects.equals(namespaceURI, that.namespaceURI) &&
+               Objects.equals(systemId, that.systemId) &&
+               Objects.equals(data, that.data) &&
+               Objects.equals(schemaGroup, that.schemaGroup);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), description, namespaceURI, systemId, data, deprecated, schemaGroup);
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder
+            extends AbstractDoc.AbstractBuilder<XmlSchemaDoc, XmlSchemaDoc.Builder> {
+
+        private String description;
+        private String namespaceURI;
+        private String systemId;
+        private String data;
+        private boolean deprecated;
+        private String schemaGroup;
+
+        private Builder() {
+        }
+
+        private Builder(final XmlSchemaDoc xmlSchemaDoc) {
+            super(xmlSchemaDoc);
+            this.description = xmlSchemaDoc.description;
+            this.namespaceURI = xmlSchemaDoc.namespaceURI;
+            this.systemId = xmlSchemaDoc.systemId;
+            this.data = xmlSchemaDoc.data;
+            this.deprecated = xmlSchemaDoc.deprecated;
+            this.schemaGroup = xmlSchemaDoc.schemaGroup;
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder namespaceURI(final String namespaceURI) {
+            this.namespaceURI = namespaceURI;
+            return self();
+        }
+
+        public Builder systemId(final String systemId) {
+            this.systemId = systemId;
+            return self();
+        }
+
+        public Builder data(final String data) {
+            this.data = data;
+            return self();
+        }
+
+        public Builder deprecated(final boolean deprecated) {
+            this.deprecated = deprecated;
+            return self();
+        }
+
+        public Builder schemaGroup(final String schemaGroup) {
+            this.schemaGroup = schemaGroup;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public XmlSchemaDoc build() {
+            return new XmlSchemaDoc(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    namespaceURI,
+                    systemId,
+                    data,
+                    deprecated,
+                    schemaGroup);
+        }
     }
 }

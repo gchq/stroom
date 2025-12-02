@@ -57,6 +57,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -672,7 +673,7 @@ class TestMetaServiceImpl {
         assertTotalRowCount(totalRows, Status.UNLOCKED);
 
         final List<DataRetentionDeleteSummary> summaries = metaDao.getRetentionDeletionSummary(
-                new DataRetentionRules(rules),
+                DataRetentionRules.builder().uuid(UUID.randomUUID().toString()).rules(rules).build(),
                 new FindDataRetentionImpactCriteria());
 
         LOGGER.info("totalRows {}", totalRows);

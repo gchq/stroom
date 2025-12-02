@@ -63,8 +63,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
     @Inject
     DictionaryStoreImpl(final StoreFactory storeFactory,
                         final DictionarySerialiser serialiser) {
-
-        this.store = storeFactory.createStore(serialiser, DictionaryDoc.TYPE, DictionaryDoc.class);
+        this.store = storeFactory.createStore(serialiser, DictionaryDoc.TYPE, DictionaryDoc::builder);
     }
 
     ////////////////////////////////////////////////////////////////////////

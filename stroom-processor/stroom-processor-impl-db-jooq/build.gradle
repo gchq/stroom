@@ -63,6 +63,7 @@ jooq {
                                     '.*\\.processor\\.deleted|' +
                                     '.*\\.processor_filter\\.enabled|' +
                                     '.*\\.processor_filter\\.deleted|' +
+                                    '.*\\.processor_filter\\.export|' +
                                     '.*\\.processor_filter\\.reprocess'
                                 // see https://github.com/jOOQ/jOOQ/issues/9405
                                 includeTypes = '(?i:tinyint)(\\(1\\))?'

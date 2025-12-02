@@ -189,10 +189,28 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.contentstore.impl.ContentStoreConfig getContentStoreConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.contentstore.impl.ContentStoreConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.core.receive.AutoContentCreationConfig getAutoContentCreationConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.core.receive.AutoContentCreationConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.credentials.api.CredentialsConfig getCredentialsConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.credentials.api.CredentialsConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -265,6 +283,15 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.feed.impl.FeedConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.gitrepo.api.GitRepoConfig getGitRepoConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.gitrepo.api.GitRepoConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -357,7 +384,14 @@ public class ConfigProvidersModule extends AbstractModule {
                 stroom.kafka.impl.KafkaConfig.class);
     }
 
-
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.langchain.api.ChatMemoryConfig getChatMemoryConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.langchain.api.ChatMemoryConfig.class);
+    }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
@@ -420,6 +454,15 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.node.impl.StatusConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.openai.shared.OpenAIModelConfig getOpenAIModelConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.openai.shared.OpenAIModelConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -573,15 +616,6 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.search.elastic.ElasticConfig.class);
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
-    stroom.search.elastic.ElasticRetentionConfig getElasticRetentionConfig(
-            final ConfigMapper configMapper) {
-        return configMapper.getConfigObject(
-                stroom.search.elastic.ElasticRetentionConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -948,16 +982,6 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         throw new UnsupportedOperationException(
                 "stroom.config.common.ConnectionPoolConfig cannot be injected directly. "
-                        + "Inject a config class that uses it or one of its sub-class instead.");
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
-    stroom.gitrepo.impl.GitRepoConfigImpl getGitRepoConfigImplButThrow(
-            final ConfigMapper configMapper) {
-        throw new UnsupportedOperationException(
-                "stroom.gitrepo.impl.GitRepoConfigImpl cannot be injected directly. "
                         + "Inject a config class that uses it or one of its sub-class instead.");
     }
 

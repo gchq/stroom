@@ -1,0 +1,39 @@
+{
+  "uuid" : "046a5180-857a-4f20-abea-7bd477da7360",
+  "queryData" : {
+    "dataSource" : {
+      "type" : "StreamStore",
+      "uuid" : "StreamStore",
+      "name" : "Stream Store"
+    },
+    "expression" : {
+      "type" : "operator",
+      "children" : [ {
+        "type" : "term",
+        "field" : "Feed",
+        "condition" : "IS_DOC_REF",
+        "value" : "OTEL_TRACES",
+        "docRef" : {
+          "type" : "Feed",
+          "uuid" : "26420bd2-cb53-46e3-ba22-1445cc0c1993",
+          "name" : "OTEL_TRACES"
+        }
+      }, {
+        "type" : "term",
+        "field" : "Type",
+        "condition" : "EQUALS",
+        "value" : "Raw Events"
+      } ]
+    }
+  },
+  "priority" : 10,
+  "maxProcessingTasks" : 0,
+  "reprocess" : false,
+  "enabled" : true,
+  "deleted" : false,
+  "export" : false,
+  "processorType" : "PIPELINE",
+  "processorUuid" : "a4ba7525-2d37-477d-8d60-88391cea125f",
+  "pipelineUuid" : "95d1e95a-b588-4da6-ba59-ae15564edcd4",
+  "pipelineName" : "OTEL_TRACES_TO_PATHWAYS"
+}

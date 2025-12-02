@@ -1,0 +1,9 @@
+{
+  "type" : "Feed",
+  "uuid" : "d5153e2b-01df-4ac7-a727-fcd84d6e716f",
+  "name" : "TEST_TRACES",
+  "version" : "0bd6fe35-aa1b-4b00-9e91-f3bb3049d2e0",
+  "reference" : false,
+  "streamType" : "Raw Events",
+  "status" : "RECEIVE"
+}

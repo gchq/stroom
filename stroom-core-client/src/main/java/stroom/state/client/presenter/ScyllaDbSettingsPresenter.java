@@ -33,6 +33,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.UUID;
+
 public class ScyllaDbSettingsPresenter
         extends DocumentEditPresenter<ScyllaDbSettingsView, ScyllaDbDoc>
         implements ScyllaDbSettingsUiHandlers {
@@ -64,7 +66,7 @@ public class ScyllaDbSettingsPresenter
 
     @Override
     public void onTestConnection(final TaskMonitorFactory taskMonitorFactory) {
-        final ScyllaDbDoc cluster = onWrite(new ScyllaDbDoc());
+        final ScyllaDbDoc cluster = onWrite(ScyllaDbDoc.builder().uuid(UUID.randomUUID().toString()).build());
         restFactory
                 .create(SCYLLA_DB_RESOURCE)
                 .method(res -> res.testCluster(cluster))

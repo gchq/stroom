@@ -38,6 +38,7 @@ public interface DuplicateCheckResource extends RestResource, DirectRestService 
     String BASE_PATH = "/duplicateCheck" + ResourcePaths.V1;
     String FIND_SUB_PATH = "/find";
     String DELETE_SUB_PATH = "/delete";
+    String FETCH_COL_NAME_SUB_PATH = "/fetchColumnNames";
 
     @POST
     @Path(FIND_SUB_PATH)
@@ -54,4 +55,11 @@ public interface DuplicateCheckResource extends RestResource, DirectRestService 
             operationId = "deleteDuplicateCheckRows")
     Boolean delete(@Parameter(description = "criteria", required = true)
                    DeleteDuplicateCheckRequest request);
+
+    @POST
+    @Path(FETCH_COL_NAME_SUB_PATH)
+    @Operation(
+            summary = "Fetch the column names from the dup check store for this analytic.",
+            operationId = "fetchColumnNames")
+    FetchColumnNamesResponse fetchColumnNames(String analyticUuid);
 }

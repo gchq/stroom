@@ -18,7 +18,7 @@ package stroom.statistics.impl.sql.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 
@@ -65,7 +65,7 @@ import java.util.Set;
         "enabled",
         "config"})
 @JsonInclude(Include.NON_NULL)
-public class StatisticStoreDoc extends Doc implements StatisticStore {
+public class StatisticStoreDoc extends AbstractDoc implements StatisticStore {
 
     public static final String TYPE = "StatisticStore";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.STATISTIC_STORE_DOCUMENT_TYPE;
@@ -91,15 +91,8 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
     @JsonProperty("config")
     private StatisticsDataSourceData config;
 
-    public StatisticStoreDoc() {
-        this.statisticType = StatisticType.COUNT;
-        this.rollUpType = StatisticRollUpType.NONE;
-        this.precision = DEFAULT_PRECISION;
-    }
-
     @JsonCreator
-    public StatisticStoreDoc(@JsonProperty("type") final String type,
-                             @JsonProperty("uuid") final String uuid,
+    public StatisticStoreDoc(@JsonProperty("uuid") final String uuid,
                              @JsonProperty("name") final String name,
                              @JsonProperty("version") final String version,
                              @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -112,7 +105,7 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
                              @JsonProperty("precision") final Long precision,
                              @JsonProperty("enabled") final Boolean enabled,
                              @JsonProperty("config") final StatisticsDataSourceData config) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.statisticType = statisticType;
         this.rollUpType = rollUpType;
@@ -295,5 +288,89 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), description, statisticType, rollUpType, precision, enabled, config);
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder
+            extends AbstractDoc.AbstractBuilder<StatisticStoreDoc, StatisticStoreDoc.Builder> {
+
+        private String description;
+        private StatisticType statisticType = StatisticType.COUNT;
+        private StatisticRollUpType rollUpType = StatisticRollUpType.NONE;
+        private Long precision = DEFAULT_PRECISION;
+        private Boolean enabled;
+        private StatisticsDataSourceData config;
+
+        private Builder() {
+        }
+
+        private Builder(final StatisticStoreDoc elasticIndexDoc) {
+            super(elasticIndexDoc);
+            this.description = elasticIndexDoc.description;
+            this.statisticType = elasticIndexDoc.statisticType;
+            this.rollUpType = elasticIndexDoc.rollUpType;
+            this.precision = elasticIndexDoc.precision;
+            this.enabled = elasticIndexDoc.enabled;
+            this.config = elasticIndexDoc.config;
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder statisticType(final StatisticType statisticType) {
+            this.statisticType = statisticType;
+            return self();
+        }
+
+        public Builder rollUpType(final StatisticRollUpType rollUpType) {
+            this.rollUpType = rollUpType;
+            return self();
+        }
+
+        public Builder precision(final Long precision) {
+            this.precision = precision;
+            return self();
+        }
+
+        public Builder enabled(final Boolean enabled) {
+            this.enabled = enabled;
+            return self();
+        }
+
+        public Builder config(final StatisticsDataSourceData config) {
+            this.config = config;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public StatisticStoreDoc build() {
+            return new StatisticStoreDoc(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    statisticType,
+                    rollUpType,
+                    precision,
+                    enabled,
+                    config);
+        }
     }
 }

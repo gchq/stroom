@@ -1,6 +1,0 @@
-{
-  "type" : "Pipeline",
-  "uuid" : "0eb23206-28f9-418c-9a7f-441e0e5a1a60",
-  "name" : "COUNT_FEED to external API",
-  "version" : "318f7978-30d8-4450-a5bf-b82f08838719"
-}

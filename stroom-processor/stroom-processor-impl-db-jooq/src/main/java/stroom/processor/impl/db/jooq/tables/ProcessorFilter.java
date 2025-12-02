@@ -6,18 +6,25 @@ package stroom.processor.impl.db.jooq.tables;
 
 import stroom.processor.impl.db.jooq.Keys;
 import stroom.processor.impl.db.jooq.Stroom;
+import stroom.processor.impl.db.jooq.tables.Processor.ProcessorPath;
+import stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker.ProcessorFilterTrackerPath;
+import stroom.processor.impl.db.jooq.tables.ProcessorTask.ProcessorTaskPath;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterRecord;
 
+import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function18;
 import org.jooq.Identity;
+import org.jooq.InverseForeignKey;
 import org.jooq.Name;
+import org.jooq.Path;
+import org.jooq.PlainSQL;
+import org.jooq.QueryPart;
 import org.jooq.Record;
-import org.jooq.Records;
-import org.jooq.Row18;
+import org.jooq.SQL;
 import org.jooq.Schema;
-import org.jooq.SelectField;
+import org.jooq.Select;
+import org.jooq.Stringly;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.TableOptions;
@@ -27,8 +34,8 @@ import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
-import java.util.function.Function;
 
 
 /**
@@ -143,12 +150,17 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
      */
     public final TableField<ProcessorFilterRecord, String> RUN_AS_USER_UUID = createField(DSL.name("run_as_user_uuid"), SQLDataType.VARCHAR(255), this, "");
 
+    /**
+     * The column <code>stroom.processor_filter.export</code>.
+     */
+    public final TableField<ProcessorFilterRecord, Boolean> EXPORT = createField(DSL.name("export"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.inline("0", SQLDataType.BOOLEAN)), this, "");
+
     private ProcessorFilter(Name alias, Table<ProcessorFilterRecord> aliased) {
-        this(alias, aliased, null);
+        this(alias, aliased, (Field<?>[]) null, null);
     }
 
-    private ProcessorFilter(Name alias, Table<ProcessorFilterRecord> aliased, Field<?>[] parameters) {
-        super(alias, null, aliased, parameters, DSL.comment(""), TableOptions.table());
+    private ProcessorFilter(Name alias, Table<ProcessorFilterRecord> aliased, Field<?>[] parameters, Condition where) {
+        super(alias, null, aliased, parameters, DSL.comment(""), TableOptions.table(), where);
     }
 
     /**
@@ -172,8 +184,35 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
         this(DSL.name("processor_filter"), null);
     }
 
-    public <O extends Record> ProcessorFilter(Table<O> child, ForeignKey<O, ProcessorFilterRecord> key) {
-        super(child, key, PROCESSOR_FILTER);
+    public <O extends Record> ProcessorFilter(Table<O> path, ForeignKey<O, ProcessorFilterRecord> childPath, InverseForeignKey<O, ProcessorFilterRecord> parentPath) {
+        super(path, childPath, parentPath, PROCESSOR_FILTER);
+    }
+
+    /**
+     * A subtype implementing {@link Path} for simplified path-based joins.
+     */
+    public static class ProcessorFilterPath extends ProcessorFilter implements Path<ProcessorFilterRecord> {
+        public <O extends Record> ProcessorFilterPath(Table<O> path, ForeignKey<O, ProcessorFilterRecord> childPath, InverseForeignKey<O, ProcessorFilterRecord> parentPath) {
+            super(path, childPath, parentPath);
+        }
+        private ProcessorFilterPath(Name alias, Table<ProcessorFilterRecord> aliased) {
+            super(alias, aliased);
+        }
+
+        @Override
+        public ProcessorFilterPath as(String alias) {
+            return new ProcessorFilterPath(DSL.name(alias), this);
+        }
+
+        @Override
+        public ProcessorFilterPath as(Name alias) {
+            return new ProcessorFilterPath(alias, this);
+        }
+
+        @Override
+        public ProcessorFilterPath as(Table<?> alias) {
+            return new ProcessorFilterPath(alias.getQualifiedName(), this);
+        }
     }
 
     @Override
@@ -201,28 +240,42 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
         return Arrays.asList(Keys.PROCESSOR_FILTER_FK_PROCESSOR_ID, Keys.PROCESSOR_FILTER_FK_PROCESSOR_FILTER_TRACKER_ID);
     }
 
-    private transient Processor _processor;
-    private transient ProcessorFilterTracker _processorFilterTracker;
+    private transient ProcessorPath _processor;
 
     /**
      * Get the implicit join path to the <code>stroom.processor</code> table.
      */
-    public Processor processor() {
+    public ProcessorPath processor() {
         if (_processor == null)
-            _processor = new Processor(this, Keys.PROCESSOR_FILTER_FK_PROCESSOR_ID);
+            _processor = new ProcessorPath(this, Keys.PROCESSOR_FILTER_FK_PROCESSOR_ID, null);
 
         return _processor;
     }
+
+    private transient ProcessorFilterTrackerPath _processorFilterTracker;
 
     /**
      * Get the implicit join path to the
      * <code>stroom.processor_filter_tracker</code> table.
      */
-    public ProcessorFilterTracker processorFilterTracker() {
+    public ProcessorFilterTrackerPath processorFilterTracker() {
         if (_processorFilterTracker == null)
-            _processorFilterTracker = new ProcessorFilterTracker(this, Keys.PROCESSOR_FILTER_FK_PROCESSOR_FILTER_TRACKER_ID);
+            _processorFilterTracker = new ProcessorFilterTrackerPath(this, Keys.PROCESSOR_FILTER_FK_PROCESSOR_FILTER_TRACKER_ID, null);
 
         return _processorFilterTracker;
+    }
+
+    private transient ProcessorTaskPath _processorTask;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>stroom.processor_task</code> table
+     */
+    public ProcessorTaskPath processorTask() {
+        if (_processorTask == null)
+            _processorTask = new ProcessorTaskPath(this, null, Keys.PROCESSOR_TASK_FK_PROCESSOR_FILTER_ID.getInverseKey());
+
+        return _processorTask;
     }
 
     @Override
@@ -269,27 +322,87 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
         return new ProcessorFilter(name.getQualifiedName(), null);
     }
 
-    // -------------------------------------------------------------------------
-    // Row18 type methods
-    // -------------------------------------------------------------------------
-
+    /**
+     * Create an inline derived table from this table
+     */
     @Override
-    public Row18<Integer, Integer, Long, String, Long, String, String, Integer, Integer, String, Integer, Boolean, Boolean, Boolean, Long, Long, Integer, String> fieldsRow() {
-        return (Row18) super.fieldsRow();
+    public ProcessorFilter where(Condition condition) {
+        return new ProcessorFilter(getQualifiedName(), aliased() ? this : null, null, condition);
     }
 
     /**
-     * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
+     * Create an inline derived table from this table
      */
-    public <U> SelectField<U> mapping(Function18<? super Integer, ? super Integer, ? super Long, ? super String, ? super Long, ? super String, ? super String, ? super Integer, ? super Integer, ? super String, ? super Integer, ? super Boolean, ? super Boolean, ? super Boolean, ? super Long, ? super Long, ? super Integer, ? super String, ? extends U> from) {
-        return convertFrom(Records.mapping(from));
+    @Override
+    public ProcessorFilter where(Collection<? extends Condition> conditions) {
+        return where(DSL.and(conditions));
     }
 
     /**
-     * Convenience mapping calling {@link SelectField#convertFrom(Class,
-     * Function)}.
+     * Create an inline derived table from this table
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function18<? super Integer, ? super Integer, ? super Long, ? super String, ? super Long, ? super String, ? super String, ? super Integer, ? super Integer, ? super String, ? super Integer, ? super Boolean, ? super Boolean, ? super Boolean, ? super Long, ? super Long, ? super Integer, ? super String, ? extends U> from) {
-        return convertFrom(toType, Records.mapping(from));
+    @Override
+    public ProcessorFilter where(Condition... conditions) {
+        return where(DSL.and(conditions));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public ProcessorFilter where(Field<Boolean> condition) {
+        return where(DSL.condition(condition));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    @PlainSQL
+    public ProcessorFilter where(SQL condition) {
+        return where(DSL.condition(condition));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    @PlainSQL
+    public ProcessorFilter where(@Stringly.SQL String condition) {
+        return where(DSL.condition(condition));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    @PlainSQL
+    public ProcessorFilter where(@Stringly.SQL String condition, Object... binds) {
+        return where(DSL.condition(condition, binds));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    @PlainSQL
+    public ProcessorFilter where(@Stringly.SQL String condition, QueryPart... parts) {
+        return where(DSL.condition(condition, parts));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public ProcessorFilter whereExists(Select<?> select) {
+        return where(DSL.exists(select));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public ProcessorFilter whereNotExists(Select<?> select) {
+        return where(DSL.notExists(select));
     }
 }

@@ -41,6 +41,8 @@ import stroom.security.shared.DocumentUserPermissionsReport;
 import stroom.security.shared.DocumentUserPermissionsRequest;
 import stroom.security.shared.FetchDocumentUserPermissionsRequest;
 import stroom.security.shared.SingleDocumentPermissionChangeRequest;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
@@ -54,13 +56,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Singleton
 public class DocumentPermissionServiceImpl implements DocumentPermissionService {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocumentPermissionServiceImpl.class);
 
     private final DocumentPermissionDao documentPermissionDao;
     private final UserGroupsCache userGroupsCache;
@@ -323,6 +326,8 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         final Set<String> explicitCreatePermissions = documentPermissionDao
                 .getDocumentUserCreatePermissions(docRef.getUuid(), userRef.getUuid());
 
+        LOGGER.debug("Inherited permissions: {}: {}", inheritedPermissions, convertToPaths(inheritedPermissions));
+
         return new DocumentUserPermissionsReport(
                 explicitPermission,
                 explicitCreatePermissions,
@@ -330,20 +335,14 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                 convertToPaths(inheritedCreatePermissions));
     }
 
-    private <T> Map<T, List<String>> convertToPaths(final Map<T, List<List<UserRef>>> map) {
+    private <T> Map<String, List<String>> convertToPaths(final Map<T, List<List<UserRef>>> map) {
         return map.entrySet()
                 .stream()
-                .collect(Collectors.toMap(Entry::getKey, entry -> {
+                .collect(Collectors.toMap(entry -> entry.getKey().toString(), entry -> {
                     return entry.getValue()
                             .stream()
                             .map(list -> list.stream()
                                     .map(UserRef::toDisplayString)
-//                                    .map(userRef ->
-//                                            userRef.getType(CaseType.SENTENCE)
-//                                            + ": \""
-//                                            + userRef.toDisplayString()
-//                                            + "\""
-//                                    )
                                     .collect(Collectors.joining(" --> ")))
                             .toList();
                 }));

@@ -33,8 +33,10 @@ import stroom.aws.s3.client.gin.S3ConfigModule;
 import stroom.cache.client.gin.CacheGinjector;
 import stroom.cache.client.gin.CacheModule;
 import stroom.content.client.presenter.ContentTabPanePresenter;
+import stroom.contentstore.client.gin.ContentStoreModule;
 import stroom.core.client.presenter.CorePresenter;
 import stroom.core.client.presenter.FullScreenPresenter;
+import stroom.credentials.client.gin.CredentialsModule;
 import stroom.dashboard.client.embeddedquery.gin.EmbeddedQueryGinjector;
 import stroom.dashboard.client.embeddedquery.gin.EmbeddedQueryModule;
 import stroom.dashboard.client.gin.DashboardGinjector;
@@ -74,6 +76,10 @@ import stroom.kafka.client.gin.KafkaConfigModule;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.monitoring.client.gin.MonitoringGinjector;
 import stroom.monitoring.client.gin.MonitoringModule;
+import stroom.openai.client.gin.OpenAIModelGinjector;
+import stroom.openai.client.gin.OpenAIModelModule;
+import stroom.pathways.client.gin.PathwaysGinjector;
+import stroom.pathways.client.gin.PathwaysModule;
 import stroom.pipeline.client.gin.PipelineGinjector;
 import stroom.pipeline.client.gin.PipelineModule;
 import stroom.planb.client.gin.PlanBGinjector;
@@ -130,8 +136,10 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         AlertModule.class,
         AnnotationModule.class,
         AppModule.class,
+        ContentStoreModule.class,
         CacheModule.class,
         ContentTemplateModule.class,
+        CredentialsModule.class,
         RestModule.class,
         DashboardModule.class,
         DictionaryModule.class,
@@ -144,6 +152,8 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         IndexModule.class,
         KafkaConfigModule.class,
         MonitoringModule.class,
+        OpenAIModelModule.class,
+        PathwaysModule.class,
         PipelineModule.class,
         PluginsModule.class,
         PolicyModule.class,
@@ -192,6 +202,8 @@ public interface AppGinjectorUser extends
         IndexGinjector,
         KafkaConfigGinjector,
         MonitoringGinjector,
+        OpenAIModelGinjector,
+        PathwaysGinjector,
         PipelineGinjector,
         PluginsGinjector,
         PopupGinjector,
@@ -219,7 +231,8 @@ public interface AppGinjectorUser extends
         ScyllaDbGinjector,
         StateStoreGinjector,
         PlanBGinjector,
-        GitRepoGinjector {
+        GitRepoGinjector /*,
+        CredentialsGinjector*/ {
 
     // Default implementation of standard resources
     EventBus getEventBus();

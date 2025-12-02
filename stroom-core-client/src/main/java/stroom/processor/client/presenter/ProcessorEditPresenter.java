@@ -23,7 +23,7 @@ import stroom.query.shared.ValidateExpressionRequest;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.security.shared.FindUserContext;
-import stroom.util.shared.UserRef;
+import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -77,19 +77,17 @@ public class ProcessorEditPresenter
                      final DocRef dataSource,
                      final List<QueryField> fields,
                      final Long minMetaCreateTimeMs,
-                     final Long maxMetaCreateTimeMs) {
+                     final Long maxMetaCreateTimeMs,
+                     final boolean export) {
+
         final SimpleFieldSelectionListModel selectionBoxModel = new SimpleFieldSelectionListModel();
         selectionBoxModel.addItems(fields);
         editExpressionPresenter.init(restFactory, dataSource, selectionBoxModel);
-
-        if (expression != null) {
-            editExpressionPresenter.read(expression);
-        } else {
-            editExpressionPresenter.read(ExpressionOperator.builder().build());
-        }
+        editExpressionPresenter.read(NullSafe.requireNonNullElse(expression, ExpressionOperator.builder().build()));
 
         getView().setMinMetaCreateTimeMs(minMetaCreateTimeMs);
         getView().setMaxMetaCreateTimeMs(maxMetaCreateTimeMs);
+        getView().setExport(export);
     }
 
     public void show(final ProcessorType processorType,
@@ -129,12 +127,14 @@ public class ProcessorEditPresenter
         final boolean existingFilter = filter != null && filter.getId() != null;
         final QueryData queryData = getOrCreateQueryData(filter, defaultExpression);
         final List<QueryField> fields = MetaFields.getProcessorFilterFields();
+        final boolean export = NullSafe.getOrElse(filter, ProcessorFilter::isExport, false);
         read(
                 queryData.getExpression(),
                 MetaFields.STREAM_STORE_DOC_REF,
                 fields,
                 minMetaCreateTimeMs,
-                maxMetaCreateTimeMs);
+                maxMetaCreateTimeMs,
+                export);
 
         // Show the processor creation dialog.
         final PopupSize popupSize = PopupSize.resizable(800, 600);
@@ -151,7 +151,7 @@ public class ProcessorEditPresenter
                         final ExpressionOperator expression = editExpressionPresenter.write();
                         final Long minMetaCreateTime = getView().getMinMetaCreateTimeMs();
                         final Long maxMetaCreateTime = getView().getMaxMetaCreateTimeMs();
-                        final UserRef userRef = userRefSelectionBoxPresenter.getSelected();
+                        final boolean exportRead = getView().isExport();
 
                         validateExpression(fields, expression, () -> {
                             try {
@@ -168,13 +168,23 @@ public class ProcessorEditPresenter
                                             result -> {
                                                 if (result) {
                                                     validateFeed(
-                                                            filter, queryData, minMetaCreateTime, maxMetaCreateTime, e);
+                                                            filter,
+                                                            queryData,
+                                                            minMetaCreateTime,
+                                                            maxMetaCreateTime,
+                                                            exportRead,
+                                                            e);
                                                 } else {
                                                     e.reset();
                                                 }
                                             });
                                 } else {
-                                    validateFeed(null, queryData, minMetaCreateTime, maxMetaCreateTime, e);
+                                    validateFeed(null,
+                                            queryData,
+                                            minMetaCreateTime,
+                                            maxMetaCreateTime,
+                                            exportRead,
+                                            e);
                                 }
                             } catch (final RuntimeException ex) {
                                 AlertEvent.fireError(ProcessorEditPresenter.this, ex.getMessage(), e::reset);
@@ -205,9 +215,8 @@ public class ProcessorEditPresenter
                         AlertEvent.fireError(ProcessorEditPresenter.this, result.getString(), null);
                     }
                 })
-                .onFailure(throwable -> {
-                    AlertEvent.fireError(ProcessorEditPresenter.this, throwable.getMessage(), null);
-                })
+                .onFailure(throwable ->
+                        AlertEvent.fireError(ProcessorEditPresenter.this, throwable.getMessage(), null))
                 .taskMonitorFactory(this)
                 .exec();
     }
@@ -229,7 +238,9 @@ public class ProcessorEditPresenter
                               final QueryData queryData,
                               final Long minMetaCreateTimeMs,
                               final Long maxMetaCreateTimeMs,
+                              final boolean export,
                               final HidePopupRequestEvent event) {
+
         final int feedCount = termCount(queryData, MetaFields.FEED);
         final int streamIdCount = termCount(queryData, MetaFields.ID);
         final int parentStreamIdCount = termCount(queryData, MetaFields.PARENT_ID);
@@ -240,13 +251,19 @@ public class ProcessorEditPresenter
             ConfirmEvent.fire(this,
                     "You are about to process all feeds. Are you sure you wish to do this?", result -> {
                         if (result) {
-                            validateStreamType(filter, queryData, minMetaCreateTimeMs, maxMetaCreateTimeMs, event);
+                            validateStreamType(
+                                    filter,
+                                    queryData,
+                                    minMetaCreateTimeMs,
+                                    maxMetaCreateTimeMs,
+                                    export,
+                                    event);
                         } else {
                             event.reset();
                         }
                     });
         } else {
-            createOrUpdateProcessor(filter, queryData, minMetaCreateTimeMs, maxMetaCreateTimeMs, event);
+            createOrUpdateProcessor(filter, queryData, minMetaCreateTimeMs, maxMetaCreateTimeMs, export, event);
         }
     }
 
@@ -254,6 +271,7 @@ public class ProcessorEditPresenter
                                     final QueryData queryData,
                                     final Long minMetaCreateTimeMs,
                                     final Long maxMetaCreateTimeMs,
+                                    final boolean export,
                                     final HidePopupRequestEvent event) {
         final int streamTypeCount = termCount(queryData, MetaFields.TYPE);
         final int streamIdCount = termCount(queryData, MetaFields.ID);
@@ -266,13 +284,19 @@ public class ProcessorEditPresenter
                     "You are about to process all stream types. Are you sure you wish to do this?",
                     result -> {
                         if (result) {
-                            createOrUpdateProcessor(filter, queryData, minMetaCreateTimeMs, maxMetaCreateTimeMs, event);
+                            createOrUpdateProcessor(
+                                    filter,
+                                    queryData,
+                                    minMetaCreateTimeMs,
+                                    maxMetaCreateTimeMs,
+                                    export,
+                                    event);
                         } else {
                             event.reset();
                         }
                     });
         } else {
-            createOrUpdateProcessor(filter, queryData, minMetaCreateTimeMs, maxMetaCreateTimeMs, event);
+            createOrUpdateProcessor(filter, queryData, minMetaCreateTimeMs, maxMetaCreateTimeMs, export, event);
         }
     }
 
@@ -287,12 +311,14 @@ public class ProcessorEditPresenter
                                          final QueryData queryData,
                                          final Long minMetaCreateTimeMs,
                                          final Long maxMetaCreateTimeMs,
+                                         final boolean export,
                                          final HidePopupRequestEvent event) {
         if (filter != null) {
             // Now update the processor filter using the find stream criteria.
             filter.setQueryData(queryData);
             filter.setMinMetaCreateTimeMs(minMetaCreateTimeMs);
             filter.setMaxMetaCreateTimeMs(maxMetaCreateTimeMs);
+            filter.setExport(export);
             filter.setRunAsUser(userRefSelectionBoxPresenter.getSelected());
 
             restFactory
@@ -312,6 +338,7 @@ public class ProcessorEditPresenter
                     .queryData(queryData)
                     .autoPriority(true)
                     .enabled(false)
+                    .export(export)
                     .minMetaCreateTimeMs(minMetaCreateTimeMs)
                     .maxMetaCreateTimeMs(maxMetaCreateTimeMs)
                     .runAsUser(userRefSelectionBoxPresenter.getSelected())
@@ -340,6 +367,10 @@ public class ProcessorEditPresenter
         Long getMaxMetaCreateTimeMs();
 
         void setMaxMetaCreateTimeMs(Long maxMetaCreateTimeMs);
+
+        boolean isExport();
+
+        void setExport(boolean export);
 
         void setRunAsUserView(View view);
     }

@@ -1,6 +1,6 @@
 package stroom.analytics.impl;
 
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.util.shared.NullSafe;
 
 public class RuleUtil {
@@ -9,7 +9,7 @@ public class RuleUtil {
         // Util class.
     }
 
-    public static String getRuleIdentity(final Doc doc) {
+    public static String getRuleIdentity(final AbstractDoc doc) {
         return NullSafe.get(doc, d -> d.getName() + " (" + d.getUuid() + ")");
     }
 

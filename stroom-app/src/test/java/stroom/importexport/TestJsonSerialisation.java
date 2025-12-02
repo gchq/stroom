@@ -438,6 +438,11 @@ class TestJsonSerialisation {
                 }
 
                 SoftAssertions.assertSoftly(softly -> {
+                    // We allow type to be set statically for docs.
+                    if (fieldPropNames.contains("type")) {
+                        constructorPropNames.add("type");
+                    }
+
                     softly.assertThat(constructorPropNames)
                             .describedAs("%s - JsonProperties defined in the constructor must have a " +
                                          "corresponding JsonProperty on the field.", clazz.getName())

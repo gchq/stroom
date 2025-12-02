@@ -6,17 +6,14 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.TransportUtils;
-import co.elastic.clients.transport.rest_client.RestClientTransport;
+import co.elastic.clients.transport.rest5_client.Rest5ClientTransport;
+import co.elastic.clients.transport.rest5_client.low_level.Rest5Client;
+import co.elastic.clients.transport.rest5_client.low_level.Rest5ClientBuilder;
 import jakarta.inject.Inject;
-import org.apache.http.Header;
-import org.apache.http.HttpHost;
-import org.apache.http.client.config.RequestConfig.Builder;
-import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
-import org.apache.http.message.BasicHeader;
-import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestClientBuilder;
-import org.elasticsearch.client.RestClientBuilder.HttpClientConfigCallback;
-import org.elasticsearch.client.RestClientBuilder.RequestConfigCallback;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.message.BasicHeader;
+import org.apache.hc.core5.util.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,13 +54,11 @@ public class ElasticClientFactory {
             }
         }
 
-        final RestClientBuilder restClientBuilder = RestClient.builder(httpHosts.toArray(new HttpHost[0]));
+        final Rest5ClientBuilder restClientBuilder = Rest5Client.builder(httpHosts.toArray(new HttpHost[0]));
 
-        restClientBuilder.setRequestConfigCallback(new RequestConfigCallback() {
-            @Override
-            public Builder customizeRequestConfig(final Builder requestConfigBuilder) {
-                return requestConfigBuilder.setSocketTimeout(config.getSocketTimeoutMillis());
-            }
+        restClientBuilder.setRequestConfigCallback(requestConfig -> {
+            requestConfig.setConnectionRequestTimeout(Timeout.ofMilliseconds(config.getConnectionTimeoutMillis()));
+            requestConfig.setResponseTimeout(Timeout.ofMilliseconds(config.getConnectionTimeoutMillis()));
         });
 
         // If using HTTPS, set the CA certificate to verify the connection with the Elasticsearch cluster
@@ -71,14 +66,11 @@ public class ElasticClientFactory {
             final SSLContext sslContext = getSslContext(config);
 
             if (sslContext != null) {
-                restClientBuilder.setHttpClientConfigCallback(new HttpClientConfigCallback() {
-                    @Override
-                    public HttpAsyncClientBuilder customizeHttpClient(final HttpAsyncClientBuilder httpClientBuilder) {
-                        return httpClientBuilder
-                                .setSSLContext(sslContext)
-                                .setMaxConnPerRoute(elasticClientConfig.getMaxConnectionsPerRoute())
-                                .setMaxConnTotal(elasticClientConfig.getMaxConnections());
-                    }
+                restClientBuilder.setSSLContext(sslContext);
+                restClientBuilder.setConnectionManagerCallback(httpClientBuilder -> {
+                    httpClientBuilder
+                            .setMaxConnPerRoute(elasticClientConfig.getMaxConnectionsPerRoute())
+                            .setMaxConnTotal(elasticClientConfig.getMaxConnections());
                 });
             }
         }
@@ -93,7 +85,7 @@ public class ElasticClientFactory {
             restClientBuilder.setDefaultHeaders(defaultHeaders);
         }
 
-        final ElasticsearchTransport transport = new RestClientTransport(restClientBuilder.build(),
+        final ElasticsearchTransport transport = new Rest5ClientTransport(restClientBuilder.build(),
                 new JacksonJsonpMapper());
 
         return new ElasticsearchClient(transport);
@@ -151,15 +143,14 @@ public class ElasticClientFactory {
                 if (port == null) {
                     if (scheme.equalsIgnoreCase("http")) {
                         port = 80;
-                    }
-                    if (scheme.equalsIgnoreCase("https")) {
+                    } else if (scheme.equalsIgnoreCase("https")) {
                         port = 443;
                     } else {
                         throw new IllegalArgumentException("Port number could not be inferred");
                     }
                 }
 
-                return new HttpHost(host, port, scheme);
+                return new HttpHost(scheme, host, port);
             }
         } catch (final NumberFormatException e) {
             LOGGER.error("Invalid port format in URL: '" + url + "'");

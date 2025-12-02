@@ -66,11 +66,11 @@ public class ReceiveDataConfig
                     StandardHeaderArguments.FORMAT,
                     StandardHeaderArguments.SCHEMA));
 
-    public static final Set<String> DEFAULT_META_TYPES = CollectionUtil.asUnmodifiabledConsistentOrderSet(
-            StreamTypeNames.ALL_HARD_CODED_STREAM_TYPE_NAMES);
+    public static final Set<String> DEFAULT_META_TYPES =
+            CollectionUtil.asUnmodifiabledConsistentOrderSet(StreamTypeNames.ALL_HARD_CODED_STREAM_TYPE_NAMES);
 
-    public static final Set<AuthenticationType> DEFAULT_AUTH_TYPES = Collections.unmodifiableSet(
-            EnumSet.of(AuthenticationType.CERTIFICATE));
+    public static final Set<AuthenticationType> DEFAULT_AUTH_TYPES =
+            EnumSet.of(AuthenticationType.CERTIFICATE, AuthenticationType.TOKEN);
 
     public static final ReceiptCheckMode DEFAULT_RECEIPT_CHECK_MODE = ReceiptCheckMode.getDefault();
     // If we can't hit the downstream then we have to let everything in

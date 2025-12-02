@@ -263,4 +263,16 @@ class TestStringUtil {
         assertThat(pluralSuffix(List.of(1, 2)))
                 .isEqualTo("s");
     }
+
+    @Test
+    void testFormatDouble() {
+        assertThat(StringUtil.formatDouble(0.00034))
+                .isEqualTo("0");
+        assertThat(StringUtil.formatDouble(123.00034))
+                .isEqualTo("123");
+        assertThat(StringUtil.formatDouble(123.12034))
+                .isEqualTo("123.12");
+        assertThat(StringUtil.formatDouble(123.10034))
+                .isEqualTo("123.1");
+    }
 }

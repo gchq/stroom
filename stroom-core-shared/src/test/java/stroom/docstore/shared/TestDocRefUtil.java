@@ -20,7 +20,7 @@ class TestDocRefUtil {
         final String uuid = UUID.randomUUID().toString();
         final String type = "TEST_TYPE";
 
-        final Doc doc = buildDoc(uuid, type);
+        final AbstractDoc doc = buildDoc(uuid, type);
         final DocRef docRef = DocRef.builder()
                 .uuid(uuid)
                 .type(type)
@@ -37,7 +37,7 @@ class TestDocRefUtil {
         final String uuid = UUID.randomUUID().toString();
         final String type = "TEST_TYPE";
 
-        final Doc doc = buildDoc(uuid, type);
+        final AbstractDoc doc = buildDoc(uuid, type);
         final DocRef docRef = DocRef.builder()
                 .uuid(uuid)
                 .type("foo")
@@ -54,7 +54,7 @@ class TestDocRefUtil {
         final String uuid = UUID.randomUUID().toString();
         final String type = "TEST_TYPE";
 
-        final Doc doc = buildDoc(uuid, type);
+        final AbstractDoc doc = buildDoc(uuid, type);
         final DocRef docRef = DocRef.builder()
                 .uuid("foo")
                 .type(type)
@@ -69,7 +69,7 @@ class TestDocRefUtil {
     void name() {
         final String uuid = UUID.randomUUID().toString();
         final String type = "TEST_TYPE";
-        final Doc doc = buildDoc(uuid, type);
+        final AbstractDoc doc = buildDoc(uuid, type);
         final DocRef docRef = DocRefUtil.create(doc);
 
         Assertions.assertThat(docRef.getName())
@@ -120,18 +120,9 @@ class TestDocRefUtil {
                 .build();
     }
 
-    private Doc buildDoc(final String uuid, final String type) {
-        return new Doc() {
+    private AbstractDoc buildDoc(final String uuid, final String type) {
+        return new AbstractDoc(type, uuid, null, null, null, null, null, null) {
 
-            @Override
-            public String getType() {
-                return type;
-            }
-
-            @Override
-            public String getUuid() {
-                return uuid;
-            }
         };
     }
 }

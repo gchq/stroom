@@ -9,16 +9,20 @@ stroomTestData = "0.2.3"
 aws = "2.31.68"
 commons-io = "2.19.0"
 dropwizard = "4.0.14" # used to set the dropwizard-bom version, that controls lots of dependency versions
-elasticsearch = "8.12.2"
-httpcore = "4.4.16" # Transient dependency of Elasticsearch
+elasticsearch = "9.2.1"
 flyway = "11.14.0"
 guice = "7.0.0"
 gwt = "2.12.2"
 jackson-swagger = "2.11.1" # Specific version of jackson for use with the swagger plugin
+jgit = "7.3.0.202506031305-r"
 jmh = "1.37"
 jooq = "3.20.8"
 junit-jupiter = "5.13.1"
+langchain4j = "1.8.0"
+langchain4j-cohere = "1.8.0-beta15"
+langchain4j-jina = "1.8.0-beta15"
 kafka = "3.9.0"
+openai = "4.3.0"
 poi = "5.4.1"
 scylladb = "4.19.0.1"
 simple-java-mail = "8.8.0"
@@ -32,7 +36,7 @@ stroomStatsSchema = { module = "uk.gov.gchq.stroom.stats:stroom-stats-schema", v
 #------3rd Party-libs---------------
 assertj-core = { module = "org.assertj:assertj-core" } # version controlled by dropwizard-dependencies
 aws-bom = { module = "software.amazon.awssdk:bom", version.ref = "aws" }
-aws-crt = { module = "software.amazon.awssdk.crt:aws-crt", version = "0.29.22" }
+aws-crt = { module = "software.amazon.awssdk.crt:aws-crt", version = "0.39.4" }
 aws-s3-transfer-manager = { module = "software.amazon.awssdk:s3-transfer-manager" } # version controlled by AWS BOM
 aws-sqs = { module = "software.amazon.awssdk:sqs" } # version controlled by AWS BOM
 aws-sts = { module = "software.amazon.awssdk:sts" } # version controlled by AWS BOM
@@ -69,7 +73,7 @@ dropwizard-servlets = { module = "io.dropwizard:dropwizard-servlets" } # version
 dropwizard-testing = { module = "io.dropwizard:dropwizard-testing" } # version controlled by dropwizard-dependencies
 dropwizard-validation = { module = "io.dropwizard:dropwizard-validation" } # version controlled by dropwizard-dependencies
 #dropwizard-websockets = { module = "com.liveperson:dropwizard-websockets", version = "1.3.14" }
-eclipse-transformer-cli = { module = "org.eclipse.transformer:org.eclipse.transformer.cli", version = "0.5.0" }
+eclipse-transformer-cli = { module = "org.eclipse.transformer:org.eclipse.transformer.cli", version = "1.0.0" }
 elasticsearch-java = { module = "co.elastic.clients:elasticsearch-java", version.ref = "elasticsearch" }
 fast-infoset = { module = "com.sun.xml.fastinfoset:FastInfoset", version = "2.1.1" }
 flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
@@ -85,12 +89,11 @@ guice-grapher = { module = "com.google.inject.extensions:guice-grapher", version
 gwt-dev = { module = "org.gwtproject:gwt-dev", version.ref = "gwt" }
 gwt-user = { module = "org.gwtproject:gwt-user", version.ref = "gwt" }
 gwtp-mvp-client = { module = "com.gwtplatform:gwtp-mvp-client", version = "0.7" }
-gson = { module = "com.google.code.gson:gson", version = "2.6.2" }
+#gson = { module = "com.google.code.gson:gson", version = "2.6.2" }
 hbase-shaded-netty = { module = "org.apache.hbase.thirdparty:hbase-shaded-netty", version = "4.1.12" } # Needed by our copied HBase classes in stroom.bytebuffer.hbase
 hessian = { module = "com.caucho:hessian", version = "4.0.65" }
-hikari = { module = "com.zaxxer:HikariCP", version = "5.1.0" }
+hikari = { module = "com.zaxxer:HikariCP", version = "7.0.2" }
 http-client = { module = "org.apache.httpcomponents.client5:httpclient5" } # version controlled by dropwizard-dependencies
-httpcore = { module = "org.apache.httpcomponents.core5:httpcore5", version.ref = "httpcore" }
 jBCrypt = { module = "de.svenkubiak:jBCrypt", version = "0.4.3" }
 jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations" } # version controlled by dropwizard-dependencies
 #jackson-core = { module = "com.fasterxml.jackson.core:jackson-core", version = "2.9.10" } # version controlled by dropwizard-dependencies
@@ -126,7 +129,8 @@ jetty-http = { module = "org.eclipse.jetty:jetty-http" } # version controlled by
 jetty-server = { module = "org.eclipse.jetty:jetty-server" } # version controlled by dropwizard-dependencies
 jetty-servlet = { module = "org.eclipse.jetty:jetty-servlet" } # version controlled by dropwizard-dependencies
 jetty-servlets = { module = "org.eclipse.jetty:jetty-servlets" } # version controlled by dropwizard-dependencies
-jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version = "7.3.0.202506031305-r" }
+jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version.ref = "jgit" }
+jgitssh = { module = "org.eclipse.jgit:org.eclipse.jgit.ssh.apache", version.ref = "jgit" }
 jinjava = { module = "com.hubspot.jinjava:jinjava", version = "2.7.2" }
 jmh-core = { module = "org.openjdk.jmh:jmh-core", version.ref = "jmh" }
 jmh-generator-annprocess = { module = "org.openjdk.jmh:jmh-generator-annprocess", version.ref = "jmh" }
@@ -158,9 +162,15 @@ mbknor-jackson-jsonSchema = { module = "com.kjetland:mbknor-jackson-jsonschema_2
 mockito-core = { module = "org.mockito:mockito-core" } # version controlled by dropwizard-dependencies
 mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter" } # version controlled by dropwizard-dependencies
 mysql-connector-java = { module = "com.mysql:mysql-connector-j", version = "9.4.0" }
+langchain4j = { module = "dev.langchain4j:langchain4j", version.ref = "langchain4j" }
+langchain4j-http-client-jdk = { module = "dev.langchain4j:langchain4j-http-client-jdk", version.ref = "langchain4j" }
+langchain4j-open-ai = { module = "dev.langchain4j:langchain4j-open-ai", version.ref = "langchain4j" }
+langchain4j-cohere = { module = "dev.langchain4j:langchain4j-cohere", version.ref = "langchain4j-cohere" }
+langchain4j-jina = { module = "dev.langchain4j:langchain4j-jina", version.ref = "langchain4j-jina" }
+openai = { module = "com.openai:openai-java", version.ref = "openai" }
 poi = { module = "org.apache.poi:poi", version.ref = "poi" }
 poi-ooxml = { module = "org.apache.poi:poi-ooxml", version.ref = "poi" }
-quartz = { module = "org.quartz-scheduler:quartz", version = "2.5.0-rc1" }
+quartz = { module = "org.quartz-scheduler:quartz", version = "2.5.1" }
 restygwt = { module = "org.fusesource.restygwt:restygwt", version = "2.2.7" }
 saxon-he = { module = "net.sf.saxon:Saxon-HE", version = "9.9.1-8" }
 
@@ -200,7 +210,7 @@ jooq = { id = "nu.studer.jooq", version = "8.2.3" }
 
 flyway = { id = "org.flywaydb.flyway", version = "11.9.1" }
 
-jdeps = { id = "org.kordamp.gradle.jdeps", version = "0.16.0" }
+jdeps = { id = "org.kordamp.gradle.jdeps", version = "0.20.0" }
 
 # moduleplugin = { id = "org.javamodularity.moduleplugin", version = "1.8.10" }
 

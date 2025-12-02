@@ -18,12 +18,13 @@ package stroom.query.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.query.api.TimeRange;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -52,7 +53,7 @@ import java.util.Objects;
         "query",
         "queryTablePreferences"})
 @JsonInclude(Include.NON_NULL)
-public class QueryDoc extends Doc {
+public class QueryDoc extends AbstractDoc {
 
     public static final String TYPE = "Query";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.QUERY_DOCUMENT_TYPE;
@@ -66,12 +67,8 @@ public class QueryDoc extends Doc {
     @JsonProperty
     private QueryTablePreferences queryTablePreferences;
 
-    public QueryDoc() {
-    }
-
     @JsonCreator
-    public QueryDoc(@JsonProperty("type") final String type,
-                    @JsonProperty("uuid") final String uuid,
+    public QueryDoc(@JsonProperty("uuid") final String uuid,
                     @JsonProperty("name") final String name,
                     @JsonProperty("version") final String version,
                     @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -82,7 +79,7 @@ public class QueryDoc extends Doc {
                     @JsonProperty("timeRange") final TimeRange timeRange,
                     @JsonProperty("query") final String query,
                     @JsonProperty("queryTablePreferences") final QueryTablePreferences queryTablePreferences) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.timeRange = timeRange;
         this.query = query;
@@ -155,5 +152,72 @@ public class QueryDoc extends Doc {
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), query);
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder extends AbstractDoc.AbstractBuilder<QueryDoc, QueryDoc.Builder> {
+
+        private String description;
+        private TimeRange timeRange;
+        private String query;
+        private QueryTablePreferences queryTablePreferences;
+
+        private Builder() {
+        }
+
+        private Builder(final QueryDoc queryDoc) {
+            super(queryDoc);
+            this.description = queryDoc.description;
+            this.timeRange = queryDoc.timeRange;
+            this.query = queryDoc.query;
+            this.queryTablePreferences = queryDoc.queryTablePreferences;
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder timeRange(final TimeRange timeRange) {
+            this.timeRange = timeRange;
+            return self();
+        }
+
+        public Builder query(final String query) {
+            this.query = query;
+            return self();
+        }
+
+        public Builder queryTablePreferences(final QueryTablePreferences queryTablePreferences) {
+            this.queryTablePreferences = queryTablePreferences;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public QueryDoc build() {
+            return new QueryDoc(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    timeRange,
+                    query,
+                    queryTablePreferences);
+        }
     }
 }

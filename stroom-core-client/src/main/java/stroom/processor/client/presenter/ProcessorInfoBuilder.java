@@ -84,6 +84,8 @@ public class ProcessorInfoBuilder {
             tb.row("Updated By", filter.getUpdateUser());
             addRowDateString(tb, "Updated On", filter.getUpdateTimeMs());
 
+            tb.row("Export", filter.isExport() ? "True" : "False");
+
             if (ProcessorType.STREAMING_ANALYTIC.equals(filter.getProcessorType())) {
                 tb.row("Analytic Rule",
                         DocRefUtil.createSimpleDocRefString(filter.getPipeline()));

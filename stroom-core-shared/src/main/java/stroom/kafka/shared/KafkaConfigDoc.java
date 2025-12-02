@@ -18,7 +18,7 @@ package stroom.kafka.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.util.shared.HasData;
@@ -48,27 +48,18 @@ import java.util.Objects;
         "description",
         "data"})
 @JsonInclude(Include.NON_EMPTY)
-public class KafkaConfigDoc extends Doc implements HasData {
+public class KafkaConfigDoc extends AbstractDoc implements HasData {
 
     public static final String TYPE = "KafkaConfig";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.KAFKA_CONFIG_DOCUMENT_TYPE;
 
     @JsonProperty
     private String description = "";
-
     @JsonProperty
     private String data = "";
 
-    public KafkaConfigDoc() {
-    }
-
-    public KafkaConfigDoc(final String type, final String uuid, final String name) {
-        super(type, uuid, name);
-    }
-
     @JsonCreator
-    public KafkaConfigDoc(@JsonProperty("type") final String type,
-                          @JsonProperty("uuid") final String uuid,
+    public KafkaConfigDoc(@JsonProperty("uuid") final String uuid,
                           @JsonProperty("name") final String name,
                           @JsonProperty("version") final String version,
                           @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -77,7 +68,7 @@ public class KafkaConfigDoc extends Doc implements HasData {
                           @JsonProperty("updateUser") final String updateUser,
                           @JsonProperty("description") final String description,
                           @JsonProperty("data") final String data) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.data = data;
     }
@@ -138,4 +129,54 @@ public class KafkaConfigDoc extends Doc implements HasData {
         return Objects.hash(super.hashCode(), description, data);
     }
 
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder extends AbstractDoc.AbstractBuilder<KafkaConfigDoc, KafkaConfigDoc.Builder> {
+
+        private String description = "";
+        private String data = "";
+
+        private Builder() {
+        }
+
+        private Builder(final KafkaConfigDoc kafkaConfigDoc) {
+            super(kafkaConfigDoc);
+            this.description = kafkaConfigDoc.description;
+            this.data = kafkaConfigDoc.data;
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder data(final String data) {
+            this.data = data;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public KafkaConfigDoc build() {
+            return new KafkaConfigDoc(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    data);
+        }
+    }
 }

@@ -128,6 +128,9 @@ appConfig:
       100000: 10
       1000000: 3
     warningThresholdPercentage: 90
+  chatMemory:
+    timeToLive: "PT1H"
+    tokenLimit: 1024
   cluster:
     clusterCallIgnoreSSLHostnameVerifier: true
     clusterCallReadTimeout: "PT30S"
@@ -172,6 +175,26 @@ appConfig:
     importAsSubjectId: "Administrators"
     importAsType: "GROUP"
     importDirectory: "content_pack_import"
+  contentStore:
+    urls:
+    - "https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/source/content-store.yml"
+  credentials:
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverPassword: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+      connectionPool:
+        cachePrepStmts: false
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        leakDetectionThreshold: "PT0S"
+        maxLifetime: "PT30M"
+        maxPoolSize: 30
+        minimumIdle: 10
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
   crossModule:
     db:
       connection:
@@ -190,6 +213,12 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
   dashboard:
+    openAIModel:
+      apiKey: null
+      baseUrl: null
+      maximumBatchSize: 1024
+      maximumTableInputRows: 100
+      modelId: null
     visualisationDocCache:
       expireAfterAccess: null
       expireAfterWrite: "PT10M"
@@ -370,8 +399,6 @@ appConfig:
       initialRetryBackoffPeriodMs: 1000
       maxNestedElementDepth: 10
       retryCount: 5
-    retention:
-      scrollSize: 10000
     search:
       highlight: true
       scrollDuration: "PT1M"
@@ -418,6 +445,22 @@ appConfig:
     feedNamePattern: "^[A-Z0-9_-]{3,}$"
     unknownClassification: "UNKNOWN CLASSIFICATION"
   gitRepo:
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverPassword: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+      connectionPool:
+        cachePrepStmts: false
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        leakDetectionThreshold: "PT0S"
+        maxLifetime: "PT30M"
+        maxPoolSize: 30
+        minimumIdle: 10
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
     localDir: "git_repo"
   haltBootOnConfigValidationFailure: true
   index:
@@ -822,6 +865,7 @@ appConfig:
     dataFeedKeyOwnerMetaKey: "AccountId"
     dataFeedKeysDir: "data_feed_keys"
     enabledAuthenticationTypes:
+    - "TOKEN"
     - "CERTIFICATE"
     fallbackReceiveAction: "RECEIVE"
     feedNameGenerationEnabled: false
@@ -1008,6 +1052,7 @@ appConfig:
       secretEncryptionKey: ""
     identity:
       allowCertificateAuthentication: false
+      autoCreateAdminAccountOnBoot: false
       certificateCnCaptureGroupIndex: 1
       certificateCnPattern: ".*\\((.*)\\)"
       db:

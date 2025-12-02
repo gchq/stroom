@@ -17,7 +17,7 @@
 package stroom.analytics.shared;
 
 import stroom.docref.DocRef;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.query.api.Param;
 import stroom.query.api.TimeRange;
 
@@ -34,7 +34,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public abstract class AbstractAnalyticRuleDoc extends Doc {
+public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
 
     @JsonProperty
     private final String description;
@@ -65,26 +65,6 @@ public abstract class AbstractAnalyticRuleDoc extends Doc {
     private final boolean suppressDuplicateNotifications;
     @JsonProperty
     private final DuplicateNotificationConfig duplicateNotificationConfig;
-
-    public AbstractAnalyticRuleDoc() {
-        description = null;
-        languageVersion = null;
-        parameters = null;
-        timeRange = null;
-        query = null;
-        analyticProcessType = null;
-        analyticProcessConfig = null;
-        analyticNotificationConfig = null;
-        notifications = new ArrayList<>();
-        errorFeed = null;
-        rememberNotifications = false;
-        suppressDuplicateNotifications = false;
-        duplicateNotificationConfig = new DuplicateNotificationConfig(
-                false,
-                false,
-                false,
-                Collections.emptyList());
-    }
 
     @SuppressWarnings("checkstyle:linelength")
     @JsonCreator
@@ -263,7 +243,7 @@ public abstract class AbstractAnalyticRuleDoc extends Doc {
 
     public abstract static class AbstractAnalyticRuleDocBuilder
             <T extends AbstractAnalyticRuleDoc, B extends AbstractAnalyticRuleDocBuilder<T, ?>>
-            extends AbstractBuilder<AbstractAnalyticRuleDoc, B> {
+            extends AbstractBuilder<T, B> {
 
         String description;
         QueryLanguageVersion languageVersion;

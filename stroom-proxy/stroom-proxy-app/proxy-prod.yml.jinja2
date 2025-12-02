@@ -70,8 +70,8 @@ logging:
     # Logs useful information about dropwizard when booting stroom
     io.dropwizard: INFO
     # Logs useful information about the jetty server when booting stroom
-    # Logs REST request/responses with headers/payloads. Set this to OFF to turn disable that logging.
-    org.glassfish.jersey.logging.LoggingFeature: INFO
+    # Set this to INFO if you want to log all REST request/responses with headers/payloads.
+    org.glassfish.jersey.logging.LoggingFeature: OFF
     # Logger and appender for proxy receipt audit logs
     "receive":
       level: INFO
@@ -201,10 +201,27 @@ proxyConfig:
       - "remotedn"
       - "remotecertexpiry"
 
+  contentDir: "{{ 'content' | envVar('CONTENT_DIR') }}"
+  #  contentSync:
+  #    contentSyncEnabled: {{ false | envVar('CONTENT_SYNC_ENABLED') }}
+  #    upstreamUrl:
+  #      ReceiveDataRuleSet: "{{ 'http://stroom:8080/api/ruleset/v1' | envVar('UPSTREAM_RULE_URL') }}"
+  #      Dictionary: "{{ 'http://stroom:8080/api/dictionary/v1' | envVar('UPSTREAM_DICTIONARY_URL') }}"
+  #    syncFrequency: 30000
+  #    apiKey: ""
+
+  feedStatus:
+    # Only set this to the FULL url of the feed status endpoint if it differs
+    # from where the downstreamHost config points to. Under normal circumstances
+    # the url is derived using downstreamHost.
+    url: "{{ '' | envVar('FEED_STATUS_URL') }}"
+
   # (FEED_STATUS|RECEIPT_POLICY|RECEIVE_ALL|DROP_ALL|REJECT_ALL)
   receive:
     receiptCheckMode: "{{ 'FEED_STATUS' | envVar('RECEIPT_CHECK_MODE') }}"
     fallbackReceiveAction: "{{ '' | envVar('FALLBACK_RECEIVE_ACTION') }}"
+    # Whether authentication is required for requests sent to /datafeed
+    authenticationRequired: {{ true | envVar('RECEIVE_AUTH_REQUIRED') }}
 
   {% if distribution == "docker" %}
   security:

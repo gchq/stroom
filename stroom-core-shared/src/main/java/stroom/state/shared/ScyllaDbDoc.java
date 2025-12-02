@@ -18,12 +18,11 @@ package stroom.state.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -48,7 +47,7 @@ import java.util.Objects;
         "keyspaceCql"
 })
 @JsonInclude(Include.NON_NULL)
-public class ScyllaDbDoc extends Doc {
+public class ScyllaDbDoc extends AbstractDoc {
 
     public static final String TYPE = "ScyllaDB";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.SCYLLA_DB_DOCUMENT_TYPE;
@@ -62,12 +61,8 @@ public class ScyllaDbDoc extends Doc {
     @JsonProperty
     private String keyspaceCql;
 
-    public ScyllaDbDoc() {
-    }
-
     @JsonCreator
-    public ScyllaDbDoc(@JsonProperty("type") final String type,
-                       @JsonProperty("uuid") final String uuid,
+    public ScyllaDbDoc(@JsonProperty("uuid") final String uuid,
                        @JsonProperty("name") final String name,
                        @JsonProperty("version") final String version,
                        @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -78,7 +73,7 @@ public class ScyllaDbDoc extends Doc {
                        @JsonProperty("connection") final String connection,
                        @JsonProperty("keyspace") final String keyspace,
                        @JsonProperty("keyspaceCql") final String keyspaceCql) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.connection = connection;
         this.keyspace = keyspace;
@@ -133,12 +128,6 @@ public class ScyllaDbDoc extends Doc {
         this.keyspaceCql = keyspaceCql;
     }
 
-    @JsonIgnore
-    @Override
-    public final String getType() {
-        return TYPE;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -170,5 +159,73 @@ public class ScyllaDbDoc extends Doc {
                ", keyspace='" + keyspace + '\'' +
                ", keyspaceCql='" + keyspaceCql + '\'' +
                '}';
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder extends AbstractBuilder<ScyllaDbDoc, ScyllaDbDoc.Builder> {
+
+        private String description;
+        private String connection;
+        private String keyspace;
+        private String keyspaceCql;
+
+        public Builder() {
+        }
+
+        public Builder(final ScyllaDbDoc scyllaDbDoc) {
+            super(scyllaDbDoc);
+            this.description = scyllaDbDoc.description;
+            this.connection = scyllaDbDoc.connection;
+            this.keyspace = scyllaDbDoc.keyspace;
+            this.keyspaceCql = scyllaDbDoc.keyspaceCql;
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder connection(final String connection) {
+            this.connection = connection;
+            return self();
+        }
+
+        public Builder keyspace(final String keyspace) {
+            this.keyspace = keyspace;
+            return self();
+        }
+
+        public Builder keyspaceCql(final String keyspaceCql) {
+            this.keyspaceCql = keyspaceCql;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        @Override
+        public ScyllaDbDoc build() {
+            return new ScyllaDbDoc(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    connection,
+                    keyspace,
+                    keyspaceCql);
+        }
     }
 }

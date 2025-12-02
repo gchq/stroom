@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Singleton
-class ImportExportActionHandlersImpl implements ImportExportActionHandlers {
+public class ImportExportActionHandlersImpl implements ImportExportActionHandlers {
 
     private final Provider<Set<ImportExportActionHandler>> importExportActionHandlerProviders;
     private volatile Map<String, ImportExportActionHandler> handlers;

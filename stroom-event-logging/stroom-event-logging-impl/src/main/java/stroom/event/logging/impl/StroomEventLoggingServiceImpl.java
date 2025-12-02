@@ -90,9 +90,6 @@ import java.util.stream.Stream;
 @Singleton
 public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService implements StroomEventLoggingService {
 
-    /**
-     * Logger - should not be used for event logs
-     */
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomEventLoggingServiceImpl.class);
 
     private static final String PROCESSING_USER_ID = "INTERNAL_PROCESSING_USER";

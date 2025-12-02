@@ -17,6 +17,7 @@
 
 package stroom.data.retention.impl;
 
+import stroom.data.retention.api.DataRetentionRulesProvider;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.docref.DocRef;
@@ -46,7 +47,7 @@ import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 @Singleton
-class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
+class DataRetentionRulesServiceImpl implements DataRetentionRulesService, DataRetentionRulesProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataRetentionRulesServiceImpl.class);
     private static final String POLICY_NAME = "Data Retention";
@@ -61,7 +62,7 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
         this.securityContext = securityContext;
         final DocumentSerialiser2<DataRetentionRules> serialiser = serialiser2Factory.createSerialiser(
                 DataRetentionRules.class);
-        this.store = storeFactory.createStore(serialiser, DataRetentionRules.TYPE, DataRetentionRules.class);
+        this.store = storeFactory.createStore(serialiser, DataRetentionRules.TYPE, DataRetentionRules::builder);
     }
 
     ////////////////////////////////////////////////////////////////////////

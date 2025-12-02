@@ -438,6 +438,28 @@ paths:
       summary: Tests the email template using an example detection event.
       tags:
       - Queries
+  /analyticRule/v1/validate:
+    post:
+      operationId: validateAnalyticRule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyticRuleDoc"
+        description: doc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Message"
+          description: default response
+      summary: Validates an analytic rule doc
+      tags:
+      - Queries
   /analyticRule/v1/{uuid}:
     get:
       operationId: fetchAnalyticRule
@@ -560,26 +582,6 @@ paths:
                 type: boolean
           description: default response
       summary: Change an annotation entry
-      tags:
-      - Annotations
-  /annotation/v1/changeDocumentPermissions:
-    post:
-      operationId: changeDocumentPermissions
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/SingleDocumentPermissionChangeRequest"
-        description: request
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: boolean
-          description: default response
-      summary: Change document permissions
       tags:
       - Annotations
   /annotation/v1/create:
@@ -1345,84 +1347,6 @@ paths:
       summary: Lists caches
       tags:
       - Caches
-  /cluster/lock/v1/keepALive/{nodeName}:
-    put:
-      operationId: keepClusterLockAlive
-      parameters:
-      - in: path
-        name: nodeName
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ClusterLockKey"
-        description: key
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: boolean
-          description: default response
-      summary: Keep a lock alive
-      tags:
-      - Cluster lock
-  /cluster/lock/v1/release/{nodeName}:
-    put:
-      operationId: releaseClusterLock
-      parameters:
-      - in: path
-        name: nodeName
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ClusterLockKey"
-        description: key
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: boolean
-          description: default response
-      summary: Release a lock
-      tags:
-      - Cluster lock
-  /cluster/lock/v1/try/{nodeName}:
-    put:
-      operationId: tryClusterLock
-      parameters:
-      - in: path
-        name: nodeName
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ClusterLockKey"
-        description: key
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: boolean
-          description: default response
-      summary: Try to lock
-      tags:
-      - Cluster lock
   /config/v1:
     post:
       operationId: createConfigProperty
@@ -1698,6 +1622,269 @@ paths:
       summary: Get the list of fields for use in the match expression.
       tags:
       - Content Templates
+  /contentstore/checkContentUpgradeAvailable:
+    post:
+      operationId: checkContentUpgradeAvailable
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentStoreContentPack"
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentStoreValueResponseBoolean"
+          description: default response
+      summary: Checks if updated content is available
+      tags:
+      - ContentStoreContentPacks
+  /contentstore/create:
+    post:
+      operationId: createGitRepoFromContentPack
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentStoreCreateGitRepoRequest"
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentStoreResponse"
+          description: default response
+      summary: Creates a GitRepoDoc from a Content Pack
+      tags:
+      - ContentStoreContentPacks
+  /contentstore/exists:
+    post:
+      operationId: GitRepoDocExistsForContentPack
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentStoreContentPack"
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Checks to see if a GitRepoDoc exists for the Content Pack
+      tags:
+      - ContentStoreContentPacks
+  /contentstore/list:
+    post:
+      operationId: listContentStoreContentPacks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PageRequest"
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResultPageContentStoreContentPackWithDynamicState"
+          description: default response
+      summary: Lists Content Store Content Packs
+      tags:
+      - ContentStoreContentPacks
+  /contentstore/upgradeContentPack:
+    post:
+      operationId: upgradeContentPack
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentStoreContentPack"
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentStoreResponse"
+          description: default response
+      summary: Upgrades the content pack and its content
+      tags:
+      - ContentStoreContentPacks
+  /credentials/create:
+    post:
+      operationId: createCredential
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CredentialsCreateRequest"
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CredentialsResponse"
+          description: default response
+      summary: Creates the credential
+      tags:
+      - Credentials
+  /credentials/delete:
+    post:
+      operationId: deleteCredential
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CredentialsResponse"
+          description: default response
+      summary: Deletes the credentials and secret with the given UUID
+      tags:
+      - Credentials
+  /credentials/get:
+    post:
+      operationId: getCredentialsWithUuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CredentialsResponse"
+          description: default response
+      summary: "Returns the credentials with the given UUID, if it exists, or null\
+        \ if it does not exist"
+      tags:
+      - Credentials
+  /credentials/getSecret:
+    post:
+      operationId: getSecret
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CredentialsResponse"
+          description: default response
+      summary: Gets a secret from the database given the ID
+      tags:
+      - Credentials
+  /credentials/list:
+    post:
+      operationId: listCredentials
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PageRequest"
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResultPageCredentialsWithPerms"
+          description: default response
+      summary: Lists credentials
+      tags:
+      - Credentials
+  /credentials/store:
+    post:
+      operationId: storeCredential
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Credentials"
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CredentialsResponse"
+          description: default response
+      summary: Stores the credential
+      tags:
+      - Credentials
+  /credentials/storeSecret:
+    post:
+      operationId: storeSecret
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CredentialsSecret"
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CredentialsResponse"
+          description: default response
+      summary: Stores the secret in the database under the given ID
+      tags:
+      - Credentials
+  /dashboard/v1/askStroomAi:
+    post:
+      operationId: askStroomAi
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AskStroomAiRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AskStroomAiResponse"
+          description: default response
+      summary: Ask Stroom AI a question relating to the current search context
+      tags:
+      - Dashboards
+  /dashboard/v1/askStroomAi/{nodeName}:
+    post:
+      operationId: askStroomAi_1
+      parameters:
+      - in: path
+        name: nodeName
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AskStroomAiRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AskStroomAiResponse"
+          description: default response
+      summary: Ask Stroom AI a question relating to the current search context
+      tags:
+      - Dashboards
   /dashboard/v1/columnValues:
     post:
       operationId: getColumnValues
@@ -2378,6 +2565,24 @@ paths:
       summary: Delete duplicate check rows
       tags:
       - DuplicateCheck
+  /duplicateCheck/v1/fetchColumnNames:
+    post:
+      operationId: fetchColumnNames
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FetchColumnNamesResponse"
+          description: default response
+      summary: Fetch the column names from the dup check store for this analytic.
+      tags:
+      - DuplicateCheck
   /duplicateCheck/v1/find:
     post:
       operationId: findDuplicateCheckRows
@@ -2733,7 +2938,7 @@ paths:
       - Explorer (v2)
   /explorer/v2/changeDocumentPermissions:
     post:
-      operationId: changeDocumentPermissions_1
+      operationId: changeDocumentPermissions
       requestBody:
         content:
           application/json:
@@ -3228,6 +3433,25 @@ paths:
       summary: Fetch supported encodings
       tags:
       - Feeds
+  /feed/v1/getDocRefForName/{name}:
+    get:
+      operationId: getDocRefForName
+      parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocRef"
+          description: default response
+      summary: Fetch a feed DocRef for a feed name
+      tags:
+      - Feeds
   /feed/v1/{uuid}:
     get:
       operationId: fetchFeed
@@ -3625,6 +3849,26 @@ paths:
       summary: Updates a data volume group
       tags:
       - Data Volume Groups
+  /gitRepo/v1/areUpdatesAvailable:
+    post:
+      operationId: areUpdatesAvailable
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GitRepoDoc"
+        description: gitRepoDoc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GitRepoResponse"
+          description: default response
+      summary: Check if any content has changed
+      tags:
+      - GitRepos
   /gitRepo/v1/pullFromGit:
     post:
       operationId: pullFromGit
@@ -3681,7 +3925,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/GitRepoDoc"
           description: default response
-      summary: Fetch a GIT repo doc by its UUID
+      summary: Fetch a Git repo doc by its UUID
       tags:
       - GitRepos
     put:
@@ -3706,7 +3950,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/GitRepoDoc"
           description: default response
-      summary: Update a GIT repo doc
+      summary: Update a Git repo doc
       tags:
       - GitRepos
   /index/v2/addField:
@@ -4804,6 +5048,194 @@ paths:
       summary: Get a token from an access code or refresh token
       tags:
       - Authentication
+  /openAIModel/v1/validate:
+    post:
+      operationId: validateOpenAIModel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OpenAIModelDoc"
+        description: openAIModelDoc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenAIModelTestResponse"
+          description: default response
+      summary: Validate OpenAI model
+      tags:
+      - OpenAI Model
+  /openAIModel/v1/{uuid}:
+    get:
+      operationId: fetchOpenAIModel
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenAIModelDoc"
+          description: default response
+      summary: Fetch an OpenAI model doc by its UUID
+      tags:
+      - OpenAI Model
+    put:
+      operationId: updateOpenAIModel
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OpenAIModelDoc"
+        description: doc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenAIModelDoc"
+          description: default response
+      summary: Update an OpenAI model doc
+      tags:
+      - OpenAI Model
+  /pathways/v2/addPathway:
+    post:
+      operationId: addPathway
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddPathway"
+        description: change
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Add pathway
+      tags:
+      - Pathways
+  /pathways/v2/deletePathway:
+    delete:
+      operationId: deletePathway
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeletePathway"
+        description: change
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Delete pathway
+      tags:
+      - Pathways
+  /pathways/v2/findPathways:
+    post:
+      operationId: findPathways
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FindPathwayCriteria"
+        description: criteria
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PathwayResultPage"
+          description: default response
+      summary: Find pathways
+      tags:
+      - Pathways
+  /pathways/v2/updatePathway:
+    put:
+      operationId: updatePathway
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePathway"
+        description: change
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Update pathway
+      tags:
+      - Pathways
+  /pathways/v2/{uuid}:
+    get:
+      operationId: fetchPathways
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PathwaysDoc"
+          description: default response
+      summary: Fetch pathways doc by its UUID
+      tags:
+      - Pathways
+    put:
+      operationId: updatePathways
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PathwaysDoc"
+        description: doc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PathwaysDoc"
+          description: default response
+      summary: Update an pathways doc
+      tags:
+      - Pathways
   /permission/app/v1:
     get:
       operationId: getEffectiveAppPermissions
@@ -4877,6 +5309,26 @@ paths:
       summary: Get a detailed report of app permissions for the specified user
       tags:
       - Application Permissions
+  /permission/changeDocumentPermissions:
+    post:
+      operationId: changeDocumentPermissions_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SingleDocumentPermissionChangeRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Change document permissions
+      tags:
+      - PermissionChange
   /permission/changeEvent/v1/fireChange/{nodeName}:
     post:
       operationId: firePermissionChangeEvent
@@ -7670,6 +8122,82 @@ paths:
       summary: Update a text converter doc
       tags:
       - Text Converters
+  /traces/v1/getTrace:
+    post:
+      operationId: tracesGetTrace
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GetTraceRequest"
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trace"
+          description: default response
+      summary: Gets trace from a remote Plan B store.
+      tags:
+      - Traces Query
+  /traces/v1/getTraces:
+    post:
+      operationId: tracesGetTraces
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FindTraceCriteria"
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TracesResultPage"
+          description: default response
+      summary: Gets traces from a remote Plan B store.
+      tags:
+      - Traces Query
+  /traces/v2/findTrace:
+    post:
+      operationId: findTrace
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GetTraceRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trace"
+          description: default response
+      summary: Find trace
+      tags:
+      - Traces
+  /traces/v2/findTraces:
+    post:
+      operationId: findTraces
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FindTraceCriteria"
+        description: criteria
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResultPageTraceRoot"
+          description: default response
+      summary: Find traces
+      tags:
+      - Traces
   /userInfo/v1/{userUuid}:
     get:
       operationId: fetchUser
@@ -8247,6 +8775,7 @@ components:
           enum:
           - ADMINISTRATOR
           - ANNOTATIONS
+          - CREDENTIALS
           - MANAGE_CACHE_PERMISSION
           - VIEW_DATA_PERMISSION
           - VIEW_DATA_WITH_PIPELINE_PERMISSION
@@ -8504,6 +9033,13 @@ components:
           $ref: "#/components/schemas/DocRef"
         indexField:
           $ref: "#/components/schemas/IndexFieldImpl"
+    AddPathway:
+      type: object
+      properties:
+        docRef:
+          $ref: "#/components/schemas/DocRef"
+        pathway:
+          $ref: "#/components/schemas/Pathway"
     AddRemoveTagsRequest:
       type: object
       properties:
@@ -8839,6 +9375,33 @@ components:
           - COLLECTION
         uuid:
           type: string
+    AnyBoolean:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/ConstraintValue"
+    AnyTypeValue:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/ConstraintValue"
+    AnyValue:
+      type: object
+      properties:
+        arrayValue:
+          $ref: "#/components/schemas/ArrayValue"
+        boolValue:
+          type: boolean
+        bytesValue:
+          type: string
+        doubleValue:
+          type: number
+          format: double
+        intValue:
+          type: integer
+          format: int32
+        kvlistValue:
+          $ref: "#/components/schemas/KeyValueList"
+        stringValue:
+          type: string
     ApiKey:
       type: object
       properties:
@@ -8904,6 +9467,7 @@ components:
               enum:
               - ADMINISTRATOR
               - ANNOTATIONS
+              - CREDENTIALS
               - MANAGE_CACHE_PERMISSION
               - VIEW_DATA_PERMISSION
               - VIEW_DATA_WITH_PIPELINE_PERMISSION
@@ -8951,6 +9515,7 @@ components:
             enum:
             - ADMINISTRATOR
             - ANNOTATIONS
+            - CREDENTIALS
             - MANAGE_CACHE_PERMISSION
             - VIEW_DATA_PERMISSION
             - VIEW_DATA_WITH_PIPELINE_PERMISSION
@@ -8988,6 +9553,7 @@ components:
             enum:
             - ADMINISTRATOR
             - ANNOTATIONS
+            - CREDENTIALS
             - MANAGE_CACHE_PERMISSION
             - VIEW_DATA_PERMISSION
             - VIEW_DATA_WITH_PIPELINE_PERMISSION
@@ -9030,6 +9596,7 @@ components:
             enum:
             - ADMINISTRATOR
             - ANNOTATIONS
+            - CREDENTIALS
             - MANAGE_CACHE_PERMISSION
             - VIEW_DATA_PERMISSION
             - VIEW_DATA_WITH_PIPELINE_PERMISSION
@@ -9098,6 +9665,25 @@ components:
           type: boolean
         varargs:
           type: boolean
+    ArrayValue:
+      type: object
+      properties:
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnyValue"
+    AskStroomAiRequest:
+      type: object
+      properties:
+        message:
+          type: string
+        searchRequest:
+          $ref: "#/components/schemas/DashboardSearchRequest"
+    AskStroomAiResponse:
+      type: object
+      properties:
+        message:
+          type: string
     AssignTasksRequest:
       type: object
       properties:
@@ -9308,6 +9894,14 @@ components:
           - DISTRIBUTED
         schedule:
           $ref: "#/components/schemas/Schedule"
+    BooleanValue:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/ConstraintValue"
+      - type: object
+        properties:
+          value:
+            type: boolean
     BuildInfo:
       type: object
       properties:
@@ -9484,16 +10078,6 @@ components:
         clientId:
           type: string
         clientSecret:
-          type: string
-    ClusterLockKey:
-      type: object
-      properties:
-        creationTime:
-          type: integer
-          format: int64
-        name:
-          type: string
-        nodeName:
           type: string
     ClusterNodeInfo:
       type: object
@@ -9830,6 +10414,107 @@ components:
           type: string
         valid:
           type: boolean
+    Constraint:
+      type: object
+      properties:
+        name:
+          type: string
+        optional:
+          type: boolean
+        value:
+          $ref: "#/components/schemas/ConstraintValue"
+    ConstraintValue:
+      type: object
+      discriminator:
+        propertyName: type
+      properties:
+        type:
+          type: string
+      required:
+      - type
+    ContentStoreContentPack:
+      type: object
+      properties:
+        contentStoreMetadata:
+          $ref: "#/components/schemas/ContentStoreMetadata"
+        details:
+          type: string
+        gitBranch:
+          type: string
+        gitCommit:
+          type: string
+        gitNeedsAuth:
+          type: boolean
+        gitPath:
+          type: string
+        gitRepoName:
+          type: string
+        gitUrl:
+          type: string
+        iconUrl:
+          type: string
+        id:
+          type: string
+        licenseName:
+          type: string
+        licenseUrl:
+          type: string
+        stroomPath:
+          type: string
+        uiName:
+          type: string
+    ContentStoreContentPackWithDynamicState:
+      type: object
+      properties:
+        contentPack:
+          $ref: "#/components/schemas/ContentStoreContentPack"
+        installationStatus:
+          type: string
+          enum:
+          - "-"
+          - Installed
+          - Pack upgradable
+          - Content upgradable
+    ContentStoreCreateGitRepoRequest:
+      type: object
+      properties:
+        contentPack:
+          $ref: "#/components/schemas/ContentStoreContentPack"
+        credentialsId:
+          type: string
+    ContentStoreMetadata:
+      type: object
+      properties:
+        authContact:
+          type: string
+        ownerDescription:
+          type: string
+        ownerId:
+          type: string
+        ownerName:
+          type: string
+        ownerUrl:
+          type: string
+    ContentStoreResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: string
+          enum:
+          - OK
+          - GENERAL_ERR
+          - ALREADY_EXISTS
+    ContentStoreValueResponseBoolean:
+      type: object
+      properties:
+        message:
+          type: string
+        ok:
+          type: boolean
+        value:
+          type: boolean
     ContentTemplate:
       type: object
       properties:
@@ -10014,6 +10699,8 @@ components:
           type: boolean
         enabled:
           type: boolean
+        export:
+          type: boolean
         maxMetaCreateTimeMs:
           type: integer
           format: int64
@@ -10039,6 +10726,71 @@ components:
           type: boolean
         runAsUser:
           $ref: "#/components/schemas/UserRef"
+    Credentials:
+      type: object
+      properties:
+        credsExpire:
+          type: boolean
+        expires:
+          type: integer
+          format: int64
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+          - USERNAME_PASSWORD
+          - ACCESS_TOKEN
+          - PRIVATE_CERT
+        uuid:
+          type: string
+    CredentialsCreateRequest:
+      type: object
+      properties:
+        credentials:
+          $ref: "#/components/schemas/Credentials"
+        secret:
+          $ref: "#/components/schemas/CredentialsSecret"
+    CredentialsResponse:
+      type: object
+      properties:
+        credentialsWithPerms:
+          $ref: "#/components/schemas/CredentialsWithPerms"
+        message:
+          type: string
+        secret:
+          $ref: "#/components/schemas/CredentialsSecret"
+        status:
+          type: string
+          enum:
+          - OK
+          - GENERAL_ERR
+    CredentialsSecret:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        passphrase:
+          type: string
+        password:
+          type: string
+        privateKey:
+          type: string
+        serverPublicKey:
+          type: string
+        username:
+          type: string
+        uuid:
+          type: string
+    CredentialsWithPerms:
+      type: object
+      properties:
+        credentials:
+          $ref: "#/components/schemas/Credentials"
+        delete:
+          type: boolean
+        edit:
+          type: boolean
     CriteriaFieldSort:
       type: object
       properties:
@@ -10423,6 +11175,13 @@ components:
           type: string
         indexDocRef:
           $ref: "#/components/schemas/DocRef"
+    DeletePathway:
+      type: object
+      properties:
+        docRef:
+          $ref: "#/components/schemas/DocRef"
+        name:
+          type: string
     Dependency:
       type: object
       properties:
@@ -10596,6 +11355,7 @@ components:
           - ADD_ABOVE
           - ADD_BELOW
           - ADD_MULTIPLE
+          - AI
           - ALERT
           - ALERT_SIMPLE
           - ARROW_DOWN
@@ -10614,6 +11374,7 @@ components:
           - CODE
           - COLLAPSE_ALL
           - COLLAPSE_UP
+          - CONTENT_STORE
           - COPY
           - DATABASE
           - DELETE
@@ -10631,8 +11392,11 @@ components:
           - DOCUMENT_FEED
           - DOCUMENT_FOLDER
           - DOCUMENT_GIT_REPO
+          - DOCUMENT_GIT_REPO_FOLDER
           - DOCUMENT_INDEX
           - DOCUMENT_KAFKA_CONFIG
+          - DOCUMENT_OPEN_AI
+          - DOCUMENT_PATHWAYS
           - DOCUMENT_PIPELINE
           - DOCUMENT_PLAN_B
           - DOCUMENT_QUERY
@@ -10650,6 +11414,7 @@ components:
           - DOCUMENT_STROOM_STATS_STORE
           - DOCUMENT_SYSTEM
           - DOCUMENT_TEXT_CONVERTER
+          - DOCUMENT_TRACES
           - DOCUMENT_VIEW
           - DOCUMENT_VISUALISATION
           - DOCUMENT_XMLSCHEMA
@@ -10705,6 +11470,7 @@ components:
           - INSERT
           - JOBS
           - KEY
+          - KEY_BLUE
           - LINK
           - LOCATE
           - LOCKED
@@ -10721,6 +11487,9 @@ components:
           - OPEN
           - OPERATOR
           - PASSWORD
+          - PATHWAYS_CHOICE
+          - PATHWAYS_NODE
+          - PATHWAYS_SEQUENCE
           - PAUSE
           - PEN
           - PIPELINE_ELASTIC_INDEX
@@ -10904,6 +11673,39 @@ components:
           type: string
         version:
           type: string
+    DoubleRange:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/ConstraintValue"
+      - type: object
+        properties:
+          max:
+            type: number
+            format: double
+          min:
+            type: number
+            format: double
+    DoubleSet:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/ConstraintValue"
+      - type: object
+        properties:
+          set:
+            type: array
+            items:
+              type: number
+              format: double
+            uniqueItems: true
+    DoubleValue:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/ConstraintValue"
+      - type: object
+        properties:
+          value:
+            type: number
+            format: double
     DownloadQueryResultsRequest:
       type: object
       properties:
@@ -11017,11 +11819,14 @@ components:
           type: string
         caCertificate:
           type: string
+        connectionTimeoutMillis:
+          type: integer
+          format: int32
         connectionUrls:
           type: array
           items:
             type: string
-        socketTimeoutMillis:
+        responseTimeoutMillis:
           type: integer
           format: int32
         useAuthentication:
@@ -11048,8 +11853,13 @@ components:
           type: string
         name:
           type: string
-        retentionExpression:
-          $ref: "#/components/schemas/ExpressionOperator"
+        rerankModelRef:
+          $ref: "#/components/schemas/DocRef"
+        rerankScoreMinimum:
+          type: number
+          format: float
+        rerankTextFieldSuffix:
+          type: string
         searchScrollSize:
           type: integer
           format: int32
@@ -11067,6 +11877,8 @@ components:
           type: string
         uuid:
           type: string
+        vectorGenerationModelRef:
+          $ref: "#/components/schemas/DocRef"
         version:
           type: string
     ElasticIndexField:
@@ -11091,6 +11903,7 @@ components:
           - IPV4_ADDRESS
           - DOC_REF
           - USER_REF
+          - DENSE_VECTOR
         fldName:
           type: string
         fldType:
@@ -11108,6 +11921,7 @@ components:
           - IPV4_ADDRESS
           - DOC_REF
           - USER_REF
+          - DENSE_VECTOR
         indexed:
           type: boolean
         nativeType:
@@ -11767,6 +12581,15 @@ components:
             $ref: "#/components/schemas/CriteriaFieldSort"
         userRef:
           $ref: "#/components/schemas/UserRef"
+    FetchColumnNamesResponse:
+      type: object
+      properties:
+        columnNames:
+          type: array
+          items:
+            type: string
+        storeInitialised:
+          type: boolean
     FetchDataRequest:
       type: object
       properties:
@@ -12225,6 +13048,24 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CriteriaFieldSort"
+    FindPathwayCriteria:
+      type: object
+      properties:
+        dataSourceRef:
+          $ref: "#/components/schemas/DocRef"
+        filter:
+          type: string
+        pageRequest:
+          $ref: "#/components/schemas/PageRequest"
+        queryable:
+          type: boolean
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: "#/components/schemas/CriteriaFieldSort"
     FindResult:
       type: object
       properties:
@@ -12318,6 +13159,26 @@ components:
       properties:
         criteria:
           $ref: "#/components/schemas/FindTaskProgressCriteria"
+    FindTraceCriteria:
+      type: object
+      properties:
+        dataSourceRef:
+          $ref: "#/components/schemas/DocRef"
+        filter:
+          type: string
+        pageRequest:
+          $ref: "#/components/schemas/PageRequest"
+        pathway:
+          $ref: "#/components/schemas/Pathway"
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: "#/components/schemas/CriteriaFieldSort"
+        temporalOrderingTolerance:
+          $ref: "#/components/schemas/SimpleDuration"
     FindUserCriteria:
       type: object
       properties:
@@ -12591,6 +13452,15 @@ components:
           format: int64
         scheduleRestriction:
           $ref: "#/components/schemas/ScheduleRestriction"
+    GetTraceRequest:
+      type: object
+      properties:
+        dataSourceRef:
+          $ref: "#/components/schemas/DocRef"
+        temporalOrderingTolerance:
+          $ref: "#/components/schemas/SimpleDuration"
+        traceId:
+          type: string
     GetUserRequest:
       type: object
       properties:
@@ -12609,16 +13479,22 @@ components:
           type: boolean
         branch:
           type: string
+        commit:
+          type: string
+        contentStoreContentPackId:
+          type: string
+        contentStoreMetadata:
+          $ref: "#/components/schemas/ContentStoreMetadata"
         createTimeMs:
           type: integer
           format: int64
         createUser:
           type: string
+        credentialsId:
+          type: string
         description:
           type: string
         name:
-          type: string
-        password:
           type: string
         path:
           type: string
@@ -12630,8 +13506,6 @@ components:
         updateUser:
           type: string
         url:
-          type: string
-        username:
           type: string
         uuid:
           type: string
@@ -12855,6 +13729,8 @@ components:
           - CREATE_CONFIRMATION
           - ACTION_CONFIRMATION
           - IGNORE_CONFIRMATION
+        mockEnvironment:
+          type: boolean
         rootDocRef:
           $ref: "#/components/schemas/DocRef"
         useImportFolders:
@@ -12942,6 +13818,7 @@ components:
           - IPV4_ADDRESS
           - DOC_REF
           - USER_REF
+          - DENSE_VECTOR
         indexed:
           type: boolean
         stored:
@@ -13089,6 +13966,39 @@ components:
           type: string
         validationRegex:
           type: string
+    IntegerRange:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/ConstraintValue"
+      - type: object
+        properties:
+          max:
+            type: integer
+            format: int32
+          min:
+            type: integer
+            format: int32
+    IntegerSet:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/ConstraintValue"
+      - type: object
+        properties:
+          set:
+            type: array
+            items:
+              type: integer
+              format: int32
+            uniqueItems: true
+    IntegerValue:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/ConstraintValue"
+      - type: object
+        properties:
+          value:
+            type: integer
+            format: int32
     InternalIdpPasswordPolicyConfig:
       type: object
       properties:
@@ -13251,6 +14161,13 @@ components:
             $ref: "#/components/schemas/Tag"
         val:
           $ref: "#/components/schemas/Val"
+    KeyValue:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          $ref: "#/components/schemas/AnyValue"
     KeyValueInputComponentSettings:
       type: object
       allOf:
@@ -13259,6 +14176,13 @@ components:
         properties:
           text:
             type: string
+    KeyValueList:
+      type: object
+      properties:
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/KeyValue"
     LayoutConfig:
       type: object
       discriminator:
@@ -13484,6 +14408,7 @@ components:
           - IPV4_ADDRESS
           - DOC_REF
           - USER_REF
+          - DENSE_VECTOR
         indexed:
           type: boolean
         stored:
@@ -13652,6 +14577,51 @@ components:
             format: int64
         change:
           $ref: "#/components/schemas/AbstractAnnotationChange"
+    NamePathKey:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/PathKey"
+      - type: object
+        properties:
+          name:
+            type: string
+    NamesPathKey:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/PathKey"
+      - type: object
+        properties:
+          names:
+            type: array
+            items:
+              type: string
+    NanoTime:
+      type: object
+      properties:
+        nanos:
+          type: integer
+          format: int32
+        seconds:
+          type: integer
+          format: int64
+    NanoTimeRange:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/ConstraintValue"
+      - type: object
+        properties:
+          max:
+            $ref: "#/components/schemas/NanoTime"
+          min:
+            $ref: "#/components/schemas/NanoTime"
+    NanoTimeValue:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/ConstraintValue"
+      - type: object
+        properties:
+          value:
+            $ref: "#/components/schemas/NanoTime"
     Node:
       type: object
       properties:
@@ -13856,9 +14826,45 @@ components:
           description: "The start offset for this sub-set of data, where zero is the\
             \ offset of the first record in the full result set"
           example: 0
-      required:
-      - length
-      - offset
+    OpenAIModelDoc:
+      type: object
+      properties:
+        apiKey:
+          type: string
+        baseUrl:
+          type: string
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        description:
+          type: string
+        maxContextWindowTokens:
+          type: integer
+          format: int32
+        modelId:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        uuid:
+          type: string
+        version:
+          type: string
+    OpenAIModelTestResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        ok:
+          type: boolean
     OverrideValueString:
       type: object
       properties:
@@ -13912,6 +14918,112 @@ components:
           enum:
           - OPTIONAL
           - MANDATORY
+    PathKey:
+      type: object
+      discriminator:
+        propertyName: type
+      properties:
+        type:
+          type: string
+      required:
+      - type
+    PathNode:
+      type: object
+      properties:
+        constraints:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/Constraint"
+        name:
+          type: string
+        path:
+          type: array
+          items:
+            type: string
+        targets:
+          type: array
+          items:
+            $ref: "#/components/schemas/PathNodeSequence"
+        uuid:
+          type: string
+    PathNodeSequence:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/PathNode"
+        pathKey:
+          $ref: "#/components/schemas/PathKey"
+        uuid:
+          type: string
+    Pathway:
+      type: object
+      properties:
+        createTime:
+          $ref: "#/components/schemas/NanoTime"
+        lastUsedTime:
+          $ref: "#/components/schemas/NanoTime"
+        name:
+          type: string
+        pathKey:
+          $ref: "#/components/schemas/PathKey"
+        root:
+          $ref: "#/components/schemas/PathNode"
+        updateTime:
+          $ref: "#/components/schemas/NanoTime"
+    PathwayResultPage:
+      type: object
+      properties:
+        pageResponse:
+          $ref: "#/components/schemas/PageResponse"
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/Pathway"
+    PathwaysDoc:
+      type: object
+      properties:
+        allowConstraintCreation:
+          type: boolean
+        allowConstraintMutation:
+          type: boolean
+        allowPathwayCreation:
+          type: boolean
+        allowPathwayMutation:
+          type: boolean
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        description:
+          type: string
+        infoFeed:
+          $ref: "#/components/schemas/DocRef"
+        name:
+          type: string
+        pathways:
+          type: array
+          items:
+            $ref: "#/components/schemas/Pathway"
+        processingNode:
+          type: string
+        temporalOrderingTolerance:
+          $ref: "#/components/schemas/SimpleDuration"
+        tracesDocRef:
+          $ref: "#/components/schemas/DocRef"
+        type:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        uuid:
+          type: string
+        version:
+          type: string
     PermissionChangeEvent:
       type: object
       properties:
@@ -13987,6 +15099,7 @@ components:
           - ADD_ABOVE
           - ADD_BELOW
           - ADD_MULTIPLE
+          - AI
           - ALERT
           - ALERT_SIMPLE
           - ARROW_DOWN
@@ -14005,6 +15118,7 @@ components:
           - CODE
           - COLLAPSE_ALL
           - COLLAPSE_UP
+          - CONTENT_STORE
           - COPY
           - DATABASE
           - DELETE
@@ -14022,8 +15136,11 @@ components:
           - DOCUMENT_FEED
           - DOCUMENT_FOLDER
           - DOCUMENT_GIT_REPO
+          - DOCUMENT_GIT_REPO_FOLDER
           - DOCUMENT_INDEX
           - DOCUMENT_KAFKA_CONFIG
+          - DOCUMENT_OPEN_AI
+          - DOCUMENT_PATHWAYS
           - DOCUMENT_PIPELINE
           - DOCUMENT_PLAN_B
           - DOCUMENT_QUERY
@@ -14041,6 +15158,7 @@ components:
           - DOCUMENT_STROOM_STATS_STORE
           - DOCUMENT_SYSTEM
           - DOCUMENT_TEXT_CONVERTER
+          - DOCUMENT_TRACES
           - DOCUMENT_VIEW
           - DOCUMENT_VISUALISATION
           - DOCUMENT_XMLSCHEMA
@@ -14096,6 +15214,7 @@ components:
           - INSERT
           - JOBS
           - KEY
+          - KEY_BLUE
           - LINK
           - LOCATE
           - LOCKED
@@ -14112,6 +15231,9 @@ components:
           - OPEN
           - OPERATOR
           - PASSWORD
+          - PATHWAYS_CHOICE
+          - PATHWAYS_NODE
+          - PATHWAYS_SEQUENCE
           - PAUSE
           - PEN
           - PIPELINE_ELASTIC_INDEX
@@ -14368,6 +15490,7 @@ components:
           - SESSION
           - HISTOGRAM
           - METRIC
+          - TRACE
         type:
           type: string
         updateTimeMs:
@@ -14484,6 +15607,8 @@ components:
         deleted:
           type: boolean
         enabled:
+          type: boolean
+        export:
           type: boolean
         id:
           type: integer
@@ -14879,6 +16004,7 @@ components:
           - "'=', '!='"
           - "'=', '!=', 'between', '>', '>=', '<', '<='"
           - "'=', '!=', 'in', 'in dictionary'"
+          - "'=', '!=', 'in', 'in dictionary'"
           - "'is', 'in folder'"
           - "'=', '!=', 'in', 'in dictionary'"
           - "'is', 'in folder', '=', '!=', 'in', 'in dictionary'"
@@ -14938,6 +16064,7 @@ components:
           - IPV4_ADDRESS
           - DOC_REF
           - USER_REF
+          - DENSE_VECTOR
         name:
           type: string
         queryable:
@@ -15341,6 +16468,14 @@ components:
       required:
       - loaderPipeline
       - referenceFeed
+    Regex:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/ConstraintValue"
+      - type: object
+        properties:
+          value:
+            type: string
     RemoveAllDocumentUserCreatePermissions:
       type: object
       allOf:
@@ -15590,6 +16725,26 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CompletionItem"
+    ResultPageContentStoreContentPackWithDynamicState:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: "#/components/schemas/PageResponse"
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContentStoreContentPackWithDynamicState"
+    ResultPageCredentialsWithPerms:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: "#/components/schemas/PageResponse"
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/CredentialsWithPerms"
     ResultPageCustomRollUpMask:
       type: object
       description: A page of results.
@@ -15840,6 +16995,16 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/StoredQuery"
+    ResultPageTraceRoot:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: "#/components/schemas/PageResponse"
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/TraceRoot"
     ResultPageUser:
       type: object
       description: A page of results.
@@ -16669,6 +17834,7 @@ components:
             enum:
             - ADMINISTRATOR
             - ANNOTATIONS
+            - CREDENTIALS
             - MANAGE_CACHE_PERMISSION
             - VIEW_DATA_PERMISSION
             - VIEW_DATA_WITH_PIPELINE_PERMISSION
@@ -16837,6 +18003,7 @@ components:
           - IPV4_ADDRESS
           - DOC_REF
           - USER_REF
+          - DENSE_VECTOR
         indexed:
           type: boolean
         multiValued:
@@ -16936,6 +18103,166 @@ components:
         recordIndex:
           type: integer
           format: int64
+    Span:
+      type: object
+      properties:
+        attributes:
+          type: array
+          items:
+            $ref: "#/components/schemas/KeyValue"
+        droppedAttributesCount:
+          type: integer
+          format: int32
+        droppedEventsCount:
+          type: integer
+          format: int32
+        droppedLinksCount:
+          type: integer
+          format: int32
+        endTimeUnixNano:
+          type: string
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/SpanEvent"
+        flags:
+          type: integer
+          format: int32
+        kind:
+          type: string
+          enum:
+          - SPAN_KIND_UNSPECIFIED
+          - SPAN_KIND_INTERNAL
+          - SPAN_KIND_SERVER
+          - SPAN_KIND_CLIENT
+          - SPAN_KIND_PRODUCER
+          - SPAN_KIND_CONSUMER
+        links:
+          type: array
+          items:
+            $ref: "#/components/schemas/SpanLink"
+        name:
+          type: string
+        parentSpanId:
+          type: string
+        spanId:
+          type: string
+        startTimeUnixNano:
+          type: string
+        status:
+          $ref: "#/components/schemas/SpanStatus"
+        traceId:
+          type: string
+        traceState:
+          type: string
+    SpanEvent:
+      type: object
+      properties:
+        attributes:
+          type: array
+          items:
+            $ref: "#/components/schemas/KeyValue"
+        droppedAttributesCount:
+          type: integer
+          format: int32
+        name:
+          type: string
+        timeUnixNano:
+          type: string
+    SpanKV:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/PlanBValue"
+      - type: object
+        properties:
+          key:
+            $ref: "#/components/schemas/SpanKey"
+          value:
+            $ref: "#/components/schemas/SpanValue"
+    SpanKey:
+      type: object
+      properties:
+        parentSpanId:
+          type: string
+        spanId:
+          type: string
+        traceId:
+          type: string
+    SpanLink:
+      type: object
+      properties:
+        attributes:
+          type: array
+          items:
+            $ref: "#/components/schemas/KeyValue"
+        droppedAttributesCount:
+          type: integer
+          format: int32
+        spanId:
+          type: string
+        traceId:
+          type: string
+        traceState:
+          type: string
+    SpanStatus:
+      type: object
+      properties:
+        code:
+          type: string
+          enum:
+          - STATUS_CODE_UNSET
+          - STATUS_CODE_OK
+          - STATUS_CODE_ERROR
+        message:
+          type: string
+    SpanValue:
+      type: object
+      properties:
+        attributes:
+          type: array
+          items:
+            $ref: "#/components/schemas/KeyValue"
+        droppedAttributesCount:
+          type: integer
+          format: int32
+        droppedEventsCount:
+          type: integer
+          format: int32
+        droppedLinksCount:
+          type: integer
+          format: int32
+        endTimeUnixNano:
+          type: string
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/SpanEvent"
+        flags:
+          type: integer
+          format: int32
+        insertTime:
+          $ref: "#/components/schemas/NanoTime"
+        kind:
+          type: string
+          enum:
+          - SPAN_KIND_UNSPECIFIED
+          - SPAN_KIND_INTERNAL
+          - SPAN_KIND_SERVER
+          - SPAN_KIND_CLIENT
+          - SPAN_KIND_PRODUCER
+          - SPAN_KIND_CONSUMER
+        links:
+          type: array
+          items:
+            $ref: "#/components/schemas/SpanLink"
+        name:
+          type: string
+        startTimeUnixNano:
+          type: string
+        status:
+          $ref: "#/components/schemas/SpanStatus"
+        traceState:
+          type: string
     SplashConfig:
       type: object
       properties:
@@ -17373,6 +18700,25 @@ components:
         offset:
           type: integer
           format: int32
+    StringSet:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/ConstraintValue"
+      - type: object
+        properties:
+          set:
+            type: array
+            items:
+              type: string
+            uniqueItems: true
+    StringValue:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/ConstraintValue"
+      - type: object
+        properties:
+          value:
+            type: string
     StringWrapper:
       type: object
       properties:
@@ -17916,6 +19262,10 @@ components:
           value:
             type: integer
             format: int64
+    TerminalPathKey:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/PathKey"
     TerminateTaskProgressRequest:
       type: object
       properties:
@@ -18092,6 +19442,50 @@ components:
           format: int64
         token_type:
           type: string
+    Trace:
+      type: object
+      properties:
+        parentSpanIdMap:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: "#/components/schemas/Span"
+        traceId:
+          type: string
+    TraceRoot:
+      type: object
+      properties:
+        depth:
+          type: integer
+          format: int32
+        endTime:
+          $ref: "#/components/schemas/NanoTime"
+        name:
+          type: string
+        services:
+          type: integer
+          format: int32
+        startTime:
+          $ref: "#/components/schemas/NanoTime"
+        totalSpans:
+          type: integer
+          format: int32
+        traceId:
+          type: string
+    TraceSettings:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractPlanBSettings"
+    TracesResultPage:
+      type: object
+      properties:
+        pageResponse:
+          $ref: "#/components/schemas/PageResponse"
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/TraceRoot"
     UiConfig:
       type: object
       properties:
@@ -18201,6 +19595,15 @@ components:
           $ref: "#/components/schemas/DocRef"
         indexField:
           $ref: "#/components/schemas/IndexFieldImpl"
+    UpdatePathway:
+      type: object
+      properties:
+        docRef:
+          $ref: "#/components/schemas/DocRef"
+        name:
+          type: string
+        pathway:
+          $ref: "#/components/schemas/Pathway"
     UpdateStatusRequest:
       type: object
       properties:

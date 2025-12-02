@@ -47,10 +47,11 @@ class TestIndexShardPoolImpl2 extends StroomUnitTest {
             final Indexer indexer = (key, document) -> {
             };
 
-            final LuceneIndexDoc index = new LuceneIndexDoc();
-            index.setUuid("1");
-            index.setFields(indexFields);
-            index.setMaxDocsPerShard(1000);
+            final LuceneIndexDoc index = LuceneIndexDoc.builder()
+                    .uuid("1")
+                    .fields(indexFields)
+                    .maxDocsPerShard(1000)
+                    .build();
 
             final IndexShardKey indexShardKey = IndexShardKey.createKey(index);
             final SimpleExecutor simpleExecutor = new SimpleExecutor(10);

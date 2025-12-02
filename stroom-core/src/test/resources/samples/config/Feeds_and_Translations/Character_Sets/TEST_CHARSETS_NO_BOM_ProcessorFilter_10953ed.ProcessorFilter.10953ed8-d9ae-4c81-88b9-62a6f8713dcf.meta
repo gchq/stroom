@@ -26,6 +26,7 @@
   "reprocess" : false,
   "enabled" : true,
   "deleted" : false,
+  "export" : false,
   "processorType" : "PIPELINE",
   "processorUuid" : "b0cdf6c6-9f8a-46e7-bef7-e85a2b467abe",
   "pipelineUuid" : "ea650200-8378-433e-82a5-894316a34114",

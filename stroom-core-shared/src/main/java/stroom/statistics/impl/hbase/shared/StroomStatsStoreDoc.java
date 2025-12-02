@@ -18,7 +18,7 @@ package stroom.statistics.impl.hbase.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 
@@ -53,7 +53,7 @@ import java.util.Set;
         "enabled",
         "config"})
 @JsonInclude(Include.NON_NULL)
-public class StroomStatsStoreDoc extends Doc {
+public class StroomStatsStoreDoc extends AbstractDoc {
 
     public static final String TYPE = "StroomStatsStore";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.STROOM_STATS_STORE_DOCUMENT_TYPE;
@@ -73,15 +73,8 @@ public class StroomStatsStoreDoc extends Doc {
     @JsonProperty
     private StroomStatsStoreEntityData config;
 
-    public StroomStatsStoreDoc() {
-        statisticType = StatisticType.COUNT;
-        rollUpType = StatisticRollUpType.NONE;
-        precision = DEFAULT_PRECISION_INTERVAL;
-    }
-
     @JsonCreator
-    public StroomStatsStoreDoc(@JsonProperty("type") final String type,
-                               @JsonProperty("uuid") final String uuid,
+    public StroomStatsStoreDoc(@JsonProperty("uuid") final String uuid,
                                @JsonProperty("name") final String name,
                                @JsonProperty("version") final String version,
                                @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -94,7 +87,7 @@ public class StroomStatsStoreDoc extends Doc {
                                @JsonProperty("precision") final EventStoreTimeIntervalEnum precision,
                                @JsonProperty("enabled") final boolean enabled,
                                @JsonProperty("config") final StroomStatsStoreEntityData config) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.statisticType = statisticType;
         this.rollUpType = rollUpType;
@@ -225,5 +218,89 @@ public class StroomStatsStoreDoc extends Doc {
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), description, statisticType, rollUpType, precision, enabled, config);
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder
+            extends AbstractDoc.AbstractBuilder<StroomStatsStoreDoc, StroomStatsStoreDoc.Builder> {
+
+        private String description;
+        private StatisticType statisticType = StatisticType.COUNT;
+        private StatisticRollUpType rollUpType = StatisticRollUpType.NONE;
+        private EventStoreTimeIntervalEnum precision = DEFAULT_PRECISION_INTERVAL;
+        private boolean enabled;
+        private StroomStatsStoreEntityData config;
+
+        private Builder() {
+        }
+
+        private Builder(final StroomStatsStoreDoc stroomStatsStoreDoc) {
+            super(stroomStatsStoreDoc);
+            this.description = stroomStatsStoreDoc.description;
+            this.statisticType = stroomStatsStoreDoc.statisticType;
+            this.rollUpType = stroomStatsStoreDoc.rollUpType;
+            this.precision = stroomStatsStoreDoc.precision;
+            this.enabled = stroomStatsStoreDoc.enabled;
+            this.config = stroomStatsStoreDoc.config;
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder statisticType(final StatisticType statisticType) {
+            this.statisticType = statisticType;
+            return self();
+        }
+
+        public Builder rollUpType(final StatisticRollUpType rollUpType) {
+            this.rollUpType = rollUpType;
+            return self();
+        }
+
+        public Builder precision(final EventStoreTimeIntervalEnum precision) {
+            this.precision = precision;
+            return self();
+        }
+
+        public Builder enabled(final boolean enabled) {
+            this.enabled = enabled;
+            return self();
+        }
+
+        public Builder config(final StroomStatsStoreEntityData config) {
+            this.config = config;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public StroomStatsStoreDoc build() {
+            return new StroomStatsStoreDoc(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    statisticType,
+                    rollUpType,
+                    precision,
+                    enabled,
+                    config);
+        }
     }
 }

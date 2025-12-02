@@ -19,7 +19,7 @@ package stroom.index.shared;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 
@@ -72,7 +72,7 @@ import java.util.Objects;
         "volumeGroupName",
         "defaultExtractionPipeline"})
 @JsonInclude(Include.NON_NULL)
-public class LuceneIndexDoc extends Doc {
+public class LuceneIndexDoc extends AbstractDoc {
 
     public static final int DEFAULT_MAX_DOCS_PER_SHARD = 1000000000;
     private static final int DEFAULT_SHARDS_PER_PARTITION = 1;
@@ -104,17 +104,8 @@ public class LuceneIndexDoc extends Doc {
     @JsonProperty
     private DocRef defaultExtractionPipeline;
 
-    public LuceneIndexDoc() {
-        maxDocsPerShard = DEFAULT_MAX_DOCS_PER_SHARD;
-        partitionBy = DEFAULT_PARTITION_BY;
-        partitionSize = DEFAULT_PARTITION_SIZE;
-        shardsPerPartition = DEFAULT_SHARDS_PER_PARTITION;
-        timeField = DEFAULT_TIME_FIELD;
-    }
-
     @JsonCreator
-    public LuceneIndexDoc(@JsonProperty("type") final String type,
-                          @JsonProperty("uuid") final String uuid,
+    public LuceneIndexDoc(@JsonProperty("uuid") final String uuid,
                           @JsonProperty("name") final String name,
                           @JsonProperty("version") final String version,
                           @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -131,7 +122,7 @@ public class LuceneIndexDoc extends Doc {
                           @JsonProperty("timeField") final String timeField,
                           @JsonProperty("volumeGroupName") final String volumeGroupName,
                           @JsonProperty("defaultExtractionPipeline") final DocRef defaultExtractionPipeline) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.maxDocsPerShard = maxDocsPerShard;
         this.partitionBy = partitionBy;
@@ -311,6 +302,122 @@ public class LuceneIndexDoc extends Doc {
         @Override
         public String getDisplayValue() {
             return displayValue;
+        }
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder
+            extends AbstractDoc.AbstractBuilder<LuceneIndexDoc, LuceneIndexDoc.Builder> {
+
+        private String description;
+        private Integer maxDocsPerShard = DEFAULT_MAX_DOCS_PER_SHARD;
+        private PartitionBy partitionBy = DEFAULT_PARTITION_BY;
+        private Integer partitionSize = DEFAULT_PARTITION_SIZE;
+        private Integer shardsPerPartition = DEFAULT_SHARDS_PER_PARTITION;
+        private Integer retentionDayAge;
+        private List<LuceneIndexField> fields;
+        private String timeField = DEFAULT_TIME_FIELD;
+        private String volumeGroupName;
+        private DocRef defaultExtractionPipeline;
+
+        private Builder() {
+        }
+
+        private Builder(final LuceneIndexDoc luceneIndexDoc) {
+            super(luceneIndexDoc);
+            this.description = luceneIndexDoc.description;
+            this.maxDocsPerShard = luceneIndexDoc.maxDocsPerShard;
+            this.partitionBy = luceneIndexDoc.partitionBy;
+            this.partitionSize = luceneIndexDoc.partitionSize;
+            this.shardsPerPartition = luceneIndexDoc.shardsPerPartition;
+            this.retentionDayAge = luceneIndexDoc.retentionDayAge;
+            this.fields = luceneIndexDoc.fields;
+            this.timeField = luceneIndexDoc.timeField;
+            this.volumeGroupName = luceneIndexDoc.volumeGroupName;
+            this.defaultExtractionPipeline = luceneIndexDoc.defaultExtractionPipeline;
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder maxDocsPerShard(final Integer maxDocsPerShard) {
+            this.maxDocsPerShard = maxDocsPerShard;
+            return self();
+        }
+
+        public Builder partitionBy(final PartitionBy partitionBy) {
+            this.partitionBy = partitionBy;
+            return self();
+        }
+
+        public Builder partitionSize(final Integer partitionSize) {
+            this.partitionSize = partitionSize;
+            return self();
+        }
+
+        public Builder shardsPerPartition(final Integer shardsPerPartition) {
+            this.shardsPerPartition = shardsPerPartition;
+            return self();
+        }
+
+        public Builder retentionDayAge(final Integer retentionDayAge) {
+            this.retentionDayAge = retentionDayAge;
+            return self();
+        }
+
+        public Builder fields(final List<LuceneIndexField> fields) {
+            this.fields = fields;
+            return self();
+        }
+
+        public Builder timeField(final String timeField) {
+            this.timeField = timeField;
+            return self();
+        }
+
+        public Builder volumeGroupName(final String volumeGroupName) {
+            this.volumeGroupName = volumeGroupName;
+            return self();
+        }
+
+        public Builder defaultExtractionPipeline(final DocRef defaultExtractionPipeline) {
+            this.defaultExtractionPipeline = defaultExtractionPipeline;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public LuceneIndexDoc build() {
+            return new LuceneIndexDoc(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    maxDocsPerShard,
+                    partitionBy,
+                    partitionSize,
+                    shardsPerPartition,
+                    retentionDayAge,
+                    fields,
+                    timeField,
+                    volumeGroupName,
+                    defaultExtractionPipeline);
         }
     }
 }

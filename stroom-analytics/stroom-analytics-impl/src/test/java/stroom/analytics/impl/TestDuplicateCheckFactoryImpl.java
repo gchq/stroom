@@ -142,16 +142,16 @@ class TestDuplicateCheckFactoryImpl {
         final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
         final String analyticRuleUuid = "test";
         final AnalyticRuleDoc analytic = createAnalytic(analyticRuleUuid);
-        assertThat(duplicateCheckFactory.fetchColumnNames(analytic))
+        assertThat(duplicateCheckFactory.fetchColumnNames(analytic.getUuid()))
                 .isEmpty();
 
         try (final DuplicateCheck ignored = createDuplicateCheck(duplicateCheckFactory, "test")) {
-            assertThat(duplicateCheckFactory.fetchColumnNames(analytic).get())
+            assertThat(duplicateCheckFactory.fetchColumnNames(analytic.getUuid()).get())
                     .containsExactly("test");
         }
 
         // Now removed from the pool
-        assertThat(duplicateCheckFactory.fetchColumnNames(analytic).get())
+        assertThat(duplicateCheckFactory.fetchColumnNames(analytic.getUuid()).get())
                 .containsExactly("test");
     }
 

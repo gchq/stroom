@@ -38,6 +38,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.UUID;
 
 @ExtendWith(GuiceExtension.class)
 @IncludeModule(UriFactoryModule.class)
@@ -71,6 +72,7 @@ class TestRepeatedTableBuilderAnalytics extends AbstractAnalyticsTest {
 
         // Create the rule.
         final AnalyticRuleDoc analyticRuleDoc = AnalyticRuleDoc.builder()
+                .uuid(UUID.randomUUID().toString())
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
                 .analyticProcessType(AnalyticProcessType.TABLE_BUILDER)

@@ -34,7 +34,6 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
-import stroom.security.shared.SingleDocumentPermissionChangeRequest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
@@ -219,11 +218,6 @@ class AnnotationResourceImpl implements AnnotationResource {
     @Override
     public List<EventId> getLinkedEvents(final DocRef annotationRef) {
         return annotationServiceProvider.get().getLinkedEvents(annotationRef);
-    }
-
-    @Override
-    public Boolean changeDocumentPermissions(final SingleDocumentPermissionChangeRequest request) {
-        return annotationServiceProvider.get().changeDocumentPermissions(request);
     }
 
     @Override

@@ -95,16 +95,11 @@ public class AnalyticsPlugin extends DocumentPlugin<AnalyticRuleDoc> {
                         resource.validate(document))
                 .onSuccess(messages -> {
                     if (NullSafe.hasItems(messages)) {
-
-                        final SafeHtml safeHtml;
-                        if (messages.size() == 1) {
-                            safeHtml = SafeHtmlUtil.toParagraphs(messages.get(0).getMessage());
-                        } else {
-                            final HtmlBuilder htmlBuilder = HtmlBuilder.builder();
-                            messages.forEach(message ->
-                                    htmlBuilder.para(message.getMessage()));
-                            safeHtml = htmlBuilder.toSafeHtml();
-                        }
+                        final HtmlBuilder htmlBuilder = HtmlBuilder.builder();
+                        messages.forEach(message ->
+                                htmlBuilder.append(SafeHtmlUtil.toParagraphs(message.getMessage())));
+                        htmlBuilder.para(aBuilder -> aBuilder.append("Do you wish to continue?"));
+                        final SafeHtml safeHtml = htmlBuilder.toSafeHtml();
                         ConfirmEvent.fire(this, safeHtml, ok -> {
                             if (ok) {
                                 doSave(document, resultConsumer, errorHandler, taskMonitorFactory);

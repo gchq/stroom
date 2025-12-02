@@ -20,7 +20,6 @@ import stroom.item.client.SelectionBox;
 import stroom.planb.shared.RangeType;
 import stroom.planb.shared.TemporalPrecision;
 import stroom.planb.shared.TemporalRangeKeySchema;
-import stroom.util.shared.NullSafe;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -44,9 +43,8 @@ public class TemporalRangeKeySchemaSettingsWidget
     public TemporalRangeKeySchemaSettingsWidget(final Binder binder) {
         widget = binder.createAndBindUi(this);
         rangeType.addItems(RangeType.ORDERED_LIST);
-        rangeType.setValue(TemporalRangeKeySchema.DEFAULT_RANGE_TYPE);
         temporalPrecision.addItems(TemporalPrecision.ORDERED_LIST);
-        temporalPrecision.setValue(TemporalRangeKeySchema.DEFAULT_TEMPORAL_PRECISION);
+        setKeySchema(new TemporalRangeKeySchema.Builder().build());
     }
 
     @Override
@@ -56,15 +54,17 @@ public class TemporalRangeKeySchemaSettingsWidget
 
     @Override
     public TemporalRangeKeySchema getKeySchema() {
-        return new TemporalRangeKeySchema(rangeType.getValue(), temporalPrecision.getValue());
+        return new TemporalRangeKeySchema.Builder()
+                .rangeType(rangeType.getValue())
+                .temporalPrecision(temporalPrecision.getValue())
+                .build();
     }
 
     @Override
     public void setKeySchema(final TemporalRangeKeySchema keySchema) {
-        rangeType.setValue(NullSafe.getOrElse(keySchema,
-                TemporalRangeKeySchema::getRangeType, TemporalRangeKeySchema.DEFAULT_RANGE_TYPE));
-        temporalPrecision.setValue(NullSafe.getOrElse(keySchema,
-                TemporalRangeKeySchema::getTemporalPrecision, TemporalRangeKeySchema.DEFAULT_TEMPORAL_PRECISION));
+        final TemporalRangeKeySchema schema = new TemporalRangeKeySchema.Builder(keySchema).build();
+        rangeType.setValue(schema.getRangeType());
+        temporalPrecision.setValue(schema.getTemporalPrecision());
     }
 
     public void onReadOnly(final boolean readOnly) {

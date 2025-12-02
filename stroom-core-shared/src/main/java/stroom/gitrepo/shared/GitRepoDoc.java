@@ -16,9 +16,10 @@
 
 package stroom.gitrepo.shared;
 
+import stroom.contentstore.shared.ContentStoreMetadata;
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 
@@ -42,18 +43,37 @@ import java.util.Objects;
         "createUser",
         "updateUser",
         "description",
+        "contentStoreMeta",
+        "contentStoreContentPackId",
         "url",
         "username",
         "password",
         "branch",
         "path",
+        "commit",
         "autoPush"
 })
 @JsonInclude(Include.NON_NULL)
-public class GitRepoDoc extends Doc {
+public class GitRepoDoc extends AbstractDoc {
 
     public static final String TYPE = "GitRepo";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.GIT_REPO_DOCUMENT_TYPE;
+
+    /**
+     * If this is from a content store then this holds
+     * the metadata about that content store. Otherwise
+     * contentStoreMeta is null.
+     */
+    @JsonProperty
+    private ContentStoreMetadata contentStoreMetadata;
+
+    /**
+     * If this is from a content store then this holds
+     * the ID of this content pack. Otherwise contentStoreContentPackId
+     * is null.
+     */
+    @JsonProperty
+    private String contentStoreContentPackId;
 
     @JsonProperty
     private String description = "";
@@ -62,10 +82,7 @@ public class GitRepoDoc extends Doc {
     private String url = "";
 
     @JsonProperty
-    private String username = "";
-
-    @JsonProperty
-    private String password = "";
+    private String credentialsId = "";
 
     @JsonProperty
     private String branch = "";
@@ -74,18 +91,13 @@ public class GitRepoDoc extends Doc {
     private String path = "";
 
     @JsonProperty
+    private String commit = "";
+
+    @JsonProperty
     private Boolean autoPush = Boolean.FALSE;
 
-    /**
-     * No-args constructor; needed by some code.
-     */
-    public GitRepoDoc() {
-        // No code
-    }
-
     @JsonCreator
-    public GitRepoDoc(@JsonProperty("type") final String type,
-                      @JsonProperty("uuid") final String uuid,
+    public GitRepoDoc(@JsonProperty("uuid") final String uuid,
                       @JsonProperty("name") final String name,
                       @JsonProperty("version") final String version,
                       @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -93,38 +105,44 @@ public class GitRepoDoc extends Doc {
                       @JsonProperty("createUser") final String createUser,
                       @JsonProperty("updateUser") final String updateUser,
                       @JsonProperty("description") final String description,
+                      @JsonProperty("contentStoreMetadata") final ContentStoreMetadata contentStoreMetadata,
+                      @JsonProperty("contentStoreContentPackId") final String contentStoreContentPackId,
                       @JsonProperty("url") final String url,
-                      @JsonProperty("username") final String username,
-                      @JsonProperty("password") final String password,
+                      @JsonProperty("credentialsId") final String credentialsId,
                       @JsonProperty("branch") final String branch,
                       @JsonProperty("path") final String path,
+                      @JsonProperty("commit") final String commit,
                       @JsonProperty("autoPush") final Boolean autoPush) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
+
+        // Content Pack stuff, if any
+        this.contentStoreMetadata = contentStoreMetadata;
+        this.contentStoreContentPackId = contentStoreContentPackId;
 
         // Git settings
         this.url = url;
-        this.username = username;
-        this.password = password;
+        this.credentialsId = credentialsId;
         this.branch = branch;
         this.path = path;
+        this.commit = commit;
         this.autoPush = autoPush;
 
         // Make sure none of the settings are null
         if (this.url == null) {
             this.url = "";
         }
-        if (this.username == null) {
-            this.username = "";
-        }
-        if (this.password == null) {
-            this.password = "";
+        if (this.credentialsId == null) {
+            this.credentialsId = "";
         }
         if (this.branch == null) {
             this.branch = "";
         }
         if (this.path == null) {
             this.path = "";
+        }
+        if (this.commit == null) {
+            this.commit = "";
         }
         if (this.autoPush == null) {
             this.autoPush = Boolean.FALSE;
@@ -157,18 +175,28 @@ public class GitRepoDoc extends Doc {
         }
         final GitRepoDoc that = (GitRepoDoc) o;
         return Objects.equals(description, that.description)
+               && Objects.equals(contentStoreMetadata, that.contentStoreMetadata)
+               && Objects.equals(contentStoreContentPackId, that.contentStoreContentPackId)
                && Objects.equals(url, that.url)
-               && Objects.equals(username, that.username)
-               && Objects.equals(password, that.password)
+               && Objects.equals(credentialsId, that.credentialsId)
                && Objects.equals(branch, that.branch)
                && Objects.equals(path, that.path)
+               && Objects.equals(commit, that.commit)
                && Objects.equals(autoPush, that.autoPush);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(),
-                description, url, username, password, branch, path, autoPush);
+                description,
+                contentStoreMetadata,
+                contentStoreContentPackId,
+                url,
+                credentialsId,
+                branch,
+                path,
+                commit,
+                autoPush);
     }
 
     public String getDescription() {
@@ -179,6 +207,40 @@ public class GitRepoDoc extends Doc {
         this.description = description;
     }
 
+    /**
+     * @return The metadata associated with the content store, if this is a content pack.
+     * If not a content pack then this returns null.
+     */
+    public ContentStoreMetadata getContentStoreMetadata() {
+        return this.contentStoreMetadata;
+    }
+
+    /**
+     * Sets the metadata associated with the content store. Set to null if not
+     * a content store.
+     */
+    public void setContentStoreMetadata(final ContentStoreMetadata meta) {
+        this.contentStoreMetadata = meta;
+    }
+
+    /**
+     * @return the ID associated with the content pack this was derived
+     * from, or null if not derived from a content pack.
+     */
+    public String getContentStoreContentPackId() {
+        return this.contentStoreContentPackId;
+    }
+
+    /**
+     * Sets the ID associated with the content pack. Set to null if not
+     * derived from a content store content pack.
+     *
+     * @param id The Content Pack ID.
+     */
+    public void setContentStoreContentPackId(final String id) {
+        this.contentStoreContentPackId = id;
+    }
+
     public String getUrl() {
         return this.url;
     }
@@ -187,20 +249,19 @@ public class GitRepoDoc extends Doc {
         this.url = url;
     }
 
-    public String getUsername() {
-        return username;
+    public String getCredentialsId() {
+        return credentialsId;
     }
 
-    public void setUsername(final String username) {
-        this.username = username;
+    public void setCredentialsId(final String id) {
+        this.credentialsId = id;
     }
 
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(final String password) {
-        this.password = password;
+    /**
+     * @return true if this GitRepoDoc needs credentials to push to Git. false if not.
+     */
+    public boolean needsCredentials() {
+        return credentialsId != null && !credentialsId.isBlank();
     }
 
     public String getBranch() {
@@ -217,6 +278,14 @@ public class GitRepoDoc extends Doc {
 
     public void setPath(final String path) {
         this.path = path;
+    }
+
+    public String getCommit() {
+        return commit;
+    }
+
+    public void setCommit(final String commit) {
+        this.commit = commit;
     }
 
     public Boolean isAutoPush() {
@@ -240,10 +309,120 @@ public class GitRepoDoc extends Doc {
         return "GitRepoDoc: {\n  "
                + this.getName() + ",\n  "
                + description + ",\n  "
+               + contentStoreMetadata + ",\n"
+               + contentStoreContentPackId + ",\n"
                + url + ",\n  "
-               + username + ",\n  "
+               + credentialsId + ",\n  "
                + branch + "\n  "
                + path + "\n  "
+               + commit + "\n  "
                + autoPush + "\n}";
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder extends AbstractDoc.AbstractBuilder<GitRepoDoc, GitRepoDoc.Builder> {
+
+        private String description = "";
+        private ContentStoreMetadata contentStoreMetadata;
+        private String contentStoreContentPackId;
+        private String url = "";
+        private String credentialsId = "";
+        private String branch = "";
+        private String path = "";
+        private String commit = "";
+        private Boolean autoPush = Boolean.FALSE;
+
+        private Builder() {
+        }
+
+        private Builder(final GitRepoDoc gitRepoDoc) {
+            super(gitRepoDoc);
+            this.description = gitRepoDoc.description;
+            this.contentStoreMetadata = gitRepoDoc.contentStoreMetadata;
+            this.contentStoreContentPackId = gitRepoDoc.contentStoreContentPackId;
+            this.url = gitRepoDoc.url;
+            this.credentialsId = gitRepoDoc.credentialsId;
+            this.branch = gitRepoDoc.branch;
+            this.path = gitRepoDoc.path;
+            this.commit = gitRepoDoc.commit;
+            this.autoPush = gitRepoDoc.autoPush;
+        }
+
+        public Builder contentStoreMetadata(final ContentStoreMetadata contentStoreMetadata) {
+            this.contentStoreMetadata = contentStoreMetadata;
+            return self();
+        }
+
+        public Builder contentStoreContentPackId(final String contentStoreContentPackId) {
+            this.contentStoreContentPackId = contentStoreContentPackId;
+            return self();
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder url(final String url) {
+            this.url = url;
+            return self();
+        }
+
+        public Builder credentialsId(final String credentialsId) {
+            this.credentialsId = credentialsId;
+            return self();
+        }
+
+        public Builder branch(final String branch) {
+            this.branch = branch;
+            return self();
+        }
+
+        public Builder path(final String path) {
+            this.path = path;
+            return self();
+        }
+
+        public Builder commit(final String commit) {
+            this.commit = commit;
+            return self();
+        }
+
+        public Builder autoPush(final Boolean autoPush) {
+            this.autoPush = autoPush;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public GitRepoDoc build() {
+            return new GitRepoDoc(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    contentStoreMetadata,
+                    contentStoreContentPackId,
+                    url,
+                    credentialsId,
+                    branch,
+                    path,
+                    commit,
+                    autoPush);
+        }
     }
 }

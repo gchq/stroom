@@ -48,6 +48,17 @@ public class DurationPicker extends Composite implements HasValue<SimpleDuration
         initWidget(flowPanel);
     }
 
+    public void smallTimeMode() {
+        time.setMin(0);
+        time.setMax(1000000);
+        timeUnit.clear();
+        timeUnit.addItem(TimeUnit.NANOSECONDS);
+        timeUnit.addItem(TimeUnit.MILLISECONDS);
+        timeUnit.addItem(TimeUnit.SECONDS);
+        timeUnit.addItem(TimeUnit.MINUTES);
+        timeUnit.addItem(TimeUnit.HOURS);
+    }
+
     @Override
     public void focus() {
         time.focus();

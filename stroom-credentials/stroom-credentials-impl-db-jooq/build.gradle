@@ -1,0 +1,66 @@
+apply plugin: 'nu.studer.jooq'
+
+ext.moduleName = 'stroom.credentials.impl.db.jooq'
+
+dependencies {
+    implementation libs.jakarta.annotation.api
+
+    implementation libs.jooq
+
+    runtimeOnly libs.mysql.connector.java
+    jooqGenerator libs.mysql.connector.java
+}
+
+// Configure jooq plugin to generate code
+jooq {
+    version = versions.jooq
+    edition = nu.studer.gradle.jooq.JooqEdition.OSS  // default (can be omitted)
+
+    configurations {
+        main {  // name of the jOOQ configuration
+
+            // Disable JOOQ code generation on build
+            generateSchemaSourceOnCompilation = false
+
+            generationTool {
+                logging = org.jooq.meta.jaxb.Logging.WARN
+                jdbc {
+                    driver = 'com.mysql.cj.jdbc.Driver'
+                    // Parsed from local.yml
+                    url = jdbcUrl
+                    user = 'stroomuser'
+                    password = 'stroompassword1'
+                }
+                generator {
+                    name = 'org.jooq.codegen.JavaGenerator'
+                    database {
+                        name = 'org.jooq.meta.mysql.MySQLDatabase'
+                        // Parsed from local.yml
+                        inputSchema = dbSchema
+                        // The schema name to use in the genned classes, instead of inputSchema
+                        outputSchema = 'stroom'
+                        // Add anything you want included in generation below, whitespace ignored
+                        // and comments allowed. Each one is a java regex
+                        includes = 'credentials|credentials_secret'
+                        // We don't want to include flyway versioning
+                        excludes = 'credentials_schema_history'
+                        // Specify 'version' for use in optimistic concurrency control
+                        recordVersionFields = 'version'
+                        // Treat some tinyint columns as booleans
+                        //forcedTypes {
+                        //forcedType {
+                        //name = 'BOOLEAN'
+                        //// see https://github.com/jOOQ/jOOQ/issues/9405
+                        //includeTypes = '(?i:tinyint)'
+                        //}
+                        //}
+                    }
+                    target {
+                        packageName = 'stroom.credentials.impl.db.jooq'
+                        directory = 'src/main/java'
+                    }
+                }
+            }
+        }
+    }
+}

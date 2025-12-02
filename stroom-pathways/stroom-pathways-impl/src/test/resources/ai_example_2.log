@@ -1,0 +1,140 @@
+[
+  {
+    "timestamp": "2024-01-01T12:00:00.000Z",
+    "trace_id": "a1b2c3d4e5f6789012345678901234ab",
+    "span_id": "1234567890abcdef",
+    "parent_span_id": null,
+    "operation_name": "GET /api/users/{id}",
+    "service_name": "user-service",
+    "duration_ms": 250,
+    "status": "ok",
+    "kind": "server",
+    "tags": {
+      "http.method": "GET",
+      "http.url": "https://api.example.com/api/users/123",
+      "http.status_code": 200,
+      "user.id": "123"
+    },
+    "logs": [
+      {
+        "timestamp": "2024-01-01T12:00:00.010Z",
+        "level": "info",
+        "message": "Processing user request"
+      }
+    ]
+  },
+  {
+    "timestamp": "2024-01-01T12:00:00.005Z",
+    "trace_id": "a1b2c3d4e5f6789012345678901234ab",
+    "span_id": "0123456789abcdef",
+    "parent_span_id": "1234567890abcdef",
+    "operation_name": "cache.check",
+    "service_name": "user-service",
+    "duration_ms": 3,
+    "status": "ok",
+    "kind": "client",
+    "tags": {
+      "cache.type": "redis",
+      "cache.key": "user:123",
+      "cache.hit": false
+    }
+  },
+  {
+    "timestamp": "2024-01-01T12:00:00.010Z",
+    "trace_id": "a1b2c3d4e5f6789012345678901234ab",
+    "span_id": "abcdef1234567890",
+    "parent_span_id": "1234567890abcdef",
+    "operation_name": "validate_user_request",
+    "service_name": "user-service",
+    "duration_ms": 15,
+    "status": "ok",
+    "kind": "internal",
+    "tags": {
+      "validation.type": "user_id",
+      "validation.result": true
+    }
+  },
+  {
+    "timestamp": "2024-01-01T12:00:00.030Z",
+    "trace_id": "a1b2c3d4e5f6789012345678901234ab",
+    "span_id": "fedcba0987654321",
+    "parent_span_id": "1234567890abcdef",
+    "operation_name": "database.query",
+    "service_name": "user-service",
+    "duration_ms": 150,
+    "status": "ok",
+    "kind": "client",
+    "tags": {
+      "db.system": "postgresql",
+      "db.name": "users_db",
+      "db.statement": "SELECT id, name, email FROM users WHERE id = $1",
+      "db.operation": "SELECT"
+    },
+    "logs": [
+      {
+        "timestamp": "2024-01-01T12:00:00.035Z",
+        "level": "debug",
+        "message": "Executing SQL query"
+      }
+    ]
+  },
+  {
+    "timestamp": "2024-01-01T12:00:00.030Z",
+    "trace_id": "a1b2c3d4e5f6789012345678901234ab",
+    "span_id": "987654321fedcba0",
+    "parent_span_id": "fedcba0987654321",
+    "operation_name": "connection.acquire",
+    "service_name": "user-service",
+    "duration_ms": 5,
+    "status": "ok",
+    "kind": "internal",
+    "tags": {
+      "db.connection_pool.name": "main_pool",
+      "db.connection_pool.state": "idle"
+    }
+  },
+  {
+    "timestamp": "2024-01-01T12:00:00.040Z",
+    "trace_id": "a1b2c3d4e5f6789012345678901234ab",
+    "span_id": "456789abcdef0123",
+    "parent_span_id": "fedcba0987654321",
+    "operation_name": "sql.execute",
+    "service_name": "user-service",
+    "duration_ms": 135,
+    "status": "ok",
+    "kind": "internal",
+    "tags": {
+      "db.rows_affected": 1
+    }
+  },
+  {
+    "timestamp": "2024-01-01T12:00:00.185Z",
+    "trace_id": "a1b2c3d4e5f6789012345678901234ab",
+    "span_id": "def0123456789abc",
+    "parent_span_id": "1234567890abcdef",
+    "operation_name": "response.serialize",
+    "service_name": "user-service",
+    "duration_ms": 10,
+    "status": "ok",
+    "kind": "internal",
+    "tags": {
+      "serialization.format": "json",
+      "response.size_bytes": 256
+    }
+  },
+  {
+    "timestamp": "2024-01-01T12:00:00.200Z",
+    "trace_id": "a1b2c3d4e5f6789012345678901234ab",
+    "span_id": "789abcdef0123456",
+    "parent_span_id": "1234567890abcdef",
+    "operation_name": "http.response",
+    "service_name": "user-service",
+    "duration_ms": 45,
+    "status": "ok",
+    "kind": "server",
+    "tags": {
+      "http.response.size": 256,
+      "http.response.content_type": "application/json"
+    }
+  }
+]

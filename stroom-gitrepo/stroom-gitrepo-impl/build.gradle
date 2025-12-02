@@ -2,7 +2,10 @@ ext.moduleName = 'stroom.gitrepo.impl'
 
 dependencies {
     implementation project(':stroom-cluster:stroom-cluster-lock-api')
+    implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
+    implementation project(':stroom-credentials:stroom-credentials-api')
+    implementation project(':stroom-credentials:stroom-credentials-impl')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
@@ -17,9 +20,11 @@ dependencies {
     implementation libs.jakarta.inject
     implementation libs.jakarta.validation.api
     implementation libs.jgit
+    implementation libs.jgitssh
     implementation libs.restygwt
     implementation libs.slf4j.api
 
+    testImplementation project(':stroom-gitrepo:stroom-gitrepo-impl-db')
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime
 }

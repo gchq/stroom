@@ -14,6 +14,7 @@ import stroom.planb.impl.serde.time.TimeSerde;
 import stroom.planb.impl.serde.val.ValSerdeUtil;
 import stroom.planb.impl.serde.val.ValSerdeUtil.Addition;
 import stroom.planb.impl.serde.val.VariableValType;
+import stroom.planb.shared.PlanBDoc;
 import stroom.query.language.functions.Val;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -33,16 +34,19 @@ public class VariableKeySerde implements TemporalKeySerde {
 
     private static final int USE_HASH_LOOKUP_THRESHOLD = Db.MAX_KEY_LENGTH;
 
+    private final PlanBDoc doc;
     private final int uidLookupThreshold;
     private final UidLookupDb uidLookupDb;
     private final HashLookupDb hashLookupDb;
     private final ByteBuffers byteBuffers;
     private final TimeSerde timeSerde;
 
-    public VariableKeySerde(final UidLookupDb uidLookupDb,
+    public VariableKeySerde(final PlanBDoc doc,
+                            final UidLookupDb uidLookupDb,
                             final HashLookupDb hashLookupDb,
                             final ByteBuffers byteBuffers,
                             final TimeSerde timeSerde) {
+        this.doc = doc;
         this.uidLookupDb = uidLookupDb;
         this.hashLookupDb = hashLookupDb;
         this.byteBuffers = byteBuffers;
@@ -145,7 +149,9 @@ public class VariableKeySerde implements TemporalKeySerde {
             if (bb.get(0) == VariableValType.UID_LOOKUP.getPrimitiveValue()) {
                 if (bb.remaining() - 1 - timeSerde.getSize() > 8) {
                     try {
-                        throw new IllegalStateException("Unexpected lookup value: " +
+                        throw new IllegalStateException("Unexpected lookup value for '" +
+                                                        doc.asDocRef() +
+                                                        "' : " +
                                                         Arrays.toString(ByteBufferUtils.toBytes(bb.duplicate())));
                     } catch (final RuntimeException e) {
                         LOGGER.error(e::getMessage, e);

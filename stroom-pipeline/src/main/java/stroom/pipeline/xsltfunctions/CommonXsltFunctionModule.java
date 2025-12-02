@@ -65,6 +65,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(RandomFunction.class);
         bindFunction(RecordNoFunction.class);
         bindFunction(SearchIdFunction.class);
+        bindFunction(SplitDocumentFunction.class);
         bindFunction(SourceFunction.class);
         bindFunction(ToUnixTimeFunction.class);
     }
@@ -774,6 +775,24 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
                     0,
                     new SequenceType[]{},
                     SequenceType.OPTIONAL_STRING,
+                    functionCallProvider);
+        }
+    }
+
+    private static class SplitDocumentFunction extends StroomExtensionFunctionDefinition<SplitDocument> {
+
+        @Inject
+        SplitDocumentFunction(final Provider<SplitDocument> functionCallProvider) {
+            super(
+                    SplitDocument.FUNCTION_NAME,
+                    3,
+                    3,
+                    new SequenceType[]{
+                            SequenceType.SINGLE_STRING,
+                            SequenceType.SINGLE_NUMERIC,
+                            SequenceType.SINGLE_NUMERIC
+                    },
+                    ArrayItemType.SINGLE_ARRAY,
                     functionCallProvider);
         }
     }

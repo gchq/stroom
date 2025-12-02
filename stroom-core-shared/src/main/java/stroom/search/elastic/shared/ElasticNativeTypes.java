@@ -36,6 +36,8 @@ public class ElasticNativeTypes {
         NATIVE_TYPE_MAP.put("wildcard", FieldType.KEYWORD);
 
         NATIVE_TYPE_MAP.put("ip", FieldType.IPV4_ADDRESS);
+
+        NATIVE_TYPE_MAP.put("dense_vector", FieldType.DENSE_VECTOR);
     }
 
     /**

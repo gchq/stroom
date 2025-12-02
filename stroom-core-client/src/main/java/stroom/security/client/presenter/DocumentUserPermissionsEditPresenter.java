@@ -19,7 +19,6 @@ package stroom.security.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.client.AnnotationChangeEvent;
-import stroom.annotation.client.AnnotationResourceClient;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.docref.DocRef;
@@ -61,7 +60,7 @@ public class DocumentUserPermissionsEditPresenter
 
     private final DocPermissionRestClient docPermissionClient;
     private final ExplorerClient explorerClient;
-    private final AnnotationResourceClient annotationResourceClient;
+    private final PermissionChangeClient permissionChangeClient;
     private final Provider<DocumentUserCreatePermissionsEditPresenter>
             documentUserCreatePermissionsEditPresenterProvider;
 
@@ -73,13 +72,13 @@ public class DocumentUserPermissionsEditPresenter
                                                 final DocumentUserPermissionsEditView view,
                                                 final DocPermissionRestClient docPermissionClient,
                                                 final ExplorerClient explorerClient,
-                                                final AnnotationResourceClient annotationResourceClient,
+                                                final PermissionChangeClient permissionChangeClient,
                                                 final Provider<DocumentUserCreatePermissionsEditPresenter>
                                                         documentUserCreatePermissionsEditPresenterProvider) {
         super(eventBus, view);
         this.docPermissionClient = docPermissionClient;
         this.explorerClient = explorerClient;
-        this.annotationResourceClient = annotationResourceClient;
+        this.permissionChangeClient = permissionChangeClient;
         this.documentUserCreatePermissionsEditPresenterProvider = documentUserCreatePermissionsEditPresenterProvider;
         getView().setUiHandlers(this);
     }
@@ -122,12 +121,14 @@ public class DocumentUserPermissionsEditPresenter
                           final Runnable onClose) {
         final AbstractDocumentPermissionsChange change = createChange();
 
-        if (Annotation.TYPE.equals(relatedDoc.getType()) ||
-            AnnotationTag.TYPE.equals(relatedDoc.getType())) {
+        if (permissionChangeClient.handlesType(relatedDoc.getType())) {
             final SingleDocumentPermissionChangeRequest request =
                     new SingleDocumentPermissionChangeRequest(relatedDoc, change);
-            annotationResourceClient.changeDocumentPermissions(request, success -> {
-                if (success) {
+            permissionChangeClient.changeDocumentPermissions(request, success -> {
+
+                if (success &&
+                    (Annotation.TYPE.equals(relatedDoc.getType())
+                     || AnnotationTag.TYPE.equals(relatedDoc.getType()))) {
                     AnnotationChangeEvent.fire(this, null);
                 }
                 onClose.run();

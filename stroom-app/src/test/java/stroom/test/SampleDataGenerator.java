@@ -51,7 +51,7 @@ public class SampleDataGenerator {
     @Inject
     public SampleDataGenerator() {
         templatesDir = StroomCoreServerTestFileUtil.getTestResourcesDir()
-                .resolve(SetupSampleDataBean.ROOT_DIR_NAME)
+                .resolve(SetupSampleDataProcess.ROOT_DIR_NAME)
                 .resolve("templates");
     }
 
@@ -60,7 +60,7 @@ public class SampleDataGenerator {
      */
     public static void main(final String[] args) {
         final Path dir = StroomCoreServerTestFileUtil.getTestResourcesDir()
-                .resolve(SetupSampleDataBean.ROOT_DIR_NAME)
+                .resolve(SetupSampleDataProcess.ROOT_DIR_NAME)
                 .resolve("generated")
                 .resolve("input");
 

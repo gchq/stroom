@@ -18,7 +18,7 @@ package stroom.dashboard.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 
@@ -56,7 +56,7 @@ import java.util.Objects;
         "description",
         "dashboardConfig"})
 @JsonInclude(Include.NON_NULL)
-public class DashboardDoc extends Doc {
+public class DashboardDoc extends AbstractDoc {
 
     public static final String TYPE = "Dashboard";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.DASHBOARD_DOCUMENT_TYPE;
@@ -66,12 +66,8 @@ public class DashboardDoc extends Doc {
     @JsonProperty
     private DashboardConfig dashboardConfig;
 
-    public DashboardDoc() {
-    }
-
     @JsonCreator
-    public DashboardDoc(@JsonProperty("type") final String type,
-                        @JsonProperty("uuid") final String uuid,
+    public DashboardDoc(@JsonProperty("uuid") final String uuid,
                         @JsonProperty("name") final String name,
                         @JsonProperty("version") final String version,
                         @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -80,7 +76,7 @@ public class DashboardDoc extends Doc {
                         @JsonProperty("updateUser") final String updateUser,
                         @JsonProperty("description") final String description,
                         @JsonProperty("dashboardConfig") final DashboardConfig dashboardConfig) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.dashboardConfig = dashboardConfig;
     }
@@ -135,5 +131,56 @@ public class DashboardDoc extends Doc {
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), dashboardConfig);
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder extends AbstractDoc.AbstractBuilder<DashboardDoc, DashboardDoc.Builder> {
+
+        private String description;
+        private DashboardConfig dashboardConfig;
+
+        private Builder() {
+        }
+
+        private Builder(final DashboardDoc dashboardDoc) {
+            super(dashboardDoc);
+            this.description = dashboardDoc.description;
+            this.dashboardConfig = dashboardDoc.dashboardConfig;
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder dashboardConfig(final DashboardConfig dashboardConfig) {
+            this.dashboardConfig = dashboardConfig;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public DashboardDoc build() {
+            return new DashboardDoc(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    dashboardConfig);
+        }
     }
 }

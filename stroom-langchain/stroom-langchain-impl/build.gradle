@@ -1,0 +1,38 @@
+ext.moduleName = 'stroom.langchain.impl'
+
+dependencies {
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-event-logging:stroom-event-logging-api')
+    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-job:stroom-job-api')
+    implementation project(':stroom-langchain:stroom-langchain-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+
+    implementation libs.dropwizard.metrics.annotation
+    implementation libs.eventLogging
+    implementation libs.guice
+    implementation libs.jackson.annotations
+    implementation libs.jakarta.inject
+    implementation libs.jakarta.json.api
+    implementation libs.langchain4j
+    implementation libs.langchain4j.http.client.jdk
+    implementation libs.langchain4j.cohere
+    implementation libs.langchain4j.jina
+    implementation libs.langchain4j.open.ai
+    implementation libs.openai
+    implementation libs.restygwt
+    implementation libs.saxon.he
+    implementation libs.slf4j.api
+    implementation libs.swagger.annotations
+    implementation libs.ws.rs.api
+
+    testImplementation project(':stroom-test-common')
+
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
+}

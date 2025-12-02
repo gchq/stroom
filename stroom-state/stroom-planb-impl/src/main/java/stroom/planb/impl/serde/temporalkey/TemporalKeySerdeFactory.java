@@ -10,16 +10,19 @@ import stroom.planb.impl.serde.hash.HashFactoryFactory;
 import stroom.planb.impl.serde.time.TimeSerde;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.KeyType;
+import stroom.planb.shared.PlanBDoc;
 
 public class TemporalKeySerdeFactory {
+
     private static final String KEY_LOOKUP_DB_NAME = "key";
 
-    public static TemporalKeySerde createKeySerde(final KeyType keyType,
-                                                   final HashLength hashLength,
-                                                   final PlanBEnv env,
-                                                   final ByteBuffers byteBuffers,
-                                                   final TimeSerde timeSerde,
-                                                   final HashClashCommitRunnable hashClashCommitRunnable) {
+    public static TemporalKeySerde createKeySerde(final PlanBDoc doc,
+                                                  final KeyType keyType,
+                                                  final HashLength hashLength,
+                                                  final PlanBEnv env,
+                                                  final ByteBuffers byteBuffers,
+                                                  final TimeSerde timeSerde,
+                                                  final HashClashCommitRunnable hashClashCommitRunnable) {
         return switch (keyType) {
             case BOOLEAN -> new BooleanKeySerde(byteBuffers, timeSerde);
             case BYTE -> new ByteKeySerde(byteBuffers, timeSerde);
@@ -58,7 +61,7 @@ public class TemporalKeySerdeFactory {
                         valueHashFactory,
                         hashClashCommitRunnable,
                         KEY_LOOKUP_DB_NAME);
-                yield new VariableKeySerde(uidLookupDb, hashLookupDb, byteBuffers, timeSerde);
+                yield new VariableKeySerde(doc, uidLookupDb, hashLookupDb, byteBuffers, timeSerde);
             }
             case TAGS -> {
                 final UidLookupDb uidLookupDb = new UidLookupDb(

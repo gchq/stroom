@@ -466,7 +466,7 @@ public class ContentTemplateTabPresenter
                     .create(CONTENT_TEMPLATE_RESOURCE)
                     .method(res ->
                             res.update(contentTemplatesWrapper.copy()
-                                    .withContentTemplates(getTemplates())
+                                    .contentTemplates(getTemplates())
                                     .build()))
                     .onSuccess(result -> {
                         contentTemplatesWrapper = result;

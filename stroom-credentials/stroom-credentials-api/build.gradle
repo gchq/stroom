@@ -1,0 +1,15 @@
+ext.moduleName = 'stroom.stroom-credentials.api'
+
+dependencies {
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+
+    implementation libs.jackson.annotations
+    implementation libs.jakarta.validation.api
+
+    testImplementation project(':stroom-test-common')
+    testImplementation libs.bundles.common.test.implementation
+
+}

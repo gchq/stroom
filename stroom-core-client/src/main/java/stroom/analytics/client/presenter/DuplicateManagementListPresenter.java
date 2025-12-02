@@ -77,6 +77,7 @@ public class DuplicateManagementListPresenter
         deleteButton = view.addButton(SvgPresets.DELETE);
 
         criteria = new FindDuplicateCheckCriteria();
+        //noinspection Convert2Diamond // cos GWT
         dataProvider = new RestDataProvider<DuplicateCheckRow, ResultPage<DuplicateCheckRow>>(eventBus) {
             @Override
             protected void exec(final Range range,
@@ -108,6 +109,7 @@ public class DuplicateManagementListPresenter
             for (int i = 0; i < columnNames.size(); i++) {
                 final int pos = i;
                 final String columnName = columnNames.get(pos);
+                //noinspection Convert2Diamond // cos GWT
                 final Column<DuplicateCheckRow, String> column = new Column<DuplicateCheckRow, String>(new TextCell()) {
                     @Override
                     public String getValue(final DuplicateCheckRow duplicateCheckRow) {
@@ -164,7 +166,7 @@ public class DuplicateManagementListPresenter
 
     private void onDelete() {
         final List<DuplicateCheckRow> selected = selectionModel.getSelectedItems();
-        if (selected != null && selected.size() > 0) {
+        if (NullSafe.hasItems(selected)) {
             ConfirmEvent.fire(this, "Are you sure you want to delete the selected row" +
                                     (selected.size() > 1
                                             ? "s"

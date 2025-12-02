@@ -53,6 +53,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
@@ -304,6 +305,6 @@ class TestSessionDb {
     }
 
     private static PlanBDoc getDoc(final SessionSettings settings) {
-        return PlanBDoc.builder().name("test").settings(settings).build();
+        return PlanBDoc.builder().uuid(UUID.randomUUID().toString()).name("test").settings(settings).build();
     }
 }

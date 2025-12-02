@@ -4,6 +4,7 @@ dependencies {
     implementation project(':stroom-activity:stroom-activity-impl-db')
     implementation project(':stroom-analytics:stroom-analytics-impl')
     implementation project(':stroom-annotation:stroom-annotation-impl')
+    implementation project(':stroom-contentstore:stroom-contentstore-impl')
     implementation project(':stroom-aws:stroom-aws-s3-impl')
     implementation project(':stroom-bytebuffer')
     implementation project(':stroom-cluster:stroom-cluster-api')
@@ -12,6 +13,7 @@ dependencies {
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core')
     implementation project(':stroom-core-shared')
+    implementation project(':stroom-credentials:stroom-credentials-api')
     implementation project(':stroom-dashboard:stroom-dashboard-impl')
     implementation project(':stroom-dashboard:stroom-storedquery-impl')
     implementation project(':stroom-data:stroom-data-retention-api')
@@ -29,6 +31,7 @@ dependencies {
     implementation project(':stroom-importexport:stroom-importexport-impl')
     implementation project(':stroom-job:stroom-job-impl')
     implementation project(':stroom-kafka:stroom-kafka-impl')
+    implementation project(':stroom-langchain:stroom-langchain-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-impl')
     implementation project(':stroom-lmdb')
     implementation project(':stroom-meta:stroom-meta-impl')
@@ -75,6 +78,7 @@ dependencies {
     implementation libs.vavr
     implementation libs.ws.rs.api
 
+    testImplementation project(':stroom-credentials:stroom-credentials-api')
     testImplementation project(':stroom-test-common')
     testImplementation project(':stroom-event-logging:stroom-event-logging-mock')
     testImplementation libs.dropwizard.configuration

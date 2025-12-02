@@ -70,11 +70,12 @@ class TestTimePartition {
     }
 
     private String getPartition(final PartitionBy partitionBy, final int partitionSize, final long millis) {
-        final LuceneIndexDoc index = new LuceneIndexDoc();
-        index.setUuid(UUID.randomUUID().toString());
-        index.setShardsPerPartition(5);
-        index.setPartitionBy(partitionBy);
-        index.setPartitionSize(partitionSize);
+        final LuceneIndexDoc index = LuceneIndexDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .shardsPerPartition(5)
+                .partitionBy(partitionBy)
+                .partitionSize(partitionSize)
+                .build();
         return new TimePartitionFactory().create(index, millis).getLabel();
     }
 }

@@ -56,7 +56,9 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     @UiField
     PasswordTextBox apiKeySecret;
     @UiField
-    IntegerBox socketTimeoutMillis;
+    IntegerBox connectionTimeoutMillis;
+    @UiField
+    IntegerBox responseTimeoutMillis;
     @UiField
     Button testConnection;
 
@@ -127,13 +129,23 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     }
 
     @Override
-    public int getSocketTimeoutMillis() {
-        return socketTimeoutMillis.getValue();
+    public int getConnectionTimeoutMillis() {
+        return connectionTimeoutMillis.getValue();
     }
 
     @Override
-    public void setSocketTimeoutMillis(final int socketTimeoutMillis) {
-        this.socketTimeoutMillis.setValue(socketTimeoutMillis);
+    public void setConnectionTimeoutMillis(final int connectionTimeoutMillis) {
+        this.connectionTimeoutMillis.setValue(connectionTimeoutMillis);
+    }
+
+    @Override
+    public int getResponseTimeoutMillis() {
+        return responseTimeoutMillis.getValue();
+    }
+
+    @Override
+    public void setResponseTimeoutMillis(final int responseTimeoutMillis) {
+        this.responseTimeoutMillis.setValue(responseTimeoutMillis);
     }
 
     @Override
@@ -145,7 +157,8 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
             apiKeyId.setEnabled(false);
             apiKeySecret.setEnabled(false);
         }
-        socketTimeoutMillis.setEnabled(!readOnly);
+        connectionTimeoutMillis.setEnabled(!readOnly);
+        responseTimeoutMillis.setEnabled(!readOnly);
     }
 
     @UiHandler("connectionUrls")
@@ -168,8 +181,13 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
         getUiHandlers().onChange();
     }
 
-    @UiHandler("socketTimeoutMillis")
-    public void onSocketTimeoutMillis(final ValueChangeEvent<Integer> event) {
+    @UiHandler("connectionTimeoutMillis")
+    public void onConnectionTimeoutMillis(final ValueChangeEvent<Integer> event) {
+        getUiHandlers().onChange();
+    }
+
+    @UiHandler("responseTimeoutMillis")
+    public void onResponseTimeoutMillis(final ValueChangeEvent<Integer> event) {
         getUiHandlers().onChange();
     }
 

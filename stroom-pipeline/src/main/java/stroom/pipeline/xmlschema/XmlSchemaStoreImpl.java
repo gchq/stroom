@@ -49,7 +49,7 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
     @Inject
     public XmlSchemaStoreImpl(final StoreFactory storeFactory,
                               final XmlSchemaSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, XmlSchemaDoc.TYPE, XmlSchemaDoc.class);
+        this.store = storeFactory.createStore(serialiser, XmlSchemaDoc.TYPE, XmlSchemaDoc::builder);
     }
 
     ////////////////////////////////////////////////////////////////////////

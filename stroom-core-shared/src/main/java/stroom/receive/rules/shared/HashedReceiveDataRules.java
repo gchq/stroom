@@ -25,6 +25,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -98,7 +99,7 @@ public class HashedReceiveDataRules {
     @SerialisationTestConstructor
     private HashedReceiveDataRules() {
         this(0L,
-                ReceiveDataRules.builder().build(),
+                ReceiveDataRules.builder().uuid(UUID.randomUUID().toString()).build(),
                 Collections.emptyMap(),
                 Collections.emptyMap(),
                 HashAlgorithm.BCRYPT);

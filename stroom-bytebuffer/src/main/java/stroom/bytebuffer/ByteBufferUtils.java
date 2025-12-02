@@ -200,6 +200,35 @@ public class ByteBufferUtils {
                 StandardCharsets.UTF_8.decode(byteBuffer.duplicate()));
     }
 
+//    public static String byteBufferToAllForms(final ByteBuffer byteBuffer) {
+//        if (byteBuffer == null) {
+//            return "null";
+//        }
+//        return ByteArrayUtils.byteArrayToAllForms(toBytes(byteBuffer));
+//    }
+//
+//    public static int compare(final ByteBuffer left, final ByteBuffer right) {
+//        int cmpResult = stroom.bytebuffer.hbase.ByteBufferUtils.compareTo(
+//                left, left.position(), left.remaining(),
+//                right, right.position(), right.remaining());
+//
+//        LOGGER.trace(() -> LogUtil.message("compare({}, {}) returned {}",
+//                ByteBufferUtils.byteBufferInfo(left),
+//                ByteBufferUtils.byteBufferInfo(right),
+//                cmpResult));
+//        return cmpResult;
+//
+//    }
+
+    public static int compareTo(final ByteBuffer buf1,
+                                final int o1,
+                                final int l1,
+                                final ByteBuffer buf2,
+                                final int o2,
+                                final int l2) {
+        return stroom.bytebuffer.hbase.ByteBufferUtils.compareTo(buf1, o1, l1, buf2, o2, l2);
+    }
+
     /**
      * Compare two {@link ByteBuffer} objects as if they are longs
      *
@@ -287,21 +316,8 @@ public class ByteBufferUtils {
     }
 
     public static boolean containsPrefix(final ByteBuffer buffer, final ByteBuffer prefixBuffer) {
-        boolean result = true;
-        if (buffer.remaining() < prefixBuffer.remaining()) {
-            result = false;
-        } else {
-            for (int i = 0; i < prefixBuffer.remaining(); i++) {
-                if (prefixBuffer.get(i) != buffer.get(i)) {
-                    result = false;
-                    break;
-                }
-            }
-        }
-//        boolean result2 = result;
-//        LOGGER.trace(() -> LogUtil.message("containsPrefix({} {}) returns {}",
-//                ByteBufferUtils.byteBufferInfo(buffer), ByteBufferUtils.byteBufferInfo(prefixBuffer), result2));
-        return result;
+        final int pos =  prefixBuffer.mismatch(buffer);
+        return pos == -1 || pos == prefixBuffer.limit();
     }
 
     public static void copy(final ByteBuffer sourceBuffer, final ByteBuffer destBuffer) {
@@ -479,5 +495,9 @@ public class ByteBufferUtils {
             }
         }
         return true;
+    }
+
+    public static void skip(final ByteBuffer byteBuffer, final int len) {
+        byteBuffer.position(byteBuffer.position() + len);
     }
 }

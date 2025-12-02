@@ -18,13 +18,12 @@ package stroom.state.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.util.shared.time.TimeUnit;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -54,7 +53,7 @@ import java.util.Objects;
 
 })
 @JsonInclude(Include.NON_NULL)
-public class StateDoc extends Doc {
+public class StateDoc extends AbstractDoc {
 
     public static final String TYPE = "StateStore";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.STATE_STORE_DOCUMENT_TYPE;
@@ -81,12 +80,8 @@ public class StateDoc extends Doc {
     @JsonProperty
     private TimeUnit retainTimeUnit;
 
-    public StateDoc() {
-    }
-
     @JsonCreator
     public StateDoc(
-            @JsonProperty("type") final String type,
             @JsonProperty("uuid") final String uuid,
             @JsonProperty("name") final String name,
             @JsonProperty("version") final String version,
@@ -103,7 +98,7 @@ public class StateDoc extends Doc {
             @JsonProperty("retainForever") final boolean retainForever,
             @JsonProperty("retainAge") final int retainAge,
             @JsonProperty("retainTimeUnit") final TimeUnit retainTimeUnit) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.scyllaDbRef = scyllaDbRef;
         this.stateType = stateType;
@@ -203,12 +198,6 @@ public class StateDoc extends Doc {
         this.retainTimeUnit = retainTimeUnit;
     }
 
-    @JsonIgnore
-    @Override
-    public final String getType() {
-        return TYPE;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -259,5 +248,112 @@ public class StateDoc extends Doc {
                ", retainAge=" + retainAge +
                ", retainTimeUnit=" + retainTimeUnit +
                '}';
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder extends AbstractDoc.AbstractBuilder<StateDoc, StateDoc.Builder> {
+
+        private DocRef scyllaDbRef;
+        private String description;
+        private StateType stateType;
+        private boolean condense;
+        private int condenseAge;
+        private TimeUnit condenseTimeUnit;
+        private boolean retainForever;
+        private int retainAge;
+        private TimeUnit retainTimeUnit;
+
+        private Builder() {
+        }
+
+        private Builder(final StateDoc stateDoc) {
+            super(stateDoc);
+            this.scyllaDbRef = stateDoc.scyllaDbRef;
+            this.description = stateDoc.description;
+            this.stateType = stateDoc.stateType;
+            this.condense = stateDoc.condense;
+            this.condenseAge = stateDoc.condenseAge;
+            this.condenseTimeUnit = stateDoc.condenseTimeUnit;
+            this.retainForever = stateDoc.retainForever;
+            this.retainAge = stateDoc.retainAge;
+            this.retainTimeUnit = stateDoc.retainTimeUnit;
+        }
+
+        public Builder scyllaDbRef(final DocRef scyllaDbRef) {
+            this.scyllaDbRef = scyllaDbRef;
+            return self();
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder stateType(final StateType stateType) {
+            this.stateType = stateType;
+            return self();
+        }
+
+        public Builder condense(final boolean condense) {
+            this.condense = condense;
+            return self();
+        }
+
+        public Builder condenseAge(final int condenseAge) {
+            this.condenseAge = condenseAge;
+            return self();
+        }
+
+        public Builder condenseTimeUnit(final TimeUnit condenseTimeUnit) {
+            this.condenseTimeUnit = condenseTimeUnit;
+            return self();
+        }
+
+        public Builder retainForever(final boolean retainForever) {
+            this.retainForever = retainForever;
+            return self();
+        }
+
+        public Builder retainAge(final int retainAge) {
+            this.retainAge = retainAge;
+            return self();
+        }
+
+        public Builder retainTimeUnit(final TimeUnit retainTimeUnit) {
+            this.retainTimeUnit = retainTimeUnit;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public StateDoc build() {
+            return new StateDoc(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    scyllaDbRef,
+                    stateType,
+                    condense,
+                    condenseAge,
+                    condenseTimeUnit,
+                    retainForever,
+                    retainAge,
+                    retainTimeUnit);
+        }
     }
 }

@@ -18,10 +18,11 @@ package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -80,7 +81,7 @@ public class MockExplorerNodeService implements ExplorerNodeService {
 
     @Override
     public ExplorerNode getRoot() {
-        return createTestNode();
+        return ExplorerConstants.SYSTEM_NODE;
     }
 
     @Override
@@ -90,51 +91,54 @@ public class MockExplorerNodeService implements ExplorerNodeService {
 
     @Override
     public Optional<ExplorerNode> getNode(final DocRef docRef) {
-        return Optional.of(createTestNode());
+        return Optional.of(ExplorerNode
+                .builder()
+                .type(docRef.getType())
+                .uuid(docRef.getUuid())
+                .name(docRef.getName())
+                .tags(Set.of("test"))
+                .build());
     }
 
     @Override
     public List<ExplorerNode> getPath(final DocRef docRef) {
-        return Collections.singletonList(createTestNode());
+        // Make sure returned list is mutable
+        final ArrayList<ExplorerNode> path = new ArrayList<>(1);
+        path.add(getRoot());
+        return path;
     }
 
     @Override
     public Optional<ExplorerNode> getParent(final DocRef docRef) {
-        return Optional.empty();
+        return Optional.of(getRoot());
     }
 
     @Override
     public List<ExplorerNode> getDescendants(final DocRef folderRef) {
-        return Collections.emptyList();
+        // Make sure returned list is mutable
+        return new ArrayList<>();
     }
 
     @Override
     public List<ExplorerNode> getChildren(final DocRef folderRef) {
-        return Collections.emptyList();
+        // Make sure returned list is mutable
+        return new ArrayList<>();
     }
 
     @Override
     public List<ExplorerNode> getNodesByName(final ExplorerNode parent, final String name) {
-        return Collections.emptyList();
+        // Make sure returned list is mutable
+        return new ArrayList<>();
     }
 
     @Override
     public List<ExplorerNode> getNodesByNameAndType(final ExplorerNode parent, final String name, final String type) {
-        return Collections.emptyList();
+        // Make sure returned list is mutable
+        return new ArrayList<>();
     }
 
     @Override
     public void deleteAllNodes() {
 
-    }
-
-    private ExplorerNode createTestNode() {
-        return ExplorerNode
-                .builder()
-                .type("test")
-                .uuid("test")
-                .name("test")
-                .tags(Set.of("test"))
-                .build();
     }
 }

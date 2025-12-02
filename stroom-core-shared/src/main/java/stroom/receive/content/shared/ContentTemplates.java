@@ -1,10 +1,9 @@
 package stroom.receive.content.shared;
 
 import stroom.docref.DocRef;
-import stroom.docref.DocRef.TypedBuilder;
 import stroom.docs.shared.Description;
 import stroom.docs.shared.NotDocumented;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.svg.shared.SvgImage;
@@ -28,7 +27,7 @@ import java.util.stream.Collectors;
 @Description("")
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
-public class ContentTemplates extends Doc {
+public class ContentTemplates extends AbstractDoc {
 
     public static final String TYPE = "ContentTemplates";
     public static final DocumentType DOCUMENT_TYPE = new DocumentType(
@@ -40,17 +39,8 @@ public class ContentTemplates extends Doc {
     @JsonProperty
     private final List<ContentTemplate> contentTemplates;
 
-    public ContentTemplates() {
-        contentTemplates = Collections.emptyList();
-    }
-
-    public ContentTemplates(final List<ContentTemplate> contentTemplates) {
-        this.contentTemplates = resetTemplateNumbers(contentTemplates);
-    }
-
     @JsonCreator
     public ContentTemplates(
-            @JsonProperty("type") final String type,
             @JsonProperty("uuid") final String uuid,
             @JsonProperty("name") final String name,
             @JsonProperty("version") final String version,
@@ -59,9 +49,24 @@ public class ContentTemplates extends Doc {
             @JsonProperty("createUser") final String createUser,
             @JsonProperty("updateUser") final String updateUser,
             @JsonProperty("contentTemplates") final List<ContentTemplate> contentTemplates) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
-
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.contentTemplates = resetTemplateNumbers(contentTemplates);
+    }
+
+    /**
+     * @return A new {@link DocRef} for this document's type with the supplied uuid.
+     */
+    public static DocRef getDocRef(final String uuid) {
+        return DocRef.builder(TYPE)
+                .uuid(uuid)
+                .build();
+    }
+
+    /**
+     * @return A new builder for creating a {@link DocRef} for this document's type.
+     */
+    public static DocRef.TypedBuilder buildDocRef() {
+        return DocRef.builder(TYPE);
     }
 
     public static List<ContentTemplate> resetTemplateNumbers(final List<ContentTemplate> contentTemplates) {
@@ -87,52 +92,6 @@ public class ContentTemplates extends Doc {
             workingList = Collections.unmodifiableList(workingList);
         }
         return workingList;
-    }
-
-    private ContentTemplates(final Builder builder) {
-        setType(builder.type);
-        setUuid(builder.uuid);
-        setName(builder.name);
-        setVersion(builder.version);
-        setCreateTimeMs(builder.createTimeMs);
-        setUpdateTimeMs(builder.updateTimeMs);
-        setCreateUser(builder.createUser);
-        setUpdateUser(builder.updateUser);
-        contentTemplates = builder.contentTemplates;
-    }
-
-    /**
-     * @return A new {@link DocRef} for this document's type with the supplied uuid.
-     */
-    public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(TYPE)
-                .uuid(uuid)
-                .build();
-    }
-
-    /**
-     * @return A new builder for creating a {@link DocRef} for this document's type.
-     */
-    public static TypedBuilder buildDocRef() {
-        return DocRef.builder(TYPE);
-    }
-
-    public Builder copy() {
-        return copy(this);
-    }
-
-    public static Builder copy(final ContentTemplates copy) {
-        final Builder builder = new Builder();
-        builder.type = copy.getType();
-        builder.uuid = copy.getUuid();
-        builder.name = copy.getName();
-        builder.version = copy.getVersion();
-        builder.createTimeMs = copy.getCreateTimeMs();
-        builder.updateTimeMs = copy.getUpdateTimeMs();
-        builder.createUser = copy.getCreateUser();
-        builder.updateUser = copy.getUpdateUser();
-        builder.contentTemplates = copy.getContentTemplates();
-        return builder;
     }
 
     public List<ContentTemplate> getContentTemplates() {
@@ -190,80 +149,46 @@ public class ContentTemplates extends Doc {
                '}';
     }
 
+    public Builder copy() {
+        return new Builder(this);
+    }
+
     public static Builder builder() {
         return new Builder();
     }
 
+    public static final class Builder extends AbstractDoc.AbstractBuilder<ContentTemplates, ContentTemplates.Builder> {
 
-    // --------------------------------------------------------------------------------
-
-
-    public static final class Builder {
-
-        private String type;
-        private String uuid;
-        private String name;
-        private String version;
-        private Long createTimeMs;
-        private Long updateTimeMs;
-        private String createUser;
-        private String updateUser;
         private List<ContentTemplate> contentTemplates;
 
         private Builder() {
         }
 
-        private static Builder builder() {
-            return new Builder();
+        private Builder(final ContentTemplates contentTemplates) {
+            super(contentTemplates);
+            this.contentTemplates = contentTemplates.getContentTemplates();
         }
 
-        public Builder withType(final String type) {
-            this.type = type;
-            return this;
-        }
-
-        public Builder withUuid(final String uuid) {
-            this.uuid = uuid;
-            return this;
-        }
-
-        public Builder withName(final String name) {
-            this.name = name;
-            return this;
-        }
-
-        public Builder withVersion(final String version) {
-            this.version = version;
-            return this;
-        }
-
-        public Builder withCreateTimeMs(final Long createTimeMs) {
-            this.createTimeMs = createTimeMs;
-            return this;
-        }
-
-        public Builder withUpdateTimeMs(final Long updateTimeMs) {
-            this.updateTimeMs = updateTimeMs;
-            return this;
-        }
-
-        public Builder withCreateUser(final String createUser) {
-            this.createUser = createUser;
-            return this;
-        }
-
-        public Builder withUpdateUser(final String updateUser) {
-            this.updateUser = updateUser;
-            return this;
-        }
-
-        public Builder withContentTemplates(final List<ContentTemplate> contentTemplates) {
+        public Builder contentTemplates(final List<ContentTemplate> contentTemplates) {
             this.contentTemplates = contentTemplates;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
             return this;
         }
 
         public ContentTemplates build() {
-            return new ContentTemplates(this);
+            return new ContentTemplates(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    contentTemplates);
         }
     }
 }
