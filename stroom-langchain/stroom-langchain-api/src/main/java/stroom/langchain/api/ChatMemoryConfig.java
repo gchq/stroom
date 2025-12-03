@@ -28,7 +28,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder(alphabetic = true)
 public class ChatMemoryConfig extends AbstractConfig implements IsStroomConfig {
 
-    private static final int DEFAULT_CHAT_MEMORY_TOKEN_LIMIT = 1024;
+    private static final int DEFAULT_CHAT_MEMORY_TOKEN_LIMIT = 30000;
     private static final StroomDuration DEFAULT_CHAT_MEMORY_TTL = StroomDuration.ofHours(1);
 
     private final int tokenLimit;

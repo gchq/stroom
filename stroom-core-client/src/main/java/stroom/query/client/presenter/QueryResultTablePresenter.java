@@ -16,7 +16,6 @@
 
 package stroom.query.client.presenter;
 
-import stroom.ai.client.AskStroomAiPresenter;
 import stroom.ai.shared.QueryTableData;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.client.AnnotationChangeEvent;
@@ -39,6 +38,7 @@ import stroom.dashboard.client.table.TableExpandButton;
 import stroom.dashboard.client.table.TableRowStyles;
 import stroom.dashboard.client.table.TableUpdateEvent;
 import stroom.dashboard.client.table.cf.RulesPresenter;
+import stroom.data.client.event.AskStroomAiEvent;
 import stroom.data.grid.client.MessagePanel;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
@@ -75,7 +75,6 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
@@ -139,7 +138,6 @@ public class QueryResultTablePresenter
     private final ButtonView annotateButton;
     private final EventBus eventBus;
     private final ButtonView askAiButton;
-    private final AskStroomAiPresenter askAiPresenter;
 
     private Supplier<QueryTablePreferences> queryTablePreferencesSupplier;
     private Consumer<QueryTablePreferences> queryTablePreferencesConsumer;
@@ -169,15 +167,13 @@ public class QueryResultTablePresenter
                                      final Provider<RulesPresenter> rulesPresenterProvider,
                                      final ColumnFilterPresenter columnFilterPresenter,
                                      final ColumnValuesFilterPresenter columnValuesFilterPresenter,
-                                     final UserPreferencesManager userPreferencesManager,
-                                     final AskStroomAiPresenter askAiPresenter) {
+                                     final UserPreferencesManager userPreferencesManager) {
         super(eventBus, tableView);
         this.eventBus = eventBus;
         this.restFactory = restFactory;
         this.locationManager = locationManager;
         this.downloadPresenter = downloadPresenter;
         this.annotationManager = annotationManager;
-        this.askAiPresenter = askAiPresenter;
         rowStyles = new TableRowStyles(userPreferencesManager);
         annotationManager.setTaskMonitorFactory(this);
 
@@ -1047,16 +1043,9 @@ public class QueryResultTablePresenter
                         .storeHistory(false)
                         .requestedRange(OffsetRange.UNBOUNDED)
                         .build();
-                ShowPopupEvent.builder(askAiPresenter)
-                        .popupType(PopupType.CLOSE_DIALOG)
-                        .popupSize(PopupSize.resizable(700, 500))
-                        .caption("Ask Stroom AI")
-                        .onShow(e -> {
-                            askAiPresenter.setContext(currentSearchModel.getCurrentNode(),
-                                    new QueryTableData(request));
-                            askAiPresenter.getView().focus();
-                        })
-                        .fire();
+                AskStroomAiEvent.fire(this,
+                        currentSearchModel.getCurrentNode(),
+                        new QueryTableData(queryKey.toString(), request));
             }
         }
     }

@@ -16,6 +16,11 @@
 
 package stroom.ai.client.gin;
 
+import stroom.ai.client.AskStroomAiPresenter;
+
+import com.google.gwt.inject.client.AsyncProvider;
+
 public interface AskStroomAIGinjector {
 
+    AsyncProvider<AskStroomAiPresenter> getAskStroomAiPresenter();
 }

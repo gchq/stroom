@@ -16,14 +16,21 @@
 
 package stroom.ai.client;
 
+import stroom.ai.client.AskStroomAiPresenter.AskStroomAiProxy;
+import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
 import stroom.ai.shared.AskStroomAiData;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.AskStroomAiResource;
 import stroom.alert.client.event.AlertCallback;
 import stroom.alert.client.event.AlertEvent;
+import stroom.data.client.event.AskStroomAiEvent;
 import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
+import stroom.docref.HasDisplayValue;
 import stroom.entity.client.presenter.MarkdownConverter;
+import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
@@ -34,11 +41,15 @@ import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.View;
+import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
+import com.gwtplatform.mvp.client.annotations.ProxyEvent;
+import com.gwtplatform.mvp.client.proxy.Proxy;
 
-public class AskStroomAiPresenter extends MyPresenterWidget<AskStroomAiPresenter.AskStroomAiView>
-        implements AskStroomAiUiHandlers {
+public class AskStroomAiPresenter
+        extends MyPresenter<AskStroomAiView, AskStroomAiProxy>
+        implements AskStroomAiUiHandlers, AskStroomAiEvent.Handler {
 
     private static final String MARKDOWN_SECTION_BREAK = "\n\n---\n\n";
     private static final AskStroomAiResource RESOURCE = GWT.create(AskStroomAiResource.class);
@@ -47,16 +58,56 @@ public class AskStroomAiPresenter extends MyPresenterWidget<AskStroomAiPresenter
     private String node;
     private AskStroomAiData data;
 
+    private boolean showing;
+
     @Inject
     public AskStroomAiPresenter(final EventBus eventBus,
                                 final AskStroomAiView view,
+                                final AskStroomAiProxy askStroomAiProxy,
                                 final MarkdownConverter markdownConverter,
                                 final RestFactory restFactory) {
-        super(eventBus, view);
+        super(eventBus, view, askStroomAiProxy);
         this.markdownConverter = markdownConverter;
         this.restFactory = restFactory;
 
         view.setUiHandlers(this);
+    }
+
+    @Override
+    protected void revealInParent() {
+
+    }
+
+    @ProxyEvent
+    @Override
+    public void onShow(final AskStroomAiEvent event) {
+        if (!showing) {
+            showing = true;
+
+            ShowPopupEvent.builder(this)
+                    .popupType(PopupType.CLOSE_DIALOG)
+                    .popupSize(PopupSize.resizable(700, 500))
+                    .caption("Ask Stroom AI")
+                    .onShow(e -> {
+                        setContext(event.getNode(),
+                                event.getData());
+                        getView().focus();
+                    })
+                    .onHide(e -> {
+                        showing = false;
+                    })
+                    .fire();
+        }
+    }
+
+    @Override
+    public void onDockBehaviourChange(final DockBehaviour dockBehaviour) {
+
+    }
+
+    @ProxyCodeSplit
+    public interface AskStroomAiProxy extends Proxy<AskStroomAiPresenter> {
+
     }
 
     @Override
@@ -143,5 +194,65 @@ public class AskStroomAiPresenter extends MyPresenterWidget<AskStroomAiPresenter
         String getMessage();
 
         void setSendButtonLoadingState(final boolean enabled);
+
+        void setDockBehaviour(final DockBehaviour dockBehaviour);
+
+        DockBehaviour getDockBehaviour();
+    }
+
+    public static class DockBehaviour {
+
+        private final DockType dockType;
+        private final DockLocation dockLocation;
+
+        public DockBehaviour(final DockType dockType,
+                             final DockLocation dockLocation) {
+            this.dockType = dockType;
+            this.dockLocation = dockLocation;
+        }
+
+        public DockType getDockType() {
+            return dockType;
+        }
+
+        public DockLocation getDockLocation() {
+            return dockLocation;
+        }
+    }
+
+    public enum DockType implements HasDisplayValue {
+        DIALOG("Dialog"),
+        TAB("Tab"),
+        FLOAT("Float"),
+        DOCK("Dock");
+
+        private final String displayValue;
+
+        DockType(final String displayValue) {
+            this.displayValue = displayValue;
+        }
+
+        @Override
+        public String getDisplayValue() {
+            return displayValue;
+        }
+    }
+
+    public enum DockLocation implements HasDisplayValue {
+        TOP("Top"),
+        LEFT("Left"),
+        BOTTOM("Bottom"),
+        RIGHT("Right");
+
+        private final String displayValue;
+
+        DockLocation(final String displayValue) {
+            this.displayValue = displayValue;
+        }
+
+        @Override
+        public String getDisplayValue() {
+            return displayValue;
+        }
     }
 }

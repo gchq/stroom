@@ -28,7 +28,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder(alphabetic = true)
 public class OpenAIModelConfig extends AbstractConfig implements IsStroomConfig {
 
-    private static final int DEFAULT_MAXIMUM_BATCH_SIZE = 1024;
+    private static final int DEFAULT_MAXIMUM_BATCH_SIZE = 16384;
     private static final int DEFAULT_MAXIMUM_TABLE_INPUT_ROWS = 100;
 
     @JsonProperty

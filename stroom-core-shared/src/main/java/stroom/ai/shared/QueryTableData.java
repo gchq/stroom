@@ -8,13 +8,15 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
-public final class QueryTableData implements AskStroomAiData {
+public final class QueryTableData extends AskStroomAiData {
 
     @JsonProperty
     private final QuerySearchRequest searchRequest;
 
     @JsonCreator
-    public QueryTableData(@JsonProperty("searchRequest") final QuerySearchRequest searchRequest) {
+    public QueryTableData(@JsonProperty("chatMemoryId") final String chatMemoryId,
+                          @JsonProperty("searchRequest") final QuerySearchRequest searchRequest) {
+        super(chatMemoryId);
         this.searchRequest = searchRequest;
     }
 

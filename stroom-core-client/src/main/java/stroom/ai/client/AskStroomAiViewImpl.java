@@ -17,6 +17,10 @@
 package stroom.ai.client;
 
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
+import stroom.ai.client.AskStroomAiPresenter.DockBehaviour;
+import stroom.ai.client.AskStroomAiPresenter.DockLocation;
+import stroom.ai.client.AskStroomAiPresenter.DockType;
+import stroom.item.client.SelectionBox;
 import stroom.widget.button.client.Button;
 
 import com.google.gwt.dom.client.Element;
@@ -24,6 +28,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -40,6 +45,10 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     private final Widget widget;
 
     @UiField
+    SelectionBox<DockType> dockTypeSelectionBox;
+    @UiField
+    SelectionBox<DockLocation> dockLocationSelectionBox;
+    @UiField
     SimplePanel markdownPreview;
     @UiField
     TextBox message;
@@ -55,6 +64,18 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         message.getElement().setAttribute("placeholder", "How can I help?");
         sendMessage.setText(SEND_BUTTON_NORMAL_TEXT);
         sendMessage.setEnabled(false);
+
+        dockTypeSelectionBox.addItem(DockType.DIALOG);
+        dockTypeSelectionBox.addItem(DockType.TAB);
+        dockTypeSelectionBox.addItem(DockType.DOCK);
+        dockTypeSelectionBox.addItem(DockType.FLOAT);
+        dockTypeSelectionBox.setValue(DockType.DIALOG);
+
+        dockLocationSelectionBox.addItem(DockLocation.RIGHT);
+        dockLocationSelectionBox.addItem(DockLocation.LEFT);
+        dockLocationSelectionBox.addItem(DockLocation.TOP);
+        dockLocationSelectionBox.addItem(DockLocation.BOTTOM);
+        dockLocationSelectionBox.setValue(DockLocation.RIGHT);
     }
 
     @Override
@@ -81,7 +102,34 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     public void setSendButtonLoadingState(final boolean loading) {
         sendMessage.setEnabled(!loading && !message.getText().isEmpty());
         sendMessage.setLoading(loading);
-        sendMessage.setText(loading ? SEND_BUTTON_BUSY_TEXT : SEND_BUTTON_NORMAL_TEXT);
+        sendMessage.setText(loading
+                ? SEND_BUTTON_BUSY_TEXT
+                : SEND_BUTTON_NORMAL_TEXT);
+    }
+
+    @Override
+    public void setDockBehaviour(final DockBehaviour dockBehaviour) {
+        dockTypeSelectionBox.setValue(dockBehaviour.getDockType());
+        dockLocationSelectionBox.setValue(dockBehaviour.getDockLocation());
+    }
+
+    @Override
+    public DockBehaviour getDockBehaviour() {
+        return new DockBehaviour(dockTypeSelectionBox.getValue(), dockLocationSelectionBox.getValue());
+    }
+
+    @UiHandler("dockTypeSelectionBox")
+    public void onDockTypeSelectionBox(final ValueChangeEvent<DockType> event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onDockBehaviourChange(getDockBehaviour());
+        }
+    }
+
+    @UiHandler("dockLocationSelectionBox")
+    public void onDockLocationSelectionBox(final ValueChangeEvent<DockLocation> event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onDockBehaviourChange(getDockBehaviour());
+        }
     }
 
     @UiHandler("message")

@@ -26,6 +26,10 @@ public class AskStroomAIModule extends AbstractPresenterModule {
 
     @Override
     protected void configure() {
-        bindPresenterWidget(AskStroomAiPresenter.class, AskStroomAiView.class, AskStroomAiViewImpl.class);
+        bindPresenter(
+                AskStroomAiPresenter.class,
+                AskStroomAiView.class,
+                AskStroomAiViewImpl.class,
+                AskStroomAiPresenter.AskStroomAiProxy.class);
     }
 }

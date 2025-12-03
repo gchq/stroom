@@ -1,5 +1,6 @@
 package stroom.ai.shared;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -9,8 +10,18 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 )
 @JsonSubTypes({
         @JsonSubTypes.Type(value = DashboardTableData.class, name = "dashboardTable"),
-        @JsonSubTypes.Type(value = QueryTableData.class, name = "queryTable")
+        @JsonSubTypes.Type(value = QueryTableData.class, name = "queryTable"),
+        @JsonSubTypes.Type(value = GeneralTableData.class, name = "generalTable")
 })
-public sealed interface AskStroomAiData permits DashboardTableData, QueryTableData {
+public sealed abstract class AskStroomAiData permits DashboardTableData, QueryTableData, GeneralTableData {
+    @JsonProperty
+    private final String chatMemoryId;
 
+    public AskStroomAiData(final String chatMemoryId) {
+        this.chatMemoryId = chatMemoryId;
+    }
+
+    public String getChatMemoryId() {
+        return chatMemoryId;
+    }
 }

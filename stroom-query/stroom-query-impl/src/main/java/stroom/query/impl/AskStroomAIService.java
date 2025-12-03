@@ -3,6 +3,7 @@ package stroom.query.impl;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.AskStroomAiResponse;
 import stroom.ai.shared.DashboardTableData;
+import stroom.ai.shared.GeneralTableData;
 import stroom.ai.shared.QueryTableData;
 import stroom.dashboard.impl.DashboardService;
 import stroom.dashboard.shared.ComponentResultRequest;
@@ -17,6 +18,8 @@ import stroom.langchain.api.OpenAIService;
 import stroom.langchain.api.SimpleTokenCountEstimator;
 import stroom.langchain.api.SummaryReducer;
 import stroom.langchain.api.TableQuery;
+import stroom.langchain.api.TableQueryMessages;
+import stroom.langchain.api.TableSummaryMessages;
 import stroom.openai.shared.OpenAIModelConfig;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.api.Column;
@@ -37,6 +40,7 @@ import jakarta.inject.Provider;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 public class AskStroomAIService {
 
@@ -44,6 +48,7 @@ public class AskStroomAIService {
 
     private static final String TABLE_CHAT_MEMORY_KEY = "table";
     private static final String SUMMARY_CHAT_MEMORY_KEY = "summary";
+    private static final Pattern MD_TABLE_ESCAPE = Pattern.compile("[$&`*_~#+-.!|()\\[\\]{}<>]");
 
     private final Provider<OpenAIModelConfig> openAiModelConfigProvider;
     private final Provider<ChatMemoryConfig> chatMemoryConfigProvider;
@@ -92,7 +97,6 @@ public class AskStroomAIService {
      */
     public AskStroomAiResponse askStroomAi(final AskStroomAiRequest request) {
         if (request.getData() instanceof final DashboardTableData dashboardTableData) {
-            final String chatMemoryId = dashboardTableData.getSearchRequest().getQueryKey().toString();
             final Function<OffsetRange, DashboardSearchResponse> dataProvider = range -> {
                 DashboardSearchRequest searchRequest = dashboardTableData.getSearchRequest();
                 final ComponentResultRequest componentResultRequest = searchRequest.getComponentResultRequests().getFirst();
@@ -106,12 +110,12 @@ public class AskStroomAIService {
                 }
                 throw new RuntimeException("No table component provided");
             };
-            return new AskStroomAiResponse(createStroomAiTableSummary(chatMemoryId,
+            return new AskStroomAiResponse(createStroomAiTableSummary(
+                    dashboardTableData.getChatMemoryId(),
                     request.getMessage(),
                     dataProvider));
 
         } else if (request.getData() instanceof final QueryTableData queryTableData) {
-            final String chatMemoryId = queryTableData.getSearchRequest().getQueryKey().toString();
             final Function<OffsetRange, DashboardSearchResponse> dataProvider = range -> {
                 final QuerySearchRequest searchRequest = queryTableData
                         .getSearchRequest()
@@ -120,12 +124,85 @@ public class AskStroomAIService {
                         .build();
                 return queryService.search(searchRequest);
             };
-            return new AskStroomAiResponse(createStroomAiTableSummary(chatMemoryId,
+            return new AskStroomAiResponse(createStroomAiTableSummary(
+                    queryTableData.getChatMemoryId(),
                     request.getMessage(),
                     dataProvider));
+        } else if (request.getData() instanceof final GeneralTableData generalTableData) {
+            return new AskStroomAiResponse(createGeneralAiTableSummary(
+                    generalTableData.getChatMemoryId(),
+                    request.getMessage(),
+                    generalTableData));
         }
 
         throw new IllegalStateException();
+    }
+
+    /**
+     * Passes the table rows in batches to the configured LLM chat completion endpoint, along with the user's query.
+     * The user is provided with an aggregated response from all batches once compiled.
+     */
+    private String createGeneralAiTableSummary(final String chatMemoryId,
+                                               final String aiQuery,
+                                               final GeneralTableData generalTableData) {
+        try {
+            final OpenAIModelConfig modelConfig = openAiModelConfigProvider.get();
+            final ResultBuilder resultBuilder = createResultBuilder(chatMemoryId, aiQuery);
+
+            // Create column header string.
+            final String header = writeHeader(generalTableData.getColumns());
+
+            // Batch and summarise user message responses into a combined summary
+            final int maxBatchSize = modelConfig.getMaximumBatchSize();
+            final int maximumRowCount = modelConfig.getMaximumTableInputRows();
+            final StringBuilder batch = new StringBuilder(header);
+            int rowCount = 0;
+
+            for (final List<String> rowValues : generalTableData.getRows()) {
+                final String rowString = writeRow(rowValues);
+                final int newBatchSize = batch.length() + rowString.length();
+                if (rowCount > 0 && newBatchSize > maxBatchSize) {
+                    // Batch message plus the new row would exceed the maximum batch size, so send the batch to the
+                    // model as-is
+                    resultBuilder.add(batch.toString());
+                    batch.setLength(0);
+                    batch.append(header);
+                }
+
+                batch.append(rowString);
+                rowCount++;
+
+                // Exit as soon as we have reached the maximum row count.
+                if (rowCount >= maximumRowCount) {
+                    break;
+                }
+            }
+
+            if (!batch.isEmpty()) {
+                // Process any remaining batch content
+                resultBuilder.add(batch.toString());
+            }
+
+            return resultBuilder.get();
+
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+            return e.getMessage();
+        }
+    }
+
+    private ChatModel getChatModel(final DocRef docRef) {
+        if (!OpenAIModelDoc.TYPE.equals(docRef.getType())) {
+            throw new RuntimeException("Default OpenAI API doc ref is incorrect");
+        }
+
+        final OpenAIModelDoc openAIModelDoc = openAIModelStore.readDocument(docRef);
+        if (openAIModelDoc == null) {
+            throw new RuntimeException("Default OpenAI API doc cannot be found");
+        }
+
+        return openAIService.getChatModel(openAIModelDoc.getModelId(),
+                openAIModelDoc.getBaseUrl(), openAIModelDoc.getApiKey());
     }
 
     /**
@@ -137,44 +214,9 @@ public class AskStroomAIService {
                                               final Function<OffsetRange, DashboardSearchResponse> dataProvider) {
         try {
             final OpenAIModelConfig modelConfig = openAiModelConfigProvider.get();
-            if (modelConfig == null || modelConfig.getDefaultApiConfig() == null) {
-                throw new RuntimeException("No default OpenAI API specified");
-            }
+            final ResultBuilder resultBuilder = createResultBuilder(chatMemoryId, aiQuery);
 
-            final DocRef docRef = modelConfig.getDefaultApiConfig();
-            if (!OpenAIModelDoc.TYPE.equals(docRef.getType())) {
-                throw new RuntimeException("Default OpenAI API doc ref is incorrect");
-            }
-
-            final OpenAIModelDoc openAIModelDoc = openAIModelStore.readDocument(docRef);
-            if (openAIModelDoc == null) {
-                throw new RuntimeException("Default OpenAI API doc cannot be found");
-            }
-
-            final ChatModel chatModel = openAIService.getChatModel(openAIModelDoc.getModelId(),
-                    openAIModelDoc.getBaseUrl(), openAIModelDoc.getApiKey());
-            final String tableChatMemoryId = TABLE_CHAT_MEMORY_KEY + "/" + chatMemoryId;
-            final String summaryChatMemoryId = SUMMARY_CHAT_MEMORY_KEY + "/" + chatMemoryId;
-            final int maxTokens = chatMemoryConfigProvider.get().getTokenLimit();
-
-            final TableQuery tableQueryService = AiServices.builder(TableQuery.class)
-                    .chatModel(chatModel)
-                    .chatMemoryProvider(memoryId -> TokenWindowChatMemory.builder()
-                            .chatMemoryStore(chatMemoryService.getChatMemoryStore())
-                            .id(tableChatMemoryId)
-                            .maxTokens(maxTokens, new SimpleTokenCountEstimator())
-                            .build())
-                    .build();
-            final SummaryReducer summaryReducerService = AiServices.builder(SummaryReducer.class)
-                    .chatModel(chatModel)
-                    .chatMemoryProvider(memoryId -> TokenWindowChatMemory.builder()
-                            .chatMemoryStore(chatMemoryService.getChatMemoryStore())
-                            .id(summaryChatMemoryId)
-                            .maxTokens(maxTokens, new SimpleTokenCountEstimator())
-                            .build())
-                    .build();
-            final ResultBuilder resultBuilder =
-                    new ResultBuilder(chatMemoryId, aiQuery, tableQueryService, summaryReducerService);
+//            final ResultBuilder2 resultBuilder = new ResultBuilder2(chatModel, aiQuery);
 
             // Get the first result page from the data source.
             OffsetRange range = new OffsetRange(0, 100);
@@ -194,7 +236,8 @@ public class AskStroomAIService {
                 for (final Row row : result.getRows()) {
                     final List<String> rowValues = row.getValues();
                     final String rowString = writeRow(rowValues);
-                    final int newBatchSize = SummaryReducer.USER_MESSAGE.length() + batch.length() + rowString.length();
+
+                    final int newBatchSize = batch.length() + rowString.length();
                     if (rowCount > 0 && newBatchSize > maxBatchSize) {
                         // Batch message plus the new row would exceed the maximum batch size, so send the batch to the
                         // model as-is
@@ -236,31 +279,81 @@ public class AskStroomAIService {
         }
     }
 
+    private ResultBuilder createResultBuilder(final String chatMemoryId,
+                                              final String aiQuery) {
+        final OpenAIModelConfig modelConfig = openAiModelConfigProvider.get();
+        if (modelConfig == null || modelConfig.getDefaultApiConfig() == null) {
+            throw new RuntimeException("No default OpenAI API specified");
+        }
+        final DocRef docRef = modelConfig.getDefaultApiConfig();
+
+        final ChatModel chatModel = getChatModel(docRef);
+        final String tableChatMemoryId = TABLE_CHAT_MEMORY_KEY + "/" + chatMemoryId;
+        final String summaryChatMemoryId = SUMMARY_CHAT_MEMORY_KEY + "/" + chatMemoryId;
+        final int maxTokens = chatMemoryConfigProvider.get().getTokenLimit();
+
+        final TableQuery tableQueryService = AiServices.builder(TableQuery.class)
+                .chatModel(chatModel)
+                .chatMemoryProvider(memoryId -> TokenWindowChatMemory.builder()
+                        .chatMemoryStore(chatMemoryService.getChatMemoryStore())
+                        .id(tableChatMemoryId)
+                        .maxTokens(maxTokens, new SimpleTokenCountEstimator())
+                        .build())
+                .build();
+        final SummaryReducer summaryReducerService = AiServices.builder(SummaryReducer.class)
+                .chatModel(chatModel)
+                .chatMemoryProvider(memoryId -> TokenWindowChatMemory.builder()
+                        .chatMemoryStore(chatMemoryService.getChatMemoryStore())
+                        .id(summaryChatMemoryId)
+                        .maxTokens(maxTokens, new SimpleTokenCountEstimator())
+                        .build())
+                .build();
+        return new ResultBuilder(chatMemoryId, aiQuery, tableQueryService, summaryReducerService);
+    }
+
     private String writeHeader(final List<String> columnList) {
-        // Write a new Markdown table header
-        return writeRow(columnList) +
-               writeRow(columnList.stream().map(col -> "---").toList());
+        final StringBuilder sb = new StringBuilder();
+        if (!columnList.isEmpty()) {
+            columnList.forEach(cell -> {
+                sb.append("| ");
+                sb.append(escape(cell));
+                sb.append(" ");
+            });
+            sb.append("|\n");
+            columnList.forEach(cell -> {
+                sb.append("| --- ");
+            });
+            sb.append("|\n");
+        }
+        return sb.toString();
     }
 
     private String writeRow(final List<String> rowValues) {
-        final StringBuilder row = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         if (!rowValues.isEmpty()) {
             rowValues.forEach(cell -> {
-                row.append("| ");
-                if (cell != null) {
-                    // Replace characters that can cause issues with Markdown tables
-                    row.append(cell
-                            .replace("\n", "<br>")
-                            .replace('|', ' '));
-                }
-                row.append(" ");
+                sb.append("| ");
+                sb.append(escape(cell));
+                sb.append(" ");
             });
-            row.append("|\n");
+            sb.append("|\n");
         }
-        return row.toString();
+        return sb.toString();
     }
 
-    private static class ResultBuilder {
+    private String escape(final String value) {
+        if (value == null) {
+            return "";
+        }
+
+        // Replace characters that can cause issues with Markdown tables
+        return MD_TABLE_ESCAPE.matcher(value)
+                .replaceAll("\\\\$0")
+                .trim()
+                .replace("\n", "<br>");
+    }
+
+    static class ResultBuilder {
 
         private final String aiQuery;
         private final TableQuery tableQueryService;
@@ -289,6 +382,37 @@ public class AskStroomAIService {
             } else {
                 cumulativeSummary = summaryReducerService.merge(
                         summaryChatMemoryId, cumulativeSummary, batchAnswer);
+            }
+        }
+
+        String get() {
+            return cumulativeSummary;
+        }
+    }
+
+    static class ResultBuilder2 {
+
+        private final ChatModel chatModel;
+        private final String aiQuery;
+        private String cumulativeSummary = "";
+
+        public ResultBuilder2(final ChatModel chatModel,
+                              final String aiQuery) {
+            this.chatModel = chatModel;
+            this.aiQuery = aiQuery;
+        }
+
+        void add(final String data) {
+            // Process any remaining batch content
+            final String batchAnswer = chatModel.chat(TableQueryMessages.createMessages(aiQuery, data))
+                    .aiMessage()
+                    .text();
+            if (cumulativeSummary.isEmpty()) {
+                cumulativeSummary = batchAnswer;
+            } else {
+                cumulativeSummary = chatModel.chat(TableSummaryMessages.createMessages(cumulativeSummary, batchAnswer))
+                        .aiMessage()
+                        .text();
             }
         }
 
