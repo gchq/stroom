@@ -687,6 +687,12 @@ tasks.register('makeSendExecutable') {
 // Build the release distribution zip for stroom
 tasks.register('buildDistribution', Zip) {
 
+    // See https://docs.gradle.org/9.0.0/release-notes.html#archive-tasks-produce-reproducible-archives-by-default
+    // Use file timestamps from the file system, else they will all be 1 Feb 1980
+    preserveFileTimestamps = true
+    // Use permissions from the file system, else files will all be -rw-r--r--
+    useFileSystemPermissions()
+
     // run all the tasks that produce content for the zip
     dependsOn copyJar
     dependsOn copySupportingFiles
