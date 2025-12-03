@@ -13,6 +13,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11-beta.12] - 2025-12-03
+
+* Fix Files list on Stream Info pane so that you can copy each file path individually.
+
+* Uplift Gradle to v9.2.1.
+
+* Issue **#5297** : Fix missing execute permissions and incorrect file dates in stroom and stroom-proxy distribution ZIP files.
+
+
 ## [v7.11-beta.11] - 2025-12-02
 
 * Uplift docker image JDK to `eclipse-temurin:25_36-jdk-alpine-3.22`.
@@ -1856,7 +1865,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.11...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.12...HEAD
+[v7.11-beta.12]: https://github.com/gchq/stroom/compare/v7.11-beta.11...v7.11-beta.12
 [v7.11-beta.11]: https://github.com/gchq/stroom/compare/v7.11-beta.10...v7.11-beta.11
 [v7.11-beta.10]: https://github.com/gchq/stroom/compare/v7.11-beta.9...v7.11-beta.10
 [v7.11-beta.9]: https://github.com/gchq/stroom/compare/v7.11-beta.8...v7.11-beta.9
