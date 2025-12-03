@@ -90,6 +90,7 @@ import java.util.regex.Pattern;
  */
 @ConfigurableElement(
         type = "PlanBFilter",
+        displayValue = "Plan B Filter",
         description = """
                 Takes XML input (conforming to the reference-data:2 schema) and \
                 loads the data into the Plan B State Store.

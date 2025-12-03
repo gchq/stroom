@@ -45,6 +45,7 @@ import java.util.Set;
  */
 @ConfigurableElement(
         type = "IdEnrichmentFilter",
+        displayValue = "ID Enrichment Filter",
         category = Category.FILTER,
         description = """
                 Adds the attributes 'StreamId' and 'EventId' to the 'event' element to enrich the event \

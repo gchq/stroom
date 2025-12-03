@@ -41,3 +41,7 @@ dependencies {
 
     testRuntimeOnly libs.bundles.common.test.runtime
 }
+
+tasks.withType(AbstractTestTask).configureEach {
+    failOnNoDiscoveredTests = false
+}

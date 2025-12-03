@@ -205,7 +205,11 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
 
         view.setUiHandlers(this);
 
-        explorerTree = new ExplorerTree(restFactory, getView().getTaskListener(), true, showAlertsBtn.getState());
+        explorerTree = new ExplorerTree(
+                restFactory,
+                getView().getTaskListener(),
+                true,
+                showAlertsBtn.getState());
 
         // Add views.
         uiConfigCache.get(uiConfig -> {

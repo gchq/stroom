@@ -107,15 +107,6 @@ public class PipelineElement implements Comparable<PipelineElement> {
 
     /**
      * E.g.
-     * <pre>{@code CombinedParser 'myCombinedParser'}</pre>
-     */
-    @JsonIgnore
-    public String getFullName() {
-        return type + " '" + getDisplayName() + "'";
-    }
-
-    /**
-     * E.g.
      * <pre>{@code 'myCombinedParser'}</pre>
      */
     @JsonIgnore

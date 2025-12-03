@@ -12,6 +12,29 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+## [v7.11-beta.11] - 2025-12-02
+
+* Uplift docker image JDK to `eclipse-temurin:25_36-jdk-alpine-3.22`.
+
+* Issue **#5259** : Fix PlanB Val.toString() NPE.
+
+* Bumps org.quartz-scheduler:quartz from 2.5.0-rc1 to 2.5.1.
+
+* Bumps org.eclipse.transformer:org.eclipse.transformer.cli from 0.5.0 to 1.0.0.
+
+* Issue **#5288** : Fix config defaults for `ForwardHttpPostConfig` and `HttpClientConfiguration`.
+
+* Issue **#5291** : Fix explorer item sort order.
+
+* Issue **#5152** : Fix position of the Clear icon on the Quick Filter.
+
+* Make the Quick Filter Help button hide the help popup if it is visible.
+
+* Add the same Quick Filter help popup as used on the explorer QF to the QFs on Dashboard table columns, Query help and Expression Term editors.
+
+* Issue **#5293** : Fix pipeline element type and name display.
+
 * Issue **#5229** : Change the default main method for the stroom-headless jar to be Headless rather than Cli. Fix errors when running stroom-headless.
 
 
@@ -1833,7 +1856,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.10...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.11...HEAD
+[v7.11-beta.11]: https://github.com/gchq/stroom/compare/v7.11-beta.10...v7.11-beta.11
 [v7.11-beta.10]: https://github.com/gchq/stroom/compare/v7.11-beta.9...v7.11-beta.10
 [v7.11-beta.9]: https://github.com/gchq/stroom/compare/v7.11-beta.8...v7.11-beta.9
 [v7.11-beta.8]: https://github.com/gchq/stroom/compare/v7.11-beta.7...v7.11-beta.8

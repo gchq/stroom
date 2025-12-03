@@ -40,6 +40,7 @@ import org.xml.sax.SAXException;
 
 @Deprecated // This is pretty limited in what it can do. HttpAppender is much better and more configurable
 @ConfigurableElement(type = "HttpPostFilter",
+        displayValue = "HTTP Post Filter",
         category = PipelineElementType.Category.FILTER,
         description = """
                 This element is deprecated, you should instead use the much more flexible \

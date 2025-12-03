@@ -23,6 +23,7 @@ import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
 import stroom.util.logging.LogUtil;
 
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 public class ValueStoreKeySerde implements Serde<ValueStoreKey> {
 
@@ -88,17 +89,19 @@ public class ValueStoreKeySerde implements Serde<ValueStoreKey> {
     }
 
     /**
-     * Compare the valueHashCode part of both byte buffers, comparing in byte form
+     * Check equality of valueHashCode part of both byte buffers
      */
-    public static int compareValueHashCode(final ByteBuffer thisBuffer, final ByteBuffer thatBuffer) {
+    public static boolean valueHashCodeEquals(final ByteBuffer thisBuffer, final ByteBuffer thatBuffer) {
         try {
-            return ByteBufferUtils.compareTo(
-                    thisBuffer, VALUE_HASH_CODE_OFFSET, VALUE_HASH_CODE_BYTES,
-                    thatBuffer, VALUE_HASH_CODE_OFFSET, VALUE_HASH_CODE_BYTES);
+            return Objects.equals(getValueHashCodeSlice(thisBuffer), getValueHashCodeSlice(thatBuffer));
         } catch (final Exception e) {
-            throw new RuntimeException(LogUtil.message("Error comparing [{}] & [{}]",
+            throw new RuntimeException(LogUtil.message("Error checking equality [{}] & [{}]",
                     ByteBufferUtils.byteBufferInfo(thisBuffer),
                     ByteBufferUtils.byteBufferInfo(thatBuffer)), e);
         }
+    }
+
+    private static ByteBuffer getValueHashCodeSlice(final ByteBuffer byteBuffer) {
+        return byteBuffer.slice(VALUE_HASH_CODE_OFFSET, VALUE_HASH_CODE_BYTES);
     }
 }

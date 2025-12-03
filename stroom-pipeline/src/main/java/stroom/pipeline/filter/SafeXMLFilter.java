@@ -30,6 +30,7 @@ import org.xml.sax.helpers.AttributesImpl;
 
 @ConfigurableElement(
         type = "SafeXMLFilter",
+        displayValue = "Safe XML Filter",
         category = Category.FILTER,
         description = "Restricts the characters to a very simple set consisting of `[a-zA-Z0-9]` and `["
                       + SafeBuffer.OTHER_CHARS

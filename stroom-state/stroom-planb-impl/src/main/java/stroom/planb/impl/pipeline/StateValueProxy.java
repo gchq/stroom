@@ -12,15 +12,17 @@ import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.store.offheapstore.RefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.offheapstore.TypedByteBuffer;
 import stroom.planb.impl.data.TemporalState;
+import stroom.planb.impl.serde.val.ValSerdeUtil;
+import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValXml;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import net.sf.saxon.trans.XPathException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -67,7 +69,7 @@ public class StateValueProxy implements RefDataValueProxy {
         return switch (state.val().type()) {
             case XML -> Optional.of(new FastInfosetValue(ByteBuffer.wrap(((ValXml) state.val()).getBytes())));
             case NULL -> Optional.of(NullValue.getInstance());
-            default -> Optional.of(new StringValue(state.val().toString()));
+            default -> Optional.of(new StringValue(NullSafe.getOrElse(state, TemporalState::val, Val::toString, "")));
         };
     }
 
@@ -81,7 +83,7 @@ public class StateValueProxy implements RefDataValueProxy {
             }
             default -> typedByteBufferConsumer.accept(new TypedByteBuffer(
                     StringValue.TYPE_ID,
-                    ByteBuffer.wrap(state.val().toString().getBytes(StandardCharsets.UTF_8))));
+                    ByteBuffer.wrap(ValSerdeUtil.getBytes(state.val()))));
         }
         return true;
     }

@@ -12,9 +12,12 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.PopupPanel;
+
+import java.util.function.Supplier;
 
 public class SelectionPopup<T, I extends SelectionItem> extends Composite {
 
@@ -115,5 +118,9 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
 
     public HandlerRegistration addCloseHandler(final CloseHandler<PopupPanel> handler) {
         return popupPanel.addCloseHandler(handler);
+    }
+
+    public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
+        selectionList.registerPopupTextProvider(popupTextSupplier);
     }
 }

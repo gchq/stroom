@@ -245,7 +245,7 @@ class ExplorerServiceImpl
                 metrics);
 
         // Sort the tree model
-        filteredModel.sort(this::getPriority);
+        filteredModel.sort();
 
         // If the name filter has changed then we want to temporarily expand all nodes.
         final Set<ExplorerNodeKey> temporaryOpenItems;
