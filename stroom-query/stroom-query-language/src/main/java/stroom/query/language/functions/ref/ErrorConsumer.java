@@ -10,6 +10,10 @@ public interface ErrorConsumer {
 
     void add(final Severity severity, final Supplier<String> message);
 
+    void add(final Severity severity, final String node, final Supplier<String> message);
+
+    void add(final ErrorMessage errorMessage);
+
     void add(final Supplier<String> message);
 
     void add(final Throwable exception);

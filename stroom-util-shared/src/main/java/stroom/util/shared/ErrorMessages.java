@@ -38,17 +38,17 @@ public class ErrorMessages {
         return errorMessages.isEmpty();
     }
 
-    public List<String> get(final Severity...severities) {
-        final List<String> messages = new ArrayList<>();
+    public List<ErrorMessage> get(final Severity...severities) {
+        final List<ErrorMessage> messages = new ArrayList<>();
         for (final Severity severity : severities) {
             messages.addAll(asMap().getOrDefault(severity, new ArrayList<>()));
         }
         return messages;
     }
 
-    private Map<Severity, List<String>> asMap() {
+    private Map<Severity, List<ErrorMessage>> asMap() {
         return errorMessages.stream()
                 .collect(Collectors.groupingBy(ErrorMessage::getSeverity, HashMap::new,
-                        Collectors.mapping(ErrorMessage::getMessage, Collectors.toList())));
+                        Collectors.mapping(m -> m, Collectors.toList())));
     }
 }

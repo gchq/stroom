@@ -36,9 +36,19 @@ public class ErrorConsumerImpl implements ErrorConsumer {
 
     @Override
     public void add(final Severity severity, final Supplier<String> message) {
+        add(severity, null, message);
+    }
+
+    @Override
+    public void add(final Severity severity, final String node, final Supplier<String> message) {
+        add(new ErrorMessage(severity, message.get(), node));
+    }
+
+    @Override
+    public void add(final ErrorMessage errorMessage) {
         if (LOGGER.isTraceEnabled()) {
             try {
-                throw new RuntimeException(message.get());
+                throw new RuntimeException(errorMessage.getMessage());
             } catch (final RuntimeException e) {
                 LOGGER.trace(e::getMessage, e);
             }
@@ -46,7 +56,7 @@ public class ErrorConsumerImpl implements ErrorConsumer {
 
         final int count = errorCount.incrementAndGet();
         if (count <= MAX_ERROR_COUNT) {
-            errorMessages.add(new ErrorMessage(severity, message.get()));
+            errorMessages.add(errorMessage);
         }
     }
 

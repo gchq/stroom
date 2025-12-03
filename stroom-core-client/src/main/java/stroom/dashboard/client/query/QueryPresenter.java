@@ -90,6 +90,7 @@ import com.gwtplatform.mvp.client.View;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class QueryPresenter
         extends AbstractRefreshableComponentPresenter<QueryView>
@@ -563,11 +564,21 @@ public class QueryPresenter
     }
 
     private void fireAlertEvent(final FireAlertEventFunction fireAlertEventFunction,
-                           final String messageType, final Severity...severity) {
-        final List<String> messages = currentErrors.get(severity);
-        final String msg = getMessage(messageType, messages.size());
-        final String errorMessages = String.join("\n", messages);
-        fireAlertEventFunction.apply(this, msg, errorMessages, null);
+                                final String messageType, final Severity...severity) {
+        final List<ErrorMessage> errorMessages = currentErrors.get(severity);
+        final String msg = getMessage(messageType, errorMessages.size());
+        final List<String> messages = errorMessages.stream()
+                .map(this::toDisplayMessage)
+                .collect(Collectors.toList());
+
+        fireAlertEventFunction.apply(this, msg, String.join("\n", messages), null);
+    }
+
+    private String toDisplayMessage(final ErrorMessage errorMessage) {
+        if (errorMessage.getNode() == null) {
+            return errorMessage.getMessage();
+        }
+        return errorMessage.getMessage() + " (node: " + errorMessage.getNode() + ")";
     }
 
     private String getMessage(final String messageType, final int numberOfMessages) {
