@@ -1,29 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!--
-  ~ Copyright 2016-2025 Crown Copyright
-  ~
-  ~ Licensed under the Apache License, Version 2.0 (the "License");
-  ~ you may not use this file except in compliance with the License.
-  ~ You may obtain a copy of the License at
-  ~
-  ~     http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and
-  ~ limitations under the License.
-  -->
-
 <!-- UK Crown Copyright © 2016 -->
 <xsl:stylesheet
   xmlns="event-logging:3"
   xpath-default-namespace="records:2"
   xmlns:stroom="stroom"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
   version="2.0">
-
+  
    <xsl:template match="records">
       <Events
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
@@ -31,7 +15,7 @@
          <xsl:apply-templates/>
       </Events>
    </xsl:template>
-
+   
    <!-- EG
    <Event>
 Date,Time,FileNo,LineNo,User,Message
@@ -68,19 +52,19 @@ Date,Time,FileNo,LineNo,User,Message
               </Data>
               <Data Name="LineNo">
                 <xsl:attribute name="Value" select="data[@name='LineNo']/@value"/>
-              </Data>
+              </Data>              
            </Authenticate>
         </EventDetail>
      </Event>
    </xsl:template>
-
+   
    <xsl:template name="header">
       <xsl:variable name="date" select="data[@name='Date']/@value"/>
       <xsl:variable name="time" select="data[@name='Time']/@value"/>
       <xsl:variable name="dateTime" select="concat($date, $time)"/>
       <xsl:variable name="formattedDateTime" select="stroom:format-date($dateTime, 'dd/MM/yyyyHH:mm:ss')"/>
       <xsl:variable name="user" select="data[@name='User']/@value"/>
-
+   
       <EventTime>
          <TimeCreated>
          	<xsl:value-of select="$formattedDateTime"/>
@@ -105,7 +89,7 @@ Date,Time,FileNo,LineNo,User,Message
                <Position>1</Position>
             </Location>
          </Device>
-
+         
          <User>
             <Id><xsl:value-of select="$user"/></Id>
          </User>

@@ -1,20 +1,4 @@
 <?xml version="1.1" encoding="UTF-8" ?>
-<!--
-  ~ Copyright 2016-2025 Crown Copyright
-  ~
-  ~ Licensed under the Apache License, Version 2.0 (the "License");
-  ~ you may not use this file except in compliance with the License.
-  ~ You may obtain a copy of the License at
-  ~
-  ~     http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and
-  ~ limitations under the License.
-  -->
-
 <!-- UK Crown Copyright © 2016 -->
 <xsl:stylesheet xpath-default-namespace="records:2" xmlns="event-logging:3" xmlns:stroom="stroom" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.0">
   <xsl:template match="records">
@@ -89,13 +73,13 @@
         <xsl:if test="$location">
           <xsl:copy-of select="$location" />
         </xsl:if>
-
+        
         <!-- hard coded bitmaplookup test that should result in 3 bit lookups -->
         <xsl:variable name="testBitmapLookup" select="stroom:bitmap-lookup('GreekAlphabet', '0x811')" />
         <Data Name="Designation">
           <xsl:attribute name="Value" select="$testBitmapLookup//@Value" />
         </Data>
-
+        
         <!-- range lookup tests -->
         <Data Name="Zone1">
           <xsl:attribute name="Value" select="stroom:lookup('IPToLocation', stroom:numeric-ip('192.168.1.1'))" />
