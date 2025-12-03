@@ -20,6 +20,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.FireAlertEventFunction;
 import stroom.core.client.LocationManager;
 import stroom.core.client.event.WindowCloseEvent;
+import stroom.core.client.messages.ErrorMessageTemplates;
 import stroom.dashboard.client.main.AbstractRefreshableComponentPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
@@ -100,6 +101,7 @@ public class QueryPresenter
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     private static final ResultStoreResource RESULT_STORE_RESOURCE = GWT.create(ResultStoreResource.class);
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
+    private static final ErrorMessageTemplates ERROR_MESSAGE_TEMPLATES = GWT.create(ErrorMessageTemplates.class);
 
     public static final ComponentType TYPE = new ComponentType(0, "query", "Query", ComponentUse.PANEL);
     static final int TEN_SECONDS = 10000;
@@ -554,19 +556,18 @@ public class QueryPresenter
     private void showErrors() {
         if (!currentErrors.isEmpty()) {
             if (currentErrors.containsAny(Severity.FATAL_ERROR, Severity.ERROR)) {
-                fireAlertEvent(AlertEvent::fireError, "error", Severity.FATAL_ERROR, Severity.ERROR);
+                fireAlertEvent(AlertEvent::fireError);
             } else if (currentErrors.containsAny(Severity.WARNING)) {
-                fireAlertEvent(AlertEvent::fireWarn, "warning", Severity.WARNING);
+                fireAlertEvent(AlertEvent::fireWarn);
             } else if (currentErrors.containsAny(Severity.INFO)) {
-                fireAlertEvent(AlertEvent::fireInfo, "message", Severity.INFO);
+                fireAlertEvent(AlertEvent::fireInfo);
             }
         }
     }
 
-    private void fireAlertEvent(final FireAlertEventFunction fireAlertEventFunction,
-                                final String messageType, final Severity...severity) {
-        final List<ErrorMessage> errorMessages = currentErrors.get(severity);
-        final String msg = getMessage(messageType, errorMessages.size());
+    private void fireAlertEvent(final FireAlertEventFunction fireAlertEventFunction) {
+        final List<ErrorMessage> errorMessages = currentErrors.getErrorMessagesOrderedBySeverity();
+        final String msg = getAlertMessage(errorMessages.size());
         final List<String> messages = errorMessages.stream()
                 .map(this::toDisplayMessage)
                 .collect(Collectors.toList());
@@ -576,16 +577,16 @@ public class QueryPresenter
 
     private String toDisplayMessage(final ErrorMessage errorMessage) {
         if (errorMessage.getNode() == null) {
-            return errorMessage.getMessage();
+            return ERROR_MESSAGE_TEMPLATES.errorMessage(errorMessage.getSeverity().getDisplayValue(),
+                    errorMessage.getMessage());
         }
-        return errorMessage.getMessage() + " (node: " + errorMessage.getNode() + ")";
+        return ERROR_MESSAGE_TEMPLATES.errorMessageWithNode(errorMessage.getSeverity().getDisplayValue(),
+                errorMessage.getMessage(), errorMessage.getNode());
     }
 
-    private String getMessage(final String messageType, final int numberOfMessages) {
-        return numberOfMessages == 1
-                ? ("The following " + messageType + " was created while running this search:")
-                : ("The following " + numberOfMessages
-                   + " " + messageType + "s have been created while running this search:");
+    private String getAlertMessage(final int numberOfMessages) {
+        return numberOfMessages == 1 ? ERROR_MESSAGE_TEMPLATES.errorMessageCreatedSingular() :
+                ERROR_MESSAGE_TEMPLATES.errorMessagesCreatedPlural();
     }
 
     @Override

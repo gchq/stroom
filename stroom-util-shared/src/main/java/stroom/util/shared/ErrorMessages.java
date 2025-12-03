@@ -2,12 +2,12 @@ package stroom.util.shared;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static stroom.util.shared.Severity.HIGH_TO_LOW_COMPARATOR;
 
 public class ErrorMessages {
 
@@ -22,7 +22,7 @@ public class ErrorMessages {
     }
 
     public Severity getHighestSeverity() {
-        return asMap().keySet().stream().sorted(HIGH_TO_LOW_COMPARATOR).findFirst().orElse(null);
+        return asMap().keySet().stream().sorted(Severity.HIGH_TO_LOW_COMPARATOR).findFirst().orElse(null);
     }
 
     public boolean containsAny(final Severity...severities) {
@@ -46,9 +46,15 @@ public class ErrorMessages {
         return messages;
     }
 
+    public List<ErrorMessage> getErrorMessagesOrderedBySeverity() {
+        return errorMessages.stream()
+                .sorted(Comparator.comparing(e -> ((ErrorMessage) e).getSeverity().getId()).reversed())
+                .collect(Collectors.toList());
+    }
+
     private Map<Severity, List<ErrorMessage>> asMap() {
         return errorMessages.stream()
                 .collect(Collectors.groupingBy(ErrorMessage::getSeverity, HashMap::new,
-                        Collectors.mapping(m -> m, Collectors.toList())));
+                        Collectors.mapping(Function.identity(), Collectors.toList())));
     }
 }
