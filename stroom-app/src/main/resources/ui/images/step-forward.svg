@@ -1,17 +1,1 @@
-<!--
-  - Copyright 2016-2025 Crown Copyright
-  -
-  - Licensed under the Apache License, Version 2.0 (the "License");
-  - you may not use this file except in compliance with the License.
-  - You may obtain a copy of the License at
-  -
-  -     http://www.apache.org/licenses/LICENSE-2.0
-  -
-  - Unless required by applicable law or agreed to in writing, software
-  - distributed under the License is distributed on an "AS IS" BASIS,
-  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  - See the License for the specific language governing permissions and
-  - limitations under the License.
-  -->
-
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!-- Font Awesome Free 5.15.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) --><path style="fill:currentColor" d="m 400,75.977968 0,360.000002 c 0,6.6 -5.4,12 -12,12 l -40,0 c -6.6,0 -12,-5.4 -12,-12 l 0,-151.9 -171.5,156.5 c -20.6,17.2 -52.5,2.8 -52.5,-24.6 0,-202.11605 0,-87.47785 0,-320.000002 0,-27.399997 31.9,-41.699997 52.5,-24.6 L 336,226.77797 336,75.977968 c 0,-6.599997 5.4,-11.999997 12,-11.999997 l 40,0 c 6.6,0 12,5.4 12,11.999997 z" /></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!-- Font Awesome Free 5.15.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) --><path style="fill:currentColor" d="m 400,75.977968 0,360.000002 c 0,6.6 -5.4,12 -12,12 l -40,0 c -6.6,0 -12,-5.4 -12,-12 l 0,-151.9 -171.5,156.5 c -20.6,17.2 -52.5,2.8 -52.5,-24.6 0,-202.11605 0,-87.47785 0,-320.000002 0,-27.399997 31.9,-41.699997 52.5,-24.6 L 336,226.77797 336,75.977968 c 0,-6.599997 5.4,-11.999997 12,-11.999997 l 40,0 c 6.6,0 12,5.4 12,11.999997 z" /></svg> 

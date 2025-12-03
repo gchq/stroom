@@ -1,17 +1,1 @@
-<!--
-  - Copyright 2016-2025 Crown Copyright
-  -
-  - Licensed under the Apache License, Version 2.0 (the "License");
-  - you may not use this file except in compliance with the License.
-  - You may obtain a copy of the License at
-  -
-  -     http://www.apache.org/licenses/LICENSE-2.0
-  -
-  - Unless required by applicable law or agreed to in writing, software
-  - distributed under the License is distributed on an "AS IS" BASIS,
-  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  - See the License for the specific language governing permissions and
-  - limitations under the License.
-  -->
-
-<svg width="1792" height="1792" viewBox="0 0 1792 1792" xmlns="http://www.w3.org/2000/svg"><path style="fill:currentColor;stroke-width:1.449;stroke-dasharray:none" d="M 780.04415,1220.6764 H 640.89714 c -38.41038,0 -69.57351,-31.1631 -69.57351,-69.5735 V 640.89716 c 0,-38.41038 31.16313,-69.57351 69.57351,-69.57351 h 139.14701 c 38.41038,0 69.57351,31.16313 69.57351,69.57351 v 510.20574 c 0,38.4104 -31.16313,69.5735 -69.57351,69.5735 z m 440.63225,-69.5735 V 640.89716 c 0,-38.41038 -31.1631,-69.57351 -69.5735,-69.57351 h -139.147 c -38.41043,0 -69.57356,31.16313 -69.57356,69.57351 v 510.20574 c 0,38.4104 31.16313,69.5735 69.57346,69.5735 h 139.1471 c 38.4104,0 69.5735,-31.1631 69.5735,-69.5735 z" /></svg>
+<svg width="1792" height="1792" viewBox="0 0 1792 1792" xmlns="http://www.w3.org/2000/svg"><path style="fill:currentColor;stroke-width:1.449;stroke-dasharray:none" d="M 780.04415,1220.6764 H 640.89714 c -38.41038,0 -69.57351,-31.1631 -69.57351,-69.5735 V 640.89716 c 0,-38.41038 31.16313,-69.57351 69.57351,-69.57351 h 139.14701 c 38.41038,0 69.57351,31.16313 69.57351,69.57351 v 510.20574 c 0,38.4104 -31.16313,69.5735 -69.57351,69.5735 z m 440.63225,-69.5735 V 640.89716 c 0,-38.41038 -31.1631,-69.57351 -69.5735,-69.57351 h -139.147 c -38.41043,0 -69.57356,31.16313 -69.57356,69.57351 v 510.20574 c 0,38.4104 31.16313,69.5735 69.57346,69.5735 h 139.1471 c 38.4104,0 69.5735,-31.1631 69.5735,-69.5735 z" /></svg> 

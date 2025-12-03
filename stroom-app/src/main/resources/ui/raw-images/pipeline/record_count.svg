@@ -1,20 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  - Copyright 2016-2025 Crown Copyright
-  -
-  - Licensed under the Apache License, Version 2.0 (the "License");
-  - you may not use this file except in compliance with the License.
-  - You may obtain a copy of the License at
-  -
-  -     http://www.apache.org/licenses/LICENSE-2.0
-  -
-  - Unless required by applicable law or agreed to in writing, software
-  - distributed under the License is distributed on an "AS IS" BASIS,
-  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  - See the License for the specific language governing permissions and
-  - limitations under the License.
-  -->
-
 <svg xmlns="http://www.w3.org/2000/svg" width="1792" height="1792" viewBox="0 0 1792 1792">
     <path style="fill:#2196f3"
           d="m 288,333.95508 c -26.66667,0 -49.33333,9.33333 -68,28 -18.66667,18.66666 -28,41.33333 -28,68 0.0805,246.24683 0,490.77231 0,736.97462 0,26.6667 9.33333,49.3333 28,68 18.66667,18.6667 41.33333,28 68,28 l 1216,0 c 26.6667,0 49.3333,-9.3333 68,-28 18.6667,-18.6667 28,-41.3333 28,-68 -0.078,-246.27922 0,-490.86553 0,-736.97462 0,-26.66667 -9.3333,-49.33334 -28,-68 -18.6667,-18.66667 -41.3333,-28 -68,-28 z"/>

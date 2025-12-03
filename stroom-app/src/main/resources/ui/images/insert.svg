@@ -1,17 +1,1 @@
-<!--
-  - Copyright 2016-2025 Crown Copyright
-  -
-  - Licensed under the Apache License, Version 2.0 (the "License");
-  - you may not use this file except in compliance with the License.
-  - You may obtain a copy of the License at
-  -
-  -     http://www.apache.org/licenses/LICENSE-2.0
-  -
-  - Unless required by applicable law or agreed to in writing, software
-  - distributed under the License is distributed on an "AS IS" BASIS,
-  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  - See the License for the specific language governing permissions and
-  - limitations under the License.
-  -->
-
-<svg width="1792" height="1792" viewBox="0 0 1792 1792" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M 160,384 C 116.00004,384 78.3333,399.6667 47,431 15.6667,462.3333 0,500.00004 0,544 v 1088 c 0,44 15.6667,81.6667 47,113 31.3333,31.3333 69.00004,47 113,47 h 1088 c 44,0 81.6667,-15.6667 113,-47 31.3333,-31.3333 47,-69 47,-113 V 635.05323 L 1153.9304,384 Z m 0,128 h 867.2795 L 1153.9304,384 1408,635.05323 1280,763.92607 V 1632 c 0,8.6667 -3.1667,16.1667 -9.5,22.5 -6.3333,6.3333 -13.8333,9.5 -22.5,9.5 H 160 c -8.66666,0 -16.16667,-3.1667 -22.5,-9.5 -6.33333,-6.3333 -9.5,-13.8333 -9.5,-22.5 V 544 c 0,-8.66666 3.16667,-16.16667 9.5,-22.5 6.33333,-6.33333 13.83334,-9.5 22.5,-9.5 z" style="fill:currentColor" /><path style="fill:none;stroke:currentColor;stroke-width:120;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" d="m 1574.9359,216.36611 v 0 0 L 704,1088 v 0 0"/><path style="fill:none;stroke:currentColor;stroke-width:119.98;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" d="m 703.99022,1087.9902 428.65668,1.2267 v 0"/><path style="fill:none;stroke:currentColor;stroke-width:120;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" d="M 704,674.58926 V 1088"/></svg>
+<svg width="1792" height="1792" viewBox="0 0 1792 1792" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M 160,384 C 116.00004,384 78.3333,399.6667 47,431 15.6667,462.3333 0,500.00004 0,544 v 1088 c 0,44 15.6667,81.6667 47,113 31.3333,31.3333 69.00004,47 113,47 h 1088 c 44,0 81.6667,-15.6667 113,-47 31.3333,-31.3333 47,-69 47,-113 V 635.05323 L 1153.9304,384 Z m 0,128 h 867.2795 L 1153.9304,384 1408,635.05323 1280,763.92607 V 1632 c 0,8.6667 -3.1667,16.1667 -9.5,22.5 -6.3333,6.3333 -13.8333,9.5 -22.5,9.5 H 160 c -8.66666,0 -16.16667,-3.1667 -22.5,-9.5 -6.33333,-6.3333 -9.5,-13.8333 -9.5,-22.5 V 544 c 0,-8.66666 3.16667,-16.16667 9.5,-22.5 6.33333,-6.33333 13.83334,-9.5 22.5,-9.5 z" style="fill:currentColor" /><path style="fill:none;stroke:currentColor;stroke-width:120;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" d="m 1574.9359,216.36611 v 0 0 L 704,1088 v 0 0"/><path style="fill:none;stroke:currentColor;stroke-width:119.98;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" d="m 703.99022,1087.9902 428.65668,1.2267 v 0"/><path style="fill:none;stroke:currentColor;stroke-width:120;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" d="M 704,674.58926 V 1088"/></svg> 

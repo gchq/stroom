@@ -1,17 +1,1 @@
-<!--
-  - Copyright 2016-2025 Crown Copyright
-  -
-  - Licensed under the Apache License, Version 2.0 (the "License");
-  - you may not use this file except in compliance with the License.
-  - You may obtain a copy of the License at
-  -
-  -     http://www.apache.org/licenses/LICENSE-2.0
-  -
-  - Unless required by applicable law or agreed to in writing, software
-  - distributed under the License is distributed on an "AS IS" BASIS,
-  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  - See the License for the specific language governing permissions and
-  - limitations under the License.
-  -->
-
-<svg xmlns="http://www.w3.org/2000/svg" width="2200" height="1792" viewBox="-800 -200 3000 1792" version="1.1"><path style="fill:none;stroke:var(--icon-colour__black);stroke-width:167.567;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" d="m 1343.9812,597.12769 c -0.4303,-39.92654 -48.3887,-75.41463 -81.9121,-40.0468 C 1078.9915,749.62582 896.53618,942.82937 713.86658,1135.8059 531.19708,942.82937 348.74187,749.62582 165.6643,557.08089 121.87875,510.88618 53.467697,585.56901 98.496154,633.13799 284.31914,829.07357 469.32098,1026.0906 656.02368,1221.1249 c 4.8034,5.6117 10.2473,10.4633 16.1231,14.4855 12.4844,9.643 27.0796,13.9638 41.7198,13.6909 14.6402,0.2729 29.2354,-4.0479 41.7198,-13.6909 5.8758,-4.0222 11.3198,-8.8738 16.1231,-14.4855 186.7028,-195.0343 371.70472,-392.05133 557.52782,-587.98691 10.5534,-11.14898 14.8757,-23.78789 14.7439,-36.0103 z" id="path983" /></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="2200" height="1792" viewBox="-800 -200 3000 1792" version="1.1"><path style="fill:none;stroke:var(--icon-colour__black);stroke-width:167.567;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" d="m 1343.9812,597.12769 c -0.4303,-39.92654 -48.3887,-75.41463 -81.9121,-40.0468 C 1078.9915,749.62582 896.53618,942.82937 713.86658,1135.8059 531.19708,942.82937 348.74187,749.62582 165.6643,557.08089 121.87875,510.88618 53.467697,585.56901 98.496154,633.13799 284.31914,829.07357 469.32098,1026.0906 656.02368,1221.1249 c 4.8034,5.6117 10.2473,10.4633 16.1231,14.4855 12.4844,9.643 27.0796,13.9638 41.7198,13.6909 14.6402,0.2729 29.2354,-4.0479 41.7198,-13.6909 5.8758,-4.0222 11.3198,-8.8738 16.1231,-14.4855 186.7028,-195.0343 371.70472,-392.05133 557.52782,-587.98691 10.5534,-11.14898 14.8757,-23.78789 14.7439,-36.0103 z" id="path983" /></svg> 
