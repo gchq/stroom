@@ -1,3 +1,19 @@
+<!--
+  - Copyright 2016-2025 Crown Copyright
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  -->
+
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="4 4 23 23">
     <path style="fill: #010101" d="M 5 5 L 5 6 L 5 7 L 6 7 L 7 7 L 7 6 L 7 5 L 6 5 L 5 5 z M 9 5 L 9 7 L 11 7 L 11 5 L 9 5 z M 13 5 L 13 7 L 15 7 L 15 5 L 13 5 z M 17 5 L 17 7 L 19 7 L 19 5 L 17 5 z M 21 5 L 21 7 L 23 7 L 23 5 L 21 5 z M 25 5 L 25 6 L 25 7 L 26 7 L 27 7 L 27 6 L 27 5 L 26 5 L 25 5 z M 5 9 L 5 11 L 7 11 L 7 9 L 5 9 z M 25 9 L 25 11 L 27 11 L 27 9 L 25 9 z M 14 11 L 14 13 L 17.5625 13 L 13.5625 17 L 7 17 L 5 17 L 5 18 L 5 19 L 5 21 L 5 23 L 5 25 L 5 26 L 5 27 L 6 27 L 7 27 L 14 27 L 15 27 L 15 26 L 15 18.4375 L 19 14.4375 L 19 18 L 21 18 L 21 12 L 21 11 L 20 11 L 14 11 z M 5 13 L 5 15 L 7 15 L 7 13 L 5 13 z M 25 13 L 25 15 L 27 15 L 27 13 L 25 13 z M 25 17 L 25 19 L 27 19 L 27 17 L 25 17 z M 7 19 L 13 19 L 13 25 L 7 25 L 7 23 L 7 21 L 7 19 z M 25 21 L 25 23 L 27 23 L 27 21 L 25 21 z M 17 25 L 17 27 L 19 27 L 19 25 L 17 25 z M 21 25 L 21 27 L 23 27 L 23 25 L 21 25 z M 25 25 L 25 26 L 25 27 L 26 27 L 27 27 L 27 26 L 27 25 L 26 25 L 25 25 z"/>
 </svg>

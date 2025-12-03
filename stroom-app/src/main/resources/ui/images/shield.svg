@@ -1,1 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1792" height="1792" viewBox="0 0 1792 1792" ><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path style="fill:currentColor" d="m 896.00002,44.728762 c 15.38039,0 30.76078,3.343564 44.80375,9.696335 L 1570.3968,321.57582 c 73.5583,31.09514 128.3928,103.65046 128.0584,191.25183 -1.6717,331.68149 -138.0891,938.53835 -714.1851,1214.38225 -55.83751,26.7485 -120.70265,26.7485 -176.54016,0 C 231.63396,1451.366 95.216565,844.50914 93.544783,512.82765 93.210427,425.22628 148.04487,352.67096 221.60327,321.57582 L 851.53063,54.425097 c 13.70861,-6.352771 29.089,-9.696335 44.46939,-9.696335 z m 0,223.350038 v 1263.867 C 1357.4118,1308.5958 1481.458,814.08272 1484.4672,517.50864 Z" /></svg> 
+<!--
+  - Copyright 2016-2025 Crown Copyright
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  -->
+
+<svg xmlns="http://www.w3.org/2000/svg" width="1792" height="1792" viewBox="0 0 1792 1792" ><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path style="fill:currentColor" d="m 896.00002,44.728762 c 15.38039,0 30.76078,3.343564 44.80375,9.696335 L 1570.3968,321.57582 c 73.5583,31.09514 128.3928,103.65046 128.0584,191.25183 -1.6717,331.68149 -138.0891,938.53835 -714.1851,1214.38225 -55.83751,26.7485 -120.70265,26.7485 -176.54016,0 C 231.63396,1451.366 95.216565,844.50914 93.544783,512.82765 93.210427,425.22628 148.04487,352.67096 221.60327,321.57582 L 851.53063,54.425097 c 13.70861,-6.352771 29.089,-9.696335 44.46939,-9.696335 z m 0,223.350038 v 1263.867 C 1357.4118,1308.5958 1481.458,814.08272 1484.4672,517.50864 Z" /></svg>

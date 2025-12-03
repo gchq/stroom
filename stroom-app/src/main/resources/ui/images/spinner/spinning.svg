@@ -1,1 +1,17 @@
-<svg width="1792" height="1792" viewBox="0 0 1792 1792" xmlns="http://www.w3.org/2000/svg"><g transform="rotate(90,791.62915,887.89995)"><path style="fill:none;stroke:currentColor;stroke-width:254.606;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1" d="m 1252.7705,330.48771 a 640.69708,640.69708 0 0 1 187.6558,453.04131 640.69708,640.69708 0 0 1 -640.69708,640.69708 v 0 A 640.69708,640.69708 0 0 1 159.03211,783.52902 640.69708,640.69708 0 0 1 346.68791,330.48771" /></g></svg> 
+<!--
+  - Copyright 2016-2025 Crown Copyright
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  -->
+
+<svg width="1792" height="1792" viewBox="0 0 1792 1792" xmlns="http://www.w3.org/2000/svg"><g transform="rotate(90,791.62915,887.89995)"><path style="fill:none;stroke:currentColor;stroke-width:254.606;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1" d="m 1252.7705,330.48771 a 640.69708,640.69708 0 0 1 187.6558,453.04131 640.69708,640.69708 0 0 1 -640.69708,640.69708 v 0 A 640.69708,640.69708 0 0 1 159.03211,783.52902 640.69708,640.69708 0 0 1 346.68791,330.48771" /></g></svg>

@@ -1,1 +1,17 @@
+<!--
+  - Copyright 2016-2025 Crown Copyright
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  -->
+
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg fill="currentColor" width="800px" height="800px" viewBox="0 0 32 32" version="1.1" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"/><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"/><g id="SVGRepo_iconCarrier"><path d="M 2 28.016 v -6.016 q 0 -0.64 0.352 -1.12 t 0.864 -0.704 t 1.12 -0.128 t 1.088 0.544 l 1.568 1.6 l 5.6 -5.6 q 0.384 -0.384 0.832 -0.512 t 0.864 -0.064 t 0.768 0.32 t 0.608 0.608 t 0.32 0.8 t -0.032 0.832 t -0.544 0.832 l -5.568 5.6 l 1.568 1.568 q 0.48 0.48 0.576 1.088 t -0.128 1.12 t -0.736 0.864 t -1.12 0.352 h -5.984 q -0.832 0 -1.44 -0.576 t -0.576 -1.408 z M 16.048 14.288 q -0.096 -0.416 0.032 -0.864 t 0.512 -0.832 l 5.568 -5.568 l -1.568 -1.6 q -0.48 -0.448 -0.544 -1.056 t 0.096 -1.152 t 0.736 -0.864 t 1.12 -0.352 h 6.016 q 0.8 0 1.408 0.608 t 0.576 1.408 v 5.984 q 0 0.64 -0.352 1.152 t -0.864 0.704 t -1.12 0.128 t -1.056 -0.576 l -1.6 -1.568 l -5.6 5.568 q -0.352 0.384 -0.8 0.512 t -0.864 0.064 t -0.8 -0.32 t -0.576 -0.608 t -0.32 -0.768 z"/></g></svg>

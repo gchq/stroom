@@ -1,4 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  - Copyright 2016-2025 Crown Copyright
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  -->
+
 <svg xmlns="http://www.w3.org/2000/svg" width="2848.165" height="772.48242" viewBox="0 0 2278.5303 617.98476">
     <g style="fill:#010101">
         <path d="M 121.99991,205.98497 C 54.999958,205.98497 0,259.98493 0,327.98487 0,394.98481 54.999958,449.98476 121.99991,449.98476 l 167.99987,0 c 24.99998,0 44.99996,20.99998 44.99996,44.99996 0,24.99998 -19.99998,44.99996 -44.99996,44.99996 l -180.79049,0 C 65.984126,553.87219 27.100843,581.57313 0.01093599,617.98462 l 289.98884401,0 c 66.99994,0 121.99991,-54.99996 121.99991,-122.9999 0,-66.99994 -54.99997,-121.99989 -121.99991,-121.99989 l -167.99987,0 c -24.999984,0 -44.999969,-19.99999 -44.999969,-44.99996 0,-24.99998 19.999985,-44.99996 44.999969,-44.99996 l 228.79045,0 c 26.9905,-35.88325 65.47093,-63.18547 108.21554,-76.99994 l -337.00599,0 z"/>

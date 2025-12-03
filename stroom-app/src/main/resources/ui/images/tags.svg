@@ -1,1 +1,17 @@
-<svg width="1792" height="1792" viewBox="0 0 1792 1792" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path style="fill:currentColor" d="m 1172.2976,222.24238 396.974,401.63326 c 162.7656,164.62925 162.7656,429.27856 0,593.90786 l -347.8957,351.9339 c -28.8879,29.1984 -76.1024,29.509 -105.3008,0.6212 -29.1984,-28.8878 -29.509,-76.1022 -0.6212,-105.3006 l 347.5853,-351.9339 c 105.3006,-106.543 105.3006,-277.6954 0,-384.23849 L 1066.3757,327.23236 c -28.8877,-29.1984 -28.5771,-76.41283 0.6213,-105.3006 29.1984,-28.88778 76.4128,-28.57716 105.3006,0.62124 z M 100.65423,813.66521 V 349.28646 c 0,-82.31462 66.78357,-149.09819 149.09819,-149.09819 h 464.37875 c 52.80561,0 103.43687,20.81162 140.71142,58.08617 l 521.84391,521.84368 c 77.6553,77.65531 77.6553,203.45703 0,281.11228 l -414.67958,414.6793 c -77.65531,77.6554 -203.45691,77.6554 -281.11222,0 L 159.05102,954.06613 C 121.46585,916.79146 100.65423,866.47082 100.65423,813.66521 Z M 547.94881,548.08405 a 99.398795,99.398795 0 1 0 -198.79759,0 99.398795,99.398795 0 1 0 198.79759,0 z" id="path1"/></svg> 
+<!--
+  - Copyright 2016-2025 Crown Copyright
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  -->
+
+<svg width="1792" height="1792" viewBox="0 0 1792 1792" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path style="fill:currentColor" d="m 1172.2976,222.24238 396.974,401.63326 c 162.7656,164.62925 162.7656,429.27856 0,593.90786 l -347.8957,351.9339 c -28.8879,29.1984 -76.1024,29.509 -105.3008,0.6212 -29.1984,-28.8878 -29.509,-76.1022 -0.6212,-105.3006 l 347.5853,-351.9339 c 105.3006,-106.543 105.3006,-277.6954 0,-384.23849 L 1066.3757,327.23236 c -28.8877,-29.1984 -28.5771,-76.41283 0.6213,-105.3006 29.1984,-28.88778 76.4128,-28.57716 105.3006,0.62124 z M 100.65423,813.66521 V 349.28646 c 0,-82.31462 66.78357,-149.09819 149.09819,-149.09819 h 464.37875 c 52.80561,0 103.43687,20.81162 140.71142,58.08617 l 521.84391,521.84368 c 77.6553,77.65531 77.6553,203.45703 0,281.11228 l -414.67958,414.6793 c -77.65531,77.6554 -203.45691,77.6554 -281.11222,0 L 159.05102,954.06613 C 121.46585,916.79146 100.65423,866.47082 100.65423,813.66521 Z M 547.94881,548.08405 a 99.398795,99.398795 0 1 0 -198.79759,0 99.398795,99.398795 0 1 0 198.79759,0 z" id="path1"/></svg>
