@@ -227,10 +227,9 @@ class BlockGZIPOutputFile extends OutputStream implements SeekableOutputStream {
             currentStreamBuffer.write(bytes, offset, bytesLeftInBlock);
             position += bytesLeftInBlock;
             endGzipBlock();
-            // Now have ago again with the reminder
+            // Now have a go again with the reminder
             write(bytes, offset + bytesLeftInBlock, length - bytesLeftInBlock);
         }
-
     }
 
     @Override

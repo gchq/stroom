@@ -17,6 +17,10 @@
 package stroom.data.store.impl.fs;
 
 import stroom.util.io.SeekableInputStream;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.ModelStringUtil;
 
 import jakarta.validation.constraints.NotNull;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
@@ -31,6 +35,8 @@ import java.nio.LongBuffer;
  * @see BlockGZIPConstants
  */
 abstract class BlockGZIPInput extends InputStream implements SeekableInputStream {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BlockGZIPInput.class);
 
     /**
      * Pointer to the current GZIPstream
@@ -112,6 +118,12 @@ abstract class BlockGZIPInput extends InputStream implements SeekableInputStream
         dataLength = readLong();
         idxStart = readLong();
         eof = readLong();
+
+        LOGGER.debug(() -> LogUtil.message("init() - blockSize: {}, dataLength: {}, idxStart: {}, eof: {}",
+                ModelStringUtil.formatCsv(blockSize),
+                ModelStringUtil.formatCsv(dataLength),
+                ModelStringUtil.formatCsv(idxStart),
+                ModelStringUtil.formatCsv(eof)));
     }
 
     abstract InputStream getRawStream();
@@ -240,6 +252,9 @@ abstract class BlockGZIPInput extends InputStream implements SeekableInputStream
         readMagicMarker();
         currentBlockRawGzipSize = readLong();
         currentStream = new GzipCompressorInputStream(new GzipInputStreamAdaptor());
+        LOGGER.debug(() -> LogUtil.message("startGzipBlock() - blockCount: {}, currentBlockRawGzipSize: {}",
+                ModelStringUtil.formatCsv(blockCount),
+                ModelStringUtil.formatCsv(currentBlockRawGzipSize)));
     }
 
     /**
@@ -253,6 +268,9 @@ abstract class BlockGZIPInput extends InputStream implements SeekableInputStream
         }
         currentBlockRawGzipSize = -1;
         closeCurrentStream();
+        LOGGER.debug(() -> LogUtil.message("endGzipBlock() - blockCount: {}, currentBlockRawGzipSize: {}",
+                ModelStringUtil.formatCsv(blockCount),
+                ModelStringUtil.formatCsv(currentBlockRawGzipSize)));
     }
 
     private void closeCurrentStream() throws IOException {
@@ -382,6 +400,10 @@ abstract class BlockGZIPInput extends InputStream implements SeekableInputStream
     int getBlockCount() {
         return blockCount;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     /**
      * Adaptor to create a stream over the raw buffer and ensures that we don't

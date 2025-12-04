@@ -189,7 +189,7 @@ abstract class ManualCheckStreamPerformance {
         final long startTime = System.currentTimeMillis();
 
         try (final InputStream is = getInputStream()) {
-            StreamUtil.skip(is, (testSize / 2) * sb.length);
+            StreamUtil.skip(is, (long) (testSize / 2) * sb.length);
             try (final LineNumberReader reader = new LineNumberReader(
                     new InputStreamReader(is, StreamUtil.DEFAULT_CHARSET))) {
                 final String line1 = reader.readLine();
@@ -199,9 +199,7 @@ abstract class ManualCheckStreamPerformance {
                     throw new RuntimeException("Something has gone wrong");
                 }
             }
-
-            final long timeTaken = System.currentTimeMillis() - startTime;
-            return timeTaken;
+            return System.currentTimeMillis() - startTime;
         }
     }
 

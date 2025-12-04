@@ -35,7 +35,7 @@ final class BlockGZIPConstants {
     /**
      * Default Block we write.
      */
-    static final int DEFAULT_BLOCK_SIZE = 1000000; // 1MB
+    static final int DEFAULT_BLOCK_SIZE = 1_000_000; // 1MB
     /**
      * Java IO Read Only.
      */
@@ -58,7 +58,8 @@ final class BlockGZIPConstants {
      * Made Up Stroom Marker .... used to help check we have not got a corrupt
      * stream.
      */
-    static final byte[] MAGIC_MARKER = new byte[]{MAGIC_LOW, MAGIC_LOW, MAGIC_LOW, 0, 0, MAGIC_HIGH, MAGIC_HIGH,
+    static final byte[] MAGIC_MARKER = new byte[]{
+            MAGIC_LOW, MAGIC_LOW, MAGIC_LOW, 0, 0, MAGIC_HIGH, MAGIC_HIGH,
             MAGIC_HIGH};
 
     private BlockGZIPConstants() {

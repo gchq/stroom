@@ -127,9 +127,9 @@ class S3Store {
     private String getS3Path(final DataVolume dataVolume, final Meta meta) {
         final S3Manager s3Manager = new S3Manager(pathCreator, dataVolume.getVolume().getS3ClientConfig());
         return "S3 > " +
-                s3Manager.createBucketName(s3Manager.getBucketNamePattern(), meta) +
-                " > " +
-                s3Manager.createKey(s3Manager.getKeyNamePattern(), meta);
+               s3Manager.createBucketName(s3Manager.getBucketNamePattern(), meta) +
+               " > " +
+               s3Manager.createKey(s3Manager.getKeyNamePattern(), meta);
     }
 
     public void release(final Meta meta, final Path path) {
@@ -230,10 +230,13 @@ class S3Store {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class TrackedSource {
 
         private final Long metaId;
-
         private final Path path;
         private final Instant createTime;
         private final AtomicInteger useCount;

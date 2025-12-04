@@ -230,42 +230,27 @@ public class S3Manager {
 
     private AssumeRoleRequest createAssumeRoleRequest(final AwsAssumeRoleRequest config) {
         final AssumeRoleRequest.Builder builder = AssumeRoleRequest.builder();
-        if (config.getRoleArn() != null) {
-            builder.roleArn(config.getRoleArn());
-        }
-        if (config.getRoleSessionName() != null) {
-            builder.roleSessionName(config.getRoleSessionName());
-        }
-        if (config.getPolicyArns() != null) {
-            builder.policyArns(config.getPolicyArns().stream().map(this::createPolicyDescriptorType).toList());
-        }
-        if (config.getPolicy() != null) {
-            builder.policy(config.getPolicy());
-        }
-        if (config.getDurationSeconds() != null) {
-            builder.durationSeconds(config.getDurationSeconds());
-        }
-        if (config.getTags() != null) {
-            builder.tags(config.getTags().stream().map(this::createStsTag).toList());
-        }
-        if (config.getTransitiveTagKeys() != null) {
-            builder.transitiveTagKeys(config.getTransitiveTagKeys());
-        }
-        if (config.getExternalId() != null) {
-            builder.externalId(config.getExternalId());
-        }
-        if (config.getSerialNumber() != null) {
-            builder.serialNumber(config.getSerialNumber());
-        }
-        if (config.getTokenCode() != null) {
-            builder.tokenCode(config.getTokenCode());
-        }
-        if (config.getSourceIdentity() != null) {
-            builder.sourceIdentity(config.getSourceIdentity());
-        }
-        if (config.getProvidedContexts() != null) {
-            builder.providedContexts(config.getProvidedContexts().stream().map(this::createProvidedContext).toList());
-        }
+        NullSafe.consume(config.getRoleArn(), builder::roleArn);
+        NullSafe.consume(config.getRoleSessionName(), builder::roleSessionName);
+        NullSafe.consume(config.getPolicyArns(), policyArns ->
+                builder.policyArns(policyArns.stream()
+                        .map(this::createPolicyDescriptorType)
+                        .toList()));
+        NullSafe.consume(config.getPolicy(), builder::policy);
+        NullSafe.consume(config.getDurationSeconds(), builder::durationSeconds);
+        NullSafe.consume(config.getTags(), tags ->
+                builder.tags(tags.stream()
+                        .map(this::createStsTag)
+                        .toList()));
+        NullSafe.consume(config.getTransitiveTagKeys(), builder::transitiveTagKeys);
+        NullSafe.consume(config.getExternalId(), builder::externalId);
+        NullSafe.consume(config.getSerialNumber(), builder::serialNumber);
+        NullSafe.consume(config.getTokenCode(), builder::tokenCode);
+        NullSafe.consume(config.getSourceIdentity(), builder::sourceIdentity);
+        NullSafe.consume(config.getProvidedContexts(), providedContexts ->
+                builder.providedContexts(providedContexts.stream()
+                        .map(this::createProvidedContext)
+                        .toList()));
         return builder.build();
     }
 
@@ -306,9 +291,10 @@ public class S3Manager {
             builder.region(createRegion(s3ClientConfig.getRegion()));
         }
 
-        if (awsAssumeRoleClientConfig != null && awsAssumeRoleClientConfig.getEndpointOverride() != null) {
-            builder.endpointOverride(createUri(awsAssumeRoleClientConfig.getEndpointOverride()));
-        }
+        NullSafe.consume(awsAssumeRoleClientConfig,
+                AwsAssumeRoleClientConfig::getEndpointOverride,
+                endpointOverride ->
+                        builder.endpointOverride(createUri(endpointOverride)));
 
         return builder.build();
     }
@@ -331,7 +317,7 @@ public class S3Manager {
                 }
                 case final stroom.aws.s3.shared.AwsDefaultCredentials awsDefaultCredentials -> {
                     LOGGER.debug("Using AWS default credentials");
-                    return DefaultCredentialsProvider.create();
+                    return DefaultCredentialsProvider.builder().build();
                 }
                 case final stroom.aws.s3.shared.AwsEnvironmentVariableCredentials awsEnvironmentVariableCredentials -> {
                     LOGGER.debug("Using AWS environment variable credentials");
@@ -389,7 +375,7 @@ public class S3Manager {
         }
 
         LOGGER.debug("No AWS credentials provided, using default");
-        return DefaultCredentialsProvider.create();
+        return DefaultCredentialsProvider.builder().build();
     }
 
     public String createBucketName(final String bucketNamePattern,

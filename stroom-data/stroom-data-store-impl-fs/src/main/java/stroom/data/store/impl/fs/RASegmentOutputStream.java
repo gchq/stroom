@@ -25,8 +25,8 @@ import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 
 /**
- * This class implements the <code>SegmentOutputStream</code> interface and
- * produces output that will be readable with a <code>SegmentInputStream</code>
+ * This class implements the {@link SegmentOutputStream} interface and
+ * produces output that will be readable with a {@link stroom.data.store.api.SegmentInputStream}
  * that opens files for random access.
  */
 class RASegmentOutputStream extends SegmentOutputStream {
@@ -50,7 +50,7 @@ class RASegmentOutputStream extends SegmentOutputStream {
     /**
      * Adds a segment boundary to the output stream. All bytes written between
      * the start of the output or the last boundary will be considered a segment
-     * by the <code>RASegmentInputStream</code>.
+     * by the {@link stroom.data.store.api.SegmentInputStream}.
      */
     @Override
     public void addSegment() throws IOException {
@@ -60,7 +60,7 @@ class RASegmentOutputStream extends SegmentOutputStream {
     /**
      * Adds a segment boundary to the output stream at a given byte position.
      * All bytes written between the start of the output or the last boundary
-     * will be considered a segment by the <code>SegmentInputStream</code>.
+     * will be considered a segment by the {@link stroom.data.store.api.SegmentInputStream}.
      *
      * @param position The byte position of the end of the segment.
      */
@@ -121,7 +121,7 @@ class RASegmentOutputStream extends SegmentOutputStream {
      * @param off the start offset in the data.
      * @param len the number of bytes to write.
      * @throws IOException if an I/O error occurs. In particular, an
-     *                     <code>IOException</code> is thrown if the output stream is
+     *                     {@link IOException}IOException</code> is thrown if the output stream is
      *                     closed.
      */
     @SuppressWarnings("NullableProblems")
@@ -159,15 +159,15 @@ class RASegmentOutputStream extends SegmentOutputStream {
     @Override
     public String toString() {
         return "RASegmentOutputStream" +
-                "\ndata = " +
-                dataOutputStream +
+               "\ndata = " +
+               dataOutputStream +
 //                if (indexOutputStream != null) {
 //                    "\nindex = " +
 //                            indexOutputStream +
 //                }
-                "\nposition = " +
-                position +
-                "\nlastBoundary = " +
-                lastBoundary;
+               "\nposition = " +
+               position +
+               "\nlastBoundary = " +
+               lastBoundary;
     }
 }

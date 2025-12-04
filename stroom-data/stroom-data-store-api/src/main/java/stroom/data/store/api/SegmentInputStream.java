@@ -20,8 +20,8 @@ import java.io.IOException;
 
 /**
  * <p>
- * This class overrides <code>InputStream</code> and is used to read input
- * created by a <code>SegmentOutputStream</code>. Input can be filtered to only
+ * This class overrides {@link java.io.InputStream} and is used to read input
+ * created by a {@link SegmentOutputStream}. Input can be filtered to only
  * include or exclude specific segments when read.
  * </p>
  * <p>
