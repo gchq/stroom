@@ -40,6 +40,8 @@ public class AnalyticStreamDestinationViewImpl
     SimplePanel destinationFeed;
     @UiField
     CustomCheckBox useSourceFeedIfPossible;
+    @UiField
+    CustomCheckBox includeRuleDocumentation;
 
     @Inject
     public AnalyticStreamDestinationViewImpl(final Binder binder) {
@@ -61,13 +63,26 @@ public class AnalyticStreamDestinationViewImpl
         return this.useSourceFeedIfPossible.getValue();
     }
 
+    public boolean isIncludeRuleDocumentation() {
+        return this.includeRuleDocumentation.getValue();
+    }
+
     @Override
     public void setUseSourceFeedIfPossible(final boolean useSourceFeedIfPossible) {
         this.useSourceFeedIfPossible.setValue(useSourceFeedIfPossible);
     }
 
+    public void setIncludeRuleDocumentation(final boolean includeRuleDocumentation) {
+        this.includeRuleDocumentation.setValue(includeRuleDocumentation);
+    }
+
     @UiHandler("useSourceFeedIfPossible")
     public void onUseSourceFeedIfPossible(final ValueChangeEvent<Boolean> event) {
+        getUiHandlers().onDirty();
+    }
+
+    @UiHandler("includeRuleDocumentation")
+    public void onIncludeRuleDocumentation(final ValueChangeEvent<Boolean> event) {
         getUiHandlers().onDirty();
     }
 
