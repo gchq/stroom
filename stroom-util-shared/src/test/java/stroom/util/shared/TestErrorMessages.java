@@ -59,12 +59,12 @@ class TestErrorMessages {
     void get() {
         assertThat(new ErrorMessages(null).get()).isEmpty();
         assertThat(errorMessages().get()).isEmpty();
-        assertThat(errorMessages(error).get(Severity.ERROR)).containsExactly("error");
-        assertThat(errorMessages(info, warning, error).get(Severity.ERROR)).containsExactly("error");
+        assertThat(errorMessages(error).get(Severity.ERROR)).containsExactly(error);
+        assertThat(errorMessages(info, warning, error).get(Severity.ERROR)).containsExactly(error);
         assertThat(errorMessages(info, warning, error).get(Severity.ERROR, Severity.WARNING))
-                .containsExactly("error", "warning");
+                .containsExactly(error, warning);
         assertThat(errorMessages(warning, info).get(Severity.ERROR)).isEmpty();
-        assertThat(errorMessages(warning, info).get(Severity.ERROR, Severity.WARNING)).containsExactly("warning");
+        assertThat(errorMessages(warning, info).get(Severity.ERROR, Severity.WARNING)).containsExactly(warning);
     }
 
     private ErrorMessages errorMessages(final ErrorMessage...errorMessages) {
