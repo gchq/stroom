@@ -1,5 +1,21 @@
 #!/bin/bash
 
+#
+# Copyright 2016-2025 Crown Copyright
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Script to send an API request to stroom
 #
@@ -7,20 +23,20 @@
 #
 # #Edit the file in vim
 # vim "$(ls -1tr ~/Downloads/DashboardQuery* | tail -n 1 | grep -oP '/home/.*\.json')"
-# 
+#
 # #Send the request to stroom
 # ./sendReq.sh "$(ls -1tr ~/Downloads/DashboardQuery* | tail -n 1 | grep -oP '/home/.*\.json')" /api/stroom-index/v2/search
 #
 # #The results can be piped to 'jq' to query the output, e.g to get just the completion state
 # ./sendReq.sh someFile.json /api/stroom-index/v2/search | jq '.complete'
-# 
+#
 # #To get the row count
 # ./sendReq.sh someFile.json /api/stroom-index/v2/search | jq '.results[0].rows | length'
 #
 # For more info on 'jq' see https://stedolan.github.io/jq/
-# 
+#
 # The -i switch cannot be used when piping the output to 'jq'
-# 
+#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 set -e
@@ -33,7 +49,7 @@ set -e
   GREEN='\033[1;32m'
   YELLOW='\033[1;33m'
   BLUE='\033[1;34m'
-  NC='\033[0m' # No Colour 
+  NC='\033[0m' # No Colour
 }
 
 #IMPORTANT - This script requires HTTPie so please install it.
@@ -97,7 +113,7 @@ while getopts "$optspec" optchar; do
                 prevUuid="$(cat ${UUID_TEMP_FILE})"
                 if [ "x${prevUuid}" = "x" ]; then
                     echo -e "${RED}ERROR${NC} Cannot reuse the last UUID as STROOM_LAST_QUERY_UUID is not set">&2
-                fi 
+                fi
                 uuid="${prevUuid}"
             else
                 echo -e "${RED}ERROR${NC} Cannot reuse the last UUID as $UUID_TEMP_FILE does not exist">&2
@@ -144,7 +160,7 @@ else
     # Modify the json with our provided uuid
     req="$(jq ".key.uuid = \"${uuid}\"" < "${requestFile}" )"
 fi
- 
+
 
 # write the uuid to our temp file so we can reuse it on another run
 echo "${uuid}" > ${UUID_TEMP_FILE}
@@ -157,7 +173,7 @@ if ${showInfo}; then
     echo -e "URL [${GREEN}${fullUrl}${NC}]"
 
     echo -e "Request content:"
-    #cat "$requestFile" | jq ".key.uuid = \"${uuid}\"" 
+    #cat "$requestFile" | jq ".key.uuid = \"${uuid}\""
     #Use jq to it is sytax highlighted and pretty printed
     echo -e "${req}" | jq '.'
     echo
@@ -169,6 +185,6 @@ if [[ "${fullUrl}" =~ ^https.* ]]; then
     extraHttpieArgs="${extraHttpieArgs} --verify=no"
 fi
 
-#echo -e "${req}" | jq -r ".key.uuid = \"${uuid}\"" | http ${extraHttpieArgs} POST ${fullUrl} "Authorization:Bearer ${api_token}" 
-echo -e "${req}" | 
-    http "${extraHttpieArgs}" POST "${fullUrl}" "Authorization:Bearer ${api_token}" 
+#echo -e "${req}" | jq -r ".key.uuid = \"${uuid}\"" | http ${extraHttpieArgs} POST ${fullUrl} "Authorization:Bearer ${api_token}"
+echo -e "${req}" |
+    http "${extraHttpieArgs}" POST "${fullUrl}" "Authorization:Bearer ${api_token}"

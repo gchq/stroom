@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -305,9 +304,12 @@ class DataServiceImpl implements DataService {
             sections.add(new DataInfoSection("Retention", getDataRententionEntries(attributeMap)));
 
             // Files are often very long so change the delimiter to \n
-            final String filesStr = String.join("\n", AttributeMapUtil.valueAsList(files));
+            final List<Entry> fileEntries = AttributeMapUtil.valueAsList(files)
+                    .stream()
+                    .map(val -> new Entry("", val))
+                    .toList();
 
-            sections.add(new DataInfoSection("Files", Collections.singletonList(new Entry("", filesStr))));
+            sections.add(new DataInfoSection("Files", fileEntries));
         }
         return sections;
     }

@@ -1,5 +1,21 @@
 #!/usr/bin/env bash
 
+#
+# Copyright 2016-2025 Crown Copyright
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 ##########################################################################
 # Version: v0.4.1
 # Date: 2023-01-16T14:59:06+00:00
@@ -7,9 +23,9 @@
 # Script to record changelog entries in individual files to get around
 # the issue of merge conflicts on the CHANGELOG file when doing PRs.
 #
-# Credit for this idea goes to 
+# Credit for this idea goes to
 # https://about.gitlab.com/blog/2018/07/03/solving-gitlabs-changelog-conflict-crisis/
-# 
+#
 # Change log entries are stored in files in <repo_root>/unreleased_changes
 # This script is used in conjunction with tag_release.sh which adds the
 # change entries to the CHANGELOG at release time.
@@ -30,8 +46,8 @@ TAG_RELEASE_SCRIPT_FILENAME='tag_release.sh'
 ISSUE_LINE_SIMPLE_PREFIX_REGEX="^\* [A-Z]"
 
 # e.g.
-# * Issue **#1234** : 
-# * Issue **gchq/stroom-resources#104** : 
+# * Issue **#1234** :
+# * Issue **gchq/stroom-resources#104** :
 # https://regex101.com/r/VcvbFV/1
 ISSUE_LINE_NUMBERED_PREFIX_REGEX="^\* (Issue \*\*([a-zA-Z0-9_\-.]+\/[a-zA-Z0-9_\-.]+\#[0-9]+|#[0-9]+)\*\* : )"
 
@@ -54,7 +70,7 @@ setup_echo_colours() {
     BLUE2=''
     DGREY=''
     NC='' # No Colour
-  else 
+  else
     RED='\033[1;31m'
     GREEN='\033[1;32m'
     YELLOW='\033[1;33m'
@@ -85,7 +101,7 @@ error_exit() {
 debug_value() {
   local name="$1"; shift
   local value="$1"; shift
-  
+
   if [ "${IS_DEBUG}" = true ]; then
     echo -e "${DGREY}DEBUG ${name}: [${value}]${NC}"
   fi
@@ -93,7 +109,7 @@ debug_value() {
 
 debug() {
   local str="$1"; shift
-  
+
   if [ "${IS_DEBUG}" = true ]; then
     echo -e "${DGREY}DEBUG ${str}${NC}"
   fi
@@ -122,7 +138,7 @@ get_git_issue_from_branch() {
 validate_git_issue() {
   local git_issue="$1"; shift
   debug "Validating [${git_issue}]"
-  
+
   if [[ ! "${git_issue}" =~ ^([_.a-zA-Z0-9-]+\/[_.a-zA-Z0-9-]+\#[0-9]+|[0-9]+)$ ]]; then
     error_exit "Invalid github issue number ${BLUE}${git_issue}${NC}." \
       "Should be of the form ${BLUE}1234${NC}," \
@@ -158,7 +174,7 @@ validate_git_issue() {
 
     local curl_return_code=0
     # Turn off exit on error so we can get the curl return code in the subshell
-    set +e 
+    set +e
 
     if command -v jq >/dev/null 2>&1; then
       # jq is available so use it
@@ -292,8 +308,8 @@ is_existing_change_file_present() {
   if [[ "${existing_file_count}" -eq 0 ]]; then
     debug "File does not exist"
     return 1
-  else 
-    # Multiple files exist for this 
+  else
+    # Multiple files exist for this
     debug "${existing_file_count} files exist"
 
     info "Change file(s) already exist for this issue:"
@@ -357,7 +373,7 @@ write_change_entry() {
 
   local git_issue_str
   git_issue_str="$(format_git_issue_for_filename "${git_issue}")"
-  
+
   # Use two underscores to help distinguish the date from the issue part
   # which may itself contain underscores.
   local filename="${date_str}__${git_issue_str}.md"
@@ -381,7 +397,7 @@ write_change_entry() {
     # * Issue **#1234** : My change text
     issue_part="${issue_prefix}#${git_issue}${issue_suffix}"
   else
-    # * Issue **gchq/stroom#1234** : 
+    # * Issue **gchq/stroom#1234** :
     issue_part="${issue_prefix}${git_issue}${issue_suffix}"
   fi
 
@@ -392,7 +408,7 @@ write_change_entry() {
   # Craft the content of the file
   # shellcheck disable=SC2016
   all_content="$( \
-    echo "${change_entry_line}" 
+    echo "${change_entry_line}"
     echo
     echo
     echo '```sh'
@@ -454,7 +470,7 @@ write_change_entry() {
 open_file_in_editor() {
   local file_to_open="$1"; shift
   local git_issue="$1"; shift
-  
+
   local editor
   editor="${VISUAL:-${EDITOR:-vi}}"
 
