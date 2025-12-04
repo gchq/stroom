@@ -1,5 +1,21 @@
 #!/usr/bin/env bash
 #
+# Copyright 2016-2025 Crown Copyright
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+#
 # Checks the health of each app using the supplied admin url
 
 echo_usage() {
@@ -26,7 +42,7 @@ echo_unhealthy() {
 }
 
 check_health() {
-  if command -v jq 1>/dev/null; then 
+  if command -v jq 1>/dev/null; then
     # jq is available so do a more complex health check
     local is_jq_installed=true
   else
@@ -34,7 +50,7 @@ check_health() {
     warn "Doing simple health check as ${BLUE}jq${NC} is not installed."
     warn "See ${BLUE}https://stedolan.github.io/jq/${NC} for details on how to install it."
     local is_jq_installed=false
-  fi 
+  fi
 
   if [ $# -ne 4 ]; then
     error "Invalid arguments. Usage: ${BLUE}health.sh HOST PORT PATH${NC}, e.g. health.sh localhost 8080 stroomAdmin"
@@ -66,7 +82,7 @@ check_health() {
     if [ "${is_jq_installed}" = true ]; then
       # Count all the unhealthy checks
       local -r unhealthy_count=$( \
-        curl -s "${health_check_url}" | 
+        curl -s "${health_check_url}" |
         jq '[to_entries[] | {key: .key, value: .value.healthy}] | map(select(.value == false)) | length')
 
       #echo "unhealthy_count: $unhealthy_count"
@@ -76,7 +92,7 @@ check_health() {
         echo_unhealthy
 
         # Dump details of the failing health checks
-        curl -s "${health_check_url}" | 
+        curl -s "${health_check_url}" |
           jq 'to_entries | map(select(.value.healthy == false)) | from_entries'
 
         echo
@@ -136,14 +152,14 @@ main() {
   while getopts ":mh" arg; do
     # shellcheck disable=SC2034
     case $arg in
-      h ) 
+      h )
         echo_usage
         exit 0
         ;;
-      m )  
-        MONOCHROME=true 
+      m )
+        MONOCHROME=true
         ;;
-      * ) 
+      * )
         invalid_arguments
         ;;  # getopts already reported the illegal option
     esac
