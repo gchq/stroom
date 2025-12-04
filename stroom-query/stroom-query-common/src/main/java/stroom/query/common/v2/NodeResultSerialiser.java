@@ -1,6 +1,7 @@
 package stroom.query.common.v2;
 
 import stroom.query.language.functions.ref.ErrorConsumer;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ErrorMessage;
@@ -9,16 +10,12 @@ import stroom.util.shared.Severity;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.List;
 
 public class NodeResultSerialiser {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(NodeResultSerialiser.class);
-
-    private static final ObjectMapper mapper = new ObjectMapper();
 
     public static boolean read(final Input input,
                                final Coprocessors coprocessors,
@@ -36,9 +33,9 @@ public class NodeResultSerialiser {
             final String errorJson = input.readString();
             if (NullSafe.isNonBlankString(errorJson)) {
                 try {
-                    final ErrorMessage errorMessage = mapper.readValue(errorJson, ErrorMessage.class);
+                    final ErrorMessage errorMessage = JsonUtil.readValue(errorJson, ErrorMessage.class);
                     errorConsumer.add(errorMessage);
-                } catch (final JsonProcessingException e) {
+                } catch (final Exception e) {
                     LOGGER.debug("Cannot deserialise error message.", e);
                     errorConsumer.add(Severity.ERROR, () -> errorJson);
                 }
@@ -64,8 +61,8 @@ public class NodeResultSerialiser {
             for (final ErrorMessage error : errors) {
                 LOGGER.debug(error::toString);
                 try {
-                    output.writeString(mapper.writeValueAsString(error));
-                } catch (final JsonProcessingException e) {
+                    output.writeString(JsonUtil.writeValueAsString(error, false));
+                } catch (final Exception e) {
                     LOGGER.debug("Cannot serialise error message.", e);
                 }
             }
