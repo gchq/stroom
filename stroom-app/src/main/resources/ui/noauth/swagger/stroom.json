@@ -20328,6 +20328,9 @@
             },
             "useSourceFeedIfPossible" : {
               "type" : "boolean"
+            },
+            "includeRuleDocumentation" : {
+              "type" : "boolean"
             }
           }
         } ]
