@@ -101,9 +101,9 @@ public class S3Manager {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3Manager.class);
 
-    private static final Pattern S3_NAME_PATTERN = Pattern.compile("[^a-z0-9]");
-    private static final Pattern S3_BUCKET_NAME_PATTERN = Pattern.compile("[^0-9a-z.]");
-    private static final Pattern S3_KEY_NAME_PATTERN = Pattern.compile("[^0-9a-zA-Z!-_.*'()/]");
+    private static final Pattern S3_NAME_INVALID_CHARS_PATTERN = Pattern.compile("[^a-z0-9]");
+    private static final Pattern S3_BUCKET_NAME_INVALID_CHARS_PATTERN = Pattern.compile("[^0-9a-z.]");
+    private static final Pattern S3_KEY_NAME_INVALID_CHARS_PATTERN = Pattern.compile("[^0-9a-zA-Z!-_.*'()/]");
     private static final Pattern LEADING_HYPHENS = Pattern.compile("^-+");
     private static final Pattern TRAILING_HYPHENS = Pattern.compile("-+$");
     private static final Pattern LEADING_SLASH = Pattern.compile("^/+");
@@ -160,17 +160,15 @@ public class S3Manager {
     }
 
     private URI createUri(final String uri) {
-        if (uri == null || uri.isBlank()) {
-            return null;
-        }
-        return URI.create(uri);
+        return NullSafe.isNonBlankString(uri)
+                ? URI.create(uri)
+                : null;
     }
 
     private Region createRegion(final String region) {
-        if (region == null || region.isBlank()) {
-            return null;
-        }
-        return Region.of(region);
+        return NullSafe.isNonBlankString(region)
+                ? Region.of(region)
+                : null;
     }
 
     private S3CrtHttpConfiguration createHttpConfiguration(final AwsHttpConfig awsHttpConfig) {
@@ -203,7 +201,7 @@ public class S3Manager {
     }
 
     private AwsCredentialsProvider createCredentialsProvider(final S3ClientConfig s3ClientConfig) {
-        if (s3ClientConfig.getAssumeRole() != null && s3ClientConfig.getAssumeRole().getRequest() != null) {
+        if (NullSafe.nonNull(s3ClientConfig.getAssumeRole(), AwsAssumeRole::getRequest)) {
             // If the config asks the client to assume a role then get assumed role credentials.
             try (final StsAsyncClient stsAsyncClient =
                     createStsAsyncClient(s3ClientConfig)) {
@@ -384,7 +382,7 @@ public class S3Manager {
         bucketName = pathCreator.replace(bucketName, "feed", meta::getFeedName);
         bucketName = pathCreator.replace(bucketName, "type", meta::getTypeName);
         bucketName = bucketName.toLowerCase(Locale.ROOT);
-        bucketName = S3_BUCKET_NAME_PATTERN.matcher(bucketName).replaceAll("-");
+        bucketName = S3_BUCKET_NAME_INVALID_CHARS_PATTERN.matcher(bucketName).replaceAll("-");
         bucketName = LEADING_HYPHENS.matcher(bucketName).replaceAll("");
         bucketName = TRAILING_HYPHENS.matcher(bucketName).replaceAll("");
         if (bucketName.length() > 63) {
@@ -398,7 +396,7 @@ public class S3Manager {
     private String createS3Name(final String name) {
         String s3Name = name;
         s3Name = s3Name.toLowerCase(Locale.ROOT);
-        s3Name = S3_NAME_PATTERN.matcher(s3Name).replaceAll("-");
+        s3Name = S3_NAME_INVALID_CHARS_PATTERN.matcher(s3Name).replaceAll("-");
         s3Name = LEADING_HYPHENS.matcher(s3Name).replaceAll("");
         s3Name = TRAILING_HYPHENS.matcher(s3Name).replaceAll("");
         return s3Name;
@@ -632,7 +630,7 @@ public class S3Manager {
         keyName = pathCreator.replace(keyName, "idPath", () -> getIdPath(idPadded));
         keyName = pathCreator.replace(keyName, "idPadded", () -> idPadded);
 
-        keyName = S3_KEY_NAME_PATTERN.matcher(keyName).replaceAll("-");
+        keyName = S3_KEY_NAME_INVALID_CHARS_PATTERN.matcher(keyName).replaceAll("-");
         keyName = MULTI_SLASH.matcher(keyName).replaceAll("/");
         keyName = LEADING_SLASH.matcher(keyName).replaceAll("");
         keyName = TRAILING_SLASH.matcher(keyName).replaceAll("");

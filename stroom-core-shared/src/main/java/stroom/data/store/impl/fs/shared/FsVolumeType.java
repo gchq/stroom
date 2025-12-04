@@ -17,12 +17,17 @@
 package stroom.data.store.impl.fs.shared;
 
 import stroom.docref.HasDisplayValue;
+import stroom.util.shared.HasPrimitiveValue;
+import stroom.util.shared.PrimitiveValueConverter;
 
-public enum FsVolumeType implements HasDisplayValue {
+public enum FsVolumeType implements HasDisplayValue, HasPrimitiveValue {
     STANDARD(0, "Standard"),
-    S3(1, "S3");
+    S3(1, "S3"),
+    S3_V2(2, "S3 v2"),
+    ;
 
-    private static final FsVolumeType[] TYPES = {STANDARD, S3};
+    public static final PrimitiveValueConverter<FsVolumeType> PRIMITIVE_VALUE_CONVERTER =
+            PrimitiveValueConverter.create(FsVolumeType.class, FsVolumeType.values());
 
     private final int id;
     private final String displayValue;
@@ -34,10 +39,13 @@ public enum FsVolumeType implements HasDisplayValue {
     }
 
     public static FsVolumeType fromId(final int id) {
-        if (id < 0 || id > 1) {
-            return STANDARD;
+        final byte b;
+        try {
+            b = (byte) id;
+        } catch (final Exception e) {
+            throw new IllegalArgumentException("Invalid id " + id);
         }
-        return TYPES[id];
+        return PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(b, STANDARD);
     }
 
     public int getId() {
@@ -47,5 +55,10 @@ public enum FsVolumeType implements HasDisplayValue {
     @Override
     public String getDisplayValue() {
         return displayValue;
+    }
+
+    @Override
+    public byte getPrimitiveValue() {
+        return (byte) id;
     }
 }

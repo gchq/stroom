@@ -221,6 +221,10 @@ final class S3Source implements Source {
         return counts;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class S3InputStreamProvider implements InputStreamProvider {
 
         private final Path dir;

@@ -277,6 +277,10 @@ final class S3Target implements Target {
         return "id=" + meta.getId();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class S3OutputStreamProvider implements OutputStreamProvider {
 
         private final Path dir;
