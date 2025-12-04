@@ -157,6 +157,7 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
                 .destination(NotificationStreamDestination.builder()
                         .destinationFeed(analyticsDataSetup.getDetections())
                         .useSourceFeedIfPossible(false)
+                        .includeRuleDocumentation(true)
                         .build())
                 .build();
         return List.of(notificationConfig);

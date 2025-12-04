@@ -18,14 +18,19 @@ public final class NotificationStreamDestination extends NotificationDestination
     private final DocRef destinationFeed;
     @JsonProperty
     private final boolean useSourceFeedIfPossible;
+    @JsonProperty
+    private final boolean includeRuleDocumentation;
 
     @JsonCreator
     public NotificationStreamDestination(
             @JsonProperty("destinationFeed") final DocRef destinationFeed,
-            @JsonProperty("useSourceFeedIfPossible") final boolean useSourceFeedIfPossible) {
+            @JsonProperty("useSourceFeedIfPossible") final boolean useSourceFeedIfPossible,
+            @JsonProperty("includeRuleDocumentation") final boolean includeRuleDocumentation) {
 
         this.destinationFeed = destinationFeed;
         this.useSourceFeedIfPossible = useSourceFeedIfPossible;
+        this.includeRuleDocumentation = includeRuleDocumentation;
+
     }
 
     public DocRef getDestinationFeed() {
@@ -34,6 +39,10 @@ public final class NotificationStreamDestination extends NotificationDestination
 
     public boolean isUseSourceFeedIfPossible() {
         return useSourceFeedIfPossible;
+    }
+
+    public boolean isIncludeRuleDocumentation() {
+        return includeRuleDocumentation;
     }
 
     @Override
@@ -46,12 +55,13 @@ public final class NotificationStreamDestination extends NotificationDestination
         }
         final NotificationStreamDestination that = (NotificationStreamDestination) o;
         return Objects.equals(destinationFeed, that.destinationFeed) &&
-                useSourceFeedIfPossible == that.useSourceFeedIfPossible;
+               (useSourceFeedIfPossible == that.useSourceFeedIfPossible) &&
+               (includeRuleDocumentation == that.includeRuleDocumentation);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(destinationFeed, useSourceFeedIfPossible);
+        return Objects.hash(destinationFeed, useSourceFeedIfPossible, includeRuleDocumentation);
     }
 
     @Override
@@ -59,6 +69,7 @@ public final class NotificationStreamDestination extends NotificationDestination
         return "AnalyticNotificationStreamDestination{" +
                 ", destinationFeed=" + destinationFeed +
                 ", useSourceFeedIfPossible=" + useSourceFeedIfPossible +
+                ", includeRuleDocumentation=" + includeRuleDocumentation +
                 '}';
     }
 
@@ -78,6 +89,7 @@ public final class NotificationStreamDestination extends NotificationDestination
 
         private DocRef destinationFeed;
         private boolean useSourceFeedIfPossible;
+        private boolean includeRuleDocumentation;
 
         private Builder() {
         }
@@ -85,6 +97,7 @@ public final class NotificationStreamDestination extends NotificationDestination
         private Builder(final NotificationStreamDestination config) {
             this.destinationFeed = config.destinationFeed;
             this.useSourceFeedIfPossible = config.useSourceFeedIfPossible;
+            this.includeRuleDocumentation = config.includeRuleDocumentation;
         }
 
         public Builder destinationFeed(final DocRef destinationFeed) {
@@ -97,10 +110,16 @@ public final class NotificationStreamDestination extends NotificationDestination
             return this;
         }
 
+        public Builder includeRuleDocumentation(final boolean includeRuleDocumentation) {
+            this.includeRuleDocumentation = includeRuleDocumentation;
+            return this;
+        }
+
         public NotificationStreamDestination build() {
             return new NotificationStreamDestination(
                     destinationFeed,
-                    useSourceFeedIfPossible);
+                    useSourceFeedIfPossible,
+                    includeRuleDocumentation);
         }
     }
 }

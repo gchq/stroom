@@ -292,6 +292,7 @@ public class QueryDocEditPresenter
         final NotificationStreamDestination destination =
                 NotificationStreamDestination.builder()
                         .useSourceFeedIfPossible(false)
+                        .includeRuleDocumentation(true)
                         .destinationFeed(analyticUiDefaultConfig.getDefaultDestinationFeed())
                         .build();
         final NotificationConfig notificationConfig = NotificationConfig
