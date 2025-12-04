@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,24 +25,21 @@ import stroom.ui.config.client.UiConfigCache;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
-public class ReportProcessingPresenter
-        extends AbstractProcessingPresenter<ReportDoc> {
+public class ReportNotificationPresenter
+        extends AbstractNotificationPresenter<ReportDoc> {
 
 
     @Inject
-    public ReportProcessingPresenter(final EventBus eventBus,
-                                     final AnalyticProcessingView view,
-                                     final ScheduledProcessingPresenter scheduledProcessingPresenter,
-                                     final TableBuilderProcessingPresenter tableBuilderProcessingPresenter,
-                                     final StreamingProcessingPresenter streamingProcessingPresenter,
-                                     final UiConfigCache uiConfigCache) {
+    public ReportNotificationPresenter(final EventBus eventBus,
+                                       final AnalyticNotificationView view,
+                                       final DocSelectionBoxPresenter errorFeedPresenter,
+                                       final ReportNotificationListPresenter notificationListPresenter,
+                                       final UiConfigCache uiConfigCache) {
         super(eventBus,
                 view,
-                scheduledProcessingPresenter,
-                tableBuilderProcessingPresenter,
-                streamingProcessingPresenter,
+                errorFeedPresenter,
+                notificationListPresenter,
                 uiConfigCache);
-        getView().addProcessingType(AnalyticProcessType.SCHEDULED_QUERY);
     }
 
     @Override
@@ -50,8 +47,8 @@ public class ReportProcessingPresenter
         return reportDoc
                 .copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
-                .analyticProcessType(getView().getProcessingType())
-                .analyticProcessConfig(writeProcessConfig())
+                .errorFeed(errorFeedPresenter.getSelectedEntityReference())
+                .includeRuleDocumentation(getView().isIncludeRuleDocumentation())
                 .build();
     }
 }
