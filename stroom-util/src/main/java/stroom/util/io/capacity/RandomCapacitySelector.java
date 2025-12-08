@@ -17,9 +17,11 @@
 package stroom.util.io.capacity;
 
 
+import stroom.util.RandomUtil;
 import stroom.util.shared.HasCapacity;
 
 import java.util.List;
+import java.util.Objects;
 
 public class RandomCapacitySelector extends AbstractSelector {
 
@@ -31,9 +33,8 @@ public class RandomCapacitySelector extends AbstractSelector {
 
     @Override
     public <T extends HasCapacity> T doSelect(final List<T> filteredList) {
-        final double random = Math.random();
-        final int index = (int) (random * filteredList.size());
-        return filteredList.get(index);
+        Objects.requireNonNull(filteredList);
+        return RandomUtil.getRandomItem(filteredList);
     }
 
     @Override

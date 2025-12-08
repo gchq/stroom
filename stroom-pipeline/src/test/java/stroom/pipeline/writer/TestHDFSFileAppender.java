@@ -161,6 +161,10 @@ class TestHDFSFileAppender extends StroomUnitTest {
         return provider;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class MockFileSystem extends DistributedFileSystem {
 
     }

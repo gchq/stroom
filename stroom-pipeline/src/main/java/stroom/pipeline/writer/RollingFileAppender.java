@@ -25,6 +25,7 @@ import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.svg.shared.SvgImage;
+import stroom.util.RandomUtil;
 import stroom.util.io.CompressionUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
@@ -118,7 +119,8 @@ public class RollingFileAppender extends AbstractRollingAppender {
             }
         }
 
-        return new RollingFileDestination(pathCreator,
+        return new RollingFileDestination(
+                pathCreator,
                 key,
                 getFrequencyTrigger(),
                 getCronTrigger(),
@@ -161,49 +163,39 @@ public class RollingFileAppender extends AbstractRollingAppender {
     }
 
     private String getRandomOutputPath() throws IOException {
-        if (outputPaths == null || outputPaths.length == 0) {
+        if (NullSafe.isEmptyArray(outputPaths)) {
             throw new IOException("No output paths have been set");
         }
-
-        // Get a path to use.
-        final String path;
-        if (outputPaths.length == 1) {
-            path = outputPaths[0];
-        } else {
-            // Choose one of the output paths at random.
-            path = outputPaths[(int) Math.round(Math.random() * (outputPaths.length - 1))];
-        }
-
-        return path;
+        return RandomUtil.getRandomItem(outputPaths);
     }
 
     /**
      * Parses a POSIX-style file permission string like "rwxr--r--"
      */
     private static Set<PosixFilePermission> parsePosixFilePermissions(final String filePermissions) {
-        if (filePermissions == null || filePermissions.isEmpty()) {
+        if (NullSafe.isEmptyString(filePermissions)) {
             return null;
         }
 
         try {
             return PosixFilePermissions.fromString(filePermissions);
         } catch (final IllegalArgumentException e) {
-            LOGGER.debug("Invalid file permissions format: '" + filePermissions + "'");
+            LOGGER.debug("Invalid file permissions format: '{}'", filePermissions);
             return null;
         }
     }
 
     @Override
     protected void validateSpecificSettings() {
-        if (outputPaths == null || outputPaths.length == 0) {
+        if (NullSafe.isEmptyArray(outputPaths)) {
             throw ProcessException.create("No output paths have been specified");
         }
 
-        if (fileNamePattern == null || fileNamePattern.isEmpty()) {
+        if (NullSafe.isEmptyString(fileNamePattern)) {
             throw ProcessException.create("No file name has been specified");
         }
 
-        if (rolledFileNamePattern == null || rolledFileNamePattern.isEmpty()) {
+        if (NullSafe.isEmptyString(rolledFileNamePattern)) {
             throw ProcessException.create("No rolled file name has been specified");
         }
 
@@ -217,7 +209,11 @@ public class RollingFileAppender extends AbstractRollingAppender {
                           "Replacement variables can be used in path strings such as ${feed}.",
             displayPriority = 1)
     public void setOutputPaths(final String outputPaths) {
-        this.outputPaths = outputPaths.split(",");
+        if (NullSafe.isEmptyString(outputPaths)) {
+            this.outputPaths = null;
+        } else {
+            this.outputPaths = outputPaths.split(",");
+        }
     }
 
     @PipelineProperty(description = "Choose the name of the file to write.",
