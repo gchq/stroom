@@ -84,8 +84,8 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
 
                 taskContext.info(() ->
                         "Received " +
-                                processorTaskList.getList().size() +
-                                " new tasks");
+                        processorTaskList.getList().size() +
+                        " new tasks");
                 return processorTaskList
                         .getList()
                         .stream()
@@ -130,6 +130,10 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
         return false;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class DistributedDataProcessorTask extends DistributedTask {
 
         private final ProcessorTask processorTask;
@@ -151,6 +155,10 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
         this.runnableFactory = runnableFactory;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class RunnableFactoryImpl implements RunnableFactory {
 
         private final Provider<DataProcessorTaskHandler> dataProcessorTaskHandlerProvider;
@@ -167,6 +175,10 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
             };
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface RunnableFactory {
 

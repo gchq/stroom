@@ -30,6 +30,7 @@ import stroom.meta.shared.Meta;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
@@ -101,8 +102,8 @@ public class S3Manager {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3Manager.class);
 
-    private static final Pattern S3_NAME_INVALID_CHARS_PATTERN = Pattern.compile("[^a-z0-9]");
-    private static final Pattern S3_BUCKET_NAME_INVALID_CHARS_PATTERN = Pattern.compile("[^0-9a-z.]");
+    private static final Pattern S3_META_KEY_INVALID_CHARS_PATTERN = Pattern.compile("[^a-z0-9]");
+    private static final Pattern S3_BUCKET_NAME_INVALID_CHARS_PATTERN = Pattern.compile("[^0-9a-z.-]");
     private static final Pattern S3_KEY_NAME_INVALID_CHARS_PATTERN = Pattern.compile("[^0-9a-zA-Z!-_.*'()/]");
     private static final Pattern LEADING_HYPHENS = Pattern.compile("^-+");
     private static final Pattern TRAILING_HYPHENS = Pattern.compile("-+$");
@@ -385,18 +386,23 @@ public class S3Manager {
         bucketName = S3_BUCKET_NAME_INVALID_CHARS_PATTERN.matcher(bucketName).replaceAll("-");
         bucketName = LEADING_HYPHENS.matcher(bucketName).replaceAll("");
         bucketName = TRAILING_HYPHENS.matcher(bucketName).replaceAll("");
-        if (bucketName.length() > 63) {
-            LOGGER.warn("Truncating bucket name: " + bucketName);
+        final int len = bucketName.length();
+        if (len < 3) {
+            LOGGER.error("Bucket name too short, must be >=3. bucketName: '{}'", bucketName);
+            throw new RuntimeException(LogUtil.message("Bucket name too short, must be >=3. bucketName: '{}'",
+                    bucketName));
+        } else if (len > 63) {
+            LOGGER.warn("Truncating bucket name: '{}'. Length must be >=3 and <=63.", bucketName);
             return bucketName.substring(0, 63);
         }
 
         return bucketName;
     }
 
-    private String createS3Name(final String name) {
-        String s3Name = name;
+    private String createS3MetaKey(final String metaKey) {
+        String s3Name = metaKey;
         s3Name = s3Name.toLowerCase(Locale.ROOT);
-        s3Name = S3_NAME_INVALID_CHARS_PATTERN.matcher(s3Name).replaceAll("-");
+        s3Name = S3_META_KEY_INVALID_CHARS_PATTERN.matcher(s3Name).replaceAll("-");
         s3Name = LEADING_HYPHENS.matcher(s3Name).replaceAll("");
         s3Name = TRAILING_HYPHENS.matcher(s3Name).replaceAll("");
         return s3Name;
@@ -679,7 +685,9 @@ public class S3Manager {
         final Map<String, String> metadata = attributeMap
                 .entrySet()
                 .stream()
-                .collect(Collectors.toMap(e -> createS3Name(e.getKey()), Entry::getValue));
+                .collect(Collectors.toMap(e ->
+                                createS3MetaKey(e.getKey()),
+                        Entry::getValue));
 
         return PutObjectRequest.builder()
                 .bucket(bucketName)

@@ -50,7 +50,7 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 /**
- * Joins text instances into a single text instance.
+ * A destination used to write an output stream to an S3 bucket.
  */
 @ConfigurableElement(
         type = "S3Appender",
@@ -67,6 +67,9 @@ public class S3Appender extends AbstractAppender {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(S3Appender.class);
     private static final String DEFAULT_USE_COMPRESSION_PROP_VALUE = "true";
+    @SuppressWarnings("ConstantValue")
+    private static final boolean DEFAULT_USE_COMPRESSION_PROP_VALUE_BOOLEAN = Boolean.parseBoolean(
+            DEFAULT_USE_COMPRESSION_PROP_VALUE);
     private static final String DEFAULT_COMPRESSION_METHOD_PROP_VALUE = CompressorStreamFactory.GZIP;
 
     private final S3AppenderTempDir s3AppenderTempDir;
@@ -96,8 +99,7 @@ public class S3Appender extends AbstractAppender {
         outputFactory = new OutputFactory(metaDataHolder);
 
         // Ensure outputStreamSupport has the defaults for S3Appender
-        //noinspection ConstantValue
-        setUseCompression(Boolean.parseBoolean(DEFAULT_USE_COMPRESSION_PROP_VALUE));
+        setUseCompression(DEFAULT_USE_COMPRESSION_PROP_VALUE_BOOLEAN);
         setCompressionMethod(DEFAULT_COMPRESSION_METHOD_PROP_VALUE);
     }
 

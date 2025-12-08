@@ -54,6 +54,7 @@ public class ExtendedPathCreator extends SimplePathCreator {
 
     @Override
     public String replaceContextVars(String path) {
+
         if (feedHolder != null && feedHolder.get().getFeedName() != null) {
             path = replace(path, "feed", () -> feedHolder.get().getFeedName());
         }
